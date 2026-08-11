@@ -1,4 +1,5 @@
-h1:4zcLt+KdVAWwHpoOrG/oNoVdIQEWSxGJxVeIQ+W+hu4=
+h1:aIYeZmFaQxnuJch8PnY7wG1swA81veNnShjV6FVPYQg=
 20260807170000_create_tenant_foundation.sql h1:9KyewD/Xqtm6MjQ7MkTora3f47kjPOobGVfE2q66AUI=
 20260807170100_create_idempotency_record.sql h1:he0jfwTn3otdzgu/qHhFo7Z4ra9+1AL/mT2db82DOrU=
-20260811145252_harden_roles_and_definer_functions.sql h1:Sgytt+jTi8GMO8QL9R58EQ7G376lD5hMJYHPRxsLmO4=
+20260811145252_harden_roles_and_definer_functions.sql h1:KhiZKVpFfL81T+f/73nMkVD0ndVWsCdM4ShqMHZfZ/g=
+20260811154100_harden_idempotency_concurrency.sql h1:fKS1HwAq+P/32QLtAO1gJTlsQDXjIIcDR3v4o3CWlwc=
