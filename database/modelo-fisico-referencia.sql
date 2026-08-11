@@ -2097,18 +2097,25 @@ WHERE NOT EXISTS (
 -- citas debían tener recordatorio.
 
 CREATE TABLE notification_schedule (
-  id             uuid        NOT NULL DEFAULT gen_random_uuid(),
-  barbershop_id  uuid        NOT NULL,
-  appointment_id uuid        NOT NULL,
-  event_type     text        NOT NULL,
-  channel        text        NOT NULL,
-  ordinal        smallint    NOT NULL DEFAULT 1,
-  scheduled_for  timestamptz NOT NULL,
-  status         text        NOT NULL DEFAULT 'pending',
-  cancelled_at   timestamptz,
-  sent_at        timestamptz,
-  created_at     timestamptz NOT NULL DEFAULT now(),
-  updated_at     timestamptz NOT NULL DEFAULT now(),
+  id                uuid        NOT NULL DEFAULT gen_random_uuid(),
+  barbershop_id     uuid        NOT NULL,
+  appointment_id    uuid        NOT NULL,
+  event_type        text        NOT NULL,
+  channel           text        NOT NULL,
+  ordinal           smallint    NOT NULL DEFAULT 1,
+  scheduled_for     timestamptz NOT NULL,
+  status            text        NOT NULL DEFAULT 'pending',
+  -- DDL-CON-01: lease de reclamación. Solo tienen valor mientras
+  -- status = 'processing'; notification_claim_due los asigna y
+  -- notification_finalize_claim los limpia al cerrar, sea cual sea el
+  -- desenlace.
+  claim_token       uuid,
+  claimed_at        timestamptz,
+  lease_expires_at  timestamptz,
+  cancelled_at      timestamptz,
+  sent_at           timestamptz,
+  created_at        timestamptz NOT NULL DEFAULT now(),
+  updated_at        timestamptz NOT NULL DEFAULT now(),
 
   CONSTRAINT notification_schedule_id_pk               PRIMARY KEY (id),
   CONSTRAINT notification_schedule_barbershop_id_id_uk UNIQUE (barbershop_id, id),
@@ -2123,44 +2130,70 @@ CREATE TABLE notification_schedule (
   CONSTRAINT notification_schedule_channel_ck CHECK (channel IN ('email', 'whatsapp')),
   CONSTRAINT notification_schedule_ordinal_ck CHECK (ordinal BETWEEN 1 AND 3),
 
-  -- `skipped` cubre la excepción de RN-REC-06: cita sin canal habilitado
-  -- conserva la programación como no enviable y produce advertencia, en lugar
-  -- de inventar un destinatario.
+  -- `processing` es el estado de lease (DEC-053, DDL-CON-01): un trabajador
+  -- la reclamó y aún no confirma el desenlace. `skipped` cubre dos casos que
+  -- comparten la misma forma de "no se va a enviar": la excepción de
+  -- RN-REC-06 (cita sin canal habilitado) y un fallo permanente de envío que
+  -- agotó reintentos (notification_finalize_claim, outcome
+  -- 'permanent_failure'); no se crea un estado terminal nuevo solo para
+  -- distinguir el motivo, que ya vive en notification_attempt.
   CONSTRAINT notification_schedule_status_ck CHECK (
-    status IN ('pending', 'sent', 'cancelled', 'skipped')
+    status IN ('pending', 'processing', 'sent', 'cancelled', 'skipped')
   ),
-  -- DDL-TMP-01: además de exigir el instante correcto por estado, ese
-  -- instante no puede preceder a la creación de la programación.
+  -- DDL-TMP-01 y DDL-CON-01: además de exigir el instante correcto por
+  -- estado, cada estado fija la forma exacta de las columnas de lease para
+  -- que ninguna fila quede a medio reclamar ni conserve un token vencido.
   CONSTRAINT notification_schedule_outcome_ck CHECK (
-    (status = 'pending'   AND sent_at IS NULL     AND cancelled_at IS NULL)
+    (status = 'pending'
+       AND claim_token IS NULL AND claimed_at IS NULL AND lease_expires_at IS NULL
+       AND sent_at IS NULL AND cancelled_at IS NULL)
     OR
-    (status = 'sent'      AND sent_at IS NOT NULL AND cancelled_at IS NULL
-       AND sent_at >= created_at)
+    (status = 'processing'
+       AND claim_token IS NOT NULL AND claimed_at IS NOT NULL
+       AND lease_expires_at IS NOT NULL AND lease_expires_at > claimed_at
+       AND sent_at IS NULL AND cancelled_at IS NULL)
     OR
-    (status = 'cancelled' AND cancelled_at IS NOT NULL
-       AND cancelled_at >= created_at)
+    (status = 'sent'
+       AND claim_token IS NULL AND claimed_at IS NULL AND lease_expires_at IS NULL
+       AND sent_at IS NOT NULL AND cancelled_at IS NULL AND sent_at >= created_at)
     OR
-    (status = 'skipped')
+    (status = 'cancelled'
+       AND claim_token IS NULL AND claimed_at IS NULL AND lease_expires_at IS NULL
+       AND cancelled_at IS NOT NULL AND cancelled_at >= created_at)
+    OR
+    (status = 'skipped'
+       AND claim_token IS NULL AND claimed_at IS NULL AND lease_expires_at IS NULL)
   )
 );
 
 COMMENT ON TABLE notification_schedule IS
   'Programación transaccional de envíos (RN-REC-06, DEC-032). Propietario funcional: plataforma. '
   'Retención: la de la cita. Clasificación: técnico. NO almacena el contenido del mensaje: '
-  'RN-REC-03 exige construirlo en el instante del envío, nunca al programarlo.';
+  'RN-REC-03 exige construirlo en el instante del envío, nunca al programarlo. '
+  'El lease de reclamación (claim_token/claimed_at/lease_expires_at) es de barberia_worker: '
+  'barberia_app no tiene privilegio de columna sobre esas tres columnas ni sobre sent_at (DEC-053).';
 
 -- Una sola programación lógica vigente por cita, tipo, canal y ordinal
 -- (estandar-base-datos.md §7). Es la restricción que impide que dos
--- reprogramaciones seguidas dejen tres recordatorios (RN-REC-01).
+-- reprogramaciones seguidas dejen tres recordatorios (RN-REC-01). Incluye
+-- 'processing': una fila reclamada por el trabajador sigue vigente y no debe
+-- dejar hueco para que una reprogramación cree una segunda fila activa.
 CREATE UNIQUE INDEX idx_notification_schedule_pending_unique
   ON notification_schedule (barbershop_id, appointment_id, event_type, channel, ordinal)
-  WHERE status = 'pending';
+  WHERE status IN ('pending', 'processing');
 
 -- Cola del trabajador (base-datos.md §12). El índice NO lleva barbershop_id
 -- delante: el trabajador reclama trabajo pendiente de todas las barberías.
 CREATE INDEX idx_notification_schedule_due
   ON notification_schedule (scheduled_for)
   WHERE status = 'pending';
+
+-- DDL-CON-01: recuperación de leases vencidos. notification_claim_due la usa
+-- para encontrar filas 'processing' cuyo trabajador desapareció sin finalizar
+-- (caída tras el claim), en la misma llamada que atiende lo nuevo pendiente.
+CREATE INDEX idx_notification_schedule_lease_expired
+  ON notification_schedule (lease_expires_at)
+  WHERE status = 'processing';
 
 CREATE TRIGGER notification_schedule_set_updated_at
   BEFORE UPDATE ON notification_schedule
@@ -2180,45 +2213,164 @@ CREATE POLICY notification_schedule_update_tenant_policy ON notification_schedul
   USING      (barbershop_id = current_setting('app.barbershop_id')::uuid)
   WITH CHECK (barbershop_id = current_setting('app.barbershop_id')::uuid);
 
-GRANT SELECT, INSERT, UPDATE ON TABLE notification_schedule TO barberia_app;
+-- DDL-CON-01/DEC-053: barberia_app NUNCA obtiene privilegio de columna sobre
+-- claim_token/claimed_at/lease_expires_at/sent_at. Solo puede cancelar una
+-- programación propia (status, cancelled_at); el CHECK de forma ya impide
+-- cancelar una fila 'processing' porque exigiría claim_token NULL a la vez
+-- que status = 'cancelled'. Reclamar y finalizar son exclusivos de
+-- barberia_worker, a través de las funciones SECURITY DEFINER de más abajo.
+GRANT SELECT, INSERT ON TABLE notification_schedule TO barberia_app;
+GRANT UPDATE (status, cancelled_at) ON TABLE notification_schedule TO barberia_app;
 
 -- -------------------------------------------------------------------
--- El trabajador y el aislamiento por barbería
+-- El trabajador, el aislamiento por barbería y el lease de reclamación
 -- -------------------------------------------------------------------
--- Problema: RLS forzada exige `app.barbershop_id`, pero el trabajador debe
--- encontrar envíos vencidos SIN saber de antemano de qué barberías son.
--- Solución: una función acotada que solo devuelve identificadores —nunca
--- datos personales ni de negocio—, reclama con SKIP LOCKED (base-datos.md
--- §4.21) y deja que el trabajador procese cada elemento dentro de su propia
--- transacción con el contexto de tenant fijado.
-CREATE OR REPLACE FUNCTION notification_claim_due(p_limit integer, p_now timestamptz)
-RETURNS TABLE (schedule_id uuid, barbershop_id uuid)
-LANGUAGE sql
+-- Problema (DDL-CON-01): RLS forzada exige `app.barbershop_id`, pero el
+-- trabajador debe encontrar envíos vencidos SIN saber de antemano de qué
+-- barberías son, y el envío es una llamada de red que NUNCA debe ejecutarse
+-- dentro de una transacción de base de datos abierta (base-datos.md §11).
+-- Con el `SELECT ... FOR UPDATE` original, confirmar la transacción de
+-- reclamo liberaba la fila de inmediato: si el envío tardaba, otro
+-- trabajador podía reclamarla y enviarla dos veces; si el proceso caía
+-- entre el claim y el envío, nada la recuperaba.
+--
+-- Protocolo de lease (DEC-053):
+--   1. `notification_claim_due` hace un `UPDATE ... SET status =
+--      'processing', claim_token, claimed_at, lease_expires_at` sobre un
+--      `SELECT ... FOR UPDATE SKIP LOCKED` sin esperar; confirma la
+--      transacción de inmediato y devuelve el token. El envío ocurre FUERA
+--      de esa transacción.
+--   2. La misma llamada recupera leases vencidos: su WHERE acepta tanto
+--      'pending' vencido como 'processing' cuyo lease_expires_at ya pasó
+--      (un trabajador que cayó tras el claim no bloquea el envío para
+--      siempre; `idx_notification_schedule_lease_expired` la sirve).
+--   3. `notification_finalize_claim` cierra por CAS de `claim_token`:
+--      'sent' (terminal), 'retry' (vuelve a 'pending', reclamable de
+--      inmediato: fallo temporal) o 'permanent_failure' (pasa a 'skipped':
+--      fallo permanente, agotó reintentos). Si el CAS no encuentra la fila
+--      con ese token —porque el lease ya venció y otro trabajador la
+--      reclamó de nuevo— devuelve `false` sin lanzar excepción: quien
+--      llegó tarde no debe tratarlo como error, solo dejar de insistir.
+CREATE OR REPLACE FUNCTION notification_claim_due(
+  p_limit         integer,
+  p_lease_seconds integer,
+  p_now           timestamptz
+)
+RETURNS TABLE (schedule_id uuid, barbershop_id uuid, claim_token uuid)
+LANGUAGE plpgsql
 VOLATILE
 SECURITY DEFINER
 SET search_path = ''
 AS $$
-  SELECT id, barbershop_id
-  FROM public.notification_schedule
-  WHERE status = 'pending'
-    AND scheduled_for <= p_now
-  ORDER BY scheduled_for
-  LIMIT p_limit
-  FOR UPDATE SKIP LOCKED
+BEGIN
+  IF p_limit IS NULL OR p_limit < 1 OR p_limit > 200 THEN
+    RAISE EXCEPTION 'notification_claim_due: p_limit fuera de rango (1-200).';
+  END IF;
+  IF p_lease_seconds IS NULL OR p_lease_seconds < 30 OR p_lease_seconds > 3600 THEN
+    RAISE EXCEPTION 'notification_claim_due: p_lease_seconds fuera de rango (30-3600).';
+  END IF;
+  IF p_now IS NULL THEN
+    RAISE EXCEPTION 'notification_claim_due: p_now no admite NULL.';
+  END IF;
+
+  RETURN QUERY
+  WITH due AS (
+    SELECT ns.id
+    FROM public.notification_schedule ns
+    WHERE (ns.status = 'pending'    AND ns.scheduled_for    <= p_now)
+       OR (ns.status = 'processing' AND ns.lease_expires_at <= p_now)
+    ORDER BY ns.scheduled_for
+    LIMIT p_limit
+    FOR UPDATE SKIP LOCKED
+  )
+  UPDATE public.notification_schedule ns
+  SET status           = 'processing',
+      claim_token      = pg_catalog.gen_random_uuid(),
+      claimed_at       = p_now,
+      lease_expires_at = p_now + pg_catalog.make_interval(secs => p_lease_seconds)
+  FROM due
+  WHERE ns.id = due.id
+  RETURNING ns.id, ns.barbershop_id, ns.claim_token;
+END;
 $$;
 
 -- Función de worker (DEC-040, DDL-SEC-04): solo barberia_worker la ejecuta,
--- nunca barberia_app. El rediseño a protocolo de lease (claim_token,
--- lease_expires_at) y la validación de p_limit quedan para el issue de
--- workers (DDL-CON-01, DDL-OPS-01); aquí solo se corrige la superficie de
--- privilegios.
-REVOKE ALL     ON FUNCTION notification_claim_due(integer, timestamptz) FROM PUBLIC;
-GRANT  EXECUTE ON FUNCTION notification_claim_due(integer, timestamptz) TO barberia_worker;
+-- nunca barberia_app.
+REVOKE ALL     ON FUNCTION notification_claim_due(integer, integer, timestamptz) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION notification_claim_due(integer, integer, timestamptz) TO barberia_worker;
 
-COMMENT ON FUNCTION notification_claim_due(integer, timestamptz) IS
-  'Reclama un lote pequeño de envíos vencidos entre barberías. Devuelve SOLO identificadores. '
-  'El trabajador vuelve a validar el estado vigente de la cita antes de enviar (RN-REC-02, RN-REC-03) '
-  'dentro de una transacción con app.barbershop_id fijado.';
+COMMENT ON FUNCTION notification_claim_due(integer, integer, timestamptz) IS
+  'Reclama un lote pequeño de envíos vencidos entre barberías con un lease de p_lease_seconds '
+  '(DEC-053, DDL-CON-01); en la misma llamada recupera leases vencidos de intentos anteriores. '
+  'Devuelve SOLO identificadores y el claim_token para finalizar. El trabajador vuelve a validar '
+  'el estado vigente de la cita antes de enviar (RN-REC-02, RN-REC-03), envía FUERA de esta '
+  'transacción y cierra con notification_finalize_claim dentro de una transacción con '
+  'app.barbershop_id fijado.';
+
+CREATE OR REPLACE FUNCTION notification_finalize_claim(
+  p_barbershop_id uuid,
+  p_schedule_id   uuid,
+  p_claim_token   uuid,
+  p_outcome       text,
+  p_now           timestamptz
+)
+RETURNS boolean
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_updated integer;
+BEGIN
+  IF p_barbershop_id IS NULL OR p_schedule_id IS NULL OR p_claim_token IS NULL
+     OR p_outcome IS NULL OR p_now IS NULL THEN
+    RAISE EXCEPTION 'notification_finalize_claim: ningún argumento admite NULL.';
+  END IF;
+  IF p_outcome NOT IN ('sent', 'retry', 'permanent_failure') THEN
+    RAISE EXCEPTION 'notification_finalize_claim: p_outcome inválido (%).', p_outcome;
+  END IF;
+
+  IF p_outcome = 'sent' THEN
+    UPDATE public.notification_schedule
+    SET status = 'sent', sent_at = p_now,
+        claim_token = NULL, claimed_at = NULL, lease_expires_at = NULL
+    WHERE barbershop_id = p_barbershop_id AND id = p_schedule_id
+      AND status = 'processing' AND claim_token = p_claim_token;
+  ELSIF p_outcome = 'retry' THEN
+    -- Fallo temporal: suelta el lease y vuelve a 'pending' para que
+    -- cualquier trabajador la reclame de nuevo sin esperar a que venza.
+    UPDATE public.notification_schedule
+    SET status = 'pending',
+        claim_token = NULL, claimed_at = NULL, lease_expires_at = NULL
+    WHERE barbershop_id = p_barbershop_id AND id = p_schedule_id
+      AND status = 'processing' AND claim_token = p_claim_token;
+  ELSE
+    -- Fallo permanente: reutiliza 'skipped', la misma forma que RN-REC-06
+    -- (DEC-053); el motivo distingue una de otra en notification_attempt.
+    UPDATE public.notification_schedule
+    SET status = 'skipped',
+        claim_token = NULL, claimed_at = NULL, lease_expires_at = NULL
+    WHERE barbershop_id = p_barbershop_id AND id = p_schedule_id
+      AND status = 'processing' AND claim_token = p_claim_token;
+  END IF;
+
+  GET DIAGNOSTICS v_updated = ROW_COUNT;
+  -- CAS fallido (token distinto, ya finalizada, o el lease venció y otro
+  -- trabajador la reclamó de nuevo): devuelve false, no lanza excepción.
+  -- Quien llega tarde debe descartar su intento, no tratarlo como error.
+  RETURN v_updated = 1;
+END;
+$$;
+
+REVOKE ALL     ON FUNCTION notification_finalize_claim(uuid, uuid, uuid, text, timestamptz) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION notification_finalize_claim(uuid, uuid, uuid, text, timestamptz) TO barberia_worker;
+
+COMMENT ON FUNCTION notification_finalize_claim(uuid, uuid, uuid, text, timestamptz) IS
+  'Cierra por CAS de claim_token la reclamación abierta por notification_claim_due (DEC-053, '
+  'DDL-CON-01). outcome=''sent'' es terminal; ''retry'' suelta el lease para un fallo temporal; '
+  '''permanent_failure'' pasa a ''skipped'' cuando se agotan los reintentos. Devuelve false, sin '
+  'lanzar excepción, si el token ya no coincide (finalización tardía tras recuperación de lease).';
 
 -- ---------------------------------------------------------------------------
 -- F.4 · `notification_attempt` — RN-REC-04, DEC-015
@@ -2516,6 +2668,10 @@ COMMENT ON FUNCTION customer_anonymize(uuid, uuid, timestamptz) IS
 --         aplicado en la sección D.2 y en estados-citas.md §9.
 --   H.3 · Anticipación del 2.º y 3.er recordatorio — DEC-048 (24h y 2h),
 --         con el ordinal 1/30min sembrado por disparador (DDL-BIZ-01).
+--   H.8 · Protocolo de lease de notification_claim_due, recuperación de
+--         leases vencidos y validación de p_limit — DEC-053 (DDL-CON-01,
+--         DDL-OPS-01). retention_claim_due_customers se revisa y se
+--         mantiene sin lease por la misma decisión.
 --
 -- H.4 · Validación de la zona IANA de la barbería
 --       No es expresable en un `CHECK` (pg_timezone_names no es inmutable).
