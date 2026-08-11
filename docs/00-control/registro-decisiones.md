@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.7"
+version: "1.8"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-06"
+ultima_actualizacion: "2026-08-11"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -68,6 +68,16 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-037` | 2026-08-06 | OpenAPI 3.1.2 y Redocly gobiernan el contrato HTTP | Documentación y contrato API | Confirmada |
 | `DEC-038` | 2026-08-06 | GitHub Flow, Conventional Commits y squash gobiernan la entrega de cambios | Ramas, commits y pull requests | Confirmada |
 | `DEC-039` | 2026-08-06 | Un sistema visual ligero gobierna colores, medidas, componentes y pantallas | Interfaz completa | Confirmada |
+| `DEC-040` | 2026-08-11 | Modelo de roles PostgreSQL: propietario `NOLOGIN`, `barberia_app` y `barberia_worker` separados, aprovisionados fuera de Atlas | `DDL-SEC-01`, `DDL-SEC-02`, `DDL-SEC-04` | Confirmada |
+| `DEC-041` | 2026-08-11 | Vocabulario de `appointment_history.event_type` en inglés `snake_case` | `DDL-DOC` (contradicción interna de `estados-citas.md`) | Confirmada |
+| `DEC-042` | 2026-08-11 | Fecha ancla de retención/anonimización: última actividad del cliente | `DEC-025`, `DDL-PRI-01` | Confirmada, sujeta a revisión jurídica |
+| `DEC-043` | 2026-08-11 | Semántica concurrente de idempotencia: bloqueo consultivo transaccional y `409`/`425` inmediato | `DDL-IDEM-01` | Confirmada |
+| `DEC-044` | 2026-08-11 | Versión mínima de PostgreSQL: se confirma 14, sin cambio sobre el código existente | `DDL` preflight | Confirmada |
+| `DEC-045` | 2026-08-11 | `customer` se identifica y reutiliza por teléfono único por barbería (upsert tenant-aware) | `DDL-BIZ-03` | Confirmada |
+| `DEC-046` | 2026-08-11 | La unicidad de correo de `customer` es por barbería, no global | `DDL-BIZ-03` | Confirmada |
+| `DEC-047` | 2026-08-11 | `barber` se recorta al alcance de `HU-021`: alta, listado y renombrar; sin borrado, desactivación, orden ni vínculo automático con `staff_user` | `DDL-BIZ-02` | Confirmada |
+| `DEC-048` | 2026-08-11 | Segundo y tercer recordatorio en 24 horas y 2 horas antes de la cita | `DEC-018`, `DDL-BIZ-01` | Confirmada |
+| `DEC-049` | 2026-08-11 | La anonimización cubre todas las copias de datos personales, no solo `customer` | `DEC-025`, `DDL-PRI-01` | Confirmada, sujeta a revisión jurídica |
 
 ## 3. Decisiones detalladas
 
@@ -419,3 +429,103 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Límites:** el MVP usa un único tema claro. Cada barbería puede mostrar nombre y logotipo, pero no sustituir colores, tipografía, radios o estados semánticos. La decisión fija el estándar, no crea todavía componentes Vue, logotipo, maquetas finales ni una dependencia de iconos.
 - **Documentos afectados:** `03-desarrollo/estandar-diseno-visual.md`, `03-desarrollo/estandar-frontend-vue.md`, `03-desarrollo/estrategia-pruebas.md`, `04-arquitectura/frontend.md`, `AGENTS.md`, `CONTRIBUTING.md`, `matriz-trazabilidad.md`.
 - **Fuente:** instrucción directa del propietario del 2026-08-06 y WCAG 2.2 del W3C.
+
+### DEC-040 · Modelo de roles PostgreSQL y aprovisionamiento
+
+- **Fecha:** 2026-08-11.
+- **Decisión:** un propietario de esquema/objetos `NOLOGIN` controla tablas, índices, secuencias y funciones. `barberia_migrator` es el único rol de login que ejecuta Atlas y no posee objetos por defecto. `barberia_app` (API) permanece tenant-scoped, sin superusuario, `CREATEDB`, `CREATEROLE` ni `BYPASSRLS`. Se crea `barberia_worker`, separado del API, sin acceso general de handlers y sin `BYPASSRLS`, exclusivo para reclamar/finalizar trabajos globales (notificaciones, retención). Los tres roles se aprovisionan con un administrador **antes** de que Atlas se conecte por primera vez; ninguna migración crea el rol con el que ya está conectada.
+- **Responsable:** propietario del proyecto, a partir de la recomendación técnica de `docs/05-backend/revision-ddl-seguridad-2026-08-11.md`.
+- **Motivo:** `DDL-SEC-01` mostró que la primera migración no controla su propio ownership de forma reproducible; `DDL-SEC-02` y `DDL-SEC-04` mostraron que API y worker comparten privilegios más amplios de lo necesario, ampliando el impacto de una inyección SQL o una credencial comprometida.
+- **Alternativas descartadas:** dejar que el primer administrador que se conecte sea dueño accidental de los objetos; un único rol compartido entre API y worker; usar el rol migrador también como propietario de login.
+- **Documentos afectados:** `05-backend/estandar-base-datos.md`, `05-backend/migraciones-atlas.md`, una migración correctiva roll-forward (no editar `20260807170000`), documentación de bootstrap de despliegue.
+- **Fuente:** `docs/05-backend/revision-ddl-seguridad-2026-08-11.md`, hallazgos `DDL-SEC-01`, `DDL-SEC-02`, `DDL-SEC-04`; aprobación explícita del propietario el 2026-08-11.
+
+### DEC-041 · Vocabulario de `appointment_history.event_type`
+
+- **Fecha:** 2026-08-11.
+- **Decisión:** `event_type` usa valores en inglés y `snake_case`, con el prefijo de la entidad: `appointment_created`, `appointment_rescheduled`, `appointment_service_changed`, `appointment_completed`, `appointment_cancelled_by_customer`, `appointment_cancelled_by_barber`, `appointment_no_show`, `appointment_status_corrected`.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** `docs/02-requisitos/estados-citas.md` sección 9 documentaba valores en español con puntos (`cita.creada`, `cita.cancelada_por_cliente`...) mientras la sección 11 exige "valores en inglés y minúsculas", igual que la columna `status`. Se elige el vocabulario en inglés para no crear una excepción de idioma dentro del mismo esquema.
+- **Alternativas descartadas:** conservar el vocabulario en español de la sección 9 y reescribir la regla general de la sección 11 para excluir `event_type`.
+- **Documentos afectados:** `02-requisitos/estados-citas.md` (sección 9, corregir los ocho valores), `database/modelo-fisico-referencia.sql` (`appointment_history_event_type_ck`), `contradicciones.md` (`CT-002`).
+- **Fuente:** hallazgo sin código propio en `docs/05-backend/revision-ddl-seguridad-2026-08-11.md`, sección 5, punto 2; aprobación explícita del propietario el 2026-08-11.
+
+### DEC-042 · Fecha ancla de retención y anonimización
+
+- **Fecha:** 2026-08-11.
+- **Decisión:** los 24 meses de `DEC-025` se cuentan desde la última actividad del cliente: la más reciente entre la fecha de su última cita (creación o última transición registrada) y su último contacto directo (por ejemplo, una solicitud de cancelación o acceso por token). Un cliente sin actividad reciente en ninguna barbería vence y puede anonimizarse; un cliente activo nunca vence mientras siga interactuando.
+- **Responsable:** propietario del proyecto, sujeta a revisión jurídica colombiana como toda `DEC-025`.
+- **Motivo:** `DEC-025` fijó el plazo pero no el punto de partida; contarlo solo desde la creación penalizaría a clientes recurrentes antiguos y contarlo solo desde la última cita ignoraría otras interacciones legítimas (cancelaciones, consultas por token).
+- **Alternativas descartadas:** contar únicamente desde la creación del registro de `customer`; contar únicamente desde la última cita, ignorando otro tipo de interacción.
+- **Documentos afectados:** `01-producto/reglas-negocio.md` (regla de retención), `database/modelo-fisico-referencia.sql` (cálculo de vencimiento), matriz de anonimización derivada de `DEC-049`.
+- **Fuente:** `docs/05-backend/revision-ddl-seguridad-2026-08-11.md`, sección 5, punto 3; aprobación explícita del propietario el 2026-08-11.
+
+### DEC-043 · Semántica concurrente de idempotencia
+
+- **Fecha:** 2026-08-11.
+- **Decisión:** una segunda solicitud concurrente con la misma clave de idempotencia intenta un `pg_try_advisory_xact_lock` derivado de `(tenant, hash de la clave)`. Si no puede tomar el lock de inmediato, responde `409 Conflicto` (o `425 Too Early` si el contrato OpenAPI lo prefiere) sin esperar a que la primera transacción termine. No hay espera acotada ni reproducción del resultado de otra transacción.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** `DDL-IDEM-01` mostró que la restricción única actual hace que la segunda inserción espere sin límite la resolución de la primera transacción, violando la regla de transacciones cortas y la semántica documentada de `RN-IDE-01`/`estados-citas.md` sección 10.
+- **Alternativas descartadas:** espera acotada con `lock_timeout` y réplica del resultado confirmado, descartada por añadir latencia y complejidad de reintento en el cliente sin beneficio claro para el volumen esperado del piloto.
+- **Documentos afectados:** `01-producto/reglas-negocio.md` (`RN-IDE-01`), `02-requisitos/estados-citas.md` (sección 10), migración correctiva de `20260807170100_create_idempotency_record.sql` (roll-forward), `06-api/estandar-openapi.md` si se adopta `425`.
+- **Fuente:** `docs/05-backend/revision-ddl-seguridad-2026-08-11.md`, hallazgo `DDL-IDEM-01`; aprobación explícita del propietario el 2026-08-11.
+
+### DEC-044 · Versión mínima de PostgreSQL
+
+- **Fecha:** 2026-08-11.
+- **Decisión:** se confirma formalmente PostgreSQL 14 como versión mayor mínima soportada, sin cambio sobre lo ya exigido por `20260807170000_create_tenant_foundation.sql` y `apps/api/README.md`.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** el código ya impone ese piso; fijar 16 o superior obligaría a reescribir una migración inmutable sin beneficio demostrado y podría reducir opciones de hospedaje económico (`DEC-031`).
+- **Alternativas descartadas:** elevar el piso a PostgreSQL 16.
+- **Documentos afectados:** ninguno requiere cambio; queda como decisión formal de referencia para el preflight de `docs/10-backlog/prompt-endurecimiento-ddl.md`.
+- **Fuente:** `docs/05-backend/revision-ddl-seguridad-2026-08-11.md`, sección 5, punto 1; aprobación explícita del propietario el 2026-08-11.
+
+### DEC-045 · Identidad y reutilización de `customer` por teléfono
+
+- **Fecha:** 2026-08-11.
+- **Decisión:** el teléfono identifica de forma única a un cliente dentro de cada barbería. Una reserva pública hace upsert por `(barbershop_id, phone)`: si el teléfono ya existe en esa barbería, actualiza nombre y correo del cliente existente en lugar de crear una fila nueva.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** evita duplicar clientes por cada reserva y refleja que, dentro de una misma barbería, el mismo número suele corresponder a la misma persona.
+- **Alternativas descartadas:** crear un cliente nuevo en cada reserva sin unicidad de teléfono, que multiplicaría filas y dificultaría el historial de un cliente recurrente.
+- **Documentos afectados:** `01-producto/reglas-negocio.md`, `database/modelo-fisico-referencia.sql` (restricción única `(barbershop_id, phone)` y lógica de upsert).
+- **Fuente:** `docs/05-backend/revision-ddl-seguridad-2026-08-11.md`, hallazgo `DDL-BIZ-03`; aprobación explícita del propietario el 2026-08-11.
+
+### DEC-046 · Unicidad de correo de `customer`
+
+- **Fecha:** 2026-08-11.
+- **Decisión:** la unicidad de correo de `customer` es por barbería, no global. La misma persona puede ser cliente de varias barberías con el mismo correo sin conflicto.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** coherente con el aislamiento fuerte por RLS de `DEC-024`: cada barbería es un tenant independiente y no existe todavía un concepto de identidad de cliente compartida entre barberías.
+- **Alternativas descartadas:** unicidad global de correo, descartada porque introduciría acoplamiento entre tenants que `DEC-024` no contempla y complicaría la anonimización por barbería.
+- **Documentos afectados:** `database/modelo-fisico-referencia.sql` (restricción única `(barbershop_id, lower(email))`).
+- **Fuente:** `docs/05-backend/revision-ddl-seguridad-2026-08-11.md`, hallazgo `DDL-BIZ-03`; aprobación explícita del propietario el 2026-08-11.
+
+### DEC-047 · Alcance de `barber` recortado a `HU-021`
+
+- **Fecha:** 2026-08-11.
+- **Decisión:** el modelo físico de `barber` se recorta a lo que `HU-021` autoriza: identificador, tenant, nombre y timestamps, con alta, listado y renombrar. Se retiran del modelo de referencia el borrado, la desactivación, el orden manual y el vínculo automático con `staff_user` hasta que una historia futura los apruebe explícitamente.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** `DDL-BIZ-02` encontró que el modelo de referencia incluye un ciclo de vida completo que `HU-021` no pidió ("Como barbero, quiero registrar, renombrar y consultar..."), y `HU-021` bloquea explícitamente `DELETE`.
+- **Alternativas descartadas:** mantener el ciclo de vida completo y registrar una ampliación de alcance de `HU-021` ahora, descartada porque el propietario prefiere no comprometerse a ese alcance antes de necesitarlo.
+- **Documentos afectados:** `database/modelo-fisico-referencia.sql` (tabla `barber`), `02-requisitos/historias-usuario.md` (sin cambio, ya refleja este alcance).
+- **Fuente:** `docs/05-backend/revision-ddl-seguridad-2026-08-11.md`, hallazgo `DDL-BIZ-02`; aprobación explícita del propietario el 2026-08-11.
+
+### DEC-048 · Segundo y tercer recordatorio
+
+- **Fecha:** 2026-08-11.
+- **Decisión:** cuando la barbería configura más de un recordatorio, el segundo se envía 24 horas antes de la cita y el tercero 2 horas antes, además del primero a 30 minutos (`DEC-018`). El orden es 1 → 30 minutos, 2 → 24 horas, 3 → 2 horas, contado hacia atrás desde `starts_at`.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** `DEC-018` fijó la cantidad (0 a 3, por defecto 1) y el primer recordatorio, pero no los valores del segundo y tercero; `DDL-BIZ-01` señaló que sin backfill ni valores por defecto, cero filas de recordatorio equivale a ninguno.
+- **Alternativas descartadas:** ninguna alternativa concreta fue solicitada por el propietario; se adoptó la recomendación técnica directamente.
+- **Documentos afectados:** `01-producto/reglas-negocio.md`, `database/modelo-fisico-referencia.sql` (backfill de la regla ordinal 1/30 y valores 2/1440 y 3/120 en minutos).
+- **Fuente:** `docs/05-backend/revision-ddl-seguridad-2026-08-11.md`, hallazgo `DDL-BIZ-01`; aprobación explícita del propietario el 2026-08-11.
+
+### DEC-049 · Matriz completa de anonimización
+
+- **Fecha:** 2026-08-11.
+- **Decisión:** la anonimización de `DEC-025` no se limita a `customer.full_name/phone/email`. Cubre también `appointment.attendee_name` y `customer_note`, `appointment_history.reason` y los valores anterior/nuevo de `appointment_history_change` que contengan datos personales, revoca y/o anonimiza `appointment_access_token`, y redacta o purga `idempotency_record.response_body` y cualquier identificador de proveedor que permita correlacionar con la persona. Se conservan cita, tiempos, servicio, estado e historial operativo, conforme al texto original de `DEC-025`.
+- **Responsable:** propietario del proyecto, sujeta a revisión jurídica colombiana como toda `DEC-025`.
+- **Motivo:** `DDL-PRI-01` mostró que una anonimización limitada a `customer` deja identificable a la persona a través de otras copias de su nombre y de texto libre asociado a la cita, incumpliendo el espíritu de minimización de `DEC-025` y `RN-DAT-03`.
+- **Alternativas descartadas:** anonimizar solo `customer` conforme al texto literal de `DEC-025`, descartada por dejar la anonimización incompleta según el propio hallazgo de la revisión.
+- **Documentos afectados:** `01-producto/reglas-negocio.md` (`RN-DAT-03`), `database/modelo-fisico-referencia.sql` (función de anonimización), diseño de worker de retención (Fase 5 de `docs/10-backlog/prompt-endurecimiento-ddl.md`).
+- **Fuente:** `docs/05-backend/revision-ddl-seguridad-2026-08-11.md`, hallazgo `DDL-PRI-01`; aprobación explícita del propietario el 2026-08-11.
