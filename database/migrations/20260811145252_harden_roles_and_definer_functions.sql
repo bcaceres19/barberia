@@ -30,11 +30,31 @@
 --   `ALTER ... OWNER TO` es idempotente: si el objeto ya pertenece a
 --   `barberia_owner`, no cambia nada.
 --
+-- Por qué no se usa `SET ROLE` / `RESET ROLE`
+--   Se intentó primero un diseño con `SET ROLE barberia_owner; ... RESET
+--   ROLE;` alrededor de las operaciones que exigen ser propietario. Probado
+--   contra PostgreSQL real, Atlas escribe su propio registro de progreso en
+--   `atlas_schema_revisions` (un esquema que solo puede ver quien lo creó,
+--   normalmente `barberia_migrator`) DURANTE la aplicación de la migración,
+--   no solo al final; con `SET ROLE` activo, esa escritura de Atlas falla
+--   con "permission denied for schema atlas_schema_revisions" y toda la
+--   migración se revierte. La solución robusta es que `barberia_migrator`
+--   herede los privilegios de `barberia_owner` de forma automática
+--   (`INHERIT` + membresía), sin cambiar de rol nunca: eso alcanza tanto
+--   para las operaciones que exigen ser propietario (confirmado: pertenecer
+--   con herencia basta, igual que para las políticas RLS que apuntan al
+--   propietario) como para que Atlas siga escribiendo su propio registro
+--   sin fricción.
+--
 -- Plan de avance
---   Toda migración posterior que cree objetos nuevos debe abrir con
---   `SET ROLE barberia_owner;` y cerrar con `RESET ROLE;` (documentado en
---   migraciones-atlas.md), para que el propietario real sea siempre
---   `barberia_owner` y no `barberia_migrator`.
+--   Toda migración futura que cree objetos nuevos los deja owned por
+--   `barberia_migrator` (quien la ejecuta), no por `barberia_owner`; es
+--   aceptable porque `barberia_migrator` es el único rol que corre
+--   migraciones (reproducible por diseño) y hereda los privilegios de
+--   `barberia_owner`. Las políticas RLS administrativas de una tabla nueva
+--   se escriben `FOR ALL TO barberia_owner`, igual que las de aquí: por
+--   membresía, `barberia_migrator` las satisface sin necesitar que el
+--   objeto quede literalmente owned por `barberia_owner`.
 
 -- ---------------------------------------------------------------------------
 -- 1. Precondición
@@ -84,12 +104,13 @@ BEGIN
 END
 $$;
 
--- barberia_migrator es NOINHERIT a propósito (migración original): no debe
--- adquirir en automático los privilegios de barberia_owner en cada consulta.
--- La membresía sí le permite transferir ownership hacia barberia_owner (esa
--- operación concreta solo exige pertenencia, no herencia activa) y le permite
--- `SET ROLE barberia_owner` explícito cuando de verdad necesite actuar como
--- propietario (sección 4 en adelante).
+-- barberia_migrator pasa de NOINHERIT (migración original) a INHERIT: con
+-- membresía en barberia_owner, adquiere sus privilegios automáticamente en
+-- cada sesión, sin `SET ROLE` (confirmado en PostgreSQL real: necesario
+-- para no romper el registro de progreso de Atlas, ver encabezado). Sigue
+-- sin `SUPERUSER`, `CREATEDB`, `CREATEROLE` ni `BYPASSRLS` propios: todo lo
+-- que gana es exactamente lo que barberia_owner tiene.
+ALTER ROLE barberia_migrator INHERIT;
 GRANT barberia_owner TO barberia_migrator;
 
 -- El worker solo invoca funciones SECURITY DEFINER con nombres ya
@@ -101,23 +122,24 @@ ALTER ROLE barberia_worker SET search_path = '';
 -- original; aquí solo se concede USAGE al rol nuevo.
 GRANT USAGE ON SCHEMA public TO barberia_worker;
 
+-- Poseer una tabla no implica poder verla: el propietario también necesita
+-- USAGE sobre el esquema que la contiene (hallazgo confirmado en PostgreSQL
+-- real: sin esta línea, ni siquiera puede hacer SELECT de sus propias
+-- tablas). CREATE porque las migraciones futuras, ejecutadas por
+-- barberia_migrator con los privilegios heredados de barberia_owner, crean
+-- objetos nuevos en este esquema.
+GRANT USAGE, CREATE ON SCHEMA public TO barberia_owner;
+
 -- ---------------------------------------------------------------------------
 -- 3. Transferencia de ownership (DDL-SEC-01)
 -- ---------------------------------------------------------------------------
 
--- Se ejecuta todavía como barberia_migrator (dueño actual de los objetos):
--- transferir ownership solo exige poseer el objeto y ser miembro del rol
--- destino, no exige `SET ROLE` previo.
+-- Transferir ownership solo exige poseer el objeto (barberia_migrator, como
+-- lo creó la migración original) y ser miembro del rol destino.
 ALTER TABLE    barbershop         OWNER TO barberia_owner;
 ALTER TABLE    staff_user         OWNER TO barberia_owner;
 ALTER TABLE    idempotency_record OWNER TO barberia_owner;
 ALTER FUNCTION set_updated_at()   OWNER TO barberia_owner;
-
--- A partir de aquí los objetos ya NO pertenecen a barberia_migrator. Como es
--- NOINHERIT, necesita actuar explícitamente como barberia_owner para las
--- operaciones que siguen (gestionar políticas, fijar default privileges,
--- revocar EXECUTE de una función que ahora es suya).
-SET ROLE barberia_owner;
 
 -- ---------------------------------------------------------------------------
 -- 4. Políticas administrativas: de barberia_migrator a barberia_owner
@@ -125,7 +147,8 @@ SET ROLE barberia_owner;
 
 -- FORCE ROW LEVEL SECURITY alcanza también al propietario. Ahora que
 -- barberia_owner es el propietario real, las políticas "admin" deben
--- apuntarle a él, no al login migrador.
+-- apuntarle a él. barberia_migrator las sigue satisfaciendo por membresía
+-- heredada (confirmado en PostgreSQL real), sin necesitar `SET ROLE`.
 
 DROP POLICY barbershop_all_admin_policy         ON barbershop;
 DROP POLICY staff_user_all_admin_policy         ON staff_user;
@@ -147,23 +170,31 @@ CREATE POLICY idempotency_record_all_admin_policy ON idempotency_record
 -- 5. Privilegios por defecto (DDL-SEC-03)
 -- ---------------------------------------------------------------------------
 
--- Sin esta línea, PostgreSQL concede EXECUTE a PUBLIC en toda función nueva
--- creada por barberia_owner. Cierra el hueco para todo lo que se cree de aquí
--- en adelante, no solo lo ya existente.
-ALTER DEFAULT PRIVILEGES FOR ROLE barberia_owner IN SCHEMA public
+-- Los privilegios por defecto se indexan por el rol que CREA el objeto, no
+-- por quien hereda sus privilegios (confirmado en PostgreSQL real: una
+-- función creada por barberia_migrator, aunque herede de barberia_owner,
+-- seguía concediendo EXECUTE a PUBLIC porque el baseline solo cubría a
+-- barberia_owner). Como barberia_migrator es quien de hecho crea los objetos
+-- de las migraciones futuras, el baseline debe fijarse para ambos roles.
+--
+-- Sin `IN SCHEMA`, no con `IN SCHEMA public`: probado en PostgreSQL real, la
+-- forma acotada a un esquema no se aplicó a una función nueva creada sin
+-- calificar el esquema (`CREATE FUNCTION f()`, el caso real de este
+-- proyecto), mientras que la forma global sí. La forma global es además más
+-- robusta: cubre cualquier esquema futuro, no solo `public`. Esta línea es
+-- un refuerzo adicional, no la única defensa: cada función SECURITY DEFINER
+-- sigue llevando su propio `REVOKE ALL ... FROM PUBLIC` explícito
+-- inmediatamente después de crearse (ver modelo-fisico-referencia.sql), que
+-- es la protección primaria y sí probada de forma aislada por objeto.
+ALTER DEFAULT PRIVILEGES FOR ROLE barberia_owner
+  REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
+ALTER DEFAULT PRIVILEGES FOR ROLE barberia_migrator
   REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
 
 -- `set_updated_at()` es un disparador interno; el API nunca lo invoca de
 -- forma directa (solo dispara UPDATE sobre tablas que ya tienen el trigger
 -- creado por el propietario). PostgreSQL no vuelve a comprobar EXECUTE del
 -- rol que dispara un trigger en tiempo de ejecución, solo lo comprobó al
--- crear el trigger (verificado en la tarea de validación contra PostgreSQL
--- real antes de fusionar este PR; si el trigger dejara de dispararse para
--- barberia_app, esta línea se revierte en este mismo PR).
+-- crear el trigger: confirmado en PostgreSQL real (INSERT + UPDATE como
+-- barberia_app tras esta revocación, updated_at sí cambió).
 REVOKE EXECUTE ON FUNCTION set_updated_at() FROM barberia_app;
-
--- ---------------------------------------------------------------------------
--- 6. Volver al rol de conexión
--- ---------------------------------------------------------------------------
-
-RESET ROLE;
