@@ -1,9 +1,9 @@
 ---
 titulo: "Plan de bloques de construcción del MVP"
-version: "1.1"
+version: "1.2"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-10"
+ultima_actualizacion: "2026-08-11"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/prioridades.md"
@@ -248,6 +248,6 @@ Tabla de control: ninguna función P0 puede quedar sin bloque.
 | Prompts de implementación de B0 | Redactados en [prompts-implementacion.md](prompts-implementacion.md) |
 | Primeras historias y prompts de B1 | `HU-020` y `HU-021` preparados como propuesta; no ejecutables hasta cerrar B0 |
 | Historias restantes de B1 a B6 | Pendientes; se redactan al cerrar el bloque anterior |
-| Dudas que bloquean B0 | `DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06` en [dudas-pendientes.md](../00-control/dudas-pendientes.md) |
+| Dudas que bloqueaban B0 | `DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`, resueltas el 2026-08-11 como `DEC-050`–`DEC-052` (ver [dudas-pendientes.md](../00-control/dudas-pendientes.md)) |
 
 Redactar las historias de un bloque **antes** de terminar el anterior está desaconsejado: lo aprendido al construir cambia lo que la historia siguiente debe decir. La preparación solicitada de `HU-020` y `HU-021` conserva por ello alcance estrecho y una guarda explícita de no implementación.
