@@ -117,7 +117,8 @@ Entidad técnica: `time_block`.
 ### Horario laboral
 Definición recurrente de los días y las franjas en que la barbería atiende normalmente. Es la base sobre la que se restan bloqueos y citas.
 
-Entidad técnica: `working_hours`.
+Entidad técnica: `working_hour` (DDL-NAM-01: nombre en singular). La excepción por fecha vive en
+`working_hour_override` y `working_hour_override_segment`.
 
 ### Enlace público de reservas
 Dirección web que el barbero comparte con sus clientes y que da acceso al flujo de reserva sin necesidad de iniciar sesión.
@@ -228,7 +229,7 @@ Garantía de que ninguna barbería puede leer ni modificar datos de otra.
 **Estado: Decisión confirmada.** PostgreSQL aplica RLS por `barbershop_id` en un esquema compartido (`DEC-024`). Ver [../05-backend/base-datos.md](../05-backend/base-datos.md).
 
 ### Evento de dominio
-Hecho ocurrido en el sistema que puede desencadenar consecuencias. Ejemplo: `cita.reprogramada`.
+Hecho ocurrido en el sistema que puede desencadenar consecuencias. Ejemplo: `appointment_rescheduled` (DEC-041).
 
 ### Notificación
 Mensaje dirigido a una persona como consecuencia de un evento. Ejemplo: aviso de que su cita cambió de hora.

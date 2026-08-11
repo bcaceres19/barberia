@@ -238,14 +238,14 @@ stateDiagram-v2
 
 | Transición | Historial | Recordatorios | Notificación al cliente | Disponibilidad |
 | --- | --- | --- | --- | --- |
-| **T1 Crear** | `cita.creada` con los valores iniciales | Se generan | Confirmación de la reserva | La franja deja de ofrecerse |
-| **T2 Reprogramar** | `cita.reprogramada` con intervalo anterior y nuevo | Se invalidan los anteriores y se generan nuevos (`RN-REC-01`) | Aviso de cambio de hora | Se libera la franja anterior, se ocupa la nueva |
-| **T3 Cambiar servicio** | `cita.servicio_modificado` con servicio y duración anteriores y nuevos | Se invalidan y regeneran si cambia el servicio o la duración (`RN-REC-01`) | Aviso de cambio | Se ajusta el intervalo si cambia la duración |
-| **T4 Completar** | `cita.completada` | Se invalidan los pendientes | Ninguna | Sin cambio (sigue ocupando) |
-| **T5 Cancelar cliente** | `cita.cancelada_por_cliente`, con motivo cuando sea obligatorio | Se invalidan | Confirmación al cliente y **aviso al barbero** | La franja vuelve a ofrecerse |
-| **T6 Cancelar barbero** | `cita.cancelada_por_barbero` | Se invalidan | Aviso al cliente | La franja vuelve a ofrecerse |
-| **T7 No asistió** | `cita.no_asistio` | Se invalidan | Según configuración; desactivada por defecto | Sin cambio (sigue ocupando) |
-| **T8 Corregir** | `cita.estado_corregido` con valor anterior, nuevo y motivo | Según el estado corregido | Según la configuración del evento | Se recalcula de forma transaccional |
+| **T1 Crear** | `appointment_created` con los valores iniciales | Se generan | Confirmación de la reserva | La franja deja de ofrecerse |
+| **T2 Reprogramar** | `appointment_rescheduled` con intervalo anterior y nuevo | Se invalidan los anteriores y se generan nuevos (`RN-REC-01`) | Aviso de cambio de hora | Se libera la franja anterior, se ocupa la nueva |
+| **T3 Cambiar servicio** | `appointment_service_changed` con servicio y duración anteriores y nuevos | Se invalidan y regeneran si cambia el servicio o la duración (`RN-REC-01`) | Aviso de cambio | Se ajusta el intervalo si cambia la duración |
+| **T4 Completar** | `appointment_completed` | Se invalidan los pendientes | Ninguna | Sin cambio (sigue ocupando) |
+| **T5 Cancelar cliente** | `appointment_cancelled_by_customer`, con motivo cuando sea obligatorio | Se invalidan | Confirmación al cliente y **aviso al barbero** | La franja vuelve a ofrecerse |
+| **T6 Cancelar barbero** | `appointment_cancelled_by_barber` | Se invalidan | Aviso al cliente | La franja vuelve a ofrecerse |
+| **T7 No asistió** | `appointment_no_show` | Se invalidan | Según configuración; desactivada por defecto | Sin cambio (sigue ocupando) |
+| **T8 Corregir** | `appointment_status_corrected` con valor anterior, nuevo y motivo | Según el estado corregido | Según la configuración del evento | Se recalcula de forma transaccional |
 
 ### Precisiones
 
