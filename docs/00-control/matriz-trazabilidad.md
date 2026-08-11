@@ -1,0 +1,85 @@
+---
+titulo: "Matriz de trazabilidad"
+version: "1.9"
+estado: "Cobertura de decisiones"
+responsable: "Propietario del proyecto"
+ultima_actualizacion: "2026-08-10"
+documentos_relacionados:
+  - "registro-decisiones.md"
+  - "contradicciones.md"
+  - "../01-producto/alcance-mvp.md"
+  - "../01-producto/reglas-negocio.md"
+  - "../02-requisitos/estados-citas.md"
+  - "../02-requisitos/historias-usuario.md"
+  - "../10-backlog/plan-bloques.md"
+---
+
+# Matriz de trazabilidad
+
+## 1. Alcance de esta versión
+
+Esta matriz cubre las decisiones `DEC-001` a `DEC-039`. Existen las historias del bloque B0 y, desde el 10 de agosto de 2026, las propuestas `HU-020` y `HU-021` de B1 con sus criterios de aceptación ([historias-usuario.md](../02-requisitos/historias-usuario.md)); el resto de B1 y los bloques B2 a B6 siguen pendientes según [plan-bloques.md](../10-backlog/plan-bloques.md). Los contratos, migraciones, casos de uso, pantallas y pruebas concretos de estas dos historias todavía no existen. `database/modelo-fisico-referencia.sql` es insumo de diseño y no se confunde con una migración aplicada.
+
+Una historia redactada tampoco es una historia implementada: `HU-001` a `HU-012`, `HU-020` y `HU-021` están en estado de propuesta; tres historias de B0 dependen de dudas abiertas y las dos de B1 dependen del criterio de salida de B0. El marcador `Pendiente` representa una brecha real; no se crean identificadores ficticios para aparentar cobertura.
+
+La cadena exigida es:
+
+`Función → Decisión → Regla → Historia → Criterio → API/datos → Prueba → Métrica`
+
+## 2. Matriz
+
+| Función | Decisión | Regla | Historia | Criterio de aceptación | API / datos | Prueba | Métrica |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Sin función MVP de referidos | `DEC-001` | `RN-PRO-03` | Fuera de la versión actual | No existe flujo de comisión o referidos en el MVP | Sin endpoint ni tabla de comisión en el MVP | Revisión de alcance: no hay capacidad activa | Cambios de alcance no autorizados: 0 |
+| `F-SERV-02`, `F-DISP-01` | `DEC-002` | `RN-SER-01`; extremos complementados por `DEC-020` | Pendiente | La agenda usa duración planificada; terminar antes o después no reescribe automáticamente la cita | `service.duration_minutes`, `appointment.starts_at/ends_at` (modelo pendiente) | Crear cita y comprobar que variaciones reales no desplazan otras | Reprogramaciones automáticas por duración real: 0 |
+| `F-SERV-01`, `F-CITA-06`, `F-NOT-02` | `DEC-003` | `RN-SER-03` | Pendiente | Al desactivar, se muestran todas las citas futuras y solo se cancelan las elegidas; cada cancelación avisa | Operación de desactivación; `service.active`; citas relacionadas (contrato pendiente) | Desactivar con citas futuras; mantener unas y cancelar otras | Citas afectadas omitidas en advertencia: 0 |
+| `F-SERV-01`, `F-CITA-04`, `F-NOT-02` | `DEC-004` | `RN-SER-04` | Pendiente | Ninguna cita cambia en silencio; si se aplica un cambio existente, deja historial y aviso | Snapshot de precio/duración en cita; operación de aplicación masiva pendiente | Cambiar precio/duración con citas futuras y verificar alcance elegido | Citas existentes modificadas sin aviso: 0 |
+| `F-DISP-04`, `F-DISP-05`, `F-CITA-03` | `DEC-005` | `RN-DIS-04` | Pendiente | Reserva pública respeta ambos límites; cita manual queda exenta de ambos | Configuración de anticipación/ventana; validación de disponibilidad | Probar debajo/encima de límites y cita manual equivalente | Reservas públicas fuera de límites: 0 |
+| `F-DISP-01`, `F-CITA-03` | `DEC-006` | `RN-DIS-06` | Pendiente | Las franjas siguen el paso configurado; la cita manual acepta otro minuto válido | Configuración `slot_step_minutes`; cálculo de franjas | Generar franjas con dos pasos y crear cita manual fuera de rejilla | Franjas fuera de rejilla pública: 0 |
+| `F-CONF-01`, `F-DISP-01`, `F-PUB-03` | `DEC-007` | `RN-DIS-07` | `HU-020`; disponibilidad y reserva pendientes | `CA-020-03/04`; cliente en otra zona ve la hora de la barbería y se almacena un instante inequívoco | `barbershop.timezone`; contrato privado de configuración propuesto | Validar zona IANA y un instante desde dispositivos en zonas distintas; reserva completa pendiente | Citas desplazadas por zona horaria: 0 |
+| `F-HOR-02`, `F-CITA-05`, `F-CITA-06`, `F-NOT-02` | `DEC-008` | `RN-BLQ-03` | Pendiente | El bloqueo se crea, lista afectadas y permite resolverlas sin acción automática | Bloqueo, consulta de citas afectadas y operaciones de reprogramación/cancelación | Bloqueo sobre tres citas; resolverlas de formas distintas | Citas canceladas o movidas automáticamente: 0 |
+| `F-HOR-02`, `F-EST-03` | `DEC-009` | `RN-BLQ-04` | Pendiente | Eliminar recupera disponibilidad y conserva registro y actor | `time_block.deleted_at`; historial de bloqueo | Eliminar bloqueo y verificar disponibilidad y persistencia | Bloqueos borrados físicamente: 0 |
+| `F-PUB-08`, `F-CITA-07` | `DEC-010` | `RN-CAN-01`, `RN-CAN-02` | Pendiente | Fuera del plazo se aplica la política configurada y se exige motivo cuando corresponda | Configuración de actores/motivo; cancelación pública (contrato pendiente) | Matriz de actores, dentro/fuera del plazo y motivo presente/ausente | Cancelaciones que incumplen política: 0 |
+| `F-CITA-06` | `DEC-011` | `RN-CAN-03` | Pendiente | Barbero cancela cualquier cita activa sin límite temporal, nunca una terminal | Operación de cancelación autenticada; estado de cita | Cancelar antes/después del inicio y rechazar estado terminal | Cancelaciones activas del barbero bloqueadas por tiempo: 0 |
+| `F-PUB-08`, `F-CITA-06`, `F-DISP-01` | `DEC-012` | `RN-CAN-04` | Pendiente | Cancelar libera de inmediato una franja futura no bloqueada | Estado de cita y consulta de disponibilidad | Cancelar y consultar la misma franja; repetir con bloqueo | Tiempo hasta liberar franja: inmediato dentro de la transacción |
+| `F-DISP-03`, `F-HOR-02`, `F-NOT-02` | `DEC-013` | `RN-CON-06` | Pendiente | En ambos órdenes concurrentes la cita persiste, queda marcada y el barbero es advertido | Transacciones de reserva/bloqueo; relación de afectación | Ejecutar carrera en ambos órdenes | Citas perdidas en carrera bloqueo/reserva: 0 |
+| `F-EST-03` | `DEC-014` | `RN-HIS-02` | Pendiente | Editar o borrar historial se rechaza; corregir agrega una entrada | Almacén append-only de historial (modelo pendiente) | Intentar `UPDATE`/`DELETE` y crear corrección | Entradas históricas modificadas o eliminadas: 0 |
+| `F-NOT-02`, `F-OPS-04` | `DEC-015` | `RN-REC-04`, `RN-DAT-02` | Pendiente | Cada intento queda en registro técnico separado y sin contacto en claro | `notification_attempt` o equivalente (modelo pendiente) | Forzar fallos y éxito; revisar separación y datos sensibles | Intentos sin evidencia: 0; datos personales en logs: 0 |
+| Interfaz completa | `DEC-016` | Convención de glosario | Pendiente | El usuario ve “turno”; contratos y datos usan `appointment` | Nombres de API/datos pendientes | Revisión de textos e identificadores | Usos técnicos ambiguos: 0 |
+| `F-EST-02`, `F-EST-04` | `DEC-017` | `RN-CIT-04`, `RN-CIT-05` | Pendiente | `no_show` existe; corrección y cierre conservan auditoría | Estado, corrección y configuración de cierre | Corregir, cerrar manual y automáticamente | Citas vencidas sin política: 0 |
+| `F-DISP-04/05`, `F-NOT-03` | `DEC-018` | `RN-DIS-04/06`, `RN-CAN-01`, `RN-REC-06` | Pendiente | Valores iniciales exactos y configuración por barbería | Configuración tipada pendiente | Límites y valores de frontera | Configuraciones fuera de rango: 0 |
+| `F-CONF-02`, `F-PUB-04` | `DEC-019` | `RN-CON-01`, `RN-TEN-01` | `HU-021`; servicios, agenda y selección pública pendientes | `CA-021-01/02/05`; una y cuatro personas usan el mismo modelo sin fuga entre barberías | Entidad `barber` y contrato privado propuestos; agenda pendiente | Integración con uno y cuatro barberos y dos tenants; reserva pendiente | Casos especiales por barbero único: 0; cruces por barbero: 0 |
+| `F-HOR-02`, `F-DISP-01` | `DEC-020` | `RN-DIS-05`, `RN-BLQ-01/02` | Pendiente | Recurrencias, festivos, medianoche y `[inicio, fin)` son uniformes | Rangos y recurrencias pendientes | Contiguidad, excepción y turno nocturno | Falsos cruces: 0 |
+| `F-CITA-10` | `DEC-021` | `RN-RET-01` | Pendiente | El barbero decide y avisa; no hay movimiento en cadena | Operaciones de aviso pendientes | Retraso con citas siguientes | Reprogramaciones automáticas: 0 |
+| `F-PUB-05/06/07` | `DEC-022` | `RN-RES-02/03`, `RN-DAT-01` | Pendiente | Campos y enlace aleatorio cumplen el flujo definido | Token público con hash y expiración | Reserva propia, tercero y token inválido | Tokens adivinables: 0 |
+| Arquitectura | `DEC-023` | — | Pendiente | Monolito Go y frontend TypeScript se despliegan reproduciblemente | `04-arquitectura/stack-despliegue-operacion.md` | Build y arranque pendientes | Consumo base por medir |
+| `F-SEG-01`, `F-DISP-02` | `DEC-024` | `RN-TEN-01`, `RN-CON-03` | `HU-001`, `HU-002`, `HU-020`, `HU-021`; `F-DISP-02` pendiente (B3) | PostgreSQL y RLS impiden fuga en configuración y barberos; los cruces se cierran en B3 | `05-backend/base-datos.md`; datos de B1 propuestos | Dos tenants y escritura directa cruzada por tabla | Fugas/cruces: 0 |
+| `F-SEG-02` | `DEC-025` | `RN-DAT-03` | Pendiente | Se anonimizan datos vencidos sin perder métricas | Plazo y trabajo de anonimización | 24 meses, solicitud y logs | Datos vencidos identificables: 0 |
+| `F-AUTH-01/02`, `F-SEG-03`, `F-OPS-09` | `DEC-026` | — | `HU-005`, `HU-006`, `HU-007`, `HU-008`, `HU-010`, `HU-011`; `F-OPS-09` pendiente (B6) | Sesión, recuperación, abuso e incidente cumplen la decisión | Sesiones, rate limit y OTP pendientes | Umbral, recuperación e incidente | Abusos sin escalamiento: 0 |
+| `F-NOT-02/03` | `DEC-027` | `RN-REC-05` | Pendiente | Correo y WhatsApp oficial obedecen configuración por evento | Adaptadores de proveedor pendientes | Matriz canal/evento | Canales no autorizados: 0 |
+| Piloto | `DEC-028` | — | Pendiente | 4 semanas, 2–3 participantes, respaldo una semana y contingencia manual | Acuerdo/plan de piloto pendiente | Simulación de interrupción | Citas futuras no entregadas: 0 |
+| Comercial | `DEC-029` | `RN-PRO-03` | Pendiente | No hay cobro/comisión sin acuerdo escrito posterior | Sin automatización MVP | Revisión de alcance | Pagos no autorizados: 0 |
+| Legal | `DEC-030` | `RN-DAT-01/03` | Pendiente | Política, aviso y acuerdo existen antes de datos reales | Artefactos legales pendientes | Lista de prerrequisitos | Participantes sin acuerdo: 0 |
+| `F-OPS-05/06` | `DEC-031` | — | Pendiente | Copia diaria, 30 días y restauración probada | Configuración de backup pendiente | Restauración limpia | Restauraciones fallidas: 0 |
+| `F-NOT-01/02/03` | `DEC-032` | `RN-REC-01/06` | Pendiente | Programación nace con la cita y el trabajador la ejecuta | Outbox/programación pendiente | Caída, reintento y reprogramación | Recordatorios duplicados/viejos: 0 |
+| Frontend completo | `DEC-033` | Criterios no funcionales de UX | `HU-009`, `HU-010`, `HU-011`, `HU-012`, `HU-020`, `HU-021`; resto pendiente | Vue 3 + TypeScript + Vite, rutas diferidas y dependencias contenidas | `04-arquitectura/frontend.md`; pantallas de B1 propuestas | Build, navegación y perfil en teléfono real | Tamaño e interacción por medir |
+| API completa | `DEC-034` | Reglas de autenticación, tenant e idempotencia | `HU-002`, `HU-003`, `HU-004`, `HU-006`, `HU-020`, `HU-021`; resto pendiente | Chi se limita a HTTP y los casos de uso conservan independencia | `04-arquitectura/backend-go.md`; adaptadores de B1 propuestos | Middleware, configuración, barberos y aislamiento | Acoplamientos de dominio a Chi: 0 |
+| Ingeniería completa | `DEC-035` | Estándares de código, pruebas y datos | Transversal a `HU-001`–`HU-012`, `HU-020` y `HU-021`; resto pendiente | Estructura, documentación, pruebas y migraciones cumplen sus puertas de calidad | `03-desarrollo/`; `05-backend/estandar-base-datos.md` | Unitarias, componentes, integración PostgreSQL y E2E según riesgo | Cobertura mínima y defectos críticos definidos en la estrategia |
+| Evolución de PostgreSQL | `DEC-036` | Migraciones inmutables y promoción controlada | `HU-001`, `HU-004`, `HU-005`, `HU-008`, `HU-020`, `HU-021`; resto pendiente | Atlas valida y aplica el mismo SQL/hash; cada ambiente conserva versión y evidencia | `05-backend/migraciones-atlas.md`; migraciones de B1 pendientes | Hash, base vacía, actualización con datos, RLS y `status` final | Migraciones fuera de Atlas o ambientes divergentes: 0 |
+| Contrato HTTP completo | `DEC-037` | OpenAPI contract-first y RFC 9457 | `HU-003`, `HU-004`, `HU-005`, `HU-008`, `HU-020`, `HU-021`; resto pendiente | Cada ruta tiene operación, seguridad, schemas, errores, ejemplos y trazabilidad; lint y bundle pasan | `06-api/estandar-openapi.md`; operaciones de B1 pendientes | Redocly, handlers contra bundle y cliente generado | Operaciones implementadas sin contrato o contratos sin implementación: 0 |
+| Entrega de cambios | `DEC-038` | GitHub Flow, Conventional Commits y PR obligatorio | Pendiente | `main` solo recibe PR por squash; ramas e issues son trazables; conversaciones y checks aplicables están resueltos | `03-desarrollo/flujo-git-github.md`; `CONTRIBUTING.md`; plantillas `.github/` | Ruleset/protección, plantilla y CI por verificar al crear el repositorio | Pushes directos, force push o cambios integrados con checks fallidos: 0 |
+| Interfaz completa | `DEC-039` | Criterios no funcionales de UX y accesibilidad | `HU-009`, `HU-010`, `HU-011`, `HU-012`, `HU-020`, `HU-021`; resto pendiente | Un tema claro, tokens semánticos, patrones responsivos y estados visuales consistentes gobiernan todas las pantallas | `03-desarrollo/estandar-diseno-visual.md`; pantallas de B1 propuestas | Componentes, teclado, contraste, reflow y evidencia en 320/360/768/1280 px | Colores o medidas arbitrarias: 0; defectos WCAG 2.2 AA conocidos: 0 |
+
+## 3. Brechas prioritarias
+
+| Brecha | Bloquea | Siguiente artefacto esperado |
+| --- | --- | --- |
+| Historias y criterios restantes de B1 a B6 sin redactar | Desarrollo verificable más allá de `HU-020`/`HU-021` | Revisar estas dos al cerrar B0 y redactar cada bloque al cerrar el anterior, según [plan-bloques.md](../10-backlog/plan-bloques.md) |
+| `DP-SEG-04`, `DP-SEG-05` y `DP-SEG-06` abiertas | `HU-005`, `HU-006`, `HU-007`, `HU-008`, `HU-011` | Decisiones `DEC-*` del propietario sobre sesión, canal del código y ventana del límite |
+| Operaciones OpenAPI, migraciones y casos de uso de B1 inexistentes | Implementación de `HU-020` y `HU-021` | Crearlos contract-first y por entrega vertical después del cierre de B0; el modelo físico de referencia no cuenta como migración |
+| Casos de prueba sin identificador ni automatización | Evidencia de cumplimiento | Implementar casos desde `03-desarrollo/estrategia-pruebas.md` y enlazarlos al criterio correspondiente |
+| Métricas sin catálogo `MP-*` | Medición del piloto | `08-piloto/metricas-piloto.md` |
+| Historias de `DEC-016`–`DEC-039` cubiertas solo por B0 y las dos primeras propuestas de B1 | Desarrollo verificable del resto de funciones de negocio | Completar B1 y redactar B2 a B6 según la secuencia aprobada |
+| Proveedores oficiales sin verificar | Costos y entrega de notificaciones | Evaluación antes del piloto |
+| Textos legales aún no redactados ni revisados | Inicio del piloto | Política, aviso y acuerdo breve |
+| Git y GitHub todavía no inicializados ni protegidos | Aplicación automática de `DEC-038` | Inicializar el repositorio, crear el remoto y configurar ruleset/checks al comenzar el Sprint 0 |

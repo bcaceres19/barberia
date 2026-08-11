@@ -1,0 +1,58 @@
+# Secretos y configuración local
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+
+# Editores y sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.example.json
+*.swp
+*.swo
+*~
+
+# Claude Code (settings.json es de equipo y se versiona; settings.local.json
+# es la anulación personal de cada quien)
+.claude/settings.local.json
+
+# Go
+apps/api/bin/
+apps/api/coverage.out
+apps/api/**/coverage.out
+*.test
+
+# Node, Vue y Vite
+node_modules/
+apps/web/dist/
+apps/web/.vite/
+apps/web/coverage/
+apps/web/playwright-report/
+apps/web/blob-report/
+apps/web/test-results/
+apps/web/.auth/
+
+# OpenAPI
+api/openapi/dist/
+
+# graphify (grafo de conocimiento del repo; graphify-out/ se versiona,
+# salvo lo siguiente, según su propia recomendación)
+graphify-out/cost.json
+graphify-out/cache/
+
+# Salidas locales
+tmp/
+temp/
+*.log
+*.local
+
+# Dumps y copias de bases de datos
+*.dump
+*.backup
+*.sql.gz

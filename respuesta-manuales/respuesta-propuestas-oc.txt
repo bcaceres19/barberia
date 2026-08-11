@@ -1,0 +1,44 @@
+RN-PRO-03 -> no essta en el alcance aun, ya que seria otra nueva version
+RN-DIS-05 -> Pues si se puede dar una hora final limite pero puede
+que se termine antes o despues, es para lo maximo que se puede demorar
+un barbero en un corte
+RN-SER-03 -> Si esta bien, pero deberia darle una advertencia 
+al barbero con las citas ya agendadas y con la decision de cancelarles
+o no las citas a los clientes, para mantener el historial
+y pues, ya es decision del barbero si proceder o no, si el barbero
+decide cancelar todas las citas, el sistema debe notificar a cada usuario
+RN-SER-04 -> Si esta bien, pero en cambios de precio o cualquier modificacion
+seria bueno notificar al usuario dichos cambios ya sea
+por mensaje al whatsapp o correo y pues, en el precio ya es 
+decision del barbero si aplicarlo a las citas agendadas o solo a las nuevas 
+RN-DIS-04 -> Si esta bien, tener un apartado de configuracion de limites 
+en el agendamiento de citas es excelente y que si es el barbero 
+que la agenda y no tiene limites perfecto, me gusta
+RN-DIS-06 -> Si, me parece bien el tema de rejilla, seria bueno que ese valor
+el barbero lo pueda personalizar
+RN-DIS-07 -> Si, es bueno ya que mi contacto tiene relaciones
+con estados unidos y españa, y haya hay zonas horarias distintas,
+asi que una buena propueesta
+RN-BLQ-03 ->Si, tambien esto va para que si hay una emergencia x
+o y el barbero en pocos clicks pueda ya sea reprogramarlas y el sistema
+notifique a los respectivos usuarios o cancelarlas 
+RN-BLQ-04 -> Si, esta bastante bien planteado para persistir el historial, no debe quedar nada eliminado por historial y trazabilidad de movimientos
+RN-CAN-02 -> Es buena pero daria una matis, donde por configuracion
+el barbero puede decidir que las cancelaciones a ultimo minuto
+lo puede hacer con una razon o el cliente y el, todo eso
+que se pueda modificar en la zona de configuracion
+RN-CAN-03 -> Si, me gusta, el barbero tiene toda la potestad
+de cancelar la sus citas si lo ve necesario
+RN-CAN-04 -> Si, me gusta esa opcion, la idea de este sistema
+es que los horarios se manejen para optimizar bien los tiempos
+y que el barbero no pierda minutos que es plata
+RN-CON-06 -> Si esta bien, pero que la advertencia se de si el sistema
+detecta que el barbero hizo un bloqueo al usuario que agendo y 
+que este ya decida si cambiarla o no y asi mismo con el barbero 
+donde si al segundo alguien agenda en esa franja se le notifique
+y ya el barbero vera que decision hace
+RN-HIS-02 -> Si, como tal y commo dije  el historial no se puede 
+modificar ni eliminar ya que es la trazabilidad
+RN-REC-04 -> Si, eso debe almacenarse en una zona especial de 
+envios no en el historial general, ya que eso es mas tema de 
+logs o eventos del sistema

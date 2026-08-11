@@ -1,0 +1,212 @@
+{
+  ".prettierrc.json": {
+    "mtime": 1786044828.641772,
+    "ast_hash": "75e4513fd50c39fde2000e2e82e6c5f5",
+    "semantic_hash": ""
+  },
+  "eslint.config.js": {
+    "mtime": 1786044823.7565787,
+    "ast_hash": "6dadd423c2deafe4670bffafc0883894",
+    "semantic_hash": ""
+  },
+  "package.json": {
+    "mtime": 1786045035.0959637,
+    "ast_hash": "c1127f514ac0b4b218e898dd296e08c9",
+    "semantic_hash": ""
+  },
+  "playwright.config.ts": {
+    "mtime": 1786044802.4489815,
+    "ast_hash": "2da2285c030d2be7aaa4fa9f0879faa1",
+    "semantic_hash": ""
+  },
+  "src/App.vue": {
+    "mtime": 1786044880.395394,
+    "ast_hash": "f8859e779fe425e82bd3409628cda5cc",
+    "semantic_hash": ""
+  },
+  "src/app/BaseStatusView.vue": {
+    "mtime": 1786044875.0974636,
+    "ast_hash": "23f1b9e2c4d4fbd43406f6cc2287c376",
+    "semantic_hash": ""
+  },
+  "src/app/bootstrap/createApp.ts": {
+    "mtime": 1786044859.421482,
+    "ast_hash": "7129b395b77622993510f857014084f3",
+    "semantic_hash": ""
+  },
+  "src/app/router/index.ts": {
+    "mtime": 1786044868.8373528,
+    "ast_hash": "80e3333a0199e311e93e48d2a964fbf0",
+    "semantic_hash": ""
+  },
+  "src/main.ts": {
+    "mtime": 1786044883.245701,
+    "ast_hash": "bfbd6f529eb288e51679118fcc8dbe6f",
+    "semantic_hash": ""
+  },
+  "src/modules/agenda/index.ts": {
+    "mtime": 1786044924.2826998,
+    "ast_hash": "12322571a2c7cf74deb87431d65ac69d",
+    "semantic_hash": ""
+  },
+  "src/modules/auth/index.ts": {
+    "mtime": 1786044918.1899943,
+    "ast_hash": "8c4d6a33298c716697eb8fea7ae3a379",
+    "semantic_hash": ""
+  },
+  "src/modules/catalog/index.ts": {
+    "mtime": 1786044927.033085,
+    "ast_hash": "7cab953071adc05b40b329ec3db12355",
+    "semantic_hash": ""
+  },
+  "src/modules/notifications/index.ts": {
+    "mtime": 1786044935.2888374,
+    "ast_hash": "3f7d711b9b9432c7376b7c9a4f494ddc",
+    "semantic_hash": ""
+  },
+  "src/modules/public-booking/index.ts": {
+    "mtime": 1786044921.5489497,
+    "ast_hash": "4aec2f0c46febde3e3ae203b4a311bc0",
+    "semantic_hash": ""
+  },
+  "src/modules/schedules/index.ts": {
+    "mtime": 1786044932.5362155,
+    "ast_hash": "41b60bcccb6bb001e0b5062523aebfd5",
+    "semantic_hash": ""
+  },
+  "src/modules/settings/index.ts": {
+    "mtime": 1786044938.5515854,
+    "ast_hash": "e1ffd2a02821d25eb2a3637c1c436073",
+    "semantic_hash": ""
+  },
+  "src/modules/staff/index.ts": {
+    "mtime": 1786044929.5310407,
+    "ast_hash": "c5e10f4a364a08afe435591b0a8d178d",
+    "semantic_hash": ""
+  },
+  "src/shared/api/index.ts": {
+    "mtime": 1786044942.8004205,
+    "ast_hash": "a056635e2652378ba61c3907168c8556",
+    "semantic_hash": ""
+  },
+  "src/shared/composables/index.ts": {
+    "mtime": 1786044946.4863696,
+    "ast_hash": "ef35b06869e1fb5fcddd27d197034c43",
+    "semantic_hash": ""
+  },
+  "src/shared/model/index.ts": {
+    "mtime": 1786044949.9055748,
+    "ast_hash": "e5d96637d5d70857370a7c5ec741517c",
+    "semantic_hash": ""
+  },
+  "src/shared/ui/BaseAlert.vue": {
+    "mtime": 1786152270.7850285,
+    "ast_hash": "12a40cc62483c8402119afb56f60c383",
+    "semantic_hash": ""
+  },
+  "src/shared/ui/BaseBadge.vue": {
+    "mtime": 1786151655.028994,
+    "ast_hash": "f7f30cef752e9d99d02029d0040cfe26",
+    "semantic_hash": ""
+  },
+  "src/shared/ui/BaseButton.vue": {
+    "mtime": 1786151946.8905644,
+    "ast_hash": "afe781cb388b0ebe4f806d063c2c8db8",
+    "semantic_hash": ""
+  },
+  "src/shared/ui/BaseDialog.vue": {
+    "mtime": 1786151989.0801,
+    "ast_hash": "3857ac7ae1c832b595ceb8c9ead020e2",
+    "semantic_hash": ""
+  },
+  "src/shared/ui/BaseInput.vue": {
+    "mtime": 1786151953.607651,
+    "ast_hash": "6f97b0b50a3042726d5fc691d1bb247c",
+    "semantic_hash": ""
+  },
+  "src/shared/ui/__tests__/BaseAlert.test.ts": {
+    "mtime": 1786152023.9072263,
+    "ast_hash": "c0ee31751cee0cb26b06aea00ce2640a",
+    "semantic_hash": ""
+  },
+  "src/shared/ui/__tests__/BaseBadge.test.ts": {
+    "mtime": 1786152258.9903004,
+    "ast_hash": "9e77c9b6e78c958205b91c6d223c4a65",
+    "semantic_hash": ""
+  },
+  "src/shared/ui/__tests__/BaseButton.test.ts": {
+    "mtime": 1786152033.839679,
+    "ast_hash": "7d2be0a63da34f9b9a2a5c7f51d11851",
+    "semantic_hash": ""
+  },
+  "src/shared/ui/__tests__/BaseDialog.test.ts": {
+    "mtime": 1786152116.0963814,
+    "ast_hash": "3788f3d5fcdd1f3cfd77aef33e9da04f",
+    "semantic_hash": ""
+  },
+  "src/shared/ui/__tests__/BaseInput.test.ts": {
+    "mtime": 1786152040.5371456,
+    "ast_hash": "ae141a49ba98efe92c0387aea7be3603",
+    "semantic_hash": ""
+  },
+  "src/shared/ui/index.ts": {
+    "mtime": 1786149645.6147027,
+    "ast_hash": "f3ac83cd7e60fea668767432b1a1cc03",
+    "semantic_hash": ""
+  },
+  "src/shared/validation/index.ts": {
+    "mtime": 1786044957.547013,
+    "ast_hash": "1a06aeafaaae798129724fb4a64845fd",
+    "semantic_hash": ""
+  },
+  "tsconfig.app.json": {
+    "mtime": 1786045060.9157665,
+    "ast_hash": "d2828aabc94d3d0a97830dfbcf1843f0",
+    "semantic_hash": ""
+  },
+  "tsconfig.json": {
+    "mtime": 1786045190.9544475,
+    "ast_hash": "cebcd0aef9a53b9c724ac53266f03437",
+    "semantic_hash": ""
+  },
+  "tsconfig.node.json": {
+    "mtime": 1786044774.8112311,
+    "ast_hash": "46c9b372a89dad5d48ac9c8434ee62b8",
+    "semantic_hash": ""
+  },
+  "tsconfig.vitest.json": {
+    "mtime": 1786044778.951316,
+    "ast_hash": "69f1492c63c8c98dd7da93212ac289ab",
+    "semantic_hash": ""
+  },
+  "vite.config.ts": {
+    "mtime": 1786044790.883883,
+    "ast_hash": "cb7eeb9c8be425aa38df1f890d7fa5a0",
+    "semantic_hash": ""
+  },
+  "vitest.config.ts": {
+    "mtime": 1786045066.6362467,
+    "ast_hash": "dc95ed55ce43d2a5fe44fabf54d5b077",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1786044971.0812023,
+    "ast_hash": "27056bbde8970313cbc8264fd84ae47c",
+    "semantic_hash": ""
+  },
+  "e2e/README.md": {
+    "mtime": 1786044964.7291136,
+    "ast_hash": "fa855a89067b38eb9d0e338bfd459e07",
+    "semantic_hash": ""
+  },
+  "index.html": {
+    "mtime": 1786044836.7604506,
+    "ast_hash": "9128c79e45cbab06b3c7d2b2d8c85e47",
+    "semantic_hash": ""
+  },
+  "public/favicon.svg": {
+    "mtime": 1786044846.8166232,
+    "ast_hash": "4cd1a5882959b8dcc7260769094a8960",
+    "semantic_hash": ""
+  }
+}

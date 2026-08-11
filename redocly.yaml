@@ -1,0 +1,9 @@
+# Configuración de Redocly CLI para lint, bundle y documentación del
+# contrato HTTP. Fuente normativa: docs/06-api/estandar-openapi.md (DEC-037).
+
+apis:
+  core@v1:
+    root: api/openapi/openapi.yaml
+
+extends:
+  - recommended-strict

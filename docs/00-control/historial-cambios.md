@@ -1,0 +1,148 @@
+---
+titulo: "Historial de cambios documentales"
+version: "2.0"
+estado: "Vigente"
+responsable: "Propietario del proyecto"
+ultima_actualizacion: "2026-08-11"
+documentos_relacionados:
+  - "registro-decisiones.md"
+  - "contradicciones.md"
+  - "matriz-trazabilidad.md"
+  - "../../README.md"
+---
+
+# Historial de cambios documentales
+
+## 1. Convención
+
+Se registra un cambio cuando modifica alcance, estado de una decisión, comportamiento, trazabilidad o precedencia documental. Correcciones ortográficas sin efecto normativo no necesitan una entrada propia.
+
+Las versiones se aplican por documento. Mientras no exista historial Git, la fecha, versión anterior, versión nueva y evidencia de origen son obligatorias.
+
+## 2. Versiones base
+
+| Fecha | Versión | Documentos | Descripción |
+| --- | --- | --- | --- |
+| 2026-07-30 | 0.1 | `glosario.md`, `supuestos.md`, `dudas-pendientes.md`, `alcance-mvp.md`, `prioridades.md`, `reglas-negocio.md`, `estados-citas.md` | Línea base inicial de producto y requisitos, con mezcla explícita de decisiones, propuestas, supuestos y dudas. |
+
+## 3. Cambios relevantes
+
+| Fecha | Documento | De → a | Cambio | Motivo / evidencia | Decisiones |
+| --- | --- | --- | --- | --- | --- |
+| 2026-08-11 | `05-backend/revision-ddl-seguridad-2026-08-11.md` | nuevo → 1.0 | Se documenta la auditoría de migraciones, roles, RLS, integridad, concurrencia, privacidad e índices, sin modificar el DDL aplicado. | Solicitud expresa del propietario y revisión contra estándares del proyecto | — |
+| 2026-08-11 | `10-backlog/prompt-endurecimiento-ddl.md` | nuevo → 1.0 | Se crea el prompt maestro de ejecución por fases, con preflight, decisiones obligatorias, roll-forward y pruebas PostgreSQL reales. | Convertir los hallazgos técnicos en trabajo posterior reproducible | — |
+| 2026-08-11 | `docs/README.md` | 1.9 → 2.0 | El mapa incorpora la revisión y su prompt y corrige el estado conocido del modelo de datos. | Navegación y estado documental coherentes | — |
+| 2026-08-11 | `historial-cambios.md` | 1.9 → 2.0 | Se registran los artefactos de revisión DDL y su incorporación al mapa documental. | Trazabilidad mientras Git no está inicializado | — |
+| 2026-08-05 | `README.md` | nuevo → 0.1 | Se crea la entrada del repositorio con propósito, estado, ejecución y mapa. | Inicio de gobierno documental | — |
+| 2026-08-05 | `docs/README.md` | nuevo → 0.1 | Se define precedencia de fuentes y flujo obligatorio de cambios. | Evitar que respuestas manuales operen como fuente paralela | — |
+| 2026-08-05 | `registro-decisiones.md` | nuevo → 0.1 | Se formalizan 15 respuestas del propietario, incluyendo límites de interpretación. | `respuesta-manuales/respuesta-propuestas-oc.txt` | `DEC-001`–`DEC-015` |
+| 2026-08-05 | `contradicciones.md` | nuevo → 0.1 | `CT-001` se traslada al registro canónico y permanece abierta. | No existe respuesta manual sobre prioridad de recordatorios | — |
+| 2026-08-05 | `matriz-trazabilidad.md` | nuevo → 0.1 | Se crea cobertura inicial para decisiones formalizadas y se hacen visibles los artefactos faltantes. | Gobierno y trazabilidad | `DEC-001`–`DEC-015` |
+| 2026-08-05 | `historial-cambios.md` | nuevo → 0.1 | Se crea el historial documental. | Gobierno y trazabilidad | — |
+| 2026-08-05 | `reglas-negocio.md` | 0.1 → 0.2 | Se incorporan decisiones de servicios, disponibilidad, bloqueos, cancelaciones, concurrencia, historial, envíos y referidos; `RN-DIS-05` queda pendiente. | Respuestas manuales formalizadas | `DEC-001`–`DEC-015` |
+| 2026-08-05 | `alcance-mvp.md` | 0.1 → 0.2 | Se reflejan funciones confirmadas de límites y política de cancelación; referidos siguen fuera; recordatorios siguen abiertos. | Consistencia con reglas aprobadas | `DEC-001`, `DEC-005`, `DEC-010` |
+| 2026-08-05 | `prioridades.md` | 0.1 → 0.2 | Se actualizan clasificaciones afectadas y se conserva abierta `CT-001`. | Consistencia de alcance | `DEC-001`, `DEC-005`, `DEC-010` |
+| 2026-08-05 | `dudas-pendientes.md` | 0.1 → 0.2 | Se distinguen valores todavía pendientes de conductas ya aprobadas y se crea `DP-BE-04`. | La respuesta a `RN-DIS-05` no decidió extremos del intervalo | `DEC-001`, `DEC-002`, `DEC-005`, `DEC-006`, `DEC-010` |
+| 2026-08-05 | `glosario.md` | 0.1 → 0.2 | Se actualizan duración planificada, límites, zonas, eliminación lógica, intentos y enlaces de control. | Terminología consistente | `DEC-002`, `DEC-005`, `DEC-007`, `DEC-009`, `DEC-015` |
+| 2026-08-05 | `supuestos.md` | 0.1 → 0.2 | Se aclara que almacenar zonas horarias ya es decisión y que `America/Bogota` sigue siendo supuesto del piloto. | Separar regla técnica de supuesto de mercado | `DEC-007` |
+| 2026-08-05 | `estados-citas.md` | 0.1 → 0.2 | Se adapta la cancelación del cliente a la política configurable y se conserva la inmutabilidad del historial. | Consistencia de transiciones | `DEC-010`, `DEC-011`, `DEC-012`, `DEC-014` |
+| 2026-08-05 | `registro-decisiones.md` | 0.1 → 1.0 | Se formalizan las 42 respuestas nuevas en 17 decisiones implementables. | `respuesta-manuales/respuesta-dudas-pendientes.txt` | `DEC-016`–`DEC-032` |
+| 2026-08-05 | `dudas-pendientes.md` | 0.2 → 1.0 | Se cierran las 41 dudas y `CT-001`, conservando código, resolución y fuente normativa. | Respuestas del propietario | `DEC-016`–`DEC-032` |
+| 2026-08-05 | `reglas-negocio.md` | 0.2 → 1.0 | Se incorporan valores, multi-barbero, calendarios, corrección/cierre, canales, RLS y anonimización. | Propagación normativa | `DEC-016`–`DEC-032` |
+| 2026-08-05 | `alcance-mvp.md` | 0.2 → 1.0 | P0 queda en 45 funciones; recordatorios y `no_show` pasan a P0. | Resolución de alcance | `DEC-017`, `DEC-019`, `DEC-026`, `DEC-032` |
+| 2026-08-05 | `prioridades.md` | 0.2 → 1.0 | Se confirman elevaciones y se retiran festivos de “Futura”. | Consistencia de prioridad | `DEC-017`, `DEC-020`, `DEC-032` |
+| 2026-08-05 | `estados-citas.md` | 0.2 → 1.0 | Máquina confirmada con `no_show` P0, corrección T8 y cierre configurable. | Respuestas de producto | `DEC-017`, `DEC-018` |
+| 2026-08-05 | `glosario.md` | 0.2 → 1.0 | “Turno” se adopta para usuario y se actualizan valores y términos técnicos. | Consistencia terminológica | `DEC-016`, `DEC-018`–`DEC-025` |
+| 2026-08-05 | `supuestos.md` | 0.2 → 1.0 | Se retiran siete supuestos ya resueltos y se conservan nueve activos. | Separar decisiones de hipótesis | `DEC-019`, `DEC-020`, `DEC-022`, `DEC-028`, `DEC-030`, `DEC-031` |
+| 2026-08-05 | `contradicciones.md` | 0.1 → 1.0 | `CT-001` se cierra al elevar recordatorios a P0. | Respuesta explícita del propietario | `DEC-027`, `DEC-032` |
+| 2026-08-05 | `matriz-trazabilidad.md` | 0.1 → 1.0 | La cobertura se amplía hasta `DEC-032`. | Gobierno y trazabilidad | `DEC-016`–`DEC-032` |
+| 2026-08-05 | `stack-despliegue-operacion.md` | nuevo → 1.0 | Se fija Go, TypeScript, monolito modular, trabajos persistidos y estrategia de despliegue. | Decisión técnica delegada | `DEC-023`, `DEC-031` |
+| 2026-08-05 | `base-datos.md` | nuevo → 1.0 | Se documentan PostgreSQL, RLS, integridad temporal y buenas prácticas de consulta. | Petición expresa del propietario | `DEC-024`, `DEC-025` |
+| 2026-08-05 | `frontend.md` | nuevo → 1.0 | Se fija Vue 3 + TypeScript + Vite, estructura modular y reglas para contener dependencias y carga. | Instrucción directa del propietario | `DEC-033` |
+| 2026-08-05 | `stack-despliegue-operacion.md` | 1.0 → 1.1 | La elección genérica de TypeScript se concreta en Vue 3 y Vite. | Equilibrio entre velocidad de desarrollo y consumo | `DEC-033` |
+| 2026-08-05 | `registro-decisiones.md` | 1.0 → 1.1 | Se registra la elección del framework frontend. | Gobierno documental | `DEC-033` |
+| 2026-08-05 | `matriz-trazabilidad.md` | 1.0 → 1.1 | La cobertura se amplía hasta `DEC-033`. | Gobierno y trazabilidad | `DEC-033` |
+| 2026-08-05 | `backend-go.md` | nuevo → 1.0 | Se fija Chi v5 como capa ligera de routing y middleware sobre `net/http`, con el dominio desacoplado del transporte. | Instrucción directa del propietario y evaluación técnica | `DEC-034` |
+| 2026-08-05 | `stack-despliegue-operacion.md` | 1.1 → 1.2 | La elección de Go se concreta en Chi v5 sobre `net/http` y se delimitan las dependencias permitidas. | Reducir código repetitivo sin adoptar un framework pesado | `DEC-034` |
+| 2026-08-05 | `registro-decisiones.md` | 1.1 → 1.2 | Se registra la elección del router y la política de arquitectura HTTP del backend. | Gobierno documental | `DEC-034` |
+| 2026-08-05 | `matriz-trazabilidad.md` | 1.1 → 1.2 | La cobertura se amplía hasta `DEC-034`. | Gobierno y trazabilidad | `DEC-034` |
+| 2026-08-05 | `dudas-pendientes.md` | 1.1 → 1.2 | La respuesta técnica de `DP-BE-01` se concreta en Chi v5 sobre `net/http`. | Propagación de la decisión confirmada | `DEC-034` |
+| 2026-08-05 | `docs/README.md` | 1.1 → 1.2 | El mapa documental incorpora la arquitectura específica del backend y la cobertura hasta `DEC-034`. | Navegación y trazabilidad | `DEC-034` |
+| 2026-08-05 | `estandar-backend-go.md` | nuevo → 1.0 | Se fijan organización por capacidades, dirección de dependencias, reglas de código limpio, documentación y revisión para Go. | Instrucción directa del propietario | `DEC-035` |
+| 2026-08-05 | `estandar-frontend-vue.md` | nuevo → 1.0 | Se fijan módulos por funcionalidad, contratos TypeScript, reglas de componentes, accesibilidad y documentación. | Instrucción directa del propietario | `DEC-035` |
+| 2026-08-05 | `estrategia-pruebas.md` | nuevo → 1.0 | Se definen pruebas unitarias, HTTP, PostgreSQL, componentes y E2E, con escenarios P0 y puertas de calidad. | Instrucción directa del propietario | `DEC-035` |
+| 2026-08-05 | `estandar-base-datos.md` | nuevo → 1.0 | Se establecen 1FN–3FN, excepciones controladas, tipos, migraciones, RLS, integridad, rendimiento y pruebas. | Instrucción directa del propietario | `DEC-035` |
+| 2026-08-05 | `AGENTS.md` | nuevo → 1.0 | Se crea la guía operativa breve que obliga a aplicar los estándares durante la implementación. | Hacer ejecutables las reglas documentales | `DEC-035` |
+| 2026-08-05 | `backend-go.md` | 1.0 → 1.1 | Se enlazan el estándar Go y la estrategia de pruebas y se ubica el módulo en `apps/api`. | Consistencia de arquitectura | `DEC-035` |
+| 2026-08-05 | `frontend.md` | 1.0 → 1.1 | Se enlazan el estándar Vue y la estrategia de pruebas y se ubica la aplicación en `apps/web`. | Consistencia de arquitectura | `DEC-035` |
+| 2026-08-05 | `base-datos.md` | 1.0 → 1.1 | Se enlaza el estándar obligatorio de diseño y evolución PostgreSQL. | Consistencia de datos | `DEC-035` |
+| 2026-08-05 | `stack-despliegue-operacion.md` | 1.2 → 1.3 | Se fija la estructura del monorepo y el conjunto mínimo de herramientas de calidad. | Preparación del desarrollo | `DEC-035` |
+| 2026-08-05 | `registro-decisiones.md` | 1.2 → 1.3 | Se formalizan los estándares de ingeniería y calidad. | Gobierno documental | `DEC-035` |
+| 2026-08-05 | `matriz-trazabilidad.md` | 1.2 → 1.3 | La cobertura se amplía hasta `DEC-035` y distingue estrategia de pruebas de casos implementados. | Gobierno y trazabilidad | `DEC-035` |
+| 2026-08-05 | `docs/README.md` | 1.2 → 1.3 | El mapa incorpora estándares de desarrollo, pruebas y datos. | Navegación documental | `DEC-035` |
+| 2026-08-05 | `README.md` | 0.1 → 0.2 | La entrada del repositorio incorpora `docs/03-desarrollo`, `AGENTS.md` y cobertura hasta `DEC-035`. | Navegación del repositorio | `DEC-035` |
+| 2026-08-06 | `migraciones-atlas.md` | nuevo → 1.0 | Se selecciona Atlas, se comparan alternativas y se define creación, validación, promoción, trazabilidad y recuperación. | Instrucción directa del propietario y evaluación técnica | `DEC-036` |
+| 2026-08-06 | `estandar-base-datos.md` | 1.0 → 1.1 | Las convenciones de archivos y migración se alinean con Atlas, SQL ascendente y `atlas.sum`. | Consistencia del estándar | `DEC-036` |
+| 2026-08-06 | `estrategia-pruebas.md` | 1.0 → 1.1 | Las pruebas de migración incorporan validación Atlas, hash y estado final por ambiente. | Automatización verificable | `DEC-036` |
+| 2026-08-06 | `base-datos.md` | 1.1 → 1.2 | Se enlaza Atlas como herramienta confirmada y se prohíbe DDL al arrancar la aplicación. | Consistencia de datos | `DEC-036` |
+| 2026-08-06 | `stack-despliegue-operacion.md` | 1.3 → 1.4 | Atlas se incorpora al stack y a la etapa separada de despliegue. | Consistencia operativa | `DEC-036` |
+| 2026-08-06 | `AGENTS.md` | 1.0 → 1.1 | La guía exige Atlas, `atlas.sum` y migraciones fuera del arranque. | Aplicación futura del estándar | `DEC-036` |
+| 2026-08-06 | `registro-decisiones.md` | 1.3 → 1.4 | Se formaliza la herramienta y el flujo de migraciones. | Gobierno documental | `DEC-036` |
+| 2026-08-06 | `matriz-trazabilidad.md` | 1.3 → 1.4 | La cobertura se amplía hasta `DEC-036`. | Gobierno y trazabilidad | `DEC-036` |
+| 2026-08-06 | `docs/README.md` | 1.3 → 1.4 | El mapa incorpora la guía de Atlas y cobertura hasta `DEC-036`. | Navegación documental | `DEC-036` |
+| 2026-08-06 | `README.md` | 0.2 → 0.3 | La entrada refleja Atlas y las decisiones formalizadas el 6 de agosto. | Navegación del repositorio | `DEC-036` |
+| 2026-08-06 | `estandar-openapi.md` | nuevo → 1.0 | Se fijan OpenAPI 3.1.2, estructura, nomenclatura, RFC 9457, seguridad, ejemplos, lint, bundle y compatibilidad. | Instrucción directa del propietario y evaluación técnica | `DEC-037` |
+| 2026-08-06 | `backend-go.md` | 1.1 → 1.2 | Las rutas incorporan `/api/v1` y el contrato OpenAPI pasa a criterio técnico. | Consistencia del backend | `DEC-037` |
+| 2026-08-06 | `frontend.md` | 1.1 → 1.2 | Los tipos del cliente quedan derivados del bundle OpenAPI. | Consistencia del frontend | `DEC-037` |
+| 2026-08-06 | `stack-despliegue-operacion.md` | 1.4 → 1.5 | OpenAPI 3.1.2 y Redocly se incorporan al stack y controles. | Gobierno del contrato | `DEC-037` |
+| 2026-08-06 | `estandar-backend-go.md` | 1.0 → 1.1 | Todo cambio HTTP debe actualizar OpenAPI y sus pruebas. | Código y contrato sincronizados | `DEC-037` |
+| 2026-08-06 | `estandar-frontend-vue.md` | 1.0 → 1.1 | Se prohíben DTO manuales paralelos al bundle OpenAPI. | Código y contrato sincronizados | `DEC-037` |
+| 2026-08-06 | `estrategia-pruebas.md` | 1.1 → 1.2 | Se incorporan lint, bundle y pruebas de handlers contra OpenAPI. | Verificación del contrato | `DEC-037` |
+| 2026-08-06 | `AGENTS.md` | 1.1 → 1.2 | La guía vuelve obligatorio el enfoque contract-first. | Aplicación futura del estándar | `DEC-037` |
+| 2026-08-06 | `registro-decisiones.md` | 1.4 → 1.5 | Se formaliza el gobierno OpenAPI del contrato HTTP. | Gobierno documental | `DEC-037` |
+| 2026-08-06 | `matriz-trazabilidad.md` | 1.4 → 1.5 | La cobertura se amplía hasta `DEC-037` y distingue estándar de contrato concreto. | Gobierno y trazabilidad | `DEC-037` |
+| 2026-08-06 | `docs/README.md` | 1.4 → 1.5 | El mapa incorpora el estándar OpenAPI y cobertura hasta `DEC-037`. | Navegación documental | `DEC-037` |
+| 2026-08-06 | `README.md` | 0.3 → 0.4 | La entrada incorpora `docs/06-api` y cobertura hasta `DEC-037`. | Navegación del repositorio | `DEC-037` |
+| 2026-08-06 | `flujo-git-github.md` | nuevo → 1.0 | Se fijan GitHub Flow, ramas cortas, Conventional Commits, PR, squash, ruleset, hotfix, tags y controles de entrega. | Instrucción directa del propietario y evaluación técnica | `DEC-038` |
+| 2026-08-06 | `CONTRIBUTING.md` | nuevo → 1.0 | Se crea la guía operativa breve para contribuir con ramas, commits, pruebas y PR. | Aplicación del estándar | `DEC-038` |
+| 2026-08-06 | `.github/PULL_REQUEST_TEMPLATE.md` | nuevo → 1.0 | Se estandarizan trazabilidad, evidencia, impactos, riesgo y definición de terminado de cada PR. | Aplicación del estándar | `DEC-038` |
+| 2026-08-06 | `.github/ISSUE_TEMPLATE/` | nuevo → 1.0 | Se crean formularios para mejoras y defectos con criterios, impactos, reproducción y pruebas. | Aplicación del estándar | `DEC-038` |
+| 2026-08-06 | `.gitattributes`, `.gitignore` | nuevo → 1.0 | Se normalizan finales de línea y exclusiones de secretos, builds, reportes y dumps. | Higiene del repositorio | `DEC-038` |
+| 2026-08-06 | `stack-despliegue-operacion.md` | 1.5 → 1.6 | GitHub Flow y squash se incorporan al stack operativo. | Consistencia de arquitectura | `DEC-038` |
+| 2026-08-06 | `AGENTS.md` | 1.2 → 1.3 | La guía vuelve obligatorios issue, rama corta, Conventional Commits, PR, checks y squash. | Aplicación futura del estándar | `DEC-038` |
+| 2026-08-06 | `registro-decisiones.md` | 1.5 → 1.6 | Se formaliza el gobierno de ramas, commits y pull requests. | Gobierno documental | `DEC-038` |
+| 2026-08-06 | `matriz-trazabilidad.md` | 1.5 → 1.6 | La cobertura se amplía hasta `DEC-038` y distingue estándar de repositorio configurado. | Gobierno y trazabilidad | `DEC-038` |
+| 2026-08-06 | `docs/README.md` | 1.5 → 1.6 | El mapa incorpora la guía Git/GitHub y cobertura hasta `DEC-038`. | Navegación documental | `DEC-038` |
+| 2026-08-06 | `README.md` | 0.4 → 0.5 | La entrada incorpora la guía de contribución y cobertura hasta `DEC-038`. | Navegación del repositorio | `DEC-038` |
+| 2026-08-06 | `estandar-diseno-visual.md` | nuevo → 1.0 | Se fijan paleta, tokens, tipografía, escalas, componentes, estados y plantillas de pantallas P0. | Instrucción directa del propietario | `DEC-039` |
+| 2026-08-06 | `registro-decisiones.md` | 1.6 → 1.7 | Se formaliza el sistema visual ligero y el tema claro único del MVP. | Gobierno documental | `DEC-039` |
+| 2026-08-06 | `matriz-trazabilidad.md` | 1.6 → 1.7 | La cobertura se amplía hasta `DEC-039` y distingue estándar visual de componentes implementados. | Gobierno y trazabilidad | `DEC-039` |
+| 2026-08-06 | `docs/README.md` | 1.6 → 1.7 | El mapa incorpora el estándar visual y cobertura hasta `DEC-039`. | Navegación documental | `DEC-039` |
+| 2026-08-06 | `frontend.md` | 1.2 → 1.3 | La arquitectura enlaza el sistema visual y descarta temas o bibliotecas visuales completas en el MVP. | Consistencia del frontend | `DEC-039` |
+| 2026-08-06 | `estandar-frontend-vue.md` | 1.1 → 1.2 | Los componentes Vue quedan obligados a consumir tokens y variantes visuales semánticas. | Consistencia de implementación | `DEC-039` |
+| 2026-08-06 | `estrategia-pruebas.md` | 1.2 → 1.3 | Se agregan evidencia responsive y verificaciones visuales y accesibles. | Verificación del sistema visual | `DEC-039` |
+| 2026-08-06 | `AGENTS.md` | 1.3 → 1.4 | La guía prohíbe paletas y medidas locales y exige evidencia responsive. | Aplicación futura del estándar | `DEC-039` |
+| 2026-08-06 | `CONTRIBUTING.md` | 1.0 → 1.1 | La guía enlaza el estándar visual entre las normas por área. | Navegación para colaboradores | `DEC-039` |
+| 2026-08-06 | `README.md` | 0.5 → 0.6 | La entrada refleja el estándar visual y cobertura hasta `DEC-039`. | Navegación del repositorio | `DEC-039` |
+| 2026-08-07 | `plan-bloques.md` | nuevo → 1.0 | Se ordenan las 45 funciones P0 en siete bloques con dependencias, criterios de salida y tabla de cobertura. No se altera alcance ni prioridad. | Petición del propietario de secuenciar la construcción | — |
+| 2026-08-07 | `historias-usuario.md` | nuevo → 1.0 | Se redactan `HU-001`–`HU-012` del bloque B0 con criterios `CA-*` verificables y rangos reservados para B1–B6. | Primera cadena Función → Regla → Historia → Criterio | `DEC-024`, `DEC-026`, `DEC-033`–`DEC-039` |
+| 2026-08-07 | `prompts-implementacion.md` | nuevo → 1.0 | Se crean el preámbulo obligatorio, los doce prompts de implementación de B0 y el prompt de revisión. | Herramienta de trabajo derivada de las historias; no es fuente normativa | — |
+| 2026-08-07 | `dudas-pendientes.md` | 1.2 → 1.3 | Se abren `DP-SEG-04`, `DP-SEG-05` y `DP-SEG-06`, detectadas al redactar B0. | `DEC-026` no fija mecanismo de sesión, canal del código de recuperación ni ventana del límite por IP | — |
+| 2026-08-07 | `glosario.md` | 1.0 → 1.1 | `HU-*` y `CA-*` apuntan a `02-requisitos/historias-usuario.md`; los criterios viven junto a su historia en lugar de un archivo separado. | Evitar duplicar el enunciado del criterio en dos documentos | — |
+| 2026-08-07 | `matriz-trazabilidad.md` | 1.7 → 1.8 | La columna Historia deja de ser `Pendiente` en las filas cubiertas por B0 y las brechas se reformulan. | Trazabilidad de las historias nuevas | `DEC-024`, `DEC-026`, `DEC-033`–`DEC-039` |
+| 2026-08-07 | `docs/README.md` | 1.7 → 1.8 | El mapa incorpora historias, plan de bloques y prompts, y actualiza los vacíos conocidos. | Navegación documental | — |
+| 2026-08-07 | `README.md` | 0.6 → 0.7 | La entrada refleja la existencia del backlog de B0 y de las dudas de seguridad abiertas. | Navegación del repositorio | — |
+| 2026-08-10 | `historias-usuario.md` | 1.0 → 1.1 | Se redactan `HU-020` y `HU-021` con criterios verificables para configuración básica y registro/listado de barberos; ambas conservan la dependencia del cierre de B0. | Solicitud del propietario de generar dos historias adicionales sin alterar el alcance P0 | `DEC-007`, `DEC-019`, `DEC-024`, `DEC-033`, `DEC-037`, `DEC-039` |
+| 2026-08-10 | `prompts-implementacion.md` | 1.0 → 1.1 | Se agregan los prompts de implementación de `HU-020` y `HU-021`, con guardas de secuencia, alcance excluido y verificación por cada `CA-*`. | Herramienta solicitada para implementar las dos historias; no abre B1 antes de B0 | — |
+| 2026-08-10 | `plan-bloques.md` | 1.0 → 1.1 | B1 pasa a redacción parcial con dos propuestas preparadas, pero conserva su estado de bloque no abierto. | Mantener explícita la diferencia entre redactar y autorizar construcción | — |
+| 2026-08-10 | `matriz-trazabilidad.md` | 1.8 → 1.9 | `DEC-007`, `DEC-019` y las decisiones técnicas transversales enlazan `HU-020`/`HU-021` y sus criterios, sin presentar artefactos propuestos como implementados. | Trazabilidad de las nuevas historias | `DEC-007`, `DEC-019`, `DEC-024`, `DEC-033`–`DEC-037`, `DEC-039` |
+| 2026-08-10 | `docs/README.md` | 1.8 → 1.9 | El mapa documental refleja la redacción parcial de B1, sus prompts y las tres dudas abiertas de B0. | Navegación y estado coherentes | — |
+
+## 4. Pendiente para la siguiente versión
+
+- Resolver `DP-SEG-04`, `DP-SEG-05` y `DP-SEG-06` con sus `DEC-*` antes de implementar `HU-005`–`HU-008` y `HU-011`.
+- Al cerrar B0, revisar `HU-020`/`HU-021` con lo aprendido y redactar las historias restantes de B1; continuar B2 a B6 al cerrar cada bloque anterior.
+- Crear contratos de API, modelo de datos, casos de prueba ejecutables y catálogo de métricas aplicando los estándares nuevos.
+- Redactar y revisar los artefactos legales exigidos por `DEC-030`.
+- Verificar costos, requisitos y plantillas vigentes de correo y WhatsApp oficial antes del piloto.
+- Inicializar control de versiones cuando el propietario decida convertir este directorio en repositorio Git.

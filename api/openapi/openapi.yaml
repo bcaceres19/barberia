@@ -1,0 +1,24 @@
+# Documento de entrada del contrato HTTP. Fuente de verdad según
+# docs/06-api/estandar-openapi.md (DEC-037). No se edita el bundle generado
+# en dist/; este archivo y los que referencia son la fuente.
+#
+# Sin operaciones todavía: paths y components se completan junto con el
+# primer endpoint implementado. No se citan x-business-rules ni
+# x-decisions hasta que exista la operación real que los use.
+openapi: 3.1.2
+info:
+  title: API del sistema de agenda para barberías
+  version: 0.1.0
+  description: >
+    Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
+    documento: /api/v1/public (reserva sin sesión), /api/v1/customer
+    (acceso por token del enlace de la cita) y /api/v1/private (sesión del
+    barbero), según docs/04-arquitectura/backend-go.md sección 7.
+  license:
+    name: Propietaria, uso interno del proyecto
+    identifier: UNLICENSED
+servers:
+  - url: /api/v1
+tags: []
+paths: {}
+components: {}

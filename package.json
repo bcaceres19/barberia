@@ -1,0 +1,16 @@
+{
+  "name": "system-barbershop",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Herramientas de repositorio para el contrato OpenAPI. La aplicación Vue vive en apps/web con su propio package.json.",
+  "type": "module",
+  "scripts": {
+    "openapi:check-config": "redocly check-config",
+    "openapi:lint": "redocly lint core@v1",
+    "openapi:bundle": "redocly bundle core@v1 --output api/openapi/dist/openapi.yaml",
+    "openapi:docs": "redocly build-docs core@v1 --output api/openapi/dist/index.html"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^2.45.0"
+  }
+}

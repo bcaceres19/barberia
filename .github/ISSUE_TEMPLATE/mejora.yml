@@ -1,0 +1,48 @@
+name: Entrega o mejora
+description: Proponer una función, cambio de comportamiento o deuda técnica planificable.
+title: ""
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Problema y resultado esperado
+      description: Explique quién tiene el problema, su impacto y qué resultado sería observable.
+    validations:
+      required: true
+  - type: textarea
+    id: alcance
+    attributes:
+      label: Alcance
+      description: Indique qué incluye y qué queda explícitamente fuera.
+    validations:
+      required: true
+  - type: textarea
+    id: trazabilidad
+    attributes:
+      label: Reglas, decisiones y dependencias
+      description: Enlace RN-*, DEC-*, otros issues o documentos aplicables. Escriba "Por determinar" si falta una decisión.
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Criterios de aceptación
+      description: Liste comportamientos verificables, incluidos errores y casos de frontera relevantes.
+      placeholder: |
+        - [ ] Dado..., cuando..., entonces...
+    validations:
+      required: true
+  - type: textarea
+    id: impactos
+    attributes:
+      label: Impactos y riesgos
+      description: Considere API, datos/Atlas, tenant/RLS, seguridad, interfaz, notificaciones y operación.
+    validations:
+      required: true
+  - type: textarea
+    id: pruebas
+    attributes:
+      label: Estrategia mínima de prueba
+      description: Indique las pruebas unitarias, de componente, integración o E2E necesarias según el riesgo.
+    validations:
+      required: true

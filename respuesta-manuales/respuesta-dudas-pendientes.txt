@@ -1,0 +1,136 @@
+DP-PRD-01 -> Usar turnos ya que suena mas coloquial 
+DP-PRD-02 -> Si, crear dicho estado ya que es esencial en el piloto para saber cuantas citas se cancelaron o no asistieron y cuales sis
+DP-PRD-03 -> Seria bueno 20 minutos ya que normalmente uno no demora mas de 20 minutos en llegar al barbero, y tambien
+para dejar tiempo por si el barbero o usuario va usar el timepo restante para un turno (igualmente se debe dejar para configurar segun 
+lo que requiera el barbero)
+DP-PRD-04 -> Si me gusta la propuesta de 1 hora pero que sea configurable por el propio barbero (igualmente los servicios pueden demorar
+entre 30 minutos a 1 hora)
+DP-PRD-05 -> Si tambien eso va, creo que lo habia respondido en respuesta-propuestas-oc, pero si, digamos que sea de 1 a 3 dias,
+asi se evitan trolls que agendan desde meses antes, que es imposible la verdad, normalmente uno le dice un miercoles 
+a un barbero para motilar el viernes o jueves
+DP-PRD-06 -> Por el momento se le presentara a uno pero puede que implemente a una barberia con 4 barberos como prueba (ya que 
+el barbero mio es el socio que va a conseguir los clientes ya que tiene muchos contactos) pero tambien
+puede suceder que solo un barbero independiente use el software asi que seria ambos casos
+DP-PRD-07 -> Como tal el tema de festivos depende del barbero, hay barberos que si los descansan otros que los trabajan,
+asi que seria mas que todo el propio horario del barbero, seria bueno una opcion donde el barbero que descansa los festivos 
+en colombia los activara y el sistema los bloqueara para que ningun usuario los agende, pero si el barbero lo quiere trabajar 
+el lo puede activar manualmente
+DP-PRD-08 -> Es normal que las personas se demoren un toque, pero ya 20 minutos es heavy, normalmente se cancelaria o se cuadraria
+otro turno, pero es decision del barbero de hacer el turno y aplazar los demas turnos notificandoles que se les aplazo el turno 
+unos minutos o cancelar el turno que llega tarde (como lo describimos ahora) y esperar el siguiente, eso ya es decision del propio
+barbero
+DP-PRD-09 -> Si, si una cita fue marcada por error el sistema debe tener al capacidad de modifcar dicha cita si el usuario lo solicita
+o cancelarla (este tema ya esta contemplado si no estoy mal)
+DP-PRD-10 -> Debe ser configurado por el barbero para que si quiere se haga automatico,
+es decir, que cada x horas se recolecten las citas que ya pasaron y no se
+han cerrado y se cierren automaticamente (con la hora de cierre haciendo referencia
+a la hora de finalizar el turno) o que el barbero lo puede hacer 
+manualmente ya sea cuando el quiera (finalizando el turno o al dia siguiente 
+donde un mensaje emergente le diga al barbero si se contemplaron
+las siguientes citas y el seleccione o finalizando la jornada del barbero
+ante de cerrar el dia)
+DP-UX-01 -> Si el cliente elige el barbero de su eleccion
+DP-UX-02 -> Para mi estaria bien el completo (ya que el correo
+se requiere para agendar el turno en el calendario de google del usuario) 
+y pues, son pocos, esenciales, el unico que sibre es el nombre de la persona 
+atendida, son tantos clientes que normalmente el barbero atiende 
+por hora mas no por nombre y uno da el nombre de quien reservo 
+o el que reservo fue uno mismo, pero si, para mi estan bien
+ya en base al proyecto los dejas o los amplias
+DP-UX-03 -> Para esto y como dije en lo anterior, la persona
+atendida es el que agendo el turno asi que pues, es lo mismo tecnicamente
+pero adapta para persona que agenda asi que la opcion 3 esta bien pero 
+para lo que te digo 
+DP-UX-04 -> Si lo mejor y lo usual es un enlace aleatorio que se 
+ingreso directamente en el correo cuando se agendo el turno, 
+asi la persona puede acceder a su turno o tener un portal 
+donde la persona puede acceder por medio de la app y por su numero 
+de telefono o correo puede cancelar la cita (se puede 
+hasta integrar un bot para que cancele por los mismos parametros pero 
+sera para despues)
+DP-UX-05 -> Si pueden ser 15 comenzando la  verdad
+DP-BE-01 -> La verdad soy programador asi que tengo bien 
+los fundamentos por años de trabajo, asi que puede ser cualquiera 
+lo importante es mi atractivo de economico a nivel
+de consumo de recursos, asi que necesitaria una arquitectura con un lenguaje
+de programacion que no chupe tanto recursos, facil de mantener y de desarrollar
+y que permita algo moderno y atractivo (puede ser un Ts, php, java, go) 
+pero eso si te lo dejo a ti en base a la magnitud de este proyecto y como 
+te digo, el atractivo de esto sera lo economico
+DP-BE-02 -> Como quiero que esto lo lleve a potestad 
+el usuario de cuando quiere crear un bloqueo o cuando no 
+y que decida el tema de recurrencia (es decir, señalar explicitamente 
+y que se coloque todos esos dias de todos los dias en todos lo meses o 
+colocar los dias que el quiere ya sea en el momento (cuando hablamos de horas) 
+o dias de anticipacion) asi que seria ambos movimientos que quiero 
+que el sistema pueda soportar 
+DP-BE-03 -> Como tal dependen del horario laboral del barbero, 
+si el trabaja hasta las 2 am debe permitirlo el sistema, pero
+es configurable y sujeto al horario laboral que tiene el propio
+barbero
+DP-BE-04 -> Si puede ser la opcion 1  puede que la primera cita 
+termine antes y la segunda continue, el fin puede variar tanto para ahorrar
+tiempo o para perderlo, asi que puede variar la verdad
+DP-BD-01 -> Si me quedo con Postgres
+DP-BD-02 -> Si lo mas economico, sencillo y rapido - flexible - segura es la opcion 2,
+que por barberia se muestre sus datos pero haz un listado
+de buenas practicas para hacer las consultas buenas
+y evitar sobre cargar la BD por una consulta mala haciendo 
+referencia a columnas innecesarias o sin indices, a pesar de la complejidad
+es mejor tener en la base ese tema para que despues en varias barberias 
+sea mas sencillo
+DP-BD-03 -> Se puede  dejar en 24 meses mientras se consigue un abogado
+especializado en software y se organice esos temas pero que 
+sea un valor de parametro en BD que se pueda configurar,
+ya que lo podemos tener por constancia de uso de la app o no
+DP-SEG-01 -> Podemos dejar ambos, correo y contraseña y que no se vuelva a 
+pedir en cierto periodo o por medio de codigo por numero de telefono
+si este se le olvido la contraseña
+DP-SEG-02 -> Si es bueno la combinacion de la 2 con la opcion 3 cuando
+se supera el limite de solicitudes (este limite debe ser configurado  en BD)
+ya se 5 solicitudes por IP o 3 y asi
+DP-SEG-03 -> Si la segunda opcion es lo mejor si hay un incidente en
+pleno piloto para resolverlo antes de su circulacion en el mercado
+DP-NOT-01 -> Como tal la ide es WhatSapp y correo electronico 
+para notificaciones (el barbero tendra la potestad de como notificar
+por medio de configuraciones, ya sea con las 2 o con una sola de las opciones)
+y el barbero sabra en que ecenarios configurarlo si todo para todo, o 
+para ciertos contextos
+DP-NOT-02 -> Yo creeria que seria 30 minutos antes de la citasion, 2
+horas es mucho tiempo, igual, este dato debe ser configurable por 
+el barbero
+DP-NOT-03 -> Deberia ser un parametro configurable maximo 3, este valor
+debe ser cambiado por el barbero segun sus preferenciaas
+DP-NOT-04 -> Este valor debe ser un valor configurable por el barbero
+DP-PIL-01 -> Si seria un mes practicamente el piloto que se sacaran 
+pruebas, correcciones, etc, etc 
+DP-PIL-02 -> En el peor de los casos uno como propietario
+se le mandara la citas agendadas y pendientes al barbero para que las tenga
+en cuenta, pero esto es en el peor de los casos donde toque
+suspender todo
+DP-PIL-03 -> Si la primera semana como es el primer intento 
+seria tener el metodo antiguo como respaldo, ya si la cosa
+va bien se usara netamente la pagina
+DP-COM-01 -> El piloto sera gratuito para los que se quieran
+atrever (2 o 3 personas) y ya en base al progreso del piloto
+se estara proponiendo precios en base a los costos de produccion
+y la utilidad que sacare, pero eso sera al finalizar
+DP-COM-02 -> Como tal esos temas de plata se hablaran con el socio mio 
+que es barbero donde se pactara si quiere un porcentaje por cliente 
+que me traiga o un monto especifico y como lo pactaremos
+DP-COM-03 -> Si sera gratuito para una pequeña poblacion que 
+ahora mencione la cantidad y sera de un mes, dependiendo de lo maduro
+que este se extendera a otro mes o no y a los participantes 
+se les otorgara una membresia gratis de 3 meses por haber confiado en el 
+proceso
+DP-LEG-01 -> Con politica debe haber una por ahi que se puede usar mientras es el piloto 
+DP-LEG-02 ->  anonimizar los datos personales conservando el historial de la cita
+DP-LEG-03 -> acuerdo breve por escrito con el colaborador
+DP-OPS-01 -> diaria, retención 30 días 
+DP-OPS-02 -> Para local en pruebas - piloto se usara servicios gratuitos,
+cuando se mande a prod se pagara un vpn dedicado donde no cobren mucho,
+ya vi varios 
+DP-OPS-03 -> Si el 3 y 2 son buenos, igualmente dare soporte a cualquier aviso
+CT-001 -> Tu toma esta decision en base a lo que hemos estado hablando,
+como tal los recordatorios y notificaciones deben crearse en el momento y no 
+esperar que esten creados 

@@ -1,0 +1,150 @@
+SISTEMA DE AGENDA PARA BARBERIAS: RESERVA PUBLICA EN LINEA CON GARANTIA DE
+INTEGRIDAD DE HORARIOS
+
+Capitulo: Formulacion de Proyectos de Software - Proyecto de Aula
+
+
+1. INTRODUCCION
+
+Las micro y pequenas empresas de servicios personales constituyen una porcion
+significativa del tejido productivo latinoamericano y, al mismo tiempo, una de
+las menos alcanzadas por la transformacion digital (CEPAL, 2020). En Colombia,
+los microestablecimientos dedicados a servicios concentran una fraccion
+mayoritaria de las unidades economicas registradas, pero su adopcion de
+herramientas informaticas se limita, en la mayoria de los casos, al uso de
+mensajeria instantanea y redes sociales como reemplazo de sistemas de
+informacion propios (DANE, 2021). Este patron no obedece a desconocimiento
+tecnologico, sino a una brecha de ajuste: las plataformas disponibles suelen
+estar dimensionadas para organizaciones con personal administrativo, capacidad
+de configuracion y presupuesto recurrente, condiciones que un negocio de una
+sola persona no reune. El resultado es que procesos criticos del negocio -entre
+ellos el agendamiento de citas- permanecen soportados por canales
+conversacionales que no fueron disenados para ese proposito.
+
+La barberia es un caso representativo de esta situacion. Se trata de un negocio
+cuya unidad de produccion es la cita: un intervalo de tiempo, asignado a un
+profesional especifico, que solo puede venderse una vez. A diferencia de un
+producto de inventario, el tiempo no vendido no se recupera, y el tiempo vendido
+dos veces no se puede entregar. Toda la operacion descansa, entonces, sobre la
+correcta administracion de un recurso rigido y no acumulable. Sin embargo, el
+barbero independiente administra ese recurso mientras tiene las manos ocupadas:
+atiende a un cliente y, simultaneamente, responde por WhatsApp a quien pregunta
+por disponibilidad, anota una cita en un cuaderno o intenta recordar un
+compromiso que acepto verbalmente. En este contexto se producen fallas que son
+estructurales y no accidentales: reservas cruzadas por doble asignacion de la
+misma franja, citas olvidadas por ausencia de un recordatorio sistematico,
+interrupciones continuas durante la atencion, y tiempo laboral consumido en
+informar horarios que el propio cliente podria consultar.
+
+El problema de fondo es un problema de integridad de datos bajo concurrencia,
+que la ingenieria de software reconoce desde hace decadas como una de las
+fuentes mas frecuentes de defectos dificiles de reproducir (Bernstein &
+Newcomer, 2009). Cuando dos clientes consultan la misma franja horaria y la
+solicitan con pocos segundos de diferencia, cualquier verificacion realizada en
+la interfaz de usuario, o incluso una consulta previa a la insercion en el
+servidor, resulta insuficiente: entre la verificacion y la escritura existe una
+ventana en la que el estado del sistema puede cambiar. Un diseno que confie la
+prevencion del cruce a la capa de presentacion o a la logica de aplicacion
+producira, con probabilidad no despreciable, el peor fallo posible del dominio:
+dos personas esperando en la puerta a la misma hora. Por esa razon, la
+formulacion de este proyecto establece como restriccion arquitectonica no
+negociable que la imposibilidad del cruce debe estar garantizada por la propia
+base de datos, mediante restricciones de exclusion sobre rangos temporales, y
+verificarse intentando insertar datos inconsistentes directamente en el motor,
+saltandose la aplicacion.
+
+A esta exigencia se suman otras que provienen del caracter multiempresa de la
+solucion y del tratamiento de datos personales. Un sistema que aloje
+simultaneamente a varias barberias debe impedir que los datos de una sean
+accesibles desde otra, incluso ante el conocimiento o la adivinacion de
+identificadores internos; el proyecto adopta para ello una defensa en
+profundidad que combina el filtrado en la aplicacion con politicas de seguridad
+a nivel de fila (RLS) en PostgreSQL. De igual forma, los nombres, telefonos y
+correos de los clientes estan sujetos al regimen colombiano de proteccion de
+datos personales (Congreso de la Republica de Colombia, Ley 1581 de 2012), lo
+que impone minimizacion en la recoleccion, ausencia de datos personales en los
+registros tecnicos y anonimizacion de la informacion vencida sin destruir el
+historial operativo que permite auditar la agenda. Estos requisitos no son
+accesorios: condicionan el modelo de datos y la observabilidad desde la
+formulacion misma del proyecto, y no pueden incorporarse despues sin rehacer
+decisiones estructurales.
+
+Existen en el mercado plataformas comerciales de agendamiento para el sector de
+belleza y barberia que resuelven parcialmente estas necesidades. Su limitacion,
+desde la perspectiva del usuario objetivo de este trabajo, es de escala y de
+costo: exigen procesos de configuracion prolongados, incorporan modulos de
+facturacion, inventario, mercadeo y fidelizacion que el barbero independiente no
+utiliza, y operan bajo suscripciones mensuales dificiles de sostener para un
+negocio unipersonal. Adicionalmente, muchas de ellas requieren que el cliente
+final cree una cuenta o instale una aplicacion, una friccion que en la practica
+devuelve la conversacion a WhatsApp. La oportunidad que este proyecto identifica
+no consiste, por lo tanto, en construir una plataforma mas completa, sino
+deliberadamente mas pequena: un alcance reducido a lo que un barbero real
+necesita para operar su jornada, con reserva publica sin registro para el
+cliente y con una operacion de bajo costo sostenible por una sola persona.
+
+En consecuencia, este proyecto formula el analisis, diseno, implementacion y
+validacion de un sistema de agenda para barberias, orientado a que un barbero
+independiente opere la totalidad de su jornada sin recurrir a WhatsApp para
+agendar y sin que se produzca un solo cruce de horarios. El alcance del producto
+minimo viable quedo delimitado en 45 funciones de prioridad P0 y 52 reglas de
+negocio codificadas y trazables, que cubren la configuracion de servicios y
+horarios, siete tipos de bloqueo con recurrencias y festivos, el calculo real de
+disponibilidad, la reserva publica mediante enlace, la agenda diaria del
+barbero, la maquina de estados de las citas con historial inmutable, los
+recordatorios automaticos por correo y por la interfaz oficial de WhatsApp, y
+los procedimientos operativos de respaldo, recuperacion e incidentes. La
+solucion se construye sobre tecnologias de codigo abierto -backend en Go con
+Chi, frontend en Vue 3 con TypeScript y Vite, persistencia en PostgreSQL con
+migraciones versionadas mediante Atlas y contrato HTTP gobernado por OpenAPI-,
+decision que reduce el costo de operacion y mantiene la trazabilidad tecnica del
+producto.
+
+La validacion del proyecto no se plantea en un entorno simulado, sino mediante
+un piloto en condiciones reales con dos o tres barberos de Armenia, Quindio,
+durante cuatro semanas, con criterios de aceptacion definidos previamente y
+umbrales absolutos que, de incumplirse, invalidan el ejercicio: cero citas
+cruzadas activas, cero citas perdidas o corrompidas, cero accesos entre
+barberias y cero datos personales expuestos. Se hace explicito, ademas, un
+limite metodologico del piloto: puede medir uso real, facilidad de uso e
+intencion declarada de continuar, pero no demuestra por si mismo disposicion
+efectiva de pago, y ningun resultado sera presentado como si lo hiciera. Con
+este enfoque, el trabajo aporta evidencia sobre una pregunta de ingenieria
+concreta y verificable -si es posible garantizar integridad de agenda bajo
+concurrencia real con una arquitectura simple y de bajo costo- y ofrece, como
+subproducto, un cuerpo documental de decisiones, reglas y trazabilidad que puede
+ser reutilizado en proyectos de dominios equivalentes basados en la asignacion
+de recursos temporales no acumulables.
+
+
+------------------------------------------------------------------------------
+
+REFERENCIAS
+
+Bernstein, P. A., & Newcomer, E. (2009). Principles of Transaction Processing
+    (2a ed.). Morgan Kaufmann.
+
+Comision Economica para America Latina y el Caribe (CEPAL). (2020).
+    [Verificar titulo exacto, ano y URL del informe sobre digitalizacion de
+    mipymes antes de entregar.]
+
+Congreso de la Republica de Colombia. (2012). Ley 1581 de 2012, por la cual se
+    dictan disposiciones generales para la proteccion de datos personales.
+    Diario Oficial.
+
+Departamento Administrativo Nacional de Estadistica (DANE). (2021).
+    [Verificar la publicacion exacta -Encuesta de Micronegocios (EMICRON) o
+    Encuesta TIC- y la cifra citada antes de entregar.]
+
+
+NOTA: las dos referencias marcadas entre corchetes deben verificarse o
+reemplazarse por las fuentes que el grupo consulte directamente. No deben
+citarse trabajos que no se hayan leido.
+
+
+------------------------------------------------------------------------------
+
+PRESENTADO POR:
+
+    BRAHIAN ALEXANDER CACERES GUEVARA
+    SANTIAGO ARIAS MOSQUERA
