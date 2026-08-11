@@ -289,6 +289,32 @@ COMMENT ON COLUMN staff_user.phone IS
   'Teléfono en formato E.164. Destino del código de recuperación; se muestra siempre '
   'enmascarado y nunca completo en respuestas ni registros (CA-008-06).';
 
+-- DDL-INT-05: cambiar el teléfono invalida la verificación anterior; centralizado
+-- aquí para que ningún flujo de actualización pueda olvidarlo.
+CREATE OR REPLACE FUNCTION staff_user_reset_phone_verification()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog
+AS $$
+BEGIN
+  IF NEW.phone IS DISTINCT FROM OLD.phone THEN
+    NEW.phone_verified_at := NULL;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+REVOKE ALL     ON FUNCTION staff_user_reset_phone_verification() FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION staff_user_reset_phone_verification() TO barberia_app;
+
+COMMENT ON FUNCTION staff_user_reset_phone_verification() IS
+  'Anula phone_verified_at cuando phone cambia de valor (DDL-INT-05). Sin esto, un número '
+  'nuevo heredaría la verificación del número anterior.';
+
+CREATE TRIGGER staff_user_reset_phone_verification_trg
+  BEFORE UPDATE OF phone ON staff_user
+  FOR EACH ROW EXECUTE FUNCTION staff_user_reset_phone_verification();
+
 CREATE TABLE staff_recovery_code (
   id             uuid        NOT NULL DEFAULT gen_random_uuid(),
   barbershop_id  uuid        NOT NULL,
@@ -556,10 +582,7 @@ COMMENT ON COLUMN barbershop.public_slug IS
 CREATE TABLE barber (
   id            uuid        NOT NULL DEFAULT gen_random_uuid(),
   barbershop_id uuid        NOT NULL,
-  staff_user_id uuid,
   full_name     text        NOT NULL,
-  display_order smallint    NOT NULL DEFAULT 0,
-  is_active     boolean     NOT NULL DEFAULT true,
   created_at    timestamptz NOT NULL DEFAULT now(),
   updated_at    timestamptz NOT NULL DEFAULT now(),
 
@@ -568,28 +591,15 @@ CREATE TABLE barber (
                                         REFERENCES barbershop (id) ON DELETE RESTRICT,
   CONSTRAINT barber_barbershop_id_id_uk UNIQUE (barbershop_id, id),
 
-  -- Un barbero puede no tener acceso al área privada (lo administra el dueño).
-  CONSTRAINT barber_barbershop_id_staff_user_id_fk
-    FOREIGN KEY (barbershop_id, staff_user_id)
-    REFERENCES staff_user (barbershop_id, id) ON DELETE SET NULL,
-
-  CONSTRAINT barber_full_name_ck     CHECK (btrim(full_name) <> '' AND char_length(full_name) <= 120),
-  CONSTRAINT barber_display_order_ck CHECK (display_order >= 0)
+  CONSTRAINT barber_full_name_ck CHECK (btrim(full_name) <> '' AND char_length(full_name) <= 120)
 );
 
 COMMENT ON TABLE barber IS
   'Persona que presta el servicio y unidad de exclusión de agenda (DEC-019). '
   'Propietario funcional: barbería. Retención: mientras exista la barbería; nunca se borra '
-  'si tiene citas. Clasificación: datos personales (nombre).';
-
--- Un usuario del área privada corresponde a lo sumo a un barbero.
-CREATE UNIQUE INDEX idx_barber_staff_user_unique
-  ON barber (barbershop_id, staff_user_id)
-  WHERE staff_user_id IS NOT NULL;
-
-CREATE INDEX idx_barber_shop_active
-  ON barber (barbershop_id, display_order)
-  WHERE is_active;
+  'si tiene citas. Clasificación: datos personales (nombre). '
+  'Alcance recortado a HU-021 (DEC-047, DDL-BIZ-02): sin borrado, desactivación, orden manual '
+  'ni vínculo con staff_user; una historia futura los aprueba explícitamente si llegan a hacer falta.';
 
 CREATE TRIGGER barber_set_updated_at
   BEFORE UPDATE ON barber
@@ -599,7 +609,7 @@ ALTER TABLE barber ENABLE ROW LEVEL SECURITY;
 ALTER TABLE barber FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY barber_all_admin_policy ON barber
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 
 CREATE POLICY barber_select_tenant_policy ON barber
   FOR SELECT TO barberia_app
@@ -614,11 +624,8 @@ CREATE POLICY barber_update_tenant_policy ON barber
   USING      (barbershop_id = current_setting('app.barbershop_id')::uuid)
   WITH CHECK (barbershop_id = current_setting('app.barbershop_id')::uuid);
 
-CREATE POLICY barber_delete_tenant_policy ON barber
-  FOR DELETE TO barberia_app
-  USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
-
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE barber TO barberia_app;
+-- Sin política ni privilegio de DELETE: HU-021 lo excluye explícitamente (DEC-047).
+GRANT SELECT, INSERT, UPDATE ON TABLE barber TO barberia_app;
 
 -- ---------------------------------------------------------------------------
 -- B.3 · `service` — F-SERV-01, F-SERV-02, RN-SER-01 a RN-SER-04
@@ -768,18 +775,20 @@ COMMENT ON COLUMN barber.holiday_calendar_enabled IS
   'La decisión de un barbero no altera el calendario de otro de la misma barbería.';
 
 -- ---------------------------------------------------------------------------
--- C.2 · `working_hours` — F-HOR-01
+-- C.2 · `working_hour` — F-HOR-01
 -- ---------------------------------------------------------------------------
 -- Representa tiempo civil local recurrente por día de semana. Se interpreta
 -- junto con `barbershop.timezone`; no se almacena un instante calculado
--- (estandar-base-datos.md §5.5).
+-- (estandar-base-datos.md §5.5). Nombre en singular (DDL-NAM-01): antes de
+-- existir migraciones aplicadas, `working_hours`/`working_hours_override` se
+-- renombran a `working_hour`/`working_hour_override`.
 --
 -- Cruce de medianoche (DEC-020): en lugar de `ends_time`, que sería ambiguo
 -- cuando el fin cae en el día siguiente, se almacena inicio + duración. Un
 -- tramo 22:00 + 300 min termina a las 03:00 del día siguiente sin ambigüedad,
 -- y `duration_minutes` cumple la regla de tipos para duraciones.
 
-CREATE TABLE working_hours (
+CREATE TABLE working_hour (
   id               uuid        NOT NULL DEFAULT gen_random_uuid(),
   barbershop_id    uuid        NOT NULL,
   barber_id        uuid        NOT NULL,
@@ -789,28 +798,28 @@ CREATE TABLE working_hours (
   created_at       timestamptz NOT NULL DEFAULT now(),
   updated_at       timestamptz NOT NULL DEFAULT now(),
 
-  CONSTRAINT working_hours_id_pk PRIMARY KEY (id),
+  CONSTRAINT working_hour_id_pk PRIMARY KEY (id),
 
-  CONSTRAINT working_hours_barbershop_id_barber_id_fk
+  CONSTRAINT working_hour_barbershop_id_barber_id_fk
     FOREIGN KEY (barbershop_id, barber_id)
     REFERENCES barber (barbershop_id, id) ON DELETE CASCADE,
 
   -- ISO 8601: 1 = lunes … 7 = domingo. No se usa 0-6 para no heredar la
   -- ambigüedad de qué día es el cero.
-  CONSTRAINT working_hours_iso_weekday_ck      CHECK (iso_weekday BETWEEN 1 AND 7),
-  CONSTRAINT working_hours_duration_minutes_ck CHECK (duration_minutes BETWEEN 1 AND 1440),
+  CONSTRAINT working_hour_iso_weekday_ck      CHECK (iso_weekday BETWEEN 1 AND 7),
+  CONSTRAINT working_hour_duration_minutes_ck CHECK (duration_minutes BETWEEN 1 AND 1440),
 
   -- Un mismo barbero no repite el mismo inicio en el mismo día de semana.
-  CONSTRAINT working_hours_shop_barber_weekday_start_uk
+  CONSTRAINT working_hour_shop_barber_weekday_start_uk
     UNIQUE (barbershop_id, barber_id, iso_weekday, starts_time)
 );
 
-COMMENT ON TABLE working_hours IS
+COMMENT ON TABLE working_hour IS
   'Jornada laboral recurrente por barbero y día de semana (F-HOR-01). Propietario funcional: '
   'barbería. Retención: mientras exista el barbero. Clasificación: negocio. '
   'Varios tramos por día representan jornada partida.';
 
-COMMENT ON COLUMN working_hours.duration_minutes IS
+COMMENT ON COLUMN working_hour.duration_minutes IS
   'Duración del tramo desde starts_time. Un valor que empuje el fin más allá de medianoche '
   'representa una jornada nocturna, permitida por DEC-020.';
 
@@ -821,119 +830,219 @@ COMMENT ON COLUMN working_hours.duration_minutes IS
 -- prueba (estandar-base-datos.md §7, último párrafo). La invariante dura —que
 -- dos citas no se crucen— sí vive en la base de datos (sección D.1).
 
-CREATE INDEX idx_working_hours_shop_barber_weekday
-  ON working_hours (barbershop_id, barber_id, iso_weekday);
+CREATE INDEX idx_working_hour_shop_barber_weekday
+  ON working_hour (barbershop_id, barber_id, iso_weekday);
 
-CREATE TRIGGER working_hours_set_updated_at
-  BEFORE UPDATE ON working_hours
+CREATE TRIGGER working_hour_set_updated_at
+  BEFORE UPDATE ON working_hour
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-ALTER TABLE working_hours ENABLE ROW LEVEL SECURITY;
-ALTER TABLE working_hours FORCE  ROW LEVEL SECURITY;
+ALTER TABLE working_hour ENABLE ROW LEVEL SECURITY;
+ALTER TABLE working_hour FORCE  ROW LEVEL SECURITY;
 
-CREATE POLICY working_hours_all_admin_policy ON working_hours
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
+CREATE POLICY working_hour_all_admin_policy ON working_hour
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 
-CREATE POLICY working_hours_select_tenant_policy ON working_hours
+CREATE POLICY working_hour_select_tenant_policy ON working_hour
   FOR SELECT TO barberia_app
   USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
 
-CREATE POLICY working_hours_insert_tenant_policy ON working_hours
+CREATE POLICY working_hour_insert_tenant_policy ON working_hour
   FOR INSERT TO barberia_app
   WITH CHECK (barbershop_id = current_setting('app.barbershop_id')::uuid);
 
-CREATE POLICY working_hours_update_tenant_policy ON working_hours
+CREATE POLICY working_hour_update_tenant_policy ON working_hour
   FOR UPDATE TO barberia_app
   USING      (barbershop_id = current_setting('app.barbershop_id')::uuid)
   WITH CHECK (barbershop_id = current_setting('app.barbershop_id')::uuid);
 
-CREATE POLICY working_hours_delete_tenant_policy ON working_hours
+CREATE POLICY working_hour_delete_tenant_policy ON working_hour
   FOR DELETE TO barberia_app
   USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE working_hours TO barberia_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE working_hour TO barberia_app;
 
 -- ---------------------------------------------------------------------------
--- C.3 · `working_hours_override` — horario especial por fecha (RN-BLQ-02)
+-- C.3 · `working_hour_override` — horario especial por fecha (RN-BLQ-02)
 -- ---------------------------------------------------------------------------
 -- Cubre el festivo que el barbero decide trabajar con horario reducido y el
--- día suelto con jornada distinta. Prevalece sobre `working_hours` para esa
+-- día suelto con jornada distinta. Prevalece sobre `working_hour` para esa
 -- fecha y sobre el bloqueo automático de festivo.
+--
+-- DDL-INT-01: la versión anterior tenía starts_time/duration_minutes en la
+-- misma fila que is_closed y solo dos índices parciales; nada impedía que un
+-- mismo día tuviera a la vez una fila cerrada y filas abiertas, ni que dos
+-- tramos abiertos se solaparan. Se separa la cabecera (una fila por barbero y
+-- fecha; is_closed decide la forma) de sus tramos (tabla hija, solo válidos
+-- si el día está abierto). Una restricción de exclusión impide el solape entre
+-- tramos de la misma cabecera, y un disparador impide crear un tramo bajo una
+-- cabecera cerrada: son las dos invariantes que la forma anterior no cubría.
 
-CREATE TABLE working_hours_override (
-  id               uuid        NOT NULL DEFAULT gen_random_uuid(),
-  barbershop_id    uuid        NOT NULL,
-  barber_id        uuid        NOT NULL,
-  effective_date   date        NOT NULL,
-  is_closed        boolean     NOT NULL,
-  starts_time      time,
-  duration_minutes integer,
-  reason           text,
-  created_at       timestamptz NOT NULL DEFAULT now(),
-  updated_at       timestamptz NOT NULL DEFAULT now(),
+CREATE TABLE working_hour_override (
+  id             uuid        NOT NULL DEFAULT gen_random_uuid(),
+  barbershop_id  uuid        NOT NULL,
+  barber_id      uuid        NOT NULL,
+  effective_date date        NOT NULL,
+  is_closed      boolean     NOT NULL,
+  reason         text,
+  created_at     timestamptz NOT NULL DEFAULT now(),
+  updated_at     timestamptz NOT NULL DEFAULT now(),
 
-  CONSTRAINT working_hours_override_id_pk PRIMARY KEY (id),
+  CONSTRAINT working_hour_override_id_pk               PRIMARY KEY (id),
+  CONSTRAINT working_hour_override_barbershop_id_id_uk UNIQUE (barbershop_id, id),
 
-  CONSTRAINT working_hours_override_barbershop_id_barber_id_fk
+  CONSTRAINT working_hour_override_barbershop_id_barber_id_fk
     FOREIGN KEY (barbershop_id, barber_id)
     REFERENCES barber (barbershop_id, id) ON DELETE CASCADE,
 
-  -- O el día está cerrado, o define un tramo completo. No hay estado medio.
-  CONSTRAINT working_hours_override_shape_ck CHECK (
-    (is_closed     AND starts_time IS NULL     AND duration_minutes IS NULL)
-    OR
-    (NOT is_closed AND starts_time IS NOT NULL AND duration_minutes IS NOT NULL)
-  ),
-  CONSTRAINT working_hours_override_duration_minutes_ck CHECK (
-    duration_minutes IS NULL OR duration_minutes BETWEEN 1 AND 1440
-  ),
-  CONSTRAINT working_hours_override_reason_ck CHECK (
+  -- Una sola cabecera por barbero y fecha: cierra la mitad de DDL-INT-01 que
+  -- exigía elegir entre cerrado y abierto sin admitir ambos ni ninguno dos veces.
+  CONSTRAINT working_hour_override_shop_barber_date_uk
+    UNIQUE (barbershop_id, barber_id, effective_date),
+
+  CONSTRAINT working_hour_override_reason_ck CHECK (
     reason IS NULL OR char_length(reason) <= 200
   )
 );
 
-COMMENT ON TABLE working_hours_override IS
-  'Excepción de jornada para una fecha concreta: día cerrado o tramo especial (RN-BLQ-02). '
+COMMENT ON TABLE working_hour_override IS
+  'Cabecera de excepción de jornada para una fecha concreta (RN-BLQ-02): is_closed decide si '
+  'el día está cerrado o tiene tramos propios en working_hour_override_segment. '
   'Propietario funcional: barbería. Retención: mientras exista el barbero. Clasificación: negocio.';
 
--- Un día cerrado se declara una sola vez…
-CREATE UNIQUE INDEX idx_working_hours_override_closed_day
-  ON working_hours_override (barbershop_id, barber_id, effective_date)
-  WHERE is_closed;
+CREATE INDEX idx_working_hour_override_shop_barber_date
+  ON working_hour_override (barbershop_id, barber_id, effective_date);
 
--- …y un día abierto admite varios tramos con inicios distintos.
-CREATE UNIQUE INDEX idx_working_hours_override_open_segment
-  ON working_hours_override (barbershop_id, barber_id, effective_date, starts_time)
-  WHERE NOT is_closed;
-
-CREATE TRIGGER working_hours_override_set_updated_at
-  BEFORE UPDATE ON working_hours_override
+CREATE TRIGGER working_hour_override_set_updated_at
+  BEFORE UPDATE ON working_hour_override
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-ALTER TABLE working_hours_override ENABLE ROW LEVEL SECURITY;
-ALTER TABLE working_hours_override FORCE  ROW LEVEL SECURITY;
+ALTER TABLE working_hour_override ENABLE ROW LEVEL SECURITY;
+ALTER TABLE working_hour_override FORCE  ROW LEVEL SECURITY;
 
-CREATE POLICY working_hours_override_all_admin_policy ON working_hours_override
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
+CREATE POLICY working_hour_override_all_admin_policy ON working_hour_override
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 
-CREATE POLICY working_hours_override_select_tenant_policy ON working_hours_override
+CREATE POLICY working_hour_override_select_tenant_policy ON working_hour_override
   FOR SELECT TO barberia_app
   USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
 
-CREATE POLICY working_hours_override_insert_tenant_policy ON working_hours_override
+CREATE POLICY working_hour_override_insert_tenant_policy ON working_hour_override
   FOR INSERT TO barberia_app
   WITH CHECK (barbershop_id = current_setting('app.barbershop_id')::uuid);
 
-CREATE POLICY working_hours_override_update_tenant_policy ON working_hours_override
+CREATE POLICY working_hour_override_update_tenant_policy ON working_hour_override
   FOR UPDATE TO barberia_app
   USING      (barbershop_id = current_setting('app.barbershop_id')::uuid)
   WITH CHECK (barbershop_id = current_setting('app.barbershop_id')::uuid);
 
-CREATE POLICY working_hours_override_delete_tenant_policy ON working_hours_override
+CREATE POLICY working_hour_override_delete_tenant_policy ON working_hour_override
   FOR DELETE TO barberia_app
   USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE working_hours_override TO barberia_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE working_hour_override TO barberia_app;
+
+-- ---------------------------------------------------------------------------
+-- C.3b · `working_hour_override_segment` — tramos de una cabecera abierta
+-- ---------------------------------------------------------------------------
+-- Solo tiene sentido bajo una cabecera con is_closed = false; el disparador
+-- de más abajo lo exige porque ninguna restricción declarativa puede mirar
+-- otra tabla.
+
+CREATE TABLE working_hour_override_segment (
+  id               uuid        NOT NULL DEFAULT gen_random_uuid(),
+  barbershop_id    uuid        NOT NULL,
+  override_id      uuid        NOT NULL,
+  starts_time      time        NOT NULL,
+  duration_minutes integer     NOT NULL,
+  created_at       timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT working_hour_override_segment_id_pk PRIMARY KEY (id),
+
+  CONSTRAINT working_hour_override_segment_barbershop_id_override_id_fk
+    FOREIGN KEY (barbershop_id, override_id)
+    REFERENCES working_hour_override (barbershop_id, id) ON DELETE CASCADE,
+
+  CONSTRAINT working_hour_override_segment_duration_minutes_ck CHECK (
+    duration_minutes BETWEEN 1 AND 1440
+  ),
+  CONSTRAINT working_hour_override_segment_override_start_uk
+    UNIQUE (override_id, starts_time)
+);
+
+COMMENT ON TABLE working_hour_override_segment IS
+  'Tramo horario de una cabecera de excepción abierta (RN-BLQ-02). Clasificación: negocio.';
+
+-- Ningún tramo se solapa con otro de la MISMA cabecera. La fecha vive en la
+-- cabecera (fija por fila), así que un ancla arbitraria común (2000-01-01)
+-- basta para comparar los tramos entre sí; un tramo nocturno que cruza
+-- medianoche sigue comparándose bien porque todos usan la misma ancla. Mismo
+-- intervalo semiabierto `[)` que appointment (sección D.1).
+ALTER TABLE working_hour_override_segment
+  ADD CONSTRAINT working_hour_override_segment_no_overlap_excl
+  EXCLUDE USING gist (
+    override_id WITH =,
+    tsrange(
+      date '2000-01-01' + starts_time,
+      date '2000-01-01' + starts_time + make_interval(mins => duration_minutes),
+      '[)'
+    ) WITH &&
+  );
+
+CREATE OR REPLACE FUNCTION working_hour_override_segment_check_open()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog
+AS $$
+DECLARE
+  v_is_closed boolean;
+BEGIN
+  SELECT is_closed INTO v_is_closed
+  FROM public.working_hour_override
+  WHERE id = NEW.override_id AND barbershop_id = NEW.barbershop_id;
+
+  IF v_is_closed IS NULL THEN
+    RAISE EXCEPTION 'working_hour_override % no existe en la barbería %',
+      NEW.override_id, NEW.barbershop_id;
+  END IF;
+
+  IF v_is_closed THEN
+    RAISE EXCEPTION 'working_hour_override % está cerrada (is_closed=true): no admite tramos',
+      NEW.override_id;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+REVOKE ALL     ON FUNCTION working_hour_override_segment_check_open() FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION working_hour_override_segment_check_open() TO barberia_app;
+
+COMMENT ON FUNCTION working_hour_override_segment_check_open() IS
+  'Impide insertar/mover un tramo bajo una cabecera cerrada (DDL-INT-01). La FK ya garantiza '
+  'que la cabecera existe en la misma barbería; esto añade la condición is_closed = false.';
+
+CREATE TRIGGER working_hour_override_segment_check_open_trg
+  BEFORE INSERT OR UPDATE ON working_hour_override_segment
+  FOR EACH ROW EXECUTE FUNCTION working_hour_override_segment_check_open();
+
+ALTER TABLE working_hour_override_segment ENABLE ROW LEVEL SECURITY;
+ALTER TABLE working_hour_override_segment FORCE  ROW LEVEL SECURITY;
+
+CREATE POLICY working_hour_override_segment_all_admin_policy ON working_hour_override_segment
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
+CREATE POLICY working_hour_override_segment_select_tenant_policy ON working_hour_override_segment
+  FOR SELECT TO barberia_app USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
+CREATE POLICY working_hour_override_segment_insert_tenant_policy ON working_hour_override_segment
+  FOR INSERT TO barberia_app WITH CHECK (barbershop_id = current_setting('app.barbershop_id')::uuid);
+CREATE POLICY working_hour_override_segment_update_tenant_policy ON working_hour_override_segment
+  FOR UPDATE TO barberia_app
+  USING      (barbershop_id = current_setting('app.barbershop_id')::uuid)
+  WITH CHECK (barbershop_id = current_setting('app.barbershop_id')::uuid);
+CREATE POLICY working_hour_override_segment_delete_tenant_policy ON working_hour_override_segment
+  FOR DELETE TO barberia_app USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE working_hour_override_segment TO barberia_app;
 
 -- ---------------------------------------------------------------------------
 -- C.4 · `time_block_series` — bloqueos recurrentes y listas de fechas
@@ -988,7 +1097,10 @@ CREATE TABLE time_block_series (
   CONSTRAINT time_block_series_effective_range_ck  CHECK (
     effective_until IS NULL OR effective_until >= effective_from
   ),
-  CONSTRAINT time_block_series_reason_ck CHECK (reason IS NULL OR char_length(reason) <= 200)
+  CONSTRAINT time_block_series_reason_ck CHECK (reason IS NULL OR char_length(reason) <= 200),
+
+  -- DDL-TMP-01: la eliminación lógica no puede preceder a la creación.
+  CONSTRAINT time_block_series_deleted_at_ck CHECK (deleted_at IS NULL OR deleted_at >= created_at)
 );
 
 COMMENT ON TABLE time_block_series IS
@@ -1008,7 +1120,7 @@ ALTER TABLE time_block_series ENABLE ROW LEVEL SECURITY;
 ALTER TABLE time_block_series FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY time_block_series_all_admin_policy ON time_block_series
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 
 CREATE POLICY time_block_series_select_tenant_policy ON time_block_series
   FOR SELECT TO barberia_app
@@ -1042,6 +1154,52 @@ COMMENT ON TABLE time_block_series_date IS
   'Fechas explícitas de una serie de tipo date_list (por ejemplo, vacaciones del 15 al 30). '
   'Clasificación: negocio.';
 
+-- DDL-INT-03: ninguna restricción declarativa puede comprobar a la vez que el
+-- padre es de tipo date_list y que la fecha cae dentro de su rango efectivo
+-- (effective_from/effective_until). Disparador pequeño y documentado, como
+-- pide el hallazgo, en vez de dividir el modelo por tipo.
+CREATE OR REPLACE FUNCTION time_block_series_date_check_parent()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog
+AS $$
+DECLARE
+  v_series public.time_block_series%ROWTYPE;
+BEGIN
+  SELECT * INTO v_series
+  FROM public.time_block_series
+  WHERE id = NEW.series_id AND barbershop_id = NEW.barbershop_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'time_block_series % no existe en la barbería %', NEW.series_id, NEW.barbershop_id;
+  END IF;
+
+  IF v_series.recurrence_kind <> 'date_list' THEN
+    RAISE EXCEPTION 'time_block_series % no es date_list (es %): no admite fechas explícitas',
+      NEW.series_id, v_series.recurrence_kind;
+  END IF;
+
+  IF NEW.block_date < v_series.effective_from
+     OR (v_series.effective_until IS NOT NULL AND NEW.block_date > v_series.effective_until) THEN
+    RAISE EXCEPTION 'block_date % fuera del rango efectivo [%, %] de time_block_series %',
+      NEW.block_date, v_series.effective_from, v_series.effective_until, NEW.series_id;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+REVOKE ALL     ON FUNCTION time_block_series_date_check_parent() FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION time_block_series_date_check_parent() TO barberia_app;
+
+COMMENT ON FUNCTION time_block_series_date_check_parent() IS
+  'Valida que la fecha explícita pertenezca a una serie date_list vigente en ese rango '
+  '(DDL-INT-03). No puede expresarse como CHECK: necesita leer otra tabla.';
+
+CREATE TRIGGER time_block_series_date_check_parent_trg
+  BEFORE INSERT OR UPDATE ON time_block_series_date
+  FOR EACH ROW EXECUTE FUNCTION time_block_series_date_check_parent();
+
 -- Excepciones individuales: "esta instancia no" sin desarmar la serie.
 CREATE TABLE time_block_series_exception (
   barbershop_id uuid        NOT NULL,
@@ -1069,7 +1227,7 @@ ALTER TABLE time_block_series_exception ENABLE ROW LEVEL SECURITY;
 ALTER TABLE time_block_series_exception FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY time_block_series_date_all_admin_policy ON time_block_series_date
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 CREATE POLICY time_block_series_date_select_tenant_policy ON time_block_series_date
   FOR SELECT TO barberia_app USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
 CREATE POLICY time_block_series_date_insert_tenant_policy ON time_block_series_date
@@ -1078,7 +1236,7 @@ CREATE POLICY time_block_series_date_delete_tenant_policy ON time_block_series_d
   FOR DELETE TO barberia_app USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
 
 CREATE POLICY time_block_series_exception_all_admin_policy ON time_block_series_exception
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 CREATE POLICY time_block_series_exception_select_tenant_policy ON time_block_series_exception
   FOR SELECT TO barberia_app USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
 CREATE POLICY time_block_series_exception_insert_tenant_policy ON time_block_series_exception
@@ -1113,9 +1271,13 @@ CREATE TABLE time_block (
     FOREIGN KEY (barbershop_id, barber_id)
     REFERENCES barber (barbershop_id, id) ON DELETE CASCADE,
 
+  -- RESTRICT, no SET NULL (DDL-INT-02): barbershop_id es NOT NULL y una FK
+  -- compuesta con SET NULL anularía ambas columnas a la vez, violando el
+  -- NOT NULL y haciendo fallar el DELETE del staff_user. staff_user nunca se
+  -- borra físicamente en este diseño (se desactiva, no se elimina).
   CONSTRAINT time_block_barbershop_id_deleted_by_fk
     FOREIGN KEY (barbershop_id, deleted_by)
-    REFERENCES staff_user (barbershop_id, id) ON DELETE SET NULL,
+    REFERENCES staff_user (barbershop_id, id) ON DELETE RESTRICT,
 
   CONSTRAINT time_block_block_type_ck CHECK (
     block_type IN ('break', 'lunch', 'unavailable', 'day_off', 'holiday', 'vacation', 'emergency')
@@ -1128,7 +1290,9 @@ CREATE TABLE time_block (
   CONSTRAINT time_block_reason_ck     CHECK (reason IS NULL OR char_length(reason) <= 200),
   CONSTRAINT time_block_deleted_by_ck CHECK (
     (deleted_at IS NULL AND deleted_by IS NULL) OR deleted_at IS NOT NULL
-  )
+  ),
+  -- DDL-TMP-01: la eliminación lógica no puede preceder a la creación.
+  CONSTRAINT time_block_deleted_at_ck CHECK (deleted_at IS NULL OR deleted_at >= created_at)
 );
 
 COMMENT ON TABLE time_block IS
@@ -1155,7 +1319,7 @@ ALTER TABLE time_block ENABLE ROW LEVEL SECURITY;
 ALTER TABLE time_block FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY time_block_all_admin_policy ON time_block
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 
 CREATE POLICY time_block_select_tenant_policy ON time_block
   FOR SELECT TO barberia_app
@@ -1181,9 +1345,110 @@ GRANT SELECT, INSERT, UPDATE ON TABLE time_block TO barberia_app;
 -- F-EST-04, F-DISP-02. Reglas RN-CON-01, RN-CON-03, RN-CIT-*, RN-HIS-*,
 -- RN-RES-*, y la máquina completa de estados-citas.md.
 --
--- NOTA: esta sección depende de `customer` (sección E.1). Si B3 se construye
--- antes que B4, la migración de `customer` se adelanta con B3, porque toda
--- cita —también la manual— referencia un cliente.
+-- DDL-INT-00: `customer` vive aquí, en D.0, y no en la sección E de reserva
+-- pública donde pertenece conceptualmente (RN-DAT-01, RN-DAT-03, DEC-022),
+-- porque toda cita —también la manual— la referencia. El archivo debe
+-- ejecutarse en orden desde una base vacía; si `customer` se copiara junto al
+-- resto de la sección E, `appointment` fallaría por una FK a una tabla que
+-- todavía no existe.
+
+-- ---------------------------------------------------------------------------
+-- D.0 · `customer` — RN-DAT-01, RN-DAT-03, DEC-022
+-- ---------------------------------------------------------------------------
+-- Toda cita referencia un cliente, también la manual: un único lugar donde
+-- anonimizar (RN-DAT-03) en lugar de datos personales repartidos entre tablas.
+-- Por eso `phone` y `email` son opcionales: la reserva pública los exige
+-- (DEC-022) pero la cita manual puede omitirlos (RN-CIT-02).
+
+CREATE TABLE customer (
+  id             uuid        NOT NULL DEFAULT gen_random_uuid(),
+  barbershop_id  uuid        NOT NULL,
+  full_name      text        NOT NULL,
+  phone          text,
+  email          text,
+  anonymized_at  timestamptz,
+  created_at     timestamptz NOT NULL DEFAULT now(),
+  updated_at     timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT customer_id_pk               PRIMARY KEY (id),
+  CONSTRAINT customer_barbershop_id_id_uk UNIQUE (barbershop_id, id),
+  CONSTRAINT customer_barbershop_id_fk    FOREIGN KEY (barbershop_id)
+                                          REFERENCES barbershop (id) ON DELETE RESTRICT,
+
+  CONSTRAINT customer_full_name_ck CHECK (
+    btrim(full_name) <> '' AND char_length(full_name) <= 120
+  ),
+  CONSTRAINT customer_phone_ck CHECK (phone IS NULL OR phone ~ '^\+[1-9][0-9]{7,14}$'),
+  -- DDL-VAL-01: forma canónica explícita (sin espacios, ya recortado), no
+  -- solo el patrón mínimo de arroba y punto.
+  CONSTRAINT customer_email_ck CHECK (
+    email IS NULL
+    OR (
+      email = lower(email)
+      AND email = btrim(email)
+      AND email !~ '\s'
+      AND email LIKE '_%@_%._%'
+      AND char_length(email) <= 254
+    )
+  ),
+
+  -- La anonimización es idempotente y verificable: una fila anonimizada no
+  -- conserva teléfono ni correo (RN-DAT-03, DEC-025).
+  CONSTRAINT customer_anonymized_ck CHECK (
+    anonymized_at IS NULL OR (phone IS NULL AND email IS NULL)
+  )
+);
+
+COMMENT ON TABLE customer IS
+  'Persona que reserva. Propietario funcional: barbería. Retención: 24 meses configurables, '
+  'después anonimización (RN-DAT-03, DEC-025). Clasificación: DATO PERSONAL. '
+  'La persona atendida NO se guarda aquí: vive en appointment.attendee_name (RN-RES-03).';
+
+-- Permite reutilizar el cliente por teléfono en el flujo público sin una
+-- carrera entre SELECT e INSERT. Consecuencia aceptada: un padre que reserva
+-- para su hijo con el mismo teléfono es UN cliente con varias citas de
+-- distintos `attendee_name`, que es exactamente el modelo de RN-RES-03.
+CREATE UNIQUE INDEX idx_customer_shop_phone
+  ON customer (barbershop_id, phone)
+  WHERE phone IS NOT NULL AND anonymized_at IS NULL;
+
+-- DEC-046: el correo es único por barbería, no global (a diferencia de
+-- staff_user.email, que sí lo es por DEC-016/H.5). El CHECK de email ya
+-- exige forma canónica en minúsculas y sin espacios, así que el índice no
+-- necesita envolver lower(email).
+CREATE UNIQUE INDEX idx_customer_shop_email
+  ON customer (barbershop_id, email)
+  WHERE email IS NOT NULL AND anonymized_at IS NULL;
+
+CREATE INDEX idx_customer_shop_anonymization_due
+  ON customer (barbershop_id, created_at)
+  WHERE anonymized_at IS NULL;
+
+CREATE TRIGGER customer_set_updated_at
+  BEFORE UPDATE ON customer
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+ALTER TABLE customer ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customer FORCE  ROW LEVEL SECURITY;
+
+CREATE POLICY customer_all_admin_policy ON customer
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
+
+CREATE POLICY customer_select_tenant_policy ON customer
+  FOR SELECT TO barberia_app
+  USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
+
+CREATE POLICY customer_insert_tenant_policy ON customer
+  FOR INSERT TO barberia_app
+  WITH CHECK (barbershop_id = current_setting('app.barbershop_id')::uuid);
+
+CREATE POLICY customer_update_tenant_policy ON customer
+  FOR UPDATE TO barberia_app
+  USING      (barbershop_id = current_setting('app.barbershop_id')::uuid)
+  WITH CHECK (barbershop_id = current_setting('app.barbershop_id')::uuid);
+
+-- Sin DELETE: los datos personales se anonimizan, no se borran (RN-DAT-03).
+GRANT SELECT, INSERT, UPDATE ON TABLE customer TO barberia_app;
 
 -- ---------------------------------------------------------------------------
 -- D.1 · `appointment`
@@ -1272,18 +1537,30 @@ CREATE TABLE appointment (
     customer_note IS NULL OR char_length(customer_note) <= 500
   ),
 
-  -- Un motivo de cancelación solo tiene sentido en una cita cancelada.
+  -- DDL-INT-04: la resta de dos timestamptz es la diferencia exacta entre dos
+  -- instantes absolutos, no una suma calendárica; EXTRACT(EPOCH ...) de esa
+  -- resta no depende de la zona de sesión ni de DST. Probado contra
+  -- PostgreSQL real cruzando medianoche y un cambio de horario de verano.
+  CONSTRAINT appointment_duration_matches_snapshot_ck CHECK (
+    EXTRACT(EPOCH FROM (ends_at - starts_at)) = duration_minutes_snapshot * 60
+  ),
+
+  -- Un motivo de cancelación solo tiene sentido en una cita cancelada, y con cota (DDL-VAL-01).
   CONSTRAINT appointment_cancellation_reason_ck CHECK (
     cancellation_reason IS NULL
-    OR status IN ('cancelled_by_customer', 'cancelled_by_barber')
+    OR (
+      status IN ('cancelled_by_customer', 'cancelled_by_barber')
+      AND char_length(cancellation_reason) <= 500
+    )
   ),
 
   -- `confirmed` es el único estado no terminal; los cuatro restantes tienen
-  -- instante de resolución.
+  -- instante de resolución, y ese instante no puede preceder a la creación
+  -- de la cita (DDL-TMP-01).
   CONSTRAINT appointment_resolved_at_ck CHECK (
     (status = 'confirmed' AND resolved_at IS NULL)
     OR
-    (status <> 'confirmed' AND resolved_at IS NOT NULL)
+    (status <> 'confirmed' AND resolved_at IS NOT NULL AND resolved_at >= created_at)
   )
 );
 
@@ -1346,7 +1623,7 @@ ALTER TABLE appointment ENABLE ROW LEVEL SECURITY;
 ALTER TABLE appointment FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY appointment_all_admin_policy ON appointment
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 
 CREATE POLICY appointment_select_tenant_policy ON appointment
   FOR SELECT TO barberia_app
@@ -1394,20 +1671,26 @@ CREATE TABLE appointment_history (
     FOREIGN KEY (barbershop_id, actor_staff_user_id)
     REFERENCES staff_user (barbershop_id, id) ON DELETE RESTRICT,
 
-  -- Vocabulario de eventos tomado literalmente de estados-citas.md §9.
-  -- ATENCIÓN: esos valores están en español mientras §11 del mismo documento
-  -- exige valores almacenados en inglés. La contradicción está señalada al
-  -- final de este archivo y debe resolverse ANTES de escribir esta migración.
+  -- DDL-HIS-01: actor_customer_id no tenía FK propia; un cliente borrado (no
+  -- ocurre hoy, pero nada lo impedía a nivel de tipos) habría dejado actores
+  -- huérfanos. Tenant-aware, igual que el resto de referencias de esta tabla.
+  CONSTRAINT appointment_history_barbershop_id_actor_customer_id_fk
+    FOREIGN KEY (barbershop_id, actor_customer_id)
+    REFERENCES customer (barbershop_id, id) ON DELETE RESTRICT,
+
+  -- Vocabulario en inglés y snake_case (DEC-041/CT-002): estados-citas.md §9
+  -- usaba puntos en español, en contradicción con la regla general de la
+  -- sección 11 del mismo documento. Resuelto explícitamente por el propietario.
   CONSTRAINT appointment_history_event_type_ck CHECK (
     event_type IN (
-      'cita.creada',
-      'cita.reprogramada',
-      'cita.servicio_modificado',
-      'cita.completada',
-      'cita.cancelada_por_cliente',
-      'cita.cancelada_por_barbero',
-      'cita.no_asistio',
-      'cita.estado_corregido'
+      'appointment_created',
+      'appointment_rescheduled',
+      'appointment_service_changed',
+      'appointment_completed',
+      'appointment_cancelled_by_customer',
+      'appointment_cancelled_by_barber',
+      'appointment_no_show',
+      'appointment_status_corrected'
     )
   ),
 
@@ -1423,11 +1706,14 @@ CREATE TABLE appointment_history (
     (actor_type = 'system'   AND actor_staff_user_id IS NULL     AND actor_customer_id IS NULL)
   ),
 
-  -- La corrección auditada (T8) exige motivo obligatorio (RN-CIT-04).
+  -- La corrección auditada (T8) exige motivo obligatorio (RN-CIT-04); en los
+  -- demás casos es opcional pero acotado (DDL-VAL-01).
   CONSTRAINT appointment_history_reason_ck CHECK (
-    (event_type = 'cita.estado_corregido' AND reason IS NOT NULL AND btrim(reason) <> '')
+    (event_type = 'appointment_status_corrected'
+       AND reason IS NOT NULL AND btrim(reason) <> '' AND char_length(reason) <= 500)
     OR
-    (event_type <> 'cita.estado_corregido' AND (reason IS NULL OR btrim(reason) <> ''))
+    (event_type <> 'appointment_status_corrected'
+       AND (reason IS NULL OR (btrim(reason) <> '' AND char_length(reason) <= 500)))
   )
 );
 
@@ -1439,11 +1725,18 @@ COMMENT ON TABLE appointment_history IS
 CREATE INDEX idx_appointment_history_shop_appointment_occurred
   ON appointment_history (barbershop_id, appointment_id, occurred_at);
 
+-- DDL-HIS-01: historial de un cliente por actor (por ejemplo, para atender un
+-- derecho de acceso). Parcial porque la mayoría de filas son actor_type
+-- staff/system, sin actor_customer_id.
+CREATE INDEX idx_appointment_history_shop_actor_customer
+  ON appointment_history (barbershop_id, actor_customer_id)
+  WHERE actor_customer_id IS NOT NULL;
+
 ALTER TABLE appointment_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE appointment_history FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY appointment_history_all_admin_policy ON appointment_history
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 
 CREATE POLICY appointment_history_select_tenant_policy ON appointment_history
   FOR SELECT TO barberia_app
@@ -1482,6 +1775,13 @@ CREATE TABLE appointment_history_change (
   -- Una entrada sin ningún valor no aporta nada.
   CONSTRAINT appointment_history_change_value_ck CHECK (
     previous_value IS NOT NULL OR new_value IS NOT NULL
+  ),
+  -- DDL-VAL-01: cota generosa pero explícita; antes no tenían límite.
+  CONSTRAINT appointment_history_change_previous_value_ck CHECK (
+    previous_value IS NULL OR char_length(previous_value) <= 1000
+  ),
+  CONSTRAINT appointment_history_change_new_value_ck CHECK (
+    new_value IS NULL OR char_length(new_value) <= 1000
   )
 );
 
@@ -1493,7 +1793,7 @@ ALTER TABLE appointment_history_change ENABLE ROW LEVEL SECURITY;
 ALTER TABLE appointment_history_change FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY appointment_history_change_all_admin_policy ON appointment_history_change
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 CREATE POLICY appointment_history_change_select_tenant_policy ON appointment_history_change
   FOR SELECT TO barberia_app USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
 CREATE POLICY appointment_history_change_insert_tenant_policy ON appointment_history_change
@@ -1509,89 +1809,10 @@ REVOKE UPDATE, DELETE ON TABLE appointment_history_change FROM barberia_app;
 -- Funciones F-PUB-01 a F-PUB-08, F-DISP-01, F-DISP-03 a F-DISP-05, F-CITA-07.
 
 -- ---------------------------------------------------------------------------
--- E.1 · `customer` — RN-DAT-01, RN-DAT-03, DEC-022
+-- E.1 · `appointment_access_token` — F-PUB-07, DEC-022
 -- ---------------------------------------------------------------------------
--- Toda cita referencia un cliente, también la manual: un único lugar donde
--- anonimizar (RN-DAT-03) en lugar de datos personales repartidos entre tablas.
--- Por eso `phone` y `email` son opcionales: la reserva pública los exige
--- (DEC-022) pero la cita manual puede omitirlos (RN-CIT-02).
-
-CREATE TABLE customer (
-  id             uuid        NOT NULL DEFAULT gen_random_uuid(),
-  barbershop_id  uuid        NOT NULL,
-  full_name      text        NOT NULL,
-  phone          text,
-  email          text,
-  anonymized_at  timestamptz,
-  created_at     timestamptz NOT NULL DEFAULT now(),
-  updated_at     timestamptz NOT NULL DEFAULT now(),
-
-  CONSTRAINT customer_id_pk               PRIMARY KEY (id),
-  CONSTRAINT customer_barbershop_id_id_uk UNIQUE (barbershop_id, id),
-  CONSTRAINT customer_barbershop_id_fk    FOREIGN KEY (barbershop_id)
-                                          REFERENCES barbershop (id) ON DELETE RESTRICT,
-
-  CONSTRAINT customer_full_name_ck CHECK (
-    btrim(full_name) <> '' AND char_length(full_name) <= 120
-  ),
-  CONSTRAINT customer_phone_ck CHECK (phone IS NULL OR phone ~ '^\+[1-9][0-9]{7,14}$'),
-  CONSTRAINT customer_email_ck CHECK (
-    email IS NULL OR (email = lower(email) AND email LIKE '_%@_%._%' AND char_length(email) <= 254)
-  ),
-
-  -- La anonimización es idempotente y verificable: una fila anonimizada no
-  -- conserva teléfono ni correo (RN-DAT-03, DEC-025).
-  CONSTRAINT customer_anonymized_ck CHECK (
-    anonymized_at IS NULL OR (phone IS NULL AND email IS NULL)
-  )
-);
-
-COMMENT ON TABLE customer IS
-  'Persona que reserva. Propietario funcional: barbería. Retención: 24 meses configurables, '
-  'después anonimización (RN-DAT-03, DEC-025). Clasificación: DATO PERSONAL. '
-  'La persona atendida NO se guarda aquí: vive en appointment.attendee_name (RN-RES-03).';
-
--- Permite reutilizar el cliente por teléfono en el flujo público sin una
--- carrera entre SELECT e INSERT. Consecuencia aceptada: un padre que reserva
--- para su hijo con el mismo teléfono es UN cliente con varias citas de
--- distintos `attendee_name`, que es exactamente el modelo de RN-RES-03.
-CREATE UNIQUE INDEX idx_customer_shop_phone
-  ON customer (barbershop_id, phone)
-  WHERE phone IS NOT NULL AND anonymized_at IS NULL;
-
-CREATE INDEX idx_customer_shop_anonymization_due
-  ON customer (barbershop_id, created_at)
-  WHERE anonymized_at IS NULL;
-
-CREATE TRIGGER customer_set_updated_at
-  BEFORE UPDATE ON customer
-  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-
-ALTER TABLE customer ENABLE ROW LEVEL SECURITY;
-ALTER TABLE customer FORCE  ROW LEVEL SECURITY;
-
-CREATE POLICY customer_all_admin_policy ON customer
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
-
-CREATE POLICY customer_select_tenant_policy ON customer
-  FOR SELECT TO barberia_app
-  USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
-
-CREATE POLICY customer_insert_tenant_policy ON customer
-  FOR INSERT TO barberia_app
-  WITH CHECK (barbershop_id = current_setting('app.barbershop_id')::uuid);
-
-CREATE POLICY customer_update_tenant_policy ON customer
-  FOR UPDATE TO barberia_app
-  USING      (barbershop_id = current_setting('app.barbershop_id')::uuid)
-  WITH CHECK (barbershop_id = current_setting('app.barbershop_id')::uuid);
-
--- Sin DELETE: los datos personales se anonimizan, no se borran (RN-DAT-03).
-GRANT SELECT, INSERT, UPDATE ON TABLE customer TO barberia_app;
-
--- ---------------------------------------------------------------------------
--- E.2 · `appointment_access_token` — F-PUB-07, DEC-022
--- ---------------------------------------------------------------------------
+-- `customer` se trasladó a D.0 (DDL-INT-00): toda cita la referencia y el
+-- archivo debe ejecutarse en orden desde una base vacía.
 
 CREATE TABLE appointment_access_token (
   id             uuid        NOT NULL DEFAULT gen_random_uuid(),
@@ -1610,9 +1831,14 @@ CREATE TABLE appointment_access_token (
 
   -- Unicidad global: el enlace se resuelve antes de conocer la barbería.
   CONSTRAINT appointment_access_token_token_hash_uk UNIQUE (token_hash),
-  CONSTRAINT appointment_access_token_token_hash_ck CHECK (char_length(token_hash) = 64),
+  -- DDL-VAL-01: hexadecimal minúscula de 64 caracteres (SHA-256), no solo longitud.
+  CONSTRAINT appointment_access_token_token_hash_ck CHECK (token_hash ~ '^[0-9a-f]{64}$'),
   CONSTRAINT appointment_access_token_expires_at_ck CHECK (
     expires_at IS NULL OR expires_at > issued_at
+  ),
+  -- DDL-TMP-01: la revocación no puede preceder a la emisión.
+  CONSTRAINT appointment_access_token_revoked_at_ck CHECK (
+    revoked_at IS NULL OR revoked_at >= issued_at
   )
 );
 
@@ -1629,7 +1855,7 @@ ALTER TABLE appointment_access_token ENABLE ROW LEVEL SECURITY;
 ALTER TABLE appointment_access_token FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY appointment_access_token_all_admin_policy ON appointment_access_token
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 CREATE POLICY appointment_access_token_select_tenant_policy ON appointment_access_token
   FOR SELECT TO barberia_app USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
 CREATE POLICY appointment_access_token_insert_tenant_policy ON appointment_access_token
@@ -1642,7 +1868,7 @@ CREATE POLICY appointment_access_token_update_tenant_policy ON appointment_acces
 GRANT SELECT, INSERT, UPDATE ON TABLE appointment_access_token TO barberia_app;
 
 -- ---------------------------------------------------------------------------
--- E.3 · Resolución pública previa al contexto de tenant
+-- E.2 · Resolución pública previa al contexto de tenant
 -- ---------------------------------------------------------------------------
 -- Mismo patrón acotado de la sección A.0, por el mismo motivo: el enlace
 -- público y el enlace del turno llegan sin sesión y sin barbería conocida.
@@ -1674,7 +1900,7 @@ GRANT  EXECUTE ON FUNCTION public_resolve_barbershop_by_slug(text)          TO b
 GRANT  EXECUTE ON FUNCTION public_resolve_appointment_token_tenant(text)    TO barberia_app;
 
 -- ---------------------------------------------------------------------------
--- E.4 · Parámetros configurables de reserva y cancelación — DEC-018
+-- E.3 · Parámetros configurables de reserva y cancelación — DEC-018
 -- ---------------------------------------------------------------------------
 -- Columnas tipadas en `barbershop`, no una tabla clave/valor ni `jsonb`: cada
 -- parámetro depende de la identidad de la barbería (3FN), tiene su propio tipo
@@ -1708,6 +1934,11 @@ ALTER TABLE barbershop
        AND auto_close_delay_hours BETWEEN 1 AND 168)
     OR
     (appointment_closing_mode = 'manual' AND auto_close_delay_hours IS NULL)
+  ),
+  -- DDL-CFG-01: la anticipación mínima no puede superar toda la ventana
+  -- pública de reserva; si lo hiciera, ninguna franja quedaría reservable.
+  ADD CONSTRAINT barbershop_min_lead_vs_window_ck CHECK (
+    min_lead_minutes <= max_booking_window_days * 1440
   );
 
 
@@ -1796,7 +2027,7 @@ ALTER TABLE barbershop_reminder_rule ENABLE ROW LEVEL SECURITY;
 ALTER TABLE barbershop_reminder_rule FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY barbershop_reminder_rule_all_admin_policy ON barbershop_reminder_rule
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 CREATE POLICY barbershop_reminder_rule_select_tenant_policy ON barbershop_reminder_rule
   FOR SELECT TO barberia_app USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
 CREATE POLICY barbershop_reminder_rule_insert_tenant_policy ON barbershop_reminder_rule
@@ -1809,6 +2040,47 @@ CREATE POLICY barbershop_reminder_rule_delete_tenant_policy ON barbershop_remind
   FOR DELETE TO barberia_app USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE barbershop_reminder_rule TO barberia_app;
+
+-- DDL-BIZ-01: cero filas de recordatorio para una barbería nueva significaba
+-- "sin recordatorios", contradiciendo el valor inicial de DEC-018 (1
+-- recordatorio a 30 minutos por defecto). El disparador lo crea al nacer la
+-- barbería; el propietario puede borrar la fila después si de verdad no
+-- quiere recordatorios, y esa elección explícita persiste.
+CREATE OR REPLACE FUNCTION barbershop_seed_default_reminder_rule()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog
+AS $$
+BEGIN
+  INSERT INTO public.barbershop_reminder_rule (barbershop_id, ordinal, lead_minutes)
+  VALUES (NEW.id, 1, 30);
+  RETURN NEW;
+END;
+$$;
+
+REVOKE ALL     ON FUNCTION barbershop_seed_default_reminder_rule() FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION barbershop_seed_default_reminder_rule() TO barberia_app;
+
+COMMENT ON FUNCTION barbershop_seed_default_reminder_rule() IS
+  'Crea el recordatorio ordinal 1 a 30 minutos por defecto al crear una barbería '
+  '(DEC-018, DDL-BIZ-01).';
+
+CREATE TRIGGER barbershop_seed_default_reminder_rule_trg
+  AFTER INSERT ON barbershop
+  FOR EACH ROW EXECUTE FUNCTION barbershop_seed_default_reminder_rule();
+
+-- Alcance retroactivo (DDL-BIZ-01): barberías creadas antes de que esta
+-- sección se aplicara reciben la misma regla por defecto si aún no tienen
+-- ninguna configuración de recordatorio ordinal 1. Sentencia de una sola vez,
+-- segura de repetir: no toca una barbería que ya tiene su ordinal 1 definido,
+-- sea cual sea su valor, ni una que borró la fila a propósito.
+INSERT INTO barbershop_reminder_rule (barbershop_id, ordinal, lead_minutes)
+SELECT b.id, 1, 30
+FROM barbershop b
+WHERE NOT EXISTS (
+  SELECT 1 FROM barbershop_reminder_rule r
+  WHERE r.barbershop_id = b.id AND r.ordinal = 1
+);
 
 -- ---------------------------------------------------------------------------
 -- F.3 · `notification_schedule` — RN-REC-01, RN-REC-06, DEC-032
@@ -1850,12 +2122,16 @@ CREATE TABLE notification_schedule (
   CONSTRAINT notification_schedule_status_ck CHECK (
     status IN ('pending', 'sent', 'cancelled', 'skipped')
   ),
+  -- DDL-TMP-01: además de exigir el instante correcto por estado, ese
+  -- instante no puede preceder a la creación de la programación.
   CONSTRAINT notification_schedule_outcome_ck CHECK (
     (status = 'pending'   AND sent_at IS NULL     AND cancelled_at IS NULL)
     OR
-    (status = 'sent'      AND sent_at IS NOT NULL AND cancelled_at IS NULL)
+    (status = 'sent'      AND sent_at IS NOT NULL AND cancelled_at IS NULL
+       AND sent_at >= created_at)
     OR
-    (status = 'cancelled' AND cancelled_at IS NOT NULL)
+    (status = 'cancelled' AND cancelled_at IS NOT NULL
+       AND cancelled_at >= created_at)
     OR
     (status = 'skipped')
   )
@@ -1887,7 +2163,7 @@ ALTER TABLE notification_schedule ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_schedule FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY notification_schedule_all_admin_policy ON notification_schedule
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 CREATE POLICY notification_schedule_select_tenant_policy ON notification_schedule
   FOR SELECT TO barberia_app USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
 CREATE POLICY notification_schedule_insert_tenant_policy ON notification_schedule
@@ -1948,7 +2224,6 @@ CREATE TABLE notification_attempt (
   barbershop_id            uuid        NOT NULL,
   notification_schedule_id uuid        NOT NULL,
   attempt_number           smallint    NOT NULL,
-  channel                  text        NOT NULL,
   result                   text        NOT NULL,
   template_key             text        NOT NULL,
   template_version         text        NOT NULL,
@@ -1966,16 +2241,20 @@ CREATE TABLE notification_attempt (
     UNIQUE (barbershop_id, notification_schedule_id, attempt_number),
 
   CONSTRAINT notification_attempt_number_ck  CHECK (attempt_number BETWEEN 1 AND 20),
-  CONSTRAINT notification_attempt_channel_ck CHECK (channel IN ('email', 'whatsapp')),
   CONSTRAINT notification_attempt_result_ck  CHECK (
     result IN ('delivered', 'failed', 'rejected')
   ),
+  -- DDL-VAL-01: error_code también acotado, no solo NULL-eable según result.
   CONSTRAINT notification_attempt_error_code_ck CHECK (
-    (result = 'delivered' AND error_code IS NULL) OR result <> 'delivered'
+    (result = 'delivered' AND error_code IS NULL)
+    OR (result <> 'delivered' AND (error_code IS NULL OR char_length(error_code) <= 100))
   ),
   CONSTRAINT notification_attempt_template_ck CHECK (
     btrim(template_key) <> '' AND char_length(template_key) <= 80
     AND btrim(template_version) <> '' AND char_length(template_version) <= 20
+  ),
+  CONSTRAINT notification_attempt_provider_message_id_ck CHECK (
+    provider_message_id IS NULL OR char_length(provider_message_id) <= 200
   )
 );
 
@@ -1983,7 +2262,9 @@ COMMENT ON TABLE notification_attempt IS
   'Evidencia de cada intento de envío, incluidos los fallidos (RN-REC-04, DEC-015). '
   'Propietario funcional: plataforma. Retención: la de la cita. Clasificación: técnico. '
   'APPEND-ONLY. Guarda plantilla y versión, NUNCA el contenido, el teléfono ni el correo '
-  '(RN-DAT-02). Un error del proveedor se depura antes de escribirlo en error_code.';
+  '(RN-DAT-02). Un error del proveedor se depura antes de escribirlo en error_code. '
+  'Sin columna channel propia (DDL-NOR-01): se lee de notification_schedule.channel a través '
+  'de notification_schedule_id, evitando que las dos copias puedan discrepar.';
 
 CREATE INDEX idx_notification_attempt_shop_schedule
   ON notification_attempt (barbershop_id, notification_schedule_id, attempted_at);
@@ -1992,7 +2273,7 @@ ALTER TABLE notification_attempt ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_attempt FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY notification_attempt_all_admin_policy ON notification_attempt
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 CREATE POLICY notification_attempt_select_tenant_policy ON notification_attempt
   FOR SELECT TO barberia_app USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
 CREATE POLICY notification_attempt_insert_tenant_policy ON notification_attempt
@@ -2059,20 +2340,13 @@ COMMENT ON FUNCTION retention_claim_due_customers(integer, timestamptz) IS
 -- corrección documental, conforme a AGENTS.md ("no inventar una respuesta a una
 -- duda o contradicción: registrarla antes de codificar").
 --
--- H.1 · Versión mínima de PostgreSQL sin decisión
---       `database/README.md` la declara pendiente. Las migraciones aplicadas
---       exigen 14 o superior y lo verifican en tiempo de ejecución, pero el
---       número exacto de la versión soportada sigue sin `DEC-*`.
---
--- H.2 · Idioma de los valores de `appointment_history.event_type`
---       estados-citas.md §9 los escribe en español (`cita.creada`) y §11 del
---       mismo documento exige valores almacenados en inglés y minúsculas.
---       Afecta a la migración de la sección D.2 y a la API. Candidata a `CT-*`.
---
--- H.3 · Anticipación del segundo y tercer recordatorio
---       DEC-018 fija la cantidad (0 a 3) y la anticipación del primero (30
---       minutos), pero no la de los demás. `barbershop_reminder_rule` deja el
---       espacio modelado sin inventar valores; falta la decisión del producto.
+-- Resueltos desde la primera versión de este archivo (se conservan para no
+-- perder el rastro, no porque sigan abiertos):
+--   H.1 · Versión mínima de PostgreSQL — DEC-044 la fija en 14.
+--   H.2 · Idioma de `appointment_history.event_type` — DEC-041/CT-002, ya
+--         aplicado en la sección D.2 y en estados-citas.md §9.
+--   H.3 · Anticipación del 2.º y 3.er recordatorio — DEC-048 (24h y 2h),
+--         con el ordinal 1/30min sembrado por disparador (DDL-BIZ-01).
 --
 -- H.4 · Validación de la zona IANA de la barbería
 --       No es expresable en un `CHECK` (pg_timezone_names no es inmutable).
@@ -2092,4 +2366,10 @@ COMMENT ON FUNCTION retention_claim_due_customers(integer, timestamptz) IS
 --       quedar dentro de un bloqueo— es deliberada (RN-CON-06) y el flujo
 --       asistido que la resuelve es responsabilidad de la aplicación.
 --       `docs/05-backend/concurrencia.md` sigue pendiente de creación.
+--
+-- H.7 · Admin RLS policy targeting barberia_migrator en tablas no tocadas
+--       por el issue de horarios/citas/historial (service, barber_service,
+--       notification_channel_setting, appointment_access_token quedó ya en
+--       barberia_owner). Gap heredado, a resolver junto con la suite RLS
+--       completa (DDL-RLS-01, issue de índices/validaciones/RLS).
 -- ===========================================================================

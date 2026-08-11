@@ -1,6 +1,6 @@
 ---
 titulo: "Estándar de diseño y evolución de base de datos"
-version: "1.3"
+version: "1.4"
 estado: "Obligatorio para desarrollo"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-11"
@@ -160,6 +160,7 @@ Las reglas que cambian con frecuencia o requieren contexto del actor permanecen 
 - El API no usa un bloqueo en memoria como defensa de agenda; múltiples procesos dependen de la misma restricción PostgreSQL.
 - Una violación de exclusión se traduce a conflicto de negocio seguro.
 - Los trabajadores reclaman lotes pequeños con bloqueo de fila y `SKIP LOCKED`, y vuelven a validar estado vigente.
+- Un `CHECK` que compare una duración declarada contra dos `timestamptz` usa `EXTRACT(EPOCH FROM (fin - inicio))`, nunca `fin - inicio = intervalo`: la resta de dos `timestamptz` es la diferencia exacta entre dos instantes absolutos y no depende de la zona de sesión ni de horario de verano; probarlo contra PostgreSQL real cruzando medianoche y una transición de DST antes de confiar en la expresión (`DDL-INT-04`).
 
 ## 9. Seguridad, RLS y privilegios
 
