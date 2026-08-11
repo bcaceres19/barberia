@@ -206,7 +206,10 @@ CREATE TABLE staff_session (
 
   CONSTRAINT staff_session_token_hash_ck  CHECK (char_length(token_hash) = 64),
   CONSTRAINT staff_session_expires_at_ck  CHECK (expires_at > issued_at),
-  CONSTRAINT staff_session_last_used_at_ck CHECK (last_used_at >= issued_at)
+  CONSTRAINT staff_session_last_used_at_ck CHECK (last_used_at >= issued_at),
+  -- DDL-PER-01/DDL-TMP-01: la revocación no puede preceder a la emisión.
+  -- Faltaba en esta tabla aunque ya existía en appointment_access_token.
+  CONSTRAINT staff_session_revoked_at_ck CHECK (revoked_at IS NULL OR revoked_at >= issued_at)
 );
 
 COMMENT ON TABLE staff_session IS
@@ -215,11 +218,15 @@ COMMENT ON TABLE staff_session IS
   'Se almacena solo el hash SHA-256 del token opaco; el valor original vive únicamente en '
   'la cookie del navegador (CA-006-05).';
 
--- Consulta de "mis sesiones activas" y revocación masiva al cambiar contraseña
--- (CA-008-05).
-CREATE INDEX idx_staff_session_shop_user_active
-  ON staff_session (barbershop_id, staff_user_id)
-  WHERE revoked_at IS NULL;
+-- Consulta de "mis sesiones activas", revocación masiva al cambiar contraseña
+-- (CA-008-05) y auditoría de sesiones vencidas/revocadas del mismo usuario
+-- (DDL-PER-01): sin predicado parcial a propósito. Un índice parcial
+-- `WHERE revoked_at IS NULL` junto a este sería redundante -el planificador
+-- ya sirve la consulta de sesiones activas con este mismo índice completo,
+-- filtrando revoked_at en el mismo escaneo- y crearía dos índices que
+-- cubren el mismo prefijo (prohibido explícitamente por el hallazgo).
+CREATE INDEX idx_staff_session_shop_user
+  ON staff_session (barbershop_id, staff_user_id);
 
 -- Limpieza de sesiones vencidas.
 CREATE INDEX idx_staff_session_expires_at ON staff_session (expires_at);
@@ -342,6 +349,13 @@ CREATE TABLE staff_recovery_code (
   -- distintos del mismo objeto y confundirlos falsea la auditoría.
   CONSTRAINT staff_recovery_code_outcome_ck CHECK (
     NOT (consumed_at IS NOT NULL AND invalidated_at IS NOT NULL)
+  ),
+  -- DDL-PER-01/DDL-TMP-01: ningún desenlace puede preceder a la creación.
+  CONSTRAINT staff_recovery_code_consumed_at_ck CHECK (
+    consumed_at IS NULL OR consumed_at >= created_at
+  ),
+  CONSTRAINT staff_recovery_code_invalidated_at_ck CHECK (
+    invalidated_at IS NULL OR invalidated_at >= created_at
   )
 );
 
@@ -356,6 +370,13 @@ COMMENT ON TABLE staff_recovery_code IS
 CREATE UNIQUE INDEX idx_staff_recovery_code_active_per_user
   ON staff_recovery_code (barbershop_id, staff_user_id)
   WHERE consumed_at IS NULL AND invalidated_at IS NULL;
+
+-- DDL-PER-01: el índice de arriba es parcial (solo el código vigente) y no
+-- puede ensancharse sin romper la unicidad de negocio que garantiza. La
+-- auditoría de un usuario ("todos sus códigos, consumidos e invalidados
+-- incluidos") necesita uno aparte, sin predicado.
+CREATE INDEX idx_staff_recovery_code_shop_user
+  ON staff_recovery_code (barbershop_id, staff_user_id);
 
 ALTER TABLE staff_recovery_code ENABLE ROW LEVEL SECURITY;
 ALTER TABLE staff_recovery_code FORCE  ROW LEVEL SECURITY;
@@ -685,8 +706,11 @@ CREATE TRIGGER service_set_updated_at
 ALTER TABLE service ENABLE ROW LEVEL SECURITY;
 ALTER TABLE service FORCE  ROW LEVEL SECURITY;
 
+-- DDL-RLS-01/H.7: apuntaba a barberia_migrator, inconsistente con DEC-040
+-- (política administrativa de tabla nueva -> barberia_owner; barberia_migrator
+-- la satisface por membresía heredada, sin SET ROLE).
 CREATE POLICY service_all_admin_policy ON service
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 
 CREATE POLICY service_select_tenant_policy ON service
   FOR SELECT TO barberia_app
@@ -739,8 +763,9 @@ CREATE INDEX idx_barber_service_shop_service
 ALTER TABLE barber_service ENABLE ROW LEVEL SECURITY;
 ALTER TABLE barber_service FORCE  ROW LEVEL SECURITY;
 
+-- DDL-RLS-01/H.7: ídem service_all_admin_policy.
 CREATE POLICY barber_service_all_admin_policy ON barber_service
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 
 CREATE POLICY barber_service_select_tenant_policy ON barber_service
   FOR SELECT TO barberia_app
@@ -1108,9 +1133,12 @@ COMMENT ON TABLE time_block_series IS
   'Propietario funcional: barbería. Retención: permanente; eliminación lógica (RN-BLQ-04). '
   'Clasificación: negocio. Nunca se materializa en time_block: la disponibilidad la expande.';
 
-CREATE INDEX idx_time_block_series_shop_barber_active
-  ON time_block_series (barbershop_id, barber_id, effective_from)
-  WHERE deleted_at IS NULL;
+-- DDL-PER-01: sin predicado parcial. Un `WHERE deleted_at IS NULL` aparte
+-- sería un segundo índice con el mismo prefijo (duplicado prohibido por el
+-- hallazgo); este mismo índice completo sirve tanto la agenda vigente como
+-- la auditoría de series borradas lógicamente por barbero.
+CREATE INDEX idx_time_block_series_shop_barber
+  ON time_block_series (barbershop_id, barber_id, effective_from);
 
 CREATE TRIGGER time_block_series_set_updated_at
   BEFORE UPDATE ON time_block_series
@@ -1306,10 +1334,19 @@ COMMENT ON COLUMN time_block.starts_at IS
   'contrario de lo que el barbero necesita en una emergencia. El flujo asistido de citas '
   'afectadas vive en la aplicación.';
 
--- Índice de base-datos.md §12, parcial por la eliminación lógica.
+-- Índice de base-datos.md §12. DDL-PER-01: sin predicado parcial, por el
+-- mismo motivo que idx_time_block_series_shop_barber -sirve la agenda
+-- vigente y la auditoría de bloqueos borrados lógicamente por barbero sin
+-- duplicar el índice.
 CREATE INDEX idx_time_block_shop_barber_starts_at
-  ON time_block (barbershop_id, barber_id, starts_at)
-  WHERE deleted_at IS NULL;
+  ON time_block (barbershop_id, barber_id, starts_at);
+
+-- DDL-PER-01: lado referenciante de deleted_by sin índice ("¿qué bloqueos
+-- eliminó este miembro del staff?"). Parcial: la mayoría de filas nunca se
+-- eliminan (deleted_by IS NULL).
+CREATE INDEX idx_time_block_shop_deleted_by
+  ON time_block (barbershop_id, deleted_by)
+  WHERE deleted_by IS NOT NULL;
 
 CREATE TRIGGER time_block_set_updated_at
   BEFORE UPDATE ON time_block
@@ -1617,6 +1654,12 @@ CREATE INDEX idx_appointment_shop_barber_starts_at
 CREATE INDEX idx_appointment_shop_customer_starts_at
   ON appointment (barbershop_id, customer_id, starts_at DESC);
 
+-- DDL-PER-01: "citas por servicio" (ej. cuántas citas usó cada servicio,
+-- para desactivarlo con RN-SER-03) no tenía índice; sin él, la única forma
+-- de resolverlo era recorrer la tabla completa.
+CREATE INDEX idx_appointment_shop_service
+  ON appointment (barbershop_id, service_id);
+
 -- Cola del cierre automático de citas vencidas (RN-CIT-05): solo las activas.
 CREATE INDEX idx_appointment_open_ends_at
   ON appointment (barbershop_id, ends_at)
@@ -1739,6 +1782,13 @@ CREATE INDEX idx_appointment_history_shop_actor_customer
   ON appointment_history (barbershop_id, actor_customer_id)
   WHERE actor_customer_id IS NOT NULL;
 
+-- DDL-PER-01: "historial por actor" también cubre al staff, el caso más
+-- frecuente (la mayoría de eventos los genera el barbero o un proceso del
+-- sistema, no el cliente) y que no tenía índice propio.
+CREATE INDEX idx_appointment_history_shop_actor_staff
+  ON appointment_history (barbershop_id, actor_staff_user_id)
+  WHERE actor_staff_user_id IS NOT NULL;
+
 ALTER TABLE appointment_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE appointment_history FORCE  ROW LEVEL SECURITY;
 
@@ -1854,9 +1904,12 @@ COMMENT ON TABLE appointment_access_token IS
   'Propietario funcional: barbería. Retención: hasta la anonimización de la cita, que lo revoca '
   '(RN-DAT-03). Clasificación: secreto. Solo se almacena el hash; el valor viaja una vez, por correo.';
 
+-- DDL-PER-01: sin predicado parcial. Un `WHERE revoked_at IS NULL` aparte
+-- duplicaría el prefijo; este índice completo sirve tanto la resolución
+-- pública (busca uno vigente) como la auditoría de tokens ya revocados de
+-- una cita.
 CREATE INDEX idx_appointment_access_token_shop_appointment
-  ON appointment_access_token (barbershop_id, appointment_id)
-  WHERE revoked_at IS NULL;
+  ON appointment_access_token (barbershop_id, appointment_id);
 
 ALTER TABLE appointment_access_token ENABLE ROW LEVEL SECURITY;
 ALTER TABLE appointment_access_token FORCE  ROW LEVEL SECURITY;
@@ -1989,8 +2042,9 @@ CREATE TRIGGER notification_channel_setting_set_updated_at
 ALTER TABLE notification_channel_setting ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_channel_setting FORCE  ROW LEVEL SECURITY;
 
+-- DDL-RLS-01/H.7: ídem service_all_admin_policy.
 CREATE POLICY notification_channel_setting_all_admin_policy ON notification_channel_setting
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 CREATE POLICY notification_channel_setting_select_tenant_policy ON notification_channel_setting
   FOR SELECT TO barberia_app USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
 CREATE POLICY notification_channel_setting_insert_tenant_policy ON notification_channel_setting
@@ -2181,6 +2235,13 @@ COMMENT ON TABLE notification_schedule IS
 CREATE UNIQUE INDEX idx_notification_schedule_pending_unique
   ON notification_schedule (barbershop_id, appointment_id, event_type, channel, ordinal)
   WHERE status IN ('pending', 'processing');
+
+-- DDL-PER-01: el índice de arriba es parcial y no puede ensancharse sin
+-- romper la unicidad de negocio que garantiza. El historial de
+-- notificaciones de una cita (enviadas, canceladas, omitidas incluidas)
+-- necesita uno aparte, sin predicado.
+CREATE INDEX idx_notification_schedule_shop_appointment
+  ON notification_schedule (barbershop_id, appointment_id);
 
 -- Cola del trabajador (base-datos.md §12). El índice NO lleva barbershop_id
 -- delante: el trabajador reclama trabajo pendiente de todas las barberías.
@@ -2672,6 +2733,9 @@ COMMENT ON FUNCTION customer_anonymize(uuid, uuid, timestamptz) IS
 --         leases vencidos y validación de p_limit — DEC-053 (DDL-CON-01,
 --         DDL-OPS-01). retention_claim_due_customers se revisa y se
 --         mantiene sin lease por la misma decisión.
+--   H.7 · Admin RLS policy apuntando a barberia_migrator en service,
+--         barber_service y notification_channel_setting — corregido a
+--         barberia_owner (DDL-RLS-01, issue #7), consistente con DEC-040.
 --
 -- H.4 · Validación de la zona IANA de la barbería
 --       No es expresable en un `CHECK` (pg_timezone_names no es inmutable).
@@ -2692,9 +2756,13 @@ COMMENT ON FUNCTION customer_anonymize(uuid, uuid, timestamptz) IS
 --       asistido que la resuelve es responsabilidad de la aplicación.
 --       `docs/05-backend/concurrencia.md` sigue pendiente de creación.
 --
--- H.7 · Admin RLS policy targeting barberia_migrator en tablas no tocadas
---       por el issue de horarios/citas/historial (service, barber_service,
---       notification_channel_setting, appointment_access_token quedó ya en
---       barberia_owner). Gap heredado, a resolver junto con la suite RLS
---       completa (DDL-RLS-01, issue de índices/validaciones/RLS).
+-- H.9 · Índices parciales ensanchados a completos (DDL-PER-01, issue #7)
+--       staff_session, staff_recovery_code (índice nuevo aparte, no
+--       ensanchado: el parcial existente impone unicidad de negocio),
+--       time_block_series, time_block, appointment_access_token y
+--       notification_schedule (ídem staff_recovery_code) ganaron cobertura
+--       para consultas que también necesitan filas históricas/revocadas/
+--       eliminadas lógicamente, sin duplicar índices sobre el mismo
+--       prefijo. `appointment` (por service_id) y `appointment_history`
+--       (por actor_staff_user_id) ganaron un índice que no existía.
 -- ===========================================================================
