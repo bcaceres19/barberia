@@ -1,6 +1,6 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.9"
+version: "1.10"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-11"
@@ -81,6 +81,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-050` | 2026-08-11 | Sesión larga del barbero: cookie `HttpOnly`+`Secure`+`SameSite`, token opaco revocable, 30 días con renovación por uso | `DP-SEG-04`, `CA-006-02` | Confirmada |
 | `DEC-051` | 2026-08-11 | Código de recuperación de acceso: WhatsApp oficial y correo, mismo proveedor de `DEC-027` | `DP-SEG-05` | Confirmada |
 | `DEC-052` | 2026-08-11 | Límite de acceso: ventana de 15 minutos, escalamiento a verificación telefónica de 24 horas | `DP-SEG-06` | Confirmada |
+| `DEC-053` | 2026-08-11 | Protocolo de lease de `notification_claim_due` (claim/CAS/recuperación); `retention_claim_due_customers` se mantiene sin lease | `DDL-CON-01`, `DDL-CON-02`, `DDL-OPS-01` | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -563,3 +564,13 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** ventana de 1 hora con escalamiento de 1 hora (ambos más indulgentes; más tiempo para que un atacante intente sin activar el control, y el escalamiento se apaga demasiado rápido para disuadir un segundo intento el mismo día).
 - **Documentos afectados:** `01-producto/reglas-negocio.md`, `database/modelo-fisico-referencia.sql` (sección `login_throttle`), `dudas-pendientes.md` (cierra `DP-SEG-06`).
 - **Fuente:** `dudas-pendientes.md` §2 bis, `DP-SEG-06`; aprobación explícita del propietario el 2026-08-11.
+
+### DEC-053 · Protocolo de lease de `notification_claim_due` y alcance de `retention_claim_due_customers`
+
+- **Fecha:** 2026-08-11.
+- **Decisión:** `notification_claim_due` reclama con un `UPDATE ... SET status = 'processing', claim_token, claimed_at, lease_expires_at` sobre un `SELECT ... FOR UPDATE SKIP LOCKED` (lease configurable entre 30 y 3600 segundos, `p_limit` entre 1 y 200), en vez de solo bloquear la fila. La misma llamada recupera leases vencidos, sin una función aparte: su `WHERE` acepta tanto `pending` vencido como `processing` cuyo `lease_expires_at` ya pasó. `notification_finalize_claim` cierra por CAS de `claim_token` con tres desenlaces: `sent` (terminal), `retry` (suelta el lease y vuelve a `pending`, fallo temporal) y `permanent_failure` (pasa a `skipped`, reutilizando el estado que ya existía para RN-REC-06 en vez de crear un estado terminal nuevo; el motivo distingue un caso del otro en `notification_attempt`). Un CAS que no encuentra el token coincidente devuelve `false` sin lanzar excepción. `barberia_app` pierde el privilegio de columna sobre `claim_token`/`claimed_at`/`lease_expires_at`/`sent_at`: solo conserva `UPDATE` de `status`/`cancelled_at` para cancelar: el `CHECK` de forma ya impide cancelar una fila `processing`. `retention_claim_due_customers` NO adopta el mismo protocolo: su efecto (anonimizar) es una escritura SQL ejecutada en la MISMA transacción que la reclama, sin llamada de red de por medio, así que el bloqueo de fila del `SELECT ... FOR UPDATE SKIP LOCKED` basta; solo se le añade la misma validación de `p_limit` (1-200) y `p_now NOT NULL`. Si la anonimización completa (`DEC-049`) termina partiéndose en varias transacciones, esta parte de la decisión se revisa y adopta el mismo protocolo de lease.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** `DDL-CON-01` mostró que la reclamación original no cambiaba estado ni creaba lease: al confirmar la transacción de reclamo, la fila volvía a estar disponible para otro trabajador, y mantener la transacción abierta durante el envío violaba la regla de transacciones cortas de `estandar-base-datos.md` §11 (nunca llamar correo o WhatsApp dentro de una transacción). `DDL-CON-02` exige poder probar estas garantías con PostgreSQL real y al menos dos conexiones. `DDL-OPS-01` exige que `p_limit` rechace `NULL`, cero, negativos y lotes excesivos en toda función global.
+- **Alternativas descartadas:** un estado terminal `failed` nuevo para el fallo permanente, descartado porque el motivo (canal deshabilitado vs. reintentos agotados) ya se distingue en `notification_attempt` y no aporta valor de negocio distinguirlo también en el estado de `notification_schedule`, a costa de ampliar el vocabulario y las pruebas de forma; una función de recuperación de leases separada de `notification_claim_due`, descartada porque el mismo índice parcial y el mismo `WHERE` sirven ambos casos sin duplicar lógica ni añadir una segunda llamada por ciclo del worker; aplicar el mismo protocolo de lease a `retention_claim_due_customers` "por si acaso", descartado porque no hay E/S externa que proteger hoy y añadir columnas de lease sin uso real solo aumenta la superficie a probar.
+- **Documentos afectados:** `docs/05-backend/estandar-base-datos.md` (§8, si se documenta el patrón de lease), `database/modelo-fisico-referencia.sql` (`notification_schedule`, `notification_claim_due`, `notification_finalize_claim`, `retention_claim_due_customers`), `database/tests/notification_lease_concurrency.sql`.
+- **Fuente:** `docs/05-backend/revision-ddl-seguridad-2026-08-11.md`, hallazgos `DDL-CON-01`, `DDL-CON-02`, `DDL-OPS-01`; issue `#5`.
