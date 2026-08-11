@@ -1,6 +1,6 @@
 ---
 titulo: "Matriz de trazabilidad"
-version: "1.11"
+version: "1.12"
 estado: "Cobertura de decisiones"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-11"
@@ -70,6 +70,7 @@ La cadena exigida es:
 | Entrega de cambios | `DEC-038` | GitHub Flow, Conventional Commits y PR obligatorio | Pendiente | `main` solo recibe PR por squash; ramas e issues son trazables; conversaciones y checks aplicables están resueltos | `03-desarrollo/flujo-git-github.md`; `CONTRIBUTING.md`; plantillas `.github/` | Ruleset/protección, plantilla y CI por verificar al crear el repositorio | Pushes directos, force push o cambios integrados con checks fallidos: 0 |
 | Interfaz completa | `DEC-039` | Criterios no funcionales de UX y accesibilidad | `HU-009`, `HU-010`, `HU-011`, `HU-012`, `HU-020`, `HU-021`; resto pendiente | Un tema claro, tokens semánticos, patrones responsivos y estados visuales consistentes gobiernan todas las pantallas | `03-desarrollo/estandar-diseno-visual.md`; pantallas de B1 propuestas | Componentes, teclado, contraste, reflow y evidencia en 320/360/768/1280 px | Colores o medidas arbitrarias: 0; defectos WCAG 2.2 AA conocidos: 0 |
 | Roles PostgreSQL y funciones `SECURITY DEFINER` | `DEC-040` | `estandar-base-datos.md` §9 | Sin HU propia; prerrequisito transversal de B1-B6 | `barberia_owner` posee los objetos; `barberia_app`/`barberia_worker` separados y sin privilegios cruzados; `search_path=''` calificado en toda función `SECURITY DEFINER` | `20260811145252_harden_roles_and_definer_functions.sql`; `modelo-fisico-referencia.sql`; `migraciones-atlas.md` (bootstrap de roles) | Catálogos `pg_class`/`pg_proc`/`pg_roles` verificados en PostgreSQL 14.23 real (Docker); suite `database/tests/hu001_aislamiento_rls.sql` pasa con `barberia_app` real | Funciones `SECURITY DEFINER` con `search_path` no vacío: 0; grants cruzados API/worker: 0 |
+| Idempotencia concurrente (`idempotency_record`) | `DEC-043` | `RN-IDE-01` | Sin HU propia; base de `HU-004`/`F-CITA-*` | Segunda solicitud concurrente responde `409`/"locked" sin esperar; una fila `completed` nunca se borra desde el API | `20260811154100_harden_idempotency_concurrency.sql` | Carrera real con dos conexiones (PostgreSQL 14.23, Docker): perdedora responde en ~1.6 ms; `idempotency_abort` sobre fila `completed` devuelve `false` y no borra | Reintentos que ejecutan el efecto dos veces: 0; escrituras directas del API a `idempotency_record`: 0 |
 
 ## 3. Brechas prioritarias
 
@@ -84,4 +85,5 @@ La cadena exigida es:
 | Proveedores oficiales sin verificar | Costos y entrega de notificaciones | Evaluación antes del piloto |
 | Textos legales aún no redactados ni revisados | Inicio del piloto | Política, aviso y acuerdo breve |
 | Ruleset o protección equivalente de `main` sin configurar (repo privado en plan gratuito de GitHub, 403) | Aplicación completa de `DEC-038` | Configurar ruleset al pasar a un plan que lo permita o hacer público el repositorio; mientras tanto, riesgo registrado en `historial-cambios.md` |
-| `DEC-041`–`DEC-049` (vocabulario `event_type`, matriz de anonimización, semántica de idempotencia, alcance de `barber`, identidad/unicidad de `customer`, recordatorios 2/3) aún sin implementar en el modelo físico | Fases 3-6 de `docs/10-backlog/prompt-endurecimiento-ddl.md` | Issues #3–#7 del repositorio (`bcaceres19/barberia`), un PR por preocupación |
+| `DEC-041`, `DEC-042`, `DEC-045`–`DEC-049` (vocabulario `event_type`, matriz de anonimización, alcance de `barber`, identidad/unicidad de `customer`, recordatorios 2/3) aún sin implementar en el modelo físico | Fase 4 de `docs/10-backlog/prompt-endurecimiento-ddl.md` | Issue #4 del repositorio (`bcaceres19/barberia`) |
+| `DDL-AUT-01` (privilegios de `staff_credential`/`login_throttle`) y `DDL-OPS-01` restante (workers de notificación/retención) del issue #2 | Fases 2 y 5 de `docs/10-backlog/prompt-endurecimiento-ddl.md` | Bloqueado por `DP-SEG-04`/`DP-SEG-05`/`DP-SEG-06` (`DDL-AUT-01`) y por el issue #5 (workers) |

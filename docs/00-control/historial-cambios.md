@@ -1,6 +1,6 @@
 ---
 titulo: "Historial de cambios documentales"
-version: "2.3"
+version: "2.4"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-11"
@@ -150,6 +150,8 @@ Las versiones se aplican por documento. Mientras no exista historial Git, la fec
 | 2026-08-11 | `20260811145252_harden_roles_and_definer_functions.sql` | validado contra PostgreSQL 14.23 real (Docker) | Se corrigen 3 defectos encontrados solo al ejecutar: faltaba `GRANT USAGE, CREATE ON SCHEMA public TO barberia_owner` (el propietario no podía ni leer sus propias tablas); `SET ROLE barberia_owner` rompía el registro de progreso de Atlas (`permission denied for schema atlas_schema_revisions`), resuelto cambiando `barberia_migrator` a `INHERIT` en vez de `SET ROLE`/`RESET ROLE`; `ALTER DEFAULT PRIVILEGES ... IN SCHEMA public` no se aplicaba a una función creada sin calificar el esquema, resuelto quitando `IN SCHEMA` (forma global). Aplicación desde cero y suite `database/tests/hu001_aislamiento_rls.sql` pasan con `barberia_app` real, no superusuario. | Tarea de validación del PR #9 (issue #2), exigida por `docs/10-backlog/prompt-endurecimiento-ddl.md` antes de fusionar | `DEC-040` |
 | 2026-08-11 | `estandar-base-datos.md` | 1.2 → 1.3 | §9 puntos 11-12 se corrigen para reflejar `INHERIT` en vez de `SET ROLE`/`RESET ROLE`, y `ALTER DEFAULT PRIVILEGES` sin `IN SCHEMA`, según lo confirmado en PostgreSQL real. | Evitar que el estándar documente un diseño que la ejecución real refutó | `DEC-040` |
 | 2026-08-11 | `migraciones-atlas.md` | 1.1 → 1.2 | La sección de bootstrap de roles se corrige: `barberia_migrator` es `INHERIT`, no `NOINHERIT` con `SET ROLE`; se documenta la razón (conflicto con el registro de progreso de Atlas) y la consecuencia (objetos nuevos quedan owned por `barberia_migrator`). | Evitar que el procedimiento documentado falle al seguirse | `DEC-040` |
+| 2026-08-11 | `database/migrations/atlas.sum` | corregido | El hash de `20260811145252_harden_roles_and_definer_functions.sql` registrado tras el squash-merge no coincidía con `atlas migrate hash` recalculado sobre el mismo contenido (bytes idénticos verificados); se regenera antes de crear la siguiente migración. | `atlas migrate new` fallaba con "checksum error" al iniciar el trabajo del issue #3 | — |
+| 2026-08-11 | `20260811154100_harden_idempotency_concurrency.sql` | nuevo, validado contra PostgreSQL 14.23 real (Docker) | Implementa `DEC-043`: `idempotency_begin`/`idempotency_complete`/`idempotency_abort`/`idempotency_purge_expired` con `pg_try_advisory_xact_lock` (confirmado con dos conexiones reales: la perdedora responde en ~1.6 ms sin esperar). Revoca `INSERT`/`UPDATE`/`DELETE` directo del API sobre `idempotency_record`; `idempotency_abort` nunca borra una fila `completed` (cierra `DDL-IDEM-01`). Límites de tamaño en `response_content_type`/`response_body`. Se corrigió en el camino un defecto real: `p_response_status smallint` no aceptaba un literal entero normal del llamador; se cambió a `integer`. | Issue #3, `DDL-IDEM-01` | `DEC-043` |
 
 ## 4. Pendiente para la siguiente versión
 
