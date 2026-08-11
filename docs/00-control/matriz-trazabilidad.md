@@ -1,9 +1,9 @@
 ---
 titulo: "Matriz de trazabilidad"
-version: "1.9"
+version: "1.11"
 estado: "Cobertura de decisiones"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-10"
+ultima_actualizacion: "2026-08-11"
 documentos_relacionados:
   - "registro-decisiones.md"
   - "contradicciones.md"
@@ -69,6 +69,7 @@ La cadena exigida es:
 | Contrato HTTP completo | `DEC-037` | OpenAPI contract-first y RFC 9457 | `HU-003`, `HU-004`, `HU-005`, `HU-008`, `HU-020`, `HU-021`; resto pendiente | Cada ruta tiene operación, seguridad, schemas, errores, ejemplos y trazabilidad; lint y bundle pasan | `06-api/estandar-openapi.md`; operaciones de B1 pendientes | Redocly, handlers contra bundle y cliente generado | Operaciones implementadas sin contrato o contratos sin implementación: 0 |
 | Entrega de cambios | `DEC-038` | GitHub Flow, Conventional Commits y PR obligatorio | Pendiente | `main` solo recibe PR por squash; ramas e issues son trazables; conversaciones y checks aplicables están resueltos | `03-desarrollo/flujo-git-github.md`; `CONTRIBUTING.md`; plantillas `.github/` | Ruleset/protección, plantilla y CI por verificar al crear el repositorio | Pushes directos, force push o cambios integrados con checks fallidos: 0 |
 | Interfaz completa | `DEC-039` | Criterios no funcionales de UX y accesibilidad | `HU-009`, `HU-010`, `HU-011`, `HU-012`, `HU-020`, `HU-021`; resto pendiente | Un tema claro, tokens semánticos, patrones responsivos y estados visuales consistentes gobiernan todas las pantallas | `03-desarrollo/estandar-diseno-visual.md`; pantallas de B1 propuestas | Componentes, teclado, contraste, reflow y evidencia en 320/360/768/1280 px | Colores o medidas arbitrarias: 0; defectos WCAG 2.2 AA conocidos: 0 |
+| Roles PostgreSQL y funciones `SECURITY DEFINER` | `DEC-040` | `estandar-base-datos.md` §9 | Sin HU propia; prerrequisito transversal de B1-B6 | `barberia_owner` posee los objetos; `barberia_app`/`barberia_worker` separados y sin privilegios cruzados; `search_path=''` calificado en toda función `SECURITY DEFINER` | `20260811145252_harden_roles_and_definer_functions.sql`; `modelo-fisico-referencia.sql`; `migraciones-atlas.md` (bootstrap de roles) | Catálogos `pg_class`/`pg_proc`/`pg_roles` verificados en PostgreSQL 14.23 real (Docker); suite `database/tests/hu001_aislamiento_rls.sql` pasa con `barberia_app` real | Funciones `SECURITY DEFINER` con `search_path` no vacío: 0; grants cruzados API/worker: 0 |
 
 ## 3. Brechas prioritarias
 
@@ -82,4 +83,5 @@ La cadena exigida es:
 | Historias de `DEC-016`–`DEC-039` cubiertas solo por B0 y las dos primeras propuestas de B1 | Desarrollo verificable del resto de funciones de negocio | Completar B1 y redactar B2 a B6 según la secuencia aprobada |
 | Proveedores oficiales sin verificar | Costos y entrega de notificaciones | Evaluación antes del piloto |
 | Textos legales aún no redactados ni revisados | Inicio del piloto | Política, aviso y acuerdo breve |
-| Git y GitHub todavía no inicializados ni protegidos | Aplicación automática de `DEC-038` | Inicializar el repositorio, crear el remoto y configurar ruleset/checks al comenzar el Sprint 0 |
+| Ruleset o protección equivalente de `main` sin configurar (repo privado en plan gratuito de GitHub, 403) | Aplicación completa de `DEC-038` | Configurar ruleset al pasar a un plan que lo permita o hacer público el repositorio; mientras tanto, riesgo registrado en `historial-cambios.md` |
+| `DEC-041`–`DEC-049` (vocabulario `event_type`, matriz de anonimización, semántica de idempotencia, alcance de `barber`, identidad/unicidad de `customer`, recordatorios 2/3) aún sin implementar en el modelo físico | Fases 3-6 de `docs/10-backlog/prompt-endurecimiento-ddl.md` | Issues #3–#7 del repositorio (`bcaceres19/barberia`), un PR por preocupación |

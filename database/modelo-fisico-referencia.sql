@@ -66,11 +66,11 @@ RETURNS uuid
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
-SET search_path = public, pg_catalog
+SET search_path = ''
 AS $$
   SELECT barbershop_id
-  FROM staff_user
-  WHERE email = lower(p_email)
+  FROM public.staff_user
+  WHERE email = pg_catalog.lower(p_email)
     AND is_active
 $$;
 
@@ -227,13 +227,13 @@ RETURNS uuid
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
-SET search_path = public, pg_catalog
+SET search_path = ''
 AS $$
   SELECT barbershop_id
-  FROM staff_session
+  FROM public.staff_session
   WHERE token_hash = p_token_hash
     AND revoked_at IS NULL
-    AND expires_at > now()
+    AND expires_at > pg_catalog.now()
 $$;
 
 REVOKE ALL     ON FUNCTION authn_resolve_session_tenant(text) FROM PUBLIC;
@@ -1502,21 +1502,22 @@ GRANT SELECT, INSERT, UPDATE ON TABLE appointment_access_token TO barberia_app;
 CREATE OR REPLACE FUNCTION public_resolve_barbershop_by_slug(p_slug text)
 RETURNS uuid
 LANGUAGE sql STABLE SECURITY DEFINER
-SET search_path = public, pg_catalog
+SET search_path = ''
 AS $$
-  SELECT id FROM barbershop WHERE lower(public_slug) = lower(p_slug)
+  SELECT id FROM public.barbershop
+  WHERE pg_catalog.lower(public_slug) = pg_catalog.lower(p_slug)
 $$;
 
 CREATE OR REPLACE FUNCTION public_resolve_appointment_token_tenant(p_token_hash text)
 RETURNS uuid
 LANGUAGE sql STABLE SECURITY DEFINER
-SET search_path = public, pg_catalog
+SET search_path = ''
 AS $$
   SELECT barbershop_id
-  FROM appointment_access_token
+  FROM public.appointment_access_token
   WHERE token_hash = p_token_hash
     AND revoked_at IS NULL
-    AND (expires_at IS NULL OR expires_at > now())
+    AND (expires_at IS NULL OR expires_at > pg_catalog.now())
 $$;
 
 REVOKE ALL     ON FUNCTION public_resolve_barbershop_by_slug(text)          FROM PUBLIC;
@@ -1764,10 +1765,10 @@ RETURNS TABLE (schedule_id uuid, barbershop_id uuid)
 LANGUAGE sql
 VOLATILE
 SECURITY DEFINER
-SET search_path = public, pg_catalog
+SET search_path = ''
 AS $$
   SELECT id, barbershop_id
-  FROM notification_schedule
+  FROM public.notification_schedule
   WHERE status = 'pending'
     AND scheduled_for <= p_now
   ORDER BY scheduled_for
@@ -1775,8 +1776,13 @@ AS $$
   FOR UPDATE SKIP LOCKED
 $$;
 
+-- Función de worker (DEC-040, DDL-SEC-04): solo barberia_worker la ejecuta,
+-- nunca barberia_app. El rediseño a protocolo de lease (claim_token,
+-- lease_expires_at) y la validación de p_limit quedan para el issue de
+-- workers (DDL-CON-01, DDL-OPS-01); aquí solo se corrige la superficie de
+-- privilegios.
 REVOKE ALL     ON FUNCTION notification_claim_due(integer, timestamptz) FROM PUBLIC;
-GRANT  EXECUTE ON FUNCTION notification_claim_due(integer, timestamptz) TO barberia_app;
+GRANT  EXECUTE ON FUNCTION notification_claim_due(integer, timestamptz) TO barberia_worker;
 
 COMMENT ON FUNCTION notification_claim_due(integer, timestamptz) IS
   'Reclama un lote pequeño de envíos vencidos entre barberías. Devuelve SOLO identificadores. '
@@ -1871,20 +1877,24 @@ RETURNS TABLE (customer_id uuid, barbershop_id uuid)
 LANGUAGE sql
 VOLATILE
 SECURITY DEFINER
-SET search_path = public, pg_catalog
+SET search_path = ''
 AS $$
   SELECT c.id, c.barbershop_id
-  FROM customer c
-  JOIN barbershop b ON b.id = c.barbershop_id
+  FROM public.customer c
+  JOIN public.barbershop b ON b.id = c.barbershop_id
   WHERE c.anonymized_at IS NULL
-    AND c.created_at < p_now - make_interval(months => b.personal_data_retention_months)
+    AND c.created_at < p_now - pg_catalog.make_interval(months => b.personal_data_retention_months)
   ORDER BY c.created_at
   LIMIT p_limit
   FOR UPDATE OF c SKIP LOCKED
 $$;
 
+-- Función de worker (DEC-040, DDL-SEC-04): solo barberia_worker la ejecuta.
+-- La fecha ancla sigue usando c.created_at; DEC-042 exige última actividad
+-- (cita o contacto más reciente) y se corrige junto con la anonimización
+-- completa (DEC-049) en el issue de privacidad, no en este de roles.
 REVOKE ALL     ON FUNCTION retention_claim_due_customers(integer, timestamptz) FROM PUBLIC;
-GRANT  EXECUTE ON FUNCTION retention_claim_due_customers(integer, timestamptz) TO barberia_app;
+GRANT  EXECUTE ON FUNCTION retention_claim_due_customers(integer, timestamptz) TO barberia_worker;
 
 COMMENT ON FUNCTION retention_claim_due_customers(integer, timestamptz) IS
   'Reclama clientes con datos personales vencidos. Devuelve SOLO identificadores. '
