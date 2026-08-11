@@ -1392,16 +1392,23 @@ CREATE TABLE customer (
     )
   ),
 
-  -- La anonimización es idempotente y verificable: una fila anonimizada no
-  -- conserva teléfono ni correo (RN-DAT-03, DEC-025).
+  -- La anonimización es idempotente y verificable (RN-DAT-03, DEC-025,
+  -- DEC-049): una fila anonimizada no conserva teléfono, correo ni nombre
+  -- real. El marcador es literal y único (customer_anonymize lo usa; ver
+  -- comentario de esa función) para que "¿está anonimizado?" sea una
+  -- comparación exacta, no una convención de texto libre.
   CONSTRAINT customer_anonymized_ck CHECK (
-    anonymized_at IS NULL OR (phone IS NULL AND email IS NULL)
+    anonymized_at IS NULL
+    OR (phone IS NULL AND email IS NULL AND full_name = 'Cliente anonimizado')
   )
 );
 
 COMMENT ON TABLE customer IS
-  'Persona que reserva. Propietario funcional: barbería. Retención: 24 meses configurables, '
-  'después anonimización (RN-DAT-03, DEC-025). Clasificación: DATO PERSONAL. '
+  'Persona que reserva. Propietario funcional: barbería. Retención: configurable (1-120 meses), '
+  'contada desde la última actividad, no desde la creación (DEC-042); después, anonimización '
+  'completa vía customer_anonymize, que también cubre appointment.attendee_name/customer_note, '
+  'appointment_history.reason y appointment_history_change, y revoca appointment_access_token '
+  '(DEC-049). Clasificación: DATO PERSONAL. '
   'La persona atendida NO se guarda aquí: vive en appointment.attendee_name (RN-RES-03).';
 
 -- Permite reutilizar el cliente por teléfono en el flujo público sin una
@@ -2300,36 +2307,198 @@ COMMENT ON COLUMN barbershop.personal_data_retention_months IS
   'AMPLIARLO exige base legal documentada: cambiar este número no basta.';
 
 -- El trabajador de anonimización tiene el mismo problema de alcance que el de
--- notificaciones y la misma solución acotada.
+-- notificaciones, pero NO el mismo problema de concurrencia (DEC-053,
+-- DDL-CON-01): el efecto es una escritura SQL sobre esta misma base de
+-- datos, no una llamada de red, así que corre dentro de la MISMA
+-- transacción que hace el claim (customer_anonymize, más abajo). El
+-- `FOR UPDATE OF c SKIP LOCKED` mantiene la fila bloqueada hasta que esa
+-- transacción confirma; no hace falta un lease con claim_token porque no
+-- hay una ventana externa que proteger. Si la anonimización completa
+-- terminara partiéndose en varias transacciones, esta decisión debe
+-- revisarse y adoptar el mismo protocolo que notification_claim_due.
+--
+-- DEC-042: la fecha ancla es la ÚLTIMA ACTIVIDAD, no c.created_at. Se
+-- calcula como el mayor entre: la creación del propio cliente (piso, para
+-- un cliente sin ninguna cita), la creación de su cita más reciente, la
+-- transición de historial más reciente sobre alguna de sus citas, y la
+-- emisión del enlace público más reciente sobre alguna de sus citas (mejor
+-- proxy disponible de "acceso por token": el esquema no registra el
+-- instante en que el cliente USA el enlace, solo cuándo el sistema lo
+-- emite; ver DEC-054).
 CREATE OR REPLACE FUNCTION retention_claim_due_customers(p_limit integer, p_now timestamptz)
 RETURNS TABLE (customer_id uuid, barbershop_id uuid)
-LANGUAGE sql
+LANGUAGE plpgsql
 VOLATILE
 SECURITY DEFINER
 SET search_path = ''
 AS $$
+BEGIN
+  IF p_limit IS NULL OR p_limit < 1 OR p_limit > 200 THEN
+    RAISE EXCEPTION 'retention_claim_due_customers: p_limit fuera de rango (1-200).';
+  END IF;
+  IF p_now IS NULL THEN
+    RAISE EXCEPTION 'retention_claim_due_customers: p_now no admite NULL.';
+  END IF;
+
+  RETURN QUERY
   SELECT c.id, c.barbershop_id
   FROM public.customer c
   JOIN public.barbershop b ON b.id = c.barbershop_id
   WHERE c.anonymized_at IS NULL
-    AND c.created_at < p_now - pg_catalog.make_interval(months => b.personal_data_retention_months)
+    AND GREATEST(
+          c.created_at,
+          (SELECT max(a.created_at) FROM public.appointment a
+             WHERE a.barbershop_id = c.barbershop_id AND a.customer_id = c.id),
+          (SELECT max(ah.occurred_at) FROM public.appointment_history ah
+             JOIN public.appointment a
+               ON a.barbershop_id = ah.barbershop_id AND a.id = ah.appointment_id
+             WHERE a.barbershop_id = c.barbershop_id AND a.customer_id = c.id),
+          (SELECT max(t.issued_at) FROM public.appointment_access_token t
+             JOIN public.appointment a
+               ON a.barbershop_id = t.barbershop_id AND a.id = t.appointment_id
+             WHERE a.barbershop_id = c.barbershop_id AND a.customer_id = c.id)
+        ) < p_now - pg_catalog.make_interval(months => b.personal_data_retention_months)
+  -- Orden por creación, no por la actividad calculada: evita repetir el
+  -- GREATEST cuatro veces más solo para ordenar un lote que ya es pequeño
+  -- (p_limit <= 200) y que se reintenta en cada ciclo del trabajador.
   ORDER BY c.created_at
   LIMIT p_limit
-  FOR UPDATE OF c SKIP LOCKED
+  FOR UPDATE OF c SKIP LOCKED;
+END;
 $$;
 
 -- Función de worker (DEC-040, DDL-SEC-04): solo barberia_worker la ejecuta.
--- La fecha ancla sigue usando c.created_at; DEC-042 exige última actividad
--- (cita o contacto más reciente) y se corrige junto con la anonimización
--- completa (DEC-049) en el issue de privacidad, no en este de roles.
 REVOKE ALL     ON FUNCTION retention_claim_due_customers(integer, timestamptz) FROM PUBLIC;
 GRANT  EXECUTE ON FUNCTION retention_claim_due_customers(integer, timestamptz) TO barberia_worker;
 
 COMMENT ON FUNCTION retention_claim_due_customers(integer, timestamptz) IS
-  'Reclama clientes con datos personales vencidos. Devuelve SOLO identificadores. '
-  'La anonimización efectiva la ejecuta el servicio, dentro del contexto de tenant, y debe: '
-  'sustituir nombre/teléfono/correo, revocar tokens públicos, y conservar cita, intervalo, '
-  'servicio, estado e historial (RN-DAT-03, DEC-025). Es idempotente.';
+  'Reclama clientes con datos personales vencidos por última actividad, no por creación '
+  '(DEC-042). Devuelve SOLO identificadores; p_limit 1-200 (DDL-OPS-01). El trabajador anonimiza '
+  'con customer_anonymize dentro de la MISMA transacción que este claim (DEC-053: sin lease, a '
+  'diferencia de notification_claim_due, porque no hay E/S externa entre reclamar y escribir).';
+
+-- ---------------------------------------------------------------------------
+-- G.1 · `customer_anonymize` — DEC-025, DEC-049, DDL-PRI-01
+-- ---------------------------------------------------------------------------
+-- Cubre TODAS las copias de datos personales enumeradas por DEC-049, no solo
+-- `customer`: una anonimización parcial deja identificable a la persona a
+-- través del resto de copias de su nombre y de texto libre asociado a su
+-- cita. Transaccional (una sola función = una sola transacción) e
+-- idempotente: repetirla sobre un cliente ya anonimizado no hace nada
+-- (guardado por `anonymized_at IS NULL` en el primer UPDATE, que además es
+-- la señal de "hay algo que hacer" para el resto de la función).
+CREATE OR REPLACE FUNCTION customer_anonymize(
+  p_barbershop_id uuid,
+  p_customer_id   uuid,
+  p_now           timestamptz
+)
+RETURNS boolean
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  -- Marcador único y literal (customer_anonymized_ck lo exige tal cual):
+  -- "¿está anonimizado?" es una comparación exacta, no una convención de
+  -- texto libre que un futuro cambio podría romper en silencio.
+  v_placeholder constant text := 'Cliente anonimizado';
+  v_claimed     integer;
+BEGIN
+  IF p_barbershop_id IS NULL OR p_customer_id IS NULL OR p_now IS NULL THEN
+    RAISE EXCEPTION 'customer_anonymize: ningún argumento admite NULL.';
+  END IF;
+
+  UPDATE public.customer
+  SET full_name = v_placeholder,
+      phone = NULL,
+      email = NULL,
+      anonymized_at = p_now
+  WHERE barbershop_id = p_barbershop_id
+    AND id = p_customer_id
+    AND anonymized_at IS NULL;
+
+  GET DIAGNOSTICS v_claimed = ROW_COUNT;
+  IF v_claimed = 0 THEN
+    RETURN false;  -- Ya anonimizado, o no existe: nada más que hacer.
+  END IF;
+
+  -- RN-RES-03: quien reserva y quien es atendido pueden diferir, pero
+  -- DEC-049 cubre attendee_name igual que el nombre del cliente.
+  UPDATE public.appointment
+  SET attendee_name = v_placeholder,
+      customer_note = NULL
+  WHERE barbershop_id = p_barbershop_id
+    AND customer_id = p_customer_id
+    AND (attendee_name <> v_placeholder OR customer_note IS NOT NULL);
+
+  -- El motivo de una transición puede contener texto libre personal
+  -- ("canceló porque su hijo..."); se redacta, nunca se borra la fila
+  -- (el historial es append-only e inmutable, RN-HIS-02).
+  UPDATE public.appointment_history ah
+  SET reason = v_placeholder
+  FROM public.appointment a
+  WHERE ah.barbershop_id = p_barbershop_id
+    AND ah.appointment_id = a.id
+    AND a.barbershop_id = p_barbershop_id
+    AND a.customer_id = p_customer_id
+    AND ah.reason IS NOT NULL
+    AND ah.reason <> v_placeholder;
+
+  -- Solo los campos que SÍ son datos personales (DEC-054): un cambio de
+  -- `status` o `starts_at` no identifica a nadie y no se toca.
+  UPDATE public.appointment_history_change ahc
+  SET previous_value = CASE WHEN ahc.previous_value IS NOT NULL THEN v_placeholder END,
+      new_value      = CASE WHEN ahc.new_value      IS NOT NULL THEN v_placeholder END
+  FROM public.appointment_history ah
+  JOIN public.appointment a
+    ON a.barbershop_id = ah.barbershop_id AND a.id = ah.appointment_id
+  WHERE ahc.barbershop_id = p_barbershop_id
+    AND ahc.history_id = ah.id
+    AND a.barbershop_id = p_barbershop_id
+    AND a.customer_id = p_customer_id
+    AND ahc.field_name IN ('attendee_name', 'customer_note')
+    AND (ahc.previous_value IS DISTINCT FROM v_placeholder
+         OR ahc.new_value IS DISTINCT FROM v_placeholder);
+
+  -- El enlace público ya no debe abrir nada de un cliente anonimizado.
+  UPDATE public.appointment_access_token t
+  SET revoked_at = p_now
+  FROM public.appointment a
+  WHERE t.barbershop_id = p_barbershop_id
+    AND t.appointment_id = a.id
+    AND a.barbershop_id = p_barbershop_id
+    AND a.customer_id = p_customer_id
+    AND t.revoked_at IS NULL;
+
+  -- idempotency_record.response_body NO se toca aquí a propósito (DEC-054):
+  -- su TTL máximo (p_ttl_seconds <= 86400, un día) es siempre menor que el
+  -- mínimo de retención posible (personal_data_retention_months >= 1 mes),
+  -- así que cualquier respuesta idempotente ligada a la actividad de este
+  -- cliente ya fue purgada por idempotency_purge_expired mucho antes de que
+  -- el cliente llegara a ser candidato de esta función. No hay columna que
+  -- correlacione idempotency_record con customer_id, y añadir una solo para
+  -- este caso ya imposible sería alcance fuera de este issue.
+
+  RETURN true;
+END;
+$$;
+
+-- Función de worker (DEC-040, DDL-SEC-04): solo barberia_worker la ejecuta,
+-- nunca barberia_app. El alcance de escritura de esta función es amplio
+-- (varias tablas, cross-tenant en el sentido de que no depende de
+-- app.barbershop_id), así que su superficie de privilegios es tan estrecha
+-- como sea posible: ni EXECUTE público ni acceso directo del API.
+REVOKE ALL     ON FUNCTION customer_anonymize(uuid, uuid, timestamptz) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION customer_anonymize(uuid, uuid, timestamptz) TO barberia_worker;
+
+COMMENT ON FUNCTION customer_anonymize(uuid, uuid, timestamptz) IS
+  'Anonimización completa de un cliente vencido (DEC-025, DEC-049, DDL-PRI-01): customer '
+  '(nombre/teléfono/correo), appointment.attendee_name/customer_note, appointment_history.reason, '
+  'appointment_history_change (solo campos personales) y revocación de appointment_access_token. '
+  'Transaccional e idempotente. Se llama dentro de la misma transacción que '
+  'retention_claim_due_customers reclamó la fila (DEC-053). No valida por sí misma que el cliente '
+  'esté vencido: confía en que solo se invoca sobre lo que ese claim ya seleccionó.';
 
 
 -- ===========================================================================
