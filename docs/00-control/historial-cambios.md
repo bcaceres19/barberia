@@ -1,6 +1,6 @@
 ---
 titulo: "Historial de cambios documentales"
-version: "2.0"
+version: "2.1"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-11"
@@ -137,6 +137,10 @@ Las versiones se aplican por documento. Mientras no exista historial Git, la fec
 | 2026-08-10 | `plan-bloques.md` | 1.0 → 1.1 | B1 pasa a redacción parcial con dos propuestas preparadas, pero conserva su estado de bloque no abierto. | Mantener explícita la diferencia entre redactar y autorizar construcción | — |
 | 2026-08-10 | `matriz-trazabilidad.md` | 1.8 → 1.9 | `DEC-007`, `DEC-019` y las decisiones técnicas transversales enlazan `HU-020`/`HU-021` y sus criterios, sin presentar artefactos propuestos como implementados. | Trazabilidad de las nuevas historias | `DEC-007`, `DEC-019`, `DEC-024`, `DEC-033`–`DEC-037`, `DEC-039` |
 | 2026-08-10 | `docs/README.md` | 1.8 → 1.9 | El mapa documental refleja la redacción parcial de B1, sus prompts y las tres dudas abiertas de B0. | Navegación y estado coherentes | — |
+| 2026-08-11 | `registro-decisiones.md` | 1.7 → 1.8 | Se formalizan `DEC-040`–`DEC-049` a partir de la revisión técnica del DDL: roles PostgreSQL, vocabulario de `event_type`, fecha ancla de anonimización, semántica de idempotencia, versión mínima de PostgreSQL, identidad/unicidad de `customer`, alcance de `barber`, recordatorios 2/3 y matriz completa de anonimización. | Preflight y decisiones obligatorias de `docs/10-backlog/prompt-endurecimiento-ddl.md`, aprobadas explícitamente por el propietario | `DEC-040`–`DEC-049` |
+| 2026-08-11 | `contradicciones.md` | 1.0 → 1.1 | Se registra y resuelve `CT-002`: vocabulario de `event_type` contradictorio dentro de `estados-citas.md`. | Hallazgo de la revisión DDL | `DEC-041` |
+| 2026-08-11 | `dudas-pendientes.md` | 1.3 → 1.4 | Se añaden y resuelven `DP-DDL-01`–`DP-DDL-10`, correspondientes a las decisiones obligatorias antes de codificar el endurecimiento del DDL. | `docs/05-backend/revision-ddl-seguridad-2026-08-11.md`, sección 5 | `DEC-040`–`DEC-049` |
+| 2026-08-11 | Repositorio | — → Git inicializado | Se inicializa `git`, se crea el commit inicial en `main` y se conecta `https://github.com/bcaceres19/barberia` como origen, siguiendo `flujo-git-github.md`. Los rulesets de rama requieren GitHub Pro en repos privados (403); queda como riesgo temporal registrado hasta actualizar el plan o hacer público el repositorio. | Requisito previo del propietario para poder implementar el endurecimiento del DDL por issue/rama/PR | `DEC-038` |
 
 ## 4. Pendiente para la siguiente versión
 
@@ -145,4 +149,5 @@ Las versiones se aplican por documento. Mientras no exista historial Git, la fec
 - Crear contratos de API, modelo de datos, casos de prueba ejecutables y catálogo de métricas aplicando los estándares nuevos.
 - Redactar y revisar los artefactos legales exigidos por `DEC-030`.
 - Verificar costos, requisitos y plantillas vigentes de correo y WhatsApp oficial antes del piloto.
-- Inicializar control de versiones cuando el propietario decida convertir este directorio en repositorio Git.
+- Configurar un ruleset o protección equivalente de `main` cuando el repositorio pase a un plan que lo permita o se decida hacerlo público.
+- Propagar `DEC-040`–`DEC-049` a `01-producto/reglas-negocio.md`, `02-requisitos/estados-citas.md`, `matriz-trazabilidad.md` y `database/modelo-fisico-referencia.sql` al ejecutar las fases 2–6 de `docs/10-backlog/prompt-endurecimiento-ddl.md`.

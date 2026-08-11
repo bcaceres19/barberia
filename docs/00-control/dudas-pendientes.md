@@ -1,9 +1,9 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "1.3"
+version: "1.4"
 estado: "Tres dudas abiertas"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-07"
+ultima_actualizacion: "2026-08-11"
 documentos_relacionados:
   - "registro-decisiones.md"
   - "contradicciones.md"
@@ -77,6 +77,16 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 | `DP-OPS-02` | Alojamiento | Servicios gratuitos gestionados en desarrollo/piloto; VPS dedicado económico en producción. | `DEC-031` |
 | `DP-OPS-03` | Soporte del piloto | Menos de una hora la primera semana; mismo día después, atendiendo cualquier alerta. | `DEC-031` |
 | `CT-001` | Recordatorios P0 o P1 | `F-NOT-03` se eleva a P0 y se construye junto con su maquinaria. | `DEC-032` |
+| `DP-DDL-01` | Vocabulario de `event_type` | Inglés `snake_case`, con prefijo `appointment_`. | `DEC-041` |
+| `DP-DDL-02` | Fecha ancla de retención/anonimización | Última actividad del cliente (cita o contacto más reciente). | `DEC-042` |
+| `DP-DDL-03` | Semántica concurrente de idempotencia | Bloqueo consultivo transaccional por tenant+clave; `409` inmediato sin espera. | `DEC-043` |
+| `DP-DDL-04` | Versión mínima de PostgreSQL | Se confirma 14, sin cambio. | `DEC-044` |
+| `DP-DDL-05` | Identidad/reutilización de `customer` por teléfono | Único por barbería, con upsert. | `DEC-045` |
+| `DP-DDL-06` | Unicidad de correo de `customer` | Por barbería, no global. | `DEC-046` |
+| `DP-DDL-07` | Ciclo de vida de `barber` | Recortado al alcance de `HU-021`: alta, listado, renombrar. | `DEC-047` |
+| `DP-DDL-08` | Valores del 2do y 3er recordatorio | 24 horas y 2 horas antes de la cita. | `DEC-048` |
+| `DP-DDL-09` | Matriz completa de anonimización | Cubre todas las copias de datos personales, no solo `customer`. | `DEC-049` |
+| `DP-DDL-10` | Modelo de roles PostgreSQL | Propietario `NOLOGIN`, `barberia_app` y `barberia_worker` separados. | `DEC-040` |
 
 ## 2 bis. Dudas abiertas
 
