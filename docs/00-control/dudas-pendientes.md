@@ -1,7 +1,7 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "1.4"
-estado: "Tres dudas abiertas"
+version: "1.5"
+estado: "Sin dudas abiertas"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-11"
 documentos_relacionados:
@@ -17,7 +17,7 @@ documentos_relacionados:
 
 ## 1. Estado
 
-**Del lote respondido el 5 de agosto de 2026 no queda ninguna duda abierta.** El 7 de agosto de 2026, al redactar las historias del bloque B0 ([historias-usuario.md](../02-requisitos/historias-usuario.md)), se detectaron **tres vacíos nuevos** que `DEC-026` y `DEC-027` no cubren: se registran en la sección 2 bis y bloquean historias concretas.
+**No queda ninguna duda abierta.** El 7 de agosto de 2026, al redactar las historias del bloque B0 ([historias-usuario.md](../02-requisitos/historias-usuario.md)), se detectaron tres vacíos que `DEC-026` y `DEC-027` no cubrían (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`); el 11 de agosto de 2026 el propietario las resolvió como `DEC-050`, `DEC-051` y `DEC-052`, desbloqueando `HU-005`–`HU-008` y `HU-011`.
 
 Las 41 dudas y la contradicción `CT-001` recibieron respuesta del propietario en [respuesta-dudas-pendientes.txt](../../respuesta-manuales/respuesta-dudas-pendientes.txt). No queda ninguna decisión abierta de este lote.
 
@@ -87,16 +87,13 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 | `DP-DDL-08` | Valores del 2do y 3er recordatorio | 24 horas y 2 horas antes de la cita. | `DEC-048` |
 | `DP-DDL-09` | Matriz completa de anonimización | Cubre todas las copias de datos personales, no solo `customer`. | `DEC-049` |
 | `DP-DDL-10` | Modelo de roles PostgreSQL | Propietario `NOLOGIN`, `barberia_app` y `barberia_worker` separados. | `DEC-040` |
+| `DP-SEG-04` | Mecanismo y duración de la sesión larga del barbero | Cookie `HttpOnly`+`Secure`+`SameSite`, token opaco revocable en `staff_session`, 30 días con renovación por uso. | `DEC-050` |
+| `DP-SEG-05` | Canal del código de recuperación de acceso | WhatsApp oficial y correo, mismo proveedor de `DEC-027`. | `DEC-051` |
+| `DP-SEG-06` | Ventana y escalamiento del límite de acceso por IP | Ventana de 15 minutos; escalamiento a verificación telefónica de 24 horas. | `DEC-052` |
 
 ## 2 bis. Dudas abiertas
 
-**Estado: Duda pendiente.** Las tres corresponden al propietario y no se resuelven escribiendo código. Mientras no exista su `DEC-*`, las historias señaladas no deben implementarse.
-
-| Código | Pregunta | Por qué no está resuelta | Qué bloquea | Opciones a considerar |
-| --- | --- | --- | --- | --- |
-| `DP-SEG-04` | ¿Qué mecanismo sostiene la sesión larga del barbero y cuánto dura exactamente? | `DEC-026` confirma "sesión de larga duración", pero no el mecanismo ni el plazo. `DEC-037` deja expresamente la selección del mecanismo de autenticación "al diseñar la primera entrega". | `HU-005`, `HU-006` | Cookie `HttpOnly` + `Secure` + `SameSite` con token opaco revocable en base de datos, frente a un token firmado sin revocación inmediata. La revocabilidad es requisito de `CA-006-02`. |
-| `DP-SEG-05` | ¿Por qué canal y con qué proveedor viaja el código de recuperación al teléfono verificado? | `DEC-026` fija el mecanismo, no el canal. `DEC-027` habilita correo y WhatsApp oficial **para notificaciones de turnos**; extenderlo a códigos de seguridad es una decisión nueva, con costo y requisitos de proveedor propios. | `HU-008`, `HU-011` | WhatsApp oficial reutilizando el proveedor de `DEC-027`, frente a SMS con un proveedor adicional. Afecta costo mensual y verificación previa al piloto. |
-| `DP-SEG-06` | ¿Cuánto dura la ventana del límite de 5 solicitudes por IP y cuánto dura el escalamiento? | `DEC-026` fija el umbral inicial (5 solicitudes por IP) pero no la ventana ni la duración de la exigencia telefónica. Sin ese valor, el límite no se puede implementar ni probar. | `HU-007` | Ventanas cortas protegen menos pero molestan menos al barbero legítimo; el valor debe elegirse sabiendo que un barbero bloqueado en plena jornada es un fallo operativo grave. |
+Ninguna. Las tres dudas de seguridad detectadas al redactar B0 (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`) se resolvieron el 2026-08-11 como `DEC-050`, `DEC-051` y `DEC-052` (tabla de la sección 2) y desbloquean `HU-005`–`HU-008` y `HU-011`.
 
 Al resolverse cada una se aplica el flujo de la sección 3: `DEC-*`, propagación, conservación de la fila y `CT-*` si revela un conflicto.
 

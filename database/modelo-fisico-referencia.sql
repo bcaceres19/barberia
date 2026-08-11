@@ -32,18 +32,23 @@
 
 
 -- ===========================================================================
--- SECCIÓN A · B0 pendiente de decisión
+-- SECCIÓN A · B0 — Autenticación (dudas resueltas)
 -- ===========================================================================
 --
--- ATENCIÓN: las tres tablas de esta sección pertenecen a historias BLOQUEADAS
--- por dudas abiertas (dudas-pendientes.md §2 bis). AGENTS.md y plan-bloques.md
--- §5.4 prohíben implementarlas antes del `DEC-*` correspondiente. El DDL se
--- deja diseñado porque la forma de las tablas casi no depende de la duda; lo
--- que depende es la vigencia, el canal y la ventana.
+-- Las tres dudas que bloqueaban esta sección (dudas-pendientes.md §2 bis) se
+-- resolvieron el 2026-08-11:
 --
---   DP-SEG-04 -> HU-005, HU-006 : mecanismo y duración de la sesión larga.
---   DP-SEG-05 -> HU-008, HU-011 : canal y proveedor del código de recuperación.
---   DP-SEG-06 -> HU-007         : ventana del límite por IP y del escalamiento.
+--   DP-SEG-04 -> HU-005, HU-006 : sesión de 30 días, token opaco revocable
+--                                 en staff_session, renovación por uso (DEC-050).
+--   DP-SEG-05 -> HU-008, HU-011 : código de recuperación por WhatsApp oficial
+--                                 y correo, proveedor de DEC-027 (DEC-051).
+--   DP-SEG-06 -> HU-007         : ventana de 15 minutos, escalamiento a
+--                                 verificación telefónica de 24 horas (DEC-052).
+--
+-- `staff_credential` y `login_throttle` además incorporan el endurecimiento
+-- de `DDL-AUT-01` (docs/05-backend/revision-ddl-seguridad-2026-08-11.md):
+-- ninguna de las dos concede ya SELECT/DML directo y amplio a `barberia_app`;
+-- se exponen funciones `SECURITY DEFINER` estrechas y revisadas en su lugar.
 --
 -- ---------------------------------------------------------------------------
 -- A.0 · El problema de resolver el tenant ANTES de tener contexto
@@ -84,7 +89,7 @@ COMMENT ON FUNCTION authn_resolve_login_tenant(text) IS
   'No expone credenciales ni datos personales.';
 
 -- ---------------------------------------------------------------------------
--- A.1 · `staff_credential` — HU-005 (bloqueada por DP-SEG-04)
+-- A.1 · `staff_credential` — HU-005
 -- ---------------------------------------------------------------------------
 -- La credencial vive separada de `staff_user` para que ninguna consulta
 -- ordinaria de perfil arrastre el material secreto.
@@ -130,11 +135,7 @@ ALTER TABLE staff_credential ENABLE ROW LEVEL SECURITY;
 ALTER TABLE staff_credential FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY staff_credential_all_admin_policy ON staff_credential
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
-
-CREATE POLICY staff_credential_select_tenant_policy ON staff_credential
-  FOR SELECT TO barberia_app
-  USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 
 CREATE POLICY staff_credential_insert_tenant_policy ON staff_credential
   FOR INSERT TO barberia_app
@@ -145,16 +146,43 @@ CREATE POLICY staff_credential_update_tenant_policy ON staff_credential
   USING      (barbershop_id = current_setting('app.barbershop_id')::uuid)
   WITH CHECK (barbershop_id = current_setting('app.barbershop_id')::uuid);
 
-GRANT SELECT, INSERT, UPDATE ON TABLE staff_credential TO barberia_app;
+-- DDL-AUT-01: sin política ni GRANT de SELECT para barberia_app. Un `SELECT *
+-- FROM staff_credential` directo (por ejemplo, desde una inyección SQL)
+-- dejaría de ser posible; la lectura pasa por auth_get_credential(), que
+-- devuelve el material de un único usuario, no de toda la barbería.
+GRANT INSERT, UPDATE ON TABLE staff_credential TO barberia_app;
+
+-- Lectura estrecha y revisada (DDL-AUT-01): un único staff_user_id, siempre
+-- dentro del tenant vigente. No hay forma de pedir "todas las credenciales".
+CREATE OR REPLACE FUNCTION auth_get_credential(p_staff_user_id uuid)
+RETURNS TABLE (password_hash text, password_algorithm text)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT c.password_hash, c.password_algorithm
+  FROM public.staff_credential c
+  WHERE c.staff_user_id = p_staff_user_id
+    AND c.barbershop_id = current_setting('app.barbershop_id')::uuid
+$$;
+
+REVOKE ALL     ON FUNCTION auth_get_credential(uuid) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION auth_get_credential(uuid) TO barberia_app;
+
+COMMENT ON FUNCTION auth_get_credential(uuid) IS
+  'Lectura estrecha de material de autenticación (DDL-AUT-01): un único staff_user_id, '
+  'acotado al tenant vigente por app.barbershop_id. Sustituye el SELECT directo sobre '
+  'staff_credential, que quedó sin GRANT ni política para barberia_app.';
 
 -- ---------------------------------------------------------------------------
--- A.2 · `staff_session` — HU-005 / HU-006 (bloqueada por DP-SEG-04)
+-- A.2 · `staff_session` — HU-005 / HU-006
 -- ---------------------------------------------------------------------------
--- La forma de la tabla asume token opaco revocable en base de datos, que es la
--- única de las dos opciones de DP-SEG-04 compatible con CA-006-02 (revocación
--- inmediata). Si el `DEC-*` eligiera un token firmado sin revocación, esta
--- tabla desaparece y CA-006-02 deja de cumplirse: el conflicto debe resolverse
--- en la decisión, no aquí.
+-- Token opaco revocable en base de datos (DEC-050): la única forma compatible
+-- con CA-006-02 (revocación inmediata). Vigencia de 30 días desde el último
+-- uso; la aplicación extiende `expires_at` en cada solicitud autenticada
+-- (renovación deslizante, DEC-050). El plazo vive en configuración de la
+-- aplicación, no en una columna: `expires_at` ya lo expresa por fila.
 
 CREATE TABLE staff_session (
   id            uuid        NOT NULL DEFAULT gen_random_uuid(),
@@ -200,7 +228,7 @@ ALTER TABLE staff_session ENABLE ROW LEVEL SECURITY;
 ALTER TABLE staff_session FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY staff_session_all_admin_policy ON staff_session
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 
 CREATE POLICY staff_session_select_tenant_policy ON staff_session
   FOR SELECT TO barberia_app
@@ -240,11 +268,13 @@ REVOKE ALL     ON FUNCTION authn_resolve_session_tenant(text) FROM PUBLIC;
 GRANT  EXECUTE ON FUNCTION authn_resolve_session_tenant(text) TO barberia_app;
 
 -- ---------------------------------------------------------------------------
--- A.3 · `staff_recovery_code` — HU-008 (bloqueada por DP-SEG-05)
+-- A.3 · `staff_recovery_code` — HU-008
 -- ---------------------------------------------------------------------------
 
 -- El teléfono verificado es requisito del mecanismo (DEC-026) y no existe en
--- HU-001; entra con esta migración.
+-- HU-001; entra con esta migración. El envío del código usa WhatsApp oficial
+-- y correo, mismo proveedor de DEC-027 (DEC-051); el destino de esta tabla es
+-- el teléfono, y el correo se toma de staff_user.email.
 ALTER TABLE staff_user
   ADD COLUMN phone             text,
   ADD COLUMN phone_verified_at timestamptz,
@@ -305,7 +335,7 @@ ALTER TABLE staff_recovery_code ENABLE ROW LEVEL SECURITY;
 ALTER TABLE staff_recovery_code FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY staff_recovery_code_all_admin_policy ON staff_recovery_code
-  FOR ALL TO barberia_migrator USING (true) WITH CHECK (true);
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 
 CREATE POLICY staff_recovery_code_select_tenant_policy ON staff_recovery_code
   FOR SELECT TO barberia_app
@@ -327,17 +357,17 @@ CREATE POLICY staff_recovery_code_delete_tenant_policy ON staff_recovery_code
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE staff_recovery_code TO barberia_app;
 
 -- ---------------------------------------------------------------------------
--- A.4 · `login_throttle` — HU-007 (bloqueada por DP-SEG-06)
+-- A.4 · `login_throttle` — HU-007
 -- ---------------------------------------------------------------------------
 -- Única tabla del sistema SIN `barbershop_id` y SIN RLS, y la excepción está
 -- razonada: el conteo ocurre antes de saber quién es el solicitante, y
 -- asociarlo a una barbería permitiría a un atacante repartir sus intentos
 -- entre barberías para diluir el límite.
 --
--- La ventana (`window_started_at` + duración) y la duración del escalamiento
--- quedan en configuración de la aplicación, no en el esquema: son
--- exactamente lo que DP-SEG-06 debe fijar y CA-007-05 exige que se cambien
--- sin recompilar.
+-- Ventana de 15 minutos y escalamiento de 24 horas (DEC-052), valores
+-- iniciales configurables por la aplicación (CA-007-05 exige poder
+-- cambiarlos sin recompilar); el esquema solo registra el resultado
+-- (`window_started_at`, `escalated_until`), no la duración en sí.
 
 CREATE TABLE login_throttle (
   ip_hash            text        NOT NULL,
@@ -353,14 +383,132 @@ CREATE TABLE login_throttle (
 );
 
 COMMENT ON TABLE login_throttle IS
-  'Contadores del límite por IP del formulario de acceso (DEC-026). Propietario funcional: '
-  'plataforma. Retención: hasta expires_at. Clasificación: técnico. La IP se guarda como '
-  'hash con sal de despliegue, nunca en claro (CA-007-06). Sin barbershop_id ni RLS por '
+  'Contadores del límite por IP del formulario de acceso (DEC-026, DEC-052). Propietario '
+  'funcional: plataforma. Retención: hasta expires_at. Clasificación: técnico. ip_hash es '
+  'HMAC-SHA256(secreto de despliegue, ip) (DDL-AUT-01): un hash simple con sal, aunque la '
+  'sal no sea pública, sigue siendo reconstruible por fuerza bruta porque el espacio de IP '
+  'es pequeño (~2^32 para IPv4); HMAC con clave secreta de despliegue no lo es. La clave '
+  'nunca vive en el repositorio ni en esta base de datos. Sin barbershop_id ni RLS por '
   'diseño: ver comentario de la sección A.4.';
 
 CREATE INDEX idx_login_throttle_expires_at ON login_throttle (expires_at);
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE login_throttle TO barberia_app;
+-- DDL-AUT-01: sin GRANT directo a barberia_app. DML completo (en particular
+-- UPDATE/DELETE) permitiría a una inyección SQL reiniciar el contador de
+-- cualquier IP y anular el control de fuerza bruta. Toda la lógica del
+-- protocolo vive en las dos funciones siguientes.
+
+CREATE OR REPLACE FUNCTION login_throttle_register_attempt(
+  p_ip_hash            text,
+  p_window_seconds     integer,
+  p_escalation_seconds integer,
+  p_threshold          integer,
+  p_retention_seconds  integer
+)
+RETURNS TABLE (attempt_count integer, escalated boolean, retry_after timestamptz)
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_now  timestamptz := pg_catalog.now();
+  v_row  public.login_throttle%ROWTYPE;
+BEGIN
+  IF p_ip_hash IS NULL OR p_window_seconds IS NULL OR p_escalation_seconds IS NULL
+     OR p_threshold IS NULL OR p_retention_seconds IS NULL THEN
+    RAISE EXCEPTION 'login_throttle_register_attempt: ningún argumento admite NULL.';
+  END IF;
+  IF char_length(p_ip_hash) <> 64 THEN
+    RAISE EXCEPTION 'login_throttle_register_attempt: ip_hash debe ser HMAC-SHA256 (64 hex).';
+  END IF;
+  IF p_window_seconds < 1 OR p_escalation_seconds < 1 OR p_threshold < 1
+     OR p_retention_seconds < p_escalation_seconds THEN
+    RAISE EXCEPTION 'login_throttle_register_attempt: parámetros fuera de rango.';
+  END IF;
+
+  -- Un solo INSERT ... ON CONFLICT DO UPDATE atómico, sin SELECT previo.
+  -- Probado bajo concurrencia real: una versión con `SELECT ... FOR UPDATE`
+  -- seguido de INSERT/UPDATE perdía incrementos, porque `FOR UPDATE` no
+  -- bloquea nada cuando la fila todavía no existe — dos sesiones nuevas para
+  -- la misma IP podían "empatar" en NOT FOUND y una sobrescribía a la otra
+  -- con attempt_count=1 en vez de sumar. El UPSERT deja que PostgreSQL
+  -- serialice por fila desde el primer intento.
+  INSERT INTO public.login_throttle (ip_hash, window_started_at, attempt_count, escalated_until, expires_at)
+  VALUES (p_ip_hash, v_now, 1, NULL, v_now + pg_catalog.make_interval(secs => p_retention_seconds))
+  ON CONFLICT (ip_hash) DO UPDATE SET
+    window_started_at = CASE
+      WHEN login_throttle.window_started_at + pg_catalog.make_interval(secs => p_window_seconds) <= v_now
+        THEN v_now
+      ELSE login_throttle.window_started_at
+    END,
+    attempt_count = CASE
+      WHEN login_throttle.window_started_at + pg_catalog.make_interval(secs => p_window_seconds) <= v_now
+        THEN 1
+      ELSE login_throttle.attempt_count + 1
+    END,
+    -- CA-007-04: la ventana vencida reinicia el conteo, pero no exime de un
+    -- escalamiento todavía vigente. Dentro de la ventana, escala en cuanto
+    -- el conteo nuevo alcanza el umbral.
+    escalated_until = CASE
+      WHEN login_throttle.window_started_at + pg_catalog.make_interval(secs => p_window_seconds) <= v_now
+        THEN CASE WHEN login_throttle.escalated_until > v_now THEN login_throttle.escalated_until END
+      WHEN login_throttle.attempt_count + 1 >= p_threshold
+        THEN v_now + pg_catalog.make_interval(secs => p_escalation_seconds)
+      ELSE login_throttle.escalated_until
+    END,
+    expires_at = v_now + pg_catalog.make_interval(secs => p_retention_seconds)
+  RETURNING * INTO v_row;
+
+  RETURN QUERY SELECT
+    v_row.attempt_count,
+    (v_row.escalated_until IS NOT NULL AND v_row.escalated_until > v_now),
+    v_row.escalated_until;
+END;
+$$;
+
+REVOKE ALL     ON FUNCTION login_throttle_register_attempt(text, integer, integer, integer, integer) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION login_throttle_register_attempt(text, integer, integer, integer, integer) TO barberia_app;
+
+COMMENT ON FUNCTION login_throttle_register_attempt(text, integer, integer, integer, integer) IS
+  'Único punto de escritura de login_throttle (DDL-AUT-01). Incrementa o reinicia el '
+  'contador de una IP de forma atómica y calcula el escalamiento; barberia_app no tiene '
+  'INSERT/UPDATE/DELETE directo sobre la tabla.';
+
+CREATE OR REPLACE FUNCTION login_throttle_purge_expired(p_limit integer)
+RETURNS integer
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_deleted integer;
+BEGIN
+  IF p_limit IS NULL OR p_limit < 1 OR p_limit > 1000 THEN
+    RAISE EXCEPTION 'login_throttle_purge_expired: p_limit fuera de rango (1-1000).';
+  END IF;
+
+  WITH due AS (
+    SELECT ip_hash FROM public.login_throttle
+    WHERE expires_at <= pg_catalog.now()
+    ORDER BY expires_at
+    LIMIT p_limit
+    FOR UPDATE SKIP LOCKED
+  )
+  DELETE FROM public.login_throttle
+  WHERE ip_hash IN (SELECT ip_hash FROM due);
+
+  GET DIAGNOSTICS v_deleted = ROW_COUNT;
+  RETURN v_deleted;
+END;
+$$;
+
+REVOKE ALL     ON FUNCTION login_throttle_purge_expired(integer) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION login_throttle_purge_expired(integer) TO barberia_worker;
+
+COMMENT ON FUNCTION login_throttle_purge_expired(integer) IS
+  'Mantenimiento del worker: purga en lote los contadores vencidos. Exclusivo de barberia_worker.';
 
 
 -- ===========================================================================

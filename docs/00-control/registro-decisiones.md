@@ -1,6 +1,6 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.8"
+version: "1.9"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-11"
@@ -78,6 +78,9 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-047` | 2026-08-11 | `barber` se recorta al alcance de `HU-021`: alta, listado y renombrar; sin borrado, desactivación, orden ni vínculo automático con `staff_user` | `DDL-BIZ-02` | Confirmada |
 | `DEC-048` | 2026-08-11 | Segundo y tercer recordatorio en 24 horas y 2 horas antes de la cita | `DEC-018`, `DDL-BIZ-01` | Confirmada |
 | `DEC-049` | 2026-08-11 | La anonimización cubre todas las copias de datos personales, no solo `customer` | `DEC-025`, `DDL-PRI-01` | Confirmada, sujeta a revisión jurídica |
+| `DEC-050` | 2026-08-11 | Sesión larga del barbero: cookie `HttpOnly`+`Secure`+`SameSite`, token opaco revocable, 30 días con renovación por uso | `DP-SEG-04`, `CA-006-02` | Confirmada |
+| `DEC-051` | 2026-08-11 | Código de recuperación de acceso: WhatsApp oficial y correo, mismo proveedor de `DEC-027` | `DP-SEG-05` | Confirmada |
+| `DEC-052` | 2026-08-11 | Límite de acceso: ventana de 15 minutos, escalamiento a verificación telefónica de 24 horas | `DP-SEG-06` | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -529,3 +532,34 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** anonimizar solo `customer` conforme al texto literal de `DEC-025`, descartada por dejar la anonimización incompleta según el propio hallazgo de la revisión.
 - **Documentos afectados:** `01-producto/reglas-negocio.md` (`RN-DAT-03`), `database/modelo-fisico-referencia.sql` (función de anonimización), diseño de worker de retención (Fase 5 de `docs/10-backlog/prompt-endurecimiento-ddl.md`).
 - **Fuente:** `docs/05-backend/revision-ddl-seguridad-2026-08-11.md`, hallazgo `DDL-PRI-01`; aprobación explícita del propietario el 2026-08-11.
+
+### DEC-050 · Mecanismo y duración de la sesión larga del barbero
+
+- **Fecha:** 2026-08-11.
+- **Decisión:** la sesión del barbero se sostiene con una cookie `HttpOnly`, `Secure` y `SameSite` que contiene un token opaco y aleatorio. El token se almacena con su hash en `staff_session` (`token_hash`, `revoked_at`, `expires_at`), nunca en claro. Dura 30 días desde la última actividad, con renovación deslizante en cada uso; revocar (cierre de sesión, cambio de contraseña, incidente) es un `UPDATE` que fija `revoked_at`, efectivo de inmediato.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** `DEC-026` confirmó una "sesión de larga duración" sin fijar mecanismo ni plazo; `CA-006-02` exige que sea revocable, lo que descarta un token firmado sin registro server-side. Un token opaco revocable en base de datos es el único mecanismo de los evaluados que cumple la revocación inmediata.
+- **Alternativas descartadas:** cookie con token opaco pero expiración fija de 90 días sin renovación (obliga a reautenticar cada 3 meses incluso con uso diario, sin beneficio de seguridad claro sobre la renovación deslizante); JWT firmado sin revocación inmediata en base de datos (incumple `CA-006-02`).
+- **Documentos afectados:** `01-producto/reglas-negocio.md`, `database/modelo-fisico-referencia.sql` (sección `staff_session`, ya diseñada con los campos necesarios), `dudas-pendientes.md` (cierra `DP-SEG-04`).
+- **Fuente:** `dudas-pendientes.md` §2 bis, `DP-SEG-04`; aprobación explícita del propietario el 2026-08-11.
+
+### DEC-051 · Canal del código de recuperación de acceso
+
+- **Fecha:** 2026-08-11.
+- **Decisión:** el código de recuperación de acceso se envía por WhatsApp oficial y por correo, reutilizando el mismo proveedor y la misma integración ya habilitados por `DEC-027` para notificaciones. No se agrega un proveedor de SMS.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** evitar sumar un proveedor, un costo y una verificación previa al piloto adicionales; el barbero ya cuenta con WhatsApp y correo como canales de contacto configurados desde `DEC-027`.
+- **Límite de interpretación:** `DEC-026` fijaba el código "al teléfono verificado"; esta decisión lo extiende explícitamente a que el mismo código también llegue por correo, como canal adicional, no exclusivo del teléfono.
+- **Alternativas descartadas:** SMS con un proveedor nuevo (agrega costo/proveedor sin necesidad, dado que WhatsApp oficial ya está disponible); WhatsApp único sin respaldo por correo (el propietario pidió explícitamente ambos canales).
+- **Documentos afectados:** `01-producto/reglas-negocio.md`, `database/modelo-fisico-referencia.sql` (sección `staff_recovery_code`), `dudas-pendientes.md` (cierra `DP-SEG-05`).
+- **Fuente:** `dudas-pendientes.md` §2 bis, `DP-SEG-05`; aprobación explícita del propietario el 2026-08-11.
+
+### DEC-052 · Ventana y escalamiento del límite de acceso por IP
+
+- **Fecha:** 2026-08-11.
+- **Decisión:** el umbral de 5 solicitudes por IP (`DEC-026`) se mide en una ventana deslizante de 15 minutos. Al superarlo, la IP queda sujeta a verificación telefónica obligatoria durante 24 horas antes de volver al comportamiento normal.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** 15 minutos es la ventana habitual contra fuerza bruta automatizada, corta para frenar intentos en ráfaga sin acumular falsos positivos de tráfico legítimo disperso; 24 horas de exigencia telefónica es suficientemente disuasivo para un atacante sin bloquear repetidamente al mismo barbero en la misma jornada tras resolver una verificación.
+- **Alternativas descartadas:** ventana de 1 hora con escalamiento de 1 hora (ambos más indulgentes; más tiempo para que un atacante intente sin activar el control, y el escalamiento se apaga demasiado rápido para disuadir un segundo intento el mismo día).
+- **Documentos afectados:** `01-producto/reglas-negocio.md`, `database/modelo-fisico-referencia.sql` (sección `login_throttle`), `dudas-pendientes.md` (cierra `DP-SEG-06`).
+- **Fuente:** `dudas-pendientes.md` §2 bis, `DP-SEG-06`; aprobación explícita del propietario el 2026-08-11.

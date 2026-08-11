@@ -1,9 +1,9 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.1"
+version: "1.2"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-10"
+ultima_actualizacion: "2026-08-11"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/reglas-negocio.md"
@@ -16,7 +16,7 @@ documentos_relacionados:
 
 # Historias de usuario y criterios de aceptación
 
-> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas ya confirmadas; no crean, amplían ni reinterpretan alcance. Requieren aprobación del propietario antes de implementarse. Tres historias de B0 dependen además de dudas abiertas (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`) y no deben codificarse mientras no exista la decisión correspondiente. `HU-020` y `HU-021` se prepararon por solicitud del propietario, pero su implementación continúa bloqueada hasta que B0 cumpla su criterio de salida.
+> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas ya confirmadas; no crean, amplían ni reinterpretan alcance. Requieren aprobación del propietario antes de implementarse. Tres historias de B0 dependían además de dudas abiertas (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`), resueltas el 2026-08-11 como `DEC-050`, `DEC-051` y `DEC-052`. `HU-020` y `HU-021` se prepararon por solicitud del propietario, pero su implementación continúa bloqueada hasta que B0 cumpla su criterio de salida.
 
 ---
 
@@ -260,9 +260,9 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 | --- | --- |
 | Función | `F-AUTH-01` |
 | Reglas | `RN-TEN-01`, `RN-DAT-02` |
-| Decisiones | `DEC-026` |
+| Decisiones | `DEC-026`, `DEC-050` |
 | Actor | Barbero |
-| Depende de | `HU-002`, `HU-003`; **duda abierta `DP-SEG-04`** |
+| Depende de | `HU-002`, `HU-003` |
 | Bloquea | `HU-006`, `HU-007`, `HU-010`, `HU-012` |
 | Riesgo | Es la puerta de todo el área privada: un defecto aquí compromete todos los datos del sistema. |
 
@@ -270,7 +270,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 > Como barbero, quiero entrar a mi agenda con mi correo y mi contraseña, para empezar a trabajar sin recordar códigos ni instalar nada.
 
-> **Bloqueo declarado:** `DEC-026` confirma "correo, contraseña y sesión larga", pero no fija el mecanismo de sesión ni su duración exacta. Ese punto está registrado como `DP-SEG-04` y debe resolverse con un `DEC-*` **antes** de escribir código. La historia se implementa contra la decisión que resuelva la duda; el resto de sus criterios no depende de ella.
+> **Bloqueo resuelto:** `DEC-026` confirmaba "correo, contraseña y sesión larga" sin fijar el mecanismo de sesión ni su duración exacta. `DP-SEG-04` quedó resuelta el 2026-08-11 como `DEC-050`: cookie `HttpOnly`+`Secure`+`SameSite` con token opaco revocable en `staff_session`, 30 días con renovación por uso.
 
 **Alcance incluido**
 
@@ -298,7 +298,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 - Integración HTTP: éxito, credenciales inválidas, correo inexistente, aislamiento entre barberías.
 - Prueba de que el hash almacenado cambia con la misma contraseña en dos usuarios distintos.
 
-**Terminado cuando** existe el `DEC-*` que resuelve `DP-SEG-04`, el contrato está publicado y todas las pruebas anteriores pasan.
+**Terminado cuando** el contrato está publicado y todas las pruebas anteriores pasan.
 
 ---
 
@@ -308,7 +308,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 | --- | --- |
 | Función | `F-AUTH-01` |
 | Reglas | `RN-TEN-01` |
-| Decisiones | `DEC-026` |
+| Decisiones | `DEC-026`, `DEC-050` |
 | Actor | Barbero |
 | Depende de | `HU-005` |
 | Bloquea | `HU-012` |
@@ -320,7 +320,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 **Alcance incluido**
 
-- Vigencia larga de la sesión conforme al `DEC-*` que resuelva `DP-SEG-04`, con renovación controlada.
+- Vigencia de 30 días con renovación por uso (`DEC-050`), token opaco revocable almacenado en `staff_session`.
 - Cierre de sesión que invalida la sesión en el servidor, no solo en el navegador.
 - Middleware de sesión que protege todo `/api/v1/private` y responde de forma uniforme cuando falta o vence.
 - Registro del instante de último uso para poder auditar accesos.
@@ -351,9 +351,9 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 | --- | --- |
 | Función | `F-SEG-03` |
 | Reglas | `RN-DAT-02` |
-| Decisiones | `DEC-026` |
+| Decisiones | `DEC-026`, `DEC-052` |
 | Actor | Propietario (protege), barbero (afectado si se excede) |
-| Depende de | `HU-003`, `HU-005`; **duda abierta `DP-SEG-06`** |
+| Depende de | `HU-003`, `HU-005` |
 | Bloquea | — |
 | Riesgo | Sin límite, un ataque automatizado prueba miles de contraseñas; con un límite mal calibrado, el barbero legítimo queda fuera en plena jornada. |
 
@@ -361,12 +361,12 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 > Como propietario del sistema, necesito que el formulario de acceso limite los intentos por IP y exija una prueba adicional cuando se supera el umbral, para frenar el abuso sin castigar al barbero que se equivocó dos veces.
 
-> **Bloqueo declarado:** `DEC-026` fija el umbral inicial de **5 solicitudes por IP**, pero no la duración de la ventana ni la del escalamiento. Registrado como `DP-SEG-06`.
+> **Bloqueo resuelto:** `DEC-026` fijaba el umbral inicial de **5 solicitudes por IP** sin la duración de la ventana ni la del escalamiento. `DP-SEG-06` quedó resuelta el 2026-08-11 como `DEC-052`: ventana de 15 minutos, escalamiento a verificación telefónica de 24 horas.
 
 **Alcance incluido**
 
-- Conteo por IP con ventana configurable y umbral configurable, con valor inicial 5.
-- Escalamiento: superado el umbral, la solicitud exige verificación telefónica antes de evaluar la contraseña.
+- Conteo por IP con ventana de 15 minutos y umbral de 5 solicitudes (`DEC-052`), ambos configurables.
+- Escalamiento: superado el umbral, la solicitud exige verificación telefónica durante 24 horas antes de evaluar la contraseña (`DEC-052`).
 - Respuesta `429` con formato uniforme y con indicación de cuándo reintentar.
 - Configuración expuesta como parámetros, no como números incrustados en el código.
 - Los contadores no almacenan datos personales; la IP se guarda de forma acotada y con vencimiento.
@@ -388,7 +388,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 - Integración: recorrido del umbral, escalamiento, expiración de la ventana, dos IP distintas independientes.
 - Prueba de que una cabecera manipulada no evade el límite en la configuración de despliegue documentada.
 
-**Terminado cuando** existe el `DEC-*` que resuelve `DP-SEG-06` y el escalamiento queda demostrado de extremo a extremo.
+**Terminado cuando** el escalamiento queda demostrado de extremo a extremo.
 
 ---
 
@@ -398,22 +398,23 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 | --- | --- |
 | Función | `F-AUTH-02` |
 | Reglas | `RN-DAT-01`, `RN-DAT-02` |
-| Decisiones | `DEC-026` |
+| Decisiones | `DEC-026`, `DEC-051` |
 | Actor | Barbero |
-| Depende de | `HU-005`, `HU-007`; **duda abierta `DP-SEG-05`** |
+| Depende de | `HU-005`, `HU-007` |
 | Bloquea | `HU-011` |
 | Riesgo | Un barbero sin acceso en plena jornada pierde su agenda; un mecanismo de recuperación débil es la vía más común de secuestro de cuentas. |
 
 **Historia**
 
-> Como barbero que olvidó su contraseña, quiero recuperar el acceso con un código enviado a mi teléfono verificado, para volver a mi agenda el mismo día sin depender de que alguien me responda.
+> Como barbero que olvidó su contraseña, quiero recuperar el acceso con un código enviado por WhatsApp y correo, para volver a mi agenda el mismo día sin depender de que alguien me responda.
 
-> **Bloqueo declarado:** `DEC-026` define el mecanismo (código al teléfono verificado) pero no el canal ni el proveedor. `DEC-027` habilita correo y WhatsApp oficial **para notificaciones de turnos**, no para códigos de seguridad. Registrado como `DP-SEG-05`.
+> **Bloqueo resuelto:** `DEC-026` definía el mecanismo (código al teléfono verificado) sin fijar canal ni proveedor. `DP-SEG-05` quedó resuelta el 2026-08-11 como `DEC-051`: WhatsApp oficial y correo, reutilizando el proveedor ya habilitado por `DEC-027`.
 
 **Alcance incluido**
 
 - Migración con la tabla de códigos de recuperación: hash del código, vencimiento corto, intentos, marca de uso, `barbershop_id` y RLS.
 - Solicitud de recuperación, verificación del código y establecimiento de contraseña nueva.
+- Envío por WhatsApp oficial y por correo (`DEC-051`), mismo proveedor de `DEC-027`.
 - Código de un solo uso, con vencimiento, con límite de intentos y con reenvío controlado.
 - Invalidación de las sesiones activas al cambiar la contraseña.
 - Destino mostrado enmascarado en la interfaz y en las respuestas.
@@ -436,7 +437,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 - Integración: recorrido completo, código vencido, código ya usado, exceso de intentos, correo inexistente, invalidación de sesiones.
 - Prueba del adaptador de envío con doble de prueba; el proveedor real no se invoca en pruebas.
 
-**Terminado cuando** existe el `DEC-*` que resuelve `DP-SEG-05` y el recorrido completo funciona con el adaptador seleccionado.
+**Terminado cuando** el recorrido completo funciona con el adaptador seleccionado.
 
 ---
 
@@ -768,12 +769,12 @@ Redactar por anticipado las historias de un bloque lejano produce texto que hay 
 
 ---
 
-## 6. Dudas que bloquean historias de B0
+## 6. Dudas que bloqueaban historias de B0
 
-| Duda | Historia bloqueada | Qué falta decidir |
-| --- | --- | --- |
-| `DP-SEG-04` | `HU-005`, `HU-006` | Mecanismo concreto de la sesión larga y su duración exacta |
-| `DP-SEG-05` | `HU-008`, `HU-011` | Canal y proveedor del código de recuperación |
-| `DP-SEG-06` | `HU-007` | Duración de la ventana del límite por IP y del escalamiento |
+| Duda | Historia antes bloqueada | Qué faltaba decidir | Resuelta como |
+| --- | --- | --- | --- |
+| `DP-SEG-04` | `HU-005`, `HU-006` | Mecanismo concreto de la sesión larga y su duración exacta | `DEC-050` |
+| `DP-SEG-05` | `HU-008`, `HU-011` | Canal y proveedor del código de recuperación | `DEC-051` |
+| `DP-SEG-06` | `HU-007` | Duración de la ventana del límite por IP y del escalamiento | `DEC-052` |
 
-Ninguna de las tres se resuelve escribiendo código. Se registran en [dudas-pendientes.md](../00-control/dudas-pendientes.md) y esperan un `DEC-*`, conforme a `AGENTS.md`.
+Las tres se resolvieron el 2026-08-11 (ver [dudas-pendientes.md](../00-control/dudas-pendientes.md) y [registro-decisiones.md](../00-control/registro-decisiones.md)). `HU-005`–`HU-008` y `HU-011` ya no dependen de una duda abierta; siguen sujetas al criterio de salida de B0 antes de implementarse.

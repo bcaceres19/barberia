@@ -1,6 +1,6 @@
 ---
 titulo: "Historial de cambios documentales"
-version: "2.4"
+version: "2.5"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-11"
@@ -152,10 +152,14 @@ Las versiones se aplican por documento. Mientras no exista historial Git, la fec
 | 2026-08-11 | `migraciones-atlas.md` | 1.1 → 1.2 | La sección de bootstrap de roles se corrige: `barberia_migrator` es `INHERIT`, no `NOINHERIT` con `SET ROLE`; se documenta la razón (conflicto con el registro de progreso de Atlas) y la consecuencia (objetos nuevos quedan owned por `barberia_migrator`). | Evitar que el procedimiento documentado falle al seguirse | `DEC-040` |
 | 2026-08-11 | `database/migrations/atlas.sum` | corregido | El hash de `20260811145252_harden_roles_and_definer_functions.sql` registrado tras el squash-merge no coincidía con `atlas migrate hash` recalculado sobre el mismo contenido (bytes idénticos verificados); se regenera antes de crear la siguiente migración. | `atlas migrate new` fallaba con "checksum error" al iniciar el trabajo del issue #3 | — |
 | 2026-08-11 | `20260811154100_harden_idempotency_concurrency.sql` | nuevo, validado contra PostgreSQL 14.23 real (Docker) | Implementa `DEC-043`: `idempotency_begin`/`idempotency_complete`/`idempotency_abort`/`idempotency_purge_expired` con `pg_try_advisory_xact_lock` (confirmado con dos conexiones reales: la perdedora responde en ~1.6 ms sin esperar). Revoca `INSERT`/`UPDATE`/`DELETE` directo del API sobre `idempotency_record`; `idempotency_abort` nunca borra una fila `completed` (cierra `DDL-IDEM-01`). Límites de tamaño en `response_content_type`/`response_body`. Se corrigió en el camino un defecto real: `p_response_status smallint` no aceptaba un literal entero normal del llamador; se cambió a `integer`. | Issue #3, `DDL-IDEM-01` | `DEC-043` |
+| 2026-08-11 | `registro-decisiones.md` | 1.8 → 1.9 | Se formalizan `DEC-050` (sesión larga: cookie revocable, 30 días), `DEC-051` (recuperación por WhatsApp oficial y correo) y `DEC-052` (límite de acceso: ventana 15 min, escalamiento 24 h), resolviendo `DP-SEG-04`, `DP-SEG-05` y `DP-SEG-06`. | Desbloquear `HU-005`–`HU-008` y `HU-011`, y el resto del issue #2 (`DDL-AUT-01`) | `DEC-050`, `DEC-051`, `DEC-052` |
+| 2026-08-11 | `dudas-pendientes.md` | 1.4 → 1.5 | Se cierran las tres dudas de la sección 2 bis; el documento queda sin dudas abiertas. | `DEC-050`–`DEC-052` | `DEC-050`, `DEC-051`, `DEC-052` |
+| 2026-08-11 | `historias-usuario.md` | 1.1 → 1.2 | `HU-005`–`HU-008` dejan de depender de una duda abierta; sus bloqueos declarados pasan a "resueltos" con el valor concreto fijado por cada `DEC-*`. | Propagación de `DEC-050`–`DEC-052` | `DEC-050`, `DEC-051`, `DEC-052` |
+| 2026-08-11 | `plan-bloques.md` | 1.1 → 1.2 | La fila de dudas que bloqueaban B0 se actualiza a resuelta. | Propagación de `DEC-050`–`DEC-052` | `DEC-050`, `DEC-051`, `DEC-052` |
+| 2026-08-11 | `database/modelo-fisico-referencia.sql` | Sección A endurecida y validada contra PostgreSQL 14.23 real (Docker) | Cierra `DDL-AUT-01`: `staff_credential` pierde `SELECT` directo para `barberia_app` (se expone `auth_get_credential`, acotada a un `staff_user_id` y al tenant vigente); `login_throttle` pierde todo DML directo (se expone `login_throttle_register_attempt` y `login_throttle_purge_expired`, esta última exclusiva de `barberia_worker`); `ip_hash` documentado como HMAC-SHA256 con secreto de despliegue, no hash simple. Políticas administrativas de `staff_session`/`staff_recovery_code` pasan a `barberia_owner`, consistente con `DEC-040`. Un defecto real de concurrencia encontrado y corregido: la primera versión de `login_throttle_register_attempt` usaba `SELECT ... FOR UPDATE` seguido de INSERT/UPDATE, y perdía incrementos bajo carreras reales (confirmado: 10 llamadas concurrentes registraron 9); se reescribió como un único `INSERT ... ON CONFLICT DO UPDATE` atómico y se repitió la prueba con 15 llamadas concurrentes en 3 corridas, sin pérdidas. | Issue #2, `DDL-AUT-01`, ahora que `DEC-050`–`DEC-052` desbloquean la sección | `DEC-050`, `DEC-051`, `DEC-052` |
 
 ## 4. Pendiente para la siguiente versión
 
-- Resolver `DP-SEG-04`, `DP-SEG-05` y `DP-SEG-06` con sus `DEC-*` antes de implementar `HU-005`–`HU-008` y `HU-011`.
 - Al cerrar B0, revisar `HU-020`/`HU-021` con lo aprendido y redactar las historias restantes de B1; continuar B2 a B6 al cerrar cada bloque anterior.
 - Crear contratos de API, modelo de datos, casos de prueba ejecutables y catálogo de métricas aplicando los estándares nuevos.
 - Redactar y revisar los artefactos legales exigidos por `DEC-030`.
