@@ -1,6 +1,6 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.9"
+version: "1.10"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-11"
@@ -81,6 +81,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-050` | 2026-08-11 | Sesión larga del barbero: cookie `HttpOnly`+`Secure`+`SameSite`, token opaco revocable, 30 días con renovación por uso | `DP-SEG-04`, `CA-006-02` | Confirmada |
 | `DEC-051` | 2026-08-11 | Código de recuperación de acceso: WhatsApp oficial y correo, mismo proveedor de `DEC-027` | `DP-SEG-05` | Confirmada |
 | `DEC-052` | 2026-08-11 | Límite de acceso: ventana de 15 minutos, escalamiento a verificación telefónica de 24 horas | `DP-SEG-06` | Confirmada |
+| `DEC-054` | 2026-08-11 | Fórmula concreta de última actividad (DEC-042), marcador de anonimización, alcance de `appointment_history_change` y por qué `idempotency_record.response_body` no se toca | `DEC-042`, `DEC-049`, `DDL-PRI-01` | Confirmada, sujeta a revisión jurídica |
 
 ## 3. Decisiones detalladas
 
@@ -563,3 +564,19 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** ventana de 1 hora con escalamiento de 1 hora (ambos más indulgentes; más tiempo para que un atacante intente sin activar el control, y el escalamiento se apaga demasiado rápido para disuadir un segundo intento el mismo día).
 - **Documentos afectados:** `01-producto/reglas-negocio.md`, `database/modelo-fisico-referencia.sql` (sección `login_throttle`), `dudas-pendientes.md` (cierra `DP-SEG-06`).
 - **Fuente:** `dudas-pendientes.md` §2 bis, `DP-SEG-06`; aprobación explícita del propietario el 2026-08-11.
+
+### DEC-054 · Fórmula de última actividad, marcador de anonimización y alcance de `appointment_history_change`
+
+> `DEC-053` está reservado por el PR del issue #5 (protocolo de lease de `notification_claim_due`), abierto en paralelo y todavía no fusionado a `main` cuando se redactó esta decisión. Se numera `DEC-054` para no reutilizar el código cuando ambos PR converjan (regla de este registro: ningún código se reasigna).
+
+- **Fecha:** 2026-08-11.
+- **Decisión:** cuatro precisiones necesarias para implementar `DEC-042`/`DEC-049` en SQL, sin las cuales el issue no se puede codificar sin inventar respuesta:
+  1. **Fórmula de última actividad (`DEC-042`):** `GREATEST(customer.created_at, MAX(appointment.created_at), MAX(appointment_history.occurred_at) de sus citas, MAX(appointment_access_token.issued_at) de sus citas)`. La emisión del token (`issued_at`) es el mejor proxy disponible de "acceso por token": el esquema no registra el instante en que el cliente de verdad abre el enlace, solo cuándo el sistema lo emite. Añadir esa columna es una ampliación de esquema fuera del alcance de este issue.
+  2. **Marcador de anonimización:** el texto literal `'Cliente anonimizado'` sustituye `customer.full_name` y `appointment.attendee_name`, y reemplaza (nunca borra) los valores no nulos de `appointment_history.reason` y de `appointment_history_change.previous_value`/`new_value` cuando el campo es personal. Es literal y único a propósito: `customer_anonymized_ck` lo exige tal cual, así que "¿está anonimizado?" es una comparación exacta, no una convención de texto libre.
+  3. **Alcance de `appointment_history_change`:** solo se redactan las filas cuyo `field_name` sea `'attendee_name'` o `'customer_note'` — los únicos dos campos personales de `appointment`. Un cambio de `status`, `starts_at` o `service_id` no identifica a nadie y se conserva íntegro, porque es la evidencia operativa que `DEC-025`/`RN-DAT-03` piden conservar.
+  4. **`idempotency_record.response_body` no se toca:** su TTL máximo es 86 400 s (`idempotency_begin`, `p_ttl_seconds` ≤ 1 día) y el mínimo de retención posible es 1 mes (`barbershop_retention_months_ck`). Para cualquier configuración válida, una respuesta idempotente ligada a la actividad de un cliente ya fue purgada por `idempotency_purge_expired` mucho antes de que ese cliente llegue a ser candidato de anonimización. La tabla tampoco tiene columna que la correlacione con `customer_id`; añadirla solo para cubrir un caso ya imposible sería alcance fuera de este issue.
+- **Responsable:** propietario del proyecto, sujeta a revisión jurídica colombiana como toda `DEC-025`.
+- **Motivo:** `DDL-PRI-01` exigía "aprobar primero una matriz de datos personales y una fecha ancla" antes de codificar; `DEC-042`/`DEC-049` fijaron el principio pero no la fórmula ni el marcador exactos, y AGENTS.md prohíbe inventar esa traducción sin registrarla.
+- **Alternativas descartadas:** un estado/columna nuevo en `appointment_access_token` para registrar el acceso real del cliente (descartada por alcance: es una ampliación de esquema, no una corrección de la anonimización); redactar `appointment_history_change` por heurística de contenido en vez de por `field_name` (descartada por indeterminista y no verificable con un `CHECK`); añadir `customer_id` a `idempotency_record` para poder purgarla por cliente (descartada porque el TTL ya lo vuelve innecesario en todo escenario válido).
+- **Documentos afectados:** `database/modelo-fisico-referencia.sql` (`customer_anonymized_ck`, `retention_claim_due_customers`, `customer_anonymize`).
+- **Fuente:** `docs/05-backend/revision-ddl-seguridad-2026-08-11.md`, hallazgo `DDL-PRI-01`; `DEC-042`, `DEC-049`; issue `#6`.
