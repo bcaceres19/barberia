@@ -1,6 +1,6 @@
 ---
 titulo: "Historial de cambios documentales"
-version: "2.2"
+version: "2.3"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-11"
@@ -147,6 +147,9 @@ Las versiones se aplican por documento. Mientras no exista historial Git, la fec
 | 2026-08-11 | `estandar-base-datos.md` | 1.1 → 1.2 | §9 documenta el modelo de 4 roles (`DEC-040`) y exige `search_path=''` calificado en funciones `SECURITY DEFINER`, no solo "fijado explícitamente". | Cerrar la brecha que `DDL-SEC-02` encontró entre el estándar y su cumplimiento real | `DEC-040` |
 | 2026-08-11 | `migraciones-atlas.md` | 1.0 → 1.1 | Nueva sección "Bootstrap de roles": procedimiento fuera de Atlas para aprovisionar `barberia_owner`/`barberia_migrator`/`barberia_app`/`barberia_worker`, y convención `SET ROLE barberia_owner; ... RESET ROLE;` para migraciones futuras. | Evitar repetir `DDL-SEC-01` en la próxima migración | `DEC-040` |
 | 2026-08-11 | `matriz-trazabilidad.md` | 1.9 → 1.10 | Se añade la fila `DEC-040` y se actualiza la brecha de Git/GitHub (ya inicializado; el ruleset queda pendiente por el plan gratuito). | Gobierno y trazabilidad | `DEC-040` |
+| 2026-08-11 | `20260811145252_harden_roles_and_definer_functions.sql` | validado contra PostgreSQL 14.23 real (Docker) | Se corrigen 3 defectos encontrados solo al ejecutar: faltaba `GRANT USAGE, CREATE ON SCHEMA public TO barberia_owner` (el propietario no podía ni leer sus propias tablas); `SET ROLE barberia_owner` rompía el registro de progreso de Atlas (`permission denied for schema atlas_schema_revisions`), resuelto cambiando `barberia_migrator` a `INHERIT` en vez de `SET ROLE`/`RESET ROLE`; `ALTER DEFAULT PRIVILEGES ... IN SCHEMA public` no se aplicaba a una función creada sin calificar el esquema, resuelto quitando `IN SCHEMA` (forma global). Aplicación desde cero y suite `database/tests/hu001_aislamiento_rls.sql` pasan con `barberia_app` real, no superusuario. | Tarea de validación del PR #9 (issue #2), exigida por `docs/10-backlog/prompt-endurecimiento-ddl.md` antes de fusionar | `DEC-040` |
+| 2026-08-11 | `estandar-base-datos.md` | 1.2 → 1.3 | §9 puntos 11-12 se corrigen para reflejar `INHERIT` en vez de `SET ROLE`/`RESET ROLE`, y `ALTER DEFAULT PRIVILEGES` sin `IN SCHEMA`, según lo confirmado en PostgreSQL real. | Evitar que el estándar documente un diseño que la ejecución real refutó | `DEC-040` |
+| 2026-08-11 | `migraciones-atlas.md` | 1.1 → 1.2 | La sección de bootstrap de roles se corrige: `barberia_migrator` es `INHERIT`, no `NOINHERIT` con `SET ROLE`; se documenta la razón (conflicto con el registro de progreso de Atlas) y la consecuencia (objetos nuevos quedan owned por `barberia_migrator`). | Evitar que el procedimiento documentado falle al seguirse | `DEC-040` |
 
 ## 4. Pendiente para la siguiente versión
 

@@ -1,6 +1,6 @@
 ---
 titulo: "Estándar de diseño y evolución de base de datos"
-version: "1.2"
+version: "1.3"
 estado: "Obligatorio para desarrollo"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-11"
@@ -173,8 +173,8 @@ Las reglas que cambian con frecuencia o requieren contexto del actor permanecen 
 8. Toda política se prueba con al menos dos barberías usando el rol real.
 9. `search_path` de todo rol y función se fija explícitamente; una función `SECURITY DEFINER` usa `SET search_path = ''` (vacío, no `public, pg_catalog`) y califica cada identificador (`public.tabla`, `pg_catalog.función`), porque un `search_path` no vacío sigue permitiendo que un objeto homónimo en un esquema escribible desvíe la resolución.
 10. Funciones `SECURITY DEFINER` son excepcionales: propietario controlado `NOLOGIN`, `search_path` vacío con nombres calificados, `REVOKE ALL ... FROM PUBLIC` antes de conceder `EXECUTE` solo al rol que la necesita (API o worker, nunca ambos por defecto), validación de parámetros y revisión de seguridad.
-11. Modelo de roles (`DEC-040`): un propietario `barberia_owner` `NOLOGIN` controla tablas, índices y funciones; `barberia_migrator` es el único login que ejecuta Atlas, es `NOINHERIT` y solo actúa como propietario mediante `SET ROLE barberia_owner` explícito dentro de una migración; `barberia_app` (API, tenant-scoped) y `barberia_worker` (procesos en segundo plano, sin contexto de tenant fijo) son roles de login separados, sin privilegios generales cruzados entre sí. Los cuatro roles se aprovisionan con un administrador antes de que Atlas se conecte por primera vez (`migraciones-atlas.md`, bootstrap de roles); ninguna migración nueva debe crear estos roles base.
-12. `ALTER DEFAULT PRIVILEGES FOR ROLE barberia_owner ... REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC` se fija una vez y cubre toda función futura creada por el propietario; un `GRANT EXECUTE` explícito sigue siendo obligatorio por función y por rol consumidor.
+11. Modelo de roles (`DEC-040`): un propietario `barberia_owner` `NOLOGIN` controla tablas, índices y funciones; `barberia_migrator` es el único login que ejecuta Atlas, es `INHERIT` y miembro de `barberia_owner`, así que actúa con sus privilegios en cada sesión sin `SET ROLE` explícito (probado contra PostgreSQL real: `SET ROLE` dentro de una migración rompe el registro de progreso que el propio Atlas escribe durante la aplicación); `barberia_app` (API, tenant-scoped) y `barberia_worker` (procesos en segundo plano, sin contexto de tenant fijo) son roles de login separados, sin privilegios generales cruzados entre sí. Los cuatro roles se aprovisionan con un administrador antes de que Atlas se conecte por primera vez (`migraciones-atlas.md`, bootstrap de roles); ninguna migración nueva debe crear estos roles base. Los objetos que cree una migración futura quedan owned por `barberia_migrator` (quien la ejecuta), no por `barberia_owner`; las políticas RLS administrativas de una tabla nueva se escriben igual `FOR ALL TO barberia_owner`, y `barberia_migrator` las satisface por membresía heredada.
+12. `ALTER DEFAULT PRIVILEGES` se fija una vez, sin `IN SCHEMA`, para `barberia_owner` y para `barberia_migrator` (probado contra PostgreSQL real: acotarlo a `IN SCHEMA public` no tuvo efecto sobre una función creada sin calificar el esquema, la forma global sí). No sustituye la defensa primaria: cada función `SECURITY DEFINER` lleva su propio `REVOKE ALL ... FROM PUBLIC` explícito, y un `GRANT EXECUTE` explícito sigue siendo obligatorio por función y por rol consumidor.
 
 ## 10. Migraciones
 
