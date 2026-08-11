@@ -1,9 +1,9 @@
 ---
 titulo: "Gestión de migraciones PostgreSQL con Atlas"
-version: "1.0"
+version: "1.1"
 estado: "Decisión confirmada"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-06"
+ultima_actualizacion: "2026-08-11"
 documentos_relacionados:
   - "../00-control/registro-decisiones.md"
   - "../00-control/matriz-trazabilidad.md"
@@ -133,6 +133,43 @@ Para producción se cambia el ambiente, pero no el artefacto. El pipeline debe:
 - detenerse sin desplegar la aplicación si la migración falla.
 
 Las migraciones no se ejecutan al arrancar el API o el worker. Así el rol de aplicación carece de DDL y varias instancias no compiten por modificar el esquema.
+
+### Bootstrap de roles (`DEC-040`)
+
+Los cuatro roles de PostgreSQL se aprovisionan **fuera de Atlas**, con un
+administrador (o superusuario de bootstrap), **antes** de que Atlas se
+conecte por primera vez a un ambiente nuevo. Ninguna migración crea estos
+roles base a partir de `20260811145252_harden_roles_and_definer_functions.sql`
+en adelante; esa migración fue la corrección única y de una sola vez para
+ambientes que ya tenían `20260807170000_create_tenant_foundation.sql`
+aplicada sin este modelo.
+
+| Rol | Atributos | Uso |
+| --- | --- | --- |
+| `barberia_owner` | `NOLOGIN`, sin `SUPERUSER`/`CREATEDB`/`CREATEROLE`/`BYPASSRLS` | Dueño real de tablas, índices, secuencias y funciones. Nunca se conecta. |
+| `barberia_migrator` | `LOGIN`, `NOINHERIT`, miembro de `barberia_owner`, sin `SUPERUSER`/`CREATEDB`/`CREATEROLE`/`BYPASSRLS` | Ejecuta Atlas. Usa `SET ROLE barberia_owner` explícito dentro de una migración cuando necesita actuar como propietario (crear/alterar objetos, políticas, default privileges). |
+| `barberia_app` | `LOGIN`, tenant-scoped, sin `SUPERUSER`/`CREATEDB`/`CREATEROLE`/`BYPASSRLS` | Rol del API. Fija `app.barbershop_id` por transacción. |
+| `barberia_worker` | `LOGIN`, sin `SUPERUSER`/`CREATEDB`/`CREATEROLE`/`BYPASSRLS` | Procesos en segundo plano (notificaciones, retención). Solo `EXECUTE` en funciones de claim/finalización; sin `GRANT` general sobre tablas de negocio. |
+
+Procedimiento de bootstrap por ambiente nuevo (desarrollo, piloto, producción):
+
+1. Un administrador se conecta como superusuario o con `CREATEROLE` y crea los
+   cuatro roles con los atributos de la tabla anterior.
+2. `GRANT barberia_owner TO barberia_migrator;` (membresía, no herencia
+   automática: `barberia_migrator` es `NOINHERIT` a propósito).
+3. Fija la contraseña de `barberia_migrator`, `barberia_app` y
+   `barberia_worker` con `ALTER ROLE ... PASSWORD '...'` desde el secreto del
+   ambiente (gestor de secretos de despliegue); nunca en el repositorio ni en
+   `atlas.hcl`.
+4. Recién entonces Atlas se conecta con `barberia_migrator` y aplica el
+   directorio completo de migraciones.
+
+Convención para toda migración que cree objetos de esquema a partir de ahora:
+abrir con `SET ROLE barberia_owner;` y cerrar con `RESET ROLE;`, para que el
+propietario efectivo sea siempre `barberia_owner` y no el login que ejecutó
+Atlas. Rotar la contraseña de `barberia_migrator`, `barberia_app` o
+`barberia_worker` no requiere una migración: es un cambio operativo sobre el
+rol existente.
 
 ## 7. Trazabilidad
 

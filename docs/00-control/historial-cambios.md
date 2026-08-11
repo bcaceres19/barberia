@@ -1,6 +1,6 @@
 ---
 titulo: "Historial de cambios documentales"
-version: "2.1"
+version: "2.2"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-11"
@@ -141,6 +141,12 @@ Las versiones se aplican por documento. Mientras no exista historial Git, la fec
 | 2026-08-11 | `contradicciones.md` | 1.0 → 1.1 | Se registra y resuelve `CT-002`: vocabulario de `event_type` contradictorio dentro de `estados-citas.md`. | Hallazgo de la revisión DDL | `DEC-041` |
 | 2026-08-11 | `dudas-pendientes.md` | 1.3 → 1.4 | Se añaden y resuelven `DP-DDL-01`–`DP-DDL-10`, correspondientes a las decisiones obligatorias antes de codificar el endurecimiento del DDL. | `docs/05-backend/revision-ddl-seguridad-2026-08-11.md`, sección 5 | `DEC-040`–`DEC-049` |
 | 2026-08-11 | Repositorio | — → Git inicializado | Se inicializa `git`, se crea el commit inicial en `main` y se conecta `https://github.com/bcaceres19/barberia` como origen, siguiendo `flujo-git-github.md`. Los rulesets de rama requieren GitHub Pro en repos privados (403); queda como riesgo temporal registrado hasta actualizar el plan o hacer público el repositorio. | Requisito previo del propietario para poder implementar el endurecimiento del DDL por issue/rama/PR | `DEC-038` |
+| 2026-08-11 | Repositorio | — | Se abren los issues #1–#7 (registro de decisiones; roles/ownership/`SECURITY DEFINER`; idempotencia; integridad del modelo físico; workers de notificación/retención; anonimización; índices/RLS), uno por preocupación de `docs/10-backlog/prompt-endurecimiento-ddl.md`. | Dividir el trabajo de endurecimiento del DDL en PR revisables por separado | — |
+| 2026-08-11 | `database/migrations/20260811145252_harden_roles_and_definer_functions.sql` | nuevo → aplicado (pendiente de validar en PostgreSQL real) | Migración correctiva roll-forward: crea `barberia_owner` (NOLOGIN) y `barberia_worker`, transfiere ownership de `barbershop`/`staff_user`/`idempotency_record`/`set_updated_at()` a `barberia_owner`, reemplaza las políticas administrativas, fija `ALTER DEFAULT PRIVILEGES` y revoca `EXECUTE` innecesario de `set_updated_at()` al API. No edita las migraciones ya aplicadas. | Cerrar `DDL-SEC-01` y `DDL-SEC-03`, issue #2 | `DEC-040` |
+| 2026-08-11 | `database/modelo-fisico-referencia.sql` | — | Las 6 funciones `SECURITY DEFINER` pasan a `search_path=''` con nombres calificados; `notification_claim_due` y `retention_claim_due_customers` se conceden a `barberia_worker` en vez de `barberia_app`. El archivo no es una migración aplicada, por lo que se corrigió en el sitio. | Cerrar `DDL-SEC-02` y `DDL-SEC-04`, issue #2 | `DEC-040` |
+| 2026-08-11 | `estandar-base-datos.md` | 1.1 → 1.2 | §9 documenta el modelo de 4 roles (`DEC-040`) y exige `search_path=''` calificado en funciones `SECURITY DEFINER`, no solo "fijado explícitamente". | Cerrar la brecha que `DDL-SEC-02` encontró entre el estándar y su cumplimiento real | `DEC-040` |
+| 2026-08-11 | `migraciones-atlas.md` | 1.0 → 1.1 | Nueva sección "Bootstrap de roles": procedimiento fuera de Atlas para aprovisionar `barberia_owner`/`barberia_migrator`/`barberia_app`/`barberia_worker`, y convención `SET ROLE barberia_owner; ... RESET ROLE;` para migraciones futuras. | Evitar repetir `DDL-SEC-01` en la próxima migración | `DEC-040` |
+| 2026-08-11 | `matriz-trazabilidad.md` | 1.9 → 1.10 | Se añade la fila `DEC-040` y se actualiza la brecha de Git/GitHub (ya inicializado; el ruleset queda pendiente por el plan gratuito). | Gobierno y trazabilidad | `DEC-040` |
 
 ## 4. Pendiente para la siguiente versión
 
