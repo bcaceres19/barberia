@@ -3,6 +3,14 @@
 -- BYPASSRLS, con el rol real de la aplicación y del trabajador (nunca
 -- superusuario para las comprobaciones de privilegio).
 --
+-- REQUIERE modelo-fisico-referencia.sql cargado ADEMÁS de las cinco
+-- migraciones de database/migrations/: las 23 tablas que cubre esta suite
+-- (más allá de barbershop/staff_user, ya cubiertas por
+-- hu001_aislamiento_rls.sql) no existen en el esquema realmente aplicado.
+-- Esta suite certifica el diseño del modelo de referencia para cuando se
+-- convierta en migración; NO es evidencia de que el esquema desplegable
+-- hoy tenga esas 23 tablas protegidas, porque hoy no las tiene en absoluto.
+--
 -- Uso:
 --   psql "$DATABASE_TEST_URL" -v ON_ERROR_STOP=1 -f testdata/dos_barberias.sql
 --   psql "$DATABASE_TEST_URL" -v ON_ERROR_STOP=1 -f testdata/rls_suite_fixture.sql
