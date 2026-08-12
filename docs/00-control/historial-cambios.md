@@ -180,6 +180,9 @@ Las versiones se aplican por documento. Mientras no exista historial Git, la fec
 | 2026-08-11 | `database/README.md` | Estado ampliado a las cinco migraciones aplicadas y los fixtures/pruebas nuevos | Reflejaba solo HU-001/HU-004; ya estaba desactualizado desde los issues #2/#3 y más aún tras #5/#6/#7. | Consistencia documental (AGENTS.md) | — |
 | 2026-08-11 | `database/testdata/README.md`, `database/tests/README.md` | filas añadidas | `rls_suite_fixture.sql`/`rls_suite.sql` (issue #7). | Issue #7 | — |
 | 2026-08-11 | `matriz-trazabilidad.md` | 1.16 → 1.17 | Se añade la fila "Índices, validaciones y suite RLS completa"; se marca resuelta la brecha de política administrativa de `service`/`barber_service`/`notification_channel_setting`. | Gobierno y trazabilidad | — |
+| 2026-08-12 | `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md` | reglas ampliadas | Todo prompt destinado a otra conversación o agente debe persistirse, quedar autocontenido y enlazar HU, tipo, issue, dependencias, rama y PR reales. | Evitar que la instrucción operativa exista solo en un chat y permitir relevo entre Codex, Claude y personas | `DEC-038`, issue #35 |
+| 2026-08-12 | `docs/10-backlog/prompts/README.md`, `TEMPLATE.md` | nuevos | Se crea el catálogo canónico con convención de nombres, metadatos, estados, versionado, plantilla y regla de una preocupación por issue. | Persistencia y trazabilidad de prompts reutilizables | `DEC-038`, issue #35 |
+| 2026-08-12 | `prompts-implementacion.md`, `prompts-detallados-b0.md`, `docs/README.md`, `matriz-trazabilidad.md` | navegación y trazabilidad actualizadas | Los documentos históricos remiten al catálogo individual y la matriz mide que ningún prompt reusable se entregue solo por chat. | Mantener una única ruta operativa sin borrar antecedentes | `DEC-038`, issue #35 |
 
 ## 4. Pendiente para la siguiente versión
 

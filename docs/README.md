@@ -1,9 +1,9 @@
 ---
 titulo: "Mapa documental y fuentes de verdad"
-version: "2.0"
+version: "2.1"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-11"
+ultima_actualizacion: "2026-08-12"
 documentos_relacionados:
   - "00-control/registro-decisiones.md"
   - "00-control/contradicciones.md"
@@ -11,6 +11,7 @@ documentos_relacionados:
   - "00-control/historial-cambios.md"
   - "03-desarrollo/flujo-git-github.md"
   - "03-desarrollo/estandar-diseno-visual.md"
+  - "10-backlog/prompts/README.md"
 ---
 
 # Mapa documental y fuentes de verdad
@@ -53,6 +54,7 @@ Los archivos de `respuesta-manuales/` son evidencia de origen. Si difieren de un
 | Requisitos | [historias-usuario.md](02-requisitos/historias-usuario.md) | Historias `HU-*` y criterios `CA-*` | Propuesta; B0 y `HU-020`/`HU-021` redactados |
 | Backlog | [plan-bloques.md](10-backlog/plan-bloques.md) | Orden de construcción de las 45 funciones P0 en siete bloques | Propuesta |
 | Backlog | [prompts-implementacion.md](10-backlog/prompts-implementacion.md) | Prompts de implementación y revisión de B0 y primeras historias de B1 | Propuesta; herramienta, no norma |
+| Backlog | [prompts/README.md](10-backlog/prompts/README.md) | Catálogo canónico, plantilla, estado y trazabilidad de prompts reutilizables | Obligatorio para prompts nuevos o revisados; herramienta, no norma |
 | Backlog | [prompt-endurecimiento-ddl.md](10-backlog/prompt-endurecimiento-ddl.md) | Ejecución por fases de las correcciones de seguridad e integridad del DDL | Propuesta; herramienta, no norma |
 | Desarrollo | [estandar-backend-go.md](03-desarrollo/estandar-backend-go.md) | Código limpio, paquetes y documentación Go | Obligatorio |
 | Desarrollo | [estandar-frontend-vue.md](03-desarrollo/estandar-frontend-vue.md) | Código limpio, módulos, TypeScript y accesibilidad | Obligatorio |

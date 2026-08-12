@@ -17,6 +17,16 @@ Estas reglas aplican a personas y agentes que modifiquen el repositorio.
 - Antes del merge deben pasar los checks aplicables y resolverse todas las conversaciones. Con colaboradores se exige al menos una aprobación ajena al último cambio.
 - Eliminar la rama después del merge y desplegar el SHA o tag aprobado, nunca una rama de ambiente divergente.
 
+## Prompts persistentes y relevo entre agentes
+
+- Todo prompt redactado para ejecución futura —implementación de una `HU-*`, corrección, auditoría, revisión, pruebas, documentación, CI, operación u orquestación— se guarda antes de entregarlo en `docs/10-backlog/prompts/`, siguiendo su [catálogo y plantilla](docs/10-backlog/prompts/README.md). No se considera entregado si existe únicamente en un chat.
+- Cada archivo es autocontenido y registra como mínimo: identificador y versión del prompt, tipo de trabajo, estado, agente objetivo, `HU-*` cuando aplique, issue real o `pending`, dependencias, reglas `RN-*`, decisiones `DEC-*`, criterios `CA-*`, alcance excluido, pruebas, rama y PR cuando existan.
+- Un prompt que autoriza cambios en el repositorio solo puede pasar a `ready` y ejecutarse cuando tiene un issue real con criterios verificables. `issue: pending` obliga a conservarlo como `draft`; no se inventan números ni se omite la trazabilidad.
+- Un prompt atiende una preocupación primaria y un issue. Para varias entregas se crea un prompt de orquestación que enlaza prompts independientes, sin combinar sus ramas o PR.
+- Los prompts son herramientas derivadas, no fuentes normativas. Si contradicen `AGENTS.md`, una `RN-*`, una `DEC-*`, una `HU-*` o un estándar, prevalece la fuente normativa y el prompt se corrige o se sustituye antes de ejecutarlo.
+- Al crear, cambiar de estado, ejecutar, bloquear o sustituir un prompt, se actualizan su metadato y el índice de `docs/10-backlog/prompts/`. Un cambio material después de iniciar la ejecución crea una nueva versión que enlaza `supersedes`; no se reescribe silenciosamente el cuerpo usado por otro agente.
+- La respuesta final que entregue un prompt incluye un enlace al archivo guardado. Si el agente no puede escribir el repositorio, debe decir explícitamente que no quedó persistido y entregar el contenido como borrador pendiente de guardar.
+
 ## Estructura obligatoria
 
 - Backend Go: `apps/api`, un módulo Go, comandos `api` y `worker`, paquetes internos por capacidad.

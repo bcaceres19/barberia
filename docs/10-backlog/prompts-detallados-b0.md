@@ -1,9 +1,9 @@
 ---
 titulo: "Prompts detallados de implementación · B0 en curso"
-version: "1.0"
+version: "1.1"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-07"
+ultima_actualizacion: "2026-08-12"
 documentos_relacionados:
   - "prompts-implementacion.md"
   - "../02-requisitos/historias-usuario.md"
@@ -12,6 +12,7 @@ documentos_relacionados:
   - "../03-desarrollo/estandar-diseno-visual.md"
   - "../03-desarrollo/estrategia-pruebas.md"
   - "../04-arquitectura/backend-go.md"
+  - "prompts/README.md"
 ---
 
 # Prompts detallados de implementación · B0 en curso
@@ -19,6 +20,8 @@ documentos_relacionados:
 > **Estado: Propuesta.** Un prompt es una herramienta de trabajo, **no** una fuente
 > normativa. Si contradice `AGENTS.md`, una regla `RN-*`, una decisión `DEC-*` o un estándar
 > de `docs/03-desarrollo/`, manda el documento normativo y el prompt se corrige.
+
+> **Catálogo vigente:** este archivo se conserva como antecedente detallado de B0. Todo prompt nuevo o revisado vive individualmente en el [catálogo de prompts persistentes](prompts/README.md), que registra issue, versión, dependencias y estado de ejecución.
 
 ---
 

@@ -1,19 +1,22 @@
 ---
 titulo: "Prompts de implementación de B0 y primeras historias de B1"
-version: "1.1"
+version: "1.2"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-10"
+ultima_actualizacion: "2026-08-12"
 documentos_relacionados:
   - "../02-requisitos/historias-usuario.md"
   - "plan-bloques.md"
   - "../../AGENTS.md"
   - "../../CONTRIBUTING.md"
+  - "prompts/README.md"
 ---
 
 # Prompts de implementación de B0 y primeras historias de B1
 
 > **Estado del contenido: Propuesta.** Un prompt es una herramienta de trabajo, **no** una fuente normativa. Si un prompt contradice `AGENTS.md`, una regla `RN-*`, una decisión `DEC-*` o un estándar de `docs/03-desarrollo/`, manda el documento normativo y el prompt se corrige.
+
+> **Catálogo vigente:** este documento conserva el inventario histórico y prompts aún no migrados. Todo prompt nuevo o revisado se guarda individualmente en el [catálogo de prompts persistentes](prompts/README.md). Si existe allí una versión individual de la misma preocupación, el catálogo identifica cuál es la operativa y su estado real.
 
 ---
 
