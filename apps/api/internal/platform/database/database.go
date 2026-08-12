@@ -81,7 +81,7 @@ type DB struct {
 // como barberia_app. NUNCA como barberia_migrator ni superusuario: si las
 // pruebas pasan con un rol privilegiado, no prueban nada sobre RLS.
 func NewDB(cfg config.Config) (*DB, error) {
-	poolConfig, err := pgxpool.ParseConfig(cfg.DatabaseURL)
+	poolConfig, err := pgxpool.ParseConfig(string(cfg.DatabaseURL))
 	if err != nil {
 		return nil, fmt.Errorf("database: parse config: %w", err)
 	}

@@ -5,17 +5,69 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
+	"regexp"
 	"time"
 )
+
+// entornosSinTLSObligatorio son los únicos ambientes donde una URL de base
+// de datos sin TLS (o el DSN de worker ausente) no hace fallar Load(). Fuera
+// de estos dos, un despliegue sin TLS es un error de configuración, no un
+// valor por defecto silencioso.
+var entornosSinTLSObligatorio = map[string]bool{
+	"local": true,
+	"test":  true,
+}
+
+// DatabaseDSN es una cadena de conexión a PostgreSQL. No es un string
+// desnudo: implementa String() y LogValue() para que ni fmt.Sprintf("%+v",
+// cfg) ni un logger estructurado puedan filtrar la contraseña. Una URL de
+// conexión completa en un log de arranque es una fuga de credenciales.
+type DatabaseDSN string
+
+// String redacta la contraseña de la URL antes de imprimirla. Soporta el
+// formato URL (postgres://usuario:contraseña@host/...) y el formato de
+// palabras clave (host=... password=...); si no reconoce ninguno de los dos
+// pero el valor no está vacío, devuelve un marcador fijo en vez de arriesgar
+// una fuga parcial.
+func (d DatabaseDSN) String() string {
+	return redactDSN(string(d))
+}
+
+// LogValue implementa slog.LogValuer: garantiza la misma redacción cuando
+// el valor se registra con el logger estructurado del proyecto, no solo con
+// fmt.
+func (d DatabaseDSN) LogValue() any {
+	return d.String()
+}
+
+var dsnPasswordKeyword = regexp.MustCompile(`(?i)(password|pwd)=\S+`)
+
+func redactDSN(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	if u, err := url.Parse(raw); err == nil && u.User != nil {
+		if _, hasPassword := u.User.Password(); hasPassword {
+			u.User = url.UserPassword(u.User.Username(), "xxxxx")
+		}
+		return u.String()
+	}
+	if dsnPasswordKeyword.MatchString(raw) {
+		return dsnPasswordKeyword.ReplaceAllString(raw, "$1=xxxxx")
+	}
+	return "[dsn redactado]"
+}
 
 // Config reúne los valores de configuración que necesitan los procesos api y
 // worker. Los campos se agregan solo cuando un componente concreto los
 // consume; este struct no es un depósito genérico de variables de entorno.
 type Config struct {
 	// Environment identifica el ambiente en ejecución: local, test, pilot o
-	// production. No determina reglas de negocio, solo comportamiento
-	// operativo como el nivel de log.
+	// production. No determina reglas de negocio, pero SÍ determina qué
+	// validaciones de seguridad son obligatorias (TLS, DSN de worker
+	// separado): fuera de local/test se exigen ambas.
 	Environment string
 
 	// HTTPAddr es la dirección donde escucha el servidor HTTP del proceso api.
@@ -25,10 +77,16 @@ type Config struct {
 	// observabilidad.
 	LogLevel string
 
-	// DatabaseURL es la URL de conexión a PostgreSQL. Es un secreto: su tipo
-	// implementa String() redactando la contraseña. Una URL completa en un
-	// log de arranque es una fuga de credenciales.
-	DatabaseURL string
+	// DatabaseURL es la URL de conexión a PostgreSQL que usa el proceso api,
+	// conectado como barberia_app.
+	DatabaseURL DatabaseDSN
+
+	// WorkerDatabaseURL es la URL de conexión a PostgreSQL que usa el
+	// proceso worker, conectado como barberia_worker (DEC-040: roles
+	// separados). Deliberadamente distinta de DatabaseURL: nada en este
+	// paquete permite que ambos procesos compartan la misma variable.
+	// Obligatoria fuera de local/test.
+	WorkerDatabaseURL DatabaseDSN
 
 	// DatabaseMaxConns es el número máximo de conexiones en el pool.
 	DatabaseMaxConns int
@@ -54,30 +112,107 @@ type Config struct {
 
 // Load lee la configuración desde variables de entorno y aplica valores por
 // defecto seguros para desarrollo local. Devuelve un error si un valor
-// obligatorio falta o no es válido.
+// obligatorio falta, o si un valor presente no es válido: una variable mal
+// escrita (p. ej. APP_DATABASE_MAX_CONNS=abc) debe impedir el arranque, no
+// caer en silencio al valor por defecto.
 func Load() (Config, error) {
-	cfg := Config{
-		Environment:              getEnv("APP_ENVIRONMENT", "local"),
-		HTTPAddr:                 getEnv("APP_HTTP_ADDR", ":8080"),
-		LogLevel:                 getEnv("APP_LOG_LEVEL", "info"),
-		DatabaseURL:              getEnv("APP_DATABASE_URL", ""),
-		DatabaseMaxConns:         getEnvInt("APP_DATABASE_MAX_CONNS", 20),
-		DatabaseMinConns:         getEnvInt("APP_DATABASE_MIN_CONNS", 2),
-		DatabaseMaxConnLifetime:  getEnvDuration("APP_DATABASE_MAX_CONN_LIFETIME", "1h"),
-		DatabaseMaxConnIdleTime:  getEnvDuration("APP_DATABASE_MAX_CONN_IDLE_TIME", "30m"),
-		DatabaseConnectTimeout:   getEnvDuration("APP_DATABASE_CONNECT_TIMEOUT", "5s"),
-		DatabaseStatementTimeout: getEnvDuration("APP_DATABASE_STATEMENT_TIMEOUT", "10s"),
+	environment := getEnv("APP_ENVIRONMENT", "local")
+	if environment == "" {
+		return Config{}, fmt.Errorf("config: APP_ENVIRONMENT no puede quedar vacío")
 	}
 
-	if cfg.Environment == "" {
-		return Config{}, fmt.Errorf("config: APP_ENVIRONMENT no puede quedar vacío")
+	maxConns, err := getEnvInt("APP_DATABASE_MAX_CONNS", 20)
+	if err != nil {
+		return Config{}, err
+	}
+	minConns, err := getEnvInt("APP_DATABASE_MIN_CONNS", 2)
+	if err != nil {
+		return Config{}, err
+	}
+	if minConns > maxConns {
+		return Config{}, fmt.Errorf(
+			"config: APP_DATABASE_MIN_CONNS (%d) no puede ser mayor que APP_DATABASE_MAX_CONNS (%d)",
+			minConns, maxConns,
+		)
+	}
+
+	maxConnLifetime, err := getEnvDuration("APP_DATABASE_MAX_CONN_LIFETIME", "1h")
+	if err != nil {
+		return Config{}, err
+	}
+	maxConnIdleTime, err := getEnvDuration("APP_DATABASE_MAX_CONN_IDLE_TIME", "30m")
+	if err != nil {
+		return Config{}, err
+	}
+	connectTimeout, err := getEnvDuration("APP_DATABASE_CONNECT_TIMEOUT", "5s")
+	if err != nil {
+		return Config{}, err
+	}
+	statementTimeout, err := getEnvDuration("APP_DATABASE_STATEMENT_TIMEOUT", "10s")
+	if err != nil {
+		return Config{}, err
+	}
+
+	cfg := Config{
+		Environment:              environment,
+		HTTPAddr:                 getEnv("APP_HTTP_ADDR", ":8080"),
+		LogLevel:                 getEnv("APP_LOG_LEVEL", "info"),
+		DatabaseURL:              DatabaseDSN(getEnv("APP_DATABASE_URL", "")),
+		WorkerDatabaseURL:        DatabaseDSN(getEnv("APP_WORKER_DATABASE_URL", "")),
+		DatabaseMaxConns:         maxConns,
+		DatabaseMinConns:         minConns,
+		DatabaseMaxConnLifetime:  maxConnLifetime,
+		DatabaseMaxConnIdleTime:  maxConnIdleTime,
+		DatabaseConnectTimeout:   connectTimeout,
+		DatabaseStatementTimeout: statementTimeout,
 	}
 
 	if cfg.DatabaseURL == "" {
 		return Config{}, fmt.Errorf("config: APP_DATABASE_URL no puede quedar vacío")
 	}
 
+	requiresHardening := !entornosSinTLSObligatorio[cfg.Environment]
+
+	if requiresHardening {
+		if cfg.WorkerDatabaseURL == "" {
+			return Config{}, fmt.Errorf(
+				"config: APP_WORKER_DATABASE_URL es obligatorio fuera de local/test " +
+					"(DEC-040: api y worker no comparten credencial)",
+			)
+		}
+		if cfg.WorkerDatabaseURL == cfg.DatabaseURL {
+			return Config{}, fmt.Errorf(
+				"config: APP_DATABASE_URL y APP_WORKER_DATABASE_URL no pueden ser iguales " +
+					"fuera de local/test (DEC-040: api y worker usan roles distintos)",
+			)
+		}
+		if err := requireTLS(string(cfg.DatabaseURL), "APP_DATABASE_URL"); err != nil {
+			return Config{}, err
+		}
+		if err := requireTLS(string(cfg.WorkerDatabaseURL), "APP_WORKER_DATABASE_URL"); err != nil {
+			return Config{}, err
+		}
+	}
+
 	return cfg, nil
+}
+
+// requireTLS rechaza sslmode=disable (o su ausencia interpretada como tal
+// por libpq) fuera de local/test. No valida el certificado en sí: eso lo
+// hace el driver al conectar. Aquí solo se evita que un despliegue real
+// quede configurado, por defecto u omisión, sin TLS.
+func requireTLS(dsn, varName string) error {
+	u, err := url.Parse(dsn)
+	if err != nil {
+		return fmt.Errorf("config: %s no es una URL válida: %w", varName, err)
+	}
+	sslmode := u.Query().Get("sslmode")
+	if sslmode == "" || sslmode == "disable" {
+		return fmt.Errorf(
+			"config: %s requiere sslmode distinto de 'disable' fuera de local/test", varName,
+		)
+	}
+	return nil
 }
 
 func getEnv(key, fallback string) string {
@@ -87,24 +222,37 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
-func getEnvInt(key string, fallback int) int {
-	if value, ok := os.LookupEnv(key); ok && value != "" {
-		var result int
-		_, err := fmt.Sscanf(value, "%d", &result)
-		if err == nil {
-			return result
-		}
+// getEnvInt parsea una variable de entorno como entero. Si la variable está
+// ausente o vacía, devuelve el valor por defecto; si está presente pero no
+// es un entero válido, devuelve error en vez de caer al valor por defecto
+// en silencio.
+func getEnvInt(key string, fallback int) (int, error) {
+	value, ok := os.LookupEnv(key)
+	if !ok || value == "" {
+		return fallback, nil
 	}
-	return fallback
+	var result int
+	if _, err := fmt.Sscanf(value, "%d", &result); err != nil {
+		return 0, fmt.Errorf("config: %s=%q no es un entero válido: %w", key, value, err)
+	}
+	return result, nil
 }
 
-func getEnvDuration(key string, fallback string) time.Duration {
-	if value, ok := os.LookupEnv(key); ok && value != "" {
-		d, err := time.ParseDuration(value)
-		if err == nil {
-			return d
+// getEnvDuration parsea una variable de entorno como duración de Go. Si la
+// variable está ausente o vacía, devuelve el valor por defecto; si está
+// presente pero no es una duración válida, devuelve error.
+func getEnvDuration(key string, fallback string) (time.Duration, error) {
+	value, ok := os.LookupEnv(key)
+	if !ok || value == "" {
+		d, err := time.ParseDuration(fallback)
+		if err != nil {
+			return 0, fmt.Errorf("config: valor por defecto de %s (%q) inválido: %w", key, fallback, err)
 		}
+		return d, nil
 	}
-	d, _ := time.ParseDuration(fallback)
-	return d
+	d, err := time.ParseDuration(value)
+	if err != nil {
+		return 0, fmt.Errorf("config: %s=%q no es una duración válida: %w", key, value, err)
+	}
+	return d, nil
 }
