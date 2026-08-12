@@ -18,10 +18,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"system-barbershop/internal/platform/config"
 	"system-barbershop/internal/platform/database"
 )
 
@@ -72,7 +70,7 @@ func TestInTenantTx_CA002_01(t *testing.T) {
 	pool := setupTestDB(t)
 	defer pool.Close()
 
-	db := &database.DB{pool: pool}
+	db := database.NewForTest(pool)
 
 	shopA := database.BarbershopID("11111111-1111-1111-1111-111111111111")
 	shopB := database.BarbershopID("22222222-2222-2222-2222-222222222222")
@@ -137,7 +135,7 @@ func TestInTenantTx_CA002_02(t *testing.T) {
 	pool := setupTestDB(t)
 	defer pool.Close()
 
-	db := &database.DB{pool: pool}
+	db := database.NewForTest(pool)
 
 	shopA := database.BarbershopID("11111111-1111-1111-1111-111111111111")
 	shopB := database.BarbershopID("22222222-2222-2222-2222-222222222222")
@@ -209,7 +207,7 @@ func TestInTenantTx_CA002_03(t *testing.T) {
 	pool := setupTestDB(t)
 	defer pool.Close()
 
-	db := &database.DB{pool: pool}
+	db := database.NewForTest(pool)
 
 	shopA := database.BarbershopID("11111111-1111-1111-1111-111111111111")
 
@@ -269,7 +267,7 @@ func TestInTenantTx_CA002_05(t *testing.T) {
 	pool := setupTestDB(t)
 	defer pool.Close()
 
-	db := &database.DB{pool: pool}
+	db := database.NewForTest(pool)
 
 	// Identificador inválido (no es UUID válido)
 	invalidShop := database.BarbershopID("not-a-uuid")
@@ -327,7 +325,7 @@ func TestContextCancellation(t *testing.T) {
 	pool := setupTestDB(t)
 	defer pool.Close()
 
-	db := &database.DB{pool: pool}
+	db := database.NewForTest(pool)
 
 	shopA := database.BarbershopID("11111111-1111-1111-1111-111111111111")
 
@@ -357,7 +355,7 @@ func TestHealthCheck(t *testing.T) {
 	pool := setupTestDB(t)
 	defer pool.Close()
 
-	db := &database.DB{pool: pool}
+	db := database.NewForTest(pool)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()

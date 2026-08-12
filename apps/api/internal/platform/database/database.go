@@ -8,17 +8,17 @@
 // una transacción ya configurada. Esto hace IMPOSIBLE omitir el contexto.
 //
 // Justificación de la dependencia (estandar-backend-go.md §5.21):
-// - Necesidad: driver nativo de PostgreSQL para pool con hooks de adquisición
-//   y liberación, tipos uuid/timestamptz/numeric/rangos sin conversión, y
-//   set_config parametrizable para fijar app.barbershop_id sin inyección SQL.
-// - Mantenimiento: jackc/pgx v5 es el driver estándar de facto, desarrollo
-//   activo, versión semver estable.
-// - Licencia: MIT.
-// - Superficie transitiva: ninguna dependencia externa más allá de la librería
-//   estándar de Go y golang.org/x/* internos.
-// - Seguridad: protocolo nativo, sin capas de abstracción que oculten
-//   comportamiento; consultas SQL visibles y revisables. Atlas gobierna
-//   migraciones; NO se ejecutan al arrancar (CA-001-07).
+//   - Necesidad: driver nativo de PostgreSQL para pool con hooks de adquisición
+//     y liberación, tipos uuid/timestamptz/numeric/rangos sin conversión, y
+//     set_config parametrizable para fijar app.barbershop_id sin inyección SQL.
+//   - Mantenimiento: jackc/pgx v5 es el driver estándar de facto, desarrollo
+//     activo, versión semver estable.
+//   - Licencia: MIT.
+//   - Superficie transitiva: ninguna dependencia externa más allá de la librería
+//     estándar de Go y golang.org/x/* internos.
+//   - Seguridad: protocolo nativo, sin capas de abstracción que oculten
+//     comportamiento; consultas SQL visibles y revisables. Atlas gobierna
+//     migraciones; NO se ejecutan al arrancar (CA-001-07).
 package database
 
 import (
@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"system-barbershop/internal/platform/config"
@@ -56,7 +57,7 @@ func ValidBarbershopID(s string) (BarbershopID, error) {
 // consultas. NO expone Begin, Commit, Rollback: la transacción la gestiona
 // InTenantTx. Los métodos son un subconjunto deliberado de pgx.Tx.
 type Queries interface {
-	Exec(ctx context.Context, sql string, args ...any) (pgx.CommandTag, error)
+	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
 	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 	SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults
@@ -148,11 +149,17 @@ func (d *DB) Close() {
 // a) El pool NO expone Query, QueryRow, Exec ni Begin como métodos exportados.
 // b) BarbershopID es un tipo propio, no un uuid.UUID desnudo ni un string.
 // c) Secuencia interna: adquirir conexión -> BEGIN -> set_config local ->
-//    ejecutar callback -> COMMIT, o ROLLBACK ante error/pánico.
+//
+//	ejecutar callback -> COMMIT, o ROLLBACK ante error/pánico.
+//
 // d) Si set_config falla, ROLLBACK y error SIN ejecutar callback.
-//    Jamás se continúa con contexto vacío (CA-002-05).
+//
+//	Jamás se continúa con contexto vacío (CA-002-05).
+//
 // e) El ejecutor entregado al callback deja de ser válido al retornar. Si
-//    alguien lo guarda en un struct, la transacción ya estará cerrada.
+//
+//	alguien lo guarda en un struct, la transacción ya estará cerrada.
+//
 // f) context.Context es el primer parámetro, se propaga hasta PostgreSQL.
 // g) No se inician goroutines dentro de la transacción.
 // h) Nada de llamadas de red dentro de la transacción (base-datos.md §4.19).
