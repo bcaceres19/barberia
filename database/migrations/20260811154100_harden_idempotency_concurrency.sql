@@ -141,7 +141,7 @@ BEGIN
   IF btrim(p_operation) = '' OR char_length(p_operation) > 120 THEN
     RAISE EXCEPTION 'idempotency_begin: operation inválida.';
   END IF;
-  IF char_length(p_request_fingerprint) NOT BETWEEN 32 AND 128 THEN
+  IF p_request_fingerprint !~ '^[0-9a-f]{32,128}$' THEN
     RAISE EXCEPTION 'idempotency_begin: request_fingerprint inválido.';
   END IF;
 

@@ -12,15 +12,21 @@ antes de agregar una migración.
 | `atlas.hcl` | Cuatro ambientes: `local`, `test`, `pilot`, `production` |
 | `migrations/20260807170000_create_tenant_foundation.sql` | HU-001 · extensiones, roles, `barbershop`, `staff_user`, RLS |
 | `migrations/20260807170100_create_idempotency_record.sql` | HU-004 · `idempotency_record` |
+| `migrations/20260811145252_harden_roles_and_definer_functions.sql` | Correctiva · `barberia_owner`/`barberia_worker`, ownership, `DEC-040` |
+| `migrations/20260811154100_harden_idempotency_concurrency.sql` | Correctiva · protocolo de idempotencia concurrente (`DEC-043`) |
+| `migrations/20260811220000_harden_idempotency_fingerprint_format.sql` | Correctiva · `request_fingerprint` hexadecimal en minúsculas (`DDL-VAL-01`) |
 | `migrations/atlas.sum` | Generado y validado con Atlas v1.3.0 |
 | `testdata/dos_barberias.sql` | Escenario de HU-001 con dos barberías |
+| `testdata/notification_lease_fixture.sql`, `testdata/customer_anonymization_fixture.sql`, `testdata/rls_suite_fixture.sql` | Fixtures de `modelo-fisico-referencia.sql` (issues #5, #6, #7) — no dependen de migraciones aplicadas más allá de las de arriba |
 | `tests/hu001_aislamiento_rls.sql` | CA-001-01 a CA-001-06 con el rol real |
+| `tests/rls_suite.sql` | Suite RLS completa de las 23 tablas restantes (issue #7, `DDL-RLS-01`) |
 | `seeds/` | Vacío |
 | `modelo-fisico-referencia.sql` | Diseño completo de B0 pendiente y B1–B6. **No es una migración** |
 
-Solo están aplicadas las migraciones de HU-001 y HU-004. El resto del modelo
-—barberos, servicios, horario, bloqueos, citas, clientes, notificaciones—
-vive en [`modelo-fisico-referencia.sql`](modelo-fisico-referencia.sql) y se
+Solo están aplicadas las cinco migraciones listadas arriba. El resto del
+modelo —barberos, servicios, horario, bloqueos, citas, clientes,
+notificaciones— vive en
+[`modelo-fisico-referencia.sql`](modelo-fisico-referencia.sql) y se
 convierte en migración cuando se abre la historia que lo necesita. Escribirlo
 todo hoy como migraciones lo volvería inmutable antes de tener una sola línea
 de negocio funcionando (`DEC-036`).
