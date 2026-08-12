@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, ci/24-minimal-pipeline] # TEMP: quitar ci/24-minimal-pipeline antes de mergear
   pull_request:
     branches: [main]
   # Permite disparar el pipeline manualmente desde cualquier rama, útil para
