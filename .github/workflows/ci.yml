@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, ci/24-minimal-pipeline] # TEMP: quitar ci/24-minimal-pipeline antes de mergear
+    branches: [main]
   pull_request:
     branches: [main]
   # Permite disparar el pipeline manualmente desde cualquier rama, útil para
@@ -31,9 +31,9 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: "1.25"
           cache-dependency-path: apps/api/go.sum
@@ -111,7 +111,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Instalar cliente psql
         run: |
