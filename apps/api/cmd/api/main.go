@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"system-barbershop/internal/platform/config"
+	"system-barbershop/internal/platform/database"
 	"system-barbershop/internal/platform/httpserver"
 	"system-barbershop/internal/platform/observability"
 )
@@ -34,14 +35,27 @@ func run() error {
 
 	logger := observability.NewLogger(cfg.LogLevel)
 
+	// La aplicación se conecta como barberia_app (cfg.DatabaseURL), nunca
+	// como barberia_migrator ni superusuario. Un fallo aquí impide arrancar:
+	// el mensaje no incluye el error crudo del driver para no arriesgar un
+	// fragmento del DSN en el log de arranque (mismo criterio que
+	// DB.HealthCheck).
+	db, err := database.NewDB(cfg.DatabaseURL, cfg)
+	if err != nil {
+		logger.Error("no se pudo iniciar el pool de base de datos")
+		return errors.New("database: fallo al iniciar el pool")
+	}
+	defer db.Close()
+
 	// Las rutas de módulo (auth, shops, staff, catalog, schedule, booking,
 	// notification) se registran aquí a medida que existan, siguiendo la
 	// estructura de audiencias de docs/04-arquitectura/backend-go.md
 	// (/api/v1/public, /api/v1/customer, /api/v1/private). Chi v5 se
-	// incorpora en ese momento (DEC-034); el mux estándar basta mientras la
-	// única ruta es la comprobación operativa.
+	// incorpora en ese momento (DEC-034); el mux estándar basta mientras las
+	// únicas rutas son las comprobaciones operativas.
 	mux := http.NewServeMux()
 	mux.Handle("GET /health", httpserver.HealthHandler())
+	mux.Handle("GET /health/db", httpserver.DatabaseHealthHandler(db))
 
 	handler := httpserver.Chain(mux,
 		httpserver.RequestID,
