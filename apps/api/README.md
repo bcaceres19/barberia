@@ -13,7 +13,7 @@ antes de agregar código.
 
 ## Requisitos
 
-- Go 1.23 o superior.
+- Go 1.25 o superior.
 - PostgreSQL 14+ con extensiones `btree_gist`
 - Variables de entorno (ver `internal/platform/config`)
 
