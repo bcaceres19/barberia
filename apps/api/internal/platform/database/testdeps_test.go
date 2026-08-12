@@ -1,9 +1,14 @@
-// Package testdeps contiene la prueba estructural CA-002-06: verifica que
-// ningún módulo de dominio importe internal/platform/database o
-// github.com/jackc/pgx. Esta prueba existe para el import que alguien
-// agregará dentro de seis meses con prisa. Debe fallar con un mensaje que
-// diga qué paquete importó qué y por qué está prohibido.
-package testdeps
+// Prueba estructural CA-002-06: verifica que ningún módulo de dominio
+// importe internal/platform/database o github.com/jackc/pgx. Esta prueba
+// existe para el import que alguien agregará dentro de seis meses con
+// prisa. Debe fallar con un mensaje que diga qué paquete importó qué y por
+// qué está prohibido.
+//
+// Vive en package database_test (no en un package "testdeps" propio):
+// un directorio de Go solo admite el paquete de producción y, como mucho,
+// su paquete de prueba externo "_test"; un tercer nombre de paquete en el
+// mismo directorio impide compilar todo el módulo.
+package database_test
 
 import (
 	"fmt"
