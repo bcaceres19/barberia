@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Permite disparar el pipeline manualmente desde cualquier rama, útil para
+  # verificar el workflow en la infraestructura real de GitHub antes de que
+  # exista en la rama base (pull_request usa el workflow de la base, no el
+  # de la rama de la PR).
+  workflow_dispatch: {}
 
 env:
   ATLAS_VERSION: v1.3.0
