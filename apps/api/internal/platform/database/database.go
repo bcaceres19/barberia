@@ -77,11 +77,14 @@ type DB struct {
 	pool *pgxpool.Pool
 }
 
-// NewDB crea el pool con la configuración provista. La aplicación se conecta
-// como barberia_app. NUNCA como barberia_migrator ni superusuario: si las
-// pruebas pasan con un rol privilegiado, no prueban nada sobre RLS.
-func NewDB(cfg config.Config) (*DB, error) {
-	poolConfig, err := pgxpool.ParseConfig(string(cfg.DatabaseURL))
+// NewDB crea el pool con el DSN y los parámetros de ajuste provistos. dsn se
+// recibe aparte de cfg (no cfg.DatabaseURL implícito) porque api y worker
+// usan credenciales distintas (DEC-040): cmd/api pasa cfg.DatabaseURL
+// (barberia_app), cmd/worker pasa cfg.WorkerDatabaseURL (barberia_worker).
+// NUNCA barberia_migrator ni superusuario: si las pruebas pasan con un rol
+// privilegiado, no prueban nada sobre RLS.
+func NewDB(dsn config.DatabaseDSN, cfg config.Config) (*DB, error) {
+	poolConfig, err := pgxpool.ParseConfig(string(dsn))
 	if err != nil {
 		return nil, fmt.Errorf("database: parse config: %w", err)
 	}
