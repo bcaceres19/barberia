@@ -1,0 +1,172 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Permite disparar el pipeline manualmente desde cualquier rama, útil para
+  # verificar el workflow en la infraestructura real de GitHub antes de que
+  # exista en la rama base (pull_request usa el workflow de la base, no el
+  # de la rama de la PR).
+  workflow_dispatch: {}
+
+env:
+  ATLAS_VERSION: v1.3.0
+
+jobs:
+  go:
+    name: Go (build, vet, test -race, govulncheck)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.25"
+          cache-dependency-path: apps/api/go.sum
+
+      - name: Instalar cliente psql
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: gofmt
+        working-directory: apps/api
+        run: |
+          diff=$(gofmt -l .)
+          if [ -n "$diff" ]; then
+            echo "Archivos sin formatear (gofmt -w antes de subir):"
+            echo "$diff"
+            exit 1
+          fi
+
+      - name: go vet
+        working-directory: apps/api
+        run: go vet ./...
+
+      - name: go build
+        working-directory: apps/api
+        run: go build ./...
+
+      - name: Aplicar las 5 migraciones (esquema de prueba)
+        working-directory: database/migrations
+        env:
+          PGPASSWORD: postgres
+        run: |
+          set -euo pipefail
+          for f in 20260807170000_create_tenant_foundation.sql \
+                   20260807170100_create_idempotency_record.sql \
+                   20260811145252_harden_roles_and_definer_functions.sql \
+                   20260811154100_harden_idempotency_concurrency.sql \
+                   20260811220000_harden_idempotency_fingerprint_format.sql; do
+            psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$f"
+          done
+          psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_app PASSWORD 'app_test';"
+
+      - name: Cargar testdata de dos barberías
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/dos_barberias.sql
+
+      - name: go test -race
+        working-directory: apps/api
+        env:
+          TEST_DATABASE_URL: postgres://barberia_app:app_test@localhost:5432/postgres?sslmode=disable
+        run: go test -race ./...
+
+      - name: govulncheck
+        working-directory: apps/api
+        env:
+          GOTOOLCHAIN: auto
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          "$(go env GOPATH)/bin/govulncheck" ./...
+
+  database:
+    name: Atlas + suites SQL contra el esquema aplicado
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Instalar cliente psql
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Instalar Atlas CLI (versión fijada, docs/05-backend/migraciones-atlas.md §3.3)
+        run: |
+          curl -sSfL "https://release.ariga.io/atlas/atlas-linux-amd64-${ATLAS_VERSION}" -o /usr/local/bin/atlas
+          chmod +x /usr/local/bin/atlas
+          atlas version
+
+      - name: atlas migrate validate
+        working-directory: database
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+        run: atlas migrate validate --env local
+
+      - name: atlas migrate apply (desde base vacía)
+        working-directory: database
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+        run: atlas migrate apply --env local
+
+      - name: atlas migrate apply (segunda vez, sin cambios esperados)
+        working-directory: database
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+        run: |
+          set -euo pipefail
+          salida=$(atlas migrate apply --env local)
+          echo "$salida"
+          echo "$salida" | grep -q "No migration files to execute"
+
+      - name: Fijar contraseña de barberia_app
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_app PASSWORD 'app_test';"
+
+      - name: Cargar testdata de dos barberías
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/dos_barberias.sql
+
+      - name: Suite de aislamiento HU-001
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/hu001_aislamiento_rls.sql
+
+      - name: Suite de idempotencia (secuencial, una conexión)
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/idempotency_concurrency.sql
+
+      - name: Suite de idempotencia (dos conexiones reales)
+        env:
+          DATABASE_TEST_URL: postgres://barberia_app:app_test@localhost:5432/postgres?sslmode=disable
+        run: bash database/tests/idempotency_concurrency_two_connections.sh
