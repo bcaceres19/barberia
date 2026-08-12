@@ -11,6 +11,7 @@ package database_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -239,9 +240,8 @@ func TestInTenantTx_CA002_03(t *testing.T) {
 
 			var setting string
 			err = conn.QueryRow(context.Background(),
-				"SELECT current_setting('app.barbershop_id', true)").Scan(&setting)
+				"SELECT coalesce(current_setting('app.barbershop_id', true), '')").Scan(&setting)
 			if err != nil {
-				// Si el setting no existe, pgx devuelve error; con true no debería
 				errCh <- fmt.Errorf("query setting: %w", err)
 				return
 			}
@@ -300,7 +300,7 @@ func TestInTenantTx_CA002_05(t *testing.T) {
 
 	var setting string
 	err = conn.QueryRow(context.Background(),
-		"SELECT current_setting('app.barbershop_id', true)").Scan(&setting)
+		"SELECT coalesce(current_setting('app.barbershop_id', true), '')").Scan(&setting)
 	if err != nil {
 		t.Fatalf("query setting after failure: %v", err)
 	}
@@ -396,5 +396,69 @@ func TestRoleHasNoBypassRLS(t *testing.T) {
 
 	if isSuper {
 		t.Fatal("test role is superuser - isolation tests would be invalid")
+	}
+}
+
+// TestInTenantTx_RollbackOnCallbackError verifica que un callback que
+// retorna un error de negocio deja la transacción REALMENTE revertida
+// (ROLLBACK ejecutado, no solo "no COMMIT"), y que la conexión sigue siendo
+// utilizable después. Usa un pool de tamaño 1 para forzar que la misma
+// conexión física se reutilice entre ambas llamadas a InTenantTx: si la
+// primera dejara la transacción abierta, la segunda fallaría o vería el
+// UPDATE no revertido.
+func TestInTenantTx_RollbackOnCallbackError(t *testing.T) {
+	url := os.Getenv("TEST_DATABASE_URL")
+	if url == "" {
+		url = testDatabaseURL
+	}
+
+	poolConfig, err := pgxpool.ParseConfig(url)
+	if err != nil {
+		t.Fatalf("parse config: %v", err)
+	}
+	poolConfig.MaxConns = 1
+	poolConfig.MinConns = 1
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
+	if err != nil {
+		t.Fatalf("create pool: %v", err)
+	}
+	defer pool.Close()
+
+	db := database.NewForTest(pool)
+	shopA := database.BarbershopID("11111111-1111-1111-1111-111111111111")
+	sentinelErr := errors.New("fallo de negocio deliberado")
+
+	err = db.InTenantTx(context.Background(), shopA, func(ctx context.Context, q database.Queries) error {
+		if _, err := q.Exec(ctx,
+			"UPDATE barbershop SET name = 'NO DEBERIA PERSISTIR' WHERE id = $1", string(shopA),
+		); err != nil {
+			return fmt.Errorf("update: %w", err)
+		}
+		return sentinelErr
+	})
+	if !errors.Is(err, sentinelErr) {
+		t.Fatalf("expected sentinel error, got: %v", err)
+	}
+
+	// La misma conexión (pool de tamaño 1) debe seguir siendo utilizable y
+	// el UPDATE anterior debe haberse revertido.
+	err = db.InTenantTx(context.Background(), shopA, func(ctx context.Context, q database.Queries) error {
+		var name string
+		if err := q.QueryRow(ctx,
+			"SELECT name FROM barbershop WHERE id = $1", string(shopA),
+		).Scan(&name); err != nil {
+			return fmt.Errorf("select: %w", err)
+		}
+		if name == "NO DEBERIA PERSISTIR" {
+			return fmt.Errorf("el UPDATE del callback fallido no se revirtió")
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("post-rollback transaction: %v", err)
 	}
 }

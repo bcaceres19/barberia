@@ -25,6 +25,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"runtime"
 	"time"
 
@@ -44,11 +45,18 @@ var ErrContextSetupFailed = errors.New("database: fallo al fijar contexto de bar
 // de un usuario, una cita u otra entidad (estandar-backend-go.md §5.10).
 type BarbershopID string
 
+// uuidPattern valida la forma canónica 8-4-4-4-12 en hexadecimal. set_config
+// acepta cualquier texto sin validar formato; esta es la única comprobación
+// real antes de fijar el contexto de una transacción.
+var uuidPattern = regexp.MustCompile(
+	`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`,
+)
+
 // ValidBarbershopID valida que el string tenga formato UUID. Se usa en pruebas
 // para inyectar el contexto; en producción llega desde la autenticación (HU-005).
 func ValidBarbershopID(s string) (BarbershopID, error) {
-	if len(s) != 36 {
-		return "", fmt.Errorf("barbershop_id: longitud inválida %d", len(s))
+	if !uuidPattern.MatchString(s) {
+		return "", fmt.Errorf("barbershop_id: formato UUID inválido")
 	}
 	return BarbershopID(s), nil
 }
@@ -90,12 +98,19 @@ func NewDB(cfg config.Config) (*DB, error) {
 	// Hook de adquisición: verificamos que la conexión devuelta no conserve
 	// app.barbershop_id. Convierte CA-002-03 en garantía de tiempo de
 	// ejecución, no solo en una prueba.
+	//
+	// current_setting(..., true) devuelve NULL (no cadena vacía) cuando el
+	// ajuste nunca se fijó en esta conexión, que es el caso normal de una
+	// conexión recién adquirida; coalesce evita que el escaneo falle en ese
+	// caso. Si la consulta de verificación falla por cualquier otro motivo
+	// (p. ej. la conexión quedó en una transacción abortada porque algo
+	// dejó de hacer ROLLBACK), la conexión se descarta también: no se puede
+	// devolver al pool una conexión cuyo estado no se pudo confirmar.
 	poolConfig.AfterRelease = func(conn *pgx.Conn) bool {
 		var setting string
 		err := conn.QueryRow(context.Background(),
-			"SELECT current_setting('app.barbershop_id', true)").Scan(&setting)
-		if err == nil && setting != "" {
-			// La conexión quedó con residuo de contexto: no la devolvemos al pool
+			"SELECT coalesce(current_setting('app.barbershop_id', true), '')").Scan(&setting)
+		if err != nil || setting != "" {
 			conn.Close(context.Background())
 			return false
 		}
@@ -168,6 +183,13 @@ func (d *DB) InTenantTx(
 	shop BarbershopID,
 	fn func(ctx context.Context, q Queries) error,
 ) error {
+	// set_config no valida formato: acepta cualquier texto. Validar aquí,
+	// antes de adquirir conexión, es lo que hace real la garantía de que
+	// jamás se continúa con un contexto vacío o inválido (CA-002-05).
+	if !uuidPattern.MatchString(string(shop)) {
+		return fmt.Errorf("%w: barbershop_id con formato inválido", ErrContextSetupFailed)
+	}
+
 	// Adquirir conexión del pool
 	conn, err := d.pool.Acquire(ctx)
 	if err != nil {
@@ -223,7 +245,11 @@ func (d *DB) InTenantTx(
 	// Ejecutar el callback con el ejecutor de consultas
 	err = fn(ctx, tx)
 	if err != nil {
-		rolledBack = true
+		// NO fijar rolledBack aquí: el rollback diferido de arriba es quien
+		// debe ejecutar tx.Rollback(ctx). Marcar rolledBack=true sin haber
+		// revertido de verdad deja la transacción abierta y devuelve al
+		// pool una conexión en estado indefinido (defecto real, corregido
+		// tras confirmarlo contra PostgreSQL real: ver issue de auditoría).
 		return err
 	}
 
