@@ -206,7 +206,7 @@ $$;
 
 RESET ROLE;
 ROLLBACK;
-\echo 'Parte 3 OK · con contexto de A, las 21 tablas restantes exponen cero filas de B'
+\echo 'Parte 3 OK · con contexto de A, las 22 tablas restantes exponen cero filas de B'
 
 -- ---------------------------------------------------------------------------
 -- Parte 4 · CRUD permitido/denegado por tabla y rol

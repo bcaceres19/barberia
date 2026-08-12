@@ -12,7 +12,8 @@
 --   DEC-036: inmutable el diseño original). No cambia el algoritmo de hash
 --   usado por el llamador: solo exige que, sea cual sea, se codifique como
 --   hexadecimal en minúsculas antes de guardarse, igual que
---   `appointment_access_token.token_hash` y `staff_session.token_hash`.
+--   `appointment_access_token.token_hash` (`staff_session.token_hash` sigue
+--   validando solo longitud, fuera de alcance de esta migración).
 --
 -- Condición de seguridad
 --   `ALTER TABLE ... DROP/ADD CONSTRAINT` no reescribe la tabla (no cambia
