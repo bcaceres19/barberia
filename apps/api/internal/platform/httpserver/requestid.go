@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"net/http"
+	"regexp"
 )
 
 // RequestIDHeader es el encabezado que transporta el identificador de
@@ -12,16 +13,24 @@ import (
 // docs/06-api/estandar-openapi.md.
 const RequestIDHeader = "X-Request-Id"
 
+// requestIDPattern acota lo que se acepta de un cliente: caracteres seguros
+// para una cabecera y para un log estructurado, longitud razonable para un
+// identificador de correlación (cubre UUID, hex e ids de rastreo típicos de
+// proxies). Cualquier otra cosa —vacío, control characters, longitud
+// arbitraria— se descarta y se genera un id propio.
+var requestIDPattern = regexp.MustCompile(`^[A-Za-z0-9._-]{1,128}$`)
+
 type requestIDKey struct{}
 
 // RequestID recorre el middleware base de todas las rutas: asigna un
-// identificador si el cliente no envió uno, lo expone en el contexto tipado
-// y lo refleja en la respuesta para poder correlacionar logs, transacción e
-// intento de notificación, según docs/04-arquitectura/backend-go.md.
+// identificador si el cliente no envió uno o si el que envió no tiene un
+// formato seguro, lo expone en el contexto tipado y lo refleja en la
+// respuesta para poder correlacionar logs, transacción e intento de
+// notificación, según docs/04-arquitectura/backend-go.md.
 func RequestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		id := r.Header.Get(RequestIDHeader)
-		if id == "" {
+		if !requestIDPattern.MatchString(id) {
 			id = newRequestID()
 		}
 
