@@ -1,6 +1,15 @@
 -- Fixture de dos tenants con al menos una fila por tabla protegida por RLS,
 -- para database/tests/rls_suite.sql (issue #7, DDL-RLS-01).
 --
+-- REQUIERE modelo-fisico-referencia.sql cargado ADEMÁS de las cinco
+-- migraciones de database/migrations/: inserta en staff_credential,
+-- staff_session y el resto de las 23 tablas restantes, ninguna de las
+-- cuales existe en el esquema realmente aplicado (database/README.md las
+-- lista como diseño de referencia, no migración). Ejecutar este fixture
+-- contra una base con solo las migraciones aplicadas falla con
+-- `relation "staff_credential" does not exist`. Esta suite certifica el
+-- diseño del modelo de referencia, NO el esquema desplegable hoy.
+--
 -- Uso:
 --   psql "$DATABASE_TEST_URL" -v ON_ERROR_STOP=1 -f testdata/dos_barberias.sql
 --   psql "$DATABASE_TEST_URL" -v ON_ERROR_STOP=1 -f testdata/rls_suite_fixture.sql

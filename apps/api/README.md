@@ -112,13 +112,22 @@ export TEST_DATABASE_URL="postgres://barberia_app@localhost:5432/barberia_test?s
 go test -race ./internal/platform/database/...
 ```
 
-Criterios verificados:
+Criterios verificados (numeración según docs/02-requisitos/historias-usuario.md,
+corregida: antes CA-002-05/06 aparecían aquí intercambiados con
+CA-002-04/05):
 - CA-002-01: contexto local en cada operación
 - CA-002-02: aislamiento concurrente A/B sobre mismo pool (-race)
 - CA-002-03: sin residuo de contexto tras devolver conexión al pool
-- CA-002-04: callback nunca ejecutado si falla set_config
-- CA-002-05: dominio no importa database ni pgx (testdeps_test.go)
-- CA-002-06: cancelación de context propaga a PostgreSQL
+- CA-002-04: ninguna función exportada ejecuta consultas de negocio sin
+  contexto (el pool no expone Query/QueryRow/Exec/Begin sueltos)
+- CA-002-05: un fallo al fijar el contexto aborta la operación; el callback
+  nunca se ejecuta con contexto vacío
+- CA-002-06: el dominio y los servicios no importan database ni pgx
+  (testdeps_test.go)
+
+Además, sin ser una de las seis CA, TestContextCancellation verifica que
+cancelar el context de la petición cancela la consulta en curso en
+PostgreSQL (regla de diseño (f) de InTenantTx).
 
 ## Migraciones
 

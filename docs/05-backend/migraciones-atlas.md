@@ -162,8 +162,28 @@ Procedimiento de bootstrap por ambiente nuevo (desarrollo, piloto, producción):
    `barberia_worker` con `ALTER ROLE ... PASSWORD '...'` desde el secreto del
    ambiente (gestor de secretos de despliegue); nunca en el repositorio ni en
    `atlas.hcl`.
-4. Recién entonces Atlas se conecta con `barberia_migrator` y aplica el
-   directorio completo de migraciones.
+4. **El mismo administrador con `CREATEROLE` (no `barberia_migrator`
+   todavía) aplica las primeras TRES migraciones**
+   (`20260807170000_create_tenant_foundation.sql`,
+   `20260807170100_create_idempotency_record.sql`,
+   `20260811145252_harden_roles_and_definer_functions.sql`), en ese orden.
+   Confirmado contra PostgreSQL 14 real, con los cuatro roles ya creados
+   (paso 1): `20260807170000` exige `CREATEROLE` de todas formas —`ALTER
+   ROLE barberia_app SET search_path = ...` altera la configuración de OTRO
+   rol, igual que crear uno, y eso requiere `CREATEROLE`/superusuario aunque
+   el rol ya exista—; `20260807170100` exige `REFERENCES` sobre `barbershop`
+   para su FK, privilegio que `barberia_migrator` no tiene hasta que
+   `20260811145252` transfiera `barbershop`/`staff_user`/`idempotency_record`
+   a `barberia_owner` (de quien `barberia_migrator` sí hereda). Por eso las
+   tres van juntas bajo el ejecutor con `CREATEROLE`, no solo la primera y la
+   tercera. Este paso es manual y puntual: no se automatiza con Atlas
+   conectado como `barberia_migrator`, y no vuelve a repetirse para
+   migraciones futuras (estas tres son las únicas que tocan roles u
+   ownership).
+5. Recién entonces Atlas se conecta con `barberia_migrator` (sin
+   `CREATEROLE`) y aplica el resto del directorio de migraciones. Verificado
+   contra PostgreSQL 14 real: `barberia_migrator` sin `CREATEROLE` aplica
+   `20260811154100` y `20260811220000` sin error a partir de aquí.
 
 **Por qué `INHERIT` y no `SET ROLE` por migración.** Se probó primero un
 diseño con `barberia_migrator` `NOINHERIT` y `SET ROLE barberia_owner; ...
