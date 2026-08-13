@@ -1,12 +1,12 @@
 # Graph Report - barberia  (2026-08-12)
 
 ## Corpus Check
-- 163 files · ~166,822 words
+- 152 files · ~167,253 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 778 nodes · 1156 edges · 74 communities (66 shown, 8 thin omitted)
-- Extraction: 85% EXTRACTED · 15% INFERRED · 0% AMBIGUOUS · INFERRED: 173 edges (avg confidence: 0.76)
+- 758 nodes · 1045 edges · 73 communities (65 shown, 8 thin omitted)
+- Extraction: 90% EXTRACTED · 10% INFERRED · 0% AMBIGUOUS · INFERRED: 106 edges (avg confidence: 0.74)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
@@ -26,11 +26,11 @@
 - compilerOptions
 - Reglas de negocio
 - package.json
-- Translate
+- OpenAPI entry document
 - api/openapi README
 - graphify SKILL.md
 - tsconfig.vitest.json
-- RequestLogger
+- clock.go
 - .prettierrc.json
 - router/index.ts
 - tsconfig.json
@@ -38,25 +38,23 @@
 - apps/web/e2e README
 - BaseAlert.vue
 - system-barbershop
+- 3. Bloque B0 · Cimientos, seguridad y primeras pantallas
 - 3. Prompts por historia
-- database_test.go
 - Alcance del MVP
 - Estrategia de pruebas y controles de calidad
-- Load
+- database_test.go
 - PostgreSQL, multi-tenancy y consultas
+- Load
 - Inicio del prompt
-- 3. Bloque B0 · Cimientos, seguridad y primeras pantallas
 - BaseDialog.vue
 - BaseInput.vue
-- HandlerFunc
-- NewRouter
-- BodyLimit
-- WriteProblem
-- Timeout
-- New
-- RequestID
-- SecurityHeaders
-- TestRequestLogger_OnlyAllowedFieldsAndNoForbiddenContent
+- Completar HU-009: sistema visual base
+- Implementar HU-003: contrato HTTP base y errores uniformes
+- Implementar HU-004: idempotencia reutilizable
+- <Título del prompt>
+- Catálogo de prompts persistentes
+- Prompt de implementación · Llaves asimétricas para la seguridad del API
+- Prompts detallados de implementación · B0 en curso
 - Sistema de agenda para barberías: reserva pública en línea con garantía de integridad de horarios
 - TestNoDatabaseImportsInDomain
 - idempotency_concurrency_two_connections.sh
@@ -71,19 +69,19 @@
 6. `Estados de las citas y máquina de transiciones` - 20 edges
 7. `Load()` - 18 edges
 8. `Estrategia de pruebas y controles de calidad` - 18 edges
-9. `New()` - 17 edges
-10. `NewRouter()` - 16 edges
+9. `Respuestas a propuestas de reglas de negocio` - 16 edges
+10. `compilerOptions` - 15 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `CLAUDE.md (root) — reglas graphify` --semantically_similar_to--> `.claude/CLAUDE.md — trigger de graphify`  [INFERRED] [semantically similar]
   CLAUDE.md → .claude/CLAUDE.md
 - `README.md — Sistema de agenda para barberías` --semantically_similar_to--> `Mapa documental y fuentes de verdad`  [INFERRED] [semantically similar]
   README.md → docs/README.md
+- `Pull request template` --conceptually_related_to--> `OpenAPI entry document`  [INFERRED]
+  .github/PULL_REQUEST_TEMPLATE.md → api/openapi/openapi.yaml
 - `Reprogramación o cancelación rápida por emergencia` --references--> `Reglas de negocio`  [INFERRED]
   respuesta-manuales/respuesta-propuestas-oc.txt → docs/01-producto/reglas-negocio.md
 - `Potestad del barbero para cancelar citas` --references--> `Reglas de negocio`  [INFERRED]
-  respuesta-manuales/respuesta-propuestas-oc.txt → docs/01-producto/reglas-negocio.md
-- `Optimización de horarios del barbero` --references--> `Reglas de negocio`  [INFERRED]
   respuesta-manuales/respuesta-propuestas-oc.txt → docs/01-producto/reglas-negocio.md
 
 ## Import Cycles
@@ -100,7 +98,7 @@
 - **Decisiones de seguridad para el piloto** — respuesta_manuales_respuesta_dudas_pendientes_dp_seg_01, respuesta_manuales_respuesta_dudas_pendientes_dp_seg_02, respuesta_manuales_respuesta_dudas_pendientes_dp_seg_03 [EXTRACTED 0.75]
 - **Reglas de disponibilidad y agendamiento** — respuesta_manuales_respuesta_propuestas_oc_rn_dis_04, respuesta_manuales_respuesta_propuestas_oc_rn_dis_05, respuesta_manuales_respuesta_propuestas_oc_rn_dis_06, respuesta_manuales_respuesta_propuestas_oc_rn_dis_07 [EXTRACTED 0.75]
 
-## Communities (74 total, 8 thin omitted)
+## Communities (73 total, 8 thin omitted)
 
 ### Community 0 - "Estados de las citas y máquina de transiciones"
 Cohesion: 0.26
@@ -108,15 +106,15 @@ Nodes (12): RN-CIT-03: Solo transiciones de estado definidas, RN-CIT-04: Correcc
 
 ### Community 1 - "Matriz de trazabilidad"
 Cohesion: 0.08
-Nodes (65): AGENTS.md — Reglas de desarrollo del proyecto, OpenAPI contract changelog, OpenAPI entry document, apps/api README, apps/web README, CONTRIBUTING.md — Cómo contribuir, database/migrations README, database README (+57 more)
+Nodes (62): AGENTS.md — Reglas de desarrollo del proyecto, apps/api README, apps/web README, CONTRIBUTING.md — Cómo contribuir, database/migrations README, database README, database/seeds README, database/testdata README (+54 more)
 
 ### Community 2 - "Respuestas a dudas pendientes del proyecto"
 Cohesion: 0.05
 Nodes (43): Respuestas a dudas pendientes del proyecto, Notificaciones y recordatorios creados en el momento, Elección de PostgreSQL, Multi-tenant compartido con buenas prácticas de consulta, Retención de datos de 24 meses configurable, Arquitectura backend económica en recursos, Bloqueos de horario manuales y recurrentes, Horario laboral configurable por el barbero (+35 more)
 
 ### Community 3 - "run"
-Cohesion: 0.32
-Nodes (6): main(), run(), Logger, NewLogger(), parseLevel(), Level
+Cohesion: 0.08
+Nodes (34): main(), run(), main(), run(), DatabaseHealthHandler(), HealthHandler(), T, TestRecover_DoesNotLogRawPanicValue() (+26 more)
 
 ### Community 4 - "devDependencies"
 Cohesion: 0.06
@@ -146,9 +144,9 @@ Nodes (31): DEC-005: Anticipación mínima y ventana máxima elevadas a P0, DEC-
 Cohesion: 0.14
 Nodes (13): description, devDependencies, @redocly/cli, name, private, scripts, openapi:bundle, openapi:check-config (+5 more)
 
-### Community 11 - "Translate"
-Cohesion: 0.13
-Nodes (26): Error, Kind, As(), Internal(), NotFound(), T, TestAs_ReturnsFalseForForeignError(), TestAs_UnwrapsWrappedError() (+18 more)
+### Community 11 - "OpenAPI entry document"
+Cohesion: 0.67
+Nodes (3): OpenAPI contract changelog, OpenAPI entry document, redocly.yaml — configuración Redocly
 
 ### Community 12 - "api/openapi README"
 Cohesion: 0.15
@@ -162,9 +160,9 @@ Nodes (11): CLAUDE.md (root) — reglas graphify, .claude/CLAUDE.md — trigger 
 Cohesion: 0.20
 Nodes (9): compilerOptions, tsBuildInfoFile, types, extends, include, node, src/**/*.spec.ts, jsdom (+1 more)
 
-### Community 15 - "RequestLogger"
-Cohesion: 0.22
-Nodes (6): Handler, Logger, RequestLogger(), Clock, System, Time
+### Community 15 - "clock.go"
+Cohesion: 0.40
+Nodes (3): Clock, System, Time
 
 ### Community 16 - ".prettierrc.json"
 Cohesion: 0.40
@@ -174,13 +172,13 @@ Nodes (4): printWidth, semi, singleQuote, trailingComma
 Cohesion: 0.06
 Nodes (31): alertRef, borderVar, classes, emit, focusableElementsRef, handleActionClick(), handleDismiss(), handleKeyDown() (+23 more)
 
-### Community 51 - "3. Prompts por historia"
-Cohesion: 0.05
-Nodes (38): 1.1 Esto no es una historia nueva: resuelve una duda existente, 1.2 Qué gana realmente este proyecto con llaves asimétricas, 1.3 El diseño que sí satisface la documentación, 1. Léase esto antes que el prompt, 2. Decisión que debe existir antes de codificar, 3. Prompt, 4. Efecto de esta decisión en el modelo de datos, 5. Riesgo que este documento deja consignado (+30 more)
+### Community 51 - "3. Bloque B0 · Cimientos, seguridad y primeras pantallas"
+Cohesion: 0.09
+Nodes (22): 1. Cómo leer este documento, 2. Estado del catálogo, 3. Bloque B0 · Cimientos, seguridad y primeras pantallas, 4. Bloque B1 · Identidad de la barbería y catálogo, 5. Historias pendientes de redacción, 6. Dudas que bloqueaban historias de B0, Convención de las tablas de cabecera, Historias de usuario y criterios de aceptación (+14 more)
 
-### Community 52 - "database_test.go"
-Cohesion: 0.13
-Nodes (25): findInternalDir(), T, TestDomainAndServicesDoNotImportChi(), Context, Pool, NewDB(), Pool, T (+17 more)
+### Community 52 - "3. Prompts por historia"
+Cohesion: 0.09
+Nodes (22): 1. Cómo usar estos prompts, 2. Preámbulo obligatorio, 3. Prompts por historia, 4. Prompts de B1 preparados, todavía bloqueados por B0, 5. Prompt de revisión, 6. Mantenimiento de este documento, Prompt de `HU-001` · Esquema inicial con aislamiento por barbería, Prompt de `HU-002` · Contexto de barbería en cada solicitud (+14 more)
 
 ### Community 53 - "Alcance del MVP"
 Cohesion: 0.20
@@ -190,21 +188,21 @@ Nodes (12): DEC-019: El MVP administra uno o varios barberos, Alcance del MVP, F
 Cohesion: 0.13
 Nodes (24): DEC-016, JSON Schema Draft 2020-12, OpenAPI Specification 3.1.2, Redocly CLI, RFC 9457 Problem Details, RN-IDE-01: Operaciones críticas seguras ante reintentos, DEC-035: Estándar de código backend/base de datos obligatorio, Estándar de código del backend en Go (+16 more)
 
-### Community 55 - "Load"
-Cohesion: 0.20
-Nodes (23): getEnv(), getEnvDuration(), getEnvInt(), Duration, Load(), redactDSN(), requireTLS(), baseLocalEnv() (+15 more)
+### Community 55 - "database_test.go"
+Cohesion: 0.15
+Nodes (22): Context, Pool, NewDB(), Pool, T, setupTestDB(), TestContextCancellation(), TestHealthCheck() (+14 more)
 
 ### Community 56 - "PostgreSQL, multi-tenancy y consultas"
 Cohesion: 0.19
 Nodes (15): Atlas CLI, Flyway, golang-migrate, Goose, RN-CON-03: La base de datos debe impedir el cruce, RN-DIS-05: Intervalos semiabiertos [inicio, fin), RN-TEN-01: Ninguna barbería accede a datos de otra, Restricción de exclusión appointment_no_overlap (+7 more)
 
-### Community 57 - "Inicio del prompt"
+### Community 57 - "Load"
+Cohesion: 0.20
+Nodes (23): getEnv(), getEnvDuration(), getEnvInt(), Load(), redactDSN(), requireTLS(), baseLocalEnv(), T (+15 more)
+
+### Community 58 - "Inicio del prompt"
 Cohesion: 0.07
 Nodes (25): 1. Resultado ejecutivo, 2. Alcance y límites de la revisión, 3. Fortalezas que deben conservarse, 4.1 Bloqueantes de seguridad, concurrencia o privacidad, 4.2 Integridad y consistencia funcional, 4.3 Privilegios, rendimiento y pruebas, 4. Hallazgos priorizados, 5. Decisiones que deben registrarse antes de codificar (+17 more)
-
-### Community 58 - "3. Bloque B0 · Cimientos, seguridad y primeras pantallas"
-Cohesion: 0.09
-Nodes (22): 1. Cómo leer este documento, 2. Estado del catálogo, 3. Bloque B0 · Cimientos, seguridad y primeras pantallas, 4. Bloque B1 · Identidad de la barbería y catálogo, 5. Historias pendientes de redacción, 6. Dudas que bloqueaban historias de B0, Convención de las tablas de cabecera, Historias de usuario y criterios de aceptación (+14 more)
 
 ### Community 59 - "BaseDialog.vue"
 Cohesion: 0.12
@@ -214,48 +212,40 @@ Nodes (18): classes, close(), closeButtonRef, dialogRef, emit, focusableElements
 Cohesion: 0.15
 Nodes (15): classes, describedBy, emit, errorId, handleBlur(), handleChange(), handleFocus(), handleInput() (+7 more)
 
-### Community 61 - "HandlerFunc"
+### Community 61 - "Completar HU-009: sistema visual base"
+Cohesion: 0.15
+Nodes (13): Alcance incluido, Auditoría inicial requerida, Completar HU-009: sistema visual base, Documentación y trazabilidad, Estado existente que debes conservar, Fuera de alcance, Git y PR, Instrucción para Claude o Codex (+5 more)
+
+### Community 62 - "Implementar HU-003: contrato HTTP base y errores uniformes"
+Cohesion: 0.17
+Nodes (12): Alcance incluido, Documentación y trazabilidad, Estado que debes conservar, Fuera de alcance, Git y PR, Implementar HU-003: contrato HTTP base y errores uniformes, Instrucción para Claude o Codex, Objetivo (+4 more)
+
+### Community 63 - "Implementar HU-004: idempotencia reutilizable"
+Cohesion: 0.17
+Nodes (12): Alcance incluido, Documentación y trazabilidad, Estado existente que debes conservar, Fuera de alcance, Git y PR, Implementar HU-004: idempotencia reutilizable, Instrucción para Claude o Codex, Objetivo (+4 more)
+
+### Community 64 - "<Título del prompt>"
+Cohesion: 0.17
+Nodes (12): Alcance incluido, Documentación y trazabilidad, Estado existente que debe conservarse, Fuera de alcance, Git y PR, Instrucción para el agente, Objetivo, Preflight obligatorio (+4 more)
+
+### Community 65 - "Catálogo de prompts persistentes"
+Cohesion: 0.18
+Nodes (11): 10. Lista de control al guardar o entregar, 1. Propósito, 2. Qué debe guardarse, 3. Organización y nombres, 4. Metadatos obligatorios, 5. Estados y transición, 6. Contenido autocontenido, 7. Una preocupación por prompt (+3 more)
+
+### Community 66 - "Prompt de implementación · Llaves asimétricas para la seguridad del API"
 Cohesion: 0.22
-Nodes (12): DatabaseHealthHandler(), HealthHandler(), T, TestRecover_DoesNotLogRawPanicValue(), TestRecover_RespondsWithProblemJSON(), TestRequestID_AcceptsValidClientID(), TestRequestID_RejectsInvalidClientID(), Handler (+4 more)
+Nodes (9): 1.1 Esto no es una historia nueva: resuelve una duda existente, 1.2 Qué gana realmente este proyecto con llaves asimétricas, 1.3 El diseño que sí satisface la documentación, 1. Léase esto antes que el prompt, 2. Decisión que debe existir antes de codificar, 3. Prompt, 4. Efecto de esta decisión en el modelo de datos, 5. Riesgo que este documento deja consignado (+1 more)
 
-### Community 62 - "NewRouter"
-Cohesion: 0.28
-Nodes (13): Logger, NewRouter(), assertUniformNotFoundProblem(), discardLogger(), Logger, T, TestNewRouter_LogsMatchedRoutePatternNotRawPath(), TestNewRouter_MethodNotAllowedIsAlsoUniformProblem() (+5 more)
-
-### Community 63 - "BodyLimit"
-Cohesion: 0.36
-Nodes (6): BodyLimit(), Handler, T, TestBodyLimit_AllowsBodyWithinLimit(), TestBodyLimit_ProducesRecognizableMaxBytesError(), TestBodyLimit_RejectsOversizedBody()
-
-### Community 64 - "WriteProblem"
+### Community 68 - "Prompts detallados de implementación · B0 en curso"
 Cohesion: 0.29
-Nodes (7): echoBodyHandler(), ResponseWriter, TestWriteProblem_SetsContentTypeAndStatus(), ResponseWriter, WriteProblem(), Problem, Request
+Nodes (7): 1. Relación con `prompts-implementacion.md`, 2. Estado real del repositorio al escribir estos prompts, 3. Prompt detallado · `HU-002` — Contexto de barbería en cada solicitud, 4. Prompt detallado · `HU-009` — Sistema visual base en componentes, 5. Qué hacer al cerrar estas dos historias, Por qué estas dos y en paralelo, Prompts detallados de implementación · B0 en curso
 
-### Community 65 - "Timeout"
-Cohesion: 0.32
-Nodes (6): Duration, Handler, T, TestTimeout_CancelsContextWithinConfiguredDuration(), TestTimeout_DoesNotCancelBeforeHandlerFinishes(), Timeout()
-
-### Community 66 - "New"
-Cohesion: 0.33
-Nodes (5): main(), run(), Handler, New(), Server
-
-### Community 67 - "RequestID"
-Cohesion: 0.38
-Nodes (6): Context, Handler, newRequestID(), RequestID(), RequestIDFromContext(), requestIDKey
-
-### Community 68 - "SecurityHeaders"
-Cohesion: 0.33
-Nodes (4): Handler, SecurityHeaders(), T, TestSecurityHeaders_SetsExpectedHeaders()
-
-### Community 69 - "TestRequestLogger_OnlyAllowedFieldsAndNoForbiddenContent"
-Cohesion: 0.70
-Nodes (4): findForbiddenPattern(), T, TestFindForbiddenPattern_DetectsPoisonedLine(), TestRequestLogger_OnlyAllowedFieldsAndNoForbiddenContent()
-
-### Community 70 - "Sistema de agenda para barberías: reserva pública en línea con garantía de integridad de horarios"
+### Community 69 - "Sistema de agenda para barberías: reserva pública en línea con garantía de integridad de horarios"
 Cohesion: 0.40
 Nodes (4): 1. Introducción, Cómo se corresponde con el ejemplo de referencia, Nota sobre las referencias, Sistema de agenda para barberías: reserva pública en línea con garantía de integridad de horarios
 
 ## Knowledge Gaps
-- **266 isolated node(s):** `system-barbershop`, `Clock`, `httprobProblem`, `requestIDKey`, `semi` (+261 more)
+- **321 isolated node(s):** `system-barbershop`, `Clock`, `httprobProblem`, `requestIDKey`, `semi` (+316 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **8 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -263,16 +253,16 @@ Nodes (4): 1. Introducción, Cómo se corresponde con el ejemplo de referencia, 
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Estándar de documentación OpenAPI` connect `Estrategia de pruebas y controles de calidad` to `Estados de las citas y máquina de transiciones`, `Matriz de trazabilidad`, `Reglas de negocio`?**
-  _High betweenness centrality (0.063) - this node is a cross-community bridge._
-- **Why does `Reglas de negocio` connect `Reglas de negocio` to `Estados de las citas y máquina de transiciones`, `PostgreSQL, multi-tenancy y consultas`, `Alcance del MVP`, `Estrategia de pruebas y controles de calidad`?**
-  _High betweenness centrality (0.063) - this node is a cross-community bridge._
+  _High betweenness centrality (0.093) - this node is a cross-community bridge._
 - **Why does `Registro de decisiones` connect `Matriz de trazabilidad` to `PostgreSQL, multi-tenancy y consultas`, `Estrategia de pruebas y controles de calidad`?**
-  _High betweenness centrality (0.054) - this node is a cross-community bridge._
+  _High betweenness centrality (0.093) - this node is a cross-community bridge._
+- **Why does `Reglas de negocio` connect `Reglas de negocio` to `Estados de las citas y máquina de transiciones`, `PostgreSQL, multi-tenancy y consultas`, `Alcance del MVP`, `Estrategia de pruebas y controles de calidad`?**
+  _High betweenness centrality (0.085) - this node is a cross-community bridge._
 - **Are the 15 inferred relationships involving `Reglas de negocio` (e.g. with `Reprogramación o cancelación rápida por emergencia` and `Persistencia de historial de bloqueos`) actually correct?**
   _`Reglas de negocio` has 15 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `system-barbershop`, `Clock`, `httprobProblem` to the rest of the system?**
-  _266 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _321 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Matriz de trazabilidad` be split into smaller, more focused modules?**
-  _Cohesion score 0.07507914970601538 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08085317460317461 - nodes in this community are weakly interconnected._
 - **Should `Respuestas a dudas pendientes del proyecto` be split into smaller, more focused modules?**
   _Cohesion score 0.048726467331118496 - nodes in this community are weakly interconnected._
