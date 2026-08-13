@@ -95,6 +95,32 @@ jobs:
           go install golang.org/x/vuln/cmd/govulncheck@latest
           "$(go env GOPATH)/bin/govulncheck" ./...
 
+  openapi:
+    name: OpenAPI (lint + bundle)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "10"
+
+      - name: pnpm install (lockfile inmutable)
+        run: pnpm install --frozen-lockfile
+
+      - name: openapi:check-config
+        run: pnpm run openapi:check-config
+
+      - name: openapi:lint
+        run: pnpm run openapi:lint
+
+      - name: openapi:bundle
+        run: pnpm run openapi:bundle
+
   database:
     name: Atlas + suites SQL contra el esquema aplicado
     runs-on: ubuntu-latest

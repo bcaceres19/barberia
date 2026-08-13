@@ -1,0 +1,15 @@
+# Cabecera de correlación devuelta en toda respuesta, incluidas las de
+# error, según docs/04-arquitectura/backend-go.md sección 6 y CA-003-01.
+description: >
+  Identificador de correlación de la solicitud. El cliente puede enviarlo;
+  si está ausente o no cumple el formato aceptado, el servidor genera uno y
+  lo refleja aquí. El mismo valor aparece en instance y requestId de
+  cualquier Problem y en los registros técnicos relacionados con la
+  solicitud.
+required: false
+schema:
+  type: string
+  pattern: '^[A-Za-z0-9._-]{1,128}$'
+examples:
+  generado:
+    value: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

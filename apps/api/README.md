@@ -10,6 +10,10 @@ antes de agregar código.
 - Configuración, logger, servidor HTTP con `/health`
 - Paquetes de módulo vacíos (`internal/modules/*`) con su comentario de responsabilidad
 - **Database**: pool pgx v5, `InTenantTx` para trabajo tenant-aware, health check de BD
+- **HTTP (HU-003)**: router Chi v5 con las tres audiencias
+  (`/api/v1/public`, `/api/v1/customer`, `/api/v1/private`, todavía sin
+  operaciones de negocio), middleware base completo y errores uniformes
+  RFC 9457. Ver la sección siguiente.
 
 ## Requisitos
 
@@ -28,6 +32,62 @@ go vet ./...
 go test ./...
 go test -race ./internal/platform/database/...
 ```
+
+## Patrón obligatorio: errores uniformes y router (HU-003)
+
+`internal/platform/httpserver.NewRouter` monta las tres audiencias y aplica,
+en este orden, el middleware que no depende de autenticación, tenant ni
+idempotencia (`docs/04-arquitectura/backend-go.md` sección 6, pasos 1-6):
+identificador de solicitud, recuperación de pánico, límite de tamaño del
+cuerpo, timeout por contexto, registro estructurado y cabeceras de
+seguridad. Los pasos 7-11 (rate limit, autenticación, tenant/RLS,
+idempotencia) llegan con las historias que los necesitan.
+
+### Cómo señalar un error desde dominio o servicios
+
+El dominio y los servicios **nunca** importan `net/http` ni Chi. Devuelven
+un `*apperr.Error`:
+
+```go
+import "system-barbershop/internal/platform/apperr"
+
+func (s *MiServicio) Buscar(ctx context.Context, id string) (*Turno, error) {
+    turno, err := s.repo.Buscar(ctx, id)
+    if errors.Is(err, sql.ErrNoRows) {
+        // Mismo Kind para "no existe" y "es de otra barbería": la capa
+        // HTTP no tiene forma de distinguirlos (CA-003-03, RN-TEN-01).
+        return nil, apperr.NotFound("no existe un turno con ese identificador")
+    }
+    if err != nil {
+        return nil, apperr.Internal(err) // la causa nunca llega al cliente
+    }
+    return turno, nil
+}
+```
+
+El handler HTTP es el único lugar que traduce ese error:
+
+```go
+turno, err := servicio.Buscar(r.Context(), id)
+if err != nil {
+    httpserver.WriteProblem(w, httpserver.Translate(err, httpserver.RequestIDFromContext(r.Context())))
+    return
+}
+```
+
+`Translate` es el único punto que decide `type`, `title`, `status`, `code`
+y `detail`: nunca construyas un `httpserver.Problem` a mano fuera de ahí,
+porque eso es lo que garantiza que `detail` no filtre SQL, rutas de
+archivo, nombres de proveedor ni versiones (CA-003-02).
+
+### Logger: lista permitida de campos
+
+`httpserver.RequestLogger` solo registra `request_id`, `method`, `route`
+(el patrón de ruta que resolvió Chi, nunca `r.URL.Path` crudo: una ruta de
+`/api/v1/customer` lleva un token en la URL), `status` y `duration_ms`.
+Cualquier log de negocio dentro de un handler o servicio sigue la misma
+regla (RN-DAT-02): nunca nombre, teléfono, correo, contraseña, token,
+cookie ni cabecera `Authorization`.
 
 ## Patrón obligatorio: operaciones tenant-aware (HU-002)
 
