@@ -8,6 +8,12 @@ Rules:
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
 
+## Merge de pull requests
+
+- Autorización permanente del propietario (2026-08-13): en cuanto todos los checks de CI de un PR contra `main` estén en verde, haz squash-merge sin pedir confirmación adicional por ese paso. No hace falta preguntar cada vez.
+- Si algún check falla o queda pendiente, no mergees: investiga o espera.
+- Esta autorización cubre el merge en sí. Sigue pidiendo confirmación aparte para otras acciones destructivas o que afecten estado compartido (force-push, borrar ramas, reescribir `main`, etc.), salvo que el usuario las autorice explícitamente también.
+
 ## Prompts persistentes
 
 - Antes de entregar un prompt pensado para otro chat, Claude, Codex o una ejecución futura, aplica `AGENTS.md` y guárdalo en `docs/10-backlog/prompts/` con la plantilla e índice del catálogo.
