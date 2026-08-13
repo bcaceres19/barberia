@@ -1,0 +1,32 @@
+# Operación privada de autenticación (HU-006): cierre de sesión. Es el
+# primer endpoint real bajo /api/v1/private (DEC-055, CT-003 resuelta):
+# exige la cookie de sesión (components/security-schemes/SessionCookie.yaml)
+# y revoca únicamente la sesión actual (DEC-050). El login sigue viviendo en
+# public-auth.yaml, fuera de este prefijo.
+/private/auth/logout:
+  post:
+    tags: [Auth]
+    summary: Cerrar la sesión actual
+    description: >
+      Revoca en el servidor la sesión asociada a la cookie de sesión vigente
+      (fija revoked_at, DEC-050) y limpia esa cookie en el navegador. No
+      afecta ninguna otra sesión del mismo barbero (CA-006-06): cerrar
+      sesión en un dispositivo no invalida los demás. El tenant se deriva
+      exclusivamente de la identidad ya autenticada por la cookie, nunca de
+      un parámetro del cliente, así que una sesión de una barbería nunca
+      puede revocar la sesión de otra (CA-006-07, DEC-058). Repetir la
+      llamada con el mismo material ya revocado responde 401 uniforme, igual
+      que cualquier otra sesión inválida (CA-006-02): no ejecuta la
+      revocación de nuevo ni produce un error distinto que revele el motivo.
+    operationId: logout
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01]
+    x-decisions: [DEC-050, DEC-055, DEC-058]
+    responses:
+      "204":
+        $ref: '../components/responses/LogoutSuccess.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

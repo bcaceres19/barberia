@@ -260,7 +260,7 @@ func TestLoginHandler_ThroughFullRouter_NeverLogsSensitiveValues(t *testing.T) {
 	successHandler := newHandler(t, repo, true)
 	failHandler := newHandler(t, repo, false)
 
-	router := httpserver.NewRouter(logger)
+	router, _ := httpserver.NewRouter(logger)
 	router.Post("/api/v1/public/auth/login", func(w http.ResponseWriter, r *http.Request) {
 		// Alterna éxito y fallo en la misma ruta según el cuerpo, para
 		// capturar ambos recorridos con un único router de prueba.

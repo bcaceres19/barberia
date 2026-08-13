@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-006-v1"
 version: "1.2"
 kind: "hu"
-status: "draft"
+status: "in_progress"
 target_agents:
   - "claude"
   - "codex"
@@ -15,7 +15,7 @@ related_hu:
 issue: 45
 issue_url: "https://github.com/bcaceres19/barberia/issues/45"
 suggested_issue_title: "feat(auth): implementar HU-006 sesión persistente y cierre"
-branch: null
+branch: "feat/45-hu006-sesion-persistente"
 pr: null
 pr_url: null
 depends_on:

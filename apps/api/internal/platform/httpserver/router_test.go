@@ -16,7 +16,7 @@ func discardLogger() *slog.Logger {
 }
 
 func TestNewRouter_MountsThreeAudienceGroups(t *testing.T) {
-	router := httpserver.NewRouter(discardLogger())
+	router, _ := httpserver.NewRouter(discardLogger())
 
 	for _, prefix := range []string{"/api/v1/public/", "/api/v1/customer/", "/api/v1/private/"} {
 		req := httptest.NewRequest(http.MethodGet, prefix+"cualquier-cosa", nil)
@@ -40,7 +40,7 @@ func TestNewRouter_MountsThreeAudienceGroups(t *testing.T) {
 }
 
 func TestNewRouter_RecoversPanicInsideAudienceGroup(t *testing.T) {
-	router := httpserver.NewRouter(discardLogger())
+	router, _ := httpserver.NewRouter(discardLogger())
 	router.Get("/api/v1/private/panics", func(w http.ResponseWriter, r *http.Request) {
 		panic("boom dentro de una audiencia real")
 	})
@@ -76,7 +76,7 @@ func TestNewRouter_LogsMatchedRoutePatternNotRawPath(t *testing.T) {
 	var buf bytes.Buffer
 	logger := slog.New(slog.NewJSONHandler(&buf, nil))
 
-	router := httpserver.NewRouter(logger)
+	router, _ := httpserver.NewRouter(logger)
 	router.Get("/api/v1/customer/appointments/{token}", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
@@ -100,7 +100,7 @@ func TestNewRouter_LogsMatchedRoutePatternNotRawPath(t *testing.T) {
 }
 
 func TestNewRouter_NotFoundOutsideAnyAudienceIsStillUniformProblem(t *testing.T) {
-	router := httpserver.NewRouter(discardLogger())
+	router, _ := httpserver.NewRouter(discardLogger())
 
 	req := httptest.NewRequest(http.MethodGet, "/no-existe", nil)
 	rec := httptest.NewRecorder()
@@ -110,7 +110,7 @@ func TestNewRouter_NotFoundOutsideAnyAudienceIsStillUniformProblem(t *testing.T)
 }
 
 func TestNewRouter_MethodNotAllowedIsAlsoUniformProblem(t *testing.T) {
-	router := httpserver.NewRouter(discardLogger())
+	router, _ := httpserver.NewRouter(discardLogger())
 	router.Get("/api/v1/private/solo-get", func(w http.ResponseWriter, r *http.Request) {})
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/private/solo-get", nil)
