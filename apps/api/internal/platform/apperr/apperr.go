@@ -25,6 +25,22 @@ const (
 	// deliberadamente en la traducción HTTP: solo Err viaja para
 	// diagnóstico interno (logs), nunca al cliente.
 	KindInternal Kind = "internal"
+	// KindInvalid cubre una entrada de cliente malformada (JSON, parámetro
+	// o cabecera con sintaxis o formato inválido) detectada antes de
+	// ejecutar cualquier efecto. Genérico y reutilizable: no es específico
+	// de idempotencia (docs/06-api/estandar-openapi.md sección 11, fila 400).
+	KindInvalid Kind = "invalid"
+	// KindIdempotencyConflict cubre una clave de idempotencia ya usada con
+	// contenido u operación distintos (RN-IDE-01). No se reutiliza para
+	// otro tipo de conflicto (por ejemplo, de agenda): un conflicto futuro
+	// no relacionado con idempotencia necesitará su propio Kind, porque el
+	// código de proyecto que Translate expone al cliente debe distinguirlos.
+	KindIdempotencyConflict Kind = "idempotency_conflict"
+	// KindIdempotencyLocked cubre una segunda llamada concurrente con la
+	// misma clave de idempotencia mientras la primera sigue en curso
+	// (DEC-043: pg_try_advisory_xact_lock sin espera acotada). El cliente
+	// puede reintentar más tarde; no es un error permanente.
+	KindIdempotencyLocked Kind = "idempotency_locked"
 )
 
 // Error es el error de aplicación que domain/servicios devuelven.
@@ -58,6 +74,27 @@ func NotFound(message string) *Error {
 // causa nunca se expone al cliente; solo sirve para diagnóstico en logs.
 func Internal(cause error) *Error {
 	return &Error{Kind: KindInternal, Err: cause}
+}
+
+// Invalid construye un error de entrada de cliente malformada. message es el
+// detalle seguro que puede llegar al cliente (nunca el valor crudo enviado,
+// si ese valor pudiera ser sensible).
+func Invalid(message string) *Error {
+	return &Error{Kind: KindInvalid, Message: message}
+}
+
+// IdempotencyConflict construye el error de una clave de idempotencia
+// reutilizada con contenido u operación distintos (RN-IDE-01). message es el
+// detalle seguro que puede llegar al cliente.
+func IdempotencyConflict(message string) *Error {
+	return &Error{Kind: KindIdempotencyConflict, Message: message}
+}
+
+// IdempotencyLocked construye el error de una clave de idempotencia cuya
+// ejecución sigue en curso en otra transacción concurrente (DEC-043).
+// message es el detalle seguro que puede llegar al cliente.
+func IdempotencyLocked(message string) *Error {
+	return &Error{Kind: KindIdempotencyLocked, Message: message}
 }
 
 // As extrae un *Error de la cadena de err, igual que errors.As.

@@ -1,0 +1,27 @@
+# DEC-043: una segunda solicitud concurrente con la misma clave de
+# idempotencia intenta un bloqueo consultivo transaccional; si no puede
+# tomarlo de inmediato, responde 409 sin esperar a que la primera
+# transacción termine. No hay espera acotada ni reproducción del resultado
+# de otra transacción todavía en curso.
+description: >
+  Otra solicitud con la misma clave de idempotencia sigue en curso en este
+  momento. No se ejecutó ningún efecto por esta solicitud. El cliente
+  puede reintentar más tarde; no es un error permanente.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      operacionEnCurso:
+        summary: Otra transacción tiene el bloqueo de esta clave ahora mismo
+        value:
+          type: /api/v1/problems/idempotency-locked
+          title: Operación en curso
+          status: 409
+          detail: la operación con esta clave de idempotencia todavía está en curso; reintenta en unos segundos
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: idempotency-locked
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

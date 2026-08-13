@@ -3,7 +3,7 @@ titulo: "Catálogo de prompts persistentes"
 version: "1.0"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-12"
+ultima_actualizacion: "2026-08-13"
 documentos_relacionados:
   - "../../../AGENTS.md"
   - "../../../CLAUDE.md"
@@ -133,7 +133,7 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | Prompt | Tipo | HU | Issue | Estado | Dependencias | Rama / PR |
 | --- | --- | --- | --- | --- | --- | --- |
 | [PROMPT-HU-003-v1](hu/hu-003-contrato-http.md) | `hu` | `HU-003` | [#37](https://github.com/bcaceres19/barberia/issues/37) | `executed` | `HU-002` terminada | `feat/37-hu003-contrato-http` / [#38](https://github.com/bcaceres19/barberia/pull/38) |
-| [PROMPT-HU-004-v1](hu/hu-004-idempotencia.md) | `hu` | `HU-004` | Pendiente | `draft` | `HU-003` integrada | — |
+| [PROMPT-HU-004-v1](hu/hu-004-idempotencia.md) | `hu` | `HU-004` | [#40](https://github.com/bcaceres19/barberia/issues/40) | `executed` | `HU-003` integrada | `feat/40-hu004-idempotencia` / [#41](https://github.com/bcaceres19/barberia/pull/41) |
 | [PROMPT-HU-009-v1](hu/hu-009-sistema-visual.md) | `hu` | `HU-009` | Pendiente | `draft` | Secuencia tras `HU-004` | — |
 
 ## 10. Lista de control al guardar o entregar

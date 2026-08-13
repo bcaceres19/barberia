@@ -44,6 +44,33 @@ var bodyTooLargeProblem = problemSpec{
 	status:  http.StatusBadRequest,
 }
 
+var invalidRequestProblem = problemSpec{
+	typeURI: "/api/v1/problems/invalid-request",
+	title:   "Solicitud inválida",
+	code:    "invalid-request",
+	status:  http.StatusBadRequest,
+}
+
+// idempotencyConflictProblem cubre RN-IDE-01: una clave de idempotencia ya
+// usada con contenido u operación distintos. detail distingue el caso
+// concreto; type, title y code se mantienen fijos, igual que notFoundProblem.
+var idempotencyConflictProblem = problemSpec{
+	typeURI: "/api/v1/problems/idempotency-conflict",
+	title:   "Conflicto de idempotencia",
+	code:    "idempotency-conflict",
+	status:  http.StatusConflict,
+}
+
+// idempotencyLockedProblem cubre DEC-043: otra llamada concurrente con la
+// misma clave sigue en curso. 409 sin espera acotada; el cliente puede
+// reintentar más tarde.
+var idempotencyLockedProblem = problemSpec{
+	typeURI: "/api/v1/problems/idempotency-locked",
+	title:   "Operación en curso",
+	code:    "idempotency-locked",
+	status:  http.StatusConflict,
+}
+
 // Translate convierte cualquier error en un Problem seguro para el cliente.
 // Es el único punto central de traducción que exige
 // docs/04-arquitectura/backend-go.md sección 5 ("los errores de dominio se
@@ -61,8 +88,17 @@ var bodyTooLargeProblem = problemSpec{
 //     Problem (CA-003-03, RN-TEN-01): no hay una rama de código que pueda
 //     distinguirlos.
 func Translate(err error, requestID string) Problem {
-	if appErr, ok := apperr.As(err); ok && appErr.Kind == apperr.KindNotFound {
-		return newProblem(notFoundProblem, appErr.Message, requestID)
+	if appErr, ok := apperr.As(err); ok {
+		switch appErr.Kind {
+		case apperr.KindNotFound:
+			return newProblem(notFoundProblem, appErr.Message, requestID)
+		case apperr.KindInvalid:
+			return newProblem(invalidRequestProblem, appErr.Message, requestID)
+		case apperr.KindIdempotencyConflict:
+			return newProblem(idempotencyConflictProblem, appErr.Message, requestID)
+		case apperr.KindIdempotencyLocked:
+			return newProblem(idempotencyLockedProblem, appErr.Message, requestID)
+		}
 	}
 
 	var maxBytesErr *http.MaxBytesError

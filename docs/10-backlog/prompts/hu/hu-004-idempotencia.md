@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-004-v1"
 version: "1.0"
 kind: "hu"
-status: "draft"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -10,12 +10,12 @@ repository: "bcaceres19/barberia"
 base_branch: "main"
 primary_hu: "HU-004"
 related_hu: []
-issue: "pending"
-issue_url: null
+issue: "40"
+issue_url: "https://github.com/bcaceres19/barberia/issues/40"
 suggested_issue_title: "feat(api): implementar HU-004 idempotencia reutilizable"
-branch: null
-pr: null
-pr_url: null
+branch: "feat/40-hu004-idempotencia"
+pr: 41
+pr_url: "https://github.com/bcaceres19/barberia/pull/41"
 depends_on:
   - "HU-003 integrada"
 rules:
@@ -54,7 +54,7 @@ source_docs:
   - "database/tests/idempotency_concurrency.sql"
   - "database/tests/idempotency_concurrency_two_connections.sh"
 created_at: "2026-08-12"
-updated_at: "2026-08-12"
+updated_at: "2026-08-13"
 supersedes: "docs/10-backlog/prompts-implementacion.md#prompt-de-hu-004--idempotencia-reutilizable"
 superseded_by: null
 ---

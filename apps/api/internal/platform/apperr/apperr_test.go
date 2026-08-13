@@ -39,6 +39,45 @@ func TestInternal_WrapsCauseWithoutExposingIt(t *testing.T) {
 	}
 }
 
+func TestInvalid_CarriesSafeMessage(t *testing.T) {
+	err := apperr.Invalid("Idempotency-Key tiene un formato inválido")
+
+	got, ok := apperr.As(err)
+	if !ok {
+		t.Fatal("expected apperr.As to recognize the error")
+	}
+	if got.Kind != apperr.KindInvalid {
+		t.Fatalf("expected KindInvalid, got %q", got.Kind)
+	}
+	if got.Message != "Idempotency-Key tiene un formato inválido" {
+		t.Fatalf("unexpected message: %q", got.Message)
+	}
+}
+
+func TestIdempotencyConflict_CarriesSafeMessage(t *testing.T) {
+	err := apperr.IdempotencyConflict("la clave ya se usó con contenido distinto")
+
+	got, ok := apperr.As(err)
+	if !ok {
+		t.Fatal("expected apperr.As to recognize the error")
+	}
+	if got.Kind != apperr.KindIdempotencyConflict {
+		t.Fatalf("expected KindIdempotencyConflict, got %q", got.Kind)
+	}
+}
+
+func TestIdempotencyLocked_CarriesSafeMessage(t *testing.T) {
+	err := apperr.IdempotencyLocked("operación en curso")
+
+	got, ok := apperr.As(err)
+	if !ok {
+		t.Fatal("expected apperr.As to recognize the error")
+	}
+	if got.Kind != apperr.KindIdempotencyLocked {
+		t.Fatalf("expected KindIdempotencyLocked, got %q", got.Kind)
+	}
+}
+
 func TestAs_ReturnsFalseForForeignError(t *testing.T) {
 	_, ok := apperr.As(fmt.Errorf("plain error"))
 	if ok {

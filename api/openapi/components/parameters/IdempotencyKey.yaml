@@ -1,0 +1,28 @@
+# Cabecera obligatoria en toda escritura crítica (RN-IDE-01, DEC-043,
+# docs/06-api/estandar-openapi.md sección 10). apps/api implementa el
+# protocolo en internal/platform/idempotency: la misma clave con el mismo
+# contenido reproduce byte a byte la respuesta original sin repetir el
+# efecto; la misma clave con contenido distinto responde
+# IdempotencyConflictProblem; una segunda solicitud concurrente con la
+# misma clave responde IdempotencyLockedProblem de inmediato, sin espera
+# acotada (DEC-043). El patrón todavía no está adjunto a ninguna operación
+# de este contrato: HU-004 entrega el mecanismo reutilizable, no una
+# operación de negocio; cada HU que cree una escritura crítica referencia
+# este mismo parámetro.
+name: Idempotency-Key
+in: header
+description: >
+  Clave elegida por el cliente que identifica un intento de escritura
+  crítica. Repetir la misma clave con el mismo contenido (método, ruta y
+  cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo.
+  Repetirla con contenido distinto es un conflicto: usa una clave nueva
+  para una solicitud distinta.
+required: true
+schema:
+  type: string
+  minLength: 1
+  maxLength: 255
+  pattern: '^[A-Za-z0-9._-]{1,255}$'
+examples:
+  generada:
+    value: create-appointment-2026-08-13-001
