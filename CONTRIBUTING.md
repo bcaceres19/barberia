@@ -7,6 +7,7 @@ Este proyecto usa GitHub Flow: `main` es la única rama permanente y todo cambio
 1. Lea `AGENTS.md`, el registro de decisiones y los estándares del área afectada.
 2. Cree o seleccione un issue con criterios de aceptación para cualquier cambio no trivial.
 3. Actualice `main` y cree una rama `<tipo>/<issue>-<descripcion>`.
+4. Si el trabajo se entrega mediante un prompt reusable, persístalo y mantenga su estado en el [catálogo de prompts](docs/10-backlog/prompts/README.md); un prompt mutable sin issue solo puede quedar como borrador.
 
 ```bash
 git switch main
