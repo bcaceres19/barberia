@@ -18,8 +18,8 @@ issue: 44
 issue_url: "https://github.com/bcaceres19/barberia/issues/44"
 suggested_issue_title: "feat(auth): implementar HU-005 inicio de sesión seguro"
 branch: "feat/44-hu005-inicio-sesion"
-pr: null
-pr_url: null
+pr: 49
+pr_url: "https://github.com/bcaceres19/barberia/pull/49"
 depends_on:
   - "HU-002 integrada"
   - "HU-003 integrada"
