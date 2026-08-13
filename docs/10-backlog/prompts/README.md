@@ -134,7 +134,7 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | --- | --- | --- | --- | --- | --- | --- |
 | [PROMPT-HU-003-v1](hu/hu-003-contrato-http.md) | `hu` | `HU-003` | [#37](https://github.com/bcaceres19/barberia/issues/37) | `executed` | `HU-002` terminada | `feat/37-hu003-contrato-http` / [#38](https://github.com/bcaceres19/barberia/pull/38) |
 | [PROMPT-HU-004-v1](hu/hu-004-idempotencia.md) | `hu` | `HU-004` | [#40](https://github.com/bcaceres19/barberia/issues/40) | `executed` | `HU-003` integrada | `feat/40-hu004-idempotencia` / [#41](https://github.com/bcaceres19/barberia/pull/41) |
-| [PROMPT-HU-009-v1](hu/hu-009-sistema-visual.md) | `hu` | `HU-009` | [#42](https://github.com/bcaceres19/barberia/issues/42) | `in_progress` | Secuencia tras `HU-004` | `feat/42-hu009-sistema-visual` / — |
+| [PROMPT-HU-009-v1](hu/hu-009-sistema-visual.md) | `hu` | `HU-009` | [#42](https://github.com/bcaceres19/barberia/issues/42) | `executed` | Secuencia tras `HU-004` | `feat/42-hu009-sistema-visual` / [#43](https://github.com/bcaceres19/barberia/pull/43) |
 
 ## 10. Lista de control al guardar o entregar
 

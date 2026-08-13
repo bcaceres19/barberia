@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-009-v1"
 version: "1.0"
 kind: "hu"
-status: "in_progress"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -14,8 +14,8 @@ issue: "42"
 issue_url: "https://github.com/bcaceres19/barberia/issues/42"
 suggested_issue_title: "feat(web): completar HU-009 sistema visual base"
 branch: "feat/42-hu009-sistema-visual"
-pr: null
-pr_url: null
+pr: 43
+pr_url: "https://github.com/bcaceres19/barberia/pull/43"
 depends_on:
   - "Secuencia de ejecución posterior a HU-004"
 rules:
