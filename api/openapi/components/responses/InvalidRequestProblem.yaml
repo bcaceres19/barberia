@@ -1,0 +1,25 @@
+# 400 genérico de entrada de cliente malformada (docs/06-api/estandar-openapi.md
+# sección 11, fila 400). No es específico de idempotencia: cualquier JSON,
+# parámetro o cabecera con sintaxis o formato inválido detectado antes de
+# ejecutar cualquier efecto responde con este mismo Problem.
+description: >
+  La solicitud tiene un JSON, parámetro o cabecera con sintaxis o formato
+  inválido. No se ejecutó ningún efecto.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      idempotencyKeyInvalida:
+        summary: Cabecera Idempotency-Key ausente o con formato inválido
+        value:
+          type: /api/v1/problems/invalid-request
+          title: Solicitud inválida
+          status: 400
+          detail: falta la cabecera Idempotency-Key, obligatoria para esta operación
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: invalid-request
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

@@ -1,0 +1,39 @@
+# RN-IDE-01: una clave de idempotencia ya usada no se reutiliza con
+# contenido u operación distintos. Cubre los dos casos que
+# internal/platform/idempotency distingue internamente
+# (conflict_fingerprint y conflict_operation); ambos producen el mismo
+# code, igual que notFoundProblem colapsa dos causas distintas cuando
+# distinguirlas no aporta al cliente algo que deba hacer distinto: en
+# ambos casos, la acción correcta es la misma, usar una clave nueva.
+description: >
+  La clave de idempotencia ya se usó, con un contenido o una operación
+  distintos a los de esta solicitud. No se ejecutó ningún efecto: repite
+  la solicitud con una clave Idempotency-Key nueva.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      contenidoDistinto:
+        summary: Misma clave, cuerpo o ruta distintos
+        value:
+          type: /api/v1/problems/idempotency-conflict
+          title: Conflicto de idempotencia
+          status: 409
+          detail: la clave de idempotencia ya se usó con un contenido distinto; usa una clave nueva
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: idempotency-conflict
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      operacionDistinta:
+        summary: Misma clave, operación distinta
+        value:
+          type: /api/v1/problems/idempotency-conflict
+          title: Conflicto de idempotencia
+          status: 409
+          detail: la clave de idempotencia ya se usó para otra operación; usa una clave nueva
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: idempotency-conflict
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

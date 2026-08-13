@@ -30,6 +30,9 @@ components:
   headers:
     X-Request-Id:
       $ref: './components/headers/XRequestId.yaml'
+  parameters:
+    IdempotencyKey:
+      $ref: './components/parameters/IdempotencyKey.yaml'
   responses:
     NotFoundProblem:
       $ref: './components/responses/NotFoundProblem.yaml'
@@ -37,3 +40,9 @@ components:
       $ref: './components/responses/InternalErrorProblem.yaml'
     PayloadTooLargeProblem:
       $ref: './components/responses/PayloadTooLargeProblem.yaml'
+    InvalidRequestProblem:
+      $ref: './components/responses/InvalidRequestProblem.yaml'
+    IdempotencyConflictProblem:
+      $ref: './components/responses/IdempotencyConflictProblem.yaml'
+    IdempotencyLockedProblem:
+      $ref: './components/responses/IdempotencyLockedProblem.yaml'

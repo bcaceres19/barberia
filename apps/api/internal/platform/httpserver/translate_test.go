@@ -66,6 +66,42 @@ func TestTranslate_UnrecognizedError_CollapsesToGenericInternal(t *testing.T) {
 	}
 }
 
+func TestTranslate_Invalid_ExposesSafeMessage(t *testing.T) {
+	p := httpserver.Translate(apperr.Invalid("Idempotency-Key tiene un formato inválido"), "req-5")
+
+	if p.Status != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", p.Status)
+	}
+	if p.Code != "invalid-request" {
+		t.Fatalf("expected code invalid-request, got %q", p.Code)
+	}
+	if p.Detail != "Idempotency-Key tiene un formato inválido" {
+		t.Fatalf("expected the safe message to pass through, got %q", p.Detail)
+	}
+}
+
+func TestTranslate_IdempotencyConflict_MapsTo409(t *testing.T) {
+	p := httpserver.Translate(apperr.IdempotencyConflict("contenido distinto para la misma clave"), "req-6")
+
+	if p.Status != http.StatusConflict {
+		t.Fatalf("expected 409, got %d", p.Status)
+	}
+	if p.Code != "idempotency-conflict" {
+		t.Fatalf("expected code idempotency-conflict, got %q", p.Code)
+	}
+}
+
+func TestTranslate_IdempotencyLocked_MapsTo409WithoutWaiting(t *testing.T) {
+	p := httpserver.Translate(apperr.IdempotencyLocked("operación en curso"), "req-7")
+
+	if p.Status != http.StatusConflict {
+		t.Fatalf("expected 409 (DEC-043), got %d", p.Status)
+	}
+	if p.Code != "idempotency-locked" {
+		t.Fatalf("expected code idempotency-locked, got %q", p.Code)
+	}
+}
+
 func TestTranslate_MaxBytesError_MapsToPayloadTooLarge(t *testing.T) {
 	err := &http.MaxBytesError{Limit: httpserver.MaxRequestBodyBytes}
 

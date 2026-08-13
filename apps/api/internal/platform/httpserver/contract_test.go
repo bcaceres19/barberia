@@ -100,10 +100,13 @@ func TestContract_TranslateAlwaysFillsRequiredFields(t *testing.T) {
 	schema := loadProblemSchema(t)
 
 	cases := map[string]error{
-		"not_found":       apperr.NotFound("recurso no disponible"),
-		"internal":        apperr.Internal(errors.New("causa interna")),
-		"unrecognized":    errors.New("error ajeno"),
-		"max_bytes_error": &http.MaxBytesError{Limit: httpserver.MaxRequestBodyBytes},
+		"not_found":            apperr.NotFound("recurso no disponible"),
+		"internal":             apperr.Internal(errors.New("causa interna")),
+		"unrecognized":         errors.New("error ajeno"),
+		"max_bytes_error":      &http.MaxBytesError{Limit: httpserver.MaxRequestBodyBytes},
+		"invalid":              apperr.Invalid("Idempotency-Key inválida"),
+		"idempotency_conflict": apperr.IdempotencyConflict("contenido distinto"),
+		"idempotency_locked":   apperr.IdempotencyLocked("operación en curso"),
 	}
 
 	for name, err := range cases {
