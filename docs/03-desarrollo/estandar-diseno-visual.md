@@ -134,6 +134,7 @@ Nombres canónicos para la implementación:
   --color-action-primary-active: #172554;
   --color-action-soft: #eff6ff;
   --color-action-soft-border: #1d4ed8;
+  --color-action-soft-active: #dbeafe;
   --color-focus: #2563eb;
   --color-brand-accent-surface: #fff7ed;
   --color-brand-accent-text: #9a3412;
@@ -291,10 +292,32 @@ Se permiten dos sombras: una sutil para superficies elevadas y otra para diálog
   --layer-overlay: 30;
   --layer-dialog: 40;
   --layer-toast: 50;
+
+  /* Superposiciones translúcidas derivadas de slate-900; nunca un color
+     nuevo. --color-overlay-scrim es el fondo no interactivo detrás de un
+     diálogo; --color-overlay-hover/--color-overlay-active son el realce
+     de un control transparente (cerrar, descartar) en hover y active. */
+  --color-overlay-scrim: rgb(15 23 42 / 48%);
+  --color-overlay-hover: rgb(15 23 42 / 8%);
+  --color-overlay-active: rgb(15 23 42 / 16%);
 }
 ```
 
 Ningún componente inventa un `z-index`; consume una capa semántica y un diálogo no puede aparecer debajo de una barra fija.
+
+### 6.4 Movimiento
+
+Toda transición o animación que explica un cambio de estado usa una de dos duraciones; ningún componente escribe un número de milisegundos suelto:
+
+```css
+:root {
+  --motion-duration-fast: 120ms;
+  --motion-duration-base: 200ms;
+  --motion-easing-standard: ease;
+}
+```
+
+Un indicador de progreso indeterminado (por ejemplo, el giro continuo de un botón en estado de carga) no es una transición de estado y no usa estos tokens: señala trabajo en curso de duración desconocida. Igual se apaga o reduce con `prefers-reduced-motion` (§12).
 
 ## 7. Composición responsiva
 

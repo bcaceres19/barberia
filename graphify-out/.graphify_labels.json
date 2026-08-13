@@ -73,13 +73,13 @@
   "71": "idempotency_concurrency_two_connections.sh",
   "72": "notification_lease_concurrency_two_connections.sh",
   "73": "httpserver/idempotency_test.go",
-  "74": "setupTestDB",
+  "74": "vitest-axe.d.ts",
   "75": "BaseAlert.vue",
   "76": "scripts",
-  "77": "findInternalDir",
+  "77": "eslint-plugin-vue",
   "78": "SecurityHeaders",
   "79": "eslint",
-  "80": "jsdom",
+  "80": "vitest-axe",
   "81": "@playwright/test",
   "82": "prettier",
   "83": "@types/node",
@@ -87,5 +87,7 @@
   "85": "@vue/test-utils",
   "86": "vue-tsc",
   "87": "@vue/tsconfig",
-  "88": "idempotency/doc.go"
+  "88": "idempotency/doc.go",
+  "89": "@vue/eslint-config-typescript",
+  "90": "vitest.setup.ts"
 }

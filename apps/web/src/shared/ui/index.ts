@@ -8,8 +8,8 @@ export { default as BaseBadge } from './BaseBadge.vue'
 export { default as BaseDialog } from './BaseDialog.vue'
 
 // Tipos TypeScript para los componentes
-export type { } from './BaseButton.vue'
-export type { } from './BaseInput.vue'
-export type { } from './BaseAlert.vue'
-export type { } from './BaseBadge.vue'
-export type { } from './BaseDialog.vue'
+export type {} from './BaseButton.vue'
+export type {} from './BaseInput.vue'
+export type {} from './BaseAlert.vue'
+export type {} from './BaseBadge.vue'
+export type {} from './BaseDialog.vue'

@@ -26,6 +26,7 @@
     "@vue/eslint-config-typescript": "^14.1.0",
     "@vue/test-utils": "^2.4.0",
     "@vue/tsconfig": "^0.9.1",
+    "axe-core": "^4.13.0",
     "eslint": "^9.11.0",
     "eslint-plugin-vue": "^9.28.0",
     "jsdom": "^25.0.0",
@@ -33,6 +34,7 @@
     "typescript": "~6.0.2",
     "vite": "^8.2.0",
     "vitest": "^2.1.0",
+    "vitest-axe": "^0.1.0",
     "vue-tsc": "^3.3.8"
   }
 }

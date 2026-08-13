@@ -121,6 +121,44 @@ jobs:
       - name: openapi:bundle
         run: pnpm run openapi:bundle
 
+  web:
+    name: Frontend (lint, tipos, pruebas, build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "10"
+
+      - name: pnpm install (lockfile inmutable)
+        working-directory: apps/web
+        run: pnpm install --frozen-lockfile
+
+      - name: format
+        working-directory: apps/web
+        run: pnpm run format
+
+      - name: lint
+        working-directory: apps/web
+        run: pnpm run lint
+
+      - name: typecheck
+        working-directory: apps/web
+        run: pnpm run typecheck
+
+      - name: test:unit
+        working-directory: apps/web
+        run: pnpm run test:unit
+
+      - name: build
+        working-directory: apps/web
+        run: pnpm run build
+
   database:
     name: Atlas + suites SQL contra el esquema aplicado
     runs-on: ubuntu-latest

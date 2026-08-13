@@ -4,7 +4,13 @@
  */
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { axe } from 'vitest-axe'
 import BaseAlert from '../BaseAlert.vue'
+
+// Ver BaseButton.test.ts: color-contrast se desactiva por la ausencia de
+// Canvas2D en jsdom; el contraste ya está verificado en la tabla aprobada
+// de estandar-diseno-visual.md §4.3.
+const axeOptions = { rules: { region: { enabled: false }, 'color-contrast': { enabled: false } } }
 
 describe('BaseAlert', () => {
   describe('Rendering', () => {
@@ -15,7 +21,7 @@ describe('BaseAlert', () => {
 
     it('applies variant classes', () => {
       const variants = ['success', 'warning', 'danger', 'info', 'neutral'] as const
-      variants.forEach(variant => {
+      variants.forEach((variant) => {
         const wrapper = mount(BaseAlert, { props: { variant } })
         expect(wrapper.classes()).toContain(`base-alert--${variant}`)
       })
@@ -110,7 +116,7 @@ describe('BaseAlert', () => {
   describe('Action slot', () => {
     it('emits action event when action slot button clicked', async () => {
       const wrapper = mount(BaseAlert, {
-        slots: { action: '<button @click="$event.stopPropagation()">Action</button>' }
+        slots: { action: '<button @click="$event.stopPropagation()">Action</button>' },
       })
       // Verificar que el slot de acción renderiza el botón
       expect(wrapper.find('.base-alert__actions').exists()).toBe(true)
@@ -118,9 +124,28 @@ describe('BaseAlert', () => {
     })
   })
 
-  describe('Custom class', () => {
-    it('applies custom class', () => {
-      const wrapper = mount(BaseAlert, { props: { class: 'my-custom-class' } })
+  describe('Accesibilidad automatizada (axe-core, CA-009-05)', () => {
+    it('sin violaciones con título y contenido', async () => {
+      const wrapper = mount(BaseAlert, {
+        props: { variant: 'danger', title: 'No se pudo confirmar el turno' },
+        slots: { default: 'Intenta de nuevo en unos segundos.' },
+      })
+      expect(await axe(wrapper.element, axeOptions)).toHaveNoViolations()
+    })
+
+    it('sin violaciones cuando es descartable', async () => {
+      const wrapper = mount(BaseAlert, {
+        props: { variant: 'success', dismissible: true, title: 'Turno confirmado' },
+      })
+      expect(await axe(wrapper.element, axeOptions)).toHaveNoViolations()
+    })
+  })
+
+  describe('Fallthrough de clase', () => {
+    // class ya no es un prop propio (auditoría HU-009); el fallthrough
+    // automático de Vue lo aplica al único elemento raíz.
+    it('hereda una clase pasada por el consumidor', () => {
+      const wrapper = mount(BaseAlert, { attrs: { class: 'my-custom-class' } })
       expect(wrapper.classes()).toContain('my-custom-class')
     })
   })

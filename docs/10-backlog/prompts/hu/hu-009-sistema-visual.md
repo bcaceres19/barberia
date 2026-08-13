@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-009-v1"
 version: "1.0"
 kind: "hu"
-status: "draft"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -10,12 +10,12 @@ repository: "bcaceres19/barberia"
 base_branch: "main"
 primary_hu: "HU-009"
 related_hu: []
-issue: "pending"
-issue_url: null
+issue: "42"
+issue_url: "https://github.com/bcaceres19/barberia/issues/42"
 suggested_issue_title: "feat(web): completar HU-009 sistema visual base"
-branch: null
-pr: null
-pr_url: null
+branch: "feat/42-hu009-sistema-visual"
+pr: 43
+pr_url: "https://github.com/bcaceres19/barberia/pull/43"
 depends_on:
   - "Secuencia de ejecución posterior a HU-004"
 rules:
@@ -49,7 +49,7 @@ source_docs:
   - "apps/web/package.json"
   - "apps/web/src/shared/ui"
 created_at: "2026-08-12"
-updated_at: "2026-08-12"
+updated_at: "2026-08-13"
 supersedes: "docs/10-backlog/prompts-implementacion.md#prompt-de-hu-009--sistema-visual-base-en-componentes"
 superseded_by: null
 ---
