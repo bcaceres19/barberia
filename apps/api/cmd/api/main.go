@@ -47,22 +47,16 @@ func run() error {
 	}
 	defer db.Close()
 
-	// Las rutas de módulo (auth, shops, staff, catalog, schedule, booking,
-	// notification) se registran aquí a medida que existan, siguiendo la
-	// estructura de audiencias de docs/04-arquitectura/backend-go.md
-	// (/api/v1/public, /api/v1/customer, /api/v1/private). Chi v5 se
-	// incorpora en ese momento (DEC-034); el mux estándar basta mientras las
-	// únicas rutas son las comprobaciones operativas.
-	mux := http.NewServeMux()
-	mux.Handle("GET /health", httpserver.HealthHandler())
-	mux.Handle("GET /health/db", httpserver.DatabaseHealthHandler(db))
+	// httpserver.NewRouter monta las tres audiencias de
+	// docs/04-arquitectura/backend-go.md (/api/v1/public, /api/v1/customer,
+	// /api/v1/private) sobre Chi v5 (DEC-034) con el middleware base ya
+	// aplicado. Las rutas de módulo (auth, shops, staff, catalog, schedule,
+	// booking, notification) se registran aquí a medida que existan.
+	router := httpserver.NewRouter(logger)
+	router.Get("/health", httpserver.HealthHandler())
+	router.Get("/health/db", httpserver.DatabaseHealthHandler(db))
 
-	handler := httpserver.Chain(mux,
-		httpserver.RequestID,
-		httpserver.Recover(logger),
-	)
-
-	server := httpserver.New(cfg.HTTPAddr, handler)
+	server := httpserver.New(cfg.HTTPAddr, router)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

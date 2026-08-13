@@ -1,0 +1,25 @@
+# Un recurso inexistente y uno que pertenece a otra barbería responden
+# exactamente igual: RN-TEN-01 y CA-003-03 exigen que ninguna de las dos
+# situaciones sea distinguible desde fuera.
+description: >
+  El recurso solicitado no existe, o existe pero pertenece a otra
+  barbería. Ambos casos producen la misma respuesta a propósito: el
+  cuerpo nunca revela que el recurso existe.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      recursoNoEncontrado:
+        summary: Recurso inexistente o de otra barbería
+        value:
+          type: /api/v1/problems/not-found
+          title: Recurso no encontrado
+          status: 404
+          detail: recurso no disponible
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: not-found
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

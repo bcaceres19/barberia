@@ -6,15 +6,20 @@ import (
 )
 
 // Problem es el cuerpo de error uniforme según RFC 9457
-// (application/problem+json). Es la base reutilizable mínima para
-// cualquier respuesta de error del API; HU-003 la completa con el
-// catálogo de tipos de error del contrato OpenAPI (CA-003-01, CA-003-06).
+// (application/problem+json), con los campos adicionales que
+// docs/06-api/estandar-openapi.md sección 12 exige para todo el proyecto:
+// code (para lógica del cliente) y requestId (correlación con logs y
+// soporte). Ningún llamador debe construir un Problem a mano fuera de
+// [Translate]: eso es lo único que garantiza que Detail nunca lleve SQL,
+// rutas de archivo, nombres de proveedor ni versiones (CA-003-02).
 type Problem struct {
-	Type     string `json:"type,omitempty"`
-	Title    string `json:"title"`
-	Status   int    `json:"status"`
-	Detail   string `json:"detail,omitempty"`
-	Instance string `json:"instance,omitempty"`
+	Type      string `json:"type,omitempty"`
+	Title     string `json:"title"`
+	Status    int    `json:"status"`
+	Detail    string `json:"detail,omitempty"`
+	Instance  string `json:"instance,omitempty"`
+	Code      string `json:"code"`
+	RequestID string `json:"requestId"`
 }
 
 // WriteProblem escribe p como application/problem+json con el código de

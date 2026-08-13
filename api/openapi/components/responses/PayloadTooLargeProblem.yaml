@@ -1,0 +1,22 @@
+# El límite de tamaño del cuerpo (docs/04-arquitectura/backend-go.md
+# sección 6 paso 3) usa 400: docs/06-api/estandar-openapi.md sección 11 no
+# incluye 413 en la tabla de códigos del proyecto.
+description: >
+  El cuerpo de la solicitud excede el límite permitido por el servidor.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      cuerpoDemasiadoGrande:
+        summary: Cuerpo por encima del límite permitido
+        value:
+          type: /api/v1/problems/payload-too-large
+          title: Cuerpo de la solicitud demasiado grande
+          status: 400
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: payload-too-large
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

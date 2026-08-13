@@ -1,0 +1,24 @@
+# CA-003-02: el cuerpo nunca incluye SQL, rutas de archivo, nombres de
+# proveedor, versiones de dependencias ni trazas. detail se omite a
+# propósito en el ejemplo: la implementación real tampoco lo rellena para
+# este tipo de problema.
+description: >
+  Fallo inesperado del servidor, incluida la recuperación de un panic. El
+  cuerpo nunca incluye detalles internos del fallo.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      errorInterno:
+        summary: Fallo inesperado
+        value:
+          type: /api/v1/problems/internal-error
+          title: Error interno
+          status: 500
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: internal-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

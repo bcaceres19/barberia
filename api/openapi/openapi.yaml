@@ -2,9 +2,11 @@
 # docs/06-api/estandar-openapi.md (DEC-037). No se edita el bundle generado
 # en dist/; este archivo y los que referencia son la fuente.
 #
-# Sin operaciones todavía: paths y components se completan junto con el
-# primer endpoint implementado. No se citan x-business-rules ni
-# x-decisions hasta que exista la operación real que los use.
+# Sin operaciones todavía: HU-003 solo entrega la base HTTP (Chi v5, tres
+# audiencias, errores uniformes) sin endpoints de negocio. Los componentes
+# de error de esta sección ya son reales porque el servidor los emite desde
+# hoy (recuperación de panic, aislamiento por tenant, límite de cuerpo);
+# paths queda vacío hasta el primer endpoint implementado.
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
@@ -21,4 +23,17 @@ servers:
   - url: /api/v1
 tags: []
 paths: {}
-components: {}
+components:
+  schemas:
+    Problem:
+      $ref: './components/schemas/Problem.yaml'
+  headers:
+    X-Request-Id:
+      $ref: './components/headers/XRequestId.yaml'
+  responses:
+    NotFoundProblem:
+      $ref: './components/responses/NotFoundProblem.yaml'
+    InternalErrorProblem:
+      $ref: './components/responses/InternalErrorProblem.yaml'
+    PayloadTooLargeProblem:
+      $ref: './components/responses/PayloadTooLargeProblem.yaml'

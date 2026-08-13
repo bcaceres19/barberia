@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -27,11 +28,7 @@ func Recover(logger *slog.Logger) func(http.Handler) http.Handler {
 						"panic_type", fmt.Sprintf("%T", rec),
 					)
 
-					WriteProblem(w, Problem{
-						Title:    "Error interno",
-						Status:   http.StatusInternalServerError,
-						Instance: requestID,
-					})
+					WriteProblem(w, Translate(errors.New("panic recuperado en el límite HTTP"), requestID))
 				}
 			}()
 			next.ServeHTTP(w, r)

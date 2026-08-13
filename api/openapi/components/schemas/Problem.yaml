@@ -1,0 +1,60 @@
+# Cuerpo de error uniforme para toda respuesta que no sea 2xx, según RFC 9457
+# (application/problem+json) y docs/06-api/estandar-openapi.md sección 12.
+# additionalProperties se deja abierto a propósito (regla 4 de la sección 9):
+# una historia futura con validación de campo agrega "errors" a este mismo
+# esquema en vez de crear uno paralelo.
+type: object
+description: >
+  Cuerpo de error uniforme para toda respuesta que no sea 2xx (RFC 9457).
+  type, title, status, detail e instance son los campos base de la RFC;
+  code y requestId son la extensión que este proyecto exige en toda
+  respuesta de error.
+properties:
+  type:
+    type: string
+    format: uri-reference
+    description: >
+      URI estable del tipo de problema. Es una ruta relativa bajo /api/v1
+      mientras el proyecto no publique documentación de errores en un
+      dominio propio; cambiar su valor es un cambio incompatible.
+    examples:
+      - /api/v1/problems/not-found
+  title:
+    type: string
+    description: Resumen estable y legible del tipo de problema.
+    examples:
+      - Recurso no encontrado
+  status:
+    type: integer
+    description: Código de estado HTTP de esta ocurrencia; coincide con el estado real de la respuesta.
+    examples:
+      - 404
+  detail:
+    type: string
+    description: >
+      Explicación segura de esta ocurrencia. Nunca contiene SQL, rutas de
+      archivo, nombres de proveedor, versiones de dependencias, trazas ni
+      la existencia de un recurso de otra barbería.
+    examples:
+      - no existe un turno con ese identificador
+  instance:
+    type: string
+    description: Identificador de esta ocurrencia; igual al valor de correlación de la solicitud.
+    examples:
+      - 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+  code:
+    type: string
+    pattern: '^[a-z]+(-[a-z]+)*$'
+    description: Código estable del proyecto para que el cliente decida sin comparar detail, en minúscula con guiones.
+    examples:
+      - not-found
+  requestId:
+    type: string
+    description: Correlación con logs y soporte; igual a la cabecera X-Request-Id de la respuesta.
+    examples:
+      - 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+required:
+  - title
+  - status
+  - code
+  - requestId
