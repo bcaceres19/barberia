@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-004-v1"
 version: "1.0"
 kind: "hu"
-status: "draft"
+status: "in_progress"
 target_agents:
   - "claude"
   - "codex"
@@ -10,10 +10,10 @@ repository: "bcaceres19/barberia"
 base_branch: "main"
 primary_hu: "HU-004"
 related_hu: []
-issue: "pending"
-issue_url: null
+issue: "40"
+issue_url: "https://github.com/bcaceres19/barberia/issues/40"
 suggested_issue_title: "feat(api): implementar HU-004 idempotencia reutilizable"
-branch: null
+branch: "feat/40-hu004-idempotencia"
 pr: null
 pr_url: null
 depends_on:
