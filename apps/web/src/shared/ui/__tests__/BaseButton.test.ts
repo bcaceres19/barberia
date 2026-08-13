@@ -4,7 +4,20 @@
  */
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { axe } from 'vitest-axe'
 import BaseButton from '../BaseButton.vue'
+
+// axe-core (vía vitest-axe) es la herramienta de verificación accesible
+// automatizada elegida en la auditoría HU-009 para docs/03-desarrollo/estrategia-pruebas.md
+// §5.4: motor WCAG 2.1/2.2 de referencia, MIT, mantenimiento activo, ya
+// integrable con Vitest sin un navegador real. No sustituye la revisión
+// manual por teclado que este mismo archivo ya cubre.
+// color-contrast se desactiva: jsdom no implementa Canvas2D, así que ese
+// chequeo de axe-core no puede medir contraste real aquí (falla o cuelga
+// con "HTMLCanvasElement.prototype.getContext"). El contraste ya está
+// verificado por la tabla aprobada de estandar-diseno-visual.md §4.3 para
+// cada combinación de tokens que estos componentes usan.
+const axeOptions = { rules: { region: { enabled: false }, 'color-contrast': { enabled: false } } }
 
 describe('BaseButton', () => {
   describe('Rendering', () => {
@@ -20,15 +33,17 @@ describe('BaseButton', () => {
 
     it('applies variant classes', () => {
       const variants = ['primary', 'secondary', 'soft', 'ghost', 'danger'] as const
-      variants.forEach(variant => {
+      variants.forEach((variant) => {
         const wrapper = mount(BaseButton, { props: { variant }, slots: { default: 'Test' } })
         expect(wrapper.classes()).toContain(`base-button--${variant}`)
       })
     })
 
     it('applies size classes', () => {
-      const sizes = ['sm', 'md', 'lg'] as const
-      sizes.forEach(size => {
+      // 'sm' se eliminó en la auditoría HU-009: el estándar visual no
+      // define un tamaño de botón por debajo de 44px (CA-009-03).
+      const sizes = ['md', 'lg'] as const
+      sizes.forEach((size) => {
         const wrapper = mount(BaseButton, { props: { size }, slots: { default: 'Test' } })
         expect(wrapper.classes()).toContain(`base-button--${size}`)
       })
@@ -60,7 +75,7 @@ describe('BaseButton', () => {
 
     it('sets type attribute', () => {
       const types = ['button', 'submit', 'reset'] as const
-      types.forEach(type => {
+      types.forEach((type) => {
         const wrapper = mount(BaseButton, { props: { type }, slots: { default: 'Test' } })
         expect(wrapper.attributes('type')).toBe(type)
       })
@@ -123,9 +138,42 @@ describe('BaseButton', () => {
     })
   })
 
-  describe('Custom class', () => {
-    it('applies custom class', () => {
-      const wrapper = mount(BaseButton, { props: { class: 'my-custom-class' }, slots: { default: 'Test' } })
+  describe('Accesibilidad automatizada (axe-core, CA-009-05)', () => {
+    it('sin violaciones en estado normal', async () => {
+      const wrapper = mount(BaseButton, {
+        props: { variant: 'primary' },
+        slots: { default: 'Confirmar' },
+      })
+      expect(await axe(wrapper.element, axeOptions)).toHaveNoViolations()
+    })
+
+    it('sin violaciones en estado cargando', async () => {
+      const wrapper = mount(BaseButton, {
+        props: { loading: true },
+        slots: { default: 'Confirmando…' },
+      })
+      expect(await axe(wrapper.element, axeOptions)).toHaveNoViolations()
+    })
+
+    it('sin violaciones en estado deshabilitado', async () => {
+      const wrapper = mount(BaseButton, {
+        props: { disabled: true },
+        slots: { default: 'No disponible' },
+      })
+      expect(await axe(wrapper.element, axeOptions)).toHaveNoViolations()
+    })
+  })
+
+  describe('Fallthrough de clase', () => {
+    // class ya no es un prop propio (auditoría HU-009: un prop de clase
+    // libre elude el sistema semántico). Un consumidor sigue pudiendo
+    // agregar una clase de layout mediante el fallthrough automático de
+    // Vue hacia el único elemento raíz.
+    it('hereda una clase pasada por el consumidor', () => {
+      const wrapper = mount(BaseButton, {
+        attrs: { class: 'my-custom-class' },
+        slots: { default: 'Test' },
+      })
       expect(wrapper.classes()).toContain('my-custom-class')
     })
   })

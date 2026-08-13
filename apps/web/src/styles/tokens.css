@@ -22,6 +22,7 @@
   --color-action-primary-active: #172554;
   --color-action-soft: #eff6ff;
   --color-action-soft-border: #1d4ed8;
+  --color-action-soft-active: #dbeafe;
   --color-focus: #2563eb;
   --color-brand-accent-surface: #fff7ed;
   --color-brand-accent-text: #9a3412;
@@ -133,4 +134,25 @@
   /* Tamaños de control (objetivo táctil 44 × 44 px) */
   --control-height: 44px;
   --control-height-primary-mobile: 48px;
+  /* Botón de icono independiente (estandar-diseno-visual.md §6.2) */
+  --control-height-icon: 44px;
+
+  /* Superposición: overlays translúcidos derivados de slate-900 (#0F172A),
+     nunca un color nuevo. --color-overlay-scrim es el fondo no interactivo
+     detrás de un diálogo (§8.5); --color-overlay-hover es el realce sutil
+     de un control de icono transparente (cerrar, descartar). */
+  --color-overlay-scrim: rgb(15 23 42 / 48%);
+  --color-overlay-hover: rgb(15 23 42 / 8%);
+  --color-overlay-active: rgb(15 23 42 / 16%);
+
+  /* Movimiento: toda transición o animación de estado usa una de estas dos
+     duraciones (estandar-diseno-visual.md §12, CA-009-07); ningún
+     componente escribe un número de milisegundos suelto. No cubre
+     indicadores de progreso indeterminado (por ejemplo el giro continuo de
+     BaseButton en estado loading): esa animación no "explica un cambio de
+     estado" en el sentido de la regla, señala trabajo en curso de duración
+     desconocida, y de todos modos se apaga con prefers-reduced-motion. */
+  --motion-duration-fast: 120ms;
+  --motion-duration-base: 200ms;
+  --motion-easing-standard: ease;
 }

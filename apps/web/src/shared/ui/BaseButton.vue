@@ -1,29 +1,32 @@
 <script setup lang="ts">
 /**
  * BaseButton - Botón base del sistema visual.
- * Implementa variantes: primary | secondary | soft | ghost | danger
+ * Variantes: primary | secondary | soft | ghost | danger
+ * (estandar-diseno-visual.md §8.1: primaria, secundaria, texto, peligro)
  * Estados: default | hover | active | focus-visible | disabled | loading
- * Tamaños: sm (40×40 icon-only) | md (44×44) | lg (48×48 mobile-primary)
- * Accesibilidad: aria-pressed (toggle), aria-disabled, role="button" nativo,
- * focus-visible ring 2px offset 2px con --color-focus, prefers-reduced-motion
+ * Tamaños: md (44px, estándar) | lg (48px, principal móvil, §6.2). No
+ * existe una variante más pequeña: el estándar visual no define un tamaño
+ * de botón por debajo del objetivo táctil de 44 × 44 px (CA-009-03), así
+ * que este componente no inventa uno.
+ * Accesibilidad: aria-pressed (toggle), aria-busy (carga), foco visible con
+ * --color-focus, prefers-reduced-motion.
  */
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 
 interface Props {
   /** Variante visual del botón */
   variant?: 'primary' | 'secondary' | 'soft' | 'ghost' | 'danger'
-  /** Tamaño del botón */
-  size?: 'sm' | 'md' | 'lg'
+  /** Tamaño del botón: md (44px) o lg (48px, acción principal móvil) */
+  size?: 'md' | 'lg'
   /** Si el botón está deshabilitado */
   disabled?: boolean
-  /** Si muestra estado de carga */
+  /** Si muestra estado de carga. Bloquea la interacción como disabled, sin
+   * sustituir la idempotencia del servidor (estandar-frontend-vue.md §6). */
   loading?: boolean
   /** Si es un botón toggle (mantiene estado pressed) */
   pressed?: boolean
   /** Tipo nativo del botón */
   type?: 'button' | 'submit' | 'reset'
-  /** Clases CSS adicionales */
-  class?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -33,15 +36,11 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   pressed: false,
   type: 'button',
-  class: '',
 })
 
 const emit = defineEmits<{
   click: [event: MouseEvent]
 }>()
-
-const buttonRef = ref<HTMLButtonElement | null>(null)
-void buttonRef // template ref, no runtime usage needed
 
 const classes = computed(() => {
   const base = 'base-button'
@@ -52,12 +51,14 @@ const classes = computed(() => {
     props.disabled ? `${base}--disabled` : '',
     props.loading ? `${base}--loading` : '',
     props.pressed ? `${base}--pressed` : '',
-    props.class,
   ]
     .filter(Boolean)
     .join(' ')
 })
 
+// El atributo nativo `disabled` ya impide el click y la activación por
+// teclado del navegador mientras disabled o loading estén activos; este
+// guardia es una defensa adicional explícita, no la única barrera real.
 const handleClick = (event: MouseEvent) => {
   if (props.disabled || props.loading) {
     event.preventDefault()
@@ -66,22 +67,10 @@ const handleClick = (event: MouseEvent) => {
   }
   emit('click', event)
 }
-
-const handleKeyDown = (event: KeyboardEvent) => {
-  if (props.disabled || props.loading) {
-    event.preventDefault()
-    return
-  }
-  // Enter o Space activan el botón (comportamiento nativo)
-  if (event.key === 'Enter' || event.key === ' ') {
-    // El navegador maneja el click nativo para button type="button"
-  }
-}
 </script>
 
 <template>
   <button
-    ref="buttonRef"
     :class="classes"
     :type="type"
     :disabled="disabled || loading"
@@ -89,7 +78,6 @@ const handleKeyDown = (event: KeyboardEvent) => {
     :aria-pressed="pressed"
     :aria-busy="loading"
     @click="handleClick"
-    @keydown="handleKeyDown"
   >
     <span class="base-button__content">
       <span v-if="loading" class="base-button__spinner" aria-hidden="true">
@@ -119,16 +107,18 @@ const handleKeyDown = (event: KeyboardEvent) => {
 <style scoped>
 .base-button {
   --btn-height: var(--control-height);
-  --btn-height-sm: 40px;
   --btn-height-lg: var(--control-height-primary-mobile);
   --btn-padding-x: var(--space-4);
-  --btn-padding-x-sm: var(--space-3);
   --btn-padding-x-lg: var(--space-5);
   --btn-gap: var(--space-2);
   --btn-font-size: var(--font-size-body);
   --btn-font-weight: 500;
   --btn-radius: var(--radius-md);
-  --btn-transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+  --btn-transition:
+    background-color var(--motion-duration-fast) var(--motion-easing-standard),
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    color var(--motion-duration-fast) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-easing-standard);
   --btn-focus-ring: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-focus);
 
   display: inline-flex;
@@ -158,12 +148,6 @@ const handleKeyDown = (event: KeyboardEvent) => {
 
 .base-button:focus-visible {
   box-shadow: var(--btn-focus-ring);
-}
-
-.base-button--sm {
-  height: var(--btn-height-sm);
-  padding: 0 var(--btn-padding-x-sm);
-  min-width: var(--btn-height-sm);
 }
 
 .base-button--lg {
@@ -217,7 +201,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
 }
 
 .base-button--soft:active:not(:disabled):not(.base-button--loading) {
-  background-color: #dbeafe;
+  background-color: var(--color-action-soft-active);
 }
 
 /* Variant: ghost */
@@ -232,7 +216,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
 }
 
 .base-button--ghost:active:not(:disabled):not(.base-button--loading) {
-  background-color: #dbeafe;
+  background-color: var(--color-action-soft-active);
 }
 
 /* Variant: danger */
@@ -242,14 +226,17 @@ const handleKeyDown = (event: KeyboardEvent) => {
   border-color: var(--color-danger-action);
 }
 
+/* El estándar visual no define un tono más oscuro de peligro para
+   hover/active (solo el único "Peligro" de la tabla de contraste, §4.2):
+   en vez de inventar un hexadecimal nuevo sin decisión del propietario,
+   estos estados oscurecen el mismo token con un multiplicador numérico,
+   igual que el resto del archivo ya usa opacity para disabled/secundario. */
 .base-button--danger:hover:not(:disabled):not(.base-button--loading) {
-  background-color: #991b1b;
-  border-color: #991b1b;
+  filter: brightness(90%);
 }
 
 .base-button--danger:active:not(:disabled):not(.base-button--loading) {
-  background-color: #7f1d1d;
-  border-color: #7f1d1d;
+  filter: brightness(80%);
 }
 
 /* Disabled */
@@ -273,6 +260,10 @@ const handleKeyDown = (event: KeyboardEvent) => {
   justify-content: center;
 }
 
+/* El giro del spinner es un indicador de progreso indeterminado, no una
+   transición de estado: por eso no usa --motion-duration-fast/base (esas
+   cubren transiciones de 120-200 ms que explican un cambio, CA-009-07).
+   Sigue apagándose con prefers-reduced-motion más abajo. */
 .base-button__spinner-svg {
   width: 1em;
   height: 1em;
@@ -280,8 +271,12 @@ const handleKeyDown = (event: KeyboardEvent) => {
 }
 
 @keyframes base-button-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -312,18 +307,13 @@ const handleKeyDown = (event: KeyboardEvent) => {
 
 /* Pressed (para toggle) */
 .base-button--pressed {
-  box-shadow: inset 0 2px 4px rgb(15 23 42 / 10%);
+  box-shadow: inset 0 2px 4px var(--color-overlay-hover);
 }
 
 /* Icon-only (cuando solo hay icono) */
 .base-button:has(> .base-button__content > :only-child:not(:has(+ *))) {
   padding-left: calc(var(--btn-padding-x) - 2px);
   padding-right: calc(var(--btn-padding-x) - 2px);
-}
-
-.base-button--sm:has(> .base-button__content > :only-child:not(:has(+ *))) {
-  padding-left: calc(var(--btn-padding-x-sm) - 2px);
-  padding-right: calc(var(--btn-padding-x-sm) - 2px);
 }
 
 .base-button--lg:has(> .base-button__content > :only-child:not(:has(+ *))) {

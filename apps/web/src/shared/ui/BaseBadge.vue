@@ -15,12 +15,8 @@ interface Props {
   size?: 'sm' | 'md'
   /** Si muestra punto de estado */
   dot?: boolean
-  /** Color personalizado del punto (override variant) */
-  dotColor?: string
   /** Si se puede cerrar */
   dismissible?: boolean
-  /** Clases CSS adicionales */
-  class?: string
   /** Label para accesibilidad (requerido si solo icono/punto) */
   label?: string
 }
@@ -30,7 +26,6 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'md',
   dot: false,
   dismissible: false,
-  class: '',
 })
 
 const emit = defineEmits<{
@@ -45,7 +40,6 @@ const classes = computed(() => {
     `${base}--${props.size}`,
     props.dot ? `${base}--dot` : '',
     props.dismissible ? `${base}--dismissible` : '',
-    props.class,
   ]
     .filter(Boolean)
     .join(' ')
@@ -87,8 +81,10 @@ const borderVar = computed(() => {
   return map[props.variant] || map.neutral
 })
 
+// El color del punto SIEMPRE deriva de variant: no existe una vía para que
+// un consumidor pase un color libre (auditoría HU-009 — estandar-diseno-visual.md
+// §15.4: "Props describen intención, no valores libres").
 const dotColorVar = computed(() => {
-  if (props.dotColor) return props.dotColor
   const map: Record<string, string> = {
     neutral: 'var(--color-inactive-text)',
     primary: 'var(--color-action-primary)',
@@ -101,15 +97,6 @@ const dotColorVar = computed(() => {
 })
 
 const dismissSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`
-
-const dotStyle = computed(() => {
-  // When dotColor is explicitly provided, use it directly
-  if (props.dotColor) {
-    return { backgroundColor: props.dotColor }
-  }
-  // Otherwise use CSS variable (set via --badge-dot-color)
-  return { backgroundColor: 'var(--badge-dot-color)' }
-})
 
 const handleDismiss = (event: MouseEvent) => {
   event.stopPropagation()
@@ -132,7 +119,7 @@ const style = computed(() => ({
     :aria-label="label"
     :aria-live="dot ? 'polite' : undefined"
   >
-    <span v-if="dot" class="base-badge__dot" :style="dotStyle" aria-hidden="true" />
+    <span v-if="dot" class="base-badge__dot" aria-hidden="true" />
     <slot />
     <button
       v-if="dismissible"
@@ -161,8 +148,16 @@ const style = computed(() => ({
   --badge-gap: var(--space-1);
   --badge-dot-size-sm: 6px;
   --badge-dot-size-md: 8px;
+  /* 24×24: suelo absoluto de WCAG 2.2 (SC 2.5.8), no los 44×44 del botón
+   * de icono independiente. Una insignia es una etiqueta compacta en línea
+   * con el texto que la rodea (excepción "Inline" de la misma regla);
+   * forzar 44×44 aquí rompería el propósito del componente. */
+  --badge-dismiss-size: 24px;
   --badge-border-width: var(--border-width-normal);
-  --badge-transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  --badge-transition:
+    background-color var(--motion-duration-fast) var(--motion-easing-standard),
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    color var(--motion-duration-fast) var(--motion-easing-standard);
 
   display: inline-flex;
   align-items: center;
@@ -209,6 +204,7 @@ const style = computed(() => ({
   height: var(--badge-dot-size-md);
   border-radius: 50%;
   flex-shrink: 0;
+  background-color: var(--badge-dot-color);
 }
 
 .base-badge--sm .base-badge__dot {
@@ -218,11 +214,11 @@ const style = computed(() => ({
 }
 
 .base-badge--dismissible {
-  padding-right: calc(var(--badge-padding-x-md) + 24px + var(--space-1));
+  padding-right: calc(var(--badge-padding-x-md) + var(--badge-dismiss-size) + var(--space-1));
 }
 
 .base-badge--sm.base-badge--dismissible {
-  padding-right: calc(var(--badge-padding-x-sm) + 20px + var(--space-1));
+  padding-right: calc(var(--badge-padding-x-sm) + var(--badge-dismiss-size) + var(--space-1));
 }
 
 .base-badge__dismiss {
@@ -230,8 +226,8 @@ const style = computed(() => ({
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: var(--badge-dismiss-size);
+  height: var(--badge-dismiss-size);
   margin-left: var(--space-1);
   padding: 0;
   background: transparent;
@@ -240,7 +236,9 @@ const style = computed(() => ({
   color: var(--badge-text);
   opacity: 0.64;
   cursor: pointer;
-  transition: opacity 0.12s ease, background-color 0.12s ease;
+  transition:
+    opacity var(--motion-duration-fast) var(--motion-easing-standard),
+    background-color var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -251,12 +249,14 @@ const style = computed(() => ({
 
 .base-badge__dismiss:hover {
   opacity: 1;
-  background-color: rgb(15 23 42 / 8%);
+  background-color: var(--color-overlay-hover);
 }
 
 .base-badge__dismiss:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-focus);
+  box-shadow:
+    0 0 0 2px var(--color-surface),
+    0 0 0 4px var(--color-focus);
 }
 
 .base-badge__dismiss-icon {

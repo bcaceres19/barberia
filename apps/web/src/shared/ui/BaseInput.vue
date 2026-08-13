@@ -7,7 +7,7 @@
  * Accesibilidad: aria-describedby para hint/error, aria-invalid, aria-readonly,
  * focus-visible ring, autocompletado nativo
  */
-import { computed, ref } from 'vue'
+import { computed, ref, useId } from 'vue'
 
 interface Props {
   /** Valor del input (v-model) */
@@ -34,10 +34,9 @@ interface Props {
   name?: string
   /** ID del input (se genera si no se proporciona) */
   id?: string
-  /** Icono leading (slot name="leading") */
-  /** Icono trailing (slot name="trailing") */
-  /** Clases CSS adicionales */
-  class?: string
+  /** Icono leading (slot name="leading") — decorativo únicamente; nunca un
+   * control interactivo, porque el wrapper lleva aria-hidden. */
+  /** Icono trailing (slot name="trailing") — misma restricción que leading. */
   /** Patrón de validación */
   pattern?: string
   /** Longitud mínima */
@@ -57,7 +56,6 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   readonly: false,
   required: false,
-  class: '',
 })
 
 const emit = defineEmits<{
@@ -69,11 +67,18 @@ const emit = defineEmits<{
 }>()
 
 const inputRef = ref<HTMLInputElement | null>(null)
-void inputRef // template ref, no runtime usage needed
-const generatedId = `base-input-${Math.random().toString(36).slice(2, 9)}`
+// vue-tsc no asocia el ref="inputRef" del template con esta variable a
+// efectos de noUnusedLocals: sin esta línea, "declared but never read".
+void inputRef.value
+// useId() (Vue 3.5+) genera un identificador estable por instancia, a
+// diferencia de Math.random(): determinista dentro del ciclo de vida del
+// componente y sin riesgo de colisión entre dos instancias montadas a la
+// vez (docs/03-desarrollo/estandar-diseno-visual.md, auditoría HU-009:
+// "IDs aleatorios o relaciones label/description/error inestables").
+const generatedId = `base-input-${useId()}`
 const inputId = computed(() => props.id || generatedId)
-const hintId = computed(() => props.hint ? `${inputId.value}-hint` : undefined)
-const errorId = computed(() => props.error ? `${inputId.value}-error` : undefined)
+const hintId = computed(() => (props.hint ? `${inputId.value}-hint` : undefined))
+const errorId = computed(() => (props.error ? `${inputId.value}-error` : undefined))
 const describedBy = computed(() => {
   const ids = []
   if (hintId.value) ids.push(hintId.value)
@@ -89,7 +94,6 @@ const classes = computed(() => {
     hasError.value ? `${base}--invalid` : '',
     props.disabled ? `${base}--disabled` : '',
     props.readonly ? `${base}--readonly` : '',
-    props.class,
   ]
     .filter(Boolean)
     .join(' ')
@@ -108,12 +112,7 @@ const wrapperClasses = computed(() => {
 
 const labelClasses = computed(() => {
   const base = 'base-input__label'
-  return [
-    base,
-    props.required ? `${base}--required` : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
+  return [base, props.required ? `${base}--required` : ''].filter(Boolean).join(' ')
 })
 
 const handleInput = (event: Event) => {
@@ -136,14 +135,18 @@ const handleFocus = (event: FocusEvent) => {
 </script>
 
 <template>
-  <div :class="wrapperClasses" class="base-input__wrapper">
+  <div :class="wrapperClasses">
     <label v-if="label" :for="inputId" :class="labelClasses">
       {{ label }}
       <span v-if="required" class="base-input__required" aria-hidden="true">*</span>
     </label>
 
     <div class="base-input__input-wrapper">
-      <span v-if="$slots.leading" class="base-input__icon base-input__icon--leading" aria-hidden="true">
+      <span
+        v-if="$slots.leading"
+        class="base-input__icon base-input__icon--leading"
+        aria-hidden="true"
+      >
         <slot name="leading" />
       </span>
 
@@ -176,7 +179,11 @@ const handleFocus = (event: FocusEvent) => {
         @focus="handleFocus"
       />
 
-      <span v-if="$slots.trailing" class="base-input__icon base-input__icon--trailing" aria-hidden="true">
+      <span
+        v-if="$slots.trailing"
+        class="base-input__icon base-input__icon--trailing"
+        aria-hidden="true"
+      >
         <slot name="trailing" />
       </span>
     </div>
@@ -221,9 +228,7 @@ const handleFocus = (event: FocusEvent) => {
 
 .base-input {
   --input-height: var(--control-height);
-  --input-height-sm: 40px;
   --input-padding-x: var(--space-4);
-  --input-padding-x-sm: var(--space-3);
   --input-font-size: var(--font-size-body);
   --input-line-height: var(--font-size-body-line);
   --input-bg: var(--color-surface);
@@ -232,7 +237,10 @@ const handleFocus = (event: FocusEvent) => {
   --input-border-focus: var(--border-width-emphasis) solid var(--color-focus);
   --input-border-invalid: var(--border-width-emphasis) solid var(--color-danger-border);
   --input-radius: var(--radius-md);
-  --input-transition: border-color 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+  --input-transition:
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-easing-standard),
+    background-color var(--motion-duration-fast) var(--motion-easing-standard);
   --input-focus-ring: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-focus);
 
   width: 100%;
@@ -290,7 +298,9 @@ const handleFocus = (event: FocusEvent) => {
 }
 
 .base-input--invalid:focus-visible {
-  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-danger-border);
+  box-shadow:
+    0 0 0 2px var(--color-surface),
+    0 0 0 4px var(--color-danger-border);
 }
 
 /* Iconos */

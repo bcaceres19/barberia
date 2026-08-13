@@ -1,3 +1,14 @@
+<script lang="ts">
+// Pila de diálogos abiertos, en un <script> de módulo (no de setup): se
+// evalúa una sola vez y por eso el array se comparte entre TODAS las
+// instancias de BaseDialog montadas. Escape y el atrapado de foco de un
+// diálogo particular solo actúan cuando su id es el último de la pila —el
+// visualmente más alto—, así dos diálogos abiertos a la vez (uno anidado
+// desde el otro) no compiten por la misma tecla (auditoría HU-009:
+// "evita colisiones con diálogos anidados o múltiples instancias").
+export const openDialogStack: string[] = []
+</script>
+
 <script setup lang="ts">
 /**
  * BaseDialog - Diálogo modal del sistema visual.
@@ -6,7 +17,7 @@
  * Accesibilidad: role="dialog", aria-modal="true", aria-labelledby,
  * focus trap, focus restoration, focus-visible en elementos interactivos
  */
-import { computed, ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { computed, ref, useId, onMounted, onUnmounted, watch, nextTick } from 'vue'
 
 interface Props {
   /** Si el diálogo está abierto (v-model) */
@@ -23,10 +34,6 @@ interface Props {
   closeOnEscape?: boolean
   /** Si mostrar botón de cerrar en header */
   showClose?: boolean
-  /** Clases CSS adicionales */
-  class?: string
-  /** Z-index personalizado */
-  zIndex?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -35,8 +42,6 @@ const props = withDefaults(defineProps<Props>(), {
   closeOnBackdrop: true,
   closeOnEscape: true,
   showClose: true,
-  class: '',
-  zIndex: 40,
 })
 
 const emit = defineEmits<{
@@ -58,46 +63,40 @@ const isOpen = computed({
 
 const classes = computed(() => {
   const base = 'base-dialog'
-  return [
-    base,
-    `${base}--${props.size}`,
-    isOpen.value ? `${base}--open` : '',
-    props.class,
-  ]
+  return [base, `${base}--${props.size}`, isOpen.value ? `${base}--open` : '']
     .filter(Boolean)
     .join(' ')
 })
 
 const overlayClasses = computed(() => {
   const base = 'base-dialog__overlay'
-  return [
-    base,
-    isOpen.value ? `${base}--open` : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
+  return [base, isOpen.value ? `${base}--open` : ''].filter(Boolean).join(' ')
 })
 
-const dialogId = `base-dialog-${Math.random().toString(36).slice(2, 9)}`
+// useId() (Vue 3.5+) genera un identificador estable y único por instancia,
+// a diferencia de Math.random(): sin riesgo de colisión entre dos diálogos
+// montados a la vez (auditoría HU-009).
+const dialogId = `base-dialog-${useId()}`
 const titleId = `${dialogId}-title`
 const descriptionId = `${dialogId}-description`
 
-const style = computed(() => ({
-  '--dialog-z-index': props.zIndex,
-}))
+// Solo el diálogo visualmente más alto (el último de openDialogStack)
+// reacciona a Escape y atrapa Tab. Ningún componente inventa un z-index
+// propio (estandar-diseno-visual.md §6.3): todos comparten --layer-dialog.
+const isTopmost = () => openDialogStack[openDialogStack.length - 1] === dialogId
 
 const updateFocusableElements = () => {
   if (!dialogRef.value) return
   const elements = dialogRef.value.querySelectorAll<HTMLElement>(
-    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"]), [contenteditable="true"]'
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"]), [contenteditable="true"]',
   )
   focusableElementsRef.value = Array.from(elements).filter(
-    el => !el.hasAttribute('disabled') && !el.hidden && el.offsetParent !== null
+    (el) => !el.hasAttribute('disabled') && !el.hidden && el.offsetParent !== null,
   )
 }
 
 const handleKeyDown = (event: KeyboardEvent) => {
-  if (!isOpen.value) return
+  if (!isOpen.value || !isTopmost()) return
 
   if (event.key === 'Escape' && props.closeOnEscape) {
     event.preventDefault()
@@ -159,8 +158,32 @@ const trapFocus = () => {
 
 const restoreFocus = () => {
   if (previouslyFocusedElement.value) {
-    (previouslyFocusedElement.value as HTMLElement).focus()
+    ;(previouslyFocusedElement.value as HTMLElement).focus()
     previouslyFocusedElement.value = null
+  }
+}
+
+// El bloqueo de scroll del body se cuenta por diálogos abiertos (largo de
+// la pila), no por este único diálogo: si un segundo diálogo se cierra
+// mientras el primero sigue abierto, el body debe seguir bloqueado.
+const lockBodyScroll = () => {
+  document.body.style.overflow = 'hidden'
+}
+const unlockBodyScrollIfNoneOpen = () => {
+  if (openDialogStack.length === 0) {
+    document.body.style.overflow = ''
+  }
+}
+
+const pushToDialogStack = () => {
+  if (!openDialogStack.includes(dialogId)) {
+    openDialogStack.push(dialogId)
+  }
+}
+const removeFromDialogStack = () => {
+  const index = openDialogStack.indexOf(dialogId)
+  if (index !== -1) {
+    openDialogStack.splice(index, 1)
   }
 }
 
@@ -168,13 +191,13 @@ watch(isOpen, (newValue) => {
   if (newValue) {
     // Guardar elemento enfocado anteriormente
     previouslyFocusedElement.value = document.activeElement as HTMLElement
-    // Prevenir scroll en body
-    document.body.style.overflow = 'hidden'
+    pushToDialogStack()
+    lockBodyScroll()
     // Focus trap
     trapFocus()
   } else {
-    // Restaurar scroll
-    document.body.style.overflow = ''
+    removeFromDialogStack()
+    unlockBodyScrollIfNoneOpen()
     // Restaurar focus
     restoreFocus()
   }
@@ -183,14 +206,18 @@ watch(isOpen, (newValue) => {
 onMounted(() => {
   document.addEventListener('keydown', handleKeyDown)
   if (isOpen.value) {
+    pushToDialogStack()
     trapFocus()
-    document.body.style.overflow = 'hidden'
+    lockBodyScroll()
   }
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyDown)
-  document.body.style.overflow = ''
+  if (isOpen.value) {
+    removeFromDialogStack()
+    unlockBodyScrollIfNoneOpen()
+  }
 })
 </script>
 
@@ -200,10 +227,8 @@ onUnmounted(() => {
       v-show="isOpen"
       ref="overlayRef"
       :class="overlayClasses"
-      :style="style"
       @click="handleBackdropClick"
       @keydown="handleKeyDown"
-      aria-hidden="true"
     >
       <div
         v-show="isOpen"
@@ -263,18 +288,22 @@ onUnmounted(() => {
 
 <style scoped>
 .base-dialog__overlay {
+  /* Sin backdrop-filter: blur() — el estándar visual prohíbe desenfoques
+   * decorativos (estandar-diseno-visual.md §6.3). El fondo no interactivo
+   * es solo un scrim translúcido. */
   position: fixed;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--space-4);
-  background-color: rgb(15 23 42 / 48%);
-  backdrop-filter: blur(2px);
-  z-index: var(--dialog-z-index, var(--layer-dialog));
+  background-color: var(--color-overlay-scrim);
+  z-index: var(--layer-dialog);
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+  transition:
+    opacity var(--motion-duration-base) var(--motion-easing-standard),
+    visibility var(--motion-duration-base) var(--motion-easing-standard);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -295,10 +324,12 @@ onUnmounted(() => {
   background-color: var(--color-surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-dialog);
-  z-index: var(--dialog-z-index, var(--layer-dialog));
+  z-index: var(--layer-dialog);
   transform: scale(0.95) translateY(8px);
   opacity: 0;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition:
+    transform var(--motion-duration-base) var(--motion-easing-standard),
+    opacity var(--motion-duration-base) var(--motion-easing-standard);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -373,19 +404,24 @@ onUnmounted(() => {
 }
 
 .base-dialog__close {
+  /* Botón de icono independiente (estandar-diseno-visual.md §6.2): 44×44,
+   * no los 36×36 anteriores. CA-009-03. */
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: var(--control-height-icon);
+  height: var(--control-height-icon);
   padding: 0;
+  margin: calc(-1 * var(--space-2));
   background: transparent;
   border: none;
   border-radius: var(--radius-md);
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: background-color 0.12s ease, color 0.12s ease;
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-easing-standard),
+    color var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -401,7 +437,9 @@ onUnmounted(() => {
 
 .base-dialog__close:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-focus);
+  box-shadow:
+    0 0 0 2px var(--color-surface),
+    0 0 0 4px var(--color-focus);
 }
 
 .base-dialog__close-icon {

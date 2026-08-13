@@ -1,16 +1,16 @@
-# Graph Report - barberia  (2026-08-12)
+# Graph Report - barberia  (2026-08-13)
 
 ## Corpus Check
-- 152 files · ~167,253 words
+- 175 files · ~181,692 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 758 nodes · 1045 edges · 73 communities (65 shown, 8 thin omitted)
-- Extraction: 90% EXTRACTED · 10% INFERRED · 0% AMBIGUOUS · INFERRED: 106 edges (avg confidence: 0.74)
+- 935 nodes · 1500 edges · 89 communities (72 shown, 17 thin omitted)
+- Extraction: 84% EXTRACTED · 16% INFERRED · 0% AMBIGUOUS · INFERRED: 238 edges (avg confidence: 0.77)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1f121ede`
+- Built from commit: `21cb1cf0`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -18,36 +18,36 @@
 - Estados de las citas y máquina de transiciones
 - Matriz de trazabilidad
 - Respuestas a dudas pendientes del proyecto
-- run
+- New
 - devDependencies
 - compilerOptions
 - Plan de bloques de construcción del MVP
-- scripts
+- web/package.json
 - compilerOptions
 - Reglas de negocio
 - package.json
-- OpenAPI entry document
+- As
 - api/openapi README
 - graphify SKILL.md
 - tsconfig.vitest.json
-- clock.go
+- Timeout
 - .prettierrc.json
 - router/index.ts
 - tsconfig.json
 - apps/web index.html
 - apps/web/e2e README
-- BaseAlert.vue
+- BaseInput.vue
 - system-barbershop
 - 3. Bloque B0 · Cimientos, seguridad y primeras pantallas
 - 3. Prompts por historia
 - Alcance del MVP
 - Estrategia de pruebas y controles de calidad
-- database_test.go
+- BarbershopID
 - PostgreSQL, multi-tenancy y consultas
 - Load
 - Inicio del prompt
 - BaseDialog.vue
-- BaseInput.vue
+- idempotency/idempotency_test.go
 - Completar HU-009: sistema visual base
 - Implementar HU-003: contrato HTTP base y errores uniformes
 - Implementar HU-004: idempotencia reutilizable
@@ -59,6 +59,21 @@
 - TestNoDatabaseImportsInDomain
 - idempotency_concurrency_two_connections.sh
 - notification_lease_concurrency_two_connections.sh
+- httpserver/idempotency_test.go
+- setupTestDB
+- BaseAlert.vue
+- scripts
+- findInternalDir
+- SecurityHeaders
+- eslint
+- jsdom
+- @playwright/test
+- prettier
+- @types/node
+- @vue/eslint-config-prettier
+- @vue/test-utils
+- vue-tsc
+- @vue/tsconfig
 
 ## God Nodes (most connected - your core abstractions)
 1. `Reglas de negocio` - 49 edges
@@ -66,22 +81,22 @@
 3. `Matriz de trazabilidad` - 42 edges
 4. `Historial de cambios documentales` - 40 edges
 5. `Dudas pendientes y resoluciones` - 23 edges
-6. `Estados de las citas y máquina de transiciones` - 20 edges
-7. `Load()` - 18 edges
-8. `Estrategia de pruebas y controles de calidad` - 18 edges
-9. `Respuestas a propuestas de reglas de negocio` - 16 edges
-10. `compilerOptions` - 15 edges
+6. `As()` - 20 edges
+7. `Estados de las citas y máquina de transiciones` - 20 edges
+8. `New()` - 19 edges
+9. `Load()` - 18 edges
+10. `Estrategia de pruebas y controles de calidad` - 18 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `CLAUDE.md (root) — reglas graphify` --semantically_similar_to--> `.claude/CLAUDE.md — trigger de graphify`  [INFERRED] [semantically similar]
   CLAUDE.md → .claude/CLAUDE.md
 - `README.md — Sistema de agenda para barberías` --semantically_similar_to--> `Mapa documental y fuentes de verdad`  [INFERRED] [semantically similar]
   README.md → docs/README.md
-- `Pull request template` --conceptually_related_to--> `OpenAPI entry document`  [INFERRED]
-  .github/PULL_REQUEST_TEMPLATE.md → api/openapi/openapi.yaml
 - `Reprogramación o cancelación rápida por emergencia` --references--> `Reglas de negocio`  [INFERRED]
   respuesta-manuales/respuesta-propuestas-oc.txt → docs/01-producto/reglas-negocio.md
 - `Potestad del barbero para cancelar citas` --references--> `Reglas de negocio`  [INFERRED]
+  respuesta-manuales/respuesta-propuestas-oc.txt → docs/01-producto/reglas-negocio.md
+- `Optimización de horarios del barbero` --references--> `Reglas de negocio`  [INFERRED]
   respuesta-manuales/respuesta-propuestas-oc.txt → docs/01-producto/reglas-negocio.md
 
 ## Import Cycles
@@ -98,7 +113,7 @@
 - **Decisiones de seguridad para el piloto** — respuesta_manuales_respuesta_dudas_pendientes_dp_seg_01, respuesta_manuales_respuesta_dudas_pendientes_dp_seg_02, respuesta_manuales_respuesta_dudas_pendientes_dp_seg_03 [EXTRACTED 0.75]
 - **Reglas de disponibilidad y agendamiento** — respuesta_manuales_respuesta_propuestas_oc_rn_dis_04, respuesta_manuales_respuesta_propuestas_oc_rn_dis_05, respuesta_manuales_respuesta_propuestas_oc_rn_dis_06, respuesta_manuales_respuesta_propuestas_oc_rn_dis_07 [EXTRACTED 0.75]
 
-## Communities (73 total, 8 thin omitted)
+## Communities (89 total, 17 thin omitted)
 
 ### Community 0 - "Estados de las citas y máquina de transiciones"
 Cohesion: 0.26
@@ -106,19 +121,19 @@ Nodes (12): RN-CIT-03: Solo transiciones de estado definidas, RN-CIT-04: Correcc
 
 ### Community 1 - "Matriz de trazabilidad"
 Cohesion: 0.08
-Nodes (62): AGENTS.md — Reglas de desarrollo del proyecto, apps/api README, apps/web README, CONTRIBUTING.md — Cómo contribuir, database/migrations README, database README, database/seeds README, database/testdata README (+54 more)
+Nodes (65): AGENTS.md — Reglas de desarrollo del proyecto, OpenAPI contract changelog, OpenAPI entry document, apps/api README, apps/web README, CONTRIBUTING.md — Cómo contribuir, database/migrations README, database README (+57 more)
 
 ### Community 2 - "Respuestas a dudas pendientes del proyecto"
 Cohesion: 0.05
 Nodes (43): Respuestas a dudas pendientes del proyecto, Notificaciones y recordatorios creados en el momento, Elección de PostgreSQL, Multi-tenant compartido con buenas prácticas de consulta, Retención de datos de 24 meses configurable, Arquitectura backend económica en recursos, Bloqueos de horario manuales y recurrentes, Horario laboral configurable por el barbero (+35 more)
 
-### Community 3 - "run"
-Cohesion: 0.08
-Nodes (34): main(), run(), main(), run(), DatabaseHealthHandler(), HealthHandler(), T, TestRecover_DoesNotLogRawPanicValue() (+26 more)
+### Community 3 - "New"
+Cohesion: 0.06
+Nodes (51): BodyLimit(), Handler, echoBodyHandler(), Request, ResponseWriter, T, TestBodyLimit_AllowsBodyWithinLimit(), TestBodyLimit_ProducesRecognizableMaxBytesError() (+43 more)
 
 ### Community 4 - "devDependencies"
-Cohesion: 0.06
-Nodes (31): devDependencies, eslint, eslint-plugin-vue, jsdom, @playwright/test, prettier, @types/node, typescript (+23 more)
+Cohesion: 0.15
+Nodes (13): devDependencies, eslint-plugin-vue, typescript, vite, @vitejs/plugin-vue, vitest, @vue/eslint-config-typescript, eslint-plugin-vue (+5 more)
 
 ### Community 5 - "compilerOptions"
 Cohesion: 0.09
@@ -128,9 +143,9 @@ Nodes (22): compilerOptions, allowImportingTsExtensions, erasableSyntaxOnly, lib
 Cohesion: 0.12
 Nodes (16): 1. Para qué sirve este documento, 2. Criterio de ordenamiento, 3. Mapa de bloques, 4. Detalle de cada bloque, 5. Reglas de secuencia, 6. Cobertura de las 45 funciones P0, 7. Qué queda fuera de este plan, 8. Estado y siguiente paso (+8 more)
 
-### Community 7 - "scripts"
-Cohesion: 0.10
-Nodes (19): dependencies, vue, vue-router, name, private, scripts, build, dev (+11 more)
+### Community 7 - "web/package.json"
+Cohesion: 0.20
+Nodes (9): dependencies, vue, vue-router, name, private, type, version, vue (+1 more)
 
 ### Community 8 - "compilerOptions"
 Cohesion: 0.10
@@ -144,9 +159,9 @@ Nodes (31): DEC-005: Anticipación mínima y ventana máxima elevadas a P0, DEC-
 Cohesion: 0.14
 Nodes (13): description, devDependencies, @redocly/cli, name, private, scripts, openapi:bundle, openapi:check-config (+5 more)
 
-### Community 11 - "OpenAPI entry document"
-Cohesion: 0.67
-Nodes (3): OpenAPI contract changelog, OpenAPI entry document, redocly.yaml — configuración Redocly
+### Community 11 - "As"
+Cohesion: 0.12
+Nodes (35): Error, Kind, As(), IdempotencyConflict(), IdempotencyLocked(), Internal(), Invalid(), NotFound() (+27 more)
 
 ### Community 12 - "api/openapi README"
 Cohesion: 0.15
@@ -160,17 +175,17 @@ Nodes (11): CLAUDE.md (root) — reglas graphify, .claude/CLAUDE.md — trigger 
 Cohesion: 0.20
 Nodes (9): compilerOptions, tsBuildInfoFile, types, extends, include, node, src/**/*.spec.ts, jsdom (+1 more)
 
-### Community 15 - "clock.go"
-Cohesion: 0.40
-Nodes (3): Clock, System, Time
+### Community 15 - "Timeout"
+Cohesion: 0.18
+Nodes (9): Duration, Handler, T, TestTimeout_CancelsContextWithinConfiguredDuration(), TestTimeout_DoesNotCancelBeforeHandlerFinishes(), Timeout(), Clock, System (+1 more)
 
 ### Community 16 - ".prettierrc.json"
 Cohesion: 0.40
 Nodes (4): printWidth, semi, singleQuote, trailingComma
 
-### Community 48 - "BaseAlert.vue"
+### Community 48 - "BaseInput.vue"
 Cohesion: 0.06
-Nodes (31): alertRef, borderVar, classes, emit, focusableElementsRef, handleActionClick(), handleDismiss(), handleKeyDown() (+23 more)
+Nodes (30): borderVar, classes, dotColorVar, dotStyle, emit, handleDismiss(), Props, style (+22 more)
 
 ### Community 51 - "3. Bloque B0 · Cimientos, seguridad y primeras pantallas"
 Cohesion: 0.09
@@ -188,9 +203,9 @@ Nodes (12): DEC-019: El MVP administra uno o varios barberos, Alcance del MVP, F
 Cohesion: 0.13
 Nodes (24): DEC-016, JSON Schema Draft 2020-12, OpenAPI Specification 3.1.2, Redocly CLI, RFC 9457 Problem Details, RN-IDE-01: Operaciones críticas seguras ante reintentos, DEC-035: Estándar de código backend/base de datos obligatorio, Estándar de código del backend en Go (+16 more)
 
-### Community 55 - "database_test.go"
-Cohesion: 0.15
-Nodes (22): Context, Pool, NewDB(), Pool, T, setupTestDB(), TestContextCancellation(), TestHealthCheck() (+14 more)
+### Community 55 - "BarbershopID"
+Cohesion: 0.08
+Nodes (37): main(), run(), main(), run(), Context, Pool, NewDB(), Pool (+29 more)
 
 ### Community 56 - "PostgreSQL, multi-tenancy y consultas"
 Cohesion: 0.19
@@ -198,7 +213,7 @@ Nodes (15): Atlas CLI, Flyway, golang-migrate, Goose, RN-CON-03: La base de dato
 
 ### Community 57 - "Load"
 Cohesion: 0.20
-Nodes (23): getEnv(), getEnvDuration(), getEnvInt(), Load(), redactDSN(), requireTLS(), baseLocalEnv(), T (+15 more)
+Nodes (23): getEnv(), getEnvDuration(), getEnvInt(), Duration, Load(), redactDSN(), requireTLS(), baseLocalEnv() (+15 more)
 
 ### Community 58 - "Inicio del prompt"
 Cohesion: 0.07
@@ -208,9 +223,9 @@ Nodes (25): 1. Resultado ejecutivo, 2. Alcance y límites de la revisión, 3. Fo
 Cohesion: 0.12
 Nodes (18): classes, close(), closeButtonRef, dialogRef, emit, focusableElementsRef, handleBackdropClick(), handleCloseClick() (+10 more)
 
-### Community 60 - "BaseInput.vue"
+### Community 60 - "idempotency/idempotency_test.go"
 Cohesion: 0.15
-Nodes (15): classes, describedBy, emit, errorId, handleBlur(), handleChange(), handleFocus(), handleInput() (+7 more)
+Nodes (24): ComputeFingerprint(), ParseKey(), contains(), T, indexOf(), TestComputeFingerprint_DifferentContentProducesDifferentFingerprint(), TestComputeFingerprint_IsDeterministic(), TestComputeFingerprint_MatchesStoredFormat() (+16 more)
 
 ### Community 61 - "Completar HU-009: sistema visual base"
 Cohesion: 0.15
@@ -244,25 +259,49 @@ Nodes (7): 1. Relación con `prompts-implementacion.md`, 2. Estado real del repo
 Cohesion: 0.40
 Nodes (4): 1. Introducción, Cómo se corresponde con el ejemplo de referencia, Nota sobre las referencias, Sistema de agenda para barberías: reserva pública en línea con garantía de integridad de horarios
 
+### Community 73 - "httpserver/idempotency_test.go"
+Cohesion: 0.19
+Nodes (23): Request, ResponseWriter, IdempotencyFingerprint(), IdempotencyKeyFromRequest(), doIdempotentRequest(), doIdempotentRequestObject(), Handler, HandlerFunc (+15 more)
+
+### Community 74 - "setupTestDB"
+Cohesion: 0.43
+Nodes (17): NewSQLCoordinator(), fingerprintOf(), T, setupTestDB(), TestAbort_ReleasesInProgressClaim_ButNeverCompleted(), TestBegin_AbandonedClaim_ReportsConflictInProgress(), TestBegin_CrossTenantIsolation(), TestBegin_DifferentFingerprint_ConflictsWithoutEffect() (+9 more)
+
+### Community 75 - "BaseAlert.vue"
+Cohesion: 0.12
+Nodes (16): alertRef, borderVar, classes, emit, focusableElementsRef, handleActionClick(), handleDismiss(), handleKeyDown() (+8 more)
+
+### Community 76 - "scripts"
+Cohesion: 0.20
+Nodes (10): scripts, build, dev, format, format:write, lint, preview, test:e2e (+2 more)
+
+### Community 77 - "findInternalDir"
+Cohesion: 0.47
+Nodes (4): findInternalDir(), T, TestDomainAndServicesDoNotImportChi(), Stat
+
+### Community 78 - "SecurityHeaders"
+Cohesion: 0.33
+Nodes (4): Handler, SecurityHeaders(), T, TestSecurityHeaders_SetsExpectedHeaders()
+
 ## Knowledge Gaps
-- **321 isolated node(s):** `system-barbershop`, `Clock`, `httprobProblem`, `requestIDKey`, `semi` (+316 more)
+- **322 isolated node(s):** `system-barbershop`, `Clock`, `httprobProblem`, `requestIDKey`, `Coordinator` (+317 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **8 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **17 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Estándar de documentación OpenAPI` connect `Estrategia de pruebas y controles de calidad` to `Estados de las citas y máquina de transiciones`, `Matriz de trazabilidad`, `Reglas de negocio`?**
-  _High betweenness centrality (0.093) - this node is a cross-community bridge._
+  _High betweenness centrality (0.061) - this node is a cross-community bridge._
 - **Why does `Registro de decisiones` connect `Matriz de trazabilidad` to `PostgreSQL, multi-tenancy y consultas`, `Estrategia de pruebas y controles de calidad`?**
-  _High betweenness centrality (0.093) - this node is a cross-community bridge._
+  _High betweenness centrality (0.061) - this node is a cross-community bridge._
 - **Why does `Reglas de negocio` connect `Reglas de negocio` to `Estados de las citas y máquina de transiciones`, `PostgreSQL, multi-tenancy y consultas`, `Alcance del MVP`, `Estrategia de pruebas y controles de calidad`?**
-  _High betweenness centrality (0.085) - this node is a cross-community bridge._
+  _High betweenness centrality (0.056) - this node is a cross-community bridge._
 - **Are the 15 inferred relationships involving `Reglas de negocio` (e.g. with `Reprogramación o cancelación rápida por emergencia` and `Persistencia de historial de bloqueos`) actually correct?**
   _`Reglas de negocio` has 15 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `system-barbershop`, `Clock`, `httprobProblem` to the rest of the system?**
-  _321 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _322 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Matriz de trazabilidad` be split into smaller, more focused modules?**
-  _Cohesion score 0.08085317460317461 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07507914970601538 - nodes in this community are weakly interconnected._
 - **Should `Respuestas a dudas pendientes del proyecto` be split into smaller, more focused modules?**
   _Cohesion score 0.048726467331118496 - nodes in this community are weakly interconnected._

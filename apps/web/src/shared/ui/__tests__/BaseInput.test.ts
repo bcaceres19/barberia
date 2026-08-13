@@ -4,7 +4,13 @@
  */
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { axe } from 'vitest-axe'
 import BaseInput from '../BaseInput.vue'
+
+// Ver BaseButton.test.ts: color-contrast se desactiva por la ausencia de
+// Canvas2D en jsdom; el contraste ya está verificado en la tabla aprobada
+// de estandar-diseno-visual.md §4.3.
+const axeOptions = { rules: { region: { enabled: false }, 'color-contrast': { enabled: false } } }
 
 describe('BaseInput', () => {
   describe('Rendering', () => {
@@ -30,7 +36,7 @@ describe('BaseInput', () => {
 
     it('applies type attribute', () => {
       const types = ['text', 'email', 'password', 'number', 'tel', 'url', 'search'] as const
-      types.forEach(type => {
+      types.forEach((type) => {
         const wrapper = mount(BaseInput, { props: { type } })
         expect(wrapper.find('input').attributes('type')).toBe(type)
       })
@@ -101,14 +107,18 @@ describe('BaseInput', () => {
   describe('States', () => {
     it('applies disabled class and attributes when disabled', () => {
       const wrapper = mount(BaseInput, { props: { disabled: true } })
-      expect(wrapper.find('.base-input__wrapper').classes()).toContain('base-input__wrapper--disabled')
+      expect(wrapper.find('.base-input__wrapper').classes()).toContain(
+        'base-input__wrapper--disabled',
+      )
       expect(wrapper.find('input').attributes('disabled')).toBeDefined()
       expect(wrapper.find('input').attributes('aria-disabled')).toBe('true')
     })
 
     it('applies readonly class and attributes when readonly', () => {
       const wrapper = mount(BaseInput, { props: { readonly: true } })
-      expect(wrapper.find('.base-input__wrapper').classes()).toContain('base-input__wrapper--readonly')
+      expect(wrapper.find('.base-input__wrapper').classes()).toContain(
+        'base-input__wrapper--readonly',
+      )
       expect(wrapper.find('input').attributes('readonly')).toBeDefined()
       expect(wrapper.find('input').attributes('aria-readonly')).toBe('true')
     })
@@ -163,7 +173,9 @@ describe('BaseInput', () => {
     })
 
     it('sets aria-describedby for both hint and error', () => {
-      const wrapper = mount(BaseInput, { props: { hint: 'Hint', error: 'Error', id: 'test-input' } })
+      const wrapper = mount(BaseInput, {
+        props: { hint: 'Hint', error: 'Error', id: 'test-input' },
+      })
       const describedBy = wrapper.find('input').attributes('aria-describedby')
       expect(describedBy).toContain('test-input-hint')
       expect(describedBy).toContain('test-input-error')
@@ -199,10 +211,35 @@ describe('BaseInput', () => {
     })
   })
 
-  describe('Custom class', () => {
-    it('applies custom class', () => {
-      const wrapper = mount(BaseInput, { props: { class: 'my-custom-class' } })
-      expect(wrapper.find('.base-input').classes()).toContain('my-custom-class')
+  describe('Accesibilidad automatizada (axe-core, CA-009-05)', () => {
+    it('sin violaciones con label y ayuda', async () => {
+      const wrapper = mount(BaseInput, {
+        props: { label: 'Correo', hint: 'Usaremos este correo para confirmar el turno' },
+      })
+      expect(await axe(wrapper.element, axeOptions)).toHaveNoViolations()
+    })
+
+    it('sin violaciones en estado de error', async () => {
+      const wrapper = mount(BaseInput, {
+        props: { label: 'Correo', error: 'Ingresa un correo válido' },
+      })
+      expect(await axe(wrapper.element, axeOptions)).toHaveNoViolations()
+    })
+
+    it('sin violaciones deshabilitado', async () => {
+      const wrapper = mount(BaseInput, {
+        props: { label: 'Correo', disabled: true, modelValue: 'a@b.com' },
+      })
+      expect(await axe(wrapper.element, axeOptions)).toHaveNoViolations()
+    })
+  })
+
+  describe('Fallthrough de clase', () => {
+    // class ya no es un prop propio (auditoría HU-009); el fallthrough
+    // automático de Vue lo aplica al elemento raíz (base-input__wrapper).
+    it('hereda una clase pasada por el consumidor', () => {
+      const wrapper = mount(BaseInput, { attrs: { class: 'my-custom-class' } })
+      expect(wrapper.classes()).toContain('my-custom-class')
     })
   })
 })

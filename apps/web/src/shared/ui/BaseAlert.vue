@@ -15,8 +15,6 @@ interface Props {
   title?: string
   /** Si se puede cerrar */
   dismissible?: boolean
-  /** Clases CSS adicionales */
-  class?: string
   /** Role ARIA (alert = assertive, status = polite) */
   role?: 'alert' | 'status'
 }
@@ -24,7 +22,6 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   variant: 'info',
   dismissible: false,
-  class: '',
   role: 'alert',
 })
 
@@ -39,12 +36,7 @@ const focusableElementsRef = ref<HTMLElement[]>([])
 
 const classes = computed(() => {
   const base = 'base-alert'
-  return [
-    base,
-    `${base}--${props.variant}`,
-    props.dismissible ? `${base}--dismissible` : '',
-    props.class,
-  ]
+  return [base, `${base}--${props.variant}`, props.dismissible ? `${base}--dismissible` : '']
     .filter(Boolean)
     .join(' ')
 })
@@ -107,9 +99,14 @@ const handleActionClick = (event: MouseEvent) => {
 const handleKeyDown = (event: KeyboardEvent) => {
   if (event.key === 'Escape' && props.dismissible) {
     handleDismiss()
+    return
   }
-  // Tab trap para alert dismissible
-  if (event.key === 'Tab' && props.dismissible && focusableElementsRef.value.length) {
+  // Tab trap para alert dismissible. Se recalculan los elementos
+  // enfocables en cada Tab, no solo al montar: un slot de acción puede
+  // cambiar su contenido después del montaje inicial.
+  if (event.key === 'Tab' && props.dismissible) {
+    updateFocusableElements()
+    if (!focusableElementsRef.value.length) return
     const first = focusableElementsRef.value[0]
     const last = focusableElementsRef.value[focusableElementsRef.value.length - 1]
     if (event.shiftKey && document.activeElement === first) {
@@ -130,20 +127,22 @@ onMounted(() => {
       const dismissBtn = alertRef.value.querySelector('.base-alert__dismiss') as HTMLElement
       dismissBtn?.focus()
     }
+    document.addEventListener('keydown', handleKeyDown)
   }
-  document.addEventListener('keydown', handleKeyDown)
 })
 
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeyDown)
+  if (props.dismissible) {
+    document.removeEventListener('keydown', handleKeyDown)
+  }
 })
 
 const updateFocusableElements = () => {
   if (!alertRef.value) return
   const elements = alertRef.value.querySelectorAll<HTMLElement>(
-    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
   )
-  focusableElementsRef.value = Array.from(elements).filter(el => !el.hasAttribute('disabled'))
+  focusableElementsRef.value = Array.from(elements).filter((el) => !el.hasAttribute('disabled'))
 }
 
 const slots = useSlots()
@@ -202,7 +201,9 @@ const style = computed(() => ({
   --alert-font-size: var(--font-size-body);
   --alert-title-size: var(--font-size-body);
   --alert-line-height: var(--font-size-body-line);
-  --alert-transition: opacity 0.2s ease, transform 0.2s ease;
+  --alert-transition:
+    opacity var(--motion-duration-base) var(--motion-easing-standard),
+    transform var(--motion-duration-base) var(--motion-easing-standard);
 
   display: flex;
   align-items: flex-start;
@@ -216,7 +217,7 @@ const style = computed(() => ({
   font-size: var(--alert-font-size);
   line-height: var(--alert-line-height);
   transition: var(--alert-transition);
-  animation: base-alert-slide-in 0.2s ease-out;
+  animation: base-alert-slide-in var(--motion-duration-base) ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -237,7 +238,7 @@ const style = computed(() => ({
   }
 }
 
-.base-alert[v-show="false"] {
+.base-alert[v-show='false'] {
   opacity: 0;
   transform: translateY(-8px);
   pointer-events: none;
@@ -280,21 +281,26 @@ const style = computed(() => ({
 }
 
 .base-alert__dismiss {
+  /* Botón de icono independiente (estandar-diseno-visual.md §6.2): 44×44,
+   * no el 28×28 anterior. CA-009-03. */
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: var(--control-height-icon);
+  height: var(--control-height-icon);
   padding: 0;
-  margin-left: var(--space-2);
+  margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-3)) calc(-1 * var(--space-3))
+    var(--space-1);
   background: transparent;
   border: none;
   border-radius: var(--radius-sm);
   color: var(--alert-text);
   opacity: 0.64;
   cursor: pointer;
-  transition: opacity 0.12s ease, background-color 0.12s ease;
+  transition:
+    opacity var(--motion-duration-fast) var(--motion-easing-standard),
+    background-color var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -305,12 +311,14 @@ const style = computed(() => ({
 
 .base-alert__dismiss:hover {
   opacity: 1;
-  background-color: rgb(15 23 42 / 8%);
+  background-color: var(--color-overlay-hover);
 }
 
 .base-alert__dismiss:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-focus);
+  box-shadow:
+    0 0 0 2px var(--color-surface),
+    0 0 0 4px var(--color-focus);
 }
 
 .base-alert__dismiss-icon {
@@ -318,9 +326,11 @@ const style = computed(() => ({
   height: 16px;
 }
 
-/* Variantes dismissible: más padding a la derecha para el botón */
+/* Variantes dismissible: más padding a la derecha para el botón. El
+   objetivo táctil real es --control-height-icon (44px); el margen negativo
+   de .base-alert__dismiss recorta cuánto de eso sobresale visualmente. */
 .base-alert--dismissible {
-  padding-right: calc(var(--alert-padding) + 28px + var(--space-2));
+  padding-right: calc(var(--alert-padding) + var(--control-height-icon) - var(--space-3));
 }
 
 /* Neutral usa texto secundario */
