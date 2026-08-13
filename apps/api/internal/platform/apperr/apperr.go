@@ -41,6 +41,18 @@ const (
 	// (DEC-043: pg_try_advisory_xact_lock sin espera acotada). El cliente
 	// puede reintentar más tarde; no es un error permanente.
 	KindIdempotencyLocked Kind = "idempotency_locked"
+	// KindValidation cubre un cuerpo bien formado (JSON válido, campos
+	// conocidos) que incumple una validación de campo o de negocio
+	// procesable, distinto de KindInvalid (docs/06-api/estandar-openapi.md
+	// sección 11, filas 400 y 422).
+	KindValidation Kind = "validation"
+	// KindUnauthorized cubre una credencial ausente, inválida o expirada
+	// (HU-005/HU-006). Un correo inexistente y una contraseña incorrecta
+	// para un correo existente comparten deliberadamente este mismo Kind y
+	// el mismo Message: no existe una forma de invocar este paquete que
+	// distinga los dos casos, igual que KindNotFound para tenant cruzado
+	// (CA-005-02).
+	KindUnauthorized Kind = "unauthorized"
 )
 
 // Error es el error de aplicación que domain/servicios devuelven.
@@ -95,6 +107,22 @@ func IdempotencyConflict(message string) *Error {
 // message es el detalle seguro que puede llegar al cliente.
 func IdempotencyLocked(message string) *Error {
 	return &Error{Kind: KindIdempotencyLocked, Message: message}
+}
+
+// Validation construye un error de cuerpo bien formado que incumple una
+// validación de campo. message es el detalle seguro que puede llegar al
+// cliente.
+func Validation(message string) *Error {
+	return &Error{Kind: KindValidation, Message: message}
+}
+
+// Unauthorized construye el error uniforme de credencial ausente, inválida o
+// expirada. message es el detalle seguro que puede llegar al cliente: nunca
+// distingue correo inexistente de contraseña incorrecta, ni token
+// desconocido de vencido, revocado o de usuario inactivo (CA-005-02,
+// CA-005-07).
+func Unauthorized(message string) *Error {
+	return &Error{Kind: KindUnauthorized, Message: message}
 }
 
 // As extrae un *Error de la cadena de err, igual que errors.As.

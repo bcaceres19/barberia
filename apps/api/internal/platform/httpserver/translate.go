@@ -51,6 +51,29 @@ var invalidRequestProblem = problemSpec{
 	status:  http.StatusBadRequest,
 }
 
+// validationProblem cubre un cuerpo bien formado que incumple una
+// validación de campo (docs/06-api/estandar-openapi.md sección 11, fila
+// 422): distinto de invalidRequestProblem, que cubre JSON o sintaxis
+// inválida detectada antes de poder evaluar los campos.
+var validationProblem = problemSpec{
+	typeURI: "/api/v1/problems/validation-error",
+	title:   "Error de validación",
+	code:    "validation-error",
+	status:  http.StatusUnprocessableEntity,
+}
+
+// unauthorizedProblem cubre HU-005 (CA-005-02, CA-005-04, CA-005-07):
+// credencial ausente, inválida o expirada. detail es siempre el mismo
+// mensaje genérico para correo inexistente, contraseña incorrecta, usuario
+// inactivo, token desconocido, vencido o revocado — apperr.KindUnauthorized
+// garantiza que ninguna rama de código pueda distinguirlos en la respuesta.
+var unauthorizedProblem = problemSpec{
+	typeURI: "/api/v1/problems/unauthorized",
+	title:   "No autorizado",
+	code:    "unauthorized",
+	status:  http.StatusUnauthorized,
+}
+
 // idempotencyConflictProblem cubre RN-IDE-01: una clave de idempotencia ya
 // usada con contenido u operación distintos. detail distingue el caso
 // concreto; type, title y code se mantienen fijos, igual que notFoundProblem.
@@ -98,6 +121,10 @@ func Translate(err error, requestID string) Problem {
 			return newProblem(idempotencyConflictProblem, appErr.Message, requestID)
 		case apperr.KindIdempotencyLocked:
 			return newProblem(idempotencyLockedProblem, appErr.Message, requestID)
+		case apperr.KindValidation:
+			return newProblem(validationProblem, appErr.Message, requestID)
+		case apperr.KindUnauthorized:
+			return newProblem(unauthorizedProblem, appErr.Message, requestID)
 		}
 	}
 

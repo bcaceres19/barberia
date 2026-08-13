@@ -71,7 +71,8 @@ jobs:
                    20260807170100_create_idempotency_record.sql \
                    20260811145252_harden_roles_and_definer_functions.sql \
                    20260811154100_harden_idempotency_concurrency.sql \
-                   20260811220000_harden_idempotency_fingerprint_format.sql; do
+                   20260811220000_harden_idempotency_fingerprint_format.sql \
+                   20260813120000_create_auth_credentials_and_sessions.sql; do
             psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$f"
           done
           psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_app PASSWORD 'app_test';"
@@ -79,7 +80,10 @@ jobs:
       - name: Cargar testdata de dos barberías
         env:
           PGPASSWORD: postgres
-        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/dos_barberias.sql
+        run: |
+          set -euo pipefail
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/dos_barberias.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu005_credenciales_sesiones.sql
 
       - name: go test -race
         working-directory: apps/api
@@ -218,12 +222,20 @@ jobs:
       - name: Cargar testdata de dos barberías
         env:
           PGPASSWORD: postgres
-        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/dos_barberias.sql
+        run: |
+          set -euo pipefail
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/dos_barberias.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu005_credenciales_sesiones.sql
 
       - name: Suite de aislamiento HU-001
         env:
           PGPASSWORD: postgres
         run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/hu001_aislamiento_rls.sql
+
+      - name: Suite de credenciales y sesiones HU-005
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/hu005_aislamiento_credenciales_sesiones.sql
 
       - name: Suite de idempotencia (secuencial, una conexión)
         env:

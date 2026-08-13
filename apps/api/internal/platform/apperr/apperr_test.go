@@ -78,6 +78,33 @@ func TestIdempotencyLocked_CarriesSafeMessage(t *testing.T) {
 	}
 }
 
+func TestValidation_CarriesSafeMessage(t *testing.T) {
+	err := apperr.Validation("email es obligatorio")
+
+	got, ok := apperr.As(err)
+	if !ok {
+		t.Fatal("expected apperr.As to recognize the error")
+	}
+	if got.Kind != apperr.KindValidation {
+		t.Fatalf("expected KindValidation, got %q", got.Kind)
+	}
+}
+
+func TestUnauthorized_CarriesSafeMessage(t *testing.T) {
+	err := apperr.Unauthorized("correo o contraseña incorrectos")
+
+	got, ok := apperr.As(err)
+	if !ok {
+		t.Fatal("expected apperr.As to recognize the error")
+	}
+	if got.Kind != apperr.KindUnauthorized {
+		t.Fatalf("expected KindUnauthorized, got %q", got.Kind)
+	}
+	if got.Message != "correo o contraseña incorrectos" {
+		t.Fatalf("unexpected message: %q", got.Message)
+	}
+}
+
 func TestAs_ReturnsFalseForForeignError(t *testing.T) {
 	_, ok := apperr.As(fmt.Errorf("plain error"))
 	if ok {

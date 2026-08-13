@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-005-v1"
-version: "1.1"
+version: "1.2"
 kind: "hu"
-status: "ready"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -17,7 +17,7 @@ related_hu:
 issue: 44
 issue_url: "https://github.com/bcaceres19/barberia/issues/44"
 suggested_issue_title: "feat(auth): implementar HU-005 inicio de sesión seguro"
-branch: null
+branch: "feat/44-hu005-inicio-sesion"
 pr: null
 pr_url: null
 depends_on:
@@ -185,3 +185,35 @@ No reduzcas umbrales, no ignores pruebas inestables y no uses SQLite o mocks par
 - Abre un PR borrador contra `main`; usa `Closes #<issue>` solo cuando los siete criterios estén probados.
 - Incluye contrato, migración/recuperación, parámetros de hash, seguridad de cookie, evidencia de no enumeración, aislamiento, logs y tabla de criterios.
 - No hagas push directo, force push, merge manual ni reescribas `main`.
+
+## Resultado de la ejecución (2026-08-13)
+
+Ejecutado en la rama `feat/44-hu005-inicio-sesion`. Entrega: migración
+`20260813120000_create_auth_credentials_and_sessions.sql`, módulo
+`internal/modules/auth` completo (núcleo, adaptador PostgreSQL, adaptador
+HTTP), `POST /api/v1/public/auth/login` contract-first, pruebas unitarias,
+HTTP (`httptest`) y PostgreSQL real (`-race`, dos tenants), lint/bundle de
+OpenAPI y pruebas de contrato — todo verificado en verde localmente contra
+Docker Postgres 14 antes de abrir el PR.
+
+Dos vacíos se registraron como dudas abiertas en
+`docs/00-control/dudas-pendientes.md` en vez de resolverse por inventiva,
+siguiendo las instrucciones explícitas de este mismo prompt (paso 6 y paso
+9 de "Trabajo requerido"):
+
+- **`DP-SEG-07`**: `DEC-050` no fija el valor exacto de `SameSite`, `Path`,
+  `Domain` ni el nombre de la cookie. Se implementó con una elección
+  provisional documentada (`barberia_session`, `Path=/api/v1`,
+  `SameSite=Lax`, host-only), pendiente de confirmación explícita del
+  propietario.
+- **`DP-SEG-08`**: `CA-005-05` exige verificar el aislamiento "contra un
+  endpoint privado real", y ninguna fuente aprueba uno para `HU-005` (la
+  primera operación privada real, `logout`, pertenece a `HU-006`). Se
+  detuvo esa parte del trabajo: no se publicó una ruta de prueba. La
+  evidencia disponible queda a nivel de PostgreSQL real (RLS sobre
+  `staff_session`), no de extremo a extremo por HTTP.
+
+Por esto, `CA-005-01` (parte de "solicitudes privadas posteriores") y
+`CA-005-05` quedan `Parcial`/`Bloqueado` en la tabla de criterios de
+`apps/api/README.md`; el PR se abre como borrador, sin `Closes #44`, hasta
+que el propietario resuelva `DP-SEG-08` (y, si corresponde, `DP-SEG-07`).

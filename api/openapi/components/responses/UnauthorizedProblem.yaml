@@ -1,0 +1,27 @@
+# Credencial ausente, inválida o expirada. Para POST /auth/login (HU-005),
+# CA-005-02/CA-005-07 exigen que correo inexistente, contraseña incorrecta y
+# usuario inactivo o eliminado produzcan EXACTAMENTE esta misma respuesta:
+# mismo status, mismo type/code, mismo detail, mismos headers funcionales.
+# Ninguna variante de detail distingue el motivo.
+description: >
+  Correo o contraseña incorrectos. La misma respuesta cubre un correo
+  inexistente, una contraseña incorrecta para un correo existente y un
+  usuario inactivo o eliminado: el cliente no puede saber cuál ocurrió.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      credencialesInvalidas:
+        summary: Correo o contraseña incorrectos (cualquier motivo)
+        value:
+          type: /api/v1/problems/unauthorized
+          title: No autorizado
+          status: 401
+          detail: correo o contraseña incorrectos
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: unauthorized
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

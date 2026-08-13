@@ -1,0 +1,16 @@
+# Cabecera de la respuesta exitosa de POST /auth/login (HU-005). Descrita
+# SIN valor funcional (docs/06-api/estandar-openapi.md sección 13.6): el
+# esquema no fija un patrón sobre el valor real de la cookie, solo documenta
+# su forma y atributos.
+description: >
+  Fija la cookie de sesión (ver components/security-schemes/SessionCookie.yaml):
+  HttpOnly, Secure, SameSite=Lax (provisional, DP-SEG-07 en
+  docs/00-control/dudas-pendientes.md), Path=/api/v1, vigencia de 30 días.
+  El valor de la cookie es un token opaco aleatorio; nunca aparece en el
+  cuerpo de la respuesta ni en ningún ejemplo de esta documentación.
+schema:
+  type: string
+examples:
+  formaIlustrativa:
+    summary: Forma ilustrativa, no un valor real
+    value: barberia_session=***; Path=/api/v1; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax

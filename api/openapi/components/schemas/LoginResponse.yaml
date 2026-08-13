@@ -1,0 +1,16 @@
+# Cuerpo de una respuesta 200 exitosa de POST /auth/login. No incluye el
+# token de sesión ni ningún otro secreto (CA-005-04): el token viaja
+# únicamente en la cabecera Set-Cookie de la respuesta, descrita sin su
+# valor funcional en components/headers/SetCookieSession.yaml.
+type: object
+additionalProperties: false
+description: Confirmación de inicio de sesión. El estado de la sesión vive en la cookie, no en este cuerpo.
+properties:
+  expiresAt:
+    type: string
+    format: date-time
+    description: Instante en que la sesión emitida expira si no hay actividad adicional (DEC-050, 30 días desde la emisión).
+    examples:
+      - "2026-09-12T12:00:00Z"
+required:
+  - expiresAt

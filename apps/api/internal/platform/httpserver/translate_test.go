@@ -102,6 +102,39 @@ func TestTranslate_IdempotencyLocked_MapsTo409WithoutWaiting(t *testing.T) {
 	}
 }
 
+func TestTranslate_Validation_MapsTo422(t *testing.T) {
+	p := httpserver.Translate(apperr.Validation("email es obligatorio"), "req-8")
+
+	if p.Status != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422, got %d", p.Status)
+	}
+	if p.Code != "validation-error" {
+		t.Fatalf("expected code validation-error, got %q", p.Code)
+	}
+	if p.Detail != "email es obligatorio" {
+		t.Fatalf("expected the safe message to pass through, got %q", p.Detail)
+	}
+}
+
+// TestTranslate_Unauthorized_MapsTo401AndNeverDistinguishesReason es
+// CA-005-02/CA-005-07 a nivel de Translate: apperr.Unauthorized solo
+// transporta un mensaje, nunca un motivo estructurado que la respuesta
+// pudiera filtrar.
+func TestTranslate_Unauthorized_MapsTo401AndNeverDistinguishesReason(t *testing.T) {
+	unknownEmail := httpserver.Translate(apperr.Unauthorized("correo o contraseña incorrectos"), "req-9")
+	wrongPassword := httpserver.Translate(apperr.Unauthorized("correo o contraseña incorrectos"), "req-9")
+
+	if unknownEmail.Status != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", unknownEmail.Status)
+	}
+	if unknownEmail.Code != "unauthorized" {
+		t.Fatalf("expected code unauthorized, got %q", unknownEmail.Code)
+	}
+	if unknownEmail != wrongPassword {
+		t.Fatalf("expected identical problems, got %+v vs %+v", unknownEmail, wrongPassword)
+	}
+}
+
 func TestTranslate_MaxBytesError_MapsToPayloadTooLarge(t *testing.T) {
 	err := &http.MaxBytesError{Limit: httpserver.MaxRequestBodyBytes}
 

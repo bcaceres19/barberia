@@ -6,9 +6,10 @@ antes de agregar una operación.
 
 ## Estado
 
-Solo existe la base: `openapi.yaml` sin operaciones, las carpetas `paths/` y
-`components/` con la agrupación documentada y un `README.md` explicando qué
-irá en cada una. No hay endpoints ni esquemas todavía.
+`openapi.yaml` declara una operación: `POST /public/auth/login` (HU-005,
+`paths/public-auth.yaml`). El resto de capacidades (`paths/public-booking.yaml`,
+`customer-appointments.yaml`, `private-appointments.yaml`, `catalog.yaml`,
+`schedules.yaml`, `settings.yaml`) sigue sin contenido.
 
 ## Comandos
 

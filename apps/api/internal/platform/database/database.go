@@ -6,6 +6,11 @@
 // única forma de ejecutar trabajo de negocio es InTenantTx, que recibe el
 // identificador de barbería y entrega el ejecutor SOLO dentro del alcance de
 // una transacción ya configurada. Esto hace IMPOSIBLE omitir el contexto.
+// Dos excepciones angostas y documentadas por método existen fuera de ese
+// patrón: HealthCheck (sin barbería, solo conectividad) y ResolveTenant
+// (HU-005: resolver a qué tenant pertenece una solicitud ANTES de que exista
+// contexto, invocando exclusivamente una función SECURITY DEFINER estrecha
+// ya revisada).
 //
 // Justificación de la dependencia (estandar-backend-go.md §5.21):
 //   - Necesidad: driver nativo de PostgreSQL para pool con hooks de adquisición
@@ -264,6 +269,37 @@ func (d *DB) InTenantTx(
 
 	rolledBack = true
 	return nil
+}
+
+// ResolveTenant es la SEGUNDA excepción autorizada a InTenantTx (junto con
+// HealthCheck): ejecuta query (una única llamada a una función SECURITY
+// DEFINER estrecha y revisada, como authn_resolve_login_tenant o
+// authn_resolve_session_tenant) SIN fijar app.barbershop_id, porque su
+// propósito exacto es resolver QUÉ tenant corresponde antes de que exista
+// contexto (HU-005, modelo-fisico-referencia.sql sección A.0). No es una vía
+// alternativa para ejecutar trabajo de negocio: query debe ser una función
+// STABLE, SECURITY DEFINER, revisada, que devuelva como mucho un uuid de
+// barbería y nada más (nunca una fila de datos de negocio), exactamente el
+// contrato que esas funciones ya garantizan en PostgreSQL. Devuelve
+// found=false cuando la función respondió NULL (tenant no resuelto: correo
+// inexistente, usuario inactivo, o token desconocido/vencido/revocado,
+// según la función invocada) — nunca un error, porque "no resuelto" es un
+// resultado válido y esperado, no un fallo.
+func (d *DB) ResolveTenant(ctx context.Context, query string, args ...any) (BarbershopID, bool, error) {
+	conn, err := d.pool.Acquire(ctx)
+	if err != nil {
+		return "", false, fmt.Errorf("database: acquire connection: %w", err)
+	}
+	defer conn.Release()
+
+	var shop *string
+	if err := conn.QueryRow(ctx, query, args...).Scan(&shop); err != nil {
+		return "", false, fmt.Errorf("database: resolve tenant: %w", err)
+	}
+	if shop == nil {
+		return "", false, nil
+	}
+	return BarbershopID(*shop), true, nil
 }
 
 // HealthCheck verifica conectividad con timeout corto y propio. La respuesta
