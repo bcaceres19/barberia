@@ -1,7 +1,7 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "1.6"
-estado: "2 dudas abiertas (DP-SEG-07, DP-SEG-08)"
+version: "1.7"
+estado: "Sin dudas abiertas"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-13"
 documentos_relacionados:
@@ -17,7 +17,7 @@ documentos_relacionados:
 
 ## 1. Estado
 
-**No queda ninguna duda abierta.** El 7 de agosto de 2026, al redactar las historias del bloque B0 ([historias-usuario.md](../02-requisitos/historias-usuario.md)), se detectaron tres vacíos que `DEC-026` y `DEC-027` no cubrían (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`); el 11 de agosto de 2026 el propietario las resolvió como `DEC-050`, `DEC-051` y `DEC-052`, desbloqueando `HU-005`–`HU-008` y `HU-011`.
+**No queda ninguna duda abierta.** El 7 de agosto de 2026, al redactar las historias del bloque B0 ([historias-usuario.md](../02-requisitos/historias-usuario.md)), se detectaron tres vacíos que `DEC-026` y `DEC-027` no cubrían (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`); el 11 de agosto de 2026 el propietario las resolvió como `DEC-050`, `DEC-051` y `DEC-052`, desbloqueando `HU-005`–`HU-008` y `HU-011`. Al implementar `HU-005` (issue `#44`) el 13 de agosto de 2026 aparecieron dos vacíos más (`DP-SEG-07`, `DP-SEG-08`), resueltos el mismo día como `DEC-057` y `DEC-058`.
 
 Las 41 dudas y la contradicción `CT-001` recibieron respuesta del propietario en [respuesta-dudas-pendientes.txt](../../respuesta-manuales/respuesta-dudas-pendientes.txt). No queda ninguna decisión abierta de este lote.
 
@@ -90,17 +90,10 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 | `DP-SEG-04` | Mecanismo y duración de la sesión larga del barbero | Cookie `HttpOnly`+`Secure`+`SameSite`, token opaco revocable en `staff_session`, 30 días con renovación por uso. | `DEC-050` |
 | `DP-SEG-05` | Canal del código de recuperación de acceso | WhatsApp oficial y correo, mismo proveedor de `DEC-027`. | `DEC-051` |
 | `DP-SEG-06` | Ventana y escalamiento del límite de acceso por IP | Ventana de 15 minutos; escalamiento a verificación telefónica de 24 horas. | `DEC-052` |
+| `DP-SEG-07` | Atributos exactos de la cookie de sesión (`SameSite`, `Path`, `Domain`, nombre) | `barberia_session`, `Path=/api/v1`, `SameSite=Lax`, sin `Domain`, 30 días. | `DEC-057` |
+| `DP-SEG-08` | Evidencia de aislamiento de `CA-005-05` sin un endpoint privado real todavía | Dividida: `HU-005` prueba aislamiento a nivel PostgreSQL/RLS; `HU-006` prueba end-to-end contra el logout real (`CA-006-07`). | `DEC-058` |
 
-## 2 bis. Dudas abiertas
-
-Dos dudas nuevas, detectadas el 2026-08-13 al implementar `HU-005` (preflight del prompt `docs/10-backlog/prompts/hu/hu-005-inicio-sesion.md`, paso 5, e issue `#44`):
-
-| Código | Pregunta | Por qué sigue abierta | Elección provisional aplicada en el PR de `HU-005` (issue `#44`) |
-| --- | --- | --- | --- |
-| `DP-SEG-07` | `DEC-050` fija `HttpOnly`+`Secure`+`SameSite` para la cookie de sesión, pero no fija el valor exacto de `SameSite` (`Strict`/`Lax`/`None`), `Path`, `Domain` ni el nombre de la cookie. Ninguna fuente (`registro-decisiones.md`, `dudas-pendientes.md`, `historias-usuario.md`, `backend-go.md`, `estandar-openapi.md`, issue `#44`) los fija. | El propietario no ha confirmado estos atributos exactos. | El prompt de `HU-005` (paso 6 de "Trabajo requerido") instruye explícitamente: "si alguno sigue sin definir, registra el bloqueo antes de elegirlo". Se registra aquí y se implementa con: nombre `barberia_session`, `Path=/api/v1`, `SameSite=Lax`, `Domain` sin fijar (host-only), `Max-Age` de 30 días. Justificación: `Lax` es el valor por defecto recomendado para una cookie de sesión de primer nivel que no necesita enviarse en navegación cross-site; `Path=/api/v1` cubre tanto el login público como las rutas privadas futuras sin exponerla a otras rutas del mismo host; sin `Domain` explícito, el navegador la ata al host exacto (más restrictivo, evita fuga a subdominios no revisados). **Pendiente de confirmación explícita del propietario**; hasta entonces esta fila permanece abierta aunque el código ya use estos valores. |
-| `DP-SEG-08` | `CA-005-05` exige verificar el aislamiento de sesión "contra un endpoint privado real", y el paso 9 de "Trabajo requerido" del prompt de `HU-005` instruye: "Usa una operación privada real aprobada... Si ninguna fuente define esa operación, registra la duda y detente; no publiques una ruta de prueba." Ninguna operación privada existe todavía en el código (`/api/v1/private` está montado sin operaciones desde `HU-003`) ni está aprobada por ninguna fuente para `HU-005`: la primera operación privada real (`POST /api/v1/private/auth/logout`) pertenece a `HU-006`, listada como `related_hu`, no como `depends_on` de `HU-005`. | Requiere que el propietario apruebe una operación privada real (adelantar el logout mínimo de `HU-006`, u otra) para que `HU-005` la use como demostración, o que acepte una evidencia alternativa. | **Sin elección aplicada**: siguiendo la instrucción explícita del prompt, se registra la duda y se detiene esa parte del trabajo. `CA-005-01` (parte de "solicitudes privadas posteriores") y `CA-005-05` no se declaran cumplidos con un endpoint inventado. Como evidencia parcial, se agregan pruebas de aislamiento de `staff_session` directamente contra PostgreSQL real con dos tenants (equivalente a `tests/hu001_aislamiento_rls.sql`), que demuestran que el mecanismo subyacente (RLS + `authn_resolve_session_tenant`) aísla la sesión de A de los datos de B a nivel de base de datos, aunque no exista todavía un endpoint HTTP privado real para ejercitarla de punta a punta. |
-
-Al resolverse cada una se aplica el flujo de la sección 3: `DEC-*`, propagación, conservación de la fila y `CT-*` si revela un conflicto.
+Al resolverse cada duda se aplica el flujo de la sección 3: `DEC-*`, propagación, conservación de la fila y `CT-*` si revela un conflicto.
 
 ## 3. Criterio para nuevas dudas
 

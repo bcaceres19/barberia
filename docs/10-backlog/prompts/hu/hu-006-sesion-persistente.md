@@ -1,6 +1,6 @@
 ---
 prompt_id: "PROMPT-HU-006-v1"
-version: "1.1"
+version: "1.2"
 kind: "hu"
 status: "draft"
 target_agents:
@@ -32,6 +32,7 @@ decisions:
   - "DEC-038"
   - "DEC-050"
   - "DEC-055"
+  - "DEC-058"
 acceptance_criteria:
   - "CA-006-01"
   - "CA-006-02"
@@ -39,6 +40,7 @@ acceptance_criteria:
   - "CA-006-04"
   - "CA-006-05"
   - "CA-006-06"
+  - "CA-006-07"
 source_docs:
   - "AGENTS.md"
   - "CLAUDE.md"
@@ -82,8 +84,9 @@ Una cookie de sesión válida debe sobrevivir al cierre del navegador y autoriza
 2. Consulta Graphify por `HU-006`, middleware privado, `staff_session`, renovación, revocación, routing y OpenAPI si existe el grafo.
 3. Lee completamente cada `source_docs`. Confirma que `HU-005` está integrada, su migración aplicada y su tabla de criterios en verde.
 4. `CT-003` está resuelta (`DEC-055`): el login vive en `/api/v1/public/auth/login`, fuera de `/api/v1/private`. La prueba estructural de `CA-006-04` exige el middleware en el 100 % del subrouter privado, sin ninguna lista de excepciones para el login ni para ninguna otra ruta.
-5. Busca o crea, con autorización, un issue que cubra solo `HU-006`. Con `issue: pending` o dependencia incumplida (`HU-005` sin integrar), conserva `status: draft` y no cambies código.
-6. Registra issue y URL, cambia a `ready`, crea `feat/<issue>-hu006-sesion-persistente` desde `main` y actualiza el prompt a `in_progress` con la rama real.
+5. `DP-SEG-08` está resuelta (`DEC-058`): `HU-005` (issue `#44`) probó el aislamiento de sesión entre barberías solo a nivel PostgreSQL/RLS porque no existía ningún endpoint privado real. Esta historia añade `CA-006-07`, que completa esa verificación end-to-end usando el logout —el primer endpoint privado real— con dos tenants reales.
+6. Busca o crea, con autorización, un issue que cubra solo `HU-006`. Con `issue: pending` o dependencia incumplida (`HU-005` sin integrar), conserva `status: draft` y no cambies código.
+7. Registra issue y URL, cambia a `ready`, crea `feat/<issue>-hu006-sesion-persistente` desde `main` y actualiza el prompt a `in_progress` con la rama real.
 
 ## Alcance incluido
 
@@ -94,6 +97,7 @@ Una cookie de sesión válida debe sobrevivir al cierre del navegador y autoriza
 - Operación contract-first de cierre de sesión que fija `revoked_at` en el servidor y elimina la cookie con los mismos atributos con que fue creada.
 - Respuestas uniformes `401` sin filtrar si el token era desconocido, vencido, revocado o de un usuario inactivo.
 - Inventario automático de rutas y prueba estructural de cobertura de middleware sobre el 100 % de `/api/v1/private`, sin lista de excepciones (`DEC-055`).
+- Verificación end-to-end de que la sesión de la barbería A nunca ejecuta el logout de la barbería B (`CA-006-07`, `DEC-058`), con dos tenants reales.
 
 ## Fuera de alcance
 
@@ -133,12 +137,13 @@ Una cookie de sesión válida debe sobrevivir al cierre del navegador y autoriza
 - Persistencia real: `last_used_at` y `expires_at` avanzan con actividad válida; no cambian para sesión vencida/revocada; RLS y dos tenants impiden cruces.
 - Logout: fija `revoked_at`, limpia la cookie y el mismo material falla de inmediato; repetir el logout no ejecuta una operación privada ni produce un error revelador.
 - Dos sesiones del mismo usuario: cerrar A invalida A y conserva B (`CA-006-06`).
+- Dos tenants reales: la sesión de A invoca el logout con la sesión de B (o viceversa) y el resultado es rechazo uniforme sin afectar la sesión objetivo; completa `CA-005-05` de `HU-005` (`CA-006-07`, `DEC-058`).
 - Carrera real renovación/logout coordinada sin `sleep`: el resultado final siempre queda revocado y ninguna actualización posterior elimina `revoked_at` o reabre la sesión.
 - Prueba estructural: inventario de rutas bajo la topología aprobada, middleware presente en todas las protegidas y allowlist exacta para excepciones autorizadas.
 - OpenAPI: esquema de cookie, seguridad por operación, `401`, logout, headers y ejemplos ficticios coinciden con handlers y cliente futuro.
 - `go test -race` para middleware, renovación y carrera de revocación.
 
-Entrega una tabla `Criterio | Estado | Prueba o evidencia` para `CA-006-01` a `CA-006-06`. No declares `CA-006-01` solo con `Max-Age`: demuestra reutilización después de recrear el cliente; no declares `CA-006-04` con una lista manual desconectada del router.
+Entrega una tabla `Criterio | Estado | Prueba o evidencia` para `CA-006-01` a `CA-006-07`. No declares `CA-006-01` solo con `Max-Age`: demuestra reutilización después de recrear el cliente; no declares `CA-006-04` con una lista manual desconectada del router; no declares `CA-006-07` sin ejecutar el logout real con la sesión de un tenant distinto.
 
 ## Documentación y trazabilidad
 

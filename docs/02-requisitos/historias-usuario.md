@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.3"
+version: "1.4"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-13"
@@ -260,7 +260,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 | --- | --- |
 | Función | `F-AUTH-01` |
 | Reglas | `RN-TEN-01`, `RN-DAT-02` |
-| Decisiones | `DEC-026`, `DEC-050`, `DEC-055` |
+| Decisiones | `DEC-026`, `DEC-050`, `DEC-055`, `DEC-057`, `DEC-058` |
 | Actor | Barbero |
 | Depende de | `HU-002`, `HU-003` |
 | Bloquea | `HU-006`, `HU-007`, `HU-010`, `HU-012` |
@@ -274,6 +274,8 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 > **Bloqueo resuelto:** `CT-003` señalaba que declarar el login bajo `/api/v1/private` lo volvía circular, porque ese prefijo exige sesión previa. Quedó resuelta el 2026-08-13 como `DEC-055`: el login se mueve a `/api/v1/public/auth/login`, la única operación pública del módulo `auth`.
 
+> **Bloqueo resuelto:** al implementar esta historia (issue `#44`) aparecieron dos vacíos nuevos. `DP-SEG-07` (atributos exactos de la cookie) quedó resuelta como `DEC-057`: `barberia_session`, `Path=/api/v1`, `SameSite=Lax`, sin `Domain`, 30 días. `DP-SEG-08` (`CA-005-05` exige un endpoint privado real que todavía no existe) quedó resuelta como `DEC-058`: el criterio se divide entre esta historia (aislamiento a nivel PostgreSQL/RLS) y `HU-006` (verificación end-to-end, nuevo `CA-006-07`).
+
 **Alcance incluido**
 
 - Migración con la tabla de credenciales y la de sesiones, ambas con `barbershop_id` y RLS.
@@ -286,11 +288,11 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 | Código | Criterio |
 | --- | --- |
-| `CA-005-01` | Dadas credenciales válidas, cuando el barbero inicia sesión, entonces obtiene una sesión asociada a su barbería y a su usuario, y las solicitudes privadas posteriores operan con el contexto de esa barbería. |
+| `CA-005-01` | Dadas credenciales válidas, cuando el barbero inicia sesión, entonces obtiene una sesión asociada a su barbería y a su usuario; el contexto de esa barbería queda probado a nivel de PostgreSQL/RLS en esta historia, y la verificación end-to-end contra solicitudes privadas reales se confirma en `CA-006-07` de `HU-006` (`DEC-058`). |
 | `CA-005-02` | Dado un correo inexistente y dado un correo existente con contraseña incorrecta, entonces ambas respuestas son indistinguibles en cuerpo, código y tiempo perceptible. |
 | `CA-005-03` | La contraseña se almacena mediante derivación de clave con sal única por usuario; la base de datos no contiene ninguna contraseña legible ni reversible. |
 | `CA-005-04` | Ni la contraseña, ni el correo, ni el material de sesión aparecen en registros, mensajes de error o respuestas. |
-| `CA-005-05` | Una sesión emitida para la barbería A no habilita ninguna operación sobre datos de B, verificado contra un endpoint privado real. |
+| `CA-005-05` | Una sesión emitida para la barbería A no habilita ninguna operación sobre datos de B; en esta historia se prueba con aislamiento real de `staff_session`/`staff_credential` a nivel PostgreSQL/RLS con dos tenants, ya que `HU-005` no depende de ningún endpoint privado real. La verificación end-to-end contra una operación privada real (logout) se confirma en `CA-006-07` de `HU-006` (`DEC-058`). |
 | `CA-005-06` | La operación está declarada en OpenAPI con su esquema, sus errores y sus ejemplos antes de existir el handler. |
 | `CA-005-07` | Un usuario desactivado o eliminado no puede iniciar sesión ni conservar sesiones vigentes. |
 
@@ -310,7 +312,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 | --- | --- |
 | Función | `F-AUTH-01` |
 | Reglas | `RN-TEN-01` |
-| Decisiones | `DEC-026`, `DEC-050`, `DEC-055` |
+| Decisiones | `DEC-026`, `DEC-050`, `DEC-055`, `DEC-058` |
 | Actor | Barbero |
 | Depende de | `HU-005` |
 | Bloquea | `HU-012` |
@@ -321,6 +323,8 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 > Como barbero, quiero seguir dentro de la aplicación al día siguiente sin volver a escribir mi contraseña, y quiero poder cerrar sesión y que ese cierre sea inmediato y real.
 
 > **Bloqueo resuelto:** `CT-003` dejaba en duda si `CA-006-04` exigía una excepción para el login. Quedó resuelta el 2026-08-13 como `DEC-055`: el login vive en `/api/v1/public/auth/login`, fuera de `/api/v1/private`, así que `CA-006-04` no necesita ninguna excepción.
+
+> **Criterio nuevo:** `DP-SEG-08`, detectada al implementar `HU-005` (issue `#44`), quedó resuelta como `DEC-058`: `CA-005-05` se prueba en `HU-005` solo a nivel PostgreSQL/RLS porque todavía no existe ningún endpoint privado real; esta historia añade `CA-006-07` para completar esa verificación end-to-end contra el logout, el primer endpoint privado real.
 
 **Alcance incluido**
 
@@ -339,11 +343,13 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 | `CA-006-04` | Toda ruta bajo `/api/v1/private` exige sesión válida; una ruta nueva sin protección explícita hace fallar una prueba. |
 | `CA-006-05` | El material de sesión no es adivinable, no se registra y no viaja en la URL. |
 | `CA-006-06` | Cerrar sesión en un dispositivo no invalida las sesiones de otros dispositivos, salvo que el barbero lo solicite explícitamente si esa opción se implementa. |
+| `CA-006-07` | Una sesión emitida para la barbería A nunca ejecuta el logout (ni ninguna otra operación privada real) sobre datos de la barbería B, verificado end-to-end contra el endpoint real (`DEC-058`, completa `CA-005-05` de `HU-005`). |
 
 **Pruebas obligatorias**
 
 - Integración HTTP: persistencia, revocación, vencimiento, ruta privada sin sesión.
 - Prueba estructural que enumera las rutas privadas registradas y verifica que todas pasan por el middleware de sesión.
+- Aislamiento end-to-end (`CA-006-07`): sesión de A contra el logout de B, con dos tenants reales.
 
 **Terminado cuando** el cierre de sesión es verificable desde el servidor y la prueba estructural protege contra rutas privadas olvidadas.
 
