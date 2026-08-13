@@ -1,9 +1,9 @@
 ---
 titulo: "Arquitectura del backend en Go"
-version: "1.2"
+version: "1.3"
 estado: "Decisión confirmada"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-06"
+ultima_actualizacion: "2026-08-13"
 documentos_relacionados:
   - "../00-control/registro-decisiones.md"
   - "../01-producto/reglas-negocio.md"
@@ -132,8 +132,9 @@ Estructura conceptual:
 ```text
 /health
 /api/v1/public/barbershops/{slug}/...
+/api/v1/public/auth/login
 /api/v1/customer/appointments/{token}/...
-/api/v1/private/auth/...
+/api/v1/private/auth/logout
 /api/v1/private/appointments/...
 /api/v1/private/services/...
 /api/v1/private/schedules/...
@@ -141,6 +142,8 @@ Estructura conceptual:
 ```
 
 Los subrouters públicos, de cliente y privados reciben cadenas de middleware distintas. El tenant no se acepta como dato confiable del cuerpo: se deriva del recurso público o de la identidad autorizada.
+
+El inicio de sesión (`HU-005`) vive en `/api/v1/public/auth/login`, sin middleware de autenticación: exigirlo sería circular, porque el barbero aún no tiene sesión (`CT-003`, resuelta por `DEC-055`). El cierre de sesión (`HU-006`) sí exige sesión y por eso vive bajo `/api/v1/private/auth/logout`. Ninguna otra ruta de `/api/v1/private` tiene excepción: la prueba estructural de `CA-006-04` cubre el subrouter completo sin lista de excepciones.
 
 ## 8. Dependencias permitidas
 

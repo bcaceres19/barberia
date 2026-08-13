@@ -1,9 +1,9 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.2"
+version: "1.3"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-11"
+ultima_actualizacion: "2026-08-13"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/reglas-negocio.md"
@@ -16,7 +16,7 @@ documentos_relacionados:
 
 # Historias de usuario y criterios de aceptación
 
-> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas ya confirmadas; no crean, amplían ni reinterpretan alcance. Requieren aprobación del propietario antes de implementarse. Tres historias de B0 dependían además de dudas abiertas (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`), resueltas el 2026-08-11 como `DEC-050`, `DEC-051` y `DEC-052`. `HU-020` y `HU-021` se prepararon por solicitud del propietario, pero su implementación continúa bloqueada hasta que B0 cumpla su criterio de salida.
+> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas ya confirmadas; no crean, amplían ni reinterpretan alcance. Requieren aprobación del propietario antes de implementarse. Tres historias de B0 dependían además de dudas abiertas (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`), resueltas el 2026-08-11 como `DEC-050`, `DEC-051` y `DEC-052`. `HU-020` y `HU-021` se prepararon por solicitud del propietario, pero su implementación continúa bloqueada hasta que B0 cumpla su criterio de salida. `CT-003` (audiencia del login) y `CT-004` (destino de `CA-010-01`) quedaron resueltas el 2026-08-13 como `DEC-055` y `DEC-056`.
 
 ---
 
@@ -260,7 +260,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 | --- | --- |
 | Función | `F-AUTH-01` |
 | Reglas | `RN-TEN-01`, `RN-DAT-02` |
-| Decisiones | `DEC-026`, `DEC-050` |
+| Decisiones | `DEC-026`, `DEC-050`, `DEC-055` |
 | Actor | Barbero |
 | Depende de | `HU-002`, `HU-003` |
 | Bloquea | `HU-006`, `HU-007`, `HU-010`, `HU-012` |
@@ -272,11 +272,13 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 > **Bloqueo resuelto:** `DEC-026` confirmaba "correo, contraseña y sesión larga" sin fijar el mecanismo de sesión ni su duración exacta. `DP-SEG-04` quedó resuelta el 2026-08-11 como `DEC-050`: cookie `HttpOnly`+`Secure`+`SameSite` con token opaco revocable en `staff_session`, 30 días con renovación por uso.
 
+> **Bloqueo resuelto:** `CT-003` señalaba que declarar el login bajo `/api/v1/private` lo volvía circular, porque ese prefijo exige sesión previa. Quedó resuelta el 2026-08-13 como `DEC-055`: el login se mueve a `/api/v1/public/auth/login`, la única operación pública del módulo `auth`.
+
 **Alcance incluido**
 
 - Migración con la tabla de credenciales y la de sesiones, ambas con `barbershop_id` y RLS.
 - Almacenamiento de contraseña con función de derivación resistente a fuerza bruta y parámetros documentados; nunca cifrado reversible ni hash simple.
-- Operación de inicio de sesión en `/api/v1/private` declarada primero en OpenAPI.
+- Operación de inicio de sesión en `/api/v1/public/auth/login` declarada primero en OpenAPI (`DEC-055`).
 - Respuesta uniforme ante credenciales inválidas y ante correo inexistente: **el mismo mensaje y el mismo tiempo de respuesta**, para no revelar qué correos existen.
 - Registro del intento sin exponer el correo en claro en los logs.
 
@@ -308,7 +310,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 | --- | --- |
 | Función | `F-AUTH-01` |
 | Reglas | `RN-TEN-01` |
-| Decisiones | `DEC-026`, `DEC-050` |
+| Decisiones | `DEC-026`, `DEC-050`, `DEC-055` |
 | Actor | Barbero |
 | Depende de | `HU-005` |
 | Bloquea | `HU-012` |
@@ -317,6 +319,8 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 **Historia**
 
 > Como barbero, quiero seguir dentro de la aplicación al día siguiente sin volver a escribir mi contraseña, y quiero poder cerrar sesión y que ese cierre sea inmediato y real.
+
+> **Bloqueo resuelto:** `CT-003` dejaba en duda si `CA-006-04` exigía una excepción para el login. Quedó resuelta el 2026-08-13 como `DEC-055`: el login vive en `/api/v1/public/auth/login`, fuera de `/api/v1/private`, así que `CA-006-04` no necesita ninguna excepción.
 
 **Alcance incluido**
 
@@ -497,7 +501,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 | --- | --- |
 | Función | `F-AUTH-01` |
 | Reglas | Criterios no funcionales de UX; `RN-DAT-02` |
-| Decisiones | `DEC-039`, `DEC-033` |
+| Decisiones | `DEC-039`, `DEC-033`, `DEC-056` |
 | Actor | Barbero |
 | Depende de | `HU-005`, `HU-009` |
 | Bloquea | `HU-012` |
@@ -507,6 +511,8 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 > Como barbero, quiero una pantalla de acceso simple, con mi correo y mi contraseña visibles en un solo lugar y con la recuperación a la vista, para entrar rápido incluso con una conexión mala.
 
+> **Bloqueo resuelto:** `CT-004` señalaba que `HU-010` no podía demostrar su destino de éxito contra el panel privado sin implementar parte de `HU-012`, que a su vez depende de `HU-010`. Quedó resuelta el 2026-08-13 como `DEC-056`: `CA-010-01` se divide — `HU-010` navega a `/panel`, ruta privada real y protegida con un guard mínimo propio, sin cabecera ni navegación; `HU-012` reutiliza ese guard y construye ahí el cascarón completo.
+
 **Alcance incluido**
 
 - Composición según `estandar-diseno-visual.md` sección 10: marca discreta, título, formulario estrecho y recuperación visible.
@@ -514,12 +520,13 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 - Estados: inicial, enviando, error de credenciales, error de red con datos conservados, y bloqueo por umbral de `HU-007` con explicación.
 - Etiquetas asociadas, mensajes de error junto al campo y resumen accesible cuando haya varios.
 - Ruta cargada de forma diferida.
+- Ruta privada `/panel` y su guard mínimo (`DEC-056`): sin sesión válida redirige al acceso; con sesión válida muestra un marcador de posición autenticado, sin cabecera ni navegación general — esa estructura la construye `HU-012` reutilizando este guard, no uno paralelo.
 
 **Criterios de aceptación**
 
 | Código | Criterio |
 | --- | --- |
-| `CA-010-01` | Con credenciales válidas, el barbero entra y llega al panel privado. |
+| `CA-010-01` | Con credenciales válidas, el barbero entra y la aplicación navega a `/panel`, ruta privada real y protegida por el guard de esta historia; la verificación de la llegada al panel completo (cabecera, navegación) se confirma en `CA-012-01`/`CA-012-02` de `HU-012` (`DEC-056`). |
 | `CA-010-02` | Con credenciales inválidas, el mensaje explica qué hacer, conserva el correo escrito y no indica si el correo existe. |
 | `CA-010-03` | Ante un fallo de red, la pantalla conserva lo escrito y ofrece reintentar sin recargar. |
 | `CA-010-04` | El botón de envío se deshabilita mientras la solicitud está en curso, y un doble toque no produce dos solicitudes. |
@@ -590,7 +597,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 | --- | --- |
 | Función | `F-OPS-01` (comportamiento ante fallos y conexión inestable) |
 | Reglas | `RN-TEN-01`, criterios no funcionales de UX |
-| Decisiones | `DEC-033`, `DEC-039` |
+| Decisiones | `DEC-033`, `DEC-039`, `DEC-056` |
 | Actor | Barbero |
 | Depende de | `HU-006`, `HU-009`, `HU-010` |
 | Bloquea | Todas las pantallas privadas de B1 en adelante |
@@ -602,8 +609,8 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 **Alcance incluido**
 
-- Estructura de aplicación autenticada: cabecera con el nombre de la barbería, navegación principal y área de contenido, según las estructuras base del estándar visual.
-- Guarda de ruta: sin sesión válida se redirige al acceso, conservando el destino pretendido.
+- Estructura de aplicación autenticada: cabecera con el nombre de la barbería, navegación principal y área de contenido, según las estructuras base del estándar visual, construida sobre la ruta `/panel` y el guard mínimo que ya entrega `HU-010` (`DEC-056`) — sin crear un guard paralelo ni cambiar la ruta.
+- Guarda de ruta: sin sesión válida se redirige al acceso, conservando el destino pretendido; generaliza el guard de `/panel` de `HU-010` a todas las rutas privadas.
 - Manejo central de respuestas no autorizadas: la sesión se limpia y se informa el motivo, sin bucles de redirección.
 - Patrones globales de estado: carga con esqueleto, error recuperable con "Reintentar" y aviso de conexión perdida.
 - Una pantalla de inicio provisional que muestra el estado de la sesión; **no** es la agenda, que llega en B3.

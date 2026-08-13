@@ -83,6 +83,8 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-052` | 2026-08-11 | Límite de acceso: ventana de 15 minutos, escalamiento a verificación telefónica de 24 horas | `DP-SEG-06` | Confirmada |
 | `DEC-053` | 2026-08-11 | Protocolo de lease de `notification_claim_due` (claim/CAS/recuperación); `retention_claim_due_customers` se mantiene sin lease | `DDL-CON-01`, `DDL-CON-02`, `DDL-OPS-01` | Confirmada |
 | `DEC-054` | 2026-08-11 | Fórmula concreta de última actividad (DEC-042), marcador de anonimización, alcance de `appointment_history_change` y por qué `idempotency_record.response_body` no se toca | `DEC-042`, `DEC-049`, `DDL-PRI-01` | Confirmada, sujeta a revisión jurídica |
+| `DEC-055` | 2026-08-13 | Resuelve `CT-003`: el inicio de sesión se mueve a `/api/v1/public/auth/login`; deja de estar bajo `/api/v1/private` | `CT-003`, `CA-006-04` | Confirmada |
+| `DEC-056` | 2026-08-13 | Resuelve `CT-004`: `CA-010-01` se divide entre `HU-010` (navega a `/panel` protegido, mínimo) y `HU-012` (cascarón completo verificable) | `CT-004`, `CA-010-01`, `CA-012-01` | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -591,3 +593,23 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** un estado/columna nuevo en `appointment_access_token` para registrar el acceso real del cliente (descartada por alcance: es una ampliación de esquema, no una corrección de la anonimización); redactar `appointment_history_change` por heurística de contenido en vez de por `field_name` (descartada por indeterminista y no verificable con un `CHECK`); añadir `customer_id` a `idempotency_record` para poder purgarla por cliente (descartada porque el TTL ya lo vuelve innecesario en todo escenario válido).
 - **Documentos afectados:** `database/modelo-fisico-referencia.sql` (`customer_anonymized_ck`, `retention_claim_due_customers`, `customer_anonymize`).
 - **Fuente:** `docs/05-backend/revision-ddl-seguridad-2026-08-11.md`, hallazgo `DDL-PRI-01`; `DEC-042`, `DEC-049`; issue `#6`.
+
+### DEC-055 · Resolución de `CT-003`: audiencia del inicio de sesión
+
+- **Fecha:** 2026-08-13.
+- **Decisión:** el inicio de sesión de `HU-005` se mueve de `/api/v1/private/auth/login` a `/api/v1/public/auth/login`. Es la única operación del módulo `auth` en la audiencia pública; el resto (cierre de sesión de `HU-006`) permanece bajo `/api/v1/private`. `CA-006-04` no necesita ninguna lista de excepciones: como el login ya no vive bajo `/private`, la prueba estructural que inventaría rutas protegidas puede exigir el middleware de sesión en el 100 % de ese subrouter sin excepción alguna.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** de las tres opciones registradas en `CT-003`, evita mantener y probar indefinidamente una lista cerrada de excepciones de arranque sin sesión dentro de `/private`, y sigue el patrón ya usado en el árbol de rutas (`backend-go.md` §7) de separar audiencias `public`/`private` en vez de introducir una tercera.
+- **Alternativas descartadas:** login bajo `/private` con lista cerrada de excepciones (opción 1) — descartada por el costo permanente de mantener y auditar esa lista y por complicar la prueba estructural de `CA-006-04`; prefijo de autenticación separado (opción 3) — descartada por introducir una tercera audiencia a documentar sin necesidad frente a la distinción `public`/`private` ya existente.
+- **Documentos afectados:** `docs/02-requisitos/historias-usuario.md` (`HU-005` alcance incluido), `docs/04-arquitectura/backend-go.md` §7 (árbol de rutas), `docs/10-backlog/prompts/hu/hu-005-inicio-sesion.md`, `docs/10-backlog/prompts/hu/hu-006-sesion-persistente.md`.
+- **Fuente:** `docs/00-control/contradicciones.md`, `CT-003`; aprobación explícita del propietario el 2026-08-13.
+
+### DEC-056 · Resolución de `CT-004`: destino de `CA-010-01` dividido entre `HU-010` y `HU-012`
+
+- **Fecha:** 2026-08-13.
+- **Decisión:** `CA-010-01` se divide entre `HU-010` y `HU-012` (opción 1 de `CT-004`). `HU-010` implementa y verifica que, con credenciales válidas, la aplicación navega a una única ruta privada real y protegida, `/panel`, con un guard mínimo propio de `HU-010` (sin sesión válida redirige al acceso) y contenido mínimo de marcador de posición autenticado — sin cabecera, sin navegación general. `HU-012` reutiliza y generaliza ese guard a todas las rutas privadas en vez de crear uno paralelo o cambiar la ruta, y construye ahí mismo la cabecera, navegación y demás estructura del cascarón descrita en su alcance. La verificación end-to-end de "llegar al panel" completo (cabecera, navegación) queda en `CA-012-01`/`CA-012-02` de `HU-012`, no en `HU-010`.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** de las tres opciones registradas en `CT-004`, dividir el criterio es el cambio de menor alcance: no amplía `HU-010` más allá de "pantalla de acceso" con responsabilidades de layout/navegación que pertenecen a `HU-012`, y no reordena un backlog B0 ya planificado.
+- **Alternativas descartadas:** mover un cascarón privado mínimo a `HU-010` (opción 2) — descartada por ampliar su alcance con responsabilidades de `HU-012`; reordenar y redefinir dependencias (opción 3) — descartada por su mayor impacto en la planificación ya fijada de B0.
+- **Documentos afectados:** `docs/02-requisitos/historias-usuario.md` (`HU-010` `CA-010-01` y alcance, `HU-012` alcance), `docs/10-backlog/prompts/hu/hu-010-pantalla-acceso.md`, futuro prompt de `HU-012`.
+- **Fuente:** `docs/00-control/contradicciones.md`, `CT-004`; aprobación explícita del propietario el 2026-08-13.

@@ -1,9 +1,9 @@
 ---
 titulo: "Matriz de trazabilidad"
-version: "1.17"
+version: "1.19"
 estado: "Cobertura de decisiones"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-11"
+ultima_actualizacion: "2026-08-13"
 documentos_relacionados:
   - "registro-decisiones.md"
   - "contradicciones.md"
@@ -18,9 +18,9 @@ documentos_relacionados:
 
 ## 1. Alcance de esta versión
 
-Esta matriz cubre las decisiones `DEC-001` a `DEC-039` y, desde el endurecimiento del DDL del 11 de agosto de 2026, también `DEC-040` a `DEC-054`. Existen las historias del bloque B0 y, desde el 10 de agosto de 2026, las propuestas `HU-020` y `HU-021` de B1 con sus criterios de aceptación ([historias-usuario.md](../02-requisitos/historias-usuario.md)); el resto de B1 y los bloques B2 a B6 siguen pendientes según [plan-bloques.md](../10-backlog/plan-bloques.md). Los contratos, migraciones, casos de uso, pantallas y pruebas concretos de estas dos historias todavía no existen. `database/modelo-fisico-referencia.sql` es insumo de diseño y no se confunde con una migración aplicada.
+Esta matriz cubre las decisiones `DEC-001` a `DEC-039` y, desde el endurecimiento del DDL del 11 de agosto de 2026, también `DEC-040` a `DEC-056`. Existen las historias del bloque B0 y, desde el 10 de agosto de 2026, las propuestas `HU-020` y `HU-021` de B1 con sus criterios de aceptación ([historias-usuario.md](../02-requisitos/historias-usuario.md)); el resto de B1 y los bloques B2 a B6 siguen pendientes según [plan-bloques.md](../10-backlog/plan-bloques.md). Los contratos, migraciones, casos de uso, pantallas y pruebas concretos de estas dos historias todavía no existen. `database/modelo-fisico-referencia.sql` es insumo de diseño y no se confunde con una migración aplicada.
 
-Una historia redactada tampoco es una historia implementada: `HU-001` a `HU-012`, `HU-020` y `HU-021` están en estado de propuesta; tres historias de B0 dependen de dudas abiertas y las dos de B1 dependen del criterio de salida de B0. El marcador `Pendiente` representa una brecha real; no se crean identificadores ficticios para aparentar cobertura.
+Una historia redactada tampoco es una historia implementada: `HU-001` a `HU-012`, `HU-020` y `HU-021` están en estado de propuesta. Las dudas que bloqueaban parte de B0 fueron resueltas por `DEC-050`–`DEC-052`; `CT-003` (topología del login) y `CT-004` (destino de `CA-010-01`) quedaron resueltas el 2026-08-13 por `DEC-055` y `DEC-056`, así que los tres prompts de `HU-005`, `HU-006` y `HU-010` ya pueden pasar a `ready` en cuanto tengan issue real. Las dos historias de B1 dependen además del criterio de salida de B0. El marcador `Pendiente` representa una brecha real; no se crean identificadores ficticios para aparentar cobertura.
 
 La cadena exigida es:
 
@@ -84,6 +84,8 @@ La cadena exigida es:
 | --- | --- | --- |
 | Historias y criterios restantes de B1 a B6 sin redactar | Desarrollo verificable más allá de `HU-020`/`HU-021` | Revisar estas dos al cerrar B0 y redactar cada bloque al cerrar el anterior, según [plan-bloques.md](../10-backlog/plan-bloques.md) |
 | ~~`DP-SEG-04`, `DP-SEG-05` y `DP-SEG-06` abiertas~~ Resueltas por `DEC-050`–`DEC-052` (PR #11) | — | Fila conservada solo por trazabilidad; ver la fila "Sesión larga, recuperación de acceso y límite por IP" en la sección 2 |
+| ~~`CT-003`: login bajo `/api/v1/private` frente a protección obligatoria de toda ruta del prefijo~~ Resuelta por `DEC-055`: login movido a `/api/v1/public/auth/login` | — | Fila conservada solo por trazabilidad; issue real pendiente para pasar `HU-005`/`HU-006` a `ready` |
+| ~~`CT-004`: `HU-010` debe llegar a un panel que solo construye `HU-012`, dependiente de `HU-010`~~ Resuelta por `DEC-056`: `CA-010-01` dividido entre `HU-010` (`/panel` mínimo) y `HU-012` (cascarón completo) | — | Fila conservada solo por trazabilidad; issue real pendiente para pasar `HU-010` a `ready` |
 | Operaciones OpenAPI, migraciones y casos de uso de B1 inexistentes | Implementación de `HU-020` y `HU-021` | Crearlos contract-first y por entrega vertical después del cierre de B0; el modelo físico de referencia no cuenta como migración |
 | Casos de prueba sin identificador ni automatización | Evidencia de cumplimiento | Implementar casos desde `03-desarrollo/estrategia-pruebas.md` y enlazarlos al criterio correspondiente |
 | Métricas sin catálogo `MP-*` | Medición del piloto | `08-piloto/metricas-piloto.md` |
