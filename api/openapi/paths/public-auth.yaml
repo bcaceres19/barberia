@@ -1,0 +1,43 @@
+# Operación pública de autenticación (HU-005): inicio de sesión. Es la
+# única operación del módulo auth bajo /public (DEC-055, CT-003 resuelta):
+# el cierre de sesión de HU-006 vive en private-auth.yaml, bajo
+# /api/v1/private, no aquí.
+/public/auth/login:
+  post:
+    tags: [Auth]
+    summary: Iniciar sesión con correo y contraseña
+    description: >
+      Verifica correo y contraseña y, si son válidos para un barbero activo,
+      emite una sesión de 30 días como cookie opaca y revocable (DEC-050).
+      Un correo inexistente y una contraseña incorrecta para un correo
+      existente producen exactamente la misma respuesta 401 (CA-005-02); un
+      usuario inactivo o eliminado también (CA-005-07). El token de sesión
+      viaja únicamente en Set-Cookie, nunca en el cuerpo de la respuesta
+      (CA-005-04).
+    operationId: loginWithPassword
+    security: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-024, DEC-026, DEC-050, DEC-055]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/LoginRequest.yaml'
+          examples:
+            credenciales:
+              summary: Correo y contraseña
+              value:
+                email: barbero.ejemplo@correo.test
+                password: "***"
+    responses:
+      "200":
+        $ref: '../components/responses/LoginSuccess.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "422":
+        $ref: '../components/responses/ValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

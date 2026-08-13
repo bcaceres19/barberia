@@ -19,6 +19,9 @@ antes de agregar código.
   crítica se ejecute como máximo una vez por clave. Reutilizable, sin
   endpoint propio todavía. Ver la sección "Patrón obligatorio: idempotencia
   reutilizable" más abajo.
+- **Inicio de sesión (HU-005)**: `internal/modules/auth` implementa
+  `POST /api/v1/public/auth/login` (`DEC-055`, sin middleware de
+  autenticación). Ver la sección "Inicio de sesión (HU-005)" más abajo.
 
 ## Requisitos
 
@@ -38,6 +41,7 @@ go test ./...
 go test -race ./internal/platform/database/...
 go test -race ./internal/platform/idempotency/...
 go test -race ./internal/platform/httpserver/...
+go test -race ./internal/modules/auth/...
 ```
 
 ## Patrón obligatorio: errores uniformes y router (HU-003)
@@ -299,6 +303,89 @@ Ver `internal/platform/idempotency/postgres_test.go` y
 `internal/platform/httpserver/idempotency_test.go` para la evidencia
 completa, incluida la concurrencia real con `-race`.
 
+## Inicio de sesión (HU-005)
+
+`POST /api/v1/public/auth/login` (`DEC-055`, sin middleware de
+autenticación: sería circular, `CT-003`) verifica correo y contraseña de un
+barbero activo y emite una cookie de sesión opaca de 30 días (`DEC-050`).
+`internal/modules/auth` sigue la estructura estándar de un módulo: el
+núcleo (`domain.go`, `ports.go`, `service.go`, `password.go`, `token.go`) no
+importa Chi, `net/http`, pgx ni `internal/platform/database` (CA-002-06);
+`postgres/repository.go` traduce el puerto `auth.Repository` a
+`database.DB`; `httpapi/` decodifica, valida la forma y traduce el
+resultado a HTTP.
+
+### Contraseñas: argon2id, parámetros documentados en código
+
+`internal/modules/auth/password.go` (`Argon2Hasher`) deriva la contraseña
+con `golang.org/x/crypto/argon2` en modo `argon2id`, memoria 19 MiB, 2
+iteraciones, 1 hilo (recomendación mínima de OWASP Password Storage Cheat
+Sheet), sal de 16 bytes generada con `crypto/rand` en cada `Hash`. El valor
+codificado (formato PHC, `$argon2id$v=19$m=...,t=...,p=...$sal$hash`)
+incluye algoritmo, versión, parámetros, sal y hash en un único texto:
+`staff_credential` no tiene columna de sal separada (CA-005-03). Nunca se
+registra, nunca se expone en una respuesta.
+
+### No enumeración: correo inexistente = contraseña incorrecta = usuario inactivo (CA-005-02, CA-005-07)
+
+`authn_resolve_login_tenant` (SQL) ya unifica "correo inexistente" y
+"usuario inactivo" en el mismo resultado (`NULL`). `LoginService.Login`
+(`service.go`) SIEMPRE ejecuta exactamente una llamada a
+`PasswordHasher.Verify`, con un hash del mismo costo criptográfico —el real
+si la credencial existe, o un hash señuelo precalculado una sola vez al
+construir el servicio si no— y `Repository.LookupCredential`
+(`postgres/repository.go`) ejecuta la MISMA forma de consultas SQL en
+ambos casos (tenant real o tenant señuelo `00000000-...-000000000000`, con
+un `staff_user_id` señuelo cuando no hay usuario que buscar). El resultado
+observable es idéntico: mismo `401`, mismo `type`/`code`/`detail`, mismos
+headers. La evidencia de esta simetría es **estructural** (mismo número de
+llamadas a cada dependencia, mismo costo de hash), no una medición de
+nanosegundos: ver `TestLogin_StructuralNonEnumeration_SameShapeForUnknownEmailAndWrongPassword`
+en `internal/modules/auth/service_test.go`.
+
+### Cookie de sesión: DP-SEG-07 (elección provisional)
+
+`DEC-050` fija `HttpOnly`+`Secure`+`SameSite`, pero no el valor exacto de
+`SameSite`, `Path`, `Domain` ni el nombre de la cookie; tampoco lo fija el
+issue `#44`. `docs/00-control/dudas-pendientes.md` registra este vacío como
+`DP-SEG-07` y documenta la elección aplicada mientras se confirma:
+`httpapi.DefaultCookieConfig()` usa nombre `barberia_session`,
+`Path=/api/v1`, `SameSite=Lax`, `Secure=true`, sin `Domain` explícito
+(host-only), 30 días de vigencia. **Estos valores son provisionales**; si
+el propietario confirma otros, se actualizan aquí, en
+`api/openapi/components/security-schemes/SessionCookie.yaml` y en el
+código en el mismo cambio.
+
+### Bloqueo conocido: CA-005-05 y la parte de "solicitudes privadas posteriores" de CA-005-01
+
+`CA-005-05` exige verificar el aislamiento de sesión "contra un endpoint
+privado real". Ninguna operación privada existe todavía en el código
+(`/api/v1/private` está montado sin operaciones desde HU-003) ni está
+aprobada por ninguna fuente para HU-005: la primera operación privada real
+(`POST /api/v1/private/auth/logout`) pertenece a HU-006, fuera del alcance
+de este cambio. Siguiendo la instrucción explícita del prompt de HU-005
+("si ninguna fuente define esa operación, registra la duda y detente; no
+publiques una ruta de prueba"), esta parte queda **registrada como
+`DP-SEG-08`** en `docs/00-control/dudas-pendientes.md`, sin un endpoint de
+demostración inventado. Como evidencia parcial,
+`internal/modules/auth/postgres/repository_test.go` y
+`database/tests/hu005_aislamiento_credenciales_sesiones.sql` demuestran el
+aislamiento de `staff_session` por tenant contra PostgreSQL real (RLS,
+`SELECT`/`INSERT` cruzados rechazados), pero no hay todavía una prueba HTTP
+de extremo a extremo con un endpoint privado real.
+
+### Tabla de criterios de aceptación
+
+| Criterio | Estado | Prueba o evidencia |
+| --- | --- | --- |
+| `CA-005-01` | Parcial | Emisión de sesión asociada a usuario y barbería: cumplido y probado (`TestLogin_Success_CreatesSessionWithHashedToken`, `TestLoginHandler_Success_SetsCookieWithoutTokenInBody`, `TestCreateSession_PersistsRetrievableSessionScopedToTenant`). "Solicitudes privadas posteriores operan con ese contexto": bloqueado, ver `DP-SEG-08`. |
+| `CA-005-02` | Cumplido | `TestLogin_StructuralNonEnumeration_SameShapeForUnknownEmailAndWrongPassword`, `TestLoginHandler_UnknownEmail_ReturnsIdenticalProblemToWrongPassword`, `TestLookupCredential_UnresolvedTenant_UsesDecoyWithoutError`, sección "CA-005-01/02/07" de `hu005_aislamiento_credenciales_sesiones.sql`. |
+| `CA-005-03` | Cumplido | `password.go` (argon2id, parámetros OWASP, sal `crypto/rand` por llamada), `TestArgon2Hasher_TwoUsersSamePassword_ProduceDistinctEncodedValues`, `staff_credential_password_hash_ck` + sección "Formato" de la suite SQL. |
+| `CA-005-04` | Cumplido | `TestLoginHandler_ThroughFullRouter_NeverLogsSensitiveValues`, `TestLoginHandler_Success_SetsCookieWithoutTokenInBody`, `TestLoginHandler_InternalRepositoryError_ReturnsSafe500`. |
+| `CA-005-05` | Bloqueado | Aislamiento de `staff_session` por tenant demostrado contra PostgreSQL real (`TestLookupCredential_CrossTenant_NeverLeaksAcrossShops`, `TestCreateSession_PersistsRetrievableSessionScopedToTenant`, sección RLS de la suite SQL). La verificación literal "contra un endpoint privado real" queda bloqueada: ver `DP-SEG-08` en `docs/00-control/dudas-pendientes.md`. |
+| `CA-005-06` | Cumplido | `api/openapi/paths/public-auth.yaml` escrito antes del handler; `openapi:lint`/`openapi:bundle` en verde; `contract_test.go` (4 pruebas) compara los DTO Go y la operación real contra el YAML fuente. |
+| `CA-005-07` | Parcial | "No puede iniciar sesión": cumplido (`TestResolveLoginTenant_InactiveAndUnknown_BothReturnNotFound`, `TestLogin_InactiveUser_IsIndistinguishableFromUnknownEmail`, `TestLoginHandler_InactiveUser_SameProblemAsUnknownEmail`, sección CA-005-07 de la suite SQL). "No conserva sesiones vigentes" tras una desactivación posterior a la emisión exige el middleware de validación de `HU-006` (fuera de alcance de `HU-005`) para probarse de extremo a extremo. |
+
 ## Pruebas de integración
 
 Las pruebas en `internal/platform/database/*_test.go` requieren PostgreSQL real
@@ -339,6 +426,19 @@ migraciones y testdata). Cubren `CA-004-01` a `CA-004-06`, `RN-IDE-01`
 ```bash
 go test -race ./internal/platform/idempotency/...
 go test -race ./internal/platform/httpserver/...
+```
+
+`internal/modules/auth/postgres/repository_test.go` requiere, además de
+`database/testdata/dos_barberias.sql`,
+`database/testdata/hu005_credenciales_sesiones.sql` cargado (credenciales y
+una sesión vigente por barbería). Cubre resolución de tenant (activo,
+inactivo, inexistente), búsqueda de credencial (tenant real y señuelo,
+cruce de tenant rechazado por RLS) y persistencia de sesión aislada por
+barbería.
+
+```bash
+psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/testdata/hu005_credenciales_sesiones.sql
+go test -race ./internal/modules/auth/...
 ```
 
 ## Migraciones

@@ -1,0 +1,18 @@
+# Respuesta 200 de POST /auth/login (HU-005). CA-005-04: nunca incluye el
+# token de sesión en el cuerpo; solo en Set-Cookie, descrita sin su valor
+# funcional.
+description: Sesión iniciada. La cookie de sesión queda fijada en Set-Cookie.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+  Set-Cookie:
+    $ref: '../headers/SetCookieSession.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/LoginResponse.yaml'
+    examples:
+      sesionIniciada:
+        summary: Inicio de sesión exitoso
+        value:
+          expiresAt: "2026-09-12T12:00:00Z"

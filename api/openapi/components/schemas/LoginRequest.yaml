@@ -1,0 +1,27 @@
+# Cuerpo de POST /auth/login (HU-005). Cerrado: additionalProperties false,
+# password writeOnly (docs/06-api/estandar-openapi.md secciones 9.4, 9.6 y
+# 5, tabla "Token o contraseña"). El backend acepta cualquier correo con
+# forma razonable, exista o no: CA-005-02 exige que un correo inexistente y
+# una contraseña incorrecta para un correo existente sean indistinguibles,
+# así que este esquema no intenta validar más que la forma mínima
+# (longitud), nunca "¿parece un correo real?".
+type: object
+additionalProperties: false
+description: Credenciales de acceso del barbero.
+properties:
+  email:
+    type: string
+    format: email
+    maxLength: 254
+    description: Correo de acceso, normalizado a minúsculas por el servidor antes de resolver la barbería.
+    examples:
+      - barbero.ejemplo@correo.test
+  password:
+    type: string
+    writeOnly: true
+    minLength: 1
+    maxLength: 256
+    description: Contraseña en texto plano, transportada solo en esta solicitud. Nunca se refleja en ninguna respuesta.
+required:
+  - email
+  - password

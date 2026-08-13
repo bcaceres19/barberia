@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.11"
+version: "1.13"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-11"
+ultima_actualizacion: "2026-08-13"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -85,6 +85,8 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-054` | 2026-08-11 | Fórmula concreta de última actividad (DEC-042), marcador de anonimización, alcance de `appointment_history_change` y por qué `idempotency_record.response_body` no se toca | `DEC-042`, `DEC-049`, `DDL-PRI-01` | Confirmada, sujeta a revisión jurídica |
 | `DEC-055` | 2026-08-13 | Resuelve `CT-003`: el inicio de sesión se mueve a `/api/v1/public/auth/login`; deja de estar bajo `/api/v1/private` | `CT-003`, `CA-006-04` | Confirmada |
 | `DEC-056` | 2026-08-13 | Resuelve `CT-004`: `CA-010-01` se divide entre `HU-010` (navega a `/panel` protegido, mínimo) y `HU-012` (cascarón completo verificable) | `CT-004`, `CA-010-01`, `CA-012-01` | Confirmada |
+| `DEC-057` | 2026-08-13 | Resuelve `DP-SEG-07`: cookie de sesión `barberia_session`, `Path=/api/v1`, `SameSite=Lax`, sin `Domain`, 30 días | `DEC-050`, `DP-SEG-07` | Confirmada |
+| `DEC-058` | 2026-08-13 | Resuelve `DP-SEG-08`: `CA-005-05`/`CA-005-01` se dividen entre `HU-005` (aislamiento a nivel PostgreSQL/RLS) y `HU-006` (verificación end-to-end contra el logout real, nuevo `CA-006-07`) | `DP-SEG-08`, `CA-005-01`, `CA-005-05`, `CA-006-07` | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -613,3 +615,23 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** mover un cascarón privado mínimo a `HU-010` (opción 2) — descartada por ampliar su alcance con responsabilidades de `HU-012`; reordenar y redefinir dependencias (opción 3) — descartada por su mayor impacto en la planificación ya fijada de B0.
 - **Documentos afectados:** `docs/02-requisitos/historias-usuario.md` (`HU-010` `CA-010-01` y alcance, `HU-012` alcance), `docs/10-backlog/prompts/hu/hu-010-pantalla-acceso.md`, futuro prompt de `HU-012`.
 - **Fuente:** `docs/00-control/contradicciones.md`, `CT-004`; aprobación explícita del propietario el 2026-08-13.
+
+### DEC-057 · Resolución de `DP-SEG-07`: atributos de la cookie de sesión
+
+- **Fecha:** 2026-08-13.
+- **Decisión:** la cookie de sesión de `HU-005`/`HU-006` se llama `barberia_session`, con `Path=/api/v1`, `SameSite=Lax`, sin `Domain` explícito (host-only) y `Max-Age` de 30 días, además de `HttpOnly`+`Secure` ya fijados por `DEC-050`. Confirma el valor ya implementado en el PR de `HU-005` (issue `#44`).
+- **Responsable:** propietario del proyecto.
+- **Motivo:** `Lax` es el valor recomendado para una cookie de sesión de primer nivel que no necesita viajar en navegación cross-site; `Path=/api/v1` cubre tanto el login público como las rutas privadas futuras sin exponerla a otras rutas del mismo host; sin `Domain` explícito, el navegador la ata al host exacto, más restrictivo y sin riesgo de fuga a subdominios no revisados.
+- **Alternativas descartadas:** `SameSite=Strict` — descartada por no aportar protección adicional relevante a este flujo y complicar la navegación desde enlaces externos (p. ej. WhatsApp/correo) sin beneficio de seguridad claro; `Domain` explícito — descartado por ampliar innecesariamente el alcance de la cookie a subdominios no auditados.
+- **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-SEG-07`), PR de `HU-005` (issue `#44`).
+- **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-SEG-07`; aprobación explícita del propietario el 2026-08-13.
+
+### DEC-058 · Resolución de `DP-SEG-08`: evidencia de aislamiento dividida entre `HU-005` y `HU-006`
+
+- **Fecha:** 2026-08-13.
+- **Decisión:** `CA-005-05` y la parte de `CA-005-01` referida a "solicitudes privadas posteriores" se dan por cumplidos en `HU-005` con evidencia a nivel de PostgreSQL/RLS (aislamiento de `staff_session`/`staff_credential` con dos tenants) y de estructura HTTP, sin exigir un endpoint privado real todavía. La verificación end-to-end contra una operación privada real queda como un nuevo criterio `CA-006-07` de `HU-006`: la cookie de sesión de la barbería A nunca ejecuta el logout (u otra operación privada real) sobre datos de B, probado contra el primer endpoint privado real que `HU-006` construye.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** mismo patrón que `DEC-056`/`CT-004` — dividir el criterio es el cambio de menor alcance: desbloquea el merge de `HU-005` ya, sin inventar un endpoint de demostración que no tiene aprobación de ninguna fuente, y sin crear una dependencia circular con `HU-006` (que ya depende de `HU-005` integrada).
+- **Alternativas descartadas:** esperar a tener un endpoint real antes de mergear `HU-005` — descartada por ser circular (`HU-006` depende de `HU-005` integrada) y bloquear todo el bloque B0 sin una vía de salida; adelantar un endpoint mínimo de demostración dentro de `HU-005` — descartada por invadir el alcance de `HU-006` y arriesgar declarar cumplido un criterio con un endpoint inventado, prohibido explícitamente por el prompt de `HU-005`.
+- **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-SEG-08`), `docs/02-requisitos/historias-usuario.md` (`HU-005` `CA-005-01`/`CA-005-05`, `HU-006` nuevo `CA-006-07`), `docs/10-backlog/prompts/hu/hu-006-sesion-persistente.md`.
+- **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-SEG-08`; aprobación explícita del propietario el 2026-08-13.

@@ -2,15 +2,14 @@
 # docs/06-api/estandar-openapi.md (DEC-037). No se edita el bundle generado
 # en dist/; este archivo y los que referencia son la fuente.
 #
-# Sin operaciones todavía: HU-003 solo entrega la base HTTP (Chi v5, tres
-# audiencias, errores uniformes) sin endpoints de negocio. Los componentes
-# de error de esta sección ya son reales porque el servidor los emite desde
-# hoy (recuperación de panic, aislamiento por tenant, límite de cuerpo);
-# paths queda vacío hasta el primer endpoint implementado.
+# HU-005 agrega la primera operación de negocio: POST /public/auth/login.
+# Los componentes de error ya eran reales desde HU-003 (recuperación de
+# panic, aislamiento por tenant, límite de cuerpo); paths queda vacío para
+# el resto de capacidades hasta su primer endpoint implementado.
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.1.0
+  version: 0.2.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -21,15 +20,25 @@ info:
     identifier: UNLICENSED
 servers:
   - url: /api/v1
-tags: []
-paths: {}
+tags:
+  - name: Auth
+    description: Identidad, sesiones y recuperación de acceso del barbero.
+paths:
+  /public/auth/login:
+    $ref: './paths/public-auth.yaml#/~1public~1auth~1login'
 components:
   schemas:
     Problem:
       $ref: './components/schemas/Problem.yaml'
+    LoginRequest:
+      $ref: './components/schemas/LoginRequest.yaml'
+    LoginResponse:
+      $ref: './components/schemas/LoginResponse.yaml'
   headers:
     X-Request-Id:
       $ref: './components/headers/XRequestId.yaml'
+    Set-Cookie:
+      $ref: './components/headers/SetCookieSession.yaml'
   parameters:
     IdempotencyKey:
       $ref: './components/parameters/IdempotencyKey.yaml'
@@ -42,7 +51,13 @@ components:
       $ref: './components/responses/PayloadTooLargeProblem.yaml'
     InvalidRequestProblem:
       $ref: './components/responses/InvalidRequestProblem.yaml'
+    ValidationProblem:
+      $ref: './components/responses/ValidationProblem.yaml'
+    UnauthorizedProblem:
+      $ref: './components/responses/UnauthorizedProblem.yaml'
     IdempotencyConflictProblem:
       $ref: './components/responses/IdempotencyConflictProblem.yaml'
     IdempotencyLockedProblem:
       $ref: './components/responses/IdempotencyLockedProblem.yaml'
+    LoginSuccess:
+      $ref: './components/responses/LoginSuccess.yaml'

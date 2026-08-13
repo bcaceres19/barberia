@@ -1,9 +1,9 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "1.5"
+version: "1.7"
 estado: "Sin dudas abiertas"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-11"
+ultima_actualizacion: "2026-08-13"
 documentos_relacionados:
   - "registro-decisiones.md"
   - "contradicciones.md"
@@ -17,7 +17,7 @@ documentos_relacionados:
 
 ## 1. Estado
 
-**No queda ninguna duda abierta.** El 7 de agosto de 2026, al redactar las historias del bloque B0 ([historias-usuario.md](../02-requisitos/historias-usuario.md)), se detectaron tres vacíos que `DEC-026` y `DEC-027` no cubrían (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`); el 11 de agosto de 2026 el propietario las resolvió como `DEC-050`, `DEC-051` y `DEC-052`, desbloqueando `HU-005`–`HU-008` y `HU-011`.
+**No queda ninguna duda abierta.** El 7 de agosto de 2026, al redactar las historias del bloque B0 ([historias-usuario.md](../02-requisitos/historias-usuario.md)), se detectaron tres vacíos que `DEC-026` y `DEC-027` no cubrían (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`); el 11 de agosto de 2026 el propietario las resolvió como `DEC-050`, `DEC-051` y `DEC-052`, desbloqueando `HU-005`–`HU-008` y `HU-011`. Al implementar `HU-005` (issue `#44`) el 13 de agosto de 2026 aparecieron dos vacíos más (`DP-SEG-07`, `DP-SEG-08`), resueltos el mismo día como `DEC-057` y `DEC-058`.
 
 Las 41 dudas y la contradicción `CT-001` recibieron respuesta del propietario en [respuesta-dudas-pendientes.txt](../../respuesta-manuales/respuesta-dudas-pendientes.txt). No queda ninguna decisión abierta de este lote.
 
@@ -90,12 +90,10 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 | `DP-SEG-04` | Mecanismo y duración de la sesión larga del barbero | Cookie `HttpOnly`+`Secure`+`SameSite`, token opaco revocable en `staff_session`, 30 días con renovación por uso. | `DEC-050` |
 | `DP-SEG-05` | Canal del código de recuperación de acceso | WhatsApp oficial y correo, mismo proveedor de `DEC-027`. | `DEC-051` |
 | `DP-SEG-06` | Ventana y escalamiento del límite de acceso por IP | Ventana de 15 minutos; escalamiento a verificación telefónica de 24 horas. | `DEC-052` |
+| `DP-SEG-07` | Atributos exactos de la cookie de sesión (`SameSite`, `Path`, `Domain`, nombre) | `barberia_session`, `Path=/api/v1`, `SameSite=Lax`, sin `Domain`, 30 días. | `DEC-057` |
+| `DP-SEG-08` | Evidencia de aislamiento de `CA-005-05` sin un endpoint privado real todavía | Dividida: `HU-005` prueba aislamiento a nivel PostgreSQL/RLS; `HU-006` prueba end-to-end contra el logout real (`CA-006-07`). | `DEC-058` |
 
-## 2 bis. Dudas abiertas
-
-Ninguna. Las tres dudas de seguridad detectadas al redactar B0 (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`) se resolvieron el 2026-08-11 como `DEC-050`, `DEC-051` y `DEC-052` (tabla de la sección 2) y desbloquean `HU-005`–`HU-008` y `HU-011`.
-
-Al resolverse cada una se aplica el flujo de la sección 3: `DEC-*`, propagación, conservación de la fila y `CT-*` si revela un conflicto.
+Al resolverse cada duda se aplica el flujo de la sección 3: `DEC-*`, propagación, conservación de la fila y `CT-*` si revela un conflicto.
 
 ## 3. Criterio para nuevas dudas
 

@@ -13,6 +13,10 @@ import (
 	"syscall"
 	"time"
 
+	"system-barbershop/internal/modules/auth"
+	authhttpapi "system-barbershop/internal/modules/auth/httpapi"
+	authpostgres "system-barbershop/internal/modules/auth/postgres"
+	"system-barbershop/internal/platform/clock"
 	"system-barbershop/internal/platform/config"
 	"system-barbershop/internal/platform/database"
 	"system-barbershop/internal/platform/httpserver"
@@ -55,6 +59,22 @@ func run() error {
 	router := httpserver.NewRouter(logger)
 	router.Get("/health", httpserver.HealthHandler())
 	router.Get("/health/db", httpserver.DatabaseHealthHandler(db))
+
+	// HU-005: inicio de sesión, público (DEC-055, sin middleware de
+	// autenticación). El servicio no importa Chi ni PostgreSQL; solo el
+	// repositorio (authpostgres) y el handler (authhttpapi) lo hacen.
+	loginService, err := auth.NewLoginService(
+		authpostgres.New(db),
+		auth.NewArgon2Hasher(),
+		auth.NewCryptoTokenGenerator(),
+		clock.System{},
+	)
+	if err != nil {
+		logger.Error("no se pudo iniciar el servicio de inicio de sesión")
+		return errors.New("auth: fallo al iniciar LoginService")
+	}
+	loginHandler := authhttpapi.NewLoginHandler(loginService, authhttpapi.DefaultCookieConfig())
+	router.Post("/api/v1/public/auth/login", loginHandler.ServeHTTP)
 
 	server := httpserver.New(cfg.HTTPAddr, router)
 

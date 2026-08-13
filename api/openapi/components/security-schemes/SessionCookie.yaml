@@ -1,0 +1,29 @@
+# Esquema de seguridad de la sesión del barbero (DEC-050): cookie opaca,
+# emitida por POST /auth/login (HU-005) y consumida por toda operación bajo
+# /api/v1/private (HU-006). El login en sí usa security: [] (es la
+# operación que EMITE la cookie, no puede exigirla); este esquema se define
+# aquí porque ya refleja el mecanismo real implementado por HU-005, para que
+# HU-006 lo reutilice sin inventar un segundo esquema paralelo
+# (docs/06-api/estandar-openapi.md sección 13.2).
+#
+# Este archivo existe como referencia lista para HU-006, pero NO está
+# registrado todavía en openapi.yaml#/components/securitySchemes: el ruleset
+# recommended-strict de Redocly (no-unused-components) rechaza un esquema de
+# seguridad sin ninguna operación que lo use, y HU-005 no tiene ninguna
+# operación privada real que referenciarlo (ver DP-SEG-08 en
+# docs/00-control/dudas-pendientes.md). HU-006 lo registra en el mismo
+# cambio en que agregue la primera operación protegida.
+#
+# El nombre exacto de la cookie, su SameSite, Path y ausencia de Domain son
+# una elección PROVISIONAL de implementación (ver DP-SEG-07 en
+# docs/00-control/dudas-pendientes.md): DEC-050 fija HttpOnly+Secure+SameSite
+# pero no el valor exacto de SameSite ni los demás atributos. Esta
+# descripción se actualiza si el propietario confirma valores distintos.
+type: apiKey
+in: cookie
+name: barberia_session
+description: >
+  Cookie de sesión opaca y revocable (DEC-050). HttpOnly, Secure,
+  SameSite=Lax (provisional, DP-SEG-07), 30 días de vigencia desde la
+  emisión. El valor no tiene significado fuera del servidor: es un token
+  aleatorio cuyo hash SHA-256 se compara contra staff_session.token_hash.

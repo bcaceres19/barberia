@@ -1,0 +1,22 @@
+# Cuerpo bien formado (JSON válido, campos conocidos) que incumple una
+# validación de campo, distinto de InvalidRequestProblem (JSON o sintaxis
+# inválida, docs/06-api/estandar-openapi.md sección 11, filas 400 y 422).
+description: El cuerpo es JSON válido, pero un campo incumple una validación (ausente, vacío o fuera de largo).
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      campoObligatorioAusente:
+        summary: Falta un campo obligatorio
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: password es obligatorio
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
