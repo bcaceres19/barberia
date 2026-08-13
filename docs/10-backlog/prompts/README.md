@@ -132,7 +132,7 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 
 | Prompt | Tipo | HU | Issue | Estado | Dependencias | Rama / PR |
 | --- | --- | --- | --- | --- | --- | --- |
-| [PROMPT-HU-003-v1](hu/hu-003-contrato-http.md) | `hu` | `HU-003` | Pendiente | `draft` | `HU-002` terminada | — |
+| [PROMPT-HU-003-v1](hu/hu-003-contrato-http.md) | `hu` | `HU-003` | [#37](https://github.com/bcaceres19/barberia/issues/37) | `executed` | `HU-002` terminada | `feat/37-hu003-contrato-http` / [#38](https://github.com/bcaceres19/barberia/pull/38) |
 | [PROMPT-HU-004-v1](hu/hu-004-idempotencia.md) | `hu` | `HU-004` | Pendiente | `draft` | `HU-003` integrada | — |
 | [PROMPT-HU-009-v1](hu/hu-009-sistema-visual.md) | `hu` | `HU-009` | Pendiente | `draft` | Secuencia tras `HU-004` | — |
 

@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-003-v1"
 version: "1.0"
 kind: "hu"
-status: "draft"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -10,12 +10,12 @@ repository: "bcaceres19/barberia"
 base_branch: "main"
 primary_hu: "HU-003"
 related_hu: []
-issue: "pending"
-issue_url: null
+issue: 37
+issue_url: "https://github.com/bcaceres19/barberia/issues/37"
 suggested_issue_title: "feat(api): implementar HU-003 contrato HTTP base y errores uniformes"
-branch: null
-pr: null
-pr_url: null
+branch: "feat/37-hu003-contrato-http"
+pr: 38
+pr_url: "https://github.com/bcaceres19/barberia/pull/38"
 depends_on:
   - "HU-001 integrada"
   - "HU-002 integrada"
@@ -52,7 +52,7 @@ source_docs:
   - "docs/06-api/estandar-openapi.md"
   - "api/openapi/openapi.yaml"
 created_at: "2026-08-12"
-updated_at: "2026-08-12"
+updated_at: "2026-08-13"
 supersedes: "docs/10-backlog/prompts-implementacion.md#prompt-de-hu-003--contrato-http-base-y-registro-sin-datos-personales"
 superseded_by: null
 ---
