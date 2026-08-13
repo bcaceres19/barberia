@@ -22,6 +22,12 @@ antes de agregar código.
 - **Inicio de sesión (HU-005)**: `internal/modules/auth` implementa
   `POST /api/v1/public/auth/login` (`DEC-055`, sin middleware de
   autenticación). Ver la sección "Inicio de sesión (HU-005)" más abajo.
+- **Sesión persistente y cierre de sesión (HU-006)**: middleware de sesión
+  (paso 8 del orden de middleware) montado sobre el subrouter real de
+  `/api/v1/private` que `httpserver.NewRouter` devuelve, renovación
+  deslizante de 30 días y `POST /api/v1/private/auth/logout`, el primer
+  endpoint privado real del sistema. Ver la sección "Sesión persistente y
+  cierre de sesión (HU-006)" más abajo.
 
 ## Requisitos
 
@@ -42,6 +48,7 @@ go test -race ./internal/platform/database/...
 go test -race ./internal/platform/idempotency/...
 go test -race ./internal/platform/httpserver/...
 go test -race ./internal/modules/auth/...
+go test -race ./cmd/api/...
 ```
 
 ## Patrón obligatorio: errores uniformes y router (HU-003)
@@ -378,13 +385,92 @@ de extremo a extremo con un endpoint privado real.
 
 | Criterio | Estado | Prueba o evidencia |
 | --- | --- | --- |
-| `CA-005-01` | Parcial | Emisión de sesión asociada a usuario y barbería: cumplido y probado (`TestLogin_Success_CreatesSessionWithHashedToken`, `TestLoginHandler_Success_SetsCookieWithoutTokenInBody`, `TestCreateSession_PersistsRetrievableSessionScopedToTenant`). "Solicitudes privadas posteriores operan con ese contexto": bloqueado, ver `DP-SEG-08`. |
+| `CA-005-01` | Cumplido | Emisión de sesión asociada a usuario y barbería (`TestLogin_Success_CreatesSessionWithHashedToken`, `TestLoginHandler_Success_SetsCookieWithoutTokenInBody`, `TestCreateSession_PersistsRetrievableSessionScopedToTenant`). "Solicitudes privadas posteriores operan con ese contexto": completado por `HU-006` (`TestSession_HTTP_ReusedCookieOnFreshRequest_StaysAuthenticatedWithoutCredentials`, `DEC-058`). |
 | `CA-005-02` | Cumplido | `TestLogin_StructuralNonEnumeration_SameShapeForUnknownEmailAndWrongPassword`, `TestLoginHandler_UnknownEmail_ReturnsIdenticalProblemToWrongPassword`, `TestLookupCredential_UnresolvedTenant_UsesDecoyWithoutError`, sección "CA-005-01/02/07" de `hu005_aislamiento_credenciales_sesiones.sql`. |
 | `CA-005-03` | Cumplido | `password.go` (argon2id, parámetros OWASP, sal `crypto/rand` por llamada), `TestArgon2Hasher_TwoUsersSamePassword_ProduceDistinctEncodedValues`, `staff_credential_password_hash_ck` + sección "Formato" de la suite SQL. |
 | `CA-005-04` | Cumplido | `TestLoginHandler_ThroughFullRouter_NeverLogsSensitiveValues`, `TestLoginHandler_Success_SetsCookieWithoutTokenInBody`, `TestLoginHandler_InternalRepositoryError_ReturnsSafe500`. |
-| `CA-005-05` | Bloqueado | Aislamiento de `staff_session` por tenant demostrado contra PostgreSQL real (`TestLookupCredential_CrossTenant_NeverLeaksAcrossShops`, `TestCreateSession_PersistsRetrievableSessionScopedToTenant`, sección RLS de la suite SQL). La verificación literal "contra un endpoint privado real" queda bloqueada: ver `DP-SEG-08` en `docs/00-control/dudas-pendientes.md`. |
+| `CA-005-05` | Cumplido | Aislamiento de `staff_session` por tenant demostrado contra PostgreSQL real (`TestLookupCredential_CrossTenant_NeverLeaksAcrossShops`, `TestCreateSession_PersistsRetrievableSessionScopedToTenant`, sección RLS de la suite SQL). La verificación end-to-end "contra un endpoint privado real" la completa `HU-006` (`CA-006-07`, `TestLogout_HTTP_SessionOfShopA_NeverExecutesShopBsLogout`, `DEC-058`). |
 | `CA-005-06` | Cumplido | `api/openapi/paths/public-auth.yaml` escrito antes del handler; `openapi:lint`/`openapi:bundle` en verde; `contract_test.go` (4 pruebas) compara los DTO Go y la operación real contra el YAML fuente. |
-| `CA-005-07` | Parcial | "No puede iniciar sesión": cumplido (`TestResolveLoginTenant_InactiveAndUnknown_BothReturnNotFound`, `TestLogin_InactiveUser_IsIndistinguishableFromUnknownEmail`, `TestLoginHandler_InactiveUser_SameProblemAsUnknownEmail`, sección CA-005-07 de la suite SQL). "No conserva sesiones vigentes" tras una desactivación posterior a la emisión exige el middleware de validación de `HU-006` (fuera de alcance de `HU-005`) para probarse de extremo a extremo. |
+| `CA-005-07` | Cumplido | "No puede iniciar sesión": `TestResolveLoginTenant_InactiveAndUnknown_BothReturnNotFound`, `TestLogin_InactiveUser_IsIndistinguishableFromUnknownEmail`, `TestLoginHandler_InactiveUser_SameProblemAsUnknownEmail`, sección CA-005-07 de la suite SQL. "No conserva sesiones vigentes" tras una desactivación posterior a la emisión: cerrado por `HU-006` (`TestValidateAndRenewSession_InactiveUser_NeverRenews`), que reconfirma `is_active` en cada uso de la sesión. |
+
+## Sesión persistente y cierre de sesión (HU-006)
+
+`internal/modules/auth` extiende el módulo de `HU-005` con la validación de
+una sesión ya emitida, su renovación deslizante y su cierre. El núcleo
+(`session_service.go`) sigue sin importar Chi, `net/http`, pgx ni
+`internal/platform/database` (CA-002-06); `postgres/session_repository.go`
+implementa el puerto `auth.SessionRepository` contra `database.DB`;
+`httpapi/middleware.go` y `httpapi/logout_handler.go` son la capa HTTP. No se
+agregó ninguna migración: `staff_session` y la función
+`authn_resolve_session_tenant` ya existían desde
+`20260813120000_create_auth_credentials_and_sessions.sql` (`HU-005`), sin
+consumidor hasta ahora.
+
+### Middleware de sesión: dónde vive y cómo se monta
+
+`httpserver.NewRouter` ahora devuelve dos valores: el `*chi.Mux` completo y
+el subrouter real montado en `/api/v1/private`. `cmd/api.buildRouter` monta
+`SessionMiddleware.RequireSession` con `private.Use(...)` **antes** de
+registrar ninguna ruta sobre ese subrouter (chi exige ese orden) y toda ruta
+privada futura se registra sobre él, nunca con el patrón completo sobre el
+`*chi.Mux` (eso saltaría el middleware: ver el control negativo
+`TestPrivateSubrouter_BypassingItSkipsTheMiddleware` en
+`internal/platform/httpserver/private_router_wiring_test.go`). Es el paso 8
+del orden de middleware (`docs/04-arquitectura/backend-go.md` sección 6);
+`DEC-055` ya dejó el login fuera de este subrouter, así que no existe
+ninguna excepción de arranque sin sesión que mantener (`CT-003` resuelta).
+
+### Validación con renovación deslizante, en una única sentencia atómica
+
+`SessionRepository.ValidateAndRenewSession` reconfirma, dentro de la
+transacción tenant-aware (la resolución previa con
+`authn_resolve_session_tenant` NUNCA sustituye esta autorización final):
+`revoked_at IS NULL`, `expires_at > now` y `staff_user.is_active`, y si la
+sesión sigue vigente extiende `last_used_at`/`expires_at` a 30 días desde el
+uso (`DEC-050`) en la MISMA sentencia `UPDATE ... FROM ... RETURNING`. No
+hace falta un `SELECT ... FOR UPDATE` aparte: el `UPDATE` ya toma el bloqueo
+de fila necesario, así que una renovación y una revocación concurrentes
+sobre la misma sesión quedan serializadas por PostgreSQL sin ninguna
+coordinación adicional en Go, y el resultado final siempre queda revocado
+(ver `TestValidateAndRenewSession_ConcurrentWithRevoke_FinalStateAlwaysRevoked`).
+
+### Cierre de sesión: solo la sesión actual, efecto idempotente
+
+`POST /api/v1/private/auth/logout` fija `revoked_at` únicamente en la fila
+de la sesión que el middleware ya validó para esa solicitud
+(`auth.Principal.SessionID`, nunca un identificador que llegue del cliente:
+el contrato no acepta ninguno) y limpia la cookie con los mismos
+`Path`/`SameSite`/`Secure`/`HttpOnly` con que `HU-005` la emitió. Repetir la
+llamada con el mismo material ya revocado nunca vuelve a ejecutar la
+operación: el middleware la detiene con el mismo `401` uniforme antes de
+llegar al handler (`CA-006-02`).
+
+### `CA-006-07`: aislamiento entre barberías contra el logout real
+
+`DEC-058` dividió la verificación de `CA-005-05`/`CA-005-01` de `HU-005`
+entre PostgreSQL/RLS (esa historia) y un endpoint privado real (esta). Como
+el contrato de logout no acepta ningún identificador de sesión objetivo -el
+tenant y la sesión se derivan exclusivamente de la cookie ya autenticada-,
+no existe ningún canal por el que la sesión de una barbería pudiera afectar
+la de otra; `TestLogout_HTTP_SessionOfShopA_NeverExecutesShopBsLogout`
+(`apps/api/cmd/api/session_integration_test.go`) lo demuestra contra el
+router de producción con dos tenants reales, y
+`TestRevokeSession_WrongTenant_NeverRevokesAnotherShopsSession`
+(`internal/modules/auth/postgres/session_repository_test.go`) añade la
+defensa en profundidad a nivel de repositorio (RLS + filtro explícito de
+`barbershop_id`).
+
+### Tabla de criterios de aceptación
+
+| Criterio | Estado | Prueba o evidencia |
+| --- | --- | --- |
+| `CA-006-01` | Cumplido | `TestSession_HTTP_ReusedCookieOnFreshRequest_StaysAuthenticatedWithoutCredentials`: una cookie persistida reutilizada en una solicitud completamente nueva sigue autenticada dentro de la vigencia, sin reenviar credenciales. |
+| `CA-006-02` | Cumplido | `TestLogout_HTTP_ReusedCookieAfterLogout_Returns401AndNeverRunsTwice`, `TestValidateAndRenewSession_RevokedSession_NeverRenewsOrReopens`, `TestRevokeSession_RevokesOwnSession_AndIsIdempotent`. |
+| `CA-006-03` | Cumplido | `TestValidateAndRenewSession_ExpiredSession_NeverRenewsOrReopens` (la fila permanece sin cambios; una sesión vencida exige un nuevo inicio de sesión). |
+| `CA-006-04` | Cumplido | `TestPrivateRouteInventory_AllRegisteredRoutesRequireSession` camina el router REAL de producción con `chi.Walk` (sin lista manual) y confirma `401` uniforme para toda ruta bajo `/api/v1/private`; `TestPrivateSubrouter_BypassingItSkipsTheMiddleware` demuestra que la técnica detecta una ruta que escapara del middleware. |
+| `CA-006-05` | Cumplido | `TestSessionMiddleware_MalformedCookie_Returns401WithoutTouchingRepository`, `TestSessionMiddleware_OversizedCookie_Returns401WithoutTouchingRepository` (forma inválida rechazada antes de tocar PostgreSQL), `TestSessionMiddleware_ThroughFullRouter_NeverLogsSessionMaterial`, `TestPrivateRoute_ThroughFullRouter_NeverLogsSessionMaterial` (ni el token ni su hash aparecen en logs ni en la URL: la cookie es el único transporte). |
+| `CA-006-06` | Cumplido | `TestLogout_HTTP_ClosingOneDeviceDoesNotAffectAnother`: dos sesiones del mismo usuario, cerrar una conserva la otra. |
+| `CA-006-07` | Cumplido | `TestLogout_HTTP_SessionOfShopA_NeverExecutesShopBsLogout` con dos tenants reales contra el logout real; `TestRevokeSession_WrongTenant_NeverRevokesAnotherShopsSession` como defensa en profundidad a nivel de repositorio. Completa `CA-005-05`/`CA-005-01` de `HU-005` (`DEC-058`). |
 
 ## Pruebas de integración
 
@@ -439,6 +525,24 @@ barbería.
 ```bash
 psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/testdata/hu005_credenciales_sesiones.sql
 go test -race ./internal/modules/auth/...
+```
+
+`internal/modules/auth/postgres/session_repository_test.go` (HU-006) usa el
+mismo `barberia_app` y la misma testdata; crea sus propias sesiones con
+tokens únicos por prueba (no depende de las sesiones fijas del fixture) y
+cubre renovación deslizante, vencimiento, revocación, usuario inactivo,
+tenant equivocado y la carrera real renovación/revocación bajo `-race`.
+
+`cmd/api/session_integration_test.go` (HU-006) construye el router REAL de
+producción (`buildRouter`, el mismo que usa `run()`) contra PostgreSQL real:
+la prueba estructural de `CA-006-04` (inventario de rutas privadas vía
+`chi.Walk`), persistencia de sesión (`CA-006-01`), reutilización tras logout
+(`CA-006-02`), cierre en un dispositivo sin afectar otro (`CA-006-06`) y
+aislamiento entre barberías contra el logout real (`CA-006-07`).
+
+```bash
+go test -race ./internal/modules/auth/postgres/...
+go test -race ./cmd/api/...
 ```
 
 ## Migraciones

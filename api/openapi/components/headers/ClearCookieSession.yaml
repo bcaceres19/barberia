@@ -1,0 +1,16 @@
+# Cabecera de la respuesta exitosa de POST /private/auth/logout (HU-006).
+# Descrita SIN valor funcional, igual que SetCookieSession.yaml
+# (docs/06-api/estandar-openapi.md sección 13.6): limpia la cookie de sesión
+# con los MISMOS Path/SameSite/Secure/HttpOnly con que HU-005 la fijó, con
+# Max-Age=0 para que el navegador la elimine de inmediato.
+description: >
+  Limpia la cookie de sesión (ver components/security-schemes/SessionCookie.yaml):
+  mismos Path=/api/v1, SameSite=Lax (provisional, DP-SEG-07 en
+  docs/00-control/dudas-pendientes.md), Secure, HttpOnly que la cookie
+  original, con Max-Age=0 para que el navegador la elimine de inmediato.
+schema:
+  type: string
+examples:
+  formaIlustrativa:
+    summary: Forma ilustrativa, no un valor real
+    value: barberia_session=; Path=/api/v1; Max-Age=0; HttpOnly; Secure; SameSite=Lax

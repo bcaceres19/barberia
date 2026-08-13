@@ -14,7 +14,7 @@
   "12": "api/openapi README",
   "13": "graphify SKILL.md",
   "14": "tsconfig.vitest.json",
-  "15": "Timeout",
+  "15": "NewSessionService",
   "16": ".prettierrc.json",
   "17": "router/index.ts",
   "18": "tsconfig.json",
@@ -99,8 +99,9 @@
   "97": "New",
   "98": "Implementar HU-006: sesión persistente y cierre de sesión",
   "99": "Implementar HU-010: pantalla de acceso",
-  "100": "RequestLogger",
-  "101": "BodyLimit",
-  "102": "WriteProblem",
-  "103": "TestRequestLogger_OnlyAllowedFieldsAndNoForbiddenContent"
+  "100": "buildRouter",
+  "101": "BaseBadge.vue",
+  "102": "BaseButton.vue",
+  "103": "contract_logout_test.go",
+  "104": "session_repository.go"
 }

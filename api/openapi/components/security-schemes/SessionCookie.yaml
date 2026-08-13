@@ -6,13 +6,12 @@
 # HU-006 lo reutilice sin inventar un segundo esquema paralelo
 # (docs/06-api/estandar-openapi.md sección 13.2).
 #
-# Este archivo existe como referencia lista para HU-006, pero NO está
-# registrado todavía en openapi.yaml#/components/securitySchemes: el ruleset
-# recommended-strict de Redocly (no-unused-components) rechaza un esquema de
-# seguridad sin ninguna operación que lo use, y HU-005 no tiene ninguna
-# operación privada real que referenciarlo (ver DP-SEG-08 en
-# docs/00-control/dudas-pendientes.md). HU-006 lo registra en el mismo
-# cambio en que agregue la primera operación protegida.
+# HU-006 registra este esquema en
+# openapi.yaml#/components/securitySchemes y lo referencia desde
+# POST /private/auth/logout (api/openapi/paths/private-auth.yaml), la
+# primera operación privada real (DP-SEG-08 resuelta como DEC-058): el
+# ruleset recommended-strict de Redocly (no-unused-components) ya no lo
+# rechaza porque existe una operación que lo usa.
 #
 # El nombre exacto de la cookie, su SameSite, Path y ausencia de Domain son
 # una elección PROVISIONAL de implementación (ver DP-SEG-07 en
