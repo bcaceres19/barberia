@@ -1,9 +1,9 @@
 ---
 titulo: "Historial de cambios documentales"
-version: "2.9"
+version: "3.0"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-11"
+ultima_actualizacion: "2026-08-13"
 documentos_relacionados:
   - "registro-decisiones.md"
   - "contradicciones.md"
@@ -29,6 +29,11 @@ Las versiones se aplican por documento. Mientras no exista historial Git, la fec
 
 | Fecha | Documento | De → a | Cambio | Motivo / evidencia | Decisiones |
 | --- | --- | --- | --- | --- | --- |
+| 2026-08-13 | `10-backlog/prompts/README.md`, `10-backlog/prompts/hu/hu-005-inicio-sesion.md`, `10-backlog/prompts/hu/hu-006-sesion-persistente.md`, `10-backlog/prompts/hu/hu-010-pantalla-acceso.md` | issue `pending` → real en los tres; `HU-005` `draft` → `ready` | Se crean los issues [#44](https://github.com/bcaceres19/barberia/issues/44) (`HU-005`), [#45](https://github.com/bcaceres19/barberia/issues/45) (`HU-006`), [#46](https://github.com/bcaceres19/barberia/issues/46) (`HU-010`) con autorización del propietario. `HU-005` pasa a `ready` (dependencias `HU-002`/`HU-003` ya integradas); `HU-006` y `HU-010` conservan `draft` porque su dependencia `HU-005 integrada` aún no se cumple. | Autorización explícita del propietario para crear los issues y comenzar la implementación, empezando por `HU-005`. | — |
+| 2026-08-13 | `registro-decisiones.md`, `contradicciones.md`, `historias-usuario.md`, `04-arquitectura/backend-go.md`, `matriz-trazabilidad.md`, `10-backlog/prompts/README.md`, `10-backlog/prompts/hu/hu-005-inicio-sesion.md`, `10-backlog/prompts/hu/hu-006-sesion-persistente.md`, `10-backlog/prompts/hu/hu-010-pantalla-acceso.md` | decisiones 1.11 → 1.12; contradicciones 1.2 → 1.3; historias 1.2 → 1.3; backend-go 1.2 → 1.3; matriz 1.18 → 1.19; catálogo de prompts 1.1 → 1.2; los tres prompts `v1.0` → `v1.1` | Se resuelven `CT-003` y `CT-004` con autorización explícita del propietario. `DEC-055`: el login se mueve a `/api/v1/public/auth/login`, fuera de `/api/v1/private`, sin excepción para `CA-006-04`. `DEC-056`: `CA-010-01` se divide entre `HU-010` (navega a `/panel`, ruta real y protegida con guard mínimo propio) y `HU-012` (cascarón completo, guard generalizado, verificación end-to-end). Se actualiza el árbol de rutas de `backend-go.md` §7, el alcance/criterios de `HU-005`/`HU-006`/`HU-010`/`HU-012`, las brechas de la matriz y el preflight/alcance de los tres prompts, que quedan sin bloqueo de contradicción abierta. | Continuación de la implementación de `HU-005`/`HU-006`/`HU-010`; ambas contradicciones bloqueaban pasar esos prompts a `ready`. Elección del propietario entre las opciones ya registradas en `CT-003`/`CT-004`. | `DEC-055`, `DEC-056` |
+| 2026-08-13 | `contradicciones.md` | 1.1 → 1.2 | Se registran `CT-003` (login dentro de un prefijo que exige sesión) y `CT-004` (acceso debe llegar a un panel que depende de la propia pantalla de acceso), ambas abiertas y con opciones sin resolver. | Preparación autocontenida de los prompts de `HU-005`, `HU-006` y `HU-010`; `AGENTS.md` prohíbe inventar una resolución antes de codificar. | — |
+| 2026-08-13 | `matriz-trazabilidad.md` | 1.17 → 1.18 | Se corrige el estado obsoleto de las dudas de B0 y se incorporan `CT-003`/`CT-004` como brechas que bloquean el paso a `ready` de las HU afectadas. | Mantener alineados el registro de contradicciones, la matriz y los prompts nuevos. | `DEC-050`–`DEC-052` |
+| 2026-08-13 | `docs/10-backlog/prompts/README.md`, `hu/hu-005-inicio-sesion.md`, `hu/hu-006-sesion-persistente.md`, `hu/hu-010-pantalla-acceso.md` | catálogo 1.0 → 1.1; tres archivos nuevos | Se persisten borradores autocontenidos para las tres siguientes HU del orden de B0, con issue pendiente, dependencias, criterios, pruebas, exclusiones y bloqueos normativos explícitos. | Solicitud del propietario y reglas de prompts persistentes de `AGENTS.md`. | `DEC-026`, `DEC-033`–`DEC-040`, `DEC-050` |
 | 2026-08-11 | `05-backend/revision-ddl-seguridad-2026-08-11.md` | nuevo → 1.0 | Se documenta la auditoría de migraciones, roles, RLS, integridad, concurrencia, privacidad e índices, sin modificar el DDL aplicado. | Solicitud expresa del propietario y revisión contra estándares del proyecto | — |
 | 2026-08-11 | `10-backlog/prompt-endurecimiento-ddl.md` | nuevo → 1.0 | Se crea el prompt maestro de ejecución por fases, con preflight, decisiones obligatorias, roll-forward y pruebas PostgreSQL reales. | Convertir los hallazgos técnicos en trabajo posterior reproducible | — |
 | 2026-08-11 | `docs/README.md` | 1.9 → 2.0 | El mapa incorpora la revisión y su prompt y corrige el estado conocido del modelo de datos. | Navegación y estado documental coherentes | — |

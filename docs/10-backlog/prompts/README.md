@@ -1,6 +1,6 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.0"
+version: "1.2"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-13"
@@ -135,6 +135,9 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-HU-003-v1](hu/hu-003-contrato-http.md) | `hu` | `HU-003` | [#37](https://github.com/bcaceres19/barberia/issues/37) | `executed` | `HU-002` terminada | `feat/37-hu003-contrato-http` / [#38](https://github.com/bcaceres19/barberia/pull/38) |
 | [PROMPT-HU-004-v1](hu/hu-004-idempotencia.md) | `hu` | `HU-004` | [#40](https://github.com/bcaceres19/barberia/issues/40) | `executed` | `HU-003` integrada | `feat/40-hu004-idempotencia` / [#41](https://github.com/bcaceres19/barberia/pull/41) |
 | [PROMPT-HU-009-v1](hu/hu-009-sistema-visual.md) | `hu` | `HU-009` | [#42](https://github.com/bcaceres19/barberia/issues/42) | `executed` | Secuencia tras `HU-004` | `feat/42-hu009-sistema-visual` / [#43](https://github.com/bcaceres19/barberia/pull/43) |
+| [PROMPT-HU-005-v1](hu/hu-005-inicio-sesion.md) (v1.1) | `hu` | `HU-005` | [#44](https://github.com/bcaceres19/barberia/issues/44) | `ready` | `HU-002`/`HU-003` integradas; `CT-003` resuelta (`DEC-055`) | — |
+| [PROMPT-HU-006-v1](hu/hu-006-sesion-persistente.md) (v1.1) | `hu` | `HU-006` | [#45](https://github.com/bcaceres19/barberia/issues/45) | `draft` | `HU-005` integrada (pendiente); `CT-003` resuelta (`DEC-055`) | — |
+| [PROMPT-HU-010-v1](hu/hu-010-pantalla-acceso.md) (v1.1) | `hu` | `HU-010` | [#46](https://github.com/bcaceres19/barberia/issues/46) | `draft` | `HU-005`/`HU-009` integradas (HU-005 pendiente); `CT-004` resuelta (`DEC-056`) | — |
 
 ## 10. Lista de control al guardar o entregar
 
