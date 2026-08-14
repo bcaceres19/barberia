@@ -1,6 +1,6 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.13"
+version: "1.14"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-13"
@@ -87,6 +87,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-056` | 2026-08-13 | Resuelve `CT-004`: `CA-010-01` se divide entre `HU-010` (navega a `/panel` protegido, mínimo) y `HU-012` (cascarón completo verificable) | `CT-004`, `CA-010-01`, `CA-012-01` | Confirmada |
 | `DEC-057` | 2026-08-13 | Resuelve `DP-SEG-07`: cookie de sesión `barberia_session`, `Path=/api/v1`, `SameSite=Lax`, sin `Domain`, 30 días | `DEC-050`, `DP-SEG-07` | Confirmada |
 | `DEC-058` | 2026-08-13 | Resuelve `DP-SEG-08`: `CA-005-05`/`CA-005-01` se dividen entre `HU-005` (aislamiento a nivel PostgreSQL/RLS) y `HU-006` (verificación end-to-end contra el logout real, nuevo `CA-006-07`) | `DP-SEG-08`, `CA-005-01`, `CA-005-05`, `CA-006-07` | Confirmada |
+| `DEC-059` | 2026-08-13 | Resuelve `DP-UX-06`: el enlace de recuperación de `CA-010-08` navega a `/recuperar-acceso`, ruta real que declara que la recuperación aún no está disponible, hasta que `HU-011` la construya | `DP-UX-06`, `CA-010-08` | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -635,3 +636,13 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** esperar a tener un endpoint real antes de mergear `HU-005` — descartada por ser circular (`HU-006` depende de `HU-005` integrada) y bloquear todo el bloque B0 sin una vía de salida; adelantar un endpoint mínimo de demostración dentro de `HU-005` — descartada por invadir el alcance de `HU-006` y arriesgar declarar cumplido un criterio con un endpoint inventado, prohibido explícitamente por el prompt de `HU-005`.
 - **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-SEG-08`), `docs/02-requisitos/historias-usuario.md` (`HU-005` `CA-005-01`/`CA-005-05`, `HU-006` nuevo `CA-006-07`), `docs/10-backlog/prompts/hu/hu-006-sesion-persistente.md`.
 - **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-SEG-08`; aprobación explícita del propietario el 2026-08-13.
+
+### DEC-059 · Resolución de `DP-UX-06`: destino provisional del enlace de recuperación
+
+- **Fecha:** 2026-08-13.
+- **Decisión:** el enlace de recuperación de acceso de `CA-010-08` navega a `/recuperar-acceso`, una ruta real y operable, cargada de forma diferida dentro de `modules/auth`. La página declara explícitamente, con un aviso informativo, que la recuperación de acceso todavía no está disponible y que `HU-011` la construirá; no simula el flujo de `HU-011` ni presenta una experiencia de producto terminada. Confirma la interpretación ya implementada en el PR de `HU-010` (issue `#46`).
+- **Responsable:** propietario del proyecto.
+- **Motivo:** de las salidas posibles, es la que no engaña al barbero (a diferencia de un enlace roto o una simulación del flujo de `HU-011`) ni invade el alcance de `HU-011`, que construirá el flujo real de recuperación.
+- **Alternativas descartadas:** un canal de contacto/soporte alterno — descartado por no estar aprobado en ningún `DEC-*` ni tener un canal de soporte definido para el MVP; dejar `CA-010-08` sin cumplir hasta que exista `HU-011` — descartado porque el criterio solo exige un enlace visible y operable, no el flujo completo, y bloquear el merge de `HU-010` por esto sería más costoso que la interpretación honesta ya aplicada.
+- **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-UX-06`), PR de `HU-010` (issue `#46`).
+- **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-UX-06`; aprobación explícita del propietario el 2026-08-13.

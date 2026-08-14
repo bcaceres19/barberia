@@ -1,7 +1,7 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "1.8"
-estado: "1 duda abierta (DP-UX-06)"
+version: "1.9"
+estado: "Sin dudas abiertas"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-13"
 documentos_relacionados:
@@ -23,15 +23,7 @@ Las 41 dudas y la contradicción `CT-001` recibieron respuesta del propietario e
 
 Este archivo conserva los códigos originales y la normalización aplicada. La fuente normativa es [registro-decisiones.md](registro-decisiones.md); el archivo de respuestas se conserva como evidencia literal.
 
-Al implementar `HU-010` (issue `#46`) el 13 de agosto de 2026 apareció una duda nueva: `DP-UX-06`, ver la tabla de dudas abiertas a continuación.
-
-## 1.1 Duda abierta
-
-| Código | Pregunta | Por qué no se resolvió por inferencia | Bloquea |
-| --- | --- | --- | --- |
-| `DP-UX-06` | ¿A qué destino navega el enlace de recuperación de acceso de `CA-010-08` mientras `HU-011` (la pantalla real de recuperación) no existe? | El prompt de `HU-010` exige un enlace visible y operable, pero prohíbe explícitamente tres salidas fáciles: una ruta de recuperación rota, una pantalla "próximamente" para aparentar cumplimiento, y construir el flujo real de `HU-011` (fuera de alcance). Ninguna fuente (`historias-usuario.md`, `registro-decisiones.md`, `dudas-pendientes.md`) define una "transición incremental aprobada" concreta para este caso; inventar una (por ejemplo, un canal de contacto de soporte no aprobado en ningún `DEC-*`) sería decidir algo que corresponde al propietario. | Cumplimiento pleno de `CA-010-08` de `HU-010`. |
-
-**Interpretación aplicada mientras se resuelve (declarada, no oculta):** el enlace es un `router-link` real y operable hacia la ruta `/recuperar-acceso`, registrada y cargada de forma diferida dentro de `modules/auth`. La página a la que lleva declara explícitamente, con `BaseAlert` variante `info`, que la recuperación de acceso todavía no está disponible y que su construcción está a cargo de `HU-011`; no simula un flujo de recuperación ni presenta una experiencia de producto terminada. Esta interpretación se documenta para que el propietario la confirme, la reemplace por otra transición o adelante `HU-011`; no se declara `CA-010-08` cumplido sin matiz en la tabla de criterios del PR de `HU-010`.
+Al implementar `HU-010` (issue `#46`) el 13 de agosto de 2026 apareció una duda nueva, `DP-UX-06`, resuelta el mismo día como `DEC-059`.
 
 Cuando la respuesta dio un rango o delegó una decisión, se escogió una configuración concreta y se documentó el límite de interpretación:
 
@@ -102,6 +94,7 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 | `DP-SEG-06` | Ventana y escalamiento del límite de acceso por IP | Ventana de 15 minutos; escalamiento a verificación telefónica de 24 horas. | `DEC-052` |
 | `DP-SEG-07` | Atributos exactos de la cookie de sesión (`SameSite`, `Path`, `Domain`, nombre) | `barberia_session`, `Path=/api/v1`, `SameSite=Lax`, sin `Domain`, 30 días. | `DEC-057` |
 | `DP-SEG-08` | Evidencia de aislamiento de `CA-005-05` sin un endpoint privado real todavía | Dividida: `HU-005` prueba aislamiento a nivel PostgreSQL/RLS; `HU-006` prueba end-to-end contra el logout real (`CA-006-07`). | `DEC-058` |
+| `DP-UX-06` | Destino del enlace de recuperación de `CA-010-08` mientras `HU-011` no existe | Ruta real `/recuperar-acceso`, cargada de forma diferida, que declara explícitamente que la recuperación aún no está disponible; no simula el flujo de `HU-011`. | `DEC-059` |
 
 Al resolverse cada duda se aplica el flujo de la sección 3: `DEC-*`, propagación, conservación de la fila y `CT-*` si revela un conflicto.
 
