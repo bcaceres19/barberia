@@ -1,16 +1,16 @@
-# Graph Report - agent-a08f8a2ee9b582718  (2026-08-13)
+# Graph Report - agent-a353b8b0b5b337b75  (2026-08-13)
 
 ## Corpus Check
-- 198 files · ~206,772 words
+- 218 files · ~233,002 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1157 nodes · 1933 edges · 104 communities (85 shown, 19 thin omitted)
-- Extraction: 86% EXTRACTED · 14% INFERRED · 0% AMBIGUOUS · INFERRED: 273 edges (avg confidence: 0.78)
+- 1248 nodes · 2064 edges · 110 communities (89 shown, 21 thin omitted)
+- Extraction: 87% EXTRACTED · 13% INFERRED · 0% AMBIGUOUS · INFERRED: 274 edges (avg confidence: 0.78)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e27afe9f`
+- Built from commit: `4d2cb667`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -22,7 +22,7 @@
 - devDependencies
 - compilerOptions
 - Plan de bloques de construcción del MVP
-- web/package.json
+- dependencies
 - compilerOptions
 - Reglas de negocio
 - package.json
@@ -36,6 +36,9 @@
 - tsconfig.json
 - apps/web index.html
 - apps/web/e2e README
+- LoginForm.vue
+- LoginPage.vue
+- openapi.d.ts
 - BaseInput.vue
 - system-barbershop
 - 3. Bloque B0 · Cimientos, seguridad y primeras pantallas
@@ -65,15 +68,14 @@
 - scripts
 - eslint-plugin-vue
 - SecurityHeaders
-- eslint
+- web/package.json
 - vitest-axe
 - @playwright/test
-- prettier
+- loginApi.test.ts
 - @types/node
 - @vue/eslint-config-prettier
 - @vue/test-utils
-- vue-tsc
-- @vue/tsconfig
+- acceso-evidencia-responsiva.spec.ts
 - @vue/eslint-config-typescript
 - handler_test.go
 - service_test.go
@@ -88,6 +90,10 @@
 - BodyLimit
 - WriteProblem
 - TestRequestLogger_OnlyAllowedFieldsAndNoForbiddenContent
+- jsdom
+- openapi-typescript
+- typescript
+- vite
 
 ## God Nodes (most connected - your core abstractions)
 1. `Reglas de negocio` - 49 edges
@@ -127,7 +133,7 @@
 - **Decisiones de seguridad para el piloto** — respuesta_manuales_respuesta_dudas_pendientes_dp_seg_01, respuesta_manuales_respuesta_dudas_pendientes_dp_seg_02, respuesta_manuales_respuesta_dudas_pendientes_dp_seg_03 [EXTRACTED 0.75]
 - **Reglas de disponibilidad y agendamiento** — respuesta_manuales_respuesta_propuestas_oc_rn_dis_04, respuesta_manuales_respuesta_propuestas_oc_rn_dis_05, respuesta_manuales_respuesta_propuestas_oc_rn_dis_06, respuesta_manuales_respuesta_propuestas_oc_rn_dis_07 [EXTRACTED 0.75]
 
-## Communities (104 total, 19 thin omitted)
+## Communities (110 total, 21 thin omitted)
 
 ### Community 0 - "Estados de las citas y máquina de transiciones"
 Cohesion: 0.26
@@ -146,8 +152,8 @@ Cohesion: 0.28
 Nodes (13): Logger, NewRouter(), assertUniformNotFoundProblem(), discardLogger(), Logger, ResponseRecorder, T, TestNewRouter_LogsMatchedRoutePatternNotRawPath() (+5 more)
 
 ### Community 4 - "devDependencies"
-Cohesion: 0.15
-Nodes (13): devDependencies, axe-core, jsdom, typescript, vite, @vitejs/plugin-vue, vitest, axe-core (+5 more)
+Cohesion: 0.13
+Nodes (15): devDependencies, axe-core, eslint, prettier, @vitejs/plugin-vue, vitest, vue-tsc, @vue/tsconfig (+7 more)
 
 ### Community 5 - "compilerOptions"
 Cohesion: 0.09
@@ -157,9 +163,9 @@ Nodes (22): compilerOptions, allowImportingTsExtensions, erasableSyntaxOnly, lib
 Cohesion: 0.12
 Nodes (16): 1. Para qué sirve este documento, 2. Criterio de ordenamiento, 3. Mapa de bloques, 4. Detalle de cada bloque, 5. Reglas de secuencia, 6. Cobertura de las 45 funciones P0, 7. Qué queda fuera de este plan, 8. Estado y siguiente paso (+8 more)
 
-### Community 7 - "web/package.json"
-Cohesion: 0.20
-Nodes (9): dependencies, vue, vue-router, name, private, type, version, vue (+1 more)
+### Community 7 - "dependencies"
+Cohesion: 0.29
+Nodes (7): dependencies, openapi-fetch, vue, vue-router, openapi-fetch, vue, vue-router
 
 ### Community 8 - "compilerOptions"
 Cohesion: 0.10
@@ -174,8 +180,8 @@ Cohesion: 0.14
 Nodes (13): description, devDependencies, @redocly/cli, name, private, scripts, openapi:bundle, openapi:check-config (+5 more)
 
 ### Community 11 - "As"
-Cohesion: 0.10
-Nodes (43): Error, Kind, Request, ResponseWriter, As(), IdempotencyConflict(), IdempotencyLocked(), Internal() (+35 more)
+Cohesion: 0.08
+Nodes (49): Error, Kind, Time, NormalizeEmail(), errInvalidCredentials(), Request, ResponseWriter, Context (+41 more)
 
 ### Community 12 - "api/openapi README"
 Cohesion: 0.15
@@ -197,9 +203,21 @@ Nodes (6): Duration, Handler, T, TestTimeout_CancelsContextWithinConfiguredDurat
 Cohesion: 0.40
 Nodes (4): printWidth, semi, singleQuote, trailingComma
 
+### Community 35 - "LoginForm.vue"
+Cohesion: 0.12
+Nodes (22): attemptedSubmit, emailError, emit, errorCount, fieldErrors, handleEmailInput(), handlePasswordInput(), LoginServerErrorSummary (+14 more)
+
+### Community 38 - "LoginPage.vue"
+Cohesion: 0.10
+Nodes (23): login(), requireSession(), LoginCredentials, LoginOutcome, RFC-9457, LoginScreenState, forgetSession(), hasRememberedSession() (+15 more)
+
+### Community 45 - "openapi.d.ts"
+Cohesion: 0.21
+Nodes (10): components, $defs, operations, paths, RFC-9457, webhooks, httpClient, isProblem() (+2 more)
+
 ### Community 48 - "BaseInput.vue"
-Cohesion: 0.14
-Nodes (16): classes, describedBy, emit, errorId, handleBlur(), handleChange(), handleFocus(), handleInput() (+8 more)
+Cohesion: 0.06
+Nodes (31): borderVar, classes, dotColorVar, emit, handleDismiss(), Props, style, surfaceVar (+23 more)
 
 ### Community 51 - "3. Bloque B0 · Cimientos, seguridad y primeras pantallas"
 Cohesion: 0.09
@@ -218,8 +236,8 @@ Cohesion: 0.13
 Nodes (24): DEC-016, JSON Schema Draft 2020-12, OpenAPI Specification 3.1.2, Redocly CLI, RFC 9457 Problem Details, RN-IDE-01: Operaciones críticas seguras ante reintentos, DEC-035: Estándar de código backend/base de datos obligatorio, Estándar de código del backend en Go (+16 more)
 
 ### Community 55 - "BarbershopID"
-Cohesion: 0.08
-Nodes (47): Context, Time, New(), Context, Pool, NewDB(), Pool, T (+39 more)
+Cohesion: 0.07
+Nodes (50): Context, Time, New(), Context, Pool, NewDB(), Pool, T (+42 more)
 
 ### Community 56 - "PostgreSQL, multi-tenancy y consultas"
 Cohesion: 0.19
@@ -234,12 +252,12 @@ Cohesion: 0.07
 Nodes (25): 1. Resultado ejecutivo, 2. Alcance y límites de la revisión, 3. Fortalezas que deben conservarse, 4.1 Bloqueantes de seguridad, concurrencia o privacidad, 4.2 Integridad y consistencia funcional, 4.3 Privilegios, rendimiento y pruebas, 4. Hallazgos priorizados, 5. Decisiones que deben registrarse antes de codificar (+17 more)
 
 ### Community 59 - "BaseDialog.vue"
-Cohesion: 0.05
-Nodes (36): borderVar, classes, dotColorVar, emit, handleDismiss(), Props, style, surfaceVar (+28 more)
+Cohesion: 0.09
+Nodes (21): classes, close(), closeButtonRef, dialogRef, emit, focusableElementsRef, handleBackdropClick(), handleCloseClick() (+13 more)
 
 ### Community 60 - "idempotency/idempotency_test.go"
-Cohesion: 0.10
-Nodes (47): ComputeFingerprint(), ParseKey(), contains(), T, indexOf(), TestComputeFingerprint_DifferentContentProducesDifferentFingerprint(), TestComputeFingerprint_IsDeterministic(), TestComputeFingerprint_MatchesStoredFormat() (+39 more)
+Cohesion: 0.11
+Nodes (44): ComputeFingerprint(), ParseKey(), contains(), T, indexOf(), TestComputeFingerprint_DifferentContentProducesDifferentFingerprint(), TestComputeFingerprint_IsDeterministic(), TestComputeFingerprint_MatchesStoredFormat() (+36 more)
 
 ### Community 61 - "Completar HU-009: sistema visual base"
 Cohesion: 0.15
@@ -286,12 +304,16 @@ Cohesion: 0.12
 Nodes (18): alertRef, borderVar, classes, emit, focusableElementsRef, handleActionClick(), handleDismiss(), handleKeyDown() (+10 more)
 
 ### Community 76 - "scripts"
-Cohesion: 0.20
-Nodes (10): scripts, build, dev, format, format:write, lint, preview, test:e2e (+2 more)
+Cohesion: 0.18
+Nodes (11): scripts, build, dev, format, format:write, generate:api, lint, preview (+3 more)
 
 ### Community 78 - "SecurityHeaders"
 Cohesion: 0.33
 Nodes (4): Handler, SecurityHeaders(), T, TestSecurityHeaders_SetsExpectedHeaders()
+
+### Community 79 - "web/package.json"
+Cohesion: 0.40
+Nodes (4): name, private, type, version
 
 ### Community 91 - "handler_test.go"
 Cohesion: 0.07
@@ -302,8 +324,8 @@ Cohesion: 0.15
 Nodes (27): Context, T, Time, newTestService(), requireInternal(), requireUnauthorized(), TestLogin_CancelledContext_NeverCallsRepository(), TestLogin_CreateSessionError_ReturnsInternal() (+19 more)
 
 ### Community 93 - "setupTestDB"
-Cohesion: 0.13
-Nodes (22): Time, NormalizeEmail(), errInvalidCredentials(), T, setupTestDB(), TestCreateSession_ConcurrentAcrossTenants_NoDataRace(), TestCreateSession_PersistsRetrievableSessionScopedToTenant(), TestLookupCredential_CrossTenant_NeverLeaksAcrossShops() (+14 more)
+Cohesion: 0.20
+Nodes (17): T, setupTestDB(), TestCreateSession_ConcurrentAcrossTenants_NoDataRace(), TestCreateSession_PersistsRetrievableSessionScopedToTenant(), TestLookupCredential_CrossTenant_NeverLeaksAcrossShops(), TestLookupCredential_ResolvedTenant_ReturnsMatchingCredential(), TestLookupCredential_UnresolvedTenant_UsesDecoyWithoutError(), TestResolveLoginTenant_ActiveUser_ResolvesOwnShop() (+9 more)
 
 ### Community 94 - "httpapi/contract_test.go"
 Cohesion: 0.18
@@ -346,24 +368,24 @@ Cohesion: 0.70
 Nodes (4): findForbiddenPattern(), T, TestFindForbiddenPattern_DetectsPoisonedLine(), TestRequestLogger_OnlyAllowedFieldsAndNoForbiddenContent()
 
 ## Knowledge Gaps
-- **365 isolated node(s):** `system-barbershop`, `schemaDoc`, `Repository`, `httprobProblem`, `requestIDKey` (+360 more)
+- **397 isolated node(s):** `system-barbershop`, `schemaDoc`, `Repository`, `httprobProblem`, `requestIDKey` (+392 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **19 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **21 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Registro de decisiones` connect `Matriz de trazabilidad` to `PostgreSQL, multi-tenancy y consultas`, `Estrategia de pruebas y controles de calidad`?**
-  _High betweenness centrality (0.043) - this node is a cross-community bridge._
-- **Why does `Estándar de documentación OpenAPI` connect `Estrategia de pruebas y controles de calidad` to `Estados de las citas y máquina de transiciones`, `Matriz de trazabilidad`, `Reglas de negocio`?**
+- **Why does `Reglas de negocio` connect `Reglas de negocio` to `Estados de las citas y máquina de transiciones`, `PostgreSQL, multi-tenancy y consultas`, `Alcance del MVP`, `Estrategia de pruebas y controles de calidad`?**
   _High betweenness centrality (0.040) - this node is a cross-community bridge._
-- **Why does `run()` connect `handler_test.go` to `New`, `NewRouter`, `BarbershopID`, `Load`, `setupTestDB`, `NewArgon2Hasher`?**
-  _High betweenness centrality (0.036) - this node is a cross-community bridge._
+- **Why does `Estándar de documentación OpenAPI` connect `Estrategia de pruebas y controles de calidad` to `Estados de las citas y máquina de transiciones`, `Matriz de trazabilidad`, `Reglas de negocio`?**
+  _High betweenness centrality (0.038) - this node is a cross-community bridge._
+- **Why does `Registro de decisiones` connect `Matriz de trazabilidad` to `PostgreSQL, multi-tenancy y consultas`, `Estrategia de pruebas y controles de calidad`?**
+  _High betweenness centrality (0.038) - this node is a cross-community bridge._
 - **Are the 15 inferred relationships involving `Reglas de negocio` (e.g. with `Reprogramación o cancelación rápida por emergencia` and `Persistencia de historial de bloqueos`) actually correct?**
   _`Reglas de negocio` has 15 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 23 inferred relationships involving `As()` (e.g. with `requireInternal()` and `requireUnauthorized()`) actually correct?**
   _`As()` has 23 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `system-barbershop`, `schemaDoc`, `Repository` to the rest of the system?**
-  _365 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _397 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Matriz de trazabilidad` be split into smaller, more focused modules?**
   _Cohesion score 0.07507914970601538 - nodes in this community are weakly interconnected._

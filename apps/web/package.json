@@ -12,9 +12,11 @@
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "test:unit": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "generate:api": "openapi-typescript ../../api/openapi/dist/openapi.yaml -o src/shared/api/generated/openapi.d.ts"
   },
   "dependencies": {
+    "openapi-fetch": "^0.17.0",
     "vue": "^3.5.40",
     "vue-router": "^4.4.0"
   },
@@ -30,6 +32,7 @@
     "eslint": "^9.11.0",
     "eslint-plugin-vue": "^9.28.0",
     "jsdom": "^25.0.0",
+    "openapi-typescript": "^7.13.0",
     "prettier": "^3.3.0",
     "typescript": "~6.0.2",
     "vite": "^8.2.0",

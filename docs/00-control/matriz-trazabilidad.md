@@ -1,6 +1,6 @@
 ---
 titulo: "Matriz de trazabilidad"
-version: "1.20"
+version: "1.21"
 estado: "Cobertura de decisiones"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-13"
@@ -85,7 +85,7 @@ La cadena exigida es:
 | Historias y criterios restantes de B1 a B6 sin redactar | Desarrollo verificable más allá de `HU-020`/`HU-021` | Revisar estas dos al cerrar B0 y redactar cada bloque al cerrar el anterior, según [plan-bloques.md](../10-backlog/plan-bloques.md) |
 | ~~`DP-SEG-04`, `DP-SEG-05` y `DP-SEG-06` abiertas~~ Resueltas por `DEC-050`–`DEC-052` (PR #11) | — | Fila conservada solo por trazabilidad; ver la fila "Sesión larga, recuperación de acceso y límite por IP" en la sección 2 |
 | ~~`CT-003`: login bajo `/api/v1/private` frente a protección obligatoria de toda ruta del prefijo~~ Resuelta por `DEC-055`: login movido a `/api/v1/public/auth/login` | — | Fila conservada solo por trazabilidad; issue real pendiente para pasar `HU-005`/`HU-006` a `ready` |
-| ~~`CT-004`: `HU-010` debe llegar a un panel que solo construye `HU-012`, dependiente de `HU-010`~~ Resuelta por `DEC-056`: `CA-010-01` dividido entre `HU-010` (`/panel` mínimo) y `HU-012` (cascarón completo) | — | Fila conservada solo por trazabilidad; issue real pendiente para pasar `HU-010` a `ready` |
+| ~~`CT-004`: `HU-010` debe llegar a un panel que solo construye `HU-012`, dependiente de `HU-010`~~ Resuelta por `DEC-056`: `CA-010-01` dividido entre `HU-010` (`/panel` mínimo) y `HU-012` (cascarón completo) | — | Fila conservada solo por trazabilidad; `HU-010` pasó a `ready`/`in_progress` con issue real [#46](https://github.com/bcaceres19/barberia/issues/46) y PR abierto contra `main` |
 | Operaciones OpenAPI, migraciones y casos de uso de B1 inexistentes | Implementación de `HU-020` y `HU-021` | Crearlos contract-first y por entrega vertical después del cierre de B0; el modelo físico de referencia no cuenta como migración |
 | Casos de prueba sin identificador ni automatización | Evidencia de cumplimiento | Implementar casos desde `03-desarrollo/estrategia-pruebas.md` y enlazarlos al criterio correspondiente |
 | Métricas sin catálogo `MP-*` | Medición del piloto | `08-piloto/metricas-piloto.md` |

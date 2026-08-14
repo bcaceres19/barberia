@@ -1,7 +1,7 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "1.7"
-estado: "Sin dudas abiertas"
+version: "1.8"
+estado: "1 duda abierta (DP-UX-06)"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-13"
 documentos_relacionados:
@@ -19,9 +19,19 @@ documentos_relacionados:
 
 **No queda ninguna duda abierta.** El 7 de agosto de 2026, al redactar las historias del bloque B0 ([historias-usuario.md](../02-requisitos/historias-usuario.md)), se detectaron tres vacíos que `DEC-026` y `DEC-027` no cubrían (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`); el 11 de agosto de 2026 el propietario las resolvió como `DEC-050`, `DEC-051` y `DEC-052`, desbloqueando `HU-005`–`HU-008` y `HU-011`. Al implementar `HU-005` (issue `#44`) el 13 de agosto de 2026 aparecieron dos vacíos más (`DP-SEG-07`, `DP-SEG-08`), resueltos el mismo día como `DEC-057` y `DEC-058`.
 
-Las 41 dudas y la contradicción `CT-001` recibieron respuesta del propietario en [respuesta-dudas-pendientes.txt](../../respuesta-manuales/respuesta-dudas-pendientes.txt). No queda ninguna decisión abierta de este lote.
+Las 41 dudas y la contradicción `CT-001` recibieron respuesta del propietario en [respuesta-dudas-pendientes.txt](../../respuesta-manuales/respuesta-dudas-pendientes.txt). No queda ninguna decisión abierta de ese lote.
 
 Este archivo conserva los códigos originales y la normalización aplicada. La fuente normativa es [registro-decisiones.md](registro-decisiones.md); el archivo de respuestas se conserva como evidencia literal.
+
+Al implementar `HU-010` (issue `#46`) el 13 de agosto de 2026 apareció una duda nueva: `DP-UX-06`, ver la tabla de dudas abiertas a continuación.
+
+## 1.1 Duda abierta
+
+| Código | Pregunta | Por qué no se resolvió por inferencia | Bloquea |
+| --- | --- | --- | --- |
+| `DP-UX-06` | ¿A qué destino navega el enlace de recuperación de acceso de `CA-010-08` mientras `HU-011` (la pantalla real de recuperación) no existe? | El prompt de `HU-010` exige un enlace visible y operable, pero prohíbe explícitamente tres salidas fáciles: una ruta de recuperación rota, una pantalla "próximamente" para aparentar cumplimiento, y construir el flujo real de `HU-011` (fuera de alcance). Ninguna fuente (`historias-usuario.md`, `registro-decisiones.md`, `dudas-pendientes.md`) define una "transición incremental aprobada" concreta para este caso; inventar una (por ejemplo, un canal de contacto de soporte no aprobado en ningún `DEC-*`) sería decidir algo que corresponde al propietario. | Cumplimiento pleno de `CA-010-08` de `HU-010`. |
+
+**Interpretación aplicada mientras se resuelve (declarada, no oculta):** el enlace es un `router-link` real y operable hacia la ruta `/recuperar-acceso`, registrada y cargada de forma diferida dentro de `modules/auth`. La página a la que lleva declara explícitamente, con `BaseAlert` variante `info`, que la recuperación de acceso todavía no está disponible y que su construcción está a cargo de `HU-011`; no simula un flujo de recuperación ni presenta una experiencia de producto terminada. Esta interpretación se documenta para que el propietario la confirme, la reemplace por otra transición o adelante `HU-011`; no se declara `CA-010-08` cumplido sin matiz en la tabla de criterios del PR de `HU-010`.
 
 Cuando la respuesta dio un rango o delegó una decisión, se escogió una configuración concreta y se documentó el límite de interpretación:
 

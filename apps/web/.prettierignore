@@ -5,3 +5,6 @@ playwright-report
 test-results
 node_modules
 pnpm-lock.yaml
+# Generado por `pnpm run generate:api` desde el bundle OpenAPI; nunca se
+# edita a mano (docs/03-desarrollo/estandar-frontend-vue.md §5.7).
+src/shared/api/generated

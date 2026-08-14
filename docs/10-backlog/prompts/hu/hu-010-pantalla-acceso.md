@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-010-v1"
 version: "1.1"
 kind: "hu"
-status: "draft"
+status: "in_progress"
 target_agents:
   - "claude"
   - "codex"
@@ -18,7 +18,7 @@ related_hu:
 issue: 46
 issue_url: "https://github.com/bcaceres19/barberia/issues/46"
 suggested_issue_title: "feat(web): implementar HU-010 pantalla de acceso"
-branch: null
+branch: "feat/46-hu010-pantalla-acceso"
 pr: null
 pr_url: null
 depends_on:
