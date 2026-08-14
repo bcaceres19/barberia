@@ -1,6 +1,6 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "1.7"
+version: "1.9"
 estado: "Sin dudas abiertas"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-13"
@@ -19,9 +19,11 @@ documentos_relacionados:
 
 **No queda ninguna duda abierta.** El 7 de agosto de 2026, al redactar las historias del bloque B0 ([historias-usuario.md](../02-requisitos/historias-usuario.md)), se detectaron tres vacíos que `DEC-026` y `DEC-027` no cubrían (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`); el 11 de agosto de 2026 el propietario las resolvió como `DEC-050`, `DEC-051` y `DEC-052`, desbloqueando `HU-005`–`HU-008` y `HU-011`. Al implementar `HU-005` (issue `#44`) el 13 de agosto de 2026 aparecieron dos vacíos más (`DP-SEG-07`, `DP-SEG-08`), resueltos el mismo día como `DEC-057` y `DEC-058`.
 
-Las 41 dudas y la contradicción `CT-001` recibieron respuesta del propietario en [respuesta-dudas-pendientes.txt](../../respuesta-manuales/respuesta-dudas-pendientes.txt). No queda ninguna decisión abierta de este lote.
+Las 41 dudas y la contradicción `CT-001` recibieron respuesta del propietario en [respuesta-dudas-pendientes.txt](../../respuesta-manuales/respuesta-dudas-pendientes.txt). No queda ninguna decisión abierta de ese lote.
 
 Este archivo conserva los códigos originales y la normalización aplicada. La fuente normativa es [registro-decisiones.md](registro-decisiones.md); el archivo de respuestas se conserva como evidencia literal.
+
+Al implementar `HU-010` (issue `#46`) el 13 de agosto de 2026 apareció una duda nueva, `DP-UX-06`, resuelta el mismo día como `DEC-059`.
 
 Cuando la respuesta dio un rango o delegó una decisión, se escogió una configuración concreta y se documentó el límite de interpretación:
 
@@ -92,6 +94,7 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 | `DP-SEG-06` | Ventana y escalamiento del límite de acceso por IP | Ventana de 15 minutos; escalamiento a verificación telefónica de 24 horas. | `DEC-052` |
 | `DP-SEG-07` | Atributos exactos de la cookie de sesión (`SameSite`, `Path`, `Domain`, nombre) | `barberia_session`, `Path=/api/v1`, `SameSite=Lax`, sin `Domain`, 30 días. | `DEC-057` |
 | `DP-SEG-08` | Evidencia de aislamiento de `CA-005-05` sin un endpoint privado real todavía | Dividida: `HU-005` prueba aislamiento a nivel PostgreSQL/RLS; `HU-006` prueba end-to-end contra el logout real (`CA-006-07`). | `DEC-058` |
+| `DP-UX-06` | Destino del enlace de recuperación de `CA-010-08` mientras `HU-011` no existe | Ruta real `/recuperar-acceso`, cargada de forma diferida, que declara explícitamente que la recuperación aún no está disponible; no simula el flujo de `HU-011`. | `DEC-059` |
 
 Al resolverse cada duda se aplica el flujo de la sección 3: `DEC-*`, propagación, conservación de la fila y `CT-*` si revela un conflicto.
 

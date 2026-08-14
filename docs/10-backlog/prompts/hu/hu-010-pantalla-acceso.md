@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-010-v1"
 version: "1.1"
 kind: "hu"
-status: "draft"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -18,9 +18,9 @@ related_hu:
 issue: 46
 issue_url: "https://github.com/bcaceres19/barberia/issues/46"
 suggested_issue_title: "feat(web): implementar HU-010 pantalla de acceso"
-branch: null
-pr: null
-pr_url: null
+branch: "feat/46-hu010-pantalla-acceso"
+pr: 52
+pr_url: "https://github.com/bcaceres19/barberia/pull/52"
 depends_on:
   - "HU-005 integrada"
   - "HU-009 integrada"
@@ -68,7 +68,7 @@ source_docs:
   - "apps/web/src/shared/ui"
   - "api/openapi/openapi.yaml"
 created_at: "2026-08-13"
-updated_at: "2026-08-13"
+updated_at: "2026-08-14"
 supersedes: "docs/10-backlog/prompts-implementacion.md#prompt-de-hu-010--pantalla-de-acceso"
 superseded_by: null
 ---

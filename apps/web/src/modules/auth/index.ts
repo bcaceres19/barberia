@@ -1,4 +1,5 @@
 // Módulo: acceso del barbero (inicio de sesión y recuperación de acceso).
-// Expondrá aquí su API pública mínima para `app` y otros módulos, según
-// docs/03-desarrollo/estandar-frontend-vue.md. Sin implementación todavía.
-export {}
+// API pública mínima para `app`, según docs/03-desarrollo/estandar-frontend-vue.md:
+// solo las rutas (cargadas de forma diferida) salen de este módulo. Los
+// componentes, el estado y el cliente API internos permanecen privados.
+export { authRoutes } from './routes'

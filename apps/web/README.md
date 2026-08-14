@@ -8,13 +8,88 @@ antes de agregar código.
 
 ## Estado
 
-Arranque de la aplicación, router con una pantalla provisional, y el
-**sistema visual base (HU-009)**: tokens (`src/styles/tokens.css`,
-`src/styles/base.css`) y cinco componentes en `src/shared/ui/` — `BaseButton`,
-`BaseInput`, `BaseAlert`, `BaseBadge`, `BaseDialog`. Ver la sección
-siguiente. Las carpetas de `modules/` conservan su `index.ts` de marcador de
-responsabilidad futura; no hay componentes de negocio, cliente API ni
-pantallas reales todavía.
+Arranque de la aplicación, router, el **sistema visual base (HU-009)**
+(tokens y cinco componentes en `src/shared/ui/`) y la **pantalla de acceso
+(HU-010)**: primer módulo de negocio real, primer cliente HTTP tipado y
+primera ruta privada. Ver las secciones siguientes. El resto de carpetas de
+`modules/` conserva su `index.ts` de marcador de responsabilidad futura.
+
+## Acceso del barbero (HU-010)
+
+Fuente normativa: `docs/02-requisitos/historias-usuario.md` (HU-010) y
+`docs/00-control/registro-decisiones.md` (`DEC-056`). Esta sección resume
+la API pública y las decisiones de implementación; no las sustituye.
+
+### Rutas
+
+`src/modules/auth/routes.ts` expone `authRoutes`, importado una sola vez
+desde `src/app/router/index.ts`:
+
+- `/acceso` (`name: "acceso"`) — pantalla de acceso, diferida.
+- `/panel` (`name: "panel"`) — ruta privada real con guard mínimo
+  (`beforeEnter: requireSession`, `src/modules/auth/guards/requireSession.ts`):
+  sin sesión válida redirige a `/acceso`; con sesión válida muestra un
+  marcador de posición autenticado sin cabecera ni navegación general.
+  `HU-012` reutiliza este guard tal cual, sin crear uno paralelo.
+- `/recuperar-acceso` (`name: "recuperar-acceso"`) — destino real (no
+  roto) del enlace de recuperación de `CA-010-08` mientras `HU-011` no
+  existe. Ver `DP-UX-06` en `docs/00-control/dudas-pendientes.md`: ninguna
+  fuente aprobada define todavía esta transición; la interpretación
+  aplicada (declarada, no oculta) es un aviso explícito de "todavía no
+  disponible", sin simular el flujo real de `HU-011`.
+
+### Guard mínimo de `/panel` y su límite conocido
+
+`requireSession` no verifica la sesión contra el servidor: la cookie
+`barberia_session` es `HttpOnly` (JavaScript no puede leerla, `DEC-050`) y
+todavía no existe ningún endpoint privado real contra el que validarla
+(`DP-SEG-08`, primer endpoint privado real = `POST /api/v1/private/auth/logout`
+de `HU-006`). El guard usa un marcador local no sensible en
+`sessionStorage` (`src/modules/auth/model/sessionMarker.ts`): guarda
+únicamente `expiresAt`, el mismo valor no secreto que `LoginResponse` ya
+expone. No es una verificación de seguridad — la autoridad real sigue
+siendo la cookie `HttpOnly` en cada solicitud privada futura.
+
+### Cliente HTTP tipado
+
+Todo acceso HTTP pasa por `src/shared/api/httpClient.ts`
+(`openapi-fetch` + tipos generados). Comando reproducible para regenerar
+los tipos tras un cambio de contrato:
+
+```bash
+# Desde la raíz del repositorio: relinta y regenera el bundle real.
+pnpm run openapi:bundle
+# Desde apps/web: genera los tipos TypeScript desde ese bundle.
+pnpm run generate:api
+```
+
+`src/shared/api/generated/openapi.d.ts` es generado; nunca se edita a
+mano (está excluido de Prettier y documentado como tal en `.prettierignore`).
+
+### Estados de error del módulo `auth`
+
+`src/modules/auth/api/loginApi.ts` traduce la respuesta real de
+`POST /public/auth/login` a `LoginOutcome` (unión discriminada), mapeando
+por `status` (nunca por `detail`): `success`, `invalid-credentials` (401),
+`validation-error` (400/422), `rate-limited` (429, aún no documentado en
+el contrato de `HU-005`; ver trabajo requerido §8 del prompt de HU-010 —
+la integración real del umbral es de `HU-007`) y `unexpected-error`
+(cualquier otro estado, con `requestId` cuando el `Problem` lo trae).
+
+### Pruebas
+
+Componente (`src/modules/auth/components/__tests__`,
+`src/modules/auth/pages/__tests__`), cliente tipado
+(`src/modules/auth/api/__tests__`), enrutamiento/guard
+(`src/modules/auth/__tests__/routes.test.ts`), accesibilidad (`vitest-axe`
+integrado en las suites anteriores) y E2E contra el API real en local
+(`e2e/acceso.spec.ts`, `e2e/acceso-evidencia-responsiva.spec.ts` con
+capturas en `e2e/evidence/`). El recorrido E2E requiere `apps/api`
+corriendo contra PostgreSQL real con las migraciones aplicadas y un
+usuario con un hash argon2id real (no el hash ficticio de
+`database/testdata/hu005_credenciales_sesiones.sql`, que solo sirve para
+probar forma/RLS); variables `E2E_EMAIL`/`E2E_PASSWORD` sobrescriben las
+credenciales de prueba por defecto.
 
 ## Sistema visual base (HU-009)
 
@@ -139,8 +214,10 @@ pnpm lint
 pnpm format
 pnpm test:unit
 pnpm test:e2e
+pnpm generate:api   # regenera shared/api/generated/openapi.d.ts desde el bundle
 ```
 
-`shared/api/generated` se agrega cuando exista un bundle OpenAPI que
-generar; Pinia se agrega solo si aparece estado compartido real entre rutas,
-según `DEC-033`.
+`pnpm dev` usa el proxy de `vite.config.ts` (`/api` → `http://localhost:8080`
+por defecto, configurable con `API_PROXY_TARGET`) para que `shared/api` use
+rutas relativas de mismo origen, igual que en despliegue real. Pinia se
+agrega solo si aparece estado compartido real entre rutas, según `DEC-033`.
