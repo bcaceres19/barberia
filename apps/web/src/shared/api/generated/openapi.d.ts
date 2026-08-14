@@ -24,6 +24,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/private/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cerrar la sesión actual
+         * @description Revoca en el servidor la sesión asociada a la cookie de sesión vigente (fija revoked_at, DEC-050) y limpia esa cookie en el navegador. No afecta ninguna otra sesión del mismo barbero (CA-006-06): cerrar sesión en un dispositivo no invalida los demás. El tenant se deriva exclusivamente de la identidad ya autenticada por la cookie, nunca de un parámetro del cliente, así que una sesión de una barbería nunca puede revocar la sesión de otra (CA-006-07, DEC-058). Repetir la llamada con el mismo material ya revocado responde 401 uniforme, igual que cualquier otra sesión inválida (CA-006-02): no ejecuta la revocación de nuevo ni produce un error distinto que revele el motivo.
+         */
+        post: operations["logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -89,6 +109,15 @@ export interface components {
         };
     };
     responses: {
+        /** @description Sesión cerrada. La cookie de sesión queda limpiada en Set-Cookie. */
+        LogoutSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                "Set-Cookie": components["headers"]["ClearCookieSession"];
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
         /** @description El recurso solicitado no existe, o existe pero pertenece a otra barbería. Ambos casos producen la misma respuesta a propósito: el cuerpo nunca revela que el recurso existe. */
         NotFoundProblem: {
             headers: {
@@ -189,6 +218,8 @@ export interface components {
     headers: {
         "X-Request-Id": unknown;
         "Set-Cookie": unknown;
+        /** @description Limpia la cookie de sesión (ver components/security-schemes/SessionCookie.yaml): mismos Path=/api/v1, SameSite=Lax (provisional, DP-SEG-07 en docs/00-control/dudas-pendientes.md), Secure, HttpOnly que la cookie original, con Max-Age=0 para que el navegador la elimine de inmediato. */
+        ClearCookieSession: string;
         /** @description Identificador de correlación de la solicitud. El cliente puede enviarlo; si está ausente o no cumple el formato aceptado, el servidor genera uno y lo refleja aquí. El mismo valor aparece en instance y requestId de cualquier Problem y en los registros técnicos relacionados con la solicitud. */
         XRequestId: string;
         /** @description Fija la cookie de sesión (ver components/security-schemes/SessionCookie.yaml): HttpOnly, Secure, SameSite=Lax (provisional, DP-SEG-07 en docs/00-control/dudas-pendientes.md), Path=/api/v1, vigencia de 30 días. El valor de la cookie es un token opaco aleatorio; nunca aparece en el cuerpo de la respuesta ni en ningún ejemplo de esta documentación. */
@@ -215,6 +246,20 @@ export interface operations {
             400: components["responses"]["InvalidRequestProblem"];
             401: components["responses"]["UnauthorizedProblem"];
             422: components["responses"]["ValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: components["responses"]["LogoutSuccess"];
+            401: components["responses"]["UnauthorizedProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

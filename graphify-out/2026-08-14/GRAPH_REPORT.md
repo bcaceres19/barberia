@@ -1,16 +1,16 @@
-# Graph Report - agent-a353b8b0b5b337b75  (2026-08-14)
+# Graph Report - agent-aaf9df19eb928642f  (2026-08-13)
 
 ## Corpus Check
-- 229 files · ~242,821 words
+- 209 files · ~217,001 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1379 nodes · 2436 edges · 105 communities (84 shown, 21 thin omitted)
-- Extraction: 85% EXTRACTED · 15% INFERRED · 0% AMBIGUOUS · INFERRED: 366 edges (avg confidence: 0.78)
+- 1288 nodes · 2305 edges · 105 communities (86 shown, 19 thin omitted)
+- Extraction: 84% EXTRACTED · 16% INFERRED · 0% AMBIGUOUS · INFERRED: 365 edges (avg confidence: 0.78)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b2d351ca`
+- Built from commit: `4d2cb667`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -36,16 +36,13 @@
 - tsconfig.json
 - apps/web index.html
 - apps/web/e2e README
-- loginApi.test.ts
-- LoginForm.vue
-- openapi.d.ts
 - BaseInput.vue
 - system-barbershop
 - 3. Bloque B0 · Cimientos, seguridad y primeras pantallas
 - 3. Prompts por historia
 - Alcance del MVP
 - Estrategia de pruebas y controles de calidad
-- buildRouter
+- BarbershopID
 - PostgreSQL, multi-tenancy y consultas
 - Load
 - Inicio del prompt
@@ -62,20 +59,21 @@
 - TestNoDatabaseImportsInDomain
 - idempotency_concurrency_two_connections.sh
 - notification_lease_concurrency_two_connections.sh
-- httpserver/idempotency_test.go
+- RequestID
 - vitest-axe.d.ts
 - BaseAlert.vue
 - scripts
 - eslint-plugin-vue
 - SecurityHeaders
-- acceso-evidencia-responsiva.spec.ts
+- eslint
 - vitest-axe
 - @playwright/test
+- prettier
 - @types/node
 - @vue/eslint-config-prettier
 - @vue/test-utils
-- jsdom
-- openapi-typescript
+- vue-tsc
+- @vue/tsconfig
 - @vue/eslint-config-typescript
 - handler_test.go
 - service_test.go
@@ -83,10 +81,12 @@
 - httpapi/contract_test.go
 - NewArgon2Hasher
 - Implementar HU-005: inicio de sesión seguro del barbero
-- typescript
+- New
 - Implementar HU-006: sesión persistente y cierre de sesión
 - Implementar HU-010: pantalla de acceso
-- vite
+- buildRouter
+- BaseBadge.vue
+- BaseButton.vue
 - contract_logout_test.go
 
 ## God Nodes (most connected - your core abstractions)
@@ -127,7 +127,7 @@
 - **Decisiones de seguridad para el piloto** — respuesta_manuales_respuesta_dudas_pendientes_dp_seg_01, respuesta_manuales_respuesta_dudas_pendientes_dp_seg_02, respuesta_manuales_respuesta_dudas_pendientes_dp_seg_03 [EXTRACTED 0.75]
 - **Reglas de disponibilidad y agendamiento** — respuesta_manuales_respuesta_propuestas_oc_rn_dis_04, respuesta_manuales_respuesta_propuestas_oc_rn_dis_05, respuesta_manuales_respuesta_propuestas_oc_rn_dis_06, respuesta_manuales_respuesta_propuestas_oc_rn_dis_07 [EXTRACTED 0.75]
 
-## Communities (105 total, 21 thin omitted)
+## Communities (105 total, 19 thin omitted)
 
 ### Community 0 - "Estados de las citas y máquina de transiciones"
 Cohesion: 0.26
@@ -142,12 +142,12 @@ Cohesion: 0.05
 Nodes (43): Respuestas a dudas pendientes del proyecto, Notificaciones y recordatorios creados en el momento, Elección de PostgreSQL, Multi-tenant compartido con buenas prácticas de consulta, Retención de datos de 24 meses configurable, Arquitectura backend económica en recursos, Bloqueos de horario manuales y recurrentes, Horario laboral configurable por el barbero (+35 more)
 
 ### Community 3 - "NewRouter"
-Cohesion: 0.07
-Nodes (36): Time, alwaysUnauthorized(), chiWalkFinds(), Handler, Mux, T, TestPrivateSubrouter_BypassingItSkipsTheMiddleware(), TestPrivateSubrouter_MiddlewareAppliesToRoutesRegisteredOnIt() (+28 more)
+Cohesion: 0.11
+Nodes (27): alwaysUnauthorized(), chiWalkFinds(), Handler, Mux, T, TestPrivateSubrouter_BypassingItSkipsTheMiddleware(), TestPrivateSubrouter_MiddlewareAppliesToRoutesRegisteredOnIt(), Logger (+19 more)
 
 ### Community 4 - "devDependencies"
-Cohesion: 0.13
-Nodes (15): devDependencies, axe-core, eslint, prettier, @vitejs/plugin-vue, vitest, vue-tsc, @vue/tsconfig (+7 more)
+Cohesion: 0.15
+Nodes (13): devDependencies, axe-core, jsdom, typescript, vite, @vitejs/plugin-vue, vitest, axe-core (+5 more)
 
 ### Community 5 - "compilerOptions"
 Cohesion: 0.09
@@ -158,8 +158,8 @@ Cohesion: 0.12
 Nodes (16): 1. Para qué sirve este documento, 2. Criterio de ordenamiento, 3. Mapa de bloques, 4. Detalle de cada bloque, 5. Reglas de secuencia, 6. Cobertura de las 45 funciones P0, 7. Qué queda fuera de este plan, 8. Estado y siguiente paso (+8 more)
 
 ### Community 7 - "web/package.json"
-Cohesion: 0.17
-Nodes (11): dependencies, openapi-fetch, vue, vue-router, name, private, type, version (+3 more)
+Cohesion: 0.20
+Nodes (9): dependencies, vue, vue-router, name, private, type, version, vue (+1 more)
 
 ### Community 8 - "compilerOptions"
 Cohesion: 0.10
@@ -175,7 +175,7 @@ Nodes (13): description, devDependencies, @redocly/cli, name, private, scripts, 
 
 ### Community 11 - "As"
 Cohesion: 0.07
-Nodes (53): Error, Kind, Time, NormalizeEmail(), errInvalidCredentials(), Time, Request, ResponseWriter (+45 more)
+Nodes (52): Error, Kind, Time, NormalizeEmail(), errInvalidCredentials(), Time, Request, ResponseWriter (+44 more)
 
 ### Community 12 - "api/openapi README"
 Cohesion: 0.15
@@ -190,20 +190,12 @@ Cohesion: 0.20
 Nodes (9): compilerOptions, tsBuildInfoFile, types, extends, include, node, src/**/*.spec.ts, jsdom (+1 more)
 
 ### Community 15 - "NewSessionService"
-Cohesion: 0.08
-Nodes (39): NewLogoutHandler(), T, newLogoutHandler(), TestLogoutHandler_MissingPrincipalInContext_ReturnsSafe500(), TestLogoutHandler_ServiceFailure_ReturnsSafe500(), TestLogoutHandler_Success_RevokesAndClearsCookie(), Handler, Context (+31 more)
+Cohesion: 0.09
+Nodes (37): NewLogoutHandler(), T, newLogoutHandler(), TestLogoutHandler_MissingPrincipalInContext_ReturnsSafe500(), TestLogoutHandler_ServiceFailure_ReturnsSafe500(), TestLogoutHandler_Success_RevokesAndClearsCookie(), Context, Time (+29 more)
 
 ### Community 16 - ".prettierrc.json"
 Cohesion: 0.40
 Nodes (4): printWidth, semi, singleQuote, trailingComma
-
-### Community 38 - "LoginForm.vue"
-Cohesion: 0.05
-Nodes (45): login(), attemptedSubmit, emailError, emit, errorCount, fieldErrors, handleEmailInput(), handlePasswordInput() (+37 more)
-
-### Community 45 - "openapi.d.ts"
-Cohesion: 0.21
-Nodes (10): components, $defs, operations, paths, RFC-9457, webhooks, httpClient, isProblem() (+2 more)
 
 ### Community 48 - "BaseInput.vue"
 Cohesion: 0.14
@@ -225,29 +217,29 @@ Nodes (12): DEC-019: El MVP administra uno o varios barberos, Alcance del MVP, F
 Cohesion: 0.13
 Nodes (24): DEC-016, JSON Schema Draft 2020-12, OpenAPI Specification 3.1.2, Redocly CLI, RFC 9457 Problem Details, RN-IDE-01: Operaciones críticas seguras ante reintentos, DEC-035: Estándar de código backend/base de datos obligatorio, Estándar de código del backend en Go (+16 more)
 
-### Community 55 - "buildRouter"
+### Community 55 - "BarbershopID"
 Cohesion: 0.07
-Nodes (50): buildRouter(), Logger, Mux, main(), run(), createSessionCookie(), discardLogger(), doLogoutRequest() (+42 more)
+Nodes (51): Context, Repository, Time, New(), Context, Repository, Time, Context (+43 more)
 
 ### Community 56 - "PostgreSQL, multi-tenancy y consultas"
 Cohesion: 0.19
 Nodes (15): Atlas CLI, Flyway, golang-migrate, Goose, RN-CON-03: La base de datos debe impedir el cruce, RN-DIS-05: Intervalos semiabiertos [inicio, fin), RN-TEN-01: Ninguna barbería accede a datos de otra, Restricción de exclusión appointment_no_overlap (+7 more)
 
 ### Community 57 - "Load"
-Cohesion: 0.11
-Nodes (32): main(), run(), getEnv(), getEnvDuration(), getEnvInt(), Duration, Load(), redactDSN() (+24 more)
+Cohesion: 0.20
+Nodes (23): getEnv(), getEnvDuration(), getEnvInt(), Duration, Load(), redactDSN(), requireTLS(), baseLocalEnv() (+15 more)
 
 ### Community 58 - "Inicio del prompt"
 Cohesion: 0.07
 Nodes (25): 1. Resultado ejecutivo, 2. Alcance y límites de la revisión, 3. Fortalezas que deben conservarse, 4.1 Bloqueantes de seguridad, concurrencia o privacidad, 4.2 Integridad y consistencia funcional, 4.3 Privilegios, rendimiento y pruebas, 4. Hallazgos priorizados, 5. Decisiones que deben registrarse antes de codificar (+17 more)
 
 ### Community 59 - "BaseDialog.vue"
-Cohesion: 0.05
-Nodes (36): borderVar, classes, dotColorVar, emit, handleDismiss(), Props, style, surfaceVar (+28 more)
+Cohesion: 0.09
+Nodes (21): classes, close(), closeButtonRef, dialogRef, emit, focusableElementsRef, handleBackdropClick(), handleCloseClick() (+13 more)
 
 ### Community 60 - "idempotency/idempotency_test.go"
 Cohesion: 0.10
-Nodes (47): ComputeFingerprint(), ParseKey(), contains(), T, indexOf(), TestComputeFingerprint_DifferentContentProducesDifferentFingerprint(), TestComputeFingerprint_IsDeterministic(), TestComputeFingerprint_MatchesStoredFormat() (+39 more)
+Nodes (46): ComputeFingerprint(), ParseKey(), contains(), T, indexOf(), TestComputeFingerprint_DifferentContentProducesDifferentFingerprint(), TestComputeFingerprint_IsDeterministic(), TestComputeFingerprint_MatchesStoredFormat() (+38 more)
 
 ### Community 61 - "Completar HU-009: sistema visual base"
 Cohesion: 0.15
@@ -281,9 +273,9 @@ Nodes (7): 1. Relación con `prompts-implementacion.md`, 2. Estado real del repo
 Cohesion: 0.40
 Nodes (4): 1. Introducción, Cómo se corresponde con el ejemplo de referencia, Nota sobre las referencias, Sistema de agenda para barberías: reserva pública en línea con garantía de integridad de horarios
 
-### Community 73 - "httpserver/idempotency_test.go"
+### Community 73 - "RequestID"
 Cohesion: 0.06
-Nodes (53): Request, ResponseWriter, BodyLimit(), Handler, echoBodyHandler(), Request, ResponseWriter, T (+45 more)
+Nodes (41): Request, ResponseWriter, Handler, validSessionCookieShape(), Time, BodyLimit(), Handler, echoBodyHandler() (+33 more)
 
 ### Community 74 - "vitest-axe.d.ts"
 Cohesion: 0.50
@@ -294,8 +286,8 @@ Cohesion: 0.12
 Nodes (18): alertRef, borderVar, classes, emit, focusableElementsRef, handleActionClick(), handleDismiss(), handleKeyDown() (+10 more)
 
 ### Community 76 - "scripts"
-Cohesion: 0.18
-Nodes (11): scripts, build, dev, format, format:write, generate:api, lint, preview (+3 more)
+Cohesion: 0.20
+Nodes (10): scripts, build, dev, format, format:write, lint, preview, test:e2e (+2 more)
 
 ### Community 78 - "SecurityHeaders"
 Cohesion: 0.33
@@ -325,6 +317,10 @@ Nodes (9): NewArgon2Hasher(), parseEncodedHash(), T, TestArgon2Hasher_HashThenVe
 Cohesion: 0.15
 Nodes (13): Alcance incluido, Documentación y trazabilidad, Estado existente que debes conservar, Fuera de alcance, Git y PR, Implementar HU-005: inicio de sesión seguro del barbero, Instrucción para Claude o Codex, Objetivo (+5 more)
 
+### Community 97 - "New"
+Cohesion: 0.20
+Nodes (9): main(), run(), Handler, New(), Logger, NewLogger(), parseLevel(), Level (+1 more)
+
 ### Community 98 - "Implementar HU-006: sesión persistente y cierre de sesión"
 Cohesion: 0.17
 Nodes (12): Alcance incluido, Documentación y trazabilidad, Estado existente que debes conservar, Fuera de alcance, Git y PR, Implementar HU-006: sesión persistente y cierre de sesión, Instrucción para Claude o Codex, Objetivo (+4 more)
@@ -333,29 +329,41 @@ Nodes (12): Alcance incluido, Documentación y trazabilidad, Estado existente qu
 Cohesion: 0.17
 Nodes (12): Alcance incluido, Documentación y trazabilidad, Estado existente que debes conservar, Fuera de alcance, Git y PR, Implementar HU-010: pantalla de acceso, Instrucción para Claude o Codex, Objetivo (+4 more)
 
+### Community 100 - "buildRouter"
+Cohesion: 0.20
+Nodes (23): buildRouter(), Logger, Mux, main(), run(), createSessionCookie(), discardLogger(), doLogoutRequest() (+15 more)
+
+### Community 101 - "BaseBadge.vue"
+Cohesion: 0.18
+Nodes (10): borderVar, classes, dotColorVar, emit, handleDismiss(), Props, style, surfaceVar (+2 more)
+
+### Community 102 - "BaseButton.vue"
+Cohesion: 0.29
+Nodes (5): classes, emit, handleClick(), Props, axeOptions
+
 ### Community 103 - "contract_logout_test.go"
 Cohesion: 0.43
 Nodes (6): T, TestContract_LogoutOperation_MethodPathSecurityAndResponses(), TestContract_OpenAPIYAML_RegistersSessionCookieSecurityScheme(), TestContract_SessionCookieSecurityScheme_MatchesRuntimeConfig(), logoutOperation, logoutPathFile
 
 ## Knowledge Gaps
-- **398 isolated node(s):** `system-barbershop`, `schemaDoc`, `Repository`, `principalContextKey`, `httprobProblem` (+393 more)
+- **366 isolated node(s):** `system-barbershop`, `schemaDoc`, `Repository`, `principalContextKey`, `httprobProblem` (+361 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **21 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **19 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `buildRouter()` connect `buildRouter` to `NewRouter`, `NewSessionService`, `handler_test.go`, `service_test.go`, `setupTestDB`, `NewArgon2Hasher`?**
-  _High betweenness centrality (0.042) - this node is a cross-community bridge._
-- **Why does `NewRouter()` connect `NewRouter` to `As`, `httpserver/idempotency_test.go`, `handler_test.go`, `buildRouter`?**
-  _High betweenness centrality (0.040) - this node is a cross-community bridge._
-- **Why does `DB` connect `buildRouter` to `httpserver/idempotency_test.go`, `idempotency/idempotency_test.go`, `setupTestDB`, `httpapi/contract_test.go`?**
-  _High betweenness centrality (0.038) - this node is a cross-community bridge._
+- **Why does `buildRouter()` connect `buildRouter` to `NewRouter`, `NewSessionService`, `BarbershopID`, `handler_test.go`, `service_test.go`, `setupTestDB`, `NewArgon2Hasher`?**
+  _High betweenness centrality (0.048) - this node is a cross-community bridge._
+- **Why does `NewRouter()` connect `NewRouter` to `As`, `RequestID`, `handler_test.go`, `buildRouter`?**
+  _High betweenness centrality (0.047) - this node is a cross-community bridge._
+- **Why does `DB` connect `BarbershopID` to `httpapi/contract_test.go`, `buildRouter`, `setupTestDB`, `idempotency/idempotency_test.go`?**
+  _High betweenness centrality (0.043) - this node is a cross-community bridge._
 - **Are the 15 inferred relationships involving `Reglas de negocio` (e.g. with `Reprogramación o cancelación rápida por emergencia` and `Persistencia de historial de bloqueos`) actually correct?**
   _`Reglas de negocio` has 15 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 28 inferred relationships involving `As()` (e.g. with `requireInternal()` and `requireUnauthorized()`) actually correct?**
   _`As()` has 28 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `system-barbershop`, `schemaDoc`, `Repository` to the rest of the system?**
-  _398 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _366 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Matriz de trazabilidad` be split into smaller, more focused modules?**
   _Cohesion score 0.07507914970601538 - nodes in this community are weakly interconnected._
