@@ -1,0 +1,10 @@
+# Respuesta 204 de POST /private/auth/logout (HU-006). Sin cuerpo
+# (docs/06-api/estandar-openapi.md sección 11: "Un 204 no contiene body").
+# La cookie de sesión queda limpiada en Set-Cookie con los mismos atributos
+# con que HU-005 la emitió.
+description: Sesión cerrada. La cookie de sesión queda limpiada en Set-Cookie.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+  Set-Cookie:
+    $ref: '../headers/ClearCookieSession.yaml'

@@ -2,10 +2,13 @@
 # docs/06-api/estandar-openapi.md (DEC-037). No se edita el bundle generado
 # en dist/; este archivo y los que referencia son la fuente.
 #
-# HU-005 agrega la primera operación de negocio: POST /public/auth/login.
-# Los componentes de error ya eran reales desde HU-003 (recuperación de
-# panic, aislamiento por tenant, límite de cuerpo); paths queda vacío para
-# el resto de capacidades hasta su primer endpoint implementado.
+# HU-005 agregó la primera operación de negocio: POST /public/auth/login.
+# HU-006 agrega la primera operación privada real: POST
+# /private/auth/logout, que registra por primera vez
+# components/securitySchemes/SessionCookie (DEC-058). Los componentes de
+# error ya eran reales desde HU-003 (recuperación de panic, aislamiento por
+# tenant, límite de cuerpo); paths queda vacío para el resto de capacidades
+# hasta su primer endpoint implementado.
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
@@ -26,6 +29,8 @@ tags:
 paths:
   /public/auth/login:
     $ref: './paths/public-auth.yaml#/~1public~1auth~1login'
+  /private/auth/logout:
+    $ref: './paths/private-auth.yaml#/~1private~1auth~1logout'
 components:
   schemas:
     Problem:
@@ -34,15 +39,22 @@ components:
       $ref: './components/schemas/LoginRequest.yaml'
     LoginResponse:
       $ref: './components/schemas/LoginResponse.yaml'
+  securitySchemes:
+    SessionCookie:
+      $ref: './components/security-schemes/SessionCookie.yaml'
   headers:
     X-Request-Id:
       $ref: './components/headers/XRequestId.yaml'
     Set-Cookie:
       $ref: './components/headers/SetCookieSession.yaml'
+    ClearCookieSession:
+      $ref: './components/headers/ClearCookieSession.yaml'
   parameters:
     IdempotencyKey:
       $ref: './components/parameters/IdempotencyKey.yaml'
   responses:
+    LogoutSuccess:
+      $ref: './components/responses/LogoutSuccess.yaml'
     NotFoundProblem:
       $ref: './components/responses/NotFoundProblem.yaml'
     InternalErrorProblem:
