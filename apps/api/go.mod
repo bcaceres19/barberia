@@ -2,6 +2,8 @@ module system-barbershop
 
 go 1.25.0
 
+toolchain go1.25.13
+
 require (
 	github.com/go-chi/chi/v5 v5.3.1
 	github.com/jackc/pgx/v5 v5.10.0
