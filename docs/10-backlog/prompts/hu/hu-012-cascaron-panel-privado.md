@@ -18,8 +18,8 @@ issue: 56
 issue_url: "https://github.com/bcaceres19/barberia/issues/56"
 suggested_issue_title: "feat(web): implementar HU-012 cascarón del panel privado"
 branch: "feat/56-hu012-cascaron-panel"
-pr: null
-pr_url: null
+pr: 59
+pr_url: "https://github.com/bcaceres19/barberia/pull/59"
 depends_on:
   - "HU-006 integrada"
   - "HU-009 integrada"

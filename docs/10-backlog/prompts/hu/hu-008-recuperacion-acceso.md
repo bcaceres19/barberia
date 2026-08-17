@@ -1,8 +1,9 @@
 ---
 prompt_id: "PROMPT-HU-008-v1"
-version: "1.0"
+version: "1.2"
 kind: "hu"
 status: "blocked"
+status_reason: "Solo pendiente de que HU-007 se integre en main; ya no hay ninguna decisión normativa abierta (DEC-063-DEC-066)."
 target_agents:
   - "claude"
   - "codex"
@@ -24,10 +25,6 @@ depends_on:
   - "HU-005 integrada"
   - "HU-006 integrada"
   - "HU-007 integrada"
-  - "DP-NOT-05 resuelta y propagada a las fuentes"
-  - "DP-SEG-11 resuelta y propagada a las fuentes"
-  - "DP-SEG-12 resuelta y propagada a las fuentes"
-  - "CT-006 resuelta por una DEC-* y propagada"
 rules:
   - "RN-TEN-01"
   - "RN-DAT-01"
@@ -47,6 +44,10 @@ decisions:
   - "DEC-050"
   - "DEC-051"
   - "DEC-057"
+  - "DEC-063"
+  - "DEC-064"
+  - "DEC-065"
+  - "DEC-066"
 acceptance_criteria:
   - "CA-008-01"
   - "CA-008-02"
@@ -86,7 +87,7 @@ source_docs:
   - "api/openapi/openapi.yaml"
   - "api/openapi/paths/public-auth.yaml"
 created_at: "2026-08-14"
-updated_at: "2026-08-14"
+updated_at: "2026-08-17"
 supersedes: "docs/10-backlog/prompts-implementacion.md#prompt-de-hu-008--recuperación-de-acceso-con-código"
 superseded_by: null
 ---
@@ -97,39 +98,39 @@ superseded_by: null
 
 Implementa únicamente `HU-008` de extremo a extremo en backend: solicitar recuperación, verificar un código de un solo uso y establecer una contraseña nueva, con envío por WhatsApp oficial y correo conforme a `DEC-051`, no enumeración, invalidación de sesiones y pruebas reales. No construyas la pantalla Vue de `HU-011` ni conviertas el código de recuperación en el reto de `HU-007`.
 
-Este prompt está **bloqueado** por `HU-007`, `DP-NOT-05`, `DP-SEG-11`, `DP-SEG-12` y `CT-006`. El issue `#58` existe para trazabilidad, pero no autoriza elegir proveedor, política de contraseña, parámetros/artefactos del código o una salida al conflicto de no enumeración. Mientras cualquiera siga pendiente, informa el bloqueo y no cambies código.
+`DP-SEG-11`, `DP-SEG-12`, `CT-006` y `DP-NOT-05` quedaron resueltas el 2026-08-17 como `DEC-063`–`DEC-066` (ver sección siguiente). Este prompt sigue **bloqueado** únicamente porque `HU-007` todavía no está **integrada en `main`**. El issue `#58` existe para trazabilidad, pero no sustituye esa condición. Verifica en preflight que el PR de `HU-007` ya se mergeó antes de abrir rama.
 
 ## Objetivo
 
 Permitir que un barbero recupere acceso sin intervención del propietario: una solicitud pública no revela si el correo existe; una cuenta válida recibe el mismo código por los canales oficiales aprobados; el código se guarda solo en una representación resistente a recuperación, vence, limita intentos y reenvíos y se consume una vez; una verificación exitosa autoriza exactamente un cambio de contraseña; el cambio actualiza la credencial e invalida todas las sesiones activas en una misma frontera consistente.
 
-## Bloqueos que deben resolverse
-
-### `DP-NOT-05` · Proveedor oficial concreto
-
-`DEC-051` fija WhatsApp oficial y correo y remite al proveedor de `DEC-027`, pero `DEC-027` no identifica un proveedor ni existe adaptador real. La resolución debe permitir evaluar dependencia, credenciales, timeouts, idempotencia, errores parciales, costos/licencia y operación sin guardar secretos. Un puerto con fake no satisface por sí solo “funciona con el adaptador seleccionado”.
+## Bloqueos resueltos: `DP-SEG-11` → `DEC-063`, `DP-SEG-12` → `DEC-064`, `CT-006` → `DEC-065`
 
 ### `DP-SEG-11` · Política de contraseña nueva
 
-`CA-008-08` exige política mínima documentada y mensaje accionable. Argon2id gobierna cómo se almacena la contraseña, no longitud, composición ni controles de calidad. No inventes esa política ni copies una recomendación externa como decisión del producto.
+`DEC-063`: longitud 10–128 caracteres, sin exigencia de composición, rechazo si es igual al correo de la cuenta o a la contraseña actual; sin verificación contra lista externa de contraseñas filtradas en este MVP (queda como mejora futura). El mensaje de rechazo indica exactamente qué regla incumple.
 
 ### `DP-SEG-12` · Parámetros y autorización del flujo
 
-Debe fijar formato/entropía del código, representación almacenada adecuada para un secreto de baja entropía, vigencia, intentos, reenvío, identificador opaco de la solicitud y el material de un solo uso que enlaza “verificar” con “cambiar contraseña”. Tres operaciones separadas sin esa autorización permitirían saltar o repetir el tercer paso.
+`DEC-064`: código de 6 dígitos numéricos (`crypto/rand`); almacenado como `HMAC-SHA256(código, secreto de despliegue)`, nunca `SHA-256` simple; vigencia 15 min; máximo 5 intentos; reenvío con cooldown de 60 s y máximo 3/hora, invalidando atómicamente el código anterior. Solicitar y verificar se hacen siempre contra `email` (sin identificador opaco nuevo). Verificar con éxito emite un token opaco de reinicio de un solo uso, vigente 5 min (mismo patrón `CryptoTokenGenerator`/`HashToken` que el token de sesión de `HU-005`/`HU-006`), que el paso de cambiar contraseña debe presentar junto con `email`.
 
 ### `CT-006` · No enumeración frente a destino enmascarado
 
-`CA-008-01` exige respuestas idénticas para correo existente/inexistente, mientras el alcance/`CA-008-06` y `HU-011` exigen mostrar el destino real enmascarado. Un correo inexistente no tiene destino. La decisión debe fijar qué devuelve cada paso y cuándo puede mostrarse un dato enmascarado sin crear un oráculo.
+`DEC-065` (opción 1): `POST /recovery/request` siempre responde idéntico, sin destino, exista o no la cuenta. El destino enmascarado solo aparece en la respuesta exitosa de `POST /recovery/verify` — llegar ahí ya exige haber recibido y transcrito el código real, así que no abre un oráculo nuevo.
 
-Si las resoluciones cambian materialmente este cuerpo antes de iniciar, actualiza `v1` y el catálogo. Si la ejecución ya comenzó, crea `v2` con `supersedes`.
+### `DP-NOT-05` · Proveedor oficial concreto
+
+`DEC-066`: WhatsApp por **Meta WhatsApp Cloud API directo** (plantilla "Authentication" pre-aprobada, sin BSP intermediario); correo por **Resend** (o **SES** si el despliegue ya usa AWS). Puerto único en el módulo `notification`, timeout de 5 s por canal, sin reintento síncrono dentro de la solicitud HTTP, tolerante a fallo parcial de un canal sin cambiar la respuesta genérica de `DEC-065`. Credenciales por variable de entorno de despliegue, nunca en el repo; configuración validada al arrancar. Un puerto con doble de prueba (fake) no satisface por sí solo "funciona con el adaptador seleccionado": implementa también el adaptador real contra Meta/Resend.
+
+Relee `DEC-063`–`DEC-066` completas en `docs/00-control/registro-decisiones.md` antes de codificar; si encuentras una ambigüedad que no cubran, detente y regístrala como duda nueva en vez de resolverla por inferencia.
 
 ## Preflight obligatorio
 
 1. Comprueba árbol limpio, `main` actualizada por fast-forward y ausencia de cambios ajenos.
 2. Consulta Graphify por `HU-008`, `staff_recovery_code`, `staff_credential`, `staff_session`, `PasswordHasher`, sesión masiva, `notification`, OpenAPI y worker.
 3. Lee completamente cada `source_docs`; revisa la sección A.3 del modelo de referencia y los privilegios sensibles de `DEC-040`/`DDL-AUT-01`.
-4. Confirma que `HU-005`, `HU-006` y `HU-007` están integradas y sus pruebas pasan. `HU-007` no se considera satisfecha por un estado `429` simulado en frontend.
-5. Verifica que `DP-NOT-05`, `DP-SEG-11`, `DP-SEG-12` y `CT-006` estén resueltas por decisiones y propagadas a HU/arquitectura/contrato. Si falta una, detente y conserva `status: blocked`.
+4. Confirma que `HU-005`, `HU-006` y `HU-007` están **integradas en `main`** (PR mergeado) y sus pruebas pasan. `HU-007` no se considera satisfecha por un estado `429` simulado en frontend, sino por el reto real de `DEC-062` funcionando end-to-end.
+5. `DP-SEG-11`, `DP-SEG-12`, `CT-006` y `DP-NOT-05` ya están resueltas (`DEC-063`–`DEC-066`); relee las cuatro completas antes de codificar.
 6. Confirma que el issue `#58` cubre solo `HU-008`; cambia a `ready` únicamente con todas las dependencias satisfechas.
 7. Crea `feat/58-hu008-recuperacion-acceso` desde `main` actualizada y cambia el prompt a `in_progress`.
 
