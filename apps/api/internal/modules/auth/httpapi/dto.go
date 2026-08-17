@@ -51,3 +51,38 @@ type ChallengeVerifyRequest struct {
 	Email string `json:"email"`
 	Code  string `json:"code"`
 }
+
+// RecoveryRequestRequest es el cuerpo de
+// POST /api/v1/public/auth/recovery/request (HU-008, DEC-064).
+type RecoveryRequestRequest struct {
+	Email string `json:"email"`
+}
+
+// RecoveryRequestAcceptedResponse es el cuerpo de la respuesta 202,
+// siempre el mismo mensaje fijo y sin destino (no enumeración, DEC-065).
+type RecoveryRequestAcceptedResponse struct {
+	Message string `json:"message"`
+}
+
+// RecoveryVerifyRequest es el cuerpo de
+// POST /api/v1/public/auth/recovery/verify (HU-008, DEC-064).
+type RecoveryVerifyRequest struct {
+	Email string `json:"email"`
+	Code  string `json:"code"`
+}
+
+// RecoveryVerifyResponse es el cuerpo de la respuesta 200 exitosa
+// (HU-008, DEC-064/DEC-065). resetToken se devuelve una única vez.
+type RecoveryVerifyResponse struct {
+	ResetToken  string `json:"resetToken"`
+	MaskedPhone string `json:"maskedPhone"`
+	MaskedEmail string `json:"maskedEmail"`
+}
+
+// RecoveryResetPasswordRequest es el cuerpo de
+// POST /api/v1/public/auth/recovery/reset-password (HU-008, DEC-063/DEC-064).
+type RecoveryResetPasswordRequest struct {
+	Email       string `json:"email"`
+	ResetToken  string `json:"resetToken"`
+	NewPassword string `json:"newPassword"`
+}

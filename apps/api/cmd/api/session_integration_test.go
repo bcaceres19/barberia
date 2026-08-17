@@ -86,6 +86,14 @@ func testRouterConfig() config.Config {
 		PhoneChallengeRateMaxActive:         3,
 		PhoneChallengeResendCooldownSeconds: 60,
 		PhoneChallengePurgeLimit:            500,
+
+		RecoveryCodeExpiresSeconds:       900,
+		RecoveryCodeMaxAttempts:          5,
+		RecoveryResendCooldownSeconds:    60,
+		RecoveryResendWindowSeconds:      3600,
+		RecoveryResendMaxPerWindow:       3,
+		RecoveryResetTokenExpiresSeconds: 300,
+		RecoveryCodePurgeLimit:           500,
 	}
 }
 

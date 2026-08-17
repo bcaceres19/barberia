@@ -61,15 +61,17 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// HU-007 (CA-007-06): purga en lote de login_throttle y
-	// auth_phone_challenge, exclusiva de barberia_worker (DDL-AUT-01,
-	// DEC-040). El reclamo de recordatorios con SKIP LOCKED, el envío por
-	// canal y los reintentos se agregan junto con el módulo notification,
-	// según docs/05-backend/estandar-base-datos.md.
+	// HU-007/HU-008 (CA-007-06, DEC-064): purga en lote de login_throttle,
+	// auth_phone_challenge y staff_recovery_code, exclusiva de
+	// barberia_worker (DDL-AUT-01, DEC-040). El reclamo de recordatorios
+	// con SKIP LOCKED, el envío por canal y los reintentos se agregan junto
+	// con la maquinaria general de notificaciones de B5, según
+	// docs/05-backend/estandar-base-datos.md.
 	purgeService := auth.NewPurgeService(
 		authpostgres.NewPurgeRepository(db),
 		cfg.LoginThrottlePurgeLimit,
 		cfg.PhoneChallengePurgeLimit,
+		cfg.RecoveryCodePurgeLimit,
 	)
 
 	logger.Info("worker iniciado", "environment", cfg.Environment, "purge_interval", purgeInterval.String())
@@ -83,15 +85,16 @@ func run() error {
 			logger.Info("worker apagado")
 			return nil
 		case <-ticker.C:
-			loginThrottleDeleted, phoneChallengeDeleted, err := purgeService.PurgeOnce(ctx)
+			loginThrottleDeleted, phoneChallengeDeleted, recoveryCodeDeleted, err := purgeService.PurgeOnce(ctx)
 			if err != nil {
-				logger.Error("worker: fallo al purgar login_throttle/auth_phone_challenge")
+				logger.Error("worker: fallo al purgar login_throttle/auth_phone_challenge/staff_recovery_code")
 				continue
 			}
-			if loginThrottleDeleted > 0 || phoneChallengeDeleted > 0 {
+			if loginThrottleDeleted > 0 || phoneChallengeDeleted > 0 || recoveryCodeDeleted > 0 {
 				logger.Info("worker: purga completada",
 					"login_throttle_deleted", loginThrottleDeleted,
 					"phone_challenge_deleted", phoneChallengeDeleted,
+					"recovery_code_deleted", recoveryCodeDeleted,
 				)
 			}
 		}

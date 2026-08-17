@@ -159,6 +159,55 @@ type Config struct {
 	// PhoneChallengePurgeLimit acota cuántos retos vencidos purga el worker
 	// por lote (auth_phone_challenge_purge_expired).
 	PhoneChallengePurgeLimit int
+
+	// RecoveryCodeExpiresSeconds es la vigencia del código de recuperación
+	// (valor inicial 900 = 15 min, DEC-064).
+	RecoveryCodeExpiresSeconds int
+	// RecoveryCodeMaxAttempts es el máximo de intentos fallidos antes de
+	// invalidar el código (valor inicial 5, DEC-064).
+	RecoveryCodeMaxAttempts int
+	// RecoveryResendCooldownSeconds es el mínimo entre dos solicitudes
+	// consecutivas para la misma cuenta (valor inicial 60, DEC-064).
+	RecoveryResendCooldownSeconds int
+	// RecoveryResendWindowSeconds es la ventana en la que se cuentan los
+	// códigos solicitados por cuenta (valor inicial 3600 = 1 h, DEC-064).
+	RecoveryResendWindowSeconds int
+	// RecoveryResendMaxPerWindow es el máximo de códigos por cuenta dentro
+	// de esa ventana (valor inicial 3, DEC-064).
+	RecoveryResendMaxPerWindow int
+	// RecoveryResetTokenExpiresSeconds es la vigencia del token de reinicio
+	// emitido tras verificar el código (valor inicial 300 = 5 min, DEC-064).
+	RecoveryResetTokenExpiresSeconds int
+	// RecoveryCodePurgeLimit acota cuántos códigos de recuperación vencidos
+	// purga el worker por lote (auth_recovery_purge_expired).
+	RecoveryCodePurgeLimit int
+
+	// MetaWhatsAppAPIVersion es la versión de Meta Graph API a usar
+	// (DEC-066). No es secreto.
+	MetaWhatsAppAPIVersion string
+	// MetaWhatsAppPhoneNumberID identifica el número emisor en Meta
+	// WhatsApp Cloud API. Secreto operativo (no una contraseña, pero
+	// específico del despliegue): nunca se registra.
+	MetaWhatsAppPhoneNumberID string
+	// MetaWhatsAppAccessToken autentica contra Meta Graph API. Secreto:
+	// nunca se registra ni se comitea.
+	MetaWhatsAppAccessToken string
+	// MetaWhatsAppTemplateName es el nombre de la plantilla de categoría
+	// "Authentication" aprobada por Meta para el código de recuperación
+	// (DEC-066).
+	MetaWhatsAppTemplateName string
+	// MetaWhatsAppLanguageCode es el código de idioma de esa plantilla
+	// (p. ej. "es" o "es_CO").
+	MetaWhatsAppLanguageCode string
+
+	// ResendAPIKey autentica contra la API de Resend (DEC-066). Secreto:
+	// nunca se registra ni se comitea.
+	ResendAPIKey string
+	// ResendFromAddress es el remitente verificado del correo de
+	// recuperación.
+	ResendFromAddress string
+	// ResendSubject es el asunto fijo del correo de recuperación.
+	ResendSubject string
 }
 
 // Load lee la configuración desde variables de entorno y aplica valores por
@@ -250,6 +299,35 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 
+	recoveryCodeExpires, err := getEnvInt("APP_RECOVERY_CODE_EXPIRES_SECONDS", 900)
+	if err != nil {
+		return Config{}, err
+	}
+	recoveryMaxAttempts, err := getEnvInt("APP_RECOVERY_CODE_MAX_ATTEMPTS", 5)
+	if err != nil {
+		return Config{}, err
+	}
+	recoveryResendCooldown, err := getEnvInt("APP_RECOVERY_RESEND_COOLDOWN_SECONDS", 60)
+	if err != nil {
+		return Config{}, err
+	}
+	recoveryResendWindow, err := getEnvInt("APP_RECOVERY_RESEND_WINDOW_SECONDS", 3600)
+	if err != nil {
+		return Config{}, err
+	}
+	recoveryResendMaxPerWindow, err := getEnvInt("APP_RECOVERY_RESEND_MAX_PER_WINDOW", 3)
+	if err != nil {
+		return Config{}, err
+	}
+	recoveryResetTokenExpires, err := getEnvInt("APP_RECOVERY_RESET_TOKEN_EXPIRES_SECONDS", 300)
+	if err != nil {
+		return Config{}, err
+	}
+	recoveryCodePurgeLimit, err := getEnvInt("APP_RECOVERY_CODE_PURGE_LIMIT", 500)
+	if err != nil {
+		return Config{}, err
+	}
+
 	cfg := Config{
 		Environment:              environment,
 		HTTPAddr:                 getEnv("APP_HTTP_ADDR", ":8080"),
@@ -278,6 +356,24 @@ func Load() (Config, error) {
 		PhoneChallengeRateMaxActive:         challengeRateMaxActive,
 		PhoneChallengeResendCooldownSeconds: challengeResendCooldown,
 		PhoneChallengePurgeLimit:            challengePurgeLimit,
+
+		RecoveryCodeExpiresSeconds:       recoveryCodeExpires,
+		RecoveryCodeMaxAttempts:          recoveryMaxAttempts,
+		RecoveryResendCooldownSeconds:    recoveryResendCooldown,
+		RecoveryResendWindowSeconds:      recoveryResendWindow,
+		RecoveryResendMaxPerWindow:       recoveryResendMaxPerWindow,
+		RecoveryResetTokenExpiresSeconds: recoveryResetTokenExpires,
+		RecoveryCodePurgeLimit:           recoveryCodePurgeLimit,
+
+		MetaWhatsAppAPIVersion:    getEnv("APP_META_WHATSAPP_API_VERSION", "v21.0"),
+		MetaWhatsAppPhoneNumberID: getEnv("APP_META_WHATSAPP_PHONE_NUMBER_ID", ""),
+		MetaWhatsAppAccessToken:   getEnv("APP_META_WHATSAPP_ACCESS_TOKEN", ""),
+		MetaWhatsAppTemplateName:  getEnv("APP_META_WHATSAPP_TEMPLATE_NAME", ""),
+		MetaWhatsAppLanguageCode:  getEnv("APP_META_WHATSAPP_LANGUAGE_CODE", "es"),
+
+		ResendAPIKey:      getEnv("APP_RESEND_API_KEY", ""),
+		ResendFromAddress: getEnv("APP_RESEND_FROM_ADDRESS", ""),
+		ResendSubject:     getEnv("APP_RESEND_SUBJECT", "Código de recuperación de acceso"),
 	}
 
 	if cfg.DatabaseURL == "" {
@@ -314,6 +410,14 @@ func Load() (Config, error) {
 			"config: APP_LOGIN_THROTTLE_PURGE_LIMIT/APP_PHONE_CHALLENGE_PURGE_LIMIT deben estar entre 1 y 1000",
 		)
 	}
+	if cfg.RecoveryCodeExpiresSeconds < 1 || cfg.RecoveryCodeMaxAttempts < 1 || cfg.RecoveryCodeMaxAttempts > 10 ||
+		cfg.RecoveryResendCooldownSeconds < 1 || cfg.RecoveryResendWindowSeconds < 1 ||
+		cfg.RecoveryResendMaxPerWindow < 1 || cfg.RecoveryResetTokenExpiresSeconds < 1 {
+		return Config{}, fmt.Errorf("config: parámetros de APP_RECOVERY_* fuera de rango")
+	}
+	if cfg.RecoveryCodePurgeLimit < 1 || cfg.RecoveryCodePurgeLimit > 1000 {
+		return Config{}, fmt.Errorf("config: APP_RECOVERY_CODE_PURGE_LIMIT debe estar entre 1 y 1000")
+	}
 	for _, cidr := range cfg.TrustedProxies {
 		if _, _, err := net.ParseCIDR(cidr); err != nil {
 			return Config{}, fmt.Errorf("config: APP_TRUSTED_PROXIES contiene un CIDR inválido %q: %w", cidr, err)
@@ -340,6 +444,22 @@ func Load() (Config, error) {
 		}
 		if err := requireTLS(string(cfg.WorkerDatabaseURL), "APP_WORKER_DATABASE_URL"); err != nil {
 			return Config{}, err
+		}
+
+		// DEC-066: fuera de local/test, HU-008 exige el adaptador real de
+		// entrega (Meta WhatsApp Cloud API + Resend), no el marcador de
+		// posición que solo registra en el log. Faltar cualquiera de estos
+		// valores debe impedir el arranque, igual que un DSN sin TLS.
+		if cfg.MetaWhatsAppPhoneNumberID == "" || cfg.MetaWhatsAppAccessToken == "" || cfg.MetaWhatsAppTemplateName == "" {
+			return Config{}, fmt.Errorf(
+				"config: APP_META_WHATSAPP_PHONE_NUMBER_ID/APP_META_WHATSAPP_ACCESS_TOKEN/" +
+					"APP_META_WHATSAPP_TEMPLATE_NAME son obligatorios fuera de local/test (DEC-066)",
+			)
+		}
+		if cfg.ResendAPIKey == "" || cfg.ResendFromAddress == "" {
+			return Config{}, fmt.Errorf(
+				"config: APP_RESEND_API_KEY/APP_RESEND_FROM_ADDRESS son obligatorios fuera de local/test (DEC-066)",
+			)
 		}
 	}
 

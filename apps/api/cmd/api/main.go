@@ -17,6 +17,7 @@ import (
 	"system-barbershop/internal/modules/auth"
 	authhttpapi "system-barbershop/internal/modules/auth/httpapi"
 	authpostgres "system-barbershop/internal/modules/auth/postgres"
+	"system-barbershop/internal/modules/notification"
 	"system-barbershop/internal/platform/clientip"
 	"system-barbershop/internal/platform/clock"
 	"system-barbershop/internal/platform/config"
@@ -201,6 +202,65 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	private.Use(sessionMiddleware.RequireSession)
 	private.Post("/auth/logout", logoutHandler.ServeHTTP)
 	private.Get("/auth/session", sessionContextHandler.ServeHTTP)
+
+	// HU-008 (DEC-063-066): recuperación de acceso con código de un solo
+	// uso. sender es el adaptador dual de Meta WhatsApp Cloud API + Resend
+	// cuando hay credenciales configuradas; sin ellas (típicamente
+	// local/test, donde config.Load no las exige) se usa el marcador de
+	// posición documentado, igual patrón que el reto telefónico de HU-007.
+	var recoverySender auth.RecoveryCodeSender
+	if cfg.MetaWhatsAppPhoneNumberID != "" && cfg.MetaWhatsAppAccessToken != "" && cfg.MetaWhatsAppTemplateName != "" &&
+		cfg.ResendAPIKey != "" && cfg.ResendFromAddress != "" {
+		recoverySender = notification.NewDualChannelRecoverySender(
+			notification.NewMetaWhatsAppSender(notification.MetaWhatsAppConfig{
+				APIVersion:    cfg.MetaWhatsAppAPIVersion,
+				PhoneNumberID: cfg.MetaWhatsAppPhoneNumberID,
+				AccessToken:   cfg.MetaWhatsAppAccessToken,
+				TemplateName:  cfg.MetaWhatsAppTemplateName,
+				LanguageCode:  cfg.MetaWhatsAppLanguageCode,
+			}, nil),
+			notification.NewResendEmailSender(notification.ResendEmailConfig{
+				APIKey:      cfg.ResendAPIKey,
+				FromAddress: cfg.ResendFromAddress,
+				Subject:     cfg.ResendSubject,
+			}, nil),
+		)
+	} else {
+		recoverySender = auth.NewLoggingRecoveryCodeSender(logger)
+	}
+	if capturePath := os.Getenv("APP_RECOVERY_CAPTURE_FILE"); capturePath != "" {
+		// Mismo doble candado de entorno que APP_PHONE_CHALLENGE_CAPTURE_FILE
+		// de HU-007: la captura en claro NUNCA puede activarse fuera de
+		// local/test, sin importar qué valor llegue por variable de entorno
+		// en un despliegue real.
+		if cfg.Environment != "local" && cfg.Environment != "test" {
+			return nil, errors.New(
+				"auth: APP_RECOVERY_CAPTURE_FILE solo puede usarse en local/test (uso exclusivo de pruebas de sistema)")
+		}
+		recoverySender = auth.NewCapturingRecoveryCodeSender(recoverySender, capturePath)
+	}
+	recoveryService := auth.NewRecoveryService(
+		authpostgres.NewRecoveryRepository(db),
+		auth.NewCryptoPhoneCodeGenerator(),
+		auth.NewCryptoTokenGenerator(),
+		recoverySender,
+		auth.NewArgon2Hasher(),
+		auth.RecoveryConfig{
+			CodeExpiresSeconds:       cfg.RecoveryCodeExpiresSeconds,
+			CodeMaxAttempts:          cfg.RecoveryCodeMaxAttempts,
+			ResendCooldownSeconds:    cfg.RecoveryResendCooldownSeconds,
+			ResendWindowSeconds:      cfg.RecoveryResendWindowSeconds,
+			ResendMaxPerWindow:       cfg.RecoveryResendMaxPerWindow,
+			ResetTokenExpiresSeconds: cfg.RecoveryResetTokenExpiresSeconds,
+		},
+		hmacSecret,
+	)
+	recoveryRequestHandler := authhttpapi.NewRecoveryRequestHandler(recoveryService, logger)
+	recoveryVerifyHandler := authhttpapi.NewRecoveryVerifyHandler(recoveryService)
+	recoveryResetPasswordHandler := authhttpapi.NewRecoveryResetPasswordHandler(recoveryService)
+	router.Post("/api/v1/public/auth/recovery/request", recoveryRequestHandler.ServeHTTP)
+	router.Post("/api/v1/public/auth/recovery/verify", recoveryVerifyHandler.ServeHTTP)
+	router.Post("/api/v1/public/auth/recovery/reset-password", recoveryResetPasswordHandler.ServeHTTP)
 
 	return router, nil
 }
