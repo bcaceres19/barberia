@@ -19,8 +19,8 @@ issue: 57
 issue_url: "https://github.com/bcaceres19/barberia/issues/57"
 suggested_issue_title: "feat(auth): implementar HU-007 defensa escalonada contra abuso"
 branch: "feat/57-hu007-defensa-abuso"
-pr: null
-pr_url: null
+pr: 61
+pr_url: "https://github.com/bcaceres19/barberia/pull/61"
 depends_on:
   - "HU-003 integrada"
   - "HU-005 integrada"
