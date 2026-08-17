@@ -53,6 +53,14 @@ const (
 	// distinga los dos casos, igual que KindNotFound para tenant cruzado
 	// (CA-005-02).
 	KindUnauthorized Kind = "unauthorized"
+	// KindChallengeRequired cubre una IP que superó el umbral de intentos
+	// de acceso y debe completar el reto telefónico antes de que la
+	// contraseña se evalúe (HU-007, DEC-061/DEC-062). No se reutiliza
+	// KindUnauthorized: el cliente necesita distinguir "credenciales
+	// incorrectas" de "falta completar el reto" para mostrar la
+	// experiencia correcta, y ambos ya tienen semántica HTTP distinta
+	// (401 frente a 429).
+	KindChallengeRequired Kind = "challenge_required"
 )
 
 // Error es el error de aplicación que domain/servicios devuelven.
@@ -65,6 +73,11 @@ type Error struct {
 	// Err es la causa interna, útil para logs; la capa HTTP nunca la
 	// vuelca en la respuesta.
 	Err error
+	// RetryAfterSeconds acompaña KindChallengeRequired con el segundo en
+	// que el escalamiento deja de estar vigente (HU-007). Cero para
+	// cualquier otro Kind: la capa HTTP solo añade la cabecera Retry-After
+	// cuando este campo es positivo.
+	RetryAfterSeconds int
 }
 
 func (e *Error) Error() string {
@@ -123,6 +136,15 @@ func Validation(message string) *Error {
 // CA-005-07).
 func Unauthorized(message string) *Error {
 	return &Error{Kind: KindUnauthorized, Message: message}
+}
+
+// ChallengeRequired construye el error de escalamiento de HU-007: la
+// contraseña no se evaluó porque la IP superó el umbral de intentos.
+// retryAfterSeconds debe ser positivo (segundos hasta que el escalamiento
+// deje de estar vigente); la capa HTTP lo traduce en la cabecera
+// Retry-After.
+func ChallengeRequired(message string, retryAfterSeconds int) *Error {
+	return &Error{Kind: KindChallengeRequired, Message: message, RetryAfterSeconds: retryAfterSeconds}
 }
 
 // As extrae un *Error de la cadena de err, igual que errors.As.

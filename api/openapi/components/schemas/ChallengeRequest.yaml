@@ -1,0 +1,17 @@
+# Cuerpo de POST /auth/challenge (HU-007, DEC-062). Cerrado, igual que
+# LoginRequest: additionalProperties false, solo el correo. La respuesta es
+# siempre idéntica exista o no la cuenta (no enumeración, DEC-062), así que
+# este esquema no valida más que la forma mínima.
+type: object
+additionalProperties: false
+description: Solicitud del reto telefónico tras superar el umbral de intentos de acceso.
+properties:
+  email:
+    type: string
+    format: email
+    maxLength: 254
+    description: Correo de la cuenta cuyo teléfono verificado recibirá el código, si corresponde.
+    examples:
+      - barbero.ejemplo@correo.test
+required:
+  - email

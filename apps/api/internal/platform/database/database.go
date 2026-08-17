@@ -6,11 +6,17 @@
 // única forma de ejecutar trabajo de negocio es InTenantTx, que recibe el
 // identificador de barbería y entrega el ejecutor SOLO dentro del alcance de
 // una transacción ya configurada. Esto hace IMPOSIBLE omitir el contexto.
-// Dos excepciones angostas y documentadas por método existen fuera de ese
-// patrón: HealthCheck (sin barbería, solo conectividad) y ResolveTenant
+// Tres excepciones angostas y documentadas por método existen fuera de ese
+// patrón: HealthCheck (sin barbería, solo conectividad), ResolveTenant
 // (HU-005: resolver a qué tenant pertenece una solicitud ANTES de que exista
 // contexto, invocando exclusivamente una función SECURITY DEFINER estrecha
-// ya revisada).
+// ya revisada que devuelve como mucho un uuid de barbería) y
+// CallSecurityDefinerRow (HU-007: login_throttle es la única tabla sin
+// barbershop_id/RLS por diseño, así que su función SECURITY DEFINER no
+// encaja en la forma "solo un uuid" de ResolveTenant; la extensión generaliza
+// el mismo mecanismo -sin transacción, sin contexto de tenant- a cualquier
+// función estrecha ya revisada, dejando que ESA función siga siendo
+// responsable de acotar qué devuelve, RN-DAT-02).
 //
 // Justificación de la dependencia (estandar-backend-go.md §5.21):
 //   - Necesidad: driver nativo de PostgreSQL para pool con hooks de adquisición
@@ -300,6 +306,30 @@ func (d *DB) ResolveTenant(ctx context.Context, query string, args ...any) (Barb
 		return "", false, nil
 	}
 	return BarbershopID(*shop), true, nil
+}
+
+// CallSecurityDefinerRow es la TERCERA excepción autorizada a InTenantTx
+// (HU-007). Ejecuta query SIN transacción y SIN fijar app.barbershop_id,
+// exactamente como ResolveTenant, pero sin exigir que el resultado sea un
+// único uuid de barbería: entrega la fila cruda a scan para que el llamador
+// la decodifique con el tipo exacto que su función SECURITY DEFINER
+// devuelve. query debe ser SIEMPRE una función SECURITY DEFINER estrecha y
+// revisada (nunca una tabla ni una consulta ad hoc): esta excepción no es
+// una vía alternativa para ejecutar trabajo de negocio general, es el mismo
+// patrón de ResolveTenant generalizado a formas de retorno distintas de "un
+// uuid o nada" (p. ej. login_throttle_register_attempt, sin
+// barbershop_id/RLS por diseño, modelo-fisico-referencia.sql sección A.4).
+func (d *DB) CallSecurityDefinerRow(ctx context.Context, query string, args []any, scan func(pgx.Row) error) error {
+	conn, err := d.pool.Acquire(ctx)
+	if err != nil {
+		return fmt.Errorf("database: acquire connection: %w", err)
+	}
+	defer conn.Release()
+
+	if err := scan(conn.QueryRow(ctx, query, args...)); err != nil {
+		return fmt.Errorf("database: call security definer function: %w", err)
+	}
+	return nil
 }
 
 // HealthCheck verifica conectividad con timeout corto y propio. La respuesta

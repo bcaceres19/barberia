@@ -1,0 +1,9 @@
+# Respuesta 204 de POST /auth/challenge/verify (HU-007, DEC-062). Sin cuerpo.
+# El servidor ya limpió escalated_until/attempt_count de la IP: el cliente
+# reintenta POST /auth/login normalmente, sin ningún token adicional.
+description: >
+  Código verificado. La IP solicitante deja de estar en verificación
+  telefónica; el barbero puede reintentar el inicio de sesión normalmente.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'

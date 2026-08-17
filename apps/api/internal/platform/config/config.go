@@ -5,9 +5,11 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -108,6 +110,55 @@ type Config struct {
 	// conexión. Una consulta que se cuelga sin límite bloquea una conexión
 	// del pool y degrada todo el proceso.
 	DatabaseStatementTimeout time.Duration
+
+	// AuthHMACSecret firma el HMAC-SHA256 de la IP (login_throttle.ip_hash)
+	// y del código del reto telefónico (auth_phone_challenge.code_hash),
+	// HU-007 (DEC-062). Nunca se registra ni se expone; Load exige un largo
+	// mínimo para que no sea un valor trivial de adivinar.
+	AuthHMACSecret string
+
+	// TrustedProxies son los CIDR de los únicos proxies inmediatos cuya
+	// cabecera X-Forwarded-For se acepta al resolver la IP real de una
+	// solicitud (HU-007). Vacío por defecto: sin proxies confiables, se usa
+	// siempre RemoteAddr, nunca una cabecera que el cliente puede falsificar.
+	TrustedProxies []string
+
+	// LoginThrottleWindowSeconds es la ventana deslizante del contador por
+	// IP (CA-007-05, valor inicial 900 = 15 min, DEC-052).
+	LoginThrottleWindowSeconds int
+	// LoginThrottleEscalationSeconds es cuánto dura el escalamiento una vez
+	// activado (valor inicial 86400 = 24 h, DEC-052).
+	LoginThrottleEscalationSeconds int
+	// LoginThrottleThreshold es la cantidad de solicitudes permitidas SIN
+	// reto dentro de la ventana; la solicitud threshold+1 lo exige
+	// (valor inicial 5, DEC-061).
+	LoginThrottleThreshold int
+	// LoginThrottleRetentionSeconds es cuánto se conserva la fila de
+	// contador antes de purgarse (debe ser >= LoginThrottleEscalationSeconds).
+	LoginThrottleRetentionSeconds int
+	// LoginThrottlePurgeLimit acota cuántas filas vencidas purga el worker
+	// por lote (login_throttle_purge_expired).
+	LoginThrottlePurgeLimit int
+
+	// PhoneChallengeExpiresSeconds es la vigencia del código del reto
+	// (valor inicial 300 = 5 min, DEC-062).
+	PhoneChallengeExpiresSeconds int
+	// PhoneChallengeMaxAttempts es el máximo de intentos fallidos antes de
+	// invalidar el código (valor inicial 5, DEC-062).
+	PhoneChallengeMaxAttempts int
+	// PhoneChallengeRateWindowSeconds es la ventana en la que se cuentan las
+	// solicitudes activas del reto por IP (valor inicial 900 = 15 min,
+	// DEC-062, misma ventana que el umbral de login).
+	PhoneChallengeRateWindowSeconds int
+	// PhoneChallengeRateMaxActive es el máximo de solicitudes del reto por
+	// IP dentro de esa ventana (valor inicial 3, DEC-062).
+	PhoneChallengeRateMaxActive int
+	// PhoneChallengeResendCooldownSeconds es el mínimo entre dos solicitudes
+	// consecutivas del reto desde la misma IP (valor inicial 60, DEC-062).
+	PhoneChallengeResendCooldownSeconds int
+	// PhoneChallengePurgeLimit acota cuántos retos vencidos purga el worker
+	// por lote (auth_phone_challenge_purge_expired).
+	PhoneChallengePurgeLimit int
 }
 
 // Load lee la configuración desde variables de entorno y aplica valores por
@@ -153,6 +204,52 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 
+	throttleWindow, err := getEnvInt("APP_LOGIN_THROTTLE_WINDOW_SECONDS", 900)
+	if err != nil {
+		return Config{}, err
+	}
+	throttleEscalation, err := getEnvInt("APP_LOGIN_THROTTLE_ESCALATION_SECONDS", 86400)
+	if err != nil {
+		return Config{}, err
+	}
+	throttleThreshold, err := getEnvInt("APP_LOGIN_THROTTLE_THRESHOLD", 5)
+	if err != nil {
+		return Config{}, err
+	}
+	throttleRetention, err := getEnvInt("APP_LOGIN_THROTTLE_RETENTION_SECONDS", 172800)
+	if err != nil {
+		return Config{}, err
+	}
+	throttlePurgeLimit, err := getEnvInt("APP_LOGIN_THROTTLE_PURGE_LIMIT", 500)
+	if err != nil {
+		return Config{}, err
+	}
+
+	challengeExpires, err := getEnvInt("APP_PHONE_CHALLENGE_EXPIRES_SECONDS", 300)
+	if err != nil {
+		return Config{}, err
+	}
+	challengeMaxAttempts, err := getEnvInt("APP_PHONE_CHALLENGE_MAX_ATTEMPTS", 5)
+	if err != nil {
+		return Config{}, err
+	}
+	challengeRateWindow, err := getEnvInt("APP_PHONE_CHALLENGE_RATE_WINDOW_SECONDS", 900)
+	if err != nil {
+		return Config{}, err
+	}
+	challengeRateMaxActive, err := getEnvInt("APP_PHONE_CHALLENGE_RATE_MAX_ACTIVE", 3)
+	if err != nil {
+		return Config{}, err
+	}
+	challengeResendCooldown, err := getEnvInt("APP_PHONE_CHALLENGE_RESEND_COOLDOWN_SECONDS", 60)
+	if err != nil {
+		return Config{}, err
+	}
+	challengePurgeLimit, err := getEnvInt("APP_PHONE_CHALLENGE_PURGE_LIMIT", 500)
+	if err != nil {
+		return Config{}, err
+	}
+
 	cfg := Config{
 		Environment:              environment,
 		HTTPAddr:                 getEnv("APP_HTTP_ADDR", ":8080"),
@@ -165,10 +262,62 @@ func Load() (Config, error) {
 		DatabaseMaxConnIdleTime:  maxConnIdleTime,
 		DatabaseConnectTimeout:   connectTimeout,
 		DatabaseStatementTimeout: statementTimeout,
+
+		AuthHMACSecret: getEnv("APP_AUTH_HMAC_SECRET", ""),
+		TrustedProxies: getEnvCSV("APP_TRUSTED_PROXIES"),
+
+		LoginThrottleWindowSeconds:     throttleWindow,
+		LoginThrottleEscalationSeconds: throttleEscalation,
+		LoginThrottleThreshold:         throttleThreshold,
+		LoginThrottleRetentionSeconds:  throttleRetention,
+		LoginThrottlePurgeLimit:        throttlePurgeLimit,
+
+		PhoneChallengeExpiresSeconds:        challengeExpires,
+		PhoneChallengeMaxAttempts:           challengeMaxAttempts,
+		PhoneChallengeRateWindowSeconds:     challengeRateWindow,
+		PhoneChallengeRateMaxActive:         challengeRateMaxActive,
+		PhoneChallengeResendCooldownSeconds: challengeResendCooldown,
+		PhoneChallengePurgeLimit:            challengePurgeLimit,
 	}
 
 	if cfg.DatabaseURL == "" {
 		return Config{}, fmt.Errorf("config: APP_DATABASE_URL no puede quedar vacío")
+	}
+
+	// minHMACSecretLen: por debajo de este largo, HMAC-SHA256 no ofrece
+	// margen de seguridad razonable contra un atacante que solo necesita
+	// reconstruir la clave, no invertir el hash (HU-007, DDL-AUT-01).
+	const minHMACSecretLen = 32
+	if len(cfg.AuthHMACSecret) < minHMACSecretLen {
+		return Config{}, fmt.Errorf(
+			"config: APP_AUTH_HMAC_SECRET debe tener al menos %d caracteres", minHMACSecretLen,
+		)
+	}
+	if cfg.LoginThrottleWindowSeconds < 1 || cfg.LoginThrottleEscalationSeconds < 1 ||
+		cfg.LoginThrottleThreshold < 1 {
+		return Config{}, fmt.Errorf("config: parámetros de APP_LOGIN_THROTTLE_* fuera de rango")
+	}
+	if cfg.LoginThrottleRetentionSeconds < cfg.LoginThrottleEscalationSeconds {
+		return Config{}, fmt.Errorf(
+			"config: APP_LOGIN_THROTTLE_RETENTION_SECONDS no puede ser menor que " +
+				"APP_LOGIN_THROTTLE_ESCALATION_SECONDS (una fila purgada perdería un escalamiento vigente)",
+		)
+	}
+	if cfg.PhoneChallengeExpiresSeconds < 1 || cfg.PhoneChallengeMaxAttempts < 1 ||
+		cfg.PhoneChallengeRateWindowSeconds < 1 || cfg.PhoneChallengeRateMaxActive < 1 ||
+		cfg.PhoneChallengeResendCooldownSeconds < 1 {
+		return Config{}, fmt.Errorf("config: parámetros de APP_PHONE_CHALLENGE_* fuera de rango")
+	}
+	if cfg.LoginThrottlePurgeLimit < 1 || cfg.LoginThrottlePurgeLimit > 1000 ||
+		cfg.PhoneChallengePurgeLimit < 1 || cfg.PhoneChallengePurgeLimit > 1000 {
+		return Config{}, fmt.Errorf(
+			"config: APP_LOGIN_THROTTLE_PURGE_LIMIT/APP_PHONE_CHALLENGE_PURGE_LIMIT deben estar entre 1 y 1000",
+		)
+	}
+	for _, cidr := range cfg.TrustedProxies {
+		if _, _, err := net.ParseCIDR(cidr); err != nil {
+			return Config{}, fmt.Errorf("config: APP_TRUSTED_PROXIES contiene un CIDR inválido %q: %w", cidr, err)
+		}
 	}
 
 	requiresHardening := !entornosSinTLSObligatorio[cfg.Environment]
@@ -220,6 +369,26 @@ func getEnv(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+// getEnvCSV parsea una variable de entorno como lista separada por comas,
+// recortando espacios y descartando elementos vacíos (una coma sobrante no
+// produce un CIDR "" que después fallaría a validar). Ausente o vacía
+// devuelve una lista vacía, nunca nil vs. []string{} de forma inconsistente.
+func getEnvCSV(key string) []string {
+	raw, ok := os.LookupEnv(key)
+	if !ok || raw == "" {
+		return []string{}
+	}
+	parts := strings.Split(raw, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			result = append(result, p)
+		}
+	}
+	return result
 }
 
 // getEnvInt parsea una variable de entorno como entero. Si la variable está

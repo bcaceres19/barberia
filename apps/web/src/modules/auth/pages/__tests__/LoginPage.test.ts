@@ -13,8 +13,14 @@ import { axe } from 'vitest-axe'
 import type { LoginOutcome } from '../../model/loginOutcome'
 
 const loginMock = vi.hoisted(() => vi.fn())
+const requestChallengeMock = vi.hoisted(() => vi.fn())
+const verifyChallengeMock = vi.hoisted(() => vi.fn())
 
 vi.mock('../../api/loginApi', () => ({ login: loginMock }))
+vi.mock('../../api/challengeApi', () => ({
+  requestChallenge: requestChallengeMock,
+  verifyChallenge: verifyChallengeMock,
+}))
 
 const { default: LoginPage } = await import('../LoginPage.vue')
 
@@ -77,6 +83,8 @@ async function fillAndSubmit(
 describe('LoginPage', () => {
   beforeEach(() => {
     loginMock.mockReset()
+    requestChallengeMock.mockReset()
+    verifyChallengeMock.mockReset()
     window.sessionStorage.clear()
   })
 
@@ -188,7 +196,7 @@ describe('LoginPage', () => {
     expect(loginMock).toHaveBeenCalledTimes(2)
   })
 
-  it('explains a 429 without claiming HU-007 escalation is implemented', async () => {
+  it('explains a 429 and shows the phone challenge to unblock immediately (HU-007)', async () => {
     loginMock.mockResolvedValueOnce({
       kind: 'rate-limited',
       retryAfterSeconds: 120,
@@ -199,6 +207,51 @@ describe('LoginPage', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('Demasiados intentos')
+    expect(wrapper.text()).toContain('Verifica tu teléfono')
+  })
+
+  it('does not show the phone challenge outside the rate-limited state', async () => {
+    loginMock.mockResolvedValueOnce({ kind: 'invalid-credentials' } satisfies LoginOutcome)
+    const { wrapper } = await mountPage()
+
+    await fillAndSubmit(wrapper)
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Verifica tu teléfono')
+  })
+
+  // CA-007-02 de punta a punta en la capa de página: tras un 429, verificar
+  // el reto (mockeado) reintenta el login automáticamente con las mismas
+  // credenciales, sin que el barbero tenga que volver a escribirlas.
+  it('retries login automatically once the phone challenge verifies', async () => {
+    loginMock
+      .mockResolvedValueOnce({
+        kind: 'rate-limited',
+        retryAfterSeconds: 120,
+      } satisfies LoginOutcome)
+      .mockResolvedValueOnce({
+        kind: 'success',
+        expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      } satisfies LoginOutcome)
+    requestChallengeMock.mockResolvedValueOnce({ kind: 'accepted' })
+    verifyChallengeMock.mockResolvedValueOnce({ kind: 'verified' })
+
+    const { wrapper, router } = await mountPage()
+    await fillAndSubmit(wrapper)
+    await flushPromises()
+
+    await wrapper.get('button:not([type="submit"])').trigger('click') // "Enviar código por WhatsApp"
+    await flushPromises()
+    await wrapper.get('input[name="challengeCode"]').setValue('482913')
+    const verifyButton = wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('Verificar código'))
+    await verifyButton?.trigger('click')
+    await flushPromises()
+
+    expect(verifyChallengeMock).toHaveBeenCalledWith('barbero@ejemplo.test', '482913')
+    expect(loginMock).toHaveBeenCalledTimes(2)
+    expect(router.currentRoute.value.name).toBe('panel')
   })
 
   it('shows a safe unexpected-error message and surfaces requestId when present', async () => {

@@ -10,10 +10,12 @@ antes de agregar código.
 
 Arranque de la aplicación, router, el **sistema visual base (HU-009)**
 (tokens y cinco componentes en `src/shared/ui/`), la **pantalla de acceso
-(HU-010)** y el **cascarón del panel privado (HU-012)**: guard generalizado
-con sesión real, cabecera con barbería activa y coordinación única de 401.
-Ver las secciones siguientes. El resto de carpetas de `modules/` conserva
-su `index.ts` de marcador de responsabilidad futura.
+(HU-010)**, el **cascarón del panel privado (HU-012)** (guard generalizado
+con sesión real, cabecera con barbería activa y coordinación única de 401)
+y la **defensa escalonada contra abuso (HU-007)**: reto telefónico inline
+en la pantalla de acceso cuando el login responde 429. Ver las secciones
+siguientes. El resto de carpetas de `modules/` conserva su `index.ts` de
+marcador de responsabilidad futura.
 
 ## Acceso del barbero (HU-010)
 
@@ -102,10 +104,15 @@ mano (está excluido de Prettier y documentado como tal en `.prettierignore`).
 `src/modules/auth/api/loginApi.ts` traduce la respuesta real de
 `POST /public/auth/login` a `LoginOutcome` (unión discriminada), mapeando
 por `status` (nunca por `detail`): `success`, `invalid-credentials` (401),
-`validation-error` (400/422), `rate-limited` (429, aún no documentado en
-el contrato de `HU-005`; ver trabajo requerido §8 del prompt de HU-010 —
-la integración real del umbral es de `HU-007`) y `unexpected-error`
-(cualquier otro estado, con `requestId` cuando el `Problem` lo trae).
+`validation-error` (400/422), `rate-limited` (429, `DEC-061`/`DEC-062`
+desde HU-007: sexta solicitud dentro de la ventana, lee `Retry-After`) y
+`unexpected-error` (cualquier otro estado, con `requestId` cuando el
+`Problem` lo trae). `LoginPage.vue` muestra `PhoneChallengeForm.vue`
+(`src/modules/auth/api/challengeApi.ts`) cuando el estado es
+`rate-limited`: pide el código de 6 dígitos y, al verificarlo, reintenta el
+login automáticamente con las credenciales ya escritas. El mensaje de
+"código enviado" es deliberadamente genérico (no enumeración, `DEC-062`):
+nunca afirma que un WhatsApp real llegó.
 
 ### Pruebas
 
@@ -118,9 +125,14 @@ cliente tipado (`src/modules/auth/api/__tests__`), enrutamiento/guard
 integrado en las suites anteriores) y E2E contra el API real en local:
 `e2e/acceso.spec.ts`/`e2e/acceso-evidencia-responsiva.spec.ts` (HU-010,
 actualizados donde HU-012 cambió el comportamiento observable — el guard
-ahora conserva `?redirect=`) y `e2e/panel.spec.ts`/
+ahora conserva `?redirect=`), `e2e/panel.spec.ts`/
 `e2e/panel-evidencia-responsiva.spec.ts` (HU-012, capturas en
-`e2e/evidence/panel/`). El recorrido E2E requiere `apps/api` corriendo
+`e2e/evidence/panel/`) y `e2e/reto-telefonico.spec.ts` (HU-007: umbral,
+reto telefónico completo con el código real capturado vía
+`APP_PHONE_CHALLENGE_CAPTURE_FILE`, código incorrecto no enumerable —
+ver `apps/api/README.md` sección "Defensa escalonada contra abuso
+(HU-007)" para el candado de umbral al correr toda la suite E2E junta).
+El recorrido E2E requiere `apps/api` corriendo
 contra PostgreSQL real con las migraciones aplicadas y un usuario con un
 hash argon2id real (no el hash ficticio de
 `database/testdata/hu005_credenciales_sesiones.sql`, que solo sirve para

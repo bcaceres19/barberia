@@ -18,10 +18,15 @@ func withEnv(t *testing.T, kv map[string]string, fn func()) {
 	fn()
 }
 
+// testHMACSecret cumple el largo mínimo exigido (32) sin ser un secreto
+// real: solo se usa dentro de pruebas con t.Setenv, nunca persiste.
+const testHMACSecret = "prueba-no-es-un-secreto-real-0123456789"
+
 func baseLocalEnv() map[string]string {
 	return map[string]string{
-		"APP_ENVIRONMENT":  "local",
-		"APP_DATABASE_URL": "postgres://barberia_app:secret@localhost:5432/barberia?sslmode=disable",
+		"APP_ENVIRONMENT":      "local",
+		"APP_DATABASE_URL":     "postgres://barberia_app:secret@localhost:5432/barberia?sslmode=disable",
+		"APP_AUTH_HMAC_SECRET": testHMACSecret,
 	}
 }
 
@@ -89,6 +94,7 @@ func TestLoad_TLSRequiredOutsideLocalTest(t *testing.T) {
 			"APP_ENVIRONMENT":         env,
 			"APP_DATABASE_URL":        "postgres://barberia_app:secret@db:5432/barberia?sslmode=disable",
 			"APP_WORKER_DATABASE_URL": "postgres://barberia_worker:secret@db:5432/barberia?sslmode=require",
+			"APP_AUTH_HMAC_SECRET":    testHMACSecret,
 		}
 		withEnv(t, e, func() {
 			_, err := config.Load()
@@ -101,8 +107,9 @@ func TestLoad_TLSRequiredOutsideLocalTest(t *testing.T) {
 
 func TestLoad_WorkerDSNRequiredOutsideLocalTest(t *testing.T) {
 	env := map[string]string{
-		"APP_ENVIRONMENT":  "production",
-		"APP_DATABASE_URL": "postgres://barberia_app:secret@db:5432/barberia?sslmode=require",
+		"APP_ENVIRONMENT":      "production",
+		"APP_DATABASE_URL":     "postgres://barberia_app:secret@db:5432/barberia?sslmode=require",
+		"APP_AUTH_HMAC_SECRET": testHMACSecret,
 	}
 	withEnv(t, env, func() {
 		_, err := config.Load()
@@ -118,6 +125,7 @@ func TestLoad_WorkerDSNMustDifferFromAPIOutsideLocalTest(t *testing.T) {
 		"APP_ENVIRONMENT":         "production",
 		"APP_DATABASE_URL":        same,
 		"APP_WORKER_DATABASE_URL": same,
+		"APP_AUTH_HMAC_SECRET":    testHMACSecret,
 	}
 	withEnv(t, env, func() {
 		_, err := config.Load()
@@ -132,10 +140,87 @@ func TestLoad_ProductionValidConfig(t *testing.T) {
 		"APP_ENVIRONMENT":         "production",
 		"APP_DATABASE_URL":        "postgres://barberia_app:secret@db:5432/barberia?sslmode=require",
 		"APP_WORKER_DATABASE_URL": "postgres://barberia_worker:secret@db:5432/barberia?sslmode=require",
+		"APP_AUTH_HMAC_SECRET":    testHMACSecret,
 	}
 	withEnv(t, env, func() {
 		if _, err := config.Load(); err != nil {
 			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+}
+
+func TestLoad_AuthHMACSecretTooShortRejected(t *testing.T) {
+	env := baseLocalEnv()
+	env["APP_AUTH_HMAC_SECRET"] = "corto"
+	withEnv(t, env, func() {
+		if _, err := config.Load(); err == nil {
+			t.Fatal("expected error for short APP_AUTH_HMAC_SECRET, got nil")
+		}
+	})
+}
+
+func TestLoad_AuthHMACSecretMissingRejected(t *testing.T) {
+	env := baseLocalEnv()
+	delete(env, "APP_AUTH_HMAC_SECRET")
+	withEnv(t, env, func() {
+		if _, err := config.Load(); err == nil {
+			t.Fatal("expected error for missing APP_AUTH_HMAC_SECRET, got nil")
+		}
+	})
+}
+
+func TestLoad_LoginThrottleRetentionBelowEscalationRejected(t *testing.T) {
+	env := baseLocalEnv()
+	env["APP_LOGIN_THROTTLE_ESCALATION_SECONDS"] = "86400"
+	env["APP_LOGIN_THROTTLE_RETENTION_SECONDS"] = "3600"
+	withEnv(t, env, func() {
+		if _, err := config.Load(); err == nil {
+			t.Fatal("expected error when retention < escalation, got nil")
+		}
+	})
+}
+
+func TestLoad_LoginThrottleDefaults(t *testing.T) {
+	withEnv(t, baseLocalEnv(), func() {
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if cfg.LoginThrottleWindowSeconds != 900 || cfg.LoginThrottleEscalationSeconds != 86400 ||
+			cfg.LoginThrottleThreshold != 5 || cfg.LoginThrottleRetentionSeconds != 172800 {
+			t.Fatalf("unexpected throttle defaults: %+v", cfg)
+		}
+		if cfg.PhoneChallengeExpiresSeconds != 300 || cfg.PhoneChallengeMaxAttempts != 5 ||
+			cfg.PhoneChallengeRateWindowSeconds != 900 || cfg.PhoneChallengeRateMaxActive != 3 ||
+			cfg.PhoneChallengeResendCooldownSeconds != 60 {
+			t.Fatalf("unexpected phone challenge defaults: %+v", cfg)
+		}
+		if len(cfg.TrustedProxies) != 0 {
+			t.Fatalf("expected no trusted proxies by default, got %v", cfg.TrustedProxies)
+		}
+	})
+}
+
+func TestLoad_TrustedProxiesParsed(t *testing.T) {
+	env := baseLocalEnv()
+	env["APP_TRUSTED_PROXIES"] = "10.0.0.0/8, 172.16.0.0/12"
+	withEnv(t, env, func() {
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(cfg.TrustedProxies) != 2 || cfg.TrustedProxies[0] != "10.0.0.0/8" || cfg.TrustedProxies[1] != "172.16.0.0/12" {
+			t.Fatalf("unexpected trusted proxies: %v", cfg.TrustedProxies)
+		}
+	})
+}
+
+func TestLoad_TrustedProxiesInvalidCIDRRejected(t *testing.T) {
+	env := baseLocalEnv()
+	env["APP_TRUSTED_PROXIES"] = "not-a-cidr"
+	withEnv(t, env, func() {
+		if _, err := config.Load(); err == nil {
+			t.Fatal("expected error for invalid CIDR in APP_TRUSTED_PROXIES, got nil")
 		}
 	})
 }

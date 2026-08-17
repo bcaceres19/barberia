@@ -1,0 +1,30 @@
+# Respuesta 429 de POST /auth/login cuando la IP superó el umbral de
+# solicitudes (HU-007, DEC-061/DEC-062): la sexta solicitud dentro de la
+# ventana, y cualquier otra mientras el escalamiento siga vigente. La
+# contraseña NO se evalúa en esta rama (CA-007-02): ni tenant ni credencial
+# se resuelven antes de completar el reto de POST /auth/challenge y
+# POST /auth/challenge/verify.
+description: >
+  Se requiere verificar el teléfono antes de continuar. La contraseña no fue
+  evaluada. Complete el reto de POST /auth/challenge y
+  POST /auth/challenge/verify, luego reintente el inicio de sesión.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+  Retry-After:
+    $ref: '../headers/RetryAfter.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      reteloRequerido:
+        summary: Verificación telefónica requerida
+        value:
+          type: /api/v1/problems/challenge-required
+          title: Verificación telefónica requerida
+          status: 429
+          detail: se requiere verificar el teléfono antes de continuar
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: challenge-required
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

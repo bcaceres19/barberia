@@ -1,0 +1,15 @@
+# Cuerpo de la respuesta 202 de POST /auth/challenge (HU-007, DEC-062).
+# message es un texto fijo, no derivado del resultado real: la solicitud
+# responde igual exista o no la cuenta, esté o no el teléfono verificado y
+# esté o no la IP realmente escalada (no enumeración).
+type: object
+additionalProperties: false
+description: Confirmación genérica de que la solicitud de reto fue recibida.
+properties:
+  message:
+    type: string
+    description: Mensaje fijo, igual para toda solicitud válida en su forma.
+    examples:
+      - Si la cuenta existe y su teléfono está verificado, recibirá un código por WhatsApp.
+required:
+  - message

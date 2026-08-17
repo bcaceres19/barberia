@@ -65,6 +65,30 @@ func discardLogger() *slog.Logger {
 	return slog.New(slog.NewJSONHandler(&bytes.Buffer{}, nil))
 }
 
+// testRouterConfig completa los valores de HU-007 (throttle/reto
+// telefónico/HMAC) que buildRouter exige, con los mismos valores por
+// defecto que config.Load usaría en producción. testHMACSecret NO es un
+// secreto real: cumple el largo mínimo exigido y solo vive en memoria de
+// prueba.
+const testHMACSecret = "prueba-cmd-api-no-es-un-secreto-real-0123456789"
+
+func testRouterConfig() config.Config {
+	return config.Config{
+		AuthHMACSecret:                      testHMACSecret,
+		LoginThrottleWindowSeconds:          900,
+		LoginThrottleEscalationSeconds:      86400,
+		LoginThrottleThreshold:              5,
+		LoginThrottleRetentionSeconds:       172800,
+		LoginThrottlePurgeLimit:             500,
+		PhoneChallengeExpiresSeconds:        300,
+		PhoneChallengeMaxAttempts:           5,
+		PhoneChallengeRateWindowSeconds:     900,
+		PhoneChallengeRateMaxActive:         3,
+		PhoneChallengeResendCooldownSeconds: 60,
+		PhoneChallengePurgeLimit:            500,
+	}
+}
+
 func uniqueToken(t *testing.T, label string) string {
 	t.Helper()
 	buf := make([]byte, 12)
@@ -116,7 +140,7 @@ func TestPrivateRouteInventory_AllRegisteredRoutesRequireSession(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
 
-	router, err := buildRouter(db, discardLogger())
+	router, err := buildRouter(db, discardLogger(), testRouterConfig())
 	if err != nil {
 		t.Fatalf("buildRouter: %v", err)
 	}
@@ -168,7 +192,7 @@ func TestPrivateRouteInventory_AllRegisteredRoutesRequireSession(t *testing.T) {
 func TestLogout_HTTP_ReusedCookieAfterLogout_Returns401AndNeverRunsTwice(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
-	router, err := buildRouter(db, discardLogger())
+	router, err := buildRouter(db, discardLogger(), testRouterConfig())
 	if err != nil {
 		t.Fatalf("buildRouter: %v", err)
 	}
@@ -198,7 +222,7 @@ func TestLogout_HTTP_ReusedCookieAfterLogout_Returns401AndNeverRunsTwice(t *test
 func TestLogout_HTTP_ClosingOneDeviceDoesNotAffectAnother(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
-	router, err := buildRouter(db, discardLogger())
+	router, err := buildRouter(db, discardLogger(), testRouterConfig())
 	if err != nil {
 		t.Fatalf("buildRouter: %v", err)
 	}
@@ -228,7 +252,7 @@ func TestLogout_HTTP_ClosingOneDeviceDoesNotAffectAnother(t *testing.T) {
 func TestLogout_HTTP_SessionOfShopA_NeverExecutesShopBsLogout(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
-	router, err := buildRouter(db, discardLogger())
+	router, err := buildRouter(db, discardLogger(), testRouterConfig())
 	if err != nil {
 		t.Fatalf("buildRouter: %v", err)
 	}
@@ -273,7 +297,7 @@ func TestLogout_HTTP_SessionOfShopA_NeverExecutesShopBsLogout(t *testing.T) {
 func TestSession_HTTP_ReusedCookieOnFreshRequest_StaysAuthenticatedWithoutCredentials(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
-	router, err := buildRouter(db, discardLogger())
+	router, err := buildRouter(db, discardLogger(), testRouterConfig())
 	if err != nil {
 		t.Fatalf("buildRouter: %v", err)
 	}
@@ -298,7 +322,7 @@ func TestPrivateRoute_ThroughFullRouter_NeverLogsSessionMaterial(t *testing.T) {
 
 	var logBuf bytes.Buffer
 	logger := slog.New(slog.NewJSONHandler(&logBuf, nil))
-	router, err := buildRouter(db, logger)
+	router, err := buildRouter(db, logger, testRouterConfig())
 	if err != nil {
 		t.Fatalf("buildRouter: %v", err)
 	}

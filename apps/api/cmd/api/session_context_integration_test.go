@@ -38,7 +38,7 @@ func doSessionContextRequest(router http.Handler, rawToken string) *httptest.Res
 func TestSessionContext_HTTP_ValidSession_ReturnsRealBarbershopName(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
-	router, err := buildRouter(db, discardLogger())
+	router, err := buildRouter(db, discardLogger(), testRouterConfig())
 	if err != nil {
 		t.Fatalf("buildRouter: %v", err)
 	}
@@ -82,7 +82,7 @@ func TestSessionContext_HTTP_ValidSession_ReturnsRealBarbershopName(t *testing.T
 func TestSessionContext_HTTP_TwoTenants_NeverCrossesBarbershopNames(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
-	router, err := buildRouter(db, discardLogger())
+	router, err := buildRouter(db, discardLogger(), testRouterConfig())
 	if err != nil {
 		t.Fatalf("buildRouter: %v", err)
 	}
@@ -121,7 +121,7 @@ func TestSessionContext_HTTP_TwoTenants_NeverCrossesBarbershopNames(t *testing.T
 func TestSessionContext_HTTP_NoCookie_Returns401Uniform(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
-	router, err := buildRouter(db, discardLogger())
+	router, err := buildRouter(db, discardLogger(), testRouterConfig())
 	if err != nil {
 		t.Fatalf("buildRouter: %v", err)
 	}
@@ -138,7 +138,7 @@ func TestSessionContext_HTTP_NoCookie_Returns401Uniform(t *testing.T) {
 func TestSessionContext_HTTP_RevokedSession_Returns401AndNeverExposesName(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
-	router, err := buildRouter(db, discardLogger())
+	router, err := buildRouter(db, discardLogger(), testRouterConfig())
 	if err != nil {
 		t.Fatalf("buildRouter: %v", err)
 	}
@@ -167,7 +167,7 @@ func TestSessionContext_HTTP_ThroughFullRouter_NeverLogsSessionMaterial(t *testi
 
 	var logBuf bytes.Buffer
 	logger := slog.New(slog.NewJSONHandler(&logBuf, nil))
-	router, err := buildRouter(db, logger)
+	router, err := buildRouter(db, logger, testRouterConfig())
 	if err != nil {
 		t.Fatalf("buildRouter: %v", err)
 	}

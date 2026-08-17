@@ -1,7 +1,9 @@
 # Operación pública de autenticación (HU-005): inicio de sesión. Es la
 # única operación del módulo auth bajo /public (DEC-055, CT-003 resuelta):
 # el cierre de sesión de HU-006 vive en private-auth.yaml, bajo
-# /api/v1/private, no aquí.
+# /api/v1/private, no aquí. HU-007 (DEC-061/DEC-062) agrega la respuesta 429
+# cuando la IP solicitante superó el umbral de intentos, y las dos
+# operaciones del reto telefónico que la desbloquean.
 /public/auth/login:
   post:
     tags: [Auth]
@@ -13,11 +15,16 @@
       existente producen exactamente la misma respuesta 401 (CA-005-02); un
       usuario inactivo o eliminado también (CA-005-07). El token de sesión
       viaja únicamente en Set-Cookie, nunca en el cuerpo de la respuesta
-      (CA-005-04).
+      (CA-005-04). Antes de evaluar la contraseña, la IP solicitante se
+      cuenta con una ventana de 15 minutos y un umbral de 5 solicitudes
+      (DEC-052); al superarlo (la sexta solicitud) responde 429 y no evalúa
+      la contraseña hasta completar el reto telefónico de
+      POST /auth/challenge y POST /auth/challenge/verify (CA-007-01,
+      CA-007-02, DEC-061).
     operationId: loginWithPassword
     security: []
     x-business-rules: [RN-TEN-01, RN-DAT-02]
-    x-decisions: [DEC-024, DEC-026, DEC-050, DEC-055]
+    x-decisions: [DEC-024, DEC-026, DEC-050, DEC-052, DEC-055, DEC-061, DEC-062]
     requestBody:
       required: true
       content:
@@ -33,6 +40,88 @@
     responses:
       "200":
         $ref: '../components/responses/LoginSuccess.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "422":
+        $ref: '../components/responses/ValidationProblem.yaml'
+      "429":
+        $ref: '../components/responses/ChallengeRequiredProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+
+# Operaciones públicas del reto telefónico (HU-007, DEC-062): desbloquean el
+# login cuando DEC-061 lo exige. No son recuperación de contraseña (HU-008);
+# no comparten artefacto ni tabla con staff_recovery_code.
+/public/auth/challenge:
+  post:
+    tags: [Auth]
+    summary: Solicitar el código del reto telefónico
+    description: >
+      Solicita el código de verificación telefónica que desbloquea el
+      inicio de sesión tras superar el umbral de intentos (DEC-062).
+      Responde siempre 202 con el mismo cuerpo genérico, exista o no la
+      cuenta, esté o no el teléfono verificado y esté o no la IP realmente
+      escalada (no enumeración): solo se envía un mensaje real por WhatsApp
+      oficial cuando las tres condiciones se cumplen. Límite propio: una
+      solicitud cada 60 segundos y máximo 3 solicitudes activas por IP en
+      15 minutos.
+    operationId: requestPhoneChallenge
+    security: []
+    x-business-rules: [RN-DAT-02]
+    x-decisions: [DEC-026, DEC-052, DEC-062]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ChallengeRequest.yaml'
+          examples:
+            solicitud:
+              summary: Solicitar el reto
+              value:
+                email: barbero.ejemplo@correo.test
+    responses:
+      "202":
+        $ref: '../components/responses/ChallengeAccepted.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "422":
+        $ref: '../components/responses/ValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+
+/public/auth/challenge/verify:
+  post:
+    tags: [Auth]
+    summary: Verificar el código del reto telefónico
+    description: >
+      Verifica el código de 6 dígitos recibido por WhatsApp (DEC-062).
+      Código incorrecto, vencido, agotado o de una cuenta inexistente
+      producen exactamente la misma respuesta 401 (no enumeración). Un
+      código correcto limpia el escalamiento de esa IP en el mismo paso
+      atómico: el barbero reintenta POST /auth/login normalmente después,
+      sin ningún token adicional.
+    operationId: verifyPhoneChallenge
+    security: []
+    x-business-rules: [RN-DAT-02]
+    x-decisions: [DEC-052, DEC-062]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ChallengeVerifyRequest.yaml'
+          examples:
+            verificacion:
+              summary: Verificar el código
+              value:
+                email: barbero.ejemplo@correo.test
+                code: "482913"
+    responses:
+      "204":
+        $ref: '../components/responses/ChallengeVerifySuccess.yaml'
       "400":
         $ref: '../components/responses/InvalidRequestProblem.yaml'
       "401":

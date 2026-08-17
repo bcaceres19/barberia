@@ -124,7 +124,7 @@ func TestContract_LoginOperation_MethodPathSecurityAndResponses(t *testing.T) {
 		t.Fatalf("expected security: [] (operación pública, DEC-055), got %v", op.Security)
 	}
 
-	wantStatuses := []string{"200", "400", "401", "422", "500"}
+	wantStatuses := []string{"200", "400", "401", "422", "429", "500"}
 	for _, s := range wantStatuses {
 		if _, ok := op.Responses[s]; !ok {
 			t.Errorf("el contrato no documenta la respuesta %s, pero el handler la produce", s)

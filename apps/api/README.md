@@ -32,6 +32,12 @@ antes de agregar código.
   (`DEC-060`), segunda operación privada real, de solo lectura: rehidrata la
   cookie `HttpOnly` y devuelve la barbería activa. Ver la sección "Contexto
   de sesión (HU-012)" más abajo.
+- **Defensa escalonada contra abuso (HU-007)**: conteo por IP de
+  `POST /api/v1/public/auth/login` (`DEC-061`: la sexta solicitud dentro de
+  la ventana exige completar el reto telefónico, no la quinta) y
+  `POST /api/v1/public/auth/challenge`/`.../verify` (`DEC-062`). Purga
+  periódica en `cmd/worker`. Ver la sección "Defensa escalonada contra abuso
+  (HU-007)" más abajo.
 
 ## Requisitos
 
@@ -520,6 +526,108 @@ sin datos personales) que el resto del módulo ya sigue.
 - PostgreSQL real: `TestBarbershopName_*` (`internal/modules/auth/postgres/session_repository_test.go`).
 - Router de producción con dos tenants reales: `TestSessionContext_HTTP_*` (`cmd/api/session_context_integration_test.go`), incluida ausencia de material de sesión en logs (`CA-006-05`) y no exposición del nombre tras revocar la sesión.
 
+## Defensa escalonada contra abuso (HU-007)
+
+Protege `POST /api/v1/public/auth/login` de intentos automatizados sin
+enumerar cuentas ni bloquear prematuramente a un barbero legítimo
+(`DEC-026`, `DEC-052`, `DEC-061`, `DEC-062`).
+
+### Umbral: la sexta solicitud, no la quinta (`DEC-061`, resolvió `CT-005`)
+
+`login_throttle_register_attempt` cuenta por IP (HMAC-SHA256 con
+`APP_AUTH_HMAC_SECRET`, nunca en claro; única tabla del sistema sin
+`barbershop_id` ni RLS por diseño — asociarla a una barbería permitiría
+diluir el límite repartiendo intentos entre barberías). Con el umbral
+inicial de 5, las cinco primeras solicitudes dentro de la ventana se
+evalúan con normalidad (contraseña incluida); la **sexta** exige el reto
+telefónico antes de evaluar la contraseña (`LoginService.Login` nunca
+resuelve tenant ni llama `PasswordHasher.Verify` en esa rama). Responde
+`429` (`code: challenge-required`) con cabecera `Retry-After`.
+
+### Reto telefónico (`DEC-062`)
+
+- `POST /api/v1/public/auth/challenge { email }` → siempre `202` con el
+  mismo mensaje genérico, exista o no la cuenta, esté o no el teléfono
+  verificado y esté o no la IP realmente escalada (no enumeración). Límite
+  propio: 1 solicitud/60 s y máximo 3 activas por IP en 15 min
+  (`auth_phone_challenge_request`, misma función que resuelve las tres
+  condiciones y devuelve el teléfono solo en el camino aceptado).
+- `POST /api/v1/public/auth/challenge/verify { email, code }` → código de
+  6 dígitos (HMAC-SHA256 con el mismo secreto, nunca `SHA-256` simple:
+  10⁶ combinaciones son triviales de recuperar offline sin un secreto),
+  vigente 5 min, máximo 5 intentos, atado a la IP concreta que lo pidió.
+  Éxito: `204`, limpia `escalated_until`/`attempt_count` de esa IP en la
+  misma transacción (`auth_phone_challenge_verify`); el barbero reintenta
+  el login normalmente, sin token adicional.
+- El envío real de WhatsApp es un marcador de posición
+  (`auth.LoggingPhoneCodeSender`, solo registra que "habría" enviado, sin
+  `phone` ni `code`): el proveedor real es `DEC-066`, decisión de HU-008.
+
+### Variables de entorno nuevas
+
+| Variable | Por defecto | Uso |
+| --- | --- | --- |
+| `APP_AUTH_HMAC_SECRET` | (obligatoria, ≥32 caracteres) | Firma el HMAC de IP y código. Nunca en el repositorio. |
+| `APP_TRUSTED_PROXIES` | vacío (sin proxies confiables) | CIDR separados por coma; sin esto, `X-Forwarded-For` se ignora siempre y se usa `RemoteAddr`. |
+| `APP_LOGIN_THROTTLE_WINDOW_SECONDS` | `900` | Ventana deslizante del contador. |
+| `APP_LOGIN_THROTTLE_ESCALATION_SECONDS` | `86400` | Duración del escalamiento una vez activado. |
+| `APP_LOGIN_THROTTLE_THRESHOLD` | `5` | Solicitudes permitidas sin reto; la siguiente lo exige. |
+| `APP_LOGIN_THROTTLE_RETENTION_SECONDS` | `172800` | Debe ser ≥ `..._ESCALATION_SECONDS`. |
+| `APP_LOGIN_THROTTLE_PURGE_LIMIT` | `500` | Lote de purga del worker (1-1000). |
+| `APP_PHONE_CHALLENGE_EXPIRES_SECONDS` | `300` | Vigencia del código. |
+| `APP_PHONE_CHALLENGE_MAX_ATTEMPTS` | `5` | Intentos antes de invalidar. |
+| `APP_PHONE_CHALLENGE_RATE_WINDOW_SECONDS` | `900` | Ventana del límite de solicitudes del reto. |
+| `APP_PHONE_CHALLENGE_RATE_MAX_ACTIVE` | `3` | Máximo de solicitudes del reto por IP en esa ventana. |
+| `APP_PHONE_CHALLENGE_RESEND_COOLDOWN_SECONDS` | `60` | Mínimo entre reenvíos. |
+| `APP_PHONE_CHALLENGE_PURGE_LIMIT` | `500` | Lote de purga del worker (1-1000). |
+
+### Prueba local completa: capturar el código sin un WhatsApp real
+
+`APP_PHONE_CHALLENGE_CAPTURE_FILE=<ruta>` hace que
+`auth.CapturingPhoneCodeSender` escriba `{"phone":"...","code":"..."}` en
+esa ruta además de "enviar". **Restringido a `APP_ENVIRONMENT=local`/`test`
+por `cmd/api/main.go`: arrancar con esta variable fuera de esos ambientes
+falla explícitamente.** Es lo que usa `apps/web/e2e/reto-telefonico.spec.ts`
+para completar el recorrido de verificación real sin un proveedor real
+("terceros se interceptan").
+
+⚠️ **Al correr la suite E2E completa en local**: `acceso.spec.ts`,
+`panel.spec.ts` y `panel-evidencia-responsiva.spec.ts` no aíslan su IP y
+comparten el contador real con cualquier otra prueba que use el mismo
+`apps/api` local. Con `fullyParallel: true` y varios navegadores/proyectos,
+el volumen combinado de intentos de esas suites puede superar el umbral
+por defecto (5) y bloquearlas con un 429 falso, con un escalamiento de 24
+horas real. Para correr esas suites junto con HU-007, sube el umbral
+temporalmente en ESE proceso `apps/api` (p. ej.
+`APP_LOGIN_THROTTLE_THRESHOLD=500`); `reto-telefonico.spec.ts` en cambio
+necesita el valor real (por defecto, 5) para ejercitar el escalamiento de
+verdad, así que corre contra una instancia separada de `apps/api` con la
+configuración por defecto. `apps/web/e2e/reto-telefonico.spec.ts` aísla
+cada una de sus propias pruebas con una IP sintética vía
+`X-Forwarded-For` (requiere `APP_TRUSTED_PROXIES` incluyendo el peer real
+que ve el proceso `api`, p. ej. `127.0.0.1/32` en un run nativo).
+
+### Tabla de criterios de aceptación
+
+| Criterio | Estado | Prueba o evidencia |
+| --- | --- | --- |
+| `CA-007-01` | Cumplido | `TestThrottleRepository_SixthAttempt_Escalates`, `TestLoginHandler_NotEscalated_ProceedsNormally`, `hu007_defensa_abuso.sql`, E2E "las primeras cinco...". |
+| `CA-007-02` | Cumplido | `TestLoginHandler_Escalated_Returns429WithRetryAfterAndNeverTouchesRepository` (repositorio de login nunca se toca), `PhoneChallengeRepository_VerifyChallenge_CorrectCode_SucceedsAndClearsThrottle`, E2E "completar el reto... y llega a /panel". |
+| `CA-007-03` | Cumplido | `TestChallengeHandler_AcceptedVsNotAccepted_IdenticalResponse`, `TestPhoneChallengeService_Verify_UnknownAccountAndWrongCode_SameError`, E2E "un código incorrecto...". |
+| `CA-007-04` | Cumplido | Semántica de ventana/escalamiento en `login_throttle_register_attempt`, comentada y probada en `hu007_defensa_abuso.sql`. |
+| `CA-007-05` | Cumplido | Todos los valores vienen de `config.Config`/variables de entorno; ver tabla arriba. Ningún valor incrustado en código. |
+| `CA-007-06` | Cumplido | `TestPurgeRepository_PurgeLoginThrottle_DeletesOnlyExpired`, `TestPurgeRepository_PurgePhoneChallenges_RunsWithoutError`, purga real vía `barberia_worker` (sin GRANT a `barberia_app`, `hu007_defensa_abuso.sql`). |
+| `CA-007-07` | Cumplido | `internal/platform/clientip` (paquete completo de pruebas: peer directo, proxy confiable, multi-salto, peer no confiable con cabecera falsificada, IPv4/IPv6, entradas malformadas). |
+
+### Pruebas
+
+- Unitarias: `internal/modules/auth/throttle_test.go`, `phone_challenge_test.go`, `purge_test.go`, `phone_sender_capture_test.go`.
+- Resolvedor de IP: `internal/platform/clientip/resolver_test.go`.
+- HTTP con dobles: `internal/modules/auth/httpapi/challenge_handler_test.go`, `login_throttle_test.go`, `contract_challenge_test.go`.
+- PostgreSQL real, incluida concurrencia (45 llamadas simultáneas sin incrementos perdidos): `internal/modules/auth/postgres/throttle_repository_test.go`, `phone_challenge_repository_test.go`, `purge_repository_test.go` (este último requiere `TEST_WORKER_DATABASE_URL` conectado como `barberia_worker`).
+- SQL directo con el rol real: `database/tests/hu007_defensa_abuso.sql`.
+- E2E contra API/PostgreSQL/navegador reales: `apps/web/e2e/reto-telefonico.spec.ts` (ver advertencia de umbral arriba).
+
 ## Pruebas de integración
 
 Las pruebas en `internal/platform/database/*_test.go` requieren PostgreSQL real
@@ -531,6 +639,14 @@ Ejecución:
 ```bash
 export TEST_DATABASE_URL="postgres://barberia_app@localhost:5432/barberia_test?sslmode=disable"
 go test -race ./internal/platform/database/...
+```
+
+Desde HU-007, `internal/modules/auth/postgres/purge_repository_test.go`
+requiere ADEMÁS `TEST_WORKER_DATABASE_URL` conectado como `barberia_worker`
+(las funciones de purga no están concedidas a `barberia_app`, `DDL-AUT-01`):
+
+```bash
+export TEST_WORKER_DATABASE_URL="postgres://barberia_worker@localhost:5432/barberia_test?sslmode=disable"
 ```
 
 Criterios verificados (numeración según docs/02-requisitos/historias-usuario.md,

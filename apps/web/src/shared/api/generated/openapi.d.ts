@@ -15,9 +15,49 @@ export interface paths {
         put?: never;
         /**
          * Iniciar sesión con correo y contraseña
-         * @description Verifica correo y contraseña y, si son válidos para un barbero activo, emite una sesión de 30 días como cookie opaca y revocable (DEC-050). Un correo inexistente y una contraseña incorrecta para un correo existente producen exactamente la misma respuesta 401 (CA-005-02); un usuario inactivo o eliminado también (CA-005-07). El token de sesión viaja únicamente en Set-Cookie, nunca en el cuerpo de la respuesta (CA-005-04).
+         * @description Verifica correo y contraseña y, si son válidos para un barbero activo, emite una sesión de 30 días como cookie opaca y revocable (DEC-050). Un correo inexistente y una contraseña incorrecta para un correo existente producen exactamente la misma respuesta 401 (CA-005-02); un usuario inactivo o eliminado también (CA-005-07). El token de sesión viaja únicamente en Set-Cookie, nunca en el cuerpo de la respuesta (CA-005-04). Antes de evaluar la contraseña, la IP solicitante se cuenta con una ventana de 15 minutos y un umbral de 5 solicitudes (DEC-052); al superarlo (la sexta solicitud) responde 429 y no evalúa la contraseña hasta completar el reto telefónico de POST /auth/challenge y POST /auth/challenge/verify (CA-007-01, CA-007-02, DEC-061).
          */
         post: operations["loginWithPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/auth/challenge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Solicitar el código del reto telefónico
+         * @description Solicita el código de verificación telefónica que desbloquea el inicio de sesión tras superar el umbral de intentos (DEC-062). Responde siempre 202 con el mismo cuerpo genérico, exista o no la cuenta, esté o no el teléfono verificado y esté o no la IP realmente escalada (no enumeración): solo se envía un mensaje real por WhatsApp oficial cuando las tres condiciones se cumplen. Límite propio: una solicitud cada 60 segundos y máximo 3 solicitudes activas por IP en 15 minutos.
+         */
+        post: operations["requestPhoneChallenge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/auth/challenge/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verificar el código del reto telefónico
+         * @description Verifica el código de 6 dígitos recibido por WhatsApp (DEC-062). Código incorrecto, vencido, agotado o de una cuenta inexistente producen exactamente la misma respuesta 401 (no enumeración). Un código correcto limpia el escalamiento de esa IP en el mismo paso atómico: el barbero reintenta POST /auth/login normalmente después, sin ningún token adicional.
+         */
+        post: operations["verifyPhoneChallenge"];
         delete?: never;
         options?: never;
         head?: never;
@@ -146,6 +186,37 @@ export interface components {
              */
             expiresAt: string;
         };
+        /** @description Solicitud del reto telefónico tras superar el umbral de intentos de acceso. */
+        ChallengeRequest: {
+            /**
+             * Format: email
+             * @description Correo de la cuenta cuyo teléfono verificado recibirá el código, si corresponde.
+             * @example barbero.ejemplo@correo.test
+             */
+            email: string;
+        };
+        /** @description Verificación del código del reto telefónico. */
+        ChallengeVerifyRequest: {
+            /**
+             * Format: email
+             * @description Correo de la cuenta que solicitó el reto.
+             * @example barbero.ejemplo@correo.test
+             */
+            email: string;
+            /**
+             * @description Código numérico de 6 dígitos enviado por WhatsApp.
+             * @example 482913
+             */
+            code: string;
+        };
+        /** @description Confirmación genérica de que la solicitud de reto fue recibida. */
+        ChallengeAcceptedResponse: {
+            /**
+             * @description Mensaje fijo, igual para toda solicitud válida en su forma.
+             * @example Si la cuenta existe y su teléfono está verificado, recibirá un código por WhatsApp.
+             */
+            message: string;
+        };
     };
     responses: {
         /** @description Sesión cerrada. La cookie de sesión queda limpiada en Set-Cookie. */
@@ -258,6 +329,35 @@ export interface components {
                 "application/json": components["schemas"]["SessionContextResponse"];
             };
         };
+        /** @description La solicitud fue recibida. Si la cuenta existe, tiene el teléfono verificado y la IP solicitante está en verificación, se envía un código por WhatsApp oficial; en cualquier otro caso no ocurre ningún envío, sin que la respuesta lo revele. */
+        ChallengeAccepted: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ChallengeAcceptedResponse"];
+            };
+        };
+        /** @description Código verificado. La IP solicitante deja de estar en verificación telefónica; el barbero puede reintentar el inicio de sesión normalmente. */
+        ChallengeVerifySuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
+        /** @description Se requiere verificar el teléfono antes de continuar. La contraseña no fue evaluada. Complete el reto de POST /auth/challenge y POST /auth/challenge/verify, luego reintente el inicio de sesión. */
+        ChallengeRequiredProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                "Retry-After": components["headers"]["RetryAfter"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
     };
     parameters: {
         /** @description Clave elegida por el cliente que identifica un intento de escritura crítica. Repetir la misma clave con el mismo contenido (método, ruta y cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo. Repetirla con contenido distinto es un conflicto: usa una clave nueva para una solicitud distinta. */
@@ -269,10 +369,13 @@ export interface components {
         "Set-Cookie": unknown;
         /** @description Limpia la cookie de sesión (ver components/security-schemes/SessionCookie.yaml): mismos Path=/api/v1, SameSite=Lax (provisional, DP-SEG-07 en docs/00-control/dudas-pendientes.md), Secure, HttpOnly que la cookie original, con Max-Age=0 para que el navegador la elimine de inmediato. */
         ClearCookieSession: string;
+        "Retry-After": unknown;
         /** @description Identificador de correlación de la solicitud. El cliente puede enviarlo; si está ausente o no cumple el formato aceptado, el servidor genera uno y lo refleja aquí. El mismo valor aparece en instance y requestId de cualquier Problem y en los registros técnicos relacionados con la solicitud. */
         XRequestId: string;
         /** @description Fija la cookie de sesión (ver components/security-schemes/SessionCookie.yaml): HttpOnly, Secure, SameSite=Lax (provisional, DP-SEG-07 en docs/00-control/dudas-pendientes.md), Path=/api/v1, vigencia de 30 días. El valor de la cookie es un token opaco aleatorio; nunca aparece en el cuerpo de la respuesta ni en ningún ejemplo de esta documentación. */
         SetCookieSession: string;
+        /** @description Segundos que el cliente debe esperar antes de reintentar. */
+        RetryAfter: number;
     };
     pathItems: never;
 }
@@ -292,6 +395,46 @@ export interface operations {
         };
         responses: {
             200: components["responses"]["LoginSuccess"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            422: components["responses"]["ValidationProblem"];
+            429: components["responses"]["ChallengeRequiredProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    requestPhoneChallenge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChallengeRequest"];
+            };
+        };
+        responses: {
+            202: components["responses"]["ChallengeAccepted"];
+            400: components["responses"]["InvalidRequestProblem"];
+            422: components["responses"]["ValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    verifyPhoneChallenge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChallengeVerifyRequest"];
+            };
+        };
+        responses: {
+            204: components["responses"]["ChallengeVerifySuccess"];
             400: components["responses"]["InvalidRequestProblem"];
             401: components["responses"]["UnauthorizedProblem"];
             422: components["responses"]["ValidationProblem"];

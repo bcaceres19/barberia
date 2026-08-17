@@ -15,6 +15,7 @@ import (
 
 	"system-barbershop/internal/modules/auth"
 	"system-barbershop/internal/modules/auth/httpapi"
+	"system-barbershop/internal/platform/clientip"
 	"system-barbershop/internal/platform/httpserver"
 )
 
@@ -63,11 +64,15 @@ func (f failingRepository) CreateSession(context.Context, string, string, string
 
 func newHandler(t *testing.T, repo auth.Repository, match bool) *httpapi.LoginHandler {
 	t.Helper()
-	svc, err := auth.NewLoginService(repo, stubHasher{match: match}, stubTokens{token: "token-de-prueba-http"}, stubClock{now: time.Date(2026, 8, 13, 0, 0, 0, 0, time.UTC)})
+	// throttle=nil: estas pruebas verifican SOLO la capa HTTP del login de
+	// HU-005; la integración con el escalamiento de HU-007 vive en
+	// contract_test.go/handler_test.go de este mismo paquete, con su propio
+	// doble de auth.ThrottleRepository.
+	svc, err := auth.NewLoginService(repo, stubHasher{match: match}, stubTokens{token: "token-de-prueba-http"}, stubClock{now: time.Date(2026, 8, 13, 0, 0, 0, 0, time.UTC)}, nil)
 	if err != nil {
 		t.Fatalf("NewLoginService: %v", err)
 	}
-	return httpapi.NewLoginHandler(svc, httpapi.DefaultCookieConfig())
+	return httpapi.NewLoginHandler(svc, httpapi.DefaultCookieConfig(), clientip.TrustedProxies{})
 }
 
 func doLogin(t *testing.T, h *httpapi.LoginHandler, body string) *httptest.ResponseRecorder {

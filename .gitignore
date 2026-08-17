@@ -28,6 +28,12 @@ apps/api/coverage.out
 apps/api/**/coverage.out
 *.test
 
+# Captura local de HU-007 (e2e/reto-telefonico.spec.ts): nunca contiene un
+# código real de WhatsApp, solo el generado en pruebas locales/E2E
+# (APP_PHONE_CHALLENGE_CAPTURE_FILE, restringido a local/test por
+# cmd/api/main.go). No debe versionarse bajo ninguna circunstancia.
+apps/api/.e2e-capture.json
+
 # Node, Vue y Vite
 node_modules/
 apps/web/dist/

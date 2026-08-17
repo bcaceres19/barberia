@@ -12,9 +12,11 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"system-barbershop/internal/modules/auth"
 	"system-barbershop/internal/platform/apperr"
+	"system-barbershop/internal/platform/clientip"
 	"system-barbershop/internal/platform/httpserver"
 )
 
@@ -65,15 +67,17 @@ func DefaultCookieConfig() CookieConfig {
 
 // LoginHandler decodifica, valida la forma, invoca el caso de uso de login y
 // traduce el resultado a HTTP. No contiene reglas de negocio ni SQL
-// (docs/03-desarrollo/estandar-backend-go.md §4).
+// (docs/03-desarrollo/estandar-backend-go.md §4). trustedProxies (HU-007)
+// resuelve la IP real de la solicitud antes de invocar el servicio.
 type LoginHandler struct {
-	service *auth.LoginService
-	cookie  CookieConfig
+	service        *auth.LoginService
+	cookie         CookieConfig
+	trustedProxies clientip.TrustedProxies
 }
 
 // NewLoginHandler construye el handler de login.
-func NewLoginHandler(service *auth.LoginService, cookie CookieConfig) *LoginHandler {
-	return &LoginHandler{service: service, cookie: cookie}
+func NewLoginHandler(service *auth.LoginService, cookie CookieConfig, trustedProxies clientip.TrustedProxies) *LoginHandler {
+	return &LoginHandler{service: service, cookie: cookie, trustedProxies: trustedProxies}
 }
 
 // ServeHTTP implementa http.Handler.
@@ -106,8 +110,17 @@ func (h *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, err := h.service.Login(r.Context(), req.Email, req.Password)
+	rawIP, err := clientip.Resolve(r, h.trustedProxies)
 	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(apperr.Internal(err), requestID))
+		return
+	}
+
+	session, err := h.service.Login(r.Context(), req.Email, req.Password, rawIP)
+	if err != nil {
+		if appErr, ok := apperr.As(err); ok && appErr.Kind == apperr.KindChallengeRequired && appErr.RetryAfterSeconds > 0 {
+			w.Header().Set("Retry-After", strconv.Itoa(appErr.RetryAfterSeconds))
+		}
 		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
 		return
 	}
