@@ -1,0 +1,32 @@
+# Cuerpo de la respuesta 200 de POST /auth/recovery/verify (DEC-064,
+# DEC-065). Único momento del flujo en que se muestra el destino, y solo
+# enmascarado: llegar aquí ya exige haber transcrito el código real
+# (DEC-065). resetToken se devuelve UNA sola vez; el cliente debe
+# presentarlo junto con email en POST /auth/recovery/reset-password dentro
+# de los siguientes 5 minutos.
+type: object
+additionalProperties: false
+description: Verificación exitosa; autoriza exactamente un cambio de contraseña.
+properties:
+  resetToken:
+    type: string
+    writeOnly: true
+    minLength: 20
+    maxLength: 64
+    description: Token opaco de un solo uso que autoriza el cambio de contraseña, vigente 5 minutos.
+    examples:
+      - 3n9F7qP2xR8mK1vL0dS5tY6wZ4bH2jN9
+  maskedPhone:
+    type: string
+    description: Teléfono de destino, enmascarado; nunca el valor completo (CA-008-06).
+    examples:
+      - "+57 *** *** 12"
+  maskedEmail:
+    type: string
+    description: Correo de destino, enmascarado; nunca el valor completo (CA-008-06).
+    examples:
+      - b***@c***.test
+required:
+  - resetToken
+  - maskedPhone
+  - maskedEmail

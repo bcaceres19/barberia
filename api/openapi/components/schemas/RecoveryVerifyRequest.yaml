@@ -1,0 +1,24 @@
+# Cuerpo de POST /auth/recovery/verify (HU-008, DEC-064). Cerrado. code es
+# el valor de 6 dígitos recibido por WhatsApp/correo; nunca se refleja en
+# ninguna respuesta ni se registra en claro (RN-DAT-02).
+type: object
+additionalProperties: false
+description: Verificación del código de recuperación.
+properties:
+  email:
+    type: string
+    format: email
+    maxLength: 254
+    description: Correo de la cuenta que solicitó la recuperación.
+    examples:
+      - barbero.ejemplo@correo.test
+  code:
+    type: string
+    writeOnly: true
+    pattern: '^[0-9]{6}$'
+    description: Código numérico de 6 dígitos recibido por WhatsApp y correo.
+    examples:
+      - "482913"
+required:
+  - email
+  - code

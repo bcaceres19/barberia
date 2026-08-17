@@ -15,7 +15,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.4.0
+  version: 0.5.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -36,6 +36,12 @@ paths:
     $ref: './paths/public-auth.yaml#/~1public~1auth~1challenge'
   /public/auth/challenge/verify:
     $ref: './paths/public-auth.yaml#/~1public~1auth~1challenge~1verify'
+  /public/auth/recovery/request:
+    $ref: './paths/public-auth.yaml#/~1public~1auth~1recovery~1request'
+  /public/auth/recovery/verify:
+    $ref: './paths/public-auth.yaml#/~1public~1auth~1recovery~1verify'
+  /public/auth/recovery/reset-password:
+    $ref: './paths/public-auth.yaml#/~1public~1auth~1recovery~1reset-password'
   /private/auth/logout:
     $ref: './paths/private-auth.yaml#/~1private~1auth~1logout'
   /private/auth/session:

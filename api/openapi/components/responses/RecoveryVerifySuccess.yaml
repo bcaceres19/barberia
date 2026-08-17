@@ -1,0 +1,12 @@
+# Respuesta 200 de POST /auth/recovery/verify (HU-008, DEC-064/DEC-065).
+description: >
+  Código verificado. El cuerpo incluye el token de un solo uso que autoriza
+  exactamente un cambio de contraseña y el destino enmascarado al que se
+  envió el código.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/RecoveryVerifyResponse.yaml'

@@ -1,0 +1,14 @@
+# Cuerpo de la respuesta 202 de POST /auth/recovery/request (DEC-065).
+# Siempre el mismo mensaje fijo, sin destino: mostrar cualquier dato
+# derivado de la cuenta aquí abriría el oráculo que DEC-065 evita.
+type: object
+additionalProperties: false
+description: Confirmación genérica de que la solicitud fue recibida.
+properties:
+  message:
+    type: string
+    description: Mensaje genérico, idéntico exista o no la cuenta.
+    examples:
+      - Si la cuenta existe, se envió un código a los medios registrados.
+required:
+  - message
