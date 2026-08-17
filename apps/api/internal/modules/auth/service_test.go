@@ -98,9 +98,14 @@ func (c fixedClock) Now() time.Time { return c.now }
 
 // --- helpers ------------------------------------------------------------
 
+// testIP es la IP usada en las pruebas de este archivo que NO ejercitan
+// HU-007 (throttle=nil): su valor es irrelevante porque LoginService.Login
+// solo la usa cuando throttle no es nil.
+const testIP = "203.0.113.1"
+
 func newTestService(t *testing.T, repo *fakeRepository, hasher *fakeHasher, tokens *fakeTokens, clk fixedClock) *auth.LoginService {
 	t.Helper()
-	svc, err := auth.NewLoginService(repo, hasher, tokens, clk)
+	svc, err := auth.NewLoginService(repo, hasher, tokens, clk, nil)
 	if err != nil {
 		t.Fatalf("NewLoginService: %v", err)
 	}
@@ -146,7 +151,7 @@ func TestLogin_Success_CreatesSessionWithHashedToken(t *testing.T) {
 	now := time.Date(2026, 8, 13, 12, 0, 0, 0, time.UTC)
 	svc := newTestService(t, repo, hasher, tokens, fixedClock{now})
 
-	session, err := svc.Login(context.Background(), "duena.a@ejemplo.test", "contraseña-correcta")
+	session, err := svc.Login(context.Background(), "duena.a@ejemplo.test", "contraseña-correcta", testIP)
 	if err != nil {
 		t.Fatalf("Login: %v", err)
 	}
@@ -181,7 +186,7 @@ func TestLogin_NormalizesEmail_TrimsAndLowercases(t *testing.T) {
 	hasher := &fakeHasher{verifyResult: false}
 	svc := newTestService(t, repo, hasher, &fakeTokens{}, fixedClock{time.Now()})
 
-	_, _ = svc.Login(context.Background(), "  DUENA.A@Ejemplo.TEST  ", "cualquiera")
+	_, _ = svc.Login(context.Background(), "  DUENA.A@Ejemplo.TEST  ", "cualquiera", testIP)
 
 	if len(repo.resolveCalls) != 1 {
 		t.Fatalf("expected exactly one ResolveLoginTenant call, got %d", len(repo.resolveCalls))
@@ -199,7 +204,7 @@ func TestLogin_WrongPassword_ReturnsUnauthorizedWithoutCreatingSession(t *testin
 	hasher := &fakeHasher{verifyResult: false}
 	svc := newTestService(t, repo, hasher, &fakeTokens{}, fixedClock{time.Now()})
 
-	_, err := svc.Login(context.Background(), "duena.a@ejemplo.test", "incorrecta")
+	_, err := svc.Login(context.Background(), "duena.a@ejemplo.test", "incorrecta", testIP)
 
 	appErr := requireUnauthorized(t, err)
 	if appErr.Message == "" {
@@ -215,7 +220,7 @@ func TestLogin_UnknownEmail_VerifiesAgainstDummyHash(t *testing.T) {
 	hasher := &fakeHasher{verifyResult: false}
 	svc := newTestService(t, repo, hasher, &fakeTokens{}, fixedClock{time.Now()})
 
-	_, err := svc.Login(context.Background(), "no-existe@ejemplo.test", "cualquiera")
+	_, err := svc.Login(context.Background(), "no-existe@ejemplo.test", "cualquiera", testIP)
 
 	requireUnauthorized(t, err)
 
@@ -249,10 +254,10 @@ func TestLogin_InactiveUser_IsIndistinguishableFromUnknownEmail(t *testing.T) {
 	hasher := &fakeHasher{verifyResult: false}
 
 	svcInactive := newTestService(t, repoInactive, hasher, &fakeTokens{}, fixedClock{time.Now()})
-	_, errInactive := svcInactive.Login(context.Background(), "barbero.b@ejemplo.test", "cualquiera")
+	_, errInactive := svcInactive.Login(context.Background(), "barbero.b@ejemplo.test", "cualquiera", testIP)
 
 	svcUnknown := newTestService(t, repoUnknown, hasher, &fakeTokens{}, fixedClock{time.Now()})
-	_, errUnknown := svcUnknown.Login(context.Background(), "no-existe@ejemplo.test", "cualquiera")
+	_, errUnknown := svcUnknown.Login(context.Background(), "no-existe@ejemplo.test", "cualquiera", testIP)
 
 	a, b := requireUnauthorized(t, errInactive), requireUnauthorized(t, errUnknown)
 	if a.Message != b.Message {
@@ -274,7 +279,7 @@ func TestLogin_StructuralNonEnumeration_SameShapeForUnknownEmailAndWrongPassword
 	unknownRepo := &fakeRepository{resolveFound: false}
 	unknownHasher := &fakeHasher{verifyResult: false}
 	unknownSvc := newTestService(t, unknownRepo, unknownHasher, &fakeTokens{}, fixedClock{time.Now()})
-	_, unknownErr := unknownSvc.Login(context.Background(), "no-existe@ejemplo.test", "cualquiera")
+	_, unknownErr := unknownSvc.Login(context.Background(), "no-existe@ejemplo.test", "cualquiera", testIP)
 
 	wrongRepo := &fakeRepository{
 		resolveShop: "11111111-1111-1111-1111-111111111111", resolveFound: true,
@@ -282,7 +287,7 @@ func TestLogin_StructuralNonEnumeration_SameShapeForUnknownEmailAndWrongPassword
 	}
 	wrongHasher := &fakeHasher{verifyResult: false}
 	wrongSvc := newTestService(t, wrongRepo, wrongHasher, &fakeTokens{}, fixedClock{time.Now()})
-	_, wrongErr := wrongSvc.Login(context.Background(), "duena.a@ejemplo.test", "incorrecta")
+	_, wrongErr := wrongSvc.Login(context.Background(), "duena.a@ejemplo.test", "incorrecta", testIP)
 
 	if len(unknownRepo.resolveCalls) != len(wrongRepo.resolveCalls) {
 		t.Fatalf("expected the same number of ResolveLoginTenant calls, got %d vs %d",
@@ -307,7 +312,7 @@ func TestLogin_ResolveTenantError_ReturnsInternal(t *testing.T) {
 	repo := &fakeRepository{resolveErr: errors.New("db unavailable")}
 	svc := newTestService(t, repo, &fakeHasher{}, &fakeTokens{}, fixedClock{time.Now()})
 
-	_, err := svc.Login(context.Background(), "duena.a@ejemplo.test", "x")
+	_, err := svc.Login(context.Background(), "duena.a@ejemplo.test", "x", testIP)
 	requireInternal(t, err)
 }
 
@@ -315,7 +320,7 @@ func TestLogin_LookupCredentialError_ReturnsInternal(t *testing.T) {
 	repo := &fakeRepository{resolveFound: true, resolveShop: "shop-1", lookupErr: errors.New("db unavailable")}
 	svc := newTestService(t, repo, &fakeHasher{}, &fakeTokens{}, fixedClock{time.Now()})
 
-	_, err := svc.Login(context.Background(), "duena.a@ejemplo.test", "x")
+	_, err := svc.Login(context.Background(), "duena.a@ejemplo.test", "x", testIP)
 	requireInternal(t, err)
 }
 
@@ -329,7 +334,7 @@ func TestLogin_CreateSessionError_ReturnsInternal(t *testing.T) {
 	tokens := &fakeTokens{token: "tok"}
 	svc := newTestService(t, repo, hasher, tokens, fixedClock{time.Now()})
 
-	_, err := svc.Login(context.Background(), "duena.a@ejemplo.test", "correcta")
+	_, err := svc.Login(context.Background(), "duena.a@ejemplo.test", "correcta", testIP)
 	requireInternal(t, err)
 }
 
@@ -342,7 +347,7 @@ func TestLogin_TokenGeneratorFails_NeverCreatesSession(t *testing.T) {
 	tokens := &fakeTokens{err: fmt.Errorf("crypto/rand agotado")}
 	svc := newTestService(t, repo, hasher, tokens, fixedClock{time.Now()})
 
-	_, err := svc.Login(context.Background(), "duena.a@ejemplo.test", "correcta")
+	_, err := svc.Login(context.Background(), "duena.a@ejemplo.test", "correcta", testIP)
 
 	requireInternal(t, err)
 	if len(repo.createSessionCalls) != 0 {
@@ -357,7 +362,7 @@ func TestLogin_CancelledContext_NeverCallsRepository(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	_, err := svc.Login(ctx, "duena.a@ejemplo.test", "x")
+	_, err := svc.Login(ctx, "duena.a@ejemplo.test", "x", testIP)
 
 	requireInternal(t, err)
 	if len(repo.resolveCalls) != 0 {
@@ -366,7 +371,7 @@ func TestLogin_CancelledContext_NeverCallsRepository(t *testing.T) {
 }
 
 func TestNewLoginService_DummyHashFailure_ReturnsError(t *testing.T) {
-	_, err := auth.NewLoginService(&fakeRepository{}, failingDummyHasher{err: errors.New("boom")}, &fakeTokens{}, fixedClock{time.Now()})
+	_, err := auth.NewLoginService(&fakeRepository{}, failingDummyHasher{err: errors.New("boom")}, &fakeTokens{}, fixedClock{time.Now()}, nil)
 	if err == nil {
 		t.Fatal("expected NewLoginService to fail when the hasher cannot compute the dummy hash")
 	}

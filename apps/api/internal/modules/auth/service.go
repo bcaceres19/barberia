@@ -27,26 +27,31 @@ const dummyPassword = "correo-inexistente-o-credencial-ausente-nunca-coincide-co
 
 // LoginService implementa el caso de uso de HU-005: inicio de sesión con
 // correo y contraseña. No conoce Chi, net/http, JSON ni PostgreSQL
-// (CA-002-06): recibe sus dependencias por constructor.
+// (CA-002-06): recibe sus dependencias por constructor. throttle es HU-007:
+// puede ser nil solo en pruebas que no ejercitan la defensa contra abuso;
+// NewLoginService lo exige en producción (cmd/api/main.go siempre lo pasa).
 type LoginService struct {
 	repo      Repository
 	hasher    PasswordHasher
 	tokens    TokenGenerator
 	clock     clock.Clock
 	dummyHash string
+	throttle  *ThrottleService
 }
 
 // NewLoginService construye el servicio. Calcula el hash señuelo una sola
 // vez, no en cada Login: cada solicitud fallida ya paga el costo
 // criptográfico completo de una verificación real; recalcular la sal del
 // señuelo en cada llamada no aporta nada y solo desplaza cuándo ocurre el
-// costo de inicialización.
-func NewLoginService(repo Repository, hasher PasswordHasher, tokens TokenGenerator, clk clock.Clock) (*LoginService, error) {
+// costo de inicialización. throttle registra el intento por IP y decide el
+// escalamiento (HU-007, DEC-061) ANTES de resolver tenant o evaluar
+// contraseña; nunca es opcional en el router real.
+func NewLoginService(repo Repository, hasher PasswordHasher, tokens TokenGenerator, clk clock.Clock, throttle *ThrottleService) (*LoginService, error) {
 	dummyHash, err := hasher.Hash(dummyPassword)
 	if err != nil {
 		return nil, fmt.Errorf("auth: preparar hash señuelo: %w", err)
 	}
-	return &LoginService{repo: repo, hasher: hasher, tokens: tokens, clock: clk, dummyHash: dummyHash}, nil
+	return &LoginService{repo: repo, hasher: hasher, tokens: tokens, clock: clk, dummyHash: dummyHash, throttle: throttle}, nil
 }
 
 // Login verifica correo y contraseña y, si son válidos, emite una sesión
@@ -58,9 +63,22 @@ func NewLoginService(repo Repository, hasher PasswordHasher, tokens TokenGenerat
 // camino resuelto y el no resuelto; esta función siempre ejecuta exactamente
 // una llamada a Verify, con un hash del mismo costo (real o señuelo), sin
 // importar qué rama se tomó antes.
-func (s *LoginService) Login(ctx context.Context, rawEmail, password string) (Session, error) {
+//
+// rawIP es la IP ya resuelta por el adaptador HTTP (clientip.Resolve, nunca
+// una cabecera sin validar). Si throttle no es nil, Login registra el
+// intento primero (HU-007): una IP escalada devuelve
+// apperr.KindChallengeRequired sin resolver tenant ni evaluar contraseña
+// (CA-007-02) — la rama escalada y la rama de credenciales inválidas nunca
+// se alcanzan en la misma llamada.
+func (s *LoginService) Login(ctx context.Context, rawEmail, password, rawIP string) (Session, error) {
 	if err := ctx.Err(); err != nil {
 		return Session{}, apperr.Internal(fmt.Errorf("auth: contexto cancelado antes de iniciar sesión: %w", err))
+	}
+
+	if s.throttle != nil {
+		if err := s.throttle.Check(ctx, rawIP); err != nil {
+			return Session{}, err
+		}
 	}
 
 	email := NormalizeEmail(rawEmail)

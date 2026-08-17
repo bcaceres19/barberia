@@ -32,3 +32,22 @@ type SessionContextResponse struct {
 	Barbershop BarbershopSummary `json:"barbershop"`
 	ExpiresAt  time.Time         `json:"expiresAt"`
 }
+
+// ChallengeRequest es el cuerpo de POST /api/v1/public/auth/challenge
+// (HU-007, DEC-062).
+type ChallengeRequest struct {
+	Email string `json:"email"`
+}
+
+// ChallengeAcceptedResponse es el cuerpo de la respuesta 202, siempre el
+// mismo mensaje fijo (no enumeración, DEC-062).
+type ChallengeAcceptedResponse struct {
+	Message string `json:"message"`
+}
+
+// ChallengeVerifyRequest es el cuerpo de
+// POST /api/v1/public/auth/challenge/verify (HU-007, DEC-062).
+type ChallengeVerifyRequest struct {
+	Email string `json:"email"`
+	Code  string `json:"code"`
+}

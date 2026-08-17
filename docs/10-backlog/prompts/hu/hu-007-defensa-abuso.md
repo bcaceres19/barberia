@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-007-v1"
-version: "1.2"
+version: "1.3"
 kind: "hu"
-status: "ready"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -18,9 +18,9 @@ related_hu:
 issue: 57
 issue_url: "https://github.com/bcaceres19/barberia/issues/57"
 suggested_issue_title: "feat(auth): implementar HU-007 defensa escalonada contra abuso"
-branch: null
-pr: null
-pr_url: null
+branch: "feat/57-hu007-defensa-abuso"
+pr: 61
+pr_url: "https://github.com/bcaceres19/barberia/pull/61"
 depends_on:
   - "HU-003 integrada"
   - "HU-005 integrada"

@@ -72,10 +72,12 @@ jobs:
                    20260811145252_harden_roles_and_definer_functions.sql \
                    20260811154100_harden_idempotency_concurrency.sql \
                    20260811220000_harden_idempotency_fingerprint_format.sql \
-                   20260813120000_create_auth_credentials_and_sessions.sql; do
+                   20260813120000_create_auth_credentials_and_sessions.sql \
+                   20260817180000_create_login_throttle_and_phone_challenge.sql; do
             psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$f"
           done
           psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_app PASSWORD 'app_test';"
+          psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_worker PASSWORD 'worker_test';"
 
       - name: Cargar testdata de dos barberías
         env:
@@ -84,11 +86,13 @@ jobs:
           set -euo pipefail
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/dos_barberias.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu005_credenciales_sesiones.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu007_reto_telefonico.sql
 
       - name: go test -race
         working-directory: apps/api
         env:
           TEST_DATABASE_URL: postgres://barberia_app:app_test@localhost:5432/postgres?sslmode=disable
+          TEST_WORKER_DATABASE_URL: postgres://barberia_worker:worker_test@localhost:5432/postgres?sslmode=disable
         run: go test -race ./...
 
       - name: govulncheck
@@ -214,10 +218,13 @@ jobs:
           echo "$salida"
           echo "$salida" | grep -q "No migration files to execute"
 
-      - name: Fijar contraseña de barberia_app
+      - name: Fijar contraseñas de barberia_app y barberia_worker
         env:
           PGPASSWORD: postgres
-        run: psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_app PASSWORD 'app_test';"
+        run: |
+          set -euo pipefail
+          psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_app PASSWORD 'app_test';"
+          psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_worker PASSWORD 'worker_test';"
 
       - name: Cargar testdata de dos barberías
         env:
@@ -226,6 +233,7 @@ jobs:
           set -euo pipefail
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/dos_barberias.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu005_credenciales_sesiones.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu007_reto_telefonico.sql
 
       - name: Suite de aislamiento HU-001
         env:
@@ -236,6 +244,11 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/hu005_aislamiento_credenciales_sesiones.sql
+
+      - name: Suite de defensa contra abuso HU-007
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/hu007_defensa_abuso.sql
 
       - name: Suite de idempotencia (secuencial, una conexión)
         env:

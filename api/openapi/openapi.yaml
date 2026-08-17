@@ -15,7 +15,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.3.0
+  version: 0.4.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -32,6 +32,10 @@ tags:
 paths:
   /public/auth/login:
     $ref: './paths/public-auth.yaml#/~1public~1auth~1login'
+  /public/auth/challenge:
+    $ref: './paths/public-auth.yaml#/~1public~1auth~1challenge'
+  /public/auth/challenge/verify:
+    $ref: './paths/public-auth.yaml#/~1public~1auth~1challenge~1verify'
   /private/auth/logout:
     $ref: './paths/private-auth.yaml#/~1private~1auth~1logout'
   /private/auth/session:
@@ -46,6 +50,12 @@ components:
       $ref: './components/schemas/LoginResponse.yaml'
     SessionContextResponse:
       $ref: './components/schemas/SessionContextResponse.yaml'
+    ChallengeRequest:
+      $ref: './components/schemas/ChallengeRequest.yaml'
+    ChallengeVerifyRequest:
+      $ref: './components/schemas/ChallengeVerifyRequest.yaml'
+    ChallengeAcceptedResponse:
+      $ref: './components/schemas/ChallengeAcceptedResponse.yaml'
   securitySchemes:
     SessionCookie:
       $ref: './components/security-schemes/SessionCookie.yaml'
@@ -56,6 +66,8 @@ components:
       $ref: './components/headers/SetCookieSession.yaml'
     ClearCookieSession:
       $ref: './components/headers/ClearCookieSession.yaml'
+    Retry-After:
+      $ref: './components/headers/RetryAfter.yaml'
   parameters:
     IdempotencyKey:
       $ref: './components/parameters/IdempotencyKey.yaml'
@@ -82,3 +94,9 @@ components:
       $ref: './components/responses/LoginSuccess.yaml'
     SessionContextSuccess:
       $ref: './components/responses/SessionContextSuccess.yaml'
+    ChallengeAccepted:
+      $ref: './components/responses/ChallengeAccepted.yaml'
+    ChallengeVerifySuccess:
+      $ref: './components/responses/ChallengeVerifySuccess.yaml'
+    ChallengeRequiredProblem:
+      $ref: './components/responses/ChallengeRequiredProblem.yaml'

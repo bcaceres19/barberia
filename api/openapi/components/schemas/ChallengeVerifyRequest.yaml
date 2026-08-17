@@ -1,0 +1,24 @@
+# Cuerpo de POST /auth/challenge/verify (HU-007, DEC-062). Cerrado. code es
+# el valor de 6 dígitos recibido por WhatsApp; nunca se refleja en ninguna
+# respuesta ni se registra en claro (RN-DAT-02).
+type: object
+additionalProperties: false
+description: Verificación del código del reto telefónico.
+properties:
+  email:
+    type: string
+    format: email
+    maxLength: 254
+    description: Correo de la cuenta que solicitó el reto.
+    examples:
+      - barbero.ejemplo@correo.test
+  code:
+    type: string
+    writeOnly: true
+    pattern: '^[0-9]{6}$'
+    description: Código numérico de 6 dígitos enviado por WhatsApp.
+    examples:
+      - "482913"
+required:
+  - email
+  - code

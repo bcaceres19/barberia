@@ -278,50 +278,15 @@ GRANT  EXECUTE ON FUNCTION authn_resolve_session_tenant(text) TO barberia_app;
 -- A.3 · `staff_recovery_code` — HU-008
 -- ---------------------------------------------------------------------------
 
--- El teléfono verificado es requisito del mecanismo (DEC-026) y no existe en
--- HU-001; entra con esta migración. El envío del código usa WhatsApp oficial
--- y correo, mismo proveedor de DEC-027 (DEC-051); el destino de esta tabla es
--- el teléfono, y el correo se toma de staff_user.email.
-ALTER TABLE staff_user
-  ADD COLUMN phone             text,
-  ADD COLUMN phone_verified_at timestamptz,
-  ADD CONSTRAINT staff_user_phone_ck CHECK (
-    phone IS NULL OR (phone ~ '^\+[1-9][0-9]{7,14}$')
-  ),
-  ADD CONSTRAINT staff_user_phone_verified_at_ck CHECK (
-    phone_verified_at IS NULL OR phone IS NOT NULL
-  );
-
-COMMENT ON COLUMN staff_user.phone IS
-  'Teléfono en formato E.164. Destino del código de recuperación; se muestra siempre '
-  'enmascarado y nunca completo en respuestas ni registros (CA-008-06).';
-
--- DDL-INT-05: cambiar el teléfono invalida la verificación anterior; centralizado
--- aquí para que ningún flujo de actualización pueda olvidarlo.
-CREATE OR REPLACE FUNCTION staff_user_reset_phone_verification()
-RETURNS trigger
-LANGUAGE plpgsql
-SET search_path = pg_catalog
-AS $$
-BEGIN
-  IF NEW.phone IS DISTINCT FROM OLD.phone THEN
-    NEW.phone_verified_at := NULL;
-  END IF;
-  RETURN NEW;
-END;
-$$;
-
-REVOKE ALL     ON FUNCTION staff_user_reset_phone_verification() FROM PUBLIC;
-GRANT  EXECUTE ON FUNCTION staff_user_reset_phone_verification() TO barberia_app;
-
-COMMENT ON FUNCTION staff_user_reset_phone_verification() IS
-  'Anula phone_verified_at cuando phone cambia de valor (DDL-INT-05). Sin esto, un número '
-  'nuevo heredaría la verificación del número anterior.';
-
-CREATE TRIGGER staff_user_reset_phone_verification_trg
-  BEFORE UPDATE OF phone ON staff_user
-  FOR EACH ROW EXECUTE FUNCTION staff_user_reset_phone_verification();
-
+-- El teléfono verificado es requisito del mecanismo (DEC-026), pero HU-007
+-- (DEC-062) también lo necesita como condición del reto telefónico y se
+-- construye antes que HU-008 en el orden de B0. `staff_user.phone` y
+-- `phone_verified_at` se adelantaron a la migración de HU-007 (sección A.5)
+-- para no duplicar el ALTER TABLE ni arriesgar una segunda migración en
+-- conflicto: al llegar aquí, ambas columnas y el trigger de reinicio de
+-- verificación ya existen. El envío del código de recuperación usa WhatsApp
+-- oficial y correo, mismo proveedor de DEC-027 (DEC-051); el destino de esta
+-- tabla es el teléfono, y el correo se toma de staff_user.email.
 CREATE TABLE staff_recovery_code (
   id             uuid        NOT NULL DEFAULT gen_random_uuid(),
   barbershop_id  uuid        NOT NULL,
@@ -559,6 +524,356 @@ GRANT  EXECUTE ON FUNCTION login_throttle_purge_expired(integer) TO barberia_wor
 
 COMMENT ON FUNCTION login_throttle_purge_expired(integer) IS
   'Mantenimiento del worker: purga en lote los contadores vencidos. Exclusivo de barberia_worker.';
+
+-- ---------------------------------------------------------------------------
+-- A.5 · Teléfono verificado (prerrequisito) y `auth_phone_challenge` — HU-007
+-- ---------------------------------------------------------------------------
+-- El teléfono verificado es requisito del mecanismo de HU-007 (DEC-062) y no
+-- existe en HU-001; entra con esta migración, adelantado desde A.3 porque
+-- HU-007 se construye antes que HU-008 en el orden de B0 y ambas historias
+-- lo necesitan. HU-008 (A.3, arriba) reutiliza estas mismas columnas sin
+-- volver a crearlas.
+ALTER TABLE staff_user
+  ADD COLUMN phone             text,
+  ADD COLUMN phone_verified_at timestamptz,
+  ADD CONSTRAINT staff_user_phone_ck CHECK (
+    phone IS NULL OR (phone ~ '^\+[1-9][0-9]{7,14}$')
+  ),
+  ADD CONSTRAINT staff_user_phone_verified_at_ck CHECK (
+    phone_verified_at IS NULL OR phone IS NOT NULL
+  );
+
+COMMENT ON COLUMN staff_user.phone IS
+  'Teléfono en formato E.164. Destino del reto de HU-007 y del código de recuperación de '
+  'HU-008; se muestra siempre enmascarado y nunca completo en respuestas ni registros '
+  '(CA-008-06).';
+
+-- DDL-INT-05: cambiar el teléfono invalida la verificación anterior; centralizado
+-- aquí para que ningún flujo de actualización pueda olvidarlo.
+CREATE OR REPLACE FUNCTION staff_user_reset_phone_verification()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog
+AS $$
+BEGIN
+  IF NEW.phone IS DISTINCT FROM OLD.phone THEN
+    NEW.phone_verified_at := NULL;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+REVOKE ALL     ON FUNCTION staff_user_reset_phone_verification() FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION staff_user_reset_phone_verification() TO barberia_app;
+
+COMMENT ON FUNCTION staff_user_reset_phone_verification() IS
+  'Anula phone_verified_at cuando phone cambia de valor (DDL-INT-05). Sin esto, un número '
+  'nuevo heredaría la verificación del número anterior.';
+
+CREATE TRIGGER staff_user_reset_phone_verification_trg
+  BEFORE UPDATE OF phone ON staff_user
+  FOR EACH ROW EXECUTE FUNCTION staff_user_reset_phone_verification();
+
+-- Reto telefónico que desbloquea el login tras el escalamiento de A.4
+-- (DEC-061). A diferencia de login_throttle, SÍ tiene barbershop_id y RLS:
+-- el reto ya conoce una cuenta candidata (por el correo recibido), así que
+-- el mismo patrón tenant-aware de staff_recovery_code aplica. Sin GRANT
+-- directo a barberia_app (mismo motivo DDL-AUT-01 que A.4): las dos
+-- operaciones públicas corren ANTES de resolver contexto de tenant, así que
+-- solo pueden pasar por funciones SECURITY DEFINER estrechas, nunca por
+-- RLS+GRANT ordinario.
+
+CREATE TABLE auth_phone_challenge (
+  id             uuid        NOT NULL DEFAULT gen_random_uuid(),
+  barbershop_id  uuid        NOT NULL,
+  staff_user_id  uuid        NOT NULL,
+  ip_hash        text        NOT NULL,
+  code_hash      text        NOT NULL,
+  attempt_count  smallint    NOT NULL DEFAULT 0,
+  max_attempts   smallint    NOT NULL DEFAULT 5,
+  expires_at     timestamptz NOT NULL,
+  consumed_at    timestamptz,
+  invalidated_at timestamptz,
+  created_at     timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT auth_phone_challenge_id_pk PRIMARY KEY (id),
+
+  CONSTRAINT auth_phone_challenge_barbershop_id_staff_user_id_fk
+    FOREIGN KEY (barbershop_id, staff_user_id)
+    REFERENCES staff_user (barbershop_id, id) ON DELETE CASCADE,
+
+  -- Mismo HMAC-SHA256 de 64 hex que login_throttle.ip_hash: ata el reto a
+  -- la IP concreta que lo pidió, nunca la IP en claro.
+  CONSTRAINT auth_phone_challenge_ip_hash_ck CHECK (char_length(ip_hash) = 64),
+  -- HMAC-SHA256 del código de 6 dígitos, nunca SHA-256 simple (DEC-062): un
+  -- espacio de 10^6 sin secreto se recupera trivialmente offline.
+  CONSTRAINT auth_phone_challenge_code_hash_ck CHECK (char_length(code_hash) = 64),
+  CONSTRAINT auth_phone_challenge_attempt_count_ck CHECK (attempt_count >= 0 AND attempt_count <= max_attempts),
+  CONSTRAINT auth_phone_challenge_max_attempts_ck CHECK (max_attempts BETWEEN 1 AND 10),
+  CONSTRAINT auth_phone_challenge_expires_at_ck CHECK (expires_at > created_at),
+
+  -- Mismo patrón de desenlace excluyente que staff_recovery_code.
+  CONSTRAINT auth_phone_challenge_outcome_ck CHECK (
+    NOT (consumed_at IS NOT NULL AND invalidated_at IS NOT NULL)
+  ),
+  CONSTRAINT auth_phone_challenge_consumed_at_ck CHECK (
+    consumed_at IS NULL OR consumed_at >= created_at
+  ),
+  CONSTRAINT auth_phone_challenge_invalidated_at_ck CHECK (
+    invalidated_at IS NULL OR invalidated_at >= created_at
+  )
+);
+
+COMMENT ON TABLE auth_phone_challenge IS
+  'Reto telefónico de HU-007 que desbloquea el login tras superar el umbral de intentos '
+  '(DEC-061, DEC-062). Propietario funcional: plataforma. Retención: corta, se purga tras '
+  'vencer. Clasificación: secreto. Solo se almacena el hash del código; la base de datos '
+  'nunca contiene el valor enviado por WhatsApp. No es staff_recovery_code (HU-008): un '
+  'reto de acceso y un código de recuperación de contraseña son artefactos distintos.';
+
+-- Límite de reenvío (1/60s) y de solicitudes activas (máx. 3/15min) por IP:
+-- ambos se calculan contando filas por ip_hash y created_at, sin una tabla
+-- de conteo aparte.
+CREATE INDEX idx_auth_phone_challenge_ip_created ON auth_phone_challenge (ip_hash, created_at);
+
+-- Auditoría por barbería/usuario (mismo motivo que staff_recovery_code).
+CREATE INDEX idx_auth_phone_challenge_shop_user
+  ON auth_phone_challenge (barbershop_id, staff_user_id);
+
+-- Purga del worker.
+CREATE INDEX idx_auth_phone_challenge_expires_at ON auth_phone_challenge (expires_at);
+
+ALTER TABLE auth_phone_challenge ENABLE ROW LEVEL SECURITY;
+ALTER TABLE auth_phone_challenge FORCE  ROW LEVEL SECURITY;
+
+CREATE POLICY auth_phone_challenge_all_admin_policy ON auth_phone_challenge
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
+
+-- DDL-AUT-01: sin política de SELECT/INSERT/UPDATE ni GRANT para
+-- barberia_app. Las dos funciones siguientes son el único punto de acceso.
+
+CREATE OR REPLACE FUNCTION auth_phone_challenge_request(
+  p_email                text,
+  p_ip_hash               text,
+  p_code_hash             text,
+  p_expires_seconds       integer,
+  p_rate_window_seconds   integer,
+  p_rate_max_active       integer,
+  p_rate_cooldown_seconds integer
+)
+RETURNS TABLE (accepted boolean, phone text)
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_now       timestamptz := pg_catalog.now();
+  v_user      record;
+  v_escalated boolean;
+  v_recent    integer;
+BEGIN
+  IF p_email IS NULL OR p_ip_hash IS NULL OR p_code_hash IS NULL
+     OR p_expires_seconds IS NULL OR p_rate_window_seconds IS NULL
+     OR p_rate_max_active IS NULL OR p_rate_cooldown_seconds IS NULL THEN
+    RAISE EXCEPTION 'auth_phone_challenge_request: ningún argumento admite NULL.';
+  END IF;
+  IF char_length(p_ip_hash) <> 64 OR char_length(p_code_hash) <> 64 THEN
+    RAISE EXCEPTION 'auth_phone_challenge_request: ip_hash/code_hash deben ser HMAC-SHA256 (64 hex).';
+  END IF;
+  IF p_expires_seconds < 1 OR p_rate_window_seconds < 1
+     OR p_rate_max_active < 1 OR p_rate_cooldown_seconds < 1 THEN
+    RAISE EXCEPTION 'auth_phone_challenge_request: parámetros fuera de rango.';
+  END IF;
+
+  -- Condición 1: la cuenta existe, está activa y tiene el teléfono
+  -- verificado. Sin esto, no hay adónde enviar un código real.
+  SELECT u.id, u.barbershop_id, u.phone
+  INTO v_user
+  FROM public.staff_user u
+  WHERE u.email = pg_catalog.lower(p_email)
+    AND u.is_active
+    AND u.phone_verified_at IS NOT NULL;
+
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT false, NULL::text;
+    RETURN;
+  END IF;
+
+  -- Condición 2: la IP solicitante está realmente escalada ahora mismo.
+  SELECT (t.escalated_until IS NOT NULL AND t.escalated_until > v_now)
+  INTO v_escalated
+  FROM public.login_throttle t
+  WHERE t.ip_hash = p_ip_hash;
+
+  IF NOT FOUND OR NOT v_escalated THEN
+    RETURN QUERY SELECT false, NULL::text;
+    RETURN;
+  END IF;
+
+  -- Condición 3: límite propio del reto (cooldown de reenvío + máximo de
+  -- solicitudes activas por ventana), para que el reto no se convierta en
+  -- un vector de bombardeo del teléfono de un tercero.
+  IF EXISTS (
+    SELECT 1 FROM public.auth_phone_challenge c
+    WHERE c.ip_hash = p_ip_hash
+      AND c.created_at > v_now - pg_catalog.make_interval(secs => p_rate_cooldown_seconds)
+  ) THEN
+    RETURN QUERY SELECT false, NULL::text;
+    RETURN;
+  END IF;
+
+  SELECT count(*) INTO v_recent
+  FROM public.auth_phone_challenge c
+  WHERE c.ip_hash = p_ip_hash
+    AND c.created_at > v_now - pg_catalog.make_interval(secs => p_rate_window_seconds);
+
+  IF v_recent >= p_rate_max_active THEN
+    RETURN QUERY SELECT false, NULL::text;
+    RETURN;
+  END IF;
+
+  -- Las tres condiciones se cumplen: registra el reto y devuelve el
+  -- teléfono para que la capa de aplicación envíe el código ya generado
+  -- (el valor en claro nunca llega a esta función; solo su hash).
+  INSERT INTO public.auth_phone_challenge
+    (barbershop_id, staff_user_id, ip_hash, code_hash, expires_at)
+  VALUES
+    (v_user.barbershop_id, v_user.id, p_ip_hash, p_code_hash,
+     v_now + pg_catalog.make_interval(secs => p_expires_seconds));
+
+  RETURN QUERY SELECT true, v_user.phone;
+END;
+$$;
+
+REVOKE ALL     ON FUNCTION auth_phone_challenge_request(text, text, text, integer, integer, integer, integer) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION auth_phone_challenge_request(text, text, text, integer, integer, integer, integer) TO barberia_app;
+
+COMMENT ON FUNCTION auth_phone_challenge_request(text, text, text, integer, integer, integer, integer) IS
+  'Único punto de escritura de auth_phone_challenge para solicitudes (DDL-AUT-01). accepted '
+  'y phone solo se completan cuando la cuenta existe con teléfono verificado, la IP está '
+  'realmente escalada y no se excede el límite propio de reenvío/solicitudes activas; en '
+  'cualquier otro caso devuelve (false, NULL) sin crear fila, para que la capa HTTP '
+  'responda siempre 202 sin distinguir el motivo (no enumeración).';
+
+CREATE OR REPLACE FUNCTION auth_phone_challenge_verify(
+  p_email    text,
+  p_ip_hash  text,
+  p_code_hash text
+)
+RETURNS boolean
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_now  timestamptz := pg_catalog.now();
+  v_user record;
+  v_row  public.auth_phone_challenge%ROWTYPE;
+BEGIN
+  IF p_email IS NULL OR p_ip_hash IS NULL OR p_code_hash IS NULL THEN
+    RAISE EXCEPTION 'auth_phone_challenge_verify: ningún argumento admite NULL.';
+  END IF;
+  IF char_length(p_ip_hash) <> 64 OR char_length(p_code_hash) <> 64 THEN
+    RAISE EXCEPTION 'auth_phone_challenge_verify: ip_hash/code_hash deben ser HMAC-SHA256 (64 hex).';
+  END IF;
+
+  SELECT u.id, u.barbershop_id
+  INTO v_user
+  FROM public.staff_user u
+  WHERE u.email = pg_catalog.lower(p_email)
+    AND u.is_active;
+
+  IF NOT FOUND THEN
+    RETURN false;
+  END IF;
+
+  -- El reto vigente más reciente para esta cuenta Y esta IP concreta
+  -- (nunca otra): un código válido para otra IP no autoriza esta.
+  SELECT * INTO v_row
+  FROM public.auth_phone_challenge c
+  WHERE c.barbershop_id = v_user.barbershop_id
+    AND c.staff_user_id = v_user.id
+    AND c.ip_hash = p_ip_hash
+    AND c.consumed_at IS NULL
+    AND c.invalidated_at IS NULL
+    AND c.expires_at > v_now
+  ORDER BY c.created_at DESC
+  LIMIT 1
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN false;
+  END IF;
+
+  IF v_row.code_hash <> p_code_hash THEN
+    UPDATE public.auth_phone_challenge
+    SET attempt_count = attempt_count + 1,
+        invalidated_at = CASE WHEN attempt_count + 1 >= max_attempts THEN v_now END
+    WHERE id = v_row.id;
+    RETURN false;
+  END IF;
+
+  UPDATE public.auth_phone_challenge SET consumed_at = v_now WHERE id = v_row.id;
+
+  -- Único efecto atómico junto con el consumo del código (DEC-062): limpia
+  -- el escalamiento de la IP para que el siguiente login se evalúe con
+  -- normalidad. Un ip_hash sin fila (ya purgado) no es un error.
+  UPDATE public.login_throttle
+  SET escalated_until = NULL,
+      attempt_count   = 0,
+      window_started_at = v_now
+  WHERE ip_hash = p_ip_hash;
+
+  RETURN true;
+END;
+$$;
+
+REVOKE ALL     ON FUNCTION auth_phone_challenge_verify(text, text, text) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION auth_phone_challenge_verify(text, text, text) TO barberia_app;
+
+COMMENT ON FUNCTION auth_phone_challenge_verify(text, text, text) IS
+  'Único punto de escritura de verificación (DDL-AUT-01). Código incorrecto incrementa '
+  'attempt_count y, al agotar max_attempts, invalida; código correcto consume el reto Y '
+  'limpia login_throttle de la misma IP en la misma transacción (DEC-062). Cuenta '
+  'inexistente, código incorrecto, vencido, agotado o de otra IP devuelven exactamente '
+  'false: la capa HTTP no puede distinguirlos (no enumeración).';
+
+CREATE OR REPLACE FUNCTION auth_phone_challenge_purge_expired(p_limit integer)
+RETURNS integer
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_deleted integer;
+BEGIN
+  IF p_limit IS NULL OR p_limit < 1 OR p_limit > 1000 THEN
+    RAISE EXCEPTION 'auth_phone_challenge_purge_expired: p_limit fuera de rango (1-1000).';
+  END IF;
+
+  WITH due AS (
+    SELECT id FROM public.auth_phone_challenge
+    WHERE expires_at <= pg_catalog.now()
+    ORDER BY expires_at
+    LIMIT p_limit
+    FOR UPDATE SKIP LOCKED
+  )
+  DELETE FROM public.auth_phone_challenge
+  WHERE id IN (SELECT id FROM due);
+
+  GET DIAGNOSTICS v_deleted = ROW_COUNT;
+  RETURN v_deleted;
+END;
+$$;
+
+REVOKE ALL     ON FUNCTION auth_phone_challenge_purge_expired(integer) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION auth_phone_challenge_purge_expired(integer) TO barberia_worker;
+
+COMMENT ON FUNCTION auth_phone_challenge_purge_expired(integer) IS
+  'Mantenimiento del worker: purga en lote los retos vencidos. Exclusivo de barberia_worker.';
 
 
 -- ===========================================================================

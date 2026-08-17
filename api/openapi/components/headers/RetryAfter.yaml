@@ -1,0 +1,13 @@
+# Cabecera estándar HTTP (RFC 9110 §10.2.3) devuelta en el 429 del reto
+# telefónico (HU-007, DEC-062) y de la evaluación de contraseña bloqueada:
+# segundos que el cliente debe esperar antes de reintentar. No es un
+# temporizador exacto de servidor: el cliente puede reintentar antes y
+# recibir el mismo 429 si el escalamiento sigue vigente.
+description: Segundos que el cliente debe esperar antes de reintentar.
+required: false
+schema:
+  type: integer
+  minimum: 1
+examples:
+  unaHora:
+    value: 3600

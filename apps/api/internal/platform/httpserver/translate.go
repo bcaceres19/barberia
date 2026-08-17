@@ -94,6 +94,16 @@ var idempotencyLockedProblem = problemSpec{
 	status:  http.StatusConflict,
 }
 
+// challengeRequiredProblem cubre HU-007 (DEC-061/DEC-062): la IP superó el
+// umbral de intentos y debe completar el reto telefónico antes de que la
+// contraseña se evalúe. detail es siempre el mismo mensaje genérico.
+var challengeRequiredProblem = problemSpec{
+	typeURI: "/api/v1/problems/challenge-required",
+	title:   "Verificación telefónica requerida",
+	code:    "challenge-required",
+	status:  http.StatusTooManyRequests,
+}
+
 // Translate convierte cualquier error en un Problem seguro para el cliente.
 // Es el único punto central de traducción que exige
 // docs/04-arquitectura/backend-go.md sección 5 ("los errores de dominio se
@@ -125,6 +135,8 @@ func Translate(err error, requestID string) Problem {
 			return newProblem(validationProblem, appErr.Message, requestID)
 		case apperr.KindUnauthorized:
 			return newProblem(unauthorizedProblem, appErr.Message, requestID)
+		case apperr.KindChallengeRequired:
+			return newProblem(challengeRequiredProblem, appErr.Message, requestID)
 		}
 	}
 

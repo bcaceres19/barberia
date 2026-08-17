@@ -4,6 +4,26 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.4.0] - 2026-08-17
+
+### Agregado
+
+- `429` en `POST /public/auth/login` (HU-007, `DEC-061`/`DEC-062`): la sexta
+  solicitud desde la misma IP dentro de la ventana de 15 minutos, y
+  cualquier otra mientras el escalamiento siga vigente, responde
+  `ChallengeRequiredProblem` (`code: challenge-required`, cabecera
+  `Retry-After`) sin evaluar la contraseña.
+- `POST /public/auth/challenge` (`operationId: requestPhoneChallenge`,
+  `DEC-062`): solicita el código del reto telefónico. Siempre `202`
+  (`ChallengeAcceptedResponse`), exista o no la cuenta (no enumeración).
+- `POST /public/auth/challenge/verify` (`operationId: verifyPhoneChallenge`,
+  `DEC-062`): verifica el código de 6 dígitos. `204` en éxito (limpia el
+  escalamiento de la IP); `401` uniforme (`UnauthorizedProblem`) para código
+  incorrecto, vencido, agotado o cuenta inexistente.
+- Esquemas `ChallengeRequest`, `ChallengeVerifyRequest`,
+  `ChallengeAcceptedResponse`. Responses `ChallengeAccepted`,
+  `ChallengeVerifySuccess`, `ChallengeRequiredProblem`. Header `Retry-After`.
+
 ## [0.3.0] - 2026-08-17
 
 ### Agregado

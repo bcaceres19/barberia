@@ -17,6 +17,7 @@ import (
 	"system-barbershop/internal/modules/auth"
 	authhttpapi "system-barbershop/internal/modules/auth/httpapi"
 	authpostgres "system-barbershop/internal/modules/auth/postgres"
+	"system-barbershop/internal/platform/clientip"
 	"system-barbershop/internal/platform/clock"
 	"system-barbershop/internal/platform/config"
 	"system-barbershop/internal/platform/database"
@@ -54,7 +55,7 @@ func run() error {
 	}
 	defer db.Close()
 
-	router, err := buildRouter(db, logger)
+	router, err := buildRouter(db, logger, cfg)
 	if err != nil {
 		logger.Error(err.Error())
 		return errors.New("http: fallo al ensamblar el router")
@@ -100,7 +101,7 @@ func run() error {
 // router_inventory_test.go) pueda construir el router REAL de producción,
 // caminarlo con chi.Walk y confirmar que toda ruta bajo /api/v1/private
 // exige sesión válida (CA-006-04), sin volver a levantar el servidor.
-func buildRouter(db *database.DB, logger *slog.Logger) (*chi.Mux, error) {
+func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.Mux, error) {
 	// httpserver.NewRouter monta las tres audiencias de
 	// docs/04-arquitectura/backend-go.md (/api/v1/public, /api/v1/customer,
 	// /api/v1/private) sobre Chi v5 (DEC-034) con el middleware base ya
@@ -111,6 +112,27 @@ func buildRouter(db *database.DB, logger *slog.Logger) (*chi.Mux, error) {
 	router.Get("/health", httpserver.HealthHandler())
 	router.Get("/health/db", httpserver.DatabaseHealthHandler(db))
 
+	trustedProxies, err := clientip.ParseTrustedProxies(cfg.TrustedProxies)
+	if err != nil {
+		return nil, errors.New("clientip: fallo al parsear APP_TRUSTED_PROXIES")
+	}
+	hmacSecret := []byte(cfg.AuthHMACSecret)
+
+	// HU-007: defensa escalonada contra abuso del login. throttleService
+	// registra el intento y decide el escalamiento ANTES de que
+	// LoginService resuelva tenant o evalúe contraseña (DEC-061, CA-007-02).
+	throttleService := auth.NewThrottleService(
+		authpostgres.NewThrottleRepository(db),
+		auth.ThrottleConfig{
+			WindowSeconds:     cfg.LoginThrottleWindowSeconds,
+			EscalationSeconds: cfg.LoginThrottleEscalationSeconds,
+			Threshold:         cfg.LoginThrottleThreshold,
+			RetentionSeconds:  cfg.LoginThrottleRetentionSeconds,
+		},
+		hmacSecret,
+		clock.System{},
+	)
+
 	// HU-005: inicio de sesión, público (DEC-055, sin middleware de
 	// autenticación: sería circular, CT-003 resuelta). El servicio no
 	// importa Chi ni PostgreSQL; solo el repositorio (authpostgres) y el
@@ -120,12 +142,45 @@ func buildRouter(db *database.DB, logger *slog.Logger) (*chi.Mux, error) {
 		auth.NewArgon2Hasher(),
 		auth.NewCryptoTokenGenerator(),
 		clock.System{},
+		throttleService,
 	)
 	if err != nil {
 		return nil, errors.New("auth: fallo al iniciar LoginService")
 	}
-	loginHandler := authhttpapi.NewLoginHandler(loginService, authhttpapi.DefaultCookieConfig())
+	loginHandler := authhttpapi.NewLoginHandler(loginService, authhttpapi.DefaultCookieConfig(), trustedProxies)
 	router.Post("/api/v1/public/auth/login", loginHandler.ServeHTTP)
+
+	// HU-007: reto telefónico que desbloquea el login tras el escalamiento
+	// (DEC-062). sender es un marcador de posición (auth.LoggingPhoneCodeSender):
+	// el adaptador real de WhatsApp es DEC-066, decisión de HU-008.
+	var phoneSender auth.PhoneCodeSender = auth.NewLoggingPhoneCodeSender(logger)
+	if capturePath := os.Getenv("APP_PHONE_CHALLENGE_CAPTURE_FILE"); capturePath != "" {
+		// Doble candado de entorno (aquí y en el propio nombre de la
+		// variable): la captura de código en claro en un archivo NUNCA
+		// puede activarse fuera de local/test, sin importar qué valor
+		// llegue por variable de entorno en un despliegue real.
+		if cfg.Environment != "local" && cfg.Environment != "test" {
+			return nil, errors.New(
+				"auth: APP_PHONE_CHALLENGE_CAPTURE_FILE solo puede usarse en local/test (uso exclusivo de e2e)")
+		}
+		phoneSender = auth.NewCapturingPhoneCodeSender(phoneSender, capturePath)
+	}
+	phoneChallengeService := auth.NewPhoneChallengeService(
+		authpostgres.NewPhoneChallengeRepository(db),
+		auth.NewCryptoPhoneCodeGenerator(),
+		phoneSender,
+		auth.PhoneChallengeConfig{
+			ExpiresSeconds:        cfg.PhoneChallengeExpiresSeconds,
+			RateWindowSeconds:     cfg.PhoneChallengeRateWindowSeconds,
+			RateMaxActive:         cfg.PhoneChallengeRateMaxActive,
+			ResendCooldownSeconds: cfg.PhoneChallengeResendCooldownSeconds,
+		},
+		hmacSecret,
+	)
+	challengeHandler := authhttpapi.NewChallengeHandler(phoneChallengeService, throttleService, trustedProxies)
+	challengeVerifyHandler := authhttpapi.NewChallengeVerifyHandler(phoneChallengeService, throttleService, trustedProxies)
+	router.Post("/api/v1/public/auth/challenge", challengeHandler.ServeHTTP)
+	router.Post("/api/v1/public/auth/challenge/verify", challengeVerifyHandler.ServeHTTP)
 
 	// HU-006: middleware de sesión (paso 8) montado UNA sola vez sobre el
 	// subrouter privado, ANTES de registrar ninguna ruta sobre él (chi

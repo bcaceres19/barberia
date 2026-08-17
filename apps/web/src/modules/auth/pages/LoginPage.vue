@@ -6,6 +6,7 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import LoginForm, { type LoginServerErrorSummary } from '../components/LoginForm.vue'
+import PhoneChallengeForm from '../components/PhoneChallengeForm.vue'
 import { login } from '../api/loginApi'
 import { resetForFreshLogin } from '../model/sessionStore'
 import { isSafeInternalRedirect } from '../model/redirectTarget'
@@ -20,6 +21,12 @@ const password = ref('')
 const screenState = ref<LoginScreenState>({ status: 'idle' })
 
 const isSubmitting = computed(() => screenState.value.status === 'submitting')
+
+// HU-007 (DEC-062): un 429 ofrece el reto telefónico como salida inmediata,
+// sin esperar el escalamiento de 24 horas. `PhoneChallengeForm` es dueño de
+// su propio flujo (solicitar/verificar código); esta página solo decide
+// cuándo mostrarlo y qué hacer cuando se verifica con éxito.
+const showPhoneChallenge = computed(() => screenState.value.status === 'rate-limited')
 
 // Convierte el resultado ya mapeado (`LoginOutcome`) en el resumen que
 // `LoginForm` puede mostrar sin conocer status HTTP ni `Problem`.
@@ -123,6 +130,13 @@ async function attemptLogin() {
 const onSubmit = () => {
   void attemptLogin()
 }
+
+// El servidor ya limpió el escalamiento de esta IP en la misma verificación
+// exitosa (DEC-062): reintenta el login normalmente, con las credenciales
+// que el barbero ya escribió, sin pedirle que las repita a mano.
+const onChallengeVerified = () => {
+  void attemptLogin()
+}
 </script>
 
 <template>
@@ -141,6 +155,13 @@ const onSubmit = () => {
         @update:password="(value) => (password = value)"
         @submit="onSubmit"
         @retry="onSubmit"
+      />
+
+      <PhoneChallengeForm
+        v-if="showPhoneChallenge"
+        :email="email"
+        :disabled="isSubmitting"
+        @verified="onChallengeVerified"
       />
     </div>
   </main>
