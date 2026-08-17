@@ -4,14 +4,16 @@
 // `LoginOutcome` (ya libre de detalles de transporte) a texto seguro para
 // el barbero, nunca al revés.
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import LoginForm, { type LoginServerErrorSummary } from '../components/LoginForm.vue'
 import { login } from '../api/loginApi'
-import { rememberSessionUntil } from '../model/sessionMarker'
+import { resetForFreshLogin } from '../model/sessionStore'
+import { isSafeInternalRedirect } from '../model/redirectTarget'
 import type { LoginOutcome } from '../model/loginOutcome'
 import type { LoginScreenState } from '../model/loginScreenState'
 
 const router = useRouter()
+const route = useRoute()
 
 const email = ref('')
 const password = ref('')
@@ -80,12 +82,19 @@ async function attemptLogin() {
   const outcome: LoginOutcome = await login({ email: email.value, password: password.value })
 
   switch (outcome.kind) {
-    case 'success':
-      rememberSessionUntil(outcome.expiresAt)
-      // CA-010-01/DEC-056: navega exactamente a /panel; el cascarón
-      // completo (cabecera, navegación) es responsabilidad de HU-012.
-      await router.push({ name: 'panel' })
+    case 'success': {
+      // HU-012 (DEC-060): ya no existe un marcador local de sesión; la
+      // próxima ruta privada consulta la fuente real
+      // (GET /private/auth/session) en vez de reutilizar un resultado
+      // `unauthenticated` previo a este mismo inicio de sesión.
+      resetForFreshLogin()
+      // CA-012-02: vuelve al destino pretendido si el guard lo conservó y
+      // es una ruta interna segura; de lo contrario, /panel (CA-010-01).
+      const redirect = route.query.redirect
+      const destination = isSafeInternalRedirect(redirect) ? redirect : { name: 'panel' }
+      await router.push(destination)
       return
+    }
     case 'invalid-credentials':
       // CA-010-02: conserva el correo escrito, no el criterio de si la
       // contraseña se limpia. Se limpia aquí a propósito: el intento fue

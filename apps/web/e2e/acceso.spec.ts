@@ -141,9 +141,11 @@ test.describe('Acceso del barbero (HU-010)', () => {
     await expect(page.getByRole('heading', { name: 'Recuperación de acceso' })).toBeVisible()
   })
 
-  test('sin sesión, /panel redirige al acceso (guard mínimo, DEC-056)', async ({ page }) => {
+  test('sin sesión, /panel redirige al acceso conservando el destino (DEC-056, generalizado por HU-012/CA-012-02)', async ({
+    page,
+  }) => {
     await page.goto('/panel')
-    await expect(page).toHaveURL(/\/acceso$/)
+    await expect(page).toHaveURL(/\/acceso\?redirect=%2Fpanel$|\/acceso\?redirect=\/panel$/)
   })
 
   test('un 429 documentado explica el bloqueo sin recargar la página (trabajo requerido §8)', async ({

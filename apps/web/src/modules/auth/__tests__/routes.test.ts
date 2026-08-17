@@ -1,22 +1,40 @@
 /**
- * Prueba de integración de enrutamiento (DEC-056): sin sesión recordada,
- * `/panel` redirige a `/acceso`; con sesión recordada (vigente), navega y
- * renderiza el marcador de posición autenticado mínimo, sin cabecera ni
- * navegación general. `/recuperar-acceso` es un destino real, no roto
- * (CA-010-08, `DP-UX-06`).
+ * Prueba de integración de enrutamiento (HU-012, DEC-060): sin sesión real,
+ * cualquier ruta privada redirige a `/acceso` conservando el destino
+ * pretendido (CA-012-02); con sesión vigente, entra directamente
+ * (CA-012-01). `fetchSessionContext` se sustituye por un doble de prueba:
+ * el recorrido real contra el API real vive en `e2e/panel.spec.ts`.
+ * `/recuperar-acceso` sigue siendo un destino real, no roto (CA-010-08,
+ * `DP-UX-06`).
  */
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { authRoutes } from '../index'
-import { rememberSessionUntil } from '../model/sessionMarker'
+import { resetForFreshLogin } from '../model/sessionStore'
+import type { SessionContextOutcome } from '../model/sessionContextOutcome'
+
+const fetchSessionContextMock = vi.hoisted(() => vi.fn())
+vi.mock('../api/sessionContextApi', () => ({ fetchSessionContext: fetchSessionContextMock }))
 
 function buildRouter() {
   return createRouter({ history: createMemoryHistory(), routes: authRoutes })
 }
 
+const authenticated: SessionContextOutcome = {
+  kind: 'authenticated',
+  barbershopId: 'shop-1',
+  barbershopName: 'Barbería de prueba',
+  expiresAt: new Date(Date.now() + 60_000).toISOString(),
+}
+
 describe('authRoutes', () => {
   beforeEach(() => {
-    window.sessionStorage.clear()
+    fetchSessionContextMock.mockReset()
+    // El store es un singleton compartido entre pruebas del mismo archivo:
+    // lo devuelve a `checking` para que cada guard vuelva a consultar el
+    // doble de prueba en vez de reutilizar el resultado de la prueba
+    // anterior.
+    resetForFreshLogin()
   })
 
   it('registers /acceso, /panel and /recuperar-acceso', () => {
@@ -24,27 +42,38 @@ describe('authRoutes', () => {
     expect(paths).toEqual(expect.arrayContaining(['/acceso', '/panel', '/recuperar-acceso']))
   })
 
-  it('redirects /panel to /acceso when there is no remembered session', async () => {
+  it('redirects /panel to /acceso when there is no real session (CA-012-02)', async () => {
+    fetchSessionContextMock.mockResolvedValueOnce({ kind: 'unauthenticated' })
     const router = buildRouter()
     await router.push('/panel')
     await router.isReady()
     expect(router.currentRoute.value.name).toBe('acceso')
   })
 
-  it('allows /panel when a valid session is remembered', async () => {
-    rememberSessionUntil(new Date(Date.now() + 60_000).toISOString())
+  it('preserves the intended destination as a query param (CA-012-02)', async () => {
+    fetchSessionContextMock.mockResolvedValueOnce({ kind: 'unauthenticated' })
+    const router = buildRouter()
+    await router.push('/panel')
+    await router.isReady()
+    expect(router.currentRoute.value.query.redirect).toBe('/panel')
+  })
+
+  it('allows /panel when the real session is valid (CA-012-01)', async () => {
+    fetchSessionContextMock.mockResolvedValueOnce(authenticated)
     const router = buildRouter()
     await router.push('/panel')
     await router.isReady()
     expect(router.currentRoute.value.name).toBe('panel')
   })
 
-  it('redirects /panel to /acceso when the remembered session already expired', async () => {
-    rememberSessionUntil(new Date(Date.now() - 60_000).toISOString())
+  it('reaches the private shell (connection-lost state) instead of bouncing when the server is unreachable (CA-012-05)', async () => {
+    fetchSessionContextMock.mockResolvedValueOnce({ kind: 'network-error' })
     const router = buildRouter()
     await router.push('/panel')
     await router.isReady()
-    expect(router.currentRoute.value.name).toBe('acceso')
+    // No redirige a /acceso: el cascarón renderiza el estado recuperable
+    // en la propia ruta privada, sin bucle de redirección.
+    expect(router.currentRoute.value.name).toBe('panel')
   })
 
   it('exposes a real, matched destination for /recuperar-acceso (no dead link)', async () => {

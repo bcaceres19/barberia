@@ -67,6 +67,10 @@ func (r *Repository) ValidateAndRenewSession(ctx context.Context, barbershopID, 
 				SessionID:    sessionID,
 				StaffUserID:  staffUserID,
 				BarbershopID: barbershopID,
+				// La UPDATE de arriba ya fijó expires_at = newExpiresAt en
+				// la misma sentencia atómica; reexponerlo aquí no cuesta
+				// una consulta adicional (HU-012, DEC-060).
+				ExpiresAt: newExpiresAt,
 			}
 			found = true
 		case errors.Is(err, pgx.ErrNoRows):
@@ -109,4 +113,21 @@ func (r *Repository) RevokeSession(ctx context.Context, barbershopID, sessionID 
 		return fmt.Errorf("auth/postgres: revoke session: %w", err)
 	}
 	return nil
+}
+
+// BarbershopName implementa auth.SessionRepository.BarbershopName leyendo la
+// columna real barbershop.name (existente desde
+// 20260807170000_create_tenant_foundation.sql) dentro de la transacción
+// tenant-aware. barbershop_select_tenant_policy ya restringe la fila visible
+// a id = current_setting('app.barbershop_id'); el filtro explícito
+// WHERE id = $1 es defensa en profundidad, igual que RevokeSession.
+func (r *Repository) BarbershopName(ctx context.Context, barbershopID string) (string, error) {
+	var name string
+	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
+		return q.QueryRow(ctx, `SELECT name FROM barbershop WHERE id = $1`, barbershopID).Scan(&name)
+	})
+	if err != nil {
+		return "", fmt.Errorf("auth/postgres: barbershop name: %w", err)
+	}
+	return name, nil
 }

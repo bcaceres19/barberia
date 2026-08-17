@@ -28,6 +28,10 @@ antes de agregar código.
   deslizante de 30 días y `POST /api/v1/private/auth/logout`, el primer
   endpoint privado real del sistema. Ver la sección "Sesión persistente y
   cierre de sesión (HU-006)" más abajo.
+- **Contexto de sesión (HU-012)**: `GET /api/v1/private/auth/session`
+  (`DEC-060`), segunda operación privada real, de solo lectura: rehidrata la
+  cookie `HttpOnly` y devuelve la barbería activa. Ver la sección "Contexto
+  de sesión (HU-012)" más abajo.
 
 ## Requisitos
 
@@ -471,6 +475,50 @@ defensa en profundidad a nivel de repositorio (RLS + filtro explícito de
 | `CA-006-05` | Cumplido | `TestSessionMiddleware_MalformedCookie_Returns401WithoutTouchingRepository`, `TestSessionMiddleware_OversizedCookie_Returns401WithoutTouchingRepository` (forma inválida rechazada antes de tocar PostgreSQL), `TestSessionMiddleware_ThroughFullRouter_NeverLogsSessionMaterial`, `TestPrivateRoute_ThroughFullRouter_NeverLogsSessionMaterial` (ni el token ni su hash aparecen en logs ni en la URL: la cookie es el único transporte). |
 | `CA-006-06` | Cumplido | `TestLogout_HTTP_ClosingOneDeviceDoesNotAffectAnother`: dos sesiones del mismo usuario, cerrar una conserva la otra. |
 | `CA-006-07` | Cumplido | `TestLogout_HTTP_SessionOfShopA_NeverExecutesShopBsLogout` con dos tenants reales contra el logout real; `TestRevokeSession_WrongTenant_NeverRevokesAnotherShopsSession` como defensa en profundidad a nivel de repositorio. Completa `CA-005-05`/`CA-005-01` de `HU-005` (`DEC-058`). |
+
+## Contexto de sesión (HU-012)
+
+`GET /api/v1/private/auth/session` (`DEC-060`) resuelve `DP-SEG-09`: hasta
+esta historia no existía ninguna lectura privada no destructiva para que el
+frontend rehidratara la cookie `HttpOnly` al abrir o recargar la
+aplicación. Se registra sobre el mismo subrouter `/api/v1/private`, después
+del mismo `SessionMiddleware` que ya protege `logout` — sin validación de
+sesión duplicada ni un segundo camino de autorización.
+
+### Diferencia con logout: lectura, no mutación
+
+A diferencia de `POST /private/auth/logout`, este endpoint nunca escribe
+`Set-Cookie` ni cambia estado: repetirlo no tiene efecto adicional.
+`SessionService.Context` solo compone el payload mínimo a partir del
+`auth.Principal` ya validado y renovado por el middleware para esa misma
+solicitud (`ExpiresAt` es el mismo valor que la renovación deslizante ya
+fijó, sin una segunda consulta) y una lectura nueva y estrecha,
+`SessionRepository.BarbershopName`, que lee la columna real `barbershop.name`
+(existente desde `20260807170000_create_tenant_foundation.sql`) dentro de
+la misma transacción tenant-aware, aislada por
+`barbershop_select_tenant_policy` (RLS, `DEC-024`).
+
+### Payload mínimo (RN-DAT-02)
+
+`{ barbershop: { id, name }, expiresAt }`. Nunca incluye `staffUserID`,
+correo ni nombre del barbero: ningún criterio de `HU-012` lo exige, y
+ampliarlo rompería el patrón de `auth.Principal` (identificadores opacos,
+sin datos personales) que el resto del módulo ya sigue.
+
+### Tabla de criterios de aceptación (evidencia de backend)
+
+| Criterio | Estado | Prueba o evidencia |
+| --- | --- | --- |
+| `CA-012-01` (parcial, backend) | Cumplido | La restauración real contra la cookie se demuestra en `TestSessionContext_HTTP_ValidSession_ReturnsRealBarbershopName`; la parte de frontend (bootstrap tras cerrar/reabrir el navegador) se documenta en `apps/web/README.md`. |
+| `CA-012-04` (parcial, backend) | Cumplido | `TestSessionContext_HTTP_ValidSession_ReturnsRealBarbershopName` y `TestSessionContext_HTTP_TwoTenants_NeverCrossesBarbershopNames` prueban que el nombre viene de la columna real y nunca se cruza entre tenants. |
+
+### Pruebas
+
+- Unitarias: `TestSessionService_Context_*` (`internal/modules/auth/session_service_test.go`).
+- HTTP con doble de repositorio: `TestSessionContextHandler_*` (`internal/modules/auth/httpapi/session_context_handler_test.go`).
+- Contrato: `TestContract_SessionContextOperation_*`, `TestContract_OpenAPIYAML_RegistersSessionContextPath` (`internal/modules/auth/httpapi/contract_session_test.go`).
+- PostgreSQL real: `TestBarbershopName_*` (`internal/modules/auth/postgres/session_repository_test.go`).
+- Router de producción con dos tenants reales: `TestSessionContext_HTTP_*` (`cmd/api/session_context_integration_test.go`), incluida ausencia de material de sesión en logs (`CA-006-05`) y no exposición del nombre tras revocar la sesión.
 
 ## Pruebas de integración
 

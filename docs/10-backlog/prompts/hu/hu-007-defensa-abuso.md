@@ -1,9 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-007-v1"
-version: "1.1"
+version: "1.2"
 kind: "hu"
-status: "blocked"
-status_reason: "Solo pendiente de que HU-012 (feat/56-hu012-cascaron-panel) se integre en main, por orden de construcción de B0; ya no hay ninguna decisión normativa abierta."
+status: "ready"
 target_agents:
   - "claude"
   - "codex"
@@ -92,7 +91,7 @@ superseded_by: null
 
 Implementa únicamente `HU-007` alrededor del inicio de sesión real de `HU-005`: conteo seguro por IP, ventana y umbral configurables, escalamiento telefónico antes de evaluar la contraseña, respuesta uniforme, expiración y pruebas contra el despliegue previsto. No conviertas esta entrega en recuperación de contraseña ni reutilices sin autorización el código de `HU-008`.
 
-`DP-SEG-10` y `CT-005` quedaron resueltas el 2026-08-17 como `DEC-062` y `DEC-061` (ver sección siguiente). Este prompt sigue `blocked`, pero únicamente porque el orden de construcción de B0 exige que `HU-012` esté **integrada en `main`** antes de empezar `HU-007` — no queda ninguna decisión normativa pendiente. Verifica en preflight que ese PR ya se mergeó antes de abrir rama.
+`DP-SEG-10` y `CT-005` quedaron resueltas el 2026-08-17 como `DEC-062` y `DEC-061` (ver sección siguiente). `HU-012` se integró en `main` el 2026-08-17 ([PR #59](https://github.com/bcaceres19/barberia/pull/59)), así que este prompt ya está `ready`: no queda ninguna decisión ni dependencia pendiente. Confirma en preflight que tu copia local de `main` incluye ese commit antes de crear la rama.
 
 ## Objetivo
 
@@ -119,7 +118,7 @@ Relee `DEC-061`/`DEC-062` completas en `docs/00-control/registro-decisiones.md` 
 1. Comprueba árbol limpio, `main` actualizada por fast-forward y ausencia de cambios ajenos.
 2. Consulta Graphify por `HU-007`, `LoginService`, `LoginHandler`, configuración, orden de middleware, `login_throttle`, proxy/IP, `429`, `Retry-After`, worker y flujo de acceso Vue.
 3. Lee completamente cada `source_docs`; revisa en particular la sección A.4 del modelo de referencia y el hallazgo `DDL-AUT-01`.
-4. Confirma que `HU-003`, `HU-005` y, por orden B0, `HU-012` están **integradas en `main`** (PR mergeado, no solo abierto). `HU-003` aporta RFC 9457/logging; `HU-005` es el login que debe protegerse; `HU-012` es la única dependencia que puede seguir pendiente cuando leas esto — si aún no se mergeó, detente y conserva `status: blocked`.
+4. Confirma que `HU-003`, `HU-005` y `HU-012` (PR #59) están **integradas en `main`** (`git log main` debe mostrarlas). `HU-003` aporta RFC 9457/logging; `HU-005` es el login que debe protegerse; `HU-012` entrega `GET /api/v1/private/auth/session` y el cascarón privado.
 5. `DP-SEG-10` y `CT-005` ya están resueltas (`DEC-062`, `DEC-061`); relee ambas completas antes de codificar.
 6. Confirma el alcance exacto del issue `#57`; cambia este archivo a `ready` solo con `HU-012` ya integrada.
 7. Crea `feat/57-hu007-defensa-abuso` desde `main` actualizada y cambia a `in_progress` antes de implementar.

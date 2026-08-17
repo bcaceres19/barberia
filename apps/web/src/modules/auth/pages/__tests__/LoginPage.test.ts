@@ -42,6 +42,11 @@ function buildRouter() {
     routes: [
       { path: '/acceso', name: 'acceso', component: { template: '<div>acceso</div>' } },
       { path: '/panel', name: 'panel', component: { template: '<div>panel</div>' } },
+      {
+        path: '/panel/otra-seccion',
+        name: 'panel-otra-seccion',
+        component: { template: '<div>otra sección</div>' },
+      },
     ],
   })
 }
@@ -75,13 +80,43 @@ describe('LoginPage', () => {
     window.sessionStorage.clear()
   })
 
-  it('navigates to /panel and remembers the session on success (CA-010-01)', async () => {
+  it('navigates to /panel by default on success (CA-010-01)', async () => {
     const outcome: LoginOutcome = {
       kind: 'success',
       expiresAt: new Date(Date.now() + 60_000).toISOString(),
     }
     loginMock.mockResolvedValueOnce(outcome)
     const { wrapper, router } = await mountPage()
+
+    await fillAndSubmit(wrapper)
+    await flushPromises()
+
+    expect(router.currentRoute.value.name).toBe('panel')
+  })
+
+  it('returns to the intended destination after login (CA-012-02)', async () => {
+    const outcome: LoginOutcome = {
+      kind: 'success',
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    }
+    loginMock.mockResolvedValueOnce(outcome)
+    const { wrapper, router } = await mountPage()
+    await router.push({ name: 'acceso', query: { redirect: '/panel/otra-seccion' } })
+
+    await fillAndSubmit(wrapper)
+    await flushPromises()
+
+    expect(router.currentRoute.value.path).toBe('/panel/otra-seccion')
+  })
+
+  it('ignores an unsafe redirect target and falls back to /panel', async () => {
+    const outcome: LoginOutcome = {
+      kind: 'success',
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    }
+    loginMock.mockResolvedValueOnce(outcome)
+    const { wrapper, router } = await mountPage()
+    await router.push({ name: 'acceso', query: { redirect: 'https://evil.example/robo' } })
 
     await fillAndSubmit(wrapper)
     await flushPromises()

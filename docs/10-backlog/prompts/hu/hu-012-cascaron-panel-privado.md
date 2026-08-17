@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-012-v1"
-version: "1.1"
+version: "1.2"
 kind: "hu"
-status: "ready"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -17,9 +17,9 @@ related_hu:
 issue: 56
 issue_url: "https://github.com/bcaceres19/barberia/issues/56"
 suggested_issue_title: "feat(web): implementar HU-012 cascarón del panel privado"
-branch: null
-pr: null
-pr_url: null
+branch: "feat/56-hu012-cascaron-panel"
+pr: 59
+pr_url: "https://github.com/bcaceres19/barberia/pull/59"
 depends_on:
   - "HU-006 integrada"
   - "HU-009 integrada"
@@ -187,6 +187,25 @@ Entrega una tabla `Criterio | Estado | Prueba o evidencia` para `CA-012-01` a `C
 - `CA-012-04` no se cumple con texto fijo, fixture productivo ni dato local autoritativo.
 - `CA-012-07` debe demostrar revocación en servidor reutilizando el material anterior.
 - `CA-012-08` incluye comportamiento, reflow, teclado y evidencia; una captura aislada no basta.
+
+### Evidencia real (ejecución del 2026-08-17)
+
+| Criterio | Estado | Prueba o evidencia |
+| --- | --- | --- |
+| `CA-012-01` | Cumplido | `TestSessionContext_HTTP_ValidSession_ReturnsRealBarbershopName` (Go); `una sesión real sobrevive a cerrar y reabrir el navegador` y `una recarga directa de /panel conserva la sesión` (`e2e/panel.spec.ts`), contra cookie real, sin marcador local. |
+| `CA-012-02` | Cumplido | `requireSession.ts` genérico sobre la ruta padre `/panel`; `routes.test.ts` (`preserves the intended destination...`); `e2e/panel.spec.ts` (`sin sesión, cualquier ruta privada redirige...`) y `LoginPage.test.ts` (`returns to the intended destination...`). |
+| `CA-012-03` | Cumplido | `sessionStore.test.ts` (`reportUnauthorized notifies listeners exactly once for several near-simultaneous 401s`), `installSessionHandling.test.ts`. |
+| `CA-012-04` | Cumplido | `AppHeader.test.ts`, `TestSessionContext_HTTP_ValidSession_ReturnsRealBarbershopName`/`TestSessionContext_HTTP_TwoTenants_NeverCrossesBarbershopNames` (Go, dos tenants reales), `e2e/panel.spec.ts` (`la cabecera muestra siempre la barbería activa real`). |
+| `CA-012-05` | Cumplido | `PrivateShell.test.ts`, `e2e/panel.spec.ts` (`una pérdida de conexión ofrece Reintentar...`). |
+| `CA-012-06` | Cumplido | Chunks separados por ruta en `pnpm run build`; `e2e/panel.spec.ts` (`la navegación entre acceso y panel no recarga la aplicación completa`). |
+| `CA-012-07` | Cumplido | `AppHeader.test.ts` (logout real); `TestLogout_HTTP_*` (HU-006, reutilizado); `e2e/panel.spec.ts` (`cerrar sesión invalida el servidor...`, reinyecta la cookie capturada antes del logout en un contexto nuevo y confirma que el servidor la rechaza). |
+| `CA-012-08` | Cumplido en Chromium/Firefox; **conocido, sin cubrir en WebKit** | `e2e/panel-evidencia-responsiva.spec.ts` en 320/360/768/1280 px + zoom 200 %; capturas en `apps/web/e2e/evidence/panel/`. Ver "Defecto conocido" abajo. |
+
+Verificación final ejecutada completa: `openapi:check-config`/`lint`/`bundle` en verde; `gofmt -l .` vacío; `go vet ./...` y `go build ./...` en verde; `go test -race ./...` en verde (PostgreSQL 14 real, Docker, migraciones aplicadas); `generate:api`/`format`/`lint`/`typecheck`/`test:unit` (213 pruebas) en verde; `build` en verde; `test:e2e` (`playwright test`, las 4 plataformas): **164/180 en verde** — `chromium-desktop` 45/45, `chromium-mobile` 45/45, `firefox` 45/45, `webkit` 29/45.
+
+### Defecto conocido, no introducido por esta HU: cookie `Secure` no persiste en WebKit sobre `http://localhost`
+
+Los 16 fallos de `webkit` comparten una sola causa raíz: `GET /private/auth/session` responde `401` inmediatamente después de un `POST /public/auth/login` exitoso, porque WebKit no almacena una cookie `Secure=true` (`DEC-050`, no negociable) emitida sobre `http://localhost` sin TLS — a diferencia de Chromium/Firefox, que sí conceden esa excepción a `localhost` en desarrollo. `HU-010` nunca lo detectó porque su E2E no hacía ninguna llamada privada real tras el login (dependía del marcador `sessionStorage` que HU-012 reemplaza); `HU-012` es la primera en ejercitar `SessionCookie` de punta a punta en cada navegador, y por eso lo expone. No se corrige aquí: bajar `Secure` violaría `DEC-050`. Es una limitación exclusiva de pruebas locales por HTTP sin TLS; en despliegue real (HTTPS) no aplica. `playwright.config.ts` ya declara que WebKit/Firefox "se suman antes de una versión" (no bloquean cada PR; solo Chromium desktop/móvil sí). Registrado aquí para que el propietario decida si amerita una duda `DP-*` formal o un ajuste de entorno de pruebas (p. ej. HTTPS local) antes de exigir a WebKit en CI.
 
 ## Documentación y trazabilidad
 
