@@ -13,12 +13,20 @@ export const authRoutes: RouteRecordRaw[] = [
     component: () => import('./pages/LoginPage.vue'),
   },
   {
-    // Ruta privada real de CA-010-01/DEC-056. El guard es deliberadamente
-    // mínimo: HU-012 lo reutiliza y lo generaliza, no crea uno paralelo.
+    // Cascarón privado (HU-012, DEC-056): un único guard generalizado sobre
+    // esta ruta padre cubre toda ruta privada hija, sin repetirlo por
+    // pantalla. `/panel` es hoy la única hija real; las historias
+    // siguientes agregan las suyas aquí mismo, no un árbol paralelo.
     path: '/panel',
-    name: 'panel',
-    component: () => import('./pages/PanelPlaceholderPage.vue'),
+    component: () => import('./layouts/PrivateShell.vue'),
     beforeEnter: requireSession,
+    children: [
+      {
+        path: '',
+        name: 'panel',
+        component: () => import('./pages/PanelPage.vue'),
+      },
+    ],
   },
   {
     // Destino provisional del enlace de recuperación de CA-010-08,

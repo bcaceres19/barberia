@@ -1,8 +1,38 @@
-# Operación privada de autenticación (HU-006): cierre de sesión. Es el
-# primer endpoint real bajo /api/v1/private (DEC-055, CT-003 resuelta):
-# exige la cookie de sesión (components/security-schemes/SessionCookie.yaml)
-# y revoca únicamente la sesión actual (DEC-050). El login sigue viviendo en
+# Operaciones privadas de autenticación. HU-006 agregó el primer endpoint
+# real bajo /api/v1/private (DEC-055, CT-003 resuelta): cierre de sesión,
+# que exige la cookie de sesión
+# (components/security-schemes/SessionCookie.yaml) y revoca únicamente la
+# sesión actual (DEC-050). HU-012 agrega una segunda operación, de solo
+# lectura (DEC-060): contexto de sesión, para rehidratar la cookie HttpOnly
+# al abrir o recargar la aplicación. El login sigue viviendo en
 # public-auth.yaml, fuera de este prefijo.
+/private/auth/session:
+  get:
+    tags: [Auth]
+    summary: Obtener el contexto de sesión vigente
+    description: >
+      Lectura no destructiva (HU-012, `DEC-060`) que rehidrata la cookie de
+      sesión `HttpOnly` al abrir o recargar la aplicación: confirma que la
+      sesión sigue vigente -`SessionMiddleware` ya la validó y renovó para
+      esta misma solicitud, igual que cualquier otra ruta bajo
+      `/api/v1/private`- y devuelve el nombre de la barbería activa
+      (`barbershop.name`, columna real aislada por tenant vía RLS) y la
+      expiración ya renovada. No emite ni modifica `Set-Cookie`, a
+      diferencia de login/logout: repetir la llamada nunca tiene un efecto
+      adicional. El payload nunca incluye `staffUserID`, correo ni nombre
+      del barbero (`RN-DAT-02`, mismo patrón que `auth.Principal`).
+    operationId: getSessionContext
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-050, DEC-060]
+    responses:
+      "200":
+        $ref: '../components/responses/SessionContextSuccess.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
 /private/auth/logout:
   post:
     tags: [Auth]

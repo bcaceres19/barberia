@@ -336,3 +336,45 @@ func TestValidateAndRenewSession_ConcurrentWithRevoke_FinalStateAlwaysRevoked(t 
 		t.Fatal("expected the session to remain revoked after the race, but a later renewal found it valid")
 	}
 }
+
+// --- BarbershopName (HU-012, DEC-060) ------------------------------------
+
+// TestBarbershopName_ReturnsRealNamePerTenant confirma que el nombre
+// devuelto es la columna real barbershop.name de database/testdata/dos_barberias.sql
+// para cada tenant, no un valor inventado ni compartido entre barberías.
+func TestBarbershopName_ReturnsRealNamePerTenant(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+	repo := authpostgres.New(db)
+
+	nameA, err := repo.BarbershopName(context.Background(), shopA)
+	if err != nil {
+		t.Fatalf("BarbershopName(shopA): %v", err)
+	}
+	if nameA != "Barbería de prueba A" {
+		t.Fatalf("expected %q, got %q", "Barbería de prueba A", nameA)
+	}
+
+	nameB, err := repo.BarbershopName(context.Background(), shopB)
+	if err != nil {
+		t.Fatalf("BarbershopName(shopB): %v", err)
+	}
+	if nameB != "Barbería de prueba B" {
+		t.Fatalf("expected %q, got %q", "Barbería de prueba B", nameB)
+	}
+}
+
+// TestBarbershopName_UnknownID_ReturnsError confirma que un identificador
+// de barbería inexistente no produce un nombre vacío silencioso: falla de
+// forma explícita, igual que el resto de operaciones tenant-aware
+// (CA-001-03).
+func TestBarbershopName_UnknownID_ReturnsError(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+	repo := authpostgres.New(db)
+
+	const unknownShop = "99999999-9999-9999-9999-999999999999"
+	if _, err := repo.BarbershopName(context.Background(), unknownShop); err == nil {
+		t.Fatal("expected an error for an unknown barbershop id, got nil")
+	}
+}

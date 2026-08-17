@@ -35,6 +35,11 @@ type Principal struct {
 	SessionID    string
 	StaffUserID  string
 	BarbershopID string
+	// ExpiresAt es la expiración YA renovada por esta misma solicitud
+	// (DEC-050, renovación deslizante); no es dato personal, es el mismo
+	// valor no sensible que LoginResponse ya expone (CA-005-04). HU-012
+	// (DEC-060) lo reexpone tal cual en GET /private/auth/session.
+	ExpiresAt time.Time
 }
 
 type principalContextKey struct{}
@@ -89,6 +94,13 @@ type SessionRepository interface {
 	// validado por el middleware, nunca de un parámetro que el cliente
 	// pueda controlar (CA-006-07).
 	RevokeSession(ctx context.Context, barbershopID, sessionID string, now time.Time) error
+
+	// BarbershopName devuelve barbershop.name de la barbería activa del
+	// principal ya autenticado, aislado por tenant vía RLS
+	// (barbershop_select_tenant_policy, DEC-024). Usada exclusivamente por
+	// [SessionService.Context] (HU-012, DEC-060); ninguna otra operación
+	// necesita este dato hoy.
+	BarbershopName(ctx context.Context, barbershopID string) (string, error)
 }
 
 // SessionService implementa el caso de uso de HU-006: validar una sesión
@@ -139,6 +151,39 @@ func (s *SessionService) Validate(ctx context.Context, rawToken string) (Princip
 	}
 
 	return principal, nil
+}
+
+// SessionContext es el resultado de la operación de contexto de sesión de
+// HU-012 (DEC-060): el payload mínimo que GET /private/auth/session
+// devuelve. Nunca incluye StaffUserID, correo ni nombre del barbero
+// (RN-DAT-02, mismo patrón que [Principal]).
+type SessionContext struct {
+	BarbershopID   string
+	BarbershopName string
+	ExpiresAt      time.Time
+}
+
+// Context arma el contexto de sesión mínimo que HU-012 rehidrata al abrir o
+// recargar la aplicación (DEC-060): el nombre de la barbería activa y la
+// expiración ya renovada por [SessionMiddleware.RequireSession] para esta
+// misma solicitud. principal llega siempre ya validado por el middleware;
+// este método no vuelve a validar la sesión ni acepta un identificador que
+// el cliente pueda controlar.
+func (s *SessionService) Context(ctx context.Context, principal Principal) (SessionContext, error) {
+	if err := ctx.Err(); err != nil {
+		return SessionContext{}, apperr.Internal(fmt.Errorf("auth: contexto cancelado antes de leer contexto de sesión: %w", err))
+	}
+
+	name, err := s.repo.BarbershopName(ctx, principal.BarbershopID)
+	if err != nil {
+		return SessionContext{}, apperr.Internal(fmt.Errorf("auth: leer nombre de barbería: %w", err))
+	}
+
+	return SessionContext{
+		BarbershopID:   principal.BarbershopID,
+		BarbershopName: name,
+		ExpiresAt:      principal.ExpiresAt,
+	}, nil
 }
 
 // Logout revoca la sesión de principal (nunca un identificador que llegue

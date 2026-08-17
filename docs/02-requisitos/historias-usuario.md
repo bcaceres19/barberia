@@ -1,9 +1,9 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.4"
+version: "1.5"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-13"
+ultima_actualizacion: "2026-08-17"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/reglas-negocio.md"
@@ -16,7 +16,7 @@ documentos_relacionados:
 
 # Historias de usuario y criterios de aceptación
 
-> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas ya confirmadas; no crean, amplían ni reinterpretan alcance. Requieren aprobación del propietario antes de implementarse. Tres historias de B0 dependían además de dudas abiertas (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`), resueltas el 2026-08-11 como `DEC-050`, `DEC-051` y `DEC-052`. `HU-020` y `HU-021` se prepararon por solicitud del propietario, pero su implementación continúa bloqueada hasta que B0 cumpla su criterio de salida. `CT-003` (audiencia del login) y `CT-004` (destino de `CA-010-01`) quedaron resueltas el 2026-08-13 como `DEC-055` y `DEC-056`.
+> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas ya confirmadas; no crean, amplían ni reinterpretan alcance. Requieren aprobación del propietario antes de implementarse. Tres historias de B0 dependían además de dudas abiertas (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`), resueltas el 2026-08-11 como `DEC-050`, `DEC-051` y `DEC-052`. `HU-020` y `HU-021` se prepararon por solicitud del propietario, pero su implementación continúa bloqueada hasta que B0 cumpla su criterio de salida. `CT-003` (audiencia del login) y `CT-004` (destino de `CA-010-01`) quedaron resueltas el 2026-08-13 como `DEC-055` y `DEC-056`. `DP-SEG-09` (bootstrap autoritativo de sesión de `HU-012`) quedó resuelta el 2026-08-17 como `DEC-060`.
 
 ---
 
@@ -603,7 +603,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 | --- | --- |
 | Función | `F-OPS-01` (comportamiento ante fallos y conexión inestable) |
 | Reglas | `RN-TEN-01`, criterios no funcionales de UX |
-| Decisiones | `DEC-033`, `DEC-039`, `DEC-056` |
+| Decisiones | `DEC-033`, `DEC-039`, `DEC-056`, `DEC-060` |
 | Actor | Barbero |
 | Depende de | `HU-006`, `HU-009`, `HU-010` |
 | Bloquea | Todas las pantallas privadas de B1 en adelante |
@@ -625,10 +625,10 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 | Código | Criterio |
 | --- | --- |
-| `CA-012-01` | Con sesión válida, al abrir la aplicación se entra directamente al panel sin pedir credenciales. |
+| `CA-012-01` | Con sesión válida, al abrir la aplicación se entra directamente al panel sin pedir credenciales; la restauración se verifica contra `GET /api/v1/private/auth/session` (`DEC-060`), nunca contra un marcador local. |
 | `CA-012-02` | Sin sesión, cualquier ruta privada redirige al acceso y, tras entrar, lleva al destino que se pretendía abrir. |
 | `CA-012-03` | Ante una respuesta de no autorizado, la sesión local se limpia una sola vez y no se produce un bucle de redirección. |
-| `CA-012-04` | La cabecera muestra siempre la barbería activa; el barbero nunca puede dudar de en qué contexto está operando. |
+| `CA-012-04` | La cabecera muestra siempre la barbería activa, con el nombre devuelto por `GET /api/v1/private/auth/session` (`DEC-060`); el barbero nunca puede dudar de en qué contexto está operando. |
 | `CA-012-05` | Una pérdida de conexión muestra un aviso comprensible con acción de reintento, sin perder el estado de la pantalla. |
 | `CA-012-06` | Cada ruta se carga de forma diferida y la navegación no recarga la aplicación completa. |
 | `CA-012-07` | Cerrar sesión desde la cabecera invalida la sesión en el servidor y devuelve al acceso. |

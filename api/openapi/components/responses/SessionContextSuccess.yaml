@@ -1,0 +1,22 @@
+# Respuesta 200 de GET /private/auth/session (HU-012, DEC-060). A
+# diferencia de LoginSuccess, esta respuesta no fija Set-Cookie: es una
+# lectura no destructiva sobre una cookie ya vigente, nunca la emite.
+description: >
+  Contexto de sesión vigente. La autoridad real sigue siendo la cookie
+  HttpOnly de cada solicitud; este cuerpo solo la refleja para que el
+  frontend rehidrate su estado, nunca al revés.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/SessionContextResponse.yaml'
+    examples:
+      contextoVigente:
+        summary: Sesión vigente con barbería activa
+        value:
+          barbershop:
+            id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+            name: Barbería Ejemplo
+          expiresAt: "2026-09-12T12:00:00Z"

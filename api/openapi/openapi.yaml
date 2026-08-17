@@ -5,14 +5,17 @@
 # HU-005 agregó la primera operación de negocio: POST /public/auth/login.
 # HU-006 agrega la primera operación privada real: POST
 # /private/auth/logout, que registra por primera vez
-# components/securitySchemes/SessionCookie (DEC-058). Los componentes de
-# error ya eran reales desde HU-003 (recuperación de panic, aislamiento por
-# tenant, límite de cuerpo); paths queda vacío para el resto de capacidades
-# hasta su primer endpoint implementado.
+# components/securitySchemes/SessionCookie (DEC-058). HU-012 agrega la
+# segunda operación privada, de solo lectura: GET /private/auth/session
+# (DEC-060), que rehidrata la cookie HttpOnly al abrir o recargar la
+# aplicación. Los componentes de error ya eran reales desde HU-003
+# (recuperación de panic, aislamiento por tenant, límite de cuerpo); paths
+# queda vacío para el resto de capacidades hasta su primer endpoint
+# implementado.
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.2.0
+  version: 0.3.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -31,6 +34,8 @@ paths:
     $ref: './paths/public-auth.yaml#/~1public~1auth~1login'
   /private/auth/logout:
     $ref: './paths/private-auth.yaml#/~1private~1auth~1logout'
+  /private/auth/session:
+    $ref: './paths/private-auth.yaml#/~1private~1auth~1session'
 components:
   schemas:
     Problem:
@@ -39,6 +44,8 @@ components:
       $ref: './components/schemas/LoginRequest.yaml'
     LoginResponse:
       $ref: './components/schemas/LoginResponse.yaml'
+    SessionContextResponse:
+      $ref: './components/schemas/SessionContextResponse.yaml'
   securitySchemes:
     SessionCookie:
       $ref: './components/security-schemes/SessionCookie.yaml'
@@ -73,3 +80,5 @@ components:
       $ref: './components/responses/IdempotencyLockedProblem.yaml'
     LoginSuccess:
       $ref: './components/responses/LoginSuccess.yaml'
+    SessionContextSuccess:
+      $ref: './components/responses/SessionContextSuccess.yaml'
