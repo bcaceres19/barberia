@@ -31,6 +31,10 @@ type spySessionRepo struct {
 
 	revokeErr   error
 	revokeCalls int
+
+	barbershopName      string
+	barbershopNameErr   error
+	barbershopNameCalls int
 }
 
 func (s *spySessionRepo) ResolveSessionTenant(context.Context, string) (string, bool, error) {
@@ -46,6 +50,11 @@ func (s *spySessionRepo) ValidateAndRenewSession(context.Context, string, string
 func (s *spySessionRepo) RevokeSession(context.Context, string, string, time.Time) error {
 	s.revokeCalls++
 	return s.revokeErr
+}
+
+func (s *spySessionRepo) BarbershopName(context.Context, string) (string, error) {
+	s.barbershopNameCalls++
+	return s.barbershopName, s.barbershopNameErr
 }
 
 func newSessionMiddleware(t *testing.T, repo *spySessionRepo) *httpapi.SessionMiddleware {

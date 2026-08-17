@@ -4,6 +4,28 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.3.0] - 2026-08-17
+
+### Agregado
+
+- `GET /private/auth/session` (HU-012, `operationId: getSessionContext`,
+  `DEC-060`): lectura no destructiva del contexto de sesión vigente, con
+  seguridad `SessionCookie`. Respuesta `200` (`SessionContextResponse`):
+  `barbershop.id`/`barbershop.name` y `expiresAt`, sin `Set-Cookie` (no
+  emite ni modifica la cookie, a diferencia de login/logout). Errores `401`
+  (sesión ausente/inválida/vencida/revocada, mismo `UnauthorizedProblem`
+  uniforme que logout), `500`.
+- Esquema `SessionContextResponse`.
+- Response `SessionContextSuccess`.
+
+### Nota
+
+- Este registro no documenta la adición de `POST /private/auth/logout`
+  (HU-006) como una versión propia: quedó dentro de la entrada `0.2.0` de
+  abajo aunque `openapi.yaml` ya reflejaba `version: 0.2.0` desde antes de
+  esa operación. Se detectó al preparar esta entrada; se deja constancia
+  aquí en vez de reescribir el historial de una versión ya publicada.
+
 ## [0.2.0] - 2026-08-13
 
 ### Agregado

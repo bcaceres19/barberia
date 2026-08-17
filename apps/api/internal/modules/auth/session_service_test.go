@@ -41,6 +41,10 @@ type fakeSessionRepository struct {
 
 	revokeErr   error
 	revokeCalls []revokeCall
+
+	barbershopName      string
+	barbershopNameErr   error
+	barbershopNameCalls []string
 }
 
 func (f *fakeSessionRepository) ResolveSessionTenant(_ context.Context, tokenHash string) (string, bool, error) {
@@ -56,6 +60,11 @@ func (f *fakeSessionRepository) ValidateAndRenewSession(_ context.Context, barbe
 func (f *fakeSessionRepository) RevokeSession(_ context.Context, barbershopID, sessionID string, now time.Time) error {
 	f.revokeCalls = append(f.revokeCalls, revokeCall{barbershopID, sessionID, now})
 	return f.revokeErr
+}
+
+func (f *fakeSessionRepository) BarbershopName(_ context.Context, barbershopID string) (string, error) {
+	f.barbershopNameCalls = append(f.barbershopNameCalls, barbershopID)
+	return f.barbershopName, f.barbershopNameErr
 }
 
 var _ auth.SessionRepository = (*fakeSessionRepository)(nil)
@@ -239,6 +248,70 @@ func TestSessionService_Logout_RepositoryFailure_ReturnsInternal(t *testing.T) {
 	appErr, ok := apperr.As(err)
 	if !ok || appErr.Kind != apperr.KindInternal {
 		t.Fatalf("expected apperr.KindInternal, got %v", err)
+	}
+}
+
+// --- Context (HU-012, DEC-060) ------------------------------------------
+
+// TestSessionService_Context_ReturnsBarbershopNameAndPrincipalsExpiresAt
+// cubre el caso de éxito: el nombre viene del repositorio (nunca inventado)
+// y expiresAt es exactamente el que el middleware ya renovó para esta
+// solicitud (nunca una segunda consulta ni un nuevo cálculo).
+func TestSessionService_Context_ReturnsBarbershopNameAndPrincipalsExpiresAt(t *testing.T) {
+	repo := &fakeSessionRepository{barbershopName: "Barbería de prueba A"}
+	svc := auth.NewSessionService(repo, fixedClock{now: time.Now()})
+
+	expiresAt := time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
+	principal := auth.Principal{SessionID: "s-1", StaffUserID: "u-1", BarbershopID: "shop-a", ExpiresAt: expiresAt}
+
+	got, err := svc.Context(context.Background(), principal)
+	if err != nil {
+		t.Fatalf("Context: %v", err)
+	}
+	if got.BarbershopID != "shop-a" {
+		t.Fatalf("expected BarbershopID=%q, got %q", "shop-a", got.BarbershopID)
+	}
+	if got.BarbershopName != "Barbería de prueba A" {
+		t.Fatalf("expected BarbershopName=%q, got %q", "Barbería de prueba A", got.BarbershopName)
+	}
+	if !got.ExpiresAt.Equal(expiresAt) {
+		t.Fatalf("expected ExpiresAt=%v (from the principal, not recomputed), got %v", expiresAt, got.ExpiresAt)
+	}
+	if len(repo.barbershopNameCalls) != 1 || repo.barbershopNameCalls[0] != "shop-a" {
+		t.Fatalf("expected exactly one BarbershopName(shop-a) call, got %v", repo.barbershopNameCalls)
+	}
+}
+
+// TestSessionService_Context_RepositoryFailure_ReturnsInternal cubre un
+// fallo de infraestructura al leer el nombre de la barbería.
+func TestSessionService_Context_RepositoryFailure_ReturnsInternal(t *testing.T) {
+	repo := &fakeSessionRepository{barbershopNameErr: errors.New("boom")}
+	svc := auth.NewSessionService(repo, fixedClock{now: time.Now()})
+
+	_, err := svc.Context(context.Background(), auth.Principal{BarbershopID: "shop-a"})
+	appErr, ok := apperr.As(err)
+	if !ok || appErr.Kind != apperr.KindInternal {
+		t.Fatalf("expected apperr.KindInternal, got %v", err)
+	}
+}
+
+// TestSessionService_Context_CancelledContext_ReturnsInternalWithoutQuerying
+// confirma que un contexto ya cancelado nunca llega al repositorio, mismo
+// patrón defensivo que Validate/Logout.
+func TestSessionService_Context_CancelledContext_ReturnsInternalWithoutQuerying(t *testing.T) {
+	repo := &fakeSessionRepository{}
+	svc := auth.NewSessionService(repo, fixedClock{now: time.Now()})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := svc.Context(ctx, auth.Principal{BarbershopID: "shop-a"})
+	appErr, ok := apperr.As(err)
+	if !ok || appErr.Kind != apperr.KindInternal {
+		t.Fatalf("expected apperr.KindInternal, got %v", err)
+	}
+	if len(repo.barbershopNameCalls) != 0 {
+		t.Fatal("expected no repository call with an already-cancelled context")
 	}
 }
 

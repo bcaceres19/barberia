@@ -9,10 +9,11 @@ antes de agregar código.
 ## Estado
 
 Arranque de la aplicación, router, el **sistema visual base (HU-009)**
-(tokens y cinco componentes en `src/shared/ui/`) y la **pantalla de acceso
-(HU-010)**: primer módulo de negocio real, primer cliente HTTP tipado y
-primera ruta privada. Ver las secciones siguientes. El resto de carpetas de
-`modules/` conserva su `index.ts` de marcador de responsabilidad futura.
+(tokens y cinco componentes en `src/shared/ui/`), la **pantalla de acceso
+(HU-010)** y el **cascarón del panel privado (HU-012)**: guard generalizado
+con sesión real, cabecera con barbería activa y coordinación única de 401.
+Ver las secciones siguientes. El resto de carpetas de `modules/` conserva
+su `index.ts` de marcador de responsabilidad futura.
 
 ## Acceso del barbero (HU-010)
 
@@ -26,11 +27,12 @@ la API pública y las decisiones de implementación; no las sustituye.
 desde `src/app/router/index.ts`:
 
 - `/acceso` (`name: "acceso"`) — pantalla de acceso, diferida.
-- `/panel` (`name: "panel"`) — ruta privada real con guard mínimo
-  (`beforeEnter: requireSession`, `src/modules/auth/guards/requireSession.ts`):
-  sin sesión válida redirige a `/acceso`; con sesión válida muestra un
-  marcador de posición autenticado sin cabecera ni navegación general.
-  `HU-012` reutiliza este guard tal cual, sin crear uno paralelo.
+- `/panel` — cascarón privado (`src/modules/auth/layouts/PrivateShell.vue`),
+  protegido por un único guard generalizado
+  (`beforeEnter: requireSession`, `src/modules/auth/guards/requireSession.ts`,
+  HU-012). Su hija `""` (`name: "panel"`, `src/modules/auth/pages/PanelPage.vue`)
+  es hoy el único contenido real; toda ruta privada futura se agrega como
+  hija de esta misma ruta padre, sin repetir el guard.
 - `/recuperar-acceso` (`name: "recuperar-acceso"`) — destino real (no
   roto) del enlace de recuperación de `CA-010-08` mientras `HU-011` no
   existe. Ver `DP-UX-06` en `docs/00-control/dudas-pendientes.md`: ninguna
@@ -38,17 +40,46 @@ desde `src/app/router/index.ts`:
   aplicada (declarada, no oculta) es un aviso explícito de "todavía no
   disponible", sin simular el flujo real de `HU-011`.
 
-### Guard mínimo de `/panel` y su límite conocido
+### Cascarón del panel privado (HU-012)
 
-`requireSession` no verifica la sesión contra el servidor: la cookie
-`barberia_session` es `HttpOnly` (JavaScript no puede leerla, `DEC-050`) y
-todavía no existe ningún endpoint privado real contra el que validarla
-(`DP-SEG-08`, primer endpoint privado real = `POST /api/v1/private/auth/logout`
-de `HU-006`). El guard usa un marcador local no sensible en
-`sessionStorage` (`src/modules/auth/model/sessionMarker.ts`): guarda
-únicamente `expiresAt`, el mismo valor no secreto que `LoginResponse` ya
-expone. No es una verificación de seguridad — la autoridad real sigue
-siendo la cookie `HttpOnly` en cada solicitud privada futura.
+Fuente normativa: `docs/02-requisitos/historias-usuario.md` (HU-012) y
+`docs/00-control/registro-decisiones.md` (`DEC-060`). Reemplaza el guard
+mínimo y el marcador local `sessionStorage` de HU-010 (`DP-SEG-08`,
+`sessionMarker.ts`, eliminado): ahora existe una lectura privada real,
+`GET /private/auth/session`, y el guard la consulta antes de decidir.
+
+- **`src/modules/auth/model/sessionStore.ts`**: único estado compartido
+  entre rutas privadas de la aplicación (singleton reactivo, sin Pinia —
+  `docs/03-desarrollo/estandar-frontend-vue.md` §113 solo la exige con
+  estado compartido real; una sola pieza de estado no justifica la
+  dependencia todavía, `DEC-035`). Expone `sessionState` (solo lectura),
+  `ensureBootstrapped`/`retryBootstrap` (consulta el servidor, comparte una
+  única solicitud en curso entre llamadas concurrentes) y la coordinación
+  única de 401 (`reportUnauthorized`/`onUnauthorized`, `CA-012-03`):
+  idempotente, así que varias respuestas 401 casi simultáneas producen una
+  sola limpieza/notificación.
+- **`src/modules/auth/guards/requireSession.ts`**: generalizado a toda
+  ruta privada. Sin sesión real, redirige a `/acceso` conservando el
+  destino pretendido como `?redirect=` (solo si es una ruta interna
+  segura, nunca externa ni un ciclo hacia acceso/logout,
+  `src/modules/auth/model/redirectTarget.ts`); `LoginPage.vue` lo recupera
+  tras un acceso exitoso (`CA-012-02`).
+- **`src/modules/auth/bootstrap/installSessionHandling.ts`**: único punto
+  que conecta el middleware de respuesta del cliente HTTP
+  (`openapi-fetch`, `client.use()`) con la coordinación de 401 del store, y
+  esa coordinación con el router real. Se instala una sola vez desde
+  `app/bootstrap/createApp.ts` — el único lugar con la instancia real del
+  router — nunca desde dentro de `modules/auth` (`app → modules → shared`).
+  Excluye deliberadamente `GET /private/auth/session`: el guard ya
+  interpreta el 401 de ese endpoint por su cuenta, evitando una redirección
+  compitiendo con la que el guard está resolviendo.
+- **`src/modules/auth/layouts/PrivateShell.vue`**: cabecera
+  (`AppHeader.vue`, barbería activa siempre visible, `CA-012-04`, y cierre
+  de sesión, `CA-012-07`) + navegación (`AppNav.vue`, hoy solo "Panel": no
+  inventa destinos de B1 en adelante que todavía no existen) + contenido,
+  solo en estado `authenticated`; `checking`/`connection-lost` (con
+  "Reintentar", `CA-012-05`) se renderizan en su lugar, nunca una pantalla
+  en blanco.
 
 ### Cliente HTTP tipado
 
@@ -79,14 +110,19 @@ la integración real del umbral es de `HU-007`) y `unexpected-error`
 ### Pruebas
 
 Componente (`src/modules/auth/components/__tests__`,
-`src/modules/auth/pages/__tests__`), cliente tipado
-(`src/modules/auth/api/__tests__`), enrutamiento/guard
+`src/modules/auth/layouts/__tests__`, `src/modules/auth/pages/__tests__`),
+store/coordinador (`src/modules/auth/model/__tests__/sessionStore.test.ts`,
+`src/modules/auth/bootstrap/__tests__/installSessionHandling.test.ts`),
+cliente tipado (`src/modules/auth/api/__tests__`), enrutamiento/guard
 (`src/modules/auth/__tests__/routes.test.ts`), accesibilidad (`vitest-axe`
-integrado en las suites anteriores) y E2E contra el API real en local
-(`e2e/acceso.spec.ts`, `e2e/acceso-evidencia-responsiva.spec.ts` con
-capturas en `e2e/evidence/`). El recorrido E2E requiere `apps/api`
-corriendo contra PostgreSQL real con las migraciones aplicadas y un
-usuario con un hash argon2id real (no el hash ficticio de
+integrado en las suites anteriores) y E2E contra el API real en local:
+`e2e/acceso.spec.ts`/`e2e/acceso-evidencia-responsiva.spec.ts` (HU-010,
+actualizados donde HU-012 cambió el comportamiento observable — el guard
+ahora conserva `?redirect=`) y `e2e/panel.spec.ts`/
+`e2e/panel-evidencia-responsiva.spec.ts` (HU-012, capturas en
+`e2e/evidence/panel/`). El recorrido E2E requiere `apps/api` corriendo
+contra PostgreSQL real con las migraciones aplicadas y un usuario con un
+hash argon2id real (no el hash ficticio de
 `database/testdata/hu005_credenciales_sesiones.sql`, que solo sirve para
 probar forma/RLS); variables `E2E_EMAIL`/`E2E_PASSWORD` sobrescriben las
 credenciales de prueba por defecto.

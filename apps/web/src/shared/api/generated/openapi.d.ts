@@ -44,6 +44,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/private/auth/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Obtener el contexto de sesión vigente
+         * @description Lectura no destructiva (HU-012, `DEC-060`) que rehidrata la cookie de sesión `HttpOnly` al abrir o recargar la aplicación: confirma que la sesión sigue vigente -`SessionMiddleware` ya la validó y renovó para esta misma solicitud, igual que cualquier otra ruta bajo `/api/v1/private`- y devuelve el nombre de la barbería activa (`barbershop.name`, columna real aislada por tenant vía RLS) y la expiración ya renovada. No emite ni modifica `Set-Cookie`, a diferencia de login/logout: repetir la llamada nunca tiene un efecto adicional. El payload nunca incluye `staffUserID`, correo ni nombre del barbero (`RN-DAT-02`, mismo patrón que `auth.Principal`).
+         */
+        get: operations["getSessionContext"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -103,6 +123,25 @@ export interface components {
             /**
              * Format: date-time
              * @description Instante en que la sesión emitida expira si no hay actividad adicional (DEC-050, 30 días desde la emisión).
+             * @example 2026-09-12T12:00:00Z
+             */
+            expiresAt: string;
+        };
+        /** @description Contexto mínimo de sesión ya autoritativo: barbería activa y expiración de la sesión que SessionMiddleware ya validó y renovó para esta misma solicitud, igual que cualquier otra ruta bajo /api/v1/private. */
+        SessionContextResponse: {
+            /** @description Barbería activa del barbero autenticado. */
+            barbershop: {
+                /**
+                 * Format: uuid
+                 * @description Identificador de la barbería activa.
+                 */
+                id: string;
+                /** @description Nombre de la barbería activa. */
+                name: string;
+            };
+            /**
+             * Format: date-time
+             * @description Instante en que la sesión vigente expira si no hay actividad adicional (DEC-050), ya renovada por esta misma solicitud.
              * @example 2026-09-12T12:00:00Z
              */
             expiresAt: string;
@@ -209,6 +248,16 @@ export interface components {
                 "application/json": components["schemas"]["LoginResponse"];
             };
         };
+        /** @description Contexto de sesión vigente. La autoridad real sigue siendo la cookie HttpOnly de cada solicitud; este cuerpo solo la refleja para que el frontend rehidrate su estado, nunca al revés. */
+        SessionContextSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["SessionContextResponse"];
+            };
+        };
     };
     parameters: {
         /** @description Clave elegida por el cliente que identifica un intento de escritura crítica. Repetir la misma clave con el mismo contenido (método, ruta y cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo. Repetirla con contenido distinto es un conflicto: usa una clave nueva para una solicitud distinta. */
@@ -259,6 +308,20 @@ export interface operations {
         requestBody?: never;
         responses: {
             204: components["responses"]["LogoutSuccess"];
+            401: components["responses"]["UnauthorizedProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getSessionContext: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["SessionContextSuccess"];
             401: components["responses"]["UnauthorizedProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };

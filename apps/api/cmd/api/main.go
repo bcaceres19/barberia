@@ -137,9 +137,15 @@ func buildRouter(db *database.DB, logger *slog.Logger) (*chi.Mux, error) {
 	sessionService := auth.NewSessionService(authpostgres.New(db), clock.System{})
 	sessionMiddleware := authhttpapi.NewSessionMiddleware(sessionService, authhttpapi.DefaultCookieConfig())
 	logoutHandler := authhttpapi.NewLogoutHandler(sessionService, authhttpapi.DefaultCookieConfig())
+	// HU-012 (DEC-060): lectura no destructiva de contexto de sesión, para
+	// que el frontend rehidrate barbería activa/expiración al abrir o
+	// recargar la aplicación. Se registra sobre el mismo subrouter privado,
+	// después del middleware de sesión, igual que logout (CA-006-04).
+	sessionContextHandler := authhttpapi.NewSessionContextHandler(sessionService)
 
 	private.Use(sessionMiddleware.RequireSession)
 	private.Post("/auth/logout", logoutHandler.ServeHTTP)
+	private.Get("/auth/session", sessionContextHandler.ServeHTTP)
 
 	return router, nil
 }
