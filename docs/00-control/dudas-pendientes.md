@@ -1,9 +1,9 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "1.9"
-estado: "Sin dudas abiertas"
+version: "2.1"
+estado: "Cuatro dudas abiertas"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-13"
+ultima_actualizacion: "2026-08-17"
 documentos_relacionados:
   - "registro-decisiones.md"
   - "contradicciones.md"
@@ -17,7 +17,9 @@ documentos_relacionados:
 
 ## 1. Estado
 
-**No queda ninguna duda abierta.** El 7 de agosto de 2026, al redactar las historias del bloque B0 ([historias-usuario.md](../02-requisitos/historias-usuario.md)), se detectaron tres vacíos que `DEC-026` y `DEC-027` no cubrían (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`); el 11 de agosto de 2026 el propietario las resolvió como `DEC-050`, `DEC-051` y `DEC-052`, desbloqueando `HU-005`–`HU-008` y `HU-011`. Al implementar `HU-005` (issue `#44`) el 13 de agosto de 2026 aparecieron dos vacíos más (`DP-SEG-07`, `DP-SEG-08`), resueltos el mismo día como `DEC-057` y `DEC-058`.
+**Hay cuatro dudas abiertas.** Al preparar los prompts de `HU-012`, `HU-007` y `HU-008` (issue documental `#55`) el 14 de agosto de 2026, la comparación entre los criterios, el contrato y el código integrado mostró cinco decisiones que todavía no podían inferirse sin ampliar o debilitar el alcance: el bootstrap autoritativo del panel (`DP-SEG-09`), el reto telefónico completo de `HU-007` (`DP-SEG-10`), la política de contraseña nueva (`DP-SEG-11`), los parámetros del código de recuperación (`DP-SEG-12`) y el proveedor oficial concreto de correo/WhatsApp (`DP-NOT-05`). El 17 de agosto de 2026 el propietario resolvió `DP-SEG-09` como `DEC-060`, desbloqueando el prompt de `HU-012`; las otras cuatro siguen abiertas y sus prompts (`HU-007`, `HU-008`) permanecen `blocked` aunque sus issues `#57`–`#58` ya existan.
+
+El 7 de agosto de 2026, al redactar las historias del bloque B0 ([historias-usuario.md](../02-requisitos/historias-usuario.md)), se detectaron tres vacíos que `DEC-026` y `DEC-027` no cubrían (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`); el 11 de agosto de 2026 el propietario las resolvió como `DEC-050`, `DEC-051` y `DEC-052`, desbloqueando `HU-005`–`HU-008` y `HU-011`. Al implementar `HU-005` (issue `#44`) el 13 de agosto de 2026 aparecieron dos vacíos más (`DP-SEG-07`, `DP-SEG-08`), resueltos el mismo día como `DEC-057` y `DEC-058`.
 
 Las 41 dudas y la contradicción `CT-001` recibieron respuesta del propietario en [respuesta-dudas-pendientes.txt](../../respuesta-manuales/respuesta-dudas-pendientes.txt). No queda ninguna decisión abierta de ese lote.
 
@@ -66,6 +68,7 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 | `DP-NOT-02` | Anticipación del recordatorio | 30 minutos iniciales, configurable. | `DEC-018` |
 | `DP-NOT-03` | Cantidad de recordatorios | 1 por defecto, configurable entre 0 y 3. | `DEC-018` |
 | `DP-NOT-04` | Aviso de inasistencia | Configurable por barbería; desactivado por defecto. | `DEC-018` |
+| `DP-NOT-05` | ¿Qué proveedor/adaptador oficial concreto implementará el envío de códigos de seguridad por WhatsApp y correo? | **Abierta.** `DEC-051` fija ambos canales y dice que se reutiliza el proveedor de `DEC-027`, pero `DEC-027` no identifica un proveedor implementable y el repositorio no contiene ese adaptador. Elegir dependencia, API, credenciales, entrega y tratamiento de fallos sin esa decisión ampliaría el alcance de `HU-008`. | Pendiente |
 | `DP-PIL-01` | Duración del piloto | 4 semanas. | `DEC-028` |
 | `DP-PIL-02` | Interrupción del piloto | El propietario entrega manualmente al barbero las citas futuras y pendientes. | `DEC-028` |
 | `DP-PIL-03` | Método anterior en paralelo | Solo durante la primera semana; después se usa la plataforma. | `DEC-028` |
@@ -95,6 +98,10 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 | `DP-SEG-07` | Atributos exactos de la cookie de sesión (`SameSite`, `Path`, `Domain`, nombre) | `barberia_session`, `Path=/api/v1`, `SameSite=Lax`, sin `Domain`, 30 días. | `DEC-057` |
 | `DP-SEG-08` | Evidencia de aislamiento de `CA-005-05` sin un endpoint privado real todavía | Dividida: `HU-005` prueba aislamiento a nivel PostgreSQL/RLS; `HU-006` prueba end-to-end contra el logout real (`CA-006-07`). | `DEC-058` |
 | `DP-UX-06` | Destino del enlace de recuperación de `CA-010-08` mientras `HU-011` no existe | Ruta real `/recuperar-acceso`, cargada de forma diferida, que declara explícitamente que la recuperación aún no está disponible; no simula el flujo de `HU-011`. | `DEC-059` |
+| `DP-SEG-09` | ¿Cuál es la operación y el payload autoritativos con que `HU-012` rehidrata una cookie `HttpOnly` y obtiene la barbería activa al abrir la aplicación? | Nueva operación `GET /api/v1/private/auth/session`, protegida por `SessionCookie` sobre el mismo `SessionMiddleware` existente, con payload mínimo `{ barbershop: { id, name }, expiresAt }`. | `DEC-060` |
+| `DP-SEG-10` | ¿Cómo funciona de extremo a extremo el reto telefónico de `HU-007` después del umbral? | **Abierta.** Deben decidirse emisión y verificación del reto, canal oficial, vigencia, intentos, reenvío, respuesta/operaciones OpenAPI y experiencia web. `HU-010` solo explica un `429`; `HU-008`/`HU-011` son recuperación de contraseña y no autorizan reutilizar su código como reto de acceso. La decisión debe además fijar retención/configuración del contador sin guardar la IP en claro. | Pendiente |
+| `DP-SEG-11` | ¿Cuál es la política mínima exacta para la contraseña nueva de `CA-008-08`? | **Abierta.** Las fuentes exigen una política documentada y mensaje accionable, pero no fijan longitud mínima/máxima, composición, frases permitidas ni controles contra contraseñas comprometidas. Los parámetros Argon2id existentes gobiernan almacenamiento, no calidad de la contraseña elegida. | Pendiente |
+| `DP-SEG-12` | ¿Cuáles son el formato/entropía y los valores iniciales del código de recuperación, su vigencia, máximo de intentos, control de reenvío y autorización entre “verificar” y “cambiar contraseña”? | **Abierta.** `HU-008` exige que todos sean seguros y configurables, pero no fija valores iniciales ni el identificador opaco de la solicitud ni el material de un solo uso que autoriza el tercer paso después de verificar el código. `staff_recovery_code` en el modelo de referencia acota la forma estructural, no decide el artefacto enviado ni el contrato público completo. | Pendiente |
 
 Al resolverse cada duda se aplica el flujo de la sección 3: `DEC-*`, propagación, conservación de la fila y `CT-*` si revela un conflicto.
 

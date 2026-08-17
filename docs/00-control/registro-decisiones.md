@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.14"
+version: "1.15"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-13"
+ultima_actualizacion: "2026-08-17"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -646,3 +646,13 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** un canal de contacto/soporte alterno — descartado por no estar aprobado en ningún `DEC-*` ni tener un canal de soporte definido para el MVP; dejar `CA-010-08` sin cumplir hasta que exista `HU-011` — descartado porque el criterio solo exige un enlace visible y operable, no el flujo completo, y bloquear el merge de `HU-010` por esto sería más costoso que la interpretación honesta ya aplicada.
 - **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-UX-06`), PR de `HU-010` (issue `#46`).
 - **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-UX-06`; aprobación explícita del propietario el 2026-08-13.
+
+### DEC-060 · Resolución de `DP-SEG-09`: operación autoritativa de contexto de sesión para `HU-012`
+
+- **Fecha:** 2026-08-17.
+- **Decisión:** se añade una operación privada de solo lectura, `GET /api/v1/private/auth/session`, protegida por `SessionCookie` y montada sobre el mismo `SessionMiddleware` que ya usan las demás rutas de `/api/v1/private` (misma validación y renovación deslizante de `DEC-050`, sin duplicar lógica de sesión). Responde `200` con un payload mínimo — `{ barbershop: { id, name }, expiresAt }` — usando `barbershop.name`, columna ya existente en `barbershop` desde la migración fundacional (`20260807170000_create_tenant_foundation.sql`), aislada por tenant mediante el RLS ya vigente (`DEC-024`); y `401` con el mismo `UnauthorizedProblem` uniforme que `logout` ante cookie ausente, inválida, vencida o revocada. El payload no incluye `staffUserID`, correo ni nombre del barbero: no lo exige ningún criterio de `HU-012` y mantiene el patrón de `auth.Principal` (identificadores opacos, sin datos personales). Esta operación reemplaza el marcador provisional `sessionStorage` de `HU-010` (`DP-SEG-08`) como fuente de rehidratación de `HU-012`; el frontend la llama al abrir o recargar la aplicación, y la cookie `HttpOnly` sigue siendo la única prueba real de sesión en cada solicitud.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** de las alternativas evaluadas, es la que resuelve `CA-012-01`/`CA-012-04` sin crear una segunda fuente de verdad ni ampliar el alcance de otra HU: reutiliza exactamente la validación de sesión que `HU-006` ya probó, y `barbershop.name` es un dato real y aislado por tenant, no un valor inventado ni un adelanto de la edición que construirá `HU-020`.
+- **Alternativas descartadas:** ampliar `LoginResponse` con el contexto de barbería — descartada porque "iniciar sesión" y "¿sigo autenticado ahora?" son preguntas distintas y mezclarlas duplicaría la validación de sesión en dos formas; reutilizar `logout` como lectura — descartada porque `logout` es destructivo por diseño y no debe tener un efecto de solo consulta; mantener el marcador local de `sessionStorage` como fuente de bootstrap — descartada porque no sobrevive al cierre del navegador y no es una fuente autoritativa (`DP-SEG-09`).
+- **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-SEG-09`), `docs/00-control/matriz-trazabilidad.md`, `docs/02-requisitos/historias-usuario.md` (`HU-012` `CA-012-01`/`CA-012-04`), `docs/10-backlog/prompts/hu/hu-012-cascaron-panel-privado.md`, `docs/10-backlog/prompts/README.md`; futura implementación de `HU-012` (issue `#56`) debe crear primero la operación en `api/openapi/paths/private-auth.yaml` contract-first.
+- **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-SEG-09`; aprobación explícita del propietario el 2026-08-17.
