@@ -1,9 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-008-v1"
-version: "1.2"
+version: "1.3"
 kind: "hu"
-status: "blocked"
-status_reason: "Solo pendiente de que HU-007 se integre en main; ya no hay ninguna decisión normativa abierta (DEC-063-DEC-066)."
+status: "ready"
 target_agents:
   - "claude"
   - "codex"
@@ -98,7 +97,7 @@ superseded_by: null
 
 Implementa únicamente `HU-008` de extremo a extremo en backend: solicitar recuperación, verificar un código de un solo uso y establecer una contraseña nueva, con envío por WhatsApp oficial y correo conforme a `DEC-051`, no enumeración, invalidación de sesiones y pruebas reales. No construyas la pantalla Vue de `HU-011` ni conviertas el código de recuperación en el reto de `HU-007`.
 
-`DP-SEG-11`, `DP-SEG-12`, `CT-006` y `DP-NOT-05` quedaron resueltas el 2026-08-17 como `DEC-063`–`DEC-066` (ver sección siguiente). Este prompt sigue **bloqueado** únicamente porque `HU-007` todavía no está **integrada en `main`**. El issue `#58` existe para trazabilidad, pero no sustituye esa condición. Verifica en preflight que el PR de `HU-007` ya se mergeó antes de abrir rama.
+`DP-SEG-11`, `DP-SEG-12`, `CT-006` y `DP-NOT-05` quedaron resueltas el 2026-08-17 como `DEC-063`–`DEC-066` (ver sección siguiente). `HU-007` se integró en `main` el 2026-08-17 ([PR #61](https://github.com/bcaceres19/barberia/pull/61)), así que este prompt ya está **`ready`**: no queda ninguna decisión ni dependencia pendiente. Confirma en preflight que tu copia local de `main` incluye ese commit antes de crear la rama.
 
 ## Objetivo
 

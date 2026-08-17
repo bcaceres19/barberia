@@ -1,6 +1,6 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "2.3"
+version: "2.4"
 estado: "Sin dudas abiertas"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-17"
@@ -17,7 +17,7 @@ documentos_relacionados:
 
 ## 1. Estado
 
-**No queda ninguna duda abierta.** Al preparar los prompts de `HU-012`, `HU-007` y `HU-008` (issue documental `#55`) el 14 de agosto de 2026, la comparación entre los criterios, el contrato y el código integrado mostró cinco decisiones que todavía no podían inferirse sin ampliar o debilitar el alcance: el bootstrap autoritativo del panel (`DP-SEG-09`), el reto telefónico completo de `HU-007` (`DP-SEG-10`), la política de contraseña nueva (`DP-SEG-11`), los parámetros del código de recuperación (`DP-SEG-12`) y el proveedor oficial concreto de correo/WhatsApp (`DP-NOT-05`). El propietario resolvió las cinco el 17 de agosto de 2026 como `DEC-060`, `DEC-062`–`DEC-064` y `DEC-066`. `HU-012` se integró en `main` el 17 de agosto de 2026 ([PR #59](https://github.com/bcaceres19/barberia/pull/59)); `HU-007` ya está `ready`; `HU-008` queda solo a la espera de que `HU-007` se integre.
+**No queda ninguna duda abierta.** Al preparar los prompts de `HU-012`, `HU-007` y `HU-008` (issue documental `#55`) el 14 de agosto de 2026, la comparación entre los criterios, el contrato y el código integrado mostró cinco decisiones que todavía no podían inferirse sin ampliar o debilitar el alcance: el bootstrap autoritativo del panel (`DP-SEG-09`), el reto telefónico completo de `HU-007` (`DP-SEG-10`), la política de contraseña nueva (`DP-SEG-11`), los parámetros del código de recuperación (`DP-SEG-12`) y el proveedor oficial concreto de correo/WhatsApp (`DP-NOT-05`). El propietario resolvió las cinco el 17 de agosto de 2026 como `DEC-060`, `DEC-062`–`DEC-064` y `DEC-066`. `HU-012` ([PR #59](https://github.com/bcaceres19/barberia/pull/59)) y `HU-007` ([PR #61](https://github.com/bcaceres19/barberia/pull/61)) se integraron en `main` el 17 de agosto de 2026; `HU-008` ya está `ready`.
 
 El 7 de agosto de 2026, al redactar las historias del bloque B0 ([historias-usuario.md](../02-requisitos/historias-usuario.md)), se detectaron tres vacíos que `DEC-026` y `DEC-027` no cubrían (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`); el 11 de agosto de 2026 el propietario las resolvió como `DEC-050`, `DEC-051` y `DEC-052`, desbloqueando `HU-005`–`HU-008` y `HU-011`. Al implementar `HU-005` (issue `#44`) el 13 de agosto de 2026 aparecieron dos vacíos más (`DP-SEG-07`, `DP-SEG-08`), resueltos el mismo día como `DEC-057` y `DEC-058`.
 

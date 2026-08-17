@@ -1,6 +1,6 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.7"
+version: "1.8"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-17"
@@ -139,8 +139,8 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-HU-006-v1](hu/hu-006-sesion-persistente.md) (v1.2) | `hu` | `HU-006` | [#45](https://github.com/bcaceres19/barberia/issues/45) | `executed` | `HU-005` integrada; `CT-003` resuelta (`DEC-055`); `DP-SEG-08` resuelta (`DEC-058`) | [PR #50](https://github.com/bcaceres19/barberia/pull/50), integrada en `main` |
 | [PROMPT-HU-010-v1](hu/hu-010-pantalla-acceso.md) (v1.1) | `hu` | `HU-010` | [#46](https://github.com/bcaceres19/barberia/issues/46) | `executed` | `HU-005`/`HU-009` integradas; `CT-004` resuelta (`DEC-056`) | [PR #52](https://github.com/bcaceres19/barberia/pull/52), integrada en `main`; `DP-UX-06` cerrada por `DEC-059` |
 | [PROMPT-HU-012-v1](hu/hu-012-cascaron-panel-privado.md) (v1.2) | `hu` | `HU-012` | [#56](https://github.com/bcaceres19/barberia/issues/56) | `executed` | `HU-006`/`HU-009`/`HU-010` integradas; `DP-SEG-09` resuelta (`DEC-060`) | [PR #59](https://github.com/bcaceres19/barberia/pull/59), integrada en `main` |
-| [PROMPT-HU-007-v1](hu/hu-007-defensa-abuso.md) (v1.1) | `hu` | `HU-007` | [#57](https://github.com/bcaceres19/barberia/issues/57) | `ready` | `DEC-061`/`DEC-062` resuelven `CT-005`/`DP-SEG-10`; `HU-012` integrada en `main` | — |
-| [PROMPT-HU-008-v1](hu/hu-008-recuperacion-acceso.md) (v1.2) | `hu` | `HU-008` | [#58](https://github.com/bcaceres19/barberia/issues/58) | `blocked` | `DEC-063`–`DEC-066` resuelven `DP-SEG-11`/`DP-SEG-12`/`CT-006`/`DP-NOT-05`; solo falta `HU-007` integrada en `main` | — |
+| [PROMPT-HU-007-v1](hu/hu-007-defensa-abuso.md) (v1.3) | `hu` | `HU-007` | [#57](https://github.com/bcaceres19/barberia/issues/57) | `executed` | `DEC-061`/`DEC-062` resuelven `CT-005`/`DP-SEG-10`; `HU-012` integrada en `main` | [PR #61](https://github.com/bcaceres19/barberia/pull/61), integrada en `main` |
+| [PROMPT-HU-008-v1](hu/hu-008-recuperacion-acceso.md) (v1.2) | `hu` | `HU-008` | [#58](https://github.com/bcaceres19/barberia/issues/58) | `ready` | `DEC-063`–`DEC-066` resuelven `DP-SEG-11`/`DP-SEG-12`/`CT-006`/`DP-NOT-05`; `HU-007` integrada en `main` | — |
 
 ## 10. Lista de control al guardar o entregar
 
