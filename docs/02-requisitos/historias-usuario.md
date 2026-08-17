@@ -1,9 +1,9 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.4"
+version: "1.7"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-13"
+ultima_actualizacion: "2026-08-17"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/reglas-negocio.md"
@@ -16,7 +16,7 @@ documentos_relacionados:
 
 # Historias de usuario y criterios de aceptación
 
-> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas ya confirmadas; no crean, amplían ni reinterpretan alcance. Requieren aprobación del propietario antes de implementarse. Tres historias de B0 dependían además de dudas abiertas (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`), resueltas el 2026-08-11 como `DEC-050`, `DEC-051` y `DEC-052`. `HU-020` y `HU-021` se prepararon por solicitud del propietario, pero su implementación continúa bloqueada hasta que B0 cumpla su criterio de salida. `CT-003` (audiencia del login) y `CT-004` (destino de `CA-010-01`) quedaron resueltas el 2026-08-13 como `DEC-055` y `DEC-056`.
+> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas ya confirmadas; no crean, amplían ni reinterpretan alcance. Requieren aprobación del propietario antes de implementarse. Tres historias de B0 dependían además de dudas abiertas (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`), resueltas el 2026-08-11 como `DEC-050`, `DEC-051` y `DEC-052`. `HU-020` y `HU-021` se prepararon por solicitud del propietario, pero su implementación continúa bloqueada hasta que B0 cumpla su criterio de salida. `CT-003` (audiencia del login) y `CT-004` (destino de `CA-010-01`) quedaron resueltas el 2026-08-13 como `DEC-055` y `DEC-056`. `DP-SEG-09` (bootstrap autoritativo de sesión de `HU-012`) quedó resuelta el 2026-08-17 como `DEC-060`. `CT-005`, `DP-SEG-10`, `DP-SEG-11`, `DP-SEG-12`, `CT-006` y `DP-NOT-05` (umbral, reto telefónico de `HU-007`, política de contraseña, parámetros/no enumeración y proveedor de `HU-008`) quedaron resueltas el mismo día como `DEC-061`–`DEC-066`. No queda ninguna duda ni contradicción abierta; `HU-007` y `HU-008` solo esperan, en orden, que `HU-012` y luego `HU-007` se integren en `main`.
 
 ---
 
@@ -361,7 +361,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 | --- | --- |
 | Función | `F-SEG-03` |
 | Reglas | `RN-DAT-02` |
-| Decisiones | `DEC-026`, `DEC-052` |
+| Decisiones | `DEC-026`, `DEC-052`, `DEC-061`, `DEC-062` |
 | Actor | Propietario (protege), barbero (afectado si se excede) |
 | Depende de | `HU-003`, `HU-005` |
 | Bloquea | — |
@@ -371,12 +371,12 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 > Como propietario del sistema, necesito que el formulario de acceso limite los intentos por IP y exija una prueba adicional cuando se supera el umbral, para frenar el abuso sin castigar al barbero que se equivocó dos veces.
 
-> **Bloqueo resuelto:** `DEC-026` fijaba el umbral inicial de **5 solicitudes por IP** sin la duración de la ventana ni la del escalamiento. `DP-SEG-06` quedó resuelta el 2026-08-11 como `DEC-052`: ventana de 15 minutos, escalamiento a verificación telefónica de 24 horas.
+> **Bloqueo resuelto:** `DEC-026` fijaba el umbral inicial de **5 solicitudes por IP** sin la duración de la ventana ni la del escalamiento. `DP-SEG-06` quedó resuelta el 2026-08-11 como `DEC-052`: ventana de 15 minutos, escalamiento a verificación telefónica de 24 horas. `CT-005` (¿la quinta o la sexta solicitud exige el reto?) y `DP-SEG-10` (reto telefónico completo) quedaron resueltas el 2026-08-17 como `DEC-061` y `DEC-062`: las cinco primeras solicitudes se evalúan con normalidad, la sexta exige completar el reto en `POST /api/v1/public/auth/challenge` y `.../challenge/verify` (código de 6 dígitos por WhatsApp oficial, 5 min, 5 intentos) antes de evaluar la contraseña.
 
 **Alcance incluido**
 
 - Conteo por IP con ventana de 15 minutos y umbral de 5 solicitudes (`DEC-052`), ambos configurables.
-- Escalamiento: superado el umbral, la solicitud exige verificación telefónica durante 24 horas antes de evaluar la contraseña (`DEC-052`).
+- Escalamiento: al superar el umbral (la sexta solicitud, `DEC-061`), esa solicitud y las siguientes exigen completar el reto telefónico de `DEC-062` antes de evaluar la contraseña, durante 24 horas o hasta completarlo con éxito.
 - Respuesta `429` con formato uniforme y con indicación de cuándo reintentar.
 - Configuración expuesta como parámetros, no como números incrustados en el código.
 - Los contadores no almacenan datos personales; la IP se guarda de forma acotada y con vencimiento.
@@ -385,10 +385,10 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 | Código | Criterio |
 | --- | --- |
-| `CA-007-01` | Dadas N solicitudes desde la misma IP por debajo del umbral, entonces todas se evalúan normalmente. |
-| `CA-007-02` | Superado el umbral dentro de la ventana, la siguiente solicitud desde esa IP exige verificación telefónica y no evalúa la contraseña. |
+| `CA-007-01` | Dadas hasta cinco solicitudes desde la misma IP dentro de la ventana, entonces todas se evalúan normalmente, incluida la contraseña (`DEC-061`). |
+| `CA-007-02` | La sexta solicitud desde esa IP dentro de la ventana exige completar el reto telefónico de `DEC-062` y no evalúa la contraseña hasta lograrlo. |
 | `CA-007-03` | La respuesta al superar el umbral usa el formato uniforme, indica cuándo reintentar y no revela si el correo existe. |
-| `CA-007-04` | Transcurrida la ventana sin nuevos intentos, el conteo se reinicia y el acceso normal se restablece. |
+| `CA-007-04` | Transcurrida la ventana sin nuevos intentos, el conteo se reinicia; el reto telefónico sigue vigente si `escalated_until` no venció o no se completó con éxito (`DEC-062`). |
 | `CA-007-05` | El umbral y la ventana se cambian por configuración, sin recompilar ni editar código. |
 | `CA-007-06` | Los datos de conteo vencen solos y no contienen correo, nombre ni teléfono. |
 | `CA-007-07` | El límite no depende de una cabecera que el cliente pueda falsificar libremente; la obtención de la IP está documentada y probada según el despliegue previsto. |
@@ -408,7 +408,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 | --- | --- |
 | Función | `F-AUTH-02` |
 | Reglas | `RN-DAT-01`, `RN-DAT-02` |
-| Decisiones | `DEC-026`, `DEC-051` |
+| Decisiones | `DEC-026`, `DEC-051`, `DEC-063`, `DEC-064`, `DEC-065` |
 | Actor | Barbero |
 | Depende de | `HU-005`, `HU-007` |
 | Bloquea | `HU-011` |
@@ -418,7 +418,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 > Como barbero que olvidó su contraseña, quiero recuperar el acceso con un código enviado por WhatsApp y correo, para volver a mi agenda el mismo día sin depender de que alguien me responda.
 
-> **Bloqueo resuelto:** `DEC-026` definía el mecanismo (código al teléfono verificado) sin fijar canal ni proveedor. `DP-SEG-05` quedó resuelta el 2026-08-11 como `DEC-051`: WhatsApp oficial y correo, reutilizando el proveedor ya habilitado por `DEC-027`.
+> **Bloqueo resuelto:** `DEC-026` definía el mecanismo (código al teléfono verificado) sin fijar canal ni proveedor. `DP-SEG-05` quedó resuelta el 2026-08-11 como `DEC-051`: WhatsApp oficial y correo, reutilizando el proveedor ya habilitado por `DEC-027`. El 2026-08-17 se resolvieron las últimas cuatro dudas: `DP-SEG-11` (política de contraseña) como `DEC-063`, `DP-SEG-12` (formato/vigencia/intentos/token de reinicio del código) como `DEC-064`, `CT-006` (respuesta idéntica frente a destino enmascarado) como `DEC-065`, y `DP-NOT-05` (proveedor/adaptador real de WhatsApp y correo: Meta Cloud API + Resend) como `DEC-066`. `HU-008` ya no depende de ninguna decisión pendiente; solo espera que `HU-007` se integre en `main`.
 
 **Alcance incluido**
 
@@ -433,14 +433,14 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 | Código | Criterio |
 | --- | --- |
-| `CA-008-01` | Dado un correo registrado, cuando se solicita recuperación, entonces se envía un código al teléfono verificado y la respuesta es idéntica a la de un correo no registrado. |
-| `CA-008-02` | El código vence en un plazo corto configurable, se acepta una sola vez y queda inválido tras usarse. |
-| `CA-008-03` | Superado el número de intentos fallidos, el código se invalida por completo y debe solicitarse uno nuevo. |
-| `CA-008-04` | El código se almacena como hash; la base de datos no contiene el valor enviado. |
-| `CA-008-05` | Al establecer la contraseña nueva, todas las sesiones activas del usuario quedan invalidadas. |
-| `CA-008-06` | El teléfono se muestra enmascarado y nunca aparece completo en respuestas ni registros. |
-| `CA-008-07` | El reenvío tiene límite propio y no reinicia el vencimiento del código anterior sin invalidarlo. |
-| `CA-008-08` | La contraseña nueva se rechaza si no cumple la política mínima documentada, con un mensaje que explica qué falta. |
+| `CA-008-01` | Dado un correo registrado, cuando se solicita recuperación, entonces se envía un código al teléfono/correo verificados y la respuesta de `POST /recovery/request` es idéntica a la de un correo no registrado, sin destino en el cuerpo (`DEC-065`). |
+| `CA-008-02` | El código vence en 15 minutos (`DEC-064`), se acepta una sola vez y queda inválido tras usarse. |
+| `CA-008-03` | Superados 5 intentos fallidos (`DEC-064`), el código se invalida por completo y debe solicitarse uno nuevo. |
+| `CA-008-04` | El código se almacena como `HMAC-SHA256` con secreto de despliegue (`DEC-064`); la base de datos no contiene el valor enviado ni una representación recuperable sin ese secreto. |
+| `CA-008-05` | Al establecer la contraseña nueva usando el token de reinicio emitido en la verificación (`DEC-064`), todas las sesiones activas del usuario quedan invalidadas en la misma transacción. |
+| `CA-008-06` | El destino (teléfono/correo) se muestra enmascarado únicamente en la respuesta exitosa de `POST /recovery/verify`, nunca en la solicitud (`DEC-065`), y nunca aparece completo en respuestas ni registros. |
+| `CA-008-07` | El reenvío tiene cooldown de 60 s y máximo 3 por hora (`DEC-064`); cada reenvío invalida atómicamente el código anterior, nunca deja dos vigentes. |
+| `CA-008-08` | La contraseña nueva se rechaza si no cumple la política de `DEC-063` (10-128 caracteres, no igual al correo ni a la contraseña actual), con un mensaje que explica qué falta. |
 
 **Pruebas obligatorias**
 
@@ -603,7 +603,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 | --- | --- |
 | Función | `F-OPS-01` (comportamiento ante fallos y conexión inestable) |
 | Reglas | `RN-TEN-01`, criterios no funcionales de UX |
-| Decisiones | `DEC-033`, `DEC-039`, `DEC-056` |
+| Decisiones | `DEC-033`, `DEC-039`, `DEC-056`, `DEC-060` |
 | Actor | Barbero |
 | Depende de | `HU-006`, `HU-009`, `HU-010` |
 | Bloquea | Todas las pantallas privadas de B1 en adelante |
@@ -625,10 +625,10 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 | Código | Criterio |
 | --- | --- |
-| `CA-012-01` | Con sesión válida, al abrir la aplicación se entra directamente al panel sin pedir credenciales. |
+| `CA-012-01` | Con sesión válida, al abrir la aplicación se entra directamente al panel sin pedir credenciales; la restauración se verifica contra `GET /api/v1/private/auth/session` (`DEC-060`), nunca contra un marcador local. |
 | `CA-012-02` | Sin sesión, cualquier ruta privada redirige al acceso y, tras entrar, lleva al destino que se pretendía abrir. |
 | `CA-012-03` | Ante una respuesta de no autorizado, la sesión local se limpia una sola vez y no se produce un bucle de redirección. |
-| `CA-012-04` | La cabecera muestra siempre la barbería activa; el barbero nunca puede dudar de en qué contexto está operando. |
+| `CA-012-04` | La cabecera muestra siempre la barbería activa, con el nombre devuelto por `GET /api/v1/private/auth/session` (`DEC-060`); el barbero nunca puede dudar de en qué contexto está operando. |
 | `CA-012-05` | Una pérdida de conexión muestra un aviso comprensible con acción de reintento, sin perder el estado de la pantalla. |
 | `CA-012-06` | Cada ruta se carga de forma diferida y la navegación no recarga la aplicación completa. |
 | `CA-012-07` | Cerrar sesión desde la cabecera invalida la sesión en el servidor y devuelve al acceso. |

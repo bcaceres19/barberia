@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de contradicciones"
-version: "1.3"
+version: "1.6"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-13"
+ultima_actualizacion: "2026-08-17"
 documentos_relacionados:
   - "registro-decisiones.md"
   - "dudas-pendientes.md"
@@ -29,6 +29,8 @@ Estados permitidos: `Abierta`, `En análisis`, `Resuelta` y `Descartada por fals
 | `CT-002` | Vocabulario de `appointment_history.event_type`: español con puntos frente a regla general en inglés | **Resuelta** | `DEC-041` | Cerrada el 2026-08-11 |
 | `CT-003` | El inicio de sesión está bajo `/api/v1/private`, pero toda ruta de ese prefijo exige una sesión previa | **Resuelta** | `DEC-055` | Cerrada el 2026-08-13 |
 | `CT-004` | `HU-010` debe llegar al panel privado que solo construye `HU-012`, pero `HU-012` depende de `HU-010` | **Resuelta** | `DEC-056` | Cerrada el 2026-08-13 |
+| `CT-005` | Umbral de `HU-007`: “superar 5 solicitudes” frente a escalar cuando el conteo alcanza 5 en el SQL de referencia | **Resuelta** | `DEC-061` | Cerrada el 2026-08-17 |
+| `CT-006` | Recuperación no enumerable con respuesta idéntica frente a mostrar el destino real enmascarado | **Resuelta** | `DEC-065` | Cerrada el 2026-08-17 |
 
 ## 3. Contradicciones detalladas
 
@@ -83,6 +85,30 @@ Estados permitidos: `Abierta`, `En análisis`, `Resuelta` y `Descartada por fals
 - **Resolución:** opción 1 (`DEC-056`). `HU-010` navega a `/panel`, ruta privada real y protegida con un guard mínimo propio; `HU-012` reutiliza y generaliza ese guard y construye ahí la cabecera, navegación y demás estructura del cascarón. La llegada al panel completo se verifica en `CA-012-01`/`CA-012-02` de `HU-012`, no en `HU-010`.
 - **Evidencia:** `HU-010` (`Depende de`, `Bloquea`, `CA-010-01`) y `HU-012` (`Depende de`, alcance incluido), `DEC-056`.
 
+### CT-005 · Límite de cinco solicitudes: alcanzar frente a superar el umbral
+
+- **Detectada y registrada:** 2026-08-14, al preparar el prompt individual de `HU-007` (issue `#57`).
+- **Estado:** **Abierta**.
+- **Responsable de resolver:** propietario del proyecto.
+- **Documentos en conflicto:** `DEC-026` y `HU-007` describen un umbral inicial de cinco solicitudes y escalamiento “al superarlo”; `CA-007-02` dice “superado el umbral”; `database/modelo-fisico-referencia.sql`, función `login_throttle_register_attempt`, fija `escalated_until` cuando el conteo nuevo cumple `>= p_threshold` y comenta que escala al “alcanzar” el umbral.
+- **Contradicción:** con `p_threshold = 5`, el SQL de referencia escala en la quinta solicitud, mientras la lectura literal de “superar cinco” permite evaluar cinco y escala desde la sexta. La diferencia cambia qué solicitud evalúa la contraseña y las pruebas de frontera.
+- **Impacto:** implementar sin resolución haría que OpenAPI, servicio, SQL, frontend y pruebas pudieran aprobar semánticas incompatibles; un cambio posterior afectaría seguridad y podría bloquear antes de lo aprobado a un barbero legítimo.
+- **Opciones:** (1) cinco solicitudes se evalúan normalmente y la sexta exige el reto; (2) la quinta ya exige el reto; (3) redefinir el parámetro como “cantidad de solicitudes normales permitidas” y alinear todos los textos/SQL con esa semántica explícita.
+- **Resolución:** opción 1. Las cinco primeras solicitudes se evalúan con normalidad; la sexta exige el reto telefónico (`DEC-061`, coordinada con `DEC-062`/`DP-SEG-10`). Se corrige `login_throttle_register_attempt` en `database/modelo-fisico-referencia.sql` (`>= p_threshold` → `> p_threshold`).
+- **Evidencia:** `DEC-026`; `HU-007`, `CA-007-01/02`; `database/modelo-fisico-referencia.sql` sección A.4; `DEC-061`.
+
+### CT-006 · Respuesta idéntica frente a destino real enmascarado
+
+- **Detectada y registrada:** 2026-08-14, al preparar el prompt individual de `HU-008` (issue `#58`).
+- **Estado:** **Abierta**.
+- **Responsable de resolver:** propietario del proyecto.
+- **Documentos en conflicto:** `CA-008-01` exige que solicitar recuperación para un correo registrado y uno inexistente produzca respuestas idénticas; el alcance de `HU-008` y `CA-008-06` exigen mostrar el teléfono enmascarado en respuestas; `HU-011`/`CA-011-02` exigen mostrar el destino enmascarado durante el flujo.
+- **Contradicción:** para un correo inexistente no existe teléfono/correo real que enmascarar. Devolver el destino real enmascarado solo para cuentas existentes cambia el cuerpo y enumera la cuenta; inventar un destino aparente o retrasar su exposición cambia el comportamiento que las fuentes no decidieron.
+- **Impacto:** el contrato de solicitud, el flujo de tres pasos y las pruebas de no enumeración no pueden fijar un schema/ejemplo único sin elegir cuándo y cómo se muestra el destino.
+- **Opciones:** (1) la solicitud siempre devuelve un mensaje genérico sin destino y el destino se muestra solo después de una prueba que ya demuestre posesión; (2) siempre devuelve un marcador fijo no derivado del dato real; (3) permite un cuerpo distinto y redefine explícitamente qué significa “idéntica”, aceptando y mitigando el riesgo de enumeración; (4) otra alternativa aprobada que conserve ambos objetivos.
+- **Resolución:** opción 1 (`DEC-065`). El paso de solicitud siempre responde idéntico y sin destino; el destino enmascarado solo aparece en la respuesta exitosa de verificación, que ya exige haber recibido y transcrito el código real.
+- **Evidencia:** `HU-008` alcance/`CA-008-01`/`CA-008-06`; `HU-011` alcance/`CA-011-02`; `DEC-065`.
+
 ## 4. Historial de estado
 
 | Fecha | Código | Cambio | Evidencia |
@@ -95,3 +121,7 @@ Estados permitidos: `Abierta`, `En análisis`, `Resuelta` y `Descartada por fals
 | 2026-08-13 | `CT-004` | Detectada y registrada como abierta: destino al panel de `HU-010` frente a dependencia de `HU-012` | `CA-010-01`, dependencias de `HU-010`/`HU-012` |
 | 2026-08-13 | `CT-003` | Resuelta: login se mueve a `/api/v1/public/auth/login` | `DEC-055` |
 | 2026-08-13 | `CT-004` | Resuelta: `CA-010-01` dividido entre `HU-010` (destino `/panel` mínimo) y `HU-012` (cascarón completo) | `DEC-056` |
+| 2026-08-14 | `CT-005` | Detectada y registrada como abierta: el SQL escala al alcanzar 5, mientras decisión/HU dicen superar 5 | `HU-007`, issue `#57`, `DP-SEG-10` |
+| 2026-08-14 | `CT-006` | Detectada y registrada como abierta: respuesta de recuperación idéntica frente a destino real enmascarado | `HU-008`, `HU-011`, issue `#58` |
+| 2026-08-17 | `CT-005` | Resuelta: la sexta solicitud exige el reto, no la quinta | `DEC-061` |
+| 2026-08-17 | `CT-006` | Resuelta: destino enmascarado solo tras verificar el código | `DEC-065` |

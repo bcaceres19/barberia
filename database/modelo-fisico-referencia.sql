@@ -495,12 +495,15 @@ BEGIN
       ELSE login_throttle.attempt_count + 1
     END,
     -- CA-007-04: la ventana vencida reinicia el conteo, pero no exime de un
-    -- escalamiento todavía vigente. Dentro de la ventana, escala en cuanto
-    -- el conteo nuevo alcanza el umbral.
+    -- escalamiento todavía vigente. Dentro de la ventana, escala al
+    -- SUPERAR el umbral (DEC-061/CT-005): p_threshold solicitudes se
+    -- evalúan con normalidad; la solicitud p_threshold+1 es la que exige
+    -- el reto. p_threshold se interpreta como "cantidad de solicitudes
+    -- permitidas sin reto", nunca como "cantidad que ya exige reto".
     escalated_until = CASE
       WHEN login_throttle.window_started_at + pg_catalog.make_interval(secs => p_window_seconds) <= v_now
         THEN CASE WHEN login_throttle.escalated_until > v_now THEN login_throttle.escalated_until END
-      WHEN login_throttle.attempt_count + 1 >= p_threshold
+      WHEN login_throttle.attempt_count + 1 > p_threshold
         THEN v_now + pg_catalog.make_interval(secs => p_escalation_seconds)
       ELSE login_throttle.escalated_until
     END,

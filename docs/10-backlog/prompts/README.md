@@ -1,9 +1,9 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.3"
+version: "1.7"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-13"
+ultima_actualizacion: "2026-08-17"
 documentos_relacionados:
   - "../../../AGENTS.md"
   - "../../../CLAUDE.md"
@@ -135,9 +135,12 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-HU-003-v1](hu/hu-003-contrato-http.md) | `hu` | `HU-003` | [#37](https://github.com/bcaceres19/barberia/issues/37) | `executed` | `HU-002` terminada | `feat/37-hu003-contrato-http` / [#38](https://github.com/bcaceres19/barberia/pull/38) |
 | [PROMPT-HU-004-v1](hu/hu-004-idempotencia.md) | `hu` | `HU-004` | [#40](https://github.com/bcaceres19/barberia/issues/40) | `executed` | `HU-003` integrada | `feat/40-hu004-idempotencia` / [#41](https://github.com/bcaceres19/barberia/pull/41) |
 | [PROMPT-HU-009-v1](hu/hu-009-sistema-visual.md) | `hu` | `HU-009` | [#42](https://github.com/bcaceres19/barberia/issues/42) | `executed` | Secuencia tras `HU-004` | `feat/42-hu009-sistema-visual` / [#43](https://github.com/bcaceres19/barberia/pull/43) |
-| [PROMPT-HU-005-v1](hu/hu-005-inicio-sesion.md) (v1.2) | `hu` | `HU-005` | [#44](https://github.com/bcaceres19/barberia/issues/44) | `executed` | `HU-002`/`HU-003` integradas; `CT-003` resuelta (`DEC-055`) | [PR #49](https://github.com/bcaceres19/barberia/pull/49) (borrador, sin `Closes`: `DP-SEG-08` pendiente) |
-| [PROMPT-HU-006-v1](hu/hu-006-sesion-persistente.md) (v1.2) | `hu` | `HU-006` | [#45](https://github.com/bcaceres19/barberia/issues/45) | `executed` | `HU-005` integrada (PR #49); `CT-003` resuelta (`DEC-055`); `DP-SEG-08` resuelta (`DEC-058`) | [PR #50](https://github.com/bcaceres19/barberia/pull/50) |
-| [PROMPT-HU-010-v1](hu/hu-010-pantalla-acceso.md) (v1.1) | `hu` | `HU-010` | [#46](https://github.com/bcaceres19/barberia/issues/46) | `executed` | `HU-005`/`HU-009` integradas (ambas ya en `main`); `CT-004` resuelta (`DEC-056`) | [PR #52](https://github.com/bcaceres19/barberia/pull/52) (borrador, sin `Closes`: `DP-UX-06` pendiente) |
+| [PROMPT-HU-005-v1](hu/hu-005-inicio-sesion.md) (v1.2) | `hu` | `HU-005` | [#44](https://github.com/bcaceres19/barberia/issues/44) | `executed` | `HU-002`/`HU-003` integradas; `CT-003` resuelta (`DEC-055`) | [PR #49](https://github.com/bcaceres19/barberia/pull/49), integrada en `main`; `DP-SEG-08` cerrada por `DEC-058`/`HU-006` |
+| [PROMPT-HU-006-v1](hu/hu-006-sesion-persistente.md) (v1.2) | `hu` | `HU-006` | [#45](https://github.com/bcaceres19/barberia/issues/45) | `executed` | `HU-005` integrada; `CT-003` resuelta (`DEC-055`); `DP-SEG-08` resuelta (`DEC-058`) | [PR #50](https://github.com/bcaceres19/barberia/pull/50), integrada en `main` |
+| [PROMPT-HU-010-v1](hu/hu-010-pantalla-acceso.md) (v1.1) | `hu` | `HU-010` | [#46](https://github.com/bcaceres19/barberia/issues/46) | `executed` | `HU-005`/`HU-009` integradas; `CT-004` resuelta (`DEC-056`) | [PR #52](https://github.com/bcaceres19/barberia/pull/52), integrada en `main`; `DP-UX-06` cerrada por `DEC-059` |
+| [PROMPT-HU-012-v1](hu/hu-012-cascaron-panel-privado.md) | `hu` | `HU-012` | [#56](https://github.com/bcaceres19/barberia/issues/56) | `ready` | `HU-006`/`HU-009`/`HU-010` integradas; `DP-SEG-09` resuelta (`DEC-060`) | — |
+| [PROMPT-HU-007-v1](hu/hu-007-defensa-abuso.md) (v1.1) | `hu` | `HU-007` | [#57](https://github.com/bcaceres19/barberia/issues/57) | `blocked` | `DEC-061`/`DEC-062` resuelven `CT-005`/`DP-SEG-10`; solo falta que `HU-012` se integre en `main` | — |
+| [PROMPT-HU-008-v1](hu/hu-008-recuperacion-acceso.md) (v1.2) | `hu` | `HU-008` | [#58](https://github.com/bcaceres19/barberia/issues/58) | `blocked` | `DEC-063`–`DEC-066` resuelven `DP-SEG-11`/`DP-SEG-12`/`CT-006`/`DP-NOT-05`; solo falta `HU-007` integrada en `main` | — |
 
 ## 10. Lista de control al guardar o entregar
 

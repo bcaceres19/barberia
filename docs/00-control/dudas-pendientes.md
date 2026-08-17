@@ -1,9 +1,9 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "1.9"
+version: "2.3"
 estado: "Sin dudas abiertas"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-13"
+ultima_actualizacion: "2026-08-17"
 documentos_relacionados:
   - "registro-decisiones.md"
   - "contradicciones.md"
@@ -17,7 +17,9 @@ documentos_relacionados:
 
 ## 1. Estado
 
-**No queda ninguna duda abierta.** El 7 de agosto de 2026, al redactar las historias del bloque B0 ([historias-usuario.md](../02-requisitos/historias-usuario.md)), se detectaron tres vacíos que `DEC-026` y `DEC-027` no cubrían (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`); el 11 de agosto de 2026 el propietario las resolvió como `DEC-050`, `DEC-051` y `DEC-052`, desbloqueando `HU-005`–`HU-008` y `HU-011`. Al implementar `HU-005` (issue `#44`) el 13 de agosto de 2026 aparecieron dos vacíos más (`DP-SEG-07`, `DP-SEG-08`), resueltos el mismo día como `DEC-057` y `DEC-058`.
+**No queda ninguna duda abierta.** Al preparar los prompts de `HU-012`, `HU-007` y `HU-008` (issue documental `#55`) el 14 de agosto de 2026, la comparación entre los criterios, el contrato y el código integrado mostró cinco decisiones que todavía no podían inferirse sin ampliar o debilitar el alcance: el bootstrap autoritativo del panel (`DP-SEG-09`), el reto telefónico completo de `HU-007` (`DP-SEG-10`), la política de contraseña nueva (`DP-SEG-11`), los parámetros del código de recuperación (`DP-SEG-12`) y el proveedor oficial concreto de correo/WhatsApp (`DP-NOT-05`). El propietario resolvió las cinco el 17 de agosto de 2026 como `DEC-060`, `DEC-062`–`DEC-064` y `DEC-066`. `HU-012` ya está `ready` y en implementación; `HU-007` queda solo a la espera de que `HU-012` se integre en `main` (orden de construcción de B0, no una decisión pendiente); `HU-008` queda solo a la espera de que `HU-007` se integre.
+
+El 7 de agosto de 2026, al redactar las historias del bloque B0 ([historias-usuario.md](../02-requisitos/historias-usuario.md)), se detectaron tres vacíos que `DEC-026` y `DEC-027` no cubrían (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`); el 11 de agosto de 2026 el propietario las resolvió como `DEC-050`, `DEC-051` y `DEC-052`, desbloqueando `HU-005`–`HU-008` y `HU-011`. Al implementar `HU-005` (issue `#44`) el 13 de agosto de 2026 aparecieron dos vacíos más (`DP-SEG-07`, `DP-SEG-08`), resueltos el mismo día como `DEC-057` y `DEC-058`.
 
 Las 41 dudas y la contradicción `CT-001` recibieron respuesta del propietario en [respuesta-dudas-pendientes.txt](../../respuesta-manuales/respuesta-dudas-pendientes.txt). No queda ninguna decisión abierta de ese lote.
 
@@ -66,6 +68,7 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 | `DP-NOT-02` | Anticipación del recordatorio | 30 minutos iniciales, configurable. | `DEC-018` |
 | `DP-NOT-03` | Cantidad de recordatorios | 1 por defecto, configurable entre 0 y 3. | `DEC-018` |
 | `DP-NOT-04` | Aviso de inasistencia | Configurable por barbería; desactivado por defecto. | `DEC-018` |
+| `DP-NOT-05` | ¿Qué proveedor/adaptador oficial concreto implementará el envío de códigos de seguridad por WhatsApp y correo? | Meta WhatsApp Cloud API directo (plantilla "Authentication") para el teléfono; Resend (o SES si ya hay AWS) para correo; puerto único en el módulo `notification` con timeout de 5 s y sin reintento síncrono. | `DEC-066` |
 | `DP-PIL-01` | Duración del piloto | 4 semanas. | `DEC-028` |
 | `DP-PIL-02` | Interrupción del piloto | El propietario entrega manualmente al barbero las citas futuras y pendientes. | `DEC-028` |
 | `DP-PIL-03` | Método anterior en paralelo | Solo durante la primera semana; después se usa la plataforma. | `DEC-028` |
@@ -95,6 +98,10 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 | `DP-SEG-07` | Atributos exactos de la cookie de sesión (`SameSite`, `Path`, `Domain`, nombre) | `barberia_session`, `Path=/api/v1`, `SameSite=Lax`, sin `Domain`, 30 días. | `DEC-057` |
 | `DP-SEG-08` | Evidencia de aislamiento de `CA-005-05` sin un endpoint privado real todavía | Dividida: `HU-005` prueba aislamiento a nivel PostgreSQL/RLS; `HU-006` prueba end-to-end contra el logout real (`CA-006-07`). | `DEC-058` |
 | `DP-UX-06` | Destino del enlace de recuperación de `CA-010-08` mientras `HU-011` no existe | Ruta real `/recuperar-acceso`, cargada de forma diferida, que declara explícitamente que la recuperación aún no está disponible; no simula el flujo de `HU-011`. | `DEC-059` |
+| `DP-SEG-09` | ¿Cuál es la operación y el payload autoritativos con que `HU-012` rehidrata una cookie `HttpOnly` y obtiene la barbería activa al abrir la aplicación? | Nueva operación `GET /api/v1/private/auth/session`, protegida por `SessionCookie` sobre el mismo `SessionMiddleware` existente, con payload mínimo `{ barbershop: { id, name }, expiresAt }`. | `DEC-060` |
+| `DP-SEG-10` | ¿Cómo funciona de extremo a extremo el reto telefónico de `HU-007` después del umbral? | Dos operaciones nuevas, `POST /api/v1/public/auth/challenge` y `.../challenge/verify`, código de 6 dígitos por WhatsApp oficial, vigencia 5 min, 5 intentos, límite propio de reenvío; verificar con éxito limpia `escalated_until` de esa IP. | `DEC-062` |
+| `DP-SEG-11` | ¿Cuál es la política mínima exacta para la contraseña nueva de `CA-008-08`? | Longitud 10–128, sin exigencia de composición, rechazo si es igual al correo o a la contraseña actual; sin verificación contra lista externa de contraseñas filtradas en el MVP. | `DEC-063` |
+| `DP-SEG-12` | ¿Cuáles son el formato/entropía y los valores iniciales del código de recuperación, su vigencia, máximo de intentos, control de reenvío y autorización entre “verificar” y “cambiar contraseña”? | Código de 6 dígitos, `HMAC-SHA256` con secreto de despliegue, vigencia 15 min, 5 intentos, reenvío con cooldown de 60 s y máximo 3/hora; token opaco de reinicio (mismo patrón que el token de sesión) de un solo uso entre verificar y cambiar contraseña. | `DEC-064` |
 
 Al resolverse cada duda se aplica el flujo de la sección 3: `DEC-*`, propagación, conservación de la fila y `CT-*` si revela un conflicto.
 
