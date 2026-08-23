@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-011-v1"
 version: "1.0"
 kind: "hu"
-status: "in_progress"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -18,8 +18,8 @@ issue: 64
 issue_url: "https://github.com/bcaceres19/barberia/issues/64"
 suggested_issue_title: "feat(web): implementar HU-011 pantalla de recuperación de acceso"
 branch: "feat/64-hu011-pantalla-recuperacion"
-pr: null
-pr_url: null
+pr: 66
+pr_url: "https://github.com/bcaceres19/barberia/pull/66"
 depends_on:
   - "HU-008 integrada"
   - "HU-009 integrada"

@@ -141,7 +141,7 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-HU-012-v1](hu/hu-012-cascaron-panel-privado.md) (v1.2) | `hu` | `HU-012` | [#56](https://github.com/bcaceres19/barberia/issues/56) | `executed` | `HU-006`/`HU-009`/`HU-010` integradas; `DP-SEG-09` resuelta (`DEC-060`) | [PR #59](https://github.com/bcaceres19/barberia/pull/59), integrada en `main` |
 | [PROMPT-HU-007-v1](hu/hu-007-defensa-abuso.md) (v1.3) | `hu` | `HU-007` | [#57](https://github.com/bcaceres19/barberia/issues/57) | `executed` | `DEC-061`/`DEC-062` resuelven `CT-005`/`DP-SEG-10`; `HU-012` integrada en `main` | [PR #61](https://github.com/bcaceres19/barberia/pull/61), integrada en `main` |
 | [PROMPT-HU-008-v1](hu/hu-008-recuperacion-acceso.md) (v1.4) | `hu` | `HU-008` | [#58](https://github.com/bcaceres19/barberia/issues/58) | `executed` | `DEC-063`–`DEC-066` resuelven `DP-SEG-11`/`DP-SEG-12`/`CT-006`/`DP-NOT-05`; `HU-007` integrada en `main` | [PR #63](https://github.com/bcaceres19/barberia/pull/63), integrada en `main` |
-| [PROMPT-HU-011-v1](hu/hu-011-pantalla-recuperacion.md) | `hu` | `HU-011` | [#64](https://github.com/bcaceres19/barberia/issues/64) | `in_progress` | `HU-008`/`HU-009`/`HU-010` integradas en `main` | `feat/64-hu011-pantalla-recuperacion` / — |
+| [PROMPT-HU-011-v1](hu/hu-011-pantalla-recuperacion.md) | `hu` | `HU-011` | [#64](https://github.com/bcaceres19/barberia/issues/64) | `executed` | `HU-008`/`HU-009`/`HU-010` integradas en `main` | `feat/64-hu011-pantalla-recuperacion` / [#66](https://github.com/bcaceres19/barberia/pull/66) |
 
 ## 10. Lista de control al guardar o entregar
 
