@@ -13,11 +13,16 @@ export interface LoginFieldErrors {
 // Patrón mínimo de forma (contiene "@" y un dominio con punto), igual de
 // permisivo que `LoginRequest.yaml` (format: email, sin regex adicional
 // del lado del servidor): más estricto aquí solo rechazaría formularios
-// válidos que el backend sí aceptaría.
-const EMAIL_SHAPE_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+// válidos que el backend sí aceptaría. Exportado porque `recoveryValidation.ts`
+// valida el mismo campo `email` (`format: email`, maxLength 254) en los tres
+// pasos de HU-011; ambos archivos viven en el módulo `auth`.
+export const EMAIL_SHAPE_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-// LoginRequest.yaml fija maxLength: 254 (email) y 256 (password).
-const EMAIL_MAX_LENGTH = 254
+// LoginRequest.yaml fija maxLength: 254 (email) y 256 (password). El
+// contrato de recuperación (RecoveryRequestRequest.yaml y hermanos) fija el
+// mismo maxLength: 254 para `email`, así que `recoveryValidation.ts`
+// reutiliza esta constante en vez de declarar un límite paralelo.
+export const EMAIL_MAX_LENGTH = 254
 const PASSWORD_MAX_LENGTH = 256
 
 export function validateLoginForm(email: string, password: string): LoginFieldErrors {
