@@ -1,0 +1,17 @@
+# Cuerpo de POST /auth/recovery/request (HU-008, DEC-064/DEC-065). Cerrado,
+# igual que ChallengeRequest: solo el correo. La respuesta es siempre
+# idéntica exista o no la cuenta (CA-008-01, DEC-065), así que este esquema
+# no valida más que la forma mínima.
+type: object
+additionalProperties: false
+description: Solicitud de recuperación de acceso.
+properties:
+  email:
+    type: string
+    format: email
+    maxLength: 254
+    description: Correo de la cuenta cuyos medios registrados recibirán el código, si corresponde.
+    examples:
+      - barbero.ejemplo@correo.test
+required:
+  - email

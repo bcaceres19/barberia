@@ -38,6 +38,12 @@ antes de agregar código.
   `POST /api/v1/public/auth/challenge`/`.../verify` (`DEC-062`). Purga
   periódica en `cmd/worker`. Ver la sección "Defensa escalonada contra abuso
   (HU-007)" más abajo.
+- **Recuperación de acceso (HU-008)**: `POST /api/v1/public/auth/recovery/
+  request`/`.../verify`/`.../reset-password` (`DEC-063`–`DEC-066`): código
+  de un solo uso enviado por WhatsApp (Meta Cloud API) y correo (Resend),
+  sin enumeración, con token de reinicio opaco y revocación total de
+  sesiones al cambiar la contraseña. Purga periódica en `cmd/worker`. Ver la
+  sección "Recuperación de acceso (HU-008)" más abajo.
 
 ## Requisitos
 
@@ -58,6 +64,7 @@ go test -race ./internal/platform/database/...
 go test -race ./internal/platform/idempotency/...
 go test -race ./internal/platform/httpserver/...
 go test -race ./internal/modules/auth/...
+go test -race ./internal/modules/notification/...
 go test -race ./cmd/api/...
 ```
 
@@ -627,6 +634,148 @@ que ve el proceso `api`, p. ej. `127.0.0.1/32` en un run nativo).
 - PostgreSQL real, incluida concurrencia (45 llamadas simultáneas sin incrementos perdidos): `internal/modules/auth/postgres/throttle_repository_test.go`, `phone_challenge_repository_test.go`, `purge_repository_test.go` (este último requiere `TEST_WORKER_DATABASE_URL` conectado como `barberia_worker`).
 - SQL directo con el rol real: `database/tests/hu007_defensa_abuso.sql`.
 - E2E contra API/PostgreSQL/navegador reales: `apps/web/e2e/reto-telefonico.spec.ts` (ver advertencia de umbral arriba).
+
+## Recuperación de acceso (HU-008)
+
+`POST /api/v1/public/auth/recovery/request`, `.../verify` y
+`.../reset-password` (`DEC-063`–`DEC-066`) permiten a un barbero recuperar
+acceso sin intervención del propietario: solicitar un código de un solo
+uso, verificarlo y establecer una contraseña nueva. `internal/modules/auth`
+extiende el módulo con `recovery.go` (núcleo: `RecoveryService`,
+`ValidateNewPassword`), `postgres/recovery_repository.go` (puerto contra las
+cuatro funciones `SECURITY DEFINER` de
+`20260817190000_create_staff_recovery_code.sql`) y `httpapi/recovery_handler.go`
+(las tres operaciones HTTP). El nuevo módulo `internal/modules/notification`
+aporta los adaptadores reales de entrega
+(`notification/whatsapp_meta.go`, `notification/email_resend.go`,
+`notification/recovery_sender.go`) detrás de un puerto pequeño
+(`auth.RecoveryCodeSender`) que `auth` consume sin conocer Meta ni Resend.
+
+### Mismo patrón que HU-007: resolver la cuenta antes de tenant
+
+Igual que `login_throttle`/`auth_phone_challenge`, `staff_recovery_code` no
+tiene ningún `GRANT` directo para `barberia_app` (`DDL-AUT-01`): las tres
+operaciones públicas corren ANTES de resolver `app.barbershop_id`
+(resuelven la cuenta por correo dentro de la función), así que usan
+`database.DB.CallSecurityDefinerRow`, no `InTenantTx`. Solo
+`auth_recovery_purge_expired` está concedida a `barberia_worker`
+(`cmd/worker`, purga periódica).
+
+### Código, token de reinicio y contraseña: parámetros de `DEC-064`/`DEC-063`
+
+Código de 6 dígitos (`crypto/rand`, mismo generador que el reto telefónico
+de HU-007), almacenado como `HMAC-SHA256(código, APP_AUTH_HMAC_SECRET)`
+—nunca `SHA-256` simple—, vigente 15 min por defecto, máximo 5 intentos,
+reenvío con cooldown de 60 s y máximo 3/hora que invalida atómicamente el
+código anterior (`idx_staff_recovery_code_active_per_user`, único código
+vigente por usuario). Verificar con éxito emite un token de reinicio opaco
+de un solo uso (mismo patrón `CryptoTokenGenerator`/`HashToken` que la
+sesión de HU-005/006), vigente 5 min por defecto, que `reset-password`
+consume exactamente una vez incluso bajo dos solicitudes concurrentes
+(`FOR UPDATE` en `auth_recovery_change_password`). La contraseña nueva debe
+tener 10–128 caracteres, distinta del correo de la cuenta y de la
+contraseña actual (`ValidateNewPassword`, mensaje específico por regla
+incumplida, `CA-008-08`); reutiliza `Argon2Hasher` sin cambiar sus
+parámetros.
+
+### No enumeración (`DEC-065`) y destino enmascarado
+
+`POST .../request` responde SIEMPRE `202` con el mismo mensaje genérico,
+exista o no la cuenta, esté o no el teléfono verificado y sin importar el
+resultado interno de `RecoveryService.Request` —ese resultado se descarta
+para la respuesta y solo se registra sin destinatario ni código
+(`RN-DAT-02`)—. El teléfono/correo enmascarados (`mask.go`) solo aparecen en
+la respuesta `200` de `.../verify`: llegar ahí ya exige haber recibido y
+transcrito el código real, así que no abre un oráculo nuevo. `.../verify` y
+`.../reset-password` devuelven exactamente el mismo error uniforme para
+código incorrecto, vencido, agotado, cuenta inexistente o token de reinicio
+desconocido/de otra cuenta/consumido/vencido.
+
+### Cambio de contraseña + revocación total de sesiones (`CA-008-05`)
+
+`auth_recovery_change_password` actualiza `staff_credential` y revoca TODAS
+las sesiones activas del usuario en la misma operación de PostgreSQL: no
+hay ventana en la que la credencial ya cambió pero una sesión antigua siga
+viva, ni viceversa.
+
+### Proveedores reales: Meta WhatsApp Cloud API + Resend (`DEC-066`)
+
+`DualChannelRecoverySender` intenta SIEMPRE los dos canales, sin importar si
+uno falla (tolerancia a fallo parcial, sin cambiar la respuesta genérica de
+`DEC-065`); cada adaptador aplica un timeout de 5 s sin reintento síncrono
+dentro de la solicitud HTTP. Sin las credenciales de despliegue configuradas
+(típicamente local/test), `cmd/api.buildRouter` usa
+`auth.LoggingRecoveryCodeSender` (marcador de posición que solo registra que
+"habría" enviado, sin teléfono/correo/código) en su lugar — mismo patrón que
+el reto telefónico de HU-007.
+
+| Variable | Por defecto | Uso |
+| --- | --- | --- |
+| `APP_RECOVERY_CODE_EXPIRES_SECONDS` | `900` | Vigencia del código. |
+| `APP_RECOVERY_CODE_MAX_ATTEMPTS` | `5` | Intentos antes de invalidar. |
+| `APP_RECOVERY_RESEND_COOLDOWN_SECONDS` | `60` | Mínimo entre reenvíos. |
+| `APP_RECOVERY_RESEND_WINDOW_SECONDS` | `3600` | Ventana del límite de reenvío. |
+| `APP_RECOVERY_RESEND_MAX_PER_WINDOW` | `3` | Máximo de códigos por cuenta en esa ventana. |
+| `APP_RECOVERY_RESET_TOKEN_EXPIRES_SECONDS` | `300` | Vigencia del token de reinicio. |
+| `APP_RECOVERY_CODE_PURGE_LIMIT` | `500` | Lote de purga del worker (1–1000). |
+| `APP_META_WHATSAPP_API_VERSION` | `v21.0` | Versión de Meta Graph API. |
+| `APP_META_WHATSAPP_PHONE_NUMBER_ID` | (vacía) | Secreto: número emisor en Meta. |
+| `APP_META_WHATSAPP_ACCESS_TOKEN` | (vacía) | Secreto: autenticación contra Meta Graph API. |
+| `APP_META_WHATSAPP_TEMPLATE_NAME` | (vacía) | Plantilla "Authentication" pre-aprobada. |
+| `APP_META_WHATSAPP_LANGUAGE_CODE` | `es` | Idioma de esa plantilla. |
+| `APP_RESEND_API_KEY` | (vacía) | Secreto: autenticación contra Resend. |
+| `APP_RESEND_FROM_ADDRESS` | (vacía) | Remitente verificado del correo. |
+| `APP_RESEND_SUBJECT` | `Código de recuperación de acceso` | Asunto fijo del correo. |
+
+### Prueba local completa: capturar el código sin un proveedor real
+
+`APP_RECOVERY_CAPTURE_FILE=<ruta>` hace que
+`auth.CapturingRecoveryCodeSender` escriba `{"phone":"...","email":"...","code":"..."}`
+en esa ruta además de "enviar". Restringido a `APP_ENVIRONMENT=local`/`test`
+por `cmd/api/main.go`, mismo doble candado que
+`APP_PHONE_CHALLENGE_CAPTURE_FILE` de HU-007. Es lo que usa
+`cmd/api/recovery_integration_test.go` para completar el recorrido de
+recuperación real sin un proveedor real ("terceros se interceptan"); el E2E
+visual de tres pasos pertenece a `HU-011`.
+
+### Contención entre paquetes de prueba: solo 2 cuentas con teléfono verificado
+
+`testdata/hu007_reto_telefonico.sql` deja exactamente dos cuentas con
+teléfono verificado en todo el fixture (`duena.a`, `dueno.b`), y tanto
+`internal/modules/auth/postgres/recovery_repository_test.go` como
+`cmd/api/recovery_integration_test.go` necesitan un código de recuperación
+real sobre esas mismas cuentas. El cooldown de reenvío de `DEC-064` usa
+reloj de pared real (no un reloj inyectable, a diferencia de las pruebas
+unitarias), y `go test ./...` ejecuta paquetes distintos en paralelo contra
+el MISMO PostgreSQL: sin cuidado adicional, dos paquetes podrían competir
+por el cooldown de la misma cuenta. Ambos archivos reintentan (con un plazo
+acotado, nunca indefinido) la primera solicitud "real" de cada prueba hasta
+que se acepta, en vez de asumir éxito a la primera; ver el comentario junto
+a `requestRecoveryEventually`/`doRecoveryRequestEventually` en cada archivo.
+Esto no sustituye ninguna prueba determinista del cooldown en sí (esas ya
+existen con datos sintéticos que no compiten por la cuenta compartida).
+
+### Tabla de criterios de aceptación
+
+| Criterio | Estado | Prueba o evidencia |
+| --- | --- | --- |
+| `CA-008-01` | Cumplido | No enumeración de `.../request` (`TestRecoveryRepository_RequestRecovery_UnverifiedPhone_NotAccepted`, `_UnknownAccount_NotAccepted`, `hu008_recuperacion_acceso.sql`, `TestRecovery_System_NonenumerationThenWrongCodeRejected`); entrega real a los dos adaptadores aprobados (`whatsapp_meta_test.go`, `email_resend_test.go` contra un `httptest.Server` que afirma el cuerpo/cabeceras de la solicitud real, `recovery_sender_test.go` para el fallo parcial tolerado). |
+| `CA-008-02` | Cumplido | Intentos/agotamiento con reloj y generador deterministas ficticios (`recovery_test.go`), concurrencia real de PostgreSQL sin `sleep` (`hu008_recuperacion_acceso.sql`, `TestRecoveryRepository_ChangePassword_ConcurrentSameToken_OnlyOneWinner` para la parte de un solo consumo). |
+| `CA-008-03` | Cumplido | Vencimiento de código/token con reloj inyectado (`recovery_test.go`), vencido/usado/inválido nunca revive (`recovery_repository_test.go`, `hu008_recuperacion_acceso.sql`). |
+| `CA-008-04` | Cumplido | `staff_recovery_code_code_hash_ck`/`reset_token_hash_ck` exigen 64 hex (HMAC-SHA256/SHA-256, nunca el valor en claro ni una representación trivial de invertir); auditoría de logs/fixtures sin código/token/contraseña/teléfono/correo completo (`TestRecoveryRequestHandler_ThroughFullRouter_NeverLogsSensitiveValues` y equivalentes en `recovery_handler_test.go`). |
+| `CA-008-05` | Cumplido | `TestRecovery_System_FullJourney_RequestVerifyResetLogsInWithNewPassword` (contraseña anterior deja de autenticar, nueva sí, contra el login real), `hu008_recuperacion_acceso.sql` (revocación total de sesiones en la misma operación), `recovery_repository_test.go` (dos consumos concurrentes del mismo token, un solo ganador). |
+| `CA-008-06` | Cumplido | Destino enmascarado solo en la respuesta exitosa de `.../verify` (`mask_test.go`, `TestRecovery_System_FullJourney...` verifica que `maskedPhone` nunca sea igual al valor completo). |
+| `CA-008-07` | Cumplido | Límite propio de reenvío y un solo código vigente por usuario (`hu008_recuperacion_acceso.sql`, subtest "immediate resend rejected by cooldown" de `recovery_repository_test.go`, índice único parcial `idx_staff_recovery_code_active_per_user`). |
+| `CA-008-08` | Cumplido | Política de `DEC-063` con mensaje específico por regla incumplida (`ValidateNewPassword`, `recovery_test.go`, `recovery_handler_test.go`). |
+
+### Pruebas
+
+- Unitarias con reloj/generador determinista ficticio: `internal/modules/auth/recovery_test.go`.
+- HTTP con dobles: `internal/modules/auth/httpapi/recovery_handler_test.go`, `contract_recovery_test.go`.
+- Adaptadores de notificación (dobles de `httptest.Server`, nunca red real): `internal/modules/notification/whatsapp_meta_test.go`, `email_resend_test.go`, `recovery_sender_test.go`.
+- PostgreSQL real, incluida concurrencia: `internal/modules/auth/postgres/recovery_repository_test.go`.
+- SQL directo con el rol real: `database/tests/hu008_recuperacion_acceso.sql`.
+- E2E backend/sistema contra el router y PostgreSQL reales, proveedor interceptado: `cmd/api/recovery_integration_test.go`.
 
 ## Pruebas de integración
 

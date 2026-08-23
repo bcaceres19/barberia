@@ -74,6 +74,7 @@ const testHMACSecret = "prueba-cmd-api-no-es-un-secreto-real-0123456789"
 
 func testRouterConfig() config.Config {
 	return config.Config{
+		Environment:                         "test",
 		AuthHMACSecret:                      testHMACSecret,
 		LoginThrottleWindowSeconds:          900,
 		LoginThrottleEscalationSeconds:      86400,
@@ -86,6 +87,14 @@ func testRouterConfig() config.Config {
 		PhoneChallengeRateMaxActive:         3,
 		PhoneChallengeResendCooldownSeconds: 60,
 		PhoneChallengePurgeLimit:            500,
+
+		RecoveryCodeExpiresSeconds:       900,
+		RecoveryCodeMaxAttempts:          5,
+		RecoveryResendCooldownSeconds:    60,
+		RecoveryResendWindowSeconds:      3600,
+		RecoveryResendMaxPerWindow:       3,
+		RecoveryResetTokenExpiresSeconds: 300,
+		RecoveryCodePurgeLimit:           500,
 	}
 }
 

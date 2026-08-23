@@ -51,3 +51,16 @@ func (r *PurgeRepository) PurgePhoneChallenges(ctx context.Context, limit int) (
 	}
 	return deleted, nil
 }
+
+// PurgeRecoveryCodes implementa auth.PurgeRepository (HU-008).
+func (r *PurgeRepository) PurgeRecoveryCodes(ctx context.Context, limit int) (int, error) {
+	var deleted int
+	err := r.db.CallSecurityDefinerRow(ctx,
+		`SELECT auth_recovery_purge_expired($1)`, []any{limit},
+		func(row pgx.Row) error { return row.Scan(&deleted) },
+	)
+	if err != nil {
+		return 0, fmt.Errorf("auth/postgres: purge staff_recovery_code: %w", err)
+	}
+	return deleted, nil
+}

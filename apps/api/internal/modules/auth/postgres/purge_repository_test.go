@@ -83,3 +83,15 @@ func TestPurgeRepository_PurgePhoneChallenges_RunsWithoutError(t *testing.T) {
 		t.Fatalf("PurgePhoneChallenges: %v", err)
 	}
 }
+
+// TestPurgeRepository_PurgeRecoveryCodes_RunsWithoutError cubre HU-008:
+// auth_recovery_purge_expired concedida exclusivamente a barberia_worker.
+func TestPurgeRepository_PurgeRecoveryCodes_RunsWithoutError(t *testing.T) {
+	workerDB := setupWorkerTestDB(t)
+	defer workerDB.Close()
+	purgeRepo := authpostgres.NewPurgeRepository(workerDB)
+
+	if _, err := purgeRepo.PurgeRecoveryCodes(context.Background(), 1000); err != nil {
+		t.Fatalf("PurgeRecoveryCodes: %v", err)
+	}
+}

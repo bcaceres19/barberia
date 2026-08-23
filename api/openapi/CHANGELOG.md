@@ -4,6 +4,26 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.5.0] - 2026-08-17
+
+### Agregado
+
+- `POST /public/auth/recovery/request` (`operationId: requestRecovery`,
+  `DEC-064`/`DEC-065`/`DEC-066`): solicita el código de recuperación de
+  acceso. Siempre `202` (`RecoveryRequestAcceptedResponse`), sin destino,
+  exista o no la cuenta (no enumeración, `CA-008-01`).
+- `POST /public/auth/recovery/verify` (`operationId: verifyRecovery`,
+  `DEC-064`/`DEC-065`): verifica el código de 6 dígitos. `200` en éxito
+  (`RecoveryVerifyResponse`: token de reinicio de un solo uso + destino
+  enmascarado, `CA-008-06`); `401` uniforme para código incorrecto, vencido,
+  agotado o cuenta inexistente.
+- `POST /public/auth/recovery/reset-password`
+  (`operationId: resetPasswordWithRecoveryToken`, `DEC-063`/`DEC-064`):
+  establece la contraseña nueva con el token de reinicio. `204` en éxito
+  (revoca todas las sesiones activas, `CA-008-05`); `401` uniforme para
+  token inválido/vencido/reutilizado; `422` si la contraseña incumple la
+  política de `DEC-063`.
+
 ## [0.4.0] - 2026-08-17
 
 ### Agregado

@@ -17,19 +17,21 @@ antes de agregar una migración.
 | `migrations/20260811220000_harden_idempotency_fingerprint_format.sql` | Correctiva · `request_fingerprint` hexadecimal en minúsculas (`DDL-VAL-01`) |
 | `migrations/20260813120000_create_auth_credentials_and_sessions.sql` | HU-005 · `staff_credential`, `staff_session`, `authn_resolve_login_tenant`, `auth_get_credential`, `authn_resolve_session_tenant` (secciones A.0–A.2 del modelo de referencia) |
 | `migrations/20260817180000_create_login_throttle_and_phone_challenge.sql` | HU-007 · `staff_user.phone`/`phone_verified_at` (adelantado de A.3), `login_throttle`, `auth_phone_challenge` y sus funciones `SECURITY DEFINER` (secciones A.4–A.5 del modelo de referencia) |
+| `migrations/20260817190000_create_staff_recovery_code.sql` | HU-008 · `staff_recovery_code` y sus cuatro funciones `SECURITY DEFINER` (`auth_recovery_request`/`verify`/`current_credential`/`change_password`/`purge_expired`), sección A.3 adaptada del modelo de referencia |
 | `migrations/atlas.sum` | Generado y validado con Atlas v1.3.0 |
 | `testdata/dos_barberias.sql` | Escenario de HU-001 con dos barberías |
 | `testdata/hu005_credenciales_sesiones.sql` | HU-005 · credenciales y una sesión vigente por barbería, sobre `dos_barberias.sql` |
-| `testdata/hu007_reto_telefonico.sql` | HU-007 · teléfono verificado para dos usuarios (uno por barbería) sobre `dos_barberias.sql`/`hu005_credenciales_sesiones.sql`; deja otros dos sin verificar a propósito |
+| `testdata/hu007_reto_telefonico.sql` | HU-007/HU-008 · teléfono verificado para dos usuarios (uno por barbería) sobre `dos_barberias.sql`/`hu005_credenciales_sesiones.sql`; deja otros dos sin verificar a propósito |
 | `testdata/notification_lease_fixture.sql`, `testdata/customer_anonymization_fixture.sql`, `testdata/rls_suite_fixture.sql` | Fixtures de `modelo-fisico-referencia.sql` (issues #5, #6, #7) — no dependen de migraciones aplicadas más allá de las de arriba |
 | `tests/hu001_aislamiento_rls.sql` | CA-001-01 a CA-001-06 con el rol real |
 | `tests/hu005_aislamiento_credenciales_sesiones.sql` | HU-005 · `staff_credential`/`staff_session`/funciones `SECURITY DEFINER` con dos tenants y el rol real |
 | `tests/hu007_defensa_abuso.sql` | HU-007 · `DDL-AUT-01` (sin DML directo de `barberia_app`, purga exclusiva de `barberia_worker`), `DEC-061` (sexta solicitud escala) y `DEC-062` (reto telefónico: tres condiciones, código atado a su IP, verificar limpia el escalamiento) con el rol real |
+| `tests/hu008_recuperacion_acceso.sql` | HU-008 · `DDL-AUT-01` (sin DML directo de `barberia_app` sobre `staff_recovery_code`, purga exclusiva de `barberia_worker`), no enumeración de `auth_recovery_request`, cooldown/límite de reenvío y unicidad del código activo (`CA-008-07`), intentos/agotamiento de `auth_recovery_verify` (`CA-008-02`/`03`) y verificación + cambio de contraseña con revocación total de sesiones en la misma operación (`CA-008-05`), todo envuelto en `BEGIN...ROLLBACK` para no dejar estado persistido |
 | `tests/rls_suite.sql` | Suite RLS completa de las 23 tablas restantes (issue #7, `DDL-RLS-01`) |
 | `seeds/` | Vacío |
-| `modelo-fisico-referencia.sql` | Diseño completo de B1–B6 y del prerrequisito de teléfono de A.3 (HU-008). **No es una migración** |
+| `modelo-fisico-referencia.sql` | Diseño completo de B1–B6. **No es una migración** |
 
-Están aplicadas las siete migraciones listadas arriba. El resto del
+Están aplicadas las ocho migraciones listadas arriba. El resto del
 modelo —barberos, servicios, horario, bloqueos, citas, clientes,
 notificaciones— vive en
 [`modelo-fisico-referencia.sql`](modelo-fisico-referencia.sql) y se

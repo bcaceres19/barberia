@@ -1,0 +1,21 @@
+# Respuesta 202 de POST /auth/recovery/request (HU-008, DEC-065). Siempre
+# la misma forma, exista o no la cuenta: la solicitud queda "aceptada para
+# procesar", sin confirmar ningún hecho sobre la cuenta (no enumeración,
+# CA-008-01).
+description: >
+  La solicitud fue recibida. Si la cuenta existe y tiene el teléfono
+  verificado, se envía un código por WhatsApp oficial y correo; en
+  cualquier otro caso no ocurre ningún envío, sin que la respuesta lo
+  revele.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/RecoveryRequestAcceptedResponse.yaml'
+    examples:
+      solicitudRecibida:
+        summary: Confirmación genérica
+        value:
+          message: Si la cuenta existe, se envió un código a los medios registrados.

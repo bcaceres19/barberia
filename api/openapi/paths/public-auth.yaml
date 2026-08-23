@@ -3,7 +3,10 @@
 # el cierre de sesión de HU-006 vive en private-auth.yaml, bajo
 # /api/v1/private, no aquí. HU-007 (DEC-061/DEC-062) agrega la respuesta 429
 # cuando la IP solicitante superó el umbral de intentos, y las dos
-# operaciones del reto telefónico que la desbloquean.
+# operaciones del reto telefónico que la desbloquean. HU-008
+# (DEC-063/DEC-064/DEC-065/DEC-066) agrega las tres operaciones de
+# recuperación de acceso: no comparten artefacto, tabla ni semántica de
+# reto con las de HU-007.
 /public/auth/login:
   post:
     tags: [Auth]
@@ -122,6 +125,136 @@
     responses:
       "204":
         $ref: '../components/responses/ChallengeVerifySuccess.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "422":
+        $ref: '../components/responses/ValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+
+# Operaciones públicas de recuperación de acceso (HU-008, DEC-063-066). Tres
+# pasos: solicitar (siempre 202 idéntico, sin destino, DEC-065), verificar
+# (destino enmascarado y token de reinicio solo tras el código correcto) y
+# establecer la contraseña nueva (consume el token, revoca todas las
+# sesiones). No reutilizan el reto telefónico de HU-007: son artefactos
+# distintos con tablas distintas.
+/public/auth/recovery/request:
+  post:
+    tags: [Auth]
+    summary: Solicitar recuperación de acceso
+    description: >
+      Solicita el código de recuperación de acceso. Responde siempre 202
+      con el mismo cuerpo genérico, exista o no la cuenta y esté o no el
+      teléfono verificado (CA-008-01, no enumeración, DEC-065): nunca
+      incluye el destino, ni siquiera enmascarado. Solo se envía un código
+      real por WhatsApp oficial y correo cuando la cuenta existe, está
+      activa y tiene el teléfono verificado. Límite propio: cooldown de 60
+      segundos entre solicitudes y máximo 3 códigos por cuenta por hora
+      (DEC-064); un reenvío aceptado invalida atómicamente el código
+      vigente anterior (CA-008-07).
+    operationId: requestRecovery
+    security: []
+    x-business-rules: [RN-DAT-01, RN-DAT-02, RN-REC-04, RN-REC-05]
+    x-decisions: [DEC-026, DEC-051, DEC-064, DEC-065, DEC-066]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/RecoveryRequestRequest.yaml'
+          examples:
+            solicitud:
+              summary: Solicitar recuperación
+              value:
+                email: barbero.ejemplo@correo.test
+    responses:
+      "202":
+        $ref: '../components/responses/RecoveryRequestAccepted.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "422":
+        $ref: '../components/responses/ValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+
+/public/auth/recovery/verify:
+  post:
+    tags: [Auth]
+    summary: Verificar el código de recuperación
+    description: >
+      Verifica el código de 6 dígitos recibido por WhatsApp y correo
+      (DEC-064). Código incorrecto, vencido, agotado o de una cuenta
+      inexistente producen exactamente la misma respuesta 401 (CA-008-01,
+      no enumeración). Un código correcto emite un token de reinicio de un
+      solo uso, vigente 5 minutos, y devuelve el destino enmascarado
+      (CA-008-06, DEC-065): llegar a esta respuesta ya exige haber recibido
+      y transcrito el código real, así que mostrar el destino aquí no abre
+      un oráculo nuevo.
+    operationId: verifyRecovery
+    security: []
+    x-business-rules: [RN-DAT-01, RN-DAT-02]
+    x-decisions: [DEC-064, DEC-065]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/RecoveryVerifyRequest.yaml'
+          examples:
+            verificacion:
+              summary: Verificar el código
+              value:
+                email: barbero.ejemplo@correo.test
+                code: "482913"
+    responses:
+      "200":
+        $ref: '../components/responses/RecoveryVerifySuccess.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "422":
+        $ref: '../components/responses/ValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+
+/public/auth/recovery/reset-password:
+  post:
+    tags: [Auth]
+    summary: Establecer la contraseña nueva
+    description: >
+      Establece la contraseña nueva usando el token de reinicio emitido por
+      una verificación exitosa (DEC-064). El token se consume una única vez
+      incluso bajo dos solicitudes concurrentes; reutilizarlo, presentarlo
+      vencido o con un correo distinto responde el mismo 401 uniforme que
+      un token desconocido. La contraseña debe cumplir la política mínima
+      de DEC-063 (10-128 caracteres, distinta del correo y de la
+      contraseña actual); un incumplimiento responde 422 indicando
+      exactamente qué regla falla (CA-008-08). Al tener éxito, actualiza la
+      credencial y revoca TODAS las sesiones activas del usuario en la
+      misma operación atómica (CA-008-05).
+    operationId: resetPasswordWithRecoveryToken
+    security: []
+    x-business-rules: [RN-DAT-01, RN-DAT-02]
+    x-decisions: [DEC-050, DEC-063, DEC-064]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/RecoveryResetPasswordRequest.yaml'
+          examples:
+            establecerContrasena:
+              summary: Establecer contraseña nueva
+              value:
+                email: barbero.ejemplo@correo.test
+                resetToken: 3n9F7qP2xR8mK1vL0dS5tY6wZ4bH2jN9
+                newPassword: "***-nueva-contrasena-ficticia"
+    responses:
+      "204":
+        $ref: '../components/responses/RecoveryResetPasswordSuccess.yaml'
       "400":
         $ref: '../components/responses/InvalidRequestProblem.yaml'
       "401":
