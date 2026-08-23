@@ -40,7 +40,7 @@ desde `src/app/router/index.ts`:
   combinando las hijas y las entradas de navegación de `auth`
   (`privateShellChildRoutes`, hoy solo `""` → `name: "panel"`) con las de
   cualquier otro módulo con pantalla privada (`settings.
-  settingsPrivateShellChildRoutes`/`settingsNavItems`, hoy `barberia` →
+settingsPrivateShellChildRoutes`/`settingsNavItems`, hoy `barberia` →
   `name: "configuracion-barberia"`). Ningún módulo importa a otro para
   lograrlo (app → modules → shared, ver
   `src/shared/navigation/navItem.ts`); toda ruta privada futura se agrega
