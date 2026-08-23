@@ -18,8 +18,8 @@ issue: 58
 issue_url: "https://github.com/bcaceres19/barberia/issues/58"
 suggested_issue_title: "feat(auth): implementar HU-008 recuperación de acceso"
 branch: "feat/58-hu008-recuperacion-acceso"
-pr: null
-pr_url: null
+pr: 63
+pr_url: "https://github.com/bcaceres19/barberia/pull/63"
 depends_on:
   - "HU-005 integrada"
   - "HU-006 integrada"
