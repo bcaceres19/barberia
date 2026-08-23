@@ -1,16 +1,16 @@
 <script setup lang="ts">
-// Navegación principal del cascarón (HU-012). Estructura lista para B1 en
-// adelante, pero sin inventar destinos que todavía no existen: hoy la única
-// ruta privada real es /panel (fuera de alcance: "adelantar la edición de
-// HU-020" ni ninguna otra capacidad de B1-B3). Cada entrada nueva se agrega
-// aquí declarando solo su ruta y su texto, según el criterio de terminado
-// de esta historia.
-interface NavItem {
-  to: { name: string }
-  label: string
-}
+// Navegación principal del cascarón (HU-012). "Panel" es la única entrada
+// que `auth` conoce de por sí; cualquier módulo hermano con una pantalla
+// privada (HU-020 en adelante) aporta la suya mediante `extraItems`, que
+// `app/router/index.ts` compone y pasa a través de `PrivateShell` (app →
+// modules → shared): `auth` nunca importa el módulo que la declaró.
+import { computed } from 'vue'
+import type { NavItem } from '@/shared/navigation/navItem'
 
-const items: NavItem[] = [{ to: { name: 'panel' }, label: 'Panel' }]
+const props = defineProps<{ extraItems?: NavItem[] }>()
+
+const baseItems: NavItem[] = [{ to: { name: 'panel' }, label: 'Panel' }]
+const items = computed<NavItem[]>(() => [...baseItems, ...(props.extraItems ?? [])])
 </script>
 
 <template>

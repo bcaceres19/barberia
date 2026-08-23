@@ -1,7 +1,10 @@
 // Package shops administra la barbería, su configuración y su zona horaria,
 // según docs/03-desarrollo/estandar-backend-go.md.
 //
-// El paquete aún no tiene dominio, servicio ni adaptadores: se agregan
-// domain.go, errors.go, ports.go, service.go y las carpetas httpapi/ o
-// postgres/ cuando exista la primera funcionalidad que los necesite.
+// HU-020 entrega la primera funcionalidad: consultar y actualizar el
+// nombre, la zona horaria IANA y el contacto opcional (correo, teléfono) de
+// la barbería activa. [Service] no conoce Chi, net/http, JSON, pgx ni
+// internal/platform/database (CA-002-06): recibe sus dependencias por
+// constructor y solo habla con [Repository], igual que auth.LoginService.
+// La persistencia vive en postgres/, el adaptador HTTP en httpapi/.
 package shops

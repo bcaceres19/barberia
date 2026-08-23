@@ -80,6 +80,24 @@ export async function ensureBootstrapped(): Promise<void> {
   await inFlight
 }
 
+/**
+ * Actualiza únicamente el nombre de la barbería del contexto ya
+ * autenticado (HU-020, CA-020-02): la cabecera refleja el nuevo nombre sin
+ * recargar la aplicación. Se llama SOLO después de que el servidor
+ * confirma el guardado (respuesta 200 de
+ * `PATCH /private/settings/barbershop`); un fallo de guardado nunca invoca
+ * esta función (sin optimismo). No hace nada si el estado no está
+ * `authenticated` (defecto de orden de llamada: la sección de
+ * configuración solo es alcanzable ya autenticado). La próxima
+ * rehidratación (recarga, `retryBootstrap`) sigue usando
+ * `GET /private/auth/session` como autoridad; esta función solo evita una
+ * espera visible mientras esa autoridad no se ha vuelto a consultar.
+ */
+export function updateBarbershopName(name: string): void {
+  if (state.bootstrap.status !== 'authenticated') return
+  state.bootstrap = { ...state.bootstrap, barbershopName: name }
+}
+
 /** Usada por LoginPage tras un acceso exitoso (DEC-060 no amplía
  * LoginResponse con el contexto): fuerza a que la próxima ruta privada
  * vuelva a consultar el servidor en vez de reutilizar un `unauthenticated`

@@ -1,0 +1,46 @@
+# Cuerpo de PATCH /private/settings/barbershop (HU-020, CA-020-02,
+# CA-020-06). Cerrado: el handler rechaza cualquier campo desconocido, en
+# particular un identificador de barbería (CA-020-05, el contrato ni
+# siquiera declara ese campo). contactEmail/contactPhone vacíos ("")
+# representan "sin contacto" en el alambre; el servicio los normaliza a
+# ausencia antes de persistir (CA-020-06).
+type: object
+additionalProperties: false
+description: Nombre, zona horaria y contacto opcional a guardar. Los cuatro campos viajan siempre presentes.
+properties:
+  name:
+    type: string
+    description: Nombre de la barbería. Espacios sueltos no cuentan como valor (se recorta y valida como no vacío).
+    maxLength: 120
+    examples:
+      - Barbería Ejemplo
+  timezone:
+    type: string
+    description: >
+      Zona horaria IANA (RN-DIS-07), confirmada por el servidor contra su
+      catálogo real de zonas dentro de la misma operación (CA-020-03).
+      Nunca una abreviatura (`COT`), un desplazamiento (`UTC-5`) ni la zona
+      detectada del dispositivo.
+    maxLength: 64
+    examples:
+      - America/Bogota
+  contactEmail:
+    type: string
+    description: >
+      Correo de contacto, con forma de correo cuando no está vacío. Cadena
+      vacía significa "sin correo de contacto" (por eso este campo no
+      declara `format: email`: ese formato no admite cadena vacía como
+      valor válido).
+    maxLength: 254
+    examples:
+      - contacto@ejemplo.test
+  contactPhone:
+    type: string
+    description: Teléfono de contacto en formato E.164. Cadena vacía significa "sin teléfono de contacto".
+    examples:
+      - "+573001234567"
+required:
+  - name
+  - timezone
+  - contactEmail
+  - contactPhone

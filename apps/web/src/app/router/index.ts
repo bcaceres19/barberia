@@ -1,10 +1,16 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import { authRoutes } from '@/modules/auth'
+import { authRoutes, privateShellChildRoutes, privateShellRoute } from '@/modules/auth'
+import { settingsNavItems, settingsPrivateShellChildRoutes } from '@/modules/settings'
 
 // Cada ruta se carga de forma diferida (docs/04-arquitectura/frontend.md):
 // un módulo futuro no aumenta el bundle inicial sin necesidad. `app/router`
 // compone las rutas que cada módulo expone en su índice público; no conoce
 // los componentes internos de ningún módulo (estandar-frontend-vue.md §3).
+//
+// El único cascarón privado (HU-012) se ensambla aquí (HU-020 en
+// adelante): `privateShellRoute` recibe las hijas y las entradas de
+// navegación combinadas de `auth` y de cada módulo con pantalla privada,
+// sin que ningún módulo importe a otro (app → modules → shared).
 const routes: RouteRecordRaw[] = [
   {
     // HU-010 entrega la primera pantalla real: la raíz redirige al acceso
@@ -13,6 +19,10 @@ const routes: RouteRecordRaw[] = [
     redirect: { name: 'acceso' },
   },
   ...authRoutes,
+  privateShellRoute(
+    [...privateShellChildRoutes, ...settingsPrivateShellChildRoutes],
+    [...settingsNavItems],
+  ),
 ]
 
 export const router = createRouter({

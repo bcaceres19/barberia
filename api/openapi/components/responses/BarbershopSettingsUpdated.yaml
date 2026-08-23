@@ -1,0 +1,19 @@
+# Respuesta 200 de PATCH /private/settings/barbershop (HU-020, CA-020-02).
+# Misma forma que BarbershopSettingsSuccess (GET): la representación
+# canónica recién guardada, nunca una vista parcial de lo que cambió.
+description: Configuración básica de la barbería ya guardada, en su representación canónica completa.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/BarbershopSettingsResponse.yaml'
+    examples:
+      actualizacionConfirmada:
+        summary: Configuración guardada
+        value:
+          name: Barbería Ejemplo
+          timezone: America/Bogota
+          contactEmail: contacto@ejemplo.test
+          contactPhone: "+573001234567"

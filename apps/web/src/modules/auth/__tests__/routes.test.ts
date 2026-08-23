@@ -9,15 +9,21 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createRouter, createMemoryHistory } from 'vue-router'
-import { authRoutes } from '../index'
+import { authRoutes, privateShellChildRoutes, privateShellRoute } from '../index'
 import { resetForFreshLogin } from '../model/sessionStore'
 import type { SessionContextOutcome } from '../model/sessionContextOutcome'
 
 const fetchSessionContextMock = vi.hoisted(() => vi.fn())
 vi.mock('../api/sessionContextApi', () => ({ fetchSessionContext: fetchSessionContextMock }))
 
+// Mismo patrón de composición que app/router/index.ts (HU-020): authRoutes
+// ya no incluye /panel directamente; privateShellRoute lo construye a
+// partir de las hijas privadas combinadas.
 function buildRouter() {
-  return createRouter({ history: createMemoryHistory(), routes: authRoutes })
+  return createRouter({
+    history: createMemoryHistory(),
+    routes: [...authRoutes, privateShellRoute(privateShellChildRoutes)],
+  })
 }
 
 const authenticated: SessionContextOutcome = {
@@ -37,9 +43,11 @@ describe('authRoutes', () => {
     resetForFreshLogin()
   })
 
-  it('registers /acceso, /panel and /recuperar-acceso', () => {
+  it('registers /acceso and /recuperar-acceso as authRoutes, and exposes /panel as a shell child', () => {
     const paths = authRoutes.map((route) => route.path)
-    expect(paths).toEqual(expect.arrayContaining(['/acceso', '/panel', '/recuperar-acceso']))
+    expect(paths).toEqual(expect.arrayContaining(['/acceso', '/recuperar-acceso']))
+    expect(paths).not.toContain('/panel')
+    expect(privateShellChildRoutes.map((route) => route.name)).toContain('panel')
   })
 
   it('redirects /panel to /acceso when there is no real session (CA-012-02)', async () => {

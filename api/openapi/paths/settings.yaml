@@ -1,3 +1,87 @@
-# Operaciones privadas de configuración de la barbería: datos generales,
-# reserva, cancelación, recordatorios y canales. Ver
-# docs/06-api/estandar-openapi.md. Sin contenido todavía.
+# Operaciones privadas de configuración de la barbería. HU-020 agrega la
+# primera capacidad real: consultar y actualizar el nombre, la zona horaria
+# IANA y el contacto opcional (correo, teléfono) de la barbería activa. No
+# mezcla con reserva, cancelación, recordatorios ni canales: esas
+# capacidades de configuración, cuando existan, se documentan en su propia
+# operación bajo este mismo path o en un archivo separado si crecen lo
+# suficiente para justificarlo, nunca dentro del schema de esta.
+/private/settings/barbershop:
+  get:
+    tags: [Settings]
+    summary: Consultar la configuración básica de la barbería activa
+    description: >
+      Lectura autenticada (HU-020, CA-020-01) de los cuatro campos
+      autorizados de la barbería derivada de la sesión vigente: nombre,
+      zona horaria IANA y contacto opcional (correo, teléfono).
+      `barbershopId` nunca es un parámetro de esta operación -el tenant se
+      deriva exclusivamente de `SessionCookie`- así que no existe un canal
+      para pedir la configuración de otra barbería (`CA-020-05`).
+    operationId: getBarbershopSettings
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-DIS-07, RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-024]
+    responses:
+      "200":
+        $ref: '../components/responses/BarbershopSettingsSuccess.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  patch:
+    tags: [Settings]
+    summary: Actualizar la configuración básica de la barbería activa
+    description: >
+      Actualización autenticada (HU-020, CA-020-02) de nombre, zona horaria
+      IANA y contacto opcional. El cuerpo declara únicamente `name`,
+      `timezone`, `contactEmail` y `contactPhone`; cualquier otro campo -en
+      particular un identificador de barbería- se rechaza como forma
+      inválida (`CA-020-05`). `contactEmail`/`contactPhone` vacíos
+      significan "sin contacto": el servidor los normaliza a ausencia antes
+      de guardar y nunca los registra en texto plano (`CA-020-06`). La zona
+      se confirma contra el catálogo real de zonas IANA del servidor dentro
+      de la misma operación que la escritura: una zona no reconocida
+      responde `422` sin modificar ningún campo, ni siquiera los que sí
+      eran válidos (`CA-020-03`). La respuesta exitosa devuelve la
+      representación completa ya guardada, la misma forma que `GET`.
+    operationId: updateBarbershopSettings
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-DIS-07, RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-019, DEC-024]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/UpdateBarbershopSettingsRequest.yaml'
+          examples:
+            actualizacionCompleta:
+              summary: Nombre, zona y contacto completo
+              value:
+                name: Barbería Ejemplo
+                timezone: America/Bogota
+                contactEmail: contacto@ejemplo.test
+                contactPhone: "+573001234567"
+            sinContacto:
+              summary: Sin correo ni teléfono de contacto
+              value:
+                name: Barbería Ejemplo
+                timezone: America/Bogota
+                contactEmail: ""
+                contactPhone: ""
+    responses:
+      "200":
+        $ref: '../components/responses/BarbershopSettingsUpdated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "422":
+        $ref: '../components/responses/BarbershopSettingsValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

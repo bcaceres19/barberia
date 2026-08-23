@@ -1,0 +1,45 @@
+# Representación canónica de la configuración básica de la barbería
+# (HU-020, CA-020-01, CA-020-07): exactamente los cuatro campos
+# autorizados, la misma forma para GET y para la respuesta 200 de PATCH.
+# Nunca public_slug, logotipo ni ningún otro campo de F-PUB-01.
+type: object
+additionalProperties: false
+description: >
+  Configuración básica de la barbería activa: nombre, zona horaria IANA y
+  contacto opcional. contactEmail/contactPhone viajan siempre presentes en
+  el cuerpo, con valor `null` explícito cuando la barbería no tiene ese
+  contacto configurado (nunca se omiten ni se representan como cadena
+  vacía).
+properties:
+  name:
+    type: string
+    description: Nombre de la barbería, ya recortado.
+    maxLength: 120
+    examples:
+      - Barbería Ejemplo
+  timezone:
+    type: string
+    description: >
+      Zona horaria IANA de la barbería (RN-DIS-07). Gobierna toda hora que
+      la aplicación presente para esta barbería; no es la zona del
+      navegador ni la del servidor.
+    maxLength: 64
+    examples:
+      - America/Bogota
+  contactEmail:
+    type: [string, "null"]
+    format: email
+    description: Correo de contacto de la barbería, normalizado a minúsculas; null cuando no está configurado.
+    maxLength: 254
+    examples:
+      - contacto@ejemplo.test
+  contactPhone:
+    type: [string, "null"]
+    description: Teléfono de contacto de la barbería en formato E.164; null cuando no está configurado.
+    examples:
+      - "+573001234567"
+required:
+  - name
+  - timezone
+  - contactEmail
+  - contactPhone
