@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de contradicciones"
-version: "1.6"
+version: "1.7"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-17"
+ultima_actualizacion: "2026-08-23"
 documentos_relacionados:
   - "registro-decisiones.md"
   - "dudas-pendientes.md"
@@ -109,6 +109,18 @@ Estados permitidos: `Abierta`, `En análisis`, `Resuelta` y `Descartada por fals
 - **Resolución:** opción 1 (`DEC-065`). El paso de solicitud siempre responde idéntico y sin destino; el destino enmascarado solo aparece en la respuesta exitosa de verificación, que ya exige haber recibido y transcrito el código real.
 - **Evidencia:** `HU-008` alcance/`CA-008-01`/`CA-008-06`; `HU-011` alcance/`CA-011-02`; `DEC-065`.
 
+### CT-007 · Mensajes distintos por causa frente al error uniforme de verificación
+
+- **Detectada y registrada:** 2026-08-23, al implementar el prompt individual de `HU-011` (issue `#64`).
+- **Estado:** **Resuelta** (misma entrada; ver resolución).
+- **Responsable de resolver:** propietario del proyecto (decisión ya tomada en `DEC-064`/`DEC-065`, aplicada aquí por primera vez a `HU-011`).
+- **Documentos en conflicto:** `CA-011-03` exige que un código incorrecto, vencido o agotado produzca "mensajes distintos y accionables"; `DEC-064`/`DEC-065`, ya implementadas en `HU-008` (`apps/api/internal/modules/auth/recovery.go`, función `Verify`: "cualquier fallo —código incorrecto, vencido, agotado o cuenta inexistente— devuelve exactamente el mismo error uniforme"), fijan que `POST /recovery/verify` responde el mismo `401` sin distinguir el motivo, por diseño de no enumeración.
+- **Contradicción:** el backend integrado no expone ningún campo (`status`, `code` ni cabecera) que distinga incorrecto de vencido de agotado; cualquier mensaje distinto en el cliente tendría que inventar esa distinción sin que el servidor la respalde, o adivinarla, lo que el catálogo de prompts prohíbe explícitamente ("no inventes... códigos de error... que el contrato no exponga").
+- **Impacto:** implementar `CA-011-03` de forma literal exigiría o bien romper la no enumeración (que el servidor sí distinga y por tanto revele más de lo que `DEC-064` decidió), o bien fabricar una distinción ficticia en el cliente sin base real. Ninguna de las dos es aceptable.
+- **Opciones:** (1) un único mensaje uniforme ("El código no es correcto o ya venció") para las tres causas, consistente con el error real del servidor; (2) pedir al backend un `code` más granular, reabriendo `DEC-064`/`DEC-065` y el riesgo de enumeración que ya resolvieron; (3) inventar en el cliente una distinción sin respaldo del servidor.
+- **Resolución:** opción 1, aplicando el mismo criterio que `DEC-064`/`DEC-065` ya fijaron para este mismo endpoint, y el mismo patrón que `HU-007` ya usa en producción para su reto telefónico análogo (`PhoneChallengeForm.vue`: "El código no es válido o venció", un único mensaje para incorrecto/vencido/agotado). `HU-011` implementa el paso de verificación con este único mensaje; el reenvío con cuenta regresiva (`CA-011-04`) sigue siendo un estado de cliente aparte, no derivado de este error.
+- **Evidencia:** `HU-011` alcance/`CA-011-03`; `apps/api/internal/modules/auth/recovery.go` (`Verify`); `apps/api/README.md` sección "No enumeración (`DEC-065`) y destino enmascarado"; `apps/web/src/modules/auth/components/PhoneChallengeForm.vue` (precedente de `HU-007`); `apps/web/src/modules/auth/components/RecoveryVerifyStep.vue`.
+
 ## 4. Historial de estado
 
 | Fecha | Código | Cambio | Evidencia |
@@ -125,3 +137,4 @@ Estados permitidos: `Abierta`, `En análisis`, `Resuelta` y `Descartada por fals
 | 2026-08-14 | `CT-006` | Detectada y registrada como abierta: respuesta de recuperación idéntica frente a destino real enmascarado | `HU-008`, `HU-011`, issue `#58` |
 | 2026-08-17 | `CT-005` | Resuelta: la sexta solicitud exige el reto, no la quinta | `DEC-061` |
 | 2026-08-17 | `CT-006` | Resuelta: destino enmascarado solo tras verificar el código | `DEC-065` |
+| 2026-08-23 | `CT-007` | Detectada y resuelta en la misma entrada: mensaje uniforme para código incorrecto/vencido/agotado, no distinto | `HU-011`, issue `#64`, `DEC-064`, `DEC-065` |

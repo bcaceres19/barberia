@@ -4,8 +4,8 @@
  * pretendido (CA-012-02); con sesión vigente, entra directamente
  * (CA-012-01). `fetchSessionContext` se sustituye por un doble de prueba:
  * el recorrido real contra el API real vive en `e2e/panel.spec.ts`.
- * `/recuperar-acceso` sigue siendo un destino real, no roto (CA-010-08,
- * `DP-UX-06`).
+ * `/recuperar-acceso` es el flujo real de HU-011 (CA-010-08, antes
+ * provisional bajo `DP-UX-06`).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createRouter, createMemoryHistory } from 'vue-router'

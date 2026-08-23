@@ -1,0 +1,205 @@
+<script setup lang="ts">
+// Paso 2/3 de HU-011: verificar el código de 6 dígitos. El destino
+// (teléfono/correo) NO se muestra aquí: el backend solo lo revela
+// enmascarado en la respuesta exitosa de esta misma verificación
+// (CA-008-06, DEC-065) — mostrarlo antes abriría el oráculo que esa
+// decisión evita. Por eso el paso 3 (`RecoveryResetStep.vue`), no este,
+// es quien confirma "enviamos tu código a b***@c***.test" como contexto.
+//
+// El reenvío es un cooldown rastreado en cliente (60 s por defecto,
+// `APP_RECOVERY_RESEND_COOLDOWN_SECONDS`), mismo patrón que
+// `PhoneChallengeForm.vue`, pero con cuenta regresiva visible (CA-011-04
+// exige "cuánto falta", no solo un botón deshabilitado).
+import { computed, onUnmounted, ref } from 'vue'
+import { BaseAlert, BaseButton, BaseInput } from '@/shared/ui'
+import { requestRecovery, verifyRecovery } from '../api/recoveryApi'
+import { validateRecoveryCode } from '../validation/recoveryValidation'
+
+const RESEND_COOLDOWN_SECONDS = 60
+
+const props = defineProps<{
+  email: string
+}>()
+
+const emit = defineEmits<{
+  advance: [payload: { resetToken: string; maskedPhone: string; maskedEmail: string }]
+}>()
+
+const code = ref('')
+const fieldError = ref<string | undefined>(undefined)
+const attemptedSubmit = ref(false)
+const verifyStatus = ref<
+  'idle' | 'verifying' | 'invalid-code' | 'network-error' | 'unexpected-error'
+>('idle')
+const resendCooldownRemaining = ref(0)
+let cooldownTimer: ReturnType<typeof setInterval> | undefined
+
+const isVerifying = computed(() => verifyStatus.value === 'verifying')
+const canResend = computed(() => resendCooldownRemaining.value <= 0)
+
+function startResendCooldown() {
+  resendCooldownRemaining.value = RESEND_COOLDOWN_SECONDS
+  cooldownTimer = setInterval(() => {
+    resendCooldownRemaining.value = Math.max(0, resendCooldownRemaining.value - 1)
+    if (resendCooldownRemaining.value === 0 && cooldownTimer) {
+      clearInterval(cooldownTimer)
+      cooldownTimer = undefined
+    }
+  }, 1_000)
+}
+
+onUnmounted(() => {
+  if (cooldownTimer) clearInterval(cooldownTimer)
+})
+
+// Cooldown activo desde el momento en que se entra a este paso: el
+// código ya se envió una vez al avanzar del paso 1 (trabajo requerido §4).
+startResendCooldown()
+
+async function onResend() {
+  if (!canResend.value) return
+  startResendCooldown()
+  // Mismo trato que el paso 1: la solicitud siempre se intenta contra el
+  // API real, pero el resultado no cambia el cooldown de cliente ni
+  // revela nada distinto (DEC-065).
+  await requestRecovery(props.email)
+}
+
+const handleCodeInput = (value: string | number) => {
+  code.value = String(value)
+    .replace(/[^0-9]/g, '')
+    .slice(0, 6)
+  if (attemptedSubmit.value) {
+    fieldError.value = validateRecoveryCode(code.value)
+  }
+}
+
+async function onSubmit() {
+  if (isVerifying.value) return
+
+  attemptedSubmit.value = true
+  const error = validateRecoveryCode(code.value)
+  fieldError.value = error
+  if (error) return
+
+  verifyStatus.value = 'verifying'
+  const outcome = await verifyRecovery(props.email, code.value)
+
+  switch (outcome.kind) {
+    case 'verified':
+      emit('advance', {
+        resetToken: outcome.resetToken,
+        maskedPhone: outcome.maskedPhone,
+        maskedEmail: outcome.maskedEmail,
+      })
+      return
+    case 'invalid-code':
+      // Mismo error uniforme para incorrecto, vencido, agotado o cuenta
+      // inexistente (DEC-064/DEC-065): el cliente tampoco puede
+      // distinguir el motivo. CT-007 (docs/00-control/contradicciones.md)
+      // registra el conflicto entre esta uniformidad y el texto literal
+      // de CA-011-03.
+      code.value = ''
+      verifyStatus.value = 'invalid-code'
+      return
+    case 'validation-error':
+      verifyStatus.value = 'invalid-code'
+      return
+    case 'network-error':
+      verifyStatus.value = 'network-error'
+      return
+    case 'unexpected-error':
+      verifyStatus.value = 'unexpected-error'
+  }
+}
+</script>
+
+<template>
+  <form class="recovery-verify" novalidate @submit.prevent="onSubmit">
+    <p class="recovery-verify__sent" role="status">
+      Si tu cuenta existe, recibirás un código de 6 dígitos por WhatsApp y correo.
+    </p>
+
+    <BaseAlert
+      v-if="verifyStatus === 'invalid-code'"
+      variant="danger"
+      title="El código no es válido"
+      role="alert"
+    >
+      El código no es correcto o ya venció. Puedes reenviarlo o revisar lo que escribiste.
+    </BaseAlert>
+    <BaseAlert
+      v-if="verifyStatus === 'network-error'"
+      variant="warning"
+      title="No pudimos conectar"
+      role="alert"
+    >
+      Revisa tu conexión e inténtalo de nuevo.
+    </BaseAlert>
+    <BaseAlert
+      v-if="verifyStatus === 'unexpected-error'"
+      variant="danger"
+      title="Ocurrió un error inesperado"
+      role="alert"
+    >
+      Inténtalo de nuevo en unos segundos.
+    </BaseAlert>
+
+    <BaseInput
+      :model-value="code"
+      type="text"
+      name="code"
+      label="Código de 6 dígitos"
+      pattern="[0-9]*"
+      :maxlength="6"
+      autocomplete="one-time-code"
+      placeholder="000000"
+      required
+      :disabled="isVerifying"
+      :error="fieldError"
+      @update:model-value="handleCodeInput"
+    />
+
+    <div class="recovery-verify__actions">
+      <BaseButton
+        type="submit"
+        variant="primary"
+        size="lg"
+        :loading="isVerifying"
+        :disabled="isVerifying"
+        class="recovery-verify__submit"
+      >
+        Verificar código
+      </BaseButton>
+
+      <BaseButton type="button" variant="ghost" size="md" :disabled="!canResend" @click="onResend">
+        {{ canResend ? 'Reenviar código' : `Reenviar en ${resendCooldownRemaining} s` }}
+      </BaseButton>
+    </div>
+  </form>
+</template>
+
+<style scoped>
+.recovery-verify {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: 100%;
+}
+
+.recovery-verify__sent {
+  margin: 0;
+  font-size: var(--font-size-body-sm);
+  color: var(--color-text-secondary);
+}
+
+.recovery-verify__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.recovery-verify__submit {
+  width: 100%;
+}
+</style>

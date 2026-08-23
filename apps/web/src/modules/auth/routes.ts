@@ -29,10 +29,10 @@ export const authRoutes: RouteRecordRaw[] = [
     ],
   },
   {
-    // Destino provisional del enlace de recuperación de CA-010-08,
-    // documentado en `DP-UX-06` (docs/00-control/dudas-pendientes.md).
+    // Destino real del enlace de recuperación de CA-010-08 (antes
+    // provisional bajo `DP-UX-06`, resuelta por `HU-011`).
     path: '/recuperar-acceso',
     name: 'recuperar-acceso',
-    component: () => import('./pages/RecoveryPendingPage.vue'),
+    component: () => import('./pages/RecoveryPage.vue'),
   },
 ]
