@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-008-v1"
-version: "1.3"
+version: "1.4"
 kind: "hu"
-status: "ready"
+status: "in_progress"
 target_agents:
   - "claude"
   - "codex"
@@ -17,7 +17,7 @@ related_hu:
 issue: 58
 issue_url: "https://github.com/bcaceres19/barberia/issues/58"
 suggested_issue_title: "feat(auth): implementar HU-008 recuperación de acceso"
-branch: null
+branch: "feat/58-hu008-recuperacion-acceso"
 pr: null
 pr_url: null
 depends_on:
@@ -86,7 +86,7 @@ source_docs:
   - "api/openapi/openapi.yaml"
   - "api/openapi/paths/public-auth.yaml"
 created_at: "2026-08-14"
-updated_at: "2026-08-17"
+updated_at: "2026-08-23"
 supersedes: "docs/10-backlog/prompts-implementacion.md#prompt-de-hu-008--recuperación-de-acceso-con-código"
 superseded_by: null
 ---

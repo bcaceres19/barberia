@@ -33,11 +33,11 @@ func (s *spyRecoverySender) SendCode(_ context.Context, phone, email, code strin
 }
 
 type fakeRecoveryRepository struct {
-	requestAccepted   bool
-	requestPhone      string
-	requestEmail      string
-	requestErr        error
-	requestCalls      []struct{ email, codeHash string }
+	requestAccepted bool
+	requestPhone    string
+	requestEmail    string
+	requestErr      error
+	requestCalls    []struct{ email, codeHash string }
 
 	verifyOK    bool
 	verifyPhone string

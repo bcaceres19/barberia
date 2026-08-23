@@ -64,6 +64,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/auth/recovery/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Solicitar recuperación de acceso
+         * @description Solicita el código de recuperación de acceso. Responde siempre 202 con el mismo cuerpo genérico, exista o no la cuenta y esté o no el teléfono verificado (CA-008-01, no enumeración, DEC-065): nunca incluye el destino, ni siquiera enmascarado. Solo se envía un código real por WhatsApp oficial y correo cuando la cuenta existe, está activa y tiene el teléfono verificado. Límite propio: cooldown de 60 segundos entre solicitudes y máximo 3 códigos por cuenta por hora (DEC-064); un reenvío aceptado invalida atómicamente el código vigente anterior (CA-008-07).
+         */
+        post: operations["requestRecovery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/auth/recovery/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verificar el código de recuperación
+         * @description Verifica el código de 6 dígitos recibido por WhatsApp y correo (DEC-064). Código incorrecto, vencido, agotado o de una cuenta inexistente producen exactamente la misma respuesta 401 (CA-008-01, no enumeración). Un código correcto emite un token de reinicio de un solo uso, vigente 5 minutos, y devuelve el destino enmascarado (CA-008-06, DEC-065): llegar a esta respuesta ya exige haber recibido y transcrito el código real, así que mostrar el destino aquí no abre un oráculo nuevo.
+         */
+        post: operations["verifyRecovery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/auth/recovery/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Establecer la contraseña nueva
+         * @description Establece la contraseña nueva usando el token de reinicio emitido por una verificación exitosa (DEC-064). El token se consume una única vez incluso bajo dos solicitudes concurrentes; reutilizarlo, presentarlo vencido o con un correo distinto responde el mismo 401 uniforme que un token desconocido. La contraseña debe cumplir la política mínima de DEC-063 (10-128 caracteres, distinta del correo y de la contraseña actual); un incumplimiento responde 422 indicando exactamente qué regla falla (CA-008-08). Al tener éxito, actualiza la credencial y revoca TODAS las sesiones activas del usuario en la misma operación atómica (CA-008-05).
+         */
+        post: operations["resetPasswordWithRecoveryToken"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/private/auth/logout": {
         parameters: {
             query?: never;
@@ -217,6 +277,74 @@ export interface components {
              */
             message: string;
         };
+        /** @description Solicitud de recuperación de acceso. */
+        RecoveryRequestRequest: {
+            /**
+             * Format: email
+             * @description Correo de la cuenta cuyos medios registrados recibirán el código, si corresponde.
+             * @example barbero.ejemplo@correo.test
+             */
+            email: string;
+        };
+        /** @description Confirmación genérica de que la solicitud fue recibida. */
+        RecoveryRequestAcceptedResponse: {
+            /**
+             * @description Mensaje genérico, idéntico exista o no la cuenta.
+             * @example Si la cuenta existe, se envió un código a los medios registrados.
+             */
+            message: string;
+        };
+        /** @description Verificación del código de recuperación. */
+        RecoveryVerifyRequest: {
+            /**
+             * Format: email
+             * @description Correo de la cuenta que solicitó la recuperación.
+             * @example barbero.ejemplo@correo.test
+             */
+            email: string;
+            /**
+             * @description Código numérico de 6 dígitos recibido por WhatsApp y correo.
+             * @example 482913
+             */
+            code: string;
+        };
+        /** @description Verificación exitosa; autoriza exactamente un cambio de contraseña. */
+        RecoveryVerifyResponse: {
+            /**
+             * @description Token opaco de un solo uso que autoriza el cambio de contraseña, vigente 5 minutos.
+             * @example 3n9F7qP2xR8mK1vL0dS5tY6wZ4bH2jN9
+             */
+            resetToken: string;
+            /**
+             * @description Teléfono de destino, enmascarado; nunca el valor completo (CA-008-06).
+             * @example +57 *** *** 12
+             */
+            maskedPhone: string;
+            /**
+             * @description Correo de destino, enmascarado; nunca el valor completo (CA-008-06).
+             * @example b***@c***.test
+             */
+            maskedEmail: string;
+        };
+        /** @description Establece la contraseña nueva usando el token de reinicio emitido por la verificación. */
+        RecoveryResetPasswordRequest: {
+            /**
+             * Format: email
+             * @description Correo de la cuenta que solicitó la recuperación.
+             * @example barbero.ejemplo@correo.test
+             */
+            email: string;
+            /**
+             * @description Token de reinicio de un solo uso devuelto por la verificación exitosa.
+             * @example 3n9F7qP2xR8mK1vL0dS5tY6wZ4bH2jN9
+             */
+            resetToken: string;
+            /**
+             * @description Contraseña nueva; se rechaza si no cumple la política mínima documentada (DEC-063).
+             * @example ***-nueva-contrasena-ficticia
+             */
+            newPassword: string;
+        };
     };
     responses: {
         /** @description Sesión cerrada. La cookie de sesión queda limpiada en Set-Cookie. */
@@ -358,6 +486,34 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
+        /** @description La solicitud fue recibida. Si la cuenta existe y tiene el teléfono verificado, se envía un código por WhatsApp oficial y correo; en cualquier otro caso no ocurre ningún envío, sin que la respuesta lo revele. */
+        RecoveryRequestAccepted: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["RecoveryRequestAcceptedResponse"];
+            };
+        };
+        /** @description Código verificado. El cuerpo incluye el token de un solo uso que autoriza exactamente un cambio de contraseña y el destino enmascarado al que se envió el código. */
+        RecoveryVerifySuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["RecoveryVerifyResponse"];
+            };
+        };
+        /** @description Contraseña actualizada. Todas las sesiones activas del usuario quedaron revocadas; debe iniciar sesión de nuevo con la contraseña nueva. */
+        RecoveryResetPasswordSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
     };
     parameters: {
         /** @description Clave elegida por el cliente que identifica un intento de escritura crítica. Repetir la misma clave con el mismo contenido (método, ruta y cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo. Repetirla con contenido distinto es un conflicto: usa una clave nueva para una solicitud distinta. */
@@ -435,6 +591,65 @@ export interface operations {
         };
         responses: {
             204: components["responses"]["ChallengeVerifySuccess"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            422: components["responses"]["ValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    requestRecovery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecoveryRequestRequest"];
+            };
+        };
+        responses: {
+            202: components["responses"]["RecoveryRequestAccepted"];
+            400: components["responses"]["InvalidRequestProblem"];
+            422: components["responses"]["ValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    verifyRecovery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecoveryVerifyRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["RecoveryVerifySuccess"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            422: components["responses"]["ValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    resetPasswordWithRecoveryToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecoveryResetPasswordRequest"];
+            };
+        };
+        responses: {
+            204: components["responses"]["RecoveryResetPasswordSuccess"];
             400: components["responses"]["InvalidRequestProblem"];
             401: components["responses"]["UnauthorizedProblem"];
             422: components["responses"]["ValidationProblem"];

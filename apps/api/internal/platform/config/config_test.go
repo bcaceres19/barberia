@@ -137,14 +137,83 @@ func TestLoad_WorkerDSNMustDifferFromAPIOutsideLocalTest(t *testing.T) {
 
 func TestLoad_ProductionValidConfig(t *testing.T) {
 	env := map[string]string{
-		"APP_ENVIRONMENT":         "production",
-		"APP_DATABASE_URL":        "postgres://barberia_app:secret@db:5432/barberia?sslmode=require",
-		"APP_WORKER_DATABASE_URL": "postgres://barberia_worker:secret@db:5432/barberia?sslmode=require",
-		"APP_AUTH_HMAC_SECRET":    testHMACSecret,
+		"APP_ENVIRONMENT":                   "production",
+		"APP_DATABASE_URL":                  "postgres://barberia_app:secret@db:5432/barberia?sslmode=require",
+		"APP_WORKER_DATABASE_URL":           "postgres://barberia_worker:secret@db:5432/barberia?sslmode=require",
+		"APP_AUTH_HMAC_SECRET":              testHMACSecret,
+		"APP_META_WHATSAPP_PHONE_NUMBER_ID": "1234567890",
+		"APP_META_WHATSAPP_ACCESS_TOKEN":    "meta-access-token-de-prueba",
+		"APP_META_WHATSAPP_TEMPLATE_NAME":   "recuperacion_acceso",
+		"APP_RESEND_API_KEY":                "resend-api-key-de-prueba",
+		"APP_RESEND_FROM_ADDRESS":           "no-responder@barberia.test",
 	}
 	withEnv(t, env, func() {
 		if _, err := config.Load(); err != nil {
 			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+}
+
+// TestLoad_ProductionMissingMetaWhatsAppCredentialsRejected cubre DEC-066:
+// fuera de local/test, HU-008 exige el adaptador real de WhatsApp, no el
+// marcador de posición.
+func TestLoad_ProductionMissingMetaWhatsAppCredentialsRejected(t *testing.T) {
+	env := map[string]string{
+		"APP_ENVIRONMENT":         "production",
+		"APP_DATABASE_URL":        "postgres://barberia_app:secret@db:5432/barberia?sslmode=require",
+		"APP_WORKER_DATABASE_URL": "postgres://barberia_worker:secret@db:5432/barberia?sslmode=require",
+		"APP_AUTH_HMAC_SECRET":    testHMACSecret,
+		"APP_RESEND_API_KEY":      "resend-api-key-de-prueba",
+		"APP_RESEND_FROM_ADDRESS": "no-responder@barberia.test",
+	}
+	withEnv(t, env, func() {
+		if _, err := config.Load(); err == nil {
+			t.Fatal("expected error when Meta WhatsApp credentials are missing outside local/test")
+		}
+	})
+}
+
+// TestLoad_ProductionMissingResendCredentialsRejected cubre DEC-066 para el
+// canal de correo.
+func TestLoad_ProductionMissingResendCredentialsRejected(t *testing.T) {
+	env := map[string]string{
+		"APP_ENVIRONMENT":                   "production",
+		"APP_DATABASE_URL":                  "postgres://barberia_app:secret@db:5432/barberia?sslmode=require",
+		"APP_WORKER_DATABASE_URL":           "postgres://barberia_worker:secret@db:5432/barberia?sslmode=require",
+		"APP_AUTH_HMAC_SECRET":              testHMACSecret,
+		"APP_META_WHATSAPP_PHONE_NUMBER_ID": "1234567890",
+		"APP_META_WHATSAPP_ACCESS_TOKEN":    "meta-access-token-de-prueba",
+		"APP_META_WHATSAPP_TEMPLATE_NAME":   "recuperacion_acceso",
+	}
+	withEnv(t, env, func() {
+		if _, err := config.Load(); err == nil {
+			t.Fatal("expected error when Resend credentials are missing outside local/test")
+		}
+	})
+}
+
+// TestLoad_LocalEnvironment_MissingProviderCredentials_StillLoads cubre que
+// local/test NO exige credenciales de proveedor (main.go usa el marcador
+// de posición documentado en ese caso).
+func TestLoad_LocalEnvironment_MissingProviderCredentials_StillLoads(t *testing.T) {
+	env := baseLocalEnv()
+	withEnv(t, env, func() {
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if cfg.MetaWhatsAppPhoneNumberID != "" || cfg.ResendAPIKey != "" {
+			t.Fatal("expected empty provider credentials when none are set")
+		}
+	})
+}
+
+func TestLoad_RecoveryParamsOutOfRangeRejected(t *testing.T) {
+	env := baseLocalEnv()
+	env["APP_RECOVERY_CODE_MAX_ATTEMPTS"] = "0"
+	withEnv(t, env, func() {
+		if _, err := config.Load(); err == nil {
+			t.Fatal("expected error for APP_RECOVERY_CODE_MAX_ATTEMPTS=0")
 		}
 	})
 }

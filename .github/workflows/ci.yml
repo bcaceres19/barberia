@@ -73,7 +73,8 @@ jobs:
                    20260811154100_harden_idempotency_concurrency.sql \
                    20260811220000_harden_idempotency_fingerprint_format.sql \
                    20260813120000_create_auth_credentials_and_sessions.sql \
-                   20260817180000_create_login_throttle_and_phone_challenge.sql; do
+                   20260817180000_create_login_throttle_and_phone_challenge.sql \
+                   20260817190000_create_staff_recovery_code.sql; do
             psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$f"
           done
           psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_app PASSWORD 'app_test';"
@@ -249,6 +250,11 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/hu007_defensa_abuso.sql
+
+      - name: Suite de recuperación de acceso HU-008
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/hu008_recuperacion_acceso.sql
 
       - name: Suite de idempotencia (secuencial, una conexión)
         env:
