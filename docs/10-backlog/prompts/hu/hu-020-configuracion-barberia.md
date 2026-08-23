@@ -19,8 +19,8 @@ issue: 67
 issue_url: "https://github.com/bcaceres19/barberia/issues/67"
 suggested_issue_title: "feat(settings): implementar HU-020 configuración básica de la barbería"
 branch: "feat/67-hu020-configuracion-barberia"
-pr: null
-pr_url: null
+pr: 70
+pr_url: "https://github.com/bcaceres19/barberia/pull/70"
 depends_on:
   - "Criterio de salida de B0 verificado contra docs/10-backlog/plan-bloques.md"
   - "HU-003, HU-006, HU-009 y HU-012 integradas en main"
@@ -281,4 +281,4 @@ Exclusiones verificadas: sin aprovisionamiento/selección de barbería, sin `pub
 
 Verificación local ejecutada en su totalidad (no solo declarada): `pnpm run openapi:check-config/lint/bundle`; `atlas migrate hash/validate/apply` contra PostgreSQL 14 real (Docker), aplicación en base vacía y confirmación de no-op en la segunda aplicación; `gofmt -l .` vacío, `go vet ./...`, `go build ./...`, `go test -race ./...` (repositorio completo, incluidos `cmd/api`, `internal/modules/shops`, `internal/modules/shops/postgres`, `internal/modules/shops/httpapi`) contra PostgreSQL 14 real con las nueve migraciones y los tres testdata aplicados; `pnpm run generate:api/format/lint/typecheck/test:unit/build` en `apps/web` (313 pruebas); `pnpm exec playwright test` real contra `go run ./cmd/api` y PostgreSQL real (`e2e/configuracion-barberia.spec.ts`, `e2e/configuracion-barberia-evidencia-responsiva.spec.ts`, más verificación de no regresión en `e2e/panel.spec.ts`). Dos defectos reales encontrados y corregidos durante la propia verificación: orden `defer db.Close()`/`t.Cleanup` en las pruebas de integración de PostgreSQL (competía con la restauración de fixtures) y comparación de struct por identidad de puntero en vez de por valor en una prueba de round-trip. `.github/workflows/ci.yml` actualizado para aplicar la migración novena y ejecutar la suite SQL de HU-020.
 
-`Refs #67` hasta que el PR se abra y se registre aquí su número/URL reales; se actualizará a `Closes #67` si el PR resultante cubre los ocho criterios sin excepción, como demuestra la tabla anterior.
+PR abierto: [#70](https://github.com/bcaceres19/barberia/pull/70), `Closes #67` (los ocho criterios están cubiertos sin excepción, como demuestra la tabla anterior). Pendiente de CI/merge.
