@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-021-v1"
 version: "1.0"
 kind: "hu"
-status: "draft"
+status: "ready"
 target_agents:
   - "claude"
   - "codex"
@@ -100,7 +100,7 @@ source_docs:
   - "apps/web/src/shared/api"
   - "apps/web/src/shared/ui"
 created_at: "2026-08-23"
-updated_at: "2026-08-23"
+updated_at: "2026-08-23T20:10:00Z"
 supersedes: "docs/10-backlog/prompts-implementacion.md#prompt-de-hu-021--registro-y-listado-de-barberos"
 superseded_by: null
 ---
@@ -111,7 +111,7 @@ superseded_by: null
 
 Implementa únicamente `HU-021` como una entrega vertical contract-first para consultar, listar, registrar y renombrar barberos de la barbería activa. Usa exactamente el mismo modelo, API y pantalla para una barbería con una persona y para otra con cuatro. No agregues borrado, activación/desactivación, orden manual, credenciales, relación con `staff_user`, servicios, horarios, disponibilidad ni agenda.
 
-Issue real creado: [#68](https://github.com/bcaceres19/barberia/issues/68), con `CA-021-01` a `CA-021-08` enlazados a `docs/02-requisitos/historias-usuario.md`. Este prompt conserva `status: draft` porque `HU-020` (issue [#67](https://github.com/bcaceres19/barberia/issues/67)) todavía no está integrada en `main`: HU-021 no puede pasar a `ready` hasta que ese PR se mergee y el patrón de composición de rutas/navegación que deja HU-020 exista realmente.
+Issue real creado: [#68](https://github.com/bcaceres19/barberia/issues/68), con `CA-021-01` a `CA-021-08` enlazados a `docs/02-requisitos/historias-usuario.md`. Este prompt pasa a `status: ready` porque `HU-020` (issue [#67](https://github.com/bcaceres19/barberia/issues/67), [PR #70](https://github.com/bcaceres19/barberia/pull/70)) ya está integrada en `main` (squash-merge 2026-08-23, checks en verde) y deja disponible el patrón real de composición de rutas/navegación privadas que esta HU debe reutilizar.
 
 ## Objetivo
 
