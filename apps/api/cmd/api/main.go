@@ -18,6 +18,9 @@ import (
 	authhttpapi "system-barbershop/internal/modules/auth/httpapi"
 	authpostgres "system-barbershop/internal/modules/auth/postgres"
 	"system-barbershop/internal/modules/notification"
+	"system-barbershop/internal/modules/shops"
+	shopshttpapi "system-barbershop/internal/modules/shops/httpapi"
+	shopspostgres "system-barbershop/internal/modules/shops/postgres"
 	"system-barbershop/internal/platform/clientip"
 	"system-barbershop/internal/platform/clock"
 	"system-barbershop/internal/platform/config"
@@ -202,6 +205,16 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	private.Use(sessionMiddleware.RequireSession)
 	private.Post("/auth/logout", logoutHandler.ServeHTTP)
 	private.Get("/auth/session", sessionContextHandler.ServeHTTP)
+
+	// HU-020: configuración básica de la barbería activa (nombre, zona
+	// IANA, contacto opcional). Registrado sobre el mismo subrouter
+	// privado, después del middleware de sesión, igual que las rutas de
+	// auth (CA-006-04).
+	shopService := shops.NewService(shopspostgres.New(db))
+	getBarbershopSettingsHandler := shopshttpapi.NewGetBarbershopSettingsHandler(shopService)
+	updateBarbershopSettingsHandler := shopshttpapi.NewUpdateBarbershopSettingsHandler(shopService)
+	private.Get("/settings/barbershop", getBarbershopSettingsHandler.ServeHTTP)
+	private.Patch("/settings/barbershop", updateBarbershopSettingsHandler.ServeHTTP)
 
 	// HU-008 (DEC-063-066): recuperación de acceso con código de un solo
 	// uso. sender es el adaptador dual de Meta WhatsApp Cloud API + Resend

@@ -7,9 +7,16 @@
 // de extensión para las pantallas que las historias siguientes agreguen
 // como hijas de esta misma ruta.
 import { BaseAlert, BaseButton } from '@/shared/ui'
+import type { NavItem } from '@/shared/navigation/navItem'
 import { retryBootstrap, sessionState } from '../model/sessionStore'
 import AppHeader from '../components/AppHeader.vue'
 import AppNav from '../components/AppNav.vue'
+
+// extraNavItems llega como prop estática de ruta (auth.privateShellRoute,
+// HU-020): `app/router/index.ts` combina las entradas de cada módulo con
+// una pantalla privada, sin que este componente ni `auth` importen esos
+// módulos.
+defineProps<{ extraNavItems?: NavItem[] }>()
 
 function onRetry() {
   void retryBootstrap()
@@ -20,7 +27,7 @@ function onRetry() {
   <div class="private-shell">
     <template v-if="sessionState.bootstrap.status === 'authenticated'">
       <AppHeader :barbershop-name="sessionState.bootstrap.barbershopName" />
-      <AppNav />
+      <AppNav :extra-items="extraNavItems" />
       <main class="private-shell__content">
         <RouterView />
       </main>

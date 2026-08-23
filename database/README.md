@@ -18,6 +18,7 @@ antes de agregar una migración.
 | `migrations/20260813120000_create_auth_credentials_and_sessions.sql` | HU-005 · `staff_credential`, `staff_session`, `authn_resolve_login_tenant`, `auth_get_credential`, `authn_resolve_session_tenant` (secciones A.0–A.2 del modelo de referencia) |
 | `migrations/20260817180000_create_login_throttle_and_phone_challenge.sql` | HU-007 · `staff_user.phone`/`phone_verified_at` (adelantado de A.3), `login_throttle`, `auth_phone_challenge` y sus funciones `SECURITY DEFINER` (secciones A.4–A.5 del modelo de referencia) |
 | `migrations/20260817190000_create_staff_recovery_code.sql` | HU-008 · `staff_recovery_code` y sus cuatro funciones `SECURITY DEFINER` (`auth_recovery_request`/`verify`/`current_credential`/`change_password`/`purge_expired`), sección A.3 adaptada del modelo de referencia |
+| `migrations/20260823120000_add_barbershop_contact_info.sql` | HU-020 · `barbershop.contact_email`/`contact_phone` opcionales, mismos patrones de forma que `staff_user.email`/`.phone`; sin `GRANT` nuevo (privilegio de tabla ya cubre las columnas) |
 | `migrations/atlas.sum` | Generado y validado con Atlas v1.3.0 |
 | `testdata/dos_barberias.sql` | Escenario de HU-001 con dos barberías |
 | `testdata/hu005_credenciales_sesiones.sql` | HU-005 · credenciales y una sesión vigente por barbería, sobre `dos_barberias.sql` |
@@ -27,11 +28,12 @@ antes de agregar una migración.
 | `tests/hu005_aislamiento_credenciales_sesiones.sql` | HU-005 · `staff_credential`/`staff_session`/funciones `SECURITY DEFINER` con dos tenants y el rol real |
 | `tests/hu007_defensa_abuso.sql` | HU-007 · `DDL-AUT-01` (sin DML directo de `barberia_app`, purga exclusiva de `barberia_worker`), `DEC-061` (sexta solicitud escala) y `DEC-062` (reto telefónico: tres condiciones, código atado a su IP, verificar limpia el escalamiento) con el rol real |
 | `tests/hu008_recuperacion_acceso.sql` | HU-008 · `DDL-AUT-01` (sin DML directo de `barberia_app` sobre `staff_recovery_code`, purga exclusiva de `barberia_worker`), no enumeración de `auth_recovery_request`, cooldown/límite de reenvío y unicidad del código activo (`CA-008-07`), intentos/agotamiento de `auth_recovery_verify` (`CA-008-02`/`03`) y verificación + cambio de contraseña con revocación total de sesiones en la misma operación (`CA-008-05`), todo envuelto en `BEGIN...ROLLBACK` para no dejar estado persistido |
+| `tests/hu020_configuracion_barberia.sql` | HU-020 · columnas anulables, contacto válido/vacío (`CA-020-06`), `CHECK` de correo/teléfono, aislamiento de tenant sobre las columnas nuevas (`CA-020-05`) y por qué la validación IANA (`CA-020-03`) no vive en un `CHECK`, todo con el rol real |
 | `tests/rls_suite.sql` | Suite RLS completa de las 23 tablas restantes (issue #7, `DDL-RLS-01`) |
 | `seeds/` | Vacío |
 | `modelo-fisico-referencia.sql` | Diseño completo de B1–B6. **No es una migración** |
 
-Están aplicadas las ocho migraciones listadas arriba. El resto del
+Están aplicadas las nueve migraciones listadas arriba. El resto del
 modelo —barberos, servicios, horario, bloqueos, citas, clientes,
 notificaciones— vive en
 [`modelo-fisico-referencia.sql`](modelo-fisico-referencia.sql) y se

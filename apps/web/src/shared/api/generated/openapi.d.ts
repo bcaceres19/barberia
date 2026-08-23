@@ -164,6 +164,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/private/settings/barbershop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar la configuración básica de la barbería activa
+         * @description Lectura autenticada (HU-020, CA-020-01) de los cuatro campos autorizados de la barbería derivada de la sesión vigente: nombre, zona horaria IANA y contacto opcional (correo, teléfono). `barbershopId` nunca es un parámetro de esta operación -el tenant se deriva exclusivamente de `SessionCookie`- así que no existe un canal para pedir la configuración de otra barbería (`CA-020-05`).
+         */
+        get: operations["getBarbershopSettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Actualizar la configuración básica de la barbería activa
+         * @description Actualización autenticada (HU-020, CA-020-02) de nombre, zona horaria IANA y contacto opcional. El cuerpo declara únicamente `name`, `timezone`, `contactEmail` y `contactPhone`; cualquier otro campo -en particular un identificador de barbería- se rechaza como forma inválida (`CA-020-05`). `contactEmail`/`contactPhone` vacíos significan "sin contacto": el servidor los normaliza a ausencia antes de guardar y nunca los registra en texto plano (`CA-020-06`). La zona se confirma contra el catálogo real de zonas IANA del servidor dentro de la misma operación que la escritura: una zona no reconocida responde `422` sin modificar ningún campo, ni siquiera los que sí eran válidos (`CA-020-03`). La respuesta exitosa devuelve la representación completa ya guardada, la misma forma que `GET`.
+         */
+        patch: operations["updateBarbershopSettings"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -276,6 +300,53 @@ export interface components {
              * @example Si la cuenta existe y su teléfono está verificado, recibirá un código por WhatsApp.
              */
             message: string;
+        };
+        /** @description Configuración básica de la barbería activa: nombre, zona horaria IANA y contacto opcional. contactEmail/contactPhone viajan siempre presentes en el cuerpo, con valor `null` explícito cuando la barbería no tiene ese contacto configurado (nunca se omiten ni se representan como cadena vacía). */
+        BarbershopSettingsResponse: {
+            /**
+             * @description Nombre de la barbería, ya recortado.
+             * @example Barbería Ejemplo
+             */
+            name: string;
+            /**
+             * @description Zona horaria IANA de la barbería (RN-DIS-07). Gobierna toda hora que la aplicación presente para esta barbería; no es la zona del navegador ni la del servidor.
+             * @example America/Bogota
+             */
+            timezone: string;
+            /**
+             * Format: email
+             * @description Correo de contacto de la barbería, normalizado a minúsculas; null cuando no está configurado.
+             * @example contacto@ejemplo.test
+             */
+            contactEmail: string | null;
+            /**
+             * @description Teléfono de contacto de la barbería en formato E.164; null cuando no está configurado.
+             * @example +573001234567
+             */
+            contactPhone: string | null;
+        };
+        /** @description Nombre, zona horaria y contacto opcional a guardar. Los cuatro campos viajan siempre presentes. */
+        UpdateBarbershopSettingsRequest: {
+            /**
+             * @description Nombre de la barbería. Espacios sueltos no cuentan como valor (se recorta y valida como no vacío).
+             * @example Barbería Ejemplo
+             */
+            name: string;
+            /**
+             * @description Zona horaria IANA (RN-DIS-07), confirmada por el servidor contra su catálogo real de zonas dentro de la misma operación (CA-020-03). Nunca una abreviatura (`COT`), un desplazamiento (`UTC-5`) ni la zona detectada del dispositivo.
+             * @example America/Bogota
+             */
+            timezone: string;
+            /**
+             * @description Correo de contacto, con forma de correo cuando no está vacío. Cadena vacía significa "sin correo de contacto" (por eso este campo no declara `format: email`: ese formato no admite cadena vacía como valor válido).
+             * @example contacto@ejemplo.test
+             */
+            contactEmail: string;
+            /**
+             * @description Teléfono de contacto en formato E.164. Cadena vacía significa "sin teléfono de contacto".
+             * @example +573001234567
+             */
+            contactPhone: string;
         };
         /** @description Solicitud de recuperación de acceso. */
         RecoveryRequestRequest: {
@@ -486,6 +557,36 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
+        /** @description Configuración básica de la barbería activa. */
+        BarbershopSettingsSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["BarbershopSettingsResponse"];
+            };
+        };
+        /** @description Configuración básica de la barbería ya guardada, en su representación canónica completa. */
+        BarbershopSettingsUpdated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["BarbershopSettingsResponse"];
+            };
+        };
+        /** @description El cuerpo es JSON válido con los campos esperados, pero uno de ellos incumple una validación de campo o de negocio: name vacío o demasiado largo, timezone vacía, demasiado larga o no reconocida por el catálogo IANA del servidor, o contactEmail/contactPhone con una forma inválida. Ninguna escritura ocurre cuando esto sucede, ni siquiera parcial (CA-020-03). */
+        BarbershopSettingsValidationProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
         /** @description La solicitud fue recibida. Si la cuenta existe y tiene el teléfono verificado, se envía un código por WhatsApp oficial y correo; en cualquier otro caso no ocurre ningún envío, sin que la respuesta lo revele. */
         RecoveryRequestAccepted: {
             headers: {
@@ -681,6 +782,42 @@ export interface operations {
         responses: {
             200: components["responses"]["SessionContextSuccess"];
             401: components["responses"]["UnauthorizedProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getBarbershopSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["BarbershopSettingsSuccess"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    updateBarbershopSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateBarbershopSettingsRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["BarbershopSettingsUpdated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            422: components["responses"]["BarbershopSettingsValidationProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

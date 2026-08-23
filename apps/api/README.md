@@ -44,6 +44,11 @@ antes de agregar código.
   sin enumeración, con token de reinicio opaco y revocación total de
   sesiones al cambiar la contraseña. Purga periódica en `cmd/worker`. Ver la
   sección "Recuperación de acceso (HU-008)" más abajo.
+- **Configuración básica de la barbería (HU-020)**: `internal/modules/shops`
+  implementa `GET`/`PATCH /api/v1/private/settings/barbershop`: nombre, zona
+  IANA (confirmada contra `pg_timezone_names` dentro de la misma transacción
+  del `UPDATE`) y contacto opcional. Ver la sección "Configuración básica de
+  la barbería (HU-020)" más abajo.
 
 ## Requisitos
 
@@ -65,6 +70,7 @@ go test -race ./internal/platform/idempotency/...
 go test -race ./internal/platform/httpserver/...
 go test -race ./internal/modules/auth/...
 go test -race ./internal/modules/notification/...
+go test -race ./internal/modules/shops/...
 go test -race ./cmd/api/...
 ```
 

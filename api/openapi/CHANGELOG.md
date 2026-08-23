@@ -4,6 +4,26 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.6.0] - 2026-08-23
+
+### Agregado
+
+- `GET /private/settings/barbershop` (HU-020, `operationId:
+  getBarbershopSettings`): lectura autenticada de la configuración básica
+  de la barbería activa (`name`, `timezone`, `contactEmail`,
+  `contactPhone`). `200` (`BarbershopSettingsResponse`), `401`, `404`
+  defensivo, `500`.
+- `PATCH /private/settings/barbershop` (`operationId:
+  updateBarbershopSettings`): actualiza los mismos cuatro campos.
+  `barbershopId` nunca es un campo aceptado (`CA-020-05`). `200`
+  (representación canónica guardada), `400` (JSON/campo desconocido),
+  `401`, `404` defensivo, `422` (validación de campo, incluida zona IANA no
+  reconocida, `CA-020-03`), `500`.
+- Esquemas `BarbershopSettingsResponse`, `UpdateBarbershopSettingsRequest`.
+- Responses `BarbershopSettingsSuccess`, `BarbershopSettingsUpdated`,
+  `BarbershopSettingsValidationProblem`.
+- Tag `Settings`.
+
 ## [0.5.0] - 2026-08-17
 
 ### Agregado

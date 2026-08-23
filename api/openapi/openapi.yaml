@@ -15,7 +15,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.5.0
+  version: 0.6.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -29,6 +29,8 @@ servers:
 tags:
   - name: Auth
     description: Identidad, sesiones y recuperación de acceso del barbero.
+  - name: Settings
+    description: Configuración general de la barbería.
 paths:
   /public/auth/login:
     $ref: './paths/public-auth.yaml#/~1public~1auth~1login'
@@ -46,6 +48,8 @@ paths:
     $ref: './paths/private-auth.yaml#/~1private~1auth~1logout'
   /private/auth/session:
     $ref: './paths/private-auth.yaml#/~1private~1auth~1session'
+  /private/settings/barbershop:
+    $ref: './paths/settings.yaml#/~1private~1settings~1barbershop'
 components:
   schemas:
     Problem:
@@ -62,6 +66,10 @@ components:
       $ref: './components/schemas/ChallengeVerifyRequest.yaml'
     ChallengeAcceptedResponse:
       $ref: './components/schemas/ChallengeAcceptedResponse.yaml'
+    BarbershopSettingsResponse:
+      $ref: './components/schemas/BarbershopSettingsResponse.yaml'
+    UpdateBarbershopSettingsRequest:
+      $ref: './components/schemas/UpdateBarbershopSettingsRequest.yaml'
   securitySchemes:
     SessionCookie:
       $ref: './components/security-schemes/SessionCookie.yaml'
@@ -106,3 +114,9 @@ components:
       $ref: './components/responses/ChallengeVerifySuccess.yaml'
     ChallengeRequiredProblem:
       $ref: './components/responses/ChallengeRequiredProblem.yaml'
+    BarbershopSettingsSuccess:
+      $ref: './components/responses/BarbershopSettingsSuccess.yaml'
+    BarbershopSettingsUpdated:
+      $ref: './components/responses/BarbershopSettingsUpdated.yaml'
+    BarbershopSettingsValidationProblem:
+      $ref: './components/responses/BarbershopSettingsValidationProblem.yaml'

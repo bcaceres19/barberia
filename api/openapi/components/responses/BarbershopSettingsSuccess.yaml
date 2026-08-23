@@ -1,0 +1,24 @@
+# Respuesta 200 de GET /private/settings/barbershop (HU-020, CA-020-01).
+description: Configuración básica de la barbería activa.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/BarbershopSettingsResponse.yaml'
+    examples:
+      conContacto:
+        summary: Barbería con contacto configurado
+        value:
+          name: Barbería Ejemplo
+          timezone: America/Bogota
+          contactEmail: contacto@ejemplo.test
+          contactPhone: "+573001234567"
+      sinContacto:
+        summary: Barbería sin contacto configurado
+        value:
+          name: Barbería Ejemplo
+          timezone: America/Bogota
+          contactEmail: null
+          contactPhone: null

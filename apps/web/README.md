@@ -11,9 +11,12 @@ antes de agregar código.
 Arranque de la aplicación, router, el **sistema visual base (HU-009)**
 (tokens y cinco componentes en `src/shared/ui/`), la **pantalla de acceso
 (HU-010)**, el **cascarón del panel privado (HU-012)** (guard generalizado
-con sesión real, cabecera con barbería activa y coordinación única de 401)
-y la **defensa escalonada contra abuso (HU-007)**: reto telefónico inline
-en la pantalla de acceso cuando el login responde 429. Ver las secciones
+con sesión real, cabecera con barbería activa y coordinación única de 401),
+la **defensa escalonada contra abuso (HU-007)**: reto telefónico inline en
+la pantalla de acceso cuando el login responde 429, y la **configuración
+básica de la barbería (HU-020)**: pantalla "Barbería" (`/panel/barberia`)
+para consultar y actualizar nombre, zona horaria y contacto opcional, con
+actualización inmediata de la cabecera tras guardar. Ver las secciones
 siguientes. El resto de carpetas de `modules/` conserva su `index.ts` de
 marcador de responsabilidad futura.
 
@@ -32,9 +35,17 @@ desde `src/app/router/index.ts`:
 - `/panel` — cascarón privado (`src/modules/auth/layouts/PrivateShell.vue`),
   protegido por un único guard generalizado
   (`beforeEnter: requireSession`, `src/modules/auth/guards/requireSession.ts`,
-  HU-012). Su hija `""` (`name: "panel"`, `src/modules/auth/pages/PanelPage.vue`)
-  es hoy el único contenido real; toda ruta privada futura se agrega como
-  hija de esta misma ruta padre, sin repetir el guard.
+  HU-012). Desde HU-020, `auth.privateShellRoute(children, extraNavItems)`
+  es una fábrica: `src/app/router/index.ts` la invoca una sola vez,
+  combinando las hijas y las entradas de navegación de `auth`
+  (`privateShellChildRoutes`, hoy solo `""` → `name: "panel"`) con las de
+  cualquier otro módulo con pantalla privada (`settings.
+  settingsPrivateShellChildRoutes`/`settingsNavItems`, hoy `barberia` →
+  `name: "configuracion-barberia"`). Ningún módulo importa a otro para
+  lograrlo (app → modules → shared, ver
+  `src/shared/navigation/navItem.ts`); toda ruta privada futura se agrega
+  igual, como hija de esta misma ruta padre, sin repetir el guard ni crear
+  un segundo cascarón.
 - `/recuperar-acceso` (`name: "recuperar-acceso"`) — destino real (no
   roto) del enlace de recuperación de `CA-010-08` mientras `HU-011` no
   existe. Ver `DP-UX-06` en `docs/00-control/dudas-pendientes.md`: ninguna
@@ -138,6 +149,74 @@ hash argon2id real (no el hash ficticio de
 `database/testdata/hu005_credenciales_sesiones.sql`, que solo sirve para
 probar forma/RLS); variables `E2E_EMAIL`/`E2E_PASSWORD` sobrescriben las
 credenciales de prueba por defecto.
+
+## Configuración básica de la barbería (HU-020)
+
+Fuente normativa: `docs/02-requisitos/historias-usuario.md` (HU-020) y
+`docs/00-control/registro-decisiones.md` (`DEC-019`, `DEC-024`). Esta
+sección resume la API pública y las decisiones de implementación; no las
+sustituye.
+
+### Ruta y navegación
+
+`src/modules/settings/routes.ts` expone `settingsPrivateShellChildRoutes`
+(`barberia` → `name: "configuracion-barberia"`, `src/modules/settings/
+pages/SettingsPage.vue`, diferida) y `src/modules/settings/index.ts`
+expone además `settingsNavItems` (`{ to: { name:
+"configuracion-barberia" }, label: "Barbería" }`). `src/app/router/index.ts`
+combina ambas con las de `auth` al construir el único cascarón privado (ver
+"Cascarón del panel privado (HU-012)" más arriba); `settings` no importa
+ningún interno de `auth` ni monta su propio guard.
+
+### Formulario y estados
+
+`SettingsPage.vue` carga `GET /private/settings/barbershop` al montar,
+edita los cuatro campos autorizados (`name`, `timezone`, `contactEmail`,
+`contactPhone`) y guarda con `PATCH` del mismo recurso
+(`src/modules/settings/api/settingsApi.ts`, mismo patrón de outcome
+discriminado por `status` que `loginApi.ts`). Estados explícitos: carga,
+error de carga recuperable con "Reintentar", listo, guardando, error de
+campo (validación de cliente en `src/modules/settings/validation/
+settingsValidation.ts`, forma únicamente — nunca valida el catálogo IANA,
+eso lo confirma el servidor), error de validación del servidor (incluida
+una zona horaria no reconocida, `CA-020-03`), error de red y éxito. Un
+error recuperable NUNCA borra lo que el barbero ya escribió (`CA-020-08`);
+solo la respuesta `200` confirmada por el servidor reemplaza los valores
+del formulario.
+
+### Actualización inmediata de la cabecera
+
+Tras un guardado exitoso, `SettingsPage.vue` llama a la función pública
+estrecha `updateBarbershopName` (exportada por `auth`, HU-020) con el
+nombre YA confirmado por el servidor: es el único punto del código que
+actualiza la cabecera antes de la próxima rehidratación completa
+(`GET /private/auth/session` sigue siendo la autoridad en cada recarga).
+Ningún camino de este módulo aplica optimismo: un fallo de guardado nunca
+invoca esta función.
+
+### Presentación de instantes independiente del dispositivo (CA-020-04)
+
+`src/shared/time/formatInstant.ts` (`formatInstantInTimezone`) es la única
+pieza que HU-020 aporta para esta garantía: recibe la zona SIEMPRE
+explícita (nunca la del dispositivo) y usa `Intl.DateTimeFormat` (API de
+plataforma, sin librería de fechas nueva). Sin consumidor real todavía
+(esta pantalla no muestra ningún instante formateado); queda lista para que
+`B2`/`B3` la reutilicen en vez de reinventar el mismo cálculo.
+
+### Pruebas
+
+Componente (`src/modules/settings/pages/__tests__/SettingsPage.test.ts`),
+cliente tipado (`src/modules/settings/api/__tests__/settingsApi.test.ts`),
+validación (`src/modules/settings/validation/__tests__/
+settingsValidation.test.ts`), presentación de instantes
+(`src/shared/time/__tests__/formatInstant.test.ts`), accesibilidad
+(`vitest-axe` integrado en `SettingsPage.test.ts`) y E2E contra el API real
+en local: `e2e/configuracion-barberia.spec.ts` (edición/guardado con
+persistencia real tras recargar, zona no reconocida sin pérdida de datos)
+y `e2e/configuracion-barberia-evidencia-responsiva.spec.ts` (capturas en
+`e2e/evidence/configuracion-barberia/`, un solo inicio de sesión
+reutilizado entre los cinco breakpoints para no competir con el umbral de
+`HU-007` al correrse junto al resto de la suite E2E).
 
 ## Sistema visual base (HU-009)
 

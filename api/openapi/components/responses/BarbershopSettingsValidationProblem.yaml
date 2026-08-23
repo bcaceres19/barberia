@@ -1,0 +1,62 @@
+# 422 de PATCH /private/settings/barbershop (HU-020, CA-020-03, CA-020-06):
+# un cuerpo bien formado que incumple una validación de campo o de negocio
+# procesable, distinto de InvalidRequestProblem (JSON o forma inválida,
+# CA-020-05: un campo desconocido como barbershopId responde 400, no 422).
+# Mismo schema que ValidationProblem.yaml; solo cambian los ejemplos, para
+# documentar cada campo que HU-020 valida sin duplicar el schema
+# (docs/06-api/estandar-openapi.md sección 9, regla 4).
+description: >
+  El cuerpo es JSON válido con los campos esperados, pero uno de ellos
+  incumple una validación de campo o de negocio: name vacío o demasiado
+  largo, timezone vacía, demasiado larga o no reconocida por el catálogo
+  IANA del servidor, o contactEmail/contactPhone con una forma inválida.
+  Ninguna escritura ocurre cuando esto sucede, ni siquiera parcial
+  (CA-020-03).
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      nombreObligatorio:
+        summary: Nombre vacío o solo espacios
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: el nombre de la barbería es obligatorio
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      zonaNoReconocida:
+        summary: Zona horaria no IANA (abreviatura, offset o texto inexistente)
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: la zona horaria no es una zona IANA reconocida
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      correoDeContactoInvalido:
+        summary: Correo de contacto con forma inválida
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: el correo de contacto no tiene un formato válido
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      telefonoDeContactoInvalido:
+        summary: Teléfono de contacto fuera de formato E.164
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: el teléfono de contacto no tiene un formato E.164 válido
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
