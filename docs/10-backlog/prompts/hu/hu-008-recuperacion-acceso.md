@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-008-v1"
 version: "1.4"
 kind: "hu"
-status: "in_progress"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
