@@ -105,6 +105,21 @@ func TestUnauthorized_CarriesSafeMessage(t *testing.T) {
 	}
 }
 
+func TestConflict_CarriesSafeMessage(t *testing.T) {
+	err := apperr.Conflict("ya existe un servicio activo con ese nombre")
+
+	got, ok := apperr.As(err)
+	if !ok {
+		t.Fatal("expected apperr.As to recognize the error")
+	}
+	if got.Kind != apperr.KindConflict {
+		t.Fatalf("expected KindConflict, got %q", got.Kind)
+	}
+	if got.Message != "ya existe un servicio activo con ese nombre" {
+		t.Fatalf("unexpected message: %q", got.Message)
+	}
+}
+
 func TestAs_ReturnsFalseForForeignError(t *testing.T) {
 	_, ok := apperr.As(fmt.Errorf("plain error"))
 	if ok {

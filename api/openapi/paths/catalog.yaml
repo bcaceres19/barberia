@@ -1,2 +1,233 @@
-# Operaciones privadas de gestión de servicios (crear, editar, desactivar).
-# Ver docs/06-api/estandar-openapi.md. Sin contenido todavía.
+# Operaciones privadas del catálogo básico de servicios (HU-022): listar,
+# consultar, crear y editar. No mezcla con asignaciones a barberos
+# (barber_service, HU-023, staff.yaml se mantiene aparte), ciclo de
+# activación (HU-024) ni horario/agenda -esas capacidades tienen su propio
+# archivo cuando existan-.
+/private/services:
+  get:
+    tags: [Catalog]
+    summary: Listar los servicios del catálogo de la barbería activa
+    description: >
+      Lista paginada por cursor (HU-022, CA-022-01) de los servicios de la
+      barbería derivada de la sesión vigente. Orden estable por fecha de
+      alta y luego por identificador; sin paginación por offset porque la
+      colección no tiene un máximo de negocio aprobado.
+    operationId: listServices
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-024, DEC-067]
+    parameters:
+      - name: cursor
+        in: query
+        required: false
+        description: >
+          Cursor opaco devuelto por una página anterior (`nextCursor`). Sin
+          este parámetro, la respuesta empieza en la primera página.
+        schema:
+          type: string
+        examples:
+          continuacion:
+            value: eyJjcmVhdGVkQXQiOiIyMDI2LTA4LTI0VDE1OjA1OjEwWiIsImlkIjoiMWEyYjNjNGQtNWU2Zi00NzA4LTlhMGItMWMyZDNlNGY1MDYxIn0=
+      - name: limit
+        in: query
+        required: false
+        description: Máximo de servicios por página.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+        examples:
+          porDefecto:
+            value: 20
+    responses:
+      "200":
+        $ref: '../components/responses/ServiceListSuccess.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  post:
+    tags: [Catalog]
+    summary: Crear un servicio en el catálogo de la barbería activa
+    description: >
+      Alta de un servicio (HU-022, CA-022-02) protegida con clave de
+      idempotencia (RN-IDE-01, DEC-043): repetir el mismo `POST` con la
+      misma `Idempotency-Key` y el mismo cuerpo devuelve la misma
+      representación creada sin crear una segunda fila. El nombre debe ser
+      único entre los servicios ACTIVOS de la misma barbería (DEC-067): una
+      clave nueva con un nombre que ya usa otro servicio activo responde
+      `409` sin crear nada; el mismo nombre que un servicio ya DESACTIVADO
+      sí se acepta. El tenant se deriva exclusivamente de `SessionCookie`;
+      el cuerpo nunca acepta `barbershopId`, `currency` ni `isActive`.
+    operationId: createService
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02, RN-IDE-01, RN-SER-01, RN-SER-02]
+    x-decisions: [DEC-024, DEC-043, DEC-067]
+    parameters:
+      - $ref: '../components/parameters/IdempotencyKey.yaml'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/CreateServiceRequest.yaml'
+          examples:
+            altaSimple:
+              summary: Alta de un servicio
+              value:
+                name: Corte clásico
+                description: Corte con máquina y tijera, incluye lavado.
+                durationMinutes: 30
+                price: "45000.00"
+    responses:
+      "201":
+        $ref: '../components/responses/ServiceCreated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "409":
+        description: >
+          Conflicto de idempotencia (misma clave con otro contenido u otra
+          operación, `IdempotencyConflictProblem`), operación en curso con
+          la misma clave (`IdempotencyLockedProblem`, DEC-043), o nombre ya
+          usado por otro servicio activo de la misma barbería
+          (`ServiceConflictProblem`, DEC-067). Los tres problem types
+          comparten status pero tienen `code` distinto: el cliente decide
+          por `code`, nunca por `detail`.
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              contenidoDistinto:
+                summary: Misma clave, cuerpo distinto
+                value:
+                  type: /api/v1/problems/idempotency-conflict
+                  title: Conflicto de idempotencia
+                  status: 409
+                  detail: la clave de idempotencia ya se usó con un contenido distinto; usa una clave nueva
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              operacionEnCurso:
+                summary: Otra transacción tiene el bloqueo de esta clave ahora mismo
+                value:
+                  type: /api/v1/problems/idempotency-locked
+                  title: Operación en curso
+                  status: 409
+                  detail: la operación con esta clave de idempotencia todavía está en curso; reintenta en unos segundos
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-locked
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              nombreDuplicado:
+                summary: Nombre ya usado por otro servicio activo de la misma barbería
+                value:
+                  type: /api/v1/problems/conflict
+                  title: Conflicto
+                  status: 409
+                  detail: ya existe un servicio activo con ese nombre en esta barbería
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "422":
+        $ref: '../components/responses/ServiceValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/services/{serviceId}:
+  get:
+    tags: [Catalog]
+    summary: Consultar un servicio del catálogo de la barbería activa
+    description: >
+      Lectura autenticada de un servicio por identificador (HU-022). Un
+      identificador inexistente o perteneciente a otra barbería responde
+      exactamente el mismo `404` (`CA-022-06`, `RN-TEN-01`).
+    operationId: getService
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-024, DEC-067]
+    parameters:
+      - name: serviceId
+        in: path
+        required: true
+        description: Identificador del servicio.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          servicio:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+    responses:
+      "200":
+        $ref: '../components/responses/ServiceSuccess.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  patch:
+    tags: [Catalog]
+    summary: Editar un servicio del catálogo de la barbería activa
+    description: >
+      Edición parcial limitada a los campos de catálogo (HU-022, CA-022-04,
+      CA-022-05): `name`, `description`, `durationMinutes`, `price`. Rechaza
+      un objeto vacío y cualquier campo fuera de esos cuatro -en particular
+      `isActive`, `currency`, asignaciones a barberos, citas o cualquier
+      alcance de propagación, todos fuera de alcance (RN-SER-04, DEC-067)-.
+      Un identificador inexistente o de otra barbería responde el mismo
+      `404` que `GET` (`CA-022-06`). Un nombre editado que choque con otro
+      servicio activo de la misma barbería responde `409` (DEC-067). Ningún
+      cambio de esta operación afecta una cita existente (RN-SER-04).
+    operationId: updateService
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02, RN-SER-01, RN-SER-02, RN-SER-04]
+    x-decisions: [DEC-024, DEC-067]
+    parameters:
+      - name: serviceId
+        in: path
+        required: true
+        description: Identificador del servicio.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          servicio:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/UpdateServiceRequest.yaml'
+          examples:
+            editarPrecioYDuracion:
+              summary: Nuevo precio y duración
+              value:
+                durationMinutes: 45
+                price: "50000.00"
+    responses:
+      "200":
+        $ref: '../components/responses/ServiceUpdated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "409":
+        $ref: '../components/responses/ServiceConflictProblem.yaml'
+      "422":
+        $ref: '../components/responses/ServiceValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

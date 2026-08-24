@@ -1,0 +1,59 @@
+# Cuerpo de POST /private/services (CA-022-02, CA-022-03, CA-022-04).
+# Cerrado: el handler rechaza cualquier campo desconocido. Nunca declara
+# barbershopId (el tenant se deriva de SessionCookie), currency (fija en
+# COP, DEC-067) ni isActive (nace activo, HU-024 la gestiona).
+type: object
+description: >
+  Alta de un servicio del catálogo de la barbería activa, protegida con
+  clave de idempotencia (RN-IDE-01). El nombre debe ser único entre los
+  servicios ACTIVOS de la misma barbería (DEC-067): un nombre igual al de un
+  servicio ya desactivado sí se acepta.
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 120
+    description: >
+      Nombre visible del servicio. El servidor recorta espacios; un valor
+      vacío, compuesto solo por espacios o mayor de 120 caracteres responde
+      `422`; un nombre igual al de otro servicio activo de la misma
+      barbería responde `409` (DEC-067). Nada se persiste en ninguno de los
+      dos casos.
+    examples:
+      - Corte clásico
+  description:
+    type: string
+    maxLength: 500
+    description: >
+      Descripción opcional. Un valor ausente, vacío o compuesto solo por
+      espacios se almacena como ausencia de descripción; uno mayor de 500
+      caracteres responde `422`.
+    examples:
+      - Corte con máquina y tijera, incluye lavado.
+  durationMinutes:
+    type: integer
+    minimum: 1
+    maximum: 1440
+    description: >
+      Duración planificada en minutos enteros (RN-SER-01, RN-SER-02): sin
+      lista cerrada, 25 o 45 minutos son igual de válidos que 30, 60 o 90.
+      Cero, negativa, fraccionaria o fuera de [1, 1440] responde `422` (o
+      `400` si el JSON ni siquiera es un entero, por ejemplo `30.5`).
+    examples:
+      - 30
+  price:
+    type: string
+    pattern: '^[0-9]{1,10}(\.[0-9]{1,2})?$'
+    description: >
+      Precio decimal exacto con hasta dos cifras, estrictamente mayor que
+      cero (DEC-067: sin servicios gratuitos). Un valor con formato
+      inválido, negativo o igual a cero responde `422`. Enviado como
+      `string`, nunca `number`: evita que un cliente lo redondee con coma
+      flotante antes de enviarlo.
+    examples:
+      - "45000.00"
+required:
+  - name
+  - durationMinutes
+  - price
+additionalProperties: false

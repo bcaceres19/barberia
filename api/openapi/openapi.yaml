@@ -10,14 +10,17 @@
 # (DEC-060), que rehidrata la cookie HttpOnly al abrir o recargar la
 # aplicación. HU-021 agrega el tag Staff y las cuatro operaciones de
 # paths/staff.yaml: listar, registrar (con Idempotency-Key, RN-IDE-01),
-# consultar y renombrar barberos. Los componentes de error ya eran reales
-# desde HU-003 (recuperación de panic, aislamiento por tenant, límite de
-# cuerpo); paths queda vacío para el resto de capacidades hasta su primer
-# endpoint implementado.
+# consultar y renombrar barberos. HU-022 agrega el tag Catalog y las cuatro
+# operaciones de paths/catalog.yaml: listar, crear (con Idempotency-Key,
+# RN-IDE-01, y conflicto de nombre entre servicios activos, DEC-067),
+# consultar y editar servicios del catálogo básico. Los componentes de
+# error ya eran reales desde HU-003 (recuperación de panic, aislamiento por
+# tenant, límite de cuerpo); paths queda vacío para el resto de capacidades
+# hasta su primer endpoint implementado.
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.7.0
+  version: 0.8.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -35,6 +38,8 @@ tags:
     description: Configuración general de la barbería.
   - name: Staff
     description: Registro y listado de los barberos de la barbería.
+  - name: Catalog
+    description: Catálogo básico de servicios de la barbería (HU-022).
 paths:
   /public/auth/login:
     $ref: './paths/public-auth.yaml#/~1public~1auth~1login'
@@ -58,6 +63,10 @@ paths:
     $ref: './paths/staff.yaml#/~1private~1barbers'
   /private/barbers/{barberId}:
     $ref: './paths/staff.yaml#/~1private~1barbers~1{barberId}'
+  /private/services:
+    $ref: './paths/catalog.yaml#/~1private~1services'
+  /private/services/{serviceId}:
+    $ref: './paths/catalog.yaml#/~1private~1services~1{serviceId}'
 components:
   schemas:
     Problem:
@@ -86,6 +95,14 @@ components:
       $ref: './components/schemas/CreateBarberRequest.yaml'
     UpdateBarberRequest:
       $ref: './components/schemas/UpdateBarberRequest.yaml'
+    ServiceResponse:
+      $ref: './components/schemas/ServiceResponse.yaml'
+    ServiceListResponse:
+      $ref: './components/schemas/ServiceListResponse.yaml'
+    CreateServiceRequest:
+      $ref: './components/schemas/CreateServiceRequest.yaml'
+    UpdateServiceRequest:
+      $ref: './components/schemas/UpdateServiceRequest.yaml'
   securitySchemes:
     SessionCookie:
       $ref: './components/security-schemes/SessionCookie.yaml'
@@ -148,3 +165,15 @@ components:
       $ref: './components/responses/BarberUpdated.yaml'
     BarberValidationProblem:
       $ref: './components/responses/BarberValidationProblem.yaml'
+    ServiceListSuccess:
+      $ref: './components/responses/ServiceListSuccess.yaml'
+    ServiceSuccess:
+      $ref: './components/responses/ServiceSuccess.yaml'
+    ServiceCreated:
+      $ref: './components/responses/ServiceCreated.yaml'
+    ServiceUpdated:
+      $ref: './components/responses/ServiceUpdated.yaml'
+    ServiceValidationProblem:
+      $ref: './components/responses/ServiceValidationProblem.yaml'
+    ServiceConflictProblem:
+      $ref: './components/responses/ServiceConflictProblem.yaml'

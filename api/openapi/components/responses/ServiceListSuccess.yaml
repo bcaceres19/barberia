@@ -1,0 +1,37 @@
+# Respuesta 200 de GET /private/services (HU-022, CA-022-01).
+description: >
+  Página de servicios del catálogo de la barbería activa.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/ServiceListResponse.yaml'
+    examples:
+      catalogoConDosServicios:
+        summary: Catálogo con dos servicios, primera y única página
+        value:
+          items:
+            - id: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+              name: Corte clásico
+              description: Corte con máquina y tijera, incluye lavado.
+              durationMinutes: 30
+              price: "45000.00"
+              currency: COP
+              createdAt: "2026-08-24T15:04:05Z"
+              updatedAt: "2026-08-24T15:04:05Z"
+            - id: 1a2b3c4d-5e6f-4708-9a0b-1c2d3e4f5061
+              name: Corte + barba
+              description: null
+              durationMinutes: 60
+              price: "65000.00"
+              currency: COP
+              createdAt: "2026-08-24T15:05:10Z"
+              updatedAt: "2026-08-24T15:05:10Z"
+          nextCursor: null
+      catalogoVacio:
+        summary: Barbería sin servicios todavía
+        value:
+          items: []
+          nextCursor: null

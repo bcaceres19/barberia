@@ -57,6 +57,19 @@ antes de agregar código.
   inexistente o de otra barbería (`CA-021-05`); sin borrado, desactivación,
   orden manual ni vínculo con `staff_user` (`DEC-047`). Ver la sección
   "Registro y listado de barberos (HU-021)" más abajo.
+- **Catálogo básico de servicios (HU-022)**: `internal/modules/catalog`
+  implementa `GET`/`POST /api/v1/private/services` y
+  `GET`/`PATCH /api/v1/private/services/{serviceId}`: lista paginada por
+  cursor, alta protegida con `Idempotency-Key` (RN-IDE-01, `DEC-043`),
+  lectura individual y edición parcial de nombre/descripción/duración/
+  precio. Precio en centavos enteros (`ParsePriceCOP`/`FormatPriceCOP`,
+  nunca coma flotante); moneda COP fija, sin campo editable (`DEC-067`).
+  `409` con `code: "conflict"` para un nombre ya usado por otro servicio
+  activo de la misma barbería, distinto del `409` de idempotencia; `404`
+  idéntico para un servicio inexistente o de otra barbería (`CA-022-06`);
+  sin borrado, ciclo de activación ni vínculo con barberos (fuera de
+  alcance de HU-022). Ver la sección "Catálogo básico de servicios
+  (HU-022)" más abajo.
 
 ## Requisitos
 
@@ -80,6 +93,7 @@ go test -race ./internal/modules/auth/...
 go test -race ./internal/modules/notification/...
 go test -race ./internal/modules/shops/...
 go test -race ./internal/modules/staff/...
+go test -race ./internal/modules/catalog/...
 go test -race ./cmd/api/...
 ```
 
@@ -889,6 +903,103 @@ compartir nombre (`TestRename_DuplicateNameAcrossBarbers_Allowed`).
 - PostgreSQL real, incluida concurrencia con `-race` (dos conexiones reales, misma clave): `internal/modules/staff/postgres/repository_test.go`.
 - SQL directo con el rol real: `database/tests/hu021_barberos.sql`.
 - Router de producción con dos tenants reales: `cmd/api/staff_integration_test.go`.
+
+## Catálogo básico de servicios (HU-022)
+
+`internal/modules/catalog` implementa las cuatro operaciones privadas de
+`api/openapi/paths/catalog.yaml`: `GET`/`POST /api/v1/private/services` y
+`GET`/`PATCH /api/v1/private/services/{serviceId}`. Núcleo (`domain.go`,
+`errors.go`, `ports.go`, `service.go`) sin Chi, `net/http`, pgx ni
+`internal/platform/database` (CA-002-06); `postgres/repository.go` traduce
+el puerto `catalog.Repository` a `database.DB`; `httpapi/` decodifica,
+valida la forma y traduce el resultado a HTTP. Migración
+`database/migrations/20260824140000_create_service.sql` (tabla `service`
+mínima: nombre, descripción opcional, duración en minutos, precio en COP,
+`is_active` presente pero sin ningún endpoint que lo cambie -prepara
+HU-024 sin exponer su transición-).
+
+El caso de uso se llama `catalog.CatalogService`, no solo `Service` (a
+diferencia de `staff.Service`/`shops.Service`): el propio recurso de este
+módulo ya se llama `Service`, y un paquete Go no puede declarar dos tipos
+con el mismo nombre.
+
+### Dinero exacto: centavos enteros, nunca coma flotante (DEC-067)
+
+`catalog.ParsePriceCOP`/`FormatPriceCOP` convierten entre el string
+decimal del contrato (`"45000.00"`) y un `int64` de centavos usando
+únicamente aritmética de enteros (división/módulo, sin `strconv.ParseFloat`
+en ningún punto). `catalog/postgres` traduce esos centavos a/desde
+`pgtype.Numeric` (`numericFromCents`/`centsFromNumeric`) también con
+aritmética de enteros (`big.Int` escalado por la potencia de diez que
+corresponda a `Exp`), para que el valor que PostgreSQL almacena en
+`numeric(12,2)` haga un viaje de ida y vuelta exacto sin redondeo
+acumulado. Un precio cero o negativo se rechaza antes de tocar el
+repositorio (`errPriceMustBePositive`); un precio con más de dos cifras
+decimales o formato inválido, también.
+
+### Nombre único entre servicios activos: conflicto, no validación (DEC-067)
+
+`idx_service_active_name` (índice único parcial `(barbershop_id, name)
+WHERE is_active`) es la única fuente de verdad de esta regla: el núcleo no
+la duplica con una consulta previa (evitaría una carrera entre dos altas
+simultáneas con el mismo nombre). `catalog/postgres.Repository.Create`/
+`.Update` detectan el `unique_violation` (`pgconn.PgError`, código `23505`,
+`ConstraintName == "idx_service_active_name"`) y lo traducen a
+`NameTaken`/`CreateResult.NameTaken`/`UpdateResult.NameTaken`, nunca a un
+error genérico; `CatalogService` los traduce a `apperr.Conflict`
+(`KindConflict`, nuevo en `internal/platform/apperr`), que
+`httpserver.Translate` mapea a `409` con `code: "conflict"` -distinto de
+`idempotency-conflict`/`idempotency-locked`, que no dependen de ninguna
+cabecera `Idempotency-Key`-. En `Create`, el conflicto ocurre DENTRO de la
+misma `InTenantTx` que la reclamación de idempotencia: el `ROLLBACK`
+resultante deshace también esa reclamación, dejando la clave libre para un
+reintento legítimo con un nombre distinto (mismo criterio de `CA-004-06`).
+
+### `404` idéntico para inexistente y de otra barbería (CA-022-06, RN-TEN-01)
+
+Mismo patrón que `staff`: `Get` y `Update` filtran explícitamente por
+`barbershop_id` además de RLS y colapsan "no existe" y "es de otra
+barbería" en el mismo `apperr.NotFound`. Un identificador que ni siquiera
+tiene forma de UUID se rechaza con el mismo `404` antes de tocar
+PostgreSQL (`catalog.LooksLikeServiceID`).
+
+### Edición parcial con `description` que se puede "borrar" (CA-022-04/05)
+
+`catalog.UpdateFields.Description` es un `OptionalDescription{Set, Value}`,
+no un simple puntero: `Set=false` significa "el cliente no envió este
+campo, no tocar"; `Set=true, Value=nil` significa "borrar la descripción
+existente". La capa HTTP deriva `Set` de la sola presencia del puntero
+`*string` tras decodificar el JSON (una clave ausente dejó el puntero
+`nil`; una clave presente, incluso con cadena vacía, lo dejó no-nulo). El
+repositorio traduce esto a SQL con `CASE WHEN $4::boolean THEN $5::text
+ELSE description END`, nunca con `COALESCE` a secas (que no podría
+expresar "borrar"). Un `PATCH` sin ningún campo de catálogo presente se
+rechaza como `apperr.Validation` antes de tocar el repositorio
+(`errUpdateEmptyBody`); ninguna operación acepta `isActive`, asignaciones a
+barberos ni alcance de propagación hacia una cita (RN-SER-04): el contrato
+ni siquiera declara esos campos.
+
+### Tabla de criterios de aceptación
+
+| Criterio | Estado | Prueba o evidencia |
+| --- | --- | --- |
+| `CA-022-01` | Cumplido | `TestList_FourServicesInACatalog_ReturnedAsFourDistinctResources`, `TestCatalog_HTTP_CreateGetListUpdateReload_FullJourney`, `database/tests/hu022_catalogo.sql` ("CA-022-01"). |
+| `CA-022-02` | Cumplido | Alta protegida con idempotencia: `TestCreate_FirstExecution_PersistsAndReturnsProceed`, `TestCreate_SameKeyAndContent_ReplaysWithoutCreatingASecondRow`, `TestCatalog_HTTP_Idempotency_ReplayAndConflict`. |
+| `CA-022-03` | Cumplido | `TestCreate_Durations25_30_45_90_AllAccepted`, `TestCreate_DurationZeroNegativeOrAbove1440_Rejected`, `TestCreateServiceHandler_FractionalDuration_Returns400`, sección de `hu022_catalogo.sql`. |
+| `CA-022-04` | Cumplido | `TestCreateServiceHandler_UnknownField_Returns400`, `TestCreate_PriceZeroOrNegative_Rejected`, `TestCreate_DuplicateActiveName_ReturnsNameTakenWithoutPersisting`, `TestCatalog_HTTP_DuplicateActiveName_Returns409`. |
+| `CA-022-05` | Cumplido | Contrato sin campo de alcance sobre citas (`TestContract_UpdateServiceRequestSchema_MatchesDTOFields` rechaza `barberIds`/`appointments`); `TestCatalog_HTTP_CreateGetListUpdateReload_FullJourney` confirma que un cambio de precio/duración no toca `name`. |
+| `CA-022-06` | Cumplido | `TestGet_CrossTenant_NeverLeaksAnotherShopsService`, `TestUpdate_CrossTenant_NeverEditsAnotherShopsService`, `TestCatalog_HTTP_TwoTenants_CrossAccessAlwaysReturns404WithoutLeaking`, sección CA-022-06 de `hu022_catalogo.sql`. |
+| `CA-022-07` | Cumplido | `openapi:lint`/`openapi:bundle` en verde; `contract_test.go` (9 pruebas) compara los DTO Go y las cuatro operaciones reales contra el YAML fuente. |
+| `CA-022-08` | Parcial (backend no aplica; ver `apps/web/README.md`) | Evidencia de frontend/accesibilidad documentada en `apps/web/README.md` y `apps/web/e2e/`. |
+
+### Pruebas
+
+- Unitarias: `internal/modules/catalog/domain_test.go`, `service_test.go` (doble en memoria de `catalog.Repository`).
+- HTTP con dobles: `internal/modules/catalog/httpapi/handler_test.go`.
+- Contrato: `internal/modules/catalog/httpapi/contract_test.go`.
+- PostgreSQL real, incluida concurrencia con `-race` y precisión monetaria exacta: `internal/modules/catalog/postgres/repository_test.go`.
+- SQL directo con el rol real: `database/tests/hu022_catalogo.sql`.
+- Router de producción con dos tenants reales: `cmd/api/catalog_integration_test.go`.
 
 ## Pruebas de integración
 
