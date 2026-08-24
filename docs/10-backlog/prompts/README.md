@@ -1,6 +1,6 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.15"
+version: "1.16"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-24"
@@ -145,7 +145,7 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-HU-020-v1](hu/hu-020-configuracion-barberia.md) | `hu` | `HU-020` | [#67](https://github.com/bcaceres19/barberia/issues/67) | `executed` | Criterio de salida de B0 verificado 2026-08-23 (CI verde sobre `main` `a57354b`); integrada en `main` (squash-merge 2026-08-23) | `feat/67-hu020-configuracion-barberia` / [PR #70](https://github.com/bcaceres19/barberia/pull/70), integrada en `main` |
 | [PROMPT-HU-021-v1](hu/hu-021-registro-listado-barberos.md) | `hu` | `HU-021` | [#68](https://github.com/bcaceres19/barberia/issues/68) | `executed` | `HU-020` (#67) integrada en `main` 2026-08-23 | Rama `feat/68-hu021-barberos`; [PR #72](https://github.com/bcaceres19/barberia/pull/72), integrada en `main` 2026-08-24 con CI verde |
 | [PROMPT-HU-022-v1](hu/hu-022-catalogo-servicios.md) | `hu` | `HU-022` | [#75](https://github.com/bcaceres19/barberia/issues/75) | `executed` | `HU-020`/`HU-021` integradas; `DP-SER-01` resuelta (`DEC-067`) | Rama `feat/75-hu022-catalogo-servicios`; [PR #79](https://github.com/bcaceres19/barberia/pull/79), integrada en `main` con CI verde |
-| [PROMPT-HU-023-v1](hu/hu-023-asignacion-servicios-barberos.md) | `hu` | `HU-023` | [#76](https://github.com/bcaceres19/barberia/issues/76) | `in_progress` | `HU-022` integrada ([PR #79](https://github.com/bcaceres19/barberia/pull/79)); `DP-SER-02` resuelta (`DEC-068`) | Rama `feat/76-hu023-servicios-barberos`; PR pendiente |
+| [PROMPT-HU-023-v1](hu/hu-023-asignacion-servicios-barberos.md) | `hu` | `HU-023` | [#76](https://github.com/bcaceres19/barberia/issues/76) | `executed` | `HU-022` integrada ([PR #79](https://github.com/bcaceres19/barberia/pull/79)); `DP-SER-02` resuelta (`DEC-068`) | Rama `feat/76-hu023-servicios-barberos`; [PR #83](https://github.com/bcaceres19/barberia/pull/83), pendiente de revisión/CI/merge |
 | [PROMPT-HU-024-v1](hu/hu-024-ciclo-vida-servicios.md) | `hu` | `HU-024` | [#77](https://github.com/bcaceres19/barberia/issues/77) | `draft` | `HU-022`/`HU-023` integradas (pendiente); `DP-SER-03` resuelta (`DEC-069`) | Rama / PR pendientes |
 
 ## 10. Lista de control al guardar o entregar

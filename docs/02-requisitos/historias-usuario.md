@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.11"
+version: "1.12"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-24"
@@ -16,7 +16,7 @@ documentos_relacionados:
 
 # Historias de usuario y criterios de aceptación
 
-> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas confirmadas; no crean alcance por sí solas y requieren aprobación antes de implementarse. B0, `HU-020`, `HU-021` y `HU-022` ya están integradas. Las dudas históricas de B0 quedaron resueltas por `DEC-050`–`DEC-066`; `DP-SER-01`–`DP-SER-03` del lote de B1 (`HU-022`–`HU-024`) quedaron resueltas por `DEC-067`–`DEC-069` y ya tienen issue real de implementación (`#75`, `#76`, `#77`). `HU-023` está en ejecución (issue `#76`); `HU-024` permanece bloqueada solo por el orden de integración (depende de que `HU-023` esté en `main`).
+> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas confirmadas; no crean alcance por sí solas y requieren aprobación antes de implementarse. B0, `HU-020`, `HU-021` y `HU-022` ya están integradas. Las dudas históricas de B0 quedaron resueltas por `DEC-050`–`DEC-066`; `DP-SER-01`–`DP-SER-03` del lote de B1 (`HU-022`–`HU-024`) quedaron resueltas por `DEC-067`–`DEC-069` y ya tienen issue real de implementación (`#75`, `#76`, `#77`). `HU-023` está implementada con [PR #83](https://github.com/bcaceres19/barberia/pull/83) abierto contra `main` (pendiente de revisión/CI/merge); `HU-024` permanece bloqueada solo por el orden de integración (depende de que `HU-023` esté en `main`).
 
 ---
 
@@ -48,7 +48,7 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | Bloque | Historias | Estado |
 | --- | --- | --- |
 | B0 · Cimientos, seguridad y primeras pantallas | `HU-001` – `HU-012` | Redactadas en este documento |
-| B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | `HU-020`/`HU-021`/`HU-022` integradas ([PR #79](https://github.com/bcaceres19/barberia/pull/79)); `HU-023` en ejecución (issue `#76`); `HU-024` con issue real (`#77`), bloqueada solo por el orden de integración |
+| B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | `HU-020`/`HU-021`/`HU-022` integradas ([PR #79](https://github.com/bcaceres19/barberia/pull/79)); `HU-023` implementada, [PR #83](https://github.com/bcaceres19/barberia/pull/83) pendiente de revisión/CI/merge; `HU-024` con issue real (`#77`), bloqueada solo por el orden de integración |
 | B2 · Horario laboral y bloqueos | `HU-040` – | Pendientes |
 | B3 · Agenda, estados e integridad | `HU-060` – | Pendientes |
 | B4 · Reserva pública y disponibilidad | `HU-090` – | Pendientes |
@@ -646,7 +646,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 ## 4. Bloque B1 · Identidad de la barbería y catálogo
 
-> **B1 en ejecución.** `HU-020`, `HU-021` y `HU-022` ya están integradas ([PR #79](https://github.com/bcaceres19/barberia/pull/79), CI 4/4 verde). `HU-023`–`HU-024` se prepararon como propuestas mediante el issue documental [#73](https://github.com/bcaceres19/barberia/issues/73); `DP-SER-02`/`DP-SER-03` quedaron resueltas por `DEC-068`/`DEC-069` y cada una tiene issue real de implementación (`#76`, `#77`). `HU-023` está en ejecución; `HU-024` permanece bloqueada únicamente por el orden de integración de esta sección.
+> **B1 en ejecución.** `HU-020`, `HU-021` y `HU-022` ya están integradas ([PR #79](https://github.com/bcaceres19/barberia/pull/79), CI 4/4 verde). `HU-023`–`HU-024` se prepararon como propuestas mediante el issue documental [#73](https://github.com/bcaceres19/barberia/issues/73); `DP-SER-02`/`DP-SER-03` quedaron resueltas por `DEC-068`/`DEC-069` y cada una tiene issue real de implementación (`#76`, `#77`). `HU-023` está implementada, con [PR #83](https://github.com/bcaceres19/barberia/pull/83) abierto contra `main` pendiente de revisión/CI/merge; `HU-024` permanece bloqueada únicamente por el orden de integración de esta sección.
 
 Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-021` → `HU-022` → `HU-023` → `HU-024`.
 
@@ -834,7 +834,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | Actor | Barbero autenticado |
 | Depende de | `HU-021`, `HU-022` integradas en `main` (cumplido) |
 | Bloquea | Horarios por barbero, disponibilidad y selección pública de barbero |
-| Estado | En ejecución; issue real [#76](https://github.com/bcaceres19/barberia/issues/76); `HU-022` ya integrada en `main` |
+| Estado | Implementada; issue real [#76](https://github.com/bcaceres19/barberia/issues/76); [PR #83](https://github.com/bcaceres19/barberia/pull/83) abierto contra `main`, pendiente de revisión/CI/merge |
 | Riesgo | Una relación sin tenant compuesto puede asociar recursos de barberías distintas; permitir retirar la última asignación de un servicio activo contradiría `DEC-068` y dejaría un servicio activo imposible de reservar. |
 
 **Historia**
