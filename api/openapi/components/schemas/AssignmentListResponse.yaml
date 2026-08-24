@@ -1,0 +1,24 @@
+# Colección paginada por cursor (docs/06-api/estandar-openapi.md §6.10): los
+# servicios asignados a un barbero de un equipo de veinte usan exactamente el
+# mismo contrato que uno de un solo servicio (CA-023-01), sin paginación por
+# offset ni un máximo de negocio de asignaciones por barbero.
+type: object
+description: >
+  Página de servicios asignados a un barbero, ordenada de forma estable por
+  fecha de asignación y luego por identificador de servicio.
+properties:
+  items:
+    type: array
+    description: Asignaciones de esta página, en el orden estable del servidor.
+    items:
+      $ref: './AssignmentResponse.yaml'
+  nextCursor:
+    type: [string, "null"]
+    description: >
+      Cursor opaco para pedir la siguiente página con el parámetro `cursor`.
+      `null` cuando esta página es la última.
+    examples:
+      - eyJjcmVhdGVkQXQiOiIyMDI2LTA4LTI0VDE1OjA0OjA1WiIsImlkIjoiMWEyYjNjNGQtNWU2Zi00NzA4LTlhMGItMWMyZDNlNGY1MDYxIn0=
+required:
+  - items
+  - nextCursor

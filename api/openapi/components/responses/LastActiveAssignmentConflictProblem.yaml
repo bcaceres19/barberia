@@ -1,0 +1,29 @@
+# 409 de DELETE /private/barbers/{barberId}/services/{serviceId} (DEC-068,
+# CA-023-05, CA-023-06): retirar esta asignación dejaría el servicio ACTIVO
+# sin ningún barbero. No se persistió ningún cambio; reintentar la misma
+# operación produce el mismo rechazo (nunca un borrado accidental en el
+# segundo intento).
+description: >
+  Esta es la última asignación activa del servicio: retirarla lo dejaría sin
+  ningún barbero mientras sigue activo (DEC-068). Asigna otro barbero antes
+  de retirar este, o desactiva el servicio (HU-024) si ya no se ofrece.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      ultimaAsignacion:
+        summary: Última asignación activa de un servicio activo
+        value:
+          type: /api/v1/problems/conflict
+          title: Conflicto
+          status: 409
+          detail: >-
+            el servicio quedaría sin ningún barbero asignado; asigna otro
+            barbero antes de retirar este
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: conflict
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

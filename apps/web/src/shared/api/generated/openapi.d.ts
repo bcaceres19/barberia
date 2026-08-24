@@ -284,6 +284,50 @@ export interface paths {
         patch: operations["updateService"];
         trace?: never;
     };
+    "/private/barbers/{barberId}/services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar los servicios asignados a un barbero de la barbería activa
+         * @description Lista paginada por cursor (HU-023, CA-023-01) de los servicios que presta un barbero de la barbería derivada de la sesión vigente. Un barbero con un solo servicio y uno con todo el catálogo usan exactamente la misma forma de respuesta. Un `barberId` inexistente o de otra barbería responde `404` (RN-TEN-01), igual que GET /private/barbers/{barberId}.
+         */
+        get: operations["listBarberServices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/private/barbers/{barberId}/services/{serviceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Asignar un servicio a un barbero de la barbería activa
+         * @description Asigna `serviceId` a `barberId` (HU-023, CA-023-02, CA-023-03). Semántica HTTP naturalmente repetible: no usa `Idempotency-Key` (RN-IDE-01 protege un `POST` que no es idempotente por sí mismo; este `PUT` sobre un recurso identificado por sus propios dos identificadores ya lo es). Repetir exactamente la misma operación no crea una segunda fila (responde `200` en vez de `201`, con el mismo `createdAt` original). Un mismo servicio puede asignarse a varios barberos de la misma barbería; cada asociación es un recurso independiente. Un `barberId` o `serviceId` inexistente o de otra barbería responde `404` uniforme (CA-023-04, RN-TEN-01): esta operación nunca revela si el recurso ajeno existe. Sin cuerpo: el contrato no declara ningún campo escribible más allá de los dos identificadores de la ruta -nunca nombre, duración, precio, orden ni disponibilidad-.
+         */
+        put: operations["assignServiceToBarber"];
+        post?: never;
+        /**
+         * Retirar la asignación de un servicio a un barbero de la barbería activa
+         * @description Retira la asociación entre `barberId` y `serviceId` (HU-023, CA-023-05, CA-023-06). Un `barberId`/`serviceId` inexistente o de otra barbería, o una asociación que nunca existió (o que ya se había retirado), responden el mismo `404` uniforme (CA-023-04). Retirar la última asignación ACTIVA de un servicio ACTIVO se rechaza con `409` (DEC-068): esta operación nunca borra al barbero, al servicio ni una cita, y el rechazo es seguro ante repetición (reintentarla produce el mismo `409`, nunca un borrado accidental).
+         */
+        delete: operations["unassignServiceFromBarber"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -598,6 +642,37 @@ export interface components {
              * @example 50000.00
              */
             price?: string;
+        };
+        /** @description Asociación entre un barbero y un servicio de la misma barbería. Sin columnas propias de negocio: nunca duplica nombre, duración, precio ni estado de ninguna de las dos tablas dueñas. */
+        AssignmentResponse: {
+            /**
+             * Format: uuid
+             * @description Identificador del barbero.
+             * @example 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+             */
+            barberId: string;
+            /**
+             * Format: uuid
+             * @description Identificador del servicio.
+             * @example 1a2b3c4d-5e6f-4708-9a0b-1c2d3e4f5061
+             */
+            serviceId: string;
+            /**
+             * Format: date-time
+             * @description Instante en que se asignó el servicio a este barbero. Repetir la asignación (CA-023-02) no cambia este valor: refleja siempre la primera vez que se creó la asociación.
+             * @example 2026-08-24T15:04:05Z
+             */
+            createdAt: string;
+        };
+        /** @description Página de servicios asignados a un barbero, ordenada de forma estable por fecha de asignación y luego por identificador de servicio. */
+        AssignmentListResponse: {
+            /** @description Asignaciones de esta página, en el orden estable del servidor. */
+            items: components["schemas"]["AssignmentResponse"][];
+            /**
+             * @description Cursor opaco para pedir la siguiente página con el parámetro `cursor`. `null` cuando esta página es la última.
+             * @example eyJjcmVhdGVkQXQiOiIyMDI2LTA4LTI0VDE1OjA0OjA1WiIsImlkIjoiMWEyYjNjNGQtNWU2Zi00NzA4LTlhMGItMWMyZDNlNGY1MDYxIn0=
+             */
+            nextCursor: string | null;
         };
         /** @description Solicitud de recuperación de acceso. */
         RecoveryRequestRequest: {
@@ -942,6 +1017,45 @@ export interface components {
         };
         /** @description Ya existe un servicio ACTIVO de esta barbería con ese nombre exacto. No se persistió ningún cambio; un servicio DESACTIVADO con el mismo nombre no produce este conflicto (DEC-067). */
         ServiceConflictProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description Página de servicios asignados al barbero, ordenada de forma estable. */
+        AssignmentListSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["AssignmentListResponse"];
+            };
+        };
+        /** @description El barbero ahora tiene asignado el servicio. `createdAt` refleja siempre la primera vez que se creó la asociación, incluso en una repetición. */
+        AssignmentAssigned: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                Location: components["headers"]["Location"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["AssignmentResponse"];
+            };
+        };
+        /** @description El barbero ya no tiene asignado el servicio. No borra al barbero, al servicio ni ninguna cita: solo retira la asociación. */
+        AssignmentUnassigned: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
+        /** @description Esta es la última asignación activa del servicio: retirarla lo dejaría sin ningún barbero mientras sigue activo (DEC-068). Asigna otro barbero antes de retirar este, o desactiva el servicio (HU-024) si ya no se ofrece. */
+        LastActiveAssignmentConflictProblem: {
             headers: {
                 "X-Request-Id": components["headers"]["XRequestId"];
                 [name: string]: unknown;
@@ -1374,6 +1488,72 @@ export interface operations {
             404: components["responses"]["NotFoundProblem"];
             409: components["responses"]["ServiceConflictProblem"];
             422: components["responses"]["ServiceValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    listBarberServices: {
+        parameters: {
+            query?: {
+                /** @description Cursor opaco devuelto por una página anterior (`nextCursor`). Sin este parámetro, la respuesta empieza en la primera página. */
+                cursor?: string;
+                /** @description Máximo de asignaciones por página. */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["AssignmentListSuccess"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    assignServiceToBarber: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+                /** @description Identificador del servicio. */
+                serviceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["AssignmentAssigned"];
+            201: components["responses"]["AssignmentAssigned"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    unassignServiceFromBarber: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+                /** @description Identificador del servicio. */
+                serviceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: components["responses"]["AssignmentUnassigned"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            409: components["responses"]["LastActiveAssignmentConflictProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

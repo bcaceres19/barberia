@@ -20,7 +20,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.8.0
+  version: 0.9.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -39,7 +39,9 @@ tags:
   - name: Staff
     description: Registro y listado de los barberos de la barbería.
   - name: Catalog
-    description: Catálogo básico de servicios de la barbería (HU-022).
+    description: >-
+      Catálogo básico de servicios de la barbería (HU-022) y su asignación a
+      barberos (HU-023).
 paths:
   /public/auth/login:
     $ref: './paths/public-auth.yaml#/~1public~1auth~1login'
@@ -67,6 +69,10 @@ paths:
     $ref: './paths/catalog.yaml#/~1private~1services'
   /private/services/{serviceId}:
     $ref: './paths/catalog.yaml#/~1private~1services~1{serviceId}'
+  /private/barbers/{barberId}/services:
+    $ref: './paths/barber-services.yaml#/~1private~1barbers~1{barberId}~1services'
+  /private/barbers/{barberId}/services/{serviceId}:
+    $ref: './paths/barber-services.yaml#/~1private~1barbers~1{barberId}~1services~1{serviceId}'
 components:
   schemas:
     Problem:
@@ -103,6 +109,10 @@ components:
       $ref: './components/schemas/CreateServiceRequest.yaml'
     UpdateServiceRequest:
       $ref: './components/schemas/UpdateServiceRequest.yaml'
+    AssignmentResponse:
+      $ref: './components/schemas/AssignmentResponse.yaml'
+    AssignmentListResponse:
+      $ref: './components/schemas/AssignmentListResponse.yaml'
   securitySchemes:
     SessionCookie:
       $ref: './components/security-schemes/SessionCookie.yaml'
@@ -177,3 +187,11 @@ components:
       $ref: './components/responses/ServiceValidationProblem.yaml'
     ServiceConflictProblem:
       $ref: './components/responses/ServiceConflictProblem.yaml'
+    AssignmentListSuccess:
+      $ref: './components/responses/AssignmentListSuccess.yaml'
+    AssignmentAssigned:
+      $ref: './components/responses/AssignmentAssigned.yaml'
+    AssignmentUnassigned:
+      $ref: './components/responses/AssignmentUnassigned.yaml'
+    LastActiveAssignmentConflictProblem:
+      $ref: './components/responses/LastActiveAssignmentConflictProblem.yaml'
