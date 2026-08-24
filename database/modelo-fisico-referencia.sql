@@ -1066,6 +1066,31 @@ GRANT SELECT, INSERT, UPDATE ON TABLE service TO barberia_app;
 -- ---------------------------------------------------------------------------
 -- Tabla de asociación pura: solo contiene datos de la asociación, nunca
 -- atributos que pertenecen a uno de sus extremos (2FN).
+--
+-- HU-023 (issue #76) implementó esta sección con DOS diferencias respecto a
+-- la propuesta técnica original, que la migración aplicada (database/
+-- migrations/20260824150000_create_barber_service.sql) ya refleja y esta
+-- sección actualiza para no quedar desalineada de lo realmente aplicado:
+--   1. Las FK compuestas usan `ON DELETE RESTRICT` (antes `ON DELETE
+--      CASCADE`): ni `barber` ni `service` exponen DELETE al rol de
+--      aplicación (RN-SER-03, CA-021-07), así que ese CASCADE nunca podría
+--      dispararse en la práctica; declarar RESTRICT documenta esa
+--      imposibilidad de forma explícita en vez de autorizar, aunque sea
+--      solo en el esquema, un borrado en cascada de una fila que la propia
+--      tabla dueña ya prohíbe borrar (trabajo requerido §2.4: "No uses ON
+--      DELETE CASCADE como autorización para borrar barber o service").
+--   2. Dos índices en vez de uno: `idx_barber_service_barber_created`
+--      (barbershop_id, barber_id, created_at, service_id) sirve la consulta
+--      real de HU-023 ("servicios de un barbero", CA-023-01, con el orden
+--      estable que su paginación por cursor necesita); `idx_barber_service_
+--      service` (barbershop_id, service_id, barber_id) sirve la
+--      verificación de DEC-068 dentro de la transacción de desasignación
+--      (contar asignaciones activas de un servicio). La consulta inversa
+--      "barberos que prestan un servicio" para selección pública (el índice
+--      único que proponía esta sección) queda fuera de alcance de HU-023
+--      (no existe todavía esa operación pública): una historia futura lo
+--      agrega junto con esa capacidad, sin abstracción anticipada sin uso
+--      demostrado (docs/03-desarrollo/estandar-backend-go.md §5).
 
 CREATE TABLE barber_service (
   barbershop_id uuid        NOT NULL,
@@ -1075,23 +1100,31 @@ CREATE TABLE barber_service (
 
   CONSTRAINT barber_service_pk PRIMARY KEY (barbershop_id, barber_id, service_id),
 
-  CONSTRAINT barber_service_barbershop_id_barber_id_fk
-    FOREIGN KEY (barbershop_id, barber_id)
-    REFERENCES barber (barbershop_id, id) ON DELETE CASCADE,
-
-  CONSTRAINT barber_service_barbershop_id_service_id_fk
-    FOREIGN KEY (barbershop_id, service_id)
-    REFERENCES service (barbershop_id, id) ON DELETE CASCADE
+  CONSTRAINT barber_service_barber_fk  FOREIGN KEY (barbershop_id, barber_id)
+                                       REFERENCES barber (barbershop_id, id)
+                                       ON DELETE RESTRICT,
+  CONSTRAINT barber_service_service_fk FOREIGN KEY (barbershop_id, service_id)
+                                       REFERENCES service (barbershop_id, id)
+                                       ON DELETE RESTRICT
 );
 
 COMMENT ON TABLE barber_service IS
-  'Qué servicios presta cada barbero. Propietario funcional: barbería. Retención: mientras '
-  'exista la asociación. Clasificación: negocio. CASCADE autorizado: la fila no tiene vida '
-  'propia y su desaparición no borra citas, que guardan su snapshot.';
+  'Qué servicios presta cada barbero (HU-023). Propietario funcional: barbería, coordinado '
+  'entre catalog (dueño de la operación) y staff (dueño de la existencia del barbero) '
+  'mediante un puerto explícito. Retención: mientras exista la asociación. Clasificación: '
+  'negocio. Sin columnas propias de negocio: nunca nombre, duración, precio ni estado '
+  '(CA-023-07). DEC-068: un servicio ACTIVO debe conservar al menos una fila aquí.';
 
--- Consulta inversa: qué barberos prestan un servicio (selección pública).
-CREATE INDEX idx_barber_service_shop_service
-  ON barber_service (barbershop_id, service_id);
+-- Servicios de un barbero (CA-023-01), en el orden estable que su
+-- paginación por cursor necesita.
+CREATE INDEX idx_barber_service_barber_created
+  ON barber_service (barbershop_id, barber_id, created_at, service_id);
+
+-- Verificación de DEC-068 dentro de la transacción de desasignación: contar
+-- asignaciones activas de un servicio, bajo el mismo barbershop_id que ya
+-- bloqueó la fila de `service` (SELECT ... FOR UPDATE).
+CREATE INDEX idx_barber_service_service
+  ON barber_service (barbershop_id, service_id, barber_id);
 
 ALTER TABLE barber_service ENABLE ROW LEVEL SECURITY;
 ALTER TABLE barber_service FORCE  ROW LEVEL SECURITY;
@@ -1112,6 +1145,7 @@ CREATE POLICY barber_service_delete_tenant_policy ON barber_service
   FOR DELETE TO barberia_app
   USING (barbershop_id = current_setting('app.barbershop_id')::uuid);
 
+-- Sin política ni GRANT de UPDATE: sin campo editable (CA-023-07).
 GRANT SELECT, INSERT, DELETE ON TABLE barber_service TO barberia_app;
 
 
