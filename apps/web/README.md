@@ -24,7 +24,15 @@ mismo estado de datos, y el **catálogo básico de servicios (HU-022)**:
 pantalla "Servicios" (`/panel/servicios`) con lista paginada, alta y
 edición de nombre/descripción/duración/precio, precio en COP como string
 decimal exacto y conflicto de nombre entre servicios activos (`DEC-067`)
-distinguido del conflicto de idempotencia. Ver las secciones siguientes.
+distinguido del conflicto de idempotencia, y la **asignación de servicios a
+barberos (HU-023)**: pantalla "Servicios por barbero"
+(`/panel/servicios-por-barbero`) con un selector de barbero y una casilla
+por servicio del catálogo; el mismo componente funciona con un barbero que
+presta todo el catálogo y con un equipo de especialidades distintas. Cada
+casilla se deshabilita mientras su propia solicitud está en curso (evita
+doble envío) y solo cambia de estado tras la respuesta real del servidor;
+retirar la última asignación activa de un servicio activo se rechaza
+(`DEC-068`) y la casilla vuelve a marcarse. Ver las secciones siguientes.
 El resto de carpetas de `modules/` conserva su `index.ts` de marcador de
 responsabilidad futura.
 
@@ -432,6 +440,76 @@ efímero, migraciones vía Atlas, `testdata/dos_barberias.sql` +
 
 - `testdata/hu022_catalogo.sql`, hash argon2id real calculado en el
   momento, nunca embebido en el repositorio).
+
+## Asignación de servicios a barberos (HU-023)
+
+Fuente normativa: `docs/02-requisitos/historias-usuario.md` (HU-023) y
+`docs/00-control/registro-decisiones.md` (`DEC-024`, `DEC-068`). Esta
+sección resume la API pública y las decisiones de implementación; no las
+sustituye.
+
+### Módulo nuevo, sin importar internos de `staff` ni de `catalog`
+
+`src/modules/barberServices/` es un módulo propio (no una extensión de
+`staff` ni de `catalog`): la pantalla necesita datos de ambos (barberos y
+servicios) pero ningún módulo del frontend expone su cliente API interno a
+otro (`staffApi.ts`/`catalogApi.ts` son privados de sus módulos,
+docs/03-desarrollo/estandar-frontend-vue.md §3). `api/barberServicesApi.ts`
+llama DIRECTAMENTE al cliente HTTP compartido (`@/shared/api/httpClient`)
+para `GET /private/barbers`/`GET /private/services` (solo id + nombre
+visible, `BarberSummary`/`ServiceSummary`) igual que cualquier otro módulo
+llama a ese mismo cliente: es la misma pequeña duplicación de forma que el
+backend ya acepta entre `catalog.Cursor`/`staff.Cursor`, preferible a un
+acoplamiento cruzado entre módulos. `routes.ts`/`index.ts` siguen el mismo
+patrón de ruta hija diferida + `NavItem` que `staff`/`catalog`;
+`src/app/router/index.ts` combina las cuatro.
+
+### Casilla controlada: el estado solo cambia tras la respuesta del servidor
+
+`BarberServicesPage.vue` no usa `v-model` sobre cada casilla: usa
+`:checked="isAssigned(service.id)"` + `@change`, y en el handler
+`onToggleService` guarda una referencia directa al `<input>` que disparó el
+evento. Si el servidor rechaza el cambio (`404`, `409` de DEC-068, error de
+red), el código fija `checkbox.checked = isAssigned(service.id)`
+DIRECTAMENTE sobre ese elemento del DOM, sin depender de que Vue vuelva a
+sincronizar la propiedad `checked` por sí solo: cuando el valor reactivo
+subyacente no cambió de contenido (el servicio seguía asignado antes y
+sigue asignado después de un rechazo), Vue no vuelve a tocar el DOM porque,
+desde su óptica, nada cambió -aunque el navegador ya haya alternado la
+casilla visualmente al hacer clic-. Cada casilla se deshabilita mientras su
+propia solicitud está en curso (`pendingServiceIds`), lo que además evita
+estructuralmente el doble envío (un `<input disabled>` no dispara `change`).
+
+### Última asignación activa: mensaje recuperable, sin perder el resto de casillas (DEC-068)
+
+Cuando `unassignService` responde `last-active-conflict`, la pantalla
+muestra una alerta explicando que ese barbero es el único asignado al
+servicio y revierte solo ESA casilla; las demás conservan su estado
+(asignado/pendiente) sin verse afectadas. La selección de barbero tampoco
+se pierde: el error es local a la casilla, no a toda la pantalla.
+
+### Pruebas
+
+Componente (`src/modules/barberServices/pages/__tests__/
+BarberServicesPage.test.ts`: un barbero y cuatro, servicio compartido,
+vacío sin barberos/sin servicios, error recuperable, cambio de barbero,
+asignar/desasignar, último activo rechazado -DEC-068- con reversión de la
+casilla, error de red, doble envío bloqueado, ausencia de horario/
+disponibilidad/citas/precio por barbero, axe-core), cliente tipado
+(`src/modules/barberServices/api/__tests__/barberServicesApi.test.ts`:
+mapeo por `status`/`code`, nunca `detail`) y E2E contra el API real en
+local: `e2e/servicios-por-barbero.spec.ts` (asignar con persistencia real,
+un servicio compartido por varios barberos como recursos independientes,
+última asignación activa rechazada con la casilla marcada de nuevo,
+identificador real de otra barbería con `404`) y
+`e2e/servicios-por-barbero-evidencia-responsiva.spec.ts` (capturas en
+`e2e/evidence/servicios-por-barbero/`, sin scroll horizontal, foco visible
+por teclado -incluida la propia casilla- y sin violaciones axe-core en los
+cinco breakpoints).
+
+Preparación de PostgreSQL para el E2E real: mismo procedimiento que
+"Catálogo básico de servicios (HU-022)" arriba, con
+`testdata/hu023_asignaciones.sql` además de las testdata previas.
 
 ## Sistema visual base (HU-009)
 
