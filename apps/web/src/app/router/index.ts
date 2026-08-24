@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { authRoutes, privateShellChildRoutes, privateShellRoute } from '@/modules/auth'
 import { settingsNavItems, settingsPrivateShellChildRoutes } from '@/modules/settings'
+import { staffNavItems, staffPrivateShellChildRoutes } from '@/modules/staff'
 
 // Cada ruta se carga de forma diferida (docs/04-arquitectura/frontend.md):
 // un módulo futuro no aumenta el bundle inicial sin necesidad. `app/router`
@@ -20,8 +21,12 @@ const routes: RouteRecordRaw[] = [
   },
   ...authRoutes,
   privateShellRoute(
-    [...privateShellChildRoutes, ...settingsPrivateShellChildRoutes],
-    [...settingsNavItems],
+    [
+      ...privateShellChildRoutes,
+      ...settingsPrivateShellChildRoutes,
+      ...staffPrivateShellChildRoutes,
+    ],
+    [...settingsNavItems, ...staffNavItems],
   ),
 ]
 

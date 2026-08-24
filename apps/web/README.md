@@ -13,12 +13,15 @@ Arranque de la aplicación, router, el **sistema visual base (HU-009)**
 (HU-010)**, el **cascarón del panel privado (HU-012)** (guard generalizado
 con sesión real, cabecera con barbería activa y coordinación única de 401),
 la **defensa escalonada contra abuso (HU-007)**: reto telefónico inline en
-la pantalla de acceso cuando el login responde 429, y la **configuración
+la pantalla de acceso cuando el login responde 429, la **configuración
 básica de la barbería (HU-020)**: pantalla "Barbería" (`/panel/barberia`)
 para consultar y actualizar nombre, zona horaria y contacto opcional, con
-actualización inmediata de la cabecera tras guardar. Ver las secciones
-siguientes. El resto de carpetas de `modules/` conserva su `index.ts` de
-marcador de responsabilidad futura.
+actualización inmediata de la cabecera tras guardar, y el **registro y
+listado de barberos (HU-021)**: pantalla "Barberos" (`/panel/barberos`)
+con lista paginada, alta con idempotencia real y edición del nombre; una
+barbería con una persona y una con varias usan el mismo componente y el
+mismo estado de datos. Ver las secciones siguientes. El resto de carpetas
+de `modules/` conserva su `index.ts` de marcador de responsabilidad futura.
 
 ## Acceso del barbero (HU-010)
 
@@ -217,6 +220,127 @@ y `e2e/configuracion-barberia-evidencia-responsiva.spec.ts` (capturas en
 `e2e/evidence/configuracion-barberia/`, un solo inicio de sesión
 reutilizado entre los cinco breakpoints para no competir con el umbral de
 `HU-007` al correrse junto al resto de la suite E2E).
+
+## Registro y listado de barberos (HU-021)
+
+Fuente normativa: `docs/02-requisitos/historias-usuario.md` (HU-021) y
+`docs/00-control/registro-decisiones.md` (`DEC-019`, `DEC-024`, `DEC-043`,
+`DEC-047`). Esta sección resume la API pública y las decisiones de
+implementación; no las sustituye.
+
+### Ruta y navegación
+
+`src/modules/staff/routes.ts` expone `staffPrivateShellChildRoutes`
+(`barberos` → `name: "staff-barberos"`, `src/modules/staff/pages/
+StaffPage.vue`, diferida) y `src/modules/staff/index.ts` expone además
+`staffNavItems` (`{ to: { name: "staff-barberos" }, label: "Barberos" }`).
+`src/app/router/index.ts` combina ambas con las de `auth`/`settings` al
+construir el único cascarón privado (ver "Cascarón del panel privado
+(HU-012)"); `staff` no importa ningún interno de `auth` ni monta su propio
+guard.
+
+### Un mismo componente para barbería unipersonal y de equipo (CA-021-01/02)
+
+`StaffPage.vue` renderiza `barbers.value` (un arreglo plano de `Barber`)
+sin ninguna rama que distinga "un barbero" de "varios": una lista con 1
+elemento y una con 4 pasan por el mismo `<li v-for>`. El alta hace
+`unshift` del recurso confirmado por el servidor (nunca antes de esa
+confirmación: sin actualización optimista); el renombrado reemplaza por
+`id` en su misma posición, sin duplicar ni reordenar de forma inestable.
+
+### Paginación por cursor (`src/modules/staff/api/staffApi.ts`)
+
+`fetchBarbers(cursor?)` traduce `GET /private/barbers` (`cursor`/`limit`
+como parámetros de consulta tipados por el cliente generado) a
+`FetchBarbersOutcome`. `StaffPage.vue` carga la primera página al montar y
+expone "Cargar más" cuando `nextCursor` no es `null`; las páginas
+siguientes se concatenan por `id` (defensivo contra un doble clic muy
+rápido), nunca se reemplaza la lista completa.
+
+### Alta con idempotencia real (RN-IDE-01, DEC-043)
+
+`src/modules/staff/model/idempotencyKey.ts` (`newIdempotencyKey`,
+`crypto.randomUUID()`) genera la clave de UN intento lógico al abrir el
+diálogo de alta; el mismo intento (por ejemplo, un reintento tras un error
+de red con el diálogo todavía abierto) reutiliza la MISMA clave, y solo un
+envío exitoso o cerrar y reabrir el diálogo la renueva. `createBarber`
+(`staffApi.ts`) envía esa clave como cabecera `Idempotency-Key`
+(`params.header`, no `headers`: forma exigida por `openapi-fetch` para
+parámetros tipados del contrato). Un conflicto de idempotencia (`409`) se
+expone como `idempotency-conflict`, distinto de `validation-error`: el
+formulario no cambió, es un reintento el que necesita una clave nueva.
+
+### Formulario y estados
+
+`StaffPage.vue` usa `BaseDialog` (HU-009) para alta y edición, con
+`BaseInput`/`BaseButton`/`BaseAlert` y validación de cliente
+(`src/modules/staff/validation/staffValidation.ts`, solo forma: vacío,
+solo espacios o más de 120 caracteres; nunca exige dos palabras ni
+unicidad). Un error recuperable nunca borra lo escrito; solo la respuesta
+confirmada por el servidor cierra el diálogo. La pantalla nunca muestra
+placeholders de servicio, horario, disponibilidad, estado activo o usuario
+vinculado (`DEC-047`): administra únicamente nombres.
+
+### Hallazgo real de accesibilidad corregido en `BaseDialog` (HU-009)
+
+HU-021 es la primera pantalla que usa `BaseDialog` en un flujo real del
+panel. El E2E de evidencia (`e2e/barberos-evidencia-responsiva.spec.ts`)
+contra Chromium real (no `jsdom`) expuso dos problemas que las pruebas de
+componente existentes no cubrían, corregidos en `src/shared/ui/
+BaseDialog.vue` en el mismo cambio:
+
+- **El foco nunca entraba al diálogo al abrirlo.** `trapFocus()` llamaba
+  `updateFocusableElements()` de forma síncrona dentro de
+  `watch(isOpen, ...)` (flush `pre`, ANTES de que Vue aplicara el `v-show`
+  que quita `display: none`); con el diálogo todavía oculto,
+  `el.offsetParent !== null` era falso para todo candidato y el bloque
+  completo -incluido el enfoque inicial- nunca se ejecutaba. `jsdom` no
+  detectaba el defecto (su cálculo de `offsetParent`/reflow es menos
+  estricto que un navegador real). Corregido envolviendo TODO el cuerpo de
+  `trapFocus` en `nextTick`, no solo la llamada final a `.focus()`.
+- **`landmark-unique` (axe-core) real con `AppHeader` (HU-012) en la misma
+  página.** El `<header>` de `BaseDialog` sigue resolviendo como landmark
+  `banner` incluso dentro de `[role="dialog"]` (la lista de excepciones de
+  la spec HTML no incluye ese rol), así que con `AppHeader` ya presente en
+  el cascarón privado, dos landmarks `banner` sin nombre único violaban la
+  regla. Corregido cambiando ese contenedor de `<header>` a `<div>` (el
+  diálogo ya se identifica por su propio `role="dialog"` +
+  `aria-labelledby`; el contenedor interno no necesita ser landmark).
+
+Ambos se verificaron con la suite de `BaseDialog.test.ts` (33 pruebas,
+sigue en verde) y con el E2E real de HU-021 en Chromium de escritorio y
+móvil.
+
+### Pruebas
+
+Componente (`src/modules/staff/pages/__tests__/StaffPage.test.ts`,
+incluida la mutación in-place que `push`/asignación por referencia exige
+clonar en los fixtures de prueba), cliente tipado (`src/modules/staff/
+api/__tests__/staffApi.test.ts`), validación (`src/modules/staff/
+validation/__tests__/staffValidation.test.ts`), accesibilidad
+(`vitest-axe` integrado en `StaffPage.test.ts`, con `stubs.teleport` para
+que las pruebas de `BaseDialog` queden dentro del árbol del wrapper) y E2E
+contra el API real en local: `e2e/barberos.spec.ts` (alta de 1 y luego 3
+más por el mismo camino de UI -CA-021-01/02-, renombrado con persistencia
+real, nombre vacío rechazado, identificador real de otra barbería con
+`404` idéntico y ausente del listado propio -CA-021-05-, verificado con
+`fetch` autenticado por cookie dentro de la página) y
+`e2e/barberos-evidencia-responsiva.spec.ts` (capturas en
+`e2e/evidence/barberos/`, axe-core inyectado desde
+`node_modules/axe-core/axe.min.js` en cada uno de los cinco breakpoints y
+en el diálogo de alta, foco atrapado dentro del diálogo verificado con
+`document.activeElement`).
+
+Preparación de PostgreSQL para el E2E real (sin exponer DSN ni secretos):
+un contenedor Postgres 14 efímero con las diez migraciones aplicadas vía
+Atlas, `testdata/dos_barberias.sql` + `testdata/hu005_credenciales_sesiones.sql`
+
+- `testdata/hu021_barberos.sql` cargados, y un hash argon2id REAL calculado
+  en el momento con el mismo `Argon2Hasher` de producción (nunca embebido en
+  el repositorio) sustituyendo el hash ficticio de
+  `hu005_credenciales_sesiones.sql` para las dos cuentas usadas en el
+  recorrido, exactamente el procedimiento que `e2e/configuracion-barberia.spec.ts`
+  ya documenta como necesario.
 
 ## Sistema visual base (HU-009)
 

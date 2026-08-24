@@ -146,14 +146,22 @@ defineExpose({
 })
 
 const trapFocus = () => {
-  updateFocusableElements()
-  if (focusableElementsRef.value.length > 0) {
-    // Focus en el primer elemento enfocable, o en el botón de cerrar si existe
-    const firstFocusable = closeButtonRef.value || focusableElementsRef.value[0]
-    nextTick(() => {
+  // Todo el cuerpo, incluida updateFocusableElements(), debe esperar a
+  // nextTick: watch(isOpen, ...) corre en flush "pre" (ANTES de que Vue
+  // aplique el v-show que quita display:none del diálogo), así que una
+  // consulta síncrona aquí encuentra 0 elementos con offsetParent !== null
+  // (todos siguen ocultos) y el bloque completo -incluido el enfoque
+  // inicial- nunca se ejecuta. Reproducido contra Chromium real (Playwright,
+  // HU-021: el foco nunca entraba al diálogo pese a que las pruebas con
+  // jsdom, menos estrictas con offsetParent/reflow, no lo detectaban).
+  nextTick(() => {
+    updateFocusableElements()
+    if (focusableElementsRef.value.length > 0) {
+      // Focus en el primer elemento enfocable, o en el botón de cerrar si existe
+      const firstFocusable = closeButtonRef.value || focusableElementsRef.value[0]
       firstFocusable?.focus()
-    })
-  }
+    }
+  })
 }
 
 const restoreFocus = () => {
@@ -241,7 +249,14 @@ onUnmounted(() => {
         :aria-describedby="description ? descriptionId : undefined"
       >
         <div class="base-dialog__container">
-          <header v-if="title || showClose || $slots.header" class="base-dialog__header">
+          <!-- div, no <header>: dentro de [role="dialog"] un <header> sigue
+               resolviendo como landmark "banner" (el hueco de la lista de
+               excepciones de la spec HTML no incluye role="dialog"), y con
+               AppHeader ya presente en la página produce dos landmarks
+               "banner" sin nombre único (axe-core landmark-unique). El
+               diálogo ya se identifica por su propio role="dialog" +
+               aria-labelledby; este contenedor no necesita ser landmark. -->
+          <div v-if="title || showClose || $slots.header" class="base-dialog__header">
             <slot name="header">
               <h2 v-if="title" :id="titleId" class="base-dialog__title">{{ title }}</h2>
               <button
@@ -267,7 +282,7 @@ onUnmounted(() => {
                 </svg>
               </button>
             </slot>
-          </header>
+          </div>
 
           <div v-if="description" :id="descriptionId" class="base-dialog__description">
             {{ description }}
