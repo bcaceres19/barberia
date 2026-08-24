@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { authRoutes, privateShellChildRoutes, privateShellRoute } from '@/modules/auth'
+import { catalogNavItems, catalogPrivateShellChildRoutes } from '@/modules/catalog'
 import { settingsNavItems, settingsPrivateShellChildRoutes } from '@/modules/settings'
 import { staffNavItems, staffPrivateShellChildRoutes } from '@/modules/staff'
 
@@ -25,8 +26,9 @@ const routes: RouteRecordRaw[] = [
       ...privateShellChildRoutes,
       ...settingsPrivateShellChildRoutes,
       ...staffPrivateShellChildRoutes,
+      ...catalogPrivateShellChildRoutes,
     ],
-    [...settingsNavItems, ...staffNavItems],
+    [...settingsNavItems, ...staffNavItems, ...catalogNavItems],
   ),
 ]
 

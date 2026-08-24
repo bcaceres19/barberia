@@ -236,6 +236,54 @@ export interface paths {
         patch: operations["renameBarber"];
         trace?: never;
     };
+    "/private/services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar los servicios del catálogo de la barbería activa
+         * @description Lista paginada por cursor (HU-022, CA-022-01) de los servicios de la barbería derivada de la sesión vigente. Orden estable por fecha de alta y luego por identificador; sin paginación por offset porque la colección no tiene un máximo de negocio aprobado.
+         */
+        get: operations["listServices"];
+        put?: never;
+        /**
+         * Crear un servicio en el catálogo de la barbería activa
+         * @description Alta de un servicio (HU-022, CA-022-02) protegida con clave de idempotencia (RN-IDE-01, DEC-043): repetir el mismo `POST` con la misma `Idempotency-Key` y el mismo cuerpo devuelve la misma representación creada sin crear una segunda fila. El nombre debe ser único entre los servicios ACTIVOS de la misma barbería (DEC-067): una clave nueva con un nombre que ya usa otro servicio activo responde `409` sin crear nada; el mismo nombre que un servicio ya DESACTIVADO sí se acepta. El tenant se deriva exclusivamente de `SessionCookie`; el cuerpo nunca acepta `barbershopId`, `currency` ni `isActive`.
+         */
+        post: operations["createService"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/private/services/{serviceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar un servicio del catálogo de la barbería activa
+         * @description Lectura autenticada de un servicio por identificador (HU-022). Un identificador inexistente o perteneciente a otra barbería responde exactamente el mismo `404` (`CA-022-06`, `RN-TEN-01`).
+         */
+        get: operations["getService"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Editar un servicio del catálogo de la barbería activa
+         * @description Edición parcial limitada a los campos de catálogo (HU-022, CA-022-04, CA-022-05): `name`, `description`, `durationMinutes`, `price`. Rechaza un objeto vacío y cualquier campo fuera de esos cuatro -en particular `isActive`, `currency`, asignaciones a barberos, citas o cualquier alcance de propagación, todos fuera de alcance (RN-SER-04, DEC-067)-. Un identificador inexistente o de otra barbería responde el mismo `404` que `GET` (`CA-022-06`). Un nombre editado que choque con otro servicio activo de la misma barbería responde `409` (DEC-067). Ningún cambio de esta operación afecta una cita existente (RN-SER-04).
+         */
+        patch: operations["updateService"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -447,6 +495,109 @@ export interface components {
              * @example Carlos A. Ramírez
              */
             fullName: string;
+        };
+        /** @description Servicio del catálogo de la barbería activa. currency es siempre "COP" (DEC-067): fija para todo el MVP, nunca aceptada como entrada del cliente. */
+        ServiceResponse: {
+            /**
+             * Format: uuid
+             * @description Identificador del servicio, opaco para el cliente.
+             * @example 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+             */
+            id: string;
+            /**
+             * @description Nombre visible del servicio, ya recortado por el servidor.
+             * @example Corte clásico
+             */
+            name: string;
+            /**
+             * @description Descripción opcional del servicio. `null` cuando no tiene.
+             * @example Corte con máquina y tijera, incluye lavado.
+             */
+            description: string | null;
+            /**
+             * @description Duración planificada en minutos enteros (RN-SER-01, RN-SER-02): sin lista cerrada de valores, 25 o 45 minutos son igual de válidos que 30, 60 o 90.
+             * @example 30
+             */
+            durationMinutes: number;
+            /**
+             * @description Precio informativo, decimal exacto con hasta dos cifras, estrictamente mayor que cero (DEC-067: sin servicios gratuitos). Nunca coma flotante: comparar como texto o convertir con una biblioteca decimal, nunca con `parseFloat`.
+             * @example 45000.00
+             */
+            price: string;
+            /**
+             * @description Moneda fija en COP para todo el MVP (DEC-067). Informativo: ningún endpoint de HU-022 acepta este campo como entrada.
+             * @example COP
+             * @enum {string}
+             */
+            currency: "COP";
+            /**
+             * Format: date-time
+             * @description Instante de alta, con offset.
+             * @example 2026-08-24T15:04:05Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description Instante de la última modificación (alta o edición), con offset.
+             * @example 2026-08-24T15:04:05Z
+             */
+            updatedAt: string;
+        };
+        /** @description Página de servicios del catálogo de la barbería activa, ordenada de forma estable por fecha de alta y luego por identificador. */
+        ServiceListResponse: {
+            /** @description Servicios de esta página, en el orden estable del servidor. */
+            items: components["schemas"]["ServiceResponse"][];
+            /**
+             * @description Cursor opaco para pedir la siguiente página con el parámetro `cursor`. `null` cuando esta página es la última.
+             * @example eyJjcmVhdGVkQXQiOiIyMDI2LTA4LTI0VDE1OjA1OjEwWiIsImlkIjoiMWEyYjNjNGQtNWU2Zi00NzA4LTlhMGItMWMyZDNlNGY1MDYxIn0=
+             */
+            nextCursor: string | null;
+        };
+        /** @description Alta de un servicio del catálogo de la barbería activa, protegida con clave de idempotencia (RN-IDE-01). El nombre debe ser único entre los servicios ACTIVOS de la misma barbería (DEC-067): un nombre igual al de un servicio ya desactivado sí se acepta. */
+        CreateServiceRequest: {
+            /**
+             * @description Nombre visible del servicio. El servidor recorta espacios; un valor vacío, compuesto solo por espacios o mayor de 120 caracteres responde `422`; un nombre igual al de otro servicio activo de la misma barbería responde `409` (DEC-067). Nada se persiste en ninguno de los dos casos.
+             * @example Corte clásico
+             */
+            name: string;
+            /**
+             * @description Descripción opcional. Un valor ausente, vacío o compuesto solo por espacios se almacena como ausencia de descripción; uno mayor de 500 caracteres responde `422`.
+             * @example Corte con máquina y tijera, incluye lavado.
+             */
+            description?: string;
+            /**
+             * @description Duración planificada en minutos enteros (RN-SER-01, RN-SER-02): sin lista cerrada, 25 o 45 minutos son igual de válidos que 30, 60 o 90. Cero, negativa, fraccionaria o fuera de [1, 1440] responde `422` (o `400` si el JSON ni siquiera es un entero, por ejemplo `30.5`).
+             * @example 30
+             */
+            durationMinutes: number;
+            /**
+             * @description Precio decimal exacto con hasta dos cifras, estrictamente mayor que cero (DEC-067: sin servicios gratuitos). Un valor con formato inválido, negativo o igual a cero responde `422`. Enviado como `string`, nunca `number`: evita que un cliente lo redondee con coma flotante antes de enviarlo.
+             * @example 45000.00
+             */
+            price: string;
+        };
+        /** @description Edición parcial de un servicio del catálogo de la barbería activa. Solo cambia `service`: ninguna operación de esta HU acepta alcance sobre citas ni simula propagación a recursos futuros (RN-SER-04). Al menos uno de los cuatro campos debe estar presente. */
+        UpdateServiceRequest: {
+            /**
+             * @description Nuevo nombre visible, ya recortado por el servidor. Vacío, solo espacios o mayor de 120 caracteres responde `422`; un nombre igual al de otro servicio activo de la misma barbería responde `409` (DEC-067).
+             * @example Corte clásico + barba
+             */
+            name?: string;
+            /**
+             * @description Nueva descripción. Una cadena vacía borra la descripción existente (equivalente a "sin descripción"); un valor mayor de 500 caracteres responde `422`.
+             * @example Corte con máquina y tijera, incluye lavado y barba.
+             */
+            description?: string;
+            /**
+             * @description Nueva duración planificada en minutos enteros. Cero, negativa, fraccionaria o fuera de [1, 1440] responde `422` (o `400` si el JSON ni siquiera es un entero).
+             * @example 45
+             */
+            durationMinutes?: number;
+            /**
+             * @description Nuevo precio decimal exacto con hasta dos cifras, estrictamente mayor que cero. Formato inválido, negativo o igual a cero responde `422`.
+             * @example 50000.00
+             */
+            price?: string;
         };
         /** @description Solicitud de recuperación de acceso. */
         RecoveryRequestRequest: {
@@ -730,6 +881,67 @@ export interface components {
         };
         /** @description El cuerpo es JSON válido, pero `fullName` incumple una validación (vacío, solo espacios o mayor de 120 caracteres). No se persistió ningún cambio. */
         BarberValidationProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description Página de servicios del catálogo de la barbería activa. */
+        ServiceListSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ServiceListResponse"];
+            };
+        };
+        /** @description Servicio del catálogo de la barbería activa. */
+        ServiceSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ServiceResponse"];
+            };
+        };
+        /** @description Servicio creado. `Location` apunta al recurso individual recién creado. */
+        ServiceCreated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                Location: components["headers"]["Location"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ServiceResponse"];
+            };
+        };
+        /** @description Servicio con los campos editados ya guardados. */
+        ServiceUpdated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ServiceResponse"];
+            };
+        };
+        /** @description El cuerpo es JSON válido, pero incumple una validación de campo (nombre, descripción, duración o precio). No se persistió ningún cambio. */
+        ServiceValidationProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description Ya existe un servicio ACTIVO de esta barbería con ese nombre exacto. No se persistió ningún cambio; un servicio DESACTIVADO con el mismo nombre no produce este conflicto (DEC-067). */
+        ServiceConflictProblem: {
             headers: {
                 "X-Request-Id": components["headers"]["XRequestId"];
                 [name: string]: unknown;
@@ -1066,6 +1278,102 @@ export interface operations {
             401: components["responses"]["UnauthorizedProblem"];
             404: components["responses"]["NotFoundProblem"];
             422: components["responses"]["BarberValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    listServices: {
+        parameters: {
+            query?: {
+                /** @description Cursor opaco devuelto por una página anterior (`nextCursor`). Sin este parámetro, la respuesta empieza en la primera página. */
+                cursor?: string;
+                /** @description Máximo de servicios por página. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["ServiceListSuccess"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    createService: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Clave elegida por el cliente que identifica un intento de escritura crítica. Repetir la misma clave con el mismo contenido (método, ruta y cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo. Repetirla con contenido distinto es un conflicto: usa una clave nueva para una solicitud distinta. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateServiceRequest"];
+            };
+        };
+        responses: {
+            201: components["responses"]["ServiceCreated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            /** @description Conflicto de idempotencia (misma clave con otro contenido u otra operación, `IdempotencyConflictProblem`), operación en curso con la misma clave (`IdempotencyLockedProblem`, DEC-043), o nombre ya usado por otro servicio activo de la misma barbería (`ServiceConflictProblem`, DEC-067). Los tres problem types comparten status pero tienen `code` distinto: el cliente decide por `code`, nunca por `detail`. */
+            409: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["ServiceValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getService: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del servicio. */
+                serviceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["ServiceSuccess"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    updateService: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del servicio. */
+                serviceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateServiceRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["ServiceUpdated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            409: components["responses"]["ServiceConflictProblem"];
+            422: components["responses"]["ServiceValidationProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };
