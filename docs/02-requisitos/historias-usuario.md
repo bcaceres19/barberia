@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.8"
+version: "1.9"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-24"
@@ -16,7 +16,7 @@ documentos_relacionados:
 
 # Historias de usuario y criterios de aceptación
 
-> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas confirmadas; no crean alcance por sí solas y requieren aprobación antes de implementarse. B0, `HU-020` y `HU-021` ya están integradas. Las dudas históricas de B0 quedaron resueltas por `DEC-050`–`DEC-066`; el siguiente lote de B1 (`HU-022`–`HU-024`) permanece bloqueado por las nuevas `DP-SER-01`–`DP-SER-03` y por issues de implementación pendientes.
+> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas confirmadas; no crean alcance por sí solas y requieren aprobación antes de implementarse. B0, `HU-020` y `HU-021` ya están integradas. Las dudas históricas de B0 quedaron resueltas por `DEC-050`–`DEC-066`; `DP-SER-01`–`DP-SER-03` del lote de B1 (`HU-022`–`HU-024`) quedaron resueltas por `DEC-067`–`DEC-069` y ya tienen issue real de implementación (`#75`, `#76`, `#77`). `HU-022` está lista para ejecutarse; `HU-023` y `HU-024` permanecen bloqueadas solo por el orden de integración (cada una depende de que la anterior esté en `main`).
 
 ---
 
@@ -48,7 +48,7 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | Bloque | Historias | Estado |
 | --- | --- | --- |
 | B0 · Cimientos, seguridad y primeras pantallas | `HU-001` – `HU-012` | Redactadas en este documento |
-| B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | `HU-020`/`HU-021` integradas; `HU-022`–`HU-024` propuestas y bloqueadas por `DP-SER-*` |
+| B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | `HU-020`/`HU-021` integradas; `HU-022` lista para ejecutarse (issue `#75`); `HU-023`/`HU-024` con issue real (`#76`/`#77`), bloqueadas solo por el orden de integración |
 | B2 · Horario laboral y bloqueos | `HU-040` – | Pendientes |
 | B3 · Agenda, estados e integridad | `HU-060` – | Pendientes |
 | B4 · Reserva pública y disponibilidad | `HU-090` – | Pendientes |
@@ -646,7 +646,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 ## 4. Bloque B1 · Identidad de la barbería y catálogo
 
-> **B1 en redacción progresiva.** `HU-020` y `HU-021` ya están integradas. `HU-022`–`HU-024` se preparan como propuestas mediante el issue documental [#73](https://github.com/bcaceres19/barberia/issues/73), pero permanecen bloqueadas por `DP-SER-01`–`DP-SER-03` y por sus issues de implementación pendientes. Redactarlas no autoriza inventar las decisiones faltantes ni ejecutar sus prompts.
+> **B1 en ejecución.** `HU-020` y `HU-021` ya están integradas. `HU-022`–`HU-024` se prepararon como propuestas mediante el issue documental [#73](https://github.com/bcaceres19/barberia/issues/73); `DP-SER-01`–`DP-SER-03` quedaron resueltas por `DEC-067`–`DEC-069` y cada una tiene issue real de implementación (`#75`, `#76`, `#77`). `HU-022` puede ejecutarse ya; `HU-023` y `HU-024` permanecen bloqueadas únicamente por el orden de integración de esta sección.
 
 Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-021` → `HU-022` → `HU-023` → `HU-024`.
 
@@ -773,12 +773,12 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | --- | --- |
 | Función | `F-SERV-01`, `F-SERV-02` (alta, consulta y edición del catálogo; ciclo de activación en `HU-024`) |
 | Reglas | `RN-SER-01`, `RN-SER-02`, `RN-SER-04`, `RN-TEN-01`, `RN-DAT-02` |
-| Decisiones | `DEC-002`, `DEC-004`, `DEC-024`, `DEC-033`–`DEC-040`, `DEC-043` |
+| Decisiones | `DEC-002`, `DEC-004`, `DEC-024`, `DEC-033`–`DEC-040`, `DEC-043`, `DEC-067` |
 | Actor | Barbero autenticado |
-| Depende de | `HU-020`, `HU-021` y resolución de `DP-SER-01` |
+| Depende de | `HU-020`, `HU-021` |
 | Bloquea | `HU-023`, `HU-024`, disponibilidad y reserva pública |
-| Estado | Propuesta `draft`; no ejecutable hasta resolver `DP-SER-01` y crear issue real |
-| Riesgo | Inventar moneda, gratuidad o unicidad de nombre produciría restricciones y errores incompatibles; tratar precio como punto flotante o propagar cambios a citas rompería integridad e historia. |
+| Estado | Lista para ejecutarse; issue real [#75](https://github.com/bcaceres19/barberia/issues/75) |
+| Riesgo | Tratar precio como punto flotante, aceptar precio 0 o nombres duplicados entre servicios activos, o propagar cambios a citas, rompería `DEC-067`, integridad e historia. |
 
 **Historia**
 
@@ -786,12 +786,12 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 
 **Alcance incluido**
 
-- Recurso `service` perteneciente a la barbería, separado de `barber` y de cualquier cita, con nombre, descripción opcional, duración en minutos enteros, importe, moneda, estado activo y marcas de tiempo.
+- Recurso `service` perteneciente a la barbería, separado de `barber` y de cualquier cita, con nombre, descripción opcional, duración en minutos enteros, importe en COP, estado activo y marcas de tiempo.
 - Lista paginada, lectura individual, alta idempotente y edición de los campos de catálogo autorizados.
 - Duraciones positivas configurables, incluidos valores como 25 o 45 minutos; la interfaz no impone una lista cerrada de presets.
 - Pantalla privada “Servicios” en el módulo `catalog`, compuesta dentro del cascarón existente sin duplicar guard, navegación ni cliente HTTP.
 - Contrato OpenAPI privado, módulo Go `catalog`, migración Atlas mínima, RLS, cliente TypeScript generado y pruebas de dos tenants.
-- Los valores finales de moneda, gratuidad y unicidad de nombres se incorporan únicamente desde la decisión que resuelva `DP-SER-01`.
+- Moneda COP fija (sin campo editable), precio estrictamente mayor que cero y nombre único entre servicios activos de la misma barbería, conforme a `DEC-067`.
 
 **Alcance excluido**
 
@@ -805,9 +805,9 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | Código | Criterio |
 | --- | --- |
 | `CA-022-01` | Dada una sesión válida, cuando se abre “Servicios”, entonces se listan únicamente los servicios de la barbería activa con paginación estable y estados de carga, vacío y error recuperable. |
-| `CA-022-02` | Dados nombre, duración, precio y moneda válidos conforme a `DP-SER-01`, cuando se crea un servicio con una clave idempotente, entonces se persiste una sola fila activa y un reintento exacto reproduce el mismo recurso. |
+| `CA-022-02` | Dados nombre y duración válidos y un precio en COP estrictamente mayor que cero, cuando se crea un servicio con una clave idempotente, entonces se persiste una sola fila activa y un reintento exacto reproduce el mismo recurso. |
 | `CA-022-03` | Dadas duraciones enteras positivas como 25, 30, 45 y 90 minutos, cuando se crean servicios, entonces todas son aceptadas sin redondeo ni catálogo cerrado; cero, negativas, fraccionarias o fuera del límite técnico documentado se rechazan. |
-| `CA-022-04` | Dados campos vacíos, excesivos, desconocidos o un precio/moneda inválidos según la decisión vigente, cuando se crea o edita, entonces se responde `400`, `409` o `422` según el contrato y no se persiste un estado parcial. |
+| `CA-022-04` | Dados campos vacíos, excesivos, desconocidos, un precio menor o igual a cero, o un nombre igual al de otro servicio activo de la misma barbería (`DEC-067`), cuando se crea o edita, entonces se responde `400`, `409` o `422` según el contrato y no se persiste un estado parcial. |
 | `CA-022-05` | Cuando se cambia nombre, descripción, duración o precio del catálogo, entonces solo cambia `service`; ninguna operación de esta HU acepta alcance sobre citas ni simula propagación a recursos futuros (`RN-SER-04`). |
 | `CA-022-06` | Dado un identificador de servicio de otra barbería, cuando se consulta o edita, entonces se responde el mismo `404` que para uno inexistente y RLS impide toda lectura o escritura cruzada. |
 | `CA-022-07` | OpenAPI, handlers, cliente generado, dominio, migración y formulario coinciden en campos, límites, precisión monetaria, errores y trazabilidad `RN-*`/`DEC-*`. |
@@ -815,12 +815,12 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 
 **Pruebas obligatorias**
 
-- Dominio y servicio para duración, nombre, descripción y valor monetario; casos definidos por `DP-SER-01`.
+- Dominio y servicio para duración, nombre, descripción y valor monetario; casos definidos por `DEC-067` (precio > 0, nombre único entre activos).
 - HTTP/contrato para lista, lectura, alta idempotente, edición, validación, conflicto, `401`, `404` tenant-aware y `500`.
 - PostgreSQL 14 real con dos tenants, precisión `numeric`, restricciones, RLS forzada, grants mínimos y ausencia de `DELETE`.
 - Componentes y E2E privado crear → listar → editar → recargar, con evidencia responsive y accesible.
 
-**Terminado cuando** el catálogo básico funciona de extremo a extremo sin asignaciones, ciclo de vida ni citas, y la decisión de `DP-SER-01` está incorporada en todas las capas.
+**Terminado cuando** el catálogo básico funciona de extremo a extremo sin asignaciones, ciclo de vida ni citas, y `DEC-067` está incorporada en todas las capas.
 
 ---
 
@@ -830,12 +830,12 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | --- | --- |
 | Función | `F-CONF-02` (servicios por barbero) |
 | Reglas | `RN-SER-03`, `RN-SER-04`, `RN-TEN-01`, `RN-DAT-02` |
-| Decisiones | `DEC-004`, `DEC-019`, `DEC-024`, `DEC-033`–`DEC-040` |
+| Decisiones | `DEC-004`, `DEC-019`, `DEC-024`, `DEC-033`–`DEC-040`, `DEC-068` |
 | Actor | Barbero autenticado |
-| Depende de | `HU-021`, `HU-022` y resolución de `DP-SER-02` |
+| Depende de | `HU-021`, `HU-022` integradas en `main` |
 | Bloquea | Horarios por barbero, disponibilidad y selección pública de barbero |
-| Estado | Propuesta `draft`; no ejecutable hasta resolver `DP-SER-02` y crear issue real |
-| Riesgo | Una relación sin tenant compuesto puede asociar recursos de barberías distintas; retirar la última asignación sin política aprobada puede dejar un servicio activo imposible de reservar o alterar expectativas sobre citas futuras. |
+| Estado | Issue real [#76](https://github.com/bcaceres19/barberia/issues/76); bloqueada solo hasta que `HU-022` esté integrada en `main` |
+| Riesgo | Una relación sin tenant compuesto puede asociar recursos de barberías distintas; permitir retirar la última asignación de un servicio activo contradiría `DEC-068` y dejaría un servicio activo imposible de reservar. |
 
 **Historia**
 
@@ -844,7 +844,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 **Alcance incluido**
 
 - Asociación tenant-aware `barber_service` entre filas reales de `barber` y `service`, sin copiar nombre, duración ni precio.
-- Consulta de asignaciones por barbero y operaciones explícitas para asignar y desasignar conforme a la decisión de `DP-SER-02`.
+- Consulta de asignaciones por barbero y operaciones explícitas para asignar y desasignar; desasignar la última fila activa de un servicio activo se rechaza (`DEC-068`).
 - La misma ruta y pantalla funcionan para un barbero con todos los servicios, varios con servicios compartidos y un equipo con especialidades distintas.
 - Interfaz dentro de la experiencia privada existente, usando APIs públicas mínimas de `staff` y `catalog` o composición en `app`; ningún módulo importa archivos internos de otro.
 - Migración Atlas mínima, RLS, FK compuestas, contrato privado, módulo Go y pruebas con dos tenants.
@@ -863,14 +863,14 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | `CA-023-02` | Cuando se asigna un servicio permitido a un barbero, entonces la relación aparece al recargar y repetir exactamente la operación no crea una segunda fila. |
 | `CA-023-03` | Un mismo servicio puede asignarse a varios barberos de la misma barbería y cada asociación sigue siendo un recurso independiente. |
 | `CA-023-04` | Intentar asociar un barbero o servicio de otra barbería responde `404` o conflicto uniforme y la FK tenant-aware/RLS rechaza la relación incluso con el rol real de aplicación. |
-| `CA-023-05` | La operación de desasignación aplica exactamente la decisión de `DP-SER-02`, es segura ante repetición y nunca borra el barbero, el servicio ni una cita. |
-| `CA-023-06` | El estado permitido cuando un servicio queda con cero asignaciones coincide en base de datos, API e interfaz con `DP-SER-02`; ningún agente lo decide por conveniencia. |
+| `CA-023-05` | Intentar retirar la última asignación activa de un servicio activo se rechaza con `409`/`422` (`DEC-068`); la operación es segura ante repetición y nunca borra el barbero, el servicio ni una cita. |
+| `CA-023-06` | Un servicio activo nunca queda con cero asignaciones como resultado de esta historia; base de datos, API e interfaz coinciden en rechazar ese estado (`DEC-068`). |
 | `CA-023-07` | La asociación no contiene nombre, duración, precio, estado ni columnas de otro dueño; el contrato no expone precios o duraciones por barbero. |
 | `CA-023-08` | La interfaz anuncia guardado/error, funciona con teclado, evita doble envío y conserva una composición usable en 320, 360, 768 y 1280 px. |
 
 **Pruebas obligatorias**
 
-- Dominio/servicio para asignación repetida, desasignación y política de última asignación.
+- Dominio/servicio para asignación repetida, desasignación y rechazo de la última asignación activa (`DEC-068`).
 - PostgreSQL real con dos tenants, FK compuestas, RLS, permisos exactos y carreras de asignación repetida.
 - HTTP/contrato para consulta, alta/baja de asociación, `401`, `404`, conflicto y campos desconocidos.
 - Componente y E2E para un barbero, cuatro barberos, servicio compartido y aislamiento cruzado.
@@ -885,12 +885,12 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | --- | --- |
 | Función | `F-SERV-01` (ciclo de vida sin borrado físico) |
 | Reglas | `RN-SER-03`, `RN-SER-04`, `RN-TEN-01`, `RN-IDE-01` |
-| Decisiones | `DEC-003`, `DEC-004`, `DEC-024`, `DEC-033`–`DEC-040`, `DEC-043` |
+| Decisiones | `DEC-003`, `DEC-004`, `DEC-024`, `DEC-033`–`DEC-040`, `DEC-043`, `DEC-069` |
 | Actor | Barbero autenticado |
-| Depende de | `HU-022`, `HU-023` y resolución de `DP-SER-03` |
+| Depende de | `HU-022`, `HU-023` integradas en `main` |
 | Bloquea | Cierre de B1, consulta pública de servicios y flujos futuros con citas |
-| Estado | Propuesta `draft`; no ejecutable hasta resolver `DP-SER-03` y crear issue real |
-| Riesgo | Desactivar sin una advertencia real omite compromisos futuros; simular citas antes de B3 crea contrato ficticio; una previsualización obsoleta puede confirmar una decisión sobre un conteo que ya cambió. |
+| Estado | Issue real [#77](https://github.com/bcaceres19/barberia/issues/77); bloqueada solo hasta que `HU-022` y `HU-023` estén integradas en `main` |
+| Riesgo | Desactivar sin una advertencia real omite compromisos futuros; simular citas antes de B3 crea contrato ficticio; construir protección de concurrencia sobre un conteo que en B1 nunca cambia (`DEC-069`) sería alcance inventado. |
 
 **Historia**
 
@@ -899,7 +899,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 **Alcance incluido**
 
 - Estado activo/inactivo coherente y marca temporal de desactivación, sin borrado físico.
-- Previsualización y confirmación del impacto según la decisión que resuelva `DP-SER-03`; la interfaz nunca inventa un conteo ni ofrece cancelar citas inexistentes.
+- Previsualización real del impacto (recuento de citas futuras afectadas, siempre 0 en B1 porque `appointment` no existe todavía) y confirmación, sin protección de concurrencia sobre el conteo (`DEC-069`); la interfaz nunca inventa un conteo distinto del real ni ofrece cancelar citas inexistentes.
 - Desactivación idempotente que conserva por defecto toda cita existente y nunca propaga cambios de catálogo en silencio.
 - Reactivación explícita y auditable a nivel técnico, sin recrear el servicio ni sus asignaciones.
 - Estados visuales de advertencia, confirmación, conflicto, éxito y error recuperable en la pantalla de servicios.
@@ -915,10 +915,10 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 
 | Código | Criterio |
 | --- | --- |
-| `CA-024-01` | Antes de desactivar, el sistema presenta el impacto real disponible según `DP-SER-03`; nunca muestra cero por defecto técnico ni datos simulados. |
+| `CA-024-01` | Antes de desactivar, el sistema presenta el impacto real disponible mediante una consulta real (siempre 0 en B1, conforme a `DEC-069`); nunca lo muestra como un valor por defecto sin consultar ni simula datos. |
 | `CA-024-02` | Cuando se confirma la desactivación conforme al contrato vigente, entonces el servicio queda inactivo con su identificador e historial conservados y no se borra ninguna asociación o cita por cascada. |
 | `CA-024-03` | Las citas existentes se mantienen por defecto y ninguna se cancela, reprograma o modifica sin una operación futura explícita de la capacidad dueña (`RN-SER-03`, `RN-SER-04`). |
-| `CA-024-04` | Una confirmación basada en impacto obsoleto se resuelve según `DP-SER-03` con un resultado explícito y seguro; no confirma silenciosamente una premisa que cambió. |
+| `CA-024-04` | La confirmación de desactivación vuelve a consultar el impacto real en la misma operación (sin depender de un valor cacheado de la previsualización); no requiere bloqueo optimista porque en B1 el conteo no puede cambiar entre ambas llamadas (`DEC-069`). |
 | `CA-024-05` | Cuando se reactiva un servicio, vuelve a estado activo sin crear otra fila ni alterar duración, precio o asignaciones. |
 | `CA-024-06` | Repetir desactivación o reactivación con la misma intención produce un solo efecto; una clave reutilizada con otra intención se rechaza conforme a `RN-IDE-01`. |
 | `CA-024-07` | Un servicio ajeno o inexistente produce el mismo `404`; el rol de aplicación no dispone de `DELETE` físico y RLS impide cambios cruzados. |
@@ -927,11 +927,11 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 **Pruebas obligatorias**
 
 - Dominio/servicio para transiciones, repetición, conflicto y decisión de impacto.
-- PostgreSQL real con dos tenants: invariantes `is_active`/marca temporal, ausencia de `DELETE`, RLS y concurrencia entre previsualización y confirmación.
+- PostgreSQL real con dos tenants: invariantes `is_active`/marca temporal, ausencia de `DELETE` y RLS.
 - HTTP/contrato para impacto, desactivar, reactivar, `401`, `404`, `409`, `422` y error interno.
 - Componente/E2E para advertencia, confirmación, cancelación del diálogo, reintento y reactivación, sin simular citas fuera del contrato aprobado.
 
-**Terminado cuando** el servicio cambia de estado sin borrado ni efectos automáticos y la división B1/B3 de `DP-SER-03` está probada, no asumida.
+**Terminado cuando** el servicio cambia de estado sin borrado ni efectos automáticos y la división B1/B3 de `DEC-069` está probada, no asumida.
 
 ---
 
@@ -939,7 +939,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 
 | Bloque | Rango reservado | Se redacta cuando |
 | --- | --- | --- |
-| B1 | `HU-025` – | `HU-022`–`HU-024` están propuestas; redactar lo restante solo después de resolver `DP-SER-01`–`DP-SER-03` y revisar el criterio de salida de B1 |
+| B1 | `HU-025` – | `HU-022`–`HU-024` están propuestas y desbloqueadas (`DEC-067`–`DEC-069`); redactar lo restante solo después de revisar el criterio de salida de B1 |
 | B2 | `HU-040` – | B1 cumple su criterio de salida |
 | B3 | `HU-060` – | B2 cumple su criterio de salida |
 | B4 | `HU-090` – | B3 cumple su criterio de salida |

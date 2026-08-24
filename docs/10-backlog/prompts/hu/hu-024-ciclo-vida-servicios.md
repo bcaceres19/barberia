@@ -1,6 +1,6 @@
 ---
 prompt_id: "PROMPT-HU-024-v1"
-version: "1.0"
+version: "1.1"
 kind: "hu"
 status: "draft"
 target_agents:
@@ -12,16 +12,15 @@ primary_hu: "HU-024"
 related_hu:
   - "HU-022"
   - "HU-023"
-issue: "pending"
-issue_url: null
+issue: "77"
+issue_url: "https://github.com/bcaceres19/barberia/issues/77"
 suggested_issue_title: "feat(catalog): implementar HU-024 desactivación y reactivación de servicios"
-branch: null
+branch: "feat/77-hu024-ciclo-vida-servicios"
 pr: null
 pr_url: null
 depends_on:
-  - "HU-022 y HU-023 integradas en main"
-  - "DP-SER-03 resuelta mediante una DEC-* propagada a HU-024"
-  - "Issue real con CA-024-01 a CA-024-08"
+  - "HU-022 y HU-023 integradas en main (pendiente)"
+  - "DP-SER-03 resuelta como DEC-069 (cumplido)"
 rules:
   - "RN-SER-03"
   - "RN-SER-04"
@@ -41,6 +40,7 @@ decisions:
   - "DEC-039"
   - "DEC-040"
   - "DEC-043"
+  - "DEC-069"
 acceptance_criteria:
   - "CA-024-01"
   - "CA-024-02"
@@ -92,20 +92,19 @@ superseded_by: null
 
 ## Instrucción para Claude o Codex
 
-Este prompt es un borrador bloqueado. No ejecutes ninguna parte mientras `issue` siga `pending` o `DP-SER-03` no esté resuelta por una `DEC-*` propagada. La cadena migrada todavía no contiene `appointment`; no inventes conteos, citas, cancelaciones ni contratos ficticios para aparentar la advertencia de `RN-SER-03`. Después del desbloqueo, implementa únicamente el ciclo de vida de `service` sin borrado físico.
+`DP-SER-03` está resuelta como `DEC-069` y el issue real [#77](https://github.com/bcaceres19/barberia/issues/77) existe con `CA-024-01`–`CA-024-08`. Este prompt permanece en `draft` únicamente porque `HU-022` y `HU-023` todavía no están integradas en `main`. La cadena migrada todavía no contiene `appointment`; no inventes conteos, citas, cancelaciones ni contratos ficticios para aparentar la advertencia de `RN-SER-03` — `DEC-069` ya fija que B1 solo construye un recuento real (siempre 0) sin bloqueo optimista. Cuando ambas HU estén integradas, pasa este prompt a `in_progress` e implementa únicamente el ciclo de vida de `service` sin borrado físico.
 
 ## Objetivo
 
-Que el barbero desactive o reactive un servicio con una confirmación honesta y segura, conservando el recurso y sin alterar citas automáticamente. La división exacta entre lo que cierra B1 y lo que se integra cuando B3 exista debe coincidir con la decisión de `DP-SER-03`, incluida la protección frente a un impacto que cambie entre previsualizar y confirmar.
+Que el barbero desactive o reactive un servicio con una confirmación honesta y segura, conservando el recurso y sin alterar citas automáticamente. La división B1/B3 y la ausencia de protección de concurrencia sobre el conteo en B1 siguen literalmente `DEC-069`.
 
 ## Preflight obligatorio
 
 1. Comprueba árbol limpio y `main` actualizada por fast-forward; verifica HU-022/HU-023 integradas y CI verde.
 2. Ejecuta Graphify sobre `catalog`, `service`, idempotencia, rutas privadas y cualquier puerto aprobado para impacto de citas. No accedas directamente a tablas de una capacidad futura.
 3. Lee completamente cada `source_docs` y confirma el estado real de migraciones, contrato y módulos.
-4. Verifica que `DP-SER-03` esté resuelta y propagada a HU-024, plan, matriz y modelo de referencia. Si la resolución no define la frontera B1/B3 o concurrencia de la advertencia, detente.
-5. Crea/localiza el issue con `CA-024-01`–`CA-024-08`; actualiza este prompt y el catálogo. No pases a `ready` con `issue: pending`.
-6. Crea `feat/<issue>-hu024-ciclo-vida-servicios` desde `main` actualizada y cambia a `in_progress` antes de implementar.
+4. Confirma en `docs/00-control/registro-decisiones.md` que `DEC-069` está propagada. Si aparece una contradicción, registra bloqueo y detente.
+5. Crea `feat/77-hu024-ciclo-vida-servicios` desde `main` actualizada y cambia este prompt a `in_progress` antes de implementar.
 
 ## Alcance incluido
 

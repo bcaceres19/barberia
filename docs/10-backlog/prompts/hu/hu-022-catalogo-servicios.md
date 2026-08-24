@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-022-v1"
-version: "1.0"
+version: "1.1"
 kind: "hu"
-status: "draft"
+status: "in_progress"
 target_agents:
   - "claude"
   - "codex"
@@ -14,16 +14,15 @@ related_hu:
   - "HU-021"
   - "HU-023"
   - "HU-024"
-issue: "pending"
-issue_url: null
+issue: "75"
+issue_url: "https://github.com/bcaceres19/barberia/issues/75"
 suggested_issue_title: "feat(catalog): implementar HU-022 catálogo básico de servicios"
-branch: null
+branch: "feat/75-hu022-catalogo-servicios"
 pr: null
 pr_url: null
 depends_on:
-  - "HU-020 y HU-021 integradas en main"
-  - "DP-SER-01 resuelta mediante una DEC-* propagada a HU-022"
-  - "Issue real con CA-022-01 a CA-022-08"
+  - "HU-020 y HU-021 integradas en main (cumplido)"
+  - "DP-SER-01 resuelta como DEC-067 (cumplido)"
 rules:
   - "RN-SER-01"
   - "RN-SER-02"
@@ -98,11 +97,11 @@ superseded_by: null
 
 ## Instrucción para Claude o Codex
 
-Este prompt es un borrador no ejecutable. No cambies código, contrato ni base de datos mientras `issue` siga `pending` o `DP-SER-01` no tenga una `DEC-*` aprobada y propagada. Cuando ambas guardas estén satisfechas, implementa únicamente `HU-022` como corte vertical contract-first para listar, consultar, crear y editar el catálogo básico de servicios. No adelantes asignaciones a barberos, ciclo de activación, disponibilidad, reserva ni citas.
+`DP-SER-01` está resuelta como `DEC-067` y el issue real [#75](https://github.com/bcaceres19/barberia/issues/75) existe con `CA-022-01`–`CA-022-08`. Ambas guardas quedan satisfechas: implementa `HU-022` como corte vertical contract-first para listar, consultar, crear y editar el catálogo básico de servicios. No adelantes asignaciones a barberos, ciclo de activación, disponibilidad, reserva ni citas.
 
 ## Objetivo
 
-Que un barbero autenticado gestione nombre, descripción, duración planificada y precio informativo de los servicios de su barbería desde una pantalla real. La moneda, gratuidad y política de nombres activos deben coincidir exactamente con la decisión que cierre `DP-SER-01`. Un cambio de catálogo nunca modifica ni aparenta modificar citas existentes.
+Que un barbero autenticado gestione nombre, descripción, duración planificada y precio informativo de los servicios de su barbería desde una pantalla real. Moneda COP fija, sin servicios gratuitos (`price > 0`) y nombre único entre servicios activos de la misma barbería, exactamente conforme a `DEC-067`. Un cambio de catálogo nunca modifica ni aparenta modificar citas existentes.
 
 ## Preflight obligatorio
 
@@ -110,9 +109,8 @@ Que un barbero autenticado gestione nombre, descripción, duración planificada 
 2. Verifica en GitHub que `HU-020` y `HU-021` están integradas y que sus checks continúan verdes.
 3. Ejecuta Graphify sobre `catalog`, `service`, `InTenantTx`, idempotencia, composición de rutas privadas y cliente OpenAPI; confirma los límites con `staff`, `settings`, `app` y `shared`.
 4. Lee completamente cada `source_docs`. En rutas de directorio revisa archivos públicos, pruebas y migraciones aplicadas relevantes.
-5. Confirma que `DP-SER-01` está resuelta y propagada a reglas, historia, criterios y modelo de referencia. Si falta una respuesta o aparece otra contradicción, registra el bloqueo y detente.
-6. Crea o localiza el issue con `CA-022-01`–`CA-022-08`; actualiza metadatos e índice. `issue: pending` obliga a conservar `status: draft`.
-7. Crea `feat/<issue>-hu022-catalogo-servicios` desde `main` actualizada y cambia este prompt a `in_progress` antes de implementar.
+5. Confirma en `docs/00-control/registro-decisiones.md` que `DEC-067` está propagada a reglas, historia, criterios y modelo de referencia. Si aparece una contradicción, registra el bloqueo y detente.
+6. Crea `feat/75-hu022-catalogo-servicios` desde `main` actualizada.
 
 ## Alcance incluido
 
