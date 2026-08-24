@@ -1,6 +1,6 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.15"
+version: "1.16"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-24"
@@ -147,6 +147,7 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-HU-022-v1](hu/hu-022-catalogo-servicios.md) | `hu` | `HU-022` | [#75](https://github.com/bcaceres19/barberia/issues/75) | `executed` | `HU-020`/`HU-021` integradas; `DP-SER-01` resuelta (`DEC-067`) | Rama `feat/75-hu022-catalogo-servicios`; [PR #79](https://github.com/bcaceres19/barberia/pull/79), integrada en `main` con CI verde |
 | [PROMPT-HU-023-v1](hu/hu-023-asignacion-servicios-barberos.md) | `hu` | `HU-023` | [#76](https://github.com/bcaceres19/barberia/issues/76) | `in_progress` | `HU-022` integrada ([PR #79](https://github.com/bcaceres19/barberia/pull/79)); `DP-SER-02` resuelta (`DEC-068`) | Rama `feat/76-hu023-servicios-barberos`; PR pendiente |
 | [PROMPT-HU-024-v1](hu/hu-024-ciclo-vida-servicios.md) | `hu` | `HU-024` | [#77](https://github.com/bcaceres19/barberia/issues/77) | `draft` | `HU-022`/`HU-023` integradas (pendiente); `DP-SER-03` resuelta (`DEC-069`) | Rama / PR pendientes |
+| [PROMPT-DOCS-INFORME-ACADEMICO-v1](docs/pending-informe-academico-secciones-1-a-4-2.md) | `docs` | — | [#81](https://github.com/bcaceres19/barberia/issues/81) | `executed` | DOCX de 26 páginas verificado; 45 RU P0; privacidad y render final aprobados | Rama `docs/81-informe-academico`; PR pendiente |
 
 ## 10. Lista de control al guardar o entregar
 
