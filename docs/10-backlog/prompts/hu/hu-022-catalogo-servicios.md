@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-022-v1"
 version: "1.1"
 kind: "hu"
-status: "in_progress"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -18,8 +18,8 @@ issue: "75"
 issue_url: "https://github.com/bcaceres19/barberia/issues/75"
 suggested_issue_title: "feat(catalog): implementar HU-022 catálogo básico de servicios"
 branch: "feat/75-hu022-catalogo-servicios"
-pr: null
-pr_url: null
+pr: 79
+pr_url: "https://github.com/bcaceres19/barberia/pull/79"
 depends_on:
   - "HU-020 y HU-021 integradas en main (cumplido)"
   - "DP-SER-01 resuelta como DEC-067 (cumplido)"
@@ -92,6 +92,19 @@ updated_at: "2026-08-24"
 supersedes: null
 superseded_by: null
 ---
+
+> **Ejecutado.** PR real [#79](https://github.com/bcaceres19/barberia/pull/79)
+> abierto contra `main` con `Closes #75`: contrato OpenAPI, migración
+> `database/migrations/20260824140000_create_service.sql`, módulo Go
+> `catalog` y módulo Vue `catalog` (pantalla "Servicios" en
+> `/panel/servicios`) implementados y verificados localmente contra
+> PostgreSQL 14 real, incluida concurrencia de idempotencia con `-race` y
+> un E2E real contra Chromium (Go real + PostgreSQL 14 real, dos tenants
+> reales). Los ocho criterios `CA-022-01`–`CA-022-08` tienen prueba o
+> evidencia real; ver la tabla de criterios en la descripción del PR y en
+> `apps/api/README.md`/`apps/web/README.md`. Este estado no implica que el
+> PR ya esté integrado en `main`: verificar el estado real del PR antes de
+> asumir que `HU-022` está disponible en producción.
 
 # Implementar HU-022: catálogo básico de servicios
 

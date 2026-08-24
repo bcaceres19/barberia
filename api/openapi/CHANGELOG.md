@@ -4,6 +4,39 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.8.0] - 2026-08-24
+
+### Agregado
+
+- `GET /private/services` (HU-022, `operationId: listServices`): lista
+  paginada por cursor de los servicios del catálogo de la barbería activa.
+  `200` (`ServiceListResponse`), `400` (cursor/limit inválido), `401`,
+  `500`.
+- `POST /private/services` (`operationId: createService`): alta de un
+  servicio, protegida con `Idempotency-Key` (`RN-IDE-01`, `DEC-043`).
+  `201` (`ServiceResponse` + `Location`), `400`, `401`, `409` (conflicto u
+  operación en curso de idempotencia, `code: idempotency-conflict`/
+  `idempotency-locked`; o nombre ya usado por otro servicio activo de la
+  misma barbería, `code: conflict`, `DEC-067`), `422` (nombre/descripción/
+  duración/precio inválidos), `500`.
+- `GET /private/services/{serviceId}` (`operationId: getService`): lectura
+  individual; un identificador inexistente o de otra barbería responde el
+  mismo `404` (`CA-022-06`, `RN-TEN-01`).
+- `PATCH /private/services/{serviceId}` (`operationId: updateService`):
+  edición parcial de `name`/`description`/`durationMinutes`/`price`;
+  rechaza objetos vacíos y campos desconocidos (nunca `isActive`,
+  `currency`, asignaciones a barberos ni alcance de propagación hacia una
+  cita, `RN-SER-04`). `200`, `400`, `401`, `404`, `409` (nombre duplicado),
+  `422`, `500`.
+- Esquemas `ServiceResponse`, `ServiceListResponse`, `CreateServiceRequest`,
+  `UpdateServiceRequest`. `price` viaja como string decimal exacto;
+  `currency` siempre `"COP"` (`DEC-067`), informativo, nunca aceptado como
+  entrada.
+- Responses `ServiceListSuccess`, `ServiceSuccess`, `ServiceCreated`,
+  `ServiceUpdated`, `ServiceValidationProblem`, `ServiceConflictProblem`
+  (nuevo problem type `conflict`, distinto de `idempotency-conflict`).
+- Tag `Catalog`.
+
 ## [0.7.0] - 2026-08-23
 
 ### Agregado

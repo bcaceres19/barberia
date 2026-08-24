@@ -16,12 +16,17 @@ la **defensa escalonada contra abuso (HU-007)**: reto telefónico inline en
 la pantalla de acceso cuando el login responde 429, la **configuración
 básica de la barbería (HU-020)**: pantalla "Barbería" (`/panel/barberia`)
 para consultar y actualizar nombre, zona horaria y contacto opcional, con
-actualización inmediata de la cabecera tras guardar, y el **registro y
+actualización inmediata de la cabecera tras guardar, el **registro y
 listado de barberos (HU-021)**: pantalla "Barberos" (`/panel/barberos`)
 con lista paginada, alta con idempotencia real y edición del nombre; una
 barbería con una persona y una con varias usan el mismo componente y el
-mismo estado de datos. Ver las secciones siguientes. El resto de carpetas
-de `modules/` conserva su `index.ts` de marcador de responsabilidad futura.
+mismo estado de datos, y el **catálogo básico de servicios (HU-022)**:
+pantalla "Servicios" (`/panel/servicios`) con lista paginada, alta y
+edición de nombre/descripción/duración/precio, precio en COP como string
+decimal exacto y conflicto de nombre entre servicios activos (`DEC-067`)
+distinguido del conflicto de idempotencia. Ver las secciones siguientes.
+El resto de carpetas de `modules/` conserva su `index.ts` de marcador de
+responsabilidad futura.
 
 ## Acceso del barbero (HU-010)
 
@@ -341,6 +346,91 @@ Atlas, `testdata/dos_barberias.sql` + `testdata/hu005_credenciales_sesiones.sql`
   `hu005_credenciales_sesiones.sql` para las dos cuentas usadas en el
   recorrido, exactamente el procedimiento que `e2e/configuracion-barberia.spec.ts`
   ya documenta como necesario.
+
+## Catálogo básico de servicios (HU-022)
+
+Fuente normativa: `docs/02-requisitos/historias-usuario.md` (HU-022) y
+`docs/00-control/registro-decisiones.md` (`DEC-024`, `DEC-043`, `DEC-067`).
+Esta sección resume la API pública y las decisiones de implementación; no
+las sustituye.
+
+### Ruta y navegación
+
+`src/modules/catalog/routes.ts` expone `catalogPrivateShellChildRoutes`
+(`servicios` → `name: "catalog-servicios"`, `src/modules/catalog/pages/
+CatalogPage.vue`, diferida) y `src/modules/catalog/index.ts` expone
+`catalogNavItems` (`{ to: { name: "catalog-servicios" }, label: "Servicios" }`).
+`src/app/router/index.ts` combina ambas con las de `auth`/`settings`/`staff`
+al construir el único cascarón privado; `catalog` no importa ningún interno
+de otro módulo ni monta su propio guard.
+
+### Precio como string decimal, nunca `number` (DEC-067)
+
+`model/service.ts` declara `price: string` (nunca `number`): el contrato
+expone un decimal exacto con hasta dos cifras
+(`api/openapi/components/schemas/ServiceResponse.yaml`) y el formulario
+(`validation/catalogValidation.ts`) valida esa misma forma con una
+expresión regular antes de enviarla, sin convertir a punto flotante en
+ningún punto del cliente. `currency` siempre llega `"COP"`: informativo,
+nunca un campo editable (ningún formulario de esta pantalla lo declara).
+
+### Conflicto de nombre distinto de conflicto de idempotencia (DEC-067)
+
+`api/catalogApi.ts` distingue el `409` de nombre duplicado
+(`code: "conflict"`) del `409` de idempotencia
+(`code: "idempotency-conflict"`/`"idempotency-locked"`) leyendo el campo
+`code` que `openapi-fetch` ya decodificó en `error`, nunca comparando
+`detail`. `CatalogPage.vue` expone ambos como mensajes recuperables
+distintos (`name-conflict` invita a elegir otro nombre; `idempotency-conflict`
+invita a reintentar) sin perder lo que el barbero ya escribió.
+
+### Edición parcial de cuatro campos en un solo formulario
+
+A diferencia de `StaffPage.vue` (un único campo editable), el diálogo de
+edición de `CatalogPage.vue` muestra los cuatro campos de catálogo
+prellenados y los reenvía todos en cada guardado (el backend sí admite un
+subconjunto parcial, pero esta pantalla no necesita esa granularidad:
+edita el servicio completo de una vez). Una cadena vacía en "Descripción"
+borra la descripción existente (equivalente a "sin descripción"), mismo
+criterio que el backend.
+
+### Hallazgo real de responsive corregido en `AppNav` (HU-012, compartido)
+
+El E2E de evidencia (`e2e/servicios-evidencia-responsiva.spec.ts`) contra
+Chromium real expuso que la cuarta entrada de navegación ("Servicios") ya
+no cabía en una sola fila a 320/360 px sin desbordar el documento
+(`document.documentElement.scrollWidth > clientWidth`): `AppNav.vue`
+(`.app-nav__list`) no tenía manejo alguno para más de tres enlaces en el
+ancho más angosto. Corregido con `overflow-x: auto` sobre la propia lista
+de enlaces (patrón de barra de pestañas desplazable, en vez de envolver a
+varias líneas, que habría cambiado el ritmo vertical del cascarón).
+Verificado sin regresión contra las evidencias responsivas ya integradas
+de `HU-011`/`HU-012`/`HU-020`/`HU-021`.
+
+### Pruebas
+
+Componente (`src/modules/catalog/pages/__tests__/CatalogPage.test.ts`:
+carga, alta, edición, conflicto de nombre, conflicto de idempotencia,
+doble envío bloqueado, ausencia de placeholders de asignación/activación/
+citas, axe-core), cliente tipado
+(`src/modules/catalog/api/__tests__/catalogApi.test.ts`: mapeo por
+`status`/`code`, nunca `detail`), validación
+(`src/modules/catalog/validation/__tests__/catalogValidation.test.ts`) y
+E2E contra el API real en local: `e2e/servicios.spec.ts` (alta → listar →
+editar → recargar con persistencia real, precio cero y nombre vacío
+rechazados sin persistir, duraciones 25/30/45/90 sin catálogo cerrado,
+nombre duplicado con `409` sin segunda fila -`DEC-067`-, identificador
+real de otra barbería con `404` idéntico y ausente del listado propio) y
+`e2e/servicios-evidencia-responsiva.spec.ts` (capturas en
+`e2e/evidence/servicios/`, sin scroll horizontal, foco visible y sin
+violaciones axe-core en los cinco breakpoints y en el diálogo de alta).
+
+Preparación de PostgreSQL para el E2E real: mismo procedimiento que
+"Registro y listado de barberos (HU-021)" arriba (contenedor Postgres 14
+efímero, migraciones vía Atlas, `testdata/dos_barberias.sql` +
+`testdata/hu005_credenciales_sesiones.sql` + `testdata/hu021_barberos.sql`
++ `testdata/hu022_catalogo.sql`, hash argon2id real calculado en el
+momento, nunca embebido en el repositorio).
 
 ## Sistema visual base (HU-009)
 
