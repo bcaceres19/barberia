@@ -969,6 +969,18 @@ GRANT SELECT, INSERT, UPDATE ON TABLE barber TO barberia_app;
 -- ---------------------------------------------------------------------------
 -- B.3 · `service` — F-SERV-01, F-SERV-02, RN-SER-01 a RN-SER-04
 -- ---------------------------------------------------------------------------
+-- DEC-067 (HU-022, issue #75) confirmó esta sección como decisión de
+-- producto, con TRES diferencias respecto a la propuesta técnica original
+-- que la migración aplicada (database/migrations/
+-- 20260824140000_create_service.sql) ya refleja y esta sección actualiza
+-- para no quedar desalineada de lo realmente aplicado:
+--   1. service_price_amount_ck exige `price_amount > 0` (antes `>= 0`):
+--      sin servicios gratuitos.
+--   2. service_price_currency_ck exige `price_currency = 'COP'` (antes
+--      cualquier código ISO de tres letras): moneda fija, sin columna
+--      editable por el cliente.
+--   3. idx_service_active_name compara `name` exacto (antes `lower(name)`):
+--      DEC-067 especifica literalmente esa forma de índice.
 
 CREATE TABLE service (
   id               uuid           NOT NULL DEFAULT gen_random_uuid(),
@@ -995,9 +1007,11 @@ CREATE TABLE service (
   -- por error de digitación sin cerrar la lista de valores (RN-SER-02).
   CONSTRAINT service_duration_minutes_ck CHECK (duration_minutes BETWEEN 1 AND 1440),
 
-  -- `numeric`, nunca coma flotante (estandar-base-datos.md §5).
-  CONSTRAINT service_price_amount_ck   CHECK (price_amount >= 0),
-  CONSTRAINT service_price_currency_ck CHECK (price_currency ~ '^[A-Z]{3}$'),
+  -- `numeric`, nunca coma flotante (estandar-base-datos.md §5). DEC-067:
+  -- estrictamente mayor que cero (sin servicios gratuitos) y moneda COP
+  -- fija, sin columna editable por el cliente.
+  CONSTRAINT service_price_amount_ck   CHECK (price_amount > 0),
+  CONSTRAINT service_price_currency_ck CHECK (price_currency = 'COP'),
 
   -- RN-SER-03: un servicio no se elimina; se desactiva y conserva su historia.
   CONSTRAINT service_deactivated_at_ck CHECK (
@@ -1011,10 +1025,11 @@ COMMENT ON TABLE service IS
   'Los cambios de este catálogo NO se propagan a citas existentes: la cita guarda su propio '
   'snapshot (DEC-004, ver sección D.1).';
 
--- Nombres únicos entre los servicios ofrecidos; un servicio desactivado libera
--- su nombre para poder reemplazarlo.
+-- Nombres únicos entre los servicios ACTIVOS de la misma barbería (DEC-067,
+-- comparación exacta); un servicio desactivado libera su nombre para poder
+-- reemplazarlo.
 CREATE UNIQUE INDEX idx_service_active_name
-  ON service (barbershop_id, lower(name))
+  ON service (barbershop_id, name)
   WHERE is_active;
 
 CREATE TRIGGER service_set_updated_at
