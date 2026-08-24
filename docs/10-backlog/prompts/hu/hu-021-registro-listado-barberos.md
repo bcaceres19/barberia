@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-021-v1"
 version: "1.0"
 kind: "hu"
-status: "ready"
+status: "in_progress"
 target_agents:
   - "claude"
   - "codex"
@@ -20,7 +20,7 @@ related_hu:
 issue: 68
 issue_url: "https://github.com/bcaceres19/barberia/issues/68"
 suggested_issue_title: "feat(staff): implementar HU-021 registro y listado de barberos"
-branch: null
+branch: "feat/68-hu021-barberos"
 pr: null
 pr_url: null
 depends_on:
