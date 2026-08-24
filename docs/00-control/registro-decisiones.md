@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.17"
+version: "1.18"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-17"
+ultima_actualizacion: "2026-08-24"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -88,6 +88,9 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-057` | 2026-08-13 | Resuelve `DP-SEG-07`: cookie de sesión `barberia_session`, `Path=/api/v1`, `SameSite=Lax`, sin `Domain`, 30 días | `DEC-050`, `DP-SEG-07` | Confirmada |
 | `DEC-058` | 2026-08-13 | Resuelve `DP-SEG-08`: `CA-005-05`/`CA-005-01` se dividen entre `HU-005` (aislamiento a nivel PostgreSQL/RLS) y `HU-006` (verificación end-to-end contra el logout real, nuevo `CA-006-07`) | `DP-SEG-08`, `CA-005-01`, `CA-005-05`, `CA-006-07` | Confirmada |
 | `DEC-059` | 2026-08-13 | Resuelve `DP-UX-06`: el enlace de recuperación de `CA-010-08` navega a `/recuperar-acceso`, ruta real que declara que la recuperación aún no está disponible, hasta que `HU-011` la construya | `DP-UX-06`, `CA-010-08` | Confirmada |
+| `DEC-067` | 2026-08-24 | Resuelve `DP-SER-01`: catálogo con moneda COP fija, sin servicios gratuitos (precio > 0) y nombres únicos entre servicios activos de la misma barbería | `DP-SER-01`, `HU-022` | Confirmada |
+| `DEC-068` | 2026-08-24 | Resuelve `DP-SER-02`: un servicio activo debe conservar al menos un barbero asignado; se rechaza retirar la última asignación | `DP-SER-02`, `HU-023` | Confirmada |
+| `DEC-069` | 2026-08-24 | Resuelve `DP-SER-03`: B1 construye un recuento simple de impacto al desactivar, sin protección de concurrencia; la advertencia completa con cancelación queda para B3 | `DP-SER-03`, `HU-024` | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -726,3 +729,33 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** BSP intermedio (Twilio/360dialog/Infobip) — descartado por el costo mensual y la capa de abstracción adicional innecesaria para el volumen del piloto; revisable si el producto escala. SendGrid/Postmark para correo — descartados solo por preferencia de simplicidad frente a Resend; son alternativas igualmente válidas si el propietario ya tiene cuenta con alguno.
 - **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-NOT-05`), `docs/00-control/matriz-trazabilidad.md`, `docs/02-requisitos/historias-usuario.md` (`CA-008-01`), `docs/10-backlog/prompts/hu/hu-008-recuperacion-acceso.md`, `apps/api/README.md` (documentar variables de entorno esperadas, sin valores).
 - **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-NOT-05`; aprobación explícita del propietario el 2026-08-17.
+
+### DEC-067 · Resolución de `DP-SER-01`: moneda, gratuidad y nombres del catálogo
+
+- **Fecha:** 2026-08-24.
+- **Decisión:** el catálogo de `HU-022` usa moneda **COP fija** para todo el MVP (sin campo de moneda configurable por barbería ni por servicio); el precio debe ser estrictamente mayor que cero (`price > 0`), por lo que **no se permiten servicios gratuitos**; y dos servicios **activos** de la misma barbería no pueden compartir nombre exacto (unicidad parcial tenant-aware sobre `is_active = true`), mientras que un servicio inactivo puede conservar un nombre igual al de uno activo nuevo (no bloquea reactivación futura ni renombrar). Confirma la propuesta ya presente en `database/modelo-fisico-referencia.sql` §B.3 como decisión de producto, no solo como insumo técnico.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** COP fija evita construir selección/almacenamiento de moneda y su validación ISO sin un caso de uso real todavía (el piloto opera en una sola región); exigir precio positivo evita que "gratis" se confunda con un campo vacío o un error de captura, y mantiene el precio como una señal comercial real; la unicidad por nombre entre servicios activos evita catálogos ambiguos en la pantalla y en el futuro enlace público, sin impedir que un nombre se reutilice tras desactivar el original.
+- **Alternativas descartadas:** moneda configurable por barbería — descartada por ampliar el alcance de `HU-022` con un campo, validación y ejemplos que ningún criterio exige todavía; permitir precio 0 — descartada por no tener un caso de uso aprobado (cortesías/promociones quedan fuera del MVP) y por complicar innecesariamente la regla de validación; permitir nombres duplicados entre servicios activos — descartada por degradar la lista y la futura selección pública sin beneficio claro.
+- **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-SER-01`), `docs/02-requisitos/historias-usuario.md` (`HU-022`, `CA-022-02`–`CA-022-04`), `docs/10-backlog/prompts/hu/hu-022-catalogo-servicios.md`; futura implementación (issue `#75`) debe reflejar `currency = 'COP'` fijo (no columna editable), `CHECK (price > 0)` y un índice único parcial `(barbershop_id, name) WHERE is_active`.
+- **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-SER-01`; aprobación explícita del propietario el 2026-08-24.
+
+### DEC-068 · Resolución de `DP-SER-02`: última asignación de un servicio activo
+
+- **Fecha:** 2026-08-24.
+- **Decisión:** un servicio activo debe conservar al menos un barbero asignado. La operación de desasignación que dejaría a un servicio activo sin ningún barbero se **rechaza** (bloqueo duro, `409`/`422` según el contrato), no se advierte ni se permite silenciosamente. Esta regla aplica únicamente mientras el servicio esté activo: desactivar el servicio (`HU-024`) sí puede dejarlo sin asignaciones, porque un servicio inactivo no se ofrece de todas formas.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** de las tres opciones registradas en `DP-SER-02`, el bloqueo duro es la única que garantiza que "servicio activo" siga significando "servicio reservable" en todo momento, sin depender de que el barbero recuerde reasignarlo después ni de una advertencia que puede ignorarse; evita además tener que definir y probar un estado intermedio ("activo mostrable" vs. "activo sin oferta real") que ningún criterio de `HU-022`/`HU-023` exige.
+- **Alternativas descartadas:** solo advertencia — descartada por dejar un estado inconsistente (servicio activo sin oferta real) como resultado normal del flujo, sin ganancia frente al bloqueo; sin restricción — descartada por la misma razón, agravada porque tampoco exige confirmación explícita.
+- **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-SER-02`), `docs/02-requisitos/historias-usuario.md` (`HU-023`, `CA-023-05`, `CA-023-06`), `docs/10-backlog/prompts/hu/hu-023-asignacion-servicios-barberos.md`; futura implementación (issue `#76`) debe rechazar la desasignación cuando sea la última fila activa de `barber_service` para ese `service_id`, verificado dentro de la misma transacción (carrera de dos desasignaciones concurrentes de las dos últimas filas).
+- **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-SER-02`; aprobación explícita del propietario el 2026-08-24.
+
+### DEC-069 · Resolución de `DP-SER-03`: alcance B1/B3 de la advertencia de citas futuras
+
+- **Fecha:** 2026-08-24.
+- **Decisión:** `HU-024` (B1) construye un recuento simple de impacto antes de confirmar la desactivación: el sistema calcula y muestra cuántas citas futuras quedarían afectadas usando el estado real disponible en ese momento (que en B1 siempre será 0, porque `appointment` todavía no existe en la cadena migrada), sin protección contra cambios concurrentes entre previsualizar y confirmar (sin token de versión ni bloqueo optimista). El contrato, el dominio y la interfaz quedan preparados para que B3 rellene ese conteo con datos reales de `appointment` sin cambiar la forma de la operación. La cancelación selectiva de citas y cualquier protección de concurrencia sobre el conteo quedan explícitamente fuera de B1 y se construyen junto con `appointment` en B3.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** de las opciones registradas en `DP-SER-03`, es la que no inventa un conteo cero como caso especial documentado en el código de negocio (sería una mentira de dominio: "cero" es simplemente el resultado real de una consulta sobre una tabla vacía, no un atajo), y no exige construir un mecanismo de concurrencia para proteger un dato que en B1 nunca cambia entre previsualizar y confirmar (no puede existir una carrera real sin `appointment`); tampoco difiere toda la funcionalidad a B3, lo que dejaría `HU-024` sin ninguna advertencia y rompería `RN-SER-03` antes de tiempo.
+- **Alternativas descartadas:** recuento con bloqueo optimista en B1 — descartada por construir protección de concurrencia contra una carrera que no puede ocurrir todavía (no hay `appointment` que cambie el conteo entre las dos llamadas), costo sin beneficio real hasta B3; diferir toda advertencia a B3 — descartada por dejar `HU-024` sin cumplir la parte de `RN-SER-03` que sí es alcanzable ahora (mostrar impacto antes de confirmar), aunque ese impacto sea siempre cero en B1.
+- **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-SER-03`), `docs/01-producto/reglas-negocio.md` (`RN-SER-03`, nota de alcance B1/B3), `docs/02-requisitos/historias-usuario.md` (`HU-024`, `CA-024-01`, `CA-024-04`), `docs/10-backlog/prompts/hu/hu-024-ciclo-vida-servicios.md`; futura implementación (issue `#77`) expone la previsualización como una operación real que consulta el estado vigente sin simular ni cachear un valor, y sin agregar un mecanismo de versión/lease que ningún dato concurrente todavía justifica.
+- **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-SER-03`; aprobación explícita del propietario el 2026-08-24.

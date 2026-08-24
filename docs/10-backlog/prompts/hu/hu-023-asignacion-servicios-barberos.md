@@ -1,6 +1,6 @@
 ---
 prompt_id: "PROMPT-HU-023-v1"
-version: "1.0"
+version: "1.1"
 kind: "hu"
 status: "draft"
 target_agents:
@@ -13,17 +13,16 @@ related_hu:
   - "HU-021"
   - "HU-022"
   - "HU-024"
-issue: "pending"
-issue_url: null
+issue: "76"
+issue_url: "https://github.com/bcaceres19/barberia/issues/76"
 suggested_issue_title: "feat(catalog): implementar HU-023 asignación de servicios a barberos"
-branch: null
+branch: "feat/76-hu023-servicios-barberos"
 pr: null
 pr_url: null
 depends_on:
-  - "HU-021 integrada en main"
-  - "HU-022 integrada en main"
-  - "DP-SER-02 resuelta mediante una DEC-* propagada a HU-023"
-  - "Issue real con CA-023-01 a CA-023-08"
+  - "HU-021 integrada en main (cumplido)"
+  - "HU-022 integrada en main (pendiente)"
+  - "DP-SER-02 resuelta como DEC-068 (cumplido)"
 rules:
   - "RN-SER-03"
   - "RN-SER-04"
@@ -41,6 +40,7 @@ decisions:
   - "DEC-038"
   - "DEC-039"
   - "DEC-040"
+  - "DEC-068"
 acceptance_criteria:
   - "CA-023-01"
   - "CA-023-02"
@@ -95,20 +95,19 @@ superseded_by: null
 
 ## Instrucción para Claude o Codex
 
-Este prompt es un borrador no ejecutable. No implementes mientras `HU-022` no esté integrada, `issue` siga `pending` o `DP-SER-02` permanezca abierta. Después de satisfacer las guardas, implementa únicamente la relación entre barberos y servicios existentes. No cambies el catálogo, el ciclo de vida, horarios, disponibilidad ni citas.
+`DP-SER-02` está resuelta como `DEC-068` y el issue real [#76](https://github.com/bcaceres19/barberia/issues/76) existe con `CA-023-01`–`CA-023-08`. Este prompt permanece en `draft` únicamente porque `HU-022` todavía no está integrada en `main`. No implementes hasta que lo esté; entonces pasa este prompt a `in_progress` e implementa únicamente la relación entre barberos y servicios existentes. No cambies el catálogo, el ciclo de vida, horarios, disponibilidad ni citas.
 
 ## Objetivo
 
-Que un barbero autenticado configure qué servicios presta cada integrante de su barbería usando una asociación tenant-aware sin atributos duplicados. La política de cero/última asignación y el efecto de desasignar deben seguir literalmente la decisión que resuelva `DP-SER-02`.
+Que un barbero autenticado configure qué servicios presta cada integrante de su barbería usando una asociación tenant-aware sin atributos duplicados. Un servicio activo debe conservar al menos un barbero asignado; retirar la última asignación activa se rechaza, conforme a `DEC-068`.
 
 ## Preflight obligatorio
 
 1. Comprueba árbol limpio, actualiza `main` por fast-forward y verifica que HU-021/HU-022 estén integradas con CI verde.
 2. Ejecuta Graphify sobre `staff`, `catalog`, `barber`, `service`, composición privada e `InTenantTx`; identifica el dueño de cada operación y evita ciclos.
 3. Lee completamente cada `source_docs`, incluidas las APIs públicas y pruebas reales de HU-021/HU-022.
-4. Confirma que `DP-SER-02` está cerrada por una `DEC-*` propagada. Si la respuesta no define el último vínculo o el efecto futuro, registra bloqueo y detente.
-5. Localiza o crea un issue real con `CA-023-01`–`CA-023-08`, actualiza metadatos/índice y solo entonces pasa a `ready`.
-6. Crea `feat/<issue>-hu023-servicios-barberos` desde `main` actualizada y cambia a `in_progress` al iniciar.
+4. Confirma en `docs/00-control/registro-decisiones.md` que `DEC-068` está propagada. Si aparece una contradicción, registra bloqueo y detente.
+5. Crea `feat/76-hu023-servicios-barberos` desde `main` actualizada y cambia este prompt a `in_progress` al iniciar.
 
 ## Alcance incluido
 

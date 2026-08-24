@@ -1,9 +1,9 @@
 ---
 titulo: "Reglas de negocio"
-version: "1.0"
+version: "1.1"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-05"
+ultima_actualizacion: "2026-08-24"
 documentos_relacionados:
   - "../00-control/glosario.md"
   - "../00-control/supuestos.md"
@@ -146,6 +146,7 @@ Los servicios no se eliminan físicamente. Al desactivarlos dejan de aparecer en
 **Casos límite:**
 - Desactivar un servicio con citas futuras ya agendadas: se conservan por defecto; el barbero puede seleccionar cuáles cancelar y cada cancelación debe notificar al cliente.
 - Reactivar un servicio previamente desactivado: permitido.
+- Alcance por bloque (`DEC-069`): `HU-024` (B1) construye la advertencia como un recuento real de impacto antes de confirmar, sin cancelación selectiva ni protección de concurrencia sobre el conteo (no aplicable todavía porque `appointment` no existe en B1). La cancelación selectiva con notificación y el bloqueo optimista del conteo se completan en B3 junto con `appointment`, sin cambiar la forma de esta regla.
 
 **Módulos afectados:** servicios, reserva pública, agenda, notificaciones, historial.
 

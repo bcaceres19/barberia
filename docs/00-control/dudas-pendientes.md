@@ -1,7 +1,7 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "2.5"
-estado: "Con dudas abiertas de B1"
+version: "2.6"
+estado: "Sin dudas abiertas"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-24"
 documentos_relacionados:
@@ -17,7 +17,7 @@ documentos_relacionados:
 
 ## 1. Estado
 
-Hay tres dudas abiertas de B1. Se detectaron el 24 de agosto de 2026 al preparar `HU-022`, `HU-023` y `HU-024` y sus prompts persistentes (issue documental [#73](https://github.com/bcaceres19/barberia/issues/73)). `F-SERV-01`, `F-SERV-02`, `RN-SER-01`–`RN-SER-04` y el modelo físico de referencia no fijan por sí solos todas las decisiones observables necesarias para contrato, interfaz y pruebas. Las tres historias y prompts permanecen como propuesta `draft`; no se ejecutan hasta resolver `DP-SER-01`–`DP-SER-03`, registrar las decisiones y crear un issue de implementación por HU.
+No queda ninguna duda abierta. Las tres dudas de B1 (`DP-SER-01`–`DP-SER-03`) se detectaron el 24 de agosto de 2026 al preparar `HU-022`, `HU-023` y `HU-024` y sus prompts persistentes (issue documental [#73](https://github.com/bcaceres19/barberia/issues/73)); `F-SERV-01`, `F-SERV-02`, `RN-SER-01`–`RN-SER-04` y el modelo físico de referencia no fijaban por sí solos todas las decisiones observables necesarias para contrato, interfaz y pruebas. El propietario las resolvió el mismo 24 de agosto de 2026 como `DEC-067`–`DEC-069`, y se crearon los issues reales de implementación: [#75](https://github.com/bcaceres19/barberia/issues/75) (`HU-022`), [#76](https://github.com/bcaceres19/barberia/issues/76) (`HU-023`) y [#77](https://github.com/bcaceres19/barberia/issues/77) (`HU-024`).
 
 Antes de este lote no quedaba ninguna duda abierta. Al preparar los prompts de `HU-012`, `HU-007` y `HU-008` (issue documental `#55`) el 14 de agosto de 2026, la comparación entre los criterios, el contrato y el código integrado mostró cinco decisiones que todavía no podían inferirse sin ampliar o debilitar el alcance: el bootstrap autoritativo del panel (`DP-SEG-09`), el reto telefónico completo de `HU-007` (`DP-SEG-10`), la política de contraseña nueva (`DP-SEG-11`), los parámetros del código de recuperación (`DP-SEG-12`) y el proveedor oficial concreto de correo/WhatsApp (`DP-NOT-05`). El propietario resolvió las cinco el 17 de agosto de 2026 como `DEC-060`, `DEC-062`–`DEC-064` y `DEC-066`.
 
@@ -37,15 +37,9 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 - alojamiento: se interpreta “VPN dedicado” como **VPS dedicado**, que es el recurso de cómputo coherente con el contexto;
 - “turnos” se usa en la interfaz y la comunicación; “citas” se conserva como término técnico para no renombrar la entidad `appointment`.
 
-## 2. Dudas abiertas de servicios (B1)
+## 2. Dudas abiertas
 
-| Código | HU | Pregunta que debe resolver el propietario | Por qué bloquea |
-| --- | --- | --- | --- |
-| `DP-SER-01` | `HU-022` | ¿La moneda del catálogo es COP fija o configurable; se permiten servicios gratuitos; y dos servicios activos pueden compartir nombre? | Cambia schemas, restricciones, errores `409`/`422`, normalización, ejemplos y controles de formulario. El `modelo-fisico-referencia.sql` propone COP, precio `>= 0` y unicidad parcial por nombre, pero no sustituye una decisión de producto. |
-| `DP-SER-02` | `HU-023` | ¿Un servicio activo debe estar asignado al menos a un barbero y se permite retirar la última asignación? ¿La desasignación se bloquea, advierte o solo afecta oferta futura cuando existan citas? | Define la cardinalidad observable, el estado vacío, los permisos de `DELETE` sobre `barber_service` y el efecto futuro sobre disponibilidad sin alterar citas existentes. |
-| `DP-SER-03` | `HU-024` | Antes de que B3 implemente `appointment`, ¿qué parte exacta de la advertencia de citas futuras debe cerrar B1 al desactivar un servicio? ¿La previsualización y confirmación deben protegerse contra cambios concurrentes del conteo? | B1 exige construir la advertencia, mientras `RN-SER-03` exige contar y permitir decidir sobre citas que todavía no existen en la cadena migrada. Inventar un conteo cero o una cancelación ficticia incumpliría ambas fuentes. |
-
-Opciones y consecuencias deben documentarse en `registro-decisiones.md` antes de pasar cualquiera de estos prompts a `ready`. Una decisión puede resolver más de una pregunta relacionada, pero no se completa con valores elegidos solo por el agente.
+Ninguna. Las últimas tres (`DP-SER-01`–`DP-SER-03`, de B1) se resolvieron el 24 de agosto de 2026; ver la tabla de resoluciones en la sección 3.
 
 ## 3. Resoluciones
 
@@ -110,6 +104,9 @@ Opciones y consecuencias deben documentarse en `registro-decisiones.md` antes de
 | `DP-SEG-07` | Atributos exactos de la cookie de sesión (`SameSite`, `Path`, `Domain`, nombre) | `barberia_session`, `Path=/api/v1`, `SameSite=Lax`, sin `Domain`, 30 días. | `DEC-057` |
 | `DP-SEG-08` | Evidencia de aislamiento de `CA-005-05` sin un endpoint privado real todavía | Dividida: `HU-005` prueba aislamiento a nivel PostgreSQL/RLS; `HU-006` prueba end-to-end contra el logout real (`CA-006-07`). | `DEC-058` |
 | `DP-UX-06` | Destino del enlace de recuperación de `CA-010-08` mientras `HU-011` no existe | Ruta real `/recuperar-acceso`, cargada de forma diferida, que declara explícitamente que la recuperación aún no está disponible; no simula el flujo de `HU-011`. | `DEC-059` |
+| `DP-SER-01` | ¿Moneda COP fija o configurable; se permiten servicios gratuitos; nombres duplicados entre servicios activos? | COP fija, precio estrictamente mayor que cero (sin gratuitos), nombre único entre servicios activos de la misma barbería. | `DEC-067` |
+| `DP-SER-02` | ¿Se permite retirar la última asignación de barbero de un servicio activo? | No; un servicio activo debe conservar al menos un barbero asignado, la operación se rechaza (bloqueo duro). | `DEC-068` |
+| `DP-SER-03` | ¿Qué parte de la advertencia de citas futuras cierra B1 al desactivar un servicio, antes de `appointment` en B3? | B1 construye un recuento simple sobre el estado real (0 hasta que exista `appointment`), sin protección de concurrencia; cancelación selectiva y bloqueo optimista quedan para B3. | `DEC-069` |
 | `DP-SEG-09` | ¿Cuál es la operación y el payload autoritativos con que `HU-012` rehidrata una cookie `HttpOnly` y obtiene la barbería activa al abrir la aplicación? | Nueva operación `GET /api/v1/private/auth/session`, protegida por `SessionCookie` sobre el mismo `SessionMiddleware` existente, con payload mínimo `{ barbershop: { id, name }, expiresAt }`. | `DEC-060` |
 | `DP-SEG-10` | ¿Cómo funciona de extremo a extremo el reto telefónico de `HU-007` después del umbral? | Dos operaciones nuevas, `POST /api/v1/public/auth/challenge` y `.../challenge/verify`, código de 6 dígitos por WhatsApp oficial, vigencia 5 min, 5 intentos, límite propio de reenvío; verificar con éxito limpia `escalated_until` de esa IP. | `DEC-062` |
 | `DP-SEG-11` | ¿Cuál es la política mínima exacta para la contraseña nueva de `CA-008-08`? | Longitud 10–128, sin exigencia de composición, rechazo si es igual al correo o a la contraseña actual; sin verificación contra lista externa de contraseñas filtradas en el MVP. | `DEC-063` |
