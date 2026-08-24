@@ -62,7 +62,9 @@ test.describe('Asignación de servicios a barberos (HU-023)', () => {
   // propias escrituras, no un defecto del producto.
   test.describe.configure({ mode: 'serial' })
 
-  test('asignar un servicio a un barbero aparece marcado tras recargar (CA-023-02)', async ({ page }) => {
+  test('asignar un servicio a un barbero aparece marcado tras recargar (CA-023-02)', async ({
+    page,
+  }) => {
     const stamp = Date.now()
     const barberName = `E2E Barbero Asig ${stamp}`
     const serviceName = `E2E Servicio Asig ${stamp}`
@@ -146,7 +148,9 @@ test.describe('Asignación de servicios a barberos (HU-023)', () => {
     // Verificación real contra el servidor: el servicio sigue teniendo
     // exactamente una asignación activa.
     const remaining = await page.evaluate(async (name) => {
-      const servicesRes = await fetch('/api/v1/private/services?limit=50', { credentials: 'include' })
+      const servicesRes = await fetch('/api/v1/private/services?limit=50', {
+        credentials: 'include',
+      })
       const services = (await servicesRes.json()) as { items: { id: string; name: string }[] }
       const service = services.items.find((s) => s.name === name)
       return service ?? null
@@ -183,6 +187,8 @@ test.describe('Asignación de servicios a barberos (HU-023)', () => {
 
     // El selector de A nunca ofrece el barbero de B.
     await openBarberServices(page)
-    await expect(page.getByLabel('Barbero', { exact: true }).locator('option', { hasText: nameB })).toHaveCount(0)
+    await expect(
+      page.getByLabel('Barbero', { exact: true }).locator('option', { hasText: nameB }),
+    ).toHaveCount(0)
   })
 })

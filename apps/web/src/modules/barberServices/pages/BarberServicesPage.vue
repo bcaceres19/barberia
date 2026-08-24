@@ -209,12 +209,12 @@ async function onToggleService(service: ServiceSummary, event: Event) {
 
     <template v-else>
       <p v-if="barbers.length === 0" class="barber-services-page__empty">
-        Aún no tienes barberos registrados. Agrega uno en la sección
-        “Barberos” antes de asignarle servicios.
+        Aún no tienes barberos registrados. Agrega uno en la sección “Barberos” antes de asignarle
+        servicios.
       </p>
       <p v-else-if="services.length === 0" class="barber-services-page__empty">
-        Aún no tienes servicios en el catálogo. Agrega uno en la sección
-        “Servicios” antes de asignarlo a un barbero.
+        Aún no tienes servicios en el catálogo. Agrega uno en la sección “Servicios” antes de
+        asignarlo a un barbero.
       </p>
 
       <template v-else>
@@ -262,16 +262,17 @@ async function onToggleService(service: ServiceSummary, event: Event) {
             Servicios que presta {{ selectedBarber?.fullName }}
           </legend>
 
-          <BaseAlert v-if="toggleError" variant="danger" role="alert" class="barber-services-page__toggle-error">
+          <BaseAlert
+            v-if="toggleError"
+            variant="danger"
+            role="alert"
+            class="barber-services-page__toggle-error"
+          >
             {{ toggleError }}
           </BaseAlert>
 
           <ul class="barber-services-page__list" aria-label="Catálogo de servicios">
-            <li
-              v-for="service in services"
-              :key="service.id"
-              class="barber-services-page__item"
-            >
+            <li v-for="service in services" :key="service.id" class="barber-services-page__item">
               <input
                 :id="`barber-services-service-${service.id}`"
                 type="checkbox"
@@ -286,7 +287,11 @@ async function onToggleService(service: ServiceSummary, event: Event) {
               >
                 {{ service.name }}
               </label>
-              <span v-if="isPending(service.id)" class="barber-services-page__pending" aria-live="polite">
+              <span
+                v-if="isPending(service.id)"
+                class="barber-services-page__pending"
+                aria-live="polite"
+              >
                 Guardando…
               </span>
             </li>

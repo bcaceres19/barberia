@@ -14,8 +14,13 @@ vi.mock('@/shared/api/httpClient', () => ({
   httpClient: { GET: getMock, PUT: putMock, DELETE: deleteMock },
 }))
 
-const { fetchBarberSummaries, fetchServiceSummaries, fetchAssignments, assignService, unassignService } =
-  await import('../barberServicesApi')
+const {
+  fetchBarberSummaries,
+  fetchServiceSummaries,
+  fetchAssignments,
+  assignService,
+  unassignService,
+} = await import('../barberServicesApi')
 
 function ok(body: unknown) {
   return { data: body, error: undefined, response: new Response(null, { status: 200 }) }
@@ -36,7 +41,12 @@ describe('barberServicesApi.fetchBarberSummaries', () => {
     getMock.mockResolvedValueOnce(
       ok({
         items: [
-          { id: 'b-1', fullName: 'Carlos Ramírez', createdAt: '2026-08-24T15:04:05Z', updatedAt: '2026-08-24T15:04:05Z' },
+          {
+            id: 'b-1',
+            fullName: 'Carlos Ramírez',
+            createdAt: '2026-08-24T15:04:05Z',
+            updatedAt: '2026-08-24T15:04:05Z',
+          },
         ],
         nextCursor: null,
       }),
@@ -87,14 +97,20 @@ describe('barberServicesApi.fetchAssignments', () => {
 
   it('maps a 200 success body to a page of assignments', async () => {
     getMock.mockResolvedValueOnce(
-      ok({ items: [{ barberId: 'b-1', serviceId: 's-1', createdAt: '2026-08-24T15:04:05Z' }], nextCursor: null }),
+      ok({
+        items: [{ barberId: 'b-1', serviceId: 's-1', createdAt: '2026-08-24T15:04:05Z' }],
+        nextCursor: null,
+      }),
     )
 
     const outcome = await fetchAssignments('b-1')
 
     expect(outcome).toEqual({
       kind: 'success',
-      page: { items: [{ barberId: 'b-1', serviceId: 's-1', createdAt: '2026-08-24T15:04:05Z' }], nextCursor: null },
+      page: {
+        items: [{ barberId: 'b-1', serviceId: 's-1', createdAt: '2026-08-24T15:04:05Z' }],
+        nextCursor: null,
+      },
     })
     expect(getMock).toHaveBeenCalledWith('/private/barbers/{barberId}/services', {
       params: { path: { barberId: 'b-1' }, query: {} },
@@ -119,7 +135,9 @@ describe('barberServicesApi.assignService', () => {
   beforeEach(() => putMock.mockReset())
 
   it('maps a 201 success body to a success outcome', async () => {
-    putMock.mockResolvedValueOnce(created({ barberId: 'b-1', serviceId: 's-1', createdAt: '2026-08-24T15:04:05Z' }))
+    putMock.mockResolvedValueOnce(
+      created({ barberId: 'b-1', serviceId: 's-1', createdAt: '2026-08-24T15:04:05Z' }),
+    )
 
     const outcome = await assignService('b-1', 's-1')
 
@@ -133,7 +151,9 @@ describe('barberServicesApi.assignService', () => {
   })
 
   it('maps a 200 replay body to a success outcome too (CA-023-02)', async () => {
-    putMock.mockResolvedValueOnce(ok({ barberId: 'b-1', serviceId: 's-1', createdAt: '2026-08-24T15:04:05Z' }))
+    putMock.mockResolvedValueOnce(
+      ok({ barberId: 'b-1', serviceId: 's-1', createdAt: '2026-08-24T15:04:05Z' }),
+    )
     const outcome = await assignService('b-1', 's-1')
     expect(outcome.kind).toBe('success')
   })
@@ -153,7 +173,11 @@ describe('barberServicesApi.unassignService', () => {
   beforeEach(() => deleteMock.mockReset())
 
   it('maps a 204 success to a success outcome', async () => {
-    deleteMock.mockResolvedValueOnce({ data: undefined, error: undefined, response: new Response(null, { status: 204 }) })
+    deleteMock.mockResolvedValueOnce({
+      data: undefined,
+      error: undefined,
+      response: new Response(null, { status: 204 }),
+    })
     expect(await unassignService('b-1', 's-1')).toEqual({ kind: 'success' })
   })
 

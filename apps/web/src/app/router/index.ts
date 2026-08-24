@@ -33,12 +33,7 @@ const routes: RouteRecordRaw[] = [
       ...catalogPrivateShellChildRoutes,
       ...barberServicesPrivateShellChildRoutes,
     ],
-    [
-      ...settingsNavItems,
-      ...staffNavItems,
-      ...catalogNavItems,
-      ...barberServicesNavItems,
-    ],
+    [...settingsNavItems, ...staffNavItems, ...catalogNavItems, ...barberServicesNavItems],
   ),
 ]
 

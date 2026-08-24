@@ -87,13 +87,18 @@ describe('BarberServicesPage', () => {
 
   it('shows a non-blank loading state, then the loaded picker', async () => {
     let resolveBarbers: (value: unknown) => void = () => {}
-    fetchBarberSummariesMock.mockReturnValueOnce(new Promise((resolve) => (resolveBarbers = resolve)))
+    fetchBarberSummariesMock.mockReturnValueOnce(
+      new Promise((resolve) => (resolveBarbers = resolve)),
+    )
     fetchServiceSummariesMock.mockResolvedValueOnce({ kind: 'success', items: twoServices })
     const wrapper = mountPage()
 
     expect(wrapper.text()).toContain('Cargando')
 
-    fetchAssignmentsMock.mockResolvedValueOnce({ kind: 'success', page: { items: [], nextCursor: null } })
+    fetchAssignmentsMock.mockResolvedValueOnce({
+      kind: 'success',
+      page: { items: [], nextCursor: null },
+    })
     resolveBarbers({ kind: 'success', items: oneBarber })
     await flushPromises()
 
@@ -141,7 +146,10 @@ describe('BarberServicesPage', () => {
 
     fetchBarberSummariesMock.mockResolvedValueOnce({ kind: 'success', items: oneBarber })
     fetchServiceSummariesMock.mockResolvedValueOnce({ kind: 'success', items: twoServices })
-    fetchAssignmentsMock.mockResolvedValueOnce({ kind: 'success', page: { items: [], nextCursor: null } })
+    fetchAssignmentsMock.mockResolvedValueOnce({
+      kind: 'success',
+      page: { items: [], nextCursor: null },
+    })
     await wrapper.get('button').trigger('click')
     await flushPromises()
 
@@ -154,7 +162,10 @@ describe('BarberServicesPage', () => {
 
     fetchAssignmentsMock.mockResolvedValueOnce({
       kind: 'success',
-      page: { items: [{ barberId: 'b-2', serviceId: 's-2', createdAt: '2026-08-24T15:04:05Z' }], nextCursor: null },
+      page: {
+        items: [{ barberId: 'b-2', serviceId: 's-2', createdAt: '2026-08-24T15:04:05Z' }],
+        nextCursor: null,
+      },
     })
     const select = barberSelect(wrapper)
     select.value = 'b-2'
@@ -247,7 +258,15 @@ describe('BarberServicesPage', () => {
   it('never shows barber schedules, availability, appointments, or per-barber pricing', async () => {
     const wrapper = await mountReady(fourBarbers, twoServices, ['s-1'])
     const text = wrapper.text().toLowerCase()
-    for (const forbidden of ['horario', 'disponib', 'agenda', 'cita', 'precio', 'duración', 'comisión']) {
+    for (const forbidden of [
+      'horario',
+      'disponib',
+      'agenda',
+      'cita',
+      'precio',
+      'duración',
+      'comisión',
+    ]) {
       expect(text).not.toContain(forbidden)
     }
   })

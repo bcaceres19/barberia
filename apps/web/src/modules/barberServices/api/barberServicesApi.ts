@@ -57,7 +57,10 @@ export async function fetchServiceSummaries(): Promise<FetchServiceSummariesOutc
   }
 }
 
-export async function fetchAssignments(barberId: string, cursor?: string): Promise<FetchAssignmentsOutcome> {
+export async function fetchAssignments(
+  barberId: string,
+  cursor?: string,
+): Promise<FetchAssignmentsOutcome> {
   try {
     const { data, response } = await httpClient.GET('/private/barbers/{barberId}/services', {
       params: {
@@ -81,11 +84,17 @@ export async function fetchAssignments(barberId: string, cursor?: string): Promi
   }
 }
 
-export async function assignService(barberId: string, serviceId: string): Promise<AssignServiceOutcome> {
+export async function assignService(
+  barberId: string,
+  serviceId: string,
+): Promise<AssignServiceOutcome> {
   try {
-    const { data, response } = await httpClient.PUT('/private/barbers/{barberId}/services/{serviceId}', {
-      params: { path: { barberId, serviceId } },
-    })
+    const { data, response } = await httpClient.PUT(
+      '/private/barbers/{barberId}/services/{serviceId}',
+      {
+        params: { path: { barberId, serviceId } },
+      },
+    )
 
     if (response.ok && data) {
       return { kind: 'success', assignment: toAssignment(data) }
@@ -102,11 +111,17 @@ export async function assignService(barberId: string, serviceId: string): Promis
   }
 }
 
-export async function unassignService(barberId: string, serviceId: string): Promise<UnassignServiceOutcome> {
+export async function unassignService(
+  barberId: string,
+  serviceId: string,
+): Promise<UnassignServiceOutcome> {
   try {
-    const { response, error } = await httpClient.DELETE('/private/barbers/{barberId}/services/{serviceId}', {
-      params: { path: { barberId, serviceId } },
-    })
+    const { response, error } = await httpClient.DELETE(
+      '/private/barbers/{barberId}/services/{serviceId}',
+      {
+        params: { path: { barberId, serviceId } },
+      },
+    )
 
     if (response.ok) {
       return { kind: 'success' }
@@ -121,7 +136,9 @@ export async function unassignService(barberId: string, serviceId: string): Prom
         // en este DELETE): el cliente todavía decide por `code`, nunca por
         // `detail` (docs/06-api/estandar-openapi.md §5), por si una versión
         // futura agregara otro problem type sobre este mismo status.
-        return isProblemCode(error, 'conflict') ? { kind: 'last-active-conflict' } : { kind: 'unexpected-error' }
+        return isProblemCode(error, 'conflict')
+          ? { kind: 'last-active-conflict' }
+          : { kind: 'unexpected-error' }
       default:
         return { kind: 'unexpected-error' }
     }
@@ -134,7 +151,11 @@ function isProblemCode(error: unknown, code: string): boolean {
   return !!error && typeof error === 'object' && (error as { code?: string }).code === code
 }
 
-function toAssignment(data: { barberId: string; serviceId: string; createdAt: string }): Assignment {
+function toAssignment(data: {
+  barberId: string
+  serviceId: string
+  createdAt: string
+}): Assignment {
   return { barberId: data.barberId, serviceId: data.serviceId, createdAt: data.createdAt }
 }
 
