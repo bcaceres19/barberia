@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-DOCS-INFORME-ACADEMICO-v1"
 version: "1.0"
 kind: "docs"
-status: "executed"
+status: "superseded"
 target_agents:
   - "codex"
 repository: "bcaceres19/barberia"
@@ -32,6 +32,7 @@ suggested_issue_title: "docs(informe): redactar secciones 1 a 4.2 del trabajo de
 branch: "docs/81-informe-academico"
 pr: "82"
 pr_url: "https://github.com/bcaceres19/barberia/pull/82"
+superseded_by: "PROMPT-DOCS-INFORME-ACADEMICO-v2"
 depends_on:
   - "Issue real de documentación (cumplido: #81)"
   - "DOCX de referencia disponible (cumplido; SHA-256 56bcfc271603b1818d49b966de07406a4044e5d5bdc15a97cab3a59250529f44)"
