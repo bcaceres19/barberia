@@ -132,7 +132,9 @@ describe('CatalogPage', () => {
   })
 
   it('shows duration and price for each service', async () => {
-    const wrapper = await mountReady([service('s-1', 'Corte clásico', { durationMinutes: 45, price: '65000.00' })])
+    const wrapper = await mountReady([
+      service('s-1', 'Corte clásico', { durationMinutes: 45, price: '65000.00' }),
+    ])
     expect(wrapper.text()).toContain('45 min')
     expect(wrapper.text()).toContain('65000.00 COP')
   })
@@ -209,7 +211,10 @@ describe('CatalogPage', () => {
     fillCreateForm(wrapper, 'Nuevo Servicio')
     await flushPromises()
 
-    createMock.mockResolvedValueOnce({ kind: 'success', service: service('s-new', 'Nuevo Servicio') })
+    createMock.mockResolvedValueOnce({
+      kind: 'success',
+      service: service('s-new', 'Nuevo Servicio'),
+    })
     submitOpenDialog(wrapper)
     await flushPromises()
 
@@ -230,7 +235,10 @@ describe('CatalogPage', () => {
     submitOpenDialog(wrapper)
     await flushPromises()
 
-    createMock.mockResolvedValueOnce({ kind: 'success', service: service('s-retry', 'Reintentado') })
+    createMock.mockResolvedValueOnce({
+      kind: 'success',
+      service: service('s-retry', 'Reintentado'),
+    })
     submitOpenDialog(wrapper)
     await flushPromises()
 
@@ -314,7 +322,11 @@ describe('CatalogPage', () => {
 
   it('opens the edit dialog prefilled with the service fields and edits on success', async () => {
     const wrapper = await mountReady([
-      service('s-1', 'Corte clásico', { description: 'Con lavado', durationMinutes: 30, price: '45000.00' }),
+      service('s-1', 'Corte clásico', {
+        description: 'Con lavado',
+        durationMinutes: 30,
+        price: '45000.00',
+      }),
     ])
     await findButtonByText(wrapper, 'Editar').trigger('click')
     await flushPromises()

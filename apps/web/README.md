@@ -429,8 +429,9 @@ Preparación de PostgreSQL para el E2E real: mismo procedimiento que
 "Registro y listado de barberos (HU-021)" arriba (contenedor Postgres 14
 efímero, migraciones vía Atlas, `testdata/dos_barberias.sql` +
 `testdata/hu005_credenciales_sesiones.sql` + `testdata/hu021_barberos.sql`
-+ `testdata/hu022_catalogo.sql`, hash argon2id real calculado en el
-momento, nunca embebido en el repositorio).
+
+- `testdata/hu022_catalogo.sql`, hash argon2id real calculado en el
+  momento, nunca embebido en el repositorio).
 
 ## Sistema visual base (HU-009)
 

@@ -106,13 +106,23 @@ describe('catalogApi.createService', () => {
     postMock.mockResolvedValueOnce(created(serviceBody))
 
     await createService(
-      { name: 'Corte clásico', description: '  Con lavado  ', durationMinutes: 30, price: '45000.00' },
+      {
+        name: 'Corte clásico',
+        description: '  Con lavado  ',
+        durationMinutes: 30,
+        price: '45000.00',
+      },
       'idem-key-1',
     )
 
     expect(postMock).toHaveBeenCalledWith('/private/services', {
       params: { header: { 'Idempotency-Key': 'idem-key-1' } },
-      body: { name: 'Corte clásico', description: 'Con lavado', durationMinutes: 30, price: '45000.00' },
+      body: {
+        name: 'Corte clásico',
+        description: 'Con lavado',
+        durationMinutes: 30,
+        price: '45000.00',
+      },
     })
   })
 

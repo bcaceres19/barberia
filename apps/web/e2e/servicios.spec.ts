@@ -127,7 +127,9 @@ test.describe('Catálogo básico de servicios (HU-022)', () => {
     await expect(dialog.getByLabel('Nombre')).toHaveValue(`Precio Cero E2E ${stamp}`)
   })
 
-  test('duraciones 25, 30, 45 y 90 minutos se aceptan sin catálogo cerrado (CA-022-03)', async ({ page }) => {
+  test('duraciones 25, 30, 45 y 90 minutos se aceptan sin catálogo cerrado (CA-022-03)', async ({
+    page,
+  }) => {
     await login(page, EMAIL, PASSWORD)
     await openServicios(page)
 
