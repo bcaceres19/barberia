@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-021-v1"
 version: "1.0"
 kind: "hu"
-status: "in_progress"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -21,8 +21,8 @@ issue: 68
 issue_url: "https://github.com/bcaceres19/barberia/issues/68"
 suggested_issue_title: "feat(staff): implementar HU-021 registro y listado de barberos"
 branch: "feat/68-hu021-barberos"
-pr: null
-pr_url: null
+pr: 72
+pr_url: "https://github.com/bcaceres19/barberia/pull/72"
 depends_on:
   - "Criterio de salida de B0 verificado contra docs/10-backlog/plan-bloques.md"
   - "HU-020 integrada en main con sus ocho criterios verificados"
@@ -100,7 +100,7 @@ source_docs:
   - "apps/web/src/shared/api"
   - "apps/web/src/shared/ui"
 created_at: "2026-08-23"
-updated_at: "2026-08-23T20:10:00Z"
+updated_at: "2026-08-24T01:15:00Z"
 supersedes: "docs/10-backlog/prompts-implementacion.md#prompt-de-hu-021--registro-y-listado-de-barberos"
 superseded_by: null
 ---

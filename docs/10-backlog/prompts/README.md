@@ -143,7 +143,7 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-HU-008-v1](hu/hu-008-recuperacion-acceso.md) (v1.4) | `hu` | `HU-008` | [#58](https://github.com/bcaceres19/barberia/issues/58) | `executed` | `DEC-063`–`DEC-066` resuelven `DP-SEG-11`/`DP-SEG-12`/`CT-006`/`DP-NOT-05`; `HU-007` integrada en `main` | [PR #63](https://github.com/bcaceres19/barberia/pull/63), integrada en `main` |
 | [PROMPT-HU-011-v1](hu/hu-011-pantalla-recuperacion.md) | `hu` | `HU-011` | [#64](https://github.com/bcaceres19/barberia/issues/64) | `executed` | `HU-008`/`HU-009`/`HU-010` integradas en `main` | `feat/64-hu011-pantalla-recuperacion` / [#66](https://github.com/bcaceres19/barberia/pull/66) |
 | [PROMPT-HU-020-v1](hu/hu-020-configuracion-barberia.md) | `hu` | `HU-020` | [#67](https://github.com/bcaceres19/barberia/issues/67) | `executed` | Criterio de salida de B0 verificado 2026-08-23 (CI verde sobre `main` `a57354b`); integrada en `main` (squash-merge 2026-08-23) | `feat/67-hu020-configuracion-barberia` / [PR #70](https://github.com/bcaceres19/barberia/pull/70), integrada en `main` |
-| [PROMPT-HU-021-v1](hu/hu-021-registro-listado-barberos.md) | `hu` | `HU-021` | [#68](https://github.com/bcaceres19/barberia/issues/68) | `in_progress` | `HU-020` (#67) integrada en `main` 2026-08-23 | Rama `feat/68-hu021-barberos`; PR pendiente de abrir |
+| [PROMPT-HU-021-v1](hu/hu-021-registro-listado-barberos.md) | `hu` | `HU-021` | [#68](https://github.com/bcaceres19/barberia/issues/68) | `executed` | `HU-020` (#67) integrada en `main` 2026-08-23 | Rama `feat/68-hu021-barberos`; [PR #72](https://github.com/bcaceres19/barberia/pull/72) abierto, pendiente de CI/merge |
 
 ## 10. Lista de control al guardar o entregar
 
