@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-023-v1"
-version: "1.1"
+version: "1.2"
 kind: "hu"
-status: "draft"
+status: "in_progress"
 target_agents:
   - "claude"
   - "codex"
@@ -21,7 +21,7 @@ pr: null
 pr_url: null
 depends_on:
   - "HU-021 integrada en main (cumplido)"
-  - "HU-022 integrada en main (pendiente)"
+  - "HU-022 integrada en main (cumplido, PR #79)"
   - "DP-SER-02 resuelta como DEC-068 (cumplido)"
 rules:
   - "RN-SER-03"
@@ -95,7 +95,7 @@ superseded_by: null
 
 ## Instrucción para Claude o Codex
 
-`DP-SER-02` está resuelta como `DEC-068` y el issue real [#76](https://github.com/bcaceres19/barberia/issues/76) existe con `CA-023-01`–`CA-023-08`. Este prompt permanece en `draft` únicamente porque `HU-022` todavía no está integrada en `main`. No implementes hasta que lo esté; entonces pasa este prompt a `in_progress` e implementa únicamente la relación entre barberos y servicios existentes. No cambies el catálogo, el ciclo de vida, horarios, disponibilidad ni citas.
+`DP-SER-02` está resuelta como `DEC-068`, el issue real [#76](https://github.com/bcaceres19/barberia/issues/76) existe con `CA-023-01`–`CA-023-08`, y `HU-022` ya está integrada en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), CI 4/4 verde). Todas las guardas quedan satisfechas: implementa únicamente la relación entre barberos y servicios existentes. No cambies el catálogo, el ciclo de vida, horarios, disponibilidad ni citas.
 
 ## Objetivo
 
@@ -103,7 +103,7 @@ Que un barbero autenticado configure qué servicios presta cada integrante de su
 
 ## Preflight obligatorio
 
-1. Comprueba árbol limpio, actualiza `main` por fast-forward y verifica que HU-021/HU-022 estén integradas con CI verde.
+1. Comprueba árbol limpio, actualiza `main` por fast-forward y confirma que HU-021/HU-022 siguen integradas con CI verde (ya verificado al desbloquear este prompt).
 2. Ejecuta Graphify sobre `staff`, `catalog`, `barber`, `service`, composición privada e `InTenantTx`; identifica el dueño de cada operación y evita ciclos.
 3. Lee completamente cada `source_docs`, incluidas las APIs públicas y pruebas reales de HU-021/HU-022.
 4. Confirma en `docs/00-control/registro-decisiones.md` que `DEC-068` está propagada. Si aparece una contradicción, registra bloqueo y detente.
