@@ -77,7 +77,8 @@ jobs:
                    20260817190000_create_staff_recovery_code.sql \
                    20260823120000_add_barbershop_contact_info.sql \
                    20260823130000_create_barber.sql \
-                   20260824140000_create_service.sql; do
+                   20260824140000_create_service.sql \
+                   20260824150000_create_barber_service.sql; do
             psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$f"
           done
           psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_app PASSWORD 'app_test';"
@@ -93,6 +94,7 @@ jobs:
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu007_reto_telefonico.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu021_barberos.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu022_catalogo.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu023_asignaciones.sql
 
       - name: go test -race
         working-directory: apps/api
@@ -242,6 +244,7 @@ jobs:
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu007_reto_telefonico.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu021_barberos.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu022_catalogo.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu023_asignaciones.sql
 
       - name: Suite de aislamiento HU-001
         env:
@@ -277,6 +280,11 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/hu022_catalogo.sql
+
+      - name: Suite de asignación de servicios a barberos HU-023
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/hu023_asignaciones.sql
 
       - name: Suite de idempotencia (secuencial, una conexión)
         env:
