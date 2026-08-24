@@ -1,0 +1,56 @@
+# 422 de POST/PATCH /private/services (CA-022-03, CA-022-04): campo vacío,
+# excesivo, duración fuera de [1, 1440] o precio con formato inválido o
+# menor o igual a cero (DEC-067). Mismo criterio que
+# BarberValidationProblem: cuerpo bien formado que incumple una validación
+# de campo, distinto del 400 de JSON/campo desconocido.
+description: >
+  El cuerpo es JSON válido, pero incumple una validación de campo (nombre,
+  descripción, duración o precio). No se persistió ningún cambio.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      nombreVacio:
+        summary: name vacío o solo espacios
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: el nombre del servicio es obligatorio
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      duracionFueraDeRango:
+        summary: durationMinutes fuera de [1, 1440]
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: la duración del servicio debe ser un entero entre 1 y 1440 minutos
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      precioNoPositivo:
+        summary: price menor o igual a cero (DEC-067)
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: el precio debe ser mayor que cero
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      cuerpoDeEdicionVacio:
+        summary: PATCH sin ningún campo del catálogo
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: debe incluir al menos un campo del catálogo para editar
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

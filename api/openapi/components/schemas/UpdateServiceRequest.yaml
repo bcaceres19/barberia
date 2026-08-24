@@ -1,0 +1,52 @@
+# Cuerpo de PATCH /private/services/{serviceId} (CA-022-04, CA-022-05).
+# Cerrado y limitado a los campos de catálogo de HU-022: nunca isActive,
+# currency, asignaciones a barberos, citas ni ningún alcance de propagación
+# hacia una cita existente (RN-SER-04, DEC-067). Edición PARCIAL: cada
+# campo es opcional, pero un objeto vacío `{}` se rechaza (ningún campo que
+# editar).
+type: object
+description: >
+  Edición parcial de un servicio del catálogo de la barbería activa. Solo
+  cambia `service`: ninguna operación de esta HU acepta alcance sobre citas
+  ni simula propagación a recursos futuros (RN-SER-04). Al menos uno de los
+  cuatro campos debe estar presente.
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 120
+    description: >
+      Nuevo nombre visible, ya recortado por el servidor. Vacío, solo
+      espacios o mayor de 120 caracteres responde `422`; un nombre igual al
+      de otro servicio activo de la misma barbería responde `409`
+      (DEC-067).
+    examples:
+      - Corte clásico + barba
+  description:
+    type: string
+    maxLength: 500
+    description: >
+      Nueva descripción. Una cadena vacía borra la descripción existente
+      (equivalente a "sin descripción"); un valor mayor de 500 caracteres
+      responde `422`.
+    examples:
+      - Corte con máquina y tijera, incluye lavado y barba.
+  durationMinutes:
+    type: integer
+    minimum: 1
+    maximum: 1440
+    description: >
+      Nueva duración planificada en minutos enteros. Cero, negativa,
+      fraccionaria o fuera de [1, 1440] responde `422` (o `400` si el JSON
+      ni siquiera es un entero).
+    examples:
+      - 45
+  price:
+    type: string
+    pattern: '^[0-9]{1,10}(\.[0-9]{1,2})?$'
+    description: >
+      Nuevo precio decimal exacto con hasta dos cifras, estrictamente mayor
+      que cero. Formato inválido, negativo o igual a cero responde `422`.
+    examples:
+      - "50000.00"
+additionalProperties: false

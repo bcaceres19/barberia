@@ -1,0 +1,24 @@
+# Colección paginada por cursor (docs/06-api/estandar-openapi.md §6.10): la
+# colección de servicios de una barbería no tiene un máximo de negocio
+# aprobado, así que no se pagina por offset ni se inventa un tope de
+# servicios por barbería (CA-022-01), mismo criterio que BarberListResponse.
+type: object
+description: >
+  Página de servicios del catálogo de la barbería activa, ordenada de forma
+  estable por fecha de alta y luego por identificador.
+properties:
+  items:
+    type: array
+    description: Servicios de esta página, en el orden estable del servidor.
+    items:
+      $ref: './ServiceResponse.yaml'
+  nextCursor:
+    type: [string, "null"]
+    description: >
+      Cursor opaco para pedir la siguiente página con el parámetro `cursor`.
+      `null` cuando esta página es la última.
+    examples:
+      - eyJjcmVhdGVkQXQiOiIyMDI2LTA4LTI0VDE1OjA1OjEwWiIsImlkIjoiMWEyYjNjNGQtNWU2Zi00NzA4LTlhMGItMWMyZDNlNGY1MDYxIn0=
+required:
+  - items
+  - nextCursor

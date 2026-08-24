@@ -1,0 +1,23 @@
+# Respuesta 200 de PATCH /private/services/{serviceId} (HU-022, CA-022-04,
+# CA-022-05): representación completa ya guardada, mismo criterio que
+# BarberUpdated. Sigue siendo el mismo `id`; solo cambian los campos
+# editados y `updatedAt`.
+description: Servicio con los campos editados ya guardados.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/ServiceResponse.yaml'
+    examples:
+      servicio:
+        value:
+          id: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+          name: Corte clásico + barba
+          description: Corte con máquina y tijera, incluye lavado y barba.
+          durationMinutes: 45
+          price: "50000.00"
+          currency: COP
+          createdAt: "2026-08-24T15:04:05Z"
+          updatedAt: "2026-08-24T16:10:00Z"
