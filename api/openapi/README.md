@@ -6,10 +6,14 @@ antes de agregar una operación.
 
 ## Estado
 
-`openapi.yaml` declara una operación: `POST /public/auth/login` (HU-005,
-`paths/public-auth.yaml`). El resto de capacidades (`paths/public-booking.yaml`,
-`customer-appointments.yaml`, `private-appointments.yaml`, `catalog.yaml`,
-`schedules.yaml`, `settings.yaml`) sigue sin contenido.
+`openapi.yaml` declara: autenticación pública y privada (`paths/public-auth.yaml`,
+`paths/private-auth.yaml`, HU-005/006/007/008/012), configuración de la
+barbería (`paths/settings.yaml`, HU-020) y registro/listado de barberos
+(`paths/staff.yaml`, HU-021: `GET`/`POST /private/barbers`,
+`GET`/`PATCH /private/barbers/{barberId}`). El resto de capacidades
+(`paths/public-booking.yaml`, `customer-appointments.yaml`,
+`private-appointments.yaml`, `catalog.yaml`, `schedules.yaml`) sigue sin
+contenido.
 
 ## Comandos
 

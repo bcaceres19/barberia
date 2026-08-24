@@ -1,0 +1,20 @@
+# Respuesta 200 de PATCH /private/barbers/{barberId} (HU-021, CA-021-04):
+# representación completa ya guardada, mismo criterio que
+# BarbershopSettingsUpdated. La lista refleja el nuevo nombre sin duplicar
+# el recurso: sigue siendo el mismo `id`, solo cambian `fullName` y
+# `updatedAt`.
+description: Barbero con el nombre ya actualizado.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/BarberResponse.yaml'
+    examples:
+      barbero:
+        value:
+          id: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+          fullName: Carlos A. Ramírez
+          createdAt: "2026-08-23T15:04:05Z"
+          updatedAt: "2026-08-23T16:10:00Z"

@@ -1,0 +1,25 @@
+# Colección paginada por cursor (docs/06-api/estandar-openapi.md §6.10): la
+# colección de barberos de una barbería no tiene un máximo de negocio
+# aprobado (una barbería de cuatro personas y una futura de veinte usan
+# exactamente el mismo contrato, CA-021-02), así que no se pagina por offset
+# ni se inventa un tope de barberos por barbería.
+type: object
+description: >
+  Página de barberos de la barbería activa, ordenada de forma estable por
+  fecha de alta y luego por identificador.
+properties:
+  items:
+    type: array
+    description: Barberos de esta página, en el orden estable del servidor.
+    items:
+      $ref: './BarberResponse.yaml'
+  nextCursor:
+    type: [string, "null"]
+    description: >
+      Cursor opaco para pedir la siguiente página con el parámetro `cursor`.
+      `null` cuando esta página es la última.
+    examples:
+      - eyJjcmVhdGVkQXQiOiIyMDI2LTA4LTIzVDE1OjA0OjA1WiIsImlkIjoiOGYzYWMyYjEtZTRkNS00NmY2LWE3YzgtZDllMGYxYTJiM2M0In0=
+required:
+  - items
+  - nextCursor

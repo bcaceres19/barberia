@@ -1,0 +1,35 @@
+# 422 de POST/PATCH /private/barbers (CA-021-03): fullName vacío, compuesto
+# solo por espacios o mayor de 120 caracteres. Mismo criterio que
+# BarbershopSettingsValidationProblem: cuerpo bien formado que incumple una
+# validación de campo, distinto del 400 de JSON/campo desconocido.
+description: >
+  El cuerpo es JSON válido, pero `fullName` incumple una validación (vacío,
+  solo espacios o mayor de 120 caracteres). No se persistió ningún cambio.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      nombreVacio:
+        summary: fullName vacío o solo espacios
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: el nombre del barbero es obligatorio
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      nombreDemasiadoLargo:
+        summary: fullName mayor de 120 caracteres
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: el nombre del barbero excede el largo máximo
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

@@ -1,0 +1,25 @@
+# Cuerpo de PATCH /private/barbers/{barberId} (CA-021-03, CA-021-04).
+# Cerrado y limitado al único campo editable de HU-021: nunca active,
+# deletedAt, sortOrder, staffUserId, servicios ni horarios (DEC-047,
+# CA-021-07). Un objeto vacío `{}` se rechaza igual que un nombre vacío
+# (`fullName` es requerido, sin valor por defecto que lo omita).
+type: object
+description: >
+  Renombrado de un barbero de la barbería activa. Nunca modifica su
+  identificador, su fecha de alta ni ningún otro campo: `updatedAt` es lo
+  único adicional que cambia, gestionado por el servidor.
+properties:
+  fullName:
+    type: string
+    minLength: 1
+    maxLength: 120
+    description: >
+      Nuevo nombre visible del barbero, ya recortado por el servidor. Un
+      valor vacío, compuesto solo por espacios o mayor de 120 caracteres
+      responde `422` sin persistir nada (CA-021-03); nombres repetidos
+      dentro de la misma barbería son válidos.
+    examples:
+      - Carlos A. Ramírez
+required:
+  - fullName
+additionalProperties: false

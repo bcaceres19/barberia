@@ -1,0 +1,14 @@
+# Cabecera estándar de un 201 (docs/06-api/estandar-openapi.md §7/§11):
+# ruta del recurso recién creado, relativa a `servers: - url: /api/v1`. HU-021
+# es la primera operación de este contrato que crea un recurso con
+# identificador propio, así que introduce el componente compartido en vez de
+# documentar la cabecera de forma ad hoc en cada response futura.
+description: >
+  Ruta del recurso recién creado (o del ya existente, en una repetición
+  exacta de la misma clave de idempotencia), relativa a `/api/v1`.
+schema:
+  type: string
+  format: uri-reference
+examples:
+  barbero:
+    value: /private/barbers/8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
