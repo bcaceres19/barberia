@@ -1,9 +1,9 @@
 ---
 titulo: "Plan de bloques de construcción del MVP"
-version: "1.2"
+version: "1.3"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-11"
+ultima_actualizacion: "2026-08-24"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/prioridades.md"
@@ -44,7 +44,7 @@ Consecuencia deliberada: **el flujo público de reserva, que es la cara visible 
 | Bloque | Nombre | Funciones P0 cubiertas | Rango de historias | Estado |
 | --- | --- | --- | --- | --- |
 | **B0** | Cimientos, seguridad y primeras pantallas | 8 | `HU-001` – `HU-012` | Redactado |
-| **B1** | Identidad de la barbería y catálogo | 4 | `HU-020` – `HU-0xx` | Redacción parcial: `HU-020` y `HU-021`; bloque no abierto |
+| **B1** | Identidad de la barbería y catálogo | 4 | `HU-020` – `HU-0xx` | `HU-020`/`HU-021` integradas; `HU-022`–`HU-024` propuestas y bloqueadas por `DP-SER-01`–`DP-SER-03` |
 | **B2** | Horario laboral y bloqueos | 2 | `HU-040` – `HU-0xx` | Pendiente de redacción |
 | **B3** | Agenda del barbero, estados e integridad | 11 | `HU-060` – `HU-0xx` | Pendiente de redacción |
 | **B4** | Reserva pública y disponibilidad | 13 | `HU-090` – `HU-1xx` | Pendiente de redacción |
@@ -84,7 +84,7 @@ Los rangos se reservan por bloque para que los códigos `HU-*` no se renumeren c
 
 ### B1 · Identidad de la barbería y catálogo
 
-`HU-020` y `HU-021` están preparadas como propuesta por solicitud del propietario. Esta redacción anticipada no satisface la dependencia: B1 continúa cerrado hasta que B0 cumpla su criterio de salida.
+`HU-020` y `HU-021` están integradas. `HU-022`–`HU-024` dividen el siguiente trabajo en catálogo básico, asignación de servicios a barberos y ciclo de vida del servicio. Son propuestas no ejecutables hasta resolver `DP-SER-01`–`DP-SER-03` y crear un issue real por HU.
 
 **Objetivo:** que la barbería tenga nombre, zona horaria, contacto, barberos y servicios con duración y precio.
 
@@ -246,8 +246,8 @@ Tabla de control: ninguna función P0 puede quedar sin bloque.
 | División en bloques | Propuesta; requiere aprobación del propietario |
 | Historias de B0 | Redactadas en [historias-usuario.md](../02-requisitos/historias-usuario.md) |
 | Prompts de implementación de B0 | Redactados en [prompts-implementacion.md](prompts-implementacion.md) |
-| Primeras historias y prompts de B1 | `HU-020` y `HU-021` preparados como propuesta; no ejecutables hasta cerrar B0 |
+| Primeras historias y prompts de B1 | `HU-020`/`HU-021` integradas; `HU-022`–`HU-024` en `draft`, bloqueadas por decisiones e issues pendientes |
 | Historias restantes de B1 a B6 | Pendientes; se redactan al cerrar el bloque anterior |
 | Dudas que bloqueaban B0 | `DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`, resueltas el 2026-08-11 como `DEC-050`–`DEC-052` (ver [dudas-pendientes.md](../00-control/dudas-pendientes.md)) |
 
-Redactar las historias de un bloque **antes** de terminar el anterior está desaconsejado: lo aprendido al construir cambia lo que la historia siguiente debe decir. La preparación solicitada de `HU-020` y `HU-021` conserva por ello alcance estrecho y una guarda explícita de no implementación.
+Redactar historias muy por anticipado está desaconsejado: lo aprendido al construir cambia lo que la historia siguiente debe decir. Las propuestas `HU-022`–`HU-024` conservan alcance estrecho y guardas explícitas; cualquier decisión faltante se resuelve en `dudas-pendientes.md` antes de ejecutar.
