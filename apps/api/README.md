@@ -70,6 +70,26 @@ antes de agregar código.
   sin borrado, ciclo de activación ni vínculo con barberos (fuera de
   alcance de HU-022). Ver la sección "Catálogo básico de servicios
   (HU-022)" más abajo.
+- **Asignación de servicios a barberos (HU-023)**: `internal/modules/
+  catalog` (`AssignmentService`, dueño de la operación) implementa
+  `GET /api/v1/private/barbers/{barberId}/services`,
+  `PUT`/`DELETE .../{barberId}/services/{serviceId}`: lista paginada por
+  cursor, asignación con semántica HTTP naturalmente repetible (sin
+  `Idempotency-Key`: repetir el mismo `PUT` responde `200` en vez de `201`
+  con el mismo `createdAt`, sin crear una segunda fila) y desasignación.
+  Retirar la última asignación activa de un servicio activo responde `409`
+  (`DEC-068`), verificado dentro de la misma transacción que bloquea la
+  fila de `service` (`SELECT ... FOR UPDATE`) para resistir la carrera de
+  dos desasignaciones concurrentes de las dos últimas filas de un mismo
+  servicio. `catalog` colabora con `staff` SOLO a través de
+  `catalog.BarberPort`, un puerto pequeño que `staff.BarberLookup`
+  satisface de forma estructural: ningún paquete de un módulo importa al
+  otro (verificado por `internal/platform/archtest/
+  module_boundary_test.go`); `cmd/api` es la única raíz de composición que
+  conecta ambos. `404` idéntico para un barbero o servicio inexistente o de
+  otra barbería (`CA-023-04`); la asociación (`barber_service`) nunca
+  duplica nombre, duración, precio ni estado (`CA-023-07`). Ver la sección
+  "Asignación de servicios a barberos (HU-023)" más abajo.
 
 ## Requisitos
 
@@ -1000,6 +1020,110 @@ ni siquiera declara esos campos.
 - PostgreSQL real, incluida concurrencia con `-race` y precisión monetaria exacta: `internal/modules/catalog/postgres/repository_test.go`.
 - SQL directo con el rol real: `database/tests/hu022_catalogo.sql`.
 - Router de producción con dos tenants reales: `cmd/api/catalog_integration_test.go`.
+
+## Asignación de servicios a barberos (HU-023)
+
+`internal/modules/catalog` agrega las tres operaciones privadas de
+`api/openapi/paths/barber-services.yaml`:
+`GET /api/v1/private/barbers/{barberId}/services`,
+`PUT`/`DELETE .../{barberId}/services/{serviceId}`. Núcleo nuevo
+(`assignment.go`, `assignment_errors.go`, `assignment_ports.go`,
+`assignment_service.go`) en el mismo paquete `catalog` (dueño de la
+intención "qué servicios se prestan"), sin Chi, `net/http`, pgx ni
+`internal/platform/database` (CA-002-06); `postgres/
+assignment_repository.go` traduce `catalog.AssignmentRepository` a
+`database.DB`; `httpapi/assignment_{dto,handler}.go` decodifica y traduce a
+HTTP. Migración `database/migrations/20260824150000_create_barber_service.sql`
+(tabla de asociación PURA `barber_service`: solo `barbershop_id`,
+`barber_id`, `service_id`, `created_at`, sin duplicar nombre/duración/
+precio/estado, CA-023-07).
+
+### Colaboración entre módulos SOLO por puerto explícito (trabajo requerido §3.1)
+
+`catalog.AssignmentService` necesita confirmar que un `barberId` pertenece
+a la barbería vigente antes de asignarle un servicio, pero **el paquete
+`catalog` nunca importa `staff`**, ni siquiera en sus propias pruebas
+(`internal/platform/archtest/module_boundary_test.go` lo verifica
+recorriendo los imports de ambos árboles de paquetes). En su lugar,
+`catalog` declara su propio puerto pequeño:
+
+```go
+// catalog/assignment_ports.go
+type BarberPort interface {
+    Exists(ctx context.Context, barbershopID, barberID string) (bool, error)
+}
+```
+
+`staff` expone `staff.BarberLookup` (`staff/lookup.go`), un adaptador de una
+sola operación sobre `*staff.Service` que satisface esa interfaz de forma
+puramente estructural, sin que `staff` importe `catalog` tampoco.
+`cmd/api.buildRouter` (la única raíz de composición que conoce ambos
+módulos) conecta ambos lados:
+
+```go
+assignmentService := catalog.NewAssignmentService(
+    catalogpostgres.NewAssignmentRepository(db),
+    staff.NewBarberLookup(staffService),
+)
+```
+
+La existencia de `serviceId` la verifica `catalog` directamente (es su
+propia tabla `service`, mismo módulo bajo prueba, no una dependencia
+cruzada).
+
+### Última asignación activa: rechazo con bloqueo de fila (DEC-068, CA-023-05/06)
+
+`AssignmentRepository.Unassign` ejecuta, dentro de UNA sola `InTenantTx`:
+
+1. `SELECT is_active FROM service WHERE id = $1 AND barbershop_id = $2
+   FOR UPDATE`: bloquea la fila de `service` hasta el fin de la
+   transacción. Dos desasignaciones concurrentes del MISMO `service_id` se
+   serializan aquí, sin importar qué `barber_id` retire cada una.
+2. Confirma que la asociación exista (si no, `UnassignOutcomeNotFound`).
+3. Cuenta cuántas filas activas quedan para ese `service_id` (incluida la
+   que se retiraría). Si el servicio está activo y esa cuenta es `<= 1`,
+   sería la última: `UnassignOutcomeLastActiveConflict`, sin borrar nada.
+4. En cualquier otro caso, `DELETE` y `UnassignOutcomeDeleted`.
+
+El lock del paso 1 es lo que hace la carrera segura: una segunda
+transacción que intente retirar la penúltima fila del mismo servicio espera
+ahí; al reanudarse, ve la cuenta YA actualizada y rechaza correctamente si
+le toca ser la última.
+`TestUnassign_ConcurrentRaceOnLastTwoAssignments_ExactlyOneSucceeds`
+(`internal/modules/catalog/postgres/assignment_repository_test.go`, con
+`-race`, dos conexiones reales) demuestra esto contra PostgreSQL real.
+
+### Semántica HTTP naturalmente repetible, sin `Idempotency-Key`
+
+Asignar y desasignar son `PUT`/`DELETE` sobre un recurso identificado por
+sus propios dos identificadores (`barberId`+`serviceId`): repetir la misma
+solicitud produce el mismo estado final sin ambigüedad de contenido, así
+que ninguna de las dos operaciones usa el protocolo de idempotencia de
+RN-IDE-01/`DEC-043` (reservado a un `POST` que no sería idempotente por sí
+mismo). Repetir `PUT` responde `200` (no `201`) con el `createdAt`
+ORIGINAL, sin insertar una segunda fila (`INSERT ... ON CONFLICT DO
+NOTHING`); repetir `DELETE` sobre una asociación ya retirada responde `404`.
+
+### Tabla de criterios de aceptación
+
+| Criterio | Estado | Prueba o evidencia |
+| --- | --- | --- |
+| `CA-023-01` | Cumplido | `TestAssign_New_CreatesRowAndIsVisibleInList`, `TestBarberServices_HTTP_AssignRepeatListUnassign_FullJourney`, E2E `servicios-por-barbero.spec.ts`. |
+| `CA-023-02` | Cumplido | `TestAssign_Repeated_DoesNotCreateASecondRow`, `TestAssignmentService_Assign_Repeated_ReturnsAlreadyExistsWithoutError`, HTTP journey (200 con `createdAt` original en la repetición). |
+| `CA-023-03` | Cumplido | `TestAssign_SameServiceToMultipleBarbers_EachIsAnIndependentResource`, E2E ("un mismo servicio se asigna a varios barberos"). |
+| `CA-023-04` | Cumplido | `TestAssign_ServiceFromAnotherTenant_ServiceNotFound`, `TestRawSQL_CompositeFK_RejectsCrossTenantAssociation` (FK real, `23503`), `TestBarberServices_HTTP_TwoTenants_CrossAccessReturns404WithoutLeaking`, `hu023_asignaciones.sql` ("CA-023-04"). |
+| `CA-023-05` | Cumplido | `TestUnassign_LastActiveAssignment_RejectedWithoutDeleting` (incluye reintento seguro), `TestBarberServices_HTTP_LastActiveAssignment_Returns409`, E2E DEC-068. |
+| `CA-023-06` | Cumplido | `TestUnassign_ConcurrentRaceOnLastTwoAssignments_ExactlyOneSucceeds` (`-race`, dos conexiones reales), `hu023_asignaciones.sql` ("CA-023-06"). |
+| `CA-023-07` | Cumplido | Esquema exacto verificado en `hu023_asignaciones.sql`; `TestBarberServices_HTTP_ResponseNeverIncludesNameDurationPrice`. |
+| `CA-023-08` | Parcial (backend no aplica; ver `apps/web/README.md`) | Evidencia de frontend/accesibilidad documentada en `apps/web/README.md` y `apps/web/e2e/`. |
+
+### Pruebas
+
+- Unitarias: `internal/modules/catalog/assignment_service_test.go` (doble en memoria de `catalog.AssignmentRepository`/`BarberPort`); `internal/modules/staff/lookup_test.go`.
+- PostgreSQL real, incluida la carrera de DEC-068 con `-race`: `internal/modules/catalog/postgres/assignment_repository_test.go`.
+- SQL directo con el rol real: `database/tests/hu023_asignaciones.sql`.
+- Router de producción con dos tenants reales: `cmd/api/barber_services_integration_test.go`.
+- Arquitectura (sin imports cruzados `catalog`↔`staff`): `internal/platform/archtest/module_boundary_test.go`.
 
 ## Pruebas de integración
 
