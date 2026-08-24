@@ -17,6 +17,9 @@ import (
 	"system-barbershop/internal/modules/auth"
 	authhttpapi "system-barbershop/internal/modules/auth/httpapi"
 	authpostgres "system-barbershop/internal/modules/auth/postgres"
+	"system-barbershop/internal/modules/catalog"
+	cataloghttpapi "system-barbershop/internal/modules/catalog/httpapi"
+	catalogpostgres "system-barbershop/internal/modules/catalog/postgres"
 	"system-barbershop/internal/modules/notification"
 	"system-barbershop/internal/modules/shops"
 	shopshttpapi "system-barbershop/internal/modules/shops/httpapi"
@@ -233,6 +236,20 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	private.Post("/barbers", createBarberHandler.ServeHTTP)
 	private.Get("/barbers/{barberId}", getBarberHandler.ServeHTTP)
 	private.Patch("/barbers/{barberId}", renameBarberHandler.ServeHTTP)
+
+	// HU-022: catálogo básico de servicios de la barbería activa.
+	// catalogpostgres.New recibe el mismo idempotency.SQLCoordinator real
+	// que protege el alta (RN-IDE-01, DEC-043), coordinado dentro de la
+	// misma InTenantTx que el INSERT (catalog/postgres/repository.go).
+	catalogService := catalog.NewService(catalogpostgres.New(db, idempotency.NewSQLCoordinator()))
+	listServicesHandler := cataloghttpapi.NewListServicesHandler(catalogService)
+	getServiceHandler := cataloghttpapi.NewGetServiceHandler(catalogService)
+	createServiceHandler := cataloghttpapi.NewCreateServiceHandler(catalogService)
+	updateServiceHandler := cataloghttpapi.NewUpdateServiceHandler(catalogService)
+	private.Get("/services", listServicesHandler.ServeHTTP)
+	private.Post("/services", createServiceHandler.ServeHTTP)
+	private.Get("/services/{serviceId}", getServiceHandler.ServeHTTP)
+	private.Patch("/services/{serviceId}", updateServiceHandler.ServeHTTP)
 
 	// HU-008 (DEC-063-066): recuperación de acceso con código de un solo
 	// uso. sender es el adaptador dual de Meta WhatsApp Cloud API + Resend

@@ -104,6 +104,17 @@ var challengeRequiredProblem = problemSpec{
 	status:  http.StatusTooManyRequests,
 }
 
+// conflictProblem cubre apperr.KindConflict: un conflicto de negocio ajeno a
+// idempotencia (HU-022, CA-022-04: nombre de servicio ya usado por otro
+// servicio activo de la misma barbería). type, title y code fijos; detail
+// distingue el caso concreto, igual que notFoundProblem.
+var conflictProblem = problemSpec{
+	typeURI: "/api/v1/problems/conflict",
+	title:   "Conflicto",
+	code:    "conflict",
+	status:  http.StatusConflict,
+}
+
 // Translate convierte cualquier error en un Problem seguro para el cliente.
 // Es el único punto central de traducción que exige
 // docs/04-arquitectura/backend-go.md sección 5 ("los errores de dominio se
@@ -137,6 +148,8 @@ func Translate(err error, requestID string) Problem {
 			return newProblem(unauthorizedProblem, appErr.Message, requestID)
 		case apperr.KindChallengeRequired:
 			return newProblem(challengeRequiredProblem, appErr.Message, requestID)
+		case apperr.KindConflict:
+			return newProblem(conflictProblem, appErr.Message, requestID)
 		}
 	}
 

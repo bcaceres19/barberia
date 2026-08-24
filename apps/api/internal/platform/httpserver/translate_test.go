@@ -135,6 +135,27 @@ func TestTranslate_Unauthorized_MapsTo401AndNeverDistinguishesReason(t *testing.
 	}
 }
 
+// TestTranslate_Conflict_MapsTo409DistinctFromIdempotencyConflict es HU-022
+// (CA-022-04): un conflicto de negocio (nombre de servicio ya usado) también
+// mapea a 409, pero con un code distinto de idempotency-conflict, porque no
+// depende de ninguna cabecera Idempotency-Key.
+func TestTranslate_Conflict_MapsTo409DistinctFromIdempotencyConflict(t *testing.T) {
+	p := httpserver.Translate(apperr.Conflict("ya existe un servicio activo con ese nombre"), "req-10")
+
+	if p.Status != http.StatusConflict {
+		t.Fatalf("expected 409, got %d", p.Status)
+	}
+	if p.Code != "conflict" {
+		t.Fatalf("expected code conflict, got %q", p.Code)
+	}
+	if p.Code == "idempotency-conflict" {
+		t.Fatalf("conflict must not reuse the idempotency-conflict code")
+	}
+	if p.Detail != "ya existe un servicio activo con ese nombre" {
+		t.Fatalf("expected the safe message to pass through, got %q", p.Detail)
+	}
+}
+
 func TestTranslate_MaxBytesError_MapsToPayloadTooLarge(t *testing.T) {
 	err := &http.MaxBytesError{Limit: httpserver.MaxRequestBodyBytes}
 

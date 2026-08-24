@@ -61,6 +61,14 @@ const (
 	// experiencia correcta, y ambos ya tienen semántica HTTP distinta
 	// (401 frente a 429).
 	KindChallengeRequired Kind = "challenge_required"
+	// KindConflict cubre un conflicto de estado de negocio ajeno a
+	// idempotencia: otra fila ya persistida vuelve inválida la operación
+	// solicitada (por ejemplo, HU-022 CA-022-04: un nombre de servicio ya
+	// usado por otro servicio activo de la misma barbería). No se
+	// reutiliza KindIdempotencyConflict, reservado a RN-IDE-01, porque este
+	// conflicto no depende de ninguna cabecera Idempotency-Key ni de un
+	// reintento: existiría igual en la primera y única solicitud.
+	KindConflict Kind = "conflict"
 )
 
 // Error es el error de aplicación que domain/servicios devuelven.
@@ -145,6 +153,13 @@ func Unauthorized(message string) *Error {
 // Retry-After.
 func ChallengeRequired(message string, retryAfterSeconds int) *Error {
 	return &Error{Kind: KindChallengeRequired, Message: message, RetryAfterSeconds: retryAfterSeconds}
+}
+
+// Conflict construye el error de un conflicto de negocio ajeno a
+// idempotencia (KindConflict): otra fila ya persistida vuelve inválida la
+// operación. message es el detalle seguro que puede llegar al cliente.
+func Conflict(message string) *Error {
+	return &Error{Kind: KindConflict, Message: message}
 }
 
 // As extrae un *Error de la cadena de err, igual que errors.As.
