@@ -30,8 +30,8 @@ issue: "81"
 issue_url: "https://github.com/bcaceres19/barberia/issues/81"
 suggested_issue_title: "docs(informe): redactar secciones 1 a 4.2 del trabajo de grado"
 branch: "docs/81-informe-academico"
-pr: null
-pr_url: null
+pr: "82"
+pr_url: "https://github.com/bcaceres19/barberia/pull/82"
 depends_on:
   - "Issue real de documentación (cumplido: #81)"
   - "DOCX de referencia disponible (cumplido; SHA-256 56bcfc271603b1818d49b966de07406a4044e5d5bdc15a97cab3a59250529f44)"
@@ -603,7 +603,7 @@ Incluye el SHA/fecha de corte, cantidad de páginas, resultado de render, audito
 
 ## Resultado de ejecución
 
-Ejecución completada el 24 de agosto de 2026 en la rama `docs/81-informe-academico`, issue [#81](https://github.com/bcaceres19/barberia/issues/81), con corte documental `d843c932afaa6ae97143e901d1d8313b921e8673`.
+Ejecución completada el 24 de agosto de 2026 en la rama `docs/81-informe-academico`, issue [#81](https://github.com/bcaceres19/barberia/issues/81) y [PR #82](https://github.com/bcaceres19/barberia/pull/82), con corte documental `d843c932afaa6ae97143e901d1d8313b921e8673`.
 
 | Criterio | Estado | Evidencia |
 | --- | --- | --- |
