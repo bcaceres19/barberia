@@ -1,9 +1,9 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "2.4"
-estado: "Sin dudas abiertas"
+version: "2.5"
+estado: "Con dudas abiertas de B1"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-17"
+ultima_actualizacion: "2026-08-24"
 documentos_relacionados:
   - "registro-decisiones.md"
   - "contradicciones.md"
@@ -17,7 +17,9 @@ documentos_relacionados:
 
 ## 1. Estado
 
-**No queda ninguna duda abierta.** Al preparar los prompts de `HU-012`, `HU-007` y `HU-008` (issue documental `#55`) el 14 de agosto de 2026, la comparación entre los criterios, el contrato y el código integrado mostró cinco decisiones que todavía no podían inferirse sin ampliar o debilitar el alcance: el bootstrap autoritativo del panel (`DP-SEG-09`), el reto telefónico completo de `HU-007` (`DP-SEG-10`), la política de contraseña nueva (`DP-SEG-11`), los parámetros del código de recuperación (`DP-SEG-12`) y el proveedor oficial concreto de correo/WhatsApp (`DP-NOT-05`). El propietario resolvió las cinco el 17 de agosto de 2026 como `DEC-060`, `DEC-062`–`DEC-064` y `DEC-066`. `HU-012` ([PR #59](https://github.com/bcaceres19/barberia/pull/59)) y `HU-007` ([PR #61](https://github.com/bcaceres19/barberia/pull/61)) se integraron en `main` el 17 de agosto de 2026; `HU-008` ya está `ready`.
+Hay tres dudas abiertas de B1. Se detectaron el 24 de agosto de 2026 al preparar `HU-022`, `HU-023` y `HU-024` y sus prompts persistentes (issue documental [#73](https://github.com/bcaceres19/barberia/issues/73)). `F-SERV-01`, `F-SERV-02`, `RN-SER-01`–`RN-SER-04` y el modelo físico de referencia no fijan por sí solos todas las decisiones observables necesarias para contrato, interfaz y pruebas. Las tres historias y prompts permanecen como propuesta `draft`; no se ejecutan hasta resolver `DP-SER-01`–`DP-SER-03`, registrar las decisiones y crear un issue de implementación por HU.
+
+Antes de este lote no quedaba ninguna duda abierta. Al preparar los prompts de `HU-012`, `HU-007` y `HU-008` (issue documental `#55`) el 14 de agosto de 2026, la comparación entre los criterios, el contrato y el código integrado mostró cinco decisiones que todavía no podían inferirse sin ampliar o debilitar el alcance: el bootstrap autoritativo del panel (`DP-SEG-09`), el reto telefónico completo de `HU-007` (`DP-SEG-10`), la política de contraseña nueva (`DP-SEG-11`), los parámetros del código de recuperación (`DP-SEG-12`) y el proveedor oficial concreto de correo/WhatsApp (`DP-NOT-05`). El propietario resolvió las cinco el 17 de agosto de 2026 como `DEC-060`, `DEC-062`–`DEC-064` y `DEC-066`.
 
 El 7 de agosto de 2026, al redactar las historias del bloque B0 ([historias-usuario.md](../02-requisitos/historias-usuario.md)), se detectaron tres vacíos que `DEC-026` y `DEC-027` no cubrían (`DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`); el 11 de agosto de 2026 el propietario las resolvió como `DEC-050`, `DEC-051` y `DEC-052`, desbloqueando `HU-005`–`HU-008` y `HU-011`. Al implementar `HU-005` (issue `#44`) el 13 de agosto de 2026 aparecieron dos vacíos más (`DP-SEG-07`, `DP-SEG-08`), resueltos el mismo día como `DEC-057` y `DEC-058`.
 
@@ -35,7 +37,17 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 - alojamiento: se interpreta “VPN dedicado” como **VPS dedicado**, que es el recurso de cómputo coherente con el contexto;
 - “turnos” se usa en la interfaz y la comunicación; “citas” se conserva como término técnico para no renombrar la entidad `appointment`.
 
-## 2. Resoluciones
+## 2. Dudas abiertas de servicios (B1)
+
+| Código | HU | Pregunta que debe resolver el propietario | Por qué bloquea |
+| --- | --- | --- | --- |
+| `DP-SER-01` | `HU-022` | ¿La moneda del catálogo es COP fija o configurable; se permiten servicios gratuitos; y dos servicios activos pueden compartir nombre? | Cambia schemas, restricciones, errores `409`/`422`, normalización, ejemplos y controles de formulario. El `modelo-fisico-referencia.sql` propone COP, precio `>= 0` y unicidad parcial por nombre, pero no sustituye una decisión de producto. |
+| `DP-SER-02` | `HU-023` | ¿Un servicio activo debe estar asignado al menos a un barbero y se permite retirar la última asignación? ¿La desasignación se bloquea, advierte o solo afecta oferta futura cuando existan citas? | Define la cardinalidad observable, el estado vacío, los permisos de `DELETE` sobre `barber_service` y el efecto futuro sobre disponibilidad sin alterar citas existentes. |
+| `DP-SER-03` | `HU-024` | Antes de que B3 implemente `appointment`, ¿qué parte exacta de la advertencia de citas futuras debe cerrar B1 al desactivar un servicio? ¿La previsualización y confirmación deben protegerse contra cambios concurrentes del conteo? | B1 exige construir la advertencia, mientras `RN-SER-03` exige contar y permitir decidir sobre citas que todavía no existen en la cadena migrada. Inventar un conteo cero o una cancelación ficticia incumpliría ambas fuentes. |
+
+Opciones y consecuencias deben documentarse en `registro-decisiones.md` antes de pasar cualquiera de estos prompts a `ready`. Una decisión puede resolver más de una pregunta relacionada, pero no se completa con valores elegidos solo por el agente.
+
+## 3. Resoluciones
 
 | Código | Pregunta resumida | Resolución incorporada | Decisión |
 | --- | --- | --- | --- |
@@ -105,7 +117,7 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 
 Al resolverse cada duda se aplica el flujo de la sección 3: `DEC-*`, propagación, conservación de la fila y `CT-*` si revela un conflicto.
 
-## 3. Criterio para nuevas dudas
+## 4. Criterio para nuevas dudas
 
 Una duda nueva recibe un código `DP-*` y se añade aquí solo mientras esté abierta. Al resolverse:
 
