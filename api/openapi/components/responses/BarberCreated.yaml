@@ -1,0 +1,22 @@
+# Respuesta 201 de POST /private/barbers (HU-021, CA-021-02, RN-IDE-01).
+# Una repetición exacta de la misma Idempotency-Key con el mismo contenido
+# reproduce esta MISMA respuesta byte a byte (mismo status, mismo cuerpo,
+# mismo Location): no crea una segunda fila.
+description: >
+  Barbero creado. `Location` apunta al recurso individual recién creado.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+  Location:
+    $ref: '../headers/Location.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/BarberResponse.yaml'
+    examples:
+      barbero:
+        value:
+          id: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+          fullName: Carlos Ramírez
+          createdAt: "2026-08-23T15:04:05Z"
+          updatedAt: "2026-08-23T15:04:05Z"

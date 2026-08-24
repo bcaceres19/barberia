@@ -1,0 +1,25 @@
+# Cuerpo de POST /private/barbers (CA-021-02, CA-021-03). Cerrado: el
+# handler rechaza cualquier campo desconocido, mismo criterio que
+# UpdateBarbershopSettingsRequest. Nunca declara barbershopId (el tenant se
+# deriva de SessionCookie) ni ningún campo fuera de alcance de HU-021
+# (active, staffUserId, servicios, horario).
+type: object
+description: >
+  Alta de un barbero de la barbería activa. La clave de idempotencia no
+  convierte el nombre en único: dos claves distintas pueden crear dos
+  barberos con el mismo `fullName` (fuera de alcance de HU-021 inventar esa
+  restricción).
+properties:
+  fullName:
+    type: string
+    minLength: 1
+    maxLength: 120
+    description: >
+      Nombre visible del barbero. El servidor recorta espacios; un valor
+      vacío, compuesto solo por espacios o mayor de 120 caracteres responde
+      `422` sin persistir nada (CA-021-03).
+    examples:
+      - Carlos Ramírez
+required:
+  - fullName
+additionalProperties: false

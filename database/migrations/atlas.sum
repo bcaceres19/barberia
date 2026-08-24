@@ -1,4 +1,4 @@
-h1:n4zQYQHUK8ArG4R+qalBNxQo/XXvIptnDSrFdUlFYEc=
+h1:EqxAH22J25T2bp3CW6SC5BF06buz61W8MPs7+3bqif4=
 20260807170000_create_tenant_foundation.sql h1:9KyewD/Xqtm6MjQ7MkTora3f47kjPOobGVfE2q66AUI=
 20260807170100_create_idempotency_record.sql h1:he0jfwTn3otdzgu/qHhFo7Z4ra9+1AL/mT2db82DOrU=
 20260811145252_harden_roles_and_definer_functions.sql h1:KhiZKVpFfL81T+f/73nMkVD0ndVWsCdM4ShqMHZfZ/g=
@@ -8,3 +8,4 @@ h1:n4zQYQHUK8ArG4R+qalBNxQo/XXvIptnDSrFdUlFYEc=
 20260817180000_create_login_throttle_and_phone_challenge.sql h1:Pma5VTyaZgKzOpzrMUlwQte1jqwVXUTnF9+aAjp/nks=
 20260817190000_create_staff_recovery_code.sql h1:VgEi/sxFW/Q3TMxjjkFGUg3oeludwqebbU1YGdC1pC8=
 20260823120000_add_barbershop_contact_info.sql h1:Zrx4+OuJmynzPRUrYV/gGZr77/MV4z1NZKUk+ygm5k0=
+20260823130000_create_barber.sql h1:QSYKrBC5QXqH1tu/9Kze5TLjZ0jhN6Zz12JyetApOyI=

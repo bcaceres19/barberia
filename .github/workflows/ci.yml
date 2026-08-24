@@ -61,7 +61,7 @@ jobs:
         working-directory: apps/api
         run: go build ./...
 
-      - name: Aplicar las 5 migraciones (esquema de prueba)
+      - name: Aplicar las 6 migraciones (esquema de prueba)
         working-directory: database/migrations
         env:
           PGPASSWORD: postgres
@@ -75,7 +75,8 @@ jobs:
                    20260813120000_create_auth_credentials_and_sessions.sql \
                    20260817180000_create_login_throttle_and_phone_challenge.sql \
                    20260817190000_create_staff_recovery_code.sql \
-                   20260823120000_add_barbershop_contact_info.sql; do
+                   20260823120000_add_barbershop_contact_info.sql \
+                   20260823130000_create_barber.sql; do
             psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$f"
           done
           psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_app PASSWORD 'app_test';"
@@ -89,6 +90,7 @@ jobs:
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/dos_barberias.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu005_credenciales_sesiones.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu007_reto_telefonico.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu021_barberos.sql
 
       - name: go test -race
         working-directory: apps/api
@@ -236,6 +238,7 @@ jobs:
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/dos_barberias.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu005_credenciales_sesiones.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu007_reto_telefonico.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu021_barberos.sql
 
       - name: Suite de aislamiento HU-001
         env:
@@ -261,6 +264,11 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/hu020_configuracion_barberia.sql
+
+      - name: Suite de registro y listado de barberos HU-021
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/hu021_barberos.sql
 
       - name: Suite de idempotencia (secuencial, una conexión)
         env:

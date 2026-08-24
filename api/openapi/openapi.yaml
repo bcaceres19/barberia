@@ -8,14 +8,16 @@
 # components/securitySchemes/SessionCookie (DEC-058). HU-012 agrega la
 # segunda operación privada, de solo lectura: GET /private/auth/session
 # (DEC-060), que rehidrata la cookie HttpOnly al abrir o recargar la
-# aplicación. Los componentes de error ya eran reales desde HU-003
-# (recuperación de panic, aislamiento por tenant, límite de cuerpo); paths
-# queda vacío para el resto de capacidades hasta su primer endpoint
-# implementado.
+# aplicación. HU-021 agrega el tag Staff y las cuatro operaciones de
+# paths/staff.yaml: listar, registrar (con Idempotency-Key, RN-IDE-01),
+# consultar y renombrar barberos. Los componentes de error ya eran reales
+# desde HU-003 (recuperación de panic, aislamiento por tenant, límite de
+# cuerpo); paths queda vacío para el resto de capacidades hasta su primer
+# endpoint implementado.
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.6.0
+  version: 0.7.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -31,6 +33,8 @@ tags:
     description: Identidad, sesiones y recuperación de acceso del barbero.
   - name: Settings
     description: Configuración general de la barbería.
+  - name: Staff
+    description: Registro y listado de los barberos de la barbería.
 paths:
   /public/auth/login:
     $ref: './paths/public-auth.yaml#/~1public~1auth~1login'
@@ -50,6 +54,10 @@ paths:
     $ref: './paths/private-auth.yaml#/~1private~1auth~1session'
   /private/settings/barbershop:
     $ref: './paths/settings.yaml#/~1private~1settings~1barbershop'
+  /private/barbers:
+    $ref: './paths/staff.yaml#/~1private~1barbers'
+  /private/barbers/{barberId}:
+    $ref: './paths/staff.yaml#/~1private~1barbers~1{barberId}'
 components:
   schemas:
     Problem:
@@ -70,6 +78,14 @@ components:
       $ref: './components/schemas/BarbershopSettingsResponse.yaml'
     UpdateBarbershopSettingsRequest:
       $ref: './components/schemas/UpdateBarbershopSettingsRequest.yaml'
+    BarberResponse:
+      $ref: './components/schemas/BarberResponse.yaml'
+    BarberListResponse:
+      $ref: './components/schemas/BarberListResponse.yaml'
+    CreateBarberRequest:
+      $ref: './components/schemas/CreateBarberRequest.yaml'
+    UpdateBarberRequest:
+      $ref: './components/schemas/UpdateBarberRequest.yaml'
   securitySchemes:
     SessionCookie:
       $ref: './components/security-schemes/SessionCookie.yaml'
@@ -82,6 +98,8 @@ components:
       $ref: './components/headers/ClearCookieSession.yaml'
     Retry-After:
       $ref: './components/headers/RetryAfter.yaml'
+    Location:
+      $ref: './components/headers/Location.yaml'
   parameters:
     IdempotencyKey:
       $ref: './components/parameters/IdempotencyKey.yaml'
@@ -120,3 +138,13 @@ components:
       $ref: './components/responses/BarbershopSettingsUpdated.yaml'
     BarbershopSettingsValidationProblem:
       $ref: './components/responses/BarbershopSettingsValidationProblem.yaml'
+    BarberListSuccess:
+      $ref: './components/responses/BarberListSuccess.yaml'
+    BarberSuccess:
+      $ref: './components/responses/BarberSuccess.yaml'
+    BarberCreated:
+      $ref: './components/responses/BarberCreated.yaml'
+    BarberUpdated:
+      $ref: './components/responses/BarberUpdated.yaml'
+    BarberValidationProblem:
+      $ref: './components/responses/BarberValidationProblem.yaml'

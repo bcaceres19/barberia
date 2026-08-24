@@ -1,0 +1,217 @@
+# Operaciones privadas de registro y listado de barberos (HU-021,
+# F-CONF-02 parcial: solo registrar, listar, consultar y renombrar. No
+# mezcla con servicios, horario ni agenda por barbero -esas capacidades
+# tienen su propio archivo cuando existan (catalog.yaml, schedules.yaml)-
+# ni con credenciales o roles de staff_user (DEC-047).
+/private/barbers:
+  get:
+    tags: [Staff]
+    summary: Listar los barberos de la barbería activa
+    description: >
+      Lista paginada por cursor (HU-021, CA-021-01, CA-021-02) de los
+      barberos de la barbería derivada de la sesión vigente. Una barbería
+      unipersonal y una de cuatro barberos usan exactamente la misma forma
+      de respuesta: nunca una rama especial para "barbero único". Orden
+      estable por fecha de alta y luego por identificador; sin paginación
+      por offset porque la colección no tiene un máximo de negocio
+      aprobado.
+    operationId: listBarbers
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-019, DEC-024, DEC-047]
+    parameters:
+      - name: cursor
+        in: query
+        required: false
+        description: >
+          Cursor opaco devuelto por una página anterior (`nextCursor`). Sin
+          este parámetro, la respuesta empieza en la primera página.
+        schema:
+          type: string
+        examples:
+          continuacion:
+            value: eyJjcmVhdGVkQXQiOiIyMDI2LTA4LTIzVDE1OjA1OjEwWiIsImlkIjoiMWEyYjNjNGQtNWU2Zi00NzA4LTlhMGItMWMyZDNlNGY1MDYxIn0=
+      - name: limit
+        in: query
+        required: false
+        description: Máximo de barberos por página.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+        examples:
+          porDefecto:
+            value: 20
+    responses:
+      "200":
+        $ref: '../components/responses/BarberListSuccess.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  post:
+    tags: [Staff]
+    summary: Registrar un barbero en la barbería activa
+    description: >
+      Alta de un barbero (HU-021, CA-021-02) protegida con clave de
+      idempotencia (RN-IDE-01, DEC-043): repetir el mismo `POST` con la
+      misma `Idempotency-Key` y el mismo cuerpo devuelve la misma
+      representación creada sin crear una segunda fila. La misma clave con
+      un `fullName` distinto responde `409` (conflicto de idempotencia); una
+      clave nueva con el mismo `fullName` que un barbero existente SÍ crea
+      un segundo barbero -esta historia no impone unicidad de nombre-. El
+      tenant se deriva exclusivamente de `SessionCookie`; el cuerpo nunca
+      acepta `barbershopId`.
+    operationId: createBarber
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02, RN-IDE-01]
+    x-decisions: [DEC-019, DEC-024, DEC-043, DEC-047]
+    parameters:
+      - $ref: '../components/parameters/IdempotencyKey.yaml'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/CreateBarberRequest.yaml'
+          examples:
+            altaSimple:
+              summary: Alta de un barbero
+              value:
+                fullName: Carlos Ramírez
+    responses:
+      "201":
+        $ref: '../components/responses/BarberCreated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "409":
+        description: >
+          Conflicto de idempotencia (misma clave con otro contenido u otra
+          operación, `IdempotencyConflictProblem`) u operación en curso con
+          la misma clave (`IdempotencyLockedProblem`, DEC-043). Mismos dos
+          problem types reutilizables que HU-004 ya documenta; ver esos
+          componentes para la forma completa de cada uno.
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              contenidoDistinto:
+                summary: Misma clave, cuerpo distinto
+                value:
+                  type: /api/v1/problems/idempotency-conflict
+                  title: Conflicto de idempotencia
+                  status: 409
+                  detail: la clave de idempotencia ya se usó con un contenido distinto; usa una clave nueva
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              operacionEnCurso:
+                summary: Otra transacción tiene el bloqueo de esta clave ahora mismo
+                value:
+                  type: /api/v1/problems/idempotency-locked
+                  title: Operación en curso
+                  status: 409
+                  detail: la operación con esta clave de idempotencia todavía está en curso; reintenta en unos segundos
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-locked
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "422":
+        $ref: '../components/responses/BarberValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/barbers/{barberId}:
+  get:
+    tags: [Staff]
+    summary: Consultar un barbero de la barbería activa
+    description: >
+      Lectura autenticada de un barbero por identificador (HU-021). Un
+      identificador inexistente o perteneciente a otra barbería responde
+      exactamente el mismo `404` (`CA-021-05`, `RN-TEN-01`): esta operación
+      permite demostrar ese criterio de forma directa, sin depender solo del
+      listado.
+    operationId: getBarber
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-019, DEC-024, DEC-047]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+    responses:
+      "200":
+        $ref: '../components/responses/BarberSuccess.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  patch:
+    tags: [Staff]
+    summary: Renombrar un barbero de la barbería activa
+    description: >
+      Actualización parcial limitada al nombre (HU-021, CA-021-04). Rechaza
+      objetos vacíos y cualquier campo distinto de `fullName` -en particular
+      `active`, `deletedAt`, `sortOrder`, `staffUserId`, servicios u
+      horarios, todos fuera de alcance (`DEC-047`, `CA-021-07`)-. Un
+      identificador inexistente o de otra barbería responde el mismo `404`
+      que `GET` (`CA-021-05`).
+    operationId: renameBarber
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-019, DEC-024, DEC-047]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/UpdateBarberRequest.yaml'
+          examples:
+            renombrar:
+              summary: Nuevo nombre
+              value:
+                fullName: Carlos A. Ramírez
+    responses:
+      "200":
+        $ref: '../components/responses/BarberUpdated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "422":
+        $ref: '../components/responses/BarberValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

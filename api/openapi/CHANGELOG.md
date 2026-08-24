@@ -4,6 +4,35 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.7.0] - 2026-08-23
+
+### Agregado
+
+- `GET /private/barbers` (HU-021, `operationId: listBarbers`): lista
+  paginada por cursor de los barberos de la barbería activa. `200`
+  (`BarberListResponse`), `400` (cursor/limit inválido), `401`, `500`.
+- `POST /private/barbers` (`operationId: createBarber`): alta de un barbero,
+  protegida con `Idempotency-Key` (`RN-IDE-01`, `DEC-043`). `201`
+  (`BarberResponse` + `Location`), `400`, `401`, `409` (conflicto u
+  operación en curso de idempotencia), `422` (nombre vacío/solo
+  espacios/mayor de 120 caracteres), `500`. No impone unicidad de
+  `fullName`.
+- `GET /private/barbers/{barberId}` (`operationId: getBarber`): lectura
+  individual; un identificador inexistente o de otra barbería responde el
+  mismo `404` (`CA-021-05`, `RN-TEN-01`).
+- `PATCH /private/barbers/{barberId}` (`operationId: renameBarber`):
+  renombrado limitado a `fullName`; rechaza objetos vacíos y campos
+  desconocidos (nunca `active`, `deletedAt`, `sortOrder`, `staffUserId`,
+  servicios ni horarios, `DEC-047`). `200`, `400`, `401`, `404`, `422`,
+  `500`.
+- Esquemas `BarberResponse`, `BarberListResponse`, `CreateBarberRequest`,
+  `UpdateBarberRequest`.
+- Responses `BarberListSuccess`, `BarberSuccess`, `BarberCreated`,
+  `BarberUpdated`, `BarberValidationProblem`.
+- Header `Location` (componente compartido, primer uso de un `201` en este
+  contrato).
+- Tag `Staff`.
+
 ## [0.6.0] - 2026-08-23
 
 ### Agregado

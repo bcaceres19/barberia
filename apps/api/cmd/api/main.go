@@ -21,11 +21,15 @@ import (
 	"system-barbershop/internal/modules/shops"
 	shopshttpapi "system-barbershop/internal/modules/shops/httpapi"
 	shopspostgres "system-barbershop/internal/modules/shops/postgres"
+	"system-barbershop/internal/modules/staff"
+	staffhttpapi "system-barbershop/internal/modules/staff/httpapi"
+	staffpostgres "system-barbershop/internal/modules/staff/postgres"
 	"system-barbershop/internal/platform/clientip"
 	"system-barbershop/internal/platform/clock"
 	"system-barbershop/internal/platform/config"
 	"system-barbershop/internal/platform/database"
 	"system-barbershop/internal/platform/httpserver"
+	"system-barbershop/internal/platform/idempotency"
 	"system-barbershop/internal/platform/observability"
 
 	"github.com/go-chi/chi/v5"
@@ -215,6 +219,20 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	updateBarbershopSettingsHandler := shopshttpapi.NewUpdateBarbershopSettingsHandler(shopService)
 	private.Get("/settings/barbershop", getBarbershopSettingsHandler.ServeHTTP)
 	private.Patch("/settings/barbershop", updateBarbershopSettingsHandler.ServeHTTP)
+
+	// HU-021: registro y listado de barberos de la barbería activa.
+	// staffpostgres.New recibe el mismo idempotency.SQLCoordinator real que
+	// protege el alta (RN-IDE-01, DEC-043), coordinado dentro de la misma
+	// InTenantTx que el INSERT (staff/postgres/repository.go).
+	staffService := staff.NewService(staffpostgres.New(db, idempotency.NewSQLCoordinator()))
+	listBarbersHandler := staffhttpapi.NewListBarbersHandler(staffService)
+	getBarberHandler := staffhttpapi.NewGetBarberHandler(staffService)
+	createBarberHandler := staffhttpapi.NewCreateBarberHandler(staffService)
+	renameBarberHandler := staffhttpapi.NewRenameBarberHandler(staffService)
+	private.Get("/barbers", listBarbersHandler.ServeHTTP)
+	private.Post("/barbers", createBarberHandler.ServeHTTP)
+	private.Get("/barbers/{barberId}", getBarberHandler.ServeHTTP)
+	private.Patch("/barbers/{barberId}", renameBarberHandler.ServeHTTP)
 
 	// HU-008 (DEC-063-066): recuperación de acceso con código de un solo
 	// uso. sender es el adaptador dual de Meta WhatsApp Cloud API + Resend

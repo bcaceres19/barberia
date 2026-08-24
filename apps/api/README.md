@@ -49,6 +49,14 @@ antes de agregar código.
   IANA (confirmada contra `pg_timezone_names` dentro de la misma transacción
   del `UPDATE`) y contacto opcional. Ver la sección "Configuración básica de
   la barbería (HU-020)" más abajo.
+- **Registro y listado de barberos (HU-021)**: `internal/modules/staff`
+  implementa `GET`/`POST /api/v1/private/barbers` y
+  `GET`/`PATCH /api/v1/private/barbers/{barberId}`: lista paginada por
+  cursor, alta protegida con `Idempotency-Key` (RN-IDE-01, `DEC-043`),
+  lectura individual y renombrado. `404` idéntico para un barbero
+  inexistente o de otra barbería (`CA-021-05`); sin borrado, desactivación,
+  orden manual ni vínculo con `staff_user` (`DEC-047`). Ver la sección
+  "Registro y listado de barberos (HU-021)" más abajo.
 
 ## Requisitos
 
@@ -71,6 +79,7 @@ go test -race ./internal/platform/httpserver/...
 go test -race ./internal/modules/auth/...
 go test -race ./internal/modules/notification/...
 go test -race ./internal/modules/shops/...
+go test -race ./internal/modules/staff/...
 go test -race ./cmd/api/...
 ```
 
@@ -782,6 +791,104 @@ existen con datos sintéticos que no compiten por la cuenta compartida).
 - PostgreSQL real, incluida concurrencia: `internal/modules/auth/postgres/recovery_repository_test.go`.
 - SQL directo con el rol real: `database/tests/hu008_recuperacion_acceso.sql`.
 - E2E backend/sistema contra el router y PostgreSQL reales, proveedor interceptado: `cmd/api/recovery_integration_test.go`.
+
+## Registro y listado de barberos (HU-021)
+
+`internal/modules/staff` implementa las cuatro operaciones privadas de
+`api/openapi/paths/staff.yaml`: `GET`/`POST /api/v1/private/barbers` y
+`GET`/`PATCH /api/v1/private/barbers/{barberId}`. Núcleo (`domain.go`,
+`errors.go`, `ports.go`, `service.go`) sin Chi, `net/http`, pgx ni
+`internal/platform/database` (CA-002-06); `postgres/repository.go` traduce
+el puerto `staff.Repository` a `database.DB`; `httpapi/` decodifica, valida
+la forma y traduce el resultado a HTTP. Migración
+`database/migrations/20260823130000_create_barber.sql` (tabla `barber`
+mínima, DEC-047: sin `active`, `deleted_at`, `sort_order` ni vínculo con
+`staff_user`).
+
+### Un mismo camino para barbería unipersonal y de equipo (CA-021-01/02)
+
+`barber` es una tabla ordinaria, sin ninguna bandera ni columna que
+distinga "el único barbero" de "uno de varios": una barbería con una
+persona tiene exactamente una fila `barber`, y agregar tres más produce
+cuatro filas distintas con el mismo `INSERT`, el mismo handler y el mismo
+componente Vue. `TestStaff_HTTP_OneThenFourBarbers_SamePathBothCases`
+(`cmd/api/staff_integration_test.go`) lo demuestra contra el router real.
+
+### Paginación por cursor (CA-021-02)
+
+La colección no tiene un máximo de negocio aprobado (`docs/06-api/
+estandar-openapi.md` §6.10), así que `GET /private/barbers` pagina por
+cursor opaco (`staff.EncodeCursor`/`DecodeCursor`, base64 de
+`{createdAt, id}`) en vez de offset, con orden estable `(created_at, id)`
+respaldado por `idx_barber_shop_created_id`. `limit` se clampa en el
+servicio a `[1, 50]`, por defecto 20 (`staff.DefaultListLimit`); un cursor
+manipulado o de otra forma se rechaza como `400` sin tocar PostgreSQL
+(nunca revela ni modifica un recurso ajeno: el cursor es solo una posición
+de recorrido, la fila real sigue protegida por RLS).
+
+### Alta idempotente: Begin, INSERT y Complete en una sola transacción (RN-IDE-01, DEC-043)
+
+`POST /private/barbers` sigue al pie de la letra el patrón documentado en
+"Patrón obligatorio: idempotencia reutilizable" de arriba, pero a
+diferencia del ejemplo de esa sección (que solo demuestra el mecanismo), la
+orquestación completa vive en `staff/postgres.Repository.Create`: dentro de
+la MISMA `InTenantTx`, llama `Coordinator.Begin`, ejecuta el `INSERT
+... RETURNING` solo si el resultado es `OutcomeProceed`, construye el
+cuerpo JSON de la respuesta (mismo formato exacto que
+`httpapi.BarberResponse`, ver la advertencia de mantenimiento manual en
+ambos archivos) y llama `Coordinator.Complete` con ese mismo cuerpo. El
+handler HTTP nunca decide el cuerpo por su cuenta: reproduce
+`result.Response` byte a byte tanto en la primera ejecución como en una
+repetición exacta (`CA-004-01`), reconstruyendo `Location` a partir del
+`id` que ese mismo cuerpo ya contiene (funciona igual para `OutcomeProceed`
+y `OutcomeReplay`, sin un campo aparte). La clave de idempotencia NO impone
+unicidad de nombre: dos claves distintas pueden crear dos barberos con el
+mismo `fullName` (`TestCreate_DifferentKeysSameName_CreatesTwoDistinctBarbers`).
+
+### `404` idéntico para inexistente y de otra barbería (CA-021-05, RN-TEN-01)
+
+`Get` y `Rename` filtran explícitamente por `barbershop_id` además de RLS
+y colapsan "no existe" y "es de otra barbería" en el mismo
+`apperr.NotFound`, igual que el resto del backend. Un identificador que ni
+siquiera tiene forma de UUID se rechaza con el mismo `404` ANTES de tocar
+PostgreSQL (`staff.LooksLikeBarberID`), para no arriesgar un error de tipo
+(500) por una comparación `text` contra una columna `uuid`.
+`TestStaff_HTTP_TwoTenants_CrossAccessAlwaysReturns404WithoutLeaking`
+(`cmd/api/staff_integration_test.go`) compara campo a campo el `Problem` de
+un identificador inexistente contra el de un barbero real de otra
+barbería (solo `instance`/`requestId`, de correlación por solicitud,
+pueden diferir).
+
+### Nombre: recorte, largo y Unicode (CA-021-03)
+
+`staff.NormalizeFullName` recorta espacios; el servicio rechaza vacío,
+solo espacios o más de 120 caracteres (`staff.FullNameMaxLength`, igual
+que `barber_full_name_ck`) usando `utf8.RuneCountInString` (cuenta
+caracteres, no bytes: un nombre con tildes o `ñ` no se rechaza de forma
+prematura). Sin unicidad: dos barberos de la misma barbería pueden
+compartir nombre (`TestRename_DuplicateNameAcrossBarbers_Allowed`).
+
+### Tabla de criterios de aceptación
+
+| Criterio | Estado | Prueba o evidencia |
+| --- | --- | --- |
+| `CA-021-01` | Cumplido | `TestList_FourBarbersInATeamShop_ReturnedAsFourDistinctResources`, `TestStaff_HTTP_OneThenFourBarbers_SamePathBothCases`, `database/tests/hu021_barberos.sql` ("CA-021-01/02"). |
+| `CA-021-02` | Cumplido | Los mismos anteriores; alta protegida con idempotencia: `TestCreate_FirstExecution_PersistsAndReturnsProceed`, `TestStaff_HTTP_Idempotency_ReplayAndConflict`. |
+| `CA-021-03` | Cumplido | `TestCreate_EmptyName_RejectedWithoutTouchingRepository`, `TestCreate_WhitespaceOnlyName_Rejected`, `TestCreate_NameOver120Characters_Rejected`, `TestCreate_NameExactly120Characters_Accepted`, `TestCreate_UnicodeName_CountsRunesNotBytes`, `barber_full_name_ck` en `database/tests/hu021_barberos.sql`. |
+| `CA-021-04` | Cumplido | `TestRename_OwnTenant_UpdatesByIDWithoutDuplicating`, `TestStaff_HTTP_CreateGetListRenameReload_FullJourney`. |
+| `CA-021-05` | Cumplido | `TestGet_CrossTenant_NeverLeaksAnotherShopsBarber`, `TestRename_CrossTenant_NeverRenamesAnotherShopsBarber`, `TestStaff_HTTP_TwoTenants_CrossAccessAlwaysReturns404WithoutLeaking`, sección CA-021-05 de `hu021_barberos.sql`. |
+| `CA-021-06` | Cumplido | Sección CA-021-06 de `database/tests/hu021_barberos.sql` (RLS forzada, `WITH CHECK` rechaza `barbershop_id` ajeno, rol real sin `BYPASSRLS`). |
+| `CA-021-07` | Cumplido | Sin política/GRANT `DELETE` (`database/tests/hu021_barberos.sql`), contrato sin campos fuera de alcance (`TestContract_UpdateBarberRequestSchema_MatchesDTOFields`), `TestStaff_HTTP_UnknownField_Returns400`. |
+| `CA-021-08` | Parcial (backend no aplica; ver `apps/web/README.md`) | Evidencia de frontend/accesibilidad documentada en `apps/web/README.md` y `apps/web/e2e/`. |
+
+### Pruebas
+
+- Unitarias: `internal/modules/staff/domain_test.go`, `service_test.go` (doble en memoria de `staff.Repository`).
+- HTTP con dobles: `internal/modules/staff/httpapi/handler_test.go`.
+- Contrato: `internal/modules/staff/httpapi/contract_test.go`.
+- PostgreSQL real, incluida concurrencia con `-race` (dos conexiones reales, misma clave): `internal/modules/staff/postgres/repository_test.go`.
+- SQL directo con el rol real: `database/tests/hu021_barberos.sql`.
+- Router de producción con dos tenants reales: `cmd/api/staff_integration_test.go`.
 
 ## Pruebas de integración
 

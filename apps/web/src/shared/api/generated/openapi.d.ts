@@ -188,6 +188,54 @@ export interface paths {
         patch: operations["updateBarbershopSettings"];
         trace?: never;
     };
+    "/private/barbers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar los barberos de la barbería activa
+         * @description Lista paginada por cursor (HU-021, CA-021-01, CA-021-02) de los barberos de la barbería derivada de la sesión vigente. Una barbería unipersonal y una de cuatro barberos usan exactamente la misma forma de respuesta: nunca una rama especial para "barbero único". Orden estable por fecha de alta y luego por identificador; sin paginación por offset porque la colección no tiene un máximo de negocio aprobado.
+         */
+        get: operations["listBarbers"];
+        put?: never;
+        /**
+         * Registrar un barbero en la barbería activa
+         * @description Alta de un barbero (HU-021, CA-021-02) protegida con clave de idempotencia (RN-IDE-01, DEC-043): repetir el mismo `POST` con la misma `Idempotency-Key` y el mismo cuerpo devuelve la misma representación creada sin crear una segunda fila. La misma clave con un `fullName` distinto responde `409` (conflicto de idempotencia); una clave nueva con el mismo `fullName` que un barbero existente SÍ crea un segundo barbero -esta historia no impone unicidad de nombre-. El tenant se deriva exclusivamente de `SessionCookie`; el cuerpo nunca acepta `barbershopId`.
+         */
+        post: operations["createBarber"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/private/barbers/{barberId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar un barbero de la barbería activa
+         * @description Lectura autenticada de un barbero por identificador (HU-021). Un identificador inexistente o perteneciente a otra barbería responde exactamente el mismo `404` (`CA-021-05`, `RN-TEN-01`): esta operación permite demostrar ese criterio de forma directa, sin depender solo del listado.
+         */
+        get: operations["getBarber"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Renombrar un barbero de la barbería activa
+         * @description Actualización parcial limitada al nombre (HU-021, CA-021-04). Rechaza objetos vacíos y cualquier campo distinto de `fullName` -en particular `active`, `deletedAt`, `sortOrder`, `staffUserId`, servicios u horarios, todos fuera de alcance (`DEC-047`, `CA-021-07`)-. Un identificador inexistente o de otra barbería responde el mismo `404` que `GET` (`CA-021-05`).
+         */
+        patch: operations["renameBarber"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -347,6 +395,58 @@ export interface components {
              * @example +573001234567
              */
             contactPhone: string;
+        };
+        /** @description Barbero de la barbería activa. La misma forma representa tanto a la única persona de una barbería unipersonal como a cualquiera de los varios barberos de un equipo (CA-021-01): no existe una forma especial para "barbero único". */
+        BarberResponse: {
+            /**
+             * Format: uuid
+             * @description Identificador del barbero, opaco para el cliente.
+             * @example 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+             */
+            id: string;
+            /**
+             * @description Nombre visible del barbero, ya recortado por el servidor.
+             * @example Carlos Ramírez
+             */
+            fullName: string;
+            /**
+             * Format: date-time
+             * @description Instante de alta, con offset.
+             * @example 2026-08-23T15:04:05Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description Instante de la última modificación (alta o renombrado), con offset.
+             * @example 2026-08-23T15:04:05Z
+             */
+            updatedAt: string;
+        };
+        /** @description Página de barberos de la barbería activa, ordenada de forma estable por fecha de alta y luego por identificador. */
+        BarberListResponse: {
+            /** @description Barberos de esta página, en el orden estable del servidor. */
+            items: components["schemas"]["BarberResponse"][];
+            /**
+             * @description Cursor opaco para pedir la siguiente página con el parámetro `cursor`. `null` cuando esta página es la última.
+             * @example eyJjcmVhdGVkQXQiOiIyMDI2LTA4LTIzVDE1OjA0OjA1WiIsImlkIjoiOGYzYWMyYjEtZTRkNS00NmY2LWE3YzgtZDllMGYxYTJiM2M0In0=
+             */
+            nextCursor: string | null;
+        };
+        /** @description Alta de un barbero de la barbería activa. La clave de idempotencia no convierte el nombre en único: dos claves distintas pueden crear dos barberos con el mismo `fullName` (fuera de alcance de HU-021 inventar esa restricción). */
+        CreateBarberRequest: {
+            /**
+             * @description Nombre visible del barbero. El servidor recorta espacios; un valor vacío, compuesto solo por espacios o mayor de 120 caracteres responde `422` sin persistir nada (CA-021-03).
+             * @example Carlos Ramírez
+             */
+            fullName: string;
+        };
+        /** @description Renombrado de un barbero de la barbería activa. Nunca modifica su identificador, su fecha de alta ni ningún otro campo: `updatedAt` es lo único adicional que cambia, gestionado por el servidor. */
+        UpdateBarberRequest: {
+            /**
+             * @description Nuevo nombre visible del barbero, ya recortado por el servidor. Un valor vacío, compuesto solo por espacios o mayor de 120 caracteres responde `422` sin persistir nada (CA-021-03); nombres repetidos dentro de la misma barbería son válidos.
+             * @example Carlos A. Ramírez
+             */
+            fullName: string;
         };
         /** @description Solicitud de recuperación de acceso. */
         RecoveryRequestRequest: {
@@ -587,6 +687,57 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
+        /** @description Página de barberos de la barbería activa. Una barbería con una sola persona y una con cuatro personas devuelven exactamente la misma forma (`items` con 1 o 4 elementos): no existe una rama de respuesta distinta para "barbero único". */
+        BarberListSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["BarberListResponse"];
+            };
+        };
+        /** @description Barbero de la barbería activa. */
+        BarberSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["BarberResponse"];
+            };
+        };
+        /** @description Barbero creado. `Location` apunta al recurso individual recién creado. */
+        BarberCreated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                Location: components["headers"]["Location"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["BarberResponse"];
+            };
+        };
+        /** @description Barbero con el nombre ya actualizado. */
+        BarberUpdated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["BarberResponse"];
+            };
+        };
+        /** @description El cuerpo es JSON válido, pero `fullName` incumple una validación (vacío, solo espacios o mayor de 120 caracteres). No se persistió ningún cambio. */
+        BarberValidationProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
         /** @description La solicitud fue recibida. Si la cuenta existe y tiene el teléfono verificado, se envía un código por WhatsApp oficial y correo; en cualquier otro caso no ocurre ningún envío, sin que la respuesta lo revele. */
         RecoveryRequestAccepted: {
             headers: {
@@ -627,6 +778,8 @@ export interface components {
         /** @description Limpia la cookie de sesión (ver components/security-schemes/SessionCookie.yaml): mismos Path=/api/v1, SameSite=Lax (provisional, DP-SEG-07 en docs/00-control/dudas-pendientes.md), Secure, HttpOnly que la cookie original, con Max-Age=0 para que el navegador la elimine de inmediato. */
         ClearCookieSession: string;
         "Retry-After": unknown;
+        /** @description Ruta del recurso recién creado (o del ya existente, en una repetición exacta de la misma clave de idempotencia), relativa a `/api/v1`. */
+        Location: string;
         /** @description Identificador de correlación de la solicitud. El cliente puede enviarlo; si está ausente o no cumple el formato aceptado, el servidor genera uno y lo refleja aquí. El mismo valor aparece en instance y requestId de cualquier Problem y en los registros técnicos relacionados con la solicitud. */
         XRequestId: string;
         /** @description Fija la cookie de sesión (ver components/security-schemes/SessionCookie.yaml): HttpOnly, Secure, SameSite=Lax (provisional, DP-SEG-07 en docs/00-control/dudas-pendientes.md), Path=/api/v1, vigencia de 30 días. El valor de la cookie es un token opaco aleatorio; nunca aparece en el cuerpo de la respuesta ni en ningún ejemplo de esta documentación. */
@@ -818,6 +971,101 @@ export interface operations {
             401: components["responses"]["UnauthorizedProblem"];
             404: components["responses"]["NotFoundProblem"];
             422: components["responses"]["BarbershopSettingsValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    listBarbers: {
+        parameters: {
+            query?: {
+                /** @description Cursor opaco devuelto por una página anterior (`nextCursor`). Sin este parámetro, la respuesta empieza en la primera página. */
+                cursor?: string;
+                /** @description Máximo de barberos por página. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["BarberListSuccess"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    createBarber: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Clave elegida por el cliente que identifica un intento de escritura crítica. Repetir la misma clave con el mismo contenido (método, ruta y cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo. Repetirla con contenido distinto es un conflicto: usa una clave nueva para una solicitud distinta. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBarberRequest"];
+            };
+        };
+        responses: {
+            201: components["responses"]["BarberCreated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            /** @description Conflicto de idempotencia (misma clave con otro contenido u otra operación, `IdempotencyConflictProblem`) u operación en curso con la misma clave (`IdempotencyLockedProblem`, DEC-043). Mismos dos problem types reutilizables que HU-004 ya documenta; ver esos componentes para la forma completa de cada uno. */
+            409: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["BarberValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getBarber: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["BarberSuccess"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    renameBarber: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateBarberRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["BarberUpdated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            422: components["responses"]["BarberValidationProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

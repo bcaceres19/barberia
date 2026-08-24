@@ -1,0 +1,36 @@
+# Respuesta 200 de GET /private/barbers (HU-021, CA-021-01, CA-021-02).
+description: >
+  Página de barberos de la barbería activa. Una barbería con una sola
+  persona y una con cuatro personas devuelven exactamente la misma forma
+  (`items` con 1 o 4 elementos): no existe una rama de respuesta distinta
+  para "barbero único".
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/BarberListResponse.yaml'
+    examples:
+      barberiaUnipersonal:
+        summary: Barbería con un solo barbero
+        value:
+          items:
+            - id: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+              fullName: Carlos Ramírez
+              createdAt: "2026-08-23T15:04:05Z"
+              updatedAt: "2026-08-23T15:04:05Z"
+          nextCursor: null
+      barberiaConEquipo:
+        summary: Barbería con varios barberos, primera página
+        value:
+          items:
+            - id: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+              fullName: Carlos Ramírez
+              createdAt: "2026-08-23T15:04:05Z"
+              updatedAt: "2026-08-23T15:04:05Z"
+            - id: 1a2b3c4d-5e6f-4708-9a0b-1c2d3e4f5061
+              fullName: Ana Torres
+              createdAt: "2026-08-23T15:05:10Z"
+              updatedAt: "2026-08-23T15:05:10Z"
+          nextCursor: eyJjcmVhdGVkQXQiOiIyMDI2LTA4LTIzVDE1OjA1OjEwWiIsImlkIjoiMWEyYjNjNGQtNWU2Zi00NzA4LTlhMGItMWMyZDNlNGY1MDYxIn0=
