@@ -20,7 +20,12 @@ import {
   updateWorkingHour,
 } from '../api/schedulesApi'
 import { newIdempotencyKey } from '../model/idempotencyKey'
-import { ISO_WEEKDAYS, weekdayLabel, type BarberSummary, type WorkingHour } from '../model/workingHour'
+import {
+  ISO_WEEKDAYS,
+  weekdayLabel,
+  type BarberSummary,
+  type WorkingHour,
+} from '../model/workingHour'
 import {
   validateDurationMinutes,
   validateISOWeekday,
@@ -395,8 +400,8 @@ async function onDelete(wh: WorkingHour) {
 
     <template v-else>
       <p v-if="barbers.length === 0" class="schedules-page__empty">
-        Aún no tienes barberos registrados. Agrega uno en la sección "Barberos" antes de
-        configurar su horario.
+        Aún no tienes barberos registrados. Agrega uno en la sección "Barberos" antes de configurar
+        su horario.
       </p>
 
       <template v-else>
@@ -438,7 +443,12 @@ async function onDelete(wh: WorkingHour) {
         </BaseAlert>
 
         <template v-else-if="workingHoursStatus === 'ready'">
-          <BaseAlert v-if="deleteError" variant="danger" role="alert" class="schedules-page__delete-error">
+          <BaseAlert
+            v-if="deleteError"
+            variant="danger"
+            role="alert"
+            class="schedules-page__delete-error"
+          >
             {{ deleteError }}
           </BaseAlert>
 
@@ -489,7 +499,12 @@ async function onDelete(wh: WorkingHour) {
     </template>
 
     <!-- Alta -->
-    <BaseDialog v-model="isCreateOpen" title="Agregar tramo" size="sm" @close="onCreateDialogClosed">
+    <BaseDialog
+      v-model="isCreateOpen"
+      title="Agregar tramo"
+      size="sm"
+      @close="onCreateDialogClosed"
+    >
       <form
         name="createWorkingHour"
         class="schedules-page__form"

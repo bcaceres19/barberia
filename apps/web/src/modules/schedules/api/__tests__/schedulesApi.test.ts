@@ -97,7 +97,10 @@ describe('schedulesApi.fetchWorkingHours', () => {
 
     const outcome = await fetchWorkingHours('b-1')
 
-    expect(outcome).toEqual({ kind: 'success', page: { items: [workingHourBody], nextCursor: null } })
+    expect(outcome).toEqual({
+      kind: 'success',
+      page: { items: [workingHourBody], nextCursor: null },
+    })
     expect(getMock).toHaveBeenCalledWith('/private/barbers/{barberId}/working-hours', {
       params: { path: { barberId: 'b-1' }, query: { limit: 50 } },
     })
@@ -136,17 +139,23 @@ describe('schedulesApi.createWorkingHour', () => {
 
   it('maps a 409 with code=conflict to overlap-conflict (CA-040-04)', async () => {
     postMock.mockResolvedValueOnce(problem(409, { code: 'conflict' }))
-    expect(await createWorkingHour('b-1', 1, '08:00', 60, 'k')).toEqual({ kind: 'overlap-conflict' })
+    expect(await createWorkingHour('b-1', 1, '08:00', 60, 'k')).toEqual({
+      kind: 'overlap-conflict',
+    })
   })
 
   it('maps a 409 with code=idempotency-conflict to idempotency-conflict (RN-IDE-01)', async () => {
     postMock.mockResolvedValueOnce(problem(409, { code: 'idempotency-conflict' }))
-    expect(await createWorkingHour('b-1', 1, '08:00', 60, 'k')).toEqual({ kind: 'idempotency-conflict' })
+    expect(await createWorkingHour('b-1', 1, '08:00', 60, 'k')).toEqual({
+      kind: 'idempotency-conflict',
+    })
   })
 
   it('maps a 422 to validation-error', async () => {
     postMock.mockResolvedValueOnce(problem(422))
-    expect(await createWorkingHour('b-1', 1, '08:00', 60, 'k')).toEqual({ kind: 'validation-error' })
+    expect(await createWorkingHour('b-1', 1, '08:00', 60, 'k')).toEqual({
+      kind: 'validation-error',
+    })
   })
 
   it('maps a network failure to network-error', async () => {
@@ -164,10 +173,13 @@ describe('schedulesApi.updateWorkingHour', () => {
     const outcome = await updateWorkingHour('b-1', 'wh-1', 1, '09:00', 60)
 
     expect(outcome).toEqual({ kind: 'success', workingHour: workingHourBody })
-    expect(patchMock).toHaveBeenCalledWith('/private/barbers/{barberId}/working-hours/{workingHourId}', {
-      params: { path: { barberId: 'b-1', workingHourId: 'wh-1' } },
-      body: { isoWeekday: 1, startsTime: '09:00', durationMinutes: 60 },
-    })
+    expect(patchMock).toHaveBeenCalledWith(
+      '/private/barbers/{barberId}/working-hours/{workingHourId}',
+      {
+        params: { path: { barberId: 'b-1', workingHourId: 'wh-1' } },
+        body: { isoWeekday: 1, startsTime: '09:00', durationMinutes: 60 },
+      },
+    )
   })
 
   it('maps a 404 to not-found', async () => {
@@ -177,12 +189,16 @@ describe('schedulesApi.updateWorkingHour', () => {
 
   it('maps a 409 to overlap-conflict', async () => {
     patchMock.mockResolvedValueOnce(problem(409))
-    expect(await updateWorkingHour('b-1', 'wh-1', 1, '08:00', 60)).toEqual({ kind: 'overlap-conflict' })
+    expect(await updateWorkingHour('b-1', 'wh-1', 1, '08:00', 60)).toEqual({
+      kind: 'overlap-conflict',
+    })
   })
 
   it('maps a 422 to validation-error', async () => {
     patchMock.mockResolvedValueOnce(problem(422))
-    expect(await updateWorkingHour('b-1', 'wh-1', 1, '08:00', 60)).toEqual({ kind: 'validation-error' })
+    expect(await updateWorkingHour('b-1', 'wh-1', 1, '08:00', 60)).toEqual({
+      kind: 'validation-error',
+    })
   })
 })
 

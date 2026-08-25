@@ -18,8 +18,7 @@ export type FetchBarberSummariesOutcome =
 // esta consulta no tiene un desenlace de error propio que la página deba
 // tratar como bloqueante.
 export type FetchBarbershopTimezoneOutcome =
-  | { kind: 'success'; timezone: string }
-  | { kind: 'unavailable' }
+  { kind: 'success'; timezone: string } | { kind: 'unavailable' }
 
 export type FetchWorkingHoursOutcome =
   | { kind: 'success'; page: WorkingHourPage }

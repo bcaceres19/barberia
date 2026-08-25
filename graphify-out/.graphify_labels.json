@@ -240,9 +240,10 @@
   "238": "axe-core",
   "239": "newLogoutHandler",
   "240": "schedulesApi.test.ts",
-  "241": ".ServeHTTP",
+  "241": "PrincipalFromContext",
   "242": "loadPage",
+  "243": "onConfirmDeactivate",
   "244": "horarios.spec.ts",
   "245": "assignment_ports.go",
-  "246": "openapi-typescript"
+  "246": "eslint-plugin-vue"
 }

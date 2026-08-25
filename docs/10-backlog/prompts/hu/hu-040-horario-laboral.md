@@ -17,8 +17,8 @@ issue: 90
 issue_url: "https://github.com/bcaceres19/barberia/issues/90"
 suggested_issue_title: "feat(schedule): implementar HU-040 horario laboral recurrente"
 branch: "feat/90-hu040-horario-laboral"
-pr: null
-pr_url: null
+pr: 93
+pr_url: "https://github.com/bcaceres19/barberia/pull/93"
 depends_on:
   - "Criterio de salida de B1 cumplido; HU-020–HU-024 integradas en main (PR #84)"
   - "CT-008 resuelta como DEC-070 (FK de B2 en ON DELETE RESTRICT, no CASCADE)"

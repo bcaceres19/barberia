@@ -2576,7 +2576,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "auth/httpapi/contract_test.go"
     },
     {
@@ -2587,7 +2587,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test_go_httpapi_schemadoc",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "schemadoc"
     },
     {
@@ -2598,7 +2598,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test_go_httpapi_operation",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "operation"
     },
     {
@@ -2609,7 +2609,7 @@
       "_origin": "ast",
       "id": "httpapi_pathfile",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "pathfile"
     },
     {
@@ -2620,7 +2620,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test_findreporoot",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "findreporoot()"
     },
     {
@@ -2631,7 +2631,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test_go_t",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "t"
     },
     {
@@ -2642,7 +2642,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test_loadyaml",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "loadyaml()"
     },
     {
@@ -2653,7 +2653,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test_testcontract_loginrequestschema_matchesdtofields",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_loginrequestschema_matchesdtofields()"
     },
     {
@@ -2664,7 +2664,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test_testcontract_loginresponseschema_matchesdtofields",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_loginresponseschema_matchesdtofields()"
     },
     {
@@ -2675,7 +2675,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test_testcontract_loginoperation_methodpathsecurityandresponses",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_loginoperation_methodpathsecurityandresponses()"
     },
     {
@@ -2686,7 +2686,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test_testcontract_cookienamematchessecurityschemereference",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_cookienamematchessecurityschemereference()"
     },
     {
@@ -2916,8 +2916,8 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "httpapi_loginhandler_servehttp",
-      "community": 191,
-      "community_name": "WriteProblem",
+      "community": 125,
+      "community_name": "As",
       "norm_label": ".servehttp()"
     },
     {
@@ -2927,8 +2927,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_handler_go_responsewriter",
-      "community": 191,
-      "community_name": "WriteProblem",
+      "community": 125,
+      "community_name": "As",
       "norm_label": "responsewriter"
     },
     {
@@ -2938,8 +2938,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_handler_go_request",
-      "community": 191,
-      "community_name": "WriteProblem",
+      "community": 125,
+      "community_name": "As",
       "norm_label": "request"
     },
     {
@@ -3532,8 +3532,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "httpapi_logouthandler_servehttp",
-      "community": 91,
-      "community_name": "Principal",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": ".servehttp()"
     },
     {
@@ -3543,8 +3543,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_logout_handler_go_responsewriter",
-      "community": 91,
-      "community_name": "Principal",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": "responsewriter"
     },
     {
@@ -3554,8 +3554,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_logout_handler_go_request",
-      "community": 91,
-      "community_name": "Principal",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": "request"
     },
     {
@@ -3994,8 +3994,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "httpapi_recoveryrequesthandler_servehttp",
-      "community": 191,
-      "community_name": "WriteProblem",
+      "community": 125,
+      "community_name": "As",
       "norm_label": ".servehttp()"
     },
     {
@@ -4005,8 +4005,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_recovery_handler_go_responsewriter",
-      "community": 191,
-      "community_name": "WriteProblem",
+      "community": 125,
+      "community_name": "As",
       "norm_label": "responsewriter"
     },
     {
@@ -4016,8 +4016,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_recovery_handler_go_request",
-      "community": 191,
-      "community_name": "WriteProblem",
+      "community": 125,
+      "community_name": "As",
       "norm_label": "request"
     },
     {
@@ -4049,8 +4049,8 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "httpapi_recoveryverifyhandler_servehttp",
-      "community": 191,
-      "community_name": "WriteProblem",
+      "community": 125,
+      "community_name": "As",
       "norm_label": ".servehttp()"
     },
     {
@@ -4082,8 +4082,8 @@
       "source_location": "L165",
       "_origin": "ast",
       "id": "httpapi_recoveryresetpasswordhandler_servehttp",
-      "community": 191,
-      "community_name": "WriteProblem",
+      "community": 125,
+      "community_name": "As",
       "norm_label": ".servehttp()"
     },
     {
@@ -4544,8 +4544,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_mask",
-      "community": 226,
-      "community_name": "MaskEmail",
+      "community": 221,
+      "community_name": "RecoveryService",
       "norm_label": "mask.go"
     },
     {
@@ -4555,8 +4555,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_mask_maskphone",
-      "community": 226,
-      "community_name": "MaskEmail",
+      "community": 221,
+      "community_name": "RecoveryService",
       "norm_label": "maskphone()"
     },
     {
@@ -4566,8 +4566,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_mask_maskemail",
-      "community": 226,
-      "community_name": "MaskEmail",
+      "community": 221,
+      "community_name": "RecoveryService",
       "norm_label": "maskemail()"
     },
     {
@@ -4577,8 +4577,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_mask_test",
-      "community": 226,
-      "community_name": "MaskEmail",
+      "community": 221,
+      "community_name": "RecoveryService",
       "norm_label": "mask_test.go"
     },
     {
@@ -4588,8 +4588,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_mask_test_testmaskphone",
-      "community": 226,
-      "community_name": "MaskEmail",
+      "community": 221,
+      "community_name": "RecoveryService",
       "norm_label": "testmaskphone()"
     },
     {
@@ -4599,8 +4599,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_mask_test_go_t",
-      "community": 226,
-      "community_name": "MaskEmail",
+      "community": 221,
+      "community_name": "RecoveryService",
       "norm_label": "t"
     },
     {
@@ -4610,8 +4610,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_mask_test_testmaskemail",
-      "community": 226,
-      "community_name": "MaskEmail",
+      "community": 221,
+      "community_name": "RecoveryService",
       "norm_label": "testmaskemail()"
     },
     {
@@ -4621,8 +4621,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_mask_test_testmaskemail_neverreturnsfullvalue",
-      "community": 226,
-      "community_name": "MaskEmail",
+      "community": 221,
+      "community_name": "RecoveryService",
       "norm_label": "testmaskemail_neverreturnsfullvalue()"
     },
     {
@@ -5326,7 +5326,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_phone_sender_capture_test",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "phone_sender_capture_test.go"
     },
     {
@@ -5337,7 +5337,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_phone_sender_capture_test_testcapturingphonecodesender_writesphoneandcodetofile",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcapturingphonecodesender_writesphoneandcodetofile()"
     },
     {
@@ -5348,7 +5348,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_phone_sender_capture_test_go_t",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "t"
     },
     {
@@ -5359,7 +5359,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_phone_sender_capture_test_testcapturingphonecodesender_innerfailure_neverwritescapture",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcapturingphonecodesender_innerfailure_neverwritescapture()"
     },
     {
@@ -9253,7 +9253,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "catalog/domain.go"
     },
     {
@@ -9264,7 +9264,7 @@
       "_origin": "ast",
       "id": "catalog_service",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "service"
     },
     {
@@ -9275,7 +9275,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_go_time",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "time"
     },
     {
@@ -9286,7 +9286,7 @@
       "_origin": "ast",
       "id": "catalog_deactivationimpact",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "deactivationimpact"
     },
     {
@@ -9297,7 +9297,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_currentdeactivationimpact",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "currentdeactivationimpact()"
     },
     {
@@ -9307,8 +9307,8 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_lookslikeserviceid",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 216,
+      "community_name": "CatalogService",
       "norm_label": "lookslikeserviceid()"
     },
     {
@@ -9319,7 +9319,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_normalizename",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "normalizename()"
     },
     {
@@ -9330,7 +9330,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_normalizedescription",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "normalizedescription()"
     },
     {
@@ -9341,7 +9341,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_parsepricecop",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "parsepricecop()"
     },
     {
@@ -9352,7 +9352,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_formatpricecop",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "formatpricecop()"
     },
     {
@@ -9363,7 +9363,7 @@
       "_origin": "ast",
       "id": "catalog_cursor",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "cursor"
     },
     {
@@ -9374,7 +9374,7 @@
       "_origin": "ast",
       "id": "catalog_cursorwire",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "cursorwire"
     },
     {
@@ -9385,7 +9385,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_encodecursor",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "encodecursor()"
     },
     {
@@ -9396,7 +9396,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_decodecursor",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "decodecursor()"
     },
     {
@@ -9407,7 +9407,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_test",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "catalog/domain_test.go"
     },
     {
@@ -9418,7 +9418,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_test_testnormalizename_trimssurroundingspaces",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "testnormalizename_trimssurroundingspaces()"
     },
     {
@@ -9429,7 +9429,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_test_go_t",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "t"
     },
     {
@@ -9440,7 +9440,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_test_testnormalizedescription_emptyorwhitespacebecomesnil",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "testnormalizedescription_emptyorwhitespacebecomesnil()"
     },
     {
@@ -9451,7 +9451,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_test_testnormalizedescription_trimsandpreservesunicode",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "testnormalizedescription_trimsandpreservesunicode()"
     },
     {
@@ -9462,7 +9462,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_test_testlookslikeserviceid_acceptscanonicaluuid",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "testlookslikeserviceid_acceptscanonicaluuid()"
     },
     {
@@ -9473,7 +9473,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_test_testlookslikeserviceid_rejectsmalformedvalues",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "testlookslikeserviceid_rejectsmalformedvalues()"
     },
     {
@@ -9484,7 +9484,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_test_testencodedecodecursor_roundtrips",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "testencodedecodecursor_roundtrips()"
     },
     {
@@ -9495,7 +9495,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_test_testdecodecursor_rejectsgarbageasclienterror",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "testdecodecursor_rejectsgarbageasclienterror()"
     },
     {
@@ -9506,7 +9506,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_test_testparsepricecop_acceptsintegerandtwodecimals",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "testparsepricecop_acceptsintegerandtwodecimals()"
     },
     {
@@ -9517,7 +9517,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_test_testparsepricecop_rejectszeroandnegative",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "testparsepricecop_rejectszeroandnegative()"
     },
     {
@@ -9528,7 +9528,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_test_testparsepricecop_rejectsinvalidformat",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "testparsepricecop_rejectsinvalidformat()"
     },
     {
@@ -9539,7 +9539,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_test_testparsepricecop_trimssurroundingwhitespace",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "testparsepricecop_trimssurroundingwhitespace()"
     },
     {
@@ -9550,7 +9550,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_test_testformatpricecop_alwaystwodecimals",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "testformatpricecop_alwaystwodecimals()"
     },
     {
@@ -9561,7 +9561,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_domain_test_testparseformatpricecop_roundtrips",
       "community": 118,
-      "community_name": "Validation",
+      "community_name": "catalog/domain_test.go",
       "norm_label": "testparseformatpricecop_roundtrips()"
     },
     {
@@ -9571,7 +9571,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_errors",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "catalog/errors.go"
     },
@@ -9582,7 +9582,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_errors_errnamerequired",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "errnamerequired()"
     },
@@ -9593,7 +9593,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_errors_errnametoolong",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "errnametoolong()"
     },
@@ -9604,7 +9604,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_errors_errdescriptiontoolong",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "errdescriptiontoolong()"
     },
@@ -9615,7 +9615,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_errors_errdurationoutofrange",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "errdurationoutofrange()"
     },
@@ -9626,7 +9626,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_errors_errpriceinvalidformat",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "errpriceinvalidformat()"
     },
@@ -9637,7 +9637,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_errors_errpricemustbepositive",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "errpricemustbepositive()"
     },
@@ -9648,8 +9648,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_errors_errservicenotfound",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 216,
+      "community_name": "CatalogService",
       "norm_label": "errservicenotfound()"
     },
     {
@@ -9659,8 +9659,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_errors_errnameconflict",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 216,
+      "community_name": "CatalogService",
       "norm_label": "errnameconflict()"
     },
     {
@@ -9670,7 +9670,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_errors_errupdateemptybody",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "errupdateemptybody()"
     },
@@ -9681,8 +9681,8 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_errors_errservicealreadyinactive",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 125,
+      "community_name": "As",
       "norm_label": "errservicealreadyinactive()"
     },
     {
@@ -9692,8 +9692,8 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_errors_errservicealreadyactive",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 125,
+      "community_name": "As",
       "norm_label": "errservicealreadyactive()"
     },
     {
@@ -9792,7 +9792,7 @@
       "_origin": "ast",
       "id": "httpapi_listassignmentshandler_servehttp",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": ".servehttp()"
     },
     {
@@ -9803,7 +9803,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_assignment_handler_go_responsewriter",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": "responsewriter"
     },
     {
@@ -9814,7 +9814,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_assignment_handler_go_request",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": "request"
     },
     {
@@ -9847,7 +9847,7 @@
       "_origin": "ast",
       "id": "httpapi_assignservicehandler_servehttp",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": ".servehttp()"
     },
     {
@@ -9880,7 +9880,7 @@
       "_origin": "ast",
       "id": "httpapi_unassignservicehandler_servehttp",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": ".servehttp()"
     },
     {
@@ -9923,7 +9923,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "catalog/httpapi/contract_test.go"
     },
@@ -9934,7 +9934,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_go_httpapi_schemadoc",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "schemadoc"
     },
@@ -9945,7 +9945,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_go_httpapi_operation",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "operation"
     },
@@ -9956,7 +9956,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "httpapi_catalogpathsfile",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "catalogpathsfile"
     },
@@ -9967,7 +9967,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "httpapi_servicelifecyclepathsfile",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "servicelifecyclepathsfile"
     },
@@ -9978,7 +9978,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_findreporoot",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "findreporoot()"
     },
@@ -9989,7 +9989,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_go_t",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "t"
     },
@@ -10000,7 +10000,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_loadyaml",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "loadyaml()"
     },
@@ -10011,7 +10011,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_requireexactprops",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "requireexactprops()"
     },
@@ -10022,7 +10022,7 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_requireresponses",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "requireresponses()"
     },
@@ -10033,7 +10033,7 @@
       "source_location": "L136",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_testcontract_serviceresponseschema_matchesdtofields",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "testcontract_serviceresponseschema_matchesdtofields()"
     },
@@ -10044,7 +10044,7 @@
       "source_location": "L147",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_testcontract_createservicerequestschema_matchesdtofields",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "testcontract_createservicerequestschema_matchesdtofields()"
     },
@@ -10055,7 +10055,7 @@
       "source_location": "L159",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_testcontract_updateservicerequestschema_matchesdtofields",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "testcontract_updateservicerequestschema_matchesdtofields()"
     },
@@ -10066,7 +10066,7 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_testcontract_servicelistresponseschema_hasitemsandnextcursor",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "testcontract_servicelistresponseschema_hasitemsandnextcursor()"
     },
@@ -10077,7 +10077,7 @@
       "source_location": "L178",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_testcontract_listservicesoperation_methodpathsecurityandresponses",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "testcontract_listservicesoperation_methodpathsecurityandresponses()"
     },
@@ -10088,7 +10088,7 @@
       "source_location": "L183",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_testcontract_createserviceoperation_methodpathsecurityandresponses",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "testcontract_createserviceoperation_methodpathsecurityandresponses()"
     },
@@ -10099,7 +10099,7 @@
       "source_location": "L188",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_testcontract_getserviceoperation_methodpathsecurityandresponses",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "testcontract_getserviceoperation_methodpathsecurityandresponses()"
     },
@@ -10110,7 +10110,7 @@
       "source_location": "L193",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_testcontract_updateserviceoperation_methodpathsecurityandresponses",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "testcontract_updateserviceoperation_methodpathsecurityandresponses()"
     },
@@ -10121,7 +10121,7 @@
       "source_location": "L201",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_testcontract_openapiyaml_registerscatalogpaths",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "testcontract_openapiyaml_registerscatalogpaths()"
     },
@@ -10132,7 +10132,7 @@
       "source_location": "L226",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_testcontract_servicedeactivationimpactresponseschema_matchesdtofields",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "testcontract_servicedeactivationimpactresponseschema_matchesdtofields()"
     },
@@ -10143,7 +10143,7 @@
       "source_location": "L232",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_testcontract_servicedeactivationresponseschema_matchesdtofields",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "testcontract_servicedeactivationresponseschema_matchesdtofields()"
     },
@@ -10154,7 +10154,7 @@
       "source_location": "L238",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_testcontract_getservicedeactivationimpactoperation_methodpathsecurityandresponses",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "testcontract_getservicedeactivationimpactoperation_methodpathsecurityandresponses()"
     },
@@ -10165,7 +10165,7 @@
       "source_location": "L243",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_testcontract_deactivateserviceoperation_methodpathsecurityandresponses",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "testcontract_deactivateserviceoperation_methodpathsecurityandresponses()"
     },
@@ -10176,7 +10176,7 @@
       "source_location": "L248",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_contract_test_testcontract_reactivateserviceoperation_methodpathsecurityandresponses",
-      "community": 94,
+      "community": 201,
       "community_name": "catalog/httpapi/contract_test.go",
       "norm_label": "testcontract_reactivateserviceoperation_methodpathsecurityandresponses()"
     },
@@ -10287,7 +10287,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_principalorinternalerror",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": "principalorinternalerror()"
     },
     {
@@ -10298,7 +10298,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_go_responsewriter",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": "responsewriter"
     },
     {
@@ -10309,7 +10309,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_go_request",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": "request"
     },
     {
@@ -10320,7 +10320,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_writeunknownfieldorinvalidjsonproblem",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": "writeunknownfieldorinvalidjsonproblem()"
     },
     {
@@ -10353,7 +10353,7 @@
       "_origin": "ast",
       "id": "httpapi_listserviceshandler_servehttp",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": ".servehttp()"
     },
     {
@@ -10386,7 +10386,7 @@
       "_origin": "ast",
       "id": "httpapi_getservicehandler_servehttp",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": ".servehttp()"
     },
     {
@@ -10408,7 +10408,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_newcreateservicehandler",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "newcreateservicehandler()"
     },
     {
@@ -10419,7 +10419,7 @@
       "_origin": "ast",
       "id": "httpapi_createservicehandler_servehttp",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": ".servehttp()"
     },
     {
@@ -10441,7 +10441,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_newupdateservicehandler",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "newupdateservicehandler()"
     },
     {
@@ -10452,7 +10452,7 @@
       "_origin": "ast",
       "id": "httpapi_updateservicehandler_servehttp",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": ".servehttp()"
     },
     {
@@ -10485,7 +10485,7 @@
       "_origin": "ast",
       "id": "httpapi_getservicedeactivationimpacthandler_servehttp",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": ".servehttp()"
     },
     {
@@ -10496,7 +10496,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_readlifecyclebody",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": "readlifecyclebody()"
     },
     {
@@ -10518,7 +10518,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_newdeactivateservicehandler",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "newdeactivateservicehandler()"
     },
     {
@@ -10529,7 +10529,7 @@
       "_origin": "ast",
       "id": "httpapi_deactivateservicehandler_servehttp",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": ".servehttp()"
     },
     {
@@ -10562,7 +10562,7 @@
       "_origin": "ast",
       "id": "httpapi_reactivateservicehandler_servehttp",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": ".servehttp()"
     },
     {
@@ -10573,7 +10573,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_newserviceresponse",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": "newserviceresponse()"
     },
     {
@@ -10584,7 +10584,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_go_service",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": "service"
     },
     {
@@ -10595,7 +10595,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_newservicelistresponse",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": "newservicelistresponse()"
     },
     {
@@ -10606,7 +10606,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_go_listresult",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": "listresult"
     },
     {
@@ -10617,7 +10617,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "catalog/httpapi/handler_test.go"
     },
     {
@@ -10628,7 +10628,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_go_httpapi_fakerepository",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": "fakerepository"
     },
     {
@@ -10639,7 +10639,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_go_cursor",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": "cursor"
     },
     {
@@ -10650,7 +10650,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_go_listresult",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": "listresult"
     },
     {
@@ -10661,7 +10661,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_go_service",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": "service"
     },
     {
@@ -10672,7 +10672,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_go_createinput",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": "createinput"
     },
     {
@@ -10683,7 +10683,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_go_createresult",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": "createresult"
     },
     {
@@ -10694,7 +10694,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_go_updateresult",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": "updateresult"
     },
     {
@@ -10705,7 +10705,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_go_httpapi_fakerepository_list",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": ".list()"
     },
     {
@@ -10715,8 +10715,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_go_context",
-      "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community": 169,
+      "community_name": "fakeRepository",
       "norm_label": "context"
     },
     {
@@ -10726,8 +10726,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_go_httpapi_fakerepository_get",
-      "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community": 169,
+      "community_name": "fakeRepository",
       "norm_label": ".get()"
     },
     {
@@ -10738,7 +10738,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_go_httpapi_fakerepository_create",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": ".create()"
     },
     {
@@ -10749,7 +10749,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_go_httpapi_fakerepository_update",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": ".update()"
     },
     {
@@ -10760,7 +10760,7 @@
       "_origin": "ast",
       "id": "httpapi_fakerepository_deactivate",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": ".deactivate()"
     },
     {
@@ -10771,7 +10771,7 @@
       "_origin": "ast",
       "id": "httpapi_fakerepository_reactivate",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": ".reactivate()"
     },
     {
@@ -10782,7 +10782,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_requestwithprincipal",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "requestwithprincipal()"
     },
     {
@@ -10793,7 +10793,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_go_request",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "request"
     },
     {
@@ -10804,7 +10804,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_requestwithserviceid",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "requestwithserviceid()"
     },
     {
@@ -10815,7 +10815,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_decodeproblem",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "decodeproblem()"
     },
     {
@@ -10826,7 +10826,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_go_t",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "t"
     },
     {
@@ -10837,7 +10837,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_go_responserecorder",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "responserecorder"
     },
     {
@@ -10848,7 +10848,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testlistserviceshandler_success_returnsitemsandcursor",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testlistserviceshandler_success_returnsitemsandcursor()"
     },
     {
@@ -10859,7 +10859,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testlistserviceshandler_nonextpage_returnsexplicitnull",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testlistserviceshandler_nonextpage_returnsexplicitnull()"
     },
     {
@@ -10870,7 +10870,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testlistserviceshandler_invalidlimit_returns400",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testlistserviceshandler_invalidlimit_returns400()"
     },
     {
@@ -10881,7 +10881,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testgetservicehandler_found_returnsservice",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testgetservicehandler_found_returnsservice()"
     },
     {
@@ -10892,7 +10892,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testgetservicehandler_notfound_returns404",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testgetservicehandler_notfound_returns404()"
     },
     {
@@ -10903,7 +10903,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testgetservicehandler_othertenantsid_samenotfoundasnonexistent",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testgetservicehandler_othertenantsid_samenotfoundasnonexistent()"
     },
     {
@@ -10914,7 +10914,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testcreateservicehandler_missingidempotencykey_returns400",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testcreateservicehandler_missingidempotencykey_returns400()"
     },
     {
@@ -10925,7 +10925,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testcreateservicehandler_unknownfield_returns400",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testcreateservicehandler_unknownfield_returns400()"
     },
     {
@@ -10936,7 +10936,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testcreateservicehandler_validationerror_returns422withoutcallingrepository",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testcreateservicehandler_validationerror_returns422withoutcallingrepository()"
     },
     {
@@ -10947,7 +10947,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testcreateservicehandler_fractionalduration_returns400",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testcreateservicehandler_fractionalduration_returns400()"
     },
     {
@@ -10958,7 +10958,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testcreateservicehandler_proceed_returns201withlocationandbody",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testcreateservicehandler_proceed_returns201withlocationandbody()"
     },
     {
@@ -10969,7 +10969,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testcreateservicehandler_replay_returnssamestatusandbodywithlocation",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testcreateservicehandler_replay_returnssamestatusandbodywithlocation()"
     },
     {
@@ -10980,7 +10980,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testcreateservicehandler_conflictfingerprint_returns409",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testcreateservicehandler_conflictfingerprint_returns409()"
     },
     {
@@ -10991,7 +10991,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testcreateservicehandler_locked_returns409",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testcreateservicehandler_locked_returns409()"
     },
     {
@@ -11002,7 +11002,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testcreateservicehandler_nameconflict_returns409withconflictcode",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testcreateservicehandler_nameconflict_returns409withconflictcode()"
     },
     {
@@ -11013,7 +11013,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testcreateservicehandler_throughfullrouter_neverlogsnameorbody",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testcreateservicehandler_throughfullrouter_neverlogsnameorbody()"
     },
     {
@@ -11024,7 +11024,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testupdateservicehandler_success_returns200",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testupdateservicehandler_success_returns200()"
     },
     {
@@ -11035,7 +11035,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testupdateservicehandler_unknownfield_returns400",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testupdateservicehandler_unknownfield_returns400()"
     },
     {
@@ -11046,7 +11046,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testupdateservicehandler_emptyobject_returns422",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testupdateservicehandler_emptyobject_returns422()"
     },
     {
@@ -11057,7 +11057,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testupdateservicehandler_descriptionemptystring_clearsdescription",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testupdateservicehandler_descriptionemptystring_clearsdescription()"
     },
     {
@@ -11068,7 +11068,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testupdateservicehandler_notfound_returns404",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testupdateservicehandler_notfound_returns404()"
     },
     {
@@ -11079,7 +11079,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testupdateservicehandler_nameconflict_returns409",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testupdateservicehandler_nameconflict_returns409()"
     },
     {
@@ -11090,7 +11090,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testupdateservicehandler_validationerror_returns422",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testupdateservicehandler_validationerror_returns422()"
     },
     {
@@ -11101,7 +11101,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testgetservicedeactivationimpacthandler_found_returns200withzero",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testgetservicedeactivationimpacthandler_found_returns200withzero()"
     },
     {
@@ -11112,7 +11112,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testgetservicedeactivationimpacthandler_notfound_returns404",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testgetservicedeactivationimpacthandler_notfound_returns404()"
     },
     {
@@ -11123,7 +11123,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testdeactivateservicehandler_missingidempotencykey_returns400",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testdeactivateservicehandler_missingidempotencykey_returns400()"
     },
     {
@@ -11134,7 +11134,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testdeactivateservicehandler_unknownfield_returns400",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testdeactivateservicehandler_unknownfield_returns400()"
     },
     {
@@ -11145,7 +11145,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testdeactivateservicehandler_proceed_returns200withstoredbody",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testdeactivateservicehandler_proceed_returns200withstoredbody()"
     },
     {
@@ -11156,7 +11156,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testdeactivateservicehandler_notfound_returns404",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testdeactivateservicehandler_notfound_returns404()"
     },
     {
@@ -11167,7 +11167,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testdeactivateservicehandler_alreadyinactive_returns409",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testdeactivateservicehandler_alreadyinactive_returns409()"
     },
     {
@@ -11178,7 +11178,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testdeactivateservicehandler_idempotencyconflict_returns409",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testdeactivateservicehandler_idempotencyconflict_returns409()"
     },
     {
@@ -11189,7 +11189,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testreactivateservicehandler_proceed_returns200withstoredbody",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testreactivateservicehandler_proceed_returns200withstoredbody()"
     },
     {
@@ -11200,7 +11200,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testreactivateservicehandler_alreadyactive_returns409",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testreactivateservicehandler_alreadyactive_returns409()"
     },
     {
@@ -11211,7 +11211,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testreactivateservicehandler_missingidempotencykey_returns400",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testreactivateservicehandler_missingidempotencykey_returns400()"
     },
     {
@@ -11222,7 +11222,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_httpapi_handler_test_testhandlers_missingprincipal_returns500safely",
       "community": 12,
-      "community_name": "catalog/httpapi/handler_test.go",
+      "community_name": "NewService",
       "norm_label": "testhandlers_missingprincipal_returns500safely()"
     },
     {
@@ -11233,7 +11233,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_ports",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": "catalog/ports.go"
     },
     {
@@ -11244,7 +11244,7 @@
       "_origin": "ast",
       "id": "catalog_listresult",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": "listresult"
     },
     {
@@ -11255,7 +11255,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_ports_go_service",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": "service"
     },
     {
@@ -11266,7 +11266,7 @@
       "_origin": "ast",
       "id": "catalog_createinput",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": "createinput"
     },
     {
@@ -11288,7 +11288,7 @@
       "_origin": "ast",
       "id": "catalog_updatefields",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": "updatefields"
     },
     {
@@ -11299,7 +11299,7 @@
       "_origin": "ast",
       "id": "catalog_updatefields_hasany",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": ".hasany()"
     },
     {
@@ -11310,7 +11310,7 @@
       "_origin": "ast",
       "id": "catalog_optionaldescription",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": "optionaldescription"
     },
     {
@@ -11321,7 +11321,7 @@
       "_origin": "ast",
       "id": "catalog_updateresult",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": "updateresult"
     },
     {
@@ -11332,7 +11332,7 @@
       "_origin": "ast",
       "id": "catalog_lifecycleresult",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": "lifecycleresult"
     },
     {
@@ -11343,7 +11343,7 @@
       "_origin": "ast",
       "id": "catalog_repository",
       "community": 169,
-      "community_name": "Fingerprint",
+      "community_name": "fakeRepository",
       "norm_label": "repository"
     },
     {
@@ -11353,8 +11353,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_postgres_assignment_repository",
-      "community": 200,
-      "community_name": "BarbershopID",
+      "community": 73,
+      "community_name": "NewAssignmentService",
       "norm_label": "assignment_repository.go"
     },
     {
@@ -11364,8 +11364,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "postgres_assignmentrepository",
-      "community": 200,
-      "community_name": "BarbershopID",
+      "community": 73,
+      "community_name": "NewAssignmentService",
       "norm_label": "assignmentrepository"
     },
     {
@@ -11375,8 +11375,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_postgres_assignment_repository_newassignmentrepository",
-      "community": 200,
-      "community_name": "BarbershopID",
+      "community": 73,
+      "community_name": "NewAssignmentService",
       "norm_label": "newassignmentrepository()"
     },
     {
@@ -11386,8 +11386,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "postgres_assignmentrepository_list",
-      "community": 200,
-      "community_name": "BarbershopID",
+      "community": 73,
+      "community_name": "NewAssignmentService",
       "norm_label": ".list()"
     },
     {
@@ -11397,8 +11397,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_postgres_assignment_repository_go_context",
-      "community": 200,
-      "community_name": "BarbershopID",
+      "community": 73,
+      "community_name": "NewAssignmentService",
       "norm_label": "context"
     },
     {
@@ -11408,8 +11408,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_postgres_assignment_repository_go_cursor",
-      "community": 200,
-      "community_name": "BarbershopID",
+      "community": 73,
+      "community_name": "NewAssignmentService",
       "norm_label": "cursor"
     },
     {
@@ -11419,8 +11419,8 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "postgres_assignmentrepository_assign",
-      "community": 200,
-      "community_name": "BarbershopID",
+      "community": 73,
+      "community_name": "NewAssignmentService",
       "norm_label": ".assign()"
     },
     {
@@ -11430,8 +11430,8 @@
       "source_location": "L183",
       "_origin": "ast",
       "id": "postgres_assignmentrepository_unassign",
-      "community": 200,
-      "community_name": "BarbershopID",
+      "community": 73,
+      "community_name": "NewAssignmentService",
       "norm_label": ".unassign()"
     },
     {
@@ -12442,8 +12442,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 231,
+      "community_name": "catalog/service.go",
       "norm_label": "catalog/service.go"
     },
     {
@@ -12475,7 +12475,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_newservice",
-      "community": 67,
+      "community": 12,
       "community_name": "NewService",
       "norm_label": "newservice()"
     },
@@ -12486,8 +12486,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "catalog_catalogservice_list",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 216,
+      "community_name": "CatalogService",
       "norm_label": ".list()"
     },
     {
@@ -12497,8 +12497,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_go_context",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 216,
+      "community_name": "CatalogService",
       "norm_label": "context"
     },
     {
@@ -12508,8 +12508,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_go_listresult",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 216,
+      "community_name": "CatalogService",
       "norm_label": "listresult"
     },
     {
@@ -12519,8 +12519,8 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "catalog_catalogservice_get",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 216,
+      "community_name": "CatalogService",
       "norm_label": ".get()"
     },
     {
@@ -12530,8 +12530,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_go_service",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 216,
+      "community_name": "CatalogService",
       "norm_label": "service"
     },
     {
@@ -12541,8 +12541,8 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "catalog_createinputraw",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 231,
+      "community_name": "catalog/service.go",
       "norm_label": "createinputraw"
     },
     {
@@ -12552,8 +12552,8 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "catalog_catalogservice_create",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 216,
+      "community_name": "CatalogService",
       "norm_label": ".create()"
     },
     {
@@ -12563,8 +12563,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_go_createresult",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 216,
+      "community_name": "CatalogService",
       "norm_label": "createresult"
     },
     {
@@ -12574,8 +12574,8 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "catalog_updateinputraw",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 231,
+      "community_name": "catalog/service.go",
       "norm_label": "updateinputraw"
     },
     {
@@ -12585,8 +12585,8 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "catalog_catalogservice_update",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 216,
+      "community_name": "CatalogService",
       "norm_label": ".update()"
     },
     {
@@ -12596,8 +12596,8 @@
       "source_location": "L178",
       "_origin": "ast",
       "id": "catalog_catalogservice_previewdeactivation",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 216,
+      "community_name": "CatalogService",
       "norm_label": ".previewdeactivation()"
     },
     {
@@ -12607,8 +12607,8 @@
       "source_location": "L202",
       "_origin": "ast",
       "id": "catalog_catalogservice_deactivate",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 216,
+      "community_name": "CatalogService",
       "norm_label": ".deactivate()"
     },
     {
@@ -12618,8 +12618,8 @@
       "source_location": "L232",
       "_origin": "ast",
       "id": "catalog_catalogservice_reactivate",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 216,
+      "community_name": "CatalogService",
       "norm_label": ".reactivate()"
     },
     {
@@ -12629,8 +12629,8 @@
       "source_location": "L263",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_validatename",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 231,
+      "community_name": "catalog/service.go",
       "norm_label": "validatename()"
     },
     {
@@ -12640,8 +12640,8 @@
       "source_location": "L276",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_validatedescription",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 231,
+      "community_name": "catalog/service.go",
       "norm_label": "validatedescription()"
     },
     {
@@ -12651,8 +12651,8 @@
       "source_location": "L287",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_validateduration",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 231,
+      "community_name": "catalog/service.go",
       "norm_label": "validateduration()"
     },
     {
@@ -12662,8 +12662,8 @@
       "source_location": "L298",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_validatecreateinput",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 231,
+      "community_name": "catalog/service.go",
       "norm_label": "validatecreateinput()"
     },
     {
@@ -12673,8 +12673,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_go_createinput",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 231,
+      "community_name": "catalog/service.go",
       "norm_label": "createinput"
     },
     {
@@ -12684,8 +12684,8 @@
       "source_location": "L326",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_validateupdatefields",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 231,
+      "community_name": "catalog/service.go",
       "norm_label": "validateupdatefields()"
     },
     {
@@ -12695,8 +12695,8 @@
       "source_location": "L364",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_derefor",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 231,
+      "community_name": "catalog/service.go",
       "norm_label": "derefor()"
     },
     {
@@ -12707,7 +12707,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "catalog/service_test.go"
     },
     {
@@ -12717,8 +12717,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "catalog_fakerepository",
-      "community": 169,
-      "community_name": "Fingerprint",
+      "community": 67,
+      "community_name": "catalog/service_test.go",
       "norm_label": "fakerepository"
     },
     {
@@ -12728,8 +12728,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_go_context",
-      "community": 169,
-      "community_name": "Fingerprint",
+      "community": 67,
+      "community_name": "catalog/service_test.go",
       "norm_label": "context"
     },
     {
@@ -12739,8 +12739,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_go_cursor",
-      "community": 169,
-      "community_name": "Fingerprint",
+      "community": 67,
+      "community_name": "catalog/service_test.go",
       "norm_label": "cursor"
     },
     {
@@ -12750,8 +12750,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_go_listresult",
-      "community": 169,
-      "community_name": "Fingerprint",
+      "community": 67,
+      "community_name": "catalog/service_test.go",
       "norm_label": "listresult"
     },
     {
@@ -12761,8 +12761,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_go_service",
-      "community": 169,
-      "community_name": "Fingerprint",
+      "community": 67,
+      "community_name": "catalog/service_test.go",
       "norm_label": "service"
     },
     {
@@ -12772,8 +12772,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_go_createinput",
-      "community": 169,
-      "community_name": "Fingerprint",
+      "community": 67,
+      "community_name": "catalog/service_test.go",
       "norm_label": "createinput"
     },
     {
@@ -12783,8 +12783,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_go_createresult",
-      "community": 169,
-      "community_name": "Fingerprint",
+      "community": 67,
+      "community_name": "catalog/service_test.go",
       "norm_label": "createresult"
     },
     {
@@ -12794,8 +12794,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_go_updateresult",
-      "community": 169,
-      "community_name": "Fingerprint",
+      "community": 67,
+      "community_name": "catalog/service_test.go",
       "norm_label": "updateresult"
     },
     {
@@ -12805,8 +12805,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "catalog_fakerepository_list",
-      "community": 169,
-      "community_name": "Fingerprint",
+      "community": 67,
+      "community_name": "catalog/service_test.go",
       "norm_label": ".list()"
     },
     {
@@ -12816,8 +12816,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "catalog_fakerepository_get",
-      "community": 169,
-      "community_name": "Fingerprint",
+      "community": 67,
+      "community_name": "catalog/service_test.go",
       "norm_label": ".get()"
     },
     {
@@ -12828,7 +12828,7 @@
       "_origin": "ast",
       "id": "catalog_fakerepository_create",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": ".create()"
     },
     {
@@ -12839,7 +12839,7 @@
       "_origin": "ast",
       "id": "catalog_fakerepository_update",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": ".update()"
     },
     {
@@ -12849,8 +12849,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "catalog_fakerepository_deactivate",
-      "community": 169,
-      "community_name": "Fingerprint",
+      "community": 67,
+      "community_name": "catalog/service_test.go",
       "norm_label": ".deactivate()"
     },
     {
@@ -12860,8 +12860,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "catalog_fakerepository_reactivate",
-      "community": 169,
-      "community_name": "Fingerprint",
+      "community": 67,
+      "community_name": "catalog/service_test.go",
       "norm_label": ".reactivate()"
     },
     {
@@ -12872,7 +12872,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_mustbevalidation",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "mustbevalidation()"
     },
     {
@@ -12883,7 +12883,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_go_t",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "t"
     },
     {
@@ -12894,7 +12894,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_mustbenotfound",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "mustbenotfound()"
     },
     {
@@ -12905,7 +12905,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_mustbeconflict",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "mustbeconflict()"
     },
     {
@@ -12916,7 +12916,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_failingcreatefn",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "failingcreatefn()"
     },
     {
@@ -12927,7 +12927,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_validcreateraw",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "validcreateraw()"
     },
     {
@@ -12938,7 +12938,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testcreate_emptyname_rejectedwithouttouchingrepository",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testcreate_emptyname_rejectedwithouttouchingrepository()"
     },
     {
@@ -12949,7 +12949,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testcreate_whitespaceonlyname_rejected",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testcreate_whitespaceonlyname_rejected()"
     },
     {
@@ -12960,7 +12960,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testcreate_nameover120characters_rejected",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testcreate_nameover120characters_rejected()"
     },
     {
@@ -12971,7 +12971,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testcreate_nameexactly120characters_accepted",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testcreate_nameexactly120characters_accepted()"
     },
     {
@@ -12982,7 +12982,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testcreate_unicodename_countsrunesnotbytes",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testcreate_unicodename_countsrunesnotbytes()"
     },
     {
@@ -12993,7 +12993,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testcreate_descriptionover500characters_rejected",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testcreate_descriptionover500characters_rejected()"
     },
     {
@@ -13004,7 +13004,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testcreate_descriptionexactly500characters_accepted",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testcreate_descriptionexactly500characters_accepted()"
     },
     {
@@ -13015,7 +13015,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testcreate_emptydescription_normalizedtonil",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testcreate_emptydescription_normalizedtonil()"
     },
     {
@@ -13026,7 +13026,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testcreate_durations25_30_45_90_allaccepted",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testcreate_durations25_30_45_90_allaccepted()"
     },
     {
@@ -13037,7 +13037,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testcreate_durationzeronegativeorabove1440_rejected",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testcreate_durationzeronegativeorabove1440_rejected()"
     },
     {
@@ -13048,7 +13048,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testcreate_pricezeroornegative_rejected",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testcreate_pricezeroornegative_rejected()"
     },
     {
@@ -13059,7 +13059,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testcreate_priceinvalidformat_rejected",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testcreate_priceinvalidformat_rejected()"
     },
     {
@@ -13070,7 +13070,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testcreate_nametaken_translatestoconflictwithoutwrappingasinternal",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testcreate_nametaken_translatestoconflictwithoutwrappingasinternal()"
     },
     {
@@ -13081,7 +13081,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testcreate_propagatesrepositoryresultuntouched",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testcreate_propagatesrepositoryresultuntouched()"
     },
     {
@@ -13092,7 +13092,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testupdate_emptybody_rejectedwithouttouchingrepository",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testupdate_emptybody_rejectedwithouttouchingrepository()"
     },
     {
@@ -13103,7 +13103,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testupdate_malformedid_returnsnotfoundwithouttouchingrepository",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testupdate_malformedid_returnsnotfoundwithouttouchingrepository()"
     },
     {
@@ -13114,7 +13114,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testupdate_onlyonefieldpresent_validatesonlythatfield",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testupdate_onlyonefieldpresent_validatesonlythatfield()"
     },
     {
@@ -13125,7 +13125,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testupdate_descriptionsettoempty_clearsdescription",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testupdate_descriptionsettoempty_clearsdescription()"
     },
     {
@@ -13136,7 +13136,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testupdate_durationoutofrange_rejected",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testupdate_durationoutofrange_rejected()"
     },
     {
@@ -13147,7 +13147,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testupdate_pricezero_rejected",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testupdate_pricezero_rejected()"
     },
     {
@@ -13158,7 +13158,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testupdate_notfound_translatestonotfound",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testupdate_notfound_translatestonotfound()"
     },
     {
@@ -13169,7 +13169,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testupdate_nametaken_translatestoconflict",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testupdate_nametaken_translatestoconflict()"
     },
     {
@@ -13180,7 +13180,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testupdate_found_returnsupdatedservicebyid_noduplication",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testupdate_found_returnsupdatedservicebyid_noduplication()"
     },
     {
@@ -13191,7 +13191,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testget_malformedid_returnsnotfoundwithouttouchingrepository",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testget_malformedid_returnsnotfoundwithouttouchingrepository()"
     },
     {
@@ -13202,7 +13202,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testget_notfound_translatestonotfound",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testget_notfound_translatestonotfound()"
     },
     {
@@ -13213,7 +13213,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testget_found_returnsservice",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testget_found_returnsservice()"
     },
     {
@@ -13224,7 +13224,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testlist_zerolimit_usesdefault",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testlist_zerolimit_usesdefault()"
     },
     {
@@ -13235,7 +13235,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testlist_limitabovemax_clamped",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testlist_limitabovemax_clamped()"
     },
     {
@@ -13246,7 +13246,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testlist_emptycursor_passesnilcursor",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testlist_emptycursor_passesnilcursor()"
     },
     {
@@ -13257,7 +13257,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testlist_validcursor_decodedandpassedthrough",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testlist_validcursor_decodedandpassedthrough()"
     },
     {
@@ -13268,7 +13268,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testlist_invalidcursor_rejectedwithouttouchingrepository",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testlist_invalidcursor_rejectedwithouttouchingrepository()"
     },
     {
@@ -13279,7 +13279,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testpreviewdeactivation_malformedid_returnsnotfoundwithouttouchingrepository",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testpreviewdeactivation_malformedid_returnsnotfoundwithouttouchingrepository()"
     },
     {
@@ -13290,7 +13290,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testpreviewdeactivation_notfound_translatestonotfound",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testpreviewdeactivation_notfound_translatestonotfound()"
     },
     {
@@ -13301,7 +13301,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testpreviewdeactivation_found_returnszeroaffectedappointments",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testpreviewdeactivation_found_returnszeroaffectedappointments()"
     },
     {
@@ -13311,8 +13311,8 @@
       "source_location": "L586",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_failinglifecyclefn",
-      "community": 169,
-      "community_name": "Fingerprint",
+      "community": 67,
+      "community_name": "catalog/service_test.go",
       "norm_label": "failinglifecyclefn()"
     },
     {
@@ -13322,8 +13322,8 @@
       "source_location": "L593",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testdeactivate_malformedid_returnsnotfoundwithouttouchingrepository",
-      "community": 169,
-      "community_name": "Fingerprint",
+      "community": 67,
+      "community_name": "catalog/service_test.go",
       "norm_label": "testdeactivate_malformedid_returnsnotfoundwithouttouchingrepository()"
     },
     {
@@ -13334,7 +13334,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testdeactivate_notfound_translatestonotfound",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testdeactivate_notfound_translatestonotfound()"
     },
     {
@@ -13345,7 +13345,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testdeactivate_invalidtransition_translatestoconflict",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testdeactivate_invalidtransition_translatestoconflict()"
     },
     {
@@ -13356,7 +13356,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testdeactivate_proceed_returnsresultuntouched",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testdeactivate_proceed_returnsresultuntouched()"
     },
     {
@@ -13367,7 +13367,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testdeactivate_replayoutcome_passedthroughwithouttranslatingaserror",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testdeactivate_replayoutcome_passedthroughwithouttranslatingaserror()"
     },
     {
@@ -13377,8 +13377,8 @@
       "source_location": "L670",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testreactivate_malformedid_returnsnotfoundwithouttouchingrepository",
-      "community": 169,
-      "community_name": "Fingerprint",
+      "community": 67,
+      "community_name": "catalog/service_test.go",
       "norm_label": "testreactivate_malformedid_returnsnotfoundwithouttouchingrepository()"
     },
     {
@@ -13389,7 +13389,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testreactivate_notfound_translatestonotfound",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testreactivate_notfound_translatestonotfound()"
     },
     {
@@ -13400,7 +13400,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testreactivate_invalidtransition_translatestoconflict",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testreactivate_invalidtransition_translatestoconflict()"
     },
     {
@@ -13411,7 +13411,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_service_test_testreactivate_proceed_returnsresultuntouched",
       "community": 67,
-      "community_name": "NewService",
+      "community_name": "catalog/service_test.go",
       "norm_label": "testreactivate_proceed_returnsresultuntouched()"
     },
     {
@@ -14345,7 +14345,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_errors_errstartstimeinvalid",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "errstartstimeinvalid()"
     },
@@ -14378,7 +14378,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test",
-      "community": 227,
+      "community": 94,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "schedule/httpapi/contract_test.go"
     },
@@ -14389,7 +14389,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_go_httpapi_schemadoc",
-      "community": 227,
+      "community": 94,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "schemadoc"
     },
@@ -14400,7 +14400,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_go_httpapi_operation",
-      "community": 227,
+      "community": 94,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "operation"
     },
@@ -14411,7 +14411,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "httpapi_schedulepathsfile",
-      "community": 227,
+      "community": 94,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "schedulepathsfile"
     },
@@ -14422,7 +14422,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_findreporoot",
-      "community": 227,
+      "community": 94,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "findreporoot()"
     },
@@ -14433,7 +14433,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_go_t",
-      "community": 227,
+      "community": 94,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "t"
     },
@@ -14444,7 +14444,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_loadyaml",
-      "community": 227,
+      "community": 94,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "loadyaml()"
     },
@@ -14455,7 +14455,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_requireprops",
-      "community": 227,
+      "community": 94,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "requireprops()"
     },
@@ -14466,7 +14466,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_requireresponses",
-      "community": 227,
+      "community": 94,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "requireresponses()"
     },
@@ -14477,7 +14477,7 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_workinghourresponseschema_matchesdtofields",
-      "community": 227,
+      "community": 94,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_workinghourresponseschema_matchesdtofields()"
     },
@@ -14488,7 +14488,7 @@
       "source_location": "L120",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_createworkinghourrequestschema_matchesdtofields",
-      "community": 227,
+      "community": 94,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_createworkinghourrequestschema_matchesdtofields()"
     },
@@ -14499,7 +14499,7 @@
       "source_location": "L131",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_updateworkinghourrequestschema_matchesdtofields",
-      "community": 227,
+      "community": 94,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_updateworkinghourrequestschema_matchesdtofields()"
     },
@@ -14510,7 +14510,7 @@
       "source_location": "L136",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_workinghourlistresponseschema_hasitemsandnextcursor",
-      "community": 227,
+      "community": 94,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_workinghourlistresponseschema_hasitemsandnextcursor()"
     },
@@ -14521,7 +14521,7 @@
       "source_location": "L143",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_listworkinghoursoperation_methodpathsecurityandresponses",
-      "community": 227,
+      "community": 94,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_listworkinghoursoperation_methodpathsecurityandresponses()"
     },
@@ -14532,7 +14532,7 @@
       "source_location": "L148",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_createworkinghouroperation_methodpathsecurityandresponses",
-      "community": 227,
+      "community": 94,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_createworkinghouroperation_methodpathsecurityandresponses()"
     },
@@ -14543,7 +14543,7 @@
       "source_location": "L153",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_getworkinghouroperation_methodpathsecurityandresponses",
-      "community": 227,
+      "community": 94,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_getworkinghouroperation_methodpathsecurityandresponses()"
     },
@@ -14554,7 +14554,7 @@
       "source_location": "L158",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_updateworkinghouroperation_methodpathsecurityandresponses",
-      "community": 227,
+      "community": 94,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_updateworkinghouroperation_methodpathsecurityandresponses()"
     },
@@ -14565,7 +14565,7 @@
       "source_location": "L163",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_deleteworkinghouroperation_methodpathsecurityandresponses",
-      "community": 227,
+      "community": 94,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_deleteworkinghouroperation_methodpathsecurityandresponses()"
     },
@@ -14576,7 +14576,7 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_openapiyaml_registersschedulepaths",
-      "community": 227,
+      "community": 94,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_openapiyaml_registersschedulepaths()"
     },
@@ -14588,7 +14588,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_dto",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "schedule/httpapi/dto.go"
     },
     {
@@ -14599,7 +14599,7 @@
       "_origin": "ast",
       "id": "httpapi_workinghourresponse",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "workinghourresponse"
     },
     {
@@ -14610,7 +14610,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_dto_go_time",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "time"
     },
     {
@@ -14621,7 +14621,7 @@
       "_origin": "ast",
       "id": "httpapi_workinghourlistresponse",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "workinghourlistresponse"
     },
     {
@@ -14632,7 +14632,7 @@
       "_origin": "ast",
       "id": "httpapi_createworkinghourrequest",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "createworkinghourrequest"
     },
     {
@@ -14643,7 +14643,7 @@
       "_origin": "ast",
       "id": "httpapi_updateworkinghourrequest",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "updateworkinghourrequest"
     },
     {
@@ -14654,7 +14654,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_handler",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "schedule/httpapi/handler.go"
     },
     {
@@ -14665,7 +14665,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_handler_workinghourbasepath",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "workinghourbasepath()"
     },
     {
@@ -14676,7 +14676,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_handler_principalorinternalerror",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "principalorinternalerror()"
     },
     {
@@ -14687,7 +14687,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_handler_go_responsewriter",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "responsewriter"
     },
     {
@@ -14698,7 +14698,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_handler_go_request",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "request"
     },
     {
@@ -14709,7 +14709,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_handler_writeunknownfieldorinvalidjsonproblem",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "writeunknownfieldorinvalidjsonproblem()"
     },
     {
@@ -14720,7 +14720,7 @@
       "_origin": "ast",
       "id": "httpapi_listworkinghourshandler",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "listworkinghourshandler"
     },
     {
@@ -14731,7 +14731,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_handler_go_service",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "service"
     },
     {
@@ -14742,7 +14742,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_handler_newlistworkinghourshandler",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "newlistworkinghourshandler()"
     },
     {
@@ -14753,7 +14753,7 @@
       "_origin": "ast",
       "id": "httpapi_listworkinghourshandler_servehttp",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": ".servehttp()"
     },
     {
@@ -14764,7 +14764,7 @@
       "_origin": "ast",
       "id": "httpapi_getworkinghourhandler",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "getworkinghourhandler"
     },
     {
@@ -14775,7 +14775,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_handler_newgetworkinghourhandler",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "newgetworkinghourhandler()"
     },
     {
@@ -14786,7 +14786,7 @@
       "_origin": "ast",
       "id": "httpapi_getworkinghourhandler_servehttp",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": ".servehttp()"
     },
     {
@@ -14797,7 +14797,7 @@
       "_origin": "ast",
       "id": "httpapi_createworkinghourhandler",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "createworkinghourhandler"
     },
     {
@@ -14808,7 +14808,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_handler_newcreateworkinghourhandler",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "newcreateworkinghourhandler()"
     },
     {
@@ -14819,7 +14819,7 @@
       "_origin": "ast",
       "id": "httpapi_createworkinghourhandler_servehttp",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": ".servehttp()"
     },
     {
@@ -14830,7 +14830,7 @@
       "_origin": "ast",
       "id": "httpapi_updateworkinghourhandler",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "updateworkinghourhandler"
     },
     {
@@ -14841,7 +14841,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_handler_newupdateworkinghourhandler",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "newupdateworkinghourhandler()"
     },
     {
@@ -14852,7 +14852,7 @@
       "_origin": "ast",
       "id": "httpapi_updateworkinghourhandler_servehttp",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": ".servehttp()"
     },
     {
@@ -14863,7 +14863,7 @@
       "_origin": "ast",
       "id": "httpapi_deleteworkinghourhandler",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "deleteworkinghourhandler"
     },
     {
@@ -14874,7 +14874,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_handler_newdeleteworkinghourhandler",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "newdeleteworkinghourhandler()"
     },
     {
@@ -14885,7 +14885,7 @@
       "_origin": "ast",
       "id": "httpapi_deleteworkinghourhandler_servehttp",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": ".servehttp()"
     },
     {
@@ -14896,7 +14896,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_handler_newworkinghourresponse",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "newworkinghourresponse()"
     },
     {
@@ -14907,7 +14907,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_handler_go_workinghour",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "workinghour"
     },
     {
@@ -14918,7 +14918,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_handler_newworkinghourlistresponse",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "newworkinghourlistresponse()"
     },
     {
@@ -14929,7 +14929,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_handler_go_listresult",
       "community": 198,
-      "community_name": "URLParam",
+      "community_name": "schedule/httpapi/handler.go",
       "norm_label": "listresult"
     },
     {
@@ -16248,7 +16248,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_domain",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "shops/domain.go"
     },
@@ -16270,7 +16270,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_domain_normalizename",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "normalizename()"
     },
@@ -16281,7 +16281,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_domain_normalizecontact",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "normalizecontact()"
     },
@@ -16292,7 +16292,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_domain_normalizecontactemail",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "normalizecontactemail()"
     },
@@ -16303,7 +16303,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_errors",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "shops/errors.go"
     },
@@ -16314,7 +16314,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_errors_errnamerequired",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "errnamerequired()"
     },
@@ -16325,7 +16325,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_errors_errnametoolong",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "errnametoolong()"
     },
@@ -16336,7 +16336,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_errors_errtimezonerequired",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "errtimezonerequired()"
     },
@@ -16347,7 +16347,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_errors_errtimezonetoolong",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "errtimezonetoolong()"
     },
@@ -16358,7 +16358,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_errors_errtimezoneinvalid",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "errtimezoneinvalid()"
     },
@@ -16369,7 +16369,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_errors_errcontactemailinvalid",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "errcontactemailinvalid()"
     },
@@ -16380,7 +16380,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_errors_errcontactphoneinvalid",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "errcontactphoneinvalid()"
     },
@@ -16392,7 +16392,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "shops/httpapi/contract_test.go"
     },
     {
@@ -16403,7 +16403,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_go_httpapi_schemadoc",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "schemadoc"
     },
     {
@@ -16414,7 +16414,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_go_httpapi_operation",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "operation"
     },
     {
@@ -16425,7 +16425,7 @@
       "_origin": "ast",
       "id": "httpapi_barbershopsettingspathfile",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "barbershopsettingspathfile"
     },
     {
@@ -16436,7 +16436,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_findreporoot",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "findreporoot()"
     },
     {
@@ -16447,7 +16447,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_go_t",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "t"
     },
     {
@@ -16458,7 +16458,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_loadyaml",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "loadyaml()"
     },
     {
@@ -16469,7 +16469,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_requireprops",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "requireprops()"
     },
     {
@@ -16480,7 +16480,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_testcontract_barbershopsettingsresponseschema_matchesdtofields",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_barbershopsettingsresponseschema_matchesdtofields()"
     },
     {
@@ -16491,7 +16491,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_testcontract_updatebarbershopsettingsrequestschema_matchesdtofields",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_updatebarbershopsettingsrequestschema_matchesdtofields()"
     },
     {
@@ -16502,7 +16502,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_testcontract_getbarbershopsettingsoperation_methodpathsecurityandresponses",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_getbarbershopsettingsoperation_methodpathsecurityandresponses()"
     },
     {
@@ -16513,7 +16513,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_testcontract_updatebarbershopsettingsoperation_methodpathsecurityandresponses",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_updatebarbershopsettingsoperation_methodpathsecurityandresponses()"
     },
     {
@@ -16524,7 +16524,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_testcontract_openapiyaml_registersbarbershopsettingspath",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_openapiyaml_registersbarbershopsettingspath()"
     },
     {
@@ -17183,7 +17183,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_service_go_context",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "context"
     },
@@ -17205,7 +17205,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "shops_service_update",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": ".update()"
     },
@@ -17722,8 +17722,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test",
-      "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community": 226,
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "staff/httpapi/contract_test.go"
     },
     {
@@ -17733,8 +17733,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_go_httpapi_schemadoc",
-      "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community": 226,
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "schemadoc"
     },
     {
@@ -17744,8 +17744,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_go_httpapi_operation",
-      "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community": 226,
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "operation"
     },
     {
@@ -17755,8 +17755,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "httpapi_staffpathsfile",
-      "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community": 226,
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "staffpathsfile"
     },
     {
@@ -17766,8 +17766,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_findreporoot",
-      "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community": 226,
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "findreporoot()"
     },
     {
@@ -17777,8 +17777,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_go_t",
-      "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community": 226,
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "t"
     },
     {
@@ -17788,8 +17788,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_loadyaml",
-      "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community": 226,
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "loadyaml()"
     },
     {
@@ -17799,8 +17799,8 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_requireprops",
-      "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community": 226,
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "requireprops()"
     },
     {
@@ -17810,8 +17810,8 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_requireresponses",
-      "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community": 226,
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "requireresponses()"
     },
     {
@@ -17821,8 +17821,8 @@
       "source_location": "L118",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_testcontract_barberresponseschema_matchesdtofields",
-      "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community": 226,
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_barberresponseschema_matchesdtofields()"
     },
     {
@@ -17832,8 +17832,8 @@
       "source_location": "L123",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_testcontract_createbarberrequestschema_matchesdtofields",
-      "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community": 226,
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_createbarberrequestschema_matchesdtofields()"
     },
     {
@@ -17843,8 +17843,8 @@
       "source_location": "L131",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_testcontract_updatebarberrequestschema_matchesdtofields",
-      "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community": 226,
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_updatebarberrequestschema_matchesdtofields()"
     },
     {
@@ -17854,8 +17854,8 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_testcontract_barberlistresponseschema_hasitemsandnextcursor",
-      "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community": 226,
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_barberlistresponseschema_hasitemsandnextcursor()"
     },
     {
@@ -17865,8 +17865,8 @@
       "source_location": "L148",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_testcontract_listbarbersoperation_methodpathsecurityandresponses",
-      "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community": 226,
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_listbarbersoperation_methodpathsecurityandresponses()"
     },
     {
@@ -17876,8 +17876,8 @@
       "source_location": "L153",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_testcontract_createbarberoperation_methodpathsecurityandresponses",
-      "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community": 226,
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_createbarberoperation_methodpathsecurityandresponses()"
     },
     {
@@ -17887,8 +17887,8 @@
       "source_location": "L158",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_testcontract_getbarberoperation_methodpathsecurityandresponses",
-      "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community": 226,
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_getbarberoperation_methodpathsecurityandresponses()"
     },
     {
@@ -17898,8 +17898,8 @@
       "source_location": "L163",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_testcontract_renamebarberoperation_methodpathsecurityandresponses",
-      "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community": 226,
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_renamebarberoperation_methodpathsecurityandresponses()"
     },
     {
@@ -17909,8 +17909,8 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_testcontract_openapiyaml_registersstaffpaths",
-      "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community": 226,
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_openapiyaml_registersstaffpaths()"
     },
     {
@@ -17921,7 +17921,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_dto",
       "community": 191,
-      "community_name": "WriteProblem",
+      "community_name": "principalOrInternalError",
       "norm_label": "staff/httpapi/dto.go"
     },
     {
@@ -17932,7 +17932,7 @@
       "_origin": "ast",
       "id": "httpapi_barberresponse",
       "community": 191,
-      "community_name": "WriteProblem",
+      "community_name": "principalOrInternalError",
       "norm_label": "barberresponse"
     },
     {
@@ -17943,7 +17943,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_dto_go_time",
       "community": 191,
-      "community_name": "WriteProblem",
+      "community_name": "principalOrInternalError",
       "norm_label": "time"
     },
     {
@@ -17954,7 +17954,7 @@
       "_origin": "ast",
       "id": "httpapi_barberlistresponse",
       "community": 191,
-      "community_name": "WriteProblem",
+      "community_name": "principalOrInternalError",
       "norm_label": "barberlistresponse"
     },
     {
@@ -17965,7 +17965,7 @@
       "_origin": "ast",
       "id": "httpapi_createbarberrequest",
       "community": 191,
-      "community_name": "WriteProblem",
+      "community_name": "principalOrInternalError",
       "norm_label": "createbarberrequest"
     },
     {
@@ -17976,7 +17976,7 @@
       "_origin": "ast",
       "id": "httpapi_updatebarberrequest",
       "community": 191,
-      "community_name": "WriteProblem",
+      "community_name": "principalOrInternalError",
       "norm_label": "updatebarberrequest"
     },
     {
@@ -17998,7 +17998,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_handler_principalorinternalerror",
       "community": 191,
-      "community_name": "WriteProblem",
+      "community_name": "principalOrInternalError",
       "norm_label": "principalorinternalerror()"
     },
     {
@@ -18009,7 +18009,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_handler_go_responsewriter",
       "community": 191,
-      "community_name": "WriteProblem",
+      "community_name": "principalOrInternalError",
       "norm_label": "responsewriter"
     },
     {
@@ -18020,7 +18020,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_handler_go_request",
       "community": 191,
-      "community_name": "WriteProblem",
+      "community_name": "principalOrInternalError",
       "norm_label": "request"
     },
     {
@@ -18031,7 +18031,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_handler_writeunknownfieldorinvalidjsonproblem",
       "community": 191,
-      "community_name": "WriteProblem",
+      "community_name": "principalOrInternalError",
       "norm_label": "writeunknownfieldorinvalidjsonproblem()"
     },
     {
@@ -18075,7 +18075,7 @@
       "_origin": "ast",
       "id": "httpapi_listbarbershandler_servehttp",
       "community": 191,
-      "community_name": "WriteProblem",
+      "community_name": "principalOrInternalError",
       "norm_label": ".servehttp()"
     },
     {
@@ -18108,7 +18108,7 @@
       "_origin": "ast",
       "id": "httpapi_getbarberhandler_servehttp",
       "community": 191,
-      "community_name": "WriteProblem",
+      "community_name": "principalOrInternalError",
       "norm_label": ".servehttp()"
     },
     {
@@ -18141,7 +18141,7 @@
       "_origin": "ast",
       "id": "httpapi_createbarberhandler_servehttp",
       "community": 191,
-      "community_name": "WriteProblem",
+      "community_name": "principalOrInternalError",
       "norm_label": ".servehttp()"
     },
     {
@@ -18174,7 +18174,7 @@
       "_origin": "ast",
       "id": "httpapi_renamebarberhandler_servehttp",
       "community": 191,
-      "community_name": "WriteProblem",
+      "community_name": "principalOrInternalError",
       "norm_label": ".servehttp()"
     },
     {
@@ -18185,7 +18185,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_handler_newbarberresponse",
       "community": 191,
-      "community_name": "WriteProblem",
+      "community_name": "principalOrInternalError",
       "norm_label": "newbarberresponse()"
     },
     {
@@ -18196,7 +18196,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_handler_go_barber",
       "community": 191,
-      "community_name": "WriteProblem",
+      "community_name": "principalOrInternalError",
       "norm_label": "barber"
     },
     {
@@ -18207,7 +18207,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_handler_newbarberlistresponse",
       "community": 191,
-      "community_name": "WriteProblem",
+      "community_name": "principalOrInternalError",
       "norm_label": "newbarberlistresponse()"
     },
     {
@@ -18218,7 +18218,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_handler_go_listresult",
       "community": 191,
-      "community_name": "WriteProblem",
+      "community_name": "principalOrInternalError",
       "norm_label": "listresult"
     },
     {
@@ -19867,8 +19867,8 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "apps_api_internal_platform_apperr_apperr_invalid",
-      "community": 191,
-      "community_name": "WriteProblem",
+      "community": 125,
+      "community_name": "As",
       "norm_label": "invalid()"
     },
     {
@@ -19900,7 +19900,7 @@
       "source_location": "L136",
       "_origin": "ast",
       "id": "apps_api_internal_platform_apperr_apperr_validation",
-      "community": 118,
+      "community": 197,
       "community_name": "Validation",
       "norm_label": "validation()"
     },
@@ -19933,8 +19933,8 @@
       "source_location": "L161",
       "_origin": "ast",
       "id": "apps_api_internal_platform_apperr_apperr_conflict",
-      "community": 118,
-      "community_name": "Validation",
+      "community": 125,
+      "community_name": "As",
       "norm_label": "conflict()"
     },
     {
@@ -20088,7 +20088,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_archtest_chi_boundary_test",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "chi_boundary_test.go"
     },
     {
@@ -20099,7 +20099,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_archtest_chi_boundary_test_testdomainandservicesdonotimportchi",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testdomainandservicesdonotimportchi()"
     },
     {
@@ -20110,7 +20110,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_archtest_chi_boundary_test_go_t",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "t"
     },
     {
@@ -20121,7 +20121,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_archtest_chi_boundary_test_findinternaldir",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "findinternaldir()"
     },
     {
@@ -20132,7 +20132,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_archtest_module_boundary_test",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "module_boundary_test.go"
     },
     {
@@ -20143,7 +20143,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_archtest_module_boundary_test_testmodulesdonotimporteachother",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testmodulesdonotimporteachother()"
     },
     {
@@ -20154,7 +20154,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_archtest_module_boundary_test_go_t",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "t"
     },
     {
@@ -21056,7 +21056,7 @@
       "_origin": "ast",
       "id": "database_db_poolstats",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": ".poolstats()"
     },
     {
@@ -21067,7 +21067,7 @@
       "_origin": "ast",
       "id": "stat",
       "community": 94,
-      "community_name": "catalog/httpapi/contract_test.go",
+      "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "stat"
     },
     {
@@ -21297,8 +21297,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit",
-      "community": 122,
-      "community_name": "RequestID",
+      "community": 227,
+      "community_name": "echoBodyHandler",
       "norm_label": "bodylimit.go"
     },
     {
@@ -21308,8 +21308,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_bodylimit",
-      "community": 122,
-      "community_name": "RequestID",
+      "community": 227,
+      "community_name": "echoBodyHandler",
       "norm_label": "bodylimit()"
     },
     {
@@ -21319,8 +21319,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_go_handler",
-      "community": 122,
-      "community_name": "RequestID",
+      "community": 227,
+      "community_name": "echoBodyHandler",
       "norm_label": "handler"
     },
     {
@@ -21330,8 +21330,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_test",
-      "community": 122,
-      "community_name": "RequestID",
+      "community": 227,
+      "community_name": "echoBodyHandler",
       "norm_label": "bodylimit_test.go"
     },
     {
@@ -21341,8 +21341,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_test_echobodyhandler",
-      "community": 122,
-      "community_name": "RequestID",
+      "community": 227,
+      "community_name": "echoBodyHandler",
       "norm_label": "echobodyhandler()"
     },
     {
@@ -21352,8 +21352,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_test_go_responsewriter",
-      "community": 122,
-      "community_name": "RequestID",
+      "community": 227,
+      "community_name": "echoBodyHandler",
       "norm_label": "responsewriter"
     },
     {
@@ -21363,8 +21363,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_test_go_request",
-      "community": 122,
-      "community_name": "RequestID",
+      "community": 227,
+      "community_name": "echoBodyHandler",
       "norm_label": "request"
     },
     {
@@ -21374,8 +21374,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_test_testbodylimit_rejectsoversizedbody",
-      "community": 122,
-      "community_name": "RequestID",
+      "community": 227,
+      "community_name": "echoBodyHandler",
       "norm_label": "testbodylimit_rejectsoversizedbody()"
     },
     {
@@ -21385,8 +21385,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_test_go_t",
-      "community": 122,
-      "community_name": "RequestID",
+      "community": 227,
+      "community_name": "echoBodyHandler",
       "norm_label": "t"
     },
     {
@@ -21396,8 +21396,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_test_testbodylimit_allowsbodywithinlimit",
-      "community": 122,
-      "community_name": "RequestID",
+      "community": 227,
+      "community_name": "echoBodyHandler",
       "norm_label": "testbodylimit_allowsbodywithinlimit()"
     },
     {
@@ -21407,8 +21407,8 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_test_testbodylimit_producesrecognizablemaxbyteserror",
-      "community": 122,
-      "community_name": "RequestID",
+      "community": 227,
+      "community_name": "echoBodyHandler",
       "norm_label": "testbodylimit_producesrecognizablemaxbyteserror()"
     },
     {
@@ -21551,7 +21551,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_httpserver_test",
       "community": 122,
-      "community_name": "RequestID",
+      "community_name": "Recover",
       "norm_label": "httpserver_test.go"
     },
     {
@@ -21562,7 +21562,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_httpserver_test_testrequestid_acceptsvalidclientid",
       "community": 122,
-      "community_name": "RequestID",
+      "community_name": "Recover",
       "norm_label": "testrequestid_acceptsvalidclientid()"
     },
     {
@@ -21573,7 +21573,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_httpserver_test_go_t",
       "community": 122,
-      "community_name": "RequestID",
+      "community_name": "Recover",
       "norm_label": "t"
     },
     {
@@ -21584,7 +21584,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_httpserver_test_testrequestid_rejectsinvalidclientid",
       "community": 122,
-      "community_name": "RequestID",
+      "community_name": "Recover",
       "norm_label": "testrequestid_rejectsinvalidclientid()"
     },
     {
@@ -21595,7 +21595,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_httpserver_test_testrecover_doesnotlograwpanicvalue",
       "community": 122,
-      "community_name": "RequestID",
+      "community_name": "Recover",
       "norm_label": "testrecover_doesnotlograwpanicvalue()"
     },
     {
@@ -21606,7 +21606,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_httpserver_test_testrecover_respondswithproblemjson",
       "community": 122,
-      "community_name": "RequestID",
+      "community_name": "Recover",
       "norm_label": "testrecover_respondswithproblemjson()"
     },
     {
@@ -21617,7 +21617,7 @@
       "_origin": "ast",
       "id": "httpserver_httprobproblem",
       "community": 122,
-      "community_name": "RequestID",
+      "community_name": "Recover",
       "norm_label": "httprobproblem"
     },
     {
@@ -21628,7 +21628,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_httpserver_test_testwriteproblem_setscontenttypeandstatus",
       "community": 122,
-      "community_name": "RequestID",
+      "community_name": "Recover",
       "norm_label": "testwriteproblem_setscontenttypeandstatus()"
     },
     {
@@ -21638,8 +21638,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency",
-      "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community": 175,
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "httpserver/idempotency.go"
     },
     {
@@ -21649,8 +21649,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_idempotencykeyfromrequest",
-      "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community": 175,
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "idempotencykeyfromrequest()"
     },
     {
@@ -21660,8 +21660,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_go_request",
-      "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community": 175,
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "request"
     },
     {
@@ -21671,8 +21671,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_idempotencyfingerprint",
-      "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community": 175,
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "idempotencyfingerprint()"
     },
     {
@@ -21683,7 +21683,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_writestoredresponse",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": "writestoredresponse()"
     },
     {
@@ -21694,7 +21694,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_go_responsewriter",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": "responsewriter"
     },
     {
@@ -21705,7 +21705,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_test",
       "community": 175,
-      "community_name": "httpserver/idempotency_test.go",
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "httpserver/idempotency_test.go"
     },
     {
@@ -21716,7 +21716,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_test_testidempotencykeyfromrequest_rejectsmissingheader",
       "community": 175,
-      "community_name": "httpserver/idempotency_test.go",
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "testidempotencykeyfromrequest_rejectsmissingheader()"
     },
     {
@@ -21727,7 +21727,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_test_go_t",
       "community": 175,
-      "community_name": "httpserver/idempotency_test.go",
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "t"
     },
     {
@@ -21738,7 +21738,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_test_testidempotencykeyfromrequest_acceptsvalidheader",
       "community": 175,
-      "community_name": "httpserver/idempotency_test.go",
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "testidempotencykeyfromrequest_acceptsvalidheader()"
     },
     {
@@ -21749,7 +21749,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_test_testidempotencyfingerprint_matchescorecomputation",
       "community": 175,
-      "community_name": "httpserver/idempotency_test.go",
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "testidempotencyfingerprint_matchescorecomputation()"
     },
     {
@@ -21760,7 +21760,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_test_testwritestoredresponse_reproducesstatuscontenttypeandbodyexactly",
       "community": 175,
-      "community_name": "httpserver/idempotency_test.go",
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "testwritestoredresponse_reproducesstatuscontenttypeandbodyexactly()"
     },
     {
@@ -21771,7 +21771,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_test_setupidempotencytestdb",
       "community": 175,
-      "community_name": "httpserver/idempotency_test.go",
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "setupidempotencytestdb()"
     },
     {
@@ -21781,8 +21781,8 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_test_testidempotenthandler",
-      "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community": 175,
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "testidempotenthandler()"
     },
     {
@@ -21793,7 +21793,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_test_go_handlerfunc",
       "community": 175,
-      "community_name": "httpserver/idempotency_test.go",
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "handlerfunc"
     },
     {
@@ -21804,7 +21804,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_test_newidempotencytestserver",
       "community": 175,
-      "community_name": "httpserver/idempotency_test.go",
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "newidempotencytestserver()"
     },
     {
@@ -21815,7 +21815,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_test_go_handler",
       "community": 175,
-      "community_name": "httpserver/idempotency_test.go",
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "handler"
     },
     {
@@ -21826,7 +21826,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_test_doidempotentrequest",
       "community": 175,
-      "community_name": "httpserver/idempotency_test.go",
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "doidempotentrequest()"
     },
     {
@@ -21837,7 +21837,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_test_go_responserecorder",
       "community": 175,
-      "community_name": "httpserver/idempotency_test.go",
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "responserecorder"
     },
     {
@@ -21848,7 +21848,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_test_testidempotenthandler_firstexecution_thenreplaysexactly",
       "community": 175,
-      "community_name": "httpserver/idempotency_test.go",
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "testidempotenthandler_firstexecution_thenreplaysexactly()"
     },
     {
@@ -21859,7 +21859,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_test_testidempotenthandler_differentbody_returns409problemjson",
       "community": 175,
-      "community_name": "httpserver/idempotency_test.go",
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "testidempotenthandler_differentbody_returns409problemjson()"
     },
     {
@@ -21870,7 +21870,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_test_testidempotenthandler_missingkey_returns400problemjson",
       "community": 175,
-      "community_name": "httpserver/idempotency_test.go",
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "testidempotenthandler_missingkey_returns400problemjson()"
     },
     {
@@ -21881,7 +21881,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_test_testidempotenthandler_concurrentrequests_secondgetslockedproblem",
       "community": 175,
-      "community_name": "httpserver/idempotency_test.go",
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "testidempotenthandler_concurrentrequests_secondgetslockedproblem()"
     },
     {
@@ -21892,7 +21892,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_test_doidempotentrequestobject",
       "community": 175,
-      "community_name": "httpserver/idempotency_test.go",
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "doidempotentrequestobject()"
     },
     {
@@ -21903,7 +21903,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_test_go_request",
       "community": 175,
-      "community_name": "httpserver/idempotency_test.go",
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "request"
     },
     {
@@ -22001,7 +22001,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_problem",
-      "community": 191,
+      "community": 107,
       "community_name": "WriteProblem",
       "norm_label": "problem.go"
     },
@@ -22012,7 +22012,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "httpserver_problem",
-      "community": 191,
+      "community": 107,
       "community_name": "WriteProblem",
       "norm_label": "problem"
     },
@@ -22023,7 +22023,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_problem_writeproblem",
-      "community": 191,
+      "community": 107,
       "community_name": "WriteProblem",
       "norm_label": "writeproblem()"
     },
@@ -22034,7 +22034,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_problem_go_responsewriter",
-      "community": 191,
+      "community": 107,
       "community_name": "WriteProblem",
       "norm_label": "responsewriter"
     },
@@ -22046,7 +22046,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_recover",
       "community": 122,
-      "community_name": "RequestID",
+      "community_name": "Recover",
       "norm_label": "recover.go"
     },
     {
@@ -22057,7 +22057,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_recover_recover",
       "community": 122,
-      "community_name": "RequestID",
+      "community_name": "Recover",
       "norm_label": "recover()"
     },
     {
@@ -22068,7 +22068,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_recover_go_logger",
       "community": 122,
-      "community_name": "RequestID",
+      "community_name": "Recover",
       "norm_label": "logger"
     },
     {
@@ -22079,7 +22079,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_recover_go_handler",
       "community": 122,
-      "community_name": "RequestID",
+      "community_name": "Recover",
       "norm_label": "handler"
     },
     {
@@ -22089,8 +22089,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_requestid",
-      "community": 122,
-      "community_name": "RequestID",
+      "community": 175,
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "requestid.go"
     },
     {
@@ -22100,8 +22100,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "httpserver_requestidkey",
-      "community": 122,
-      "community_name": "RequestID",
+      "community": 175,
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "requestidkey"
     },
     {
@@ -22111,8 +22111,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_requestid_requestid",
-      "community": 122,
-      "community_name": "RequestID",
+      "community": 175,
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "requestid()"
     },
     {
@@ -22122,8 +22122,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_requestid_go_handler",
-      "community": 122,
-      "community_name": "RequestID",
+      "community": 175,
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "handler"
     },
     {
@@ -22134,7 +22134,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_requestid_requestidfromcontext",
       "community": 107,
-      "community_name": "RequestIDFromContext",
+      "community_name": "WriteProblem",
       "norm_label": "requestidfromcontext()"
     },
     {
@@ -22144,8 +22144,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_requestid_go_context",
-      "community": 122,
-      "community_name": "RequestID",
+      "community": 175,
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "context"
     },
     {
@@ -22155,8 +22155,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_requestid_newrequestid",
-      "community": 122,
-      "community_name": "RequestID",
+      "community": 175,
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "newrequestid()"
     },
     {
@@ -22265,8 +22265,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_routeparam",
-      "community": 198,
-      "community_name": "URLParam",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": "routeparam.go"
     },
     {
@@ -22276,8 +22276,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_routeparam_urlparam",
-      "community": 198,
-      "community_name": "URLParam",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": "urlparam()"
     },
     {
@@ -22287,8 +22287,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_routeparam_go_request",
-      "community": 198,
-      "community_name": "URLParam",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": "request"
     },
     {
@@ -22298,8 +22298,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_routeparam_requestwithurlparam",
-      "community": 198,
-      "community_name": "URLParam",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": "requestwithurlparam()"
     },
     {
@@ -22947,8 +22947,8 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "idempotency_fingerprint",
-      "community": 169,
-      "community_name": "Fingerprint",
+      "community": 67,
+      "community_name": "catalog/service_test.go",
       "norm_label": "fingerprint"
     },
     {
@@ -22958,8 +22958,8 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "idempotency_fingerprint_valid",
-      "community": 169,
-      "community_name": "Fingerprint",
+      "community": 67,
+      "community_name": "catalog/service_test.go",
       "norm_label": ".valid()"
     },
     {
@@ -23035,8 +23035,8 @@
       "source_location": "L222",
       "_origin": "ast",
       "id": "idempotency_coordinator",
-      "community": 137,
-      "community_name": "catalog/postgres/repository.go",
+      "community": 205,
+      "community_name": ".Create",
       "norm_label": "coordinator"
     },
     {
@@ -24723,8 +24723,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "apps_web_package_devdependencies_axe_core",
-      "community": 4,
-      "community_name": "devDependencies",
+      "community": 238,
+      "community_name": "axe-core",
       "norm_label": "axe-core"
     },
     {
@@ -24734,8 +24734,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "axe_core",
-      "community": 4,
-      "community_name": "devDependencies",
+      "community": 238,
+      "community_name": "axe-core",
       "norm_label": "axe-core"
     },
     {
@@ -24767,8 +24767,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "apps_web_package_devdependencies_eslint_plugin_vue",
-      "community": 238,
-      "community_name": "eslint-plugin-vue",
+      "community": 4,
+      "community_name": "devDependencies",
       "norm_label": "eslint-plugin-vue"
     },
     {
@@ -24778,8 +24778,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "eslint_plugin_vue",
-      "community": 238,
-      "community_name": "eslint-plugin-vue",
+      "community": 4,
+      "community_name": "devDependencies",
       "norm_label": "eslint-plugin-vue"
     },
     {
@@ -25435,8 +25435,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_api_sessioncontextapi",
-      "community": 112,
-      "community_name": "sessionStore.ts",
+      "community": 157,
+      "community_name": "sessionContextOutcome.ts",
       "norm_label": "sessioncontextapi.ts"
     },
     {
@@ -25447,8 +25447,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_api_sessioncontextapi_fetchsessioncontext",
-      "community": 112,
-      "community_name": "sessionStore.ts",
+      "community": 157,
+      "community_name": "sessionContextOutcome.ts",
       "norm_label": "fetchsessioncontext()"
     },
     {
@@ -25504,8 +25504,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_bootstrap_installsessionhandling",
-      "community": 112,
-      "community_name": "sessionStore.ts",
+      "community": 129,
+      "community_name": "routes.test.ts",
       "norm_label": "installsessionhandling.ts"
     },
     {
@@ -25516,8 +25516,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_bootstrap_installsessionhandling_installsessionhandling",
-      "community": 112,
-      "community_name": "sessionStore.ts",
+      "community": 129,
+      "community_name": "routes.test.ts",
       "norm_label": "installsessionhandling()"
     },
     {
@@ -25527,8 +25527,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_components_appheader",
-      "community": 201,
-      "community_name": "resetForFreshLogin",
+      "community": 112,
+      "community_name": "sessionStore.ts",
       "norm_label": "appheader.vue"
     },
     {
@@ -25538,8 +25538,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_components_appheader_router",
-      "community": 201,
-      "community_name": "resetForFreshLogin",
+      "community": 112,
+      "community_name": "sessionStore.ts",
       "norm_label": "router"
     },
     {
@@ -25549,8 +25549,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_components_appheader_loggingout",
-      "community": 201,
-      "community_name": "resetForFreshLogin",
+      "community": 112,
+      "community_name": "sessionStore.ts",
       "norm_label": "loggingout"
     },
     {
@@ -25561,8 +25561,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_components_appheader_onlogout",
-      "community": 201,
-      "community_name": "resetForFreshLogin",
+      "community": 112,
+      "community_name": "sessionStore.ts",
       "norm_label": "onlogout()"
     },
     {
@@ -26740,8 +26740,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_layouts_privateshell",
-      "community": 127,
-      "community_name": "requireSession.ts",
+      "community": 112,
+      "community_name": "sessionStore.ts",
       "norm_label": "privateshell.vue"
     },
     {
@@ -26752,8 +26752,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_layouts_privateshell_onretry",
-      "community": 127,
-      "community_name": "requireSession.ts",
+      "community": 112,
+      "community_name": "sessionStore.ts",
       "norm_label": "onretry()"
     },
     {
@@ -27000,8 +27000,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_model_redirecttarget",
-      "community": 117,
-      "community_name": "LoginPage.vue",
+      "community": 127,
+      "community_name": "requireSession.ts",
       "norm_label": "redirecttarget.ts"
     },
     {
@@ -27011,8 +27011,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_model_redirecttarget_cycle_paths",
-      "community": 117,
-      "community_name": "LoginPage.vue",
+      "community": 127,
+      "community_name": "requireSession.ts",
       "norm_label": "cycle_paths"
     },
     {
@@ -27023,8 +27023,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_model_redirecttarget_issafeinternalredirect",
-      "community": 117,
-      "community_name": "LoginPage.vue",
+      "community": 127,
+      "community_name": "requireSession.ts",
       "norm_label": "issafeinternalredirect()"
     },
     {
@@ -27117,8 +27117,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_model_sessionstore_sessionstate",
-      "community": 127,
-      "community_name": "requireSession.ts",
+      "community": 112,
+      "community_name": "sessionStore.ts",
       "norm_label": "sessionstate"
     },
     {
@@ -27129,8 +27129,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_model_sessionstore_setchecking",
-      "community": 127,
-      "community_name": "requireSession.ts",
+      "community": 112,
+      "community_name": "sessionStore.ts",
       "norm_label": "setchecking()"
     },
     {
@@ -27201,8 +27201,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_model_sessionstore_updatebarbershopname",
-      "community": 129,
-      "community_name": "routes.test.ts",
+      "community": 112,
+      "community_name": "sessionStore.ts",
       "norm_label": "updatebarbershopname()"
     },
     {
@@ -27213,8 +27213,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_model_sessionstore_resetforfreshlogin",
-      "community": 201,
-      "community_name": "resetForFreshLogin",
+      "community": 112,
+      "community_name": "sessionStore.ts",
       "norm_label": "resetforfreshlogin()"
     },
     {
@@ -27225,8 +27225,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_model_sessionstore_retrybootstrap",
-      "community": 127,
-      "community_name": "requireSession.ts",
+      "community": 112,
+      "community_name": "sessionStore.ts",
       "norm_label": "retrybootstrap()"
     },
     {
@@ -27261,8 +27261,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_model_sessionstore_onunauthorized",
-      "community": 112,
-      "community_name": "sessionStore.ts",
+      "community": 129,
+      "community_name": "routes.test.ts",
       "norm_label": "onunauthorized()"
     },
     {
@@ -29753,8 +29753,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_catalog_pages_catalogpage_replaceserviceinlist",
-      "community": 231,
-      "community_name": "onConfirmDeactivate",
+      "community": 230,
+      "community_name": "fetchServices",
       "norm_label": "replaceserviceinlist()"
     },
     {
@@ -29765,8 +29765,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_catalog_pages_catalogpage_onconfirmdeactivate",
-      "community": 231,
-      "community_name": "onConfirmDeactivate",
+      "community": 230,
+      "community_name": "fetchServices",
       "norm_label": "onconfirmdeactivate()"
     },
     {
@@ -29777,8 +29777,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_catalog_pages_catalogpage_onconfirmreactivate",
-      "community": 231,
-      "community_name": "onConfirmDeactivate",
+      "community": 230,
+      "community_name": "fetchServices",
       "norm_label": "onconfirmreactivate()"
     },
     {
@@ -29789,8 +29789,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_catalog_pages_catalogpage_onconfirmlifecycle",
-      "community": 231,
-      "community_name": "onConfirmDeactivate",
+      "community": 230,
+      "community_name": "fetchServices",
       "norm_label": "onconfirmlifecycle()"
     },
     {
@@ -29801,8 +29801,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_catalog_pages_catalogpage_reloadafterconflict",
-      "community": 231,
-      "community_name": "onConfirmDeactivate",
+      "community": 230,
+      "community_name": "fetchServices",
       "norm_label": "reloadafterconflict()"
     },
     {
@@ -37382,8 +37382,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_docs_informe_academico_secciones_1_a_4_2_v3_identidad_institucional",
-      "community": 197,
-      "community_name": "PROMPT-DOCS-INFORME-ACADEMICO-v3",
+      "community": 225,
+      "community_name": "prompts/README.md",
       "norm_label": "informe-academico-secciones-1-a-4-2-v3-identidad-institucional.md"
     },
     {
@@ -37393,8 +37393,8 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_docs_informe_academico_secciones_1_a_4_2_v3_identidad_institucional_prompt_docs_informe_academico_v3",
-      "community": 197,
-      "community_name": "PROMPT-DOCS-INFORME-ACADEMICO-v3",
+      "community": 225,
+      "community_name": "prompts/README.md",
       "norm_label": "prompt-docs-informe-academico-v3"
     },
     {
@@ -37404,8 +37404,8 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_docs_informe_academico_secciones_1_a_4_2_v3_identidad_institucional_objetivo",
-      "community": 197,
-      "community_name": "PROMPT-DOCS-INFORME-ACADEMICO-v3",
+      "community": 225,
+      "community_name": "prompts/README.md",
       "norm_label": "objetivo"
     },
     {
@@ -37415,8 +37415,8 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_docs_informe_academico_secciones_1_a_4_2_v3_identidad_institucional_cambios_autorizados",
-      "community": 197,
-      "community_name": "PROMPT-DOCS-INFORME-ACADEMICO-v3",
+      "community": 225,
+      "community_name": "prompts/README.md",
       "norm_label": "cambios autorizados"
     },
     {
@@ -37426,8 +37426,8 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_docs_informe_academico_secciones_1_a_4_2_v3_identidad_institucional_sistema_visual",
-      "community": 197,
-      "community_name": "PROMPT-DOCS-INFORME-ACADEMICO-v3",
+      "community": 225,
+      "community_name": "prompts/README.md",
       "norm_label": "sistema visual"
     },
     {
@@ -37437,8 +37437,8 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_docs_informe_academico_secciones_1_a_4_2_v3_identidad_institucional_verificaci\u00f3n_y_entrega",
-      "community": 197,
-      "community_name": "PROMPT-DOCS-INFORME-ACADEMICO-v3",
+      "community": 225,
+      "community_name": "prompts/README.md",
       "norm_label": "verificacion y entrega"
     },
     {
@@ -37448,8 +37448,8 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_docs_informe_academico_secciones_1_a_4_2_v3_identidad_institucional_resultado_de_ejecuci\u00f3n",
-      "community": 197,
-      "community_name": "PROMPT-DOCS-INFORME-ACADEMICO-v3",
+      "community": 225,
+      "community_name": "prompts/README.md",
       "norm_label": "resultado de ejecucion"
     },
     {
@@ -38625,8 +38625,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_008_recuperacion_acceso",
-      "community": 225,
-      "community_name": "prompts/README.md",
+      "community": 110,
+      "community_name": "Implementar HU-008: recuperaci\u00f3n de acceso con c\u00f3digo",
       "norm_label": "hu-008-recuperacion-acceso.md"
     },
     {
@@ -38834,8 +38834,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_009_sistema_visual",
-      "community": 225,
-      "community_name": "prompts/README.md",
+      "community": 61,
+      "community_name": "Completar HU-009: sistema visual base",
       "norm_label": "hu-009-sistema-visual.md"
     },
     {
@@ -39274,8 +39274,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_012_cascaron_panel_privado",
-      "community": 225,
-      "community_name": "prompts/README.md",
+      "community": 114,
+      "community_name": "Implementar HU-012: cascar\u00f3n del panel privado",
       "norm_label": "hu-012-cascaron-panel-privado.md"
     },
     {
@@ -40566,10 +40566,21 @@
       "norm_label": "verificacion final"
     },
     {
-      "label": "Git y PR",
+      "label": "Evidencia real de esta ejecuci\u00f3n",
       "file_type": "document",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
       "source_location": "L201",
+      "_origin": "ast",
+      "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_evidencia_real_de_esta_ejecuci\u00f3n",
+      "community": 119,
+      "community_name": "Implementar HU-040: horario laboral recurrente",
+      "norm_label": "evidencia real de esta ejecucion"
+    },
+    {
+      "label": "Git y PR",
+      "file_type": "document",
+      "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
+      "source_location": "L216",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_git_y_pr",
       "community": 119,
@@ -42800,10 +42811,10 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 54,
+      "community": 56,
       "norm_label": "postgresql, multi-tenancy y consultas",
       "_origin": "semantic",
-      "community_name": "Estrategia de pruebas y controles de calidad",
+      "community_name": "PostgreSQL, multi-tenancy y consultas",
       "id": "docs_05_backend_base_datos_doc"
     },
     {
@@ -42815,10 +42826,10 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 54,
+      "community": 56,
       "norm_label": "estandar de diseno y evolucion de base de datos",
       "_origin": "semantic",
-      "community_name": "Estrategia de pruebas y controles de calidad",
+      "community_name": "PostgreSQL, multi-tenancy y consultas",
       "id": "docs_05_backend_estandar_base_datos_doc"
     },
     {
@@ -42845,10 +42856,10 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 54,
+      "community": 56,
       "norm_label": "rn-con-03: la base de datos debe impedir el cruce",
       "_origin": "semantic",
-      "community_name": "Estrategia de pruebas y controles de calidad",
+      "community_name": "PostgreSQL, multi-tenancy y consultas",
       "id": "docs_01_producto_reglas_negocio_rn_con_03"
     },
     {
@@ -42905,10 +42916,10 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 54,
+      "community": 56,
       "norm_label": "rn-dis-05: intervalos semiabiertos [inicio, fin)",
       "_origin": "semantic",
-      "community_name": "Estrategia de pruebas y controles de calidad",
+      "community_name": "PostgreSQL, multi-tenancy y consultas",
       "id": "docs_01_producto_reglas_negocio_rn_dis_05"
     },
     {
@@ -43070,10 +43081,10 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 54,
+      "community": 56,
       "norm_label": "rn-ten-01: ninguna barberia accede a datos de otra",
       "_origin": "semantic",
-      "community_name": "Estrategia de pruebas y controles de calidad",
+      "community_name": "PostgreSQL, multi-tenancy y consultas",
       "id": "docs_01_producto_reglas_negocio_rn_ten_01"
     },
     {
@@ -43295,10 +43306,10 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 53,
+      "community": 9,
       "norm_label": "dec-005: anticipacion minima y ventana maxima elevadas a p0",
       "_origin": "semantic",
-      "community_name": "Alcance del MVP",
+      "community_name": "Reglas de negocio",
       "id": "docs_01_producto_prioridades_dec_005"
     },
     {
@@ -43490,10 +43501,10 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 9,
+      "community": 54,
       "norm_label": "modulo go: notification",
       "_origin": "semantic",
-      "community_name": "Reglas de negocio",
+      "community_name": "Estrategia de pruebas y controles de calidad",
       "id": "docs_03_desarrollo_estandar_backend_go_module_notification"
     },
     {
@@ -43535,10 +43546,10 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 54,
+      "community": 56,
       "norm_label": "tabla appointment",
       "_origin": "semantic",
-      "community_name": "Estrategia de pruebas y controles de calidad",
+      "community_name": "PostgreSQL, multi-tenancy y consultas",
       "id": "docs_05_backend_base_datos_appointment_table"
     },
     {
@@ -43550,10 +43561,10 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 54,
+      "community": 56,
       "norm_label": "restriccion de exclusion appointment_no_overlap",
       "_origin": "semantic",
-      "community_name": "Estrategia de pruebas y controles de calidad",
+      "community_name": "PostgreSQL, multi-tenancy y consultas",
       "id": "docs_05_backend_base_datos_appointment_no_overlap"
     },
     {
@@ -43565,10 +43576,10 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 54,
+      "community": 56,
       "norm_label": "politica rls por barbershop_id",
       "_origin": "semantic",
-      "community_name": "Estrategia de pruebas y controles de calidad",
+      "community_name": "PostgreSQL, multi-tenancy y consultas",
       "id": "docs_05_backend_base_datos_rls_policy"
     },
     {
@@ -43583,7 +43594,7 @@
       "community": 56,
       "norm_label": "gestion de migraciones postgresql con atlas",
       "_origin": "semantic",
-      "community_name": "Gesti\u00f3n de migraciones PostgreSQL con Atlas",
+      "community_name": "PostgreSQL, multi-tenancy y consultas",
       "id": "docs_05_backend_migraciones_atlas"
     },
     {
@@ -43595,10 +43606,10 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 243,
+      "community": 54,
       "norm_label": "estandar de documentacion openapi",
       "_origin": "semantic",
-      "community_name": "Est\u00e1ndar de documentaci\u00f3n OpenAPI",
+      "community_name": "Estrategia de pruebas y controles de calidad",
       "id": "docs_06_api_estandar_openapi"
     },
     {
@@ -43643,7 +43654,7 @@
       "community": 56,
       "norm_label": "dec-036",
       "_origin": "semantic",
-      "community_name": "Gesti\u00f3n de migraciones PostgreSQL con Atlas",
+      "community_name": "PostgreSQL, multi-tenancy y consultas",
       "id": "docs_05_backend_migraciones_atlas_dec036"
     },
     {
@@ -43655,10 +43666,10 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 243,
+      "community": 54,
       "norm_label": "dec-037",
       "_origin": "semantic",
-      "community_name": "Est\u00e1ndar de documentaci\u00f3n OpenAPI",
+      "community_name": "Estrategia de pruebas y controles de calidad",
       "id": "docs_06_api_estandar_openapi_dec037"
     },
     {
@@ -43670,10 +43681,10 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 243,
+      "community": 54,
       "norm_label": "dec-016",
       "_origin": "semantic",
-      "community_name": "Est\u00e1ndar de documentaci\u00f3n OpenAPI",
+      "community_name": "Estrategia de pruebas y controles de calidad",
       "id": "concept_dec016"
     },
     {
@@ -43688,7 +43699,7 @@
       "community": 56,
       "norm_label": "atlas cli",
       "_origin": "semantic",
-      "community_name": "Gesti\u00f3n de migraciones PostgreSQL con Atlas",
+      "community_name": "PostgreSQL, multi-tenancy y consultas",
       "id": "concept_atlas_cli"
     },
     {
@@ -43703,7 +43714,7 @@
       "community": 56,
       "norm_label": "goose",
       "_origin": "semantic",
-      "community_name": "Gesti\u00f3n de migraciones PostgreSQL con Atlas",
+      "community_name": "PostgreSQL, multi-tenancy y consultas",
       "id": "concept_goose"
     },
     {
@@ -43718,7 +43729,7 @@
       "community": 56,
       "norm_label": "golang-migrate",
       "_origin": "semantic",
-      "community_name": "Gesti\u00f3n de migraciones PostgreSQL con Atlas",
+      "community_name": "PostgreSQL, multi-tenancy y consultas",
       "id": "concept_golang_migrate"
     },
     {
@@ -43733,7 +43744,7 @@
       "community": 56,
       "norm_label": "flyway",
       "_origin": "semantic",
-      "community_name": "Gesti\u00f3n de migraciones PostgreSQL con Atlas",
+      "community_name": "PostgreSQL, multi-tenancy y consultas",
       "id": "concept_flyway"
     },
     {
@@ -43748,7 +43759,7 @@
       "community": 56,
       "norm_label": "atlas_schema_revisions",
       "_origin": "semantic",
-      "community_name": "Gesti\u00f3n de migraciones PostgreSQL con Atlas",
+      "community_name": "PostgreSQL, multi-tenancy y consultas",
       "id": "docs_05_backend_migraciones_atlas_atlas_schema_revisions"
     },
     {
@@ -43760,10 +43771,10 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 243,
+      "community": 54,
       "norm_label": "openapi specification 3.1.2",
       "_origin": "semantic",
-      "community_name": "Est\u00e1ndar de documentaci\u00f3n OpenAPI",
+      "community_name": "Estrategia de pruebas y controles de calidad",
       "id": "concept_openapi_spec"
     },
     {
@@ -43775,10 +43786,10 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 243,
+      "community": 54,
       "norm_label": "json schema draft 2020-12",
       "_origin": "semantic",
-      "community_name": "Est\u00e1ndar de documentaci\u00f3n OpenAPI",
+      "community_name": "Estrategia de pruebas y controles de calidad",
       "id": "concept_json_schema"
     },
     {
@@ -43790,10 +43801,10 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 243,
+      "community": 54,
       "norm_label": "redocly cli",
       "_origin": "semantic",
-      "community_name": "Est\u00e1ndar de documentaci\u00f3n OpenAPI",
+      "community_name": "Estrategia de pruebas y controles de calidad",
       "id": "concept_redocly_cli"
     },
     {
@@ -43805,10 +43816,10 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 243,
+      "community": 54,
       "norm_label": "rfc 9457 problem details",
       "_origin": "semantic",
-      "community_name": "Est\u00e1ndar de documentaci\u00f3n OpenAPI",
+      "community_name": "Estrategia de pruebas y controles de calidad",
       "id": "concept_rfc9457"
     },
     {
@@ -139988,7 +139999,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L201",
+      "source_location": "L216",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_implementar_hu_040_horario_laboral_recurrente",
@@ -140092,6 +140103,17 @@
       "_origin": "ast",
       "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_trabajo_requerido",
       "target": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_3_frontend_vue",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
+      "source_location": "L201",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_verificaci\u00f3n_final",
+      "target": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_evidencia_real_de_esta_ejecuci\u00f3n",
       "confidence_score": 1.0
     },
     {

@@ -45,7 +45,11 @@ async function openSchedules(page: Page) {
 
 async function addWorkingHour(
   page: Page,
-  { weekday, startsTime, durationMinutes }: { weekday: string; startsTime: string; durationMinutes: string },
+  {
+    weekday,
+    startsTime,
+    durationMinutes,
+  }: { weekday: string; startsTime: string; durationMinutes: string },
 ) {
   await page.getByRole('button', { name: 'Agregar tramo' }).click()
   const dialog = page.getByRole('dialog', { name: 'Agregar tramo' })
@@ -120,7 +124,11 @@ test.describe('Horario laboral recurrente (HU-040)', () => {
     await openSchedules(page)
     await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
 
-    await addWorkingHour(page, { weekday: 'Miércoles', startsTime: '08:00', durationMinutes: '120' })
+    await addWorkingHour(page, {
+      weekday: 'Miércoles',
+      startsTime: '08:00',
+      durationMinutes: '120',
+    })
     await expect(page.getByText('08:00 · 120 min')).toBeVisible()
 
     const dialog = await addWorkingHour(page, {
@@ -139,7 +147,9 @@ test.describe('Horario laboral recurrente (HU-040)', () => {
     await expect(page.getByText('09:00 · 60 min')).not.toBeVisible()
   })
 
-  test('editar un tramo cambia su intervalo, y retirarlo lo elimina de la lista', async ({ page }) => {
+  test('editar un tramo cambia su intervalo, y retirarlo lo elimina de la lista', async ({
+    page,
+  }) => {
     const stamp = Date.now()
     const barberName = `E2E Editar Retirar ${stamp}`
 
@@ -189,7 +199,9 @@ test.describe('Horario laboral recurrente (HU-040)', () => {
     await login(page, EMAIL, PASSWORD)
 
     const crossTenantStatus = await page.evaluate(async (id) => {
-      const res = await fetch(`/api/v1/private/barbers/${id}/working-hours`, { credentials: 'include' })
+      const res = await fetch(`/api/v1/private/barbers/${id}/working-hours`, {
+        credentials: 'include',
+      })
       return res.status
     }, barberBId)
     expect(crossTenantStatus).toBe(404)

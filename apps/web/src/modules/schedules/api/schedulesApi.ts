@@ -63,10 +63,9 @@ export async function fetchBarbershopTimezone(): Promise<FetchBarbershopTimezone
 
 export async function fetchWorkingHours(barberId: string): Promise<FetchWorkingHoursOutcome> {
   try {
-    const { data, response } = await httpClient.GET(
-      '/private/barbers/{barberId}/working-hours',
-      { params: { path: { barberId }, query: { limit: WORKING_HOURS_LIMIT } } },
-    )
+    const { data, response } = await httpClient.GET('/private/barbers/{barberId}/working-hours', {
+      params: { path: { barberId }, query: { limit: WORKING_HOURS_LIMIT } },
+    })
 
     if (response.ok && data) {
       return { kind: 'success', page: toPage(data) }

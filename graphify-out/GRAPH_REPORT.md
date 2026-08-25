@@ -1,16 +1,16 @@
 # Graph Report - barberia  (2026-08-25)
 
 ## Corpus Check
-- 479 files · ~672,322 words
+- 479 files · ~672,335 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3919 nodes · 8673 edges · 246 communities (208 shown, 38 thin omitted)
+- 3919 nodes · 8673 edges · 247 communities (209 shown, 38 thin omitted)
 - Extraction: 80% EXTRACTED · 20% INFERRED · 0% AMBIGUOUS · INFERRED: 1701 edges (avg confidence: 0.79)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `042fa650`
+- Built from commit: `3b2c7186`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -224,10 +224,11 @@
 - axe-core
 - newLogoutHandler
 - schedulesApi.test.ts
-- .ServeHTTP
+- PrincipalFromContext
 - loadPage
+- onConfirmDeactivate
 - assignment_ports.go
-- openapi-typescript
+- eslint-plugin-vue
 
 ## God Nodes (most connected - your core abstractions)
 1. `buildRouter()` - 110 edges
@@ -267,7 +268,7 @@
 - **Decisiones de seguridad para el piloto** — respuesta_manuales_respuesta_dudas_pendientes_dp_seg_01, respuesta_manuales_respuesta_dudas_pendientes_dp_seg_02, respuesta_manuales_respuesta_dudas_pendientes_dp_seg_03 [EXTRACTED 0.75]
 - **Reglas de disponibilidad y agendamiento** — respuesta_manuales_respuesta_propuestas_oc_rn_dis_04, respuesta_manuales_respuesta_propuestas_oc_rn_dis_05, respuesta_manuales_respuesta_propuestas_oc_rn_dis_06, respuesta_manuales_respuesta_propuestas_oc_rn_dis_07 [EXTRACTED 0.75]
 
-## Communities (246 total, 38 thin omitted)
+## Communities (247 total, 38 thin omitted)
 
 ### Community 0 - "Estados de las citas y máquina de transiciones"
 Cohesion: 0.26
@@ -287,7 +288,7 @@ Nodes (36): Time, alwaysUnauthorized(), chiWalkFinds(), Handler, Mux, T, TestPri
 
 ### Community 4 - "devDependencies"
 Cohesion: 0.13
-Nodes (15): devDependencies, eslint, eslint-plugin-vue, prettier, @vitejs/plugin-vue, vitest, vue-tsc, @vue/tsconfig (+7 more)
+Nodes (15): devDependencies, eslint, openapi-typescript, prettier, @vitejs/plugin-vue, vitest, vue-tsc, @vue/tsconfig (+7 more)
 
 ### Community 5 - "compilerOptions"
 Cohesion: 0.09
@@ -454,8 +455,8 @@ Cohesion: 0.24
 Nodes (17): NewPhoneChallengeService(), T, testChallengeCfg(), TestCryptoPhoneCodeGenerator_ProducesSixDigits(), TestPhoneChallengeService_Request_Accepted_SendsCode(), TestPhoneChallengeService_Request_AcceptedButEmptyPhone_NeverSends(), TestPhoneChallengeService_Request_CodeGeneratorFails_ReturnsInternalWithoutCallingRepository(), TestPhoneChallengeService_Request_NotAccepted_NeverSends() (+9 more)
 
 ### Community 91 - "Principal"
-Cohesion: 0.14
-Nodes (20): Handler, Request, ResponseWriter, NewSessionContextHandler(), T, newSessionContextHandler(), TestSessionContextHandler_MissingPrincipalInContext_ReturnsSafe500(), TestSessionContextHandler_RepositoryFailure_ReturnsSafe500() (+12 more)
+Cohesion: 0.17
+Nodes (17): Handler, NewSessionContextHandler(), T, newSessionContextHandler(), TestSessionContextHandler_MissingPrincipalInContext_ReturnsSafe500(), TestSessionContextHandler_RepositoryFailure_ReturnsSafe500(), TestSessionContextHandler_Success_ReturnsMinimalPayload(), ContextWithPrincipal() (+9 more)
 
 ### Community 92 - "CatalogPage.vue"
 Cohesion: 0.06
@@ -506,8 +507,8 @@ Cohesion: 0.11
 Nodes (18): requestChallenge(), verifyChallenge(), canRequest, canVerify, code, codeDigitsOnly, emit, onRequestCode() (+10 more)
 
 ### Community 107 - "WriteProblem"
-Cohesion: 0.16
-Nodes (22): Request, ResponseWriter, Request, ResponseWriter, ListResult, Request, ResponseWriter, Service (+14 more)
+Cohesion: 0.18
+Nodes (20): Request, ResponseWriter, ListResult, Request, ResponseWriter, Service, newServiceListResponse(), newServiceResponse() (+12 more)
 
 ### Community 108 - "whatsapp_meta.go"
 Cohesion: 0.15
@@ -610,8 +611,8 @@ Cohesion: 0.67
 Nodes (3): buildRouter(), mountHeader(), postMock
 
 ### Community 137 - "catalog/postgres/repository.go"
-Cohesion: 0.15
-Nodes (21): centsFromNumeric(), Context, CreateInput, CreateResult, Cursor, ListResult, Repository, Service (+13 more)
+Cohesion: 0.14
+Nodes (19): centsFromNumeric(), Context, CreateInput, CreateResult, Cursor, ListResult, Service, Time (+11 more)
 
 ### Community 140 - "NewThrottleService"
 Cohesion: 0.17
@@ -838,8 +839,8 @@ Cohesion: 0.50
 Nodes (3): axeScriptPath, evidenceDir, viewports
 
 ### Community 205 - ".Create"
-Cohesion: 0.15
-Nodes (18): Context, CreateInput, CreateResult, Cursor, ListResult, Repository, Time, UpdateResult (+10 more)
+Cohesion: 0.14
+Nodes (20): Repository, New(), Context, CreateInput, CreateResult, Cursor, ListResult, Repository (+12 more)
 
 ### Community 206 - "barberServicesApi.test.ts"
 Cohesion: 0.29
@@ -926,8 +927,8 @@ Cohesion: 0.40
 Nodes (4): name, private, type, version
 
 ### Community 230 - "fetchServices"
-Cohesion: 0.27
-Nodes (10): fetchServices(), toPage(), load(), onConfirmDeactivate(), onConfirmLifecycle(), onConfirmReactivate(), onLoadMore(), onRetryLoad() (+2 more)
+Cohesion: 0.40
+Nodes (5): fetchServices(), toPage(), load(), onLoadMore(), onRetryLoad()
 
 ### Community 231 - "catalog/service.go"
 Cohesion: 0.40
@@ -961,13 +962,17 @@ Nodes (7): NewLogoutHandler(), T, newLogoutHandler(), TestLogoutHandler_MissingP
 Cohesion: 0.22
 Nodes (5): deleteMock, getMock, patchMock, postMock, workingHourBody
 
-### Community 241 - ".ServeHTTP"
-Cohesion: 0.32
-Nodes (5): Request, ResponseWriter, newBarbershopSettingsResponse(), BarbershopSettingsResponse, UpdateBarbershopSettingsRequest
+### Community 241 - "PrincipalFromContext"
+Cohesion: 0.16
+Nodes (10): Request, ResponseWriter, Request, ResponseWriter, PrincipalFromContext(), Request, ResponseWriter, newBarbershopSettingsResponse() (+2 more)
 
 ### Community 242 - "loadPage"
 Cohesion: 0.25
 Nodes (8): fetchBarbershopTimezone(), fetchBarberSummaries(), fetchWorkingHours(), loadPage(), onBarberSelectChange(), onRetryLoad(), onRetryWorkingHours(), selectBarber()
+
+### Community 243 - "onConfirmDeactivate"
+Cohesion: 0.70
+Nodes (5): onConfirmDeactivate(), onConfirmLifecycle(), onConfirmReactivate(), reloadAfterConflict(), replaceServiceInList()
 
 ## Knowledge Gaps
 - **940 isolated node(s):** `deactivationImpactBody`, `system-barbershop`, `schemaDoc`, `ChallengeRequest`, `ChallengeAcceptedResponse` (+935 more)
@@ -979,9 +984,9 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `buildRouter()` connect `buildRouter` to `PhoneChallengeService`, `NewRouter`, `NewThrottleService`, `NewService`, `.Now`, `newLoginHandlerWithThrottle`, `NewService`, `NewSQLCoordinator`, `recovery_handler_test.go`, `Load`, `Key`, `schedule/httpapi/handler.go`, `NewAssignmentService`, `NewLoggingPhoneCodeSender`, `NewLoggingRecoveryCodeSender`, `NewPhoneChallengeService`, `CatalogService`, `Principal`, `RecoveryService`, `setupTestDB`, `newSessionMiddleware`, `recovery_test.go`, `NewService`, `whatsapp_meta.go`, `TrustedProxies`, `newLogoutHandler`, `NewDualChannelRecoverySender`, `newResendSenderAgainstTestServer`?**
   _High betweenness centrality (0.121) - this node is a cross-community bridge._
-- **Why does `DB` connect `Key` to `buildRouter`, `NewService`, `BarbershopID`, `NewAssignmentService`, `catalog/postgres/repository.go`, `.Create`, `NewSQLCoordinator`, `IdempotencyKeyFromRequest`, `Repository`, `database_test.go`, `setupTestDB`, `Repository`, `setupTestDB`, `schedule/httpapi/contract_test.go`?**
+- **Why does `DB` connect `Key` to `buildRouter`, `NewService`, `BarbershopID`, `NewAssignmentService`, `.Create`, `NewSQLCoordinator`, `IdempotencyKeyFromRequest`, `Repository`, `database_test.go`, `setupTestDB`, `Repository`, `setupTestDB`, `schedule/httpapi/contract_test.go`?**
   _High betweenness centrality (0.055) - this node is a cross-community bridge._
-- **Why does `As()` connect `As` to `catalog/postgres/repository.go`, `Translate`, `NewThrottleService`, `.Now`, `schedule/service_test.go`, `NewService`, `NewSQLCoordinator`, `IdempotencyKeyFromRequest`, `DecodeCursor`, `Key`, `principalOrInternalError`, `catalog/service_test.go`, `schedule/httpapi/handler.go`, `NewAssignmentService`, `.Create`, `NewPhoneChallengeService`, `echoBodyHandler`, `NewService`, `WriteProblem`, `.ServeHTTP`, `catalog/domain_test.go`?**
+- **Why does `As()` connect `As` to `catalog/postgres/repository.go`, `Translate`, `NewThrottleService`, `.Now`, `schedule/service_test.go`, `NewService`, `NewSQLCoordinator`, `IdempotencyKeyFromRequest`, `DecodeCursor`, `Key`, `principalOrInternalError`, `catalog/service_test.go`, `schedule/httpapi/handler.go`, `NewAssignmentService`, `.Create`, `NewPhoneChallengeService`, `echoBodyHandler`, `NewService`, `WriteProblem`, `PrincipalFromContext`, `catalog/domain_test.go`?**
   _High betweenness centrality (0.044) - this node is a cross-community bridge._
 - **Are the 104 inferred relationships involving `buildRouter()` (e.g. with `TestBarberServices_HTTP_AssignRepeatListUnassign_FullJourney()` and `TestBarberServices_HTTP_LastActiveAssignment_Returns409()`) actually correct?**
   _`buildRouter()` has 104 INFERRED edges - model-reasoned connections that need verification._

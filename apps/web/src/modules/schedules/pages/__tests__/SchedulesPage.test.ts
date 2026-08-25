@@ -52,7 +52,10 @@ function mountPage() {
 
 async function mountReady(barbers = oneBarber, items: (typeof mondayMorning)[] = []) {
   fetchBarberSummariesMock.mockResolvedValueOnce({ kind: 'success', items: barbers })
-  fetchWorkingHoursMock.mockResolvedValueOnce({ kind: 'success', page: { items, nextCursor: null } })
+  fetchWorkingHoursMock.mockResolvedValueOnce({
+    kind: 'success',
+    page: { items, nextCursor: null },
+  })
   const wrapper = mountPage()
   await flushPromises()
   return wrapper
@@ -98,12 +101,17 @@ describe('SchedulesPage', () => {
 
   it('shows a non-blank loading state, then the loaded picker', async () => {
     let resolveBarbers: (value: unknown) => void = () => {}
-    fetchBarberSummariesMock.mockReturnValueOnce(new Promise((resolve) => (resolveBarbers = resolve)))
+    fetchBarberSummariesMock.mockReturnValueOnce(
+      new Promise((resolve) => (resolveBarbers = resolve)),
+    )
     const wrapper = mountPage()
 
     expect(wrapper.text()).toContain('Cargando')
 
-    fetchWorkingHoursMock.mockResolvedValueOnce({ kind: 'success', page: { items: [], nextCursor: null } })
+    fetchWorkingHoursMock.mockResolvedValueOnce({
+      kind: 'success',
+      page: { items: [], nextCursor: null },
+    })
     resolveBarbers({ kind: 'success', items: oneBarber })
     await flushPromises()
 
@@ -152,7 +160,10 @@ describe('SchedulesPage', () => {
     expect(wrapper.text()).toContain('No pudimos cargar esta sección')
 
     fetchBarberSummariesMock.mockResolvedValueOnce({ kind: 'success', items: oneBarber })
-    fetchWorkingHoursMock.mockResolvedValueOnce({ kind: 'success', page: { items: [], nextCursor: null } })
+    fetchWorkingHoursMock.mockResolvedValueOnce({
+      kind: 'success',
+      page: { items: [], nextCursor: null },
+    })
     await wrapper.get('button').trigger('click')
     await flushPromises()
 
@@ -281,7 +292,10 @@ describe('SchedulesPage', () => {
     await flushPromises()
 
     expect(
-      wrapper.findAll('button').find((b) => b.text() === 'Retirar')!.attributes('disabled'),
+      wrapper
+        .findAll('button')
+        .find((b) => b.text() === 'Retirar')!
+        .attributes('disabled'),
     ).toBeDefined()
     expect(deleteWorkingHourMock).toHaveBeenCalledTimes(1)
 
