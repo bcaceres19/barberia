@@ -107,7 +107,13 @@ test.describe('Ciclo de vida de servicios (HU-024)', () => {
     const reactivated = await page.evaluate(async (targetName) => {
       const res = await fetch('/api/v1/private/services?limit=50', { credentials: 'include' })
       const body = (await res.json()) as {
-        items: { id: string; name: string; isActive: boolean; deactivatedAt: string | null; durationMinutes: number }[]
+        items: {
+          id: string
+          name: string
+          isActive: boolean
+          deactivatedAt: string | null
+          durationMinutes: number
+        }[]
       }
       return body.items.find((s) => s.name === targetName) ?? null
     }, name)

@@ -438,7 +438,10 @@ describe('CatalogPage', () => {
 
     deactivateMock.mockResolvedValueOnce({
       kind: 'success',
-      service: service('s-1', 'Corte clásico', { isActive: false, deactivatedAt: '2026-08-25T12:00:00Z' }),
+      service: service('s-1', 'Corte clásico', {
+        isActive: false,
+        deactivatedAt: '2026-08-25T12:00:00Z',
+      }),
       affectedAppointments: 0,
     })
     clickDialogButton(wrapper, 'Desactivar')
@@ -476,7 +479,15 @@ describe('CatalogPage', () => {
     deactivateMock.mockResolvedValueOnce({ kind: 'transition-conflict' })
     fetchMock.mockResolvedValueOnce({
       kind: 'success',
-      page: { items: [service('s-1', 'Corte clásico', { isActive: false, deactivatedAt: '2026-08-25T12:00:00Z' })], nextCursor: null },
+      page: {
+        items: [
+          service('s-1', 'Corte clásico', {
+            isActive: false,
+            deactivatedAt: '2026-08-25T12:00:00Z',
+          }),
+        ],
+        nextCursor: null,
+      },
     })
     clickDialogButton(wrapper, 'Desactivar')
     await flushPromises()
