@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-DOCS-INFORME-ACADEMICO-v2"
 version: "2.0"
 kind: "docs"
-status: "executed"
+status: "superseded"
 target_agents:
   - "codex"
 repository: "bcaceres19/barberia"
@@ -32,6 +32,7 @@ branch: "docs/81-informe-academico"
 pr: "82"
 pr_url: "https://github.com/bcaceres19/barberia/pull/82"
 supersedes: "PROMPT-DOCS-INFORME-ACADEMICO-v1"
+superseded_by: "PROMPT-DOCS-INFORME-ACADEMICO-v3"
 depends_on:
   - "Informe académico v1 ejecutado y verificado"
   - "Retroalimentación del propietario: sustituir el énfasis técnico por contexto comprensible para PM, gerentes, jefes y clientes"
