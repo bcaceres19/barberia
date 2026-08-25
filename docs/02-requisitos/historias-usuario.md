@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.16"
+version: "1.17"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-25"
@@ -17,7 +17,7 @@ documentos_relacionados:
 
 # Historias de usuario y criterios de aceptación
 
-> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas confirmadas; no crean alcance por sí solas y requieren aprobación antes de implementarse. B0 y `HU-020`–`HU-024` ya están integradas en `main`. Las dudas históricas de B0 quedaron resueltas por `DEC-050`–`DEC-066`; `DP-SER-01`–`DP-SER-03` del lote de B1 quedaron resueltas por `DEC-067`–`DEC-069`; `CT-008` del lote de B2 quedó resuelta por `DEC-070`. `HU-040` tiene issue real [#90](https://github.com/bcaceres19/barberia/issues/90) y su prompt está `ready`; `HU-041`–`HU-042` siguen `draft` a la espera de que `HU-040` se integre.
+> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas confirmadas; no crean alcance por sí solas y requieren aprobación antes de implementarse. B0, `HU-020`–`HU-024` y `HU-040` ya están integradas en `main`. Las dudas históricas de B0 quedaron resueltas por `DEC-050`–`DEC-066`; `DP-SER-01`–`DP-SER-03` del lote de B1 quedaron resueltas por `DEC-067`–`DEC-069`; `CT-008` del lote de B2 quedó resuelta por `DEC-070`. `HU-040` abre B2 ([PR #93](https://github.com/bcaceres19/barberia/pull/93), issue real [#90](https://github.com/bcaceres19/barberia/issues/90) abierto por `CA-040-08` parcial); `HU-041`–`HU-042` siguen `draft` a la espera de issue real propio.
 
 ---
 
@@ -50,7 +50,7 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | --- | --- | --- |
 | B0 · Cimientos, seguridad y primeras pantallas | `HU-001` – `HU-012` | Redactadas en este documento |
 | B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | Integradas en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), [PR #83](https://github.com/bcaceres19/barberia/pull/83), [PR #84](https://github.com/bcaceres19/barberia/pull/84)) |
-| B2 · Horario laboral y bloqueos | `HU-040` – `HU-042` | `CT-008` resuelta (`DEC-070`); `HU-040` en ejecución (issue real [#90](https://github.com/bcaceres19/barberia/issues/90)); `HU-041`–`HU-042` siguen `draft` |
+| B2 · Horario laboral y bloqueos | `HU-040` – `HU-042` | `CT-008` resuelta (`DEC-070`); `HU-040` integrada en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93)); `HU-041`–`HU-042` siguen `draft` |
 | B3 · Agenda, estados e integridad | `HU-060` – | Pendientes |
 | B4 · Reserva pública y disponibilidad | `HU-090` – | Pendientes |
 | B5 · Notificaciones y recordatorios | `HU-130` – | Pendientes |
@@ -938,7 +938,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 
 ## 5. Bloque B2 · Horario laboral y bloqueos
 
-> **B2 en ejecución.** Las tres historias separan las dos funciones P0 del bloque: HU-040 configura la jornada semanal; HU-041 resuelve fechas especiales y festivos; HU-042 administra bloqueos puntuales y recurrentes. CT-008 quedó resuelta como DEC-070 (las FK del modelo físico de B2 usan ON DELETE RESTRICT, no CASCADE). HU-040 tiene issue real #90 y su prompt está ready; HU-041/HU-042 permanecen draft hasta que HU-040 se integre en main.
+> **B2 en ejecución.** Las tres historias separan las dos funciones P0 del bloque: HU-040 configura la jornada semanal; HU-041 resuelve fechas especiales y festivos; HU-042 administra bloqueos puntuales y recurrentes. CT-008 quedó resuelta como DEC-070 (las FK del modelo físico de B2 usan ON DELETE RESTRICT, no CASCADE). HU-040 está integrada en main (PR #93, issue real #90 abierto por CA-040-08 parcial); HU-041/HU-042 permanecen draft a la espera de issue real propio.
 
 Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas afectadas y la agenda consumen estas capacidades en B3/B4; no se implementan aquí.
 
@@ -954,7 +954,7 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 | Actor | Barbero autenticado |
 | Depende de | Criterio de salida de B1; HU-020–HU-024 integradas en main; CT-008 resuelta (DEC-070) |
 | Bloquea | HU-041, HU-042 y el cálculo posterior de disponibilidad |
-| Estado | Implementación completa en PR #93 (rama feat/90-hu040-horario-laboral); prompt PROMPT-HU-040-v1 in_progress; issue real #90; pendiente de CI |
+| Estado | Integrada en main (PR #93, squash-merge 2026-08-25, CI 4/4 en verde); prompt PROMPT-HU-040-v1 executed; issue real #90 abierto por CA-040-08 parcial |
 | Riesgo | Un tramo ambiguo, solapado o interpretado en la zona del dispositivo desplaza toda la disponibilidad futura. |
 
 **Historia**
@@ -1133,7 +1133,7 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 | Bloque | Rango reservado | Se redacta cuando |
 | --- | --- | --- |
 | B1 | `HU-025` – | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
-| B2 | `HU-040` – `HU-042` | `CT-008` resuelta (`DEC-070`); `HU-040` en ejecución (issue real `#90`); `HU-041`–`HU-042` requieren issue real propio antes de ejecutarse |
+| B2 | `HU-040` – `HU-042` | `CT-008` resuelta (`DEC-070`); `HU-040` integrada en `main` (PR `#93`); `HU-041`–`HU-042` requieren issue real propio antes de ejecutarse |
 | B3 | `HU-060` – | B2 cumple su criterio de salida |
 | B4 | `HU-090` – | B3 cumple su criterio de salida |
 | B5 | `HU-130` – | B4 cumple su criterio de salida |

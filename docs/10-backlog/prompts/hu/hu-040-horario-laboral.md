@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-040-v1"
-version: "1.2"
+version: "1.3"
 kind: "hu"
-status: "in_progress"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -90,6 +90,11 @@ created_at: "2026-08-25"
 updated_at: "2026-08-25"
 supersedes: null
 superseded_by: null
+
+# PR #93 integrado en main por squash-merge el 2026-08-25 con CI 4/4 en
+# verde. CA-040-08 queda Parcial (falta verificación responsive real a
+# 320/360/768/1280 px con Playwright); el issue #90 permanece abierto por
+# ese pendiente, no como historia sin terminar.
 ---
 
 # Implementar HU-040: horario laboral recurrente
@@ -215,8 +220,7 @@ Comandos ejecutados y verificados: `openapi:lint`, `openapi:bundle`, `atlas migr
 
 ## Git y PR
 
-- Rama: `feat/90-hu040-horario-laboral`.
-- Commit/título: `feat(schedule): implementa HU-040 horario laboral recurrente`.
-- `Refs #90`, no `Closes #90`: CA-040-08 queda Parcial (falta la verificación responsive real a 320/360/768/1280 px con Playwright; ver tabla de evidencia arriba).
-- No hagas push directo, force push, merge manual de main, DDL al arrancar ni cambios a migraciones aplicadas.
+- Rama `feat/90-hu040-horario-laboral`; [PR #93](https://github.com/bcaceres19/barberia/pull/93), integrado en `main` por squash-merge el 2026-08-25 con CI 4/4 en verde.
+- `Refs #90`, no `Closes #90`: CA-040-08 queda Parcial (falta la verificación responsive real a 320/360/768/1280 px con Playwright; ver tabla de evidencia arriba). El issue `#90` permanece abierto por ese pendiente.
+- No se hizo push directo, force push, merge manual de `main`, DDL al arrancar ni cambios a migraciones aplicadas.
 

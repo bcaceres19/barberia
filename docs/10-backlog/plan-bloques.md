@@ -1,6 +1,6 @@
 ---
 titulo: "Plan de bloques de construcción del MVP"
-version: "1.10"
+version: "1.11"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-25"
@@ -46,7 +46,7 @@ Consecuencia deliberada: **el flujo público de reserva, que es la cara visible 
 | --- | --- | --- | --- | --- |
 | **B0** | Cimientos, seguridad y primeras pantallas | 8 | `HU-001` – `HU-012` | Redactado |
 | **B1** | Identidad de la barbería y catálogo | 4 | `HU-020` – `HU-0xx` | `HU-020`–`HU-024` integradas en `main` ([PR #84](https://github.com/bcaceres19/barberia/pull/84), issue real `#77`) |
-| **B2** | Horario laboral y bloqueos | 2 | `HU-040` – `HU-042` | `CT-008` resuelta (`DEC-070`); `HU-040` en ejecución (issue real [#90](https://github.com/bcaceres19/barberia/issues/90)); `HU-041`–`HU-042` siguen `draft` a la espera de `HU-040` |
+| **B2** | Horario laboral y bloqueos | 2 | `HU-040` – `HU-042` | `CT-008` resuelta (`DEC-070`); `HU-040` integrada en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93), issue real [#90](https://github.com/bcaceres19/barberia/issues/90) abierto por `CA-040-08` parcial); `HU-041`–`HU-042` siguen `draft` |
 | **B3** | Agenda del barbero, estados e integridad | 11 | `HU-060` – `HU-0xx` | Pendiente de redacción |
 | **B4** | Reserva pública y disponibilidad | 13 | `HU-090` – `HU-1xx` | Pendiente de redacción |
 | **B5** | Notificaciones y recordatorios | 3 | `HU-130` – `HU-1xx` | Pendiente de redacción |
@@ -108,7 +108,7 @@ Los rangos se reservan por bloque para que los códigos `HU-*` no se renumeren c
 
 **Objetivo:** que el sistema sepa cuándo trabaja cada barbero y cuándo no.
 
-**Historias propuestas:** `HU-040` horario laboral recurrente → `HU-041` excepciones de jornada y festivos → `HU-042` bloqueos de agenda. Cada una tiene un prompt individual en `docs/10-backlog/prompts/hu/`. `CT-008` se resolvió como `DEC-070` (FK en `ON DELETE RESTRICT`); `HU-040` tiene issue real [#90](https://github.com/bcaceres19/barberia/issues/90) y su prompt pasó a `ready`. `HU-041` y `HU-042` permanecen en `draft` hasta que `HU-040` esté integrada.
+**Historias propuestas:** `HU-040` horario laboral recurrente → `HU-041` excepciones de jornada y festivos → `HU-042` bloqueos de agenda. Cada una tiene un prompt individual en `docs/10-backlog/prompts/hu/`. `CT-008` se resolvió como `DEC-070` (FK en `ON DELETE RESTRICT`); `HU-040` está integrada en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93)), con `CA-040-08` parcial (falta evidencia responsive real) y el issue real [#90](https://github.com/bcaceres19/barberia/issues/90) abierto por ese pendiente. `HU-041` y `HU-042` permanecen en `draft` a la espera de issue real propio.
 
 **Funciones:** `F-HOR-01`, `F-HOR-02`.
 
@@ -250,7 +250,7 @@ Tabla de control: ninguna función P0 puede quedar sin bloque.
 | Historias de B0 | Redactadas en [historias-usuario.md](../02-requisitos/historias-usuario.md) |
 | Prompts de implementación de B0 | Redactados en [prompts-implementacion.md](prompts-implementacion.md) |
 | Primeras historias y prompts de B1 | `HU-020`–`HU-024` integradas en `main` ([PR #84](https://github.com/bcaceres19/barberia/pull/84), issue real `#77`) |
-| Historias restantes de B1 a B6 | B2: `HU-040` en ejecución (issue [#90](https://github.com/bcaceres19/barberia/issues/90)); `HU-041`–`HU-042` redactadas y `draft`; B3–B6 pendientes y se redactan al cerrar el bloque anterior |
+| Historias restantes de B1 a B6 | B2: `HU-040` integrada en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93)); `HU-041`–`HU-042` redactadas y `draft`; B3–B6 pendientes y se redactan al cerrar el bloque anterior |
 | Dudas que bloqueaban B0 | `DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`, resueltas el 2026-08-11 como `DEC-050`–`DEC-052` (ver [dudas-pendientes.md](../00-control/dudas-pendientes.md)) |
 
 Redactar historias muy por anticipado está desaconsejado: lo aprendido al construir cambia lo que la historia siguiente debe decir. Las propuestas `HU-022`–`HU-024` conservan alcance estrecho y guardas explícitas; sus tres decisiones pendientes ya se resolvieron en `dudas-pendientes.md` (`DEC-067`–`DEC-069`) antes de ejecutar.

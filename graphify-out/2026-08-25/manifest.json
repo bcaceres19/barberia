@@ -475,8 +475,8 @@
     "semantic_hash": ""
   },
   "docs/00-control/matriz-trazabilidad.md": {
-    "mtime": 1787699792.2379313,
-    "ast_hash": "6fc9d04ba61a46b041fced76e1430eed",
+    "mtime": 1787699966.9797223,
+    "ast_hash": "6a3ddfcd389fd265fa6c14d90958e1b0",
     "semantic_hash": ""
   },
   "docs/00-control/registro-decisiones.md": {
@@ -595,8 +595,8 @@
     "semantic_hash": ""
   },
   "docs/02-requisitos/historias-usuario.md": {
-    "mtime": 1787699799.9212282,
-    "ast_hash": "dfe4bd663f8cf4e5049af63681e0f74f",
+    "mtime": 1787699970.8209383,
+    "ast_hash": "6ca6d961c47031b24f7c056ad99958ac",
     "semantic_hash": ""
   },
   "docs/10-backlog/plan-bloques.md": {
@@ -805,8 +805,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/README.md": {
-    "mtime": 1787699759.901054,
-    "ast_hash": "570e487b83908b5a1a89e13ce1998d82",
+    "mtime": 1787699955.480316,
+    "ast_hash": "122f97a7acf6856b71ce3fc6f280e0e9",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/TEMPLATE.md": {
@@ -3090,8 +3090,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md": {
-    "mtime": 1787699738.1413524,
-    "ast_hash": "8e8ba3d2c88159a5692ffc9d33fac3e2",
+    "mtime": 1787699946.8368247,
+    "ast_hash": "1e2948260cc717a0e6dacb43237c5507",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/hu/hu-041-excepciones-festivos.md": {
@@ -3165,18 +3165,18 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/horarios.spec.ts": {
-    "mtime": 1787699246.4408112,
-    "ast_hash": "c58238dd54c64ad0ccbb805fbd295079",
+    "mtime": 1787700016.2455542,
+    "ast_hash": "9772e517cd9ffc50de7111112665059d",
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/api/__tests__/schedulesApi.test.ts": {
-    "mtime": 1787699391.472292,
-    "ast_hash": "71acb8a219814055da4f3912c44f7a03",
+    "mtime": 1787700018.267902,
+    "ast_hash": "6070aac0a927d5e413f9c3f7ffb5c129",
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/api/schedulesApi.ts": {
-    "mtime": 1787699339.5183158,
-    "ast_hash": "8df8568de893bdc8798de8c312c410dd",
+    "mtime": 1787700018.280057,
+    "ast_hash": "cfc480a048c415129d625431192693ef",
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/model/idempotencyKey.ts": {
@@ -3185,8 +3185,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/model/scheduleOutcome.ts": {
-    "mtime": 1787699329.4440222,
-    "ast_hash": "b55870ce5363733528995d5d66bc46fd",
+    "mtime": 1787700018.295645,
+    "ast_hash": "64fbf7fcb1528b0445598dd347c627a7",
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/model/workingHour.ts": {
@@ -3195,13 +3195,13 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/pages/SchedulesPage.vue": {
-    "mtime": 1787699360.6587095,
-    "ast_hash": "a99a172a8a2da4cdab5649518700c641",
+    "mtime": 1787700018.4166336,
+    "ast_hash": "dd0a9a0c6b1d1bc56bd0697ba562f480",
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/pages/__tests__/SchedulesPage.test.ts": {
-    "mtime": 1787699381.7011719,
-    "ast_hash": "dfb79c03ec443c110a45359a49a83757",
+    "mtime": 1787700018.325523,
+    "ast_hash": "d3aa34e4b9eb77627a4e3139efdc9149",
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/routes.ts": {

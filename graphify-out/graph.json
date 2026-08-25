@@ -1715,8 +1715,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_cmd_worker_main",
-      "community": 109,
-      "community_name": "NewPurgeService",
+      "community": 248,
+      "community_name": "run",
       "norm_label": "worker/main.go"
     },
     {
@@ -1726,8 +1726,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "apps_api_cmd_worker_main_main",
-      "community": 109,
-      "community_name": "NewPurgeService",
+      "community": 248,
+      "community_name": "run",
       "norm_label": "main()"
     },
     {
@@ -1737,8 +1737,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "apps_api_cmd_worker_main_run",
-      "community": 109,
-      "community_name": "NewPurgeService",
+      "community": 248,
+      "community_name": "run",
       "norm_label": "run()"
     },
     {
@@ -1783,8 +1783,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_domain",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 249,
+      "community_name": "NormalizeEmail",
       "norm_label": "auth/domain.go"
     },
     {
@@ -1794,8 +1794,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "auth_session",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 249,
+      "community_name": "NormalizeEmail",
       "norm_label": "session"
     },
     {
@@ -1805,8 +1805,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_domain_go_time",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 249,
+      "community_name": "NormalizeEmail",
       "norm_label": "time"
     },
     {
@@ -1816,8 +1816,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_domain_normalizeemail",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 249,
+      "community_name": "NormalizeEmail",
       "norm_label": "normalizeemail()"
     },
     {
@@ -1827,8 +1827,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_errors",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 249,
+      "community_name": "NormalizeEmail",
       "norm_label": "auth/errors.go"
     },
     {
@@ -1838,8 +1838,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_errors_errinvalidcredentials",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 249,
+      "community_name": "NormalizeEmail",
       "norm_label": "errinvalidcredentials()"
     },
     {
@@ -2576,7 +2576,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "auth/httpapi/contract_test.go"
     },
     {
@@ -2587,7 +2587,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test_go_httpapi_schemadoc",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "schemadoc"
     },
     {
@@ -2598,7 +2598,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test_go_httpapi_operation",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "operation"
     },
     {
@@ -2609,7 +2609,7 @@
       "_origin": "ast",
       "id": "httpapi_pathfile",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "pathfile"
     },
     {
@@ -2620,7 +2620,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test_findreporoot",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "findreporoot()"
     },
     {
@@ -2631,7 +2631,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test_go_t",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "t"
     },
     {
@@ -2642,7 +2642,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test_loadyaml",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "loadyaml()"
     },
     {
@@ -2653,7 +2653,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test_testcontract_loginrequestschema_matchesdtofields",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_loginrequestschema_matchesdtofields()"
     },
     {
@@ -2664,7 +2664,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test_testcontract_loginresponseschema_matchesdtofields",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_loginresponseschema_matchesdtofields()"
     },
     {
@@ -2675,7 +2675,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test_testcontract_loginoperation_methodpathsecurityandresponses",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_loginoperation_methodpathsecurityandresponses()"
     },
     {
@@ -2686,7 +2686,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_contract_test_testcontract_cookienamematchessecurityschemereference",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_cookienamematchessecurityschemereference()"
     },
     {
@@ -2707,8 +2707,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "httpapi_loginrequest",
-      "community": 170,
-      "community_name": "newLoginHandlerWithThrottle",
+      "community": 158,
+      "community_name": "auth/httpapi/dto.go",
       "norm_label": "loginrequest"
     },
     {
@@ -2949,8 +2949,8 @@
       "source_location": "L151",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_handler_validateloginrequest",
-      "community": 170,
-      "community_name": "newLoginHandlerWithThrottle",
+      "community": 158,
+      "community_name": "auth/httpapi/dto.go",
       "norm_label": "validateloginrequest()"
     },
     {
@@ -3037,8 +3037,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "httpapi_stubhasher",
-      "community": 218,
-      "community_name": "assertProblem",
+      "community": 254,
+      "community_name": "stubHasher",
       "norm_label": "stubhasher"
     },
     {
@@ -3048,8 +3048,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "httpapi_stubhasher_hash",
-      "community": 218,
-      "community_name": "assertProblem",
+      "community": 254,
+      "community_name": "stubHasher",
       "norm_label": ".hash()"
     },
     {
@@ -3059,8 +3059,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "httpapi_stubhasher_verify",
-      "community": 218,
-      "community_name": "assertProblem",
+      "community": 254,
+      "community_name": "stubHasher",
       "norm_label": ".verify()"
     },
     {
@@ -3378,8 +3378,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "httpapi_escalatedthrottlerepository",
-      "community": 170,
-      "community_name": "newLoginHandlerWithThrottle",
+      "community": 253,
+      "community_name": ".RegisterAttempt",
       "norm_label": "escalatedthrottlerepository"
     },
     {
@@ -3389,8 +3389,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_login_throttle_test_go_time",
-      "community": 170,
-      "community_name": "newLoginHandlerWithThrottle",
+      "community": 253,
+      "community_name": ".RegisterAttempt",
       "norm_label": "time"
     },
     {
@@ -3400,8 +3400,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "httpapi_escalatedthrottlerepository_registerattempt",
-      "community": 170,
-      "community_name": "newLoginHandlerWithThrottle",
+      "community": 253,
+      "community_name": ".RegisterAttempt",
       "norm_label": ".registerattempt()"
     },
     {
@@ -3411,8 +3411,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_login_throttle_test_go_context",
-      "community": 170,
-      "community_name": "newLoginHandlerWithThrottle",
+      "community": 253,
+      "community_name": ".RegisterAttempt",
       "norm_label": "context"
     },
     {
@@ -3477,8 +3477,8 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "httpapi_countingrepository",
-      "community": 170,
-      "community_name": "newLoginHandlerWithThrottle",
+      "community": 253,
+      "community_name": ".RegisterAttempt",
       "norm_label": "countingrepository"
     },
     {
@@ -3488,8 +3488,8 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "httpapi_countingrepository_resolvelogintenant",
-      "community": 170,
-      "community_name": "newLoginHandlerWithThrottle",
+      "community": 253,
+      "community_name": ".RegisterAttempt",
       "norm_label": ".resolvelogintenant()"
     },
     {
@@ -3532,8 +3532,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "httpapi_logouthandler_servehttp",
-      "community": 241,
-      "community_name": "PrincipalFromContext",
+      "community": 91,
+      "community_name": "Principal",
       "norm_label": ".servehttp()"
     },
     {
@@ -3543,8 +3543,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_logout_handler_go_responsewriter",
-      "community": 241,
-      "community_name": "PrincipalFromContext",
+      "community": 91,
+      "community_name": "Principal",
       "norm_label": "responsewriter"
     },
     {
@@ -3554,8 +3554,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_logout_handler_go_request",
-      "community": 241,
-      "community_name": "PrincipalFromContext",
+      "community": 91,
+      "community_name": "Principal",
       "norm_label": "request"
     },
     {
@@ -3631,8 +3631,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_middleware",
-      "community": 222,
-      "community_name": "newSessionMiddleware",
+      "community": 170,
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "middleware.go"
     },
     {
@@ -3642,8 +3642,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "httpapi_sessionmiddleware",
-      "community": 222,
-      "community_name": "newSessionMiddleware",
+      "community": 170,
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "sessionmiddleware"
     },
     {
@@ -3653,8 +3653,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_middleware_newsessionmiddleware",
-      "community": 222,
-      "community_name": "newSessionMiddleware",
+      "community": 170,
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "newsessionmiddleware()"
     },
     {
@@ -3664,8 +3664,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "httpapi_sessionmiddleware_requiresession",
-      "community": 91,
-      "community_name": "Principal",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": ".requiresession()"
     },
     {
@@ -3675,8 +3675,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_middleware_go_handler",
-      "community": 91,
-      "community_name": "Principal",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": "handler"
     },
     {
@@ -3686,8 +3686,8 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_middleware_validsessioncookieshape",
-      "community": 222,
-      "community_name": "newSessionMiddleware",
+      "community": 170,
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "validsessioncookieshape()"
     },
     {
@@ -3708,8 +3708,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "httpapi_spysessionrepo",
-      "community": 222,
-      "community_name": "newSessionMiddleware",
+      "community": 251,
+      "community_name": "spySessionRepo",
       "norm_label": "spysessionrepo"
     },
     {
@@ -3719,8 +3719,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "httpapi_spysessionrepo_resolvesessiontenant",
-      "community": 222,
-      "community_name": "newSessionMiddleware",
+      "community": 251,
+      "community_name": "spySessionRepo",
       "norm_label": ".resolvesessiontenant()"
     },
     {
@@ -3730,8 +3730,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_middleware_test_go_context",
-      "community": 222,
-      "community_name": "newSessionMiddleware",
+      "community": 251,
+      "community_name": "spySessionRepo",
       "norm_label": "context"
     },
     {
@@ -3741,8 +3741,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "httpapi_spysessionrepo_validateandrenewsession",
-      "community": 222,
-      "community_name": "newSessionMiddleware",
+      "community": 251,
+      "community_name": "spySessionRepo",
       "norm_label": ".validateandrenewsession()"
     },
     {
@@ -3752,8 +3752,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_middleware_test_go_time",
-      "community": 222,
-      "community_name": "newSessionMiddleware",
+      "community": 251,
+      "community_name": "spySessionRepo",
       "norm_label": "time"
     },
     {
@@ -3763,8 +3763,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "httpapi_spysessionrepo_revokesession",
-      "community": 222,
-      "community_name": "newSessionMiddleware",
+      "community": 251,
+      "community_name": "spySessionRepo",
       "norm_label": ".revokesession()"
     },
     {
@@ -3774,8 +3774,8 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "httpapi_spysessionrepo_barbershopname",
-      "community": 222,
-      "community_name": "newSessionMiddleware",
+      "community": 251,
+      "community_name": "spySessionRepo",
       "norm_label": ".barbershopname()"
     },
     {
@@ -3994,8 +3994,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "httpapi_recoveryrequesthandler_servehttp",
-      "community": 125,
-      "community_name": "As",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": ".servehttp()"
     },
     {
@@ -4005,8 +4005,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_recovery_handler_go_responsewriter",
-      "community": 125,
-      "community_name": "As",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": "responsewriter"
     },
     {
@@ -4016,8 +4016,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_recovery_handler_go_request",
-      "community": 125,
-      "community_name": "As",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": "request"
     },
     {
@@ -4049,8 +4049,8 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "httpapi_recoveryverifyhandler_servehttp",
-      "community": 125,
-      "community_name": "As",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": ".servehttp()"
     },
     {
@@ -4082,8 +4082,8 @@
       "source_location": "L165",
       "_origin": "ast",
       "id": "httpapi_recoveryresetpasswordhandler_servehttp",
-      "community": 125,
-      "community_name": "As",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": ".servehttp()"
     },
     {
@@ -4445,8 +4445,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "httpapi_sessioncontexthandler_servehttp",
-      "community": 241,
-      "community_name": "PrincipalFromContext",
+      "community": 91,
+      "community_name": "Principal",
       "norm_label": ".servehttp()"
     },
     {
@@ -4456,8 +4456,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_session_context_handler_go_responsewriter",
-      "community": 241,
-      "community_name": "PrincipalFromContext",
+      "community": 91,
+      "community_name": "Principal",
       "norm_label": "responsewriter"
     },
     {
@@ -4467,8 +4467,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_session_context_handler_go_request",
-      "community": 241,
-      "community_name": "PrincipalFromContext",
+      "community": 91,
+      "community_name": "Principal",
       "norm_label": "request"
     },
     {
@@ -4544,8 +4544,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_mask",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 250,
+      "community_name": "MaskEmail",
       "norm_label": "mask.go"
     },
     {
@@ -4555,8 +4555,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_mask_maskphone",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 250,
+      "community_name": "MaskEmail",
       "norm_label": "maskphone()"
     },
     {
@@ -4566,8 +4566,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_mask_maskemail",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 250,
+      "community_name": "MaskEmail",
       "norm_label": "maskemail()"
     },
     {
@@ -4577,8 +4577,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_mask_test",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 250,
+      "community_name": "MaskEmail",
       "norm_label": "mask_test.go"
     },
     {
@@ -4588,8 +4588,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_mask_test_testmaskphone",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 250,
+      "community_name": "MaskEmail",
       "norm_label": "testmaskphone()"
     },
     {
@@ -4599,8 +4599,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_mask_test_go_t",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 250,
+      "community_name": "MaskEmail",
       "norm_label": "t"
     },
     {
@@ -4610,8 +4610,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_mask_test_testmaskemail",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 250,
+      "community_name": "MaskEmail",
       "norm_label": "testmaskemail()"
     },
     {
@@ -4621,8 +4621,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_mask_test_testmaskemail_neverreturnsfullvalue",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 250,
+      "community_name": "MaskEmail",
       "norm_label": "testmaskemail_neverreturnsfullvalue()"
     },
     {
@@ -4632,8 +4632,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_password",
-      "community": 95,
-      "community_name": "recovery_test.go",
+      "community": 229,
+      "community_name": "NewArgon2Hasher",
       "norm_label": "password.go"
     },
     {
@@ -4643,8 +4643,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "auth_argon2hasher",
-      "community": 95,
-      "community_name": "recovery_test.go",
+      "community": 229,
+      "community_name": "NewArgon2Hasher",
       "norm_label": "argon2hasher"
     },
     {
@@ -4654,8 +4654,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_password_newargon2hasher",
-      "community": 95,
-      "community_name": "recovery_test.go",
+      "community": 229,
+      "community_name": "NewArgon2Hasher",
       "norm_label": "newargon2hasher()"
     },
     {
@@ -4665,8 +4665,8 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "auth_argon2hasher_hash",
-      "community": 95,
-      "community_name": "recovery_test.go",
+      "community": 229,
+      "community_name": "NewArgon2Hasher",
       "norm_label": ".hash()"
     },
     {
@@ -4676,8 +4676,8 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "auth_argon2hasher_verify",
-      "community": 95,
-      "community_name": "recovery_test.go",
+      "community": 229,
+      "community_name": "NewArgon2Hasher",
       "norm_label": ".verify()"
     },
     {
@@ -4687,8 +4687,8 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "auth_argon2params",
-      "community": 95,
-      "community_name": "recovery_test.go",
+      "community": 229,
+      "community_name": "NewArgon2Hasher",
       "norm_label": "argon2params"
     },
     {
@@ -4698,8 +4698,8 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_password_parseencodedhash",
-      "community": 95,
-      "community_name": "recovery_test.go",
+      "community": 229,
+      "community_name": "NewArgon2Hasher",
       "norm_label": "parseencodedhash()"
     },
     {
@@ -4709,8 +4709,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_password_test",
-      "community": 95,
-      "community_name": "recovery_test.go",
+      "community": 229,
+      "community_name": "NewArgon2Hasher",
       "norm_label": "password_test.go"
     },
     {
@@ -4720,8 +4720,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_password_test_testargon2hasher_hashthenverify_succeeds",
-      "community": 95,
-      "community_name": "recovery_test.go",
+      "community": 229,
+      "community_name": "NewArgon2Hasher",
       "norm_label": "testargon2hasher_hashthenverify_succeeds()"
     },
     {
@@ -4731,8 +4731,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_password_test_go_t",
-      "community": 95,
-      "community_name": "recovery_test.go",
+      "community": 229,
+      "community_name": "NewArgon2Hasher",
       "norm_label": "t"
     },
     {
@@ -4742,8 +4742,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_password_test_testargon2hasher_verify_wrongpasswordfails",
-      "community": 95,
-      "community_name": "recovery_test.go",
+      "community": 229,
+      "community_name": "NewArgon2Hasher",
       "norm_label": "testargon2hasher_verify_wrongpasswordfails()"
     },
     {
@@ -4753,8 +4753,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_password_test_testargon2hasher_twouserssamepassword_producedistinctencodedvalues",
-      "community": 95,
-      "community_name": "recovery_test.go",
+      "community": 229,
+      "community_name": "NewArgon2Hasher",
       "norm_label": "testargon2hasher_twouserssamepassword_producedistinctencodedvalues()"
     },
     {
@@ -4764,8 +4764,8 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_password_test_testargon2hasher_verify_malformedencodedhash_neverpanicsorerrors",
-      "community": 95,
-      "community_name": "recovery_test.go",
+      "community": 229,
+      "community_name": "NewArgon2Hasher",
       "norm_label": "testargon2hasher_verify_malformedencodedhash_neverpanicsorerrors()"
     },
     {
@@ -5326,7 +5326,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_phone_sender_capture_test",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "phone_sender_capture_test.go"
     },
     {
@@ -5337,7 +5337,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_phone_sender_capture_test_testcapturingphonecodesender_writesphoneandcodetofile",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcapturingphonecodesender_writesphoneandcodetofile()"
     },
     {
@@ -5348,7 +5348,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_phone_sender_capture_test_go_t",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "t"
     },
     {
@@ -5359,7 +5359,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_phone_sender_capture_test_testcapturingphonecodesender_innerfailure_neverwritescapture",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcapturingphonecodesender_innerfailure_neverwritescapture()"
     },
     {
@@ -5369,8 +5369,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_ports",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 140,
+      "community_name": "ThrottleService",
       "norm_label": "auth/ports.go"
     },
     {
@@ -5380,8 +5380,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "auth_passwordhasher",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 140,
+      "community_name": "ThrottleService",
       "norm_label": "passwordhasher"
     },
     {
@@ -5391,8 +5391,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "auth_tokengenerator",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 140,
+      "community_name": "ThrottleService",
       "norm_label": "tokengenerator"
     },
     {
@@ -5413,8 +5413,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "auth_repository",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 140,
+      "community_name": "ThrottleService",
       "norm_label": "repository"
     },
     {
@@ -5633,8 +5633,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_postgres_purge_repository",
-      "community": 93,
-      "community_name": "setupTestDB",
+      "community": 247,
+      "community_name": "setupWorkerTestDB",
       "norm_label": "purge_repository.go"
     },
     {
@@ -5644,8 +5644,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "postgres_purgerepository",
-      "community": 93,
-      "community_name": "setupTestDB",
+      "community": 247,
+      "community_name": "setupWorkerTestDB",
       "norm_label": "purgerepository"
     },
     {
@@ -5655,8 +5655,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_postgres_purge_repository_newpurgerepository",
-      "community": 93,
-      "community_name": "setupTestDB",
+      "community": 247,
+      "community_name": "setupWorkerTestDB",
       "norm_label": "newpurgerepository()"
     },
     {
@@ -5666,8 +5666,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "postgres_purgerepository_purgeloginthrottle",
-      "community": 93,
-      "community_name": "setupTestDB",
+      "community": 247,
+      "community_name": "setupWorkerTestDB",
       "norm_label": ".purgeloginthrottle()"
     },
     {
@@ -5677,8 +5677,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_postgres_purge_repository_go_context",
-      "community": 93,
-      "community_name": "setupTestDB",
+      "community": 247,
+      "community_name": "setupWorkerTestDB",
       "norm_label": "context"
     },
     {
@@ -5688,8 +5688,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "postgres_purgerepository_purgephonechallenges",
-      "community": 93,
-      "community_name": "setupTestDB",
+      "community": 247,
+      "community_name": "setupWorkerTestDB",
       "norm_label": ".purgephonechallenges()"
     },
     {
@@ -5699,8 +5699,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "postgres_purgerepository_purgerecoverycodes",
-      "community": 93,
-      "community_name": "setupTestDB",
+      "community": 247,
+      "community_name": "setupWorkerTestDB",
       "norm_label": ".purgerecoverycodes()"
     },
     {
@@ -5710,8 +5710,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_postgres_purge_repository_test",
-      "community": 93,
-      "community_name": "setupTestDB",
+      "community": 247,
+      "community_name": "setupWorkerTestDB",
       "norm_label": "purge_repository_test.go"
     },
     {
@@ -5721,8 +5721,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_postgres_purge_repository_test_setupworkertestdb",
-      "community": 93,
-      "community_name": "setupTestDB",
+      "community": 247,
+      "community_name": "setupWorkerTestDB",
       "norm_label": "setupworkertestdb()"
     },
     {
@@ -5732,8 +5732,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_postgres_purge_repository_test_go_t",
-      "community": 93,
-      "community_name": "setupTestDB",
+      "community": 247,
+      "community_name": "setupWorkerTestDB",
       "norm_label": "t"
     },
     {
@@ -5743,8 +5743,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_postgres_purge_repository_test_testpurgerepository_purgeloginthrottle_deletesonlyexpired",
-      "community": 93,
-      "community_name": "setupTestDB",
+      "community": 247,
+      "community_name": "setupWorkerTestDB",
       "norm_label": "testpurgerepository_purgeloginthrottle_deletesonlyexpired()"
     },
     {
@@ -5754,8 +5754,8 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_postgres_purge_repository_test_testpurgerepository_purgephonechallenges_runswithouterror",
-      "community": 93,
-      "community_name": "setupTestDB",
+      "community": 247,
+      "community_name": "setupWorkerTestDB",
       "norm_label": "testpurgerepository_purgephonechallenges_runswithouterror()"
     },
     {
@@ -5765,8 +5765,8 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_postgres_purge_repository_test_testpurgerepository_purgerecoverycodes_runswithouterror",
-      "community": 93,
-      "community_name": "setupTestDB",
+      "community": 247,
+      "community_name": "setupWorkerTestDB",
       "norm_label": "testpurgerepository_purgerecoverycodes_runswithouterror()"
     },
     {
@@ -6535,8 +6535,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "postgres_throttlerepository_registerattempt",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": ".registerattempt()"
     },
     {
@@ -6546,8 +6546,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_postgres_throttle_repository_go_context",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": "context"
     },
     {
@@ -6557,8 +6557,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_postgres_throttle_repository_go_time",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": "time"
     },
     {
@@ -7393,8 +7393,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_service",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 140,
+      "community_name": "ThrottleService",
       "norm_label": "auth/service.go"
     },
     {
@@ -7404,8 +7404,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "auth_loginservice",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 140,
+      "community_name": "ThrottleService",
       "norm_label": "loginservice"
     },
     {
@@ -7415,8 +7415,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_service_go_repository",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 140,
+      "community_name": "ThrottleService",
       "norm_label": "repository"
     },
     {
@@ -7426,8 +7426,8 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_service_newloginservice",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 140,
+      "community_name": "ThrottleService",
       "norm_label": "newloginservice()"
     },
     {
@@ -7437,8 +7437,8 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "auth_loginservice_login",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 249,
+      "community_name": "NormalizeEmail",
       "norm_label": ".login()"
     },
     {
@@ -7448,8 +7448,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_service_go_context",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 249,
+      "community_name": "NormalizeEmail",
       "norm_label": "context"
     },
     {
@@ -7943,8 +7943,8 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_session_service_principalfromcontext",
-      "community": 241,
-      "community_name": "PrincipalFromContext",
+      "community": 91,
+      "community_name": "Principal",
       "norm_label": "principalfromcontext()"
     },
     {
@@ -8317,8 +8317,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_throttle",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": "throttle.go"
     },
     {
@@ -8328,8 +8328,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "auth_throttleconfig",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": "throttleconfig"
     },
     {
@@ -8339,8 +8339,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "auth_throttlerepository",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": "throttlerepository"
     },
     {
@@ -8351,7 +8351,7 @@
       "_origin": "ast",
       "id": "auth_throttleservice",
       "community": 140,
-      "community_name": "NewThrottleService",
+      "community_name": "ThrottleService",
       "norm_label": "throttleservice"
     },
     {
@@ -8361,8 +8361,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_throttle_newthrottleservice",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": "newthrottleservice()"
     },
     {
@@ -8373,7 +8373,7 @@
       "_origin": "ast",
       "id": "auth_throttleservice_haship",
       "community": 140,
-      "community_name": "NewThrottleService",
+      "community_name": "ThrottleService",
       "norm_label": ".haship()"
     },
     {
@@ -8384,7 +8384,7 @@
       "_origin": "ast",
       "id": "auth_throttleservice_check",
       "community": 140,
-      "community_name": "NewThrottleService",
+      "community_name": "ThrottleService",
       "norm_label": ".check()"
     },
     {
@@ -8395,7 +8395,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_throttle_go_context",
       "community": 140,
-      "community_name": "NewThrottleService",
+      "community_name": "ThrottleService",
       "norm_label": "context"
     },
     {
@@ -8405,8 +8405,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_throttle_test",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": "throttle_test.go"
     },
     {
@@ -8416,8 +8416,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "auth_registerattemptcall",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": "registerattemptcall"
     },
     {
@@ -8427,8 +8427,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "auth_fakethrottlerepository",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": "fakethrottlerepository"
     },
     {
@@ -8438,8 +8438,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_throttle_test_go_time",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": "time"
     },
     {
@@ -8449,8 +8449,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "auth_fakethrottlerepository_registerattempt",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": ".registerattempt()"
     },
     {
@@ -8460,8 +8460,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_throttle_test_go_context",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": "context"
     },
     {
@@ -8471,8 +8471,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_throttle_test_testthrottlecfg",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": "testthrottlecfg()"
     },
     {
@@ -8482,8 +8482,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_throttle_test_testthrottleservice_belowthreshold_returnsnil",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": "testthrottleservice_belowthreshold_returnsnil()"
     },
     {
@@ -8493,8 +8493,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_throttle_test_go_t",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": "t"
     },
     {
@@ -8504,8 +8504,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_throttle_test_testthrottleservice_escalated_returnschallengerequired",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": "testthrottleservice_escalated_returnschallengerequired()"
     },
     {
@@ -8515,8 +8515,8 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_throttle_test_testthrottleservice_escalated_retryafterneverbelowone",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": "testthrottleservice_escalated_retryafterneverbelowone()"
     },
     {
@@ -8526,8 +8526,8 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_throttle_test_testthrottleservice_haship_stableandkeyed",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": "testthrottleservice_haship_stableandkeyed()"
     },
     {
@@ -8537,8 +8537,8 @@
       "source_location": "L108",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_throttle_test_testthrottleservice_repositoryerror_returnsinternal",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": "testthrottleservice_repositoryerror_returnsinternal()"
     },
     {
@@ -8548,8 +8548,8 @@
       "source_location": "L119",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_throttle_test_testthrottleservice_cancelledcontext_nevercallsrepository",
-      "community": 140,
-      "community_name": "NewThrottleService",
+      "community": 15,
+      "community_name": ".Now",
       "norm_label": "testthrottleservice_cancelledcontext_nevercallsrepository()"
     },
     {
@@ -11353,8 +11353,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_postgres_assignment_repository",
-      "community": 73,
-      "community_name": "NewAssignmentService",
+      "community": 200,
+      "community_name": "BarbershopID",
       "norm_label": "assignment_repository.go"
     },
     {
@@ -11364,8 +11364,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "postgres_assignmentrepository",
-      "community": 73,
-      "community_name": "NewAssignmentService",
+      "community": 200,
+      "community_name": "BarbershopID",
       "norm_label": "assignmentrepository"
     },
     {
@@ -11375,8 +11375,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_postgres_assignment_repository_newassignmentrepository",
-      "community": 73,
-      "community_name": "NewAssignmentService",
+      "community": 200,
+      "community_name": "BarbershopID",
       "norm_label": "newassignmentrepository()"
     },
     {
@@ -11386,8 +11386,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "postgres_assignmentrepository_list",
-      "community": 73,
-      "community_name": "NewAssignmentService",
+      "community": 200,
+      "community_name": "BarbershopID",
       "norm_label": ".list()"
     },
     {
@@ -11397,8 +11397,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_postgres_assignment_repository_go_context",
-      "community": 73,
-      "community_name": "NewAssignmentService",
+      "community": 200,
+      "community_name": "BarbershopID",
       "norm_label": "context"
     },
     {
@@ -11408,8 +11408,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_postgres_assignment_repository_go_cursor",
-      "community": 73,
-      "community_name": "NewAssignmentService",
+      "community": 200,
+      "community_name": "BarbershopID",
       "norm_label": "cursor"
     },
     {
@@ -11419,8 +11419,8 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "postgres_assignmentrepository_assign",
-      "community": 73,
-      "community_name": "NewAssignmentService",
+      "community": 200,
+      "community_name": "BarbershopID",
       "norm_label": ".assign()"
     },
     {
@@ -11430,8 +11430,8 @@
       "source_location": "L183",
       "_origin": "ast",
       "id": "postgres_assignmentrepository_unassign",
-      "community": 73,
-      "community_name": "NewAssignmentService",
+      "community": 200,
+      "community_name": "BarbershopID",
       "norm_label": ".unassign()"
     },
     {
@@ -11815,8 +11815,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_postgres_repository_go_postgres_repository",
-      "community": 205,
-      "community_name": ".Create",
+      "community": 137,
+      "community_name": "catalog/postgres/repository.go",
       "norm_label": "repository"
     },
     {
@@ -11826,8 +11826,8 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "apps_api_internal_modules_catalog_postgres_repository_new",
-      "community": 205,
-      "community_name": ".Create",
+      "community": 137,
+      "community_name": "catalog/postgres/repository.go",
       "norm_label": "new()"
     },
     {
@@ -14015,8 +14015,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "schedule/domain.go"
     },
     {
@@ -14026,8 +14026,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "schedule_workinghour",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "workinghour"
     },
     {
@@ -14037,8 +14037,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_go_time",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "time"
     },
     {
@@ -14070,8 +14070,8 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_validatestartstime",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "validatestartstime()"
     },
     {
@@ -14081,8 +14081,8 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_minutesofday",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "minutesofday()"
     },
     {
@@ -14092,8 +14092,8 @@
       "source_location": "L118",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_intervalsoverlap",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "intervalsoverlap()"
     },
     {
@@ -14103,8 +14103,8 @@
       "source_location": "L128",
       "_origin": "ast",
       "id": "schedule_cursor",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "cursor"
     },
     {
@@ -14114,8 +14114,8 @@
       "source_location": "L136",
       "_origin": "ast",
       "id": "schedule_cursorwire",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "cursorwire"
     },
     {
@@ -14125,8 +14125,8 @@
       "source_location": "L144",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_encodecursor",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "encodecursor()"
     },
     {
@@ -14136,8 +14136,8 @@
       "source_location": "L158",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_decodecursor",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "decodecursor()"
     },
     {
@@ -14147,8 +14147,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_test",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "schedule/domain_test.go"
     },
     {
@@ -14158,8 +14158,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_test_testlookslikebarberid",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testlookslikebarberid()"
     },
     {
@@ -14169,8 +14169,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_test_go_t",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "t"
     },
     {
@@ -14180,8 +14180,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_test_testlookslikeworkinghourid",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testlookslikeworkinghourid()"
     },
     {
@@ -14191,8 +14191,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_test_testvalidatestartstime_valid",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testvalidatestartstime_valid()"
     },
     {
@@ -14202,8 +14202,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_test_testvalidatestartstime_invalid",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testvalidatestartstime_invalid()"
     },
     {
@@ -14213,8 +14213,8 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_test_testintervalsoverlap_contiguous_notoverlapping",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testintervalsoverlap_contiguous_notoverlapping()"
     },
     {
@@ -14224,8 +14224,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_test_testintervalsoverlap_identical_overlaps",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testintervalsoverlap_identical_overlaps()"
     },
     {
@@ -14235,8 +14235,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_test_testintervalsoverlap_partialoverlap_detected",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testintervalsoverlap_partialoverlap_detected()"
     },
     {
@@ -14246,8 +14246,8 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_test_testintervalsoverlap_disjoint_notoverlapping",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testintervalsoverlap_disjoint_notoverlapping()"
     },
     {
@@ -14257,8 +14257,8 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_test_testintervalsoverlap_nightshift_extendspastmidnight",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testintervalsoverlap_nightshift_extendspastmidnight()"
     },
     {
@@ -14268,8 +14268,8 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_test_testencodedecodecursor_roundtrips",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testencodedecodecursor_roundtrips()"
     },
     {
@@ -14279,8 +14279,8 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_test_testdecodecursor_malformed_rejected",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testdecodecursor_malformed_rejected()"
     },
     {
@@ -14290,8 +14290,8 @@
       "source_location": "L108",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_domain_test_testdecodecursor_outofrangeweekday_rejected",
-      "community": 146,
-      "community_name": "schedule/service_test.go",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testdecodecursor_outofrangeweekday_rejected()"
     },
     {
@@ -14378,7 +14378,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test",
-      "community": 94,
+      "community": 226,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "schedule/httpapi/contract_test.go"
     },
@@ -14389,7 +14389,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_go_httpapi_schemadoc",
-      "community": 94,
+      "community": 226,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "schemadoc"
     },
@@ -14400,7 +14400,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_go_httpapi_operation",
-      "community": 94,
+      "community": 226,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "operation"
     },
@@ -14411,7 +14411,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "httpapi_schedulepathsfile",
-      "community": 94,
+      "community": 226,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "schedulepathsfile"
     },
@@ -14422,7 +14422,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_findreporoot",
-      "community": 94,
+      "community": 226,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "findreporoot()"
     },
@@ -14433,7 +14433,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_go_t",
-      "community": 94,
+      "community": 226,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "t"
     },
@@ -14444,7 +14444,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_loadyaml",
-      "community": 94,
+      "community": 226,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "loadyaml()"
     },
@@ -14455,7 +14455,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_requireprops",
-      "community": 94,
+      "community": 226,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "requireprops()"
     },
@@ -14466,7 +14466,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_requireresponses",
-      "community": 94,
+      "community": 226,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "requireresponses()"
     },
@@ -14477,7 +14477,7 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_workinghourresponseschema_matchesdtofields",
-      "community": 94,
+      "community": 226,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_workinghourresponseschema_matchesdtofields()"
     },
@@ -14488,7 +14488,7 @@
       "source_location": "L120",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_createworkinghourrequestschema_matchesdtofields",
-      "community": 94,
+      "community": 226,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_createworkinghourrequestschema_matchesdtofields()"
     },
@@ -14499,7 +14499,7 @@
       "source_location": "L131",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_updateworkinghourrequestschema_matchesdtofields",
-      "community": 94,
+      "community": 226,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_updateworkinghourrequestschema_matchesdtofields()"
     },
@@ -14510,7 +14510,7 @@
       "source_location": "L136",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_workinghourlistresponseschema_hasitemsandnextcursor",
-      "community": 94,
+      "community": 226,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_workinghourlistresponseschema_hasitemsandnextcursor()"
     },
@@ -14521,7 +14521,7 @@
       "source_location": "L143",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_listworkinghoursoperation_methodpathsecurityandresponses",
-      "community": 94,
+      "community": 226,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_listworkinghoursoperation_methodpathsecurityandresponses()"
     },
@@ -14532,7 +14532,7 @@
       "source_location": "L148",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_createworkinghouroperation_methodpathsecurityandresponses",
-      "community": 94,
+      "community": 226,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_createworkinghouroperation_methodpathsecurityandresponses()"
     },
@@ -14543,7 +14543,7 @@
       "source_location": "L153",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_getworkinghouroperation_methodpathsecurityandresponses",
-      "community": 94,
+      "community": 226,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_getworkinghouroperation_methodpathsecurityandresponses()"
     },
@@ -14554,7 +14554,7 @@
       "source_location": "L158",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_updateworkinghouroperation_methodpathsecurityandresponses",
-      "community": 94,
+      "community": 226,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_updateworkinghouroperation_methodpathsecurityandresponses()"
     },
@@ -14565,7 +14565,7 @@
       "source_location": "L163",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_deleteworkinghouroperation_methodpathsecurityandresponses",
-      "community": 94,
+      "community": 226,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_deleteworkinghouroperation_methodpathsecurityandresponses()"
     },
@@ -14576,7 +14576,7 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_httpapi_contract_test_testcontract_openapiyaml_registersschedulepaths",
-      "community": 94,
+      "community": 226,
       "community_name": "schedule/httpapi/contract_test.go",
       "norm_label": "testcontract_openapiyaml_registersschedulepaths()"
     },
@@ -15269,8 +15269,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "schedule/postgres/repository_test.go"
     },
     {
@@ -15280,8 +15280,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_setuptestdb",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "setuptestdb()"
     },
     {
@@ -15291,8 +15291,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_go_t",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "t"
     },
     {
@@ -15302,8 +15302,8 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_newrepository",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "newrepository()"
     },
     {
@@ -15313,8 +15313,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_go_repository",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "repository"
     },
     {
@@ -15324,8 +15324,8 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_createworkinghour",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "createworkinghour()"
     },
     {
@@ -15335,8 +15335,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_go_createinput",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "createinput"
     },
     {
@@ -15346,8 +15346,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_go_workinghour",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "workinghour"
     },
     {
@@ -15357,8 +15357,8 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_itoa",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "itoa()"
     },
     {
@@ -15368,8 +15368,8 @@
       "source_location": "L113",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_uniquesuffix",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "uniquesuffix()"
     },
     {
@@ -15379,8 +15379,8 @@
       "source_location": "L129",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testcreate_storedresponsebody_matcheshttpapiwireshape",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testcreate_storedresponsebody_matcheshttpapiwireshape()"
     },
     {
@@ -15390,8 +15390,8 @@
       "source_location": "L156",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testcreate_repeatedkeysamebody_replayswithoutsecondrow",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testcreate_repeatedkeysamebody_replayswithoutsecondrow()"
     },
     {
@@ -15401,8 +15401,8 @@
       "source_location": "L188",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testcreate_splitshift_twononoverlappingsegmentssameday",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testcreate_splitshift_twononoverlappingsegmentssameday()"
     },
     {
@@ -15412,8 +15412,8 @@
       "source_location": "L200",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testcreate_nightshift_crossesmidnightwithouterror",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testcreate_nightshift_crossesmidnightwithouterror()"
     },
     {
@@ -15423,8 +15423,8 @@
       "source_location": "L212",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testcreate_exactsamestart_returnsconflict",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testcreate_exactsamestart_returnsconflict()"
     },
     {
@@ -15434,8 +15434,8 @@
       "source_location": "L229",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testcreate_partialoverlap_returnsconflict",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testcreate_partialoverlap_returnsconflict()"
     },
     {
@@ -15445,8 +15445,8 @@
       "source_location": "L247",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testcreate_contiguoussegments_noconflict",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testcreate_contiguoussegments_noconflict()"
     },
     {
@@ -15456,8 +15456,8 @@
       "source_location": "L268",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testcreate_concurrentoverlappingcreates_exactlyonesucceeds",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testcreate_concurrentoverlappingcreates_exactlyonesucceeds()"
     },
     {
@@ -15467,8 +15467,8 @@
       "source_location": "L328",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testget_crossbarber_neverleaksanotherbarbersworkinghour",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testget_crossbarber_neverleaksanotherbarbersworkinghour()"
     },
     {
@@ -15478,8 +15478,8 @@
       "source_location": "L343",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testget_crosstenant_neverleaksanothershopsworkinghour",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testget_crosstenant_neverleaksanothershopsworkinghour()"
     },
     {
@@ -15489,8 +15489,8 @@
       "source_location": "L358",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testupdate_crosstenant_nevereditsanothershopsworkinghour",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testupdate_crosstenant_nevereditsanothershopsworkinghour()"
     },
     {
@@ -15500,8 +15500,8 @@
       "source_location": "L373",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testdelete_crosstenant_neverdeletesanothershopsworkinghour",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testdelete_crosstenant_neverdeletesanothershopsworkinghour()"
     },
     {
@@ -15511,8 +15511,8 @@
       "source_location": "L399",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testupdate_noconflict_changesinterval",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testupdate_noconflict_changesinterval()"
     },
     {
@@ -15522,8 +15522,8 @@
       "source_location": "L417",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testupdate_samesegmentnorealchange_doesnotconflictwithitself",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testupdate_samesegmentnorealchange_doesnotconflictwithitself()"
     },
     {
@@ -15533,8 +15533,8 @@
       "source_location": "L435",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testupdate_overlapsanothersegment_returnsconflictwithoutchanginganything",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testupdate_overlapsanothersegment_returnsconflictwithoutchanginganything()"
     },
     {
@@ -15544,8 +15544,8 @@
       "source_location": "L461",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testupdate_nonexistentid_returnsnotfound",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testupdate_nonexistentid_returnsnotfound()"
     },
     {
@@ -15555,8 +15555,8 @@
       "source_location": "L476",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testdelete_thenget_notfound",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testdelete_thenget_notfound()"
     },
     {
@@ -15566,8 +15566,8 @@
       "source_location": "L499",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testdelete_retried_secondcallissafenoop",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testdelete_retried_secondcallissafenoop()"
     },
     {
@@ -15577,8 +15577,8 @@
       "source_location": "L520",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testlist_orderedbyweekdaythenstartstime",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testlist_orderedbyweekdaythenstartstime()"
     },
     {
@@ -15588,8 +15588,8 @@
       "source_location": "L549",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_postgres_repository_test_testlist_firstpage_neverreturnsmorethanlimit",
-      "community": 60,
-      "community_name": "Key",
+      "community": 191,
+      "community_name": "createWorkingHour",
       "norm_label": "testlist_firstpage_neverreturnsmorethanlimit()"
     },
     {
@@ -16392,7 +16392,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "shops/httpapi/contract_test.go"
     },
     {
@@ -16403,7 +16403,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_go_httpapi_schemadoc",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "schemadoc"
     },
     {
@@ -16414,7 +16414,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_go_httpapi_operation",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "operation"
     },
     {
@@ -16425,7 +16425,7 @@
       "_origin": "ast",
       "id": "httpapi_barbershopsettingspathfile",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "barbershopsettingspathfile"
     },
     {
@@ -16436,7 +16436,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_findreporoot",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "findreporoot()"
     },
     {
@@ -16447,7 +16447,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_go_t",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "t"
     },
     {
@@ -16458,7 +16458,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_loadyaml",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "loadyaml()"
     },
     {
@@ -16469,7 +16469,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_requireprops",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "requireprops()"
     },
     {
@@ -16480,7 +16480,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_testcontract_barbershopsettingsresponseschema_matchesdtofields",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_barbershopsettingsresponseschema_matchesdtofields()"
     },
     {
@@ -16491,7 +16491,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_testcontract_updatebarbershopsettingsrequestschema_matchesdtofields",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_updatebarbershopsettingsrequestschema_matchesdtofields()"
     },
     {
@@ -16502,7 +16502,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_testcontract_getbarbershopsettingsoperation_methodpathsecurityandresponses",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_getbarbershopsettingsoperation_methodpathsecurityandresponses()"
     },
     {
@@ -16513,7 +16513,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_testcontract_updatebarbershopsettingsoperation_methodpathsecurityandresponses",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_updatebarbershopsettingsoperation_methodpathsecurityandresponses()"
     },
     {
@@ -16524,7 +16524,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_contract_test_testcontract_openapiyaml_registersbarbershopsettingspath",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_openapiyaml_registersbarbershopsettingspath()"
     },
     {
@@ -16535,7 +16535,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_dto",
       "community": 241,
-      "community_name": "PrincipalFromContext",
+      "community_name": ".ServeHTTP",
       "norm_label": "shops/httpapi/dto.go"
     },
     {
@@ -16546,7 +16546,7 @@
       "_origin": "ast",
       "id": "httpapi_barbershopsettingsresponse",
       "community": 241,
-      "community_name": "PrincipalFromContext",
+      "community_name": ".ServeHTTP",
       "norm_label": "barbershopsettingsresponse"
     },
     {
@@ -16557,7 +16557,7 @@
       "_origin": "ast",
       "id": "httpapi_updatebarbershopsettingsrequest",
       "community": 241,
-      "community_name": "PrincipalFromContext",
+      "community_name": ".ServeHTTP",
       "norm_label": "updatebarbershopsettingsrequest"
     },
     {
@@ -16612,7 +16612,7 @@
       "_origin": "ast",
       "id": "httpapi_getbarbershopsettingshandler_servehttp",
       "community": 241,
-      "community_name": "PrincipalFromContext",
+      "community_name": ".ServeHTTP",
       "norm_label": ".servehttp()"
     },
     {
@@ -16623,7 +16623,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_handler_go_responsewriter",
       "community": 241,
-      "community_name": "PrincipalFromContext",
+      "community_name": ".ServeHTTP",
       "norm_label": "responsewriter"
     },
     {
@@ -16634,7 +16634,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_handler_go_request",
       "community": 241,
-      "community_name": "PrincipalFromContext",
+      "community_name": ".ServeHTTP",
       "norm_label": "request"
     },
     {
@@ -16667,7 +16667,7 @@
       "_origin": "ast",
       "id": "httpapi_updatebarbershopsettingshandler_servehttp",
       "community": 241,
-      "community_name": "PrincipalFromContext",
+      "community_name": ".ServeHTTP",
       "norm_label": ".servehttp()"
     },
     {
@@ -16678,7 +16678,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_httpapi_handler_newbarbershopsettingsresponse",
       "community": 241,
-      "community_name": "PrincipalFromContext",
+      "community_name": ".ServeHTTP",
       "norm_label": "newbarbershopsettingsresponse()"
     },
     {
@@ -16930,8 +16930,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_postgres_repository",
-      "community": 102,
-      "community_name": "NewService",
+      "community": 227,
+      "community_name": "DB",
       "norm_label": "shops/postgres/repository.go"
     },
     {
@@ -16941,8 +16941,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_postgres_repository_go_postgres_repository",
-      "community": 102,
-      "community_name": "NewService",
+      "community": 227,
+      "community_name": "DB",
       "norm_label": "repository"
     },
     {
@@ -16952,8 +16952,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_postgres_repository_new",
-      "community": 102,
-      "community_name": "NewService",
+      "community": 227,
+      "community_name": "DB",
       "norm_label": "new()"
     },
     {
@@ -16963,8 +16963,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_postgres_repository_go_postgres_repository_get",
-      "community": 102,
-      "community_name": "NewService",
+      "community": 227,
+      "community_name": "DB",
       "norm_label": ".get()"
     },
     {
@@ -16974,8 +16974,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_postgres_repository_go_context",
-      "community": 102,
-      "community_name": "NewService",
+      "community": 227,
+      "community_name": "DB",
       "norm_label": "context"
     },
     {
@@ -16985,8 +16985,8 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_postgres_repository_go_postgres_repository_update",
-      "community": 102,
-      "community_name": "NewService",
+      "community": 227,
+      "community_name": "DB",
       "norm_label": ".update()"
     },
     {
@@ -16996,8 +16996,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_postgres_repository_go_updateresult",
-      "community": 102,
-      "community_name": "NewService",
+      "community": 227,
+      "community_name": "DB",
       "norm_label": "updateresult"
     },
     {
@@ -17722,7 +17722,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test",
-      "community": 226,
+      "community": 94,
       "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "staff/httpapi/contract_test.go"
     },
@@ -17733,7 +17733,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_go_httpapi_schemadoc",
-      "community": 226,
+      "community": 94,
       "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "schemadoc"
     },
@@ -17744,7 +17744,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_go_httpapi_operation",
-      "community": 226,
+      "community": 94,
       "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "operation"
     },
@@ -17755,7 +17755,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "httpapi_staffpathsfile",
-      "community": 226,
+      "community": 94,
       "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "staffpathsfile"
     },
@@ -17766,7 +17766,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_findreporoot",
-      "community": 226,
+      "community": 94,
       "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "findreporoot()"
     },
@@ -17777,7 +17777,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_go_t",
-      "community": 226,
+      "community": 94,
       "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "t"
     },
@@ -17788,7 +17788,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_loadyaml",
-      "community": 226,
+      "community": 94,
       "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "loadyaml()"
     },
@@ -17799,7 +17799,7 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_requireprops",
-      "community": 226,
+      "community": 94,
       "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "requireprops()"
     },
@@ -17810,7 +17810,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_requireresponses",
-      "community": 226,
+      "community": 94,
       "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "requireresponses()"
     },
@@ -17821,7 +17821,7 @@
       "source_location": "L118",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_testcontract_barberresponseschema_matchesdtofields",
-      "community": 226,
+      "community": 94,
       "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_barberresponseschema_matchesdtofields()"
     },
@@ -17832,7 +17832,7 @@
       "source_location": "L123",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_testcontract_createbarberrequestschema_matchesdtofields",
-      "community": 226,
+      "community": 94,
       "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_createbarberrequestschema_matchesdtofields()"
     },
@@ -17843,7 +17843,7 @@
       "source_location": "L131",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_testcontract_updatebarberrequestschema_matchesdtofields",
-      "community": 226,
+      "community": 94,
       "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_updatebarberrequestschema_matchesdtofields()"
     },
@@ -17854,7 +17854,7 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_testcontract_barberlistresponseschema_hasitemsandnextcursor",
-      "community": 226,
+      "community": 94,
       "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_barberlistresponseschema_hasitemsandnextcursor()"
     },
@@ -17865,7 +17865,7 @@
       "source_location": "L148",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_testcontract_listbarbersoperation_methodpathsecurityandresponses",
-      "community": 226,
+      "community": 94,
       "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_listbarbersoperation_methodpathsecurityandresponses()"
     },
@@ -17876,7 +17876,7 @@
       "source_location": "L153",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_testcontract_createbarberoperation_methodpathsecurityandresponses",
-      "community": 226,
+      "community": 94,
       "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_createbarberoperation_methodpathsecurityandresponses()"
     },
@@ -17887,7 +17887,7 @@
       "source_location": "L158",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_testcontract_getbarberoperation_methodpathsecurityandresponses",
-      "community": 226,
+      "community": 94,
       "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_getbarberoperation_methodpathsecurityandresponses()"
     },
@@ -17898,7 +17898,7 @@
       "source_location": "L163",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_testcontract_renamebarberoperation_methodpathsecurityandresponses",
-      "community": 226,
+      "community": 94,
       "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_renamebarberoperation_methodpathsecurityandresponses()"
     },
@@ -17909,7 +17909,7 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_contract_test_testcontract_openapiyaml_registersstaffpaths",
-      "community": 226,
+      "community": 94,
       "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testcontract_openapiyaml_registersstaffpaths()"
     },
@@ -17920,8 +17920,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_dto",
-      "community": 191,
-      "community_name": "principalOrInternalError",
+      "community": 171,
+      "community_name": "NewService",
       "norm_label": "staff/httpapi/dto.go"
     },
     {
@@ -17931,8 +17931,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "httpapi_barberresponse",
-      "community": 191,
-      "community_name": "principalOrInternalError",
+      "community": 171,
+      "community_name": "NewService",
       "norm_label": "barberresponse"
     },
     {
@@ -17942,8 +17942,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_dto_go_time",
-      "community": 191,
-      "community_name": "principalOrInternalError",
+      "community": 171,
+      "community_name": "NewService",
       "norm_label": "time"
     },
     {
@@ -17953,8 +17953,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "httpapi_barberlistresponse",
-      "community": 191,
-      "community_name": "principalOrInternalError",
+      "community": 171,
+      "community_name": "NewService",
       "norm_label": "barberlistresponse"
     },
     {
@@ -17964,8 +17964,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "httpapi_createbarberrequest",
-      "community": 191,
-      "community_name": "principalOrInternalError",
+      "community": 171,
+      "community_name": "NewService",
       "norm_label": "createbarberrequest"
     },
     {
@@ -17975,8 +17975,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "httpapi_updatebarberrequest",
-      "community": 191,
-      "community_name": "principalOrInternalError",
+      "community": 171,
+      "community_name": "NewService",
       "norm_label": "updatebarberrequest"
     },
     {
@@ -17997,8 +17997,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_handler_principalorinternalerror",
-      "community": 191,
-      "community_name": "principalOrInternalError",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": "principalorinternalerror()"
     },
     {
@@ -18008,8 +18008,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_handler_go_responsewriter",
-      "community": 191,
-      "community_name": "principalOrInternalError",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": "responsewriter"
     },
     {
@@ -18019,8 +18019,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_handler_go_request",
-      "community": 191,
-      "community_name": "principalOrInternalError",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": "request"
     },
     {
@@ -18030,8 +18030,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_handler_writeunknownfieldorinvalidjsonproblem",
-      "community": 191,
-      "community_name": "principalOrInternalError",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": "writeunknownfieldorinvalidjsonproblem()"
     },
     {
@@ -18074,8 +18074,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "httpapi_listbarbershandler_servehttp",
-      "community": 191,
-      "community_name": "principalOrInternalError",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": ".servehttp()"
     },
     {
@@ -18107,8 +18107,8 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "httpapi_getbarberhandler_servehttp",
-      "community": 191,
-      "community_name": "principalOrInternalError",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": ".servehttp()"
     },
     {
@@ -18140,8 +18140,8 @@
       "source_location": "L139",
       "_origin": "ast",
       "id": "httpapi_createbarberhandler_servehttp",
-      "community": 191,
-      "community_name": "principalOrInternalError",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": ".servehttp()"
     },
     {
@@ -18173,8 +18173,8 @@
       "source_location": "L219",
       "_origin": "ast",
       "id": "httpapi_renamebarberhandler_servehttp",
-      "community": 191,
-      "community_name": "principalOrInternalError",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": ".servehttp()"
     },
     {
@@ -18184,8 +18184,8 @@
       "source_location": "L256",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_handler_newbarberresponse",
-      "community": 191,
-      "community_name": "principalOrInternalError",
+      "community": 171,
+      "community_name": "NewService",
       "norm_label": "newbarberresponse()"
     },
     {
@@ -18195,8 +18195,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_handler_go_barber",
-      "community": 191,
-      "community_name": "principalOrInternalError",
+      "community": 171,
+      "community_name": "NewService",
       "norm_label": "barber"
     },
     {
@@ -18206,8 +18206,8 @@
       "source_location": "L265",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_handler_newbarberlistresponse",
-      "community": 191,
-      "community_name": "principalOrInternalError",
+      "community": 171,
+      "community_name": "NewService",
       "norm_label": "newbarberlistresponse()"
     },
     {
@@ -18217,8 +18217,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_httpapi_handler_go_listresult",
-      "community": 191,
-      "community_name": "principalOrInternalError",
+      "community": 171,
+      "community_name": "NewService",
       "norm_label": "listresult"
     },
     {
@@ -18789,8 +18789,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_ports",
-      "community": 174,
-      "community_name": "NewSQLCoordinator",
+      "community": 171,
+      "community_name": "NewService",
       "norm_label": "staff/ports.go"
     },
     {
@@ -18800,8 +18800,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "staff_listresult",
-      "community": 174,
-      "community_name": "NewSQLCoordinator",
+      "community": 171,
+      "community_name": "NewService",
       "norm_label": "listresult"
     },
     {
@@ -18811,8 +18811,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_staff_ports_go_barber",
-      "community": 174,
-      "community_name": "NewSQLCoordinator",
+      "community": 171,
+      "community_name": "NewService",
       "norm_label": "barber"
     },
     {
@@ -18844,8 +18844,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "staff_repository",
-      "community": 174,
-      "community_name": "NewSQLCoordinator",
+      "community": 171,
+      "community_name": "NewService",
       "norm_label": "repository"
     },
     {
@@ -19867,8 +19867,8 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "apps_api_internal_platform_apperr_apperr_invalid",
-      "community": 125,
-      "community_name": "As",
+      "community": 107,
+      "community_name": "WriteProblem",
       "norm_label": "invalid()"
     },
     {
@@ -20088,7 +20088,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_archtest_chi_boundary_test",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "chi_boundary_test.go"
     },
     {
@@ -20099,7 +20099,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_archtest_chi_boundary_test_testdomainandservicesdonotimportchi",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testdomainandservicesdonotimportchi()"
     },
     {
@@ -20110,7 +20110,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_archtest_chi_boundary_test_go_t",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "t"
     },
     {
@@ -20121,7 +20121,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_archtest_chi_boundary_test_findinternaldir",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "findinternaldir()"
     },
     {
@@ -20132,7 +20132,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_archtest_module_boundary_test",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "module_boundary_test.go"
     },
     {
@@ -20143,7 +20143,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_archtest_module_boundary_test_testmodulesdonotimporteachother",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "testmodulesdonotimporteachother()"
     },
     {
@@ -20154,7 +20154,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_archtest_module_boundary_test_go_t",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "t"
     },
     {
@@ -20439,8 +20439,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "clock_clock",
-      "community": 221,
-      "community_name": "RecoveryService",
+      "community": 140,
+      "community_name": "ThrottleService",
       "norm_label": "clock"
     },
     {
@@ -20901,8 +20901,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_platform_database_database",
-      "community": 200,
-      "community_name": "BarbershopID",
+      "community": 227,
+      "community_name": "DB",
       "norm_label": "database.go"
     },
     {
@@ -20923,8 +20923,8 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "apps_api_internal_platform_database_database_validbarbershopid",
-      "community": 200,
-      "community_name": "BarbershopID",
+      "community": 227,
+      "community_name": "DB",
       "norm_label": "validbarbershopid()"
     },
     {
@@ -20934,8 +20934,8 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "database_queries",
-      "community": 205,
-      "community_name": ".Create",
+      "community": 174,
+      "community_name": "NewSQLCoordinator",
       "norm_label": "queries"
     },
     {
@@ -20945,8 +20945,8 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "database_db",
-      "community": 60,
-      "community_name": "Key",
+      "community": 227,
+      "community_name": "DB",
       "norm_label": "db"
     },
     {
@@ -20956,8 +20956,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_database_database_go_pool",
-      "community": 60,
-      "community_name": "Key",
+      "community": 227,
+      "community_name": "DB",
       "norm_label": "pool"
     },
     {
@@ -20967,8 +20967,8 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "apps_api_internal_platform_database_database_newdb",
-      "community": 60,
-      "community_name": "Key",
+      "community": 227,
+      "community_name": "DB",
       "norm_label": "newdb()"
     },
     {
@@ -20978,8 +20978,8 @@
       "source_location": "L168",
       "_origin": "ast",
       "id": "database_db_close",
-      "community": 60,
-      "community_name": "Key",
+      "community": 227,
+      "community_name": "DB",
       "norm_label": ".close()"
     },
     {
@@ -20989,8 +20989,8 @@
       "source_location": "L195",
       "_origin": "ast",
       "id": "database_db_intenanttx",
-      "community": 60,
-      "community_name": "Key",
+      "community": 227,
+      "community_name": "DB",
       "norm_label": ".intenanttx()"
     },
     {
@@ -21000,8 +21000,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_database_database_go_context",
-      "community": 60,
-      "community_name": "Key",
+      "community": 227,
+      "community_name": "DB",
       "norm_label": "context"
     },
     {
@@ -21011,8 +21011,8 @@
       "source_location": "L294",
       "_origin": "ast",
       "id": "database_db_resolvetenant",
-      "community": 60,
-      "community_name": "Key",
+      "community": 227,
+      "community_name": "DB",
       "norm_label": ".resolvetenant()"
     },
     {
@@ -21022,8 +21022,8 @@
       "source_location": "L322",
       "_origin": "ast",
       "id": "database_db_callsecuritydefinerrow",
-      "community": 60,
-      "community_name": "Key",
+      "community": 227,
+      "community_name": "DB",
       "norm_label": ".callsecuritydefinerrow()"
     },
     {
@@ -21033,8 +21033,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "row",
-      "community": 60,
-      "community_name": "Key",
+      "community": 227,
+      "community_name": "DB",
       "norm_label": "row"
     },
     {
@@ -21044,8 +21044,8 @@
       "source_location": "L342",
       "_origin": "ast",
       "id": "database_db_healthcheck",
-      "community": 60,
-      "community_name": "Key",
+      "community": 227,
+      "community_name": "DB",
       "norm_label": ".healthcheck()"
     },
     {
@@ -21056,7 +21056,7 @@
       "_origin": "ast",
       "id": "database_db_poolstats",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": ".poolstats()"
     },
     {
@@ -21067,7 +21067,7 @@
       "_origin": "ast",
       "id": "stat",
       "community": 94,
-      "community_name": "schedule/httpapi/contract_test.go",
+      "community_name": "staff/httpapi/contract_test.go",
       "norm_label": "stat"
     },
     {
@@ -21297,8 +21297,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit",
-      "community": 227,
-      "community_name": "echoBodyHandler",
+      "community": 122,
+      "community_name": "RequestID",
       "norm_label": "bodylimit.go"
     },
     {
@@ -21308,8 +21308,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_bodylimit",
-      "community": 227,
-      "community_name": "echoBodyHandler",
+      "community": 122,
+      "community_name": "RequestID",
       "norm_label": "bodylimit()"
     },
     {
@@ -21319,8 +21319,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_go_handler",
-      "community": 227,
-      "community_name": "echoBodyHandler",
+      "community": 122,
+      "community_name": "RequestID",
       "norm_label": "handler"
     },
     {
@@ -21330,8 +21330,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_test",
-      "community": 227,
-      "community_name": "echoBodyHandler",
+      "community": 122,
+      "community_name": "RequestID",
       "norm_label": "bodylimit_test.go"
     },
     {
@@ -21341,8 +21341,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_test_echobodyhandler",
-      "community": 227,
-      "community_name": "echoBodyHandler",
+      "community": 122,
+      "community_name": "RequestID",
       "norm_label": "echobodyhandler()"
     },
     {
@@ -21352,8 +21352,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_test_go_responsewriter",
-      "community": 227,
-      "community_name": "echoBodyHandler",
+      "community": 122,
+      "community_name": "RequestID",
       "norm_label": "responsewriter"
     },
     {
@@ -21363,8 +21363,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_test_go_request",
-      "community": 227,
-      "community_name": "echoBodyHandler",
+      "community": 122,
+      "community_name": "RequestID",
       "norm_label": "request"
     },
     {
@@ -21374,8 +21374,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_test_testbodylimit_rejectsoversizedbody",
-      "community": 227,
-      "community_name": "echoBodyHandler",
+      "community": 122,
+      "community_name": "RequestID",
       "norm_label": "testbodylimit_rejectsoversizedbody()"
     },
     {
@@ -21385,8 +21385,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_test_go_t",
-      "community": 227,
-      "community_name": "echoBodyHandler",
+      "community": 122,
+      "community_name": "RequestID",
       "norm_label": "t"
     },
     {
@@ -21396,8 +21396,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_test_testbodylimit_allowsbodywithinlimit",
-      "community": 227,
-      "community_name": "echoBodyHandler",
+      "community": 122,
+      "community_name": "RequestID",
       "norm_label": "testbodylimit_allowsbodywithinlimit()"
     },
     {
@@ -21407,8 +21407,8 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_bodylimit_test_testbodylimit_producesrecognizablemaxbyteserror",
-      "community": 227,
-      "community_name": "echoBodyHandler",
+      "community": 122,
+      "community_name": "RequestID",
       "norm_label": "testbodylimit_producesrecognizablemaxbyteserror()"
     },
     {
@@ -21551,7 +21551,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_httpserver_test",
       "community": 122,
-      "community_name": "Recover",
+      "community_name": "RequestID",
       "norm_label": "httpserver_test.go"
     },
     {
@@ -21562,7 +21562,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_httpserver_test_testrequestid_acceptsvalidclientid",
       "community": 122,
-      "community_name": "Recover",
+      "community_name": "RequestID",
       "norm_label": "testrequestid_acceptsvalidclientid()"
     },
     {
@@ -21573,7 +21573,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_httpserver_test_go_t",
       "community": 122,
-      "community_name": "Recover",
+      "community_name": "RequestID",
       "norm_label": "t"
     },
     {
@@ -21584,7 +21584,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_httpserver_test_testrequestid_rejectsinvalidclientid",
       "community": 122,
-      "community_name": "Recover",
+      "community_name": "RequestID",
       "norm_label": "testrequestid_rejectsinvalidclientid()"
     },
     {
@@ -21595,7 +21595,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_httpserver_test_testrecover_doesnotlograwpanicvalue",
       "community": 122,
-      "community_name": "Recover",
+      "community_name": "RequestID",
       "norm_label": "testrecover_doesnotlograwpanicvalue()"
     },
     {
@@ -21606,7 +21606,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_httpserver_test_testrecover_respondswithproblemjson",
       "community": 122,
-      "community_name": "Recover",
+      "community_name": "RequestID",
       "norm_label": "testrecover_respondswithproblemjson()"
     },
     {
@@ -21617,7 +21617,7 @@
       "_origin": "ast",
       "id": "httpserver_httprobproblem",
       "community": 122,
-      "community_name": "Recover",
+      "community_name": "RequestID",
       "norm_label": "httprobproblem"
     },
     {
@@ -21628,7 +21628,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_httpserver_test_testwriteproblem_setscontenttypeandstatus",
       "community": 122,
-      "community_name": "Recover",
+      "community_name": "RequestID",
       "norm_label": "testwriteproblem_setscontenttypeandstatus()"
     },
     {
@@ -21682,8 +21682,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_writestoredresponse",
-      "community": 107,
-      "community_name": "WriteProblem",
+      "community": 175,
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "writestoredresponse()"
     },
     {
@@ -21693,8 +21693,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_idempotency_go_responsewriter",
-      "community": 107,
-      "community_name": "WriteProblem",
+      "community": 175,
+      "community_name": "IdempotencyKeyFromRequest",
       "norm_label": "responsewriter"
     },
     {
@@ -22046,7 +22046,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_recover",
       "community": 122,
-      "community_name": "Recover",
+      "community_name": "RequestID",
       "norm_label": "recover.go"
     },
     {
@@ -22057,7 +22057,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_recover_recover",
       "community": 122,
-      "community_name": "Recover",
+      "community_name": "RequestID",
       "norm_label": "recover()"
     },
     {
@@ -22068,7 +22068,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_recover_go_logger",
       "community": 122,
-      "community_name": "Recover",
+      "community_name": "RequestID",
       "norm_label": "logger"
     },
     {
@@ -22079,7 +22079,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_recover_go_handler",
       "community": 122,
-      "community_name": "Recover",
+      "community_name": "RequestID",
       "norm_label": "handler"
     },
     {
@@ -22089,8 +22089,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_requestid",
-      "community": 175,
-      "community_name": "IdempotencyKeyFromRequest",
+      "community": 122,
+      "community_name": "RequestID",
       "norm_label": "requestid.go"
     },
     {
@@ -22100,8 +22100,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "httpserver_requestidkey",
-      "community": 175,
-      "community_name": "IdempotencyKeyFromRequest",
+      "community": 122,
+      "community_name": "RequestID",
       "norm_label": "requestidkey"
     },
     {
@@ -22111,8 +22111,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_requestid_requestid",
-      "community": 175,
-      "community_name": "IdempotencyKeyFromRequest",
+      "community": 122,
+      "community_name": "RequestID",
       "norm_label": "requestid()"
     },
     {
@@ -22122,8 +22122,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_requestid_go_handler",
-      "community": 175,
-      "community_name": "IdempotencyKeyFromRequest",
+      "community": 122,
+      "community_name": "RequestID",
       "norm_label": "handler"
     },
     {
@@ -22144,8 +22144,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_requestid_go_context",
-      "community": 175,
-      "community_name": "IdempotencyKeyFromRequest",
+      "community": 122,
+      "community_name": "RequestID",
       "norm_label": "context"
     },
     {
@@ -22155,8 +22155,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_requestid_newrequestid",
-      "community": 175,
-      "community_name": "IdempotencyKeyFromRequest",
+      "community": 122,
+      "community_name": "RequestID",
       "norm_label": "newrequestid()"
     },
     {
@@ -22551,8 +22551,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_server",
-      "community": 109,
-      "community_name": "NewPurgeService",
+      "community": 248,
+      "community_name": "run",
       "norm_label": "server.go"
     },
     {
@@ -22562,8 +22562,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_server_new",
-      "community": 109,
-      "community_name": "NewPurgeService",
+      "community": 248,
+      "community_name": "run",
       "norm_label": "new()"
     },
     {
@@ -22573,8 +22573,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_server_go_handler",
-      "community": 109,
-      "community_name": "NewPurgeService",
+      "community": 248,
+      "community_name": "run",
       "norm_label": "handler"
     },
     {
@@ -22584,8 +22584,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_server_go_server",
-      "community": 109,
-      "community_name": "NewPurgeService",
+      "community": 248,
+      "community_name": "run",
       "norm_label": "server"
     },
     {
@@ -23035,8 +23035,8 @@
       "source_location": "L222",
       "_origin": "ast",
       "id": "idempotency_coordinator",
-      "community": 205,
-      "community_name": ".Create",
+      "community": 137,
+      "community_name": "catalog/postgres/repository.go",
       "norm_label": "coordinator"
     },
     {
@@ -23519,8 +23519,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_platform_observability_logger",
-      "community": 109,
-      "community_name": "NewPurgeService",
+      "community": 248,
+      "community_name": "run",
       "norm_label": "logger.go"
     },
     {
@@ -23530,8 +23530,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "apps_api_internal_platform_observability_logger_newlogger",
-      "community": 109,
-      "community_name": "NewPurgeService",
+      "community": 248,
+      "community_name": "run",
       "norm_label": "newlogger()"
     },
     {
@@ -23541,8 +23541,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_platform_observability_logger_go_logger",
-      "community": 109,
-      "community_name": "NewPurgeService",
+      "community": 248,
+      "community_name": "run",
       "norm_label": "logger"
     },
     {
@@ -23552,8 +23552,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "apps_api_internal_platform_observability_logger_parselevel",
-      "community": 109,
-      "community_name": "NewPurgeService",
+      "community": 248,
+      "community_name": "run",
       "norm_label": "parselevel()"
     },
     {
@@ -23563,8 +23563,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "level",
-      "community": 109,
-      "community_name": "NewPurgeService",
+      "community": 248,
+      "community_name": "run",
       "norm_label": "level"
     },
     {
@@ -24305,7 +24305,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_web_package",
-      "community": 229,
+      "community": 7,
       "community_name": "web/package.json",
       "norm_label": "web/package.json"
     },
@@ -24316,7 +24316,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "apps_web_package_name",
-      "community": 229,
+      "community": 7,
       "community_name": "web/package.json",
       "norm_label": "name"
     },
@@ -24327,7 +24327,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "apps_web_package_private",
-      "community": 229,
+      "community": 7,
       "community_name": "web/package.json",
       "norm_label": "private"
     },
@@ -24338,7 +24338,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "apps_web_package_version",
-      "community": 229,
+      "community": 7,
       "community_name": "web/package.json",
       "norm_label": "version"
     },
@@ -24349,7 +24349,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "apps_web_package_type",
-      "community": 229,
+      "community": 7,
       "community_name": "web/package.json",
       "norm_label": "type"
     },
@@ -24482,7 +24482,7 @@
       "_origin": "ast",
       "id": "apps_web_package_dependencies",
       "community": 7,
-      "community_name": "dependencies",
+      "community_name": "web/package.json",
       "norm_label": "dependencies"
     },
     {
@@ -24493,7 +24493,7 @@
       "_origin": "ast",
       "id": "apps_web_package_dependencies_openapi_fetch",
       "community": 7,
-      "community_name": "dependencies",
+      "community_name": "web/package.json",
       "norm_label": "openapi-fetch"
     },
     {
@@ -24504,7 +24504,7 @@
       "_origin": "ast",
       "id": "openapi_fetch",
       "community": 7,
-      "community_name": "dependencies",
+      "community_name": "web/package.json",
       "norm_label": "openapi-fetch"
     },
     {
@@ -24515,7 +24515,7 @@
       "_origin": "ast",
       "id": "apps_web_package_dependencies_vue",
       "community": 7,
-      "community_name": "dependencies",
+      "community_name": "web/package.json",
       "norm_label": "vue"
     },
     {
@@ -24526,7 +24526,7 @@
       "_origin": "ast",
       "id": "vue",
       "community": 7,
-      "community_name": "dependencies",
+      "community_name": "web/package.json",
       "norm_label": "vue"
     },
     {
@@ -24537,7 +24537,7 @@
       "_origin": "ast",
       "id": "apps_web_package_dependencies_vue_router",
       "community": 7,
-      "community_name": "dependencies",
+      "community_name": "web/package.json",
       "norm_label": "vue-router"
     },
     {
@@ -24548,7 +24548,7 @@
       "_origin": "ast",
       "id": "vue_router",
       "community": 7,
-      "community_name": "dependencies",
+      "community_name": "web/package.json",
       "norm_label": "vue-router"
     },
     {
@@ -37382,8 +37382,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_docs_informe_academico_secciones_1_a_4_2_v3_identidad_institucional",
-      "community": 225,
-      "community_name": "prompts/README.md",
+      "community": 252,
+      "community_name": "PROMPT-DOCS-INFORME-ACADEMICO-v3",
       "norm_label": "informe-academico-secciones-1-a-4-2-v3-identidad-institucional.md"
     },
     {
@@ -37393,8 +37393,8 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_docs_informe_academico_secciones_1_a_4_2_v3_identidad_institucional_prompt_docs_informe_academico_v3",
-      "community": 225,
-      "community_name": "prompts/README.md",
+      "community": 252,
+      "community_name": "PROMPT-DOCS-INFORME-ACADEMICO-v3",
       "norm_label": "prompt-docs-informe-academico-v3"
     },
     {
@@ -37404,8 +37404,8 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_docs_informe_academico_secciones_1_a_4_2_v3_identidad_institucional_objetivo",
-      "community": 225,
-      "community_name": "prompts/README.md",
+      "community": 252,
+      "community_name": "PROMPT-DOCS-INFORME-ACADEMICO-v3",
       "norm_label": "objetivo"
     },
     {
@@ -37415,8 +37415,8 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_docs_informe_academico_secciones_1_a_4_2_v3_identidad_institucional_cambios_autorizados",
-      "community": 225,
-      "community_name": "prompts/README.md",
+      "community": 252,
+      "community_name": "PROMPT-DOCS-INFORME-ACADEMICO-v3",
       "norm_label": "cambios autorizados"
     },
     {
@@ -37426,8 +37426,8 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_docs_informe_academico_secciones_1_a_4_2_v3_identidad_institucional_sistema_visual",
-      "community": 225,
-      "community_name": "prompts/README.md",
+      "community": 252,
+      "community_name": "PROMPT-DOCS-INFORME-ACADEMICO-v3",
       "norm_label": "sistema visual"
     },
     {
@@ -37437,8 +37437,8 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_docs_informe_academico_secciones_1_a_4_2_v3_identidad_institucional_verificaci\u00f3n_y_entrega",
-      "community": 225,
-      "community_name": "prompts/README.md",
+      "community": 252,
+      "community_name": "PROMPT-DOCS-INFORME-ACADEMICO-v3",
       "norm_label": "verificacion y entrega"
     },
     {
@@ -37448,8 +37448,8 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_docs_informe_academico_secciones_1_a_4_2_v3_identidad_institucional_resultado_de_ejecuci\u00f3n",
-      "community": 225,
-      "community_name": "prompts/README.md",
+      "community": 252,
+      "community_name": "PROMPT-DOCS-INFORME-ACADEMICO-v3",
       "norm_label": "resultado de ejecucion"
     },
     {
@@ -38141,8 +38141,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_005_inicio_sesion",
-      "community": 96,
-      "community_name": "Implementar HU-005: inicio de sesi\u00f3n seguro del barbero",
+      "community": 225,
+      "community_name": "prompts/README.md",
       "norm_label": "hu-005-inicio-sesion.md"
     },
     {
@@ -38438,8 +38438,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_007_defensa_abuso",
-      "community": 113,
-      "community_name": "Implementar HU-007: defensa escalonada contra abuso en el acceso",
+      "community": 225,
+      "community_name": "prompts/README.md",
       "norm_label": "hu-007-defensa-abuso.md"
     },
     {
@@ -40412,10 +40412,54 @@
       "norm_label": "hu-040-horario-laboral.md"
     },
     {
-      "label": "Implementar HU-040: horario laboral recurrente",
+      "label": "PR #93 integrado en main por squash-merge el 2026-08-25 con CI 4/4 en",
+      "file_type": "document",
+      "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
+      "source_location": "L94",
+      "_origin": "ast",
+      "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_pr_93_integrado_en_main_por_squash_merge_el_2026_08_25_con_ci_4_4_en",
+      "community": 119,
+      "community_name": "Implementar HU-040: horario laboral recurrente",
+      "norm_label": "pr #93 integrado en main por squash-merge el 2026-08-25 con ci 4/4 en"
+    },
+    {
+      "label": "verde. CA-040-08 queda Parcial (falta verificaci\u00f3n responsive real a",
       "file_type": "document",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
       "source_location": "L95",
+      "_origin": "ast",
+      "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_verde_ca_040_08_queda_parcial_falta_verificaci\u00f3n_responsive_real_a",
+      "community": 119,
+      "community_name": "Implementar HU-040: horario laboral recurrente",
+      "norm_label": "verde. ca-040-08 queda parcial (falta verificacion responsive real a"
+    },
+    {
+      "label": "320/360/768/1280 px con Playwright); el issue #90 permanece abierto por",
+      "file_type": "document",
+      "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
+      "source_location": "L96",
+      "_origin": "ast",
+      "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_320_360_768_1280_px_con_playwright_el_issue_90_permanece_abierto_por",
+      "community": 119,
+      "community_name": "Implementar HU-040: horario laboral recurrente",
+      "norm_label": "320/360/768/1280 px con playwright); el issue #90 permanece abierto por"
+    },
+    {
+      "label": "ese pendiente, no como historia sin terminar.",
+      "file_type": "document",
+      "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
+      "source_location": "L97",
+      "_origin": "ast",
+      "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_ese_pendiente_no_como_historia_sin_terminar",
+      "community": 119,
+      "community_name": "Implementar HU-040: horario laboral recurrente",
+      "norm_label": "ese pendiente, no como historia sin terminar."
+    },
+    {
+      "label": "Implementar HU-040: horario laboral recurrente",
+      "file_type": "document",
+      "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
+      "source_location": "L100",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_implementar_hu_040_horario_laboral_recurrente",
       "community": 119,
@@ -40426,7 +40470,7 @@
       "label": "Instrucci\u00f3n para el agente",
       "file_type": "document",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L97",
+      "source_location": "L102",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_instrucci\u00f3n_para_el_agente",
       "community": 119,
@@ -40437,7 +40481,7 @@
       "label": "Objetivo",
       "file_type": "document",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L103",
+      "source_location": "L108",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_objetivo",
       "community": 119,
@@ -40448,7 +40492,7 @@
       "label": "Preflight obligatorio",
       "file_type": "document",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L107",
+      "source_location": "L112",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_preflight_obligatorio",
       "community": 119,
@@ -40459,7 +40503,7 @@
       "label": "Alcance incluido",
       "file_type": "document",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L116",
+      "source_location": "L121",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_alcance_incluido",
       "community": 119,
@@ -40470,7 +40514,7 @@
       "label": "Fuera de alcance",
       "file_type": "document",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L126",
+      "source_location": "L131",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_fuera_de_alcance",
       "community": 119,
@@ -40481,7 +40525,7 @@
       "label": "Estado existente que debe conservarse",
       "file_type": "document",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L135",
+      "source_location": "L140",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_estado_existente_que_debe_conservarse",
       "community": 119,
@@ -40492,7 +40536,7 @@
       "label": "Trabajo requerido",
       "file_type": "document",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L143",
+      "source_location": "L148",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_trabajo_requerido",
       "community": 119,
@@ -40503,7 +40547,7 @@
       "label": "1. Contrato HTTP",
       "file_type": "document",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L145",
+      "source_location": "L150",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_1_contrato_http",
       "community": 119,
@@ -40514,7 +40558,7 @@
       "label": "2. Datos y backend Go",
       "file_type": "document",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L152",
+      "source_location": "L157",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_2_datos_y_backend_go",
       "community": 119,
@@ -40525,7 +40569,7 @@
       "label": "3. Frontend Vue",
       "file_type": "document",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L162",
+      "source_location": "L167",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_3_frontend_vue",
       "community": 119,
@@ -40536,7 +40580,7 @@
       "label": "Pruebas y evidencia",
       "file_type": "document",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L170",
+      "source_location": "L175",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_pruebas_y_evidencia",
       "community": 119,
@@ -40547,7 +40591,7 @@
       "label": "Documentaci\u00f3n y trazabilidad",
       "file_type": "document",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L179",
+      "source_location": "L184",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_documentaci\u00f3n_y_trazabilidad",
       "community": 119,
@@ -40558,7 +40602,7 @@
       "label": "Verificaci\u00f3n final",
       "file_type": "document",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L186",
+      "source_location": "L191",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_verificaci\u00f3n_final",
       "community": 119,
@@ -40569,7 +40613,7 @@
       "label": "Evidencia real de esta ejecuci\u00f3n",
       "file_type": "document",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L201",
+      "source_location": "L206",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_evidencia_real_de_esta_ejecuci\u00f3n",
       "community": 119,
@@ -40580,7 +40624,7 @@
       "label": "Git y PR",
       "file_type": "document",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L216",
+      "source_location": "L221",
       "_origin": "ast",
       "id": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_git_y_pr",
       "community": 119,
@@ -139944,7 +139988,29 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L95",
+      "source_location": "L96",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral",
+      "target": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_320_360_768_1280_px_con_playwright_el_issue_90_permanece_abierto_por",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
+      "source_location": "L97",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral",
+      "target": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_ese_pendiente_no_como_historia_sin_terminar",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
+      "source_location": "L100",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral",
@@ -139955,7 +140021,29 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L116",
+      "source_location": "L94",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral",
+      "target": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_pr_93_integrado_en_main_por_squash_merge_el_2026_08_25_con_ci_4_4_en",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
+      "source_location": "L95",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral",
+      "target": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_verde_ca_040_08_queda_parcial_falta_verificaci\u00f3n_responsive_real_a",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
+      "source_location": "L121",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_implementar_hu_040_horario_laboral_recurrente",
@@ -139966,7 +140054,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L179",
+      "source_location": "L184",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_implementar_hu_040_horario_laboral_recurrente",
@@ -139977,7 +140065,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L135",
+      "source_location": "L140",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_implementar_hu_040_horario_laboral_recurrente",
@@ -139988,7 +140076,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L126",
+      "source_location": "L131",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_implementar_hu_040_horario_laboral_recurrente",
@@ -139999,7 +140087,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L216",
+      "source_location": "L221",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_implementar_hu_040_horario_laboral_recurrente",
@@ -140010,7 +140098,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L97",
+      "source_location": "L102",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_implementar_hu_040_horario_laboral_recurrente",
@@ -140021,7 +140109,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L103",
+      "source_location": "L108",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_implementar_hu_040_horario_laboral_recurrente",
@@ -140032,7 +140120,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L107",
+      "source_location": "L112",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_implementar_hu_040_horario_laboral_recurrente",
@@ -140043,7 +140131,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L170",
+      "source_location": "L175",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_implementar_hu_040_horario_laboral_recurrente",
@@ -140054,7 +140142,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L143",
+      "source_location": "L148",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_implementar_hu_040_horario_laboral_recurrente",
@@ -140065,7 +140153,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L186",
+      "source_location": "L191",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_implementar_hu_040_horario_laboral_recurrente",
@@ -140076,7 +140164,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L145",
+      "source_location": "L150",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_trabajo_requerido",
@@ -140087,7 +140175,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L152",
+      "source_location": "L157",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_trabajo_requerido",
@@ -140098,7 +140186,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L162",
+      "source_location": "L167",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_trabajo_requerido",
@@ -140109,7 +140197,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md",
-      "source_location": "L201",
+      "source_location": "L206",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_prompts_hu_hu_040_horario_laboral_verificaci\u00f3n_final",
@@ -145528,5 +145616,5 @@
       "source_file": "respuesta-manuales/respuesta-propuestas-oc.txt"
     }
   ],
-  "built_at_commit": "3b2c7186e543aa851241c774f4ce9fc51b2b61e9"
+  "built_at_commit": "5200a56626ce5bc86de464773486172d09daa5b4"
 }
