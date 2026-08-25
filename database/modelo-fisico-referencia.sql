@@ -1192,9 +1192,14 @@ CREATE TABLE working_hour (
 
   CONSTRAINT working_hour_id_pk PRIMARY KEY (id),
 
+  -- RESTRICT, no CASCADE (CT-008/DEC-070): AGENTS.md prohíbe borrado en
+  -- cascada; barber no tiene borrado físico en su alcance vigente (comentario
+  -- de la tabla barber, DDL-BIZ-02), así que RESTRICT es coherente con la FK
+  -- barber→barbershop, ya RESTRICT, y no deja huérfanos silenciosos si una
+  -- historia futura agrega borrado de barbero sin resolver antes su retención.
   CONSTRAINT working_hour_barbershop_id_barber_id_fk
     FOREIGN KEY (barbershop_id, barber_id)
-    REFERENCES barber (barbershop_id, id) ON DELETE CASCADE,
+    REFERENCES barber (barbershop_id, id) ON DELETE RESTRICT,
 
   -- ISO 8601: 1 = lunes … 7 = domingo. No se usa 0-6 para no heredar la
   -- ambigüedad de qué día es el cero.
@@ -1283,9 +1288,10 @@ CREATE TABLE working_hour_override (
   CONSTRAINT working_hour_override_id_pk               PRIMARY KEY (id),
   CONSTRAINT working_hour_override_barbershop_id_id_uk UNIQUE (barbershop_id, id),
 
+  -- RESTRICT, no CASCADE (CT-008/DEC-070): mismo criterio que working_hour.
   CONSTRAINT working_hour_override_barbershop_id_barber_id_fk
     FOREIGN KEY (barbershop_id, barber_id)
-    REFERENCES barber (barbershop_id, id) ON DELETE CASCADE,
+    REFERENCES barber (barbershop_id, id) ON DELETE RESTRICT,
 
   -- Una sola cabecera por barbero y fecha: cierra la mitad de DDL-INT-01 que
   -- exigía elegir entre cerrado y abierto sin admitir ambos ni ninguno dos veces.
@@ -1351,9 +1357,12 @@ CREATE TABLE working_hour_override_segment (
 
   CONSTRAINT working_hour_override_segment_id_pk PRIMARY KEY (id),
 
+  -- RESTRICT, no CASCADE (CT-008/DEC-070): un tramo se retira explícitamente
+  -- antes de poder retirar su cabecera; nunca por efecto colateral de borrar
+  -- la cabecera.
   CONSTRAINT working_hour_override_segment_barbershop_id_override_id_fk
     FOREIGN KEY (barbershop_id, override_id)
-    REFERENCES working_hour_override (barbershop_id, id) ON DELETE CASCADE,
+    REFERENCES working_hour_override (barbershop_id, id) ON DELETE RESTRICT,
 
   CONSTRAINT working_hour_override_segment_duration_minutes_ck CHECK (
     duration_minutes BETWEEN 1 AND 1440
@@ -1467,9 +1476,10 @@ CREATE TABLE time_block_series (
   CONSTRAINT time_block_series_id_pk               PRIMARY KEY (id),
   CONSTRAINT time_block_series_barbershop_id_id_uk UNIQUE (barbershop_id, id),
 
+  -- RESTRICT, no CASCADE (CT-008/DEC-070): mismo criterio que working_hour.
   CONSTRAINT time_block_series_barbershop_id_barber_id_fk
     FOREIGN KEY (barbershop_id, barber_id)
-    REFERENCES barber (barbershop_id, id) ON DELETE CASCADE,
+    REFERENCES barber (barbershop_id, id) ON DELETE RESTRICT,
 
   -- Los siete tipos del criterio de salida de B2 (RN-BLQ-01).
   CONSTRAINT time_block_series_block_type_ck CHECK (
@@ -1540,9 +1550,11 @@ CREATE TABLE time_block_series_date (
   block_date    date NOT NULL,
 
   CONSTRAINT time_block_series_date_pk PRIMARY KEY (barbershop_id, series_id, block_date),
+  -- RESTRICT, no CASCADE (CT-008/DEC-070): time_block_series usa eliminación
+  -- lógica (deleted_at, RN-BLQ-04); sus hijas nunca se borran por cascada.
   CONSTRAINT time_block_series_date_barbershop_id_series_id_fk
     FOREIGN KEY (barbershop_id, series_id)
-    REFERENCES time_block_series (barbershop_id, id) ON DELETE CASCADE
+    REFERENCES time_block_series (barbershop_id, id) ON DELETE RESTRICT
 );
 
 COMMENT ON TABLE time_block_series_date IS
@@ -1604,9 +1616,11 @@ CREATE TABLE time_block_series_exception (
   created_at    timestamptz NOT NULL DEFAULT now(),
 
   CONSTRAINT time_block_series_exception_pk PRIMARY KEY (barbershop_id, series_id, excluded_date),
+  -- RESTRICT, no CASCADE (CT-008/DEC-070): mismo criterio que
+  -- time_block_series_date.
   CONSTRAINT time_block_series_exception_barbershop_id_series_id_fk
     FOREIGN KEY (barbershop_id, series_id)
-    REFERENCES time_block_series (barbershop_id, id) ON DELETE CASCADE,
+    REFERENCES time_block_series (barbershop_id, id) ON DELETE RESTRICT,
   CONSTRAINT time_block_series_exception_reason_ck CHECK (
     reason IS NULL OR char_length(reason) <= 200
   )
@@ -1662,9 +1676,11 @@ CREATE TABLE time_block (
 
   CONSTRAINT time_block_id_pk PRIMARY KEY (id),
 
+  -- RESTRICT, no CASCADE (CT-008/DEC-070): mismo criterio que working_hour;
+  -- time_block ya usa eliminación lógica propia (deleted_at/deleted_by).
   CONSTRAINT time_block_barbershop_id_barber_id_fk
     FOREIGN KEY (barbershop_id, barber_id)
-    REFERENCES barber (barbershop_id, id) ON DELETE CASCADE,
+    REFERENCES barber (barbershop_id, id) ON DELETE RESTRICT,
 
   -- RESTRICT, no SET NULL (DDL-INT-02): barbershop_id es NOT NULL y una FK
   -- compuesta con SET NULL anularía ambas columnas a la vez, violando el

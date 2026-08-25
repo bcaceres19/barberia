@@ -1,6 +1,6 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.17"
+version: "1.20"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-25"
@@ -145,11 +145,15 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-HU-020-v1](hu/hu-020-configuracion-barberia.md) | `hu` | `HU-020` | [#67](https://github.com/bcaceres19/barberia/issues/67) | `executed` | Criterio de salida de B0 verificado 2026-08-23 (CI verde sobre `main` `a57354b`); integrada en `main` (squash-merge 2026-08-23) | `feat/67-hu020-configuracion-barberia` / [PR #70](https://github.com/bcaceres19/barberia/pull/70), integrada en `main` |
 | [PROMPT-HU-021-v1](hu/hu-021-registro-listado-barberos.md) | `hu` | `HU-021` | [#68](https://github.com/bcaceres19/barberia/issues/68) | `executed` | `HU-020` (#67) integrada en `main` 2026-08-23 | Rama `feat/68-hu021-barberos`; [PR #72](https://github.com/bcaceres19/barberia/pull/72), integrada en `main` 2026-08-24 con CI verde |
 | [PROMPT-HU-022-v1](hu/hu-022-catalogo-servicios.md) | `hu` | `HU-022` | [#75](https://github.com/bcaceres19/barberia/issues/75) | `executed` | `HU-020`/`HU-021` integradas; `DP-SER-01` resuelta (`DEC-067`) | Rama `feat/75-hu022-catalogo-servicios`; [PR #79](https://github.com/bcaceres19/barberia/pull/79), integrada en `main` con CI verde |
-| [PROMPT-HU-023-v1](hu/hu-023-asignacion-servicios-barberos.md) | `hu` | `HU-023` | [#76](https://github.com/bcaceres19/barberia/issues/76) | `executed` | `HU-022` integrada ([PR #79](https://github.com/bcaceres19/barberia/pull/79)); `DP-SER-02` resuelta (`DEC-068`) | Rama `feat/76-hu023-servicios-barberos`; [PR #83](https://github.com/bcaceres19/barberia/pull/83), pendiente de revisión/CI/merge |
-| [PROMPT-HU-024-v1](hu/hu-024-ciclo-vida-servicios.md) | `hu` | `HU-024` | [#77](https://github.com/bcaceres19/barberia/issues/77) | `in_progress` | `HU-022`/`HU-023` integradas; `DP-SER-03` resuelta (`DEC-069`) | Rama `feat/77-hu024-ciclo-vida-servicios`; [PR #84](https://github.com/bcaceres19/barberia/pull/84), pendiente de revisión/CI/merge |
+| [PROMPT-HU-023-v1](hu/hu-023-asignacion-servicios-barberos.md) | `hu` | `HU-023` | [#76](https://github.com/bcaceres19/barberia/issues/76) | `executed` | `HU-022` integrada ([PR #79](https://github.com/bcaceres19/barberia/pull/79)); `DP-SER-02` resuelta (`DEC-068`) | Rama `feat/76-hu023-servicios-barberos`; [PR #83](https://github.com/bcaceres19/barberia/pull/83), integrada en `main` |
+| [PROMPT-HU-024-v1](hu/hu-024-ciclo-vida-servicios.md) | `hu` | `HU-024` | [#77](https://github.com/bcaceres19/barberia/issues/77) | `executed` | `HU-022`/`HU-023` integradas; `DP-SER-03` resuelta (`DEC-069`) | Rama `feat/77-hu024-ciclo-vida-servicios`; [PR #84](https://github.com/bcaceres19/barberia/pull/84), integrada en `main` |
+| [PROMPT-HU-040-v1](hu/hu-040-horario-laboral.md) (v1.1) | `hu` | `HU-040` | [#90](https://github.com/bcaceres19/barberia/issues/90) | `ready` | B1 cerrado; `CT-008` resuelta (`DEC-070`) | Sin rama/PR aún |
+| [PROMPT-HU-041-v1](hu/hu-041-excepciones-festivos.md) | `hu` | `HU-041` | `pending` | `draft` | `HU-040` pendiente; `CT-008` abierta; issue real pendiente | Sin rama/PR |
+| [PROMPT-HU-042-v1](hu/hu-042-bloqueos-agenda.md) | `hu` | `HU-042` | `pending` | `draft` | `HU-040`/`HU-041` pendientes; `CT-008` abierta; issue real pendiente | Sin rama/PR |
 | [PROMPT-DOCS-INFORME-ACADEMICO-v1](docs/pending-informe-academico-secciones-1-a-4-2.md) | `docs` | — | [#81](https://github.com/bcaceres19/barberia/issues/81) | `superseded` | Sustituido por v2 tras retroalimentación sobre lenguaje y audiencia | Rama `docs/81-informe-academico`; [PR #82](https://github.com/bcaceres19/barberia/pull/82) |
 | [PROMPT-DOCS-INFORME-ACADEMICO-v2](docs/informe-academico-secciones-1-a-4-2-v2-gerencial.md) | `docs` | — | [#81](https://github.com/bcaceres19/barberia/issues/81) | `superseded` | Sustituido por v3 para incorporar identidad institucional, equipo confirmado y sistema visual sobrio | Rama `docs/81-informe-academico`; [PR #82](https://github.com/bcaceres19/barberia/pull/82); SHA-256 `6cad6bcc…78bbe0` |
 | [PROMPT-DOCS-INFORME-ACADEMICO-v3](docs/informe-academico-secciones-1-a-4-2-v3-identidad-institucional.md) | `docs` | — | [#81](https://github.com/bcaceres19/barberia/issues/81) | `executed` | Identidad institucional, responsabilidades compartidas, primer participante, Arial y color solo para estados | 26 páginas y 45 RU; QA visual completo; SHA-256 `73554078…72859`; rama `docs/81-informe-academico`; [PR #82](https://github.com/bcaceres19/barberia/pull/82) |
+| [PROMPT-TEST-QA-B0-B1-CHROME-v1](test/2026-08-25-qa-manual-b0-b1-chrome-mcp.md) | `test` | `HU-005`–`HU-012`, `HU-020`–`HU-024` | — (no modifica el repositorio) | `executed` | B0 y B1 recorridas; informe persistido con pasos, observaciones, evidencias y pendientes | Sin rama/PR: QA manual en navegador real vía MCP de Chrome; [informe](test/2026-08-25-qa-manual-b0-b1-chrome-mcp-report.md) |
 
 ## 10. Lista de control al guardar o entregar
 

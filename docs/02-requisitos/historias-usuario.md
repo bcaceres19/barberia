@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.13"
+version: "1.15"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-25"
@@ -12,11 +12,12 @@ documentos_relacionados:
   - "../10-backlog/prompts-implementacion.md"
   - "../00-control/matriz-trazabilidad.md"
   - "../00-control/dudas-pendientes.md"
+  - "../00-control/contradicciones.md"
 ---
 
 # Historias de usuario y criterios de aceptación
 
-> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas confirmadas; no crean alcance por sí solas y requieren aprobación antes de implementarse. B0, `HU-020`, `HU-021` y `HU-022` ya están integradas. Las dudas históricas de B0 quedaron resueltas por `DEC-050`–`DEC-066`; `DP-SER-01`–`DP-SER-03` del lote de B1 (`HU-022`–`HU-024`) quedaron resueltas por `DEC-067`–`DEC-069` y ya tienen issue real de implementación (`#75`, `#76`, `#77`). `HU-023` está implementada con [PR #83](https://github.com/bcaceres19/barberia/pull/83) abierto contra `main` (pendiente de revisión/CI/merge); `HU-024` permanece bloqueada solo por el orden de integración (depende de que `HU-023` esté en `main`).
+> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas confirmadas; no crean alcance por sí solas y requieren aprobación antes de implementarse. B0 y `HU-020`–`HU-024` ya están integradas en `main`. Las dudas históricas de B0 quedaron resueltas por `DEC-050`–`DEC-066`; `DP-SER-01`–`DP-SER-03` del lote de B1 quedaron resueltas por `DEC-067`–`DEC-069`; `CT-008` del lote de B2 quedó resuelta por `DEC-070`. `HU-040` tiene issue real [#90](https://github.com/bcaceres19/barberia/issues/90) y su prompt está `ready`; `HU-041`–`HU-042` siguen `draft` a la espera de que `HU-040` se integre.
 
 ---
 
@@ -48,8 +49,8 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | Bloque | Historias | Estado |
 | --- | --- | --- |
 | B0 · Cimientos, seguridad y primeras pantallas | `HU-001` – `HU-012` | Redactadas en este documento |
-| B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | `HU-020`/`HU-021`/`HU-022`/`HU-023` integradas en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), [PR #83](https://github.com/bcaceres19/barberia/pull/83)); `HU-024` implementada contra el issue real [#77](https://github.com/bcaceres19/barberia/issues/77), [PR #84](https://github.com/bcaceres19/barberia/pull/84), pendiente de revisión/CI/merge |
-| B2 · Horario laboral y bloqueos | `HU-040` – | Pendientes |
+| B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | Integradas en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), [PR #83](https://github.com/bcaceres19/barberia/pull/83), [PR #84](https://github.com/bcaceres19/barberia/pull/84)) |
+| B2 · Horario laboral y bloqueos | `HU-040` – `HU-042` | `CT-008` resuelta (`DEC-070`); `HU-040` en ejecución (issue real [#90](https://github.com/bcaceres19/barberia/issues/90)); `HU-041`–`HU-042` siguen `draft` |
 | B3 · Agenda, estados e integridad | `HU-060` – | Pendientes |
 | B4 · Reserva pública y disponibilidad | `HU-090` – | Pendientes |
 | B5 · Notificaciones y recordatorios | `HU-130` – | Pendientes |
@@ -646,7 +647,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 ## 4. Bloque B1 · Identidad de la barbería y catálogo
 
-> **B1 en ejecución.** `HU-020`, `HU-021` y `HU-022` ya están integradas ([PR #79](https://github.com/bcaceres19/barberia/pull/79), CI 4/4 verde). `HU-023`–`HU-024` se prepararon como propuestas mediante el issue documental [#73](https://github.com/bcaceres19/barberia/issues/73); `DP-SER-02`/`DP-SER-03` quedaron resueltas por `DEC-068`/`DEC-069` y cada una tiene issue real de implementación (`#76`, `#77`). `HU-023` está implementada, con [PR #83](https://github.com/bcaceres19/barberia/pull/83) abierto contra `main` pendiente de revisión/CI/merge; `HU-024` permanece bloqueada únicamente por el orden de integración de esta sección.
+> **B1 integrado.** `HU-020`–`HU-024` están integradas en `main`; `DP-SER-01`–`DP-SER-03` quedaron resueltas por `DEC-067`–`DEC-069` y el cierre de B1 está respaldado por [PR #84](https://github.com/bcaceres19/barberia/pull/84).
 
 Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-021` → `HU-022` → `HU-023` → `HU-024`.
 
@@ -889,7 +890,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | Actor | Barbero autenticado |
 | Depende de | `HU-022`, `HU-023` integradas en `main` |
 | Bloquea | Cierre de B1, consulta pública de servicios y flujos futuros con citas |
-| Estado | Implementada contra el issue real [#77](https://github.com/bcaceres19/barberia/issues/77) (`feat/77-hu024-ciclo-vida-servicios`); [PR #84](https://github.com/bcaceres19/barberia/pull/84), pendiente de revisión/CI/merge |
+| Estado | Integrada en `main` contra el issue real [#77](https://github.com/bcaceres19/barberia/issues/77); [PR #84](https://github.com/bcaceres19/barberia/pull/84) |
 | Riesgo | Desactivar sin una advertencia real omite compromisos futuros; simular citas antes de B3 crea contrato ficticio; construir protección de concurrencia sobre un conteo que en B1 nunca cambia (`DEC-069`) sería alcance inventado. |
 
 **Historia**
@@ -935,12 +936,204 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 
 ---
 
-## 5. Historias pendientes de redacción
+## 5. Bloque B2 · Horario laboral y bloqueos
+
+> **B2 en ejecución.** Las tres historias separan las dos funciones P0 del bloque: HU-040 configura la jornada semanal; HU-041 resuelve fechas especiales y festivos; HU-042 administra bloqueos puntuales y recurrentes. CT-008 quedó resuelta como DEC-070 (las FK del modelo físico de B2 usan ON DELETE RESTRICT, no CASCADE). HU-040 tiene issue real #90 y su prompt está ready; HU-041/HU-042 permanecen draft hasta que HU-040 se integre en main.
+
+Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas afectadas y la agenda consumen estas capacidades en B3/B4; no se implementan aquí.
+
+---
+
+### HU-040 · Horario laboral recurrente
+
+| Campo | Valor |
+| --- | --- |
+| Función | F-HOR-01 |
+| Reglas | RN-TEN-01, RN-DIS-05, RN-DIS-07 |
+| Decisiones | DEC-007, DEC-019, DEC-020, DEC-024, DEC-033–DEC-040 |
+| Actor | Barbero autenticado |
+| Depende de | Criterio de salida de B1; HU-020–HU-024 integradas en main; CT-008 resuelta (DEC-070) |
+| Bloquea | HU-041, HU-042 y el cálculo posterior de disponibilidad |
+| Estado | En ejecución; prompt PROMPT-HU-040-v1 ready; issue real #90 |
+| Riesgo | Un tramo ambiguo, solapado o interpretado en la zona del dispositivo desplaza toda la disponibilidad futura. |
+
+**Historia**
+
+> Como barbero, quiero configurar los tramos de trabajo de cada barbero por día de la semana, para que el sistema sepa cuándo ofrecer turnos y pueda representar jornadas partidas o nocturnas.
+
+**Alcance incluido**
+
+- Consulta, alta, edición y retiro de tramos recurrentes por barbero y barbería activa.
+- Días ISO del 1 al 7, varios tramos por día y duración en minutos enteros.
+- Horas civiles interpretadas con la zona IANA de la barbería; no se usa la zona del navegador.
+- Intervalos semiabiertos [inicio, fin), con tramos contiguos permitidos y solapes del mismo barbero/día rechazados.
+- Tramos que cruzan medianoche, según DEC-020, sin convertir la configuración en instantes dependientes del servidor.
+- Contrato OpenAPI, módulo schedule, persistencia tenant-aware, pantalla privada y cliente tipado.
+
+**Alcance excluido**
+
+- Fechas especiales, festivos, horarios de excepción y calendario colombiano: HU-041.
+- Descansos, almuerzos, vacaciones, emergencias, recurrencias y listas explícitas: HU-042.
+- Citas, agenda, disponibilidad pública, reservas y notificaciones.
+- Credenciales, roles, eliminación de barberos y personalización visual por barbería.
+- Cualquier FK o cascada del modelo físico distinta de ON DELETE RESTRICT (DEC-070).
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| CA-040-01 | Dada una barbería con uno o varios barberos, cuando se consulta el horario, entonces aparecen los siete días y solo los tramos de la barbería activa, sin filas de otro tenant. |
+| CA-040-02 | Cuando se crean dos tramos no solapados el mismo día, entonces ambos persisten; una jornada partida no requiere una rama especial para el segundo tramo. |
+| CA-040-03 | Una duración positiva representa el fin del tramo de forma determinista; los intervalos contiguos no chocan y un tramo nocturno puede cruzar medianoche conforme a DEC-020. |
+| CA-040-04 | Un día fuera de 1–7, duración cero/negativa/excesiva, hora inválida o solape del mismo barbero responde con error de validación y no deja escritura parcial. |
+| CA-040-05 | Un barbero puede editar o retirar un tramo propio; intentar leerlo o modificarlo desde otra barbería responde 404 y la base de datos rechaza la operación cruzada con el rol de aplicación. |
+| CA-040-06 | La misma configuración se muestra con la zona de la barbería aunque el dispositivo use otra zona horaria; los instantes de una capacidad futura no se reescriben. |
+| CA-040-07 | La pantalla contempla carga, vacío, error recuperable y éxito; conserva los datos no sensibles ante error, evita doble envío y es operable por teclado. |
+| CA-040-08 | El contrato, handler, caso de uso, repositorio, cliente generado y pantalla coinciden en campos, límites y errores, con verificación responsive a 320, 360, 768 y 1280 px. |
+
+**Pruebas obligatorias**
+
+- Unitarias de dominio y aplicación para días, duración, tramos partidos, contiguidad, solape y medianoche.
+- HTTP y contrato para consulta, alta, edición, retiro, no autenticado, recurso ajeno, validación y error uniforme.
+- PostgreSQL real con dos barberías, RLS, FK en ON DELETE RESTRICT (DEC-070) y grants, lectura/escritura cruzada y ausencia de escritura parcial.
+- Componente y E2E del selector de barbero, alta, edición, conflicto, retiro, recarga y aislamiento.
+- Evidencia responsive y accesible en 320, 360, 768 y 1280 px, teclado, foco, zoom 200 %, axe-core y contraste.
+
+**Terminado cuando** un barbero puede mantener la semana laboral real de cualquier profesional de su barbería, incluidos tramos partidos y nocturnos, sin cruces de tenant y sin adelantar excepciones, bloqueos o citas.
+
+---
+
+### HU-041 · Excepciones de jornada y festivos
+
+| Campo | Valor |
+| --- | --- |
+| Función | F-HOR-02, parte de fechas especiales y festivos |
+| Reglas | RN-TEN-01, RN-BLQ-02, RN-DIS-05, RN-DIS-07 |
+| Decisiones | DEC-007, DEC-019, DEC-020, DEC-024, DEC-033–DEC-040 |
+| Actor | Barbero autenticado |
+| Depende de | HU-040 integrada en main y B1 cerrado |
+| Bloquea | HU-042 y la resolución posterior de jornada efectiva |
+| Estado | Propuesta; prompt PROMPT-HU-041-v1 en draft; issue pending |
+| Riesgo | Compartir el calendario entre barberos o dejar que un festivo automático venza una apertura manual produce disponibilidad falsa. |
+
+**Historia**
+
+> Como barbero, quiero activar el calendario colombiano de festivos y definir excepciones para fechas concretas, para cerrar un día o trabajar con un horario especial sin alterar a los demás barberos.
+
+**Alcance incluido**
+
+- Toggle holiday_calendar_enabled independiente por barbero.
+- Resolución determinista del calendario colombiano para la fecha consultada y la zona de la barbería.
+- Excepción por fecha para cerrar completamente el día o abrirlo con uno o varios tramos propios.
+- Apertura manual de un festivo completo o con horario reducido; la excepción manual prevalece sobre el bloqueo automático.
+- Consulta, alta, edición y retiro de excepciones, con una sola cabecera por barbero y fecha.
+- Puerto interno de resolución de jornada efectiva para consumos futuros, sin crear citas ni disponibilidad pública.
+- Modelo normalizado de cabecera y tramos, contrato OpenAPI, módulo schedule, pantalla y cliente generado.
+
+**Alcance excluido**
+
+- Bloqueos de descanso, almuerzo, no disponible, vacaciones, días libres y emergencia: HU-042.
+- Citas afectadas, reprogramación, cancelación, notificaciones y agenda.
+- Cambio de zona de la barbería o conversión de instantes existentes.
+- Catálogo editable de festivos, calendarios externos y reglas comerciales.
+- Cualquier FK o cascada del modelo físico distinta de ON DELETE RESTRICT (DEC-070).
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| CA-041-01 | Dado un barbero con el calendario desactivado, entonces los festivos no agregan bloqueos automáticos; la decisión no cambia el resultado de otro barbero. |
+| CA-041-02 | Dado un barbero con el calendario activado, entonces un festivo queda cerrado por defecto en la resolución de jornada efectiva. |
+| CA-041-03 | Dado un festivo abierto manualmente, entonces prevalece la excepción y el barbero puede trabajar la jornada completa o uno o varios tramos reducidos. |
+| CA-041-04 | Una excepción cerrada no admite tramos; una excepción abierta exige tramos válidos, sin solapes, con intervalos semiabiertos y medianoche permitida por DEC-020. |
+| CA-041-05 | Existe como máximo una excepción por barbero y fecha; crear, editar o retirar una excepción no modifica el horario semanal ni la excepción de otro barbero. |
+| CA-041-06 | Una fecha, barbero o excepción de otra barbería no se expone y una escritura directa con el rol de aplicación queda bloqueada por tenant/RLS. |
+| CA-041-07 | La resolución de jornada aplica la precedencia excepción manual abierta/cerrada > festivo automático > horario semanal y usa siempre la zona de la barbería. |
+| CA-041-08 | La pantalla y el contrato comunican carga, vacío, error, éxito y el efecto del toggle; son operables por teclado y reflowan sin pérdida a 320, 360, 768 y 1280 px. |
+
+**Pruebas obligatorias**
+
+- Unitarias de calendario colombiano, toggle independiente, precedencia, fecha cerrada, horario especial, medianoche, contiguidad y solape.
+- HTTP y contrato para toggle y CRUD de excepciones, 401, 404, 409, 422 y RFC 9457.
+- PostgreSQL real con dos tenants y varios barberos, unicidad por fecha, cabecera cerrada sin tramos, RLS, FK en ON DELETE RESTRICT (DEC-070) y grants.
+- Componente y E2E para activar, cerrar festivo, abrir festivo reducido, editar, retirar y comprobar aislamiento.
+- Evidencia responsive y accesible en 320, 360, 768 y 1280 px, teclado, foco, zoom 200 %, axe-core y contraste.
+
+**Terminado cuando** cada barbero puede representar su decisión independiente sobre festivos y fechas especiales, la resolución es reproducible y ninguna pantalla promete todavía citas o disponibilidad.
+
+---
+
+### HU-042 · Bloqueos de agenda
+
+| Campo | Valor |
+| --- | --- |
+| Función | F-HOR-02, bloqueos puntuales, recurrentes y listas explícitas |
+| Reglas | RN-TEN-01, RN-BLQ-01, RN-BLQ-03, RN-BLQ-04, RN-DIS-05, RN-DIS-07, RN-IDE-01 |
+| Decisiones | DEC-007, DEC-008, DEC-009, DEC-013, DEC-019, DEC-020, DEC-024, DEC-033–DEC-040, DEC-043 |
+| Actor | Barbero autenticado |
+| Depende de | HU-040 y HU-041 integradas en main |
+| Bloquea | Proyección completa de disponibilidad y la integración B3 de citas afectadas |
+| Estado | Propuesta; prompt PROMPT-HU-042-v1 en draft; issue pending |
+| Riesgo | Rechazar una emergencia por una cita existente, borrar el registro o duplicar una recurrencia destruye la confianza operativa del barbero. |
+
+**Historia**
+
+> Como barbero, quiero bloquear descansos, almuerzos, días libres, vacaciones, emergencias y otros intervalos, de forma puntual o recurrente, para que el sistema deje de ofrecer esos espacios y conserve la explicación de cada cambio.
+
+**Alcance incluido**
+
+- Siete tipos: break, lunch, unavailable, day_off, holiday, vacation y emergency.
+- Bloqueo puntual y definiciones recurrentes semanales o por lista explícita de fechas.
+- Rango de vigencia, excepciones individuales de una serie y edición con alcance explícito: esta instancia, esta y las siguientes o toda la serie.
+- Intervalos semiabiertos, duración positiva, cruce de medianoche y unión de bloqueos solapados sin descontar dos veces.
+- Eliminación lógica con actor e instante, conservación del registro y exclusión inmediata de la proyección efectiva.
+- Creación de un bloqueo no rechazada por una posible cita; la consulta y resolución de citas afectadas queda en B3/B5.
+- Contrato OpenAPI, módulo schedule, persistencia Atlas, RLS, pantalla, cliente tipado y pruebas reales.
+
+**Alcance excluido**
+
+- Crear, modificar, reprogramar, cancelar o notificar citas.
+- Lista de citas afectadas, decisiones individuales y avisos de RN-BLQ-03: B3/B5.
+- Cálculo de reserva pública, agenda y disponibilidad final.
+- Borrado físico, purga, calendarios externos y funciones P1/P2.
+- Cambiar horario semanal o excepciones de jornada: HU-040/HU-041.
+- Crear una tabla appointment parcial o un adaptador que devuelva conteos inventados.
+- Cualquier FK o cascada del modelo físico distinta de ON DELETE RESTRICT (DEC-070).
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| CA-042-01 | Cada uno de los siete tipos puede crearse y consultarse como bloqueo puntual o definición de serie válida, sin valores fuera del vocabulario aprobado. |
+| CA-042-02 | Una serie semanal exige día ISO y una lista explícita conserva sus fechas en filas normalizadas; una excepción elimina solo la instancia elegida. |
+| CA-042-03 | La edición ofrece esta instancia, esta y las siguientes o toda la serie; la opción elegida no pierde ni duplica instancias futuras. |
+| CA-042-04 | Los intervalos validan duración, rango, contiguidad, medianoche y semántica [inicio, fin); los solapamientos de bloqueos se proyectan como una sola unión temporal. |
+| CA-042-05 | Retirar un bloqueo o serie marca su eliminación, registra actor e instante, lo excluye de la proyección y conserva el registro; no existe DELETE físico para el rol de aplicación. |
+| CA-042-06 | Crear un bloqueo no falla por la posible existencia de citas y no cancela, reprograma ni notifica ninguna cita; el punto de integración deja RN-BLQ-03 trazado a B3/B5. |
+| CA-042-07 | La lectura y escritura están aisladas por barbería, los reintentos críticos no duplican efectos y una carrera real no deja dos retiros o dos series para una misma intención. |
+| CA-042-08 | La pantalla diferencia punto/serie/lista, comunica estado retirado, conserva datos ante error y funciona con teclado, foco, zoom 200 % y anchos 320, 360, 768 y 1280 px. |
+
+**Pruebas obligatorias**
+
+- Unitarias de los siete tipos, punto, semanal, lista, excepciones, edición por alcance, solape, medianoche, unión, retiro lógico e idempotencia.
+- HTTP y contrato para punto, serie, fechas, excepciones, retiro, 401, 404, 409, 422 y errores RFC 9457.
+- PostgreSQL real con dos tenants, checks, RLS, fecha hija inválida, serie cerrada/no vigente, grants sin DELETE, actor de retiro y FK en ON DELETE RESTRICT (DEC-070).
+- Concurrencia con dos conexiones reales y barreras observables, nunca sleep.
+- Componente y E2E con los siete tipos, recurrencia, fecha explícita, excepción, retiro y aislamiento.
+- Evidencia responsive y accesible en 320, 360, 768 y 1280 px, teclado, foco, zoom 200 %, axe-core y contraste.
+- Evidencia separada de que esta HU no consulta ni crea appointment y deja la lista de afectados para B3/B5.
+
+**Terminado cuando** el barbero puede bloquear tiempo de forma puntual, recurrente y auditable sin que el sistema borre registros ni resuelva citas por su cuenta, y la parte pendiente de RN-BLQ-03 queda enlazada a las historias dueñas.
+
+---
+
+
+## 6. Historias pendientes de redacción
 
 | Bloque | Rango reservado | Se redacta cuando |
 | --- | --- | --- |
 | B1 | `HU-025` – | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
-| B2 | `HU-040` – | B1 cumple su criterio de salida |
+| B2 | `HU-040` – `HU-042` | `CT-008` resuelta (`DEC-070`); `HU-040` en ejecución (issue real `#90`); `HU-041`–`HU-042` requieren issue real propio antes de ejecutarse |
 | B3 | `HU-060` – | B2 cumple su criterio de salida |
 | B4 | `HU-090` – | B3 cumple su criterio de salida |
 | B5 | `HU-130` – | B4 cumple su criterio de salida |
@@ -950,7 +1143,7 @@ Redactar por anticipado las historias de un bloque lejano produce texto que hay 
 
 ---
 
-## 6. Dudas que bloqueaban historias de B0
+## 7. Dudas que bloqueaban historias de B0
 
 | Duda | Historia antes bloqueada | Qué faltaba decidir | Resuelta como |
 | --- | --- | --- | --- |

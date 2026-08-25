@@ -28,22 +28,12 @@ const items = computed<NavItem[]>(() => [...baseItems, ...(props.extraItems ?? [
 <style scoped>
 .app-nav__list {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-2);
   margin: 0;
   padding: var(--space-2) var(--space-4);
   list-style: none;
   border-bottom: var(--border-width-normal) solid var(--color-border-subtle);
-  /* HU-022 agregó una cuarta entrada ("Servicios"): a 320/360 px, cuatro
-     enlaces ya no caben en una sola fila sin desbordar el documento
-     (docs/03-desarrollo/estandar-diseno-visual.md §16, CA-022-08). En vez
-     de envolver a varias líneas -que cambia el ritmo vertical del
-     cascarón entre barberías con más o menos módulos- la barra se
-     desplaza horizontalmente dentro de sí misma, un patrón de pestañas
-     estándar que escala a un quinto o sexto módulo futuro sin volver a
-     tocar este componente.
-   */
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
 }
 
 .app-nav__item {

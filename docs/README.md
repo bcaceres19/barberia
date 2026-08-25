@@ -1,9 +1,9 @@
 ---
 titulo: "Mapa documental y fuentes de verdad"
-version: "2.1"
+version: "2.2"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-12"
+ultima_actualizacion: "2026-08-25"
 documentos_relacionados:
   - "00-control/registro-decisiones.md"
   - "00-control/contradicciones.md"
@@ -69,6 +69,7 @@ Los archivos de `respuesta-manuales/` son evidencia de origen. Si difieren de un
 | Backend | [migraciones-atlas.md](05-backend/migraciones-atlas.md) | Atlas, promoción entre ambientes y trazabilidad de esquema | Confirmada |
 | Backend | [revision-ddl-seguridad-2026-08-11.md](05-backend/revision-ddl-seguridad-2026-08-11.md) | Auditoría técnica de migraciones y modelo físico de referencia | Revisión técnica; no normativa |
 | API | [estandar-openapi.md](06-api/estandar-openapi.md) | OpenAPI, errores, seguridad, ejemplos y compatibilidad | Obligatorio |
+| Calidad | [07-calidad/README.md](07-calidad/README.md) | Checklists de exploración combinatoria (humana o por IA) para encontrar bugs de almacenamiento, responsive y errores no controlados en combinaciones raras | Herramienta operativa, no normativa; cubre los módulos existentes hasta `HU-024` |
 
 ## 4. Flujo obligatorio de una decisión
 

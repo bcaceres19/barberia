@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-024-v1"
 version: "1.2"
 kind: "hu"
-status: "in_progress"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -92,7 +92,7 @@ superseded_by: null
 
 ## Instrucción para Claude o Codex
 
-`DP-SER-03` está resuelta como `DEC-069` y el issue real [#77](https://github.com/bcaceres19/barberia/issues/77) existe con `CA-024-01`–`CA-024-08`. `HU-022` y `HU-023` ya están integradas en `main`: este prompt pasó a `in_progress` y se implementó el ciclo de vida de `service` sin borrado físico, contra la rama `feat/77-hu024-ciclo-vida-servicios`. La cadena migrada todavía no contiene `appointment`; el impacto de citas futuras (`CA-024-01`/`CA-024-04`) es literal y honestamente `0` en B1 (`catalog.currentDeactivationImpact`, `DEC-069`), sin bloqueo optimista, sin tabla `appointment` parcial ni adaptador que simule una consulta contra algo que no existe todavía.
+`DP-SER-03` está resuelta como `DEC-069` y el issue real [#77](https://github.com/bcaceres19/barberia/issues/77) existe con `CA-024-01`–`CA-024-08`. `HU-022` y `HU-023` ya están integradas en `main`: este prompt pasó a `executed` y produjo la implementación del ciclo de vida de `service` sin borrado físico, contra la rama `feat/77-hu024-ciclo-vida-servicios` y el PR #84 integrado. La cadena migrada todavía no contiene `appointment`; el impacto de citas futuras (`CA-024-01`/`CA-024-04`) es literal y honestamente `0` en B1 (`catalog.currentDeactivationImpact`, `DEC-069`), sin bloqueo optimista, sin tabla `appointment` parcial ni adaptador que simule una consulta contra algo que no existe todavía.
 
 ## Objetivo
 
