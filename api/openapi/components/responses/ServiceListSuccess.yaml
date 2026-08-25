@@ -19,6 +19,8 @@ content:
               durationMinutes: 30
               price: "45000.00"
               currency: COP
+              isActive: true
+              deactivatedAt: null
               createdAt: "2026-08-24T15:04:05Z"
               updatedAt: "2026-08-24T15:04:05Z"
             - id: 1a2b3c4d-5e6f-4708-9a0b-1c2d3e4f5061
@@ -27,8 +29,10 @@ content:
               durationMinutes: 60
               price: "65000.00"
               currency: COP
+              isActive: false
+              deactivatedAt: "2026-08-24T18:00:00Z"
               createdAt: "2026-08-24T15:05:10Z"
-              updatedAt: "2026-08-24T15:05:10Z"
+              updatedAt: "2026-08-24T18:00:00Z"
           nextCursor: null
       catalogoVacio:
         summary: Barbería sin servicios todavía

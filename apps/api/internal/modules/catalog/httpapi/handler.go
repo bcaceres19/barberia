@@ -276,6 +276,160 @@ func (h *UpdateServiceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	_ = json.NewEncoder(w).Encode(newServiceResponse(svc))
 }
 
+// GetServiceDeactivationImpactHandler expone
+// GET /private/services/{serviceId}/deactivation-impact (CA-024-01).
+type GetServiceDeactivationImpactHandler struct {
+	service *catalog.CatalogService
+}
+
+// NewGetServiceDeactivationImpactHandler construye el handler de
+// previsualización.
+func NewGetServiceDeactivationImpactHandler(service *catalog.CatalogService) *GetServiceDeactivationImpactHandler {
+	return &GetServiceDeactivationImpactHandler{service: service}
+}
+
+// ServeHTTP implementa http.Handler.
+func (h *GetServiceDeactivationImpactHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+	principal, ok := principalOrInternalError(w, r, requestID)
+	if !ok {
+		return
+	}
+
+	serviceID := httpserver.URLParam(r, serviceIDParam)
+	impact, err := h.service.PreviewDeactivation(r.Context(), principal.BarbershopID, serviceID)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(ServiceDeactivationImpactResponse{AffectedAppointments: impact.AffectedAppointments})
+}
+
+// readLifecycleBody lee el cuerpo (posiblemente vacío) de una escritura de
+// ciclo de vida, para calcular la huella de idempotencia sobre los bytes
+// EXACTOS recibidos (mismo criterio que CreateServiceHandler): deactivate y
+// reactivate no declaran ningún campo escribible (RN-SER-04), así que un
+// cuerpo con cualquier campo se rechaza sin tocar el repositorio.
+func readLifecycleBody(w http.ResponseWriter, r *http.Request, requestID string) ([]byte, bool) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+			return nil, false
+		}
+		httpserver.WriteProblem(w, httpserver.Translate(apperr.Invalid("cuerpo de la solicitud ilegible"), requestID))
+		return nil, false
+	}
+	if len(body) > 0 {
+		var probe struct{}
+		dec := json.NewDecoder(bytes.NewReader(body))
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(&probe); err != nil || dec.More() {
+			writeUnknownFieldOrInvalidJSONProblem(w, requestID)
+			return nil, false
+		}
+	}
+	return body, true
+}
+
+// DeactivateServiceHandler expone POST /private/services/{serviceId}/deactivate
+// (CA-024-02, CA-024-03, CA-024-04), protegido por el protocolo de
+// idempotencia reutilizable de HU-004 (RN-IDE-01, DEC-043).
+type DeactivateServiceHandler struct {
+	service *catalog.CatalogService
+}
+
+// NewDeactivateServiceHandler construye el handler de desactivación.
+func NewDeactivateServiceHandler(service *catalog.CatalogService) *DeactivateServiceHandler {
+	return &DeactivateServiceHandler{service: service}
+}
+
+// ServeHTTP implementa http.Handler.
+func (h *DeactivateServiceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+	principal, ok := principalOrInternalError(w, r, requestID)
+	if !ok {
+		return
+	}
+
+	key, err := httpserver.IdempotencyKeyFromRequest(r)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	body, ok := readLifecycleBody(w, r, requestID)
+	if !ok {
+		return
+	}
+	fingerprint := httpserver.IdempotencyFingerprint(r, body)
+
+	serviceID := httpserver.URLParam(r, serviceIDParam)
+	result, err := h.service.Deactivate(r.Context(), principal.BarbershopID, serviceID, key, fingerprint)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	switch result.Decision.Outcome {
+	case idempotency.OutcomeProceed, idempotency.OutcomeReplay:
+		httpserver.WriteStoredResponse(w, result.Response)
+	default:
+		httpserver.WriteProblem(w, httpserver.Translate(result.Decision.AsError(), requestID))
+	}
+}
+
+// ReactivateServiceHandler expone POST /private/services/{serviceId}/reactivate
+// (CA-024-05), protegido por el mismo protocolo de idempotencia que
+// DeactivateServiceHandler.
+type ReactivateServiceHandler struct {
+	service *catalog.CatalogService
+}
+
+// NewReactivateServiceHandler construye el handler de reactivación.
+func NewReactivateServiceHandler(service *catalog.CatalogService) *ReactivateServiceHandler {
+	return &ReactivateServiceHandler{service: service}
+}
+
+// ServeHTTP implementa http.Handler.
+func (h *ReactivateServiceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+	principal, ok := principalOrInternalError(w, r, requestID)
+	if !ok {
+		return
+	}
+
+	key, err := httpserver.IdempotencyKeyFromRequest(r)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	body, ok := readLifecycleBody(w, r, requestID)
+	if !ok {
+		return
+	}
+	fingerprint := httpserver.IdempotencyFingerprint(r, body)
+
+	serviceID := httpserver.URLParam(r, serviceIDParam)
+	result, err := h.service.Reactivate(r.Context(), principal.BarbershopID, serviceID, key, fingerprint)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	switch result.Decision.Outcome {
+	case idempotency.OutcomeProceed, idempotency.OutcomeReplay:
+		httpserver.WriteStoredResponse(w, result.Response)
+	default:
+		httpserver.WriteProblem(w, httpserver.Translate(result.Decision.AsError(), requestID))
+	}
+}
+
 func newServiceResponse(svc catalog.Service) ServiceResponse {
 	return ServiceResponse{
 		ID:              svc.ID,
@@ -284,6 +438,8 @@ func newServiceResponse(svc catalog.Service) ServiceResponse {
 		DurationMinutes: svc.DurationMinutes,
 		Price:           catalog.FormatPriceCOP(svc.PriceCents),
 		Currency:        svc.Currency,
+		IsActive:        svc.IsActive,
+		DeactivatedAt:   svc.DeactivatedAt,
 		CreatedAt:       svc.CreatedAt,
 		UpdatedAt:       svc.UpdatedAt,
 	}

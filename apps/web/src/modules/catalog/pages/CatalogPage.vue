@@ -1,15 +1,23 @@
 <script setup lang="ts">
-// Pantalla "Servicios" (HU-022): consultar y listar el catálogo de la
-// barbería activa, crear un servicio y editarlo. Estados discriminados:
-// carga inicial, listo, vacío, error recuperable, guardando (mismo patrón
-// que StaffPage.vue). Un error recuperable NUNCA borra lo que el barbero ya
-// escribió; solo un guardado exitoso confirmado por el servidor cierra el
-// diálogo. Nunca muestra asignaciones a barberos (HU-023), estado de
-// activación (HU-024), disponibilidad ni citas: fuera de alcance de esta
-// historia.
+// Pantalla "Servicios" (HU-022, HU-024): consultar y listar el catálogo de
+// la barbería activa, crear un servicio, editarlo y cambiar su ciclo de
+// vida (desactivar/reactivar). Estados discriminados: carga inicial, listo,
+// vacío, error recuperable, guardando (mismo patrón que StaffPage.vue). Un
+// error recuperable NUNCA borra lo que el barbero ya escribió; solo un
+// guardado exitoso confirmado por el servidor cierra el diálogo. Nunca
+// muestra asignaciones a barberos (HU-023), disponibilidad ni citas: fuera
+// de alcance de esta historia.
 import { onMounted, ref } from 'vue'
-import { BaseAlert, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
-import { createService, fetchServices, updateService, type ServiceInput } from '../api/catalogApi'
+import { BaseAlert, BaseBadge, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
+import {
+  createService,
+  deactivateService,
+  fetchServices,
+  previewDeactivation,
+  reactivateService,
+  updateService,
+  type ServiceInput,
+} from '../api/catalogApi'
 import { newIdempotencyKey } from '../model/idempotencyKey'
 import type { Service } from '../model/service'
 import {
@@ -302,6 +310,157 @@ async function onSubmitEdit() {
       editStatus.value = 'unexpected-error'
   }
 }
+
+// --- HU-024: desactivar/reactivar ------------------------------------------
+
+type ImpactStatus = 'loading' | 'ready' | 'error'
+type LifecycleStatus =
+  | 'idle'
+  | 'saving'
+  | 'transition-conflict'
+  | 'idempotency-conflict'
+  | 'not-found'
+  | 'network-error'
+  | 'unexpected-error'
+
+const lifecycleTarget = ref<Service | null>(null)
+const lifecycleIntent = ref<'deactivate' | 'reactivate' | null>(null)
+const isLifecycleOpen = ref(false)
+const lifecycleStatus = ref<LifecycleStatus>('idle')
+const impactStatus = ref<ImpactStatus>('loading')
+const affectedAppointments = ref(0)
+// Una clave por intento lógico (RN-IDE-01), igual disciplina que
+// createIdempotencyKey: se genera al abrir el diálogo y se REUTILIZA en
+// cada reintento del mismo intento (network-error/unexpected-error);
+// confirmar con éxito o cerrar el diálogo exige abrirlo de nuevo para
+// obtener una clave nueva.
+let lifecycleIdempotencyKey = newIdempotencyKey()
+
+async function openDeactivateDialog(service: Service) {
+  lifecycleTarget.value = service
+  lifecycleIntent.value = 'deactivate'
+  lifecycleStatus.value = 'idle'
+  impactStatus.value = 'loading'
+  affectedAppointments.value = 0
+  lifecycleIdempotencyKey = newIdempotencyKey()
+  isLifecycleOpen.value = true
+
+  // CA-024-01: la advertencia solo muestra impacto respaldado por el
+  // servidor, nunca un valor por defecto asumido en el cliente.
+  const outcome = await previewDeactivation(service.id)
+  if (lifecycleIntent.value !== 'deactivate' || lifecycleTarget.value?.id !== service.id) return
+
+  if (outcome.kind === 'success') {
+    affectedAppointments.value = outcome.affectedAppointments
+    impactStatus.value = 'ready'
+    return
+  }
+  if (outcome.kind === 'not-found') {
+    lifecycleStatus.value = 'not-found'
+    impactStatus.value = 'error'
+    return
+  }
+  impactStatus.value = 'error'
+}
+
+function openReactivateDialog(service: Service) {
+  lifecycleTarget.value = service
+  lifecycleIntent.value = 'reactivate'
+  lifecycleStatus.value = 'idle'
+  impactStatus.value = 'ready'
+  lifecycleIdempotencyKey = newIdempotencyKey()
+  isLifecycleOpen.value = true
+}
+
+function onLifecycleDialogClosed() {
+  lifecycleStatus.value = 'idle'
+  lifecycleIntent.value = null
+  lifecycleTarget.value = null
+}
+
+function replaceServiceInList(service: Service) {
+  const index = services.value.findIndex((s) => s.id === service.id)
+  if (index !== -1) services.value[index] = service
+}
+
+async function onConfirmDeactivate() {
+  const target = lifecycleTarget.value
+  if (!target || lifecycleStatus.value === 'saving') return
+
+  lifecycleStatus.value = 'saving'
+  const outcome = await deactivateService(target.id, lifecycleIdempotencyKey)
+
+  switch (outcome.kind) {
+    case 'success':
+      replaceServiceInList(outcome.service)
+      isLifecycleOpen.value = false
+      lifecycleStatus.value = 'idle'
+      return
+    case 'not-found':
+      lifecycleStatus.value = 'not-found'
+      return
+    case 'transition-conflict':
+      // CA-024-04/Frontend §3: un conflicto de estado recarga el impacto
+      // real, nunca asume éxito optimista.
+      lifecycleStatus.value = 'transition-conflict'
+      void reloadAfterConflict(target.id)
+      return
+    case 'idempotency-conflict':
+      lifecycleStatus.value = 'idempotency-conflict'
+      return
+    case 'network-error':
+      lifecycleStatus.value = 'network-error'
+      return
+    case 'unexpected-error':
+      lifecycleStatus.value = 'unexpected-error'
+  }
+}
+
+async function onConfirmReactivate() {
+  const target = lifecycleTarget.value
+  if (!target || lifecycleStatus.value === 'saving') return
+
+  lifecycleStatus.value = 'saving'
+  const outcome = await reactivateService(target.id, lifecycleIdempotencyKey)
+
+  switch (outcome.kind) {
+    case 'success':
+      replaceServiceInList(outcome.service)
+      isLifecycleOpen.value = false
+      lifecycleStatus.value = 'idle'
+      return
+    case 'not-found':
+      lifecycleStatus.value = 'not-found'
+      return
+    case 'transition-conflict':
+      lifecycleStatus.value = 'transition-conflict'
+      void reloadAfterConflict(target.id)
+      return
+    case 'idempotency-conflict':
+      lifecycleStatus.value = 'idempotency-conflict'
+      return
+    case 'network-error':
+      lifecycleStatus.value = 'network-error'
+      return
+    case 'unexpected-error':
+      lifecycleStatus.value = 'unexpected-error'
+  }
+}
+
+function onConfirmLifecycle() {
+  if (lifecycleIntent.value === 'deactivate') void onConfirmDeactivate()
+  else if (lifecycleIntent.value === 'reactivate') void onConfirmReactivate()
+}
+
+// reloadAfterConflict trae el estado real tras un conflicto de transición
+// (CA-024-04): la lista refleja lo que el servidor confirma, nunca lo que
+// el cliente esperaba.
+async function reloadAfterConflict(serviceId: string) {
+  const outcome = await fetchServices()
+  if (outcome.kind !== 'success') return
+  const fresh = outcome.page.items.find((s) => s.id === serviceId)
+  if (fresh) replaceServiceInList(fresh)
+}
 </script>
 
 <template>
@@ -347,7 +506,19 @@ async function onSubmitEdit() {
       <ul v-else class="catalog-page__list" aria-label="Servicios de la barbería">
         <li v-for="service in services" :key="service.id" class="catalog-page__item">
           <div class="catalog-page__item-info">
-            <span class="catalog-page__item-name">{{ service.name }}</span>
+            <div class="catalog-page__item-heading">
+              <span class="catalog-page__item-name">{{ service.name }}</span>
+              <!-- No depende solo del color: el texto de la etiqueta ya
+                   distingue el estado (CA-024-08). -->
+              <BaseBadge
+                :variant="service.isActive ? 'success' : 'neutral'"
+                size="sm"
+                dot
+                role="status"
+              >
+                {{ service.isActive ? 'Activo' : 'Inactivo' }}
+              </BaseBadge>
+            </div>
             <span class="catalog-page__item-meta">
               {{ service.durationMinutes }} min · {{ formatPrice(service) }}
             </span>
@@ -355,14 +526,34 @@ async function onSubmitEdit() {
               {{ service.description }}
             </span>
           </div>
-          <BaseButton
-            type="button"
-            variant="secondary"
-            :aria-label="`Editar ${service.name}`"
-            @click="openEditDialog(service)"
-          >
-            Editar
-          </BaseButton>
+          <div class="catalog-page__item-actions">
+            <BaseButton
+              type="button"
+              variant="secondary"
+              :aria-label="`Editar ${service.name}`"
+              @click="openEditDialog(service)"
+            >
+              Editar
+            </BaseButton>
+            <BaseButton
+              v-if="service.isActive"
+              type="button"
+              variant="danger"
+              :aria-label="`Desactivar ${service.name}`"
+              @click="openDeactivateDialog(service)"
+            >
+              Desactivar
+            </BaseButton>
+            <BaseButton
+              v-else
+              type="button"
+              variant="secondary"
+              :aria-label="`Reactivar ${service.name}`"
+              @click="openReactivateDialog(service)"
+            >
+              Reactivar
+            </BaseButton>
+          </div>
         </li>
       </ul>
 
@@ -575,6 +766,97 @@ async function onSubmitEdit() {
         </div>
       </form>
     </BaseDialog>
+
+    <!-- HU-024: desactivar/reactivar -->
+    <BaseDialog
+      v-model="isLifecycleOpen"
+      :title="lifecycleIntent === 'deactivate' ? 'Desactivar servicio' : 'Reactivar servicio'"
+      size="sm"
+      @close="onLifecycleDialogClosed"
+    >
+      <div class="catalog-page__lifecycle">
+        <BaseAlert
+          v-if="lifecycleStatus === 'not-found'"
+          variant="warning"
+          title="Este servicio ya no está disponible"
+          role="alert"
+        >
+          Cierra este diálogo y recarga la lista.
+        </BaseAlert>
+        <BaseAlert
+          v-else-if="lifecycleStatus === 'transition-conflict'"
+          variant="warning"
+          title="El estado de este servicio cambió"
+          role="alert"
+        >
+          Alguien más ya
+          {{ lifecycleIntent === 'deactivate' ? 'lo desactivó' : 'lo reactivó' }}. Cierra este
+          diálogo: la lista ya se actualizó con el estado real.
+        </BaseAlert>
+        <BaseAlert
+          v-else-if="lifecycleStatus === 'idempotency-conflict'"
+          variant="danger"
+          title="No pudimos completar el intento anterior"
+          role="alert"
+        >
+          Cierra este diálogo y vuelve a intentarlo.
+        </BaseAlert>
+        <BaseAlert
+          v-else-if="lifecycleStatus === 'network-error'"
+          variant="warning"
+          title="No pudimos conectar"
+          role="alert"
+        >
+          Revisa tu conexión e inténtalo de nuevo.
+        </BaseAlert>
+        <BaseAlert
+          v-else-if="lifecycleStatus === 'unexpected-error'"
+          variant="danger"
+          title="Ocurrió un error inesperado"
+          role="alert"
+        >
+          Inténtalo de nuevo en unos segundos.
+        </BaseAlert>
+
+        <template v-if="lifecycleIntent === 'deactivate'">
+          <p v-if="impactStatus === 'loading'" role="status" aria-live="polite">
+            Consultando el impacto real…
+          </p>
+          <template v-else-if="impactStatus === 'ready'">
+            <p>
+              <strong>{{ lifecycleTarget?.name }}</strong> dejará de ofrecerse. El servicio y su
+              historial se conservan; nunca se borra.
+            </p>
+            <p v-if="affectedAppointments > 0">
+              {{ affectedAppointments }} cita(s) futura(s) se verían afectadas. Ninguna se cancela
+              ni se modifica automáticamente.
+            </p>
+            <p v-else>No hay citas futuras que se vean afectadas ahora mismo.</p>
+          </template>
+        </template>
+        <template v-else>
+          <p>
+            <strong>{{ lifecycleTarget?.name }}</strong> vuelve a ofrecerse en el catálogo, sin
+            crear otro registro ni cambiar duración, precio o asignaciones.
+          </p>
+        </template>
+
+        <div class="catalog-page__dialog-actions">
+          <BaseButton type="button" variant="secondary" @click="isLifecycleOpen = false">
+            Cancelar
+          </BaseButton>
+          <BaseButton
+            type="button"
+            :variant="lifecycleIntent === 'deactivate' ? 'danger' : 'primary'"
+            :loading="lifecycleStatus === 'saving'"
+            :disabled="lifecycleStatus === 'saving' || impactStatus === 'loading'"
+            @click="onConfirmLifecycle"
+          >
+            {{ lifecycleIntent === 'deactivate' ? 'Desactivar' : 'Reactivar' }}
+          </BaseButton>
+        </div>
+      </div>
+    </BaseDialog>
   </section>
 </template>
 
@@ -630,6 +912,7 @@ async function onSubmitEdit() {
   background-color: var(--color-surface);
   border: var(--border-width-normal) solid var(--color-border-subtle);
   border-radius: var(--radius-md);
+  flex-wrap: wrap;
 }
 
 .catalog-page__item-info {
@@ -639,12 +922,25 @@ async function onSubmitEdit() {
   min-width: 0;
 }
 
+.catalog-page__item-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
 .catalog-page__item-name {
   font-family: var(--font-family-base);
   font-size: var(--font-size-body);
   font-weight: 500;
   color: var(--color-text-primary);
   overflow-wrap: anywhere;
+}
+
+.catalog-page__item-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }
 
 .catalog-page__item-meta {
@@ -677,5 +973,11 @@ async function onSubmitEdit() {
   gap: var(--space-3);
   margin-top: var(--space-5);
   flex-wrap: wrap;
+}
+
+.catalog-page__lifecycle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 </style>

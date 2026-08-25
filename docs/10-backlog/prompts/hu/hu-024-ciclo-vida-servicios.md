@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-024-v1"
-version: "1.1"
+version: "1.2"
 kind: "hu"
-status: "draft"
+status: "in_progress"
 target_agents:
   - "claude"
   - "codex"
@@ -19,7 +19,7 @@ branch: "feat/77-hu024-ciclo-vida-servicios"
 pr: null
 pr_url: null
 depends_on:
-  - "HU-022 y HU-023 integradas en main (pendiente)"
+  - "HU-022 y HU-023 integradas en main (cumplido)"
   - "DP-SER-03 resuelta como DEC-069 (cumplido)"
 rules:
   - "RN-SER-03"
@@ -83,7 +83,7 @@ source_docs:
   - "apps/api/internal/modules/catalog"
   - "apps/web/src/modules/catalog"
 created_at: "2026-08-24"
-updated_at: "2026-08-24"
+updated_at: "2026-08-25"
 supersedes: null
 superseded_by: null
 ---
@@ -92,7 +92,7 @@ superseded_by: null
 
 ## Instrucción para Claude o Codex
 
-`DP-SER-03` está resuelta como `DEC-069` y el issue real [#77](https://github.com/bcaceres19/barberia/issues/77) existe con `CA-024-01`–`CA-024-08`. Este prompt permanece en `draft` únicamente porque `HU-022` y `HU-023` todavía no están integradas en `main`. La cadena migrada todavía no contiene `appointment`; no inventes conteos, citas, cancelaciones ni contratos ficticios para aparentar la advertencia de `RN-SER-03` — `DEC-069` ya fija que B1 solo construye un recuento real (siempre 0) sin bloqueo optimista. Cuando ambas HU estén integradas, pasa este prompt a `in_progress` e implementa únicamente el ciclo de vida de `service` sin borrado físico.
+`DP-SER-03` está resuelta como `DEC-069` y el issue real [#77](https://github.com/bcaceres19/barberia/issues/77) existe con `CA-024-01`–`CA-024-08`. `HU-022` y `HU-023` ya están integradas en `main`: este prompt pasó a `in_progress` y se implementó el ciclo de vida de `service` sin borrado físico, contra la rama `feat/77-hu024-ciclo-vida-servicios`. La cadena migrada todavía no contiene `appointment`; el impacto de citas futuras (`CA-024-01`/`CA-024-04`) es literal y honestamente `0` en B1 (`catalog.currentDeactivationImpact`, `DEC-069`), sin bloqueo optimista, sin tabla `appointment` parcial ni adaptador que simule una consulta contra algo que no existe todavía.
 
 ## Objetivo
 

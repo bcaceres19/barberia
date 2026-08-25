@@ -251,6 +251,15 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	private.Get("/services/{serviceId}", getServiceHandler.ServeHTTP)
 	private.Patch("/services/{serviceId}", updateServiceHandler.ServeHTTP)
 
+	// HU-024: ciclo de vida del catálogo (desactivar/reactivar), mismo
+	// catalogService que HU-022: un único núcleo dueño de `service`.
+	getDeactivationImpactHandler := cataloghttpapi.NewGetServiceDeactivationImpactHandler(catalogService)
+	deactivateServiceHandler := cataloghttpapi.NewDeactivateServiceHandler(catalogService)
+	reactivateServiceHandler := cataloghttpapi.NewReactivateServiceHandler(catalogService)
+	private.Get("/services/{serviceId}/deactivation-impact", getDeactivationImpactHandler.ServeHTTP)
+	private.Post("/services/{serviceId}/deactivate", deactivateServiceHandler.ServeHTTP)
+	private.Post("/services/{serviceId}/reactivate", reactivateServiceHandler.ServeHTTP)
+
 	// HU-023: asignación de servicios a barberos. AssignmentService (catalog,
 	// dueño de la intención "qué servicios se prestan") colabora con staff
 	// SOLO a través de staff.BarberLookup(staffService), un puerto pequeño

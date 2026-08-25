@@ -7,7 +7,10 @@ import { httpClient } from '@/shared/api/httpClient'
 import type { Service, ServicePage } from '../model/service'
 import type {
   CreateServiceOutcome,
+  DeactivateServiceOutcome,
   FetchServicesOutcome,
+  PreviewDeactivationOutcome,
+  ReactivateServiceOutcome,
   UpdateServiceOutcome,
 } from '../model/catalogOutcome'
 
@@ -125,6 +128,8 @@ function toService(data: {
   durationMinutes: number
   price: string
   currency: string
+  isActive: boolean
+  deactivatedAt: string | null
   createdAt: string
   updatedAt: string
 }): Service {
@@ -135,6 +140,8 @@ function toService(data: {
     durationMinutes: data.durationMinutes,
     price: data.price,
     currency: data.currency,
+    isActive: data.isActive,
+    deactivatedAt: data.deactivatedAt,
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
   }
@@ -148,10 +155,108 @@ function toPage(data: {
     durationMinutes: number
     price: string
     currency: string
+    isActive: boolean
+    deactivatedAt: string | null
     createdAt: string
     updatedAt: string
   }[]
   nextCursor: string | null
 }): ServicePage {
   return { items: data.items.map(toService), nextCursor: data.nextCursor }
+}
+
+// --- HU-024: ciclo de vida --------------------------------------------------
+
+// previewDeactivation consulta el impacto real de desactivar serviceId
+// (CA-024-01): siempre 0 en B1 (DEC-069), pero SIEMPRE mediante esta
+// solicitud real -nunca un valor por defecto asumido en el cliente.
+export async function previewDeactivation(serviceId: string): Promise<PreviewDeactivationOutcome> {
+  try {
+    const { data, response } = await httpClient.GET(
+      '/private/services/{serviceId}/deactivation-impact',
+      { params: { path: { serviceId } } },
+    )
+
+    if (response.ok && data) {
+      return { kind: 'success', affectedAppointments: data.affectedAppointments }
+    }
+    if (response.status === 404) return { kind: 'not-found' }
+    return { kind: 'unexpected-error' }
+  } catch {
+    return { kind: 'network-error' }
+  }
+}
+
+// deactivateService confirma la desactivación (CA-024-02, CA-024-04),
+// protegida por Idempotency-Key (RN-IDE-01): idempotencyKey es la clave del
+// intento lógico vigente (misma disciplina que createService).
+export async function deactivateService(
+  serviceId: string,
+  idempotencyKey: string,
+): Promise<DeactivateServiceOutcome> {
+  try {
+    const { data, error, response } = await httpClient.POST(
+      '/private/services/{serviceId}/deactivate',
+      {
+        params: { path: { serviceId }, header: { 'Idempotency-Key': idempotencyKey } },
+      },
+    )
+
+    if (response.ok && data) {
+      return {
+        kind: 'success',
+        service: toService(data.service),
+        affectedAppointments: data.affectedAppointments,
+      }
+    }
+
+    switch (response.status) {
+      case 404:
+        return { kind: 'not-found' }
+      case 409:
+        // "conflict" (transición inválida, el servicio ya estaba inactivo)
+        // frente a "idempotency-conflict"/"idempotency-locked" (RN-IDE-01):
+        // el cliente decide por `code`, nunca por `detail`.
+        return isProblemCode(error, 'conflict')
+          ? { kind: 'transition-conflict' }
+          : { kind: 'idempotency-conflict' }
+      default:
+        return { kind: 'unexpected-error' }
+    }
+  } catch {
+    return { kind: 'network-error' }
+  }
+}
+
+// reactivateService confirma la reactivación (CA-024-05), mismo protocolo
+// de idempotencia que deactivateService, en sentido inverso.
+export async function reactivateService(
+  serviceId: string,
+  idempotencyKey: string,
+): Promise<ReactivateServiceOutcome> {
+  try {
+    const { data, error, response } = await httpClient.POST(
+      '/private/services/{serviceId}/reactivate',
+      {
+        params: { path: { serviceId }, header: { 'Idempotency-Key': idempotencyKey } },
+      },
+    )
+
+    if (response.ok && data) {
+      return { kind: 'success', service: toService(data) }
+    }
+
+    switch (response.status) {
+      case 404:
+        return { kind: 'not-found' }
+      case 409:
+        return isProblemCode(error, 'conflict')
+          ? { kind: 'transition-conflict' }
+          : { kind: 'idempotency-conflict' }
+      default:
+        return { kind: 'unexpected-error' }
+    }
+  } catch {
+    return { kind: 'network-error' }
+  }
 }

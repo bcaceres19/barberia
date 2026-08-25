@@ -34,3 +34,33 @@ export type UpdateServiceOutcome =
   | { kind: 'not-found' }
   | { kind: 'network-error' }
   | { kind: 'unexpected-error' }
+
+// --- HU-024: ciclo de vida --------------------------------------------------
+
+export type PreviewDeactivationOutcome =
+  | { kind: 'success'; affectedAppointments: number }
+  | { kind: 'not-found' }
+  | { kind: 'network-error' }
+  | { kind: 'unexpected-error' }
+
+// transition-conflict (RN-IDE-01 con una clave nueva sobre una transición
+// que ya no aplica, CA-024-06): el servicio ya estaba en el estado destino.
+// Distinto de idempotency-conflict (misma clave, otro contenido/operación,
+// o en curso, DEC-043): ese caso nunca debería alcanzar la interfaz porque
+// cada intento lógico genera su propia clave nueva; se conserva como
+// frontera defensiva.
+export type DeactivateServiceOutcome =
+  | { kind: 'success'; service: Service; affectedAppointments: number }
+  | { kind: 'not-found' }
+  | { kind: 'transition-conflict' }
+  | { kind: 'idempotency-conflict' }
+  | { kind: 'network-error' }
+  | { kind: 'unexpected-error' }
+
+export type ReactivateServiceOutcome =
+  | { kind: 'success'; service: Service }
+  | { kind: 'not-found' }
+  | { kind: 'transition-conflict' }
+  | { kind: 'idempotency-conflict' }
+  | { kind: 'network-error' }
+  | { kind: 'unexpected-error' }

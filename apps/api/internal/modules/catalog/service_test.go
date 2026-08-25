@@ -17,13 +17,17 @@ import (
 // apperr), nunca SQL, RLS ni el unique_violation real (eso vive en
 // postgres/repository_test.go contra PostgreSQL real).
 type fakeRepository struct {
-	listFn   func(ctx context.Context, barbershopID string, cursor *catalog.Cursor, limit int) (catalog.ListResult, error)
-	getFn    func(ctx context.Context, barbershopID, serviceID string) (catalog.Service, bool, error)
-	createFn func(ctx context.Context, barbershopID string, input catalog.CreateInput, key idempotency.Key, fingerprint idempotency.Fingerprint) (catalog.CreateResult, error)
-	updateFn func(ctx context.Context, barbershopID, serviceID string, fields catalog.UpdateFields) (catalog.UpdateResult, error)
+	listFn       func(ctx context.Context, barbershopID string, cursor *catalog.Cursor, limit int) (catalog.ListResult, error)
+	getFn        func(ctx context.Context, barbershopID, serviceID string) (catalog.Service, bool, error)
+	createFn     func(ctx context.Context, barbershopID string, input catalog.CreateInput, key idempotency.Key, fingerprint idempotency.Fingerprint) (catalog.CreateResult, error)
+	updateFn     func(ctx context.Context, barbershopID, serviceID string, fields catalog.UpdateFields) (catalog.UpdateResult, error)
+	deactivateFn func(ctx context.Context, barbershopID, serviceID string, key idempotency.Key, fingerprint idempotency.Fingerprint) (catalog.LifecycleResult, error)
+	reactivateFn func(ctx context.Context, barbershopID, serviceID string, key idempotency.Key, fingerprint idempotency.Fingerprint) (catalog.LifecycleResult, error)
 
-	createCalls int
-	updateCalls int
+	createCalls     int
+	updateCalls     int
+	deactivateCalls int
+	reactivateCalls int
 }
 
 func (f *fakeRepository) List(ctx context.Context, barbershopID string, cursor *catalog.Cursor, limit int) (catalog.ListResult, error) {
@@ -42,6 +46,16 @@ func (f *fakeRepository) Create(ctx context.Context, barbershopID string, input 
 func (f *fakeRepository) Update(ctx context.Context, barbershopID, serviceID string, fields catalog.UpdateFields) (catalog.UpdateResult, error) {
 	f.updateCalls++
 	return f.updateFn(ctx, barbershopID, serviceID, fields)
+}
+
+func (f *fakeRepository) Deactivate(ctx context.Context, barbershopID, serviceID string, key idempotency.Key, fingerprint idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+	f.deactivateCalls++
+	return f.deactivateFn(ctx, barbershopID, serviceID, key, fingerprint)
+}
+
+func (f *fakeRepository) Reactivate(ctx context.Context, barbershopID, serviceID string, key idempotency.Key, fingerprint idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+	f.reactivateCalls++
+	return f.reactivateFn(ctx, barbershopID, serviceID, key, fingerprint)
 }
 
 var _ catalog.Repository = (*fakeRepository)(nil)
@@ -524,5 +538,183 @@ func TestList_InvalidCursor_RejectedWithoutTouchingRepository(t *testing.T) {
 	appErr, ok := apperr.As(err)
 	if !ok || appErr.Kind != apperr.KindInvalid {
 		t.Fatalf("expected apperr.KindInvalid, got %v", err)
+	}
+}
+
+// --- PreviewDeactivation/Deactivate/Reactivate (HU-024) --------------------
+
+const validServiceID = "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4"
+
+func TestPreviewDeactivation_MalformedID_ReturnsNotFoundWithoutTouchingRepository(t *testing.T) {
+	repo := &fakeRepository{getFn: func(context.Context, string, string) (catalog.Service, bool, error) {
+		t.Fatal("repository must not be called for a malformed id")
+		return catalog.Service{}, false, nil
+	}}
+	svc := catalog.NewService(repo)
+
+	_, err := svc.PreviewDeactivation(context.Background(), "shop-1", "not-a-uuid")
+	mustBeNotFound(t, err)
+}
+
+func TestPreviewDeactivation_NotFound_TranslatesToNotFound(t *testing.T) {
+	repo := &fakeRepository{getFn: func(context.Context, string, string) (catalog.Service, bool, error) {
+		return catalog.Service{}, false, nil
+	}}
+	svc := catalog.NewService(repo)
+
+	_, err := svc.PreviewDeactivation(context.Background(), "shop-1", validServiceID)
+	mustBeNotFound(t, err)
+}
+
+func TestPreviewDeactivation_Found_ReturnsZeroAffectedAppointments(t *testing.T) {
+	repo := &fakeRepository{getFn: func(context.Context, string, string) (catalog.Service, bool, error) {
+		return catalog.Service{ID: validServiceID, IsActive: true}, true, nil
+	}}
+	svc := catalog.NewService(repo)
+
+	impact, err := svc.PreviewDeactivation(context.Background(), "shop-1", validServiceID)
+	if err != nil {
+		t.Fatalf("PreviewDeactivation: %v", err)
+	}
+	// DEC-069: B1 no tiene appointment todavía, así que el conteo real es
+	// siempre 0.
+	if impact.AffectedAppointments != 0 {
+		t.Fatalf("expected AffectedAppointments=0 (DEC-069), got %d", impact.AffectedAppointments)
+	}
+}
+
+func failingLifecycleFn(t *testing.T) func(context.Context, string, string, idempotency.Key, idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+	return func(context.Context, string, string, idempotency.Key, idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+		t.Fatal("repository must not be called for a malformed id")
+		return catalog.LifecycleResult{}, nil
+	}
+}
+
+func TestDeactivate_MalformedID_ReturnsNotFoundWithoutTouchingRepository(t *testing.T) {
+	repo := &fakeRepository{deactivateFn: failingLifecycleFn(t)}
+	svc := catalog.NewService(repo)
+
+	_, err := svc.Deactivate(context.Background(), "shop-1", "not-a-uuid", "key-1", "a")
+	mustBeNotFound(t, err)
+}
+
+func TestDeactivate_NotFound_TranslatesToNotFound(t *testing.T) {
+	repo := &fakeRepository{deactivateFn: func(context.Context, string, string, idempotency.Key, idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+		return catalog.LifecycleResult{
+			Decision: idempotency.Decision{Outcome: idempotency.OutcomeProceed},
+			Found:    false,
+		}, nil
+	}}
+	svc := catalog.NewService(repo)
+
+	_, err := svc.Deactivate(context.Background(), "shop-1", validServiceID, "key-1", "a")
+	mustBeNotFound(t, err)
+}
+
+func TestDeactivate_InvalidTransition_TranslatesToConflict(t *testing.T) {
+	repo := &fakeRepository{deactivateFn: func(context.Context, string, string, idempotency.Key, idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+		return catalog.LifecycleResult{
+			Decision:          idempotency.Decision{Outcome: idempotency.OutcomeProceed},
+			Found:             true,
+			InvalidTransition: true,
+		}, nil
+	}}
+	svc := catalog.NewService(repo)
+
+	_, err := svc.Deactivate(context.Background(), "shop-1", validServiceID, "key-1", "a")
+	mustBeConflict(t, err)
+}
+
+func TestDeactivate_Proceed_ReturnsResultUntouched(t *testing.T) {
+	want := catalog.LifecycleResult{
+		Decision: idempotency.Decision{Outcome: idempotency.OutcomeProceed},
+		Found:    true,
+		Service:  catalog.Service{ID: validServiceID, IsActive: false},
+	}
+	repo := &fakeRepository{deactivateFn: func(context.Context, string, string, idempotency.Key, idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+		return want, nil
+	}}
+	svc := catalog.NewService(repo)
+
+	got, err := svc.Deactivate(context.Background(), "shop-1", validServiceID, "key-1", "a")
+	if err != nil {
+		t.Fatalf("Deactivate: %v", err)
+	}
+	if got.Service.ID != want.Service.ID || got.Service.IsActive != want.Service.IsActive {
+		t.Fatalf("expected the repository result untouched, got %+v want %+v", got, want)
+	}
+}
+
+func TestDeactivate_ReplayOutcome_PassedThroughWithoutTranslatingAsError(t *testing.T) {
+	repo := &fakeRepository{deactivateFn: func(context.Context, string, string, idempotency.Key, idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+		return catalog.LifecycleResult{
+			Decision: idempotency.Decision{Outcome: idempotency.OutcomeReplay},
+			Response: idempotency.StoredResponse{Status: 200, Body: `{"service":{}}`},
+		}, nil
+	}}
+	svc := catalog.NewService(repo)
+
+	// CA-024-06: una repetición exacta (mismo Outcome=Replay) nunca se
+	// traduce a NotFound/Conflict, aunque Found/InvalidTransition queden en
+	// su valor cero por defecto (no son significativos fuera de
+	// OutcomeProceed).
+	got, err := svc.Deactivate(context.Background(), "shop-1", validServiceID, "key-1", "a")
+	if err != nil {
+		t.Fatalf("Deactivate: %v", err)
+	}
+	if got.Decision.Outcome != idempotency.OutcomeReplay {
+		t.Fatalf("expected OutcomeReplay passed through, got %s", got.Decision.Outcome)
+	}
+}
+
+func TestReactivate_MalformedID_ReturnsNotFoundWithoutTouchingRepository(t *testing.T) {
+	repo := &fakeRepository{reactivateFn: failingLifecycleFn(t)}
+	svc := catalog.NewService(repo)
+
+	_, err := svc.Reactivate(context.Background(), "shop-1", "not-a-uuid", "key-1", "a")
+	mustBeNotFound(t, err)
+}
+
+func TestReactivate_NotFound_TranslatesToNotFound(t *testing.T) {
+	repo := &fakeRepository{reactivateFn: func(context.Context, string, string, idempotency.Key, idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+		return catalog.LifecycleResult{Decision: idempotency.Decision{Outcome: idempotency.OutcomeProceed}, Found: false}, nil
+	}}
+	svc := catalog.NewService(repo)
+
+	_, err := svc.Reactivate(context.Background(), "shop-1", validServiceID, "key-1", "a")
+	mustBeNotFound(t, err)
+}
+
+func TestReactivate_InvalidTransition_TranslatesToConflict(t *testing.T) {
+	repo := &fakeRepository{reactivateFn: func(context.Context, string, string, idempotency.Key, idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+		return catalog.LifecycleResult{
+			Decision:          idempotency.Decision{Outcome: idempotency.OutcomeProceed},
+			Found:             true,
+			InvalidTransition: true,
+		}, nil
+	}}
+	svc := catalog.NewService(repo)
+
+	_, err := svc.Reactivate(context.Background(), "shop-1", validServiceID, "key-1", "a")
+	mustBeConflict(t, err)
+}
+
+func TestReactivate_Proceed_ReturnsResultUntouched(t *testing.T) {
+	want := catalog.LifecycleResult{
+		Decision: idempotency.Decision{Outcome: idempotency.OutcomeProceed},
+		Found:    true,
+		Service:  catalog.Service{ID: validServiceID, IsActive: true},
+	}
+	repo := &fakeRepository{reactivateFn: func(context.Context, string, string, idempotency.Key, idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+		return want, nil
+	}}
+	svc := catalog.NewService(repo)
+
+	got, err := svc.Reactivate(context.Background(), "shop-1", validServiceID, "key-1", "a")
+	if err != nil {
+		t.Fatalf("Reactivate: %v", err)
+	}
+	if got.Service.ID != want.Service.ID || !got.Service.IsActive {
+		t.Fatalf("expected the repository result untouched, got %+v want %+v", got, want)
 	}
 }

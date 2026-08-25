@@ -713,7 +713,7 @@ func TestCreate_StoredResponseBody_MatchesHTTPAPIWireShape(t *testing.T) {
 	if err := json.Unmarshal([]byte(result.Response.Body), &generic); err != nil {
 		t.Fatalf("unmarshal stored body: %v", err)
 	}
-	wantKeys := []string{"id", "name", "description", "durationMinutes", "price", "currency", "createdAt", "updatedAt"}
+	wantKeys := []string{"id", "name", "description", "durationMinutes", "price", "currency", "isActive", "deactivatedAt", "createdAt", "updatedAt"}
 	if len(generic) != len(wantKeys) {
 		t.Fatalf("expected exactly %v, got keys %v", wantKeys, generic)
 	}

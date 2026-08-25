@@ -328,6 +328,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/private/services/{serviceId}/deactivation-impact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Previsualizar el impacto de desactivar un servicio del catálogo
+         * @description Consulta real (HU-024, CA-024-01), calculada en el momento de esta solicitud, de cuántas citas futuras quedarían afectadas si el servicio se desactivara ahora mismo. Siempre `0` en B1 (DEC-069): `appointment` no existe todavía en la cadena migrada, así que cero es el conteo real del sistema actual, no un valor por defecto. Un identificador inexistente o de otra barbería responde `404` uniforme (RN-TEN-01), igual que `GET /private/services/{serviceId}`.
+         */
+        get: operations["getServiceDeactivationImpact"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/private/services/{serviceId}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Desactivar un servicio del catálogo de la barbería activa
+         * @description Transición explícita activo → inactivo sobre el mismo `service` (HU-024, CA-024-02, CA-024-03), protegida con clave de idempotencia (RN-IDE-01, DEC-043): repetir el mismo `POST` con la misma `Idempotency-Key` reproduce la misma respuesta sin ejecutar la transición de nuevo. Vuelve a consultar el impacto real dentro de esta misma operación, sin depender de un valor cacheado de `.../deactivation-impact` (CA-024-04): no requiere bloqueo optimista porque en B1 ese conteo no puede cambiar entre ambas llamadas (DEC-069). Nunca borra la fila, sus asignaciones ni ninguna cita (RN-SER-03, RN-SER-04): solo cambia `isActive`/`deactivatedAt`. Un identificador inexistente o de otra barbería responde `404` uniforme. Un servicio ya inactivo, con una clave de idempotencia nueva, responde `409` (transición inválida): la interfaz debe recargar el estado real en vez de asumir éxito.
+         */
+        post: operations["deactivateService"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/private/services/{serviceId}/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reactivar un servicio del catálogo de la barbería activa
+         * @description Transición explícita inactivo → activo sobre el mismo `service` (HU-024, CA-024-05), protegida con clave de idempotencia (RN-IDE-01, DEC-043): repetir el mismo `POST` con la misma `Idempotency-Key` reproduce la misma respuesta sin ejecutar la transición de nuevo. Nunca crea otra fila ni altera `name`, `durationMinutes`, `price` ni asignaciones (RN-SER-04). Un identificador inexistente o de otra barbería responde `404` uniforme. Un servicio ya activo, con una clave de idempotencia nueva, responde `409` (transición inválida).
+         */
+        post: operations["reactivateService"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -540,7 +600,7 @@ export interface components {
              */
             fullName: string;
         };
-        /** @description Servicio del catálogo de la barbería activa. currency es siempre "COP" (DEC-067): fija para todo el MVP, nunca aceptada como entrada del cliente. */
+        /** @description Servicio del catálogo de la barbería activa. currency es siempre "COP" (DEC-067): fija para todo el MVP, nunca aceptada como entrada del cliente. isActive/deactivatedAt son de solo lectura: ningún endpoint de HU-022 (create/update) los acepta como entrada; solo cambian mediante POST .../deactivate y POST .../reactivate (HU-024). */
         ServiceResponse: {
             /**
              * Format: uuid
@@ -574,6 +634,17 @@ export interface components {
              * @enum {string}
              */
             currency: "COP";
+            /**
+             * @description Estado de ciclo de vida (HU-024, RN-SER-03): `true` mientras el servicio se ofrece; `false` cuando se desactivó. Nunca se borra físicamente; desactivar/reactivar son las únicas transiciones.
+             * @example true
+             */
+            isActive: boolean;
+            /**
+             * Format: date-time
+             * @description Instante en que el servicio pasó a inactivo, con offset. `null` mientras `isActive` es `true`; nunca `null` cuando es `false` (invariante `service_deactivated_at_ck`).
+             * @example null
+             */
+            deactivatedAt: string | null;
             /**
              * Format: date-time
              * @description Instante de alta, con offset.
@@ -673,6 +744,23 @@ export interface components {
              * @example eyJjcmVhdGVkQXQiOiIyMDI2LTA4LTI0VDE1OjA0OjA1WiIsImlkIjoiMWEyYjNjNGQtNWU2Zi00NzA4LTlhMGItMWMyZDNlNGY1MDYxIn0=
              */
             nextCursor: string | null;
+        };
+        /** @description Impacto real, calculado en el momento de la solicitud, de desactivar el servicio ahora mismo. */
+        ServiceDeactivationImpactResponse: {
+            /**
+             * @description Cantidad de citas futuras que quedarían afectadas si el servicio se desactiva. Siempre 0 en B1 (DEC-069): ninguna cita existe todavía en el sistema.
+             * @example 0
+             */
+            affectedAppointments: number;
+        };
+        /** @description Servicio ya desactivado, junto con el impacto real que la propia confirmación volvió a consultar (no el valor que devolvió una previsualización anterior). */
+        ServiceDeactivationResponse: {
+            service: components["schemas"]["ServiceResponse"];
+            /**
+             * @description Citas futuras afectadas, calculadas de nuevo en esta misma operación de confirmación. Siempre 0 en B1 (DEC-069).
+             * @example 0
+             */
+            affectedAppointments: number;
         };
         /** @description Solicitud de recuperación de acceso. */
         RecoveryRequestRequest: {
@@ -1062,6 +1150,36 @@ export interface components {
             };
             content: {
                 "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description Impacto real de desactivar el servicio, calculado en el momento de esta solicitud. */
+        ServiceDeactivationImpact: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ServiceDeactivationImpactResponse"];
+            };
+        };
+        /** @description Servicio desactivado, con el impacto real vuelto a consultar en la misma confirmación. */
+        ServiceDeactivated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ServiceDeactivationResponse"];
+            };
+        };
+        /** @description Servicio reactivado, sin recrear el recurso ni sus asignaciones. */
+        ServiceReactivated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ServiceResponse"];
             };
         };
         /** @description La solicitud fue recibida. Si la cuenta existe y tiene el teléfono verificado, se envía un código por WhatsApp oficial y correo; en cualquier otro caso no ocurre ningún envío, sin que la respuesta lo revele. */
@@ -1554,6 +1672,88 @@ export interface operations {
             401: components["responses"]["UnauthorizedProblem"];
             404: components["responses"]["NotFoundProblem"];
             409: components["responses"]["LastActiveAssignmentConflictProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getServiceDeactivationImpact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del servicio. */
+                serviceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["ServiceDeactivationImpact"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    deactivateService: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Clave elegida por el cliente que identifica un intento de escritura crítica. Repetir la misma clave con el mismo contenido (método, ruta y cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo. Repetirla con contenido distinto es un conflicto: usa una clave nueva para una solicitud distinta. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Identificador del servicio. */
+                serviceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["ServiceDeactivated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            /** @description Conflicto de idempotencia (misma clave con otra operación, `IdempotencyConflictProblem`), operación en curso con la misma clave (`IdempotencyLockedProblem`, DEC-043), o el servicio ya está inactivo (`ServiceTransitionConflictProblem`). Los tres problem types comparten status pero tienen `code` distinto: el cliente decide por `code`, nunca por `detail`. */
+            409: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    reactivateService: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Clave elegida por el cliente que identifica un intento de escritura crítica. Repetir la misma clave con el mismo contenido (método, ruta y cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo. Repetirla con contenido distinto es un conflicto: usa una clave nueva para una solicitud distinta. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Identificador del servicio. */
+                serviceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["ServiceReactivated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            /** @description Conflicto de idempotencia (misma clave con otra operación, `IdempotencyConflictProblem`), operación en curso con la misma clave (`IdempotencyLockedProblem`, DEC-043), o el servicio ya está activo (`ServiceTransitionConflictProblem`). Los tres problem types comparten status pero tienen `code` distinto: el cliente decide por `code`, nunca por `detail`. */
+            409: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             500: components["responses"]["InternalErrorProblem"];
         };
     };

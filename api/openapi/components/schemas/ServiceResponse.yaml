@@ -1,14 +1,17 @@
 # Representación canónica de un servicio del catálogo (HU-022, CA-022-01,
-# CA-022-07): exactamente id, name, description, durationMinutes, price,
-# currency, createdAt, updatedAt. Nunca isActive, deactivatedAt,
-# asignaciones a barberos ni citas: el ciclo de activación pertenece a
-# HU-024 y las asignaciones a HU-023 (alcance excluido de HU-022).
-# barbershopId NUNCA aparece, mismo criterio que BarberResponse: el tenant
-# se deriva exclusivamente de SessionCookie.
+# CA-022-07; HU-024, CA-024-02, CA-024-05): id, name, description,
+# durationMinutes, price, currency, isActive, deactivatedAt, createdAt,
+# updatedAt. isActive/deactivatedAt reflejan el ciclo de vida de HU-024
+# (RN-SER-03): nunca asignaciones a barberos ni citas (alcance excluido de
+# HU-022/HU-024). barbershopId NUNCA aparece, mismo criterio que
+# BarberResponse: el tenant se deriva exclusivamente de SessionCookie.
 type: object
 description: >
   Servicio del catálogo de la barbería activa. currency es siempre "COP"
   (DEC-067): fija para todo el MVP, nunca aceptada como entrada del cliente.
+  isActive/deactivatedAt son de solo lectura: ningún endpoint de HU-022
+  (create/update) los acepta como entrada; solo cambian mediante
+  POST .../deactivate y POST .../reactivate (HU-024).
 properties:
   id:
     type: string
@@ -57,6 +60,23 @@ properties:
       endpoint de HU-022 acepta este campo como entrada.
     examples:
       - COP
+  isActive:
+    type: boolean
+    description: >
+      Estado de ciclo de vida (HU-024, RN-SER-03): `true` mientras el
+      servicio se ofrece; `false` cuando se desactivó. Nunca se borra
+      físicamente; desactivar/reactivar son las únicas transiciones.
+    examples:
+      - true
+  deactivatedAt:
+    type: [string, "null"]
+    format: date-time
+    description: >
+      Instante en que el servicio pasó a inactivo, con offset. `null`
+      mientras `isActive` es `true`; nunca `null` cuando es `false`
+      (invariante `service_deactivated_at_ck`).
+    examples:
+      - null
   createdAt:
     type: string
     format: date-time
@@ -76,5 +96,7 @@ required:
   - durationMinutes
   - price
   - currency
+  - isActive
+  - deactivatedAt
   - createdAt
   - updatedAt

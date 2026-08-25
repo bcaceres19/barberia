@@ -35,6 +35,18 @@ type catalogPathsFile struct {
 	} `yaml:"/private/services/{serviceId}"`
 }
 
+type serviceLifecyclePathsFile struct {
+	Impact struct {
+		Get operation `yaml:"get"`
+	} `yaml:"/private/services/{serviceId}/deactivation-impact"`
+	Deactivate struct {
+		Post operation `yaml:"post"`
+	} `yaml:"/private/services/{serviceId}/deactivate"`
+	Reactivate struct {
+		Post operation `yaml:"post"`
+	} `yaml:"/private/services/{serviceId}/reactivate"`
+}
+
 func findRepoRoot(t *testing.T) string {
 	t.Helper()
 	dir, err := os.Getwd()
@@ -118,14 +130,14 @@ func requireResponses(t *testing.T, op operation, wantOperationID string, wantSt
 
 // TestContract_ServiceResponseSchema_MatchesDTOFields verifica que
 // httpapi.ServiceResponse (id, name, description, durationMinutes, price,
-// currency, createdAt, updatedAt) coincide exactamente con
-// ServiceResponse.yaml (CA-022-07: nunca isActive, deactivatedAt,
-// asignaciones ni citas).
+// currency, isActive, deactivatedAt, createdAt, updatedAt) coincide
+// exactamente con ServiceResponse.yaml (CA-022-07, CA-024-02, CA-024-05:
+// nunca asignaciones ni citas).
 func TestContract_ServiceResponseSchema_MatchesDTOFields(t *testing.T) {
 	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/ServiceResponse.yaml")
-	want := []string{"id", "name", "description", "durationMinutes", "price", "currency", "createdAt", "updatedAt"}
+	want := []string{"id", "name", "description", "durationMinutes", "price", "currency", "isActive", "deactivatedAt", "createdAt", "updatedAt"}
 	requireExactProps(t, schema, want, want)
-	for _, forbidden := range []string{"isActive", "deactivatedAt", "barbershopId", "barberIds", "appointments"} {
+	for _, forbidden := range []string{"barbershopId", "barberIds", "appointments"} {
 		if _, ok := schema.Properties[forbidden]; ok {
 			t.Fatalf("CA-022-07: el contrato de respuesta nunca debe declarar %q", forbidden)
 		}
@@ -198,4 +210,42 @@ func TestContract_OpenAPIYAML_RegistersCatalogPaths(t *testing.T) {
 	if _, ok := doc.Paths["/private/services/{serviceId}"]; !ok {
 		t.Fatal("openapi.yaml no registra paths./private/services/{serviceId}")
 	}
+	for _, p := range []string{
+		"/private/services/{serviceId}/deactivation-impact",
+		"/private/services/{serviceId}/deactivate",
+		"/private/services/{serviceId}/reactivate",
+	} {
+		if _, ok := doc.Paths[p]; !ok {
+			t.Fatalf("openapi.yaml no registra paths.%s", p)
+		}
+	}
+}
+
+// --- HU-024: ciclo de vida --------------------------------------------------
+
+func TestContract_ServiceDeactivationImpactResponseSchema_MatchesDTOFields(t *testing.T) {
+	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/ServiceDeactivationImpactResponse.yaml")
+	want := []string{"affectedAppointments"}
+	requireExactProps(t, schema, want, want)
+}
+
+func TestContract_ServiceDeactivationResponseSchema_MatchesDTOFields(t *testing.T) {
+	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/ServiceDeactivationResponse.yaml")
+	want := []string{"service", "affectedAppointments"}
+	requireExactProps(t, schema, want, want)
+}
+
+func TestContract_GetServiceDeactivationImpactOperation_MethodPathSecurityAndResponses(t *testing.T) {
+	doc := loadYAML[serviceLifecyclePathsFile](t, "api/openapi/paths/service-lifecycle.yaml")
+	requireResponses(t, doc.Impact.Get, "getServiceDeactivationImpact", []string{"200", "401", "404", "500"})
+}
+
+func TestContract_DeactivateServiceOperation_MethodPathSecurityAndResponses(t *testing.T) {
+	doc := loadYAML[serviceLifecyclePathsFile](t, "api/openapi/paths/service-lifecycle.yaml")
+	requireResponses(t, doc.Deactivate.Post, "deactivateService", []string{"200", "400", "401", "404", "409", "500"})
+}
+
+func TestContract_ReactivateServiceOperation_MethodPathSecurityAndResponses(t *testing.T) {
+	doc := loadYAML[serviceLifecyclePathsFile](t, "api/openapi/paths/service-lifecycle.yaml")
+	requireResponses(t, doc.Reactivate.Post, "reactivateService", []string{"200", "400", "401", "404", "409", "500"})
 }

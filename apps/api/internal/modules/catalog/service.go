@@ -171,6 +171,92 @@ func (s *CatalogService) Update(ctx context.Context, barbershopID, serviceID str
 	return result.Service, nil
 }
 
+// PreviewDeactivation calcula el impacto real de desactivar serviceID ahora
+// mismo (CA-024-01), sin cambiar ningún dato: solo confirma que el servicio
+// existe en barbershopID (mismo apperr.NotFound uniforme que Get) y
+// devuelve currentDeactivationImpact(), siempre 0 en B1 (DEC-069).
+func (s *CatalogService) PreviewDeactivation(ctx context.Context, barbershopID, serviceID string) (DeactivationImpact, error) {
+	if err := ctx.Err(); err != nil {
+		return DeactivationImpact{}, apperr.Internal(fmt.Errorf("catalog: contexto cancelado antes de previsualizar desactivación: %w", err))
+	}
+	if !LooksLikeServiceID(serviceID) {
+		return DeactivationImpact{}, errServiceNotFound()
+	}
+
+	_, found, err := s.repo.Get(ctx, barbershopID, serviceID)
+	if err != nil {
+		return DeactivationImpact{}, apperr.Internal(fmt.Errorf("catalog: leer servicio para previsualizar desactivación: %w", err))
+	}
+	if !found {
+		return DeactivationImpact{}, errServiceNotFound()
+	}
+	return currentDeactivationImpact(), nil
+}
+
+// Deactivate transiciona serviceID de activo a inactivo (CA-024-02,
+// CA-024-03), protegido por el protocolo de idempotencia reutilizable de
+// HU-004 (RN-IDE-01, DEC-043). key y fingerprint ya fueron interpretados
+// por la capa HTTP. Un identificador inexistente o de otra barbería produce
+// apperr.NotFound (CA-024-07); un servicio ya inactivo bajo una clave nueva
+// produce apperr.Conflict (CA-024-06).
+func (s *CatalogService) Deactivate(
+	ctx context.Context,
+	barbershopID, serviceID string,
+	key idempotency.Key,
+	fingerprint idempotency.Fingerprint,
+) (LifecycleResult, error) {
+	if err := ctx.Err(); err != nil {
+		return LifecycleResult{}, apperr.Internal(fmt.Errorf("catalog: contexto cancelado antes de desactivar servicio: %w", err))
+	}
+	if !LooksLikeServiceID(serviceID) {
+		return LifecycleResult{}, errServiceNotFound()
+	}
+
+	result, err := s.repo.Deactivate(ctx, barbershopID, serviceID, key, fingerprint)
+	if err != nil {
+		return LifecycleResult{}, apperr.Internal(fmt.Errorf("catalog: desactivar servicio: %w", err))
+	}
+	if result.Decision.Outcome == idempotency.OutcomeProceed {
+		if !result.Found {
+			return LifecycleResult{}, errServiceNotFound()
+		}
+		if result.InvalidTransition {
+			return LifecycleResult{}, errServiceAlreadyInactive()
+		}
+	}
+	return result, nil
+}
+
+// Reactivate transiciona serviceID de inactivo a activo (CA-024-05), mismo
+// protocolo de idempotencia que Deactivate, en sentido inverso.
+func (s *CatalogService) Reactivate(
+	ctx context.Context,
+	barbershopID, serviceID string,
+	key idempotency.Key,
+	fingerprint idempotency.Fingerprint,
+) (LifecycleResult, error) {
+	if err := ctx.Err(); err != nil {
+		return LifecycleResult{}, apperr.Internal(fmt.Errorf("catalog: contexto cancelado antes de reactivar servicio: %w", err))
+	}
+	if !LooksLikeServiceID(serviceID) {
+		return LifecycleResult{}, errServiceNotFound()
+	}
+
+	result, err := s.repo.Reactivate(ctx, barbershopID, serviceID, key, fingerprint)
+	if err != nil {
+		return LifecycleResult{}, apperr.Internal(fmt.Errorf("catalog: reactivar servicio: %w", err))
+	}
+	if result.Decision.Outcome == idempotency.OutcomeProceed {
+		if !result.Found {
+			return LifecycleResult{}, errServiceNotFound()
+		}
+		if result.InvalidTransition {
+			return LifecycleResult{}, errServiceAlreadyActive()
+		}
+	}
+	return result, nil
+}
+
 // validateName recorta y valida name contra CA-022-04: vacío, solo espacios
 // o mayor de NameMaxLength caracteres se rechaza sin tocar el repositorio.
 // utf8.RuneCountInString cuenta caracteres Unicode, no bytes.

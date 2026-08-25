@@ -286,6 +286,11 @@ jobs:
           PGPASSWORD: postgres
         run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/hu023_asignaciones.sql
 
+      - name: Suite de ciclo de vida de servicios HU-024
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/hu024_ciclo_vida.sql
+
       - name: Suite de idempotencia (secuencial, una conexión)
         env:
           PGPASSWORD: postgres

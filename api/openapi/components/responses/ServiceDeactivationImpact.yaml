@@ -1,0 +1,17 @@
+# Respuesta 200 de GET /private/services/{serviceId}/deactivation-impact
+# (HU-024, CA-024-01).
+description: >
+  Impacto real de desactivar el servicio, calculado en el momento de esta
+  solicitud.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/ServiceDeactivationImpactResponse.yaml'
+    examples:
+      sinCitas:
+        summary: B1, sin capacidad de citas todavía (DEC-069)
+        value:
+          affectedAppointments: 0

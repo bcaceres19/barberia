@@ -1,0 +1,225 @@
+# Ciclo de vida del catálogo básico de servicios (HU-024): previsualizar el
+# impacto de una desactivación, desactivar y reactivar. No mezcla con alta,
+# edición ni lectura (catalog.yaml, HU-022) ni con asignaciones a barberos
+# (barber-services.yaml, HU-023). Nunca expone DELETE físico: RN-SER-03
+# prohíbe borrar un servicio; estas tres operaciones son las únicas
+# transiciones de `is_active`. Ninguna de las tres acepta name, description,
+# durationMinutes, price ni asignaciones (RN-SER-04): esos campos solo
+# cambian con catalog.yaml.
+/private/services/{serviceId}/deactivation-impact:
+  get:
+    tags: [Catalog]
+    summary: Previsualizar el impacto de desactivar un servicio del catálogo
+    description: >
+      Consulta real (HU-024, CA-024-01), calculada en el momento de esta
+      solicitud, de cuántas citas futuras quedarían afectadas si el
+      servicio se desactivara ahora mismo. Siempre `0` en B1 (DEC-069):
+      `appointment` no existe todavía en la cadena migrada, así que cero es
+      el conteo real del sistema actual, no un valor por defecto. Un
+      identificador inexistente o de otra barbería responde `404` uniforme
+      (RN-TEN-01), igual que `GET /private/services/{serviceId}`.
+    operationId: getServiceDeactivationImpact
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02, RN-SER-03]
+    x-decisions: [DEC-024, DEC-069]
+    parameters:
+      - name: serviceId
+        in: path
+        required: true
+        description: Identificador del servicio.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          servicio:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+    responses:
+      "200":
+        $ref: '../components/responses/ServiceDeactivationImpact.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/services/{serviceId}/deactivate:
+  post:
+    tags: [Catalog]
+    summary: Desactivar un servicio del catálogo de la barbería activa
+    description: >
+      Transición explícita activo → inactivo sobre el mismo `service`
+      (HU-024, CA-024-02, CA-024-03), protegida con clave de idempotencia
+      (RN-IDE-01, DEC-043): repetir el mismo `POST` con la misma
+      `Idempotency-Key` reproduce la misma respuesta sin ejecutar la
+      transición de nuevo. Vuelve a consultar el impacto real dentro de esta
+      misma operación, sin depender de un valor cacheado de
+      `.../deactivation-impact` (CA-024-04): no requiere bloqueo optimista
+      porque en B1 ese conteo no puede cambiar entre ambas llamadas
+      (DEC-069). Nunca borra la fila, sus asignaciones ni ninguna cita
+      (RN-SER-03, RN-SER-04): solo cambia `isActive`/`deactivatedAt`. Un
+      identificador inexistente o de otra barbería responde `404` uniforme.
+      Un servicio ya inactivo, con una clave de idempotencia nueva, responde
+      `409` (transición inválida): la interfaz debe recargar el estado real
+      en vez de asumir éxito.
+    operationId: deactivateService
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02, RN-SER-03, RN-SER-04, RN-IDE-01]
+    x-decisions: [DEC-024, DEC-043, DEC-069]
+    parameters:
+      - name: serviceId
+        in: path
+        required: true
+        description: Identificador del servicio.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          servicio:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+      - $ref: '../components/parameters/IdempotencyKey.yaml'
+    responses:
+      "200":
+        $ref: '../components/responses/ServiceDeactivated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "409":
+        description: >
+          Conflicto de idempotencia (misma clave con otra operación,
+          `IdempotencyConflictProblem`), operación en curso con la misma
+          clave (`IdempotencyLockedProblem`, DEC-043), o el servicio ya está
+          inactivo (`ServiceTransitionConflictProblem`). Los tres problem
+          types comparten status pero tienen `code` distinto: el cliente
+          decide por `code`, nunca por `detail`.
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              contenidoDistinto:
+                summary: Misma clave, otra operación
+                value:
+                  type: /api/v1/problems/idempotency-conflict
+                  title: Conflicto de idempotencia
+                  status: 409
+                  detail: la clave de idempotencia ya se usó con un contenido distinto; usa una clave nueva
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              operacionEnCurso:
+                summary: Otra transacción tiene el bloqueo de esta clave ahora mismo
+                value:
+                  type: /api/v1/problems/idempotency-locked
+                  title: Operación en curso
+                  status: 409
+                  detail: la operación con esta clave de idempotencia todavía está en curso; reintenta en unos segundos
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-locked
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              yaInactivo:
+                summary: El servicio ya estaba inactivo (clave nueva)
+                value:
+                  type: /api/v1/problems/conflict
+                  title: Conflicto
+                  status: 409
+                  detail: el servicio ya está inactivo
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/services/{serviceId}/reactivate:
+  post:
+    tags: [Catalog]
+    summary: Reactivar un servicio del catálogo de la barbería activa
+    description: >
+      Transición explícita inactivo → activo sobre el mismo `service`
+      (HU-024, CA-024-05), protegida con clave de idempotencia (RN-IDE-01,
+      DEC-043): repetir el mismo `POST` con la misma `Idempotency-Key`
+      reproduce la misma respuesta sin ejecutar la transición de nuevo.
+      Nunca crea otra fila ni altera `name`, `durationMinutes`, `price` ni
+      asignaciones (RN-SER-04). Un identificador inexistente o de otra
+      barbería responde `404` uniforme. Un servicio ya activo, con una clave
+      de idempotencia nueva, responde `409` (transición inválida).
+    operationId: reactivateService
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02, RN-SER-03, RN-SER-04, RN-IDE-01]
+    x-decisions: [DEC-024, DEC-043, DEC-069]
+    parameters:
+      - name: serviceId
+        in: path
+        required: true
+        description: Identificador del servicio.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          servicio:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+      - $ref: '../components/parameters/IdempotencyKey.yaml'
+    responses:
+      "200":
+        $ref: '../components/responses/ServiceReactivated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "409":
+        description: >
+          Conflicto de idempotencia (misma clave con otra operación,
+          `IdempotencyConflictProblem`), operación en curso con la misma
+          clave (`IdempotencyLockedProblem`, DEC-043), o el servicio ya está
+          activo (`ServiceTransitionConflictProblem`). Los tres problem
+          types comparten status pero tienen `code` distinto: el cliente
+          decide por `code`, nunca por `detail`.
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              contenidoDistinto:
+                summary: Misma clave, otra operación
+                value:
+                  type: /api/v1/problems/idempotency-conflict
+                  title: Conflicto de idempotencia
+                  status: 409
+                  detail: la clave de idempotencia ya se usó con un contenido distinto; usa una clave nueva
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              operacionEnCurso:
+                summary: Otra transacción tiene el bloqueo de esta clave ahora mismo
+                value:
+                  type: /api/v1/problems/idempotency-locked
+                  title: Operación en curso
+                  status: 409
+                  detail: la operación con esta clave de idempotencia todavía está en curso; reintenta en unos segundos
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-locked
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              yaActivo:
+                summary: El servicio ya estaba activo (clave nueva)
+                value:
+                  type: /api/v1/problems/conflict
+                  title: Conflicto
+                  status: 409
+                  detail: el servicio ya está activo
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

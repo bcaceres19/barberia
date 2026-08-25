@@ -1,0 +1,28 @@
+# Respuesta 200 de POST /private/services/{serviceId}/deactivate (HU-024,
+# CA-024-02, CA-024-04, RN-IDE-01). Una repetición exacta de la misma
+# Idempotency-Key reproduce esta MISMA respuesta byte a byte.
+description: >
+  Servicio desactivado, con el impacto real vuelto a consultar en la misma
+  confirmación.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/ServiceDeactivationResponse.yaml'
+    examples:
+      desactivado:
+        value:
+          service:
+            id: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+            name: Corte clásico
+            description: Corte con máquina y tijera, incluye lavado.
+            durationMinutes: 30
+            price: "45000.00"
+            currency: COP
+            isActive: false
+            deactivatedAt: "2026-08-24T18:00:00Z"
+            createdAt: "2026-08-24T15:04:05Z"
+            updatedAt: "2026-08-24T18:00:00Z"
+          affectedAppointments: 0
