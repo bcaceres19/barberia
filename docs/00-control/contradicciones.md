@@ -1,10 +1,11 @@
 ---
 titulo: "Registro de contradicciones"
-version: "1.7"
+version: "1.8"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-23"
+ultima_actualizacion: "2026-08-25"
 documentos_relacionados:
+  - "../../AGENTS.md"
   - "registro-decisiones.md"
   - "dudas-pendientes.md"
   - "../01-producto/alcance-mvp.md"
@@ -31,6 +32,7 @@ Estados permitidos: `Abierta`, `En análisis`, `Resuelta` y `Descartada por fals
 | `CT-004` | `HU-010` debe llegar al panel privado que solo construye `HU-012`, pero `HU-012` depende de `HU-010` | **Resuelta** | `DEC-056` | Cerrada el 2026-08-13 |
 | `CT-005` | Umbral de `HU-007`: “superar 5 solicitudes” frente a escalar cuando el conteo alcanza 5 en el SQL de referencia | **Resuelta** | `DEC-061` | Cerrada el 2026-08-17 |
 | `CT-006` | Recuperación no enumerable con respuesta idéntica frente a mostrar el destino real enmascarado | **Resuelta** | `DEC-065` | Cerrada el 2026-08-17 |
+| `CT-008` | Modelo físico de B2 propone `ON DELETE CASCADE` frente a la prohibición de borrado en cascada de `AGENTS.md` | **Resuelta** | `DEC-070` | Cerrada el 2026-08-25 |
 
 ## 3. Contradicciones detalladas
 
@@ -121,6 +123,19 @@ Estados permitidos: `Abierta`, `En análisis`, `Resuelta` y `Descartada por fals
 - **Resolución:** opción 1, aplicando el mismo criterio que `DEC-064`/`DEC-065` ya fijaron para este mismo endpoint, y el mismo patrón que `HU-007` ya usa en producción para su reto telefónico análogo (`PhoneChallengeForm.vue`: "El código no es válido o venció", un único mensaje para incorrecto/vencido/agotado). `HU-011` implementa el paso de verificación con este único mensaje; el reenvío con cuenta regresiva (`CA-011-04`) sigue siendo un estado de cliente aparte, no derivado de este error.
 - **Evidencia:** `HU-011` alcance/`CA-011-03`; `apps/api/internal/modules/auth/recovery.go` (`Verify`); `apps/api/README.md` sección "No enumeración (`DEC-065`) y destino enmascarado"; `apps/web/src/modules/auth/components/PhoneChallengeForm.vue` (precedente de `HU-007`); `apps/web/src/modules/auth/components/RecoveryVerifyStep.vue`.
 
+### CT-008 · Borrado en cascada del modelo de B2 frente a la regla del repositorio
+
+- **Detectada y registrada:** 2026-08-25, al preparar las historias y prompts de B2.
+- **Estado:** **Resuelta**.
+- **Responsable de resolver:** propietario del proyecto.
+- **Documentos en conflicto:** `AGENTS.md` prohíbe el borrado en cascada; `database/modelo-fisico-referencia.sql`, sección C, proponía `ON DELETE CASCADE` en las FK de `working_hour`, `working_hour_override`, `working_hour_override_segment`, `time_block_series`, `time_block_series_date`, `time_block_series_exception` y `time_block` hacia `barber` o sus entidades padre.
+- **Contradicción:** no se puede copiar literalmente el modelo de referencia y cumplir simultáneamente la regla de no borrado en cascada. La decisión afecta el comportamiento ante baja o limpieza administrativa de un barbero y las migraciones tenant-aware.
+- **Impacto:** una migración ejecutada sin resolverla podría eliminar horarios, excepciones o bloqueos sin una operación explícita y perder evidencia operativa; cambiar las FK después de aplicarlas exige roll-forward.
+- **Opciones:** (1) sustituir las cascadas por `RESTRICT`/desactivación y exigir limpieza o retención explícita; (2) aprobar una excepción limitada y documentada para tablas de configuración, actualizando `AGENTS.md`; (3) otra alternativa que conserve la trazabilidad y no borre datos de negocio implícitamente.
+- **Resolución:** opción 1. Las siete FK pasan a `ON DELETE RESTRICT`; `barber` no tiene borrado físico en su alcance vigente (`HU-021`), así que `RESTRICT` no bloquea ninguna operación existente y deja explícita cualquier limpieza futura (`DEC-070`).
+- **Evidencia:** `AGENTS.md`, sección Calidad; `database/modelo-fisico-referencia.sql`, sección C; `docs/05-backend/estandar-base-datos.md`, secciones 6, 9 y 10; `docs/00-control/registro-decisiones.md`, `DEC-070`.
+
+---
 ## 4. Historial de estado
 
 | Fecha | Código | Cambio | Evidencia |
@@ -138,3 +153,5 @@ Estados permitidos: `Abierta`, `En análisis`, `Resuelta` y `Descartada por fals
 | 2026-08-17 | `CT-005` | Resuelta: la sexta solicitud exige el reto, no la quinta | `DEC-061` |
 | 2026-08-17 | `CT-006` | Resuelta: destino enmascarado solo tras verificar el código | `DEC-065` |
 | 2026-08-23 | `CT-007` | Detectada y resuelta en la misma entrada: mensaje uniforme para código incorrecto/vencido/agotado, no distinto | `HU-011`, issue `#64`, `DEC-064`, `DEC-065` |
+| 2026-08-25 | `CT-008` | Detectada y registrada como abierta: las FK de B2 proponen `ON DELETE CASCADE`, contrario a la prohibición de borrado en cascada | `AGENTS.md`, `database/modelo-fisico-referencia.sql`, preparación de `HU-040`–`HU-042` |
+| 2026-08-25 | `CT-008` | Resuelta: las siete FK pasan a `ON DELETE RESTRICT` | `DEC-070` |

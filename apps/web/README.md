@@ -413,11 +413,27 @@ Chromium real expuso que la cuarta entrada de navegación ("Servicios") ya
 no cabía en una sola fila a 320/360 px sin desbordar el documento
 (`document.documentElement.scrollWidth > clientWidth`): `AppNav.vue`
 (`.app-nav__list`) no tenía manejo alguno para más de tres enlaces en el
-ancho más angosto. Corregido con `overflow-x: auto` sobre la propia lista
-de enlaces (patrón de barra de pestañas desplazable, en vez de envolver a
-varias líneas, que habría cambiado el ritmo vertical del cascarón).
-Verificado sin regresión contra las evidencias responsivas ya integradas
-de `HU-011`/`HU-012`/`HU-020`/`HU-021`.
+ancho más angosto. Se corrigió entonces con `overflow-x: auto` sobre la
+propia lista de enlaces (patrón de barra de pestañas desplazable dentro
+de sí misma), que sí dejaba pasar la aserción del E2E porque esta solo
+mide el desbordamiento de `document.documentElement`, no el de un
+contenedor interno.
+
+El QA manual en navegador real de `HU-020`–`HU-024`
+(`docs/10-backlog/prompts/test/2026-08-25-qa-manual-b0-b1-chrome-mcp-report.md`)
+encontró que ese patrón sí era un defecto real y visible a 320/360 px: el
+menú queda con scroll horizontal interno, lo que incumple el criterio
+literal de `estandar-diseno-visual.md` §16/§17 ("funciona desde 320 px sin
+pérdida") y el ítem A de `docs/07-calidad/02-checklist-transversal.md`
+("reflow sin scroll horizontal ni pérdida de contenido"). Se reemplazó por
+`flex-wrap: wrap` sobre `.app-nav__list`: a 320/360 px los cinco enlaces
+(`Panel`/`Barbería`/`Barberos`/`Servicios`/`Servicios por barbero`) se
+reparten en dos líneas sin scroll de ningún tipo, aceptando el costo de un
+alto de cabecera variable según cuántos módulos aporte cada barbería (antes
+descartado por ese motivo) a cambio de no violar el criterio de "sin
+pérdida" con un scroll no descubrible. Reverificado sin regresión con
+`panel-evidencia-responsiva.spec.ts` en 320/360/768/1280 px (sin scroll
+horizontal del documento, foco visible en teclado).
 
 ### Pruebas
 
