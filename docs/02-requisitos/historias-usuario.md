@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.14"
+version: "1.15"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-25"
@@ -17,7 +17,7 @@ documentos_relacionados:
 
 # Historias de usuario y criterios de aceptación
 
-> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas confirmadas; no crean alcance por sí solas y requieren aprobación antes de implementarse. B0 y `HU-020`–`HU-024` ya están integradas en `main`. Las dudas históricas de B0 quedaron resueltas por `DEC-050`–`DEC-066`; `DP-SER-01`–`DP-SER-03` del lote de B1 quedaron resueltas por `DEC-067`–`DEC-069`. `HU-040`–`HU-042` son propuestas de B2 con prompts persistentes en `draft`: no tienen issue real y están bloqueadas por `CT-008` hasta que exista un `DEC-*` compatible con `AGENTS.md`.
+> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas confirmadas; no crean alcance por sí solas y requieren aprobación antes de implementarse. B0 y `HU-020`–`HU-024` ya están integradas en `main`. Las dudas históricas de B0 quedaron resueltas por `DEC-050`–`DEC-066`; `DP-SER-01`–`DP-SER-03` del lote de B1 quedaron resueltas por `DEC-067`–`DEC-069`; `CT-008` del lote de B2 quedó resuelta por `DEC-070`. `HU-040` tiene issue real [#90](https://github.com/bcaceres19/barberia/issues/90) y su prompt está `ready`; `HU-041`–`HU-042` siguen `draft` a la espera de que `HU-040` se integre.
 
 ---
 
@@ -50,7 +50,7 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | --- | --- | --- |
 | B0 · Cimientos, seguridad y primeras pantallas | `HU-001` – `HU-012` | Redactadas en este documento |
 | B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | Integradas en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), [PR #83](https://github.com/bcaceres19/barberia/pull/83), [PR #84](https://github.com/bcaceres19/barberia/pull/84)) |
-| B2 · Horario laboral y bloqueos | `HU-040` – `HU-042` | Redactadas; prompts en `draft`, sin issue y bloqueadas por `CT-008` |
+| B2 · Horario laboral y bloqueos | `HU-040` – `HU-042` | `CT-008` resuelta (`DEC-070`); `HU-040` en ejecución (issue real [#90](https://github.com/bcaceres19/barberia/issues/90)); `HU-041`–`HU-042` siguen `draft` |
 | B3 · Agenda, estados e integridad | `HU-060` – | Pendientes |
 | B4 · Reserva pública y disponibilidad | `HU-090` – | Pendientes |
 | B5 · Notificaciones y recordatorios | `HU-130` – | Pendientes |
@@ -938,7 +938,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 
 ## 5. Bloque B2 · Horario laboral y bloqueos
 
-> **B2 en redacción propuesta.** Las tres historias separan las dos funciones P0 del bloque: HU-040 configura la jornada semanal; HU-041 resuelve fechas especiales y festivos; HU-042 administra bloqueos puntuales y recurrentes. Las tres tienen prompt persistente en draft, issue: pending y guardan CT-008 abierta. No se ejecutan hasta que exista issue real por HU y un DEC-* resuelva la contradicción entre AGENTS.md y el modelo físico de referencia.
+> **B2 en ejecución.** Las tres historias separan las dos funciones P0 del bloque: HU-040 configura la jornada semanal; HU-041 resuelve fechas especiales y festivos; HU-042 administra bloqueos puntuales y recurrentes. CT-008 quedó resuelta como DEC-070 (las FK del modelo físico de B2 usan ON DELETE RESTRICT, no CASCADE). HU-040 tiene issue real #90 y su prompt está ready; HU-041/HU-042 permanecen draft hasta que HU-040 se integre en main.
 
 Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas afectadas y la agenda consumen estas capacidades en B3/B4; no se implementan aquí.
 
@@ -952,9 +952,9 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 | Reglas | RN-TEN-01, RN-DIS-05, RN-DIS-07 |
 | Decisiones | DEC-007, DEC-019, DEC-020, DEC-024, DEC-033–DEC-040 |
 | Actor | Barbero autenticado |
-| Depende de | Criterio de salida de B1; HU-020–HU-024 integradas en main |
+| Depende de | Criterio de salida de B1; HU-020–HU-024 integradas en main; CT-008 resuelta (DEC-070) |
 | Bloquea | HU-041, HU-042 y el cálculo posterior de disponibilidad |
-| Estado | Propuesta; prompt PROMPT-HU-040-v1 en draft; issue pending |
+| Estado | En ejecución; prompt PROMPT-HU-040-v1 ready; issue real #90 |
 | Riesgo | Un tramo ambiguo, solapado o interpretado en la zona del dispositivo desplaza toda la disponibilidad futura. |
 
 **Historia**
@@ -976,7 +976,7 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 - Descansos, almuerzos, vacaciones, emergencias, recurrencias y listas explícitas: HU-042.
 - Citas, agenda, disponibilidad pública, reservas y notificaciones.
 - Credenciales, roles, eliminación de barberos y personalización visual por barbería.
-- Cualquier FK o cascada copiada del modelo físico sin resolver CT-008.
+- Cualquier FK o cascada del modelo físico distinta de ON DELETE RESTRICT (DEC-070).
 
 **Criterios de aceptación**
 
@@ -995,7 +995,7 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 
 - Unitarias de dominio y aplicación para días, duración, tramos partidos, contiguidad, solape y medianoche.
 - HTTP y contrato para consulta, alta, edición, retiro, no autenticado, recurso ajeno, validación y error uniforme.
-- PostgreSQL real con dos barberías, RLS, FK y grants definidos después de CT-008, lectura/escritura cruzada y ausencia de escritura parcial.
+- PostgreSQL real con dos barberías, RLS, FK en ON DELETE RESTRICT (DEC-070) y grants, lectura/escritura cruzada y ausencia de escritura parcial.
 - Componente y E2E del selector de barbero, alta, edición, conflicto, retiro, recarga y aislamiento.
 - Evidencia responsive y accesible en 320, 360, 768 y 1280 px, teclado, foco, zoom 200 %, axe-core y contraste.
 
@@ -1036,7 +1036,7 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 - Citas afectadas, reprogramación, cancelación, notificaciones y agenda.
 - Cambio de zona de la barbería o conversión de instantes existentes.
 - Catálogo editable de festivos, calendarios externos y reglas comerciales.
-- Borrado en cascada o resolución de CT-008 inventada.
+- Cualquier FK o cascada del modelo físico distinta de ON DELETE RESTRICT (DEC-070).
 
 **Criterios de aceptación**
 
@@ -1055,7 +1055,7 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 
 - Unitarias de calendario colombiano, toggle independiente, precedencia, fecha cerrada, horario especial, medianoche, contiguidad y solape.
 - HTTP y contrato para toggle y CRUD de excepciones, 401, 404, 409, 422 y RFC 9457.
-- PostgreSQL real con dos tenants y varios barberos, unicidad por fecha, cabecera cerrada sin tramos, RLS y grants definidos después de CT-008.
+- PostgreSQL real con dos tenants y varios barberos, unicidad por fecha, cabecera cerrada sin tramos, RLS, FK en ON DELETE RESTRICT (DEC-070) y grants.
 - Componente y E2E para activar, cerrar festivo, abrir festivo reducido, editar, retirar y comprobar aislamiento.
 - Evidencia responsive y accesible en 320, 360, 768 y 1280 px, teclado, foco, zoom 200 %, axe-core y contraste.
 
@@ -1098,7 +1098,7 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 - Borrado físico, purga, calendarios externos y funciones P1/P2.
 - Cambiar horario semanal o excepciones de jornada: HU-040/HU-041.
 - Crear una tabla appointment parcial o un adaptador que devuelva conteos inventados.
-- Copiar cascadas del modelo físico mientras CT-008 siga sin DEC-*.
+- Cualquier FK o cascada del modelo físico distinta de ON DELETE RESTRICT (DEC-070).
 
 **Criterios de aceptación**
 
@@ -1117,7 +1117,7 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 
 - Unitarias de los siete tipos, punto, semanal, lista, excepciones, edición por alcance, solape, medianoche, unión, retiro lógico e idempotencia.
 - HTTP y contrato para punto, serie, fechas, excepciones, retiro, 401, 404, 409, 422 y errores RFC 9457.
-- PostgreSQL real con dos tenants, checks, RLS, fecha hija inválida, serie cerrada/no vigente, grants sin DELETE, actor de retiro y decisión de FK de CT-008.
+- PostgreSQL real con dos tenants, checks, RLS, fecha hija inválida, serie cerrada/no vigente, grants sin DELETE, actor de retiro y FK en ON DELETE RESTRICT (DEC-070).
 - Concurrencia con dos conexiones reales y barreras observables, nunca sleep.
 - Componente y E2E con los siete tipos, recurrencia, fecha explícita, excepción, retiro y aislamiento.
 - Evidencia responsive y accesible en 320, 360, 768 y 1280 px, teclado, foco, zoom 200 %, axe-core y contraste.
@@ -1133,7 +1133,7 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 | Bloque | Rango reservado | Se redacta cuando |
 | --- | --- | --- |
 | B1 | `HU-025` – | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
-| B2 | `HU-040` – `HU-042` | Ya redactadas; requieren issue real por HU y resolución de `CT-008` antes de ejecutarse |
+| B2 | `HU-040` – `HU-042` | `CT-008` resuelta (`DEC-070`); `HU-040` en ejecución (issue real `#90`); `HU-041`–`HU-042` requieren issue real propio antes de ejecutarse |
 | B3 | `HU-060` – | B2 cumple su criterio de salida |
 | B4 | `HU-090` – | B3 cumple su criterio de salida |
 | B5 | `HU-130` – | B4 cumple su criterio de salida |
