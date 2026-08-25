@@ -48,7 +48,7 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | Bloque | Historias | Estado |
 | --- | --- | --- |
 | B0 · Cimientos, seguridad y primeras pantallas | `HU-001` – `HU-012` | Redactadas en este documento |
-| B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | `HU-020`/`HU-021`/`HU-022`/`HU-023` integradas en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), [PR #83](https://github.com/bcaceres19/barberia/pull/83)); `HU-024` implementada contra el issue real [#77](https://github.com/bcaceres19/barberia/issues/77), PR pendiente de apertura/CI/merge |
+| B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | `HU-020`/`HU-021`/`HU-022`/`HU-023` integradas en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), [PR #83](https://github.com/bcaceres19/barberia/pull/83)); `HU-024` implementada contra el issue real [#77](https://github.com/bcaceres19/barberia/issues/77), [PR #84](https://github.com/bcaceres19/barberia/pull/84), pendiente de revisión/CI/merge |
 | B2 · Horario laboral y bloqueos | `HU-040` – | Pendientes |
 | B3 · Agenda, estados e integridad | `HU-060` – | Pendientes |
 | B4 · Reserva pública y disponibilidad | `HU-090` – | Pendientes |
@@ -889,7 +889,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | Actor | Barbero autenticado |
 | Depende de | `HU-022`, `HU-023` integradas en `main` |
 | Bloquea | Cierre de B1, consulta pública de servicios y flujos futuros con citas |
-| Estado | Implementada contra el issue real [#77](https://github.com/bcaceres19/barberia/issues/77) (`feat/77-hu024-ciclo-vida-servicios`); PR pendiente de apertura/CI/merge |
+| Estado | Implementada contra el issue real [#77](https://github.com/bcaceres19/barberia/issues/77) (`feat/77-hu024-ciclo-vida-servicios`); [PR #84](https://github.com/bcaceres19/barberia/pull/84), pendiente de revisión/CI/merge |
 | Riesgo | Desactivar sin una advertencia real omite compromisos futuros; simular citas antes de B3 crea contrato ficticio; construir protección de concurrencia sobre un conteo que en B1 nunca cambia (`DEC-069`) sería alcance inventado. |
 
 **Historia**

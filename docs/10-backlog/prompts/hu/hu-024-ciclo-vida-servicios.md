@@ -16,8 +16,8 @@ issue: "77"
 issue_url: "https://github.com/bcaceres19/barberia/issues/77"
 suggested_issue_title: "feat(catalog): implementar HU-024 desactivación y reactivación de servicios"
 branch: "feat/77-hu024-ciclo-vida-servicios"
-pr: null
-pr_url: null
+pr: 84
+pr_url: "https://github.com/bcaceres19/barberia/pull/84"
 depends_on:
   - "HU-022 y HU-023 integradas en main (cumplido)"
   - "DP-SER-03 resuelta como DEC-069 (cumplido)"

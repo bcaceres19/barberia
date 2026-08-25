@@ -44,7 +44,7 @@ Consecuencia deliberada: **el flujo público de reserva, que es la cara visible 
 | Bloque | Nombre | Funciones P0 cubiertas | Rango de historias | Estado |
 | --- | --- | --- | --- | --- |
 | **B0** | Cimientos, seguridad y primeras pantallas | 8 | `HU-001` – `HU-012` | Redactado |
-| **B1** | Identidad de la barbería y catálogo | 4 | `HU-020` – `HU-0xx` | `HU-020`/`HU-021`/`HU-022`/`HU-023` integradas; `HU-024` implementada y verificada contra PostgreSQL real, PR pendiente de apertura/CI/merge contra el issue real (`#77`) |
+| **B1** | Identidad de la barbería y catálogo | 4 | `HU-020` – `HU-0xx` | `HU-020`/`HU-021`/`HU-022`/`HU-023` integradas; `HU-024` implementada y verificada contra PostgreSQL real, [PR #84](https://github.com/bcaceres19/barberia/pull/84), pendiente de revisión/CI/merge, contra el issue real (`#77`) |
 | **B2** | Horario laboral y bloqueos | 2 | `HU-040` – `HU-0xx` | Pendiente de redacción |
 | **B3** | Agenda del barbero, estados e integridad | 11 | `HU-060` – `HU-0xx` | Pendiente de redacción |
 | **B4** | Reserva pública y disponibilidad | 13 | `HU-090` – `HU-1xx` | Pendiente de redacción |
@@ -84,7 +84,7 @@ Los rangos se reservan por bloque para que los códigos `HU-*` no se renumeren c
 
 ### B1 · Identidad de la barbería y catálogo
 
-`HU-020`, `HU-021`, `HU-022` y `HU-023` están integradas. `DP-SER-01`–`DP-SER-03` quedaron resueltas por `DEC-067`–`DEC-069` y cada HU tiene issue real (`#75`, `#76`, `#77`); `HU-024` (ciclo de vida del servicio, cierre de B1) está implementada y verificada contra PostgreSQL real, con PR pendiente de apertura contra el issue real `#77`.
+`HU-020`, `HU-021`, `HU-022` y `HU-023` están integradas. `DP-SER-01`–`DP-SER-03` quedaron resueltas por `DEC-067`–`DEC-069` y cada HU tiene issue real (`#75`, `#76`, `#77`); `HU-024` (ciclo de vida del servicio, cierre de B1) está implementada y verificada contra PostgreSQL real, con [PR #84](https://github.com/bcaceres19/barberia/pull/84) abierto, pendiente de revisión/CI/merge, contra el issue real `#77`.
 
 **Objetivo:** que la barbería tenga nombre, zona horaria, contacto, barberos y servicios con duración y precio.
 
@@ -246,7 +246,7 @@ Tabla de control: ninguna función P0 puede quedar sin bloque.
 | División en bloques | Propuesta; requiere aprobación del propietario |
 | Historias de B0 | Redactadas en [historias-usuario.md](../02-requisitos/historias-usuario.md) |
 | Prompts de implementación de B0 | Redactados en [prompts-implementacion.md](prompts-implementacion.md) |
-| Primeras historias y prompts de B1 | `HU-020`/`HU-021`/`HU-022`/`HU-023` integradas; `HU-024` implementada y verificada contra PostgreSQL real, PR pendiente de apertura contra el issue real (`#77`) |
+| Primeras historias y prompts de B1 | `HU-020`/`HU-021`/`HU-022`/`HU-023` integradas; `HU-024` implementada y verificada contra PostgreSQL real, [PR #84](https://github.com/bcaceres19/barberia/pull/84) abierto, pendiente de revisión/CI/merge, contra el issue real (`#77`) |
 | Historias restantes de B1 a B6 | Pendientes; se redactan al cerrar el bloque anterior |
 | Dudas que bloqueaban B0 | `DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`, resueltas el 2026-08-11 como `DEC-050`–`DEC-052` (ver [dudas-pendientes.md](../00-control/dudas-pendientes.md)) |
 
