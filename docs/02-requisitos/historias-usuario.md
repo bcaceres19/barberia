@@ -1,9 +1,9 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.12"
+version: "1.13"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-24"
+ultima_actualizacion: "2026-08-25"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/reglas-negocio.md"
@@ -48,7 +48,7 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | Bloque | Historias | Estado |
 | --- | --- | --- |
 | B0 · Cimientos, seguridad y primeras pantallas | `HU-001` – `HU-012` | Redactadas en este documento |
-| B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | `HU-020`/`HU-021`/`HU-022` integradas ([PR #79](https://github.com/bcaceres19/barberia/pull/79)); `HU-023` implementada, [PR #83](https://github.com/bcaceres19/barberia/pull/83) pendiente de revisión/CI/merge; `HU-024` con issue real (`#77`), bloqueada solo por el orden de integración |
+| B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | `HU-020`/`HU-021`/`HU-022`/`HU-023` integradas en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), [PR #83](https://github.com/bcaceres19/barberia/pull/83)); `HU-024` implementada contra el issue real [#77](https://github.com/bcaceres19/barberia/issues/77), [PR #84](https://github.com/bcaceres19/barberia/pull/84), pendiente de revisión/CI/merge |
 | B2 · Horario laboral y bloqueos | `HU-040` – | Pendientes |
 | B3 · Agenda, estados e integridad | `HU-060` – | Pendientes |
 | B4 · Reserva pública y disponibilidad | `HU-090` – | Pendientes |
@@ -889,7 +889,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | Actor | Barbero autenticado |
 | Depende de | `HU-022`, `HU-023` integradas en `main` |
 | Bloquea | Cierre de B1, consulta pública de servicios y flujos futuros con citas |
-| Estado | Issue real [#77](https://github.com/bcaceres19/barberia/issues/77); bloqueada solo hasta que `HU-022` y `HU-023` estén integradas en `main` |
+| Estado | Implementada contra el issue real [#77](https://github.com/bcaceres19/barberia/issues/77) (`feat/77-hu024-ciclo-vida-servicios`); [PR #84](https://github.com/bcaceres19/barberia/pull/84), pendiente de revisión/CI/merge |
 | Riesgo | Desactivar sin una advertencia real omite compromisos futuros; simular citas antes de B3 crea contrato ficticio; construir protección de concurrencia sobre un conteo que en B1 nunca cambia (`DEC-069`) sería alcance inventado. |
 
 **Historia**
@@ -939,7 +939,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 
 | Bloque | Rango reservado | Se redacta cuando |
 | --- | --- | --- |
-| B1 | `HU-025` – | `HU-022`–`HU-024` están propuestas y desbloqueadas (`DEC-067`–`DEC-069`); redactar lo restante solo después de revisar el criterio de salida de B1 |
+| B1 | `HU-025` – | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
 | B2 | `HU-040` – | B1 cumple su criterio de salida |
 | B3 | `HU-060` – | B2 cumple su criterio de salida |
 | B4 | `HU-090` – | B3 cumple su criterio de salida |

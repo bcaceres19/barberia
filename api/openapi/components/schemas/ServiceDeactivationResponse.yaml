@@ -1,0 +1,24 @@
+# Resultado de confirmar la desactivación de un servicio (HU-024,
+# CA-024-02, CA-024-04). affectedAppointments es el impacto RECIÉN
+# consultado dentro de esta misma operación de confirmación (nunca un valor
+# cacheado de una llamada previa a .../deactivation-impact): siempre 0 en B1
+# (DEC-069).
+type: object
+description: >
+  Servicio ya desactivado, junto con el impacto real que la propia
+  confirmación volvió a consultar (no el valor que devolvió una
+  previsualización anterior).
+properties:
+  service:
+    $ref: './ServiceResponse.yaml'
+  affectedAppointments:
+    type: integer
+    minimum: 0
+    description: >
+      Citas futuras afectadas, calculadas de nuevo en esta misma operación
+      de confirmación. Siempre 0 en B1 (DEC-069).
+    examples:
+      - 0
+required:
+  - service
+  - affectedAppointments

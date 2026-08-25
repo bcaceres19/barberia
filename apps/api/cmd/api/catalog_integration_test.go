@@ -26,6 +26,8 @@ type serviceBody struct {
 	DurationMinutes int     `json:"durationMinutes"`
 	Price           string  `json:"price"`
 	Currency        string  `json:"currency"`
+	IsActive        bool    `json:"isActive"`
+	DeactivatedAt   *string `json:"deactivatedAt"`
 	CreatedAt       string  `json:"createdAt"`
 	UpdatedAt       string  `json:"updatedAt"`
 }

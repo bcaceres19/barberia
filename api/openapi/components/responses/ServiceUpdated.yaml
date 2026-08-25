@@ -19,5 +19,7 @@ content:
           durationMinutes: 45
           price: "50000.00"
           currency: COP
+          isActive: true
+          deactivatedAt: null
           createdAt: "2026-08-24T15:04:05Z"
           updatedAt: "2026-08-24T16:10:00Z"

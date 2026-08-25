@@ -2,6 +2,11 @@
 # docs/06-api/estandar-openapi.md (DEC-037). No se edita el bundle generado
 # en dist/; este archivo y los que referencia son la fuente.
 #
+# HU-024 agrega paths/service-lifecycle.yaml: previsualizar el impacto
+# (siempre 0 en B1, DEC-069), desactivar y reactivar un servicio del
+# catálogo, protegidas con Idempotency-Key (RN-IDE-01). ServiceResponse
+# gana isActive/deactivatedAt, de solo lectura.
+#
 # HU-005 agregó la primera operación de negocio: POST /public/auth/login.
 # HU-006 agrega la primera operación privada real: POST
 # /private/auth/logout, que registra por primera vez
@@ -20,7 +25,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.9.0
+  version: 0.10.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -40,8 +45,8 @@ tags:
     description: Registro y listado de los barberos de la barbería.
   - name: Catalog
     description: >-
-      Catálogo básico de servicios de la barbería (HU-022) y su asignación a
-      barberos (HU-023).
+      Catálogo básico de servicios de la barbería (HU-022), su asignación a
+      barberos (HU-023) y su ciclo de desactivación/reactivación (HU-024).
 paths:
   /public/auth/login:
     $ref: './paths/public-auth.yaml#/~1public~1auth~1login'
@@ -73,6 +78,12 @@ paths:
     $ref: './paths/barber-services.yaml#/~1private~1barbers~1{barberId}~1services'
   /private/barbers/{barberId}/services/{serviceId}:
     $ref: './paths/barber-services.yaml#/~1private~1barbers~1{barberId}~1services~1{serviceId}'
+  /private/services/{serviceId}/deactivation-impact:
+    $ref: './paths/service-lifecycle.yaml#/~1private~1services~1{serviceId}~1deactivation-impact'
+  /private/services/{serviceId}/deactivate:
+    $ref: './paths/service-lifecycle.yaml#/~1private~1services~1{serviceId}~1deactivate'
+  /private/services/{serviceId}/reactivate:
+    $ref: './paths/service-lifecycle.yaml#/~1private~1services~1{serviceId}~1reactivate'
 components:
   schemas:
     Problem:
@@ -113,6 +124,10 @@ components:
       $ref: './components/schemas/AssignmentResponse.yaml'
     AssignmentListResponse:
       $ref: './components/schemas/AssignmentListResponse.yaml'
+    ServiceDeactivationImpactResponse:
+      $ref: './components/schemas/ServiceDeactivationImpactResponse.yaml'
+    ServiceDeactivationResponse:
+      $ref: './components/schemas/ServiceDeactivationResponse.yaml'
   securitySchemes:
     SessionCookie:
       $ref: './components/security-schemes/SessionCookie.yaml'
@@ -195,3 +210,9 @@ components:
       $ref: './components/responses/AssignmentUnassigned.yaml'
     LastActiveAssignmentConflictProblem:
       $ref: './components/responses/LastActiveAssignmentConflictProblem.yaml'
+    ServiceDeactivationImpact:
+      $ref: './components/responses/ServiceDeactivationImpact.yaml'
+    ServiceDeactivated:
+      $ref: './components/responses/ServiceDeactivated.yaml'
+    ServiceReactivated:
+      $ref: './components/responses/ServiceReactivated.yaml'

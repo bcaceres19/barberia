@@ -48,7 +48,10 @@ const (
 // representa el precio en centavos (entero exacto, nunca coma flotante,
 // docs/03-desarrollo/estandar-backend-go.md, docs/05-backend/
 // estandar-base-datos.md §5); Currency es siempre CurrencyCOP (DEC-067).
-// Description es nil cuando el servicio no tiene descripción.
+// Description es nil cuando el servicio no tiene descripción. IsActive y
+// DeactivatedAt reflejan el ciclo de vida de HU-024 (RN-SER-03):
+// DeactivatedAt es nil mientras IsActive es true, y nunca nil cuando es
+// false (mismo invariante que service_deactivated_at_ck).
 type Service struct {
 	ID              string
 	Name            string
@@ -56,8 +59,33 @@ type Service struct {
 	DurationMinutes int
 	PriceCents      int64
 	Currency        string
+	IsActive        bool
+	DeactivatedAt   *time.Time
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+}
+
+// DeactivationImpact es el resultado de previsualizar o confirmar el efecto
+// de desactivar un servicio (CA-024-01, CA-024-04). AffectedAppointments es
+// siempre 0 en B1 (DEC-069): `appointment` no existe todavía en la cadena
+// migrada, así que cero citas futuras existen para ningún servicio -es el
+// conteo real del sistema actual, no un valor por defecto ni un dato
+// simulado. B3 sustituye el cálculo por una consulta real contra
+// `appointment` sin cambiar esta forma.
+type DeactivationImpact struct {
+	AffectedAppointments int
+}
+
+// currentDeactivationImpact es el único punto donde B1 decide
+// AffectedAppointments (DEC-069). No es un puerto ni un adaptador que
+// simule consultar una tabla: es la verdad honesta y literal del sistema
+// actual, porque appointment no existe todavía en ningún ambiente
+// migrado -no puede haber una sola cita futura, para ningún servicio, de
+// ninguna barbería. Cuando B3 cree appointment, esta función (y solo esta)
+// se reemplaza por una consulta real al repositorio de esa capacidad, sin
+// tocar el resto de esta historia.
+func currentDeactivationImpact() DeactivationImpact {
+	return DeactivationImpact{AffectedAppointments: 0}
 }
 
 // serviceIDPattern es la misma forma canónica 8-4-4-4-12 que

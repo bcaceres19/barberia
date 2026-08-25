@@ -70,14 +70,16 @@ var _ catalog.Repository = (*Repository)(nil)
 // httpapi.ServiceResponse, este struct debe cambiar igual en el mismo
 // commit (ver TestCreate_StoredResponseBody_MatchesHTTPAPIWireShape).
 type serviceResponseWire struct {
-	ID              string    `json:"id"`
-	Name            string    `json:"name"`
-	Description     *string   `json:"description"`
-	DurationMinutes int       `json:"durationMinutes"`
-	Price           string    `json:"price"`
-	Currency        string    `json:"currency"`
-	CreatedAt       time.Time `json:"createdAt"`
-	UpdatedAt       time.Time `json:"updatedAt"`
+	ID              string     `json:"id"`
+	Name            string     `json:"name"`
+	Description     *string    `json:"description"`
+	DurationMinutes int        `json:"durationMinutes"`
+	Price           string     `json:"price"`
+	Currency        string     `json:"currency"`
+	IsActive        bool       `json:"isActive"`
+	DeactivatedAt   *time.Time `json:"deactivatedAt"`
+	CreatedAt       time.Time  `json:"createdAt"`
+	UpdatedAt       time.Time  `json:"updatedAt"`
 }
 
 func marshalServiceResponse(svc catalog.Service) ([]byte, error) {
@@ -88,9 +90,20 @@ func marshalServiceResponse(svc catalog.Service) ([]byte, error) {
 		DurationMinutes: svc.DurationMinutes,
 		Price:           catalog.FormatPriceCOP(svc.PriceCents),
 		Currency:        svc.Currency,
+		IsActive:        svc.IsActive,
+		DeactivatedAt:   svc.DeactivatedAt,
 		CreatedAt:       svc.CreatedAt,
 		UpdatedAt:       svc.UpdatedAt,
 	})
+}
+
+// deactivationResponseWire es la forma JSON EXACTA que también usa
+// httpapi.ServiceDeactivationResponse: mismo criterio que
+// serviceResponseWire, usado únicamente para persistir el cuerpo exacto que
+// Deactivate almacena para una repetición byte a byte (CA-004-01).
+type deactivationResponseWire struct {
+	Service              serviceResponseWire `json:"service"`
+	AffectedAppointments int                 `json:"affectedAppointments"`
 }
 
 // numericFromCents construye el valor pgtype.Numeric que representa cents
@@ -157,15 +170,16 @@ type rowScanner interface {
 }
 
 // scanServiceWithID lee id, name, description, duration_minutes,
-// price_amount, price_currency, created_at, updated_at (en ese orden, el
-// mismo que List/Get/Create/Update proyectan) hacia un catalog.Service
-// nuevo, convirtiendo price_amount de pgtype.Numeric a centavos exactos sin
-// pasar por coma flotante.
+// price_amount, price_currency, is_active, deactivated_at, created_at,
+// updated_at (en ese orden, el mismo que List/Get/Create/Update proyectan)
+// hacia un catalog.Service nuevo, convirtiendo price_amount de
+// pgtype.Numeric a centavos exactos sin pasar por coma flotante.
 func scanServiceWithID(row rowScanner) (catalog.Service, error) {
 	var svc catalog.Service
 	var priceNumeric pgtype.Numeric
 	if err := row.Scan(
 		&svc.ID, &svc.Name, &svc.Description, &svc.DurationMinutes, &priceNumeric, &svc.Currency,
+		&svc.IsActive, &svc.DeactivatedAt,
 		&svc.CreatedAt, &svc.UpdatedAt,
 	); err != nil {
 		return catalog.Service{}, err
@@ -196,7 +210,7 @@ func (r *Repository) List(ctx context.Context, barbershopID string, cursor *cata
 		if cursor == nil {
 			rows, err = q.Query(ctx,
 				`SELECT id, name, description, duration_minutes, price_amount, price_currency,
-				        created_at, updated_at
+				        is_active, deactivated_at, created_at, updated_at
 				   FROM service
 				  WHERE barbershop_id = $1
 				  ORDER BY created_at, id
@@ -206,7 +220,7 @@ func (r *Repository) List(ctx context.Context, barbershopID string, cursor *cata
 		} else {
 			rows, err = q.Query(ctx,
 				`SELECT id, name, description, duration_minutes, price_amount, price_currency,
-				        created_at, updated_at
+				        is_active, deactivated_at, created_at, updated_at
 				   FROM service
 				  WHERE barbershop_id = $1
 				    AND (created_at, id) > ($2, $3)
@@ -263,11 +277,12 @@ func (r *Repository) Get(ctx context.Context, barbershopID, serviceID string) (c
 		var priceNumeric pgtype.Numeric
 		err := q.QueryRow(ctx,
 			`SELECT name, description, duration_minutes, price_amount, price_currency,
-			        created_at, updated_at
+			        is_active, deactivated_at, created_at, updated_at
 			   FROM service
 			  WHERE id = $1 AND barbershop_id = $2`,
 			serviceID, barbershopID,
 		).Scan(&svc.Name, &svc.Description, &svc.DurationMinutes, &priceNumeric, &svc.Currency,
+			&svc.IsActive, &svc.DeactivatedAt,
 			&svc.CreatedAt, &svc.UpdatedAt)
 		switch {
 		case err == nil:
@@ -329,7 +344,7 @@ func (r *Repository) Create(
 			`INSERT INTO service (barbershop_id, name, description, duration_minutes, price_amount, price_currency)
 			      VALUES ($1, $2, $3, $4, $5, 'COP')
 			   RETURNING id, name, description, duration_minutes, price_amount, price_currency,
-			             created_at, updated_at`,
+			             is_active, deactivated_at, created_at, updated_at`,
 			barbershopID, input.Name, input.Description, input.DurationMinutes, numericFromCents(input.PriceCents),
 		)
 		svc, err := scanServiceWithID(row)
@@ -397,13 +412,14 @@ func (r *Repository) Update(ctx context.Context, barbershopID, serviceID string,
 			        price_amount     = COALESCE($7::numeric(12,2), price_amount)
 			  WHERE id = $1 AND barbershop_id = $2
 			RETURNING name, description, duration_minutes, price_amount, price_currency,
-			          created_at, updated_at`,
+			          is_active, deactivated_at, created_at, updated_at`,
 			serviceID, barbershopID,
 			fields.Name,
 			fields.Description.Set, fields.Description.Value,
 			fields.DurationMinutes,
 			numericFromCentsPtr(fields.PriceCents),
 		).Scan(&svc.Name, &svc.Description, &svc.DurationMinutes, &priceNumeric, &svc.Currency,
+			&svc.IsActive, &svc.DeactivatedAt,
 			&svc.CreatedAt, &svc.UpdatedAt)
 		switch {
 		case err == nil:
@@ -429,6 +445,225 @@ func (r *Repository) Update(ctx context.Context, barbershopID, serviceID string,
 			return result, nil
 		}
 		return catalog.UpdateResult{}, fmt.Errorf("catalog/postgres: update service: %w", err)
+	}
+	return result, nil
+}
+
+// deactivateServiceOperation y reactivateServiceOperation identifican,
+// dentro de una barbería, las dos operaciones de idempotencia de HU-024
+// (RN-IDE-01): una clave ya usada para OTRA operación (incluida la otra
+// transición) nunca se confunde con esta.
+const (
+	deactivateServiceOperation idempotency.Operation = "deactivate_service"
+	reactivateServiceOperation idempotency.Operation = "reactivate_service"
+)
+
+// lifecycleIdempotencyTTL es la vigencia de una reclamación de idempotencia
+// sobre una transición de ciclo de vida, mismo valor que
+// createServiceIdempotencyTTL.
+const lifecycleIdempotencyTTL = 24 * time.Hour
+
+// errLifecycleAbortInternal es un error interno (sentinela) que solo existe
+// para atravesar InTenantTx y provocar su ROLLBACK normal cuando Deactivate
+// o Reactivate descubren que el servicio no existe o ya está en el estado
+// destino. Nunca se expone fuera de este paquete: ambos métodos lo detectan
+// con errors.Is y traducen el resultado ya fijado en result (Found,
+// InvalidTransition) antes de que ocurriera, mismo criterio que
+// errNameConflictInternal.
+var errLifecycleAbortInternal = errors.New("catalog/postgres: transición de ciclo de vida abortada")
+
+// lockServiceForTransition bloquea (SELECT ... FOR UPDATE) la fila de
+// service dentro de la transacción vigente, para resistir dos
+// confirmaciones concurrentes sobre el mismo servicio (mismo patrón que
+// AssignmentRepository.Unassign, DEC-068-style): la segunda conexión que
+// intente la misma transición espera a que la primera confirme o revierta,
+// y al continuar ve el estado YA actualizado. found=false cubre "no existe"
+// o "es de otra barbería" (CA-024-07).
+func lockServiceForTransition(ctx context.Context, q database.Queries, barbershopID, serviceID string) (isActive bool, found bool, err error) {
+	err = q.QueryRow(ctx,
+		`SELECT is_active FROM service WHERE id = $1 AND barbershop_id = $2 FOR UPDATE`,
+		serviceID, barbershopID,
+	).Scan(&isActive)
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		return false, false, nil
+	case err != nil:
+		return false, false, fmt.Errorf("lock service: %w", err)
+	}
+	return isActive, true, nil
+}
+
+// Deactivate implementa catalog.Repository.Deactivate: Begin, el bloqueo de
+// la fila, el UPDATE condicionado y Complete ocurren dentro de la MISMA
+// InTenantTx. Un servicio inexistente o ya inactivo hace ROLLBACK de toda
+// la transacción -incluida la reclamación de idempotencia que Begin ya
+// había tomado-, dejando la clave libre para un reintento legítimo (mismo
+// criterio que CA-004-06). El impacto de citas futuras se recalcula aquí
+// mismo (CA-024-04, DEC-069), nunca a partir de un valor recibido del
+// cliente.
+func (r *Repository) Deactivate(
+	ctx context.Context,
+	barbershopID, serviceID string,
+	key idempotency.Key,
+	fingerprint idempotency.Fingerprint,
+) (catalog.LifecycleResult, error) {
+	var result catalog.LifecycleResult
+
+	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
+		decision, err := r.coord.Begin(ctx, q, database.BarbershopID(barbershopID), key, deactivateServiceOperation, fingerprint, lifecycleIdempotencyTTL)
+		if err != nil {
+			return fmt.Errorf("idempotency begin: %w", err)
+		}
+		result.Decision = decision
+
+		if decision.Outcome != idempotency.OutcomeProceed {
+			if decision.Outcome == idempotency.OutcomeReplay {
+				result.Response = decision.Response
+			}
+			return nil
+		}
+
+		isActive, found, err := lockServiceForTransition(ctx, q, barbershopID, serviceID)
+		if err != nil {
+			return err
+		}
+		if !found {
+			result.Found = false
+			return errLifecycleAbortInternal
+		}
+		result.Found = true
+		if !isActive {
+			result.InvalidTransition = true
+			return errLifecycleAbortInternal
+		}
+
+		row := q.QueryRow(ctx,
+			`UPDATE service
+			    SET is_active      = false,
+			        deactivated_at = now()
+			  WHERE id = $1 AND barbershop_id = $2
+			RETURNING id, name, description, duration_minutes, price_amount, price_currency,
+			          is_active, deactivated_at, created_at, updated_at`,
+			serviceID, barbershopID,
+		)
+		svc, err := scanServiceWithID(row)
+		if err != nil {
+			return fmt.Errorf("deactivate service: update: %w", err)
+		}
+
+		impact := catalog.DeactivationImpact{AffectedAppointments: 0}
+		body, err := json.Marshal(deactivationResponseWire{
+			Service: serviceResponseWire{
+				ID: svc.ID, Name: svc.Name, Description: svc.Description,
+				DurationMinutes: svc.DurationMinutes, Price: catalog.FormatPriceCOP(svc.PriceCents),
+				Currency: svc.Currency, IsActive: svc.IsActive, DeactivatedAt: svc.DeactivatedAt,
+				CreatedAt: svc.CreatedAt, UpdatedAt: svc.UpdatedAt,
+			},
+			AffectedAppointments: impact.AffectedAppointments,
+		})
+		if err != nil {
+			return fmt.Errorf("marshal deactivated service: %w", err)
+		}
+		stored := idempotency.StoredResponse{Status: 200, ContentType: "application/json", Body: string(body)}
+
+		ok, err := r.coord.Complete(ctx, q, database.BarbershopID(barbershopID), key, stored)
+		if err != nil {
+			return fmt.Errorf("idempotency complete: %w", err)
+		}
+		if !ok {
+			return fmt.Errorf("idempotency complete: la reclamación ya no estaba in_progress")
+		}
+
+		result.Service = svc
+		result.Response = stored
+		return nil
+	})
+	if err != nil {
+		if errors.Is(err, errLifecycleAbortInternal) {
+			return result, nil
+		}
+		return catalog.LifecycleResult{}, fmt.Errorf("catalog/postgres: deactivate service: %w", err)
+	}
+	return result, nil
+}
+
+// Reactivate implementa catalog.Repository.Reactivate: mismo protocolo que
+// Deactivate, en sentido inverso. La respuesta almacenada es
+// serviceResponseWire (sin affectedAppointments): reactivar no previsualiza
+// ningún impacto de citas (CA-024-05).
+func (r *Repository) Reactivate(
+	ctx context.Context,
+	barbershopID, serviceID string,
+	key idempotency.Key,
+	fingerprint idempotency.Fingerprint,
+) (catalog.LifecycleResult, error) {
+	var result catalog.LifecycleResult
+
+	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
+		decision, err := r.coord.Begin(ctx, q, database.BarbershopID(barbershopID), key, reactivateServiceOperation, fingerprint, lifecycleIdempotencyTTL)
+		if err != nil {
+			return fmt.Errorf("idempotency begin: %w", err)
+		}
+		result.Decision = decision
+
+		if decision.Outcome != idempotency.OutcomeProceed {
+			if decision.Outcome == idempotency.OutcomeReplay {
+				result.Response = decision.Response
+			}
+			return nil
+		}
+
+		isActive, found, err := lockServiceForTransition(ctx, q, barbershopID, serviceID)
+		if err != nil {
+			return err
+		}
+		if !found {
+			result.Found = false
+			return errLifecycleAbortInternal
+		}
+		result.Found = true
+		if isActive {
+			result.InvalidTransition = true
+			return errLifecycleAbortInternal
+		}
+
+		row := q.QueryRow(ctx,
+			`UPDATE service
+			    SET is_active      = true,
+			        deactivated_at = NULL
+			  WHERE id = $1 AND barbershop_id = $2
+			RETURNING id, name, description, duration_minutes, price_amount, price_currency,
+			          is_active, deactivated_at, created_at, updated_at`,
+			serviceID, barbershopID,
+		)
+		svc, err := scanServiceWithID(row)
+		if err != nil {
+			return fmt.Errorf("reactivate service: update: %w", err)
+		}
+
+		body, err := marshalServiceResponse(svc)
+		if err != nil {
+			return fmt.Errorf("marshal reactivated service: %w", err)
+		}
+		stored := idempotency.StoredResponse{Status: 200, ContentType: "application/json", Body: string(body)}
+
+		ok, err := r.coord.Complete(ctx, q, database.BarbershopID(barbershopID), key, stored)
+		if err != nil {
+			return fmt.Errorf("idempotency complete: %w", err)
+		}
+		if !ok {
+			return fmt.Errorf("idempotency complete: la reclamación ya no estaba in_progress")
+		}
+
+		result.Service = svc
+		result.Response = stored
+		return nil
+	})
+	if err != nil {
+		if errors.Is(err, errLifecycleAbortInternal) {
+			return result, nil
+		}
+		return catalog.LifecycleResult{}, fmt.Errorf("catalog/postgres: reactivate service: %w", err)
 	}
 	return result, nil
 }

@@ -23,10 +23,12 @@ import (
 // PostgreSQL real (esa cobertura vive en
 // internal/modules/catalog/postgres/repository_test.go).
 type fakeRepository struct {
-	listFn   func(barbershopID string, cursor *catalog.Cursor, limit int) (catalog.ListResult, error)
-	getFn    func(barbershopID, serviceID string) (catalog.Service, bool, error)
-	createFn func(barbershopID string, input catalog.CreateInput, key idempotency.Key, fp idempotency.Fingerprint) (catalog.CreateResult, error)
-	updateFn func(barbershopID, serviceID string, fields catalog.UpdateFields) (catalog.UpdateResult, error)
+	listFn       func(barbershopID string, cursor *catalog.Cursor, limit int) (catalog.ListResult, error)
+	getFn        func(barbershopID, serviceID string) (catalog.Service, bool, error)
+	createFn     func(barbershopID string, input catalog.CreateInput, key idempotency.Key, fp idempotency.Fingerprint) (catalog.CreateResult, error)
+	updateFn     func(barbershopID, serviceID string, fields catalog.UpdateFields) (catalog.UpdateResult, error)
+	deactivateFn func(barbershopID, serviceID string, key idempotency.Key, fp idempotency.Fingerprint) (catalog.LifecycleResult, error)
+	reactivateFn func(barbershopID, serviceID string, key idempotency.Key, fp idempotency.Fingerprint) (catalog.LifecycleResult, error)
 }
 
 func (f *fakeRepository) List(_ context.Context, barbershopID string, cursor *catalog.Cursor, limit int) (catalog.ListResult, error) {
@@ -43,6 +45,14 @@ func (f *fakeRepository) Create(_ context.Context, barbershopID string, input ca
 
 func (f *fakeRepository) Update(_ context.Context, barbershopID, serviceID string, fields catalog.UpdateFields) (catalog.UpdateResult, error) {
 	return f.updateFn(barbershopID, serviceID, fields)
+}
+
+func (f *fakeRepository) Deactivate(_ context.Context, barbershopID, serviceID string, key idempotency.Key, fp idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+	return f.deactivateFn(barbershopID, serviceID, key, fp)
+}
+
+func (f *fakeRepository) Reactivate(_ context.Context, barbershopID, serviceID string, key idempotency.Key, fp idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+	return f.reactivateFn(barbershopID, serviceID, key, fp)
 }
 
 var _ catalog.Repository = (*fakeRepository)(nil)
@@ -569,6 +579,241 @@ func TestUpdateServiceHandler_ValidationError_Returns422(t *testing.T) {
 }
 
 // --- Wiring defensivo -------------------------------------------------
+
+// --- HU-024: ciclo de vida --------------------------------------------------
+
+const lifecycleServiceID = "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4"
+
+func TestGetServiceDeactivationImpactHandler_Found_Returns200WithZero(t *testing.T) {
+	repo := &fakeRepository{getFn: func(barbershopID, serviceID string) (catalog.Service, bool, error) {
+		if barbershopID != testShopID || serviceID != lifecycleServiceID {
+			t.Fatalf("unexpected lookup: shop=%s service=%s", barbershopID, serviceID)
+		}
+		return catalog.Service{ID: serviceID, IsActive: true}, true, nil
+	}}
+	h := httpapi.NewGetServiceDeactivationImpactHandler(catalog.NewService(repo))
+
+	req := requestWithServiceID(http.MethodGet, "/api/v1/private/services/"+lifecycleServiceID+"/deactivation-impact", nil, lifecycleServiceID)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var body httpapi.ServiceDeactivationImpactResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode body: %v", err)
+	}
+	if body.AffectedAppointments != 0 {
+		t.Fatalf("expected affectedAppointments=0 (DEC-069), got %d", body.AffectedAppointments)
+	}
+}
+
+func TestGetServiceDeactivationImpactHandler_NotFound_Returns404(t *testing.T) {
+	repo := &fakeRepository{getFn: func(string, string) (catalog.Service, bool, error) {
+		return catalog.Service{}, false, nil
+	}}
+	h := httpapi.NewGetServiceDeactivationImpactHandler(catalog.NewService(repo))
+
+	req := requestWithServiceID(http.MethodGet, "/api/v1/private/services/"+lifecycleServiceID+"/deactivation-impact", nil, lifecycleServiceID)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestDeactivateServiceHandler_MissingIdempotencyKey_Returns400(t *testing.T) {
+	repo := &fakeRepository{deactivateFn: func(string, string, idempotency.Key, idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+		t.Fatal("repository must not be called without an idempotency key")
+		return catalog.LifecycleResult{}, nil
+	}}
+	h := httpapi.NewDeactivateServiceHandler(catalog.NewService(repo))
+
+	req := requestWithServiceID(http.MethodPost, "/api/v1/private/services/"+lifecycleServiceID+"/deactivate", nil, lifecycleServiceID)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestDeactivateServiceHandler_UnknownField_Returns400(t *testing.T) {
+	repo := &fakeRepository{deactivateFn: func(string, string, idempotency.Key, idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+		t.Fatal("repository must not be called for an unknown field")
+		return catalog.LifecycleResult{}, nil
+	}}
+	h := httpapi.NewDeactivateServiceHandler(catalog.NewService(repo))
+
+	req := requestWithServiceID(http.MethodPost, "/api/v1/private/services/"+lifecycleServiceID+"/deactivate", []byte(`{"isActive":false}`), lifecycleServiceID)
+	req.Header.Set(httpserver.IdempotencyKeyHeader, "key-1")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestDeactivateServiceHandler_Proceed_Returns200WithStoredBody(t *testing.T) {
+	stored := idempotency.StoredResponse{
+		Status:      200,
+		ContentType: "application/json",
+		Body:        `{"service":{"id":"` + lifecycleServiceID + `","isActive":false},"affectedAppointments":0}`,
+	}
+	repo := &fakeRepository{deactivateFn: func(barbershopID, serviceID string, key idempotency.Key, fp idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+		if barbershopID != testShopID || serviceID != lifecycleServiceID || key != "key-1" {
+			t.Fatalf("unexpected call: shop=%s service=%s key=%s", barbershopID, serviceID, key)
+		}
+		return catalog.LifecycleResult{
+			Decision: idempotency.Decision{Outcome: idempotency.OutcomeProceed},
+			Found:    true,
+			Response: stored,
+		}, nil
+	}}
+	h := httpapi.NewDeactivateServiceHandler(catalog.NewService(repo))
+
+	req := requestWithServiceID(http.MethodPost, "/api/v1/private/services/"+lifecycleServiceID+"/deactivate", nil, lifecycleServiceID)
+	req.Header.Set(httpserver.IdempotencyKeyHeader, "key-1")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if rec.Body.String() != stored.Body {
+		t.Fatalf("expected the exact stored body, got %s", rec.Body.String())
+	}
+}
+
+func TestDeactivateServiceHandler_NotFound_Returns404(t *testing.T) {
+	repo := &fakeRepository{deactivateFn: func(string, string, idempotency.Key, idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+		return catalog.LifecycleResult{Decision: idempotency.Decision{Outcome: idempotency.OutcomeProceed}, Found: false}, nil
+	}}
+	h := httpapi.NewDeactivateServiceHandler(catalog.NewService(repo))
+
+	req := requestWithServiceID(http.MethodPost, "/api/v1/private/services/"+lifecycleServiceID+"/deactivate", nil, lifecycleServiceID)
+	req.Header.Set(httpserver.IdempotencyKeyHeader, "key-1")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestDeactivateServiceHandler_AlreadyInactive_Returns409(t *testing.T) {
+	repo := &fakeRepository{deactivateFn: func(string, string, idempotency.Key, idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+		return catalog.LifecycleResult{
+			Decision:          idempotency.Decision{Outcome: idempotency.OutcomeProceed},
+			Found:             true,
+			InvalidTransition: true,
+		}, nil
+	}}
+	h := httpapi.NewDeactivateServiceHandler(catalog.NewService(repo))
+
+	req := requestWithServiceID(http.MethodPost, "/api/v1/private/services/"+lifecycleServiceID+"/deactivate", nil, lifecycleServiceID)
+	req.Header.Set(httpserver.IdempotencyKeyHeader, "key-1")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("expected 409, got %d: %s", rec.Code, rec.Body.String())
+	}
+	problem := decodeProblem(t, rec)
+	if problem["code"] != "conflict" {
+		t.Fatalf("expected code=conflict, got %v", problem["code"])
+	}
+}
+
+func TestDeactivateServiceHandler_IdempotencyConflict_Returns409(t *testing.T) {
+	repo := &fakeRepository{deactivateFn: func(string, string, idempotency.Key, idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+		return catalog.LifecycleResult{Decision: idempotency.Decision{Outcome: idempotency.OutcomeConflictFingerprint}}, nil
+	}}
+	h := httpapi.NewDeactivateServiceHandler(catalog.NewService(repo))
+
+	req := requestWithServiceID(http.MethodPost, "/api/v1/private/services/"+lifecycleServiceID+"/deactivate", nil, lifecycleServiceID)
+	req.Header.Set(httpserver.IdempotencyKeyHeader, "key-1")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("expected 409, got %d: %s", rec.Code, rec.Body.String())
+	}
+	problem := decodeProblem(t, rec)
+	if problem["code"] != "idempotency-conflict" {
+		t.Fatalf("expected code=idempotency-conflict, got %v", problem["code"])
+	}
+}
+
+func TestReactivateServiceHandler_Proceed_Returns200WithStoredBody(t *testing.T) {
+	stored := idempotency.StoredResponse{
+		Status:      200,
+		ContentType: "application/json",
+		Body:        `{"id":"` + lifecycleServiceID + `","isActive":true,"deactivatedAt":null}`,
+	}
+	repo := &fakeRepository{reactivateFn: func(barbershopID, serviceID string, key idempotency.Key, fp idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+		if key != "key-1" {
+			t.Fatalf("unexpected key: %s", key)
+		}
+		return catalog.LifecycleResult{
+			Decision: idempotency.Decision{Outcome: idempotency.OutcomeProceed},
+			Found:    true,
+			Response: stored,
+		}, nil
+	}}
+	h := httpapi.NewReactivateServiceHandler(catalog.NewService(repo))
+
+	req := requestWithServiceID(http.MethodPost, "/api/v1/private/services/"+lifecycleServiceID+"/reactivate", nil, lifecycleServiceID)
+	req.Header.Set(httpserver.IdempotencyKeyHeader, "key-1")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if rec.Body.String() != stored.Body {
+		t.Fatalf("expected the exact stored body, got %s", rec.Body.String())
+	}
+}
+
+func TestReactivateServiceHandler_AlreadyActive_Returns409(t *testing.T) {
+	repo := &fakeRepository{reactivateFn: func(string, string, idempotency.Key, idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+		return catalog.LifecycleResult{
+			Decision:          idempotency.Decision{Outcome: idempotency.OutcomeProceed},
+			Found:             true,
+			InvalidTransition: true,
+		}, nil
+	}}
+	h := httpapi.NewReactivateServiceHandler(catalog.NewService(repo))
+
+	req := requestWithServiceID(http.MethodPost, "/api/v1/private/services/"+lifecycleServiceID+"/reactivate", nil, lifecycleServiceID)
+	req.Header.Set(httpserver.IdempotencyKeyHeader, "key-1")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("expected 409, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestReactivateServiceHandler_MissingIdempotencyKey_Returns400(t *testing.T) {
+	repo := &fakeRepository{reactivateFn: func(string, string, idempotency.Key, idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+		t.Fatal("repository must not be called without an idempotency key")
+		return catalog.LifecycleResult{}, nil
+	}}
+	h := httpapi.NewReactivateServiceHandler(catalog.NewService(repo))
+
+	req := requestWithServiceID(http.MethodPost, "/api/v1/private/services/"+lifecycleServiceID+"/reactivate", nil, lifecycleServiceID)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
 
 func TestHandlers_MissingPrincipal_Returns500Safely(t *testing.T) {
 	// Solo puede ocurrir si la ruta se montó fuera del subrouter protegido

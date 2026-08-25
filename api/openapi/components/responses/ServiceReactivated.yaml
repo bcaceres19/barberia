@@ -1,20 +1,17 @@
-# Respuesta 201 de POST /private/services (HU-022, CA-022-02, RN-IDE-01).
-# Una repetición exacta de la misma Idempotency-Key con el mismo contenido
-# reproduce esta MISMA respuesta byte a byte (mismo status, mismo cuerpo,
-# mismo Location): no crea una segunda fila.
-description: >
-  Servicio creado. `Location` apunta al recurso individual recién creado.
+# Respuesta 200 de POST /private/services/{serviceId}/reactivate (HU-024,
+# CA-024-05, RN-IDE-01). Una repetición exacta de la misma Idempotency-Key
+# reproduce esta MISMA respuesta byte a byte. Nunca crea otra fila ni
+# altera duración, precio o asignaciones.
+description: Servicio reactivado, sin recrear el recurso ni sus asignaciones.
 headers:
   X-Request-Id:
     $ref: '../headers/XRequestId.yaml'
-  Location:
-    $ref: '../headers/Location.yaml'
 content:
   application/json:
     schema:
       $ref: '../schemas/ServiceResponse.yaml'
     examples:
-      servicio:
+      reactivado:
         value:
           id: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
           name: Corte clásico
@@ -25,4 +22,4 @@ content:
           isActive: true
           deactivatedAt: null
           createdAt: "2026-08-24T15:04:05Z"
-          updatedAt: "2026-08-24T15:04:05Z"
+          updatedAt: "2026-08-24T19:00:00Z"

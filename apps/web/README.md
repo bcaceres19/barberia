@@ -32,9 +32,13 @@ presta todo el catálogo y con un equipo de especialidades distintas. Cada
 casilla se deshabilita mientras su propia solicitud está en curso (evita
 doble envío) y solo cambia de estado tras la respuesta real del servidor;
 retirar la última asignación activa de un servicio activo se rechaza
-(`DEC-068`) y la casilla vuelve a marcarse. Ver las secciones siguientes.
-El resto de carpetas de `modules/` conserva su `index.ts` de marcador de
-responsabilidad futura.
+(`DEC-068`) y la casilla vuelve a marcarse, y el **ciclo de vida de
+servicios (HU-024)**: en la misma pantalla "Servicios", desactivar/reactivar
+con un `BaseDialog` que consulta el impacto real de citas futuras antes de
+confirmar (siempre 0 en B1, `DEC-069`) y recarga el estado real si el
+servidor responde un conflicto de transición, en vez de asumir éxito
+optimista. Ver las secciones siguientes. El resto de carpetas de `modules/`
+conserva su `index.ts` de marcador de responsabilidad futura.
 
 ## Acceso del barbero (HU-010)
 
@@ -510,6 +514,65 @@ cinco breakpoints).
 Preparación de PostgreSQL para el E2E real: mismo procedimiento que
 "Catálogo básico de servicios (HU-022)" arriba, con
 `testdata/hu023_asignaciones.sql` además de las testdata previas.
+
+## Ciclo de vida de servicios (HU-024)
+
+Fuente normativa: `docs/02-requisitos/historias-usuario.md` (HU-024) y
+`docs/00-control/registro-decisiones.md` (`DEC-069`). Esta sección resume la
+API pública y las decisiones de implementación; no las sustituye.
+
+### Misma pantalla, sin mezclar edición de catálogo
+
+`CatalogPage.vue` (HU-022) gana dos acciones por servicio -"Desactivar" si
+`isActive`, "Reactivar" si no- y un tercer `BaseDialog`, sin tocar los
+diálogos de alta/edición existentes: el ciclo de vida nunca comparte
+formulario con nombre/descripción/duración/precio (RN-SER-04). Cada
+servicio muestra un `BaseBadge` "Activo"/"Inactivo" con texto explícito
+(nunca solo color, CA-024-08).
+
+### El diálogo consulta el impacto real antes de confirmar (CA-024-01)
+
+Al abrir el diálogo de desactivación, `openDeactivateDialog` llama
+`previewDeactivation(serviceId)` de inmediato: el mensaje de advertencia
+("N cita(s) futura(s) se verían afectadas" o "no hay citas futuras") viene
+SIEMPRE de esa respuesta real, nunca de un valor por defecto en el cliente.
+El botón de confirmar queda deshabilitado mientras la previsualización está
+en curso. `deactivateService`/`reactivateService` (POST) llevan su propia
+`Idempotency-Key` por intento lógico -mismo criterio que `createService`
+(HU-022): se genera al abrir el diálogo y se reutiliza en un reintento por
+error de red, nunca en un intento lógico distinto.
+
+### Conflicto de transición: recarga el estado real, nunca éxito optimista
+
+Cuando el servidor responde `409` con `code: conflict` (CA-024-06: el
+servicio ya estaba en el estado destino, alguien más lo cambió primero), la
+página NO asume que su propio intento tuvo efecto: `reloadAfterConflict`
+vuelve a pedir `fetchServices()` y reemplaza la fila con el estado real del
+servidor, mostrando una alerta que explica qué pasó. Un `409` de
+idempotencia (`idempotency-conflict`/`idempotency-locked`, RN-IDE-01) y un
+`404` (servicio ya no existe) tienen su propio mensaje recuperable, sin
+tocar la lista.
+
+### Pruebas
+
+Componente (`src/modules/catalog/pages/__tests__/CatalogPage.test.ts`:
+badges Activo/Inactivo, previsualización real antes de confirmar, clave de
+idempotencia fresca por intento, cancelar no muta nada, conflicto de
+transición recarga el estado real, reactivar sin campos de formulario,
+axe-core con el diálogo de desactivación abierto), cliente tipado
+(`src/modules/catalog/api/__tests__/catalogApi.test.ts`) y E2E contra el
+API real en local: `e2e/servicios-ciclo-vida.spec.ts` (previsualizar,
+cancelar sin mutar, desactivar con persistencia real tras recargar,
+reactivar sin alterar duración, identificador real de otra barbería con
+`404` en las tres operaciones), escrito siguiendo el mismo patrón que
+`servicios.spec.ts`/`servicios-por-barbero.spec.ts`. Pendiente de
+ejecución contra Chromium real y de la evidencia responsiva en
+`e2e/evidence/servicios/` en los cinco breakpoints (no forma parte de los
+checks de CI, que solo corren `test:unit`).
+
+Preparación de PostgreSQL para el E2E real: mismo procedimiento que
+"Catálogo básico de servicios (HU-022)" arriba (sin testdata adicional:
+`service.is_active`/`deactivated_at` ya existen desde esa migración).
 
 ## Sistema visual base (HU-009)
 

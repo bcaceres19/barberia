@@ -50,3 +50,18 @@ func errNameConflict() error {
 func errUpdateEmptyBody() error {
 	return apperr.Validation("debe incluir al menos un campo del catálogo para editar")
 }
+
+// errServiceAlreadyInactive cubre HU-024: una clave de idempotencia nueva
+// que intenta desactivar un servicio que ya está inactivo (CA-024-06,
+// "transición inválida"). apperr.KindConflict, no KindValidation: no es un
+// defecto de forma del cuerpo, es un conflicto con el estado real ya
+// persistido de ese mismo recurso.
+func errServiceAlreadyInactive() error {
+	return apperr.Conflict("el servicio ya está inactivo")
+}
+
+// errServiceAlreadyActive es el mismo criterio que errServiceAlreadyInactive,
+// en sentido inverso (reactivar un servicio que ya está activo).
+func errServiceAlreadyActive() error {
+	return apperr.Conflict("el servicio ya está activo")
+}

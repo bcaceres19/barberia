@@ -4,6 +4,39 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.10.0] - 2026-08-25
+
+### Agregado
+
+- `GET /private/services/{serviceId}/deactivation-impact` (HU-024,
+  `operationId: getServiceDeactivationImpact`, `CA-024-01`): previsualiza el
+  impacto real de desactivar el servicio, calculado en el momento de la
+  solicitud. Siempre `0` en B1 (`DEC-069`): `appointment` no existe todavía
+  en la cadena migrada. `200` (`ServiceDeactivationImpactResponse`), `401`,
+  `404`, `500`.
+- `POST /private/services/{serviceId}/deactivate`
+  (`operationId: deactivateService`, `CA-024-02`, `CA-024-03`, `CA-024-04`):
+  transición activo → inactivo, protegida con `Idempotency-Key`
+  (`RN-IDE-01`, `DEC-043`). Vuelve a consultar el impacto real dentro de la
+  misma operación, sin bloqueo optimista (`DEC-069`). Un servicio ya
+  inactivo con una clave nueva responde `409` (`code: conflict`,
+  transición inválida). `200` (`ServiceDeactivationResponse`), `400`, `401`,
+  `404`, `409` (idempotencia u transición inválida), `500`.
+- `POST /private/services/{serviceId}/reactivate`
+  (`operationId: reactivateService`, `CA-024-05`): transición inactivo →
+  activo, misma protección de idempotencia; nunca crea otra fila ni altera
+  duración, precio o asignaciones. Un servicio ya activo con una clave nueva
+  responde `409`. `200` (`ServiceResponse`), `400`, `401`, `404`, `409`,
+  `500`.
+- `ServiceResponse` gana `isActive`/`deactivatedAt`, de solo lectura
+  (`CA-024-02`, `CA-024-05`): ningún endpoint de HU-022 (`create`/`update`)
+  los acepta como entrada; solo cambian mediante las dos operaciones
+  anteriores.
+- Esquemas `ServiceDeactivationImpactResponse`, `ServiceDeactivationResponse`.
+- Responses `ServiceDeactivationImpact`, `ServiceDeactivated`,
+  `ServiceReactivated`.
+- Tag `Catalog` ampliado para cubrir también el ciclo de vida de servicios.
+
 ## [0.9.0] - 2026-08-24
 
 ### Agregado

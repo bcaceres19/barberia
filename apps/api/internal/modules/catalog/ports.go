@@ -85,6 +85,32 @@ type UpdateResult struct {
 	NameTaken bool
 }
 
+// LifecycleResult es el desenlace completo de un intento de
+// desactivación/reactivación idempotente (RN-IDE-01, DEC-043), mismo patrón
+// que CreateResult:
+//   - OutcomeProceed: Service refleja la fila ya transicionada.
+//   - OutcomeReplay: Decision.Response ya trae la respuesta original.
+//   - Cualquier otro Outcome (incluido InvalidTransition): Decision.AsError()
+//     o el apperr correspondiente a InvalidTransition ya traduce el caso.
+//
+// Found es false cuando serviceID no existe o pertenece a otra barbería
+// (mismo apperr.NotFound uniforme que Get/Update, CA-024-07); solo es
+// significativo cuando Decision.Outcome == OutcomeProceed. InvalidTransition
+// es true cuando el servicio SÍ existe pero el UPDATE condicionado
+// (is_active = NOT destino) no afectó ninguna fila porque ya estaba en el
+// estado destino (una clave de idempotencia nueva sobre una transición que
+// ya no aplica): la transacción entera hace ROLLBACK, incluida la
+// reclamación de idempotencia que Begin había tomado, así que la clave
+// queda libre para un reintento legítimo (mismo criterio que
+// CreateResult.NameTaken).
+type LifecycleResult struct {
+	Decision          idempotency.Decision
+	Service           Service
+	Response          idempotency.StoredResponse
+	Found             bool
+	InvalidTransition bool
+}
+
 // Repository es el puerto de persistencia del módulo catalog. El núcleo no
 // importa internal/platform/database ni pgx (CA-002-06): postgres/ traduce
 // entre este contrato y database.DB, mismo patrón que staff.Repository.
@@ -123,4 +149,29 @@ type Repository interface {
 	// duplica una fila, y nunca edita la de otra barbería (CA-022-06).
 	// fields ya llegó normalizado y validado por Service.
 	Update(ctx context.Context, barbershopID, serviceID string, fields UpdateFields) (UpdateResult, error)
+
+	// Deactivate ejecuta el protocolo completo de idempotencia (Begin,
+	// UPDATE condicionado a is_active = true, Complete) dentro de UNA sola
+	// InTenantTx (HU-024, CA-024-02, CA-024-03, CA-024-06). Un UPDATE que no
+	// afecta ninguna fila porque el servicio ya está inactivo se traduce a
+	// LifecycleResult.InvalidTransition; found=false (dentro de Service
+	// vacío) cubre "no existe" o "es de otra barbería" mediante el mismo
+	// apperr.NotFound uniforme que Get.
+	Deactivate(
+		ctx context.Context,
+		barbershopID, serviceID string,
+		key idempotency.Key,
+		fingerprint idempotency.Fingerprint,
+	) (LifecycleResult, error)
+
+	// Reactivate es el mismo protocolo que Deactivate, en sentido inverso
+	// (HU-024, CA-024-05, CA-024-06): UPDATE condicionado a is_active =
+	// false. Nunca crea otra fila ni toca duration_minutes, price_amount ni
+	// barber_service.
+	Reactivate(
+		ctx context.Context,
+		barbershopID, serviceID string,
+		key idempotency.Key,
+		fingerprint idempotency.Fingerprint,
+	) (LifecycleResult, error)
 }

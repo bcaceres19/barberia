@@ -90,6 +90,19 @@ antes de agregar código.
   otra barbería (`CA-023-04`); la asociación (`barber_service`) nunca
   duplica nombre, duración, precio ni estado (`CA-023-07`). Ver la sección
   "Asignación de servicios a barberos (HU-023)" más abajo.
+- **Ciclo de vida de servicios (HU-024)**: `internal/modules/catalog`
+  implementa `GET .../{serviceId}/deactivation-impact`,
+  `POST .../deactivate`, `POST .../reactivate`, protegidas por el mismo
+  protocolo de idempotencia que HU-004/HU-022 (`Idempotency-Key`,
+  RN-IDE-01). El impacto de citas futuras es literal `0` en B1
+  (`catalog.currentDeactivationImpact`, `DEC-069`): `appointment` no existe
+  todavía, así que no se simula ni se construye un puerto que finja
+  consultarlo. La transición bloquea la fila (`SELECT ... FOR UPDATE`)
+  dentro de la misma transacción del `UPDATE`, mismo patrón que HU-023
+  (`DEC-068`): una clave de idempotencia nueva sobre una transición que ya
+  no aplica responde `409` sin romper la reclamación. Sin migración nueva:
+  `service.is_active`/`deactivated_at` ya existían desde HU-022. Ver la
+  sección "Ciclo de vida de servicios (HU-024)" más abajo.
 
 ## Requisitos
 
@@ -1124,6 +1137,102 @@ NOTHING`); repetir `DELETE` sobre una asociación ya retirada responde `404`.
 - SQL directo con el rol real: `database/tests/hu023_asignaciones.sql`.
 - Router de producción con dos tenants reales: `cmd/api/barber_services_integration_test.go`.
 - Arquitectura (sin imports cruzados `catalog`↔`staff`): `internal/platform/archtest/module_boundary_test.go`.
+
+## Ciclo de vida de servicios (HU-024)
+
+`internal/modules/catalog` agrega las tres operaciones privadas de
+`api/openapi/paths/service-lifecycle.yaml`:
+`GET /api/v1/private/services/{serviceId}/deactivation-impact`,
+`POST .../deactivate`, `POST .../reactivate`. Mismo núcleo `catalog`, mismo
+paquete que HU-022/HU-023 (`CatalogService.PreviewDeactivation`/
+`Deactivate`/`Reactivate` en `service.go`); sin migración nueva:
+`service.is_active`/`deactivated_at` y `service_deactivated_at_ck` ya
+existían desde `20260824140000_create_service.sql` (HU-022 los preparó sin
+exponer ningún endpoint que los cambiara).
+
+### El impacto de citas futuras es literal, no un puerto simulado (DEC-069)
+
+`CA-024-01`/`CA-024-04` exigen que la advertencia muestre el impacto REAL de
+desactivar un servicio, consultado en el momento, nunca un valor por
+defecto. `appointment` no existe todavía en la cadena migrada (B3), así que
+"el impacto real" en B1 es, literalmente, cero: ninguna cita puede existir
+para ningún servicio de ninguna barbería. `catalog.currentDeactivationImpact()`
+(`domain.go`) documenta esta verdad explícitamente y es el ÚNICO lugar que
+decide `AffectedAppointments`; no es un `Port`/adaptador que finja consultar
+una tabla que no existe (`trabajo requerido §2`, "no inventes... un
+adaptador que siempre devuelva cero... como dato falso"). Cuando B3 cree
+`appointment`, esta única función se reemplaza por una consulta real, sin
+tocar el resto de la historia.
+
+### Transición atómica con bloqueo de fila, sin optimista (DEC-069)
+
+`Repository.Deactivate`/`Reactivate` ejecutan, dentro de UNA sola
+`InTenantTx` que además coordina la idempotencia de HU-004 (`Idempotency-Key`,
+RN-IDE-01):
+
+1. `Begin` reclama la clave de idempotencia (`OutcomeProceed` continúa;
+   `OutcomeReplay` reproduce la respuesta guardada byte a byte; cualquier
+   otro desenlace se traduce a `409` sin tocar la fila).
+2. `lockServiceForTransition` bloquea la fila (`SELECT is_active FROM
+   service WHERE id = $1 AND barbershop_id = $2 FOR UPDATE`): dos
+   confirmaciones concurrentes del MISMO servicio se serializan aquí,
+   idéntico patrón que `AssignmentRepository.Unassign` (HU-023, DEC-068).
+   `found=false` (fila inexistente o de otra barbería) hace `ROLLBACK`
+   entero, dejando la clave de idempotencia libre para un reintento
+   legítimo (`CA-024-07`).
+3. Si el estado ya coincide con el destino (desactivar un servicio ya
+   inactivo, o viceversa), `InvalidTransition=true` y `ROLLBACK`: la
+   transacción entera se revierte, la clave queda libre, y la capa HTTP
+   traduce esto a `409` (`code: conflict`, CA-024-06) — nunca un éxito
+   silencioso sobre una transición que ya no aplica.
+4. En cualquier otro caso, el `UPDATE` condicionado y `Complete` cierran la
+   reclamación de idempotencia con la respuesta final.
+
+`DEC-069` es explícita en que este bloqueo NO es "protección de concurrencia
+sobre el conteo de citas" (imposible de construir honestamente sin
+`appointment`): es la misma guarda de estado que cualquier transición
+atómica necesita sobre su propia fila, independiente de B1/B3.
+`TestDeactivate_TwoRealConcurrentConnections_ExactlyOneSucceeds`
+(`internal/modules/catalog/postgres/lifecycle_repository_test.go`, `-race`,
+dos conexiones reales) demuestra que, ante dos confirmaciones simultáneas
+con claves de idempotencia DISTINTAS sobre el mismo servicio, exactamente
+una transiciona y la otra descubre `InvalidTransition` tras esperar el
+lock — nunca un error, nunca una segunda escritura.
+
+### `ServiceResponse` gana `isActive`/`deactivatedAt`, de solo lectura
+
+El contrato de HU-022 declaraba explícitamente que `ServiceResponse` nunca
+exponía estos dos campos ("el ciclo de activación pertenece a HU-024"). Con
+HU-024 implementada, `isActive`/`deactivatedAt` pasan a ser parte
+permanente de la representación canónica (`GET`/lista/alta/edición los
+devuelven también), pero siguen siendo de solo lectura: `CreateServiceRequest`/
+`UpdateServiceRequest` (HU-022) NUNCA los aceptan como entrada — solo
+cambian mediante `deactivate`/`reactivate`.
+`postgres.serviceResponseWire`/`deactivationResponseWire` declaran la MISMA
+forma exacta que `httpapi.ServiceResponse`/`ServiceDeactivationResponse`
+(mismo criterio de mantenimiento manual que HU-022 ya documentaba, ver
+`TestCreate_StoredResponseBody_MatchesHTTPAPIWireShape`).
+
+### Tabla de criterios de aceptación
+
+| Criterio | Estado | Prueba o evidencia |
+| --- | --- | --- |
+| `CA-024-01` | Cumplido | `TestPreviewDeactivation_Found_ReturnsZeroAffectedAppointments`, `TestGetServiceDeactivationImpactHandler_Found_Returns200WithZero`, `TestServiceLifecycle_HTTP_PreviewDeactivateReactivate_FullJourney`. |
+| `CA-024-02` | Cumplido | `TestDeactivate_ActiveService_SetsInactiveWithTimestamp`, `hu024_ciclo_vida.sql` ("CA-024-02"), journey HTTP completo. |
+| `CA-024-03` | Cumplido | Ninguna operación de `appointment`/notificación existe en el código; alcance verificado por ausencia, no por prueba positiva (B3 todavía no existe). |
+| `CA-024-04` | Cumplido | El impacto se recalcula dentro de `Deactivate` (nunca recibido del cliente); `TestDeactivateServiceHandler_Proceed_Returns200WithStoredBody` confirma `affectedAppointments` en la respuesta de confirmación. |
+| `CA-024-05` | Cumplido | `TestReactivate_InactiveService_SetsActiveClearsTimestamp`, `hu024_ciclo_vida.sql` ("CA-024-05" ×2), journey HTTP. |
+| `CA-024-06` | Cumplido | `TestDeactivate_Repeated_SameKey_ReturnsSameResponseWithoutSecondEffect` (replay), `TestDeactivate_AlreadyInactive_NewKey_ReturnsInvalidTransitionWithoutChangingRow` (clave nueva rechazada). |
+| `CA-024-07` | Cumplido | `TestDeactivate_CrossTenant_NeverLeaksAnotherShopsService`, `TestDeactivate_UnknownID_ReturnsNotFound`, `TestServiceLifecycle_HTTP_TwoTenants_CrossAccessReturns404WithoutLeaking`, `hu024_ciclo_vida.sql` ("CA-024-07"). |
+| `CA-024-08` | Parcial (backend no aplica; ver `apps/web/README.md`) | Evidencia de frontend/accesibilidad documentada en `apps/web/README.md`. |
+
+### Pruebas
+
+- Dominio: `internal/modules/catalog/service_test.go` (doble en memoria de `catalog.Repository`; 12 pruebas nuevas de `PreviewDeactivation`/`Deactivate`/`Reactivate`).
+- PostgreSQL real, incluida la carrera de dos conexiones con `-race`: `internal/modules/catalog/postgres/lifecycle_repository_test.go` (9 pruebas).
+- HTTP con dobles: `internal/modules/catalog/httpapi/handler_test.go` (15 pruebas nuevas) y `contract_test.go` (contrato contra el YAML fuente).
+- SQL directo con el rol real: `database/tests/hu024_ciclo_vida.sql`.
+- Router de producción con dos tenants reales: `cmd/api/service_lifecycle_integration_test.go` (4 pruebas de recorrido completo).
 
 ## Pruebas de integración
 
