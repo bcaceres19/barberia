@@ -2,6 +2,12 @@
 # docs/06-api/estandar-openapi.md (DEC-037). No se edita el bundle generado
 # en dist/; este archivo y los que referencia son la fuente.
 #
+# HU-040 agrega el tag Schedule y las cuatro operaciones de
+# paths/schedules.yaml: listar, crear (con Idempotency-Key, RN-IDE-01, y
+# conflicto de solape/hora repetida del mismo barbero y día), consultar y
+# editar tramos recurrentes de working_hour de un barbero. CT-008 se
+# resolvió como DEC-070 (FK en ON DELETE RESTRICT, no CASCADE).
+#
 # HU-024 agrega paths/service-lifecycle.yaml: previsualizar el impacto
 # (siempre 0 en B1, DEC-069), desactivar y reactivar un servicio del
 # catálogo, protegidas con Idempotency-Key (RN-IDE-01). ServiceResponse
@@ -25,7 +31,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.10.0
+  version: 0.11.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -47,6 +53,10 @@ tags:
     description: >-
       Catálogo básico de servicios de la barbería (HU-022), su asignación a
       barberos (HU-023) y su ciclo de desactivación/reactivación (HU-024).
+  - name: Schedule
+    description: >-
+      Horario laboral recurrente de cada barbero (HU-040); excepciones por
+      fecha/festivos y bloqueos llegan con HU-041/HU-042.
 paths:
   /public/auth/login:
     $ref: './paths/public-auth.yaml#/~1public~1auth~1login'
@@ -84,6 +94,10 @@ paths:
     $ref: './paths/service-lifecycle.yaml#/~1private~1services~1{serviceId}~1deactivate'
   /private/services/{serviceId}/reactivate:
     $ref: './paths/service-lifecycle.yaml#/~1private~1services~1{serviceId}~1reactivate'
+  /private/barbers/{barberId}/working-hours:
+    $ref: './paths/schedules.yaml#/~1private~1barbers~1{barberId}~1working-hours'
+  /private/barbers/{barberId}/working-hours/{workingHourId}:
+    $ref: './paths/schedules.yaml#/~1private~1barbers~1{barberId}~1working-hours~1{workingHourId}'
 components:
   schemas:
     Problem:

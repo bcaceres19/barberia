@@ -4,6 +4,42 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.11.0] - 2026-08-25
+
+### Agregado
+
+- Tag `Schedule` (HU-040): horario laboral recurrente de cada barbero.
+- `GET /private/barbers/{barberId}/working-hours`
+  (`operationId: listWorkingHours`, `CA-040-01`): lista paginada por cursor
+  de los tramos del barbero de la ruta, ordenada por día ISO y hora de
+  inicio. `200` (`WorkingHourListResponse`), `400`, `401`, `404`, `500`.
+- `POST /private/barbers/{barberId}/working-hours`
+  (`operationId: createWorkingHour`, `CA-040-02`, `CA-040-03`,
+  `CA-040-04`): alta de un tramo, protegida con `Idempotency-Key`
+  (`RN-IDE-01`, `DEC-043`). Un tramo cuyo `startsTime` + `durationMinutes`
+  cruza medianoche es válido (`DEC-020`). Un solape o una hora de inicio
+  repetida con otro tramo del mismo barbero y día responde `409`
+  (`code: conflict`). `201` (`WorkingHourResponse`), `400`, `401`, `404`,
+  `409` (idempotencia o solape), `422`, `500`.
+- `GET /private/barbers/{barberId}/working-hours/{workingHourId}`
+  (`operationId: getWorkingHour`, `CA-040-05`): lectura individual; un
+  tramo inexistente, de otro barbero o de otra barbería responde `404`.
+  `200`, `401`, `404`, `500`.
+- `PATCH /private/barbers/{barberId}/working-hours/{workingHourId}`
+  (`operationId: updateWorkingHour`, `CA-040-04`, `CA-040-05`): reemplaza
+  el intervalo completo del tramo (`isoWeekday`, `startsTime`,
+  `durationMinutes` obligatorios). `200`, `400`, `401`, `404`, `409`,
+  `422`, `500`.
+- `DELETE /private/barbers/{barberId}/working-hours/{workingHourId}`
+  (`operationId: deleteWorkingHour`, `CA-040-05`): retiro físico
+  (`working_hour` no tiene eliminación lógica); reintentar tras un `404` es
+  seguro. `204`, `401`, `404`, `500`.
+
+No mezcla con excepciones por fecha/festivos (`HU-041`) ni con bloqueos
+(`HU-042`): sus operaciones llegan con sus propias historias. `CT-008` se
+resolvió como `DEC-070` antes de esta migración: las FK del modelo físico
+de B2 usan `ON DELETE RESTRICT`, no `CASCADE`.
+
 ## [0.10.0] - 2026-08-25
 
 ### Agregado

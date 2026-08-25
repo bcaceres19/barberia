@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-040-v1"
-version: "1.1"
+version: "1.2"
 kind: "hu"
-status: "ready"
+status: "in_progress"
 target_agents:
   - "claude"
   - "codex"
@@ -16,9 +16,9 @@ related_hu:
 issue: 90
 issue_url: "https://github.com/bcaceres19/barberia/issues/90"
 suggested_issue_title: "feat(schedule): implementar HU-040 horario laboral recurrente"
-branch: null
-pr: null
-pr_url: null
+branch: "feat/90-hu040-horario-laboral"
+pr: 93
+pr_url: "https://github.com/bcaceres19/barberia/pull/93"
 depends_on:
   - "Criterio de salida de B1 cumplido; HU-020–HU-024 integradas en main (PR #84)"
   - "CT-008 resuelta como DEC-070 (FK de B2 en ON DELETE RESTRICT, no CASCADE)"
@@ -198,10 +198,25 @@ graphify update .
 
 Entrega una tabla Criterio | Estado | Prueba o evidencia para CA-040-01–CA-040-08. No declares cumplido un criterio que dependa de una decisión o capacidad no implementada.
 
+### Evidencia real de esta ejecución
+
+Comandos ejecutados y verificados: `openapi:lint`, `openapi:bundle`, `atlas migrate hash`/`validate`/`apply` (dos veces, "No migration files to execute" en la segunda) contra PostgreSQL 14 real efímero, `gofmt -w .`, `go vet ./...`, `go build ./...`, `go test -race ./...` (módulo `schedule` completo + `cmd/api` con las trece migraciones y todas las testdata aplicadas), `database/tests/hu040_horario.sql` contra PostgreSQL real, `pnpm run lint`, `pnpm run typecheck`, `pnpm run build`, `pnpm run test:unit` (módulo `schedules` completo, incluida accesibilidad con `vitest-axe`), `graphify update .`. `pnpm run test:e2e` (`e2e/horarios.spec.ts`) se escribió siguiendo el patrón de `servicios-por-barbero.spec.ts`, pero **no se ejecutó** contra Chromium real en esta sesión (exige API + frontend + PostgreSQL con credenciales E2E reales levantados simultáneamente); tampoco se capturó evidencia responsiva. `test:e2e` no forma parte de los checks de CI (que solo corren `test:unit`), mismo estado documentado por HU-024 en `apps/web/README.md` para su propio E2E.
+
+| Criterio | Estado | Prueba o evidencia |
+| --- | --- | --- |
+| CA-040-01 | Cumplido | `TestList_OrderedByWeekdayThenStartsTime`, `TestList_FirstPage_NeverReturnsMoreThanLimit` (PostgreSQL real); `SchedulesPage.test.ts` ("always shows all seven weekdays"); `TestWorkingHours_HTTP_CreateListGetUpdateDelete_FullJourney`. |
+| CA-040-02 | Cumplido | `TestCreate_SplitShift_TwoNonOverlappingSegmentsSameDay`; `hu040_horario.sql` ("CA-040-02/03"). |
+| CA-040-03 | Cumplido | `TestIntervalsOverlap_Contiguous_NotOverlapping/_NightShift_ExtendsPastMidnight` (dominio); `TestCreate_NightShift_CrossesMidnightWithoutError`; `TestCreate_ContiguousSegments_NoConflict`. |
+| CA-040-04 | Cumplido | `TestCreate_ExactSameStart_ReturnsConflict`, `TestCreate_PartialOverlap_ReturnsConflict`, `TestUpdate_OverlapsAnotherSegment_ReturnsConflictWithoutChangingAnything`, `TestCreate_ConcurrentOverlappingCreates_ExactlyOneSucceeds` (`-race`, dos goroutines reales); `TestWorkingHours_HTTP_OverlappingCreate_Returns409`, `TestWorkingHours_HTTP_InvalidField_Returns422`; `hu040_horario.sql` (CHECK día/duración, UNIQUE día+inicio). |
+| CA-040-05 | Cumplido | `TestGet_CrossBarber_...`, `TestGet_CrossTenant_...`, `TestUpdate_CrossTenant_...`, `TestDelete_CrossTenant_...`, `TestDelete_ThenGet_NotFound`, `TestDelete_Retried_SecondCallIsSafeNoOp`; `TestWorkingHours_HTTP_CrossTenantBarber_Returns404`; `hu040_horario.sql` ("CA-040-05", con id real). |
+| CA-040-06 | Cumplido | `startsTime` viaja como `to_char(starts_time, 'HH24:MI')` sin conversión; `SchedulesPage.vue` muestra la zona IANA real (`fetchBarbershopTimezone`); prueba dedicada en `SchedulesPage.test.ts` y `schedulesApi.test.ts`. |
+| CA-040-07 | Cumplido | `SchedulesPage.test.ts` cubre carga, vacío, error recuperable, guardando (`:loading`/`:disabled` en los botones de guardar/retirar), conserva lo escrito ante error de solape/red sin cerrar el diálogo. Evidencia responsiva (320/360/768/1280 px) no capturada en esta sesión (ver nota de E2E arriba). |
+| CA-040-08 | Parcial | Contrato (`api/openapi/paths/schedules.yaml`), handler (`schedule/httpapi`), caso de uso (`schedule.Service`), repositorio (`schedule/postgres`), cliente generado (`openapi-typescript`) y pantalla coinciden en campos/límites/errores; `TestContract_*` (`schedule/httpapi/contract_test.go`) compara los DTO contra el YAML fuente. Falta la verificación responsive real a 320/360/768/1280 px (Playwright, ver nota de E2E arriba): pendiente, no ejecutada en esta sesión. |
+
 ## Git y PR
 
-- Rama: feat/<issue>-hu040-horario-laboral.
-- Commit/título: feat(schedule): implementa HU-040 horario laboral recurrente.
-- Usa Closes #<issue> solo si cubres los ocho criterios; en otro caso usa Refs #<issue>.
+- Rama: `feat/90-hu040-horario-laboral`.
+- Commit/título: `feat(schedule): implementa HU-040 horario laboral recurrente`.
+- `Refs #90`, no `Closes #90`: CA-040-08 queda Parcial (falta la verificación responsive real a 320/360/768/1280 px con Playwright; ver tabla de evidencia arriba).
 - No hagas push directo, force push, merge manual de main, DDL al arrancar ni cambios a migraciones aplicadas.
 

@@ -1,7 +1,8 @@
 // Package schedule administra horarios, excepciones, festivos y bloqueos,
 // según docs/03-desarrollo/estandar-backend-go.md.
 //
-// El paquete aún no tiene dominio, servicio ni adaptadores: se agregan
-// domain.go, errors.go, ports.go, service.go y las carpetas httpapi/ o
-// postgres/ cuando exista la primera funcionalidad que los necesite.
+// HU-040 agrega la primera capacidad: working_hour, el tramo recurrente de
+// jornada laboral de un barbero por día ISO de la semana. Excepciones por
+// fecha/festivos (HU-041) y bloqueos (HU-042) se agregan a este mismo
+// paquete cuando existan; ninguna de las dos vive aquí todavía.
 package schedule

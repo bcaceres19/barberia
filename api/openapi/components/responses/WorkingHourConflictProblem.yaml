@@ -1,0 +1,29 @@
+# 409 de POST/PATCH .../working-hours[/{workingHourId}] (CA-040-04): el
+# intervalo solicitado se solapa con otro tramo del MISMO barbero y MISMO
+# día ISO de la semana, o repite exactamente el mismo día y hora de inicio
+# de un tramo ya existente (working_hour_shop_barber_weekday_start_uk).
+# Distinto de IdempotencyConflictProblem/IdempotencyLockedProblem
+# (RN-IDE-01): este conflicto no depende de ninguna cabecera
+# Idempotency-Key ni de un reintento.
+description: >
+  El intervalo solicitado se solapa con otro tramo existente del mismo
+  barbero y día, o repite su hora de inicio exacta. No se persistió ningún
+  cambio.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      solape:
+        summary: El tramo se solapa con otro del mismo barbero y día
+        value:
+          type: /api/v1/problems/conflict
+          title: Conflicto
+          status: 409
+          detail: el tramo se solapa con otro existente del mismo barbero y día
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: conflict
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

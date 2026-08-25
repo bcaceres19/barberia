@@ -1,0 +1,40 @@
+# Cuerpo de POST /private/barbers/{barberId}/working-hours (CA-040-02,
+# CA-040-04). Cerrado: el handler rechaza cualquier campo desconocido,
+# mismo criterio que CreateBarberRequest. Nunca declara barbershopId ni
+# barberId (el tenant se deriva de SessionCookie, el barbero de la ruta).
+type: object
+description: >
+  Alta de un tramo recurrente de la jornada laboral del barbero de la ruta.
+  Un día ISO fuera de 1-7, una hora con formato inválido, una duración
+  fuera de [1, 1440] o un tramo que se solapa con otro del mismo barbero y
+  día responden 422/409 sin persistir nada (CA-040-04).
+properties:
+  isoWeekday:
+    type: integer
+    minimum: 1
+    maximum: 7
+    description: Día ISO 8601 de la semana (1 = lunes, 7 = domingo).
+    examples:
+      - 1
+  startsTime:
+    type: string
+    pattern: '^([01]\d|2[0-3]):[0-5]\d$'
+    description: >
+      Hora civil de inicio del tramo, en la zona IANA de la barbería,
+      formato HH:MM de 24 horas.
+    examples:
+      - "08:00"
+  durationMinutes:
+    type: integer
+    minimum: 1
+    maximum: 1440
+    description: >
+      Duración del tramo en minutos desde startsTime. Un tramo nocturno
+      (startsTime + durationMinutes cruza medianoche) es válido (DEC-020).
+    examples:
+      - 480
+required:
+  - isoWeekday
+  - startsTime
+  - durationMinutes
+additionalProperties: false

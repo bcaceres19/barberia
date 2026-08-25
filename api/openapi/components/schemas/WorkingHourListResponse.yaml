@@ -1,0 +1,26 @@
+# Colección paginada por cursor (docs/06-api/estandar-openapi.md §6,
+# regla 10), mismo criterio que BarberListResponse/AssignmentListResponse
+# aunque la colección de un barbero esté acotada en la práctica: la
+# consistencia del contrato pesa más que optimizar un caso pequeño.
+type: object
+description: >
+  Página de tramos de horario laboral del barbero de la ruta, ordenada de
+  forma estable por día ISO de la semana y luego por hora de inicio
+  (CA-040-01): los siete días aparecen representados por sus tramos, nunca
+  por una fila vacía cuando un día no tiene ninguno.
+properties:
+  items:
+    type: array
+    description: Tramos de esta página, en el orden estable del servidor.
+    items:
+      $ref: './WorkingHourResponse.yaml'
+  nextCursor:
+    type: [string, "null"]
+    description: >
+      Cursor opaco para pedir la siguiente página con el parámetro `cursor`.
+      `null` cuando esta página es la última.
+    examples:
+      - eyJpc29XZWVrZGF5IjoxLCJzdGFydHNUaW1lIjoiMDg6MDAiLCJpZCI6IjZmMWEyYjNjLTRkNWUtNGY2MC04MTcyLTgzOTRhNWI2YzdkOCJ9
+required:
+  - items
+  - nextCursor

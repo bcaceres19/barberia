@@ -388,6 +388,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/private/barbers/{barberId}/working-hours": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar los tramos de horario laboral de un barbero de la barbería activa
+         * @description Lista paginada por cursor (HU-040, CA-040-01) de los tramos recurrentes del barbero de la ruta, ordenada por día ISO de la semana y luego por hora de inicio. Los siete días aparecen representados por sus propios tramos; un día sin ninguno simplemente no aporta elementos, sin fila vacía. Un `barberId` inexistente o de otra barbería responde `404` (RN-TEN-01), igual que GET /private/barbers/{barberId}.
+         */
+        get: operations["listWorkingHours"];
+        put?: never;
+        /**
+         * Crear un tramo de horario laboral para un barbero de la barbería activa
+         * @description Alta de un tramo recurrente (HU-040, CA-040-02) protegida con clave de idempotencia (RN-IDE-01, DEC-043): repetir el mismo `POST` con la misma `Idempotency-Key` y el mismo cuerpo devuelve la misma representación creada sin crear un segundo tramo. Varios tramos no solapados el mismo día representan una jornada partida; un tramo cuyo `startsTime` + `durationMinutes` cruza medianoche es válido (DEC-020). Un intervalo que se solapa con otro tramo existente del mismo barbero y día, o que repite exactamente su hora de inicio, responde `409` sin crear nada. El tenant se deriva exclusivamente de `SessionCookie` y el barbero de `barberId`; el cuerpo nunca acepta `barbershopId` ni `barberId`. Un `barberId` inexistente o de otra barbería responde `404`.
+         */
+        post: operations["createWorkingHour"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/private/barbers/{barberId}/working-hours/{workingHourId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar un tramo de horario laboral de un barbero de la barbería activa
+         * @description Lectura autenticada de un tramo por identificador (HU-040). Un `barberId`/`workingHourId` inexistente, de otro barbero o de otra barbería responde exactamente el mismo `404` (CA-040-05, RN-TEN-01).
+         */
+        get: operations["getWorkingHour"];
+        put?: never;
+        post?: never;
+        /**
+         * Retirar un tramo de horario laboral de un barbero de la barbería activa
+         * @description Retira físicamente el tramo (HU-040, CA-040-05): working_hour no tiene eliminación lógica. Un `barberId`/`workingHourId` inexistente, de otro barbero, de otra barbería, o ya retirado antes, responden el mismo `404` uniforme; reintentar la misma operación tras un `404` es seguro (nunca retira un segundo tramo por error).
+         */
+        delete: operations["deleteWorkingHour"];
+        options?: never;
+        head?: never;
+        /**
+         * Editar un tramo de horario laboral de un barbero de la barbería activa
+         * @description Reemplaza el intervalo completo de un tramo existente (HU-040, CA-040-04): `isoWeekday`, `startsTime` y `durationMinutes` son los tres obligatorios, porque forman un único intervalo y una edición parcial sería ambigua. Un `barberId`/`workingHourId` inexistente, de otro barbero o de otra barbería responde el mismo `404` que `GET` (CA-040-05). Un intervalo nuevo que se solapa con otro tramo del mismo barbero y día (excluyendo el propio tramo editado), o que repite exactamente la hora de inicio de otro, responde `409`.
+         */
+        patch: operations["updateWorkingHour"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -830,6 +882,88 @@ export interface components {
              */
             newPassword: string;
         };
+        /** @description Tramo recurrente de la jornada laboral de un barbero, para un único día ISO de la semana. Una jornada partida se representa con varios tramos del mismo día (CA-040-02); un tramo nocturno cruza medianoche cuando startsTime + durationMinutes supera las 24:00 (DEC-020, CA-040-03). */
+        WorkingHourResponse: {
+            /**
+             * Format: uuid
+             * @description Identificador del tramo, opaco para el cliente.
+             * @example 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+             */
+            id: string;
+            /**
+             * @description Día ISO 8601 de la semana (1 = lunes, 7 = domingo).
+             * @example 1
+             */
+            isoWeekday: number;
+            /**
+             * @description Hora civil de inicio del tramo, en la zona IANA de la barbería (nunca la del dispositivo del cliente), formato HH:MM de 24 horas.
+             * @example 08:00
+             */
+            startsTime: string;
+            /**
+             * @description Duración del tramo en minutos desde startsTime. Un valor que empuje el fin más allá de medianoche representa una jornada nocturna, permitida por DEC-020.
+             * @example 480
+             */
+            durationMinutes: number;
+            /**
+             * Format: date-time
+             * @description Instante de alta, con offset.
+             * @example 2026-08-25T15:04:05Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description Instante de la última modificación, con offset.
+             * @example 2026-08-25T15:04:05Z
+             */
+            updatedAt: string;
+        };
+        /** @description Página de tramos de horario laboral del barbero de la ruta, ordenada de forma estable por día ISO de la semana y luego por hora de inicio (CA-040-01): los siete días aparecen representados por sus tramos, nunca por una fila vacía cuando un día no tiene ninguno. */
+        WorkingHourListResponse: {
+            /** @description Tramos de esta página, en el orden estable del servidor. */
+            items: components["schemas"]["WorkingHourResponse"][];
+            /**
+             * @description Cursor opaco para pedir la siguiente página con el parámetro `cursor`. `null` cuando esta página es la última.
+             * @example eyJpc29XZWVrZGF5IjoxLCJzdGFydHNUaW1lIjoiMDg6MDAiLCJpZCI6IjZmMWEyYjNjLTRkNWUtNGY2MC04MTcyLTgzOTRhNWI2YzdkOCJ9
+             */
+            nextCursor: string | null;
+        };
+        /** @description Alta de un tramo recurrente de la jornada laboral del barbero de la ruta. Un día ISO fuera de 1-7, una hora con formato inválido, una duración fuera de [1, 1440] o un tramo que se solapa con otro del mismo barbero y día responden 422/409 sin persistir nada (CA-040-04). */
+        CreateWorkingHourRequest: {
+            /**
+             * @description Día ISO 8601 de la semana (1 = lunes, 7 = domingo).
+             * @example 1
+             */
+            isoWeekday: number;
+            /**
+             * @description Hora civil de inicio del tramo, en la zona IANA de la barbería, formato HH:MM de 24 horas.
+             * @example 08:00
+             */
+            startsTime: string;
+            /**
+             * @description Duración del tramo en minutos desde startsTime. Un tramo nocturno (startsTime + durationMinutes cruza medianoche) es válido (DEC-020).
+             * @example 480
+             */
+            durationMinutes: number;
+        };
+        /** @description Reemplazo completo del intervalo de un tramo existente del barbero de la ruta. Un objeto vacío `{}` se rechaza igual que en la creación. */
+        UpdateWorkingHourRequest: {
+            /**
+             * @description Día ISO 8601 de la semana (1 = lunes, 7 = domingo).
+             * @example 1
+             */
+            isoWeekday: number;
+            /**
+             * @description Hora civil de inicio del tramo, en la zona IANA de la barbería, formato HH:MM de 24 horas.
+             * @example 09:00
+             */
+            startsTime: string;
+            /**
+             * @description Duración del tramo en minutos desde startsTime.
+             * @example 420
+             */
+            durationMinutes: number;
+        };
     };
     responses: {
         /** @description Sesión cerrada. La cookie de sesión queda limpiada en Set-Cookie. */
@@ -1209,6 +1343,75 @@ export interface components {
                 [name: string]: unknown;
             };
             content?: never;
+        };
+        /** @description Página de tramos de horario laboral del barbero de la ruta, ordenada por día ISO de la semana y hora de inicio. */
+        WorkingHourListSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["WorkingHourListResponse"];
+            };
+        };
+        /** @description Tramo creado. `Location` apunta al recurso individual recién creado. */
+        WorkingHourCreated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                Location: components["headers"]["Location"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["WorkingHourResponse"];
+            };
+        };
+        /** @description El cuerpo es JSON válido, pero isoWeekday, startsTime o durationMinutes incumplen una validación. No se persistió ningún cambio. */
+        WorkingHourValidationProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description Tramo de horario laboral del barbero de la ruta. */
+        WorkingHourSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["WorkingHourResponse"];
+            };
+        };
+        /** @description El tramo ya no forma parte de la jornada laboral del barbero. Retiro físico (working_hour no tiene eliminación lógica); no afecta al barbero, a la barbería ni a ningún otro tramo. */
+        WorkingHourDeleted: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
+        /** @description Tramo con el intervalo ya actualizado. */
+        WorkingHourUpdated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["WorkingHourResponse"];
+            };
+        };
+        /** @description El intervalo solicitado se solapa con otro tramo existente del mismo barbero y día, o repite su hora de inicio exacta. No se persistió ningún cambio. */
+        WorkingHourConflictProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
         };
     };
     parameters: {
@@ -1754,6 +1957,134 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    listWorkingHours: {
+        parameters: {
+            query?: {
+                /** @description Cursor opaco devuelto por una página anterior (`nextCursor`). Sin este parámetro, la respuesta empieza en la primera página. */
+                cursor?: string;
+                /** @description Máximo de tramos por página. */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["WorkingHourListSuccess"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    createWorkingHour: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Clave elegida por el cliente que identifica un intento de escritura crítica. Repetir la misma clave con el mismo contenido (método, ruta y cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo. Repetirla con contenido distinto es un conflicto: usa una clave nueva para una solicitud distinta. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWorkingHourRequest"];
+            };
+        };
+        responses: {
+            201: components["responses"]["WorkingHourCreated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            /** @description Conflicto de idempotencia (misma clave con otro contenido u otra operación, `IdempotencyConflictProblem`), operación en curso con la misma clave (`IdempotencyLockedProblem`, DEC-043), o solape/ repetición de hora de inicio con otro tramo del mismo barbero y día (`WorkingHourConflictProblem`). Los problem types comparten status pero tienen `code` distinto: el cliente decide por `code`, nunca por `detail`. */
+            409: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["WorkingHourValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getWorkingHour: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+                /** @description Identificador del tramo. */
+                workingHourId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["WorkingHourSuccess"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    deleteWorkingHour: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+                /** @description Identificador del tramo. */
+                workingHourId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: components["responses"]["WorkingHourDeleted"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    updateWorkingHour: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+                /** @description Identificador del tramo. */
+                workingHourId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateWorkingHourRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["WorkingHourUpdated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            409: components["responses"]["WorkingHourConflictProblem"];
+            422: components["responses"]["WorkingHourValidationProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

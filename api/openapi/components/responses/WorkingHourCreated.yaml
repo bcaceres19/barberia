@@ -1,0 +1,24 @@
+# Respuesta 201 de POST /private/barbers/{barberId}/working-hours (HU-040,
+# CA-040-02, RN-IDE-01). Una repetición exacta de la misma
+# Idempotency-Key con el mismo contenido reproduce esta MISMA respuesta
+# byte a byte: no crea un segundo tramo.
+description: >
+  Tramo creado. `Location` apunta al recurso individual recién creado.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+  Location:
+    $ref: '../headers/Location.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/WorkingHourResponse.yaml'
+    examples:
+      tramo:
+        value:
+          id: 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+          isoWeekday: 1
+          startsTime: "08:00"
+          durationMinutes: 480
+          createdAt: "2026-08-25T15:04:05Z"
+          updatedAt: "2026-08-25T15:04:05Z"

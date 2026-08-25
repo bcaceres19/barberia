@@ -21,6 +21,9 @@ import (
 	cataloghttpapi "system-barbershop/internal/modules/catalog/httpapi"
 	catalogpostgres "system-barbershop/internal/modules/catalog/postgres"
 	"system-barbershop/internal/modules/notification"
+	"system-barbershop/internal/modules/schedule"
+	schedulehttpapi "system-barbershop/internal/modules/schedule/httpapi"
+	schedulepostgres "system-barbershop/internal/modules/schedule/postgres"
 	"system-barbershop/internal/modules/shops"
 	shopshttpapi "system-barbershop/internal/modules/shops/httpapi"
 	shopspostgres "system-barbershop/internal/modules/shops/postgres"
@@ -276,6 +279,26 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	private.Get("/barbers/{barberId}/services", listAssignmentsHandler.ServeHTTP)
 	private.Put("/barbers/{barberId}/services/{serviceId}", assignServiceHandler.ServeHTTP)
 	private.Delete("/barbers/{barberId}/services/{serviceId}", unassignServiceHandler.ServeHTTP)
+
+	// HU-040: horario laboral recurrente de cada barbero. scheduleService
+	// (schedule, dueño de la intención "cuándo trabaja cada barbero")
+	// colabora con staff SOLO a través de staff.BarberLookup(staffService),
+	// mismo puerto y mismo criterio que catalog.AssignmentService frente a
+	// HU-023: ni schedule importa staff, ni staff importa schedule.
+	scheduleService := schedule.NewService(
+		schedulepostgres.New(db, idempotency.NewSQLCoordinator()),
+		staff.NewBarberLookup(staffService),
+	)
+	listWorkingHoursHandler := schedulehttpapi.NewListWorkingHoursHandler(scheduleService)
+	getWorkingHourHandler := schedulehttpapi.NewGetWorkingHourHandler(scheduleService)
+	createWorkingHourHandler := schedulehttpapi.NewCreateWorkingHourHandler(scheduleService)
+	updateWorkingHourHandler := schedulehttpapi.NewUpdateWorkingHourHandler(scheduleService)
+	deleteWorkingHourHandler := schedulehttpapi.NewDeleteWorkingHourHandler(scheduleService)
+	private.Get("/barbers/{barberId}/working-hours", listWorkingHoursHandler.ServeHTTP)
+	private.Post("/barbers/{barberId}/working-hours", createWorkingHourHandler.ServeHTTP)
+	private.Get("/barbers/{barberId}/working-hours/{workingHourId}", getWorkingHourHandler.ServeHTTP)
+	private.Patch("/barbers/{barberId}/working-hours/{workingHourId}", updateWorkingHourHandler.ServeHTTP)
+	private.Delete("/barbers/{barberId}/working-hours/{workingHourId}", deleteWorkingHourHandler.ServeHTTP)
 
 	// HU-008 (DEC-063-066): recuperación de acceso con código de un solo
 	// uso. sender es el adaptador dual de Meta WhatsApp Cloud API + Resend

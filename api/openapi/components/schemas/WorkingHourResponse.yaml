@@ -1,0 +1,63 @@
+# Representación canónica de un tramo de horario laboral recurrente
+# (HU-040, CA-040-01/02/03): exactamente id, isoWeekday, startsTime,
+# durationMinutes, createdAt, updatedAt. Nunca barbershopId ni barberId: el
+# tenant se deriva de SessionCookie y el barbero de la ruta
+# /private/barbers/{barberId}/working-hours (mismo criterio que
+# AssignmentResponse no repite ids que ya están en la URL).
+type: object
+description: >
+  Tramo recurrente de la jornada laboral de un barbero, para un único día
+  ISO de la semana. Una jornada partida se representa con varios tramos del
+  mismo día (CA-040-02); un tramo nocturno cruza medianoche cuando
+  startsTime + durationMinutes supera las 24:00 (DEC-020, CA-040-03).
+properties:
+  id:
+    type: string
+    format: uuid
+    description: Identificador del tramo, opaco para el cliente.
+    examples:
+      - 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+  isoWeekday:
+    type: integer
+    minimum: 1
+    maximum: 7
+    description: Día ISO 8601 de la semana (1 = lunes, 7 = domingo).
+    examples:
+      - 1
+  startsTime:
+    type: string
+    pattern: '^([01]\d|2[0-3]):[0-5]\d$'
+    description: >
+      Hora civil de inicio del tramo, en la zona IANA de la barbería
+      (nunca la del dispositivo del cliente), formato HH:MM de 24 horas.
+    examples:
+      - "08:00"
+  durationMinutes:
+    type: integer
+    minimum: 1
+    maximum: 1440
+    description: >
+      Duración del tramo en minutos desde startsTime. Un valor que empuje el
+      fin más allá de medianoche representa una jornada nocturna, permitida
+      por DEC-020.
+    examples:
+      - 480
+  createdAt:
+    type: string
+    format: date-time
+    description: Instante de alta, con offset.
+    examples:
+      - "2026-08-25T15:04:05Z"
+  updatedAt:
+    type: string
+    format: date-time
+    description: Instante de la última modificación, con offset.
+    examples:
+      - "2026-08-25T15:04:05Z"
+required:
+  - id
+  - isoWeekday
+  - startsTime
+  - durationMinutes
+  - createdAt
+  - updatedAt

@@ -1,16 +1,16 @@
 # Graph Report - barberia  (2026-08-25)
 
 ## Corpus Check
-- 453 files · ~643,372 words
+- 479 files · ~672,335 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3576 nodes · 7791 edges · 236 communities (200 shown, 36 thin omitted)
-- Extraction: 80% EXTRACTED · 20% INFERRED · 0% AMBIGUOUS · INFERRED: 1530 edges (avg confidence: 0.79)
+- 3919 nodes · 8673 edges · 247 communities (209 shown, 38 thin omitted)
+- Extraction: 80% EXTRACTED · 20% INFERRED · 0% AMBIGUOUS · INFERRED: 1701 edges (avg confidence: 0.79)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `08cc0a98`
+- Built from commit: `3b2c7186`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -27,7 +27,7 @@
 - Reglas de negocio
 - package.json
 - Translate
-- catalog/httpapi/handler_test.go
+- NewService
 - graphify SKILL.md
 - tsconfig.vitest.json
 - .Now
@@ -39,6 +39,7 @@
 - loginApi.test.ts
 - LoginForm.vue
 - catalog/index.ts
+- schedules/index.ts
 - settings/index.ts
 - staff/index.ts
 - openapi.d.ts
@@ -60,7 +61,7 @@
 - <Título del prompt>
 - Catálogo de prompts persistentes
 - Prompt de implementación · Llaves asimétricas para la seguridad del API
-- NewService
+- catalog/service_test.go
 - Prompts detallados de implementación · B0 en curso
 - Sistema de agenda para barberías: reserva pública en línea con garantía de integridad de horarios
 - TestNoDatabaseImportsInDomain
@@ -84,7 +85,7 @@
 - Principal
 - CatalogPage.vue
 - setupTestDB
-- catalog/httpapi/contract_test.go
+- schedule/httpapi/contract_test.go
 - recovery_test.go
 - Implementar HU-005: inicio de sesión seguro del barbero
 - typescript
@@ -107,11 +108,11 @@
 - newResendSenderAgainstTestServer
 - LoginPage.test.ts
 - LoginPage.vue
-- Validation
+- catalog/domain_test.go
 - Implementar HU-040: horario laboral recurrente
 - StaffPage.vue
 - BaseBadge.vue
-- RequestID
+- Recover
 - SettingsPage.vue
 - AppNav.vue
 - As
@@ -133,11 +134,11 @@
 - Implementar HU-020: configuración básica de la barbería
 - Implementar HU-021: registro y listado de barberos
 - CatalogPage.test.ts
-- setupWorkerTestDB
+- schedule/service_test.go
 - Implementar HU-022: catálogo básico de servicios
 - Implementar HU-023: asignación de servicios a barberos
 - RecoveryRequestStep.vue
-- DB
+- Repository
 - Implementar HU-024: desactivación y reactivación de servicios
 - setupTestDB
 - Repository
@@ -155,16 +156,16 @@
 - configuracion-barberia-evidencia-responsiva.spec.ts
 - formatInstant.ts
 - navItem.ts
-- Fingerprint
+- fakeRepository
 - newLoginHandlerWithThrottle
 - NewService
 - LoginForm.test.ts
 - RecoveryPage.test.ts
 - NewSQLCoordinator
-- httpserver/idempotency_test.go
+- IdempotencyKeyFromRequest
 - BarberServicesPage.test.ts
 - recovery_handler_test.go
-- run
+- SchedulesPage.vue
 - AGENTS.md — Reglas de desarrollo del proyecto
 - DecodeCursor
 - StaffPage.test.ts
@@ -183,14 +184,14 @@
 - staffApi.test.ts
 - 07-calidad/README.md
 - recuperacion.spec.ts
-- prompts/README.md
-- newSessionContextHandler
+- Validation
+- schedule/httpapi/handler.go
 - catalogApi.test.ts
 - BarbershopID
-- resetForFreshLogin
+- catalog/httpapi/contract_test.go
 - catalog/httpapi/dto.go
 - barberos-evidencia-responsiva.spec.ts
-- NewCapturingPhoneCodeSender
+- .Create
 - barberServicesApi.test.ts
 - database README
 - servicios-evidencia-responsiva.spec.ts
@@ -208,28 +209,38 @@
 - newSessionMiddleware
 - TestContract_TranslateAlwaysFillsRequiredFields
 - toService
-- Informe de QA manual en navegador real: B0 y B1
-- MaskEmail
-- axe-core
+- prompts/README.md
+- staff/httpapi/contract_test.go
+- echoBodyHandler
 - newIdempotencyKey
 - web/package.json
 - fetchServices
-- onConfirmDeactivate
-- Repository
+- catalog/service.go
+- schedulesApi.ts
 - Context
+- SchedulesPage.test.ts
+- scheduleValidation.ts
+- TrustedProxies
+- axe-core
+- newLogoutHandler
+- schedulesApi.test.ts
+- PrincipalFromContext
+- loadPage
+- onConfirmDeactivate
+- assignment_ports.go
 - eslint-plugin-vue
 
 ## God Nodes (most connected - your core abstractions)
-1. `buildRouter()` - 100 edges
+1. `buildRouter()` - 110 edges
 2. `NewService()` - 81 edges
-3. `As()` - 73 edges
-4. `Key` - 58 edges
-5. `DB` - 51 edges
-6. `Translate()` - 50 edges
-7. `NewService()` - 49 edges
-8. `Reglas de negocio` - 49 edges
-9. `setupTestDB()` - 48 edges
-10. `setupTestDB()` - 45 edges
+3. `As()` - 79 edges
+4. `Key` - 69 edges
+5. `Translate()` - 57 edges
+6. `DB` - 55 edges
+7. `setupTestDB()` - 53 edges
+8. `BarbershopID` - 51 edges
+9. `Internal()` - 50 edges
+10. `testRouterConfig()` - 49 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `CLAUDE.md (root) — reglas graphify` --semantically_similar_to--> `.claude/CLAUDE.md — trigger de graphify`  [INFERRED] [semantically similar]
@@ -257,7 +268,7 @@
 - **Decisiones de seguridad para el piloto** — respuesta_manuales_respuesta_dudas_pendientes_dp_seg_01, respuesta_manuales_respuesta_dudas_pendientes_dp_seg_02, respuesta_manuales_respuesta_dudas_pendientes_dp_seg_03 [EXTRACTED 0.75]
 - **Reglas de disponibilidad y agendamiento** — respuesta_manuales_respuesta_propuestas_oc_rn_dis_04, respuesta_manuales_respuesta_propuestas_oc_rn_dis_05, respuesta_manuales_respuesta_propuestas_oc_rn_dis_06, respuesta_manuales_respuesta_propuestas_oc_rn_dis_07 [EXTRACTED 0.75]
 
-## Communities (236 total, 36 thin omitted)
+## Communities (247 total, 38 thin omitted)
 
 ### Community 0 - "Estados de las citas y máquina de transiciones"
 Cohesion: 0.26
@@ -307,9 +318,9 @@ Nodes (13): description, devDependencies, @redocly/cli, name, private, scripts, 
 Cohesion: 0.26
 Nodes (16): newProblem(), T, TestTranslate_Conflict_MapsTo409DistinctFromIdempotencyConflict(), TestTranslate_IdempotencyConflict_MapsTo409(), TestTranslate_IdempotencyLocked_MapsTo409WithoutWaiting(), TestTranslate_Internal_NeverExposesCause(), TestTranslate_Invalid_ExposesSafeMessage(), TestTranslate_MaxBytesError_MapsToPayloadTooLarge() (+8 more)
 
-### Community 12 - "catalog/httpapi/handler_test.go"
-Cohesion: 0.14
-Nodes (44): NewCreateServiceHandler(), NewDeactivateServiceHandler(), NewUpdateServiceHandler(), decodeProblem(), Request, ResponseRecorder, T, requestWithPrincipal() (+36 more)
+### Community 12 - "NewService"
+Cohesion: 0.17
+Nodes (45): NewCreateServiceHandler(), NewDeactivateServiceHandler(), NewUpdateServiceHandler(), decodeProblem(), Request, ResponseRecorder, T, requestWithPrincipal() (+37 more)
 
 ### Community 13 - "graphify SKILL.md"
 Cohesion: 0.18
@@ -376,11 +387,11 @@ Cohesion: 0.11
 Nodes (18): classes, close(), closeButtonRef, dialogRef, emit, focusableElementsRef, handleBackdropClick(), handleCloseClick() (+10 more)
 
 ### Community 60 - "Key"
-Cohesion: 0.11
-Nodes (83): createBarberFixture(), createServiceFixture(), AssignmentRepository, Service, T, mustAssign(), newAssignmentRepository(), TestAssign_New_CreatesRowAndIsVisibleInList() (+75 more)
+Cohesion: 0.07
+Nodes (118): createBarberFixture(), createServiceFixture(), AssignmentRepository, Service, T, mustAssign(), newAssignmentRepository(), TestAssign_New_CreatesRowAndIsVisibleInList() (+110 more)
 
 ### Community 61 - "Completar HU-009: sistema visual base"
-Cohesion: 0.15
+Cohesion: 0.14
 Nodes (13): Alcance incluido, Auditoría inicial requerida, Completar HU-009: sistema visual base, Documentación y trazabilidad, Estado existente que debes conservar, Fuera de alcance, Git y PR, Instrucción para Claude o Codex (+5 more)
 
 ### Community 62 - "Implementar HU-003: contrato HTTP base y errores uniformes"
@@ -403,9 +414,9 @@ Nodes (11): 10. Lista de control al guardar o entregar, 1. Propósito, 2. Qué d
 Cohesion: 0.22
 Nodes (9): 1.1 Esto no es una historia nueva: resuelve una duda existente, 1.2 Qué gana realmente este proyecto con llaves asimétricas, 1.3 El diseño que sí satisface la documentación, 1. Léase esto antes que el prompt, 2. Decisión que debe existir antes de codificar, 3. Prompt, 4. Efecto de esta decisión en el modelo de datos, 5. Riesgo que este documento deja consignado (+1 more)
 
-### Community 67 - "NewService"
-Cohesion: 0.15
-Nodes (49): NewService(), failingCreateFn(), T, mustBeConflict(), mustBeNotFound(), mustBeValidation(), TestCreate_DescriptionExactly500Characters_Accepted(), TestCreate_DescriptionOver500Characters_Rejected() (+41 more)
+### Community 67 - "catalog/service_test.go"
+Cohesion: 0.10
+Nodes (59): failingCreateFn(), failingLifecycleFn(), Context, CreateInput, CreateResult, Cursor, ListResult, Service (+51 more)
 
 ### Community 68 - "Prompts detallados de implementación · B0 en curso"
 Cohesion: 0.29
@@ -416,8 +427,8 @@ Cohesion: 0.40
 Nodes (4): 1. Introducción, Cómo se corresponde con el ejemplo de referencia, Nota sobre las referencias, Sistema de agenda para barberías: reserva pública en línea con garantía de integridad de horarios
 
 ### Community 73 - "NewAssignmentService"
-Cohesion: 0.08
-Nodes (51): errAssignmentBarberNotFound(), errAssignmentNotFound(), errLastActiveAssignment(), Time, LooksLikeBarberID(), AssignmentRepository, Context, NewAssignmentService() (+43 more)
+Cohesion: 0.07
+Nodes (54): errAssignmentBarberNotFound(), errAssignmentNotFound(), errLastActiveAssignment(), Time, LooksLikeBarberID(), AssignmentRepository, BarberPort, Context (+46 more)
 
 ### Community 74 - "vitest-axe.d.ts"
 Cohesion: 0.50
@@ -444,27 +455,27 @@ Cohesion: 0.24
 Nodes (17): NewPhoneChallengeService(), T, testChallengeCfg(), TestCryptoPhoneCodeGenerator_ProducesSixDigits(), TestPhoneChallengeService_Request_Accepted_SendsCode(), TestPhoneChallengeService_Request_AcceptedButEmptyPhone_NeverSends(), TestPhoneChallengeService_Request_CodeGeneratorFails_ReturnsInternalWithoutCallingRepository(), TestPhoneChallengeService_Request_NotAccepted_NeverSends() (+9 more)
 
 ### Community 91 - "Principal"
-Cohesion: 0.10
-Nodes (25): Request, ResponseWriter, NewLogoutHandler(), T, newLogoutHandler(), TestLogoutHandler_MissingPrincipalInContext_ReturnsSafe500(), TestLogoutHandler_ServiceFailure_ReturnsSafe500(), TestLogoutHandler_Success_RevokesAndClearsCookie() (+17 more)
+Cohesion: 0.17
+Nodes (17): Handler, NewSessionContextHandler(), T, newSessionContextHandler(), TestSessionContextHandler_MissingPrincipalInContext_ReturnsSafe500(), TestSessionContextHandler_RepositoryFailure_ReturnsSafe500(), TestSessionContextHandler_Success_ReturnsMinimalPayload(), ContextWithPrincipal() (+9 more)
 
 ### Community 92 - "CatalogPage.vue"
 Cohesion: 0.06
 Nodes (37): affectedAppointments, createAttempted, createDurationRaw, createFieldErrors, createForm, createIdempotencyKey, createStatus, editAttempted (+29 more)
 
 ### Community 93 - "setupTestDB"
-Cohesion: 0.07
-Nodes (73): HMACHex(), Context, NewPhoneChallengeRepository(), T, testChallengeCfg(), testCodeHash(), TestPhoneChallengeRepository_RequestChallenge_NonEscalatedIP_NotAccepted(), TestPhoneChallengeRepository_RequestChallenge_ResendCooldown_RejectsImmediate() (+65 more)
-
-### Community 94 - "catalog/httpapi/contract_test.go"
 Cohesion: 0.06
-Nodes (68): findRepoRoot(), operation, schemaDoc, T, loadYAML(), TestContract_CookieNameMatchesSecuritySchemeReference(), TestContract_LoginOperation_MethodPathSecurityAndResponses(), TestContract_LoginRequestSchema_MatchesDTOFields() (+60 more)
+Nodes (81): HMACHex(), Context, NewPhoneChallengeRepository(), T, testChallengeCfg(), testCodeHash(), TestPhoneChallengeRepository_RequestChallenge_NonEscalatedIP_NotAccepted(), TestPhoneChallengeRepository_RequestChallenge_ResendCooldown_RejectsImmediate() (+73 more)
+
+### Community 94 - "schedule/httpapi/contract_test.go"
+Cohesion: 0.07
+Nodes (49): findRepoRoot(), operation, schemaDoc, T, loadYAML(), TestContract_CookieNameMatchesSecuritySchemeReference(), TestContract_LoginOperation_MethodPathSecurityAndResponses(), TestContract_LoginRequestSchema_MatchesDTOFields() (+41 more)
 
 ### Community 95 - "recovery_test.go"
 Cohesion: 0.12
 Nodes (27): NewArgon2Hasher(), parseEncodedHash(), T, TestArgon2Hasher_HashThenVerify_Succeeds(), TestArgon2Hasher_TwoUsersSamePassword_ProduceDistinctEncodedValues(), TestArgon2Hasher_Verify_MalformedEncodedHash_NeverPanicsOrErrors(), TestArgon2Hasher_Verify_WrongPasswordFails(), Context (+19 more)
 
 ### Community 96 - "Implementar HU-005: inicio de sesión seguro del barbero"
-Cohesion: 0.15
+Cohesion: 0.14
 Nodes (13): Alcance incluido, Documentación y trazabilidad, Estado existente que debes conservar, Fuera de alcance, Git y PR, Implementar HU-005: inicio de sesión seguro del barbero, Instrucción para Claude o Codex, Objetivo (+5 more)
 
 ### Community 98 - "Implementar HU-006: sesión persistente y cierre de sesión"
@@ -477,11 +488,11 @@ Nodes (12): Alcance incluido, Documentación y trazabilidad, Estado existente qu
 
 ### Community 101 - "buildRouter"
 Cohesion: 0.06
-Nodes (120): assignmentBody, assignmentListBody, barberBody, barberListBody, barbershopSettingsBody, deactivationBody, deactivationImpactBody, recoveryCapture (+112 more)
+Nodes (135): assignmentBody, assignmentListBody, barberBody, barberListBody, barbershopSettingsBody, deactivationBody, deactivationImpactBody, recoveryCapture (+127 more)
 
 ### Community 102 - "NewService"
-Cohesion: 0.10
-Nodes (49): Service, NewGetBarbershopSettingsHandler(), NewUpdateBarbershopSettingsHandler(), Context, fakeRepository, Request, T, UpdateResult (+41 more)
+Cohesion: 0.08
+Nodes (52): Service, NewGetBarbershopSettingsHandler(), NewUpdateBarbershopSettingsHandler(), Context, fakeRepository, Request, T, UpdateResult (+44 more)
 
 ### Community 103 - "contract_logout_test.go"
 Cohesion: 0.43
@@ -496,16 +507,16 @@ Cohesion: 0.11
 Nodes (18): requestChallenge(), verifyChallenge(), canRequest, canVerify, code, codeDigitsOnly, emit, onRequestCode() (+10 more)
 
 ### Community 107 - "WriteProblem"
-Cohesion: 0.20
-Nodes (18): Request, ResponseWriter, ListResult, Request, ResponseWriter, Service, newServiceListResponse(), newServiceResponse() (+10 more)
+Cohesion: 0.18
+Nodes (20): Request, ResponseWriter, ListResult, Request, ResponseWriter, Service, newServiceListResponse(), newServiceResponse() (+12 more)
 
 ### Community 108 - "whatsapp_meta.go"
 Cohesion: 0.15
 Nodes (18): Client, Context, NewMetaWhatsAppSender(), Request, Server, T, newMetaSenderAgainstTestServer(), TestMetaWhatsAppSender_Send_ErrorStatus_ReturnsErrorWithoutLeakingBody() (+10 more)
 
 ### Community 109 - "NewPurgeService"
-Cohesion: 0.19
-Nodes (13): Context, NewPurgeService(), Context, T, TestPurgeService_CancelledContext_NeverCallsRepository(), TestPurgeService_LoginThrottleError_SkipsRest(), TestPurgeService_PhoneChallengeError_SkipsRecoveryButKeepsLoginThrottleCount(), TestPurgeService_PurgeOnce_ReturnsAllThreeCounts() (+5 more)
+Cohesion: 0.10
+Nodes (22): main(), run(), Context, NewPurgeService(), Context, T, TestPurgeService_CancelledContext_NeverCallsRepository(), TestPurgeService_LoginThrottleError_SkipsRest() (+14 more)
 
 ### Community 110 - "Implementar HU-008: recuperación de acceso con código"
 Cohesion: 0.11
@@ -516,8 +527,8 @@ Cohesion: 0.19
 Nodes (11): Context, NewDualChannelRecoverySender(), Context, T, TestDualChannelRecoverySender_BothChannelsFail_ReturnsCombinedError(), TestDualChannelRecoverySender_OneChannelFails_StillCallsTheOther(), TestDualChannelRecoverySender_SendsBothChannels(), DualChannelRecoverySender (+3 more)
 
 ### Community 112 - "sessionStore.ts"
-Cohesion: 0.24
-Nodes (11): fetchSessionContext(), installSessionHandling(), onUnauthorized(), refreshFromServer(), reportUnauthorized(), setAuthenticated(), setConnectionLost(), setUnauthenticated() (+3 more)
+Cohesion: 0.16
+Nodes (17): loggingOut, onLogout(), router, onRetry(), refreshFromServer(), reportUnauthorized(), resetForFreshLogin(), retryBootstrap() (+9 more)
 
 ### Community 113 - "Implementar HU-007: defensa escalonada contra abuso en el acceso"
 Cohesion: 0.12
@@ -536,16 +547,16 @@ Cohesion: 0.29
 Nodes (6): axeOptions, buildRouter(), loginMock, mountPage(), requestChallengeMock, verifyChallengeMock
 
 ### Community 117 - "LoginPage.vue"
-Cohesion: 0.13
-Nodes (18): login(), LoginCredentials, LoginOutcome, RFC-9457, LoginScreenState, CYCLE_PATHS, isSafeInternalRedirect(), attemptLogin() (+10 more)
+Cohesion: 0.15
+Nodes (16): login(), LoginCredentials, LoginOutcome, RFC-9457, LoginScreenState, attemptLogin(), email, isSubmitting (+8 more)
 
-### Community 118 - "Validation"
-Cohesion: 0.06
-Nodes (61): currentDeactivationImpact(), DecodeCursor(), EncodeCursor(), FormatPriceCOP(), Time, LooksLikeServiceID(), NormalizeDescription(), NormalizeName() (+53 more)
+### Community 118 - "catalog/domain_test.go"
+Cohesion: 0.15
+Nodes (26): currentDeactivationImpact(), DecodeCursor(), EncodeCursor(), FormatPriceCOP(), Time, NormalizeDescription(), NormalizeName(), ParsePriceCOP() (+18 more)
 
 ### Community 119 - "Implementar HU-040: horario laboral recurrente"
 Cohesion: 0.12
-Nodes (15): 1. Contrato HTTP, 2. Datos y backend Go, 3. Frontend Vue, Alcance incluido, Documentación y trazabilidad, Estado existente que debe conservarse, Fuera de alcance, Git y PR (+7 more)
+Nodes (16): 1. Contrato HTTP, 2. Datos y backend Go, 3. Frontend Vue, Alcance incluido, Documentación y trazabilidad, Estado existente que debe conservarse, Evidencia real de esta ejecución, Fuera de alcance (+8 more)
 
 ### Community 120 - "StaffPage.vue"
 Cohesion: 0.07
@@ -555,9 +566,9 @@ Nodes (38): createBarber(), fetchBarbers(), renameBarber(), toBarber(), toPage()
 Cohesion: 0.18
 Nodes (10): borderVar, classes, dotColorVar, emit, handleDismiss(), Props, style, surfaceVar (+2 more)
 
-### Community 122 - "RequestID"
-Cohesion: 0.10
-Nodes (24): BodyLimit(), Handler, echoBodyHandler(), Request, ResponseWriter, T, TestBodyLimit_AllowsBodyWithinLimit(), TestBodyLimit_ProducesRecognizableMaxBytesError() (+16 more)
+### Community 122 - "Recover"
+Cohesion: 0.24
+Nodes (10): T, TestRecover_DoesNotLogRawPanicValue(), TestRecover_RespondsWithProblemJSON(), TestRequestID_AcceptsValidClientID(), TestRequestID_RejectsInvalidClientID(), TestWriteProblem_SetsContentTypeAndStatus(), Handler, Logger (+2 more)
 
 ### Community 123 - "SettingsPage.vue"
 Cohesion: 0.13
@@ -568,28 +579,28 @@ Cohesion: 0.33
 Nodes (3): baseItems, items, props
 
 ### Community 125 - "As"
-Cohesion: 0.12
-Nodes (28): Error, Kind, Request, ResponseWriter, Request, ResponseWriter, Request, ResponseWriter (+20 more)
+Cohesion: 0.11
+Nodes (30): Error, Kind, Request, ResponseWriter, Request, ResponseWriter, Request, ResponseWriter (+22 more)
 
 ### Community 126 - "BaseButton.vue"
 Cohesion: 0.29
 Nodes (5): classes, emit, handleClick(), Props, axeOptions
 
 ### Community 127 - "requireSession.ts"
-Cohesion: 0.36
-Nodes (6): requireSession(), onRetry(), ensureBootstrapped(), retryBootstrap(), sessionState, setChecking()
+Cohesion: 0.60
+Nodes (4): requireSession(), CYCLE_PATHS, isSafeInternalRedirect(), ensureBootstrapped()
 
 ### Community 128 - "contract_session_test.go"
 Cohesion: 0.47
 Nodes (5): T, TestContract_OpenAPIYAML_RegistersSessionContextPath(), TestContract_SessionContextOperation_MethodPathSecurityAndResponses(), sessionContextOperation, sessionContextPathFile
 
 ### Community 129 - "routes.test.ts"
-Cohesion: 0.36
-Nodes (7): updateBarbershopName(), authRoutes, privateShellChildRoutes, privateShellRoute(), authenticated, buildRouter(), fetchSessionContextMock
+Cohesion: 0.30
+Nodes (8): installSessionHandling(), onUnauthorized(), authRoutes, privateShellChildRoutes, privateShellRoute(), authenticated, buildRouter(), fetchSessionContextMock
 
 ### Community 131 - "PhoneChallengeService"
-Cohesion: 0.17
-Nodes (14): NewChallengeHandler(), NewChallengeVerifyHandler(), errInvalidChallenge(), Context, NewCryptoPhoneCodeGenerator(), CryptoPhoneCodeGenerator, PhoneChallengeRepository, PhoneChallengeService (+6 more)
+Cohesion: 0.18
+Nodes (11): errInvalidChallenge(), Context, NewCryptoPhoneCodeGenerator(), Context, NewCapturingPhoneCodeSender(), CapturingPhoneCodeSender, CryptoPhoneCodeGenerator, PhoneChallengeRepository (+3 more)
 
 ### Community 133 - "PrivateShell.test.ts"
 Cohesion: 0.40
@@ -600,8 +611,8 @@ Cohesion: 0.67
 Nodes (3): buildRouter(), mountHeader(), postMock
 
 ### Community 137 - "catalog/postgres/repository.go"
-Cohesion: 0.15
-Nodes (20): centsFromNumeric(), Context, Cursor, ListResult, Repository, Service, Time, UpdateResult (+12 more)
+Cohesion: 0.14
+Nodes (19): centsFromNumeric(), Context, CreateInput, CreateResult, Cursor, ListResult, Service, Time (+11 more)
 
 ### Community 140 - "NewThrottleService"
 Cohesion: 0.17
@@ -623,9 +634,9 @@ Nodes (16): 1. Contrato HTTP antes del código, 2. Migración y seguridad de dat
 Cohesion: 0.13
 Nodes (18): axeOptions, clickDialogButton(), createMock, deactivateMock, fetchMock, fillCreateForm(), fourServices, mountPage() (+10 more)
 
-### Community 146 - "setupWorkerTestDB"
-Cohesion: 0.29
-Nodes (8): Context, NewPurgeRepository(), T, setupWorkerTestDB(), TestPurgeRepository_PurgeLoginThrottle_DeletesOnlyExpired(), TestPurgeRepository_PurgePhoneChallenges_RunsWithoutError(), TestPurgeRepository_PurgeRecoveryCodes_RunsWithoutError(), PurgeRepository
+### Community 146 - "schedule/service_test.go"
+Cohesion: 0.06
+Nodes (73): DecodeCursor(), EncodeCursor(), Time, IntervalsOverlap(), LooksLikeBarberID(), LooksLikeWorkingHourID(), T, TestDecodeCursor_Malformed_Rejected() (+65 more)
 
 ### Community 147 - "Implementar HU-022: catálogo básico de servicios"
 Cohesion: 0.12
@@ -639,9 +650,9 @@ Nodes (16): 1. Contrato HTTP, 2. Migración y seguridad, 3. Backend Go, 4. Front
 Cohesion: 0.13
 Nodes (16): attemptedSubmit, email, emit, fieldError, handleEmailInput(), isSubmitting, onSubmit(), status (+8 more)
 
-### Community 150 - "DB"
-Cohesion: 0.17
-Nodes (9): Context, Repository, Time, New(), Context, Pool, NewDB(), DB (+1 more)
+### Community 150 - "Repository"
+Cohesion: 0.36
+Nodes (4): Context, Repository, Time, New()
 
 ### Community 151 - "Implementar HU-024: desactivación y reactivación de servicios"
 Cohesion: 0.12
@@ -668,12 +679,12 @@ Cohesion: 0.18
 Nodes (15): resetRecoveryPassword(), attemptedSubmit, confirmPassword, emit, fieldErrors, handleConfirmPasswordInput(), handleNewPasswordInput(), isSubmitting (+7 more)
 
 ### Community 157 - "sessionContextOutcome.ts"
-Cohesion: 0.38
-Nodes (4): SessionContext, SessionContextOutcome, authenticated, fetchSessionContextMock
+Cohesion: 0.31
+Nodes (5): fetchSessionContext(), SessionContext, SessionContextOutcome, authenticated, fetchSessionContextMock
 
 ### Community 158 - "auth/httpapi/dto.go"
-Cohesion: 0.15
-Nodes (14): Time, validateLoginRequest(), BarbershopSummary, ChallengeAcceptedResponse, ChallengeRequest, ChallengeVerifyRequest, LoginRequest, LoginResponse (+6 more)
+Cohesion: 0.18
+Nodes (12): Time, BarbershopSummary, ChallengeAcceptedResponse, ChallengeRequest, ChallengeVerifyRequest, LoginResponse, RecoveryRequestAcceptedResponse, RecoveryRequestRequest (+4 more)
 
 ### Community 159 - "RecoveryPage.vue"
 Cohesion: 0.14
@@ -699,17 +710,17 @@ Nodes (4): fetchMock, loadedSettings, saveMock, updateBarbershopNameMock
 Cohesion: 0.50
 Nodes (3): openDialogStack, axeOptions, TwoDialogsHost
 
-### Community 169 - "Fingerprint"
-Cohesion: 0.10
-Nodes (26): Context, CreateResult, Cursor, fakeRepository, ListResult, Service, UpdateResult, Service (+18 more)
+### Community 169 - "fakeRepository"
+Cohesion: 0.15
+Nodes (16): Context, CreateInput, CreateResult, Cursor, fakeRepository, ListResult, Service, UpdateResult (+8 more)
 
 ### Community 170 - "newLoginHandlerWithThrottle"
-Cohesion: 0.19
-Nodes (14): DefaultCookieConfig(), NewLoginHandler(), Context, Repository, T, Time, newLoginHandlerWithThrottle(), TestLoginHandler_Escalated_Returns429WithRetryAfterAndNeverTouchesRepository() (+6 more)
+Cohesion: 0.16
+Nodes (16): DefaultCookieConfig(), NewLoginHandler(), validateLoginRequest(), Context, Repository, T, Time, newLoginHandlerWithThrottle() (+8 more)
 
 ### Community 171 - "NewService"
-Cohesion: 0.05
-Nodes (96): Time, Barber, ListResult, Service, newBarberListResponse(), newBarberResponse(), NewCreateBarberHandler(), NewGetBarberHandler() (+88 more)
+Cohesion: 0.06
+Nodes (83): Service, NewCreateBarberHandler(), NewGetBarberHandler(), NewListBarbersHandler(), NewRenameBarberHandler(), decodeProblem(), Barber, Context (+75 more)
 
 ### Community 172 - "LoginForm.test.ts"
 Cohesion: 0.33
@@ -720,12 +731,12 @@ Cohesion: 0.33
 Nodes (6): axeOptions, buildRouter(), mountPage(), requestRecoveryMock, resetRecoveryPasswordMock, verifyRecoveryMock
 
 ### Community 174 - "NewSQLCoordinator"
-Cohesion: 0.11
-Nodes (43): ParseKey(), contains(), T, indexOf(), TestComputeFingerprint_DifferentContentProducesDifferentFingerprint(), TestComputeFingerprint_IsDeterministic(), TestComputeFingerprint_MatchesStoredFormat(), TestComputeFingerprint_MethodIsCaseInsensitive() (+35 more)
+Cohesion: 0.08
+Nodes (54): WorkingHour, Barber, ParseKey(), contains(), T, indexOf(), TestComputeFingerprint_DifferentContentProducesDifferentFingerprint(), TestComputeFingerprint_IsDeterministic() (+46 more)
 
-### Community 175 - "httpserver/idempotency_test.go"
-Cohesion: 0.19
-Nodes (23): Request, ResponseWriter, IdempotencyFingerprint(), IdempotencyKeyFromRequest(), doIdempotentRequest(), doIdempotentRequestObject(), Handler, HandlerFunc (+15 more)
+### Community 175 - "IdempotencyKeyFromRequest"
+Cohesion: 0.15
+Nodes (26): Request, IdempotencyFingerprint(), IdempotencyKeyFromRequest(), doIdempotentRequest(), doIdempotentRequestObject(), Handler, HandlerFunc, Request (+18 more)
 
 ### Community 176 - "BarberServicesPage.test.ts"
 Cohesion: 0.15
@@ -735,9 +746,9 @@ Nodes (11): assignServiceMock, axeOptions, fetchAssignmentsMock, fetchBarberSumm
 Cohesion: 0.18
 Nodes (26): Logger, NewRecoveryRequestHandler(), NewRecoveryResetPasswordHandler(), NewRecoveryVerifyHandler(), discardRecoveryLogger(), Logger, RecoveryRepository, T (+18 more)
 
-### Community 178 - "run"
-Cohesion: 0.20
-Nodes (9): main(), run(), Handler, Server, New(), Logger, NewLogger(), parseLevel() (+1 more)
+### Community 178 - "SchedulesPage.vue"
+Cohesion: 0.05
+Nodes (36): deleteWorkingHour(), newIdempotencyKey(), barbers, barbershopTimezone, createAttempted, createDurationError, createDurationMinutes, createIdempotencyKey (+28 more)
 
 ### Community 179 - "AGENTS.md — Reglas de desarrollo del proyecto"
 Cohesion: 0.18
@@ -780,12 +791,12 @@ Cohesion: 0.40
 Nodes (3): axeOptions, requestRecoveryMock, verifyRecoveryMock
 
 ### Community 191 - "principalOrInternalError"
-Cohesion: 0.61
-Nodes (4): Request, ResponseWriter, principalOrInternalError(), writeUnknownFieldOrInvalidJSONProblem()
+Cohesion: 0.20
+Nodes (13): Time, Barber, ListResult, Request, ResponseWriter, newBarberListResponse(), newBarberResponse(), principalOrInternalError() (+5 more)
 
 ### Community 192 - "Resolve"
-Cohesion: 0.32
-Nodes (18): Request, ParseTrustedProxies(), Resolve(), Request, T, mustTrusted(), newRequest(), TestParseTrustedProxies_InvalidCIDRErrors() (+10 more)
+Cohesion: 0.37
+Nodes (17): Request, Resolve(), Request, T, mustTrusted(), newRequest(), TestParseTrustedProxies_InvalidCIDRErrors(), TestResolve_DirectConnectionNoProxy() (+9 more)
 
 ### Community 193 - "Implementar HU-042: bloqueos de agenda"
 Cohesion: 0.12
@@ -799,25 +810,25 @@ Nodes (4): barberBody, getMock, patchMock, postMock
 Cohesion: 0.05
 Nodes (41): 1. Objetivo, 2. Técnica: combinación por pares, no producto cartesiano completo, 3. Severidad, 4. Protocolo para una sesión humana, 5. Protocolo para un agente de IA, 6. Qué hacer con un hallazgo confirmado, Metodología de exploración combinatoria, A. Responsive y visual (`estandar-diseno-visual.md` §7, §16) (+33 more)
 
-### Community 197 - "prompts/README.md"
+### Community 197 - "Validation"
 Cohesion: 0.16
-Nodes (6): Cambios autorizados, Objetivo, PROMPT-DOCS-INFORME-ACADEMICO-v3, Resultado de ejecución, Sistema visual, Verificación y entrega
+Nodes (20): errDescriptionTooLong(), errDurationOutOfRange(), errNameRequired(), errNameTooLong(), errPriceInvalidFormat(), errPriceMustBePositive(), errUpdateEmptyBody(), errStartsTimeInvalid() (+12 more)
 
-### Community 198 - "newSessionContextHandler"
-Cohesion: 0.29
-Nodes (9): Request, ResponseWriter, NewSessionContextHandler(), T, newSessionContextHandler(), TestSessionContextHandler_MissingPrincipalInContext_ReturnsSafe500(), TestSessionContextHandler_RepositoryFailure_ReturnsSafe500(), TestSessionContextHandler_Success_ReturnsMinimalPayload() (+1 more)
+### Community 198 - "schedule/httpapi/handler.go"
+Cohesion: 0.14
+Nodes (25): Time, ListResult, Request, ResponseWriter, Service, WorkingHour, NewCreateWorkingHourHandler(), NewDeleteWorkingHourHandler() (+17 more)
 
 ### Community 199 - "catalogApi.test.ts"
 Cohesion: 0.25
 Nodes (4): getMock, patchMock, postMock, serviceBody
 
 ### Community 200 - "BarbershopID"
-Cohesion: 0.17
-Nodes (10): Context, Repository, Time, Context, Cursor, NewAssignmentRepository(), ValidBarbershopID(), BarbershopID (+2 more)
+Cohesion: 0.36
+Nodes (5): Context, Repository, Time, ValidBarbershopID(), BarbershopID
 
-### Community 201 - "resetForFreshLogin"
-Cohesion: 0.50
-Nodes (4): loggingOut, onLogout(), router, resetForFreshLogin()
+### Community 201 - "catalog/httpapi/contract_test.go"
+Cohesion: 0.21
+Nodes (23): findRepoRoot(), operation, schemaDoc, T, loadYAML(), requireExactProps(), requireResponses(), TestContract_CreateServiceOperation_MethodPathSecurityAndResponses() (+15 more)
 
 ### Community 202 - "catalog/httpapi/dto.go"
 Cohesion: 0.32
@@ -827,9 +838,9 @@ Nodes (7): Time, CreateServiceRequest, ServiceDeactivationImpactResponse, Servic
 Cohesion: 0.50
 Nodes (3): axeScriptPath, evidenceDir, viewports
 
-### Community 205 - "NewCapturingPhoneCodeSender"
-Cohesion: 0.29
-Nodes (7): Context, NewCapturingPhoneCodeSender(), T, TestCapturingPhoneCodeSender_InnerFailure_NeverWritesCapture(), TestCapturingPhoneCodeSender_WritesPhoneAndCodeToFile(), CapturingPhoneCodeSender, PhoneCodeSender
+### Community 205 - ".Create"
+Cohesion: 0.14
+Nodes (20): Repository, New(), Context, CreateInput, CreateResult, Cursor, ListResult, Repository (+12 more)
 
 ### Community 206 - "barberServicesApi.test.ts"
 Cohesion: 0.29
@@ -860,8 +871,8 @@ Cohesion: 0.18
 Nodes (8): Context, Time, Context, fakePhoneChallengeRepository, PhoneChallengeConfig, requestChallengeCall, stubPhoneChallengeRepository, stubThrottleRepository
 
 ### Community 216 - "CatalogService"
-Cohesion: 0.30
-Nodes (13): NewGetServiceDeactivationImpactHandler(), NewGetServiceHandler(), NewListServicesHandler(), NewReactivateServiceHandler(), Repository, CatalogService, CreateServiceHandler, DeactivateServiceHandler (+5 more)
+Cohesion: 0.15
+Nodes (20): LooksLikeServiceID(), errNameConflict(), errServiceNotFound(), NewGetServiceDeactivationImpactHandler(), NewGetServiceHandler(), NewListServicesHandler(), NewReactivateServiceHandler(), Context (+12 more)
 
 ### Community 217 - "PROMPT-DOCS-INFORME-ACADEMICO-v2"
 Cohesion: 0.14
@@ -880,8 +891,8 @@ Cohesion: 0.35
 Nodes (10): validateCreateFields(), validateEditFields(), DESCRIPTION_MAX_LENGTH, DURATION_MAX_MINUTES, DURATION_MIN_MINUTES, NAME_MAX_LENGTH, validateDescription(), validateDurationMinutes() (+2 more)
 
 ### Community 221 - "RecoveryService"
-Cohesion: 0.11
-Nodes (24): Time, NormalizeEmail(), errInvalidCredentials(), errInvalidRecoveryCode(), errInvalidResetToken(), Context, NewRecoveryService(), Context (+16 more)
+Cohesion: 0.08
+Nodes (30): Time, NormalizeEmail(), errInvalidCredentials(), MaskEmail(), MaskPhone(), T, TestMaskEmail(), TestMaskEmail_NeverReturnsFullValue() (+22 more)
 
 ### Community 222 - "newSessionMiddleware"
 Cohesion: 0.18
@@ -895,13 +906,17 @@ Nodes (7): findRepoRoot(), T, isZeroValue(), loadProblemSchema(), TestContract_P
 Cohesion: 0.31
 Nodes (9): createService(), deactivateService(), isProblemCode(), reactivateService(), toService(), updateService(), hasFieldError(), onSubmitCreate() (+1 more)
 
-### Community 225 - "Informe de QA manual en navegador real: B0 y B1"
-Cohesion: 0.29
-Nodes (6): Datos sintéticos creados, Divergencias y pendientes, Estado por paso, Informe de QA manual en navegador real: B0 y B1, Integridad de la ejecución, Resultado ejecutivo
+### Community 225 - "prompts/README.md"
+Cohesion: 0.12
+Nodes (12): Cambios autorizados, Objetivo, PROMPT-DOCS-INFORME-ACADEMICO-v3, Resultado de ejecución, Sistema visual, Verificación y entrega, Datos sintéticos creados, Divergencias y pendientes (+4 more)
 
-### Community 226 - "MaskEmail"
-Cohesion: 0.39
-Nodes (6): MaskEmail(), MaskPhone(), T, TestMaskEmail(), TestMaskEmail_NeverReturnsFullValue(), TestMaskPhone()
+### Community 226 - "staff/httpapi/contract_test.go"
+Cohesion: 0.27
+Nodes (17): findRepoRoot(), operation, schemaDoc, T, loadYAML(), requireProps(), requireResponses(), TestContract_BarberListResponseSchema_HasItemsAndNextCursor() (+9 more)
+
+### Community 227 - "echoBodyHandler"
+Cohesion: 0.24
+Nodes (9): BodyLimit(), Handler, echoBodyHandler(), Request, ResponseWriter, T, TestBodyLimit_AllowsBodyWithinLimit(), TestBodyLimit_ProducesRecognizableMaxBytesError() (+1 more)
 
 ### Community 228 - "newIdempotencyKey"
 Cohesion: 0.33
@@ -915,37 +930,69 @@ Nodes (4): name, private, type, version
 Cohesion: 0.40
 Nodes (5): fetchServices(), toPage(), load(), onLoadMore(), onRetryLoad()
 
-### Community 231 - "onConfirmDeactivate"
-Cohesion: 0.70
-Nodes (5): onConfirmDeactivate(), onConfirmLifecycle(), onConfirmReactivate(), reloadAfterConflict(), replaceServiceInList()
+### Community 231 - "catalog/service.go"
+Cohesion: 0.40
+Nodes (9): derefOr(), CreateInput, validateCreateInput(), validateDescription(), validateDuration(), validateName(), validateUpdateFields(), CreateInputRaw (+1 more)
 
-### Community 233 - "Repository"
-Cohesion: 0.38
-Nodes (4): Context, Repository, UpdateResult, New()
+### Community 233 - "schedulesApi.ts"
+Cohesion: 0.21
+Nodes (16): createWorkingHour(), isProblemCode(), toPage(), toWorkingHour(), updateWorkingHour(), CreateWorkingHourOutcome, DeleteWorkingHourOutcome, FetchBarbershopTimezoneOutcome (+8 more)
 
 ### Community 234 - "Context"
 Cohesion: 0.36
 Nodes (3): Context, stubRecoveryRepository, stubRecoverySender
 
+### Community 235 - "SchedulesPage.test.ts"
+Cohesion: 0.12
+Nodes (14): axeOptions, createForm(), createWorkingHourMock, deleteWorkingHourMock, fetchBarbershopTimezoneMock, fetchBarberSummariesMock, fetchWorkingHoursMock, fillCreateForm() (+6 more)
+
+### Community 236 - "scheduleValidation.ts"
+Cohesion: 0.24
+Nodes (13): onCreateDurationInput(), onCreateStartsTimeInput(), onEditDurationInput(), onEditStartsTimeInput(), onSubmitCreate(), onSubmitEdit(), revalidateCreate(), revalidateEdit() (+5 more)
+
+### Community 237 - "TrustedProxies"
+Cohesion: 0.29
+Nodes (8): NewChallengeHandler(), NewChallengeVerifyHandler(), ParseTrustedProxies(), TrustedProxies, ChallengeHandler, ChallengeVerifyHandler, IP, IPNet
+
+### Community 239 - "newLogoutHandler"
+Cohesion: 0.44
+Nodes (7): NewLogoutHandler(), T, newLogoutHandler(), TestLogoutHandler_MissingPrincipalInContext_ReturnsSafe500(), TestLogoutHandler_ServiceFailure_ReturnsSafe500(), TestLogoutHandler_Success_RevokesAndClearsCookie(), LogoutHandler
+
+### Community 240 - "schedulesApi.test.ts"
+Cohesion: 0.22
+Nodes (5): deleteMock, getMock, patchMock, postMock, workingHourBody
+
+### Community 241 - "PrincipalFromContext"
+Cohesion: 0.16
+Nodes (10): Request, ResponseWriter, Request, ResponseWriter, PrincipalFromContext(), Request, ResponseWriter, newBarbershopSettingsResponse() (+2 more)
+
+### Community 242 - "loadPage"
+Cohesion: 0.25
+Nodes (8): fetchBarbershopTimezone(), fetchBarberSummaries(), fetchWorkingHours(), loadPage(), onBarberSelectChange(), onRetryLoad(), onRetryWorkingHours(), selectBarber()
+
+### Community 243 - "onConfirmDeactivate"
+Cohesion: 0.70
+Nodes (5): onConfirmDeactivate(), onConfirmLifecycle(), onConfirmReactivate(), reloadAfterConflict(), replaceServiceInList()
+
 ## Knowledge Gaps
-- **883 isolated node(s):** `deactivationImpactBody`, `system-barbershop`, `schemaDoc`, `ChallengeRequest`, `ChallengeAcceptedResponse` (+878 more)
+- **940 isolated node(s):** `deactivationImpactBody`, `system-barbershop`, `schemaDoc`, `ChallengeRequest`, `ChallengeAcceptedResponse` (+935 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **36 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **38 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `buildRouter()` connect `buildRouter` to `PhoneChallengeService`, `NewRouter`, `NewThrottleService`, `catalog/httpapi/handler_test.go`, `.Now`, `DB`, `newLoginHandlerWithThrottle`, `NewService`, `NewSQLCoordinator`, `recovery_handler_test.go`, `Load`, `Resolve`, `newSessionContextHandler`, `BarbershopID`, `NewAssignmentService`, `NewCapturingPhoneCodeSender`, `NewLoggingPhoneCodeSender`, `NewLoggingRecoveryCodeSender`, `NewPhoneChallengeService`, `CatalogService`, `Principal`, `RecoveryService`, `setupTestDB`, `newSessionMiddleware`, `recovery_test.go`, `NewService`, `whatsapp_meta.go`, `NewDualChannelRecoverySender`, `newResendSenderAgainstTestServer`?**
-  _High betweenness centrality (0.123) - this node is a cross-community bridge._
-- **Why does `DB` connect `DB` to `buildRouter`, `BarbershopID`, `catalog/postgres/repository.go`, `Repository`, `NewSQLCoordinator`, `httpserver/idempotency_test.go`, `setupWorkerTestDB`, `database_test.go`, `setupTestDB`, `Repository`, `Key`, `setupTestDB`, `catalog/httpapi/contract_test.go`?**
+- **Why does `buildRouter()` connect `buildRouter` to `PhoneChallengeService`, `NewRouter`, `NewThrottleService`, `NewService`, `.Now`, `newLoginHandlerWithThrottle`, `NewService`, `NewSQLCoordinator`, `recovery_handler_test.go`, `Load`, `Key`, `schedule/httpapi/handler.go`, `NewAssignmentService`, `NewLoggingPhoneCodeSender`, `NewLoggingRecoveryCodeSender`, `NewPhoneChallengeService`, `CatalogService`, `Principal`, `RecoveryService`, `setupTestDB`, `newSessionMiddleware`, `recovery_test.go`, `NewService`, `whatsapp_meta.go`, `TrustedProxies`, `newLogoutHandler`, `NewDualChannelRecoverySender`, `newResendSenderAgainstTestServer`?**
+  _High betweenness centrality (0.121) - this node is a cross-community bridge._
+- **Why does `DB` connect `Key` to `buildRouter`, `NewService`, `BarbershopID`, `NewAssignmentService`, `.Create`, `NewSQLCoordinator`, `IdempotencyKeyFromRequest`, `Repository`, `database_test.go`, `setupTestDB`, `Repository`, `setupTestDB`, `schedule/httpapi/contract_test.go`?**
+  _High betweenness centrality (0.055) - this node is a cross-community bridge._
+- **Why does `As()` connect `As` to `catalog/postgres/repository.go`, `Translate`, `NewThrottleService`, `.Now`, `schedule/service_test.go`, `NewService`, `NewSQLCoordinator`, `IdempotencyKeyFromRequest`, `DecodeCursor`, `Key`, `principalOrInternalError`, `catalog/service_test.go`, `schedule/httpapi/handler.go`, `NewAssignmentService`, `.Create`, `NewPhoneChallengeService`, `echoBodyHandler`, `NewService`, `WriteProblem`, `PrincipalFromContext`, `catalog/domain_test.go`?**
   _High betweenness centrality (0.044) - this node is a cross-community bridge._
-- **Why does `As()` connect `As` to `NewService`, `NewService`, `NewAssignmentService`, `catalog/postgres/repository.go`, `WriteProblem`, `NewThrottleService`, `NewService`, `Translate`, `.Now`, `httpserver/idempotency_test.go`, `NewSQLCoordinator`, `DecodeCursor`, `Validation`, `NewPhoneChallengeService`, `RequestID`, `Principal`, `Key`, `principalOrInternalError`?**
-  _High betweenness centrality (0.038) - this node is a cross-community bridge._
-- **Are the 94 inferred relationships involving `buildRouter()` (e.g. with `TestBarberServices_HTTP_AssignRepeatListUnassign_FullJourney()` and `TestBarberServices_HTTP_LastActiveAssignment_Returns409()`) actually correct?**
-  _`buildRouter()` has 94 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 104 inferred relationships involving `buildRouter()` (e.g. with `TestBarberServices_HTTP_AssignRepeatListUnassign_FullJourney()` and `TestBarberServices_HTTP_LastActiveAssignment_Returns409()`) actually correct?**
+  _`buildRouter()` has 104 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 78 inferred relationships involving `NewService()` (e.g. with `TestCreateServiceHandler_ConflictFingerprint_Returns409()` and `TestCreateServiceHandler_FractionalDuration_Returns400()`) actually correct?**
   _`NewService()` has 78 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 71 inferred relationships involving `As()` (e.g. with `TestPhoneChallengeService_Request_CodeGeneratorFails_ReturnsInternalWithoutCallingRepository()` and `TestPhoneChallengeService_Request_SenderFails_ReturnsInternalButStillRegistered()`) actually correct?**
-  _`As()` has 71 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 28 inferred relationships involving `Key` (e.g. with `createServiceFixture()` and `TestDeactivate_ActiveService_SetsInactiveWithTimestamp()`) actually correct?**
-  _`Key` has 28 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 77 inferred relationships involving `As()` (e.g. with `TestPhoneChallengeService_Request_CodeGeneratorFails_ReturnsInternalWithoutCallingRepository()` and `TestPhoneChallengeService_Request_SenderFails_ReturnsInternalButStillRegistered()`) actually correct?**
+  _`As()` has 77 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 34 inferred relationships involving `Key` (e.g. with `createServiceFixture()` and `TestDeactivate_ActiveService_SetsInactiveWithTimestamp()`) actually correct?**
+  _`Key` has 34 INFERRED edges - model-reasoned connections that need verification._

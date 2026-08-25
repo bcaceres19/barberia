@@ -1,6 +1,6 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.20"
+version: "1.22"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-25"
@@ -147,7 +147,7 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-HU-022-v1](hu/hu-022-catalogo-servicios.md) | `hu` | `HU-022` | [#75](https://github.com/bcaceres19/barberia/issues/75) | `executed` | `HU-020`/`HU-021` integradas; `DP-SER-01` resuelta (`DEC-067`) | Rama `feat/75-hu022-catalogo-servicios`; [PR #79](https://github.com/bcaceres19/barberia/pull/79), integrada en `main` con CI verde |
 | [PROMPT-HU-023-v1](hu/hu-023-asignacion-servicios-barberos.md) | `hu` | `HU-023` | [#76](https://github.com/bcaceres19/barberia/issues/76) | `executed` | `HU-022` integrada ([PR #79](https://github.com/bcaceres19/barberia/pull/79)); `DP-SER-02` resuelta (`DEC-068`) | Rama `feat/76-hu023-servicios-barberos`; [PR #83](https://github.com/bcaceres19/barberia/pull/83), integrada en `main` |
 | [PROMPT-HU-024-v1](hu/hu-024-ciclo-vida-servicios.md) | `hu` | `HU-024` | [#77](https://github.com/bcaceres19/barberia/issues/77) | `executed` | `HU-022`/`HU-023` integradas; `DP-SER-03` resuelta (`DEC-069`) | Rama `feat/77-hu024-ciclo-vida-servicios`; [PR #84](https://github.com/bcaceres19/barberia/pull/84), integrada en `main` |
-| [PROMPT-HU-040-v1](hu/hu-040-horario-laboral.md) (v1.1) | `hu` | `HU-040` | [#90](https://github.com/bcaceres19/barberia/issues/90) | `ready` | B1 cerrado; `CT-008` resuelta (`DEC-070`) | Sin rama/PR aún |
+| [PROMPT-HU-040-v1](hu/hu-040-horario-laboral.md) (v1.2) | `hu` | `HU-040` | [#90](https://github.com/bcaceres19/barberia/issues/90) | `in_progress` | B1 cerrado; `CT-008` resuelta (`DEC-070`); `CA-040-08` parcial (falta evidencia responsive real) | Rama `feat/90-hu040-horario-laboral`; [PR #93](https://github.com/bcaceres19/barberia/pull/93), pendiente de CI/revisión |
 | [PROMPT-HU-041-v1](hu/hu-041-excepciones-festivos.md) | `hu` | `HU-041` | `pending` | `draft` | `HU-040` pendiente; `CT-008` abierta; issue real pendiente | Sin rama/PR |
 | [PROMPT-HU-042-v1](hu/hu-042-bloqueos-agenda.md) | `hu` | `HU-042` | `pending` | `draft` | `HU-040`/`HU-041` pendientes; `CT-008` abierta; issue real pendiente | Sin rama/PR |
 | [PROMPT-DOCS-INFORME-ACADEMICO-v1](docs/pending-informe-academico-secciones-1-a-4-2.md) | `docs` | — | [#81](https://github.com/bcaceres19/barberia/issues/81) | `superseded` | Sustituido por v2 tras retroalimentación sobre lenguaje y audiencia | Rama `docs/81-informe-academico`; [PR #82](https://github.com/bcaceres19/barberia/pull/82) |

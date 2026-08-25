@@ -13,7 +13,7 @@ interface Props {
   /** Valor del input (v-model) */
   modelValue?: string | number
   /** Tipo de input HTML */
-  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search'
+  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search' | 'time'
   /** Label asociado */
   label?: string
   /** Texto de ayuda (hint) */

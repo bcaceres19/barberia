@@ -1,0 +1,10 @@
+# 204 de DELETE
+# /private/barbers/{barberId}/working-hours/{workingHourId} (HU-040,
+# CA-040-05). Sin cuerpo (docs/06-api/estandar-openapi.md sección 11).
+description: >
+  El tramo ya no forma parte de la jornada laboral del barbero. Retiro
+  físico (working_hour no tiene eliminación lógica); no afecta al barbero,
+  a la barbería ni a ningún otro tramo.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'

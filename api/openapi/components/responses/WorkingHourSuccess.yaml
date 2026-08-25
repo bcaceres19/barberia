@@ -1,0 +1,21 @@
+# Respuesta 200 de GET
+# /private/barbers/{barberId}/working-hours/{workingHourId} (HU-040): la
+# lectura individual permite demostrar de forma directa el 404 de un tramo
+# de otro barbero o de otra barbería (CA-040-05).
+description: Tramo de horario laboral del barbero de la ruta.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/WorkingHourResponse.yaml'
+    examples:
+      tramo:
+        value:
+          id: 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+          isoWeekday: 1
+          startsTime: "08:00"
+          durationMinutes: 480
+          createdAt: "2026-08-25T15:04:05Z"
+          updatedAt: "2026-08-25T15:04:05Z"

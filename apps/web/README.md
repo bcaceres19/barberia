@@ -37,8 +37,16 @@ servicios (HU-024)**: en la misma pantalla "Servicios", desactivar/reactivar
 con un `BaseDialog` que consulta el impacto real de citas futuras antes de
 confirmar (siempre 0 en B1, `DEC-069`) y recarga el estado real si el
 servidor responde un conflicto de transición, en vez de asumir éxito
-optimista. Ver las secciones siguientes. El resto de carpetas de `modules/`
-conserva su `index.ts` de marcador de responsabilidad futura.
+optimista, y el **horario laboral recurrente (HU-040)**: pantalla
+"Horarios" (`/panel/horarios`) con un selector de barbero y los siete días
+ISO siempre visibles, agrupando los tramos existentes de cada uno; agregar,
+editar y retirar un tramo con validación de campo en cliente (día/hora/
+duración) y traducción del conflicto de solape real del servidor
+(`code: "conflict"`) a un mensaje recuperable sin cerrar el diálogo. La
+pantalla indica explícitamente la zona IANA de la barbería junto a las
+horas (`CA-040-06`), nunca la del dispositivo. Ver las secciones
+siguientes. El resto de carpetas de `modules/` conserva su `index.ts` de
+marcador de responsabilidad futura.
 
 ## Acceso del barbero (HU-010)
 
@@ -589,6 +597,80 @@ checks de CI, que solo corren `test:unit`).
 Preparación de PostgreSQL para el E2E real: mismo procedimiento que
 "Catálogo básico de servicios (HU-022)" arriba (sin testdata adicional:
 `service.is_active`/`deactivated_at` ya existen desde esa migración).
+
+## Horario laboral recurrente (HU-040)
+
+Fuente normativa: `docs/02-requisitos/historias-usuario.md` (HU-040) y
+`docs/00-control/registro-decisiones.md` (`DEC-020`, `DEC-043`, `DEC-070`).
+Esta sección resume la API pública y las decisiones de implementación; no
+las sustituye.
+
+### Módulo nuevo, mismo patrón de selector que HU-023
+
+`src/modules/schedules/` reutiliza el patrón de selector de barbero de
+`barberServices` (`api/schedulesApi.ts` llama DIRECTAMENTE al cliente HTTP
+compartido para `GET /private/barbers`, nunca a `staffApi.ts`), pero
+agrupa el recurso por día ISO en vez de por casilla: `groupedByWeekday`
+siempre construye las siete entradas de `ISO_WEEKDAYS`, con o sin tramos
+(`CA-040-01`), así que un barbero recién creado sin horario y uno con
+jornada partida en varios días muestran exactamente la misma estructura.
+
+### Alta con `Idempotency-Key`, edición y retiro sin ella
+
+`createWorkingHour` sigue el mismo patrón de intento lógico que
+`createBarber`/`createService`: la clave se genera al abrir el diálogo
+"Agregar tramo" y se reutiliza en un reintento por error de red, nunca en
+un intento lógico distinto. `updateWorkingHour` (reemplaza el intervalo
+completo) y `deleteWorkingHour` no llevan `Idempotency-Key` (PATCH/DELETE
+sobre un recurso ya identificado por su propio id son naturalmente
+repetibles, mismo criterio que `renameBarber`); retirar un tramo ya
+retirado responde `404`, que la pantalla trata igual que un éxito (ya no
+está, sin mostrar un error nuevo que exija reintento).
+
+### El solape del servidor es la única fuente de verdad
+
+`scheduleValidation.ts` valida forma (día 1-7, hora `HH:MM`, duración
+`[1, 1440]`) pero NUNCA solape: esa comprobación depende del estado ya
+persistido de los demás tramos, que solo el servidor conoce con certeza
+(mismo criterio que `DEC-067`/`DEC-068` en otros módulos). Un `409` con
+`code: "conflict"` se traduce a un mensaje recuperable que no cierra el
+diálogo ("Este tramo se solapa con otro existente"), distinto del `409` de
+idempotencia (`RN-IDE-01`).
+
+### La zona de la barbería se indica explícitamente (CA-040-06)
+
+`fetchBarbershopTimezone` llama a
+`GET /private/settings/barbershop` (HU-020) directamente -mismo criterio
+de pequeña duplicación entre módulos que `BarberSummary`/`ServiceSummary`
+en `barberServices`- y la pantalla muestra "Horas en la zona horaria de la
+barbería: {zona}" junto al título. `startsTime` viaja siempre como hora
+civil `HH:MM` sin ninguna conversión de zona en ningún punto del cliente;
+un fallo al obtener la zona no bloquea la pantalla (la hora ya es correcta
+de todas formas), solo omite el indicador.
+
+### Pruebas
+
+Componente (`src/modules/schedules/pages/__tests__/SchedulesPage.test.ts`:
+un tramo y jornada partida en varios días con el mismo componente, los
+siete días siempre visibles, vacío sin barberos, error recuperable, cambio
+de barbero, alta/edición/retiro -éxito, solape, validación de cliente,
+error de red-, retiro sin doble envío, indicador de zona horaria,
+axe-core), cliente tipado
+(`src/modules/schedules/api/__tests__/schedulesApi.test.ts`: mapeo por
+`status`/`code`, nunca `detail`) y validación
+(`src/modules/schedules/validation/__tests__/scheduleValidation.test.ts`).
+E2E escrito siguiendo el mismo patrón que
+`servicios-por-barbero.spec.ts`/`servicios-ciclo-vida.spec.ts`:
+`e2e/horarios.spec.ts` (alta con persistencia real tras recargar, jornada
+partida, solape rechazado sin cerrar el diálogo, editar y retirar con
+persistencia real, identificador real de otra barbería con `404`).
+Pendiente de ejecución contra Chromium real y de la evidencia responsiva en
+`e2e/evidence/horarios/` en los cinco breakpoints (no forma parte de los
+checks de CI, que solo corren `test:unit`).
+
+Preparación de PostgreSQL para el E2E real: mismo procedimiento que
+"Catálogo básico de servicios (HU-022)" arriba, con
+`testdata/hu040_horario.sql` además de las testdata previas.
 
 ## Sistema visual base (HU-009)
 

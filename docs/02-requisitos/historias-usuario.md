@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.15"
+version: "1.16"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-25"
@@ -954,7 +954,7 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 | Actor | Barbero autenticado |
 | Depende de | Criterio de salida de B1; HU-020–HU-024 integradas en main; CT-008 resuelta (DEC-070) |
 | Bloquea | HU-041, HU-042 y el cálculo posterior de disponibilidad |
-| Estado | En ejecución; prompt PROMPT-HU-040-v1 ready; issue real #90 |
+| Estado | Implementación completa en PR #93 (rama feat/90-hu040-horario-laboral); prompt PROMPT-HU-040-v1 in_progress; issue real #90; pendiente de CI |
 | Riesgo | Un tramo ambiguo, solapado o interpretado en la zona del dispositivo desplaza toda la disponibilidad futura. |
 
 **Historia**
