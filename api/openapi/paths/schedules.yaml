@@ -1,2 +1,326 @@
-# Operaciones privadas de horario laboral, excepciones, festivos y
-# bloqueos. Ver docs/06-api/estandar-openapi.md. Sin contenido todavía.
+# Operaciones privadas de horario laboral recurrente (HU-040): consultar,
+# crear, editar y retirar tramos de working_hour de un barbero de la
+# barbería activa. No mezcla con excepciones por fecha/festivos (HU-041) ni
+# con bloqueos (HU-042) -esas capacidades tienen su propio archivo cuando
+# existan-, ni con disponibilidad, citas, agenda o reserva pública.
+/private/barbers/{barberId}/working-hours:
+  get:
+    tags: [Schedule]
+    summary: Listar los tramos de horario laboral de un barbero de la barbería activa
+    description: >
+      Lista paginada por cursor (HU-040, CA-040-01) de los tramos
+      recurrentes del barbero de la ruta, ordenada por día ISO de la semana
+      y luego por hora de inicio. Los siete días aparecen representados por
+      sus propios tramos; un día sin ninguno simplemente no aporta
+      elementos, sin fila vacía. Un `barberId` inexistente o de otra
+      barbería responde `404` (RN-TEN-01), igual que
+      GET /private/barbers/{barberId}.
+    operationId: listWorkingHours
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DIS-05, RN-DIS-07]
+    x-decisions: [DEC-007, DEC-020, DEC-024, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+      - name: cursor
+        in: query
+        required: false
+        description: >
+          Cursor opaco devuelto por una página anterior (`nextCursor`). Sin
+          este parámetro, la respuesta empieza en la primera página.
+        schema:
+          type: string
+        examples:
+          continuacion:
+            value: eyJpc29XZWVrZGF5IjoxLCJzdGFydHNUaW1lIjoiMDg6MDAiLCJpZCI6IjZmMWEyYjNjLTRkNWUtNGY2MC04MTcyLTgzOTRhNWI2YzdkOCJ9
+      - name: limit
+        in: query
+        required: false
+        description: Máximo de tramos por página.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+        examples:
+          porDefecto:
+            value: 20
+    responses:
+      "200":
+        $ref: '../components/responses/WorkingHourListSuccess.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  post:
+    tags: [Schedule]
+    summary: Crear un tramo de horario laboral para un barbero de la barbería activa
+    description: >
+      Alta de un tramo recurrente (HU-040, CA-040-02) protegida con clave
+      de idempotencia (RN-IDE-01, DEC-043): repetir el mismo `POST` con la
+      misma `Idempotency-Key` y el mismo cuerpo devuelve la misma
+      representación creada sin crear un segundo tramo. Varios tramos no
+      solapados el mismo día representan una jornada partida; un tramo cuyo
+      `startsTime` + `durationMinutes` cruza medianoche es válido
+      (DEC-020). Un intervalo que se solapa con otro tramo existente del
+      mismo barbero y día, o que repite exactamente su hora de inicio,
+      responde `409` sin crear nada. El tenant se deriva exclusivamente de
+      `SessionCookie` y el barbero de `barberId`; el cuerpo nunca acepta
+      `barbershopId` ni `barberId`. Un `barberId` inexistente o de otra
+      barbería responde `404`.
+    operationId: createWorkingHour
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DIS-05, RN-DIS-07, RN-IDE-01]
+    x-decisions: [DEC-007, DEC-020, DEC-024, DEC-043, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+      - $ref: '../components/parameters/IdempotencyKey.yaml'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/CreateWorkingHourRequest.yaml'
+          examples:
+            tramoMatutino:
+              summary: Alta de un tramo matutino
+              value:
+                isoWeekday: 1
+                startsTime: "08:00"
+                durationMinutes: 480
+    responses:
+      "201":
+        $ref: '../components/responses/WorkingHourCreated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "409":
+        description: >
+          Conflicto de idempotencia (misma clave con otro contenido u otra
+          operación, `IdempotencyConflictProblem`), operación en curso con
+          la misma clave (`IdempotencyLockedProblem`, DEC-043), o solape/
+          repetición de hora de inicio con otro tramo del mismo barbero y
+          día (`WorkingHourConflictProblem`). Los problem types comparten
+          status pero tienen `code` distinto: el cliente decide por `code`,
+          nunca por `detail`.
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              contenidoDistinto:
+                summary: Misma clave, cuerpo distinto
+                value:
+                  type: /api/v1/problems/idempotency-conflict
+                  title: Conflicto de idempotencia
+                  status: 409
+                  detail: la clave de idempotencia ya se usó con un contenido distinto; usa una clave nueva
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              operacionEnCurso:
+                summary: Otra transacción tiene el bloqueo de esta clave ahora mismo
+                value:
+                  type: /api/v1/problems/idempotency-locked
+                  title: Operación en curso
+                  status: 409
+                  detail: la operación con esta clave de idempotencia todavía está en curso; reintenta en unos segundos
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-locked
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              solape:
+                summary: El tramo se solapa con otro del mismo barbero y día
+                value:
+                  type: /api/v1/problems/conflict
+                  title: Conflicto
+                  status: 409
+                  detail: el tramo se solapa con otro existente del mismo barbero y día
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "422":
+        $ref: '../components/responses/WorkingHourValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/barbers/{barberId}/working-hours/{workingHourId}:
+  get:
+    tags: [Schedule]
+    summary: Consultar un tramo de horario laboral de un barbero de la barbería activa
+    description: >
+      Lectura autenticada de un tramo por identificador (HU-040). Un
+      `barberId`/`workingHourId` inexistente, de otro barbero o de otra
+      barbería responde exactamente el mismo `404` (CA-040-05, RN-TEN-01).
+    operationId: getWorkingHour
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DIS-05, RN-DIS-07]
+    x-decisions: [DEC-007, DEC-020, DEC-024, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+      - name: workingHourId
+        in: path
+        required: true
+        description: Identificador del tramo.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          tramo:
+            value: 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+    responses:
+      "200":
+        $ref: '../components/responses/WorkingHourSuccess.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  patch:
+    tags: [Schedule]
+    summary: Editar un tramo de horario laboral de un barbero de la barbería activa
+    description: >
+      Reemplaza el intervalo completo de un tramo existente (HU-040,
+      CA-040-04): `isoWeekday`, `startsTime` y `durationMinutes` son los
+      tres obligatorios, porque forman un único intervalo y una edición
+      parcial sería ambigua. Un `barberId`/`workingHourId` inexistente, de
+      otro barbero o de otra barbería responde el mismo `404` que `GET`
+      (CA-040-05). Un intervalo nuevo que se solapa con otro tramo del
+      mismo barbero y día (excluyendo el propio tramo editado), o que
+      repite exactamente la hora de inicio de otro, responde `409`.
+    operationId: updateWorkingHour
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DIS-05, RN-DIS-07]
+    x-decisions: [DEC-007, DEC-020, DEC-024, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+      - name: workingHourId
+        in: path
+        required: true
+        description: Identificador del tramo.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          tramo:
+            value: 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/UpdateWorkingHourRequest.yaml'
+          examples:
+            editarIntervalo:
+              summary: Nuevo intervalo del tramo
+              value:
+                isoWeekday: 1
+                startsTime: "09:00"
+                durationMinutes: 420
+    responses:
+      "200":
+        $ref: '../components/responses/WorkingHourUpdated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "409":
+        $ref: '../components/responses/WorkingHourConflictProblem.yaml'
+      "422":
+        $ref: '../components/responses/WorkingHourValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  delete:
+    tags: [Schedule]
+    summary: Retirar un tramo de horario laboral de un barbero de la barbería activa
+    description: >
+      Retira físicamente el tramo (HU-040, CA-040-05): working_hour no
+      tiene eliminación lógica. Un `barberId`/`workingHourId` inexistente,
+      de otro barbero, de otra barbería, o ya retirado antes, responden el
+      mismo `404` uniforme; reintentar la misma operación tras un `404` es
+      seguro (nunca retira un segundo tramo por error).
+    operationId: deleteWorkingHour
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DIS-05, RN-DIS-07]
+    x-decisions: [DEC-007, DEC-020, DEC-024, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+      - name: workingHourId
+        in: path
+        required: true
+        description: Identificador del tramo.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          tramo:
+            value: 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+    responses:
+      "204":
+        $ref: '../components/responses/WorkingHourDeleted.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

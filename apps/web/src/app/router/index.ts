@@ -5,6 +5,7 @@ import {
   barberServicesPrivateShellChildRoutes,
 } from '@/modules/barberServices'
 import { catalogNavItems, catalogPrivateShellChildRoutes } from '@/modules/catalog'
+import { schedulesNavItems, schedulesPrivateShellChildRoutes } from '@/modules/schedules'
 import { settingsNavItems, settingsPrivateShellChildRoutes } from '@/modules/settings'
 import { staffNavItems, staffPrivateShellChildRoutes } from '@/modules/staff'
 
@@ -32,8 +33,15 @@ const routes: RouteRecordRaw[] = [
       ...staffPrivateShellChildRoutes,
       ...catalogPrivateShellChildRoutes,
       ...barberServicesPrivateShellChildRoutes,
+      ...schedulesPrivateShellChildRoutes,
     ],
-    [...settingsNavItems, ...staffNavItems, ...catalogNavItems, ...barberServicesNavItems],
+    [
+      ...settingsNavItems,
+      ...staffNavItems,
+      ...catalogNavItems,
+      ...barberServicesNavItems,
+      ...schedulesNavItems,
+    ],
   ),
 ]
 

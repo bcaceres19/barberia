@@ -1,0 +1,44 @@
+# 422 de POST/PATCH .../working-hours[/{workingHourId}] (CA-040-04): cuerpo
+# bien formado que incumple una validación de campo (día, hora o duración),
+# distinto del 400 de JSON/campo desconocido y del 409 de solape.
+description: >
+  El cuerpo es JSON válido, pero isoWeekday, startsTime o durationMinutes
+  incumplen una validación. No se persistió ningún cambio.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      diaFueraDeRango:
+        summary: isoWeekday fuera de 1-7
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: el día de la semana debe estar entre 1 y 7
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      horaInvalida:
+        summary: startsTime con formato inválido
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: la hora de inicio debe tener formato HH:MM de 24 horas
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      duracionInvalida:
+        summary: durationMinutes fuera de [1, 1440]
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: la duración debe ser mayor que cero y no exceder 1440 minutos
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

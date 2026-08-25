@@ -103,6 +103,22 @@ antes de agregar código.
   no aplica responde `409` sin romper la reclamación. Sin migración nueva:
   `service.is_active`/`deactivated_at` ya existían desde HU-022. Ver la
   sección "Ciclo de vida de servicios (HU-024)" más abajo.
+- **Horario laboral recurrente (HU-040)**: `internal/modules/schedule`
+  implementa `GET`/`POST /api/v1/private/barbers/{barberId}/working-hours` y
+  `GET`/`PATCH`/`DELETE .../working-hours/{workingHourId}`: lista paginada
+  por cursor ordenada por día ISO y hora de inicio, alta protegida con
+  `Idempotency-Key` (RN-IDE-01, `DEC-043`), lectura individual, edición
+  (reemplaza el intervalo completo) y retiro físico. Un tramo cuyo
+  `startsTime` + `durationMinutes` cruza medianoche es válido (`DEC-020`);
+  el solape con otro tramo del mismo barbero y día responde `409`
+  (`code: "conflict"`), verificado dentro de la transacción que bloquea la
+  fila de `barber` (`SELECT ... FOR UPDATE`) para resistir la carrera de
+  dos altas concurrentes que parten de cero tramos existentes. `schedule`
+  colabora con `staff` SOLO a través de `schedule.BarberPort`, mismo
+  patrón que `catalog.BarberPort` frente a HU-023. `CT-008` se resolvió
+  como `DEC-070`: la FK de `working_hour` hacia `barber` usa
+  `ON DELETE RESTRICT`, no `CASCADE`. Ver la sección "Horario laboral
+  recurrente (HU-040)" más abajo.
 
 ## Requisitos
 
@@ -127,6 +143,7 @@ go test -race ./internal/modules/notification/...
 go test -race ./internal/modules/shops/...
 go test -race ./internal/modules/staff/...
 go test -race ./internal/modules/catalog/...
+go test -race ./internal/modules/schedule/...
 go test -race ./cmd/api/...
 ```
 
@@ -1233,6 +1250,78 @@ forma exacta que `httpapi.ServiceResponse`/`ServiceDeactivationResponse`
 - HTTP con dobles: `internal/modules/catalog/httpapi/handler_test.go` (15 pruebas nuevas) y `contract_test.go` (contrato contra el YAML fuente).
 - SQL directo con el rol real: `database/tests/hu024_ciclo_vida.sql`.
 - Router de producción con dos tenants reales: `cmd/api/service_lifecycle_integration_test.go` (4 pruebas de recorrido completo).
+
+## Horario laboral recurrente (HU-040)
+
+`internal/modules/schedule` (nuevo módulo) implementa las cinco operaciones
+privadas de `api/openapi/paths/schedules.yaml` sobre `working_hour`
+(`20260825160000_create_working_hour.sql`): listar (paginada por cursor,
+orden `iso_weekday, starts_time, id`), crear (protegida con
+`Idempotency-Key`, RN-IDE-01), consultar, editar (reemplaza el intervalo
+completo) y retirar (físico; `working_hour` no tiene eliminación lógica).
+
+### El solape vive en Go, no en un `EXCLUDE` de PostgreSQL
+
+Un tramo nocturno (DEC-020) hace que una restricción de exclusión con
+envolvente semanal sea frágil (mismo razonamiento documentado en el
+comentario de la migración y en `estandar-base-datos.md §7`). En su lugar,
+`schedule.IntervalsOverlap` compara dos intervalos `[inicio, fin)` en
+minutos desde medianoche (semiabiertos: tramos contiguos NO se solapan,
+CA-040-03), y `postgres.overlapsExisting` la invoca dentro de la misma
+transacción que el `INSERT`/`UPDATE`, sobre los tramos existentes del mismo
+`(barbershopID, barberID, isoWeekday)` ya bloqueados con
+`SELECT ... FOR UPDATE`.
+
+### Bloqueo de la fila de `barber`, no solo de `working_hour` (carrera de "cero tramos")
+
+Si dos altas concurrentes para el MISMO barbero y día parten de un
+conjunto de tramos existentes VACÍO, un `SELECT ... FOR UPDATE` sobre
+`working_hour` no bloquea nada (no hay fila que bloquear): ambas
+transacciones podrían insertar tramos que se solapan entre sí sin que
+ninguna vea a la otra (phantom read clásico a `READ COMMITTED`).
+`lockBarberForScheduleWrite` bloquea en cambio la fila de `barber` antes de
+verificar solape, serializando todas las escrituras de horario de ese
+barbero (mismo criterio que DEC-068 bloqueando la fila de `service`).
+`TestCreate_ConcurrentOverlappingCreates_ExactlyOneSucceeds`
+(`internal/modules/schedule/postgres/repository_test.go`, `-race`, dos
+goroutines reales sobre el mismo pool) demuestra que exactamente una de dos
+altas concurrentes que se solapan tiene éxito; la otra recibe
+`Conflict=true` sin dejar dos tramos cruzados.
+
+### `CT-008`/`DEC-070`: `ON DELETE RESTRICT`, no `CASCADE`
+
+El modelo de referencia proponía `ON DELETE CASCADE` de `working_hour`
+hacia `barber`; `AGENTS.md` prohíbe el borrado en cascada. Se resolvió como
+`DEC-070`: la FK usa `ON DELETE RESTRICT` (`barber` no tiene borrado físico
+en su alcance vigente, HU-021/DDL-BIZ-02), verificado contra PostgreSQL
+real en `tests/hu040_horario.sql`, no solo documentado.
+
+### `BarberPort`: mismo patrón de colaboración entre módulos que HU-023
+
+`schedule.Service` verifica que `barberId` exista en la barbería activa
+mediante `schedule.BarberPort`, satisfecho por `staff.NewBarberLookup`
+(mismo puerto pequeño y explícito que `catalog.BarberPort`): ni `schedule`
+importa `staff`, ni `staff` importa `schedule`; `cmd/api` conecta ambos.
+
+### Tabla de criterios de aceptación
+
+| Criterio | Estado | Prueba o evidencia |
+| --- | --- | --- |
+| `CA-040-01` | Cumplido | `TestList_OrderedByWeekdayThenStartsTime`, `TestList_FirstPage_NeverReturnsMoreThanLimit`, `TestWorkingHours_HTTP_CreateListGetUpdateDelete_FullJourney`. |
+| `CA-040-02` | Cumplido | `TestCreate_SplitShift_TwoNonOverlappingSegmentsSameDay`, `hu040_horario.sql` ("CA-040-02/03"). |
+| `CA-040-03` | Cumplido | `TestIntervalsOverlap_*` (dominio), `TestCreate_NightShift_CrossesMidnightWithoutError`, `TestCreate_ContiguousSegments_NoConflict`. |
+| `CA-040-04` | Cumplido | `TestCreate_ExactSameStart_ReturnsConflict`, `TestCreate_PartialOverlap_ReturnsConflict`, `TestUpdate_OverlapsAnotherSegment_ReturnsConflictWithoutChangingAnything`, `TestWorkingHours_HTTP_OverlappingCreate_Returns409`, `TestWorkingHours_HTTP_InvalidField_Returns422`, `hu040_horario.sql` (CHECK de día/duración). |
+| `CA-040-05` | Cumplido | `TestGet_CrossBarber_...`, `TestGet_CrossTenant_...`, `TestUpdate_CrossTenant_...`, `TestDelete_CrossTenant_...`, `TestDelete_ThenGet_NotFound`, `TestWorkingHours_HTTP_CrossTenantBarber_Returns404`, `hu040_horario.sql` ("CA-040-05"). |
+| `CA-040-06` | Cumplido | `startsTime` viaja como hora civil `HH:MM` sin conversión alguna (`to_char(starts_time, 'HH24:MI')`); ver `apps/web/README.md` para la indicación explícita de zona en pantalla. |
+| `CA-040-07`/`08` | Parcial (backend no aplica) | Evidencia de frontend/accesibilidad documentada en `apps/web/README.md`. |
+
+### Pruebas
+
+- Dominio: `internal/modules/schedule/domain_test.go`, `service_test.go` (doble en memoria de `schedule.Repository`/`BarberPort`).
+- PostgreSQL real, incluida la carrera de dos altas concurrentes con `-race`: `internal/modules/schedule/postgres/repository_test.go`.
+- HTTP con dobles y contrato: `internal/modules/schedule/httpapi/contract_test.go` (contrato contra el YAML fuente; sin `handler_test.go` propio: las rutas con dos parámetros de ruta se cubren mediante el router real, mismo criterio que `catalog/httpapi/assignment_handler.go`).
+- SQL directo con el rol real: `database/tests/hu040_horario.sql` (incluida la verificación de `DEC-070` contra PostgreSQL real).
+- Router de producción con dos tenants reales: `cmd/api/schedule_integration_test.go`.
 
 ## Pruebas de integración
 

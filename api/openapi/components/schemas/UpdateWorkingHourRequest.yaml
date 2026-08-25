@@ -1,0 +1,37 @@
+# Cuerpo de PATCH /private/barbers/{barberId}/working-hours/{workingHourId}
+# (CA-040-04). Los tres campos son obligatorios: un tramo es un único
+# intervalo, así que editarlo reemplaza la forma completa en vez de aceptar
+# una edición parcial ambigua (a diferencia de UpdateServiceRequest, que sí
+# es parcial porque nombre/duración/precio son independientes entre sí).
+type: object
+description: >
+  Reemplazo completo del intervalo de un tramo existente del barbero de la
+  ruta. Un objeto vacío `{}` se rechaza igual que en la creación.
+properties:
+  isoWeekday:
+    type: integer
+    minimum: 1
+    maximum: 7
+    description: Día ISO 8601 de la semana (1 = lunes, 7 = domingo).
+    examples:
+      - 1
+  startsTime:
+    type: string
+    pattern: '^([01]\d|2[0-3]):[0-5]\d$'
+    description: >
+      Hora civil de inicio del tramo, en la zona IANA de la barbería,
+      formato HH:MM de 24 horas.
+    examples:
+      - "09:00"
+  durationMinutes:
+    type: integer
+    minimum: 1
+    maximum: 1440
+    description: Duración del tramo en minutos desde startsTime.
+    examples:
+      - 420
+required:
+  - isoWeekday
+  - startsTime
+  - durationMinutes
+additionalProperties: false

@@ -5,8 +5,8 @@
     "semantic_hash": ""
   },
   "apps/api/cmd/api/main.go": {
-    "mtime": 1787669474.1528976,
-    "ast_hash": "ac4966ddd12853c3eff27e0b11545d2a",
+    "mtime": 1787697591.5778854,
+    "ast_hash": "b8605042db69e541856c8246965cf167",
     "semantic_hash": ""
   },
   "apps/api/cmd/worker/main.go": {
@@ -45,9 +45,9 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/schedule/doc.go": {
-    "mtime": 1786044597.6464398,
-    "ast_hash": "adbd801e35fb9fefd0e67d464591631d",
-    "semantic_hash": "adbd801e35fb9fefd0e67d464591631d"
+    "mtime": 1787697370.6287732,
+    "ast_hash": "faf3d8434acacb0c77c703499892b1bb",
+    "semantic_hash": ""
   },
   "apps/api/internal/modules/shops/doc.go": {
     "mtime": 1787514985.0273151,
@@ -130,8 +130,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/router/index.ts": {
-    "mtime": 1787665049.4538825,
-    "ast_hash": "ee73a6547f9221aa4dcaf066beaa3c0e",
+    "mtime": 1787698722.8119776,
+    "ast_hash": "24f9e25fdebd2a79acdea696d5a867b5",
     "semantic_hash": ""
   },
   "apps/web/src/main.ts": {
@@ -165,9 +165,9 @@
     "semantic_hash": "4aec2f0c46febde3e3ae203b4a311bc0"
   },
   "apps/web/src/modules/schedules/index.ts": {
-    "mtime": 1786044932.5362155,
-    "ast_hash": "41b60bcccb6bb001e0b5062523aebfd5",
-    "semantic_hash": "41b60bcccb6bb001e0b5062523aebfd5"
+    "mtime": 1787698715.8792849,
+    "ast_hash": "8d53896dc787cd3f2266300e2e4dd4ac",
+    "semantic_hash": ""
   },
   "apps/web/src/modules/settings/index.ts": {
     "mtime": 1787514985.048272,
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "api/openapi/CHANGELOG.md": {
-    "mtime": 1787669474.145978,
-    "ast_hash": "2fde90c769401d7b1e5e3a11463fcba1",
+    "mtime": 1787696841.0235717,
+    "ast_hash": "c78ca97869ccecd81afd8a24cdd173c1",
     "semantic_hash": ""
   },
   "api/openapi/README.md": {
@@ -375,8 +375,8 @@
     "semantic_hash": "72ebdeafb399c1fc6afba7f4c79dd076"
   },
   "api/openapi/openapi.yaml": {
-    "mtime": 1787669474.1528976,
-    "ast_hash": "da0b61cdc52bcf52a106a62a509f624a",
+    "mtime": 1787696830.5240119,
+    "ast_hash": "7d32f4a7ae3a78186d3f561a1c35a521",
     "semantic_hash": ""
   },
   "api/openapi/paths/catalog.yaml": {
@@ -400,9 +400,9 @@
     "semantic_hash": "17d759fa74d7b2c7f567d10cc269a9b4"
   },
   "api/openapi/paths/schedules.yaml": {
-    "mtime": 1786045313.5289383,
-    "ast_hash": "e7f6854b98ee862dc54f253e32d54001",
-    "semantic_hash": "e7f6854b98ee862dc54f253e32d54001"
+    "mtime": 1787696798.2707343,
+    "ast_hash": "be4412a16e49ac3605ff398ac9d75fc5",
+    "semantic_hash": ""
   },
   "api/openapi/paths/settings.yaml": {
     "mtime": 1787514985.0252988,
@@ -410,13 +410,13 @@
     "semantic_hash": ""
   },
   "apps/api/README.md": {
-    "mtime": 1787669474.1528976,
-    "ast_hash": "fe66680c7127cf08a242cb877026b8ed",
+    "mtime": 1787699539.1659288,
+    "ast_hash": "208d7f3f927dc4d5a7d56cc1bdc148f7",
     "semantic_hash": ""
   },
   "apps/web/README.md": {
-    "mtime": 1787688659.433794,
-    "ast_hash": "33659a22d3e0a760dc2dcbca570a6514",
+    "mtime": 1787699592.5778904,
+    "ast_hash": "4ee66907c933b5f896280511178c0e27",
     "semantic_hash": ""
   },
   "apps/web/e2e/README.md": {
@@ -430,8 +430,8 @@
     "semantic_hash": ""
   },
   "database/README.md": {
-    "mtime": 1787669474.169366,
-    "ast_hash": "3fb9700e27060fe8e4d37f3e18ccb16f",
+    "mtime": 1787697189.3858516,
+    "ast_hash": "a913c876ac96650302d6794b21862886",
     "semantic_hash": ""
   },
   "database/migrations/README.md": {
@@ -455,8 +455,8 @@
     "semantic_hash": ""
   },
   "docs/00-control/contradicciones.md": {
-    "mtime": 1787507297.7499673,
-    "ast_hash": "62dd11e015af6f525ed8cd6398e394ee",
+    "mtime": 1787696855.2448788,
+    "ast_hash": "cf3625bc2de63509b688b3744c2b5b5f",
     "semantic_hash": ""
   },
   "docs/00-control/dudas-pendientes.md": {
@@ -470,18 +470,18 @@
     "semantic_hash": ""
   },
   "docs/00-control/historial-cambios.md": {
-    "mtime": 1787688688.249114,
-    "ast_hash": "5acd06d73c43204c9fbd1df8362159d0",
+    "mtime": 1787696855.2463927,
+    "ast_hash": "f747c9ac499424e954033294ec77488b",
     "semantic_hash": ""
   },
   "docs/00-control/matriz-trazabilidad.md": {
-    "mtime": 1787688691.5790715,
-    "ast_hash": "012679452fb55b56d67eeadc45c6b014",
+    "mtime": 1787696855.2485273,
+    "ast_hash": "cbf2954ef07665d092d6764b35d2a024",
     "semantic_hash": ""
   },
   "docs/00-control/registro-decisiones.md": {
-    "mtime": 1787585514.1442933,
-    "ast_hash": "7defb764843db00775cdb89ae821a09e",
+    "mtime": 1787696855.2507496,
+    "ast_hash": "005ce5b2269be65e969e1e2c47b2780e",
     "semantic_hash": ""
   },
   "docs/00-control/supuestos.md": {
@@ -570,7 +570,7 @@
     "semantic_hash": "8e0cad33ae076ac13a6e29782c0a6cf6"
   },
   "docs/README.md": {
-    "mtime": 1787670216.5506637,
+    "mtime": 1787696855.2740946,
     "ast_hash": "aea8023ca068e20a675c3312956e4d0b",
     "semantic_hash": ""
   },
@@ -595,13 +595,13 @@
     "semantic_hash": ""
   },
   "docs/02-requisitos/historias-usuario.md": {
-    "mtime": 1787669474.1709569,
-    "ast_hash": "8d0691df831559e8fd159910eaec72c2",
+    "mtime": 1787696855.2522917,
+    "ast_hash": "39ec54d10a661abafdc5c6a66d42aa8a",
     "semantic_hash": ""
   },
   "docs/10-backlog/plan-bloques.md": {
-    "mtime": 1787688695.2882044,
-    "ast_hash": "454c1ca7a2cefcb23948456f85d4c7c2",
+    "mtime": 1787696855.2636395,
+    "ast_hash": "71ca82179168f055b3aa94b99be24641",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts-implementacion.md": {
@@ -620,8 +620,8 @@
     "semantic_hash": ""
   },
   "database/modelo-fisico-referencia.sql": {
-    "mtime": 1787665049.4647617,
-    "ast_hash": "03b44d3d39774627edac18699f6d074a",
+    "mtime": 1787696855.2425103,
+    "ast_hash": "eeb6c24b7b68b7fe291369c416b16ba6",
     "semantic_hash": ""
   },
   "database/testdata/dos_barberias.sql": {
@@ -700,8 +700,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/BaseInput.vue": {
-    "mtime": 1786636133.841422,
-    "ast_hash": "0809cb79d1ad66625d5b283481f30d7b",
+    "mtime": 1787698748.28015,
+    "ast_hash": "ddc6d80d3205ee3ad7efe2100faf5481",
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/__tests__/BaseAlert.test.ts": {
@@ -790,8 +790,8 @@
     "semantic_hash": ""
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1787669474.145978,
-    "ast_hash": "e0d58d73e0b4cd69cdda6c0bb86cd895",
+    "mtime": 1787697162.0311403,
+    "ast_hash": "36d9bda019575fc54729a12cd96e221e",
     "semantic_hash": ""
   },
   "docs/05-backend/revision-ddl-seguridad-2026-08-11.md": {
@@ -805,8 +805,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/README.md": {
-    "mtime": 1787687486.1689258,
-    "ast_hash": "f84c54d38926c3e15aed263af20a3a6a",
+    "mtime": 1787696855.2657037,
+    "ast_hash": "3a176782184fff50f7966ea62fdab6e4",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/TEMPLATE.md": {
@@ -1295,8 +1295,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/shared/api/generated/openapi.d.ts": {
-    "mtime": 1787669474.169366,
-    "ast_hash": "3bd76f12a5b80f332884cd18e350bc7d",
+    "mtime": 1787698619.501704,
+    "ast_hash": "cdd26bdf83a4b47a5490c9a762cf7f15",
     "semantic_hash": ""
   },
   "apps/web/src/shared/api/httpClient.ts": {
@@ -1710,7 +1710,7 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/AppNav.vue": {
-    "mtime": 1787688178.268477,
+    "mtime": 1787696855.2404797,
     "ast_hash": "34b1355de1a0a1e1a9823ec2902e97d6",
     "semantic_hash": ""
   },
@@ -2705,8 +2705,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/hu/hu-024-ciclo-vida-servicios.md": {
-    "mtime": 1787669474.1750705,
-    "ast_hash": "e3eeb0ad8cc6e02d93fe2db9171a6aca",
+    "mtime": 1787696855.2666426,
+    "ast_hash": "5536ad41afad1d427f4555e314e75d01",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/servicios/1280-zoom200/foco.png": {
@@ -3040,53 +3040,253 @@
     "semantic_hash": ""
   },
   "docs/07-calidad/01-metodologia-y-uso.md": {
-    "mtime": 1787670023.1365135,
+    "mtime": 1787696855.254495,
     "ast_hash": "c22080fafe841f0e3770b0102aae5c03",
     "semantic_hash": ""
   },
   "docs/07-calidad/02-checklist-transversal.md": {
-    "mtime": 1787670058.8331962,
+    "mtime": 1787696855.2555768,
     "ast_hash": "8386da65d397c09a5c418f624d6f18a3",
     "semantic_hash": ""
   },
   "docs/07-calidad/03-checklist-autenticacion-sesion.md": {
-    "mtime": 1787670087.0242627,
+    "mtime": 1787696855.2569668,
     "ast_hash": "9fdbfb29bb8bd89ccfb738ddeaf62da7",
     "semantic_hash": ""
   },
   "docs/07-calidad/04-checklist-modulos-catalogo.md": {
-    "mtime": 1787670135.0144308,
+    "mtime": 1787696855.2580202,
     "ast_hash": "d5a0b7e1925d8dbf5005d4df298ee217",
     "semantic_hash": ""
   },
   "docs/07-calidad/05-matriz-combinaciones.md": {
-    "mtime": 1787670163.9476016,
+    "mtime": 1787696855.2600193,
     "ast_hash": "17700b3aa2e46be1510a1e11c0874561",
     "semantic_hash": ""
   },
   "docs/07-calidad/06-plantilla-hallazgo.md": {
-    "mtime": 1787670185.3909898,
+    "mtime": 1787696855.2610989,
     "ast_hash": "276e6a82087801b7381207f31bdc197d",
     "semantic_hash": ""
   },
   "docs/07-calidad/07-modulos-futuros-pendientes.md": {
-    "mtime": 1787670204.3682163,
+    "mtime": 1787696855.2610989,
     "ast_hash": "ac7d5e779da2cbe0286b3f83c5c8c51d",
     "semantic_hash": ""
   },
   "docs/07-calidad/README.md": {
-    "mtime": 1787669982.261105,
+    "mtime": 1787696855.262624,
     "ast_hash": "e013f2105820acf033c63e5655eec1e6",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/test/2026-08-25-qa-manual-b0-b1-chrome-mcp-report.md": {
-    "mtime": 1787687474.0632548,
+    "mtime": 1787696855.2717223,
     "ast_hash": "cb17cd78e4ed28bfad774bbbc8ec5eac",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/test/2026-08-25-qa-manual-b0-b1-chrome-mcp.md": {
-    "mtime": 1787687474.5224051,
+    "mtime": 1787696855.2740946,
     "ast_hash": "3779440d0048bcfb7288990977509411",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/hu/hu-040-horario-laboral.md": {
+    "mtime": 1787696855.2666426,
+    "ast_hash": "be042ee7d5c3da0dbb45abaa4ea286ea",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/hu/hu-041-excepciones-festivos.md": {
+    "mtime": 1787696855.268103,
+    "ast_hash": "626145cdbd73ea6a633edf6233241559",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/hu/hu-042-bloqueos-agenda.md": {
+    "mtime": 1787696855.2691581,
+    "ast_hash": "6439ee3a0b75803fd59aa284d85d1814",
+    "semantic_hash": ""
+  },
+  "apps/api/cmd/api/schedule_integration_test.go": {
+    "mtime": 1787698102.2149558,
+    "ast_hash": "86fb6a707453096b0482e67479b7c9e5",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/schedule/domain.go": {
+    "mtime": 1787697399.6384995,
+    "ast_hash": "6b79cbe73442cc654532081e3e9b8658",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/schedule/domain_test.go": {
+    "mtime": 1787697692.8274188,
+    "ast_hash": "808bcde9c06f137d72ed959b9bdf1fc5",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/schedule/errors.go": {
+    "mtime": 1787697407.9235802,
+    "ast_hash": "5fc293c33432ed988addfdb404014c48",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/schedule/httpapi/contract_test.go": {
+    "mtime": 1787698395.3902607,
+    "ast_hash": "e032cc281e1ef209a34e69bf067387d1",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/schedule/httpapi/dto.go": {
+    "mtime": 1787697542.939964,
+    "ast_hash": "f15bfc113bf6c2ac87087d48da029d0e",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/schedule/httpapi/handler.go": {
+    "mtime": 1787697575.6646023,
+    "ast_hash": "58dd84b0ac990b0e8c55348706e1eb17",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/schedule/ports.go": {
+    "mtime": 1787697431.017483,
+    "ast_hash": "99e3ebe06023a76239c115a9cd7c2ec7",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/schedule/postgres/repository.go": {
+    "mtime": 1787697525.359025,
+    "ast_hash": "39827ff759ebdcdf5d4a452d6fce67f9",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/schedule/postgres/repository_test.go": {
+    "mtime": 1787698379.9861767,
+    "ast_hash": "ed3e8c8e8cdd34394f7c6148b93b3e34",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/schedule/service.go": {
+    "mtime": 1787697455.7732236,
+    "ast_hash": "c062111037e99ec948db56a97de7d57c",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/schedule/service_test.go": {
+    "mtime": 1787697761.242517,
+    "ast_hash": "ec42de9ef9368c72a05b902f1685c347",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/horarios.spec.ts": {
+    "mtime": 1787699246.4408112,
+    "ast_hash": "c58238dd54c64ad0ccbb805fbd295079",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/schedules/api/__tests__/schedulesApi.test.ts": {
+    "mtime": 1787699391.472292,
+    "ast_hash": "71acb8a219814055da4f3912c44f7a03",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/schedules/api/schedulesApi.ts": {
+    "mtime": 1787699339.5183158,
+    "ast_hash": "8df8568de893bdc8798de8c312c410dd",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/schedules/model/idempotencyKey.ts": {
+    "mtime": 1787698680.1096172,
+    "ast_hash": "cbee183655371ac08758dc6b058e5759",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/schedules/model/scheduleOutcome.ts": {
+    "mtime": 1787699329.4440222,
+    "ast_hash": "b55870ce5363733528995d5d66bc46fd",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/schedules/model/workingHour.ts": {
+    "mtime": 1787698643.8793817,
+    "ast_hash": "5425ab63ac78527ee9d5dc683924c05e",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/schedules/pages/SchedulesPage.vue": {
+    "mtime": 1787699360.6587095,
+    "ast_hash": "a99a172a8a2da4cdab5649518700c641",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/schedules/pages/__tests__/SchedulesPage.test.ts": {
+    "mtime": 1787699381.7011719,
+    "ast_hash": "dfb79c03ec443c110a45359a49a83757",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/schedules/routes.ts": {
+    "mtime": 1787698711.6393437,
+    "ast_hash": "c79324b6819250bcd326b9c3e20953e2",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/schedules/validation/__tests__/scheduleValidation.test.ts": {
+    "mtime": 1787698973.6849723,
+    "ast_hash": "fd1d3d8319b20130b9ac689eb1a30186",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/schedules/validation/scheduleValidation.ts": {
+    "mtime": 1787698706.9408622,
+    "ast_hash": "e8b51562c75999b7a550e3d45dd50a8f",
+    "semantic_hash": ""
+  },
+  "database/migrations/20260825160000_create_working_hour.sql": {
+    "mtime": 1787696935.96066,
+    "ast_hash": "3c5d022ec0a3e398d13b3119721bf547",
+    "semantic_hash": ""
+  },
+  "database/testdata/hu040_horario.sql": {
+    "mtime": 1787698278.8787553,
+    "ast_hash": "dbf5317f81f8df88157353993522ece7",
+    "semantic_hash": ""
+  },
+  "database/tests/hu040_horario.sql": {
+    "mtime": 1787698341.4545887,
+    "ast_hash": "e783fa3ca4c7e1683356bae82491413f",
+    "semantic_hash": ""
+  },
+  "api/openapi/components/responses/WorkingHourConflictProblem.yaml": {
+    "mtime": 1787696758.0935102,
+    "ast_hash": "fdbbd11f5c6786acd8f694e893551a26",
+    "semantic_hash": ""
+  },
+  "api/openapi/components/responses/WorkingHourCreated.yaml": {
+    "mtime": 1787696742.9402263,
+    "ast_hash": "2d20025ea15536c227588a3727e4ba87",
+    "semantic_hash": ""
+  },
+  "api/openapi/components/responses/WorkingHourDeleted.yaml": {
+    "mtime": 1787696747.899964,
+    "ast_hash": "2a74b37f282255b86be8504d72afac31",
+    "semantic_hash": ""
+  },
+  "api/openapi/components/responses/WorkingHourListSuccess.yaml": {
+    "mtime": 1787696737.485276,
+    "ast_hash": "0b7e78c5a672c0f32ce5c2fe5373fb39",
+    "semantic_hash": ""
+  },
+  "api/openapi/components/responses/WorkingHourSuccess.yaml": {
+    "mtime": 1787696740.2449517,
+    "ast_hash": "16b9e37bb79bd01b5809807fd1280fb6",
+    "semantic_hash": ""
+  },
+  "api/openapi/components/responses/WorkingHourUpdated.yaml": {
+    "mtime": 1787696745.607077,
+    "ast_hash": "3ac205942867179dedecdf92329b9865",
+    "semantic_hash": ""
+  },
+  "api/openapi/components/responses/WorkingHourValidationProblem.yaml": {
+    "mtime": 1787696754.4183354,
+    "ast_hash": "c2d11af7d936542b2d26a51eee65cb63",
+    "semantic_hash": ""
+  },
+  "api/openapi/components/schemas/CreateWorkingHourRequest.yaml": {
+    "mtime": 1787696726.9735024,
+    "ast_hash": "dc3883207210109694ea3914c37b85fa",
+    "semantic_hash": ""
+  },
+  "api/openapi/components/schemas/UpdateWorkingHourRequest.yaml": {
+    "mtime": 1787696731.0138218,
+    "ast_hash": "116093c3203f426ef60953e922ed20ea",
+    "semantic_hash": ""
+  },
+  "api/openapi/components/schemas/WorkingHourListResponse.yaml": {
+    "mtime": 1787696721.9310563,
+    "ast_hash": "60bb20c730537f11060f9f89232589d0",
+    "semantic_hash": ""
+  },
+  "api/openapi/components/schemas/WorkingHourResponse.yaml": {
+    "mtime": 1787696715.3280337,
+    "ast_hash": "3a98c79518d4bc57b67f71a5f383f403",
     "semantic_hash": ""
   }
 }
