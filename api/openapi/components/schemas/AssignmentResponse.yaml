@@ -1,0 +1,37 @@
+# Representación canónica de una asignación barbero-servicio (HU-023,
+# CA-023-07): exactamente barberId, serviceId y createdAt. Nunca nombre,
+# duración, precio ni estado del barbero o del servicio -esos campos siguen
+# siendo responsabilidad exclusiva de BarberResponse/ServiceResponse; un
+# cliente que necesite mostrarlos cruza por identificador contra
+# GET /private/barbers y GET /private/services, que ya los exponen-.
+type: object
+description: >
+  Asociación entre un barbero y un servicio de la misma barbería. Sin
+  columnas propias de negocio: nunca duplica nombre, duración, precio ni
+  estado de ninguna de las dos tablas dueñas.
+properties:
+  barberId:
+    type: string
+    format: uuid
+    description: Identificador del barbero.
+    examples:
+      - 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+  serviceId:
+    type: string
+    format: uuid
+    description: Identificador del servicio.
+    examples:
+      - 1a2b3c4d-5e6f-4708-9a0b-1c2d3e4f5061
+  createdAt:
+    type: string
+    format: date-time
+    description: >
+      Instante en que se asignó el servicio a este barbero. Repetir la
+      asignación (CA-023-02) no cambia este valor: refleja siempre la
+      primera vez que se creó la asociación.
+    examples:
+      - "2026-08-24T15:04:05Z"
+required:
+  - barberId
+  - serviceId
+  - createdAt

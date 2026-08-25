@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-023-v1"
-version: "1.2"
+version: "1.3"
 kind: "hu"
-status: "in_progress"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -17,8 +17,8 @@ issue: "76"
 issue_url: "https://github.com/bcaceres19/barberia/issues/76"
 suggested_issue_title: "feat(catalog): implementar HU-023 asignación de servicios a barberos"
 branch: "feat/76-hu023-servicios-barberos"
-pr: null
-pr_url: null
+pr: 83
+pr_url: "https://github.com/bcaceres19/barberia/pull/83"
 depends_on:
   - "HU-021 integrada en main (cumplido)"
   - "HU-022 integrada en main (cumplido, PR #79)"

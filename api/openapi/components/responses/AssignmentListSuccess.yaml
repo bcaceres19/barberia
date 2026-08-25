@@ -1,0 +1,18 @@
+# 200 de GET /private/barbers/{barberId}/services (HU-023, CA-023-01).
+description: >
+  Página de servicios asignados al barbero, ordenada de forma estable.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/AssignmentListResponse.yaml'
+    examples:
+      pagina:
+        value:
+          items:
+            - barberId: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+              serviceId: 1a2b3c4d-5e6f-4708-9a0b-1c2d3e4f5061
+              createdAt: "2026-08-24T15:04:05Z"
+          nextCursor: null

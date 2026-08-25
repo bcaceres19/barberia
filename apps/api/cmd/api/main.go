@@ -251,6 +251,23 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	private.Get("/services/{serviceId}", getServiceHandler.ServeHTTP)
 	private.Patch("/services/{serviceId}", updateServiceHandler.ServeHTTP)
 
+	// HU-023: asignación de servicios a barberos. AssignmentService (catalog,
+	// dueño de la intención "qué servicios se prestan") colabora con staff
+	// SOLO a través de staff.BarberLookup(staffService), un puerto pequeño
+	// que satisface catalog.BarberPort de forma puramente estructural: ni
+	// catalog importa staff, ni staff importa catalog. cmd/api es la única
+	// raíz de composición que conoce ambos módulos a la vez.
+	assignmentService := catalog.NewAssignmentService(
+		catalogpostgres.NewAssignmentRepository(db),
+		staff.NewBarberLookup(staffService),
+	)
+	listAssignmentsHandler := cataloghttpapi.NewListAssignmentsHandler(assignmentService)
+	assignServiceHandler := cataloghttpapi.NewAssignServiceHandler(assignmentService)
+	unassignServiceHandler := cataloghttpapi.NewUnassignServiceHandler(assignmentService)
+	private.Get("/barbers/{barberId}/services", listAssignmentsHandler.ServeHTTP)
+	private.Put("/barbers/{barberId}/services/{serviceId}", assignServiceHandler.ServeHTTP)
+	private.Delete("/barbers/{barberId}/services/{serviceId}", unassignServiceHandler.ServeHTTP)
+
 	// HU-008 (DEC-063-066): recuperación de acceso con código de un solo
 	// uso. sender es el adaptador dual de Meta WhatsApp Cloud API + Resend
 	// cuando hay credenciales configuradas; sin ellas (típicamente
