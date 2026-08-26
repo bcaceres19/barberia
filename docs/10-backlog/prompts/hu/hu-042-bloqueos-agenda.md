@@ -17,8 +17,8 @@ issue: 98
 issue_url: "https://github.com/bcaceres19/barberia/issues/98"
 suggested_issue_title: "feat(schedule): implementar HU-042 bloqueos de agenda"
 branch: "feat/98-hu042-bloqueos-agenda"
-pr: null
-pr_url: null
+pr: 99
+pr_url: "https://github.com/bcaceres19/barberia/pull/99"
 depends_on:
   - "HU-040 integrada en main (PR #93) — cumplido"
   - "HU-041 integrada en main (PR #96) — cumplido"
