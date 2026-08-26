@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-041-v1"
-version: "1.2"
+version: "1.3"
 kind: "hu"
-status: "in_progress"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -17,8 +17,8 @@ issue: 95
 issue_url: "https://github.com/bcaceres19/barberia/issues/95"
 suggested_issue_title: "feat(schedule): implementar HU-041 excepciones de jornada y festivos"
 branch: "feat/95-hu041-excepciones-festivos"
-pr: null
-pr_url: null
+pr: 96
+pr_url: "https://github.com/bcaceres19/barberia/pull/96"
 depends_on:
   - "HU-040 integrada en main (PR #93)"
   - "Criterio de salida de B1 cumplido; HU-020–HU-024 integradas en main"
@@ -87,7 +87,7 @@ source_docs:
   - "apps/web/README.md"
   - "apps/web/src/modules/schedules"
 created_at: "2026-08-25"
-updated_at: "2026-08-25"
+updated_at: "2026-08-26"
 supersedes: null
 superseded_by: null
 ---
@@ -96,7 +96,7 @@ superseded_by: null
 
 ## Instrucción para el agente
 
-Este prompt pasó a ready y ahora está in_progress: el issue real es #95 (https://github.com/bcaceres19/barberia/issues/95), CT-008 quedó resuelta como DEC-070 (docs/00-control/registro-decisiones.md) — las FK de working_hour_override/working_hour_override_segment hacia barber usan ON DELETE RESTRICT, ya aplicado en database/modelo-fisico-referencia.sql §C.3/C.3b — y la rama feat/95-hu041-excepciones-festivos implementa contrato, migración, backend Go, frontend Vue y pruebas reales descritos abajo. CA-041-08 (carga/vacío/error/éxito, teclado y responsive) queda Parcial: E2E escrito en apps/web/e2e/excepciones-festivos.spec.ts pero no ejecutado contra Chromium real, mismo estado documentado que HU-040. Actualiza pr/pr_url reales en este archivo y en el índice del catálogo antes de fusionar.
+Este prompt está executed: PR [#96](https://github.com/bcaceres19/barberia/pull/96) se fusionó por squash en `main` tras CI 4/4 en verde, contra el issue real [#95](https://github.com/bcaceres19/barberia/issues/95). CT-008 quedó resuelta como DEC-070 (docs/00-control/registro-decisiones.md) — las FK de working_hour_override/working_hour_override_segment hacia barber usan ON DELETE RESTRICT, ya aplicado en database/modelo-fisico-referencia.sql §C.3/C.3b. CA-041-08 (carga/vacío/error/éxito, teclado y responsive) queda Parcial: E2E escrito en apps/web/e2e/excepciones-festivos.spec.ts pero no ejecutado contra Chromium real, mismo estado documentado que HU-040; el issue real #95 permanece deliberadamente abierto por ese pendiente (el PR se integró con `Refs #95`, no `Closes #95`).
 
 Implementa únicamente la configuración por fecha y el calendario festivo de esta HU. No adelantes bloqueos de descanso/emergencia, agenda, citas ni cálculo público de disponibilidad.
 

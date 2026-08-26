@@ -1,9 +1,9 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.24"
+version: "1.25"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-25"
+ultima_actualizacion: "2026-08-26"
 documentos_relacionados:
   - "../../../AGENTS.md"
   - "../../../CLAUDE.md"
@@ -148,7 +148,7 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-HU-023-v1](hu/hu-023-asignacion-servicios-barberos.md) | `hu` | `HU-023` | [#76](https://github.com/bcaceres19/barberia/issues/76) | `executed` | `HU-022` integrada ([PR #79](https://github.com/bcaceres19/barberia/pull/79)); `DP-SER-02` resuelta (`DEC-068`) | Rama `feat/76-hu023-servicios-barberos`; [PR #83](https://github.com/bcaceres19/barberia/pull/83), integrada en `main` |
 | [PROMPT-HU-024-v1](hu/hu-024-ciclo-vida-servicios.md) | `hu` | `HU-024` | [#77](https://github.com/bcaceres19/barberia/issues/77) | `executed` | `HU-022`/`HU-023` integradas; `DP-SER-03` resuelta (`DEC-069`) | Rama `feat/77-hu024-ciclo-vida-servicios`; [PR #84](https://github.com/bcaceres19/barberia/pull/84), integrada en `main` |
 | [PROMPT-HU-040-v1](hu/hu-040-horario-laboral.md) (v1.3) | `hu` | `HU-040` | [#90](https://github.com/bcaceres19/barberia/issues/90), abierto por `CA-040-08` parcial | `executed` | B1 cerrado; `CT-008` resuelta (`DEC-070`) | Rama `feat/90-hu040-horario-laboral`; [PR #93](https://github.com/bcaceres19/barberia/pull/93), integrada en `main` con CI verde |
-| [PROMPT-HU-041-v1](hu/hu-041-excepciones-festivos.md) (v1.2) | `hu` | `HU-041` | [#95](https://github.com/bcaceres19/barberia/issues/95) | `in_progress` | `HU-040` integrada ([PR #93](https://github.com/bcaceres19/barberia/pull/93)); `CT-008` resuelta (`DEC-070`) | Rama `feat/95-hu041-excepciones-festivos`; PR pendiente |
+| [PROMPT-HU-041-v1](hu/hu-041-excepciones-festivos.md) (v1.3) | `hu` | `HU-041` | [#95](https://github.com/bcaceres19/barberia/issues/95), abierto por `CA-041-08` parcial | `executed` | `HU-040` integrada ([PR #93](https://github.com/bcaceres19/barberia/pull/93)); `CT-008` resuelta (`DEC-070`) | Rama `feat/95-hu041-excepciones-festivos`; [PR #96](https://github.com/bcaceres19/barberia/pull/96), integrada en `main` con CI verde |
 | [PROMPT-HU-042-v1](hu/hu-042-bloqueos-agenda.md) | `hu` | `HU-042` | `pending` | `draft` | `HU-040`/`HU-041` pendientes; `CT-008` abierta; issue real pendiente | Sin rama/PR |
 | [PROMPT-DOCS-INFORME-ACADEMICO-v1](docs/pending-informe-academico-secciones-1-a-4-2.md) | `docs` | — | [#81](https://github.com/bcaceres19/barberia/issues/81) | `superseded` | Sustituido por v2 tras retroalimentación sobre lenguaje y audiencia | Rama `docs/81-informe-academico`; [PR #82](https://github.com/bcaceres19/barberia/pull/82) |
 | [PROMPT-DOCS-INFORME-ACADEMICO-v2](docs/informe-academico-secciones-1-a-4-2-v2-gerencial.md) | `docs` | — | [#81](https://github.com/bcaceres19/barberia/issues/81) | `superseded` | Sustituido por v3 para incorporar identidad institucional, equipo confirmado y sistema visual sobrio | Rama `docs/81-informe-academico`; [PR #82](https://github.com/bcaceres19/barberia/pull/82); SHA-256 `6cad6bcc…78bbe0` |
