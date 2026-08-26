@@ -1,0 +1,14 @@
+# Respuesta 200 de PATCH /private/barbers/{barberId}/holiday-calendar
+# (HU-041, CA-041-01/02).
+description: Calendario colombiano de festivos con el estado ya actualizado.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/HolidayCalendarResponse.yaml'
+    examples:
+      activado:
+        value:
+          enabled: true

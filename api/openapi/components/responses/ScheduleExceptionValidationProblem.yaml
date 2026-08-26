@@ -1,0 +1,44 @@
+# 422 de POST/PATCH .../schedule-exceptions[/{exceptionId}] (CA-041-04):
+# cuerpo bien formado que incumple una validación de campo, distinto del
+# 400 de JSON/campo desconocido y del 409 de fecha duplicada/solape.
+description: >
+  El cuerpo es JSON válido, pero effectiveDate, isClosed o segments
+  incumplen una validación. No se persistió ningún cambio.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      cerradaConTramos:
+        summary: isClosed=true con segments no vacío
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: una excepción cerrada no admite tramos
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      abiertaSinTramos:
+        summary: isClosed=false sin ningún tramo
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: una excepción abierta exige al menos un tramo
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      horaInvalida:
+        summary: Un tramo con hora u duración inválida
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: la hora de inicio debe tener formato HH:MM de 24 horas
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

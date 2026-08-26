@@ -1,0 +1,16 @@
+# Cuerpo de PATCH /private/barbers/{barberId}/holiday-calendar
+# (CA-041-01/02). Cerrado: un único campo, sin barbershopId ni barberId (el
+# tenant se deriva de SessionCookie, el barbero de la ruta).
+type: object
+description: >
+  Activa o desactiva el calendario colombiano de festivos del barbero de la
+  ruta. La decisión nunca afecta a otro barbero de la misma barbería.
+properties:
+  enabled:
+    type: boolean
+    description: Nuevo estado del calendario colombiano de festivos.
+    examples:
+      - true
+required:
+  - enabled
+additionalProperties: false

@@ -1,0 +1,42 @@
+# Cuerpo de POST /private/barbers/{barberId}/schedule-exceptions
+# (CA-041-04, CA-041-05). Cerrado: el handler rechaza cualquier campo
+# desconocido. Nunca declara barbershopId ni barberId (el tenant se deriva
+# de SessionCookie, el barbero de la ruta).
+type: object
+description: >
+  Alta de una excepción de jornada para la fecha efectiva del barbero de la
+  ruta. isClosed: true cierra el día completo y `segments` debe venir vacío
+  u omitido; isClosed: false exige al menos un tramo en `segments`, sin
+  solapes entre sí (CA-041-04). Ya existe una excepción para esa fecha y
+  ese barbero responde 409 sin crear nada (CA-041-05: como máximo una
+  excepción por barbero y fecha).
+properties:
+  effectiveDate:
+    type: string
+    format: date
+    description: Fecha civil a la que aplica la excepción, en la zona IANA de la barbería.
+    examples:
+      - "2026-12-08"
+  isClosed:
+    type: boolean
+    description: true cierra el día completo; false lo abre con los tramos de `segments`.
+    examples:
+      - false
+  reason:
+    type: [string, "null"]
+    maxLength: 200
+    description: Motivo breve y opcional, visible solo para el barbero.
+    examples:
+      - "Festivo trabajado con horario reducido"
+  segments:
+    type: array
+    description: >
+      Tramos especiales de esa fecha, requeridos y no vacíos cuando
+      isClosed es false; deben venir vacíos u omitidos cuando isClosed es
+      true.
+    items:
+      $ref: './ScheduleExceptionSegmentInput.yaml'
+required:
+  - effectiveDate
+  - isClosed
+additionalProperties: false

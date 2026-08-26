@@ -79,7 +79,8 @@ jobs:
                    20260823130000_create_barber.sql \
                    20260824140000_create_service.sql \
                    20260824150000_create_barber_service.sql \
-                   20260825160000_create_working_hour.sql; do
+                   20260825160000_create_working_hour.sql \
+                   20260826090000_create_working_hour_override.sql; do
             psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$f"
           done
           psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_app PASSWORD 'app_test';"
@@ -97,6 +98,7 @@ jobs:
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu022_catalogo.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu023_asignaciones.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu040_horario.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu041_excepciones.sql
 
       - name: go test -race
         working-directory: apps/api
@@ -248,6 +250,7 @@ jobs:
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu022_catalogo.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu023_asignaciones.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu040_horario.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu041_excepciones.sql
 
       - name: Suite de aislamiento HU-001
         env:
@@ -298,6 +301,11 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/hu040_horario.sql
+
+      - name: Suite de excepciones de jornada y festivos HU-041
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/hu041_excepciones.sql
 
       - name: Suite de idempotencia (secuencial, una conexión)
         env:

@@ -440,6 +440,102 @@ export interface paths {
         patch: operations["updateWorkingHour"];
         trace?: never;
     };
+    "/private/barbers/{barberId}/holiday-calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar el calendario colombiano de festivos de un barbero de la barbería activa
+         * @description Lectura autenticada del interruptor de calendario colombiano de festivos del barbero de la ruta (HU-041, CA-041-01/02). Un `barberId` inexistente o de otra barbería responde `404` (RN-TEN-01).
+         */
+        get: operations["getHolidayCalendar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Activar o desactivar el calendario colombiano de festivos de un barbero de la barbería activa
+         * @description Activa o desactiva el calendario colombiano de festivos del barbero de la ruta (HU-041, CA-041-01/02). La decisión nunca afecta a otro barbero de la misma barbería. Un `barberId` inexistente o de otra barbería responde `404`.
+         */
+        patch: operations["updateHolidayCalendar"];
+        trace?: never;
+    };
+    "/private/barbers/{barberId}/schedule-exceptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar las excepciones de jornada de un barbero de la barbería activa
+         * @description Lista paginada por cursor (HU-041, CA-041-04/05) de las excepciones del barbero de la ruta, ordenada por fecha efectiva y luego por identificador. Un `barberId` inexistente o de otra barbería responde `404`.
+         */
+        get: operations["listScheduleExceptions"];
+        put?: never;
+        /**
+         * Crear una excepción de jornada para un barbero de la barbería activa
+         * @description Alta de una excepción de jornada (HU-041, CA-041-04, CA-041-05) protegida con clave de idempotencia (RN-IDE-01, DEC-043): repetir el mismo `POST` con la misma `Idempotency-Key` y el mismo cuerpo devuelve la misma representación creada sin crear una segunda excepción. `isClosed: true` cierra el día completo (`segments` debe venir vacío u omitido); `isClosed: false` exige al menos un tramo sin solapes entre sí (DEC-020 permite cruzar medianoche). Ya existe una excepción de este barbero para esa fecha responde `409` sin crear nada (CA-041-05: como máximo una excepción por barbero y fecha). El tenant se deriva exclusivamente de `SessionCookie` y el barbero de `barberId`; el cuerpo nunca acepta `barbershopId` ni `barberId`. Un `barberId` inexistente o de otra barbería responde `404`.
+         */
+        post: operations["createScheduleException"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/private/barbers/{barberId}/schedule-exceptions/{exceptionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar una excepción de jornada de un barbero de la barbería activa
+         * @description Lectura autenticada de una excepción por identificador (HU-041). Un `barberId`/`exceptionId` inexistente, de otro barbero o de otra barbería responde exactamente el mismo `404` (CA-041-06, RN-TEN-01).
+         */
+        get: operations["getScheduleException"];
+        put?: never;
+        post?: never;
+        /**
+         * Retirar una excepción de jornada de un barbero de la barbería activa
+         * @description Retira físicamente la excepción (HU-041, CA-041-06): sin eliminación lógica. Un `barberId`/`exceptionId` inexistente, de otro barbero, de otra barbería, o ya retirado antes, responden el mismo `404` uniforme; reintentar la misma operación tras un `404` es seguro.
+         */
+        delete: operations["deleteScheduleException"];
+        options?: never;
+        head?: never;
+        /**
+         * Editar una excepción de jornada de un barbero de la barbería activa
+         * @description Reemplaza la excepción completa (HU-041, CA-041-04, CA-041-05): `effectiveDate` e `isClosed` son obligatorios, con las mismas reglas de `segments` que la creación. Un `barberId`/`exceptionId` inexistente, de otro barbero o de otra barbería responde el mismo `404` que `GET` (CA-041-06). Mover la excepción a una fecha que ya tiene otra excepción del mismo barbero, o un solape entre tramos, responde `409`.
+         */
+        patch: operations["updateScheduleException"];
+        trace?: never;
+    };
+    "/private/schedule/colombian-holidays": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar los festivos colombianos de un año calendario
+         * @description Dato de referencia calendárica (HU-041, RN-BLQ-02), calculado de forma determinista (Ley 51 de 1983, "Ley Emiliani"): igual para toda barbería y todo barbero, no depende de ningún dato propio de la sesión más allá de exigirla. Útil para que la pantalla ofrezca "abrir este festivo" sin que el cliente reimplemente el cálculo.
+         */
+        get: operations["listColombianHolidays"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -964,6 +1060,164 @@ export interface components {
              */
             durationMinutes: number;
         };
+        /** @description Estado del calendario colombiano de festivos del barbero de la ruta. Desactivado (por defecto): los festivos no agregan ningún bloqueo automático. Activado: un festivo queda cerrado por defecto en la resolución de jornada efectiva, salvo que exista una excepción manual para esa fecha. */
+        HolidayCalendarResponse: {
+            /**
+             * @description Si el calendario colombiano de festivos está activo para este barbero.
+             * @example true
+             */
+            enabled: boolean;
+        };
+        /** @description Activa o desactiva el calendario colombiano de festivos del barbero de la ruta. La decisión nunca afecta a otro barbero de la misma barbería. */
+        UpdateHolidayCalendarRequest: {
+            /**
+             * @description Nuevo estado del calendario colombiano de festivos.
+             * @example true
+             */
+            enabled: boolean;
+        };
+        /** @description Tramo especial ya guardado dentro de una fecha excepcional abierta. */
+        ScheduleExceptionSegmentResponse: {
+            /**
+             * Format: uuid
+             * @description Identificador del tramo, opaco para el cliente.
+             * @example 7a1b2c3d-4e5f-4061-8273-8495a6b7c8d9
+             */
+            id: string;
+            /**
+             * @description Hora civil de inicio del tramo, en la zona IANA de la barbería.
+             * @example 08:00
+             */
+            startsTime: string;
+            /**
+             * @description Duración del tramo en minutos desde startsTime.
+             * @example 240
+             */
+            durationMinutes: number;
+        };
+        /** @description Excepción de jornada de un barbero para una fecha concreta. isClosed decide la forma: true significa día completamente cerrado (segments siempre vacío); false significa día abierto con uno o varios tramos propios (segments siempre no vacío). Nunca ambas formas a la vez (CA-041-04). */
+        ScheduleExceptionResponse: {
+            /**
+             * Format: uuid
+             * @description Identificador de la excepción, opaco para el cliente.
+             * @example 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+             */
+            id: string;
+            /**
+             * Format: date
+             * @description Fecha civil a la que aplica la excepción, en la zona IANA de la barbería.
+             * @example 2026-12-08
+             */
+            effectiveDate: string;
+            /**
+             * @description true: el día queda completamente cerrado. false: el día está abierto con los tramos de `segments`.
+             * @example true
+             */
+            isClosed: boolean;
+            /**
+             * @description Motivo breve y opcional, visible solo para el barbero.
+             * @example Festivo trabajado con horario reducido
+             */
+            reason: string | null;
+            /** @description Tramos especiales de esa fecha. Siempre vacío cuando isClosed es true; siempre con al menos un elemento cuando isClosed es false. */
+            segments: components["schemas"]["ScheduleExceptionSegmentResponse"][];
+            /**
+             * Format: date-time
+             * @description Instante de alta, con offset.
+             * @example 2026-08-25T15:04:05Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description Instante de la última modificación, con offset.
+             * @example 2026-08-25T15:04:05Z
+             */
+            updatedAt: string;
+        };
+        /** @description Página de excepciones de jornada del barbero de la ruta, ordenada de forma estable por fecha efectiva y luego por identificador. */
+        ScheduleExceptionListResponse: {
+            /** @description Excepciones de esta página, en el orden estable del servidor. */
+            items: components["schemas"]["ScheduleExceptionResponse"][];
+            /**
+             * @description Cursor opaco para pedir la siguiente página con el parámetro `cursor`. `null` cuando esta página es la última.
+             * @example eyJlZmZlY3RpdmVEYXRlIjoiMjAyNi0xMi0wOCIsImlkIjoiNmYxYTJiM2MtNGQ1ZS00ZjYwLTgxNzItODM5NGE1YjZjN2Q4In0=
+             */
+            nextCursor: string | null;
+        };
+        /** @description Tramo especial dentro de una fecha excepcional abierta. Solo válido cuando la cabecera declara isClosed: false; una cabecera cerrada no admite tramos. */
+        ScheduleExceptionSegmentInput: {
+            /**
+             * @description Hora civil de inicio del tramo, en la zona IANA de la barbería, formato HH:MM de 24 horas.
+             * @example 08:00
+             */
+            startsTime: string;
+            /**
+             * @description Duración del tramo en minutos desde startsTime. Un tramo nocturno (startsTime + durationMinutes cruza medianoche) es válido (DEC-020).
+             * @example 240
+             */
+            durationMinutes: number;
+        };
+        /** @description Alta de una excepción de jornada para la fecha efectiva del barbero de la ruta. isClosed: true cierra el día completo y `segments` debe venir vacío u omitido; isClosed: false exige al menos un tramo en `segments`, sin solapes entre sí (CA-041-04). Ya existe una excepción para esa fecha y ese barbero responde 409 sin crear nada (CA-041-05: como máximo una excepción por barbero y fecha). */
+        CreateScheduleExceptionRequest: {
+            /**
+             * Format: date
+             * @description Fecha civil a la que aplica la excepción, en la zona IANA de la barbería.
+             * @example 2026-12-08
+             */
+            effectiveDate: string;
+            /**
+             * @description true cierra el día completo; false lo abre con los tramos de `segments`.
+             * @example false
+             */
+            isClosed: boolean;
+            /**
+             * @description Motivo breve y opcional, visible solo para el barbero.
+             * @example Festivo trabajado con horario reducido
+             */
+            reason?: string | null;
+            /** @description Tramos especiales de esa fecha, requeridos y no vacíos cuando isClosed es false; deben venir vacíos u omitidos cuando isClosed es true. */
+            segments?: components["schemas"]["ScheduleExceptionSegmentInput"][];
+        };
+        /** @description Reemplazo completo de una excepción existente del barbero de la ruta. Mismas reglas que la creación: isClosed: true exige `segments` vacío u omitido; isClosed: false exige al menos un tramo sin solapes. */
+        UpdateScheduleExceptionRequest: {
+            /**
+             * Format: date
+             * @description Fecha civil a la que aplica la excepción, en la zona IANA de la barbería.
+             * @example 2026-12-08
+             */
+            effectiveDate: string;
+            /**
+             * @description true cierra el día completo; false lo abre con los tramos de `segments`.
+             * @example false
+             */
+            isClosed: boolean;
+            /**
+             * @description Motivo breve y opcional, visible solo para el barbero.
+             * @example Festivo trabajado con horario reducido
+             */
+            reason?: string | null;
+            /** @description Tramos especiales de esa fecha, requeridos y no vacíos cuando isClosed es false; deben venir vacíos u omitidos cuando isClosed es true. */
+            segments?: components["schemas"]["ScheduleExceptionSegmentInput"][];
+        };
+        /** @description Fecha de un festivo colombiano de un año calendario. */
+        ColombianHolidayResponse: {
+            /**
+             * Format: date
+             * @description Fecha del festivo.
+             * @example 2026-07-20
+             */
+            date: string;
+            /**
+             * @description Nombre del festivo.
+             * @example Día de la Independencia
+             */
+            name: string;
+        };
+        /** @description Festivos colombianos del año consultado, en orden cronológico. */
+        ColombianHolidayListResponse: {
+            /** @description Festivos del año, ordenados por fecha. */
+            items: components["schemas"]["ColombianHolidayResponse"][];
+        };
     };
     responses: {
         /** @description Sesión cerrada. La cookie de sesión queda limpiada en Set-Cookie. */
@@ -1411,6 +1665,105 @@ export interface components {
             };
             content: {
                 "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description Estado del calendario colombiano de festivos del barbero de la ruta. */
+        HolidayCalendarSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["HolidayCalendarResponse"];
+            };
+        };
+        /** @description Calendario colombiano de festivos con el estado ya actualizado. */
+        HolidayCalendarUpdated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["HolidayCalendarResponse"];
+            };
+        };
+        /** @description Página de excepciones de jornada del barbero de la ruta. */
+        ScheduleExceptionListSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ScheduleExceptionListResponse"];
+            };
+        };
+        /** @description Excepción creada. `Location` apunta al recurso individual recién creado. */
+        ScheduleExceptionCreated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                Location: components["headers"]["Location"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ScheduleExceptionResponse"];
+            };
+        };
+        /** @description El cuerpo es JSON válido, pero effectiveDate, isClosed o segments incumplen una validación. No se persistió ningún cambio. */
+        ScheduleExceptionValidationProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description Excepción de jornada del barbero de la ruta. */
+        ScheduleExceptionSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ScheduleExceptionResponse"];
+            };
+        };
+        /** @description La excepción ya no forma parte de la configuración del barbero (retiro físico; deja de aplicar en la próxima resolución de jornada, que vuelve al festivo automático o al horario semanal). No afecta al barbero, a la barbería ni a ninguna otra excepción. */
+        ScheduleExceptionDeleted: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
+        /** @description Excepción con la fecha/forma/tramos ya actualizados. */
+        ScheduleExceptionUpdated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ScheduleExceptionResponse"];
+            };
+        };
+        /** @description Ya existe otra excepción del barbero para esa fecha, o dos tramos de la excepción se solapan entre sí. No se persistió ningún cambio. */
+        ScheduleExceptionConflictProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description Festivos colombianos del año consultado. Dato de referencia calendárica, igual para toda barbería y todo barbero. */
+        ColombianHolidayListSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ColombianHolidayListResponse"];
             };
         };
     };
@@ -2085,6 +2438,193 @@ export interface operations {
             404: components["responses"]["NotFoundProblem"];
             409: components["responses"]["WorkingHourConflictProblem"];
             422: components["responses"]["WorkingHourValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getHolidayCalendar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["HolidayCalendarSuccess"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    updateHolidayCalendar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateHolidayCalendarRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["HolidayCalendarUpdated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    listScheduleExceptions: {
+        parameters: {
+            query?: {
+                /** @description Cursor opaco devuelto por una página anterior (`nextCursor`). Sin este parámetro, la respuesta empieza en la primera página. */
+                cursor?: string;
+                /** @description Máximo de excepciones por página. */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["ScheduleExceptionListSuccess"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    createScheduleException: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Clave elegida por el cliente que identifica un intento de escritura crítica. Repetir la misma clave con el mismo contenido (método, ruta y cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo. Repetirla con contenido distinto es un conflicto: usa una clave nueva para una solicitud distinta. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateScheduleExceptionRequest"];
+            };
+        };
+        responses: {
+            201: components["responses"]["ScheduleExceptionCreated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            /** @description Conflicto de idempotencia (misma clave con otro contenido u otra operación, `IdempotencyConflictProblem`), operación en curso con la misma clave (`IdempotencyLockedProblem`, DEC-043), o fecha duplicada/tramos solapados (`ScheduleExceptionConflictProblem`). Los problem types comparten status pero tienen `code` distinto: el cliente decide por `code`, nunca por `detail`. */
+            409: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["ScheduleExceptionValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getScheduleException: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+                /** @description Identificador de la excepción. */
+                exceptionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["ScheduleExceptionSuccess"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    deleteScheduleException: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+                /** @description Identificador de la excepción. */
+                exceptionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: components["responses"]["ScheduleExceptionDeleted"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    updateScheduleException: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+                /** @description Identificador de la excepción. */
+                exceptionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateScheduleExceptionRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["ScheduleExceptionUpdated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            409: components["responses"]["ScheduleExceptionConflictProblem"];
+            422: components["responses"]["ScheduleExceptionValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    listColombianHolidays: {
+        parameters: {
+            query: {
+                /** @description Año calendario (Gregoriano) a consultar. */
+                year: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["ColombianHolidayListSuccess"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

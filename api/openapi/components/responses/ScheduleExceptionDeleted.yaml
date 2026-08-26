@@ -1,0 +1,11 @@
+# 204 de DELETE
+# /private/barbers/{barberId}/schedule-exceptions/{exceptionId} (HU-041,
+# CA-041-06). Sin cuerpo (docs/06-api/estandar-openapi.md sección 11).
+description: >
+  La excepción ya no forma parte de la configuración del barbero (retiro
+  físico; deja de aplicar en la próxima resolución de jornada, que vuelve
+  al festivo automático o al horario semanal). No afecta al barbero, a la
+  barbería ni a ninguna otra excepción.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'

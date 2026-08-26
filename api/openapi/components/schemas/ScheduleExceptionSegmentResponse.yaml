@@ -1,0 +1,29 @@
+# Representación canónica de un tramo ya persistido de una excepción de
+# jornada abierta (HU-041, CA-041-04): agrega id sobre
+# ScheduleExceptionSegmentInput.
+type: object
+description: Tramo especial ya guardado dentro de una fecha excepcional abierta.
+properties:
+  id:
+    type: string
+    format: uuid
+    description: Identificador del tramo, opaco para el cliente.
+    examples:
+      - 7a1b2c3d-4e5f-4061-8273-8495a6b7c8d9
+  startsTime:
+    type: string
+    pattern: '^([01]\d|2[0-3]):[0-5]\d$'
+    description: Hora civil de inicio del tramo, en la zona IANA de la barbería.
+    examples:
+      - "08:00"
+  durationMinutes:
+    type: integer
+    minimum: 1
+    maximum: 1440
+    description: Duración del tramo en minutos desde startsTime.
+    examples:
+      - 240
+required:
+  - id
+  - startsTime
+  - durationMinutes

@@ -1,0 +1,21 @@
+# Representación canónica de un festivo colombiano calculado para un año
+# (HU-041, RN-BLQ-02): exactamente date y name. Dato de referencia
+# calendárica, calculado de forma determinista (Ley 51 de 1983, "Ley
+# Emiliani"); no depende de ninguna barbería ni barbero.
+type: object
+description: Fecha de un festivo colombiano de un año calendario.
+properties:
+  date:
+    type: string
+    format: date
+    description: Fecha del festivo.
+    examples:
+      - "2026-07-20"
+  name:
+    type: string
+    description: Nombre del festivo.
+    examples:
+      - "Día de la Independencia"
+required:
+  - date
+  - name

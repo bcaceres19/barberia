@@ -1,0 +1,21 @@
+# Respuesta 200 de GET /private/schedule/colombian-holidays (HU-041).
+description: >
+  Festivos colombianos del año consultado. Dato de referencia calendárica,
+  igual para toda barbería y todo barbero.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/ColombianHolidayListResponse.yaml'
+    examples:
+      anio2026:
+        value:
+          items:
+            - date: "2026-01-01"
+              name: "Año Nuevo"
+            - date: "2026-07-20"
+              name: "Día de la Independencia"
+            - date: "2026-12-25"
+              name: "Navidad"

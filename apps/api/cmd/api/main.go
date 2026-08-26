@@ -300,6 +300,26 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	private.Patch("/barbers/{barberId}/working-hours/{workingHourId}", updateWorkingHourHandler.ServeHTTP)
 	private.Delete("/barbers/{barberId}/working-hours/{workingHourId}", deleteWorkingHourHandler.ServeHTTP)
 
+	// HU-041: excepciones de jornada y festivos. Mismo scheduleService de
+	// HU-040 (mismo módulo, misma tabla de tenant/barbero): solo se agregan
+	// handlers y rutas nuevas.
+	getHolidayCalendarHandler := schedulehttpapi.NewGetHolidayCalendarHandler(scheduleService)
+	updateHolidayCalendarHandler := schedulehttpapi.NewUpdateHolidayCalendarHandler(scheduleService)
+	listScheduleExceptionsHandler := schedulehttpapi.NewListScheduleExceptionsHandler(scheduleService)
+	getScheduleExceptionHandler := schedulehttpapi.NewGetScheduleExceptionHandler(scheduleService)
+	createScheduleExceptionHandler := schedulehttpapi.NewCreateScheduleExceptionHandler(scheduleService)
+	updateScheduleExceptionHandler := schedulehttpapi.NewUpdateScheduleExceptionHandler(scheduleService)
+	deleteScheduleExceptionHandler := schedulehttpapi.NewDeleteScheduleExceptionHandler(scheduleService)
+	listColombianHolidaysHandler := schedulehttpapi.NewListColombianHolidaysHandler()
+	private.Get("/barbers/{barberId}/holiday-calendar", getHolidayCalendarHandler.ServeHTTP)
+	private.Patch("/barbers/{barberId}/holiday-calendar", updateHolidayCalendarHandler.ServeHTTP)
+	private.Get("/barbers/{barberId}/schedule-exceptions", listScheduleExceptionsHandler.ServeHTTP)
+	private.Post("/barbers/{barberId}/schedule-exceptions", createScheduleExceptionHandler.ServeHTTP)
+	private.Get("/barbers/{barberId}/schedule-exceptions/{exceptionId}", getScheduleExceptionHandler.ServeHTTP)
+	private.Patch("/barbers/{barberId}/schedule-exceptions/{exceptionId}", updateScheduleExceptionHandler.ServeHTTP)
+	private.Delete("/barbers/{barberId}/schedule-exceptions/{exceptionId}", deleteScheduleExceptionHandler.ServeHTTP)
+	private.Get("/schedule/colombian-holidays", listColombianHolidaysHandler.ServeHTTP)
+
 	// HU-008 (DEC-063-066): recuperación de acceso con código de un solo
 	// uso. sender es el adaptador dual de Meta WhatsApp Cloud API + Resend
 	// cuando hay credenciales configuradas; sin ellas (típicamente

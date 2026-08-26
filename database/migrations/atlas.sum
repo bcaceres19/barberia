@@ -1,4 +1,4 @@
-h1:8RGs+hhZ31XbfodABemNC+oQs4Vc9nPRa++9nWcwwok=
+h1:6b47lJnQEg3qACN9xSTud+rO42gLGgTRO6Dnz+/jYyY=
 20260807170000_create_tenant_foundation.sql h1:9KyewD/Xqtm6MjQ7MkTora3f47kjPOobGVfE2q66AUI=
 20260807170100_create_idempotency_record.sql h1:he0jfwTn3otdzgu/qHhFo7Z4ra9+1AL/mT2db82DOrU=
 20260811145252_harden_roles_and_definer_functions.sql h1:KhiZKVpFfL81T+f/73nMkVD0ndVWsCdM4ShqMHZfZ/g=
@@ -12,3 +12,4 @@ h1:8RGs+hhZ31XbfodABemNC+oQs4Vc9nPRa++9nWcwwok=
 20260824140000_create_service.sql h1:zDTpqqNP408tQwZZMtlgrimDi8ZYjBobv0ao/PYrn4g=
 20260824150000_create_barber_service.sql h1:0tZxy26PSg+p2DkLHFrau19EUVDkKbxB+lbNolEl4Ws=
 20260825160000_create_working_hour.sql h1:iLo3IRxDB/deJYJj8IdiBSXOwKo4QZWTbpnbnhNanIM=
+20260826090000_create_working_hour_override.sql h1:lv5Kbz63yW3F3Qaw5Notgs6KNzuxEDrM/fpOsHpRGu4=
