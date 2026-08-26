@@ -1,0 +1,13 @@
+# Colección completa de los festivos colombianos de UN año calendario
+# (HU-041): sin paginación por cursor -18 festivos por año como máximo, un
+# dato de referencia acotado por definición, no una colección que crezca-.
+type: object
+description: Festivos colombianos del año consultado, en orden cronológico.
+properties:
+  items:
+    type: array
+    description: Festivos del año, ordenados por fecha.
+    items:
+      $ref: './ColombianHolidayResponse.yaml'
+required:
+  - items

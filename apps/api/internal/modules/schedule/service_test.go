@@ -24,6 +24,17 @@ type fakeRepository struct {
 	createCalls int
 	updateCalls int
 	deleteCalls int
+
+	// HU-041: excepciones de jornada y calendario de festivos.
+	getHolidayCalendarEnabledFn  func(ctx context.Context, barbershopID, barberID string) (bool, bool, error)
+	setHolidayCalendarEnabledFn  func(ctx context.Context, barbershopID, barberID string, enabled bool) (schedule.HolidayCalendarResult, error)
+	listExceptionsFn             func(ctx context.Context, barbershopID, barberID string, cursor *schedule.ExceptionCursor, limit int) (schedule.ExceptionListResult, error)
+	getExceptionFn               func(ctx context.Context, barbershopID, barberID, exceptionID string) (schedule.ScheduleException, bool, error)
+	getExceptionByDateFn         func(ctx context.Context, barbershopID, barberID, effectiveDate string) (schedule.ScheduleException, bool, error)
+	createExceptionFn            func(ctx context.Context, barbershopID, barberID string, input schedule.CreateExceptionInput, key idempotency.Key, fingerprint idempotency.Fingerprint) (schedule.CreateExceptionResult, error)
+	updateExceptionFn            func(ctx context.Context, barbershopID, barberID, exceptionID string, input schedule.UpdateExceptionInput) (schedule.UpdateExceptionResult, error)
+	deleteExceptionFn            func(ctx context.Context, barbershopID, barberID, exceptionID string) (bool, error)
+	listWorkingHoursForWeekdayFn func(ctx context.Context, barbershopID, barberID string, isoWeekday int) ([]schedule.WorkingHour, error)
 }
 
 func (f *fakeRepository) List(ctx context.Context, barbershopID, barberID string, cursor *schedule.Cursor, limit int) (schedule.ListResult, error) {
@@ -47,6 +58,42 @@ func (f *fakeRepository) Update(ctx context.Context, barbershopID, barberID, wor
 func (f *fakeRepository) Delete(ctx context.Context, barbershopID, barberID, workingHourID string) (bool, error) {
 	f.deleteCalls++
 	return f.deleteFn(ctx, barbershopID, barberID, workingHourID)
+}
+
+func (f *fakeRepository) GetHolidayCalendarEnabled(ctx context.Context, barbershopID, barberID string) (bool, bool, error) {
+	return f.getHolidayCalendarEnabledFn(ctx, barbershopID, barberID)
+}
+
+func (f *fakeRepository) SetHolidayCalendarEnabled(ctx context.Context, barbershopID, barberID string, enabled bool) (schedule.HolidayCalendarResult, error) {
+	return f.setHolidayCalendarEnabledFn(ctx, barbershopID, barberID, enabled)
+}
+
+func (f *fakeRepository) ListExceptions(ctx context.Context, barbershopID, barberID string, cursor *schedule.ExceptionCursor, limit int) (schedule.ExceptionListResult, error) {
+	return f.listExceptionsFn(ctx, barbershopID, barberID, cursor, limit)
+}
+
+func (f *fakeRepository) GetException(ctx context.Context, barbershopID, barberID, exceptionID string) (schedule.ScheduleException, bool, error) {
+	return f.getExceptionFn(ctx, barbershopID, barberID, exceptionID)
+}
+
+func (f *fakeRepository) GetExceptionByDate(ctx context.Context, barbershopID, barberID, effectiveDate string) (schedule.ScheduleException, bool, error) {
+	return f.getExceptionByDateFn(ctx, barbershopID, barberID, effectiveDate)
+}
+
+func (f *fakeRepository) CreateException(ctx context.Context, barbershopID, barberID string, input schedule.CreateExceptionInput, key idempotency.Key, fingerprint idempotency.Fingerprint) (schedule.CreateExceptionResult, error) {
+	return f.createExceptionFn(ctx, barbershopID, barberID, input, key, fingerprint)
+}
+
+func (f *fakeRepository) UpdateException(ctx context.Context, barbershopID, barberID, exceptionID string, input schedule.UpdateExceptionInput) (schedule.UpdateExceptionResult, error) {
+	return f.updateExceptionFn(ctx, barbershopID, barberID, exceptionID, input)
+}
+
+func (f *fakeRepository) DeleteException(ctx context.Context, barbershopID, barberID, exceptionID string) (bool, error) {
+	return f.deleteExceptionFn(ctx, barbershopID, barberID, exceptionID)
+}
+
+func (f *fakeRepository) ListWorkingHoursForWeekday(ctx context.Context, barbershopID, barberID string, isoWeekday int) ([]schedule.WorkingHour, error) {
+	return f.listWorkingHoursForWeekdayFn(ctx, barbershopID, barberID, isoWeekday)
 }
 
 var _ schedule.Repository = (*fakeRepository)(nil)

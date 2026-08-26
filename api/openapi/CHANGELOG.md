@@ -4,6 +4,45 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.12.0] - 2026-08-25
+
+### Agregado
+
+- `GET`/`PATCH /private/barbers/{barberId}/holiday-calendar`
+  (`operationId: getHolidayCalendar`/`updateHolidayCalendar`,
+  `CA-041-01`, `CA-041-02`): interruptor de calendario colombiano de
+  festivos por barbero. `200`, `400`, `401`, `404`, `500`.
+- `GET /private/barbers/{barberId}/schedule-exceptions`
+  (`operationId: listScheduleExceptions`, `CA-041-04`, `CA-041-05`): lista
+  paginada por cursor de excepciones de jornada, ordenada por fecha
+  efectiva. `200`, `400`, `401`, `404`, `500`.
+- `POST /private/barbers/{barberId}/schedule-exceptions`
+  (`operationId: createScheduleException`, `CA-041-04`, `CA-041-05`): alta
+  de una excepción (día cerrado o abierto con tramos), protegida con
+  `Idempotency-Key` (`RN-IDE-01`, `DEC-043`). Una excepción ya existente
+  para esa fecha, o tramos que se solapan entre sí, responden `409`
+  (`code: conflict`). `201`, `400`, `401`, `404`, `409` (idempotencia o
+  conflicto), `422`, `500`.
+- `GET /private/barbers/{barberId}/schedule-exceptions/{exceptionId}`
+  (`operationId: getScheduleException`, `CA-041-06`). `200`, `401`,
+  `404`, `500`.
+- `PATCH /private/barbers/{barberId}/schedule-exceptions/{exceptionId}`
+  (`operationId: updateScheduleException`, `CA-041-04`, `CA-041-05`,
+  `CA-041-06`): reemplaza la excepción completa. `200`, `400`, `401`,
+  `404`, `409`, `422`, `500`.
+- `DELETE /private/barbers/{barberId}/schedule-exceptions/{exceptionId}`
+  (`operationId: deleteScheduleException`, `CA-041-06`): retiro físico;
+  reintentar tras un `404` es seguro. `204`, `401`, `404`, `500`.
+- `GET /private/schedule/colombian-holidays`
+  (`operationId: listColombianHolidays`): festivos colombianos de un año
+  calendario, calculados de forma determinista (Ley 51 de 1983, "Ley
+  Emiliani"), sin tabla ni dependencia nueva. `200`, `400`, `401`, `500`.
+
+No mezcla con horario semanal (`working-hours`, `HU-040`) ni con bloqueos
+(`HU-042`). La precedencia de resolución (excepción manual >
+festivo automático > horario semanal) vive en un puerto interno de Go, sin
+endpoint propio: la disponibilidad (B4) lo consumirá cuando exista.
+
 ## [0.11.0] - 2026-08-25
 
 ### Agregado

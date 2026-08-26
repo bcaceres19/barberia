@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-041-v1"
-version: "1.0"
+version: "1.2"
 kind: "hu"
-status: "draft"
+status: "in_progress"
 target_agents:
   - "claude"
   - "codex"
@@ -13,17 +13,17 @@ related_hu:
   - "HU-040"
   - "HU-042"
   - "HU-021"
-issue: "pending"
-issue_url: null
+issue: 95
+issue_url: "https://github.com/bcaceres19/barberia/issues/95"
 suggested_issue_title: "feat(schedule): implementar HU-041 excepciones de jornada y festivos"
-branch: null
+branch: "feat/95-hu041-excepciones-festivos"
 pr: null
 pr_url: null
 depends_on:
-  - "HU-040 integrada en main"
+  - "HU-040 integrada en main (PR #93)"
   - "Criterio de salida de B1 cumplido; HU-020–HU-024 integradas en main"
-  - "CT-008 resuelta mediante un DEC-* antes de crear la migración"
-  - "Issue real de HU-041 creado y enlazado antes de pasar a ready o ejecutar"
+  - "CT-008 resuelta como DEC-070 (FK de B2 en ON DELETE RESTRICT)"
+  - "Issue real #95 creado y enlazado"
 rules:
   - "RN-TEN-01"
   - "RN-BLQ-02"
@@ -96,7 +96,7 @@ superseded_by: null
 
 ## Instrucción para el agente
 
-Este prompt permanece en draft: no existe issue real y CT-008 sigue siendo una contradicción abierta hasta que el propietario publique un DEC-*. No lo ejecutes ni lo marques ready por inferencia. Actualiza metadatos, rama e índice solo cuando las guardas se cumplan.
+Este prompt pasó a ready y ahora está in_progress: el issue real es #95 (https://github.com/bcaceres19/barberia/issues/95), CT-008 quedó resuelta como DEC-070 (docs/00-control/registro-decisiones.md) — las FK de working_hour_override/working_hour_override_segment hacia barber usan ON DELETE RESTRICT, ya aplicado en database/modelo-fisico-referencia.sql §C.3/C.3b — y la rama feat/95-hu041-excepciones-festivos implementa contrato, migración, backend Go, frontend Vue y pruebas reales descritos abajo. CA-041-08 (carga/vacío/error/éxito, teclado y responsive) queda Parcial: E2E escrito en apps/web/e2e/excepciones-festivos.spec.ts pero no ejecutado contra Chromium real, mismo estado documentado que HU-040. Actualiza pr/pr_url reales en este archivo y en el índice del catálogo antes de fusionar.
 
 Implementa únicamente la configuración por fecha y el calendario festivo de esta HU. No adelantes bloqueos de descanso/emergencia, agenda, citas ni cálculo público de disponibilidad.
 

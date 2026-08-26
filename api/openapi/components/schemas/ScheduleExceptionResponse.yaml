@@ -1,0 +1,64 @@
+# Representación canónica de una excepción de jornada para una fecha
+# concreta (HU-041, CA-041-04/05): exactamente id, effectiveDate, isClosed,
+# reason, segments, createdAt, updatedAt. Nunca barbershopId ni barberId:
+# el tenant se deriva de SessionCookie y el barbero de la ruta.
+type: object
+description: >
+  Excepción de jornada de un barbero para una fecha concreta. isClosed
+  decide la forma: true significa día completamente cerrado (segments
+  siempre vacío); false significa día abierto con uno o varios tramos
+  propios (segments siempre no vacío). Nunca ambas formas a la vez
+  (CA-041-04).
+properties:
+  id:
+    type: string
+    format: uuid
+    description: Identificador de la excepción, opaco para el cliente.
+    examples:
+      - 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+  effectiveDate:
+    type: string
+    format: date
+    description: Fecha civil a la que aplica la excepción, en la zona IANA de la barbería.
+    examples:
+      - "2026-12-08"
+  isClosed:
+    type: boolean
+    description: >
+      true: el día queda completamente cerrado. false: el día está abierto
+      con los tramos de `segments`.
+    examples:
+      - true
+  reason:
+    type: [string, "null"]
+    maxLength: 200
+    description: Motivo breve y opcional, visible solo para el barbero.
+    examples:
+      - "Festivo trabajado con horario reducido"
+  segments:
+    type: array
+    description: >
+      Tramos especiales de esa fecha. Siempre vacío cuando isClosed es
+      true; siempre con al menos un elemento cuando isClosed es false.
+    items:
+      $ref: './ScheduleExceptionSegmentResponse.yaml'
+  createdAt:
+    type: string
+    format: date-time
+    description: Instante de alta, con offset.
+    examples:
+      - "2026-08-25T15:04:05Z"
+  updatedAt:
+    type: string
+    format: date-time
+    description: Instante de la última modificación, con offset.
+    examples:
+      - "2026-08-25T15:04:05Z"
+required:
+  - id
+  - effectiveDate
+  - isClosed
+  - reason
+  - segments
+  - createdAt
+  - updatedAt

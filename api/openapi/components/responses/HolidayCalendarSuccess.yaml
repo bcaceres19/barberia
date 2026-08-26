@@ -1,0 +1,17 @@
+# Respuesta 200 de GET /private/barbers/{barberId}/holiday-calendar
+# (HU-041, CA-041-01/02).
+description: Estado del calendario colombiano de festivos del barbero de la ruta.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/HolidayCalendarResponse.yaml'
+    examples:
+      desactivado:
+        value:
+          enabled: false
+      activado:
+        value:
+          enabled: true

@@ -58,6 +58,7 @@ func setupTestDB(t *testing.T) *database.DB {
 	if err != nil {
 		t.Fatalf("database.NewDB: %v", err)
 	}
+	t.Cleanup(func() { db.Close() })
 	return db
 }
 

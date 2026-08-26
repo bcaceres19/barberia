@@ -1,0 +1,444 @@
+# Operaciones privadas de excepciones de jornada y festivos (HU-041): el
+# interruptor de calendario colombiano por barbero, el CRUD de excepciones
+# por fecha, y la consulta de referencia de festivos colombianos de un
+# año. No mezcla con horario semanal (working-hours, HU-040) ni con
+# bloqueos (HU-042) -esas capacidades tienen su propio archivo-.
+/private/barbers/{barberId}/holiday-calendar:
+  get:
+    tags: [Schedule]
+    summary: Consultar el calendario colombiano de festivos de un barbero de la barbería activa
+    description: >
+      Lectura autenticada del interruptor de calendario colombiano de
+      festivos del barbero de la ruta (HU-041, CA-041-01/02). Un
+      `barberId` inexistente o de otra barbería responde `404`
+      (RN-TEN-01).
+    operationId: getHolidayCalendar
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-02]
+    x-decisions: [DEC-020, DEC-024, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+    responses:
+      "200":
+        $ref: '../components/responses/HolidayCalendarSuccess.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  patch:
+    tags: [Schedule]
+    summary: Activar o desactivar el calendario colombiano de festivos de un barbero de la barbería activa
+    description: >
+      Activa o desactiva el calendario colombiano de festivos del barbero
+      de la ruta (HU-041, CA-041-01/02). La decisión nunca afecta a otro
+      barbero de la misma barbería. Un `barberId` inexistente o de otra
+      barbería responde `404`.
+    operationId: updateHolidayCalendar
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-02]
+    x-decisions: [DEC-020, DEC-024, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/UpdateHolidayCalendarRequest.yaml'
+          examples:
+            activar:
+              summary: Activa el calendario
+              value:
+                enabled: true
+    responses:
+      "200":
+        $ref: '../components/responses/HolidayCalendarUpdated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/barbers/{barberId}/schedule-exceptions:
+  get:
+    tags: [Schedule]
+    summary: Listar las excepciones de jornada de un barbero de la barbería activa
+    description: >
+      Lista paginada por cursor (HU-041, CA-041-04/05) de las excepciones
+      del barbero de la ruta, ordenada por fecha efectiva y luego por
+      identificador. Un `barberId` inexistente o de otra barbería responde
+      `404`.
+    operationId: listScheduleExceptions
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-02, RN-DIS-05, RN-DIS-07]
+    x-decisions: [DEC-020, DEC-024, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+      - name: cursor
+        in: query
+        required: false
+        description: >
+          Cursor opaco devuelto por una página anterior (`nextCursor`). Sin
+          este parámetro, la respuesta empieza en la primera página.
+        schema:
+          type: string
+        examples:
+          continuacion:
+            value: eyJlZmZlY3RpdmVEYXRlIjoiMjAyNi0xMi0wOCIsImlkIjoiNmYxYTJiM2MtNGQ1ZS00ZjYwLTgxNzItODM5NGE1YjZjN2Q4In0=
+      - name: limit
+        in: query
+        required: false
+        description: Máximo de excepciones por página.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+        examples:
+          porDefecto:
+            value: 20
+    responses:
+      "200":
+        $ref: '../components/responses/ScheduleExceptionListSuccess.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  post:
+    tags: [Schedule]
+    summary: Crear una excepción de jornada para un barbero de la barbería activa
+    description: >
+      Alta de una excepción de jornada (HU-041, CA-041-04, CA-041-05)
+      protegida con clave de idempotencia (RN-IDE-01, DEC-043): repetir el
+      mismo `POST` con la misma `Idempotency-Key` y el mismo cuerpo
+      devuelve la misma representación creada sin crear una segunda
+      excepción. `isClosed: true` cierra el día completo (`segments` debe
+      venir vacío u omitido); `isClosed: false` exige al menos un tramo sin
+      solapes entre sí (DEC-020 permite cruzar medianoche). Ya existe una
+      excepción de este barbero para esa fecha responde `409` sin crear
+      nada (CA-041-05: como máximo una excepción por barbero y fecha). El
+      tenant se deriva exclusivamente de `SessionCookie` y el barbero de
+      `barberId`; el cuerpo nunca acepta `barbershopId` ni `barberId`. Un
+      `barberId` inexistente o de otra barbería responde `404`.
+    operationId: createScheduleException
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-02, RN-DIS-05, RN-DIS-07, RN-IDE-01]
+    x-decisions: [DEC-020, DEC-024, DEC-043, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+      - $ref: '../components/parameters/IdempotencyKey.yaml'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/CreateScheduleExceptionRequest.yaml'
+          examples:
+            festivoAbiertoReducido:
+              summary: Festivo trabajado con horario reducido
+              value:
+                effectiveDate: "2026-07-20"
+                isClosed: false
+                reason: "Festivo trabajado con horario reducido"
+                segments:
+                  - startsTime: "09:00"
+                    durationMinutes: 180
+            diaCerrado:
+              summary: Día completamente cerrado
+              value:
+                effectiveDate: "2026-12-08"
+                isClosed: true
+    responses:
+      "201":
+        $ref: '../components/responses/ScheduleExceptionCreated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "409":
+        description: >
+          Conflicto de idempotencia (misma clave con otro contenido u otra
+          operación, `IdempotencyConflictProblem`), operación en curso con
+          la misma clave (`IdempotencyLockedProblem`, DEC-043), o fecha
+          duplicada/tramos solapados (`ScheduleExceptionConflictProblem`).
+          Los problem types comparten status pero tienen `code` distinto:
+          el cliente decide por `code`, nunca por `detail`.
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              contenidoDistinto:
+                summary: Misma clave, cuerpo distinto
+                value:
+                  type: /api/v1/problems/idempotency-conflict
+                  title: Conflicto de idempotencia
+                  status: 409
+                  detail: la clave de idempotencia ya se usó con un contenido distinto; usa una clave nueva
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              operacionEnCurso:
+                summary: Otra transacción tiene el bloqueo de esta clave ahora mismo
+                value:
+                  type: /api/v1/problems/idempotency-locked
+                  title: Operación en curso
+                  status: 409
+                  detail: la operación con esta clave de idempotencia todavía está en curso; reintenta en unos segundos
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-locked
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              fechaDuplicada:
+                summary: Ya existe una excepción de este barbero para esa fecha
+                value:
+                  type: /api/v1/problems/conflict
+                  title: Conflicto
+                  status: 409
+                  detail: ya existe una excepción de este barbero para esa fecha
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "422":
+        $ref: '../components/responses/ScheduleExceptionValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/barbers/{barberId}/schedule-exceptions/{exceptionId}:
+  get:
+    tags: [Schedule]
+    summary: Consultar una excepción de jornada de un barbero de la barbería activa
+    description: >
+      Lectura autenticada de una excepción por identificador (HU-041). Un
+      `barberId`/`exceptionId` inexistente, de otro barbero o de otra
+      barbería responde exactamente el mismo `404` (CA-041-06, RN-TEN-01).
+    operationId: getScheduleException
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-02]
+    x-decisions: [DEC-020, DEC-024, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+      - name: exceptionId
+        in: path
+        required: true
+        description: Identificador de la excepción.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          excepcion:
+            value: 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+    responses:
+      "200":
+        $ref: '../components/responses/ScheduleExceptionSuccess.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  patch:
+    tags: [Schedule]
+    summary: Editar una excepción de jornada de un barbero de la barbería activa
+    description: >
+      Reemplaza la excepción completa (HU-041, CA-041-04, CA-041-05):
+      `effectiveDate` e `isClosed` son obligatorios, con las mismas reglas
+      de `segments` que la creación. Un `barberId`/`exceptionId`
+      inexistente, de otro barbero o de otra barbería responde el mismo
+      `404` que `GET` (CA-041-06). Mover la excepción a una fecha que ya
+      tiene otra excepción del mismo barbero, o un solape entre tramos,
+      responde `409`.
+    operationId: updateScheduleException
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-02, RN-DIS-05, RN-DIS-07]
+    x-decisions: [DEC-020, DEC-024, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+      - name: exceptionId
+        in: path
+        required: true
+        description: Identificador de la excepción.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          excepcion:
+            value: 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/UpdateScheduleExceptionRequest.yaml'
+          examples:
+            editarACerrada:
+              summary: Cambia a día cerrado
+              value:
+                effectiveDate: "2026-12-08"
+                isClosed: true
+                reason: "Día libre"
+    responses:
+      "200":
+        $ref: '../components/responses/ScheduleExceptionUpdated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "409":
+        $ref: '../components/responses/ScheduleExceptionConflictProblem.yaml'
+      "422":
+        $ref: '../components/responses/ScheduleExceptionValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  delete:
+    tags: [Schedule]
+    summary: Retirar una excepción de jornada de un barbero de la barbería activa
+    description: >
+      Retira físicamente la excepción (HU-041, CA-041-06): sin eliminación
+      lógica. Un `barberId`/`exceptionId` inexistente, de otro barbero, de
+      otra barbería, o ya retirado antes, responden el mismo `404`
+      uniforme; reintentar la misma operación tras un `404` es seguro.
+    operationId: deleteScheduleException
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-02]
+    x-decisions: [DEC-020, DEC-024, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+      - name: exceptionId
+        in: path
+        required: true
+        description: Identificador de la excepción.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          excepcion:
+            value: 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+    responses:
+      "204":
+        $ref: '../components/responses/ScheduleExceptionDeleted.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/schedule/colombian-holidays:
+  get:
+    tags: [Schedule]
+    summary: Consultar los festivos colombianos de un año calendario
+    description: >
+      Dato de referencia calendárica (HU-041, RN-BLQ-02), calculado de
+      forma determinista (Ley 51 de 1983, "Ley Emiliani"): igual para toda
+      barbería y todo barbero, no depende de ningún dato propio de la
+      sesión más allá de exigirla. Útil para que la pantalla ofrezca
+      "abrir este festivo" sin que el cliente reimplemente el cálculo.
+    operationId: listColombianHolidays
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-BLQ-02]
+    x-decisions: [DEC-020]
+    parameters:
+      - name: year
+        in: query
+        required: true
+        description: Año calendario (Gregoriano) a consultar.
+        schema:
+          type: integer
+          minimum: 1900
+          maximum: 2200
+        examples:
+          anio2026:
+            value: 2026
+    responses:
+      "200":
+        $ref: '../components/responses/ColombianHolidayListSuccess.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

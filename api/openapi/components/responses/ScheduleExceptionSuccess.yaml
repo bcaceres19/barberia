@@ -1,0 +1,22 @@
+# Respuesta 200 de GET
+# /private/barbers/{barberId}/schedule-exceptions/{exceptionId} (HU-041):
+# la lectura individual permite demostrar de forma directa el 404 de una
+# excepción de otro barbero o de otra barbería (CA-041-06).
+description: Excepción de jornada del barbero de la ruta.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/ScheduleExceptionResponse.yaml'
+    examples:
+      diaCerrado:
+        value:
+          id: 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+          effectiveDate: "2026-12-08"
+          isClosed: true
+          reason: null
+          segments: []
+          createdAt: "2026-08-25T15:04:05Z"
+          updatedAt: "2026-08-25T15:04:05Z"

@@ -19,7 +19,18 @@ import {
   fetchWorkingHours,
   updateWorkingHour,
 } from '../api/schedulesApi'
+import {
+  createScheduleException,
+  deleteScheduleException,
+  fetchColombianHolidays,
+  fetchHolidayCalendar,
+  fetchScheduleExceptions,
+  updateHolidayCalendar,
+  updateScheduleException,
+  type ScheduleExceptionSegmentInput,
+} from '../api/scheduleExceptionsApi'
 import { newIdempotencyKey } from '../model/idempotencyKey'
+import type { ColombianHoliday, ScheduleException } from '../model/scheduleException'
 import {
   ISO_WEEKDAYS,
   weekdayLabel,
@@ -31,6 +42,11 @@ import {
   validateISOWeekday,
   validateStartsTime,
 } from '../validation/scheduleValidation'
+import {
+  validateEffectiveDate,
+  validateExceptionShape,
+  validateReason,
+} from '../validation/exceptionValidation'
 
 type PageStatus = 'loading' | 'ready' | 'load-error'
 type WorkingHoursStatus = 'idle' | 'loading' | 'ready' | 'error'
@@ -112,9 +128,12 @@ async function selectBarber(barberId: string) {
   if (outcome.kind === 'success') {
     workingHours.value = outcome.page.items
     workingHoursStatus.value = 'ready'
-    return
+  } else {
+    workingHoursStatus.value = 'error'
   }
-  workingHoursStatus.value = 'error'
+
+  void loadHolidayCalendar(barberId)
+  void loadExceptions(barberId)
 }
 
 function onBarberSelectChange(event: Event) {
@@ -357,6 +376,380 @@ async function onDelete(wh: WorkingHour) {
       deleteError.value = 'Ocurrió un error inesperado. Inténtalo de nuevo en unos segundos.'
   }
 }
+
+// --- HU-041: calendario de festivos colombianos (CA-041-01/02) -----------
+
+type HolidayCalendarStatus = 'idle' | 'loading' | 'ready' | 'error'
+const holidayCalendarStatus = ref<HolidayCalendarStatus>('idle')
+const holidayCalendarEnabled = ref(false)
+const holidayCalendarSaving = ref(false)
+const holidayCalendarError = ref<string | null>(null)
+
+async function loadHolidayCalendar(barberId: string) {
+  holidayCalendarStatus.value = 'loading'
+  const outcome = await fetchHolidayCalendar(barberId)
+  if (selectedBarberId.value !== barberId) return
+
+  if (outcome.kind === 'success') {
+    holidayCalendarEnabled.value = outcome.enabled
+    holidayCalendarStatus.value = 'ready'
+    return
+  }
+  holidayCalendarStatus.value = 'error'
+}
+
+async function onToggleHolidayCalendar(event: Event) {
+  const barberId = selectedBarberId.value
+  const checked = (event.target as HTMLInputElement).checked
+  if (!barberId || holidayCalendarSaving.value) return
+
+  holidayCalendarSaving.value = true
+  holidayCalendarError.value = null
+  const outcome = await updateHolidayCalendar(barberId, checked)
+  holidayCalendarSaving.value = false
+
+  if (outcome.kind === 'success') {
+    holidayCalendarEnabled.value = outcome.enabled
+    return
+  }
+  // La casilla vuelve a su valor real: ninguna respuesta distinta de
+  // `success` cambió el estado persistido.
+  holidayCalendarError.value =
+    outcome.kind === 'network-error'
+      ? 'No pudimos conectar. Revisa tu conexión e inténtalo de nuevo.'
+      : 'Ocurrió un error inesperado. Inténtalo de nuevo en unos segundos.'
+}
+
+// --- HU-041: festivos colombianos de referencia (RN-BLQ-02) ---------------
+
+// upcomingColombianHolidays es un dato de referencia único para toda la
+// pantalla (no depende del barbero elegido): se carga una sola vez.
+const colombianHolidays = ref<ColombianHoliday[]>([])
+
+async function loadColombianHolidays() {
+  const year = new Date().getFullYear()
+  const outcome = await fetchColombianHolidays(year)
+  if (outcome.kind === 'success') {
+    const today = new Date().toISOString().slice(0, 10)
+    colombianHolidays.value = outcome.items.filter((h) => h.date >= today)
+  }
+}
+
+// --- HU-041: excepciones de jornada (CA-041-04/05) -------------------------
+
+type ExceptionsStatus = 'idle' | 'loading' | 'ready' | 'error'
+const exceptionsStatus = ref<ExceptionsStatus>('idle')
+const exceptions = ref<ScheduleException[]>([])
+const pendingDeleteExceptionIds = ref<Set<string>>(new Set())
+const exceptionDeleteError = ref<string | null>(null)
+
+const sortedExceptions = computed(() =>
+  [...exceptions.value].sort((a, b) => a.effectiveDate.localeCompare(b.effectiveDate)),
+)
+
+async function loadExceptions(barberId: string) {
+  exceptionsStatus.value = 'loading'
+  const outcome = await fetchScheduleExceptions(barberId)
+  if (selectedBarberId.value !== barberId) return
+
+  if (outcome.kind === 'success') {
+    exceptions.value = outcome.page.items
+    exceptionsStatus.value = 'ready'
+    return
+  }
+  exceptionsStatus.value = 'error'
+}
+
+function onRetryExceptions() {
+  if (selectedBarberId.value) void loadExceptions(selectedBarberId.value)
+}
+
+type ExceptionSaveStatus =
+  | 'idle'
+  | 'saving'
+  | 'validation-error'
+  | 'date-conflict'
+  | 'idempotency-conflict'
+  | 'not-found'
+  | 'network-error'
+  | 'unexpected-error'
+
+interface ExceptionSegmentRow {
+  startsTime: string
+  durationMinutes: number
+}
+
+function newSegmentRow(): ExceptionSegmentRow {
+  return { startsTime: '', durationMinutes: 60 }
+}
+
+// --- Alta de excepción -----------------------------------------------------
+
+const isExceptionCreateOpen = ref(false)
+const createEffectiveDate = ref('')
+const createIsClosed = ref(true)
+const createReason = ref('')
+const createSegments = ref<ExceptionSegmentRow[]>([])
+const createEffectiveDateError = ref<string | undefined>(undefined)
+const createReasonError = ref<string | undefined>(undefined)
+const createShapeError = ref<string | undefined>(undefined)
+const createExceptionStatus = ref<ExceptionSaveStatus>('idle')
+const createExceptionAttempted = ref(false)
+let createExceptionIdempotencyKey = newIdempotencyKey()
+
+function openExceptionCreateDialog(prefillDate?: string) {
+  createEffectiveDate.value = prefillDate ?? ''
+  createIsClosed.value = true
+  createReason.value = ''
+  createSegments.value = []
+  createEffectiveDateError.value = undefined
+  createReasonError.value = undefined
+  createShapeError.value = undefined
+  createExceptionStatus.value = 'idle'
+  createExceptionAttempted.value = false
+  createExceptionIdempotencyKey = newIdempotencyKey()
+  isExceptionCreateOpen.value = true
+}
+
+function onExceptionCreateDialogClosed() {
+  createExceptionStatus.value = 'idle'
+}
+
+function onCreateIsClosedChange(isClosed: boolean) {
+  createIsClosed.value = isClosed
+  if (!isClosed && createSegments.value.length === 0) {
+    createSegments.value = [newSegmentRow()]
+  }
+  revalidateExceptionCreate()
+}
+
+function addCreateSegment() {
+  createSegments.value = [...createSegments.value, newSegmentRow()]
+}
+
+function removeCreateSegment(index: number) {
+  createSegments.value = createSegments.value.filter((_, i) => i !== index)
+  revalidateExceptionCreate()
+}
+
+function revalidateExceptionCreate() {
+  if (!createExceptionAttempted.value) return
+  createEffectiveDateError.value = validateEffectiveDate(createEffectiveDate.value)
+  createReasonError.value = validateReason(createReason.value)
+  createShapeError.value = validateExceptionShape(createIsClosed.value, createSegments.value)
+}
+
+async function onSubmitExceptionCreate() {
+  if (createExceptionStatus.value === 'saving' || !selectedBarberId.value) return
+
+  createExceptionAttempted.value = true
+  const effectiveDateError = validateEffectiveDate(createEffectiveDate.value)
+  const reasonError = validateReason(createReason.value)
+  const shapeError = validateExceptionShape(createIsClosed.value, createSegments.value)
+  createEffectiveDateError.value = effectiveDateError
+  createReasonError.value = reasonError
+  createShapeError.value = shapeError
+  if (effectiveDateError || reasonError || shapeError) return
+
+  createExceptionStatus.value = 'saving'
+  const segments: ScheduleExceptionSegmentInput[] = createIsClosed.value
+    ? []
+    : createSegments.value.map((s) => ({
+        startsTime: s.startsTime,
+        durationMinutes: s.durationMinutes,
+      }))
+  const outcome = await createScheduleException(
+    selectedBarberId.value,
+    createEffectiveDate.value,
+    createIsClosed.value,
+    createReason.value.trim() === '' ? null : createReason.value.trim(),
+    segments,
+    createExceptionIdempotencyKey,
+  )
+
+  switch (outcome.kind) {
+    case 'success':
+      exceptions.value.push(outcome.exception)
+      isExceptionCreateOpen.value = false
+      createExceptionStatus.value = 'idle'
+      return
+    case 'validation-error':
+      createExceptionStatus.value = 'validation-error'
+      return
+    case 'date-conflict':
+      createExceptionStatus.value = 'date-conflict'
+      return
+    case 'idempotency-conflict':
+      createExceptionStatus.value = 'idempotency-conflict'
+      return
+    case 'not-found':
+      createExceptionStatus.value = 'not-found'
+      return
+    case 'network-error':
+      createExceptionStatus.value = 'network-error'
+      return
+    case 'unexpected-error':
+      createExceptionStatus.value = 'unexpected-error'
+  }
+}
+
+// --- Edición de excepción ---------------------------------------------------
+
+const isExceptionEditOpen = ref(false)
+const editExceptionTarget = ref<ScheduleException | null>(null)
+const editEffectiveDate = ref('')
+const editIsClosed = ref(true)
+const editReason = ref('')
+const editSegments = ref<ExceptionSegmentRow[]>([])
+const editEffectiveDateError = ref<string | undefined>(undefined)
+const editReasonError = ref<string | undefined>(undefined)
+const editShapeError = ref<string | undefined>(undefined)
+const editExceptionStatus = ref<ExceptionSaveStatus>('idle')
+const editExceptionAttempted = ref(false)
+
+function openExceptionEditDialog(exception: ScheduleException) {
+  editExceptionTarget.value = exception
+  editEffectiveDate.value = exception.effectiveDate
+  editIsClosed.value = exception.isClosed
+  editReason.value = exception.reason ?? ''
+  editSegments.value = exception.segments.map((s) => ({
+    startsTime: s.startsTime,
+    durationMinutes: s.durationMinutes,
+  }))
+  editEffectiveDateError.value = undefined
+  editReasonError.value = undefined
+  editShapeError.value = undefined
+  editExceptionStatus.value = 'idle'
+  editExceptionAttempted.value = false
+  isExceptionEditOpen.value = true
+}
+
+function onExceptionEditDialogClosed() {
+  editExceptionStatus.value = 'idle'
+}
+
+function onEditIsClosedChange(isClosed: boolean) {
+  editIsClosed.value = isClosed
+  if (!isClosed && editSegments.value.length === 0) {
+    editSegments.value = [newSegmentRow()]
+  }
+  revalidateExceptionEdit()
+}
+
+function addEditSegment() {
+  editSegments.value = [...editSegments.value, newSegmentRow()]
+}
+
+function removeEditSegment(index: number) {
+  editSegments.value = editSegments.value.filter((_, i) => i !== index)
+  revalidateExceptionEdit()
+}
+
+function revalidateExceptionEdit() {
+  if (!editExceptionAttempted.value) return
+  editEffectiveDateError.value = validateEffectiveDate(editEffectiveDate.value)
+  editReasonError.value = validateReason(editReason.value)
+  editShapeError.value = validateExceptionShape(editIsClosed.value, editSegments.value)
+}
+
+async function onSubmitExceptionEdit() {
+  if (
+    editExceptionStatus.value === 'saving' ||
+    !editExceptionTarget.value ||
+    !selectedBarberId.value
+  )
+    return
+
+  editExceptionAttempted.value = true
+  const effectiveDateError = validateEffectiveDate(editEffectiveDate.value)
+  const reasonError = validateReason(editReason.value)
+  const shapeError = validateExceptionShape(editIsClosed.value, editSegments.value)
+  editEffectiveDateError.value = effectiveDateError
+  editReasonError.value = reasonError
+  editShapeError.value = shapeError
+  if (effectiveDateError || reasonError || shapeError) return
+
+  editExceptionStatus.value = 'saving'
+  const segments: ScheduleExceptionSegmentInput[] = editIsClosed.value
+    ? []
+    : editSegments.value.map((s) => ({
+        startsTime: s.startsTime,
+        durationMinutes: s.durationMinutes,
+      }))
+  const outcome = await updateScheduleException(
+    selectedBarberId.value,
+    editExceptionTarget.value.id,
+    editEffectiveDate.value,
+    editIsClosed.value,
+    editReason.value.trim() === '' ? null : editReason.value.trim(),
+    segments,
+  )
+
+  switch (outcome.kind) {
+    case 'success': {
+      const index = exceptions.value.findIndex((e) => e.id === outcome.exception.id)
+      if (index !== -1) exceptions.value[index] = outcome.exception
+      isExceptionEditOpen.value = false
+      editExceptionStatus.value = 'idle'
+      return
+    }
+    case 'validation-error':
+      editExceptionStatus.value = 'validation-error'
+      return
+    case 'date-conflict':
+      editExceptionStatus.value = 'date-conflict'
+      return
+    case 'not-found':
+      editExceptionStatus.value = 'not-found'
+      return
+    case 'network-error':
+      editExceptionStatus.value = 'network-error'
+      return
+    case 'unexpected-error':
+      editExceptionStatus.value = 'unexpected-error'
+  }
+}
+
+// --- Retiro de excepción ----------------------------------------------------
+
+function isExceptionDeletePending(id: string): boolean {
+  return pendingDeleteExceptionIds.value.has(id)
+}
+
+async function onDeleteException(exception: ScheduleException) {
+  const barberId = selectedBarberId.value
+  if (!barberId || isExceptionDeletePending(exception.id)) return
+
+  const next = new Set(pendingDeleteExceptionIds.value)
+  next.add(exception.id)
+  pendingDeleteExceptionIds.value = next
+  exceptionDeleteError.value = null
+
+  const outcome = await deleteScheduleException(barberId, exception.id)
+
+  const after = new Set(pendingDeleteExceptionIds.value)
+  after.delete(exception.id)
+  pendingDeleteExceptionIds.value = after
+
+  if (outcome.kind === 'success') {
+    exceptions.value = exceptions.value.filter((item) => item.id !== exception.id)
+    return
+  }
+
+  switch (outcome.kind) {
+    case 'not-found':
+      exceptions.value = exceptions.value.filter((item) => item.id !== exception.id)
+      break
+    case 'network-error':
+      exceptionDeleteError.value = 'No pudimos conectar. Revisa tu conexión e inténtalo de nuevo.'
+      break
+    case 'unexpected-error':
+      exceptionDeleteError.value =
+        'Ocurrió un error inesperado. Inténtalo de nuevo en unos segundos.'
+  }
+}
+
+onMounted(loadColombianHolidays)
 </script>
 
 <template>
@@ -495,6 +888,143 @@ async function onDelete(wh: WorkingHour) {
             </section>
           </div>
         </template>
+
+        <!-- HU-041: calendario de festivos colombianos -->
+        <section class="schedules-page__holiday-calendar" aria-labelledby="holiday-calendar-title">
+          <h2 id="holiday-calendar-title" class="schedules-page__day-title">
+            Calendario de festivos colombianos
+          </h2>
+          <BaseAlert v-if="holidayCalendarError" variant="warning" role="alert">
+            {{ holidayCalendarError }}
+          </BaseAlert>
+          <label class="schedules-page__checkbox-label">
+            <input
+              type="checkbox"
+              :checked="holidayCalendarEnabled"
+              :disabled="holidayCalendarStatus !== 'ready' || holidayCalendarSaving"
+              @change="onToggleHolidayCalendar"
+            />
+            Cerrar automáticamente los festivos colombianos de este barbero
+          </label>
+          <p class="schedules-page__day-empty">
+            Desactivado: los festivos no agregan ningún bloqueo automático. Activado: un festivo
+            queda cerrado por defecto, salvo que exista una excepción manual para esa fecha.
+          </p>
+        </section>
+
+        <!-- HU-041: excepciones de jornada -->
+        <section class="schedules-page__exceptions" aria-labelledby="exceptions-title">
+          <header class="schedules-page__exceptions-header">
+            <h2 id="exceptions-title" class="schedules-page__day-title">Excepciones de jornada</h2>
+            <BaseButton type="button" variant="secondary" @click="openExceptionCreateDialog()">
+              Agregar excepción
+            </BaseButton>
+          </header>
+
+          <div
+            v-if="exceptionsStatus === 'loading'"
+            class="schedules-page__state"
+            role="status"
+            aria-live="polite"
+          >
+            <p>Cargando excepciones…</p>
+          </div>
+
+          <BaseAlert v-else-if="exceptionsStatus === 'error'" variant="warning" role="alert">
+            No pudimos cargar las excepciones de este barbero. Revisa tu conexión e inténtalo de
+            nuevo.
+            <template #action>
+              <BaseButton type="button" variant="secondary" @click="onRetryExceptions">
+                Reintentar
+              </BaseButton>
+            </template>
+          </BaseAlert>
+
+          <template v-else-if="exceptionsStatus === 'ready'">
+            <BaseAlert
+              v-if="exceptionDeleteError"
+              variant="danger"
+              role="alert"
+              class="schedules-page__delete-error"
+            >
+              {{ exceptionDeleteError }}
+            </BaseAlert>
+
+            <p v-if="sortedExceptions.length === 0" class="schedules-page__day-empty">
+              Sin excepciones registradas.
+            </p>
+
+            <ul v-else class="schedules-page__list" aria-label="Excepciones de jornada">
+              <li
+                v-for="exception in sortedExceptions"
+                :key="exception.id"
+                class="schedules-page__item"
+              >
+                <div>
+                  <span class="schedules-page__item-time">{{ exception.effectiveDate }}</span>
+                  <span v-if="exception.isClosed"> · Cerrado</span>
+                  <span v-else>
+                    ·
+                    {{
+                      exception.segments
+                        .map((s) => `${s.startsTime} (${s.durationMinutes} min)`)
+                        .join(', ')
+                    }}
+                  </span>
+                  <span v-if="exception.reason"> · {{ exception.reason }}</span>
+                </div>
+                <div class="schedules-page__item-actions">
+                  <BaseButton
+                    type="button"
+                    variant="secondary"
+                    :aria-label="`Editar excepción del ${exception.effectiveDate}`"
+                    @click="openExceptionEditDialog(exception)"
+                  >
+                    Editar
+                  </BaseButton>
+                  <BaseButton
+                    type="button"
+                    variant="secondary"
+                    :loading="isExceptionDeletePending(exception.id)"
+                    :disabled="isExceptionDeletePending(exception.id)"
+                    :aria-label="`Retirar excepción del ${exception.effectiveDate}`"
+                    @click="onDeleteException(exception)"
+                  >
+                    Retirar
+                  </BaseButton>
+                </div>
+              </li>
+            </ul>
+          </template>
+        </section>
+
+        <!-- HU-041: festivos colombianos de referencia -->
+        <section
+          v-if="colombianHolidays.length > 0"
+          class="schedules-page__holidays-reference"
+          aria-labelledby="holidays-reference-title"
+        >
+          <h2 id="holidays-reference-title" class="schedules-page__day-title">
+            Próximos festivos colombianos
+          </h2>
+          <ul class="schedules-page__list" aria-label="Próximos festivos colombianos">
+            <li
+              v-for="holiday in colombianHolidays"
+              :key="holiday.date"
+              class="schedules-page__item"
+            >
+              <span class="schedules-page__item-time">{{ holiday.date }} · {{ holiday.name }}</span>
+              <BaseButton
+                type="button"
+                variant="secondary"
+                :aria-label="`Registrar una excepción para el ${holiday.date}, ${holiday.name}`"
+                @click="openExceptionCreateDialog(holiday.date)"
+              >
+                Registrar excepción
+              </BaseButton>
+            </li>
+          </ul>
+        </section>
       </template>
     </template>
 
@@ -714,6 +1244,372 @@ async function onDelete(wh: WorkingHour) {
         </div>
       </form>
     </BaseDialog>
+
+    <!-- HU-041: alta de excepción -->
+    <BaseDialog
+      v-model="isExceptionCreateOpen"
+      title="Agregar excepción"
+      size="sm"
+      @close="onExceptionCreateDialogClosed"
+    >
+      <form
+        name="createScheduleException"
+        class="schedules-page__form"
+        novalidate
+        @submit.prevent="onSubmitExceptionCreate"
+      >
+        <BaseAlert
+          v-if="createExceptionStatus === 'date-conflict'"
+          variant="danger"
+          title="Ya existe una excepción para esa fecha"
+          role="alert"
+        >
+          Edita la excepción existente en vez de crear una nueva.
+        </BaseAlert>
+        <BaseAlert
+          v-if="createExceptionStatus === 'not-found'"
+          variant="warning"
+          title="Este barbero ya no está disponible"
+          role="alert"
+        >
+          Cierra este diálogo y recarga la lista.
+        </BaseAlert>
+        <BaseAlert
+          v-if="createExceptionStatus === 'idempotency-conflict'"
+          variant="danger"
+          title="No pudimos completar el intento anterior"
+          role="alert"
+        >
+          Inténtalo de nuevo.
+        </BaseAlert>
+        <BaseAlert
+          v-if="createExceptionStatus === 'network-error'"
+          variant="warning"
+          title="No pudimos conectar"
+          role="alert"
+        >
+          Revisa tu conexión e inténtalo de nuevo. No perdiste lo que escribiste.
+        </BaseAlert>
+        <BaseAlert
+          v-if="createExceptionStatus === 'unexpected-error'"
+          variant="danger"
+          title="Ocurrió un error inesperado"
+          role="alert"
+        >
+          Inténtalo de nuevo en unos segundos. No perdiste lo que escribiste.
+        </BaseAlert>
+
+        <BaseInput
+          :model-value="createEffectiveDate"
+          type="date"
+          name="effectiveDate"
+          label="Fecha"
+          required
+          :disabled="createExceptionStatus === 'saving'"
+          :error="createEffectiveDateError"
+          @update:model-value="
+            (v) => {
+              createEffectiveDate = String(v)
+              revalidateExceptionCreate()
+            }
+          "
+        />
+
+        <div class="schedules-page__field">
+          <span class="schedules-page__label">Estado del día</span>
+          <div class="schedules-page__radio-group" role="radiogroup" aria-label="Estado del día">
+            <label class="schedules-page__checkbox-label">
+              <input
+                type="radio"
+                name="createExceptionShape"
+                :checked="createIsClosed"
+                :disabled="createExceptionStatus === 'saving'"
+                @change="onCreateIsClosedChange(true)"
+              />
+              Cerrado
+            </label>
+            <label class="schedules-page__checkbox-label">
+              <input
+                type="radio"
+                name="createExceptionShape"
+                :checked="!createIsClosed"
+                :disabled="createExceptionStatus === 'saving'"
+                @change="onCreateIsClosedChange(false)"
+              />
+              Abierto con tramos especiales
+            </label>
+          </div>
+        </div>
+
+        <div v-if="!createIsClosed" class="schedules-page__segments">
+          <div
+            v-for="(segment, index) in createSegments"
+            :key="index"
+            class="schedules-page__segment-row"
+          >
+            <BaseInput
+              :model-value="segment.startsTime"
+              type="time"
+              :name="`createSegmentStart${index}`"
+              label="Hora de inicio"
+              required
+              :disabled="createExceptionStatus === 'saving'"
+              @update:model-value="
+                (v) => {
+                  segment.startsTime = String(v)
+                  revalidateExceptionCreate()
+                }
+              "
+            />
+            <BaseInput
+              :model-value="segment.durationMinutes"
+              type="number"
+              :name="`createSegmentDuration${index}`"
+              label="Duración (minutos)"
+              required
+              :min="1"
+              :max="1440"
+              :disabled="createExceptionStatus === 'saving'"
+              @update:model-value="
+                (v) => {
+                  segment.durationMinutes = Number(v)
+                  revalidateExceptionCreate()
+                }
+              "
+            />
+            <BaseButton
+              type="button"
+              variant="secondary"
+              :disabled="createExceptionStatus === 'saving'"
+              aria-label="Quitar este tramo"
+              @click="removeCreateSegment(index)"
+            >
+              Quitar
+            </BaseButton>
+          </div>
+          <BaseButton
+            type="button"
+            variant="secondary"
+            :disabled="createExceptionStatus === 'saving'"
+            @click="addCreateSegment"
+          >
+            Agregar tramo
+          </BaseButton>
+          <div v-if="createShapeError" class="schedules-page__field-error" role="alert">
+            {{ createShapeError }}
+          </div>
+        </div>
+
+        <BaseInput
+          :model-value="createReason"
+          type="text"
+          name="reason"
+          label="Motivo (opcional)"
+          :maxlength="200"
+          :disabled="createExceptionStatus === 'saving'"
+          :error="createReasonError"
+          @update:model-value="
+            (v) => {
+              createReason = String(v)
+              revalidateExceptionCreate()
+            }
+          "
+        />
+
+        <div class="schedules-page__dialog-actions">
+          <BaseButton type="button" variant="secondary" @click="isExceptionCreateOpen = false">
+            Cancelar
+          </BaseButton>
+          <BaseButton
+            type="submit"
+            variant="primary"
+            :loading="createExceptionStatus === 'saving'"
+            :disabled="createExceptionStatus === 'saving'"
+          >
+            Guardar
+          </BaseButton>
+        </div>
+      </form>
+    </BaseDialog>
+
+    <!-- HU-041: edición de excepción -->
+    <BaseDialog
+      v-model="isExceptionEditOpen"
+      title="Editar excepción"
+      size="sm"
+      @close="onExceptionEditDialogClosed"
+    >
+      <form
+        name="updateScheduleException"
+        class="schedules-page__form"
+        novalidate
+        @submit.prevent="onSubmitExceptionEdit"
+      >
+        <BaseAlert
+          v-if="editExceptionStatus === 'date-conflict'"
+          variant="danger"
+          title="Ya existe otra excepción para esa fecha"
+          role="alert"
+        >
+          Elige una fecha distinta.
+        </BaseAlert>
+        <BaseAlert
+          v-if="editExceptionStatus === 'not-found'"
+          variant="warning"
+          title="Esta excepción ya no está disponible"
+          role="alert"
+        >
+          Cierra este diálogo y recarga la lista.
+        </BaseAlert>
+        <BaseAlert
+          v-if="editExceptionStatus === 'network-error'"
+          variant="warning"
+          title="No pudimos conectar"
+          role="alert"
+        >
+          Revisa tu conexión e inténtalo de nuevo. No perdiste lo que escribiste.
+        </BaseAlert>
+        <BaseAlert
+          v-if="editExceptionStatus === 'unexpected-error'"
+          variant="danger"
+          title="Ocurrió un error inesperado"
+          role="alert"
+        >
+          Inténtalo de nuevo en unos segundos. No perdiste lo que escribiste.
+        </BaseAlert>
+
+        <BaseInput
+          :model-value="editEffectiveDate"
+          type="date"
+          name="effectiveDate"
+          label="Fecha"
+          required
+          :disabled="editExceptionStatus === 'saving'"
+          :error="editEffectiveDateError"
+          @update:model-value="
+            (v) => {
+              editEffectiveDate = String(v)
+              revalidateExceptionEdit()
+            }
+          "
+        />
+
+        <div class="schedules-page__field">
+          <span class="schedules-page__label">Estado del día</span>
+          <div class="schedules-page__radio-group" role="radiogroup" aria-label="Estado del día">
+            <label class="schedules-page__checkbox-label">
+              <input
+                type="radio"
+                name="editExceptionShape"
+                :checked="editIsClosed"
+                :disabled="editExceptionStatus === 'saving'"
+                @change="onEditIsClosedChange(true)"
+              />
+              Cerrado
+            </label>
+            <label class="schedules-page__checkbox-label">
+              <input
+                type="radio"
+                name="editExceptionShape"
+                :checked="!editIsClosed"
+                :disabled="editExceptionStatus === 'saving'"
+                @change="onEditIsClosedChange(false)"
+              />
+              Abierto con tramos especiales
+            </label>
+          </div>
+        </div>
+
+        <div v-if="!editIsClosed" class="schedules-page__segments">
+          <div
+            v-for="(segment, index) in editSegments"
+            :key="index"
+            class="schedules-page__segment-row"
+          >
+            <BaseInput
+              :model-value="segment.startsTime"
+              type="time"
+              :name="`editSegmentStart${index}`"
+              label="Hora de inicio"
+              required
+              :disabled="editExceptionStatus === 'saving'"
+              @update:model-value="
+                (v) => {
+                  segment.startsTime = String(v)
+                  revalidateExceptionEdit()
+                }
+              "
+            />
+            <BaseInput
+              :model-value="segment.durationMinutes"
+              type="number"
+              :name="`editSegmentDuration${index}`"
+              label="Duración (minutos)"
+              required
+              :min="1"
+              :max="1440"
+              :disabled="editExceptionStatus === 'saving'"
+              @update:model-value="
+                (v) => {
+                  segment.durationMinutes = Number(v)
+                  revalidateExceptionEdit()
+                }
+              "
+            />
+            <BaseButton
+              type="button"
+              variant="secondary"
+              :disabled="editExceptionStatus === 'saving'"
+              aria-label="Quitar este tramo"
+              @click="removeEditSegment(index)"
+            >
+              Quitar
+            </BaseButton>
+          </div>
+          <BaseButton
+            type="button"
+            variant="secondary"
+            :disabled="editExceptionStatus === 'saving'"
+            @click="addEditSegment"
+          >
+            Agregar tramo
+          </BaseButton>
+          <div v-if="editShapeError" class="schedules-page__field-error" role="alert">
+            {{ editShapeError }}
+          </div>
+        </div>
+
+        <BaseInput
+          :model-value="editReason"
+          type="text"
+          name="reason"
+          label="Motivo (opcional)"
+          :maxlength="200"
+          :disabled="editExceptionStatus === 'saving'"
+          :error="editReasonError"
+          @update:model-value="
+            (v) => {
+              editReason = String(v)
+              revalidateExceptionEdit()
+            }
+          "
+        />
+
+        <div class="schedules-page__dialog-actions">
+          <BaseButton type="button" variant="secondary" @click="isExceptionEditOpen = false">
+            Cancelar
+          </BaseButton>
+          <BaseButton
+            type="submit"
+            variant="primary"
+            :loading="editExceptionStatus === 'saving'"
+            :disabled="editExceptionStatus === 'saving'"
+          >
+            Guardar
+          </BaseButton>
+        </div>
+      </form>
+    </BaseDialog>
   </section>
 </template>
 
@@ -820,6 +1716,52 @@ async function onDelete(wh: WorkingHour) {
   padding: 0;
   margin: 0;
   list-style: none;
+}
+
+.schedules-page__holiday-calendar,
+.schedules-page__exceptions,
+.schedules-page__holidays-reference {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: var(--border-width-normal) solid var(--color-border-subtle);
+}
+
+.schedules-page__exceptions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.schedules-page__checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+}
+
+.schedules-page__radio-group {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.schedules-page__segments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.schedules-page__segment-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
 .schedules-page__item {

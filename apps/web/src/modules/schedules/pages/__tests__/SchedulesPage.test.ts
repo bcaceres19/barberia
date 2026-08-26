@@ -27,6 +27,28 @@ vi.mock('../../api/schedulesApi', () => ({
   deleteWorkingHour: deleteWorkingHourMock,
 }))
 
+// HU-041: mismo doble de prueba que schedulesApi, para que el calendario de
+// festivos y las excepciones de jornada (siempre cargados junto al horario
+// semanal del barbero elegido) no dependan de una llamada de red real
+// durante estas pruebas de HU-040.
+const fetchHolidayCalendarMock = vi.hoisted(() => vi.fn())
+const updateHolidayCalendarMock = vi.hoisted(() => vi.fn())
+const fetchScheduleExceptionsMock = vi.hoisted(() => vi.fn())
+const createScheduleExceptionMock = vi.hoisted(() => vi.fn())
+const updateScheduleExceptionMock = vi.hoisted(() => vi.fn())
+const deleteScheduleExceptionMock = vi.hoisted(() => vi.fn())
+const fetchColombianHolidaysMock = vi.hoisted(() => vi.fn())
+
+vi.mock('../../api/scheduleExceptionsApi', () => ({
+  fetchHolidayCalendar: fetchHolidayCalendarMock,
+  updateHolidayCalendar: updateHolidayCalendarMock,
+  fetchScheduleExceptions: fetchScheduleExceptionsMock,
+  createScheduleException: createScheduleExceptionMock,
+  updateScheduleException: updateScheduleExceptionMock,
+  deleteScheduleException: deleteScheduleExceptionMock,
+  fetchColombianHolidays: fetchColombianHolidaysMock,
+}))
+
 const { default: SchedulesPage } = await import('../SchedulesPage.vue')
 
 const oneBarber = [{ id: 'b-1', fullName: 'Carlos Ramírez' }]
@@ -97,6 +119,15 @@ describe('SchedulesPage', () => {
     updateWorkingHourMock.mockReset()
     deleteWorkingHourMock.mockReset()
     fetchBarbershopTimezoneMock.mockReset().mockResolvedValue({ kind: 'unavailable' })
+    fetchHolidayCalendarMock.mockReset().mockResolvedValue({ kind: 'success', enabled: false })
+    updateHolidayCalendarMock.mockReset()
+    fetchScheduleExceptionsMock
+      .mockReset()
+      .mockResolvedValue({ kind: 'success', page: { items: [], nextCursor: null } })
+    createScheduleExceptionMock.mockReset()
+    updateScheduleExceptionMock.mockReset()
+    deleteScheduleExceptionMock.mockReset()
+    fetchColombianHolidaysMock.mockReset().mockResolvedValue({ kind: 'unavailable' })
   })
 
   it('shows a non-blank loading state, then the loaded picker', async () => {
@@ -307,5 +338,169 @@ describe('SchedulesPage', () => {
     const wrapper = await mountReady(fourBarbers, [mondayMorning])
     const results = await axe(wrapper.element, axeOptions)
     expect(results).toHaveNoViolations()
+  })
+})
+
+// --- HU-041: calendario de festivos, excepciones de jornada ---------------
+
+function holidayCalendarCheckbox(wrapper: VueWrapper): HTMLInputElement {
+  return wrapper.get('input[type="checkbox"]').element as HTMLInputElement
+}
+
+async function openExceptionCreateDialog(wrapper: VueWrapper) {
+  const button = wrapper.findAll('button').find((b) => b.text() === 'Agregar excepción')!
+  await button.trigger('click')
+  await flushPromises()
+}
+
+function exceptionCreateForm(wrapper: VueWrapper) {
+  return wrapper.get('form[name="createScheduleException"]')
+}
+
+const closedException = {
+  id: 'exc-1',
+  effectiveDate: '2026-12-08',
+  isClosed: true,
+  reason: null,
+  segments: [],
+  createdAt: '2026-08-25T15:04:05Z',
+  updatedAt: '2026-08-25T15:04:05Z',
+}
+
+describe('SchedulesPage · HU-041', () => {
+  beforeEach(() => {
+    fetchBarberSummariesMock.mockReset()
+    fetchWorkingHoursMock.mockReset()
+    fetchBarbershopTimezoneMock.mockReset().mockResolvedValue({ kind: 'unavailable' })
+    fetchHolidayCalendarMock.mockReset().mockResolvedValue({ kind: 'success', enabled: false })
+    updateHolidayCalendarMock.mockReset()
+    fetchScheduleExceptionsMock
+      .mockReset()
+      .mockResolvedValue({ kind: 'success', page: { items: [], nextCursor: null } })
+    createScheduleExceptionMock.mockReset()
+    deleteScheduleExceptionMock.mockReset()
+    fetchColombianHolidaysMock.mockReset().mockResolvedValue({ kind: 'unavailable' })
+  })
+
+  it('reflects the current holiday calendar state (CA-041-01)', async () => {
+    fetchHolidayCalendarMock.mockReset().mockResolvedValueOnce({ kind: 'success', enabled: true })
+    const wrapper = await mountReady(oneBarber, [])
+
+    expect(holidayCalendarCheckbox(wrapper).checked).toBe(true)
+  })
+
+  it('toggling the holiday calendar persists the new value (CA-041-02)', async () => {
+    const wrapper = await mountReady(oneBarber, [])
+    updateHolidayCalendarMock.mockResolvedValueOnce({ kind: 'success', enabled: true })
+
+    const checkbox = holidayCalendarCheckbox(wrapper)
+    checkbox.checked = true
+    await checkbox.dispatchEvent(new Event('change'))
+    await flushPromises()
+
+    expect(updateHolidayCalendarMock).toHaveBeenCalledWith('b-1', true)
+    expect(checkbox.checked).toBe(true)
+  })
+
+  it('a failed toggle shows a recoverable message', async () => {
+    const wrapper = await mountReady(oneBarber, [])
+    updateHolidayCalendarMock.mockResolvedValueOnce({ kind: 'network-error' })
+
+    const checkbox = holidayCalendarCheckbox(wrapper)
+    checkbox.checked = true
+    await checkbox.dispatchEvent(new Event('change'))
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('No pudimos conectar')
+  })
+
+  it('lists the exceptions of the selected barber (CA-041-04)', async () => {
+    fetchScheduleExceptionsMock.mockReset().mockResolvedValueOnce({
+      kind: 'success',
+      page: { items: [closedException], nextCursor: null },
+    })
+    const wrapper = await mountReady(oneBarber, [])
+
+    expect(wrapper.text()).toContain('2026-12-08')
+    expect(wrapper.text()).toContain('Cerrado')
+  })
+
+  it('creating a closed exception succeeds and appends it to the list', async () => {
+    const wrapper = await mountReady(oneBarber, [])
+    await openExceptionCreateDialog(wrapper)
+    await exceptionCreateForm(wrapper).get('input[name="effectiveDate"]').setValue('2026-12-08')
+
+    createScheduleExceptionMock.mockResolvedValueOnce({
+      kind: 'success',
+      exception: closedException,
+    })
+    await exceptionCreateForm(wrapper).trigger('submit')
+    await flushPromises()
+
+    expect(createScheduleExceptionMock).toHaveBeenCalledWith(
+      'b-1',
+      '2026-12-08',
+      true,
+      null,
+      [],
+      expect.any(String),
+    )
+    expect(wrapper.text()).toContain('2026-12-08')
+  })
+
+  it('a duplicate date (CA-041-05) shows a recoverable message without closing the dialog', async () => {
+    const wrapper = await mountReady(oneBarber, [])
+    await openExceptionCreateDialog(wrapper)
+    await exceptionCreateForm(wrapper).get('input[name="effectiveDate"]').setValue('2026-12-08')
+
+    createScheduleExceptionMock.mockResolvedValueOnce({ kind: 'date-conflict' })
+    await exceptionCreateForm(wrapper).trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Ya existe una excepción para esa fecha')
+  })
+
+  it('rejects an empty effective date on the client without calling the API', async () => {
+    const wrapper = await mountReady(oneBarber, [])
+    await openExceptionCreateDialog(wrapper)
+
+    await exceptionCreateForm(wrapper).trigger('submit')
+    await flushPromises()
+
+    expect(createScheduleExceptionMock).not.toHaveBeenCalled()
+  })
+
+  it('deleting an exception removes it from the list on success', async () => {
+    fetchScheduleExceptionsMock.mockReset().mockResolvedValueOnce({
+      kind: 'success',
+      page: { items: [closedException], nextCursor: null },
+    })
+    const wrapper = await mountReady(oneBarber, [])
+    deleteScheduleExceptionMock.mockResolvedValueOnce({ kind: 'success' })
+
+    const retireButton = wrapper.findAll('button').find((b) => b.text() === 'Retirar')!
+    await retireButton.trigger('click')
+    await flushPromises()
+
+    expect(deleteScheduleExceptionMock).toHaveBeenCalledWith('b-1', 'exc-1')
+    expect(wrapper.text()).not.toContain('2026-12-08')
+  })
+
+  it('shows upcoming Colombian holidays and prefills the create dialog from one (RN-BLQ-02)', async () => {
+    fetchColombianHolidaysMock.mockReset().mockResolvedValueOnce({
+      kind: 'success',
+      items: [{ date: '2026-12-25', name: 'Navidad' }],
+    })
+    const wrapper = await mountReady(oneBarber, [])
+
+    expect(wrapper.text()).toContain('Navidad')
+
+    const useButton = wrapper.findAll('button').find((b) => b.text() === 'Registrar excepción')!
+    await useButton.trigger('click')
+    await flushPromises()
+
+    const dateInput = exceptionCreateForm(wrapper).get('input[name="effectiveDate"]')
+      .element as HTMLInputElement
+    expect(dateInput.value).toBe('2026-12-25')
   })
 })

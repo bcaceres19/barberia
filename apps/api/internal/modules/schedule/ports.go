@@ -128,4 +128,69 @@ type Repository interface {
 	// found=false cubre tanto "no existía" como "ya se había retirado"
 	// (CA-040-05): reintentar la misma operación tras un 404 es seguro.
 	Delete(ctx context.Context, barbershopID, barberID, workingHourID string) (found bool, err error)
+
+	// --- HU-041: interruptor de festivos y excepciones de jornada --------
+
+	// GetHolidayCalendarEnabled lee el interruptor de calendario colombiano
+	// de festivos del barbero. found=false cubre tanto "no existe" como
+	// "es de otra barbería" (RN-TEN-01).
+	GetHolidayCalendarEnabled(ctx context.Context, barbershopID, barberID string) (enabled bool, found bool, err error)
+
+	// SetHolidayCalendarEnabled activa o desactiva el interruptor con un
+	// único `UPDATE ... RETURNING`, filtrando por id y barbershopID.
+	// Result.Found en false cubre "no existe"/"de otra barbería".
+	SetHolidayCalendarEnabled(ctx context.Context, barbershopID, barberID string, enabled bool) (HolidayCalendarResult, error)
+
+	// ListExceptions lee una página de excepciones de barberID dentro de
+	// barbershopID, ordenada por (effective_date, id). cursor es nil para
+	// la primera página; limit ya llegó clamped por Service.
+	ListExceptions(ctx context.Context, barbershopID, barberID string, cursor *ExceptionCursor, limit int) (ExceptionListResult, error)
+
+	// GetException lee una excepción por id dentro del barbero y tenant
+	// vigentes, con sus tramos. found=false cubre "no existe"/"de otro
+	// barbero"/"de otra barbería" (CA-041-06).
+	GetException(ctx context.Context, barbershopID, barberID, exceptionID string) (ScheduleException, bool, error)
+
+	// GetExceptionByDate lee la excepción (si existe) de barberID para
+	// effectiveDate, con sus tramos. Lo usa exclusivamente
+	// ResolveEffectiveDay (el puerto interno de CA-041-07): a diferencia
+	// de GetException, no la usa ningún handler HTTP.
+	GetExceptionByDate(ctx context.Context, barbershopID, barberID, effectiveDate string) (ScheduleException, bool, error)
+
+	// ListWorkingHoursForWeekday lee, sin paginar, los tramos de
+	// working_hour de barberID para un único isoWeekday, ordenados por
+	// starts_time. Lo usa exclusivamente ResolveEffectiveDay: la lista
+	// paginada de List (CA-040-01) sirve a la pantalla completa de los
+	// siete días, no a la resolución de un único día.
+	ListWorkingHoursForWeekday(ctx context.Context, barbershopID, barberID string, isoWeekday int) ([]WorkingHour, error)
+
+	// CreateException ejecuta, dentro de UNA sola InTenantTx: Begin
+	// (idempotencia), INSERT de la cabecera y de cada tramo, y Complete.
+	// input ya llegó validado por Service (CA-041-04); key y fingerprint
+	// ya fueron interpretados por la capa HTTP. Una fecha duplicada
+	// (working_hour_override_shop_barber_date_uk) o un solape entre
+	// tramos (working_hour_override_segment_no_overlap_excl) se traducen a
+	// CreateExceptionResult.Conflict, con ROLLBACK completo (incluida la
+	// reclamación de idempotencia, CA-004-06).
+	CreateException(
+		ctx context.Context,
+		barbershopID, barberID string,
+		input CreateExceptionInput,
+		key idempotency.Key,
+		fingerprint idempotency.Fingerprint,
+	) (CreateExceptionResult, error)
+
+	// UpdateException reemplaza la excepción completa (fecha, forma y
+	// tramos): borra los tramos existentes y crea los nuevos dentro de la
+	// misma transacción que el `UPDATE` de la cabecera, filtrando por id,
+	// barbershopID y barberID. Found en false cubre "no existe"/"de otro
+	// barbero"/"de otra barbería" (CA-041-06); Conflict cubre fecha
+	// duplicada o solape de tramos.
+	UpdateException(ctx context.Context, barbershopID, barberID, exceptionID string, input UpdateExceptionInput) (UpdateExceptionResult, error)
+
+	// DeleteException retira físicamente la cabecera y sus tramos (sin
+	// eliminación lógica), filtrando por id, barbershopID y barberID.
+	// found=false cubre "no existía"/"ya se había retirado" (CA-041-06):
+	// reintentar tras un 404 es seguro.
+	DeleteException(ctx context.Context, barbershopID, barberID, exceptionID string) (found bool, err error)
 }

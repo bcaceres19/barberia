@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * BaseInput - Campo de entrada base del sistema visual.
- * Tipos: text | email | password | number | tel | url | search
+ * Tipos: text | email | password | number | tel | url | search | time | date
  * Estados: default | hover | focus | invalid | disabled | readonly
  * Con label, hint, error message, leading/trailing icons
  * Accesibilidad: aria-describedby para hint/error, aria-invalid, aria-readonly,
@@ -13,7 +13,7 @@ interface Props {
   /** Valor del input (v-model) */
   modelValue?: string | number
   /** Tipo de input HTML */
-  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search' | 'time'
+  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search' | 'time' | 'date'
   /** Label asociado */
   label?: string
   /** Texto de ayuda (hint) */

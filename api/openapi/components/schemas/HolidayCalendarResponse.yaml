@@ -1,0 +1,19 @@
+# Representación canónica del interruptor de calendario colombiano de
+# festivos de un barbero (HU-041, RN-BLQ-02, CA-041-01/02): exactamente
+# enabled. La decisión es independiente por barbero; nunca por barbería
+# completa.
+type: object
+description: >
+  Estado del calendario colombiano de festivos del barbero de la ruta.
+  Desactivado (por defecto): los festivos no agregan ningún bloqueo
+  automático. Activado: un festivo queda cerrado por defecto en la
+  resolución de jornada efectiva, salvo que exista una excepción manual
+  para esa fecha.
+properties:
+  enabled:
+    type: boolean
+    description: Si el calendario colombiano de festivos está activo para este barbero.
+    examples:
+      - true
+required:
+  - enabled

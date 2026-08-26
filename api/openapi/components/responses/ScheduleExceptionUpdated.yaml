@@ -1,0 +1,21 @@
+# Respuesta 200 de PATCH
+# /private/barbers/{barberId}/schedule-exceptions/{exceptionId} (HU-041,
+# CA-041-04/05): excepción completa ya guardada, mismo `id`.
+description: Excepción con la fecha/forma/tramos ya actualizados.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/ScheduleExceptionResponse.yaml'
+    examples:
+      cerrada:
+        value:
+          id: 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+          effectiveDate: "2026-12-08"
+          isClosed: true
+          reason: "Día libre"
+          segments: []
+          createdAt: "2026-08-25T15:04:05Z"
+          updatedAt: "2026-08-25T16:10:00Z"

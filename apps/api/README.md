@@ -119,6 +119,25 @@ antes de agregar código.
   como `DEC-070`: la FK de `working_hour` hacia `barber` usa
   `ON DELETE RESTRICT`, no `CASCADE`. Ver la sección "Horario laboral
   recurrente (HU-040)" más abajo.
+- **Excepciones de jornada y festivos (HU-041)**: extiende
+  `internal/modules/schedule` con el interruptor de calendario colombiano
+  de festivos por barbero (`GET`/`PATCH .../holiday-calendar`), el CRUD de
+  excepciones de jornada por fecha (`GET`/`POST .../schedule-exceptions`,
+  `GET`/`PATCH`/`DELETE .../schedule-exceptions/{exceptionId}`, alta
+  protegida con `Idempotency-Key`) y el dato de referencia
+  `GET /api/v1/private/schedule/colombian-holidays` (calculado, algoritmo
+  de Pascua Meeus/Jones/Butcher + Ley 51 de 1983 "Ley Emiliani", sin tabla
+  ni proveedor externo). A diferencia de HU-040, el solape de tramos SÍ
+  vive en una restricción `EXCLUDE` de PostgreSQL
+  (`working_hour_override_segment_no_overlap_excl`): la fecha es fija por
+  cabecera, no una envolvente semanal recurrente, así que no hay
+  fragilidad de tramo nocturno que evitar. `CT-008`/`DEC-070` (`ON DELETE
+  RESTRICT`) aplica igual a las dos tablas nuevas. `schedule.
+  ResolveEffectiveDay` es un puerto interno (nunca expuesto por HTTP) que
+  aplica la precedencia de `CA-041-07`: excepción manual (abierta o
+  cerrada) > festivo automático (solo si el barbero activó su calendario)
+  > horario semanal de HU-040. Ver la sección "Excepciones de jornada y
+  festivos (HU-041)" más abajo.
 
 ## Requisitos
 
@@ -1322,6 +1341,86 @@ importa `staff`, ni `staff` importa `schedule`; `cmd/api` conecta ambos.
 - HTTP con dobles y contrato: `internal/modules/schedule/httpapi/contract_test.go` (contrato contra el YAML fuente; sin `handler_test.go` propio: las rutas con dos parámetros de ruta se cubren mediante el router real, mismo criterio que `catalog/httpapi/assignment_handler.go`).
 - SQL directo con el rol real: `database/tests/hu040_horario.sql` (incluida la verificación de `DEC-070` contra PostgreSQL real).
 - Router de producción con dos tenants reales: `cmd/api/schedule_integration_test.go`.
+
+## Excepciones de jornada y festivos (HU-041)
+
+Extiende `internal/modules/schedule` (mismo módulo de HU-040, mismo
+`schedule.Service`/`schedule.Repository`) sobre dos tablas nuevas de
+`20260826090000_create_working_hour_override.sql`: `working_hour_override`
+(cabecera: fecha efectiva, `is_closed`, `reason` opcional) y
+`working_hour_override_segment` (tramos de un día abierto), más
+`barber.holiday_calendar_enabled`.
+
+### El solape SÍ vive en un `EXCLUDE` de PostgreSQL, a diferencia de HU-040
+
+`working_hour_override_segment_no_overlap_excl` (`EXCLUDE USING gist`)
+rechaza dos tramos que se solapan dentro de la MISMA excepción. La
+justificación de HU-040 para mover el solape a Go (una restricción de
+exclusión sobre una envolvente semanal es frágil frente a un tramo
+nocturno) no aplica aquí: cada excepción está anclada a una fecha civil
+fija de la cabecera, no a un día de la semana que se repite, así que no
+hay envolvente que fragilizar. `UNIQUE (barbershop_id, barber_id,
+effective_date)` hace atómica la detección de fecha duplicada
+(`CA-041-05`) por el mismo motivo: sin recurrencia, la base es un
+backstop seguro sin necesitar el truco de bloquear la fila de `barber`
+que sí hizo falta en HU-040.
+
+### `UpdateException`: ROLLBACK completo si el conflicto aparece a mitad de transacción
+
+`postgres.Repository.UpdateException` hace `UPDATE` de la cabecera,
+`DELETE` de los tramos previos e `INSERT` de los nuevos dentro de LA MISMA
+transacción. Si el `INSERT` de los tramos nuevos choca contra el
+`EXCLUDE` (o el `UPDATE` de la cabecera choca contra el `UNIQUE` de
+fecha) DESPUÉS de que la cabecera o los tramos previos ya se modificaron,
+el sentinela `errExceptionConflictInternal` fuerza el `ROLLBACK` de la
+transacción COMPLETA (mismo patrón que `errOverlapConflictInternal` de
+HU-040): la excepción nunca queda a medio reemplazar (cabecera nueva,
+tramos vacíos).
+
+### `ResolveEffectiveDay`: puerto interno de precedencia (`CA-041-07`), no expuesto por HTTP
+
+Para una fecha civil concreta, en este orden: (1) una excepción manual de
+esa fecha, abierta o cerrada, prevalece siempre; (2) en su ausencia, un
+festivo colombiano (`ColombianHolidaysForYear`) bloquea el día SOLO si el
+barbero activó `holiday_calendar_enabled`; (3) en cualquier otro caso, el
+horario semanal de `working_hour` (HU-040) para el día ISO
+correspondiente. Es un puerto interno para que la disponibilidad (B4) lo
+consuma después; no crea citas ni expone disponibilidad pública por sí
+mismo.
+
+### Festivos colombianos: calculado, no una tabla ni un proveedor externo
+
+`schedule.ColombianHolidaysForYear` implementa la Ley 51 de 1983 ("Ley
+Emiliani"): dieciocho festivos por año — seis fijos que nunca se mueven,
+dos ligados a Pascua que tampoco se mueven (Jueves y Viernes Santo), y
+diez (siete fijos y tres ligados a Pascua) que se trasladan al lunes
+siguiente cuando no caen ya en lunes. La fecha de Pascua usa el algoritmo
+gregoriano anónimo (Meeus/Jones/Butcher), válido para cualquier año del
+calendario gregoriano. `GET /api/v1/private/schedule/colombian-holidays`
+expone este cálculo (parámetro `year` obligatorio) como dato de
+referencia, igual para toda barbería y todo barbero: útil para que la
+pantalla ofrezca "abrir este festivo" sin que el cliente reimplemente el
+algoritmo.
+
+### Tabla de criterios de aceptación
+
+| Criterio | Estado | Prueba o evidencia |
+| --- | --- | --- |
+| `CA-041-01`/`02` | Cumplido | `TestGetHolidayCalendar_*`, `TestSetHolidayCalendar_*`, `TestHolidayCalendarEnabled_*`, `TestSetHolidayCalendarEnabled_*`, `TestHolidayCalendar_HTTP_GetThenUpdate_PersistsToggle`. |
+| `CA-041-03` | Cumplido | `TestResolveEffectiveDay_HolidayAuto_WhenEnabledAndNoException`, `TestResolveEffectiveDay_HolidayIgnored_WhenCalendarDisabled`. |
+| `CA-041-04` | Cumplido | `TestValidateExceptionShape_*` (dominio), `TestCreateException_OverlappingSegments_ReturnsConflictAndNothingPersists`, `TestScheduleExceptions_HTTP_InvalidShape_Returns422`, `hu041_excepciones.sql`. |
+| `CA-041-05` | Cumplido | `TestCreateException_DuplicateDate_ReturnsConflict`, `TestUpdateException_ConflictWithAnotherDate_LeavesOriginalUntouched`, `TestScheduleExceptions_HTTP_DuplicateDate_Returns409`, `hu041_excepciones.sql`. |
+| `CA-041-06` | Cumplido | `TestGetException_CrossBarber_*`, `TestGetException_CrossTenant_*`, `TestUpdateException_CrossTenant_*`, `TestDeleteException_CrossTenant_*`, `TestDeleteException_ThenGet_NotFound`, `TestScheduleExceptions_HTTP_CrossTenantBarber_Returns404`, `hu041_excepciones.sql` ("CA-041-06"). |
+| `CA-041-07` | Cumplido | `TestResolveEffectiveDay_ManualClosed_PrevailsOverEverything`, `TestResolveEffectiveDay_ManualOpen_PrevailsOverHolidayAndWeekly`, `TestResolveEffectiveDay_Weekly_WhenNoExceptionAndNotHoliday`. |
+| `CA-041-08` | Parcial (backend no aplica) | Evidencia de frontend/accesibilidad documentada en `apps/web/README.md`. |
+
+### Pruebas
+
+- Dominio: `internal/modules/schedule/colombian_holidays_test.go`, `exception_domain_test.go`, `exception_service_test.go` (doble en memoria de `schedule.Repository`/`BarberPort`).
+- PostgreSQL real: `internal/modules/schedule/postgres/exception_repository_test.go`.
+- HTTP con contrato: `internal/modules/schedule/httpapi/contract_test.go` (extendido con las ocho operaciones nuevas).
+- SQL directo con el rol real: `database/tests/hu041_excepciones.sql` (incluida la verificación de `DEC-070` contra PostgreSQL real).
+- Router de producción con dos tenants reales: `cmd/api/schedule_exceptions_integration_test.go`.
 
 ## Pruebas de integración
 

@@ -1,0 +1,28 @@
+# Respuesta 201 de POST /private/barbers/{barberId}/schedule-exceptions
+# (HU-041, CA-041-04/05, RN-IDE-01). Una repetición exacta de la misma
+# Idempotency-Key con el mismo contenido reproduce esta MISMA respuesta
+# byte a byte: no crea una segunda excepción.
+description: >
+  Excepción creada. `Location` apunta al recurso individual recién creado.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+  Location:
+    $ref: '../headers/Location.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/ScheduleExceptionResponse.yaml'
+    examples:
+      diaAbierto:
+        value:
+          id: 7a1b2c3d-4e5f-4061-8273-8495a6b7c8d9
+          effectiveDate: "2026-07-20"
+          isClosed: false
+          reason: "Festivo trabajado con horario reducido"
+          segments:
+            - id: 8b2c3d4e-5f60-4172-8384-95a6b7c8d9e0
+              startsTime: "09:00"
+              durationMinutes: 180
+          createdAt: "2026-08-25T15:04:05Z"
+          updatedAt: "2026-08-25T15:04:05Z"

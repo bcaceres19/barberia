@@ -1,0 +1,31 @@
+# Tramo de una excepción de jornada abierta, tal como lo envía el cliente
+# en la creación/edición (HU-041, CA-041-04): mismo par startsTime/
+# durationMinutes que CreateWorkingHourRequest, sin isoWeekday -la fecha
+# vive en la cabecera de la excepción, no en cada tramo-.
+type: object
+description: >
+  Tramo especial dentro de una fecha excepcional abierta. Solo válido
+  cuando la cabecera declara isClosed: false; una cabecera cerrada no
+  admite tramos.
+properties:
+  startsTime:
+    type: string
+    pattern: '^([01]\d|2[0-3]):[0-5]\d$'
+    description: >
+      Hora civil de inicio del tramo, en la zona IANA de la barbería,
+      formato HH:MM de 24 horas.
+    examples:
+      - "08:00"
+  durationMinutes:
+    type: integer
+    minimum: 1
+    maximum: 1440
+    description: >
+      Duración del tramo en minutos desde startsTime. Un tramo nocturno
+      (startsTime + durationMinutes cruza medianoche) es válido (DEC-020).
+    examples:
+      - 240
+required:
+  - startsTime
+  - durationMinutes
+additionalProperties: false

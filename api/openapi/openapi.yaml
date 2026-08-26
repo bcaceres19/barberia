@@ -2,6 +2,12 @@
 # docs/06-api/estandar-openapi.md (DEC-037). No se edita el bundle generado
 # en dist/; este archivo y los que referencia son la fuente.
 #
+# HU-041 agrega paths/schedule-exceptions.yaml al tag Schedule: el
+# interruptor holiday-calendar por barbero, el CRUD de schedule-exceptions
+# (cabecera de fecha + tramos, con Idempotency-Key en el alta, RN-IDE-01),
+# y colombian-holidays (referencia calendárica calculada, Ley 51 de 1983
+# "Ley Emiliani", sin tabla ni dependencia nueva).
+#
 # HU-040 agrega el tag Schedule y las cuatro operaciones de
 # paths/schedules.yaml: listar, crear (con Idempotency-Key, RN-IDE-01, y
 # conflicto de solape/hora repetida del mismo barbero y día), consultar y
@@ -31,7 +37,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.11.0
+  version: 0.12.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -55,8 +61,9 @@ tags:
       barberos (HU-023) y su ciclo de desactivación/reactivación (HU-024).
   - name: Schedule
     description: >-
-      Horario laboral recurrente de cada barbero (HU-040); excepciones por
-      fecha/festivos y bloqueos llegan con HU-041/HU-042.
+      Horario laboral recurrente de cada barbero (HU-040), calendario
+      colombiano de festivos y excepciones de jornada por fecha (HU-041);
+      bloqueos llegan con HU-042.
 paths:
   /public/auth/login:
     $ref: './paths/public-auth.yaml#/~1public~1auth~1login'
@@ -98,6 +105,14 @@ paths:
     $ref: './paths/schedules.yaml#/~1private~1barbers~1{barberId}~1working-hours'
   /private/barbers/{barberId}/working-hours/{workingHourId}:
     $ref: './paths/schedules.yaml#/~1private~1barbers~1{barberId}~1working-hours~1{workingHourId}'
+  /private/barbers/{barberId}/holiday-calendar:
+    $ref: './paths/schedule-exceptions.yaml#/~1private~1barbers~1{barberId}~1holiday-calendar'
+  /private/barbers/{barberId}/schedule-exceptions:
+    $ref: './paths/schedule-exceptions.yaml#/~1private~1barbers~1{barberId}~1schedule-exceptions'
+  /private/barbers/{barberId}/schedule-exceptions/{exceptionId}:
+    $ref: './paths/schedule-exceptions.yaml#/~1private~1barbers~1{barberId}~1schedule-exceptions~1{exceptionId}'
+  /private/schedule/colombian-holidays:
+    $ref: './paths/schedule-exceptions.yaml#/~1private~1schedule~1colombian-holidays'
 components:
   schemas:
     Problem:

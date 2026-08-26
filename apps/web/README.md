@@ -44,9 +44,15 @@ editar y retirar un tramo con validación de campo en cliente (día/hora/
 duración) y traducción del conflicto de solape real del servidor
 (`code: "conflict"`) a un mensaje recuperable sin cerrar el diálogo. La
 pantalla indica explícitamente la zona IANA de la barbería junto a las
-horas (`CA-040-06`), nunca la del dispositivo. Ver las secciones
-siguientes. El resto de carpetas de `modules/` conserva su `index.ts` de
-marcador de responsabilidad futura.
+horas (`CA-040-06`), nunca la del dispositivo, y las **excepciones de
+jornada y festivos (HU-041)**: en la misma pantalla "Horarios", un
+interruptor de calendario de festivos colombianos por barbero, un CRUD de
+excepciones de jornada por fecha (día cerrado o abierto con tramos
+especiales, con la misma traducción de conflicto de fecha duplicada
+\-`CA-041-05`- a un mensaje recuperable) y una referencia de "Próximos
+festivos colombianos" con un atajo para prellenar la fecha del diálogo de
+alta. Ver las secciones siguientes. El resto de carpetas de `modules/`
+conserva su `index.ts` de marcador de responsabilidad futura.
 
 ## Acceso del barbero (HU-010)
 
@@ -671,6 +677,91 @@ checks de CI, que solo corren `test:unit`).
 Preparación de PostgreSQL para el E2E real: mismo procedimiento que
 "Catálogo básico de servicios (HU-022)" arriba, con
 `testdata/hu040_horario.sql` además de las testdata previas.
+
+## Excepciones de jornada y festivos (HU-041)
+
+Fuente normativa: `docs/02-requisitos/historias-usuario.md` (HU-041) y
+`docs/00-control/registro-decisiones.md` (`DEC-020`, `DEC-043`,
+`DEC-070`). Esta sección resume la API pública y las decisiones de
+implementación; no las sustituye.
+
+### Mismo módulo y misma pantalla que HU-040, tres secciones nuevas por barbero
+
+`src/modules/schedules/` gana `api/scheduleExceptionsApi.ts`,
+`model/scheduleException.ts`/`exceptionOutcome.ts` y
+`validation/exceptionValidation.ts`, todos siguiendo exactamente el
+mismo patrón que sus equivalentes de HU-040. `SchedulesPage.vue` no gana
+una pantalla nueva: al elegir un barbero, `selectBarber` dispara en
+paralelo la carga de su horario semanal (HU-040), su interruptor de
+calendario de festivos y sus excepciones de jornada. Tres secciones
+nuevas aparecen debajo de los siete días: el interruptor de calendario de
+festivos, la lista de excepciones (con alta/edición/retiro) y, si hay
+datos, la referencia de "Próximos festivos colombianos" con un botón
+"Registrar excepción" que prellena la fecha en el diálogo de alta.
+
+### Forma abierta/cerrada, tramos dinámicos
+
+`ValidateExceptionShape` en `exceptionValidation.ts` refleja la regla del
+backend: cerrada nunca admite tramos (`CA-041-04`), abierta exige al
+menos uno. Los diálogos de alta/edición modelan `isClosed` como un
+`radiogroup` de dos opciones en vez de una casilla booleana sola, para
+que la etiqueta describa el resultado ("Cerrado"/"Abierto con tramos
+especiales") en lugar de un verbo ambiguo; al pasar a "Abierto" se
+agrega automáticamente un primer tramo vacío. Los tramos son una lista
+dinámica (`Agregar tramo`/`Quitar`, mismo par `startsTime`/
+`durationMinutes` que HU-040), no un único campo fijo: una jornada de
+festivo trabajado con un solo tramo reducido y un día especial con
+varios tramos usan el mismo formulario.
+
+### El solape y la fecha duplicada del servidor son la única fuente de verdad
+
+Igual que HU-040, `exceptionValidation.ts` valida forma en cliente pero
+nunca fecha duplicada (`CA-041-05`) ni solape contra el estado ya
+persistido: un `409` con `code: "conflict"` se traduce a
+`date-conflict` (mensaje recuperable, "Ya existe una excepción para esa
+fecha" / "Ya existe otra excepción para esa fecha"), distinto del `409`
+de idempotencia (`RN-IDE-01`) que sigue el mismo criterio que
+`createWorkingHour`.
+
+### El calendario de festivos es un interruptor por barbero, no una acción con `Idempotency-Key`
+
+`updateHolidayCalendar` es un `PATCH` naturalmente repetible (mismo
+criterio que `renameBarber`/`updateWorkingHour`): no lleva clave de
+idempotencia. La casilla revierte a su valor real si la petición falla,
+sin optimismo: solo una respuesta `success` cambia el estado visible.
+
+### Festivos colombianos: un dato de referencia que no bloquea la pantalla
+
+`fetchColombianHolidays` es la única llamada del módulo con un outcome de
+un solo desenlace de error (`unavailable`, sin distinguir causas): es un
+atajo de conveniencia para prellenar una fecha, nunca una condición
+bloqueante. La pantalla filtra a fechas futuras (`>= hoy`) y omite la
+sección por completo si la consulta falla o no hay festivos próximos.
+
+### Pruebas
+
+Componente (`src/modules/schedules/pages/__tests__/SchedulesPage.test.ts`,
+sección "SchedulesPage · HU-041": interruptor de festivos reflejando su
+estado real y su edición, mensaje recuperable en un fallo de red, listado
+de excepciones, alta de una excepción cerrada, fecha duplicada sin cerrar
+el diálogo, validación de cliente sin llamar al API, retiro, festivos
+colombianos próximos con prellenado del diálogo de alta), cliente tipado
+(`src/modules/schedules/api/__tests__/scheduleExceptionsApi.test.ts`:
+mapeo por `status`/`code`, nunca `detail`) y validación
+(`src/modules/schedules/validation/__tests__/exceptionValidation.test.ts`).
+E2E escrito siguiendo el mismo patrón que `horarios.spec.ts`:
+`e2e/excepciones-festivos.spec.ts` (activar el calendario de festivos con
+persistencia real, alta cerrada y abierta con persistencia real, fecha
+duplicada rechazada sin cerrar el diálogo, editar y retirar con
+persistencia real, identificador real de otra barbería con `404` en el
+calendario de festivos). Pendiente de ejecución contra Chromium real y de
+la evidencia responsiva en `e2e/evidence/excepciones-festivos/` en los
+cinco breakpoints (no forma parte de los checks de CI, que solo corren
+`test:unit`), mismo estado que `horarios.spec.ts` (HU-040).
+
+Preparación de PostgreSQL para el E2E real: mismo procedimiento que
+"Horario laboral recurrente (HU-040)" arriba, con
+`testdata/hu041_excepciones.sql` además de las testdata previas.
 
 ## Sistema visual base (HU-009)
 

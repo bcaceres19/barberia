@@ -1,0 +1,22 @@
+# Colección paginada por cursor (docs/06-api/estandar-openapi.md §6, regla
+# 10), mismo criterio que WorkingHourListResponse.
+type: object
+description: >
+  Página de excepciones de jornada del barbero de la ruta, ordenada de
+  forma estable por fecha efectiva y luego por identificador.
+properties:
+  items:
+    type: array
+    description: Excepciones de esta página, en el orden estable del servidor.
+    items:
+      $ref: './ScheduleExceptionResponse.yaml'
+  nextCursor:
+    type: [string, "null"]
+    description: >
+      Cursor opaco para pedir la siguiente página con el parámetro `cursor`.
+      `null` cuando esta página es la última.
+    examples:
+      - eyJlZmZlY3RpdmVEYXRlIjoiMjAyNi0xMi0wOCIsImlkIjoiNmYxYTJiM2MtNGQ1ZS00ZjYwLTgxNzItODM5NGE1YjZjN2Q4In0=
+required:
+  - items
+  - nextCursor
