@@ -320,6 +320,42 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	private.Delete("/barbers/{barberId}/schedule-exceptions/{exceptionId}", deleteScheduleExceptionHandler.ServeHTTP)
 	private.Get("/schedule/colombian-holidays", listColombianHolidaysHandler.ServeHTTP)
 
+	// HU-042: bloqueos de agenda. Mismo scheduleService de HU-040/HU-041
+	// (mismo módulo, misma tabla de tenant/barbero): solo se agregan
+	// handlers y rutas nuevas.
+	listTimeBlocksHandler := schedulehttpapi.NewListTimeBlocksHandler(scheduleService)
+	getTimeBlockHandler := schedulehttpapi.NewGetTimeBlockHandler(scheduleService)
+	createTimeBlockHandler := schedulehttpapi.NewCreateTimeBlockHandler(scheduleService)
+	deleteTimeBlockHandler := schedulehttpapi.NewDeleteTimeBlockHandler(scheduleService)
+	effectiveBlocksHandler := schedulehttpapi.NewEffectiveBlocksHandler(scheduleService)
+	listTimeBlockSeriesHandler := schedulehttpapi.NewListTimeBlockSeriesHandler(scheduleService)
+	getTimeBlockSeriesHandler := schedulehttpapi.NewGetTimeBlockSeriesHandler(scheduleService)
+	createTimeBlockSeriesHandler := schedulehttpapi.NewCreateTimeBlockSeriesHandler(scheduleService)
+	updateTimeBlockSeriesHandler := schedulehttpapi.NewUpdateTimeBlockSeriesHandler(scheduleService)
+	deleteTimeBlockSeriesHandler := schedulehttpapi.NewDeleteTimeBlockSeriesHandler(scheduleService)
+	addSeriesDateHandler := schedulehttpapi.NewAddSeriesDateHandler(scheduleService)
+	removeSeriesDateHandler := schedulehttpapi.NewRemoveSeriesDateHandler(scheduleService)
+	addSeriesExceptionHandler := schedulehttpapi.NewAddSeriesExceptionHandler(scheduleService)
+	removeSeriesExceptionHandler := schedulehttpapi.NewRemoveSeriesExceptionHandler(scheduleService)
+	// /time-blocks/effective se registra ANTES de /time-blocks/{blockId}:
+	// chi resuelve el segmento literal "effective" con prioridad sobre el
+	// parámetro {blockId} sin importar el orden de registro, pero declararla
+	// primero documenta la intención para quien lea este archivo.
+	private.Get("/barbers/{barberId}/time-blocks/effective", effectiveBlocksHandler.ServeHTTP)
+	private.Get("/barbers/{barberId}/time-blocks", listTimeBlocksHandler.ServeHTTP)
+	private.Post("/barbers/{barberId}/time-blocks", createTimeBlockHandler.ServeHTTP)
+	private.Get("/barbers/{barberId}/time-blocks/{blockId}", getTimeBlockHandler.ServeHTTP)
+	private.Delete("/barbers/{barberId}/time-blocks/{blockId}", deleteTimeBlockHandler.ServeHTTP)
+	private.Get("/barbers/{barberId}/time-block-series", listTimeBlockSeriesHandler.ServeHTTP)
+	private.Post("/barbers/{barberId}/time-block-series", createTimeBlockSeriesHandler.ServeHTTP)
+	private.Get("/barbers/{barberId}/time-block-series/{seriesId}", getTimeBlockSeriesHandler.ServeHTTP)
+	private.Patch("/barbers/{barberId}/time-block-series/{seriesId}", updateTimeBlockSeriesHandler.ServeHTTP)
+	private.Delete("/barbers/{barberId}/time-block-series/{seriesId}", deleteTimeBlockSeriesHandler.ServeHTTP)
+	private.Post("/barbers/{barberId}/time-block-series/{seriesId}/dates", addSeriesDateHandler.ServeHTTP)
+	private.Delete("/barbers/{barberId}/time-block-series/{seriesId}/dates/{blockDate}", removeSeriesDateHandler.ServeHTTP)
+	private.Post("/barbers/{barberId}/time-block-series/{seriesId}/exceptions", addSeriesExceptionHandler.ServeHTTP)
+	private.Delete("/barbers/{barberId}/time-block-series/{seriesId}/exceptions/{excludedDate}", removeSeriesExceptionHandler.ServeHTTP)
+
 	// HU-008 (DEC-063-066): recuperación de acceso con código de un solo
 	// uso. sender es el adaptador dual de Meta WhatsApp Cloud API + Resend
 	// cuando hay credenciales configuradas; sin ellas (típicamente

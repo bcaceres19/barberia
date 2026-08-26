@@ -1,0 +1,24 @@
+# Excepción embebida en TimeBlockSeriesResponse: "esta instancia no"
+# (RN-BLQ-01), sin desarmar la serie.
+type: object
+description: Instancia suprimida de una serie recurrente.
+properties:
+  excludedDate:
+    type: string
+    format: date
+    examples:
+      - "2027-01-08"
+  reason:
+    type: [string, "null"]
+    maxLength: 200
+    examples:
+      - "El barbero libró ese día"
+  createdAt:
+    type: string
+    format: date-time
+    examples:
+      - "2026-08-26T15:04:05Z"
+required:
+  - excludedDate
+  - reason
+  - createdAt

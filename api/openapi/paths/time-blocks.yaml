@@ -1,0 +1,727 @@
+# Operaciones privadas de bloqueos de agenda (HU-042): bloqueo puntual,
+# definición recurrente (weekly/date_list), sus sub-recursos de fechas
+# explícitas y excepciones, y la proyección efectiva de solo lectura. No
+# mezcla con horario semanal (working-hours, HU-040) ni con excepciones de
+# jornada/festivos (schedule-exceptions, HU-041) -esas capacidades tienen su
+# propio archivo-. Crear un bloqueo o una serie NUNCA cancela, reprograma ni
+# consulta citas: la lista de citas afectadas (RN-BLQ-03) la resuelve B3/B5.
+/private/barbers/{barberId}/time-blocks:
+  get:
+    tags: [Schedule]
+    summary: Listar los bloqueos puntuales de un barbero de la barbería activa
+    description: >
+      Lista paginada por cursor de los bloqueos puntuales del barbero de la
+      ruta, ordenada por instante de inicio y luego por identificador.
+      includeDeleted=true también trae los retirados lógicamente
+      (RN-BLQ-04, auditoría). Un barberId inexistente o de otra barbería
+      responde 404 (RN-TEN-01).
+    operationId: listTimeBlocks
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-01, RN-BLQ-04, RN-DIS-05, RN-DIS-07]
+    x-decisions: [DEC-007, DEC-008, DEC-009, DEC-013, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          barbero: { value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4 }
+      - name: cursor
+        in: query
+        required: false
+        schema: { type: string }
+      - name: limit
+        in: query
+        required: false
+        schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+      - name: includeDeleted
+        in: query
+        required: false
+        description: Incluye los bloqueos retirados lógicamente (auditoría, RN-BLQ-04). Por defecto false.
+        schema: { type: boolean, default: false }
+    responses:
+      "200":
+        $ref: '../components/responses/TimeBlockListSuccess.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  post:
+    tags: [Schedule]
+    summary: Crear un bloqueo puntual para un barbero de la barbería activa
+    description: >
+      Alta de un bloqueo puntual, incluida la emergencia (RN-BLQ-01),
+      protegida con clave de idempotencia (RN-IDE-01, DEC-043). Crear un
+      bloqueo NUNCA falla por chocar con citas ya agendadas ni con otro
+      bloqueo existente (RN-BLQ-03, DEC-008): la lista de citas afectadas
+      la resuelve B3/B5, no esta operación. El tenant se deriva
+      exclusivamente de SessionCookie y el barbero de barberId; el cuerpo
+      nunca acepta barbershopId ni barberId. Un barberId inexistente o de
+      otra barbería responde 404.
+    operationId: createTimeBlock
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-01, RN-BLQ-03, RN-DIS-05, RN-DIS-07, RN-IDE-01]
+    x-decisions: [DEC-007, DEC-008, DEC-013, DEC-043, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          barbero: { value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4 }
+      - $ref: '../components/parameters/IdempotencyKey.yaml'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/CreateTimeBlockRequest.yaml'
+          examples:
+            emergencia:
+              summary: Bloqueo de emergencia, aunque haya citas en esa franja
+              value:
+                blockType: emergency
+                startsAt: "2026-07-20T15:00:00-05:00"
+                endsAt: "2026-07-20T19:00:00-05:00"
+                reason: "Urgencia médica"
+    responses:
+      "201":
+        $ref: '../components/responses/TimeBlockCreated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "409":
+        description: >
+          Conflicto de idempotencia: misma clave con otro contenido
+          (`IdempotencyConflictProblem`) u operación en curso con la misma
+          clave (`IdempotencyLockedProblem`, DEC-043). Un bloqueo puntual
+          nunca produce un 409 de negocio (RN-BLQ-03): siempre se crea.
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              contenidoDistinto:
+                value:
+                  type: /api/v1/problems/idempotency-conflict
+                  title: Conflicto de idempotencia
+                  status: 409
+                  detail: la clave de idempotencia ya se usó con un contenido distinto; usa una clave nueva
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              operacionEnCurso:
+                value:
+                  type: /api/v1/problems/idempotency-locked
+                  title: Operación en curso
+                  status: 409
+                  detail: la operación con esta clave de idempotencia todavía está en curso; reintenta en unos segundos
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-locked
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "422":
+        $ref: '../components/responses/ValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/barbers/{barberId}/time-blocks/effective:
+  get:
+    tags: [Schedule]
+    summary: Proyectar los bloqueos efectivos de un barbero en un rango de fechas
+    description: >
+      Operación interna de proyección/consulta (CA-042): expande las
+      series activas dentro de [from, to] (fechas civiles, ambos límites
+      inclusive) y lista los bloqueos puntuales vigentes que se solapan
+      con ese rango, SIN materializar instancias de una serie en
+      time_block. No es disponibilidad pública ni reserva (esas
+      capacidades viven en B4); manualBlocks y seriesOccurrences vienen
+      deliberadamente separados porque unirlos exige la zona IANA de la
+      barbería, que ningún consumidor actual necesita.
+    operationId: getEffectiveTimeBlocks
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-01, RN-BLQ-04, RN-DIS-05, RN-DIS-07]
+    x-decisions: [DEC-007, DEC-008, DEC-013, DEC-020, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          barbero: { value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4 }
+      - name: from
+        in: query
+        required: true
+        description: Primera fecha civil del rango (inclusive).
+        schema: { type: string, format: date }
+        examples:
+          desde: { value: "2027-03-01" }
+      - name: to
+        in: query
+        required: true
+        description: Última fecha civil del rango (inclusive). No puede ser anterior a from.
+        schema: { type: string, format: date }
+        examples:
+          hasta: { value: "2027-03-31" }
+    responses:
+      "200":
+        $ref: '../components/responses/EffectiveBlocksSuccess.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/barbers/{barberId}/time-blocks/{blockId}:
+  get:
+    tags: [Schedule]
+    summary: Consultar un bloqueo puntual de un barbero de la barbería activa
+    description: >
+      Lectura autenticada de un bloqueo por identificador, incluidos los
+      retirados lógicamente (RN-BLQ-04: el registro se conserva). Un
+      barberId/blockId inexistente, de otro barbero o de otra barbería
+      responde exactamente el mismo 404 (RN-TEN-01).
+    operationId: getTimeBlock
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-01, RN-BLQ-04]
+    x-decisions: [DEC-007, DEC-008, DEC-009, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          barbero: { value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4 }
+      - name: blockId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          bloqueo: { value: 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8 }
+    responses:
+      "200":
+        $ref: '../components/responses/TimeBlockSuccess.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  delete:
+    tags: [Schedule]
+    summary: Retirar lógicamente un bloqueo puntual de un barbero de la barbería activa
+    description: >
+      Retira lógicamente el bloqueo (RN-BLQ-04): fija deletedAt/deletedBy y
+      deja de restar disponibilidad, pero el registro se conserva; nunca
+      hace DELETE físico. Un barberId/blockId inexistente, de otro
+      barbero, de otra barbería, o ya retirado antes, responden el mismo
+      404 uniforme; reintentar la misma operación tras un 404 es seguro.
+    operationId: deleteTimeBlock
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-04]
+    x-decisions: [DEC-007, DEC-009, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          barbero: { value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4 }
+      - name: blockId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          bloqueo: { value: 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8 }
+    responses:
+      "204":
+        $ref: '../components/responses/TimeBlockDeleted.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/barbers/{barberId}/time-block-series:
+  get:
+    tags: [Schedule]
+    summary: Listar las series de bloqueo de un barbero de la barbería activa
+    description: >
+      Lista paginada por cursor de las definiciones recurrentes (weekly o
+      date_list) del barbero de la ruta, con sus fechas/excepciones
+      embebidas, ordenada por rango efectivo y luego por identificador.
+      includeDeleted=true también trae las retiradas lógicamente.
+    operationId: listTimeBlockSeries
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-01, RN-BLQ-04, RN-DIS-05, RN-DIS-07]
+    x-decisions: [DEC-007, DEC-008, DEC-013, DEC-019, DEC-020, DEC-024, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          barbero: { value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4 }
+      - name: cursor
+        in: query
+        required: false
+        schema: { type: string }
+      - name: limit
+        in: query
+        required: false
+        schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+      - name: includeDeleted
+        in: query
+        required: false
+        schema: { type: boolean, default: false }
+    responses:
+      "200":
+        $ref: '../components/responses/TimeBlockSeriesListSuccess.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  post:
+    tags: [Schedule]
+    summary: Crear una serie de bloqueo para un barbero de la barbería activa
+    description: >
+      Alta de una definición recurrente semanal o por lista de fechas
+      (RN-BLQ-01, DEC-020), protegida con clave de idempotencia
+      (RN-IDE-01, DEC-043). explicitDates permite crear varias fechas de
+      una serie date_list en la misma operación ("bloqueo de varios días
+      debe poder crearse en una sola operación"). Crear la serie no
+      materializa ninguna instancia en time_block. Un barberId inexistente
+      o de otra barbería responde 404.
+    operationId: createTimeBlockSeries
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-01, RN-DIS-05, RN-DIS-07, RN-IDE-01]
+    x-decisions: [DEC-007, DEC-008, DEC-013, DEC-019, DEC-020, DEC-024, DEC-043, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          barbero: { value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4 }
+      - $ref: '../components/parameters/IdempotencyKey.yaml'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/CreateTimeBlockSeriesRequest.yaml'
+          examples:
+            almuerzoSemanal:
+              summary: Almuerzo diario, lunes
+              value:
+                blockType: lunch
+                recurrenceKind: weekly
+                isoWeekday: 1
+                startsTime: "13:00"
+                durationMinutes: 60
+                effectiveFrom: "2026-01-04"
+            vacaciones:
+              summary: Lista de fechas explícitas en una sola operación
+              value:
+                blockType: vacation
+                recurrenceKind: date_list
+                startsTime: "00:00"
+                durationMinutes: 1440
+                effectiveFrom: "2027-12-01"
+                effectiveUntil: "2027-12-31"
+                explicitDates: ["2027-12-15", "2027-12-16"]
+    responses:
+      "201":
+        $ref: '../components/responses/TimeBlockSeriesCreated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "409":
+        description: >
+          Conflicto de idempotencia: misma clave con otro contenido
+          (`IdempotencyConflictProblem`) u operación en curso con la misma
+          clave (`IdempotencyLockedProblem`, DEC-043).
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              contenidoDistinto:
+                value:
+                  type: /api/v1/problems/idempotency-conflict
+                  title: Conflicto de idempotencia
+                  status: 409
+                  detail: la clave de idempotencia ya se usó con un contenido distinto; usa una clave nueva
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              operacionEnCurso:
+                value:
+                  type: /api/v1/problems/idempotency-locked
+                  title: Operación en curso
+                  status: 409
+                  detail: la operación con esta clave de idempotencia todavía está en curso; reintenta en unos segundos
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-locked
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "422":
+        $ref: '../components/responses/ValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/barbers/{barberId}/time-block-series/{seriesId}:
+  get:
+    tags: [Schedule]
+    summary: Consultar una serie de bloqueo de un barbero de la barbería activa
+    description: >
+      Lectura autenticada de una serie por identificador, con sus
+      fechas/excepciones, incluidas las retiradas lógicamente. Un
+      barberId/seriesId inexistente, de otro barbero o de otra barbería
+      responde el mismo 404.
+    operationId: getTimeBlockSeries
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-01, RN-BLQ-04]
+    x-decisions: [DEC-007, DEC-008, DEC-019, DEC-020, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          barbero: { value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4 }
+      - name: seriesId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          serie: { value: 7a1b2c3d-4e5f-4061-8273-8495a6b7c8d9 }
+    responses:
+      "200":
+        $ref: '../components/responses/TimeBlockSeriesSuccess.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  patch:
+    tags: [Schedule]
+    summary: Editar una serie de bloqueo de un barbero de la barbería activa
+    description: >
+      Edita una recurrencia distinguiendo "esta y las siguientes" o "toda
+      la serie" (RN-BLQ-01; "esta instancia" se resuelve con el
+      sub-recurso de excepciones). scope=whole reemplaza los campos
+      editables de la cabecera completa. scope=this_and_following trunca
+      la serie original en effectiveDate-1 día y crea una serie NUEVA
+      desde effectiveDate con los campos nuevos -el cuerpo de la respuesta
+      es esa serie nueva, no la original truncada-; solo se admite sobre
+      una serie weekly. Un barberId/seriesId inexistente, de otro barbero,
+      de otra barbería, o ya retirada, responde 404.
+    operationId: updateTimeBlockSeries
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-01, RN-BLQ-04, RN-DIS-05, RN-DIS-07]
+    x-decisions: [DEC-007, DEC-008, DEC-019, DEC-020, DEC-024, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          barbero: { value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4 }
+      - name: seriesId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          serie: { value: 7a1b2c3d-4e5f-4061-8273-8495a6b7c8d9 }
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/UpdateTimeBlockSeriesRequest.yaml'
+          examples:
+            todaLaSerie:
+              summary: scope=whole
+              value:
+                scope: whole
+                blockType: lunch
+                startsTime: "13:30"
+                durationMinutes: 45
+                effectiveFrom: "2026-01-04"
+            estaYLasSiguientes:
+              summary: scope=this_and_following
+              value:
+                scope: this_and_following
+                effectiveDate: "2026-06-01"
+                blockType: lunch
+                startsTime: "14:00"
+                durationMinutes: 30
+                effectiveFrom: "2026-06-01"
+    responses:
+      "200":
+        $ref: '../components/responses/TimeBlockSeriesUpdated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "422":
+        $ref: '../components/responses/ValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  delete:
+    tags: [Schedule]
+    summary: Retirar lógicamente una serie de bloqueo de un barbero de la barbería activa
+    description: >
+      Retira lógicamente la cabecera completa (RN-BLQ-04). No borra sus
+      fechas/excepciones (DEC-070: RESTRICT, nunca cascada). Un
+      barberId/seriesId inexistente, de otro barbero, de otra barbería, o
+      ya retirada antes, responden el mismo 404; reintentar tras un 404 es
+      seguro.
+    operationId: deleteTimeBlockSeries
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-04]
+    x-decisions: [DEC-007, DEC-009, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          barbero: { value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4 }
+      - name: seriesId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          serie: { value: 7a1b2c3d-4e5f-4061-8273-8495a6b7c8d9 }
+    responses:
+      "204":
+        $ref: '../components/responses/TimeBlockSeriesDeleted.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/barbers/{barberId}/time-block-series/{seriesId}/dates:
+  post:
+    tags: [Schedule]
+    summary: Agregar una fecha explícita a una serie date_list
+    description: >
+      Agrega una fecha explícita dentro del rango vigente de una serie
+      date_list. Una fecha ya registrada, fuera de rango, o sobre una
+      serie weekly, responde 409/422 sin crear nada. Sin protocolo de
+      idempotencia: un duplicado ya responde de forma determinista con
+      409, sin efecto duplicado.
+    operationId: addTimeBlockSeriesDate
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-01]
+    x-decisions: [DEC-007, DEC-019, DEC-020, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          barbero: { value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4 }
+      - name: seriesId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          serie: { value: 7a1b2c3d-4e5f-4061-8273-8495a6b7c8d9 }
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/AddSeriesDateRequest.yaml'
+          examples:
+            fecha:
+              value:
+                blockDate: "2027-12-20"
+    responses:
+      "204":
+        $ref: '../components/responses/SeriesDateAdded.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "409":
+        $ref: '../components/responses/SeriesDateConflict.yaml'
+      "422":
+        $ref: '../components/responses/ValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/barbers/{barberId}/time-block-series/{seriesId}/dates/{blockDate}:
+  delete:
+    tags: [Schedule]
+    summary: Retirar una fecha explícita de una serie date_list
+    description: >
+      Retiro físico (fila hija sin ciclo de vida propio, análoga a un
+      tramo de excepción de HU-041). Una fecha inexistente, ya retirada
+      antes, o de otra serie/barbero/barbería, responde el mismo 404;
+      reintentar tras un 404 es seguro.
+    operationId: removeTimeBlockSeriesDate
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-01]
+    x-decisions: [DEC-007, DEC-019, DEC-020, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          barbero: { value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4 }
+      - name: seriesId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          serie: { value: 7a1b2c3d-4e5f-4061-8273-8495a6b7c8d9 }
+      - name: blockDate
+        in: path
+        required: true
+        schema: { type: string, format: date }
+        examples:
+          fecha: { value: "2027-12-15" }
+    responses:
+      "204":
+        $ref: '../components/responses/SeriesDateRemoved.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/barbers/{barberId}/time-block-series/{seriesId}/exceptions:
+  post:
+    tags: [Schedule]
+    summary: Suprimir una instancia puntual de una serie ("esta instancia no")
+    description: >
+      Agrega una excepción a cualquier serie (weekly o date_list): la
+      instancia de esa fecha deja de proyectarse sin desarmar la serie
+      (RN-BLQ-01). Una fecha ya excepcionada responde 409 sin crear nada.
+      Sin protocolo de idempotencia (mismo criterio que
+      addTimeBlockSeriesDate).
+    operationId: addTimeBlockSeriesException
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-01]
+    x-decisions: [DEC-007, DEC-019, DEC-020, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          barbero: { value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4 }
+      - name: seriesId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          serie: { value: 7a1b2c3d-4e5f-4061-8273-8495a6b7c8d9 }
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/AddSeriesExceptionRequest.yaml'
+          examples:
+            excepcion:
+              value:
+                excludedDate: "2027-01-08"
+                reason: "El barbero libró ese día"
+    responses:
+      "204":
+        $ref: '../components/responses/SeriesExceptionAdded.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "409":
+        $ref: '../components/responses/SeriesExceptionConflict.yaml'
+      "422":
+        $ref: '../components/responses/ValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/barbers/{barberId}/time-block-series/{seriesId}/exceptions/{excludedDate}:
+  delete:
+    tags: [Schedule]
+    summary: Retirar una excepción de una serie ("restaura" la instancia)
+    description: >
+      Retiro físico de la excepción: la instancia vuelve a proyectarse. Una
+      excepción inexistente, ya retirada antes, o de otra serie/barbero/
+      barbería, responde el mismo 404; reintentar tras un 404 es seguro.
+    operationId: removeTimeBlockSeriesException
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-BLQ-01]
+    x-decisions: [DEC-007, DEC-019, DEC-020, DEC-070]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          barbero: { value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4 }
+      - name: seriesId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        examples:
+          serie: { value: 7a1b2c3d-4e5f-4061-8273-8495a6b7c8d9 }
+      - name: excludedDate
+        in: path
+        required: true
+        schema: { type: string, format: date }
+        examples:
+          fecha: { value: "2027-01-08" }
+    responses:
+      "204":
+        $ref: '../components/responses/SeriesExceptionRemoved.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

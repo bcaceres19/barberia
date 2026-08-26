@@ -1,0 +1,58 @@
+# Cuerpo de PATCH /private/barbers/{barberId}/time-block-series/{seriesId}
+# (RN-BLQ-01: "esta y las siguientes" o "toda la serie"; "esta instancia" se
+# resuelve con el sub-recurso de excepciones). Cerrado.
+type: object
+description: >
+  scope=whole reemplaza blockType/startsTime/durationMinutes/
+  effectiveFrom/effectiveUntil/reason de la cabecera completa.
+  scope=this_and_following trunca la serie original en effectiveDate-1 día
+  y crea una serie nueva desde effectiveDate con estos mismos campos; solo
+  se admite sobre una serie weekly (una date_list ya expone cada fecha como
+  un recurso individual). effectiveDate es obligatorio solo con
+  this_and_following.
+properties:
+  scope:
+    type: string
+    enum: [whole, this_and_following]
+    examples:
+      - whole
+  blockType:
+    type: string
+    enum: [break, lunch, unavailable, day_off, holiday, vacation, emergency]
+    examples:
+      - lunch
+  startsTime:
+    type: string
+    pattern: '^([01]\d|2[0-3]):[0-5]\d$'
+    examples:
+      - "13:30"
+  durationMinutes:
+    type: integer
+    minimum: 1
+    maximum: 1440
+    examples:
+      - 45
+  effectiveFrom:
+    type: string
+    format: date
+    examples:
+      - "2026-01-04"
+  effectiveUntil:
+    type: [string, "null"]
+    format: date
+  reason:
+    type: [string, "null"]
+    maxLength: 200
+  effectiveDate:
+    type: string
+    format: date
+    description: Fecha de corte, obligatoria solo cuando scope es this_and_following.
+    examples:
+      - "2026-06-01"
+required:
+  - scope
+  - blockType
+  - startsTime
+  - durationMinutes
+  - effectiveFrom
+additionalProperties: false

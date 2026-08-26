@@ -1,0 +1,23 @@
+# Respuesta de GET /private/barbers/{barberId}/time-blocks/effective: la
+# operación interna de proyección que HU-042 expone para que B3/B4 (y la
+# propia pantalla) lean el efecto combinado sin recalcular la expansión de
+# series. manualBlocks y seriesOccurrences vienen deliberadamente
+# separados: unirlos en una sola línea de tiempo exige la zona IANA de la
+# barbería, que ningún consumidor actual necesita.
+type: object
+description: >
+  Bloqueos puntuales vigentes y ocurrencias de serie dentro del rango
+  [from, to] solicitado (ambos límites inclusive, fechas civiles). No es
+  disponibilidad pública ni reserva: esas capacidades viven en B4.
+properties:
+  manualBlocks:
+    type: array
+    items:
+      $ref: './TimeBlockResponse.yaml'
+  seriesOccurrences:
+    type: array
+    items:
+      $ref: './SeriesOccurrenceResponse.yaml'
+required:
+  - manualBlocks
+  - seriesOccurrences

@@ -1,0 +1,14 @@
+# Página paginada por cursor de GET /private/barbers/{barberId}/time-blocks.
+type: object
+description: Página de bloqueos puntuales del barbero de la ruta.
+properties:
+  items:
+    type: array
+    items:
+      $ref: './TimeBlockResponse.yaml'
+  nextCursor:
+    type: [string, "null"]
+    description: Cursor opaco de la página siguiente, o null si esta es la última.
+required:
+  - items
+  - nextCursor

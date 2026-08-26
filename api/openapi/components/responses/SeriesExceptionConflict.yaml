@@ -1,0 +1,21 @@
+# 409 de POST .../time-block-series/{seriesId}/exceptions: ya existe una
+# excepción para esa fecha en esa serie. Conflicto de negocio, sin
+# protocolo de idempotencia (mismo criterio que SeriesDateConflict.yaml).
+description: Ya existe una excepción para esa fecha en la serie. No se persistió ningún cambio.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      excepcionDuplicada:
+        value:
+          type: /api/v1/problems/conflict
+          title: Conflicto
+          status: 409
+          detail: ya existe una excepción para esa fecha en la serie
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: conflict
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

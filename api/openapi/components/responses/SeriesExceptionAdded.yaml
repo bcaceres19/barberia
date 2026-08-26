@@ -1,0 +1,5 @@
+# Respuesta 204 de POST .../time-block-series/{seriesId}/exceptions.
+description: Excepción agregada a la serie ("esta instancia no"). Sin cuerpo.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'

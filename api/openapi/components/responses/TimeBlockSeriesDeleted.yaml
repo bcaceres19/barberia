@@ -1,0 +1,8 @@
+# Respuesta 204 de
+# DELETE /private/barbers/{barberId}/time-block-series/{seriesId}
+# (RN-BLQ-04): retiro lógico de la cabecera completa. No borra sus
+# fechas/excepciones (DEC-070: RESTRICT, nunca cascada).
+description: Serie retirada lógicamente. Sin cuerpo.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'

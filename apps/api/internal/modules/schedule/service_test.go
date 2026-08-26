@@ -3,6 +3,7 @@ package schedule_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"system-barbershop/internal/modules/schedule"
 	"system-barbershop/internal/platform/apperr"
@@ -35,6 +36,25 @@ type fakeRepository struct {
 	updateExceptionFn            func(ctx context.Context, barbershopID, barberID, exceptionID string, input schedule.UpdateExceptionInput) (schedule.UpdateExceptionResult, error)
 	deleteExceptionFn            func(ctx context.Context, barbershopID, barberID, exceptionID string) (bool, error)
 	listWorkingHoursForWeekdayFn func(ctx context.Context, barbershopID, barberID string, isoWeekday int) ([]schedule.WorkingHour, error)
+
+	// HU-042: bloqueos de agenda. Implementadas en block_service_test.go
+	// para mantener este archivo enfocado en HU-040/HU-041.
+	listBlocksFn                    func(ctx context.Context, barbershopID, barberID string, cursor *schedule.BlockCursor, limit int, includeDeleted bool) (schedule.BlockListResult, error)
+	getBlockFn                      func(ctx context.Context, barbershopID, barberID, blockID string) (schedule.TimeBlock, bool, error)
+	createBlockFn                   func(ctx context.Context, barbershopID, barberID string, input schedule.CreateBlockInput, key idempotency.Key, fingerprint idempotency.Fingerprint) (schedule.CreateBlockResult, error)
+	deleteBlockFn                   func(ctx context.Context, barbershopID, barberID, blockID, actorID string) (bool, error)
+	listSeriesFn                    func(ctx context.Context, barbershopID, barberID string, cursor *schedule.SeriesCursor, limit int, includeDeleted bool) (schedule.SeriesListResult, error)
+	getSeriesFn                     func(ctx context.Context, barbershopID, barberID, seriesID string) (schedule.TimeBlockSeries, bool, error)
+	createSeriesFn                  func(ctx context.Context, barbershopID, barberID string, input schedule.CreateSeriesInput, key idempotency.Key, fingerprint idempotency.Fingerprint) (schedule.CreateSeriesResult, error)
+	updateSeriesWholeFn             func(ctx context.Context, barbershopID, barberID, seriesID string, input schedule.UpdateSeriesInput) (schedule.UpdateSeriesResult, error)
+	splitSeriesFromFn               func(ctx context.Context, barbershopID, barberID, seriesID, effectiveDate string, input schedule.UpdateSeriesInput) (schedule.UpdateSeriesResult, error)
+	deleteSeriesFn                  func(ctx context.Context, barbershopID, barberID, seriesID string) (bool, error)
+	addSeriesDateFn                 func(ctx context.Context, barbershopID, barberID, seriesID, blockDate string) (bool, bool, error)
+	removeSeriesDateFn              func(ctx context.Context, barbershopID, barberID, seriesID, blockDate string) (bool, error)
+	addSeriesExceptionFn            func(ctx context.Context, barbershopID, barberID, seriesID, excludedDate string, reason *string) (bool, bool, error)
+	removeSeriesExceptionFn         func(ctx context.Context, barbershopID, barberID, seriesID, excludedDate string) (bool, error)
+	listEffectiveManualBlocksFn     func(ctx context.Context, barbershopID, barberID string, from, until time.Time) ([]schedule.TimeBlock, error)
+	listActiveSeriesForProjectionFn func(ctx context.Context, barbershopID, barberID, from, until string) ([]schedule.TimeBlockSeries, error)
 }
 
 func (f *fakeRepository) List(ctx context.Context, barbershopID, barberID string, cursor *schedule.Cursor, limit int) (schedule.ListResult, error) {

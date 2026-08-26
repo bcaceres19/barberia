@@ -1,0 +1,14 @@
+# Página paginada por cursor de
+# GET /private/barbers/{barberId}/time-block-series.
+type: object
+description: Página de series recurrentes del barbero de la ruta.
+properties:
+  items:
+    type: array
+    items:
+      $ref: './TimeBlockSeriesResponse.yaml'
+  nextCursor:
+    type: [string, "null"]
+required:
+  - items
+  - nextCursor

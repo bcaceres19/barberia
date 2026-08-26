@@ -1,0 +1,11 @@
+# Fecha explícita embebida en TimeBlockSeriesResponse (serie date_list).
+type: object
+description: Fecha explícita de una serie date_list.
+properties:
+  blockDate:
+    type: string
+    format: date
+    examples:
+      - "2026-12-15"
+required:
+  - blockDate
