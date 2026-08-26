@@ -2,6 +2,16 @@
 # docs/06-api/estandar-openapi.md (DEC-037). No se edita el bundle generado
 # en dist/; este archivo y los que referencia son la fuente.
 #
+# HU-042 agrega paths/time-blocks.yaml al tag Schedule: bloqueo puntual
+# (incluida la emergencia, RN-BLQ-03), definición recurrente weekly/date_list
+# con sus sub-recursos de fechas explícitas y excepciones ("esta instancia
+# no"), y la proyección efectiva de solo lectura (GET .../time-blocks/
+# effective). Los altas de bloqueo/serie llevan Idempotency-Key (RN-IDE-01);
+# los sub-recursos de fechas/excepciones no, porque un duplicado ya responde
+# de forma determinista con 409 sin efecto duplicado. Crear un bloqueo o una
+# serie NUNCA cancela, reprograma ni consulta citas (RN-BLQ-03): la lista de
+# citas afectadas queda para B3/B5.
+#
 # HU-041 agrega paths/schedule-exceptions.yaml al tag Schedule: el
 # interruptor holiday-calendar por barbero, el CRUD de schedule-exceptions
 # (cabecera de fecha + tramos, con Idempotency-Key en el alta, RN-IDE-01),
@@ -62,8 +72,8 @@ tags:
   - name: Schedule
     description: >-
       Horario laboral recurrente de cada barbero (HU-040), calendario
-      colombiano de festivos y excepciones de jornada por fecha (HU-041);
-      bloqueos llegan con HU-042.
+      colombiano de festivos y excepciones de jornada por fecha (HU-041), y
+      bloqueos de agenda puntuales y recurrentes (HU-042).
 paths:
   /public/auth/login:
     $ref: './paths/public-auth.yaml#/~1public~1auth~1login'
@@ -113,6 +123,24 @@ paths:
     $ref: './paths/schedule-exceptions.yaml#/~1private~1barbers~1{barberId}~1schedule-exceptions~1{exceptionId}'
   /private/schedule/colombian-holidays:
     $ref: './paths/schedule-exceptions.yaml#/~1private~1schedule~1colombian-holidays'
+  /private/barbers/{barberId}/time-blocks:
+    $ref: './paths/time-blocks.yaml#/~1private~1barbers~1{barberId}~1time-blocks'
+  /private/barbers/{barberId}/time-blocks/effective:
+    $ref: './paths/time-blocks.yaml#/~1private~1barbers~1{barberId}~1time-blocks~1effective'
+  /private/barbers/{barberId}/time-blocks/{blockId}:
+    $ref: './paths/time-blocks.yaml#/~1private~1barbers~1{barberId}~1time-blocks~1{blockId}'
+  /private/barbers/{barberId}/time-block-series:
+    $ref: './paths/time-blocks.yaml#/~1private~1barbers~1{barberId}~1time-block-series'
+  /private/barbers/{barberId}/time-block-series/{seriesId}:
+    $ref: './paths/time-blocks.yaml#/~1private~1barbers~1{barberId}~1time-block-series~1{seriesId}'
+  /private/barbers/{barberId}/time-block-series/{seriesId}/dates:
+    $ref: './paths/time-blocks.yaml#/~1private~1barbers~1{barberId}~1time-block-series~1{seriesId}~1dates'
+  /private/barbers/{barberId}/time-block-series/{seriesId}/dates/{blockDate}:
+    $ref: './paths/time-blocks.yaml#/~1private~1barbers~1{barberId}~1time-block-series~1{seriesId}~1dates~1{blockDate}'
+  /private/barbers/{barberId}/time-block-series/{seriesId}/exceptions:
+    $ref: './paths/time-blocks.yaml#/~1private~1barbers~1{barberId}~1time-block-series~1{seriesId}~1exceptions'
+  /private/barbers/{barberId}/time-block-series/{seriesId}/exceptions/{excludedDate}:
+    $ref: './paths/time-blocks.yaml#/~1private~1barbers~1{barberId}~1time-block-series~1{seriesId}~1exceptions~1{excludedDate}'
 components:
   schemas:
     Problem:

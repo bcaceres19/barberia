@@ -1,0 +1,8 @@
+# Respuesta 204 de DELETE /private/barbers/{barberId}/time-blocks/{blockId}
+# (RN-BLQ-04): retiro lógico, nunca físico. El registro sigue existiendo
+# (GET .../time-blocks/{blockId} lo sigue devolviendo con deletedAt fijado);
+# reintentar tras este 204 responde 404 (CA-042).
+description: Bloqueo retirado lógicamente. Sin cuerpo.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'

@@ -1,0 +1,62 @@
+# Cuerpo de POST /private/barbers/{barberId}/time-block-series (DEC-020).
+# Cerrado: el handler rechaza cualquier campo desconocido.
+type: object
+description: >
+  Alta de una definición recurrente semanal o por lista de fechas.
+  isoWeekday es obligatorio cuando recurrenceKind es weekly y se rechaza en
+  date_list. explicitDates solo se admite en date_list y permite crear
+  varias fechas en una sola operación (RN-BLQ-01).
+properties:
+  blockType:
+    type: string
+    enum: [break, lunch, unavailable, day_off, holiday, vacation, emergency]
+    examples:
+      - lunch
+  recurrenceKind:
+    type: string
+    enum: [weekly, date_list]
+    examples:
+      - weekly
+  isoWeekday:
+    type: [integer, "null"]
+    minimum: 1
+    maximum: 7
+    examples:
+      - 1
+  startsTime:
+    type: string
+    pattern: '^([01]\d|2[0-3]):[0-5]\d$'
+    examples:
+      - "13:00"
+  durationMinutes:
+    type: integer
+    minimum: 1
+    maximum: 1440
+    examples:
+      - 60
+  effectiveFrom:
+    type: string
+    format: date
+    examples:
+      - "2026-01-04"
+  effectiveUntil:
+    type: [string, "null"]
+    format: date
+  reason:
+    type: [string, "null"]
+    maxLength: 200
+  explicitDates:
+    type: array
+    description: Fechas explícitas iniciales (solo date_list); vacío u omitido en weekly.
+    items:
+      type: string
+      format: date
+    examples:
+      - ["2026-12-15", "2026-12-16"]
+required:
+  - blockType
+  - recurrenceKind
+  - startsTime
+  - durationMinutes
+  - effectiveFrom
+additionalProperties: false

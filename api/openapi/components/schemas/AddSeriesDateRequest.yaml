@@ -1,0 +1,12 @@
+# Cuerpo de POST .../time-block-series/{seriesId}/dates. Cerrado.
+type: object
+description: Agrega una fecha explícita a una serie date_list, dentro de su rango vigente.
+properties:
+  blockDate:
+    type: string
+    format: date
+    examples:
+      - "2026-12-20"
+required:
+  - blockDate
+additionalProperties: false

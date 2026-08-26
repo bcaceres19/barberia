@@ -1,0 +1,37 @@
+# Ocurrencia expandida de una serie dentro del rango consultado por
+# GET .../time-blocks/effective (civil: fecha + hora local de la
+# barbería). Deliberadamente sin instante absoluto: ver
+# EffectiveBlocksResponse.
+type: object
+description: Instancia expandida de una definición recurrente dentro del rango solicitado.
+properties:
+  seriesId:
+    type: string
+    format: uuid
+  blockType:
+    type: string
+    enum: [break, lunch, unavailable, day_off, holiday, vacation, emergency]
+  date:
+    type: string
+    format: date
+    examples:
+      - "2026-01-05"
+  startsTime:
+    type: string
+    pattern: '^([01]\d|2[0-3]):[0-5]\d$'
+    examples:
+      - "13:00"
+  durationMinutes:
+    type: integer
+    minimum: 1
+    maximum: 1440
+  reason:
+    type: [string, "null"]
+    maxLength: 200
+required:
+  - seriesId
+  - blockType
+  - date
+  - startsTime
+  - durationMinutes
+  - reason

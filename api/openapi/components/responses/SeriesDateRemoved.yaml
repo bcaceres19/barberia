@@ -1,0 +1,7 @@
+# Respuesta 204 de DELETE .../time-block-series/{seriesId}/dates/{blockDate}.
+# Retiro físico (fila hija sin ciclo de vida propio); reintentar tras este
+# 204 responde 404.
+description: Fecha explícita retirada de la serie. Sin cuerpo.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'

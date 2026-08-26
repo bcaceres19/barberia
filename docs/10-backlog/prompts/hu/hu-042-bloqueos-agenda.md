@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-042-v1"
 version: "1.0"
 kind: "hu"
-status: "draft"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -13,17 +13,18 @@ related_hu:
   - "HU-040"
   - "HU-041"
   - "HU-060"
-issue: "pending"
-issue_url: null
+issue: 98
+issue_url: "https://github.com/bcaceres19/barberia/issues/98"
 suggested_issue_title: "feat(schedule): implementar HU-042 bloqueos de agenda"
-branch: null
-pr: null
-pr_url: null
+branch: "feat/98-hu042-bloqueos-agenda"
+pr: 99
+pr_url: "https://github.com/bcaceres19/barberia/pull/99"
 depends_on:
-  - "HU-040 y HU-041 integradas en main"
-  - "Criterio de salida de B1 cumplido; HU-020–HU-024 integradas en main"
-  - "CT-008 resuelta mediante un DEC-* antes de crear la migración"
-  - "Issue real de HU-042 creado y enlazado antes de pasar a ready o ejecutar"
+  - "HU-040 integrada en main (PR #93) — cumplido"
+  - "HU-041 integrada en main (PR #96) — cumplido"
+  - "Criterio de salida de B1 cumplido; HU-020–HU-024 integradas en main — cumplido"
+  - "CT-008 resuelta mediante DEC-070 (FK en ON DELETE RESTRICT) — cumplido"
+  - "Issue real de HU-042 creado y enlazado antes de pasar a ready o ejecutar — cumplido (#98)"
 rules:
   - "RN-TEN-01"
   - "RN-BLQ-01"
@@ -94,7 +95,7 @@ source_docs:
   - "apps/web/README.md"
   - "apps/web/src/modules/schedules"
 created_at: "2026-08-25"
-updated_at: "2026-08-25"
+updated_at: "2026-08-26"
 supersedes: null
 superseded_by: null
 ---
@@ -103,7 +104,7 @@ superseded_by: null
 
 ## Instrucción para el agente
 
-Este prompt permanece en draft: no existe issue real y CT-008 sigue abierta. No lo ejecutes ni inventes una resolución para las FK del modelo de referencia. La parte de impacto sobre citas se completa con la capacidad dueña de B3; esta HU no crea una tabla appointment parcial ni simula citas.
+Issue real #98 creado y rama `feat/98-hu042-bloqueos-agenda` abierta desde `main` el 2026-08-26; `CT-008` está resuelta por `DEC-070` (FK en `ON DELETE RESTRICT`), `HU-040` y `HU-041` están integradas en `main`. La parte de impacto sobre citas se completa con la capacidad dueña de B3; esta HU no crea una tabla appointment parcial ni simula citas.
 
 ## Objetivo
 
@@ -207,6 +208,23 @@ graphify update .
 ~~~
 
 Entrega Criterio | Estado | Prueba o evidencia para CA-042-01–CA-042-08, más una fila separada que indique qué parte de RN-BLQ-03 queda explícitamente para B3/B5.
+
+### Evidencia real de esta ejecución (2026-08-26)
+
+| Área | Estado | Evidencia |
+| --- | --- | --- |
+| Migración (`time_block`, `time_block_series`, `..._date`, `..._exception`) | Completo | `20260826100000_create_time_block.sql`; `atlas migrate hash`/`validate`/`apply` (dos veces, "No migration files to execute") contra PostgreSQL 14 real, desde vacío, con Atlas CLI v1.3.0 |
+| RLS/grants/CHECK/disparador/DEC-070 | Completo | `database/tests/hu042_bloqueos.sql`, ejecutado contra PostgreSQL real con el rol `barberia_app` |
+| Dominio y servicio Go (validación, idempotencia, expansión de series, `this_and_following`) | Completo | `block_domain.go`/`block_service.go` + `block_domain_test.go`/`block_service_test.go` (dobles, sin PostgreSQL) |
+| Repositorio Postgres (idempotencia real, retiro lógico, `SplitSeriesFrom`, proyección efectiva) | Completo | `block_repository_test.go` contra PostgreSQL real (13 pruebas) |
+| Contrato HTTP (`time-blocks`/`time-block-series` y sub-recursos) | Completo | `paths/time-blocks.yaml` + esquemas/respuestas; `pnpm run openapi:lint`/`openapi:bundle` verdes |
+| HTTP/cmd de composición | Completo | `block_handler.go`, rutas en `main.go`, `schedule_blocks_integration_test.go` contra el router real y PostgreSQL real (4 pruebas: journey de bloqueo, cross-tenant, journey de serie con `this_and_following`, `date_list` con fechas/excepciones) |
+| `go build`/`go vet`/`gofmt`/`go test -race` | Verde | Ejecutado contra el módulo completo; dos fallos preexistentes en `cmd/api` (`TestRecovery_System_*`, HU-008) no relacionados con esta HU, reproducibles en `main` sin tocar `schedule` (mensaje propio: "contención de fixture entre paquetes de prueba") |
+| Frontend Vue | **Parcial** | `BlocksPage.vue` cubre alta/listado/retiro lógico de bloqueos puntuales y de series `weekly`, con conversión de hora civil↔instante verificada por prueba real (`civilTime.test.ts`, incluye DST). `pnpm run lint`/`typecheck`/`format`/`test:unit` (527 pruebas) y `build` verdes. **Sin pantalla todavía**: fechas explícitas de una serie `date_list`, excepciones ("esta instancia no") y edición de serie (`scope=whole`/`this_and_following`) — el backend ya las expone completas y probadas, falta wiring de UI |
+| `pnpm run test:e2e` (Playwright) / axe-core en navegador real / responsive 320–1280px | **No ejecutado en esta sesión** | No se levantó un navegador real; queda como seguimiento explícito, mismo criterio que `CA-040-08`/`CA-041-08` |
+| `govulncheck` | No ejecutado localmente | Lo cubre el job `go` de CI |
+
+RN-BLQ-03 (lista de citas afectadas): esta HU no consulta `appointment` en ningún punto (ni en el dominio, ni en el repositorio, ni en el contrato); queda enteramente para B3/B5, como exige el alcance.
 
 ## Git y PR
 

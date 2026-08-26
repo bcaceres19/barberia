@@ -1,0 +1,22 @@
+# 409 de POST .../time-block-series/{seriesId}/dates: la fecha ya está
+# registrada en esa serie. Conflicto de negocio, sin protocolo de
+# idempotencia (esta operación no exige Idempotency-Key: un duplicado ya
+# responde de forma determinista con este 409, sin efecto duplicado).
+description: Esa fecha ya está registrada en la serie. No se persistió ningún cambio.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      fechaDuplicada:
+        value:
+          type: /api/v1/problems/conflict
+          title: Conflicto
+          status: 409
+          detail: esa fecha ya está registrada en la serie
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: conflict
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

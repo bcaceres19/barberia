@@ -1,0 +1,8 @@
+# Respuesta 204 de
+# DELETE .../time-block-series/{seriesId}/exceptions/{excludedDate}:
+# "restaura" la instancia suprimida. Retiro físico; reintentar tras este
+# 204 responde 404.
+description: Excepción retirada; la instancia vuelve a proyectarse. Sin cuerpo.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'

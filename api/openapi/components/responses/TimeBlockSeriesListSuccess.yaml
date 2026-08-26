@@ -1,0 +1,32 @@
+# Respuesta 200 de GET /private/barbers/{barberId}/time-block-series.
+description: Página de series recurrentes del barbero de la ruta.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/TimeBlockSeriesListResponse.yaml'
+    examples:
+      unaSerie:
+        value:
+          items:
+            - id: 7a1b2c3d-4e5f-4061-8273-8495a6b7c8d9
+              blockType: lunch
+              recurrenceKind: weekly
+              isoWeekday: 1
+              startsTime: "13:00"
+              durationMinutes: 60
+              effectiveFrom: "2026-01-04"
+              effectiveUntil: null
+              reason: null
+              deletedAt: null
+              createdAt: "2026-08-26T15:04:05Z"
+              updatedAt: "2026-08-26T15:04:05Z"
+              dates: []
+              exceptions: []
+          nextCursor: null
+      vacia:
+        value:
+          items: []
+          nextCursor: null

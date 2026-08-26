@@ -1,0 +1,37 @@
+# Cuerpo de POST /private/barbers/{barberId}/time-blocks (RN-BLQ-01/03).
+# Cerrado: el handler rechaza cualquier campo desconocido. Nunca declara
+# barbershopId ni barberId.
+type: object
+description: >
+  Alta de un bloqueo puntual del barbero de la ruta. Crear un bloqueo NUNCA
+  falla por chocar con citas ya agendadas ni con otro bloqueo existente
+  (RN-BLQ-03, DEC-008): la lista de citas afectadas la resuelve B3/B5, no
+  esta operación.
+properties:
+  blockType:
+    type: string
+    enum: [break, lunch, unavailable, day_off, holiday, vacation, emergency]
+    examples:
+      - emergency
+  startsAt:
+    type: string
+    format: date-time
+    description: Instante de inicio, con offset explícito (el cliente ya conoce la zona IANA de la barbería).
+    examples:
+      - "2026-07-20T15:00:00-05:00"
+  endsAt:
+    type: string
+    format: date-time
+    description: Instante de fin (exclusivo), con offset explícito. Debe ser posterior a startsAt.
+    examples:
+      - "2026-07-20T19:00:00-05:00"
+  reason:
+    type: [string, "null"]
+    maxLength: 200
+    examples:
+      - "Urgencia médica"
+required:
+  - blockType
+  - startsAt
+  - endsAt
+additionalProperties: false

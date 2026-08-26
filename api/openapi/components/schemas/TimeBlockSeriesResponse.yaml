@@ -1,0 +1,90 @@
+# Representación canónica de una definición recurrente (HU-042, DEC-020):
+# weekly (un único día ISO) o date_list (fechas explícitas), con sus
+# fechas/excepciones embebidas. Nunca barbershopId ni barberId.
+type: object
+description: >
+  Definición recurrente o por lista de fechas de un bloqueo. Nunca se
+  materializa en time_block: la proyección efectiva (GET .../time-blocks/
+  effective) la expande. deletedAt no nulo indica retiro lógico
+  (RN-BLQ-04).
+properties:
+  id:
+    type: string
+    format: uuid
+    examples:
+      - 7a1b2c3d-4e5f-4061-8273-8495a6b7c8d9
+  blockType:
+    type: string
+    enum: [break, lunch, unavailable, day_off, holiday, vacation, emergency]
+    examples:
+      - lunch
+  recurrenceKind:
+    type: string
+    enum: [weekly, date_list]
+    examples:
+      - weekly
+  isoWeekday:
+    type: [integer, "null"]
+    minimum: 1
+    maximum: 7
+    description: Día ISO (1=lunes…7=domingo). Presente solo cuando recurrenceKind es weekly.
+    examples:
+      - 1
+  startsTime:
+    type: string
+    pattern: '^([01]\d|2[0-3]):[0-5]\d$'
+    description: Hora civil de inicio "HH:MM" de 24 horas.
+    examples:
+      - "13:00"
+  durationMinutes:
+    type: integer
+    minimum: 1
+    maximum: 1440
+    examples:
+      - 60
+  effectiveFrom:
+    type: string
+    format: date
+    examples:
+      - "2026-01-04"
+  effectiveUntil:
+    type: [string, "null"]
+    format: date
+    description: Fecha final del rango vigente, o null si es indefinido.
+  reason:
+    type: [string, "null"]
+    maxLength: 200
+  deletedAt:
+    type: [string, "null"]
+    format: date-time
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+  dates:
+    type: array
+    description: Fechas explícitas (solo recurrenceKind date_list; vacío en weekly).
+    items:
+      $ref: './SeriesDateResponse.yaml'
+  exceptions:
+    type: array
+    description: Instancias suprimidas ("esta instancia no").
+    items:
+      $ref: './SeriesExceptionResponse.yaml'
+required:
+  - id
+  - blockType
+  - recurrenceKind
+  - isoWeekday
+  - startsTime
+  - durationMinutes
+  - effectiveFrom
+  - effectiveUntil
+  - reason
+  - deletedAt
+  - createdAt
+  - updatedAt
+  - dates
+  - exceptions

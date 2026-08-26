@@ -536,6 +536,206 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/private/barbers/{barberId}/time-blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar los bloqueos puntuales de un barbero de la barbería activa
+         * @description Lista paginada por cursor de los bloqueos puntuales del barbero de la ruta, ordenada por instante de inicio y luego por identificador. includeDeleted=true también trae los retirados lógicamente (RN-BLQ-04, auditoría). Un barberId inexistente o de otra barbería responde 404 (RN-TEN-01).
+         */
+        get: operations["listTimeBlocks"];
+        put?: never;
+        /**
+         * Crear un bloqueo puntual para un barbero de la barbería activa
+         * @description Alta de un bloqueo puntual, incluida la emergencia (RN-BLQ-01), protegida con clave de idempotencia (RN-IDE-01, DEC-043). Crear un bloqueo NUNCA falla por chocar con citas ya agendadas ni con otro bloqueo existente (RN-BLQ-03, DEC-008): la lista de citas afectadas la resuelve B3/B5, no esta operación. El tenant se deriva exclusivamente de SessionCookie y el barbero de barberId; el cuerpo nunca acepta barbershopId ni barberId. Un barberId inexistente o de otra barbería responde 404.
+         */
+        post: operations["createTimeBlock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/private/barbers/{barberId}/time-blocks/effective": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Proyectar los bloqueos efectivos de un barbero en un rango de fechas
+         * @description Operación interna de proyección/consulta (CA-042): expande las series activas dentro de [from, to] (fechas civiles, ambos límites inclusive) y lista los bloqueos puntuales vigentes que se solapan con ese rango, SIN materializar instancias de una serie en time_block. No es disponibilidad pública ni reserva (esas capacidades viven en B4); manualBlocks y seriesOccurrences vienen deliberadamente separados porque unirlos exige la zona IANA de la barbería, que ningún consumidor actual necesita.
+         */
+        get: operations["getEffectiveTimeBlocks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/private/barbers/{barberId}/time-blocks/{blockId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar un bloqueo puntual de un barbero de la barbería activa
+         * @description Lectura autenticada de un bloqueo por identificador, incluidos los retirados lógicamente (RN-BLQ-04: el registro se conserva). Un barberId/blockId inexistente, de otro barbero o de otra barbería responde exactamente el mismo 404 (RN-TEN-01).
+         */
+        get: operations["getTimeBlock"];
+        put?: never;
+        post?: never;
+        /**
+         * Retirar lógicamente un bloqueo puntual de un barbero de la barbería activa
+         * @description Retira lógicamente el bloqueo (RN-BLQ-04): fija deletedAt/deletedBy y deja de restar disponibilidad, pero el registro se conserva; nunca hace DELETE físico. Un barberId/blockId inexistente, de otro barbero, de otra barbería, o ya retirado antes, responden el mismo 404 uniforme; reintentar la misma operación tras un 404 es seguro.
+         */
+        delete: operations["deleteTimeBlock"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/private/barbers/{barberId}/time-block-series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar las series de bloqueo de un barbero de la barbería activa
+         * @description Lista paginada por cursor de las definiciones recurrentes (weekly o date_list) del barbero de la ruta, con sus fechas/excepciones embebidas, ordenada por rango efectivo y luego por identificador. includeDeleted=true también trae las retiradas lógicamente.
+         */
+        get: operations["listTimeBlockSeries"];
+        put?: never;
+        /**
+         * Crear una serie de bloqueo para un barbero de la barbería activa
+         * @description Alta de una definición recurrente semanal o por lista de fechas (RN-BLQ-01, DEC-020), protegida con clave de idempotencia (RN-IDE-01, DEC-043). explicitDates permite crear varias fechas de una serie date_list en la misma operación ("bloqueo de varios días debe poder crearse en una sola operación"). Crear la serie no materializa ninguna instancia en time_block. Un barberId inexistente o de otra barbería responde 404.
+         */
+        post: operations["createTimeBlockSeries"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/private/barbers/{barberId}/time-block-series/{seriesId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar una serie de bloqueo de un barbero de la barbería activa
+         * @description Lectura autenticada de una serie por identificador, con sus fechas/excepciones, incluidas las retiradas lógicamente. Un barberId/seriesId inexistente, de otro barbero o de otra barbería responde el mismo 404.
+         */
+        get: operations["getTimeBlockSeries"];
+        put?: never;
+        post?: never;
+        /**
+         * Retirar lógicamente una serie de bloqueo de un barbero de la barbería activa
+         * @description Retira lógicamente la cabecera completa (RN-BLQ-04). No borra sus fechas/excepciones (DEC-070: RESTRICT, nunca cascada). Un barberId/seriesId inexistente, de otro barbero, de otra barbería, o ya retirada antes, responden el mismo 404; reintentar tras un 404 es seguro.
+         */
+        delete: operations["deleteTimeBlockSeries"];
+        options?: never;
+        head?: never;
+        /**
+         * Editar una serie de bloqueo de un barbero de la barbería activa
+         * @description Edita una recurrencia distinguiendo "esta y las siguientes" o "toda la serie" (RN-BLQ-01; "esta instancia" se resuelve con el sub-recurso de excepciones). scope=whole reemplaza los campos editables de la cabecera completa. scope=this_and_following trunca la serie original en effectiveDate-1 día y crea una serie NUEVA desde effectiveDate con los campos nuevos -el cuerpo de la respuesta es esa serie nueva, no la original truncada-; solo se admite sobre una serie weekly. Un barberId/seriesId inexistente, de otro barbero, de otra barbería, o ya retirada, responde 404.
+         */
+        patch: operations["updateTimeBlockSeries"];
+        trace?: never;
+    };
+    "/private/barbers/{barberId}/time-block-series/{seriesId}/dates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Agregar una fecha explícita a una serie date_list
+         * @description Agrega una fecha explícita dentro del rango vigente de una serie date_list. Una fecha ya registrada, fuera de rango, o sobre una serie weekly, responde 409/422 sin crear nada. Sin protocolo de idempotencia: un duplicado ya responde de forma determinista con 409, sin efecto duplicado.
+         */
+        post: operations["addTimeBlockSeriesDate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/private/barbers/{barberId}/time-block-series/{seriesId}/dates/{blockDate}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Retirar una fecha explícita de una serie date_list
+         * @description Retiro físico (fila hija sin ciclo de vida propio, análoga a un tramo de excepción de HU-041). Una fecha inexistente, ya retirada antes, o de otra serie/barbero/barbería, responde el mismo 404; reintentar tras un 404 es seguro.
+         */
+        delete: operations["removeTimeBlockSeriesDate"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/private/barbers/{barberId}/time-block-series/{seriesId}/exceptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Suprimir una instancia puntual de una serie ("esta instancia no")
+         * @description Agrega una excepción a cualquier serie (weekly o date_list): la instancia de esa fecha deja de proyectarse sin desarmar la serie (RN-BLQ-01). Una fecha ya excepcionada responde 409 sin crear nada. Sin protocolo de idempotencia (mismo criterio que addTimeBlockSeriesDate).
+         */
+        post: operations["addTimeBlockSeriesException"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/private/barbers/{barberId}/time-block-series/{seriesId}/exceptions/{excludedDate}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Retirar una excepción de una serie ("restaura" la instancia)
+         * @description Retiro físico de la excepción: la instancia vuelve a proyectarse. Una excepción inexistente, ya retirada antes, o de otra serie/barbero/ barbería, responde el mismo 404; reintentar tras un 404 es seguro.
+         */
+        delete: operations["removeTimeBlockSeriesException"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1218,6 +1418,278 @@ export interface components {
             /** @description Festivos del año, ordenados por fecha. */
             items: components["schemas"]["ColombianHolidayResponse"][];
         };
+        /** @description Bloqueo puntual de agenda, incluida la emergencia. deletedAt/deletedBy no nulos indican retiro lógico (RN-BLQ-04): el registro se conserva pero ya no resta disponibilidad. */
+        TimeBlockResponse: {
+            /**
+             * Format: uuid
+             * @description Identificador del bloqueo, opaco para el cliente.
+             * @example 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+             */
+            id: string;
+            /**
+             * @description Uno de los siete tipos cerrados (RN-BLQ-01).
+             * @example emergency
+             * @enum {string}
+             */
+            blockType: "break" | "lunch" | "unavailable" | "day_off" | "holiday" | "vacation" | "emergency";
+            /**
+             * @description Origen del bloqueo. HU-042 solo produce manual.
+             * @example manual
+             * @enum {string}
+             */
+            source: "manual" | "holiday_calendar";
+            /**
+             * Format: date-time
+             * @description Instante de inicio, con offset explícito.
+             * @example 2026-07-20T15:00:00-05:00
+             */
+            startsAt: string;
+            /**
+             * Format: date-time
+             * @description Instante de fin (exclusivo), con offset explícito. Siempre posterior a startsAt.
+             * @example 2026-07-20T19:00:00-05:00
+             */
+            endsAt: string;
+            /**
+             * @description Motivo breve y opcional, visible solo para el barbero.
+             * @example Urgencia médica
+             */
+            reason: string | null;
+            /**
+             * Format: date-time
+             * @description Instante del retiro lógico, o null si sigue vigente.
+             */
+            deletedAt: string | null;
+            /**
+             * Format: uuid
+             * @description Identificador del staff_user que retiró el bloqueo, o null si sigue vigente.
+             */
+            deletedBy: string | null;
+            /**
+             * Format: date-time
+             * @description Instante de alta, con offset.
+             * @example 2026-08-26T15:04:05Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description Instante de la última modificación, con offset.
+             * @example 2026-08-26T15:04:05Z
+             */
+            updatedAt: string;
+        };
+        /** @description Página de bloqueos puntuales del barbero de la ruta. */
+        TimeBlockListResponse: {
+            items: components["schemas"]["TimeBlockResponse"][];
+            /** @description Cursor opaco de la página siguiente, o null si esta es la última. */
+            nextCursor: string | null;
+        };
+        /** @description Alta de un bloqueo puntual del barbero de la ruta. Crear un bloqueo NUNCA falla por chocar con citas ya agendadas ni con otro bloqueo existente (RN-BLQ-03, DEC-008): la lista de citas afectadas la resuelve B3/B5, no esta operación. */
+        CreateTimeBlockRequest: {
+            /**
+             * @example emergency
+             * @enum {string}
+             */
+            blockType: "break" | "lunch" | "unavailable" | "day_off" | "holiday" | "vacation" | "emergency";
+            /**
+             * Format: date-time
+             * @description Instante de inicio, con offset explícito (el cliente ya conoce la zona IANA de la barbería).
+             * @example 2026-07-20T15:00:00-05:00
+             */
+            startsAt: string;
+            /**
+             * Format: date-time
+             * @description Instante de fin (exclusivo), con offset explícito. Debe ser posterior a startsAt.
+             * @example 2026-07-20T19:00:00-05:00
+             */
+            endsAt: string;
+            /** @example Urgencia médica */
+            reason?: string | null;
+        };
+        /** @description Instancia expandida de una definición recurrente dentro del rango solicitado. */
+        SeriesOccurrenceResponse: {
+            /** Format: uuid */
+            seriesId: string;
+            /** @enum {string} */
+            blockType: "break" | "lunch" | "unavailable" | "day_off" | "holiday" | "vacation" | "emergency";
+            /**
+             * Format: date
+             * @example 2026-01-05
+             */
+            date: string;
+            /** @example 13:00 */
+            startsTime: string;
+            durationMinutes: number;
+            reason: string | null;
+        };
+        /** @description Bloqueos puntuales vigentes y ocurrencias de serie dentro del rango [from, to] solicitado (ambos límites inclusive, fechas civiles). No es disponibilidad pública ni reserva: esas capacidades viven en B4. */
+        EffectiveBlocksResponse: {
+            manualBlocks: components["schemas"]["TimeBlockResponse"][];
+            seriesOccurrences: components["schemas"]["SeriesOccurrenceResponse"][];
+        };
+        /** @description Fecha explícita de una serie date_list. */
+        SeriesDateResponse: {
+            /**
+             * Format: date
+             * @example 2026-12-15
+             */
+            blockDate: string;
+        };
+        /** @description Instancia suprimida de una serie recurrente. */
+        SeriesExceptionResponse: {
+            /**
+             * Format: date
+             * @example 2027-01-08
+             */
+            excludedDate: string;
+            /** @example El barbero libró ese día */
+            reason: string | null;
+            /**
+             * Format: date-time
+             * @example 2026-08-26T15:04:05Z
+             */
+            createdAt: string;
+        };
+        /** @description Definición recurrente o por lista de fechas de un bloqueo. Nunca se materializa en time_block: la proyección efectiva (GET .../time-blocks/ effective) la expande. deletedAt no nulo indica retiro lógico (RN-BLQ-04). */
+        TimeBlockSeriesResponse: {
+            /**
+             * Format: uuid
+             * @example 7a1b2c3d-4e5f-4061-8273-8495a6b7c8d9
+             */
+            id: string;
+            /**
+             * @example lunch
+             * @enum {string}
+             */
+            blockType: "break" | "lunch" | "unavailable" | "day_off" | "holiday" | "vacation" | "emergency";
+            /**
+             * @example weekly
+             * @enum {string}
+             */
+            recurrenceKind: "weekly" | "date_list";
+            /**
+             * @description Día ISO (1=lunes…7=domingo). Presente solo cuando recurrenceKind es weekly.
+             * @example 1
+             */
+            isoWeekday: number | null;
+            /**
+             * @description Hora civil de inicio "HH:MM" de 24 horas.
+             * @example 13:00
+             */
+            startsTime: string;
+            /** @example 60 */
+            durationMinutes: number;
+            /**
+             * Format: date
+             * @example 2026-01-04
+             */
+            effectiveFrom: string;
+            /**
+             * Format: date
+             * @description Fecha final del rango vigente, o null si es indefinido.
+             */
+            effectiveUntil: string | null;
+            reason: string | null;
+            /** Format: date-time */
+            deletedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** @description Fechas explícitas (solo recurrenceKind date_list; vacío en weekly). */
+            dates: components["schemas"]["SeriesDateResponse"][];
+            /** @description Instancias suprimidas ("esta instancia no"). */
+            exceptions: components["schemas"]["SeriesExceptionResponse"][];
+        };
+        /** @description Página de series recurrentes del barbero de la ruta. */
+        TimeBlockSeriesListResponse: {
+            items: components["schemas"]["TimeBlockSeriesResponse"][];
+            nextCursor: string | null;
+        };
+        /** @description Alta de una definición recurrente semanal o por lista de fechas. isoWeekday es obligatorio cuando recurrenceKind es weekly y se rechaza en date_list. explicitDates solo se admite en date_list y permite crear varias fechas en una sola operación (RN-BLQ-01). */
+        CreateTimeBlockSeriesRequest: {
+            /**
+             * @example lunch
+             * @enum {string}
+             */
+            blockType: "break" | "lunch" | "unavailable" | "day_off" | "holiday" | "vacation" | "emergency";
+            /**
+             * @example weekly
+             * @enum {string}
+             */
+            recurrenceKind: "weekly" | "date_list";
+            /** @example 1 */
+            isoWeekday?: number | null;
+            /** @example 13:00 */
+            startsTime: string;
+            /** @example 60 */
+            durationMinutes: number;
+            /**
+             * Format: date
+             * @example 2026-01-04
+             */
+            effectiveFrom: string;
+            /** Format: date */
+            effectiveUntil?: string | null;
+            reason?: string | null;
+            /**
+             * @description Fechas explícitas iniciales (solo date_list); vacío u omitido en weekly.
+             * @example [
+             *       "2026-12-15",
+             *       "2026-12-16"
+             *     ]
+             */
+            explicitDates?: string[];
+        };
+        /** @description scope=whole reemplaza blockType/startsTime/durationMinutes/ effectiveFrom/effectiveUntil/reason de la cabecera completa. scope=this_and_following trunca la serie original en effectiveDate-1 día y crea una serie nueva desde effectiveDate con estos mismos campos; solo se admite sobre una serie weekly (una date_list ya expone cada fecha como un recurso individual). effectiveDate es obligatorio solo con this_and_following. */
+        UpdateTimeBlockSeriesRequest: {
+            /**
+             * @example whole
+             * @enum {string}
+             */
+            scope: "whole" | "this_and_following";
+            /**
+             * @example lunch
+             * @enum {string}
+             */
+            blockType: "break" | "lunch" | "unavailable" | "day_off" | "holiday" | "vacation" | "emergency";
+            /** @example 13:30 */
+            startsTime: string;
+            /** @example 45 */
+            durationMinutes: number;
+            /**
+             * Format: date
+             * @example 2026-01-04
+             */
+            effectiveFrom: string;
+            /** Format: date */
+            effectiveUntil?: string | null;
+            reason?: string | null;
+            /**
+             * Format: date
+             * @description Fecha de corte, obligatoria solo cuando scope es this_and_following.
+             * @example 2026-06-01
+             */
+            effectiveDate?: string;
+        };
+        /** @description Agrega una fecha explícita a una serie date_list, dentro de su rango vigente. */
+        AddSeriesDateRequest: {
+            /**
+             * Format: date
+             * @example 2026-12-20
+             */
+            blockDate: string;
+        };
+        /** @description Suprime una instancia puntual de cualquier serie ("esta instancia no", RN-BLQ-01). */
+        AddSeriesExceptionRequest: {
+            /**
+             * Format: date
+             * @example 2027-01-08
+             */
+            excludedDate: string;
+            /** @example El barbero libró ese día */
+            reason?: string | null;
+        };
     };
     responses: {
         /** @description Sesión cerrada. La cookie de sesión queda limpiada en Set-Cookie. */
@@ -1765,6 +2237,156 @@ export interface components {
             content: {
                 "application/json": components["schemas"]["ColombianHolidayListResponse"];
             };
+        };
+        /** @description Página de bloqueos puntuales del barbero de la ruta. */
+        TimeBlockListSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["TimeBlockListResponse"];
+            };
+        };
+        /** @description Bloqueo creado. `Location` apunta al recurso individual recién creado. */
+        TimeBlockCreated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                Location: components["headers"]["Location"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["TimeBlockResponse"];
+            };
+        };
+        /** @description Bloqueos puntuales vigentes y ocurrencias de serie dentro del rango solicitado. */
+        EffectiveBlocksSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["EffectiveBlocksResponse"];
+            };
+        };
+        /** @description Bloqueo puntual del barbero de la ruta. */
+        TimeBlockSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["TimeBlockResponse"];
+            };
+        };
+        /** @description Bloqueo retirado lógicamente. Sin cuerpo. */
+        TimeBlockDeleted: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
+        /** @description Página de series recurrentes del barbero de la ruta. */
+        TimeBlockSeriesListSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["TimeBlockSeriesListResponse"];
+            };
+        };
+        /** @description Serie creada. `Location` apunta al recurso individual recién creado. */
+        TimeBlockSeriesCreated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                Location: components["headers"]["Location"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["TimeBlockSeriesResponse"];
+            };
+        };
+        /** @description Serie recurrente del barbero de la ruta, con sus fechas/excepciones. */
+        TimeBlockSeriesSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["TimeBlockSeriesResponse"];
+            };
+        };
+        /** @description Serie retirada lógicamente. Sin cuerpo. */
+        TimeBlockSeriesDeleted: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
+        /** @description Serie tras la edición. */
+        TimeBlockSeriesUpdated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["TimeBlockSeriesResponse"];
+            };
+        };
+        /** @description Fecha explícita agregada a la serie. Sin cuerpo. */
+        SeriesDateAdded: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
+        /** @description Esa fecha ya está registrada en la serie. No se persistió ningún cambio. */
+        SeriesDateConflict: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description Fecha explícita retirada de la serie. Sin cuerpo. */
+        SeriesDateRemoved: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
+        /** @description Excepción agregada a la serie ("esta instancia no"). Sin cuerpo. */
+        SeriesExceptionAdded: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
+        /** @description Ya existe una excepción para esa fecha en la serie. No se persistió ningún cambio. */
+        SeriesExceptionConflict: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description Excepción retirada; la instancia vuelve a proyectarse. Sin cuerpo. */
+        SeriesExceptionRemoved: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content?: never;
         };
     };
     parameters: {
@@ -2625,6 +3247,330 @@ export interface operations {
             200: components["responses"]["ColombianHolidayListSuccess"];
             400: components["responses"]["InvalidRequestProblem"];
             401: components["responses"]["UnauthorizedProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    listTimeBlocks: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+                /** @description Incluye los bloqueos retirados lógicamente (auditoría, RN-BLQ-04). Por defecto false. */
+                includeDeleted?: boolean;
+            };
+            header?: never;
+            path: {
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["TimeBlockListSuccess"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    createTimeBlock: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Clave elegida por el cliente que identifica un intento de escritura crítica. Repetir la misma clave con el mismo contenido (método, ruta y cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo. Repetirla con contenido distinto es un conflicto: usa una clave nueva para una solicitud distinta. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTimeBlockRequest"];
+            };
+        };
+        responses: {
+            201: components["responses"]["TimeBlockCreated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            /** @description Conflicto de idempotencia: misma clave con otro contenido (`IdempotencyConflictProblem`) u operación en curso con la misma clave (`IdempotencyLockedProblem`, DEC-043). Un bloqueo puntual nunca produce un 409 de negocio (RN-BLQ-03): siempre se crea. */
+            409: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["ValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getEffectiveTimeBlocks: {
+        parameters: {
+            query: {
+                /** @description Primera fecha civil del rango (inclusive). */
+                from: string;
+                /** @description Última fecha civil del rango (inclusive). No puede ser anterior a from. */
+                to: string;
+            };
+            header?: never;
+            path: {
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["EffectiveBlocksSuccess"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getTimeBlock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                barberId: string;
+                blockId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["TimeBlockSuccess"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    deleteTimeBlock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                barberId: string;
+                blockId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: components["responses"]["TimeBlockDeleted"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    listTimeBlockSeries: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+                includeDeleted?: boolean;
+            };
+            header?: never;
+            path: {
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["TimeBlockSeriesListSuccess"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    createTimeBlockSeries: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Clave elegida por el cliente que identifica un intento de escritura crítica. Repetir la misma clave con el mismo contenido (método, ruta y cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo. Repetirla con contenido distinto es un conflicto: usa una clave nueva para una solicitud distinta. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTimeBlockSeriesRequest"];
+            };
+        };
+        responses: {
+            201: components["responses"]["TimeBlockSeriesCreated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            /** @description Conflicto de idempotencia: misma clave con otro contenido (`IdempotencyConflictProblem`) u operación en curso con la misma clave (`IdempotencyLockedProblem`, DEC-043). */
+            409: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["ValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getTimeBlockSeries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                barberId: string;
+                seriesId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["TimeBlockSeriesSuccess"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    deleteTimeBlockSeries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                barberId: string;
+                seriesId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: components["responses"]["TimeBlockSeriesDeleted"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    updateTimeBlockSeries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                barberId: string;
+                seriesId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTimeBlockSeriesRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["TimeBlockSeriesUpdated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            422: components["responses"]["ValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    addTimeBlockSeriesDate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                barberId: string;
+                seriesId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddSeriesDateRequest"];
+            };
+        };
+        responses: {
+            204: components["responses"]["SeriesDateAdded"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            409: components["responses"]["SeriesDateConflict"];
+            422: components["responses"]["ValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    removeTimeBlockSeriesDate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                barberId: string;
+                seriesId: string;
+                blockDate: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: components["responses"]["SeriesDateRemoved"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    addTimeBlockSeriesException: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                barberId: string;
+                seriesId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddSeriesExceptionRequest"];
+            };
+        };
+        responses: {
+            204: components["responses"]["SeriesExceptionAdded"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            409: components["responses"]["SeriesExceptionConflict"];
+            422: components["responses"]["ValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    removeTimeBlockSeriesException: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                barberId: string;
+                seriesId: string;
+                excludedDate: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: components["responses"]["SeriesExceptionRemoved"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

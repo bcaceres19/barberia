@@ -193,4 +193,7 @@ type Repository interface {
 	// found=false cubre "no existía"/"ya se había retirado" (CA-041-06):
 	// reintentar tras un 404 es seguro.
 	DeleteException(ctx context.Context, barbershopID, barberID, exceptionID string) (found bool, err error)
+
+	// --- HU-042: bloqueos de agenda --------------------------------------
+	BlockRepository
 }

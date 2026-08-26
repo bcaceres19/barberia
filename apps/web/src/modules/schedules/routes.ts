@@ -11,4 +11,9 @@ export const schedulesPrivateShellChildRoutes: RouteRecordRaw[] = [
     name: 'schedules-horarios',
     component: () => import('./pages/SchedulesPage.vue'),
   },
+  {
+    path: 'bloqueos',
+    name: 'schedules-bloqueos',
+    component: () => import('./pages/BlocksPage.vue'),
+  },
 ]

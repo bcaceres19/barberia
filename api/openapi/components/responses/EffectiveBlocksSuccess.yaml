@@ -1,0 +1,30 @@
+# Respuesta 200 de GET /private/barbers/{barberId}/time-blocks/effective.
+description: Bloqueos puntuales vigentes y ocurrencias de serie dentro del rango solicitado.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/EffectiveBlocksResponse.yaml'
+    examples:
+      mixto:
+        value:
+          manualBlocks:
+            - id: 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+              blockType: emergency
+              source: manual
+              startsAt: "2027-03-10T10:00:00-05:00"
+              endsAt: "2027-03-10T11:00:00-05:00"
+              reason: null
+              deletedAt: null
+              deletedBy: null
+              createdAt: "2026-08-26T15:04:05Z"
+              updatedAt: "2026-08-26T15:04:05Z"
+          seriesOccurrences:
+            - seriesId: 7a1b2c3d-4e5f-4061-8273-8495a6b7c8d9
+              blockType: lunch
+              date: "2027-03-11"
+              startsTime: "13:00"
+              durationMinutes: 60
+              reason: null

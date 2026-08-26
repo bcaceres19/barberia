@@ -1,0 +1,5 @@
+# Respuesta 204 de POST .../time-block-series/{seriesId}/dates.
+description: Fecha explícita agregada a la serie. Sin cuerpo.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'

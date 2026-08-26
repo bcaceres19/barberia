@@ -1,0 +1,17 @@
+# Cuerpo de POST .../time-block-series/{seriesId}/exceptions. Cerrado.
+type: object
+description: Suprime una instancia puntual de cualquier serie ("esta instancia no", RN-BLQ-01).
+properties:
+  excludedDate:
+    type: string
+    format: date
+    examples:
+      - "2027-01-08"
+  reason:
+    type: [string, "null"]
+    maxLength: 200
+    examples:
+      - "El barbero libró ese día"
+required:
+  - excludedDate
+additionalProperties: false

@@ -1,0 +1,34 @@
+# Respuesta 201 de POST /private/barbers/{barberId}/time-block-series
+# (RN-IDE-01): una repetición exacta de la misma Idempotency-Key con el
+# mismo contenido reproduce esta MISMA respuesta byte a byte.
+description: >
+  Serie creada. `Location` apunta al recurso individual recién creado.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+  Location:
+    $ref: '../headers/Location.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/TimeBlockSeriesResponse.yaml'
+    examples:
+      dateListConFechas:
+        summary: Serie date_list creada con dos fechas explícitas en la misma operación
+        value:
+          id: 8b2c3d4e-5f60-4172-8384-95a6b7c8d9e0
+          blockType: vacation
+          recurrenceKind: date_list
+          isoWeekday: null
+          startsTime: "00:00"
+          durationMinutes: 1440
+          effectiveFrom: "2027-12-01"
+          effectiveUntil: "2027-12-31"
+          reason: null
+          deletedAt: null
+          createdAt: "2026-08-26T15:04:05Z"
+          updatedAt: "2026-08-26T15:04:05Z"
+          dates:
+            - blockDate: "2027-12-15"
+            - blockDate: "2027-12-16"
+          exceptions: []
