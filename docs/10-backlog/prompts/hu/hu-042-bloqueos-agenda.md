@@ -106,6 +106,8 @@ superseded_by: null
 
 Issue real #98 creado y rama `feat/98-hu042-bloqueos-agenda` abierta desde `main` el 2026-08-26; `CT-008` está resuelta por `DEC-070` (FK en `ON DELETE RESTRICT`), `HU-040` y `HU-041` están integradas en `main`. La parte de impacto sobre citas se completa con la capacidad dueña de B3; esta HU no crea una tabla appointment parcial ni simula citas.
 
+**Estado 2026-08-26:** integrada en `main` vía [PR #99](https://github.com/bcaceres19/barberia/pull/99) con CI verde. El backend (contrato, migración/RLS, dominio, servicio, repositorio, HTTP) quedó completo y probado contra PostgreSQL real; el frontend cubre bloqueos puntuales y series `weekly`. El seguimiento de UI de `date_list`/excepciones/edición de serie y de evidencia E2E/responsive vive en el issue [#100](https://github.com/bcaceres19/barberia/issues/100), mismo criterio que `CA-040-08`/`CA-041-08`.
+
 ## Objetivo
 
 Que el barbero pueda crear y mantener bloqueos puntuales y definiciones recurrentes que resten tiempo de trabajo, con siete tipos, fechas explícitas, excepciones individuales y eliminación lógica auditable.
