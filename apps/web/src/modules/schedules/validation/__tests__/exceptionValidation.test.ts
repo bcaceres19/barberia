@@ -47,7 +47,9 @@ describe('validateExceptionShape', () => {
         { startsTime: '14:00', durationMinutes: 120 },
       ]),
     ).toBeUndefined()
-    expect(validateExceptionShape(false, [{ startsTime: '22:00', durationMinutes: 300 }])).toBeUndefined()
+    expect(
+      validateExceptionShape(false, [{ startsTime: '22:00', durationMinutes: 300 }]),
+    ).toBeUndefined()
   })
 
   it('accepts contiguous segments (semiopen [start, end))', () => {
@@ -69,7 +71,11 @@ describe('validateExceptionShape', () => {
   })
 
   it('rejects a segment with an invalid starts time or duration', () => {
-    expect(validateExceptionShape(false, [{ startsTime: '8am', durationMinutes: 60 }])).toBeDefined()
-    expect(validateExceptionShape(false, [{ startsTime: '08:00', durationMinutes: 0 }])).toBeDefined()
+    expect(
+      validateExceptionShape(false, [{ startsTime: '8am', durationMinutes: 60 }]),
+    ).toBeDefined()
+    expect(
+      validateExceptionShape(false, [{ startsTime: '08:00', durationMinutes: 0 }]),
+    ).toBeDefined()
   })
 })

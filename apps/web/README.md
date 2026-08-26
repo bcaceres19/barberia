@@ -49,7 +49,7 @@ jornada y festivos (HU-041)**: en la misma pantalla "Horarios", un
 interruptor de calendario de festivos colombianos por barbero, un CRUD de
 excepciones de jornada por fecha (día cerrado o abierto con tramos
 especiales, con la misma traducción de conflicto de fecha duplicada
--`CA-041-05`- a un mensaje recuperable) y una referencia de "Próximos
+\-`CA-041-05`- a un mensaje recuperable) y una referencia de "Próximos
 festivos colombianos" con un atajo para prellenar la fecha del diálogo de
 alta. Ver las secciones siguientes. El resto de carpetas de `modules/`
 conserva su `index.ts` de marcador de responsabilidad futura.

@@ -178,14 +178,7 @@ describe('scheduleExceptionsApi.updateScheduleException', () => {
   it('maps a 200 success body to a success outcome', async () => {
     patchMock.mockResolvedValueOnce(ok(exceptionBody))
 
-    const outcome = await updateScheduleException(
-      'b-1',
-      'exc-1',
-      '2026-12-08',
-      true,
-      null,
-      [],
-    )
+    const outcome = await updateScheduleException('b-1', 'exc-1', '2026-12-08', true, null, [])
 
     expect(outcome).toEqual({ kind: 'success', exception: exceptionBody })
     expect(patchMock).toHaveBeenCalledWith(
@@ -199,9 +192,9 @@ describe('scheduleExceptionsApi.updateScheduleException', () => {
 
   it('maps a 404 to not-found', async () => {
     patchMock.mockResolvedValueOnce(problem(404))
-    expect(
-      await updateScheduleException('b-1', 'unknown', '2026-12-08', true, null, []),
-    ).toEqual({ kind: 'not-found' })
+    expect(await updateScheduleException('b-1', 'unknown', '2026-12-08', true, null, [])).toEqual({
+      kind: 'not-found',
+    })
   })
 
   it('maps a 409 to date-conflict', async () => {
