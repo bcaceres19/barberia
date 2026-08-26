@@ -1,16 +1,16 @@
 # Graph Report - barberia  (2026-08-25)
 
 ## Corpus Check
-- 502 files · ~703,168 words
+- 502 files · ~705,829 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4303 nodes · 9744 edges · 286 communities (248 shown, 38 thin omitted)
+- 4303 nodes · 9744 edges · 284 communities (246 shown, 38 thin omitted)
 - Extraction: 79% EXTRACTED · 21% INFERRED · 0% AMBIGUOUS · INFERRED: 2002 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `cea024d3`
+- Built from commit: `61a76577`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -207,7 +207,7 @@
 - catalogValidation.ts
 - RecoveryService
 - newSessionMiddleware
-- TestContract_TranslateAlwaysFillsRequiredFields
+- axe-core
 - toService
 - prompts/README.md
 - schedule/httpapi/contract_test.go
@@ -221,12 +221,11 @@
 - SchedulesPage.test.ts
 - exceptionValidation.ts
 - TrustedProxies
-- discardLogger
+- schedule_exceptions_integration_test.go
 - newLogoutHandler
 - schedulesApi.test.ts
 - Principal
 - selectBarber
-- onConfirmDeactivate
 - assignment_ports.go
 - eslint-plugin-vue
 - setupWorkerTestDB
@@ -241,10 +240,10 @@
 - exception_dto.go
 - exception_handler.go
 - createBarberViaRouter
-- uniqueToken
+- discardLogger
 - Service
 - principalOrInternalError
-- catalog_integration_test.go
+- uniqueToken
 - Service
 - testRouterConfig
 - TestWorkingHours_HTTP_CreateListGetUpdateDelete_FullJourney
@@ -266,7 +265,6 @@
 - web/package.json
 - newSegmentRow
 - exception_service.go
-- openapi-typescript
 
 ## God Nodes (most connected - your core abstractions)
 1. `buildRouter()` - 126 edges
@@ -306,7 +304,7 @@
 - **Decisiones de seguridad para el piloto** — respuesta_manuales_respuesta_dudas_pendientes_dp_seg_01, respuesta_manuales_respuesta_dudas_pendientes_dp_seg_02, respuesta_manuales_respuesta_dudas_pendientes_dp_seg_03 [EXTRACTED 0.75]
 - **Reglas de disponibilidad y agendamiento** — respuesta_manuales_respuesta_propuestas_oc_rn_dis_04, respuesta_manuales_respuesta_propuestas_oc_rn_dis_05, respuesta_manuales_respuesta_propuestas_oc_rn_dis_06, respuesta_manuales_respuesta_propuestas_oc_rn_dis_07 [EXTRACTED 0.75]
 
-## Communities (286 total, 38 thin omitted)
+## Communities (284 total, 38 thin omitted)
 
 ### Community 0 - "Estados de las citas y máquina de transiciones"
 Cohesion: 0.26
@@ -326,7 +324,7 @@ Nodes (36): Time, alwaysUnauthorized(), chiWalkFinds(), Handler, Mux, T, TestPri
 
 ### Community 4 - "devDependencies"
 Cohesion: 0.13
-Nodes (15): devDependencies, axe-core, eslint, prettier, @vitejs/plugin-vue, vitest, vue-tsc, @vue/tsconfig (+7 more)
+Nodes (15): devDependencies, eslint, openapi-typescript, prettier, @vitejs/plugin-vue, vitest, vue-tsc, @vue/tsconfig (+7 more)
 
 ### Community 5 - "compilerOptions"
 Cohesion: 0.09
@@ -849,8 +847,8 @@ Cohesion: 0.05
 Nodes (41): 1. Objetivo, 2. Técnica: combinación por pares, no producto cartesiano completo, 3. Severidad, 4. Protocolo para una sesión humana, 5. Protocolo para un agente de IA, 6. Qué hacer con un hallazgo confirmado, Metodología de exploración combinatoria, A. Responsive y visual (`estandar-diseno-visual.md` §7, §16) (+33 more)
 
 ### Community 197 - "Validation"
-Cohesion: 0.14
-Nodes (23): errDescriptionTooLong(), errDurationOutOfRange(), errNameRequired(), errNameTooLong(), errPriceInvalidFormat(), errPriceMustBePositive(), errUpdateEmptyBody(), errClosedExceptionHasSegments() (+15 more)
+Cohesion: 0.12
+Nodes (27): errDescriptionTooLong(), errDurationOutOfRange(), errNameRequired(), errNameTooLong(), errPriceInvalidFormat(), errPriceMustBePositive(), errServiceAlreadyActive(), errServiceAlreadyInactive() (+19 more)
 
 ### Community 198 - "schedule/httpapi/handler.go"
 Cohesion: 0.15
@@ -936,10 +934,6 @@ Nodes (15): Time, NormalizeEmail(), errInvalidCredentials(), errInvalidRecoveryC
 Cohesion: 0.22
 Nodes (18): doPrivateRequest(), Context, Handler, HandlerFunc, ResponseRecorder, T, Time, newSessionMiddleware() (+10 more)
 
-### Community 223 - "TestContract_TranslateAlwaysFillsRequiredFields"
-Cohesion: 0.54
-Nodes (7): findRepoRoot(), T, isZeroValue(), loadProblemSchema(), TestContract_ProblemStructMatchesOpenAPISchema(), TestContract_TranslateAlwaysFillsRequiredFields(), problemSchema
-
 ### Community 224 - "toService"
 Cohesion: 0.31
 Nodes (9): createService(), deactivateService(), isProblemCode(), reactivateService(), toService(), updateService(), hasFieldError(), onSubmitCreate() (+1 more)
@@ -965,8 +959,8 @@ Cohesion: 0.27
 Nodes (9): NewArgon2Hasher(), parseEncodedHash(), T, TestArgon2Hasher_HashThenVerify_Succeeds(), TestArgon2Hasher_TwoUsersSamePassword_ProduceDistinctEncodedValues(), TestArgon2Hasher_Verify_MalformedEncodedHash_NeverPanicsOrErrors(), TestArgon2Hasher_Verify_WrongPasswordFails(), Argon2Hasher (+1 more)
 
 ### Community 230 - "fetchServices"
-Cohesion: 0.40
-Nodes (5): fetchServices(), toPage(), load(), onLoadMore(), onRetryLoad()
+Cohesion: 0.27
+Nodes (10): fetchServices(), toPage(), load(), onConfirmDeactivate(), onConfirmLifecycle(), onConfirmReactivate(), onLoadMore(), onRetryLoad() (+2 more)
 
 ### Community 231 - "catalog/service.go"
 Cohesion: 0.40
@@ -992,9 +986,9 @@ Nodes (25): onCreateDurationInput(), onCreateStartsTimeInput(), onEditDurationIn
 Cohesion: 0.29
 Nodes (8): NewChallengeHandler(), NewChallengeVerifyHandler(), ParseTrustedProxies(), TrustedProxies, ChallengeHandler, ChallengeVerifyHandler, IP, IPNet
 
-### Community 238 - "discardLogger"
-Cohesion: 0.21
-Nodes (27): colombianHolidayBody, colombianHolidayListBody, holidayCalendarBody, scheduleExceptionBody, scheduleExceptionListBody, scheduleExceptionSegmentBody, doCreateScheduleExceptionRequest(), doDeleteScheduleExceptionRequest() (+19 more)
+### Community 238 - "schedule_exceptions_integration_test.go"
+Cohesion: 0.22
+Nodes (25): colombianHolidayBody, colombianHolidayListBody, holidayCalendarBody, scheduleExceptionBody, scheduleExceptionListBody, scheduleExceptionSegmentBody, doCreateScheduleExceptionRequest(), doDeleteScheduleExceptionRequest() (+17 more)
 
 ### Community 239 - "newLogoutHandler"
 Cohesion: 0.24
@@ -1011,10 +1005,6 @@ Nodes (11): Request, ResponseWriter, Request, ResponseWriter, PrincipalFromConte
 ### Community 242 - "selectBarber"
 Cohesion: 0.18
 Nodes (11): fetchHolidayCalendar(), fetchBarbershopTimezone(), fetchBarberSummaries(), loadExceptions(), loadHolidayCalendar(), loadPage(), onBarberSelectChange(), onRetryExceptions() (+3 more)
-
-### Community 243 - "onConfirmDeactivate"
-Cohesion: 0.70
-Nodes (5): onConfirmDeactivate(), onConfirmLifecycle(), onConfirmReactivate(), reloadAfterConflict(), replaceServiceInList()
 
 ### Community 247 - "setupWorkerTestDB"
 Cohesion: 0.29
@@ -1064,9 +1054,9 @@ Nodes (18): exceptionBasePath(), Service, NewCreateScheduleExceptionHandler(), N
 Cohesion: 0.33
 Nodes (17): assignmentBody, assignmentListBody, createBarberViaRouter(), createServiceViaRouter(), doAssignServiceRequest(), doListAssignmentsRequest(), doUnassignServiceRequest(), Handler (+9 more)
 
-### Community 259 - "uniqueToken"
-Cohesion: 0.34
-Nodes (17): barberBody, barberListBody, uniqueToken(), doCreateBarberRequest(), doGetBarberRequest(), doListBarbersRequest(), doRenameBarberRequest(), Handler (+9 more)
+### Community 259 - "discardLogger"
+Cohesion: 0.31
+Nodes (18): barberBody, barberListBody, discardLogger(), Logger, doCreateBarberRequest(), doGetBarberRequest(), doListBarbersRequest(), doRenameBarberRequest() (+10 more)
 
 ### Community 260 - "Service"
 Cohesion: 0.18
@@ -1076,9 +1066,9 @@ Nodes (13): LooksLikeWorkingHourID(), errDurationInvalid(), errISOWeekdayInvalid
 Cohesion: 0.20
 Nodes (13): Time, Barber, ListResult, Request, ResponseWriter, newBarberListResponse(), newBarberResponse(), principalOrInternalError() (+5 more)
 
-### Community 262 - "catalog_integration_test.go"
+### Community 262 - "uniqueToken"
 Cohesion: 0.34
-Nodes (16): serviceBody, serviceListBody, doCreateServiceRequest(), doGetServiceRequest(), doListServicesRequest(), doUpdateServiceRequest(), Handler, ResponseRecorder (+8 more)
+Nodes (17): serviceBody, serviceListBody, doCreateServiceRequest(), doGetServiceRequest(), doListServicesRequest(), doUpdateServiceRequest(), Handler, ResponseRecorder (+9 more)
 
 ### Community 263 - "Service"
 Cohesion: 0.19
@@ -1094,7 +1084,7 @@ Nodes (15): workingHourBody, workingHourListBody, doCreateWorkingHourRequest(), 
 
 ### Community 266 - "Error"
 Cohesion: 0.17
-Nodes (10): Error, Kind, Context, errServiceAlreadyActive(), errServiceAlreadyInactive(), errExceptionSegmentsConflict(), ChallengeRequired(), Conflict() (+2 more)
+Nodes (13): Error, Kind, Context, ChallengeRequired(), IdempotencyConflict(), IdempotencyLocked(), findRepoRoot(), T (+5 more)
 
 ### Community 267 - "createTestSession"
 Cohesion: 0.35
@@ -1172,7 +1162,7 @@ Nodes (3): EffectiveDay, EffectiveDaySegment, EffectiveDaySource
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `buildRouter()` connect `buildRouter` to `exception_handler.go`, `createBarberViaRouter`, `PhoneChallengeService`, `NewRouter`, `uniqueToken`, `catalog_integration_test.go`, `testRouterConfig`, `TestWorkingHours_HTTP_CreateListGetUpdateDelete_FullJourney`, `NewThrottleService`, `NewService`, `NewRecoveryRepository`, `TestServiceLifecycle_HTTP_PreviewDeactivateReactivate_FullJourney`, `setupTestDB`, `buildRouterWithRecoveryCapture`, `NewBarberLookup`, `NewCryptoTokenGenerator`, `NewCapturingRecoveryCodeSender`, `staff/httpapi/handler_test.go`, `NewSQLCoordinator`, `recovery_handler_test.go`, `Load`, `schedule/httpapi/handler.go`, `NewAssignmentService`, `NewLoggingPhoneCodeSender`, `NewLoggingRecoveryCodeSender`, `NewPhoneChallengeService`, `CatalogService`, `assertProblem`, `SessionService`, `RecoveryService`, `testThrottleIPHash`, `DB`, `NewArgon2Hasher`, `NewService`, `whatsapp_meta.go`, `TrustedProxies`, `discardLogger`, `newLogoutHandler`, `NewDualChannelRecoverySender`, `newResendSenderAgainstTestServer`, `NewSessionService`?**
+- **Why does `buildRouter()` connect `buildRouter` to `exception_handler.go`, `createBarberViaRouter`, `PhoneChallengeService`, `NewRouter`, `discardLogger`, `uniqueToken`, `testRouterConfig`, `TestWorkingHours_HTTP_CreateListGetUpdateDelete_FullJourney`, `NewThrottleService`, `NewService`, `NewRecoveryRepository`, `TestServiceLifecycle_HTTP_PreviewDeactivateReactivate_FullJourney`, `setupTestDB`, `buildRouterWithRecoveryCapture`, `NewBarberLookup`, `NewCryptoTokenGenerator`, `NewCapturingRecoveryCodeSender`, `staff/httpapi/handler_test.go`, `NewSQLCoordinator`, `recovery_handler_test.go`, `Load`, `schedule/httpapi/handler.go`, `NewAssignmentService`, `NewLoggingPhoneCodeSender`, `NewLoggingRecoveryCodeSender`, `NewPhoneChallengeService`, `CatalogService`, `assertProblem`, `SessionService`, `RecoveryService`, `testThrottleIPHash`, `DB`, `NewArgon2Hasher`, `NewService`, `whatsapp_meta.go`, `TrustedProxies`, `schedule_exceptions_integration_test.go`, `newLogoutHandler`, `NewDualChannelRecoverySender`, `newResendSenderAgainstTestServer`, `NewSessionService`?**
   _High betweenness centrality (0.099) - this node is a cross-community bridge._
 - **Why does `DB` connect `DB` to `testRouterConfig`, `catalog/postgres/repository.go`, `createTestSession`, `NewRecoveryRepository`, `setupTestDB`, `setupTestDB`, `buildRouterWithRecoveryCapture`, `Repository`, `RecoveryRepository`, `setupTestDB`, `Repository`, `NewSQLCoordinator`, `IdempotencyKeyFromRequest`, `database_test.go`, `Key`, `setupTestDB`, `NewAssignmentService`, `.Create`, `testThrottleIPHash`, `catalog/httpapi/contract_test.go`, `buildRouter`, `NewService`, `setupWorkerTestDB`?**
   _High betweenness centrality (0.068) - this node is a cross-community bridge._

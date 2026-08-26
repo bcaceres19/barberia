@@ -5,7 +5,7 @@
     "semantic_hash": ""
   },
   "apps/api/cmd/api/main.go": {
-    "mtime": 1787706121.8493097,
+    "mtime": 1787709319.4405372,
     "ast_hash": "12817e98636a884a7b9c5fc1758ca104",
     "semantic_hash": ""
   },
@@ -335,7 +335,7 @@
     "semantic_hash": ""
   },
   "api/openapi/CHANGELOG.md": {
-    "mtime": 1787704828.8744667,
+    "mtime": 1787709319.4297788,
     "ast_hash": "2cdca78f2113fbfb2de9145b04f7edc7",
     "semantic_hash": ""
   },
@@ -375,7 +375,7 @@
     "semantic_hash": "72ebdeafb399c1fc6afba7f4c79dd076"
   },
   "api/openapi/openapi.yaml": {
-    "mtime": 1787704817.4655268,
+    "mtime": 1787709319.4405372,
     "ast_hash": "86a5c63b682d1510d0f34198a5deba17",
     "semantic_hash": ""
   },
@@ -410,13 +410,13 @@
     "semantic_hash": ""
   },
   "apps/api/README.md": {
-    "mtime": 1787707709.3327017,
+    "mtime": 1787709319.4405372,
     "ast_hash": "590df53f1fff2299f55570773642a509",
     "semantic_hash": ""
   },
   "apps/web/README.md": {
-    "mtime": 1787707651.1808982,
-    "ast_hash": "ee611f33a7471ba276707fb7b51a8b86",
+    "mtime": 1787709319.4533598,
+    "ast_hash": "c5db602040152126c2edf0b652cc6e47",
     "semantic_hash": ""
   },
   "apps/web/e2e/README.md": {
@@ -430,7 +430,7 @@
     "semantic_hash": ""
   },
   "database/README.md": {
-    "mtime": 1787707613.1126761,
+    "mtime": 1787709319.4575934,
     "ast_hash": "5feb0d7cd19e432d88a7129bf9a33f02",
     "semantic_hash": ""
   },
@@ -470,13 +470,13 @@
     "semantic_hash": ""
   },
   "docs/00-control/historial-cambios.md": {
-    "mtime": 1787707910.1331089,
-    "ast_hash": "b5e70a28854581ab0f54e4c6c9022690",
+    "mtime": 1787709534.2269354,
+    "ast_hash": "840e468d0d78da06287ad0cc5ac8353f",
     "semantic_hash": ""
   },
   "docs/00-control/matriz-trazabilidad.md": {
-    "mtime": 1787707768.7605517,
-    "ast_hash": "bc12187c59b25f05b468e372a1612141",
+    "mtime": 1787709441.1113281,
+    "ast_hash": "989e1af2f0401d75a7f443c3da44f37c",
     "semantic_hash": ""
   },
   "docs/00-control/registro-decisiones.md": {
@@ -595,13 +595,13 @@
     "semantic_hash": ""
   },
   "docs/02-requisitos/historias-usuario.md": {
-    "mtime": 1787707832.8597083,
-    "ast_hash": "0ce5c9b51f74644b0f3339f00888e932",
+    "mtime": 1787709479.3372774,
+    "ast_hash": "c57cb27f2e75718ac8270ba9d07c1d0e",
     "semantic_hash": ""
   },
   "docs/10-backlog/plan-bloques.md": {
-    "mtime": 1787707827.259858,
-    "ast_hash": "35b3c5a3d332ed172498bc31cb9e98fb",
+    "mtime": 1787709509.6787128,
+    "ast_hash": "8b8eedf07102a299c0f8e8ed9165f20e",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts-implementacion.md": {
@@ -700,7 +700,7 @@
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/BaseInput.vue": {
-    "mtime": 1787706699.9845593,
+    "mtime": 1787709319.4575934,
     "ast_hash": "c34416d630326b13a709248819712639",
     "semantic_hash": ""
   },
@@ -790,7 +790,7 @@
     "semantic_hash": ""
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1787706533.2875502,
+    "mtime": 1787709319.4297788,
     "ast_hash": "80a63799f9df1ebec2e07409ca91c264",
     "semantic_hash": ""
   },
@@ -805,8 +805,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/README.md": {
-    "mtime": 1787707849.4944909,
-    "ast_hash": "9c606f56a96573eefe26f028fec0f715",
+    "mtime": 1787709392.8677783,
+    "ast_hash": "26b551824feed1a4ae2dcf3bd056c339",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/TEMPLATE.md": {
@@ -1155,8 +1155,8 @@
     "semantic_hash": ""
   },
   "apps/api/cmd/api/session_integration_test.go": {
-    "mtime": 1787503632.9586468,
-    "ast_hash": "3f2b785f1895ff027ee204b8ff9bef4a",
+    "mtime": 1787709319.4405372,
+    "ast_hash": "ae69253770fc0f28cde9ea7819b9ff2b",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/auth/httpapi/contract_logout_test.go": {
@@ -1295,7 +1295,7 @@
     "semantic_hash": ""
   },
   "apps/web/src/shared/api/generated/openapi.d.ts": {
-    "mtime": 1787706590.803586,
+    "mtime": 1787709319.4575934,
     "ast_hash": "9bbc53be0664d786ca63cfa42ee9a36a",
     "semantic_hash": ""
   },
@@ -3095,8 +3095,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/hu/hu-041-excepciones-festivos.md": {
-    "mtime": 1787707713.8545282,
-    "ast_hash": "70555f9cb0f7d61b3e37b1872715c287",
+    "mtime": 1787709378.8716006,
+    "ast_hash": "ff95c6deb1e97b2f359a162390e330da",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/hu/hu-042-bloqueos-agenda.md": {
@@ -3125,7 +3125,7 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/schedule/httpapi/contract_test.go": {
-    "mtime": 1787706227.0494797,
+    "mtime": 1787709319.4473605,
     "ast_hash": "f39a0c0c1f52a84e88b391d7e624133d",
     "semantic_hash": ""
   },
@@ -3140,7 +3140,7 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/schedule/ports.go": {
-    "mtime": 1787705262.5414078,
+    "mtime": 1787709319.450349,
     "ast_hash": "ff455e5fd384d8aba0c7a1a1f51bb2bd",
     "semantic_hash": ""
   },
@@ -3160,7 +3160,7 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/schedule/service_test.go": {
-    "mtime": 1787705461.9561272,
+    "mtime": 1787709319.450349,
     "ast_hash": "57f847ce394d9c8dd79dccbde0273687",
     "semantic_hash": ""
   },
@@ -3195,12 +3195,12 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/pages/SchedulesPage.vue": {
-    "mtime": 1787707172.8482573,
+    "mtime": 1787709319.457065,
     "ast_hash": "56d81cc3dcaf6f975ca8b9d612efeb75",
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/pages/__tests__/SchedulesPage.test.ts": {
-    "mtime": 1787707330.5055032,
+    "mtime": 1787709319.4575934,
     "ast_hash": "8d9ecb0d1e7de8bb6951bfbacfd8daee",
     "semantic_hash": ""
   },
@@ -3290,222 +3290,222 @@
     "semantic_hash": ""
   },
   "apps/api/cmd/api/schedule_exceptions_integration_test.go": {
-    "mtime": 1787706301.602462,
+    "mtime": 1787709319.4405372,
     "ast_hash": "14f0fb2a83afcc888f43a53da424d448",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/schedule/colombian_holidays.go": {
-    "mtime": 1787705113.708413,
+    "mtime": 1787709319.4452536,
     "ast_hash": "fde585ee4d97e64be42f41a1ddb03828",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/schedule/colombian_holidays_test.go": {
-    "mtime": 1787705139.7412295,
+    "mtime": 1787709319.4452536,
     "ast_hash": "925a33672e736150de117e8e617e5dd1",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/schedule/exception_domain.go": {
-    "mtime": 1787705421.4078927,
+    "mtime": 1787709319.4452536,
     "ast_hash": "e387cdfa78ce9bbabec6e8458b6b856b",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/schedule/exception_domain_test.go": {
-    "mtime": 1787705537.746385,
+    "mtime": 1787709319.4452536,
     "ast_hash": "4548b63663356c30e4e783030b0cd3f4",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/schedule/exception_errors.go": {
-    "mtime": 1787705200.897852,
+    "mtime": 1787709319.446803,
     "ast_hash": "ec82eccba872e0798ebd3d3aecda831b",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/schedule/exception_ports.go": {
-    "mtime": 1787705241.7816896,
+    "mtime": 1787709319.4473605,
     "ast_hash": "d9f2870b176796e0cc9fb2a1923c6888",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/schedule/exception_service.go": {
-    "mtime": 1787705303.37034,
+    "mtime": 1787709319.4473605,
     "ast_hash": "6461b25d295aeb3b3eda7c43a9e32b2e",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/schedule/exception_service_test.go": {
-    "mtime": 1787705581.0405948,
+    "mtime": 1787709319.4473605,
     "ast_hash": "239f84c992c9ac688d423222f3aee578",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/schedule/httpapi/exception_dto.go": {
-    "mtime": 1787706164.96542,
+    "mtime": 1787709319.449113,
     "ast_hash": "5b3f7a83f2a1d998a7f0f47b49071f0c",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/schedule/httpapi/exception_handler.go": {
-    "mtime": 1787706110.5843823,
+    "mtime": 1787709319.4497027,
     "ast_hash": "ed26afc1904e2fc71171e4f6e11987f4",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/schedule/postgres/exception_repository.go": {
-    "mtime": 1787705421.439189,
+    "mtime": 1787709319.450349,
     "ast_hash": "b3fad461035fed6decbe36723cf54cc1",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/schedule/postgres/exception_repository_test.go": {
-    "mtime": 1787705889.7757502,
+    "mtime": 1787709319.450349,
     "ast_hash": "395037b07c38608c30af53de7a73992f",
     "semantic_hash": ""
   },
   "apps/web/e2e/excepciones-festivos.spec.ts": {
-    "mtime": 1787707442.0449505,
+    "mtime": 1787709319.4533598,
     "ast_hash": "b577b061ba45854bc8fbb83521342fab",
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/api/__tests__/scheduleExceptionsApi.test.ts": {
-    "mtime": 1787707283.8596432,
-    "ast_hash": "ae51ef907c73f68674ff6b1a83314ab3",
+    "mtime": 1787709319.4533598,
+    "ast_hash": "522733646303e3e75ca79f219f171127",
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/api/scheduleExceptionsApi.ts": {
-    "mtime": 1787707007.4875383,
+    "mtime": 1787709319.4533598,
     "ast_hash": "7e35a154d8f0f202d23e7e7333456445",
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/model/exceptionOutcome.ts": {
-    "mtime": 1787707007.6394894,
+    "mtime": 1787709319.4533598,
     "ast_hash": "59e4289579bd01fe90127fc0d6b49c37",
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/model/scheduleException.ts": {
-    "mtime": 1787706635.2557366,
+    "mtime": 1787709319.4560504,
     "ast_hash": "81cd3a7e4ed6655d2e9830f3aeeaf237",
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/validation/__tests__/exceptionValidation.test.ts": {
-    "mtime": 1787707295.4345639,
-    "ast_hash": "a0d69c456e3651b415d8e40b50b5ac86",
+    "mtime": 1787709319.4575934,
+    "ast_hash": "b8a7f4e7c4a0614b1c3478d088d692a2",
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/validation/exceptionValidation.ts": {
-    "mtime": 1787706677.2788956,
+    "mtime": 1787709319.4575934,
     "ast_hash": "f2e93e3a4de3436ce4676bc758f9e5fb",
     "semantic_hash": ""
   },
   "database/migrations/20260826090000_create_working_hour_override.sql": {
-    "mtime": 1787704889.8013964,
+    "mtime": 1787709319.4575934,
     "ast_hash": "e9891dd839359e73ada6440775452d24",
     "semantic_hash": ""
   },
   "database/testdata/hu041_excepciones.sql": {
-    "mtime": 1787704917.9748282,
+    "mtime": 1787709319.4630332,
     "ast_hash": "68b9a28ca0790a6b84790e6c86187a0e",
     "semantic_hash": ""
   },
   "database/tests/hu041_excepciones.sql": {
-    "mtime": 1787704987.8785522,
+    "mtime": 1787709319.4630332,
     "ast_hash": "75eee0ee43a4ede09ccdd53e457e4074",
     "semantic_hash": ""
   },
   "api/openapi/components/responses/ColombianHolidayListSuccess.yaml": {
-    "mtime": 1787704740.3728013,
+    "mtime": 1787709319.4297788,
     "ast_hash": "25fd5a69c0df432e6206ba2138f4c7d5",
     "semantic_hash": ""
   },
   "api/openapi/components/responses/HolidayCalendarSuccess.yaml": {
-    "mtime": 1787704688.5193243,
+    "mtime": 1787709319.433046,
     "ast_hash": "c823fd4fad05695e6d23688867b22306",
     "semantic_hash": ""
   },
   "api/openapi/components/responses/HolidayCalendarUpdated.yaml": {
-    "mtime": 1787704693.14228,
+    "mtime": 1787709319.433046,
     "ast_hash": "fee214c9e2b20706afe3d4ecb6bfc6fe",
     "semantic_hash": ""
   },
   "api/openapi/components/responses/ScheduleExceptionConflictProblem.yaml": {
-    "mtime": 1787704735.8127494,
+    "mtime": 1787709319.433046,
     "ast_hash": "1b657667ad09cd90ad2c6ccfd0e2bdc6",
     "semantic_hash": ""
   },
   "api/openapi/components/responses/ScheduleExceptionCreated.yaml": {
-    "mtime": 1787704710.1347916,
+    "mtime": 1787709319.434052,
     "ast_hash": "8e120b1adce58421d4ef6aa95cd0b542",
     "semantic_hash": ""
   },
   "api/openapi/components/responses/ScheduleExceptionDeleted.yaml": {
-    "mtime": 1787704719.065906,
+    "mtime": 1787709319.434052,
     "ast_hash": "d37ce16347b55f473ac04f1d055c6ab9",
     "semantic_hash": ""
   },
   "api/openapi/components/responses/ScheduleExceptionListSuccess.yaml": {
-    "mtime": 1787704699.932487,
+    "mtime": 1787709319.434052,
     "ast_hash": "3ccd11caedc949f9afb6bbf2e289d049",
     "semantic_hash": ""
   },
   "api/openapi/components/responses/ScheduleExceptionSuccess.yaml": {
-    "mtime": 1787704704.418604,
+    "mtime": 1787709319.434052,
     "ast_hash": "81f556c97fb128c4fe2d81795a7147ef",
     "semantic_hash": ""
   },
   "api/openapi/components/responses/ScheduleExceptionUpdated.yaml": {
-    "mtime": 1787704714.251131,
+    "mtime": 1787709319.434052,
     "ast_hash": "8ce38d9f3bebf9a43c3f2725c1909ee0",
     "semantic_hash": ""
   },
   "api/openapi/components/responses/ScheduleExceptionValidationProblem.yaml": {
-    "mtime": 1787704729.0876803,
+    "mtime": 1787709319.434052,
     "ast_hash": "8d5950bbcbc7711736bfd0a9a1ad4917",
     "semantic_hash": ""
   },
   "api/openapi/components/schemas/ColombianHolidayListResponse.yaml": {
-    "mtime": 1787704683.3069198,
+    "mtime": 1787709319.434052,
     "ast_hash": "e2ce85c1227f108df9c41bd9e38bf645",
     "semantic_hash": ""
   },
   "api/openapi/components/schemas/ColombianHolidayResponse.yaml": {
-    "mtime": 1787704678.9471529,
+    "mtime": 1787709319.434052,
     "ast_hash": "40aaad6eefb32c9d77efa8d717af2863",
     "semantic_hash": ""
   },
   "api/openapi/components/schemas/CreateScheduleExceptionRequest.yaml": {
-    "mtime": 1787704667.6700861,
+    "mtime": 1787709319.4374864,
     "ast_hash": "40a1108a953849be129b790b2f3f2f84",
     "semantic_hash": ""
   },
   "api/openapi/components/schemas/HolidayCalendarResponse.yaml": {
-    "mtime": 1787704613.620142,
+    "mtime": 1787709319.4374864,
     "ast_hash": "829f6cd2b793b28acdb41949ceeb571a",
     "semantic_hash": ""
   },
   "api/openapi/components/schemas/ScheduleExceptionListResponse.yaml": {
-    "mtime": 1787704655.816551,
+    "mtime": 1787709319.4374864,
     "ast_hash": "7285b488f4aa782e757ca7853c1dc9c9",
     "semantic_hash": ""
   },
   "api/openapi/components/schemas/ScheduleExceptionResponse.yaml": {
-    "mtime": 1787704648.7511332,
+    "mtime": 1787709319.4374864,
     "ast_hash": "762027432dedc64aa6ed6e5d0be7669c",
     "semantic_hash": ""
   },
   "api/openapi/components/schemas/ScheduleExceptionSegmentInput.yaml": {
-    "mtime": 1787704632.1042647,
+    "mtime": 1787709319.4374864,
     "ast_hash": "11c844921f8d9165e89f153a2775beed",
     "semantic_hash": ""
   },
   "api/openapi/components/schemas/ScheduleExceptionSegmentResponse.yaml": {
-    "mtime": 1787704640.104742,
+    "mtime": 1787709319.4374864,
     "ast_hash": "4b830f803909bb911e4f3bad020b43dd",
     "semantic_hash": ""
   },
   "api/openapi/components/schemas/UpdateHolidayCalendarRequest.yaml": {
-    "mtime": 1787704618.2378767,
+    "mtime": 1787709319.4405372,
     "ast_hash": "d1320ea3e12fc02a10b2ab2b043b9f45",
     "semantic_hash": ""
   },
   "api/openapi/components/schemas/UpdateScheduleExceptionRequest.yaml": {
-    "mtime": 1787704673.9287338,
+    "mtime": 1787709319.4405372,
     "ast_hash": "1d51b7a8ae3552b77d45f173fb290c61",
     "semantic_hash": ""
   },
   "api/openapi/paths/schedule-exceptions.yaml": {
-    "mtime": 1787704791.432907,
+    "mtime": 1787709319.4405372,
     "ast_hash": "ffd18475d0e80382fd0b512f0b58b466",
     "semantic_hash": ""
   }
