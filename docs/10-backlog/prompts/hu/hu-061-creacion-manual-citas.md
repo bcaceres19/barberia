@@ -20,8 +20,8 @@ issue: "107"
 issue_url: "https://github.com/bcaceres19/barberia/issues/107"
 suggested_issue_title: "feat(booking): implementar HU-061 creación manual de turnos"
 branch: "feat/107-hu061-creacion-manual-turnos"
-pr: null
-pr_url: null
+pr: "109"
+pr_url: "https://github.com/bcaceres19/barberia/pull/109"
 depends_on:
   - "HU-060 integrada en main con CA-060-01 a CA-060-08 verificadas (PR #105)"
   - "DP-CIT-01 resuelta como DEC-071 y propagada"
