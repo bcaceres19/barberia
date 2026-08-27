@@ -759,6 +759,55 @@ $$;
 \echo 'RLS OK · las cuatro tablas tienen RLS habilitada y forzada, barberia_app sin BYPASSRLS'
 
 -- ---------------------------------------------------------------------------
+-- Cierre por falta de contexto: sin app.barbershop_id fijado, cualquier
+-- consulta de barberia_app sobre customer/appointment falla cerrada (nunca
+-- devuelve filas de ninguna barbería), porque la política RLS evalúa
+-- current_setting('app.barbershop_id') sin el segundo argumento
+-- missing_ok y ese parámetro no tiene valor por defecto a nivel de sesión.
+-- ---------------------------------------------------------------------------
+BEGIN;
+SET ROLE barberia_app;
+-- Deliberadamente SIN "SET LOCAL app.barbershop_id = ...".
+
+DO $$
+BEGIN
+  BEGIN
+    PERFORM count(*) FROM customer;
+    RAISE EXCEPTION 'customer: una consulta sin app.barbershop_id fijado no debe tener éxito.';
+  EXCEPTION
+    WHEN undefined_object THEN NULL;
+    WHEN invalid_parameter_value THEN NULL;
+    -- Este mismo backend ya fijó app.barbershop_id con alcance LOCAL en
+    -- transacciones anteriores de esta suite (todas revertidas): una vez
+    -- que un parámetro de configuración personalizado se toca en una
+    -- sesión, PostgreSQL lo registra y current_setting() devuelve '' en
+    -- vez de lanzar undefined_object; el CAST a uuid de la política RLS
+    -- falla con invalid_text_representation. Cierra igual de cerrado.
+    WHEN invalid_text_representation THEN NULL;
+  END;
+
+  BEGIN
+    PERFORM count(*) FROM appointment;
+    RAISE EXCEPTION 'appointment: una consulta sin app.barbershop_id fijado no debe tener éxito.';
+  EXCEPTION
+    WHEN undefined_object THEN NULL;
+    WHEN invalid_parameter_value THEN NULL;
+    -- Este mismo backend ya fijó app.barbershop_id con alcance LOCAL en
+    -- transacciones anteriores de esta suite (todas revertidas): una vez
+    -- que un parámetro de configuración personalizado se toca en una
+    -- sesión, PostgreSQL lo registra y current_setting() devuelve '' en
+    -- vez de lanzar undefined_object; el CAST a uuid de la política RLS
+    -- falla con invalid_text_representation. Cierra igual de cerrado.
+    WHEN invalid_text_representation THEN NULL;
+  END;
+END
+$$;
+
+RESET ROLE;
+ROLLBACK;
+\echo 'cierre por falta de contexto OK · customer/appointment fallan cerrados sin app.barbershop_id'
+
+-- ---------------------------------------------------------------------------
 -- Grants exactos de barberia_app: sin DELETE en customer/appointment;
 -- sin UPDATE ni DELETE en el historial (RN-DAT-03, RN-HIS-02)
 -- ---------------------------------------------------------------------------
