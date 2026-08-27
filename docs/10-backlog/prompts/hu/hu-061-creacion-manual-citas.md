@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-061-v1"
 version: "1.0"
 kind: "hu"
-status: "draft"
+status: "ready"
 target_agents:
   - "claude"
   - "codex"
@@ -16,18 +16,17 @@ related_hu:
   - "HU-042"
   - "HU-060"
   - "HU-062"
-issue: "pending"
-issue_url: null
+issue: "107"
+issue_url: "https://github.com/bcaceres19/barberia/issues/107"
 suggested_issue_title: "feat(booking): implementar HU-061 creación manual de turnos"
 branch: null
 pr: null
 pr_url: null
 depends_on:
-  - "HU-060 integrada en main con CA-060-01 a CA-060-08 verificadas"
-  - "DP-CIT-01 resuelta como DEC-* y propagada"
-  - "DP-CIT-02 resuelta como DEC-* y propagada"
-  - "DP-CIT-03 resuelta como DEC-* y propagada"
-  - "Issue real propio creado y enlazado antes de pasar a ready o ejecutar"
+  - "HU-060 integrada en main con CA-060-01 a CA-060-08 verificadas (PR #105)"
+  - "DP-CIT-01 resuelta como DEC-071 y propagada"
+  - "DP-CIT-02 resuelta como DEC-072 y propagada"
+  - "DP-CIT-03 resuelta como DEC-073 y propagada"
 rules:
   - "RN-CIT-02"
   - "RN-RES-01"
@@ -63,6 +62,9 @@ decisions:
   - "DEC-043"
   - "DEC-045"
   - "DEC-046"
+  - "DEC-071"
+  - "DEC-072"
+  - "DEC-073"
 acceptance_criteria:
   - "CA-061-01"
   - "CA-061-02"
@@ -109,7 +111,7 @@ source_docs:
   - "apps/web/src/modules/schedules"
   - "apps/web/src/shared/api"
 created_at: "2026-08-26"
-updated_at: "2026-08-26"
+updated_at: "2026-08-27"
 supersedes: null
 superseded_by: null
 ---
@@ -118,9 +120,9 @@ superseded_by: null
 
 ## Instrucción para el agente
 
-No ejecutes este prompt mientras siga `issue: pending`, `HU-060` no esté integrada o cualquiera de `DP-CIT-01`–`DP-CIT-03` carezca de una decisión confirmada y propagada. Esas tres dudas cambian el contrato y el comportamiento observable; no elijas una respuesta por facilidad técnica.
+`DP-CIT-01`–`DP-CIT-03` ya están resueltas y propagadas (`DEC-071`–`DEC-073`, 2026-08-27) y el issue real es [#107](https://github.com/bcaceres19/barberia/issues/107); este prompt está `ready`. Aplica esas tres decisiones literalmente, sin reinterpretarlas por facilidad técnica.
 
-Cuando el prompt sea ejecutable, entrega una sola capacidad vertical: el barbero crea un turno manual desde el panel y la operación termina en una única cita `confirmed` con historial, aislamiento e idempotencia. No implementes edición, reprogramación, cancelación, estados terminales, reserva pública ni notificaciones.
+Entrega una sola capacidad vertical: el barbero crea un turno manual desde el panel y la operación termina en una única cita `confirmed` con historial, aislamiento e idempotencia. No implementes edición, reprogramación, cancelación, estados terminales, reserva pública ni notificaciones.
 
 ## Objetivo
 
@@ -128,9 +130,9 @@ Que un barbero autenticado registre un turno recibido por teléfono, WhatsApp o 
 
 ## Preflight obligatorio
 
-1. Verifica árbol limpio, `main` actualizada por fast-forward y `HU-060` integrada con sus ocho criterios probados.
-2. Lee las resoluciones de `DP-CIT-01`, `DP-CIT-02` y `DP-CIT-03`. Si falta alguna, detente sin tocar código y mantén este prompt `draft`.
-3. Crea o localiza el issue real propio; actualiza metadatos e índice y crea `feat/<issue>-hu061-creacion-manual-turnos` desde `main`.
+1. Verifica árbol limpio, `main` actualizada por fast-forward y `HU-060` integrada con sus ocho criterios probados (PR #105).
+2. Lee `DEC-071`, `DEC-072` y `DEC-073` (resoluciones de `DP-CIT-01`–`DP-CIT-03`) en `docs/00-control/registro-decisiones.md` antes de codificar.
+3. Actualiza `status` a `in_progress` y `branch` en los metadatos de este archivo y en el índice; crea `feat/107-hu061-creacion-manual-turnos` desde `main`.
 4. Ejecuta Graphify sobre `booking`, `catalog`, `schedule`, `staff`, sesión/tenant, idempotencia, navegación privada y componentes base.
 5. Lee completamente todos los `source_docs` y verifica que contrato, migraciones y cliente generado vigentes coincidan con la rama base.
 6. Revisa los seguimientos de B2 (`#90`, `#95`, `#98`, `#100`) y conserva cualquier corrección integrada de horario/bloqueos/UI.
@@ -141,14 +143,14 @@ Que un barbero autenticado registre un turno recibido por teléfono, WhatsApp o 
 - Caso de uso `booking.CreateManualAppointment` independiente de Chi y PostgreSQL.
 - Barbero, servicio, persona atendida, instante local interpretado en la zona de la barbería, contacto opcional y nota opcional con minimización.
 - Fin planificado y snapshots derivados en servidor del servicio autorizado; estado y origen derivados, no aceptados del body.
-- Reglas finales de `DP-CIT-01`–`DP-CIT-03` implementadas de forma literal y trazable.
+- `DEC-071`–`DEC-073` (resoluciones de `DP-CIT-01`–`DP-CIT-03`) implementadas de forma literal y trazable.
 - Exención manual de anticipación mínima, ventana máxima y rejilla pública; conserva jornada, integridad y cualquier otra restricción aprobada.
 - Reutilización de idempotencia de `HU-004`/`DEC-043`, transacción de `HU-060` y traducción segura del conflicto de exclusión.
 - Formulario Vue “Nuevo turno”, cliente tipado generado, validación de forma, resumen y estados visibles.
 
 ## Fuera de alcance
 
-- Resolver o reinterpretar `DP-CIT-01`–`DP-CIT-03` durante la implementación.
+- Reinterpretar `DEC-071`–`DEC-073` durante la implementación; se aplican tal como quedaron redactadas.
 - Consultar disponibilidad pública o proponer franjas alternativas; B4 es dueña.
 - Crear/editar barberos, servicios, asignaciones, horarios, excepciones o bloqueos.
 - Modificar, reprogramar, cancelar, completar, marcar `no_show` o corregir una cita.
@@ -169,7 +171,7 @@ Que un barbero autenticado registre un turno recibido por teléfono, WhatsApp o 
 
 ### 1. Cerrar el contrato antes de codificar
 
-1. Propaga cada decisión nueva `DEC-*` de `DP-CIT-01`–`DP-CIT-03` a reglas, historia, matriz y este prompt; si cambia materialmente el cuerpo, crea v2 antes de ejecutar.
+1. `DEC-071`–`DEC-073` ya están propagadas a reglas, historia y matriz; verifica que siguen vigentes antes de diseñar el request.
 2. Diseña un request cerrado con solo campos que el barbero aporta. Documenta unidad, zona, opcionalidad, longitudes y ejemplos ficticios.
 3. Declara `201`, repetición lógica, `400`, `401`, `404`, `409`, `422` y `500` con RFC 9457; no uses `default`.
 4. Incluye `x-business-rules` y `x-decisions` reales; no describas tablas o SQL en OpenAPI.
@@ -195,7 +197,7 @@ Que un barbero autenticado registre un turno recibido por teléfono, WhatsApp o 
 
 ## Pruebas y evidencia
 
-- Dominio/servicio: cualquier minuto, cita ya iniciada, zona distinta, duración/snapshots y todas las ramas decididas de `DP-CIT-01`–`DP-CIT-03`.
+- Dominio/servicio: cualquier minuto, cita ya iniciada, zona distinta, duración/snapshots y todas las ramas de `DEC-071`–`DEC-073`.
 - HTTP/contrato: request válido, desconocidos, exceso, auth, recurso ajeno, conflicto, validación, idempotencia igual/distinta/concurrente y error interno seguro.
 - PostgreSQL real: dos tenants, contigüidad, cruces, rollback atómico y carrera de dos conexiones sin `sleep`.
 - Componentes: carga de catálogos, datos opcionales, errores, resumen, doble toque, conservación y foco; axe-core.

@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.18"
+version: "1.19"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-24"
+ultima_actualizacion: "2026-08-27"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -91,6 +91,10 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-067` | 2026-08-24 | Resuelve `DP-SER-01`: catálogo con moneda COP fija, sin servicios gratuitos (precio > 0) y nombres únicos entre servicios activos de la misma barbería | `DP-SER-01`, `HU-022` | Confirmada |
 | `DEC-068` | 2026-08-24 | Resuelve `DP-SER-02`: un servicio activo debe conservar al menos un barbero asignado; se rechaza retirar la última asignación | `DP-SER-02`, `HU-023` | Confirmada |
 | `DEC-069` | 2026-08-24 | Resuelve `DP-SER-03`: B1 construye un recuento simple de impacto al desactivar, sin protección de concurrencia; la advertencia completa con cancelación queda para B3 | `DP-SER-03`, `HU-024` | Confirmada |
+| `DEC-070` | 2026-08-25 | Resuelve `CT-008`: siete FK de B2 pasan de `ON DELETE CASCADE` a `ON DELETE RESTRICT` | `CT-008` | Confirmada |
+| `DEC-071` | 2026-08-27 | Resuelve `DP-CIT-01`: cliente manual sin teléfono se reconcilia por correo dentro de la barbería; sin teléfono ni correo, siempre fila nueva | `DP-CIT-01`, `HU-061` | Confirmada |
+| `DEC-072` | 2026-08-27 | Resuelve `DP-CIT-02`: la cita manual solo puede usar servicios activos ya asignados al barbero elegido | `DP-CIT-02`, `HU-061` | Confirmada |
+| `DEC-073` | 2026-08-27 | Resuelve `DP-CIT-03`: un bloqueo vigente rechaza la creación manual (bloqueo duro), igual que un cruce de citas | `DP-CIT-03`, `HU-061` | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -769,3 +773,33 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** excepción documentada de `AGENTS.md` para tablas de configuración (opción 2) — descartada por no tener ningún caso de uso que la necesite hoy (nada borra físicamente un `barber` todavía) y por ampliar una prohibición general con una excepción que solo serviría a un borrado que ni siquiera existe; otro mecanismo de retención a medida (opción 3) — descartada por ser innecesaria cuando `RESTRICT` ya basta mientras `barber` no tenga borrado físico.
 - **Documentos afectados:** `docs/00-control/contradicciones.md` (cierra `CT-008`), `database/modelo-fisico-referencia.sql` §C (siete FK cambiadas de `CASCADE` a `RESTRICT`, con comentario en cada una), `docs/10-backlog/prompts/hu/hu-040-horario-laboral.md`, `docs/10-backlog/prompts/hu/hu-041-excepciones-festivos.md`, `docs/10-backlog/prompts/hu/hu-042-bloqueos-agenda.md`, `docs/10-backlog/plan-bloques.md`.
 - **Fuente:** `docs/00-control/contradicciones.md`, `CT-008`; aprobación explícita del propietario el 2026-08-25.
+
+### DEC-071 · Resolución de `DP-CIT-01`: identidad/reutilización de `customer` sin teléfono en una cita manual
+
+- **Fecha:** 2026-08-27.
+- **Decisión:** cuando la cita manual omite el teléfono (`RN-CIT-02` lo permite) pero el cliente sí da correo, `customer` se busca/reutiliza por correo dentro de la misma barbería, reutilizando la unicidad de correo por tenant que ya fija `DEC-046`. Cuando faltan ambos —teléfono y correo—, la creación siempre inserta una fila `customer` nueva; no se reconcilia por nombre ni por ningún otro dato, porque el nombre no es un identificador confiable (dos clientes distintos pueden compartir nombre) y forzar una coincidencia por texto arriesgaría fusionar personas distintas o dejar historial cruzado entre ellas.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** mantiene un único criterio de identidad por dato disponible, en el mismo orden de confiabilidad que ya usa el sistema: teléfono (`DEC-045`) primero, correo (`DEC-046`) como respaldo cuando falta teléfono, y fila nueva solo cuando no hay ningún dato de contacto verificable con el que reconciliar; no introduce un mecanismo de fusión manual ni heurísticas de coincidencia de texto que ningún criterio exige todavía.
+- **Alternativas descartadas:** siempre fila nueva sin teléfono, incluso con correo presente — descartada por desperdiciar el correo como identificador ya disponible y fragmentar el historial de un mismo cliente en varias filas sin necesidad; reconciliación por nombre — descartada por el riesgo real de fusionar personas distintas con nombres coincidentes o comunes.
+- **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-CIT-01`), `docs/01-producto/reglas-negocio.md` (`RN-CIT-02`, caso límite nuevo), `docs/02-requisitos/historias-usuario.md` (`HU-061`, `CA-061-04`), `docs/10-backlog/prompts/hu/hu-061-creacion-manual-citas.md`; futura implementación debe aplicar upsert por correo dentro del tenant solo cuando falte el teléfono, coherente con la unicidad ya vigente de `DEC-046`.
+- **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-CIT-01`; aprobación explícita del propietario el 2026-08-27.
+
+### DEC-072 · Resolución de `DP-CIT-02`: alcance de la asignación servicio-barbero en una cita manual
+
+- **Fecha:** 2026-08-27.
+- **Decisión:** una cita manual solo puede crearse con un servicio que esté activo **y** asignado al barbero elegido (fila vigente en `barber_service` de `HU-023`); un servicio activo de la barbería pero no asignado a ese barbero se rechaza, aunque exista y esté activo.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** mantiene coherencia con la única fuente de verdad que ya existe para "qué presta cada barbero" (`barber_service`, `HU-023`) y con `RN-DIS-02`, que la disponibilidad pública usará exactamente igual; permitir en la creación manual un servicio que el barbero no tiene asignado produciría una cita que la agenda y la futura reserva pública no podrían explicar de forma consistente, y obligaría a mantener dos reglas distintas de "servicio válido para un barbero" en el mismo sistema.
+- **Alternativas descartadas:** cualquier servicio activo de la barbería sin exigir asignación — descartada por crear una segunda noción de "servicio válido" solo para la creación manual, divergente de `HU-023` y de la disponibilidad pública, sin ningún caso de uso documentado que la requiera.
+- **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-CIT-02`), `docs/02-requisitos/historias-usuario.md` (`HU-061`, `CA-061-04`), `docs/10-backlog/prompts/hu/hu-061-creacion-manual-citas.md`; futura implementación valida la asignación vigente `barber_service` antes de aceptar la cita, con el mismo error `422`/`409` uniforme que otras validaciones de negocio de `HU-061`.
+- **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-CIT-02`; aprobación explícita del propietario el 2026-08-27.
+
+### DEC-073 · Resolución de `DP-CIT-03`: conducta de la creación manual frente a un bloqueo vigente
+
+- **Fecha:** 2026-08-27.
+- **Decisión:** si el intervalo elegido cae dentro de la jornada laboral pero coincide con un bloqueo vigente de cualquier tipo (`break`, `lunch`, `unavailable`, `day_off`, `holiday`, `vacation`, `emergency`), la creación manual se **rechaza** con el mismo tratamiento de conflicto que un cruce entre dos citas (bloqueo duro, sin advertencia que permita continuar). El barbero debe retirar o exceptuar el bloqueo desde las pantallas reales de `HU-041`/`HU-042` antes de poder crear la cita en ese intervalo.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** de las tres opciones registradas en `DP-CIT-03`, el bloqueo duro es la única coherente con el precedente ya sentado por `DEC-068` (rechazar en vez de advertir cuando una operación dejaría el sistema en un estado que otra regla de negocio prohíbe) y con `RN-CIT-02` ("la cita manual... es indistinguible de las públicas en cuanto a su efecto sobre la agenda"): un bloqueo vigente significa que ese tiempo no está disponible para ningún origen de cita, manual o pública, y permitir una excepción silenciosa solo para el flujo manual reintroduciría la ambigüedad que la exclusión de `HU-060` existe para eliminar.
+- **Alternativas descartadas:** permitir con advertencia — descartada porque delega en el barbero, en el momento de más prisa (creando una cita mientras atiende a alguien), una decisión que ya tiene un flujo propio y auditable en `HU-041`/`HU-042` (editar o exceptuar el bloqueo); exigir retirar/exceptuar el bloqueo como paso obligatorio dentro del mismo formulario de cita — descartada por mezclar dos preocupaciones distintas (gestión de bloqueos y creación de citas) en una sola pantalla y una sola transacción, cuando `HU-041`/`HU-042` ya resuelven la gestión de bloqueos de forma completa y auditada.
+- **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-CIT-03`), `docs/01-producto/reglas-negocio.md` (`RN-CIT-02`, caso límite nuevo), `docs/02-requisitos/historias-usuario.md` (`HU-061`, `CA-061-04`), `docs/10-backlog/prompts/hu/hu-061-creacion-manual-citas.md`; futura implementación consulta la jornada efectiva/bloqueos vigentes de `schedule` antes de confirmar y responde el mismo `409` uniforme que usa para un cruce de citas.
+- **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-CIT-03`; aprobación explícita del propietario el 2026-08-27.
