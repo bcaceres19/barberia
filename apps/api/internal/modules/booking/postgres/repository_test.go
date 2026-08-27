@@ -24,6 +24,7 @@ import (
 	"system-barbershop/internal/platform/apperr"
 	"system-barbershop/internal/platform/config"
 	"system-barbershop/internal/platform/database"
+	"system-barbershop/internal/platform/idempotency"
 )
 
 const (
@@ -71,7 +72,7 @@ func setupTestDB(t *testing.T) *database.DB {
 }
 
 func newRepository(db *database.DB) *bookingpostgres.Repository {
-	return bookingpostgres.New(db)
+	return bookingpostgres.New(db, idempotency.NewSQLCoordinator())
 }
 
 // uniqueSuffix evita colisiones entre ejecuciones repetidas de la suite

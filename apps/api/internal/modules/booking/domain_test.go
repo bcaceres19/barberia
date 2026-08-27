@@ -7,6 +7,7 @@ import (
 
 	"system-barbershop/internal/modules/booking"
 	"system-barbershop/internal/platform/apperr"
+	"system-barbershop/internal/platform/idempotency"
 )
 
 func strPtr(s string) *string { return &s }
@@ -207,4 +208,17 @@ func (s *stubRepository) CreateInternal(
 ) (booking.CreateInternalResult, error) {
 	s.called = true
 	return booking.CreateInternalResult{}, nil
+}
+
+func (s *stubRepository) FindCustomerForReconciliation(
+	_ context.Context, _ string, _, _ *string,
+) (booking.Customer, bool, error) {
+	return booking.Customer{}, false, nil
+}
+
+func (s *stubRepository) CreateManual(
+	_ context.Context, _ string, _ booking.CreateInternalInput, _ idempotency.Key, _ idempotency.Fingerprint,
+) (booking.CreateManualResult, error) {
+	s.called = true
+	return booking.CreateManualResult{}, nil
 }

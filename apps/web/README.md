@@ -763,6 +763,42 @@ Preparación de PostgreSQL para el E2E real: mismo procedimiento que
 "Horario laboral recurrente (HU-040)" arriba, con
 `testdata/hu041_excepciones.sql` además de las testdata previas.
 
+## Nuevo turno (HU-061)
+
+Primera pantalla real del módulo `agenda` (`src/modules/agenda`):
+`NewAppointmentPage.vue` (`/panel/turnos/nuevo`), el barbero autenticado
+registra un turno manual recibido por teléfono, WhatsApp o en persona.
+Elegir un barbero carga solo los servicios activos ya asignados a ese
+barbero (`GET .../services` de HU-023 cruzado contra el catálogo activo de
+HU-022, `DEC-072`): el formulario nunca ofrece un servicio que el
+servidor rechazaría. `startsAt` se envía como fecha/hora civil
+"AAAA-MM-DDTHH:MM:SS" sin desplazamiento de zona (los `<input
+type="date">`/`type="time">` nativos ya la producen en el reloj del
+dispositivo, que es el que el barbero ve): el servidor la interpreta
+contra la zona IANA de la barbería (RN-DIS-07), sin ninguna conversión de
+zona en el cliente. El éxito muestra un resumen honesto (servicio,
+duración, precio) sin enlazar a ninguna vista de agenda real: HU-062
+(agenda diaria) todavía no existe.
+
+### Pruebas
+
+Componente
+(`src/modules/agenda/pages/__tests__/NewAppointmentPage.test.ts`): carga
+(vacío, error recuperable), selección de barbero → carga de servicios
+asignados (`DEC-072`), validación de forma bloqueando el envío,
+conflicto de agenda/bloqueo (`DEC-073`) mostrando el detalle del
+servidor, conflicto de idempotencia, error de red conservando los datos
+ya escritos, doble envío bloqueado y `vitest-axe` sin violaciones.
+E2E escrito siguiendo el mismo patrón que
+`e2e/servicios-por-barbero.spec.ts`: `e2e/nuevo-turno.spec.ts` (alta
+manual dentro de la próxima hora, fuera de la anticipación mínima
+pública; cruce con una cita existente del mismo barbero rechazado;
+servicio no asignado ausente del selector). Pendiente de ejecución
+contra Chromium real y de evidencia responsiva en los cuatro
+breakpoints (no forma parte de los checks de CI, que solo corren
+`test:unit`), mismo estado que `e2e/horarios.spec.ts` (HU-040) y
+`e2e/excepciones-festivos.spec.ts` (HU-041).
+
 ## Sistema visual base (HU-009)
 
 Fuente normativa completa:

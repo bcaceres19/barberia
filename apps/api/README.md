@@ -1531,6 +1531,48 @@ existente (RN-HIS-02, `DEC-014`).
 - SQL directo con el rol real: `database/tests/hu060_citas.sql` (esquema, `CHECK`, exclusión, `occupies_schedule`, medianoche/DST, historial append-only, RLS, grants, aislamiento de tenant, `ON DELETE RESTRICT`).
 - Sin HTTP ni router de producción: HU-060 no expone ningún endpoint.
 
+## Creación manual de turnos (HU-061)
+
+`POST /private/appointments` (`internal/modules/booking/httpapi`):
+`booking.ManualBookingService` resuelve la zona IANA de la barbería
+(`booking.TimezonePort`, adaptador `shops.NewTimezoneLookup`), interpreta
+`startsAt` como instante civil sin zona contra esa zona, verifica que el
+servicio esté activo y asignado al barbero elegido (`booking.BarberServicePort`,
+adaptador `catalog.NewManualBookingCatalog`, `DEC-072`), verifica que no
+haya un bloqueo vigente en el intervalo (`booking.BlockCheckPort`, adaptador
+`schedule.NewManualBookingBlocks` sobre `schedule.Service.EffectiveBlocks`,
+`DEC-073`), decide la reconciliación de cliente por teléfono o correo
+(`DEC-045`, `DEC-046`, `DEC-071`) y delega en `booking.Repository.CreateManual`,
+que reutiliza la primitiva transaccional de HU-060 dentro del protocolo de
+idempotencia de HU-004 (`RN-IDE-01`, `DEC-043`). `booking` nunca importa
+`catalog`, `schedule` ni `shops`: los tres puertos usan solo tipos
+universales en su firma para que el adaptador real (declarado en el módulo
+dueño de los datos) los satisfaga de forma puramente estructural, mismo
+criterio que `staff.NewBarberLookup` frente a `catalog.BarberPort`
+(HU-023).
+
+### Tabla de criterios de aceptación
+
+| Criterio | Estado | Prueba o evidencia |
+| --- | --- | --- |
+| `CA-061-01` a `CA-061-08` | Backend cumplido; evidencia visual/accesible y E2E contra stack real pendientes (ver nota) | `internal/modules/booking/manual_test.go`, `internal/modules/booking/postgres/manual_repository_test.go`, `internal/modules/booking/httpapi/handler_test.go`, `apps/web/src/modules/agenda/pages/__tests__/NewAppointmentPage.test.ts`. |
+
+**Nota de alcance:** esta entrega cubre dominio, Postgres real (reconciliación,
+idempotencia, aislamiento de tenant) y HTTP/frontend con dobles de prueba,
+incluida accesibilidad automatizada (`vitest-axe`) del formulario. El
+recorrido E2E contra un stack real (login → crear turno → verificar en
+Postgres) y la evidencia visual en 320/360/768/1280px/zoom 200% quedan
+como seguimiento explícito (mismo patrón que HU-042/`BlocksPage`, que
+tampoco tiene E2E propio todavía): ninguno de los cuatro checks de CI
+(`Atlas + suites SQL`, `Go`, `Frontend`, `OpenAPI`) ejecuta Playwright.
+
+### Pruebas
+
+- Dominio/servicio: `internal/modules/booking/manual_test.go` (dobles de los cuatro puertos: forma, DEC-071/072/073, zona/instante civil).
+- PostgreSQL real: `internal/modules/booking/postgres/manual_repository_test.go` (reconciliación por teléfono/correo, alta idempotente, repetición byte a byte, aislamiento de tenant); reutiliza la carrera de dos conexiones ya probada en `TestCreateInternal_ConcurrentOverlap_ExactlyOneSucceeds` (HU-060), porque `CreateManual` llama al mismo `insertAppointment`.
+- HTTP: `internal/modules/booking/httpapi/handler_test.go` (201/Location, 400 sin `Idempotency-Key`, 400 campo desconocido, 404, 409, repetición idempotente).
+- Componentes Vue: `apps/web/src/modules/agenda/pages/__tests__/NewAppointmentPage.test.ts` (carga, vacío, error, DEC-072 en el selector de servicio, validación, éxito con resumen honesto, conflicto, error de red con datos conservados, doble envío bloqueado, `vitest-axe`).
+
 ## Pruebas de integración
 
 Las pruebas en `internal/platform/database/*_test.go` requieren PostgreSQL real

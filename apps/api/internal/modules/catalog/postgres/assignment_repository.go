@@ -29,6 +29,25 @@ func NewAssignmentRepository(db *database.DB) *AssignmentRepository {
 
 var _ catalog.AssignmentRepository = (*AssignmentRepository)(nil)
 
+// Exists implementa catalog.AssignmentRepository.Exists (HU-061, DEC-072).
+func (r *AssignmentRepository) Exists(ctx context.Context, barbershopID, barberID, serviceID string) (bool, error) {
+	var found bool
+	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
+		row := q.QueryRow(ctx,
+			`SELECT EXISTS (
+			   SELECT 1 FROM barber_service
+			    WHERE barbershop_id = $1 AND barber_id = $2 AND service_id = $3
+			 )`,
+			barbershopID, barberID, serviceID,
+		)
+		return row.Scan(&found)
+	})
+	if err != nil {
+		return false, fmt.Errorf("catalog/postgres: verificar asignación: %w", err)
+	}
+	return found, nil
+}
+
 // List implementa catalog.AssignmentRepository.List: orden estable
 // (created_at, service_id) dentro del tenant vigente y del barbero
 // solicitado, cursor opaco decodificado por el núcleo (catalog.Cursor,

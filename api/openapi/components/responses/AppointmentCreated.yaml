@@ -1,0 +1,33 @@
+# Respuesta 201 de POST /private/appointments (HU-061, RN-IDE-01). Una
+# repetición exacta de la misma Idempotency-Key con el mismo contenido
+# reproduce esta MISMA respuesta byte a byte: no crea una segunda cita.
+description: >
+  Turno creado. `Location` apunta al recurso individual recién creado.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+  Location:
+    $ref: '../headers/Location.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/AppointmentResponse.yaml'
+    examples:
+      turnoManual:
+        value:
+          id: 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+          barberId: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+          serviceId: 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+          customerId: 3c4d5e6f-1a2b-4c3d-8e9f-0a1b2c3d4e5f
+          attendeeName: Carlos Restrepo
+          startsAt: "2026-09-03T14:30:00-05:00"
+          endsAt: "2026-09-03T15:00:00-05:00"
+          status: confirmed
+          origin: manual
+          serviceName: Corte clásico
+          durationMinutes: 30
+          priceAmount: "20000.00"
+          currency: COP
+          customerNote: null
+          createdAt: "2026-08-27T15:04:05Z"
+          updatedAt: "2026-08-27T15:04:05Z"

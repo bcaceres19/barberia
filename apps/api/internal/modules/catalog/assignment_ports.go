@@ -41,6 +41,11 @@ type AssignmentRepository interface {
 	// esa verificación previa quedara desincronizada.
 	Assign(ctx context.Context, barbershopID, barberID, serviceID string) (AssignResult, error)
 
+	// Exists informa si barberID tiene asignado serviceID dentro de
+	// barbershopID (HU-061, DEC-072): una consulta de existencia simple
+	// sobre `barber_service`, sin paginar ni cargar la fila completa.
+	Exists(ctx context.Context, barbershopID, barberID, serviceID string) (bool, error)
+
 	// Unassign ejecuta, dentro de UNA sola InTenantTx que bloquea la fila
 	// de `service` (SELECT ... FOR UPDATE) para resistir la carrera de dos
 	// desasignaciones concurrentes de las dos últimas filas de un mismo

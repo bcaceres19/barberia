@@ -5,8 +5,8 @@
     "semantic_hash": ""
   },
   "apps/api/cmd/api/main.go": {
-    "mtime": 1787786835.9614365,
-    "ast_hash": "70bbd283e2145494584c738d1da5fd64",
+    "mtime": 1787870450.8124564,
+    "ast_hash": "96256a08ba4ebf0ced57b2e7a8168235",
     "semantic_hash": ""
   },
   "apps/api/cmd/worker/main.go": {
@@ -30,7 +30,7 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/doc.go": {
-    "mtime": 1787848524.2059853,
+    "mtime": 1787850924.2891588,
     "ast_hash": "dfc1dfc97ce64c32356c658dd0207515",
     "semantic_hash": ""
   },
@@ -130,8 +130,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/router/index.ts": {
-    "mtime": 1787700282.2450643,
-    "ast_hash": "24f9e25fdebd2a79acdea696d5a867b5",
+    "mtime": 1787871074.6763375,
+    "ast_hash": "912b857a2d1ee383d423b5f3062080dc",
     "semantic_hash": ""
   },
   "apps/web/src/main.ts": {
@@ -140,9 +140,9 @@
     "semantic_hash": "bfbd6f529eb288e51679118fcc8dbe6f"
   },
   "apps/web/src/modules/agenda/index.ts": {
-    "mtime": 1786044924.2826998,
-    "ast_hash": "12322571a2c7cf74deb87431d65ac69d",
-    "semantic_hash": "12322571a2c7cf74deb87431d65ac69d"
+    "mtime": 1787871066.3398833,
+    "ast_hash": "1dad2ce8e1b0493b99933190ca83078d",
+    "semantic_hash": ""
   },
   "apps/web/src/modules/auth/index.ts": {
     "mtime": 1787514985.0457573,
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "api/openapi/CHANGELOG.md": {
-    "mtime": 1787709319.4297788,
-    "ast_hash": "2cdca78f2113fbfb2de9145b04f7edc7",
+    "mtime": 1787871329.900839,
+    "ast_hash": "e31ef7eb0469d9222414ca07b7e6d0c4",
     "semantic_hash": ""
   },
   "api/openapi/README.md": {
@@ -375,8 +375,8 @@
     "semantic_hash": "72ebdeafb399c1fc6afba7f4c79dd076"
   },
   "api/openapi/openapi.yaml": {
-    "mtime": 1787786835.9614365,
-    "ast_hash": "b9d0bbdf99b3c608ec87db590c22234f",
+    "mtime": 1787871324.570594,
+    "ast_hash": "5ceb861d4dbba0e33ab7a71d924d6ea2",
     "semantic_hash": ""
   },
   "api/openapi/paths/catalog.yaml": {
@@ -390,9 +390,9 @@
     "semantic_hash": "a6283d03c1ef0df00098dcfe9ba5ee94"
   },
   "api/openapi/paths/private-appointments.yaml": {
-    "mtime": 1786045307.8400295,
-    "ast_hash": "b723e3ffe6dab2fa85dd8aa0f21f8432",
-    "semantic_hash": "b723e3ffe6dab2fa85dd8aa0f21f8432"
+    "mtime": 1787870333.9107308,
+    "ast_hash": "7fa2f4aba7448acb031eb4bdfb2f3a8d",
+    "semantic_hash": ""
   },
   "api/openapi/paths/public-booking.yaml": {
     "mtime": 1786045301.20921,
@@ -410,13 +410,13 @@
     "semantic_hash": ""
   },
   "apps/api/README.md": {
-    "mtime": 1787849959.2465968,
-    "ast_hash": "2fe66cbbf8d7d3ec4a3edc49240bc38e",
+    "mtime": 1787871353.7913346,
+    "ast_hash": "9207d0f1ad949bc1e486437f4408d29d",
     "semantic_hash": ""
   },
   "apps/web/README.md": {
-    "mtime": 1787709319.4533598,
-    "ast_hash": "c5db602040152126c2edf0b652cc6e47",
+    "mtime": 1787871432.9762878,
+    "ast_hash": "47764ad4a7fa863733f1da2a07395aaf",
     "semantic_hash": ""
   },
   "apps/web/e2e/README.md": {
@@ -430,7 +430,7 @@
     "semantic_hash": ""
   },
   "database/README.md": {
-    "mtime": 1787849903.1772401,
+    "mtime": 1787850924.2891588,
     "ast_hash": "787bd8ce83f040bd5041ebc5b441fa67",
     "semantic_hash": ""
   },
@@ -460,8 +460,8 @@
     "semantic_hash": ""
   },
   "docs/00-control/dudas-pendientes.md": {
-    "mtime": 1787847554.1892374,
-    "ast_hash": "4515a32b7189e069c43119dcbd2f8d16",
+    "mtime": 1787852320.2414703,
+    "ast_hash": "dd3a569535b46fb4b7b1eb6de931b13f",
     "semantic_hash": ""
   },
   "docs/00-control/glosario.md": {
@@ -470,18 +470,18 @@
     "semantic_hash": ""
   },
   "docs/00-control/historial-cambios.md": {
-    "mtime": 1787850166.8861854,
-    "ast_hash": "fa775be369aac72c5a63bc341cba107a",
+    "mtime": 1787871606.7371051,
+    "ast_hash": "91916ff2c94cffe363ddfa7b509576b2",
     "semantic_hash": ""
   },
   "docs/00-control/matriz-trazabilidad.md": {
-    "mtime": 1787850031.2372756,
-    "ast_hash": "c65b57c65ecbd491f61f639daaf30b0f",
+    "mtime": 1787871507.1531563,
+    "ast_hash": "8a3ffa9411a9e6294586e2eada804b26",
     "semantic_hash": ""
   },
   "docs/00-control/registro-decisiones.md": {
-    "mtime": 1787696855.2507496,
-    "ast_hash": "005ce5b2269be65e969e1e2c47b2780e",
+    "mtime": 1787852320.2444713,
+    "ast_hash": "bda57da52b9bebe25c2a66b714eb4868",
     "semantic_hash": ""
   },
   "docs/00-control/supuestos.md": {
@@ -500,8 +500,8 @@
     "semantic_hash": "f341e2a40168c458b77b9de395b6d94a"
   },
   "docs/01-producto/reglas-negocio.md": {
-    "mtime": 1787585514.1442933,
-    "ast_hash": "fa31c86f7e08a9a6e47acbb4324a3e33",
+    "mtime": 1787852320.2455156,
+    "ast_hash": "95aac92cc4abb9710ffba1a453653aba",
     "semantic_hash": ""
   },
   "docs/02-requisitos/estados-citas.md": {
@@ -595,13 +595,13 @@
     "semantic_hash": ""
   },
   "docs/02-requisitos/historias-usuario.md": {
-    "mtime": 1787850122.338594,
-    "ast_hash": "d0b1d8ef1b9a7a2a1a07bd31aee6ae66",
+    "mtime": 1787871546.719202,
+    "ast_hash": "27f239d70604a9ef12889f15af644f07",
     "semantic_hash": ""
   },
   "docs/10-backlog/plan-bloques.md": {
-    "mtime": 1787850097.9587288,
-    "ast_hash": "b167b4d04f98f8ad1e5f78f13a395b1c",
+    "mtime": 1787871565.3111804,
+    "ast_hash": "5335a50430b0d5ff2d006c4a96ac7d80",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts-implementacion.md": {
@@ -790,7 +790,7 @@
     "semantic_hash": ""
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1787849719.2313936,
+    "mtime": 1787850924.2891588,
     "ast_hash": "aac2bb59669d231e58bf494745396d38",
     "semantic_hash": ""
   },
@@ -805,8 +805,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/README.md": {
-    "mtime": 1787850133.4547193,
-    "ast_hash": "fc7e5df7da7887010d552af5405551c4",
+    "mtime": 1787871575.1758795,
+    "ast_hash": "131dbcfd05418b0b7f7acf2a37d8b0fa",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/TEMPLATE.md": {
@@ -1295,8 +1295,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/shared/api/generated/openapi.d.ts": {
-    "mtime": 1787786835.9614365,
-    "ast_hash": "11725971e88601a9455d390837d50784",
+    "mtime": 1787870416.7391846,
+    "ast_hash": "0bb08baa9bd64fb0e923db265049ca41",
     "semantic_hash": ""
   },
   "apps/web/src/shared/api/httpClient.ts": {
@@ -2775,18 +2775,18 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/catalog/assignment_ports.go": {
-    "mtime": 1787665049.4334877,
-    "ast_hash": "a90a954cd679913a703be97beb3bdbfa",
+    "mtime": 1787869890.127818,
+    "ast_hash": "2f87a50f35f7088402a02be27eac550b",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/catalog/assignment_service.go": {
-    "mtime": 1787665049.4334877,
-    "ast_hash": "0b52693ac9d3b513f47621d4e38ddb86",
+    "mtime": 1787869899.6061466,
+    "ast_hash": "edf99c9ef28d7fc51dba5fdc8a7a252c",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/catalog/assignment_service_test.go": {
-    "mtime": 1787665049.4344876,
-    "ast_hash": "4236233dbd7739ee1ef851e4c99344c9",
+    "mtime": 1787870094.692261,
+    "ast_hash": "0d0fb477f3776c7578b68abe855c060d",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/catalog/httpapi/assignment_dto.go": {
@@ -2800,8 +2800,8 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/catalog/postgres/assignment_repository.go": {
-    "mtime": 1787665049.4376674,
-    "ast_hash": "7027abc8326066c699beb8a03d4fec79",
+    "mtime": 1787869894.5771358,
+    "ast_hash": "45c3b28ec169d085e053af1a61b9ff0e",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/catalog/postgres/assignment_repository_test.go": {
@@ -3070,8 +3070,8 @@
     "semantic_hash": ""
   },
   "docs/07-calidad/07-modulos-futuros-pendientes.md": {
-    "mtime": 1787696855.2610989,
-    "ast_hash": "ac7d5e779da2cbe0286b3f83c5c8c51d",
+    "mtime": 1787850924.2997546,
+    "ast_hash": "4cd6fca34e7a00cae6bbac45a8cc3a9b",
     "semantic_hash": ""
   },
   "docs/07-calidad/README.md": {
@@ -3765,68 +3765,183 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/domain.go": {
-    "mtime": 1787848738.6509507,
+    "mtime": 1787850924.2891588,
     "ast_hash": "91b238db646b6e340f3aa64eb0399eaf",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/domain_test.go": {
-    "mtime": 1787848863.1121635,
-    "ast_hash": "4fb39191098e2f760f996cf992f08973",
+    "mtime": 1787870089.244694,
+    "ast_hash": "52a58123269a69bb2db3d853df6db1f0",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/errors.go": {
-    "mtime": 1787848701.7470455,
+    "mtime": 1787850924.2891588,
     "ast_hash": "aeafb2afae074c824874b076ddaef6a4",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/ports.go": {
-    "mtime": 1787848601.3961763,
-    "ast_hash": "79a449d666957be0090094e19a27d080",
+    "mtime": 1787869836.3452258,
+    "ast_hash": "cd31ca8026402f1df9b91e2ad0738009",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/postgres/repository.go": {
-    "mtime": 1787849005.4457242,
-    "ast_hash": "f74782e3056a56824030585eba7c2896",
+    "mtime": 1787870063.5747924,
+    "ast_hash": "e189137574dcc973d1385ceab8d2ec0b",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/postgres/repository_test.go": {
-    "mtime": 1787849081.5799863,
-    "ast_hash": "533af990b143e6ef37b1f792e659304a",
+    "mtime": 1787869877.156562,
+    "ast_hash": "e565139e196a57e93d7761fed17e1154",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/service.go": {
-    "mtime": 1787848607.9439125,
+    "mtime": 1787850924.2891588,
     "ast_hash": "934a06e212d9389c1a6124966271e6b2",
     "semantic_hash": ""
   },
   "database/migrations/20260827110000_create_appointment_core.sql": {
-    "mtime": 1787848010.2439444,
+    "mtime": 1787850924.2891588,
     "ast_hash": "0fef72c6ca8006d38166cd31320cd237",
     "semantic_hash": ""
   },
   "database/testdata/hu060_citas.sql": {
-    "mtime": 1787848025.8237152,
+    "mtime": 1787850924.2891588,
     "ast_hash": "ad50450bd9e8eaa286fc802bd0503bc2",
     "semantic_hash": ""
   },
   "database/tests/hu060_citas.sql": {
-    "mtime": 1787848391.365235,
-    "ast_hash": "71c3d1f1d865e128fbd1b36d7aecfa97",
+    "mtime": 1787850924.2891588,
+    "ast_hash": "4ae9d124c304ce6358d3725e824cce3c",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/hu/hu-060-nucleo-citas.md": {
-    "mtime": 1787850139.620311,
-    "ast_hash": "e44258797520e89aed1a78bd31cdc798",
+    "mtime": 1787850924.30186,
+    "ast_hash": "dcfb7be95dbb8dc98ea92366fdb5104a",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/hu/hu-061-creacion-manual-citas.md": {
-    "mtime": 1787847554.1939793,
-    "ast_hash": "90925935508cf6b9b81a220f55d66bbe",
+    "mtime": 1787871568.2026887,
+    "ast_hash": "0526ea1a025a6c81a41dfdd12023d795",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/hu/hu-062-agenda-diaria.md": {
     "mtime": 1787847554.1939793,
     "ast_hash": "17a861f64d96eb24ba841d3ca5b9ee35",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/booking/httpapi/dto.go": {
+    "mtime": 1787869970.7652814,
+    "ast_hash": "738e654026f1b3a4842555e6179926b4",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/booking/httpapi/handler.go": {
+    "mtime": 1787869998.1966543,
+    "ast_hash": "9230884f3427b922790bd6fffb011879",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/booking/httpapi/handler_test.go": {
+    "mtime": 1787870858.7068489,
+    "ast_hash": "ccc1183284712baa288d0bd3965b8b74",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/booking/manual.go": {
+    "mtime": 1787870063.5275338,
+    "ast_hash": "a1f3f86393d1b85247a666c826741cc3",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/booking/manual_errors.go": {
+    "mtime": 1787869787.5780559,
+    "ast_hash": "c7d35a9d7974ea768664b146ddc06309",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/booking/manual_test.go": {
+    "mtime": 1787870633.8906388,
+    "ast_hash": "5e0eac6e0bfdca90749b58c14088f036",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/booking/postgres/manual_repository_test.go": {
+    "mtime": 1787870756.2708719,
+    "ast_hash": "9b720d6270caa7e824552951e0bfa152",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/catalog/manual_booking_adapter.go": {
+    "mtime": 1787869919.704015,
+    "ast_hash": "82f63d36b7657f92ee602d9f32d3ffcd",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/schedule/manual_booking_adapter.go": {
+    "mtime": 1787869947.0096347,
+    "ast_hash": "373e1c554d4ac94528c84760ba579f47",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/shops/timezone_lookup.go": {
+    "mtime": 1787869956.050001,
+    "ast_hash": "0e963240d32b390e4bc9d7c7b403a0e7",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/nuevo-turno.spec.ts": {
+    "mtime": 1787871419.1122243,
+    "ast_hash": "510851f00733f1bc7f0021ec406f6870",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/agenda/api/appointmentsApi.ts": {
+    "mtime": 1787871168.5794444,
+    "ast_hash": "3aa273b1077a5982713508a79f6a21f7",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/agenda/model/appointment.ts": {
+    "mtime": 1787870959.9018786,
+    "ast_hash": "61653592247cbf7a6327b0b26b3bb2fb",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/agenda/model/appointmentOutcome.ts": {
+    "mtime": 1787871168.5938284,
+    "ast_hash": "84edb42a6eba9dc06eefba435cdb5832",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/agenda/model/idempotencyKey.ts": {
+    "mtime": 1787870963.3518426,
+    "ast_hash": "0852f5dcc9aeffda8aae00026411311b",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/agenda/pages/NewAppointmentPage.vue": {
+    "mtime": 1787871168.7470267,
+    "ast_hash": "247ad261cf41f800489e89554357fb8a",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/agenda/pages/__tests__/NewAppointmentPage.test.ts": {
+    "mtime": 1787871204.6215112,
+    "ast_hash": "5af7b545290abfbc10bf9f7094ffa2dd",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/agenda/routes.ts": {
+    "mtime": 1787871061.0885534,
+    "ast_hash": "df1583b2c7e71b1f9c23b1c00dc2ccc3",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/agenda/validation/appointmentValidation.ts": {
+    "mtime": 1787871009.9070585,
+    "ast_hash": "a198a3ed66db63d1d6ccdc55b4440a28",
+    "semantic_hash": ""
+  },
+  "api/openapi/components/responses/AppointmentCreated.yaml": {
+    "mtime": 1787870304.47515,
+    "ast_hash": "1fed17c415cf2ac09e8da5d770291522",
+    "semantic_hash": ""
+  },
+  "api/openapi/components/responses/AppointmentValidationProblem.yaml": {
+    "mtime": 1787870310.791789,
+    "ast_hash": "46376bf8e7992aeb698242dd4086290e",
+    "semantic_hash": ""
+  },
+  "api/openapi/components/schemas/AppointmentResponse.yaml": {
+    "mtime": 1787870388.900236,
+    "ast_hash": "7231366a76df3e9f5cad6099ea8aa02b",
+    "semantic_hash": ""
+  },
+  "api/openapi/components/schemas/CreateManualAppointmentRequest.yaml": {
+    "mtime": 1787870386.7406497,
+    "ast_hash": "f3c5356c7382d394ffa27b8a8c2e2f84",
     "semantic_hash": ""
   }
 }
