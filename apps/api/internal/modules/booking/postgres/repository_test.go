@@ -290,6 +290,55 @@ func TestCreateInternal_ScheduleConflict_RollsBackNewCustomer(t *testing.T) {
 	}
 }
 
+// TestCreateInternal_HistoryInsertFails_RollsBackAppointmentAndCustomer
+// cubre el cuarto caso obligatorio del prompt de HU-060 ("error tras
+// cita"): un actor de otro tenant hace que el INSERT de
+// appointment_history choque contra su FK compuesta tenant-aware DESPUÉS
+// de que el cliente y la cita ya se insertaron dentro de la misma
+// transacción. Ninguno de los tres debe quedar persistido.
+func TestCreateInternal_HistoryInsertFails_RollsBackAppointmentAndCustomer(t *testing.T) {
+	db := setupTestDB(t)
+	repo := newRepository(db)
+	suffix := uniqueSuffix(t)
+
+	input := validInput(t, barberQ1, serviceQ, baseStart(t), 30, suffix)
+	// staffR pertenece a shopR, no a shopQ: la FK compuesta
+	// appointment_history_barbershop_id_actor_staff_user_id_fk debe
+	// rechazarla.
+	input.Actor.StaffUserID = strPtr(staffR)
+
+	_, err := repo.CreateInternal(context.Background(), string(shopQ), input)
+	if err == nil {
+		t.Fatalf("expected an error when the actor belongs to another tenant")
+	}
+
+	verifyErr := db.InTenantTx(context.Background(), shopQ, func(ctx context.Context, q database.Queries) error {
+		var customerCount, appointmentCount int
+		if scanErr := q.QueryRow(ctx,
+			`SELECT count(*) FROM customer WHERE barbershop_id = $1 AND full_name = $2`,
+			string(shopQ), "Cliente de prueba "+suffix,
+		).Scan(&customerCount); scanErr != nil {
+			return scanErr
+		}
+		if scanErr := q.QueryRow(ctx,
+			`SELECT count(*) FROM appointment WHERE barbershop_id = $1 AND attendee_name = $2`,
+			string(shopQ), "Cliente de prueba "+suffix,
+		).Scan(&appointmentCount); scanErr != nil {
+			return scanErr
+		}
+		if customerCount != 0 {
+			t.Fatalf("expected no customer written when the history insert fails, found %d rows", customerCount)
+		}
+		if appointmentCount != 0 {
+			t.Fatalf("expected no appointment written when the history insert fails, found %d rows", appointmentCount)
+		}
+		return nil
+	})
+	if verifyErr != nil {
+		t.Fatalf("verify rollback: %v", verifyErr)
+	}
+}
+
 func TestCreateInternal_ContiguousInterval_Succeeds(t *testing.T) {
 	db := setupTestDB(t)
 	repo := newRepository(db)
