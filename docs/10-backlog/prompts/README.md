@@ -1,6 +1,6 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.25"
+version: "1.26"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-26"
@@ -150,6 +150,9 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-HU-040-v1](hu/hu-040-horario-laboral.md) (v1.3) | `hu` | `HU-040` | [#90](https://github.com/bcaceres19/barberia/issues/90), abierto por `CA-040-08` parcial | `executed` | B1 cerrado; `CT-008` resuelta (`DEC-070`) | Rama `feat/90-hu040-horario-laboral`; [PR #93](https://github.com/bcaceres19/barberia/pull/93), integrada en `main` con CI verde |
 | [PROMPT-HU-041-v1](hu/hu-041-excepciones-festivos.md) (v1.3) | `hu` | `HU-041` | [#95](https://github.com/bcaceres19/barberia/issues/95), abierto por `CA-041-08` parcial | `executed` | `HU-040` integrada ([PR #93](https://github.com/bcaceres19/barberia/pull/93)); `CT-008` resuelta (`DEC-070`) | Rama `feat/95-hu041-excepciones-festivos`; [PR #96](https://github.com/bcaceres19/barberia/pull/96), integrada en `main` con CI verde |
 | [PROMPT-HU-042-v1](hu/hu-042-bloqueos-agenda.md) | `hu` | `HU-042` | [#98](https://github.com/bcaceres19/barberia/issues/98), abierto por seguimiento parcial (issue [#100](https://github.com/bcaceres19/barberia/issues/100)) | `executed` | `HU-040`/`HU-041` integradas; `CT-008` resuelta (`DEC-070`); backend completo y probado contra PostgreSQL real | Rama `feat/98-hu042-bloqueos-agenda`; [PR #99](https://github.com/bcaceres19/barberia/pull/99), integrada en `main` con CI verde |
+| [PROMPT-HU-060-v1](hu/hu-060-nucleo-citas.md) | `hu` | `HU-060` | `pending` | `draft` | B2 integrado; falta issue real y verificar seguimientos `#90`/`#95`/`#98`/`#100` que afecten B3 | Sin rama/PR; no ejecutar con `issue: pending` |
+| [PROMPT-HU-061-v1](hu/hu-061-creacion-manual-citas.md) | `hu` | `HU-061` | `pending` | `draft` | `HU-060` integrada; resolver `DP-CIT-01`–`DP-CIT-03`; issue real propio | Sin rama/PR; no ejecutar con decisiones abiertas |
+| [PROMPT-HU-062-v1](hu/hu-062-agenda-diaria.md) | `hu` | `HU-062` | `pending` | `draft` | `HU-061` integrada; resolver `DP-CIT-04`/`DP-CIT-05`; issue real propio | Sin rama/PR; no ejecutar con decisiones abiertas |
 | [PROMPT-DOCS-INFORME-ACADEMICO-v1](docs/pending-informe-academico-secciones-1-a-4-2.md) | `docs` | — | [#81](https://github.com/bcaceres19/barberia/issues/81) | `superseded` | Sustituido por v2 tras retroalimentación sobre lenguaje y audiencia | Rama `docs/81-informe-academico`; [PR #82](https://github.com/bcaceres19/barberia/pull/82) |
 | [PROMPT-DOCS-INFORME-ACADEMICO-v2](docs/informe-academico-secciones-1-a-4-2-v2-gerencial.md) | `docs` | — | [#81](https://github.com/bcaceres19/barberia/issues/81) | `superseded` | Sustituido por v3 para incorporar identidad institucional, equipo confirmado y sistema visual sobrio | Rama `docs/81-informe-academico`; [PR #82](https://github.com/bcaceres19/barberia/pull/82); SHA-256 `6cad6bcc…78bbe0` |
 | [PROMPT-DOCS-INFORME-ACADEMICO-v3](docs/informe-academico-secciones-1-a-4-2-v3-identidad-institucional.md) | `docs` | — | [#81](https://github.com/bcaceres19/barberia/issues/81) | `executed` | Identidad institucional, responsabilidades compartidas, primer participante, Arial y color solo para estados | 26 páginas y 45 RU; QA visual completo; SHA-256 `73554078…72859`; rama `docs/81-informe-academico`; [PR #82](https://github.com/bcaceres19/barberia/pull/82) |
