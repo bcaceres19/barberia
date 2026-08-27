@@ -1,9 +1,9 @@
 ---
 titulo: "Módulos futuros pendientes de checklist"
-version: "1.0"
+version: "1.1"
 estado: "Herramienta operativa, no normativa"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-25"
+ultima_actualizacion: "2026-08-27"
 documentos_relacionados:
   - "README.md"
   - "../01-producto/reglas-negocio.md"
@@ -16,8 +16,8 @@ Al 2026-08-25, estas carpetas del código son solo el esqueleto de un módulo (`
 
 | Módulo | Frontend | Backend | Bloque |
 | --- | --- | --- | --- |
-| Agenda | `apps/web/src/modules/agenda/index.ts` | `apps/api/internal/modules/booking` (solo `doc.go`) | B2/B3 |
-| Reserva pública | `apps/web/src/modules/public-booking/index.ts` | `apps/api/internal/modules/booking` (solo `doc.go`) | B2 |
+| Agenda | `apps/web/src/modules/agenda/index.ts` | `apps/api/internal/modules/booking` (HU-060: núcleo persistente y primitiva transaccional interna; sin endpoint HTTP, sin pantalla) | B2/B3 |
+| Reserva pública | `apps/web/src/modules/public-booking/index.ts` | `apps/api/internal/modules/booking` (HU-060: núcleo persistente y primitiva transaccional interna; sin endpoint HTTP, sin pantalla) | B2 |
 | Horarios y bloqueos | `apps/web/src/modules/schedules/index.ts` | `apps/api/internal/modules/schedule` (solo `doc.go`) | B2 |
 | Notificaciones | `apps/web/src/modules/notifications/index.ts` | `apps/api/internal/modules/notification` (senders ya existen, sin flujo de UI ni programación de recordatorios) | B2/B3 |
 

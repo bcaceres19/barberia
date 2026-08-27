@@ -1,9 +1,9 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.20"
+version: "1.21"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-26"
+ultima_actualizacion: "2026-08-27"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/reglas-negocio.md"
@@ -17,7 +17,7 @@ documentos_relacionados:
 
 # Historias de usuario y criterios de aceptación
 
-> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas confirmadas; no crean alcance por sí solas y requieren aprobación antes de implementarse. B0, `HU-020`–`HU-024` y `HU-040`–`HU-042` ya están integradas en `main`. Las dudas históricas de B0 quedaron resueltas por `DEC-050`–`DEC-066`; `DP-SER-01`–`DP-SER-03` del lote de B1 quedaron resueltas por `DEC-067`–`DEC-069`; `CT-008` del lote de B2 quedó resuelta por `DEC-070`. Los issues [#90](https://github.com/bcaceres19/barberia/issues/90), [#95](https://github.com/bcaceres19/barberia/issues/95), [#98](https://github.com/bcaceres19/barberia/issues/98) y [#100](https://github.com/bcaceres19/barberia/issues/100) conservan seguimientos visuales/E2E parciales de B2. `HU-060`–`HU-062` abren B3 como propuestas; sus prompts siguen `draft` con `issue: pending`, y `HU-061`/`HU-062` no pueden ejecutarse hasta resolver `DP-CIT-01`–`DP-CIT-05`.
+> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas confirmadas; no crean alcance por sí solas y requieren aprobación antes de implementarse. B0, `HU-020`–`HU-024` y `HU-040`–`HU-042` ya están integradas en `main`. Las dudas históricas de B0 quedaron resueltas por `DEC-050`–`DEC-066`; `DP-SER-01`–`DP-SER-03` del lote de B1 quedaron resueltas por `DEC-067`–`DEC-069`; `CT-008` del lote de B2 quedó resuelta por `DEC-070`. Los issues [#90](https://github.com/bcaceres19/barberia/issues/90), [#95](https://github.com/bcaceres19/barberia/issues/95), [#98](https://github.com/bcaceres19/barberia/issues/98) y [#100](https://github.com/bcaceres19/barberia/issues/100) conservan seguimientos visuales/E2E parciales de B2. `HU-060` abre B3 y está integrada en `main` (issue real [#104](https://github.com/bcaceres19/barberia/issues/104), integrada mediante [PR #105](https://github.com/bcaceres19/barberia/pull/105)); `HU-061`/`HU-062` siguen `draft` con `issue: pending` y no pueden ejecutarse hasta resolver `DP-CIT-01`–`DP-CIT-05`.
 
 ---
 
@@ -51,7 +51,7 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | B0 · Cimientos, seguridad y primeras pantallas | `HU-001` – `HU-012` | Redactadas en este documento |
 | B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | Integradas en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), [PR #83](https://github.com/bcaceres19/barberia/pull/83), [PR #84](https://github.com/bcaceres19/barberia/pull/84)) |
 | B2 · Horario laboral y bloqueos | `HU-040` – `HU-042` | Integradas en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93), [PR #96](https://github.com/bcaceres19/barberia/pull/96), [PR #99](https://github.com/bcaceres19/barberia/pull/99)); seguimientos parciales en `#90`, `#95`, `#98` y `#100` |
-| B3 · Agenda, estados e integridad | `HU-060` – `HU-062` | Propuestas; prompts `draft`, issues `pending`; `DP-CIT-01`–`DP-CIT-05` abiertas |
+| B3 · Agenda, estados e integridad | `HU-060` – `HU-062` | `HU-060` integrada (issue real [#104](https://github.com/bcaceres19/barberia/issues/104), integrada mediante [PR #105](https://github.com/bcaceres19/barberia/pull/105)); `HU-061`/`HU-062` propuestas, prompts `draft`; `DP-CIT-01`–`DP-CIT-05` abiertas |
 | B4 · Reserva pública y disponibilidad | `HU-090` – | Pendientes |
 | B5 · Notificaciones y recordatorios | `HU-130` – | Pendientes |
 | B6 · Operación, privacidad y piloto | `HU-150` – | Pendientes |
@@ -1130,7 +1130,7 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 
 ## 6. Bloque B3 · Agenda, estados e integridad
 
-> **B3 propuesto, no ejecutable como lote.** Las primeras tres historias separan la última defensa de datos (`HU-060`), la primera escritura vertical de negocio (`HU-061`) y la pantalla operativa mínima (`HU-062`). `HU-060` no inventa una API ni una interfaz; `HU-061` no puede pasar a `ready` hasta resolver `DP-CIT-01`–`DP-CIT-03`; `HU-062` depende además de `DP-CIT-04` y `DP-CIT-05`. Cada una requiere un issue real propio.
+> **B3 en ejecución.** Las primeras tres historias separan la última defensa de datos (`HU-060`), la primera escritura vertical de negocio (`HU-061`) y la pantalla operativa mínima (`HU-062`). `HU-060` está integrada (issue real [#104](https://github.com/bcaceres19/barberia/issues/104), integrada mediante [PR #105](https://github.com/bcaceres19/barberia/pull/105)): no inventa una API ni una interfaz, solo la base persistente y la primitiva transaccional interna. `HU-061` no puede pasar a `ready` hasta resolver `DP-CIT-01`–`DP-CIT-03`; `HU-062` depende además de `DP-CIT-04` y `DP-CIT-05`. Ambas requieren issue real propio.
 
 Orden recomendado: `HU-060` → `HU-061` → `HU-062`. Las transiciones, modificaciones, reprogramación, cancelación, navegación por otra fecha y cierre automático se redactan después de verificar estas tres bases.
 
@@ -1146,7 +1146,7 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062`. Las transiciones, modific
 | Actor | Propietario del producto y capacidades futuras de citas |
 | Depende de | `HU-040`–`HU-042` integradas; criterio de salida de B2 verificado; modelo de referencia revisado, no copiado ciegamente |
 | Bloquea | `HU-061` y toda escritura, lectura o transición de citas de B3–B5 |
-| Estado | Propuesta; prompt `PROMPT-HU-060-v1` en `draft`; `issue: pending` |
+| Estado | Integrada en `main` (rama `feat/104-hu060-nucleo-citas`, issue real [#104](https://github.com/bcaceres19/barberia/issues/104), integrada mediante [PR #105](https://github.com/bcaceres19/barberia/pull/105)); prompt `PROMPT-HU-060-v1` `executed` |
 | Riesgo | Sin una exclusión real y un historial append-only, dos procesos pueden guardar turnos cruzados o reescribir la evidencia operativa. |
 
 **Historia**
