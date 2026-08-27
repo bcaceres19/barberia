@@ -1,9 +1,9 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "2.6"
-estado: "Sin dudas abiertas"
+version: "2.7"
+estado: "Con dudas abiertas de B3"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-24"
+ultima_actualizacion: "2026-08-26"
 documentos_relacionados:
   - "registro-decisiones.md"
   - "contradicciones.md"
@@ -17,7 +17,9 @@ documentos_relacionados:
 
 ## 1. Estado
 
-No queda ninguna duda abierta. Las tres dudas de B1 (`DP-SER-01`–`DP-SER-03`) se detectaron el 24 de agosto de 2026 al preparar `HU-022`, `HU-023` y `HU-024` y sus prompts persistentes (issue documental [#73](https://github.com/bcaceres19/barberia/issues/73)); `F-SERV-01`, `F-SERV-02`, `RN-SER-01`–`RN-SER-04` y el modelo físico de referencia no fijaban por sí solos todas las decisiones observables necesarias para contrato, interfaz y pruebas. El propietario las resolvió el mismo 24 de agosto de 2026 como `DEC-067`–`DEC-069`, y se crearon los issues reales de implementación: [#75](https://github.com/bcaceres19/barberia/issues/75) (`HU-022`), [#76](https://github.com/bcaceres19/barberia/issues/76) (`HU-023`) y [#77](https://github.com/bcaceres19/barberia/issues/77) (`HU-024`).
+Hay cinco dudas abiertas de B3 (`DP-CIT-01`–`DP-CIT-05`). Se detectaron el 26 de agosto de 2026 al preparar `HU-060`, `HU-061` y `HU-062`: las fuentes confirman el modelo de datos, la exclusión de cruces, la creación manual y la agenda diaria, pero no fijan la reconciliación de clientes manuales sin teléfono, el efecto de la asignación servicio-barbero sobre una cita manual, la conducta frente a un bloqueo vigente, la vista inicial en una barbería con varios barberos ni el día o días en que aparece un turno que cruza medianoche. Las historias y prompts quedan en `draft`; ninguna de esas conductas se implementa hasta que el propietario las resuelva como `DEC-*`.
+
+Las tres dudas anteriores de B1 (`DP-SER-01`–`DP-SER-03`) se detectaron el 24 de agosto de 2026 al preparar `HU-022`, `HU-023` y `HU-024` y sus prompts persistentes (issue documental [#73](https://github.com/bcaceres19/barberia/issues/73)); `F-SERV-01`, `F-SERV-02`, `RN-SER-01`–`RN-SER-04` y el modelo físico de referencia no fijaban por sí solos todas las decisiones observables necesarias para contrato, interfaz y pruebas. El propietario las resolvió el mismo 24 de agosto de 2026 como `DEC-067`–`DEC-069`, y se crearon los issues reales de implementación: [#75](https://github.com/bcaceres19/barberia/issues/75) (`HU-022`), [#76](https://github.com/bcaceres19/barberia/issues/76) (`HU-023`) y [#77](https://github.com/bcaceres19/barberia/issues/77) (`HU-024`).
 
 Antes de este lote no quedaba ninguna duda abierta. Al preparar los prompts de `HU-012`, `HU-007` y `HU-008` (issue documental `#55`) el 14 de agosto de 2026, la comparación entre los criterios, el contrato y el código integrado mostró cinco decisiones que todavía no podían inferirse sin ampliar o debilitar el alcance: el bootstrap autoritativo del panel (`DP-SEG-09`), el reto telefónico completo de `HU-007` (`DP-SEG-10`), la política de contraseña nueva (`DP-SEG-11`), los parámetros del código de recuperación (`DP-SEG-12`) y el proveedor oficial concreto de correo/WhatsApp (`DP-NOT-05`). El propietario resolvió las cinco el 17 de agosto de 2026 como `DEC-060`, `DEC-062`–`DEC-064` y `DEC-066`.
 
@@ -39,7 +41,13 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 
 ## 2. Dudas abiertas
 
-Ninguna. Las últimas tres (`DP-SER-01`–`DP-SER-03`, de B1) se resolvieron el 24 de agosto de 2026; ver la tabla de resoluciones en la sección 3.
+| Código | Pregunta que debe decidir el propietario | Por qué no se puede inferir | Bloquea |
+| --- | --- | --- | --- |
+| `DP-CIT-01` | En una cita manual, ¿cómo se identifica o reutiliza `customer` cuando falta el teléfono: por correo, siempre como una fila nueva, o con otra regla explícita? | `RN-CIT-02` permite omitir teléfono y correo; `DEC-045` solo define upsert por teléfono y `DEC-046` fija unicidad del correo por barbería, pero ninguna fuente define la reconciliación sin teléfono. Deducirla cambiaría historial, anonimización y conflictos de unicidad. | `HU-061` |
+| `DP-CIT-02` | ¿Una cita manual solo puede usar servicios activos asignados al barbero elegido, o basta que el servicio esté activo en la misma barbería? | `HU-023` crea la asignación servicio-barbero y `RN-DIS-02` la necesita para disponibilidad, mientras `estados-citas.md` T1 solo exige servicio activo y del mismo tenant. Falta la regla observable específica para creación manual. | `HU-061` |
+| `DP-CIT-03` | Si el intervalo está dentro de la jornada pero coincide con un bloqueo vigente, ¿la creación manual se rechaza, se permite con advertencia o exige retirar/exceptuar el bloqueo? | `RN-CON-06` protege una cita que gana una carrera con un bloqueo y `RN-CIT-02` exige integridad de agenda, pero ninguna fuente define una creación manual deliberada sobre un bloqueo ya conocido. | `HU-061`; integración de `RN-BLQ-03` |
+| `DP-CIT-04` | En una barbería con varios barberos y sin vínculo automático `staff_user`→`barber`, ¿la agenda abre con selector obligatorio de un barbero, con una vista consolidada o con otra selección inicial? | `DEC-019` confirma varios barberos y `DEC-047` prohíbe inventar el vínculo automático; el estándar visual dice mostrar el barbero cuando aporte contexto, pero no define la autoridad ni el valor inicial de la vista. | `HU-062` |
+| `DP-CIT-05` | Si un turno cruza medianoche, ¿aparece solo en el día civil de inicio o en cada agenda diaria cuyo intervalo intersecta? | `DEC-020` permite el cruce y `F-CITA-01` exige agenda diaria, pero ninguna fuente define la regla de pertenencia visual/consulta. Elegir una opción cambia filtros, índices, duplicación visible y la operación durante la madrugada. | `HU-062` |
 
 ## 3. Resoluciones
 
