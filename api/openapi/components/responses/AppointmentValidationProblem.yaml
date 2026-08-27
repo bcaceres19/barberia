@@ -1,0 +1,34 @@
+# 422 de POST /private/appointments (HU-061): cuerpo bien formado que
+# incumple una validación de campo o de negocio procesable, distinto del
+# 400 de JSON/campo desconocido y del 404/409 de recurso/conflicto.
+description: >
+  El cuerpo es JSON válido, pero uno de sus campos (nombre, contacto,
+  nota o startsAt) incumple una validación. No se persistió nada.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      startsAtInvalido:
+        summary: startsAt sin el formato civil exigido
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: "startsAt debe ser una fecha y hora civiles con el formato AAAA-MM-DDTHH:MM:SS, sin zona"
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      telefonoInvalido:
+        summary: customerPhone con formato inválido
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: el teléfono del cliente tiene un formato inválido
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

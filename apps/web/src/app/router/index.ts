@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { agendaNavItems, agendaPrivateShellChildRoutes } from '@/modules/agenda'
 import { authRoutes, privateShellChildRoutes, privateShellRoute } from '@/modules/auth'
 import {
   barberServicesNavItems,
@@ -34,6 +35,7 @@ const routes: RouteRecordRaw[] = [
       ...catalogPrivateShellChildRoutes,
       ...barberServicesPrivateShellChildRoutes,
       ...schedulesPrivateShellChildRoutes,
+      ...agendaPrivateShellChildRoutes,
     ],
     [
       ...settingsNavItems,
@@ -41,6 +43,7 @@ const routes: RouteRecordRaw[] = [
       ...catalogNavItems,
       ...barberServicesNavItems,
       ...schedulesNavItems,
+      ...agendaNavItems,
     ],
   ),
 ]

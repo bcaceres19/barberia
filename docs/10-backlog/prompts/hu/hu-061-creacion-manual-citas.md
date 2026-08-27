@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-061-v1"
 version: "1.0"
 kind: "hu"
-status: "ready"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -19,7 +19,7 @@ related_hu:
 issue: "107"
 issue_url: "https://github.com/bcaceres19/barberia/issues/107"
 suggested_issue_title: "feat(booking): implementar HU-061 creación manual de turnos"
-branch: null
+branch: "feat/107-hu061-creacion-manual-turnos"
 pr: null
 pr_url: null
 depends_on:

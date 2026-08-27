@@ -20,9 +20,17 @@ type fakeAssignmentRepository struct {
 	listFn     func(ctx context.Context, barbershopID, barberID string, cursor *catalog.Cursor, limit int) (catalog.AssignmentListResult, error)
 	assignFn   func(ctx context.Context, barbershopID, barberID, serviceID string) (catalog.AssignResult, error)
 	unassignFn func(ctx context.Context, barbershopID, barberID, serviceID string) (catalog.UnassignResult, error)
+	existsFn   func(ctx context.Context, barbershopID, barberID, serviceID string) (bool, error)
 
 	assignCalls   int
 	unassignCalls int
+}
+
+func (f *fakeAssignmentRepository) Exists(ctx context.Context, barbershopID, barberID, serviceID string) (bool, error) {
+	if f.existsFn == nil {
+		return false, nil
+	}
+	return f.existsFn(ctx, barbershopID, barberID, serviceID)
 }
 
 func (f *fakeAssignmentRepository) List(ctx context.Context, barbershopID, barberID string, cursor *catalog.Cursor, limit int) (catalog.AssignmentListResult, error) {

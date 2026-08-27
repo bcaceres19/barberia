@@ -47,7 +47,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.12.0
+  version: 0.13.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -74,6 +74,10 @@ tags:
       Horario laboral recurrente de cada barbero (HU-040), calendario
       colombiano de festivos y excepciones de jornada por fecha (HU-041), y
       bloqueos de agenda puntuales y recurrentes (HU-042).
+  - name: Booking
+    description: >-
+      Registro de turnos: creación manual por el barbero (HU-061), con
+      historial e idempotencia reutilizada de HU-004/HU-060.
 paths:
   /public/auth/login:
     $ref: './paths/public-auth.yaml#/~1public~1auth~1login'
@@ -141,6 +145,8 @@ paths:
     $ref: './paths/time-blocks.yaml#/~1private~1barbers~1{barberId}~1time-block-series~1{seriesId}~1exceptions'
   /private/barbers/{barberId}/time-block-series/{seriesId}/exceptions/{excludedDate}:
     $ref: './paths/time-blocks.yaml#/~1private~1barbers~1{barberId}~1time-block-series~1{seriesId}~1exceptions~1{excludedDate}'
+  /private/appointments:
+    $ref: './paths/private-appointments.yaml#/~1private~1appointments'
 components:
   schemas:
     Problem:

@@ -106,6 +106,21 @@ func (s *AssignmentService) Assign(ctx context.Context, barbershopID, barberID, 
 	return result, nil
 }
 
+// IsAssigned informa si barberID tiene asignado serviceID dentro de
+// barbershopID (HU-061, DEC-072), sin verificar barbero ni servicio por
+// separado: ManualBookingCatalog ya combina esto con CatalogService.Get
+// para decidir found de forma uniforme.
+func (s *AssignmentService) IsAssigned(ctx context.Context, barbershopID, barberID, serviceID string) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, apperr.Internal(fmt.Errorf("catalog: contexto cancelado antes de verificar asignación: %w", err))
+	}
+	exists, err := s.repo.Exists(ctx, barbershopID, barberID, serviceID)
+	if err != nil {
+		return false, apperr.Internal(fmt.Errorf("catalog: verificar asignación: %w", err))
+	}
+	return exists, nil
+}
+
 // Unassign retira la asociación entre barberID y serviceID dentro de
 // barbershopID (CA-023-05, CA-023-06, DEC-068). No existe tal asignación
 // (barbero o servicio inexistente/ajeno, o la asociación concreta nunca

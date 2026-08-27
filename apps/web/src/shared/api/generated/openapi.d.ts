@@ -736,6 +736,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/private/appointments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Registrar un turno manual
+         * @description Alta de una cita `confirmed` a partir de un turno recibido por teléfono, WhatsApp o en persona (HU-061, CA-061-01 a CA-061-08), protegida con clave de idempotencia (RN-IDE-01, DEC-043): repetir el mismo `POST` con la misma `Idempotency-Key` y el mismo cuerpo devuelve la misma representación creada sin crear una segunda cita. No está sujeta a la anticipación mínima ni a la ventana máxima de la reserva pública (RN-DIS-04, DEC-005/DEC-018): admite un instante que ya empezó o uno más allá de la ventana pública. El servicio elegido debe estar activo y asignado al barbero elegido (DEC-072); un intervalo que se solapa con otra cita del mismo barbero (RN-CON-01) o con un bloqueo vigente (DEC-073) responde `409`. El cliente se reconcilia por teléfono o, si falta, por correo (DEC-045, DEC-046, DEC-071); sin ninguno de los dos, siempre se crea un cliente nuevo, nunca por nombre. El tenant y el actor se derivan exclusivamente de `SessionCookie`; el cuerpo nunca acepta `barbershopId`, `customerId`, `status`, `origin` ni ningún dato de servicio.
+         */
+        post: operations["createManualAppointment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1690,6 +1710,86 @@ export interface components {
             /** @example El barbero libró ese día */
             reason?: string | null;
         };
+        /** @description Alta de un turno manual (recibido por teléfono, WhatsApp o en persona) registrado por el barbero autenticado. No está sujeto a la anticipación mínima ni a la ventana máxima de la reserva pública (RN-DIS-04): puede registrarse para dentro de pocos minutos, para un instante que ya empezó, o más allá de la ventana pública, siempre que respete la integridad de agenda (sin cruce con otra cita, RN-CON-01) y no exista un bloqueo vigente en ese intervalo (DEC-073). */
+        CreateManualAppointmentRequest: {
+            /**
+             * Format: uuid
+             * @description Barbero que atiende el turno.
+             * @example 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+             */
+            barberId: string;
+            /**
+             * Format: uuid
+             * @description Servicio a prestar. Debe estar activo y asignado a barberId (DEC-072); en caso contrario la solicitud responde 404.
+             * @example 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+             */
+            serviceId: string;
+            /**
+             * @description Nombre de la persona atendida (puede diferir de quien reserva, RN-RES-03).
+             * @example Carlos Restrepo
+             */
+            attendeeName: string;
+            /**
+             * @description Nombre del cliente que reserva.
+             * @example Carlos Restrepo
+             */
+            customerFullName: string;
+            /**
+             * @description Teléfono del cliente en formato E.164, opcional (RN-CIT-02). Si se da, el cliente se busca/reutiliza por teléfono dentro de la barbería (DEC-045).
+             * @example +573001234567
+             */
+            customerPhone?: string | null;
+            /**
+             * Format: email
+             * @description Correo del cliente, opcional. Si se da y no hay teléfono, el cliente se busca/reutiliza por correo dentro de la barbería (DEC-046, DEC-071). Sin teléfono ni correo, siempre se crea un cliente nuevo.
+             * @example carlos.restrepo@example.com
+             */
+            customerEmail?: string | null;
+            /**
+             * @description Nota opcional visible solo para el equipo de la barbería.
+             * @example Prefiere máquina 2 en los laterales.
+             */
+            customerNote?: string | null;
+            /**
+             * @description Fecha y hora civiles del turno ("AAAA-MM-DDTHH:MM:SS"), sin desplazamiento de zona: se interpreta en la zona IANA vigente de la barbería (RN-DIS-07), nunca en la del servidor o del dispositivo.
+             * @example 2026-09-03T14:30:00
+             */
+            startsAt: string;
+        };
+        AppointmentResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            barberId: string;
+            /** Format: uuid */
+            serviceId: string;
+            /** Format: uuid */
+            customerId: string;
+            attendeeName: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** @enum {string} */
+            status: "confirmed" | "completed" | "cancelled_by_customer" | "cancelled_by_barber" | "no_show";
+            /** @enum {string} */
+            origin: "public" | "manual";
+            /** @description Nombre del servicio congelado al momento de crear la cita (DEC-004). */
+            serviceName: string;
+            durationMinutes: number;
+            /**
+             * @description Importe exacto en formato decimal (nunca coma flotante).
+             * @example 20000.00
+             */
+            priceAmount: string;
+            /** @example COP */
+            currency: string;
+            customerNote: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
     };
     responses: {
         /** @description Sesión cerrada. La cookie de sesión queda limpiada en Set-Cookie. */
@@ -2387,6 +2487,27 @@ export interface components {
                 [name: string]: unknown;
             };
             content?: never;
+        };
+        /** @description Turno creado. `Location` apunta al recurso individual recién creado. */
+        AppointmentCreated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                Location: components["headers"]["Location"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["AppointmentResponse"];
+            };
+        };
+        /** @description El cuerpo es JSON válido, pero uno de sus campos (nombre, contacto, nota o startsAt) incumple una validación. No se persistió nada. */
+        AppointmentValidationProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
         };
     };
     parameters: {
@@ -3571,6 +3692,49 @@ export interface operations {
             204: components["responses"]["SeriesExceptionRemoved"];
             401: components["responses"]["UnauthorizedProblem"];
             404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    createManualAppointment: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Clave elegida por el cliente que identifica un intento de escritura crítica. Repetir la misma clave con el mismo contenido (método, ruta y cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo. Repetirla con contenido distinto es un conflicto: usa una clave nueva para una solicitud distinta. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateManualAppointmentRequest"];
+            };
+        };
+        responses: {
+            201: components["responses"]["AppointmentCreated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            /** @description `barberId` inexistente o de otra barbería, o `serviceId` inexistente, inactivo o no asignado a `barberId` (DEC-072). Un único `code` sin distinguir la causa (RN-TEN-01). */
+            404: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflicto de idempotencia (misma clave con otro contenido u otra operación, `IdempotencyConflictProblem`), operación en curso con la misma clave (`IdempotencyLockedProblem`, DEC-043), cruce con otra cita del mismo barbero (RN-CON-01) o bloqueo vigente en ese intervalo (DEC-073, mismo tratamiento que un cruce). Los problem types comparten status pero tienen `code` distinto: el cliente decide por `code`, nunca por `detail`. */
+            409: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["AppointmentValidationProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

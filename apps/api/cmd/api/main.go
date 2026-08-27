@@ -17,6 +17,9 @@ import (
 	"system-barbershop/internal/modules/auth"
 	authhttpapi "system-barbershop/internal/modules/auth/httpapi"
 	authpostgres "system-barbershop/internal/modules/auth/postgres"
+	"system-barbershop/internal/modules/booking"
+	bookinghttpapi "system-barbershop/internal/modules/booking/httpapi"
+	bookingpostgres "system-barbershop/internal/modules/booking/postgres"
 	"system-barbershop/internal/modules/catalog"
 	cataloghttpapi "system-barbershop/internal/modules/catalog/httpapi"
 	catalogpostgres "system-barbershop/internal/modules/catalog/postgres"
@@ -355,6 +358,24 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	private.Delete("/barbers/{barberId}/time-block-series/{seriesId}/dates/{blockDate}", removeSeriesDateHandler.ServeHTTP)
 	private.Post("/barbers/{barberId}/time-block-series/{seriesId}/exceptions", addSeriesExceptionHandler.ServeHTTP)
 	private.Delete("/barbers/{barberId}/time-block-series/{seriesId}/exceptions/{excludedDate}", removeSeriesExceptionHandler.ServeHTTP)
+
+	// HU-061: creación manual de turnos. ManualBookingService (booking, dueño
+	// de la primitiva de HU-060) colabora con catalog/schedule/shops SOLO a
+	// través de los puertos pequeños que booking declara
+	// (BarberServicePort/BlockCheckPort/TimezonePort), satisfechos aquí por
+	// adaptadores que viven en cada módulo dueño de sus propios datos
+	// (catalog.NewManualBookingCatalog, schedule.NewManualBookingBlocks,
+	// shops.NewTimezoneLookup): booking nunca importa esos tres módulos, ni
+	// viceversa (mismo criterio que catalog/schedule frente a staff, HU-023).
+	bookingRepo := bookingpostgres.New(db, idempotency.NewSQLCoordinator())
+	manualBookingService := booking.NewManualBookingService(
+		bookingRepo,
+		catalog.NewManualBookingCatalog(catalogService, assignmentService),
+		schedule.NewManualBookingBlocks(scheduleService),
+		shops.NewTimezoneLookup(shopService),
+	)
+	createManualAppointmentHandler := bookinghttpapi.NewCreateManualAppointmentHandler(manualBookingService)
+	private.Post("/appointments", createManualAppointmentHandler.ServeHTTP)
 
 	// HU-008 (DEC-063-066): recuperación de acceso con código de un solo
 	// uso. sender es el adaptador dual de Meta WhatsApp Cloud API + Resend

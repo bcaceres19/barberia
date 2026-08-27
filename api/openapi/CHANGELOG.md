@@ -4,6 +4,21 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.13.0] - 2026-08-27
+
+### Agregado
+
+- `POST /private/appointments` (`operationId: createManualAppointment`,
+  `CA-061-01` a `CA-061-08`): alta de un turno manual `confirmed` a
+  partir de un turno recibido por teléfono, WhatsApp o en persona
+  (`HU-061`), protegida con `Idempotency-Key` (`RN-IDE-01`, `DEC-043`).
+  Sin anticipación mínima ni ventana máxima (`RN-DIS-04`, `DEC-005`,
+  `DEC-018`); el servicio debe estar activo y asignado al barbero elegido
+  (`DEC-072`); un cruce con otra cita (`RN-CON-01`) o con un bloqueo
+  vigente (`DEC-073`) responde `409`. El cliente se reconcilia por
+  teléfono o correo (`DEC-045`, `DEC-046`, `DEC-071`). `201`, `400`,
+  `401`, `404`, `409` (idempotencia o conflicto), `422`, `500`.
+
 ## [0.12.0] - 2026-08-25
 
 ### Agregado
