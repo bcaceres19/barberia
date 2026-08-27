@@ -1,9 +1,9 @@
 ---
 titulo: "Reglas de negocio"
-version: "1.1"
+version: "1.2"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-24"
+ultima_actualizacion: "2026-08-27"
 documentos_relacionados:
   - "../00-control/glosario.md"
   - "../00-control/supuestos.md"
@@ -446,6 +446,9 @@ Las citas recibidas por WhatsApp, teléfono o de forma presencial se registran m
 
 **Casos límite:**
 - Cliente sin teléfono ni correo: permitido, pero entonces no recibirá recordatorios y la interfaz debe advertirlo.
+- Cliente sin teléfono pero con correo: `customer` se busca/reutiliza por correo dentro de la barbería; sin teléfono ni correo, la creación siempre inserta una fila nueva, nunca reconcilia por nombre (`DEC-071`).
+- Servicio elegido no asignado al barbero elegido: se rechaza; la cita manual solo admite servicios activos ya asignados a ese barbero (`DEC-072`).
+- Intervalo elegido coincide con un bloqueo vigente: se rechaza con el mismo tratamiento que un cruce de citas; el barbero debe retirar o exceptuar el bloqueo antes de crear la cita (`DEC-073`).
 - Cita manual que se cruza con una existente: se rechaza igual que una pública (`RN-CON-01`).
 
 **Módulos afectados:** agenda, citas, notificaciones.
