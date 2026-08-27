@@ -138,6 +138,30 @@ antes de agregar código.
   cerrada) > festivo automático (solo si el barbero activó su calendario)
   > horario semanal de HU-040. Ver la sección "Excepciones de jornada y
   festivos (HU-041)" más abajo.
+- **Núcleo persistente de citas (HU-060)**: nuevo módulo
+  `internal/modules/booking` entrega únicamente la base de datos y la
+  primitiva transaccional interna `BookingService.CreateInternal`: crea o
+  vincula el cliente que el llamador ya decidió, inserta la cita
+  `confirmed` y el evento `appointment_created`, todo dentro de UNA sola
+  `InTenantTx`. Sin endpoint HTTP, sin operación OpenAPI y sin pantalla:
+  `HU-061` expondrá la creación manual sobre este núcleo. La restricción
+  `EXCLUDE USING gist (barbershop_id, barber_id, tstzrange(starts_at,
+  ends_at, '[)')) WHERE (occupies_schedule)` es la última defensa contra
+  cruces del mismo barbero (RN-CON-01/RN-CON-03); probada con inserción SQL
+  directa (`database/tests/hu060_citas.sql`) y con una carrera real de dos
+  conexiones en Go
+  (`TestCreateInternal_ConcurrentOverlap_ExactlyOneSucceeds`,
+  `internal/modules/booking/postgres`, mismo patrón que la carrera de
+  HU-023). Bajo concurrencia real, PostgreSQL puede resolver la disputa del
+  índice GiST como `deadlock_detected` (40P01) en vez de
+  `exclusion_violation` (23P01) limpio para la transacción perdedora: el
+  repositorio traduce ambos códigos al mismo conflicto tipado
+  (`bookingpostgres.isDeadlockDetected`, hallazgo real verificado contra
+  PostgreSQL 14, no una hipótesis). `appointment_history`/
+  `appointment_history_change` son append-only para `barberia_app` (sin
+  `UPDATE` ni `DELETE`, RN-HIS-02). `booking` no importa `schedule` ni
+  `catalog`, y viceversa. Ver la sección "Núcleo persistente de citas
+  (HU-060)" más abajo.
 
 ## Requisitos
 
@@ -163,6 +187,7 @@ go test -race ./internal/modules/shops/...
 go test -race ./internal/modules/staff/...
 go test -race ./internal/modules/catalog/...
 go test -race ./internal/modules/schedule/...
+go test -race ./internal/modules/booking/...
 go test -race ./cmd/api/...
 ```
 
@@ -1421,6 +1446,90 @@ algoritmo.
 - HTTP con contrato: `internal/modules/schedule/httpapi/contract_test.go` (extendido con las ocho operaciones nuevas).
 - SQL directo con el rol real: `database/tests/hu041_excepciones.sql` (incluida la verificación de `DEC-070` contra PostgreSQL real).
 - Router de producción con dos tenants reales: `cmd/api/schedule_exceptions_integration_test.go`.
+
+## Núcleo persistente de citas (HU-060)
+
+Nuevo módulo `internal/modules/booking`, dueño de las tablas nuevas de
+`20260827110000_create_appointment_core.sql`: `customer`, `appointment`,
+`appointment_history`, `appointment_history_change`. HU-060 entrega
+únicamente la base persistente y una primitiva transaccional interna;
+ningún endpoint HTTP, operación OpenAPI ni pantalla existe todavía. `HU-061`
+construirá la política de creación manual (incluida la reconciliación de
+`DP-CIT-01`) sobre `booking.BookingService.CreateInternal`.
+
+### `CreateInternal`: cliente + cita + historial, una sola transacción
+
+`booking.BookingService.CreateInternal` valida `CreateInternalInput` (forma
+cerrada de estado/origen/intervalo/snapshot/actor, sin tocar la base) y
+delega en `booking.Repository.CreateInternal`
+(`internal/modules/booking/postgres`), que dentro de UNA sola `InTenantTx`:
+crea o vincula el cliente que `CustomerInput` ya decidió (`ExistingID`
+resuelto por `SELECT ... WHERE barbershop_id = $1 AND id = $2`, tenant-aware;
+`New` inserta una fila), inserta la cita `confirmed` y el evento
+`appointment_created`. Un fallo en cualquier paso revierte los tres, incluido
+un cliente nuevo que nunca queda persistido si la cita choca con la
+exclusión (`TestCreateInternal_ScheduleConflict_RollsBackNewCustomer`).
+
+### La restricción de exclusión es la última defensa, no el dominio Go
+
+`appointment_barber_interval_excl` (`EXCLUDE USING gist (barbershop_id,
+barber_id, tstzrange(starts_at, ends_at, '[)')) WHERE (occupies_schedule)`)
+es quien de verdad impide dos citas cruzadas del mismo barbero, sea cual sea
+lo que valide antes el dominio Go. `occupies_schedule` es una columna
+generada y almacenada (`status IN ('confirmed', 'completed', 'no_show')`,
+estados-citas.md §4/§11): el mismo criterio alimenta la exclusión y, en B4,
+el cálculo de disponibilidad, sin poder divergir.
+
+### Hallazgo real de concurrencia: `deadlock_detected` además de `exclusion_violation`
+
+Verificado contra PostgreSQL 14 real con
+`TestCreateInternal_ConcurrentOverlap_ExactlyOneSucceeds` (dos goroutines,
+cada una con su propia conexión del pool, ejecutando `-race`): cuando dos
+`INSERT` que se cruzan llegan de verdad al mismo tiempo, PostgreSQL puede
+resolver la disputa del índice GiST como `deadlock_detected` (SQLSTATE
+`40P01`) en vez de un `exclusion_violation` (`23P01`) limpio para la
+transacción perdedora — la comprobación especulativa del índice puede crear
+un ciclo de espera entre los dos `INSERT` simultáneos. `insertAppointment`
+traduce ambos códigos al mismo `apperr.Conflict`
+(`bookingpostgres.isDeadlockDetected`): esta es la única fuente posible de
+un interbloqueo dentro de esa función, así que la traducción es segura.
+
+### Snapshots de servicio: centavos en Go, `numeric(12,2)` en PostgreSQL
+
+`ServiceSnapshot.PriceAmountCents` es un entero exacto, nunca coma flotante
+(mismo criterio que `catalog.Service.PriceCents`); `formatPriceAmount`/
+`parsePriceAmount` convierten hacia y desde el `numeric(12,2)` real de
+`price_amount_snapshot`. `booking` no importa `catalog`: el snapshot llega
+ya resuelto en el `CreateInternalInput` del llamador (HU-061 en adelante),
+sin sincronización automática con el catálogo (`DEC-004`).
+
+### Historial append-only
+
+`appointment_history`/`appointment_history_change` no tienen `GRANT UPDATE`
+ni `DELETE` para `barberia_app`, ni política RLS que los permita
+(`database/tests/hu060_citas.sql`): una corrección futura (T8,
+`appointment_status_corrected`) agregará otra entrada, nunca editará la
+existente (RN-HIS-02, `DEC-014`).
+
+### Tabla de criterios de aceptación
+
+| Criterio | Estado | Prueba o evidencia |
+| --- | --- | --- |
+| `CA-060-01` | Cumplido | `database/tests/hu060_citas.sql` ("esquema OK", "CHECK OK" ×2), `20260827110000_create_appointment_core.sql`. |
+| `CA-060-02` | Cumplido | `hu060_citas.sql` ("EXCLUDE OK"), `TestCreateInternal_ScheduleConflict_RollsBackNewCustomer`, `TestCreateInternal_ContiguousInterval_Succeeds`, `TestCreateInternal_DifferentBarber_SameWindow_Succeeds`. |
+| `CA-060-03` | Cumplido | `hu060_citas.sql` ("occupies_schedule OK"), `TestStatus_OccupiesSchedule`, `TestCreateInternal_NewCustomer_PersistsAppointmentAndHistory`. |
+| `CA-060-04` | Cumplido | `hu060_citas.sql` ("DEC-007 OK", medianoche y cambio de horario de verano con la sesión en otra zona). |
+| `CA-060-05` | Cumplido | `TestCreateInternal_NewCustomer_PersistsAppointmentAndHistory`, `TestCreateInternal_ScheduleConflict_RollsBackNewCustomer`, `TestCreateInternal_ContextCancelled_NoPartialWrite`. |
+| `CA-060-06` | Cumplido | `hu060_citas.sql` ("CHECK/append-only OK": `UPDATE`/`DELETE` rechazados con `insufficient_privilege` en ambas tablas). |
+| `CA-060-07` | Cumplido | `hu060_citas.sql` ("RLS OK", "grants OK", "RN-TEN-01 OK"), `TestCreateInternal_ExistingCustomerFromOtherTenant_ReturnsNotFound`. |
+| `CA-060-08` | Cumplido | `atlas migrate hash/validate/apply` desde vacío y desde la versión anterior con datos representativos (14 barberías/9 barberos preexistentes, verificados intactos tras aplicar), segundo `apply` sin cambios, `atlas migrate status` limpio (16/16, "Already at latest version"). |
+
+### Pruebas
+
+- Dominio: `internal/modules/booking/domain_test.go` (validación de forma pura, sin base de datos).
+- PostgreSQL real: `internal/modules/booking/postgres/repository_test.go`, incluida la carrera real de dos conexiones (`TestCreateInternal_ConcurrentOverlap_ExactlyOneSucceeds`, `-race`).
+- SQL directo con el rol real: `database/tests/hu060_citas.sql` (esquema, `CHECK`, exclusión, `occupies_schedule`, medianoche/DST, historial append-only, RLS, grants, aislamiento de tenant, `ON DELETE RESTRICT`).
+- Sin HTTP ni router de producción: HU-060 no expone ningún endpoint.
 
 ## Pruebas de integración
 

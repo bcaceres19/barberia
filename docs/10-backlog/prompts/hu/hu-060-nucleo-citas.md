@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-060-v1"
 version: "1.0"
 kind: "hu"
-status: "draft"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -14,10 +14,10 @@ related_hu:
   - "HU-041"
   - "HU-042"
   - "HU-061"
-issue: "pending"
-issue_url: null
+issue: "104"
+issue_url: "https://github.com/bcaceres19/barberia/issues/104"
 suggested_issue_title: "feat(booking): implementar HU-060 núcleo de citas sin cruces"
-branch: null
+branch: "feat/104-hu060-nucleo-citas"
 pr: null
 pr_url: null
 depends_on:
@@ -94,7 +94,7 @@ source_docs:
   - "apps/api/internal/modules/booking"
   - "apps/api/internal/platform/database"
 created_at: "2026-08-26"
-updated_at: "2026-08-26"
+updated_at: "2026-08-27"
 supersedes: null
 superseded_by: null
 ---
