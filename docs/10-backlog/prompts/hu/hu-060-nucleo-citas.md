@@ -18,8 +18,8 @@ issue: "104"
 issue_url: "https://github.com/bcaceres19/barberia/issues/104"
 suggested_issue_title: "feat(booking): implementar HU-060 núcleo de citas sin cruces"
 branch: "feat/104-hu060-nucleo-citas"
-pr: null
-pr_url: null
+pr: "105"
+pr_url: "https://github.com/bcaceres19/barberia/pull/105"
 depends_on:
   - "HU-040, HU-041 y HU-042 integradas en main"
   - "Criterio de salida de B2 verificado; reconciliar seguimientos abiertos #90, #95, #98 y #100 que afecten B3"
