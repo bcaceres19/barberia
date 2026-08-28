@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.19"
+version: "1.20"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-27"
+ultima_actualizacion: "2026-08-28"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -95,6 +95,8 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-071` | 2026-08-27 | Resuelve `DP-CIT-01`: cliente manual sin teléfono se reconcilia por correo dentro de la barbería; sin teléfono ni correo, siempre fila nueva | `DP-CIT-01`, `HU-061` | Confirmada |
 | `DEC-072` | 2026-08-27 | Resuelve `DP-CIT-02`: la cita manual solo puede usar servicios activos ya asignados al barbero elegido | `DP-CIT-02`, `HU-061` | Confirmada |
 | `DEC-073` | 2026-08-27 | Resuelve `DP-CIT-03`: un bloqueo vigente rechaza la creación manual (bloqueo duro), igual que un cruce de citas | `DP-CIT-03`, `HU-061` | Confirmada |
+| `DEC-074` | 2026-08-28 | Resuelve `DP-CIT-04`: la agenda diaria abre con selector obligatorio de un barbero, sin vista consolidada inicial | `DP-CIT-04`, `HU-062` | Confirmada |
+| `DEC-075` | 2026-08-28 | Resuelve `DP-CIT-05`: un turno que cruza medianoche aparece en cada agenda diaria cuyo intervalo intersecta | `DP-CIT-05`, `HU-062` | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -803,3 +805,23 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** permitir con advertencia — descartada porque delega en el barbero, en el momento de más prisa (creando una cita mientras atiende a alguien), una decisión que ya tiene un flujo propio y auditable en `HU-041`/`HU-042` (editar o exceptuar el bloqueo); exigir retirar/exceptuar el bloqueo como paso obligatorio dentro del mismo formulario de cita — descartada por mezclar dos preocupaciones distintas (gestión de bloqueos y creación de citas) en una sola pantalla y una sola transacción, cuando `HU-041`/`HU-042` ya resuelven la gestión de bloqueos de forma completa y auditada.
 - **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-CIT-03`), `docs/01-producto/reglas-negocio.md` (`RN-CIT-02`, caso límite nuevo), `docs/02-requisitos/historias-usuario.md` (`HU-061`, `CA-061-04`), `docs/10-backlog/prompts/hu/hu-061-creacion-manual-citas.md`; futura implementación consulta la jornada efectiva/bloqueos vigentes de `schedule` antes de confirmar y responde el mismo `409` uniforme que usa para un cruce de citas.
 - **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-CIT-03`; aprobación explícita del propietario el 2026-08-27.
+
+### DEC-074 · Resolución de `DP-CIT-04`: vista inicial de la agenda diaria en una barbería con varios barberos
+
+- **Fecha:** 2026-08-28.
+- **Decisión:** la agenda diaria de `HU-062` abre siempre con un **selector obligatorio de un barbero**; no existe una vista consolidada de todos los barberos a la vez ni un default implícito que muestre citas sin que el staff elija explícitamente de quién. En una barbería con un solo barbero el selector puede preseleccionar la única opción existente sin exigir un paso adicional (mismo patrón que `DEC-019`/`DP-UX-01` ya aplica a la selección del cliente), pero la autoridad de la vista sigue siendo "un barbero a la vez", nunca una consolidación.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** `DEC-047` prohíbe inventar un vínculo automático `staff_user`→`barber`; sin esa autoridad, una vista consolidada por defecto obligaría a decidir de forma no verificable cómo entrelazar turnos de varios barberos en una sola lista (orden, color, agrupación) sin ninguna fuente que lo exija todavía. El selector obligatorio no inventa ninguna asociación: exige que la persona que opera la pantalla declare explícitamente de qué barbero quiere ver la agenda, igual que ya hace el cliente en `DP-UX-01` al reservar.
+- **Alternativas descartadas:** vista consolidada por defecto — descartada por requerir una regla de fusión/orden entre barberos que ninguna decisión previa fija, y por arriesgar que un barbero vea u opere sobre turnos de otro sin una decisión explícita de alcance; "otro criterio" (recordar el último barbero visto, orden alfabético) — descartado por añadir estado de preferencia por usuario que esta historia no necesita y que puede decidirse después sin costo, sin bloquear la entrega mínima.
+- **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-CIT-04`), `docs/02-requisitos/historias-usuario.md` (`HU-062`, criterios de aceptación), `docs/10-backlog/prompts/hu/hu-062-agenda-diaria.md`; futura implementación exige un `barberId` explícito en la operación de agenda diaria y en la pantalla, sin vista "todos".
+- **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-CIT-04`; aprobación explícita del propietario el 2026-08-28.
+
+### DEC-075 · Resolución de `DP-CIT-05`: pertenencia diaria de un turno que cruza medianoche
+
+- **Fecha:** 2026-08-28.
+- **Decisión:** un turno cuyo intervalo `[starts_at, ends_at)` cruza la medianoche aparece **en cada agenda diaria cuyo rango civil interseca ese intervalo**: en la agenda del día en que empieza y también en la agenda del día siguiente, donde termina. No se elige un único "día dueño" del turno.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** `DEC-020` ya permite que un tramo de horario/bloqueo cruce medianoche cuando cabe completo en la jornada configurada, y `HU-060` persiste el mismo tipo de intervalo semiabierto para `appointment`. Elegir "solo el día de inicio" ocultaría el turno de la agenda del día en que realmente se atiende al cliente durante la madrugada, que es precisamente cuando el barbero más necesita verlo listado; la intersección es la única regla que mantiene la agenda de cada día como un reflejo fiel de "qué pasa en mi negocio hoy", consistente con el objetivo de `HU-062`.
+- **Alternativas descartadas:** solo el día civil de inicio — descartada porque un barbero que abre la agenda del día siguiente (donde transcurre la segunda mitad del turno) no vería el turno en curso, contradiciendo el objetivo de la historia de mostrar "los turnos de hoy".
+- **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-CIT-05`), `docs/02-requisitos/historias-usuario.md` (`HU-062`, criterios de aceptación), `docs/10-backlog/prompts/hu/hu-062-agenda-diaria.md`; futura implementación filtra por intersección de rango (`starts_at < fin_civil AND ends_at > inicio_civil`), no por igualdad de fecha de `starts_at`, y un turno nocturno puede aparecer una vez en cada una de las dos agendas sin duplicarse dentro de la misma.
+- **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-CIT-05`; aprobación explícita del propietario el 2026-08-28.

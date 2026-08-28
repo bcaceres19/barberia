@@ -1,9 +1,9 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.24"
+version: "1.25"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-27"
+ultima_actualizacion: "2026-08-28"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/reglas-negocio.md"
@@ -17,7 +17,7 @@ documentos_relacionados:
 
 # Historias de usuario y criterios de aceptación
 
-> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas confirmadas; no crean alcance por sí solas y requieren aprobación antes de implementarse. B0, `HU-020`–`HU-024` y `HU-040`–`HU-042` ya están integradas en `main`. Las dudas históricas de B0 quedaron resueltas por `DEC-050`–`DEC-066`; `DP-SER-01`–`DP-SER-03` del lote de B1 quedaron resueltas por `DEC-067`–`DEC-069`; `CT-008` del lote de B2 quedó resuelta por `DEC-070`. Los issues [#90](https://github.com/bcaceres19/barberia/issues/90), [#95](https://github.com/bcaceres19/barberia/issues/95), [#98](https://github.com/bcaceres19/barberia/issues/98) y [#100](https://github.com/bcaceres19/barberia/issues/100) conservan seguimientos visuales/E2E parciales de B2. `HU-060` abre B3 y está integrada en `main` (issue real [#104](https://github.com/bcaceres19/barberia/issues/104), integrada mediante [PR #105](https://github.com/bcaceres19/barberia/pull/105)). `DP-CIT-01`–`DP-CIT-03` quedaron resueltas por `DEC-071`–`DEC-073` (2026-08-27); `HU-061` está integrada en `main` mediante [PR #109](https://github.com/bcaceres19/barberia/pull/109) (issue real [#107](https://github.com/bcaceres19/barberia/issues/107) abierto: E2E/evidencia responsiva pendientes). `HU-062` sigue `draft` con `issue: pending`, bloqueada por `DP-CIT-04`–`DP-CIT-05`.
+> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas confirmadas; no crean alcance por sí solas y requieren aprobación antes de implementarse. B0, `HU-020`–`HU-024` y `HU-040`–`HU-042` ya están integradas en `main`. Las dudas históricas de B0 quedaron resueltas por `DEC-050`–`DEC-066`; `DP-SER-01`–`DP-SER-03` del lote de B1 quedaron resueltas por `DEC-067`–`DEC-069`; `CT-008` del lote de B2 quedó resuelta por `DEC-070`. Los issues [#90](https://github.com/bcaceres19/barberia/issues/90), [#95](https://github.com/bcaceres19/barberia/issues/95), [#98](https://github.com/bcaceres19/barberia/issues/98) y [#100](https://github.com/bcaceres19/barberia/issues/100) conservan seguimientos visuales/E2E parciales de B2. `HU-060` abre B3 y está integrada en `main` (issue real [#104](https://github.com/bcaceres19/barberia/issues/104), integrada mediante [PR #105](https://github.com/bcaceres19/barberia/pull/105)). `DP-CIT-01`–`DP-CIT-03` quedaron resueltas por `DEC-071`–`DEC-073` (2026-08-27); `HU-061` está integrada en `main` mediante [PR #109](https://github.com/bcaceres19/barberia/pull/109) (issue real [#107](https://github.com/bcaceres19/barberia/issues/107) abierto: E2E/evidencia responsiva pendientes). `DP-CIT-04`–`DP-CIT-05` quedaron resueltas por `DEC-074`–`DEC-075` (2026-08-28); `HU-062` sigue `draft` con `issue: pending` hasta enlazar un issue real, ya sin decisión pendiente.
 
 ---
 
@@ -51,7 +51,7 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | B0 · Cimientos, seguridad y primeras pantallas | `HU-001` – `HU-012` | Redactadas en este documento |
 | B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | Integradas en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), [PR #83](https://github.com/bcaceres19/barberia/pull/83), [PR #84](https://github.com/bcaceres19/barberia/pull/84)) |
 | B2 · Horario laboral y bloqueos | `HU-040` – `HU-042` | Integradas en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93), [PR #96](https://github.com/bcaceres19/barberia/pull/96), [PR #99](https://github.com/bcaceres19/barberia/pull/99)); seguimientos parciales en `#90`, `#95`, `#98` y `#100` |
-| B3 · Agenda, estados e integridad | `HU-060` – `HU-062` | `HU-060` integrada ([PR #105](https://github.com/bcaceres19/barberia/pull/105)); `HU-061` integrada mediante [PR #109](https://github.com/bcaceres19/barberia/pull/109) (issue [#107](https://github.com/bcaceres19/barberia/issues/107) abierto, `DP-CIT-01`–`DP-CIT-03` resueltas por `DEC-071`–`DEC-073`); `HU-062` propuesta, prompt `draft`, bloqueada por `DP-CIT-04`–`DP-CIT-05` |
+| B3 · Agenda, estados e integridad | `HU-060` – `HU-062` | `HU-060` integrada ([PR #105](https://github.com/bcaceres19/barberia/pull/105)); `HU-061` integrada mediante [PR #109](https://github.com/bcaceres19/barberia/pull/109) (issue [#107](https://github.com/bcaceres19/barberia/issues/107) abierto, `DP-CIT-01`–`DP-CIT-03` resueltas por `DEC-071`–`DEC-073`); `HU-062` desbloqueada (`DP-CIT-04`–`DP-CIT-05` resueltas por `DEC-074`–`DEC-075`), prompt `draft` pendiente de issue real |
 | B4 · Reserva pública y disponibilidad | `HU-090` – | Pendientes |
 | B5 · Notificaciones y recordatorios | `HU-130` – | Pendientes |
 | B6 · Operación, privacidad y piloto | `HU-150` – | Pendientes |
@@ -1130,7 +1130,7 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 
 ## 6. Bloque B3 · Agenda, estados e integridad
 
-> **B3 en ejecución.** Las primeras tres historias separan la última defensa de datos (`HU-060`), la primera escritura vertical de negocio (`HU-061`) y la pantalla operativa mínima (`HU-062`). `HU-060` está integrada (issue real [#104](https://github.com/bcaceres19/barberia/issues/104), integrada mediante [PR #105](https://github.com/bcaceres19/barberia/pull/105)): no inventa una API ni una interfaz, solo la base persistente y la primitiva transaccional interna. `HU-061` está integrada en `main` mediante [PR #109](https://github.com/bcaceres19/barberia/pull/109) (`DP-CIT-01`–`DP-CIT-03` resueltas como `DEC-071`–`DEC-073`, 2026-08-27; issue real propio [#107](https://github.com/bcaceres19/barberia/issues/107)); `HU-062` sigue bloqueada por `DP-CIT-04` y `DP-CIT-05`.
+> **B3 en ejecución.** Las primeras tres historias separan la última defensa de datos (`HU-060`), la primera escritura vertical de negocio (`HU-061`) y la pantalla operativa mínima (`HU-062`). `HU-060` está integrada (issue real [#104](https://github.com/bcaceres19/barberia/issues/104), integrada mediante [PR #105](https://github.com/bcaceres19/barberia/pull/105)): no inventa una API ni una interfaz, solo la base persistente y la primitiva transaccional interna. `HU-061` está integrada en `main` mediante [PR #109](https://github.com/bcaceres19/barberia/pull/109) (`DP-CIT-01`–`DP-CIT-03` resueltas como `DEC-071`–`DEC-073`, 2026-08-27; issue real propio [#107](https://github.com/bcaceres19/barberia/issues/107)); `HU-062` ya no está bloqueada por decisión (`DP-CIT-04`/`DP-CIT-05` resueltas como `DEC-074`–`DEC-075`, 2026-08-28) y espera issue real para pasar de `draft` a ejecutable.
 
 Orden recomendado: `HU-060` → `HU-061` → `HU-062`. Las transiciones, modificaciones, reprogramación, cancelación, navegación por otra fecha y cierre automático se redactan después de verificar estas tres bases.
 
@@ -1266,9 +1266,9 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062`. Las transiciones, modific
 | Reglas | `RN-CIT-01`, `RN-RES-02`, `RN-RES-03`, `RN-DIS-07`, `RN-TEN-01` y estados confirmados de `estados-citas.md` |
 | Decisiones | `DEC-007`, `DEC-016`, `DEC-019`, `DEC-024`, `DEC-033`–`DEC-039`, `DEC-047` |
 | Actor | Barbero autenticado |
-| Depende de | `HU-061` integrada; `DP-CIT-04` y `DP-CIT-05` resueltas; evidencia pendiente de B2 que afecte el cascarón privado reconciliada |
+| Depende de | `HU-061` integrada (cumplida); `DP-CIT-04` y `DP-CIT-05` resueltas como `DEC-074`–`DEC-075` (cumplida); issue real propio pendiente de crear |
 | Bloquea | Navegación por fecha, detalle, modificación, reprogramación, cancelación y transiciones visibles |
-| Estado | Propuesta bloqueada por decisión; prompt `PROMPT-HU-062-v1` en `draft`; `issue: pending` |
+| Estado | Decisiones resueltas; desbloqueada para ejecución; prompt `PROMPT-HU-062-v1` en `draft` hasta enlazar issue real (`issue: pending`) |
 | Riesgo | Una agenda que usa la zona del dispositivo, oculta estados terminales o elige un barbero implícito muestra una operación distinta de la realidad persistida. |
 
 **Historia**
@@ -1277,8 +1277,8 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062`. Las transiciones, modific
 
 **Alcance incluido**
 
-- Consulta privada de la agenda de una fecha civil en la zona IANA de la barbería, con pertenencia de turnos nocturnos según la resolución de `DP-CIT-05` y paginada o acotada conforme al volumen real del día.
-- Apertura predeterminada en hoy y alcance multi-barbero exactamente como resuelva `DP-CIT-04`, sin inferir vínculo entre `staff_user` y `barber`.
+- Consulta privada de la agenda de una fecha civil en la zona IANA de la barbería, con un turno nocturno visible en cada agenda cuyo rango interseca su intervalo (`DEC-075`) y paginada o acotada conforme al volumen real del día.
+- Apertura predeterminada en hoy con selector obligatorio de un barbero (`DEC-074`), sin vista consolidada ni vínculo inferido entre `staff_user` y `barber`.
 - Lista cronológica accesible con hora, persona atendida, servicio snapshot, barbero cuando corresponda y etiqueta visible de cada estado.
 - Citas activas y terminales del día; las terminales pueden atenuarse o separarse, pero no desaparecen ni pierden legibilidad.
 - Acción “Nuevo turno” enlazada al formulario real de `HU-061`.
@@ -1291,7 +1291,7 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062`. Las transiciones, modific
 - Detalle completo, teléfono, correo, nota, historial o acciones sobre una cita.
 - Crear desde un hueco espacial, arrastrar, calendario semanal/mensual o tiempo real.
 - Modificar, reprogramar, cancelar, completar, marcar `no_show` o corregir estados.
-- Resolver `DP-CIT-04` o `DP-CIT-05` desde el código, o añadir un enlace automático `staff_user`→`barber` prohibido por `DEC-047`.
+- Añadir un enlace automático `staff_user`→`barber` prohibido por `DEC-047`, o cualquier vista consolidada de varios barberos (`DEC-074` la excluye).
 - Cálculo de disponibilidad pública, huecos ofrecibles, recordatorios o notificaciones.
 
 **Criterios de aceptación**
@@ -1299,9 +1299,9 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062`. Las transiciones, modific
 | Código | Criterio |
 | --- | --- |
 | `CA-062-01` | Al entrar al panel, la agenda consulta y muestra la fecha civil completa de hoy en la zona de la barbería, aunque dispositivo y servidor usen otras zonas. |
-| `CA-062-02` | La vista aplica exactamente la selección multi-barbero aprobada al resolver `DP-CIT-04`; nunca presupone que el usuario autenticado sea una fila `barber`. |
+| `CA-062-02` | La vista exige un `barberId` explícito (selector obligatorio, `DEC-074`); nunca presupone que el usuario autenticado sea una fila `barber` ni ofrece una vista consolidada de varios barberos. |
 | `CA-062-03` | Los turnos se ordenan por `startsAt` y cada fila muestra hora, persona atendida, servicio snapshot, barbero cuando corresponda y una etiqueta de estado en español que no depende solo del color. |
-| `CA-062-04` | Las citas activas y terminales que cruzan medianoche aparecen en el día o días definidos por la decisión que cierre `DP-CIT-05`, sin duplicación accidental ni pérdida en los extremos `[inicio, fin)`. |
+| `CA-062-04` | Las citas activas y terminales que cruzan medianoche aparecen en cada agenda diaria cuyo rango civil interseca su intervalo (`DEC-075`), sin duplicación dentro de la misma agenda ni pérdida en los extremos `[inicio, fin)`. |
 | `CA-062-05` | La respuesta y la interfaz no exponen teléfono, correo, nota ni campos internos innecesarios; un tenant no obtiene filas de otro y un alcance ajeno responde de forma segura. |
 | `CA-062-06` | Carga, actualización, vacío y error recuperable conservan contexto y anuncian el estado; “Nuevo turno” navega al flujo real de `HU-061`. |
 | `CA-062-07` | La consulta usa índice y límite verificables para el acceso por barbería, alcance de barbero y rango diario; `EXPLAIN (ANALYZE, BUFFERS)` evita un recorrido completo con volumen representativo. |
@@ -1311,9 +1311,9 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062`. Las transiciones, modific
 
 - Dominio/modelo de vista para día civil, zona, orden, medianoche y traducción de estados.
 - HTTP/contrato para hoy con agenda vacía/llena, `401`, `404`, límites, campos exactos y dos tenants.
-- PostgreSQL real para límites del día, citas nocturnas conforme a `DP-CIT-05`, estados terminales, aislamiento y plan de consulta con volumen representativo.
+- PostgreSQL real para límites del día, citas nocturnas conforme a `DEC-075`, estados terminales, aislamiento y plan de consulta con volumen representativo.
 - Componente con cero, una y varias citas, actualización/error, estados visibles y enlace a “Nuevo turno”.
-- E2E en navegador real con dispositivo en otra zona, varios estados y el alcance multi-barbero aprobado; evidencia a 320, 360, 768 y 1280 px y accesibilidad.
+- E2E en navegador real con dispositivo en otra zona, varios estados y el selector obligatorio de barbero; evidencia a 320, 360, 768 y 1280 px y accesibilidad.
 
 **Terminado cuando** la pantalla principal abre en hoy y presenta una lista cronológica, tenant-aware y accesible que coincide con la base de datos, sin adelantar navegación, detalle o cambios sobre la cita.
 
@@ -1325,7 +1325,7 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062`. Las transiciones, modific
 | --- | --- | --- |
 | B1 | `HU-025` – | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
 | B2 | `HU-040` – `HU-042` | Integradas en `main` (PR `#93`, `#96`, `#99`); seguimientos parciales en issues `#90`, `#95`, `#98` y `#100` |
-| B3 | `HU-063` – | `HU-060`–`HU-062` revisadas e implementadas; `DP-CIT-01`–`DP-CIT-05` resueltas |
+| B3 | `HU-063` – | `HU-060`–`HU-062` revisadas e implementadas (`DP-CIT-01`–`DP-CIT-05` ya resueltas; `HU-062` pendiente de issue real e implementación) |
 | B4 | `HU-090` – | B3 cumple su criterio de salida |
 | B5 | `HU-130` – | B4 cumple su criterio de salida |
 | B6 | `HU-150` – | B5 cumple su criterio de salida |

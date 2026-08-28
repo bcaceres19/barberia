@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-062-v1"
-version: "1.0"
+version: "1.1"
 kind: "hu"
-status: "draft"
+status: "ready"
 target_agents:
   - "claude"
   - "codex"
@@ -13,17 +13,17 @@ related_hu:
   - "HU-021"
   - "HU-060"
   - "HU-061"
-issue: "pending"
-issue_url: null
+issue: 111
+issue_url: "https://github.com/bcaceres19/barberia/issues/111"
 suggested_issue_title: "feat(agenda): implementar HU-062 agenda diaria de hoy"
 branch: null
 pr: null
 pr_url: null
 depends_on:
-  - "HU-060 y HU-061 integradas en main"
-  - "DP-CIT-04 resuelta como DEC-* y propagada"
-  - "DP-CIT-05 resuelta como DEC-* y propagada"
-  - "Issue real propio creado y enlazado antes de pasar a ready o ejecutar"
+  - "HU-060 y HU-061 integradas en main (cumplido)"
+  - "DP-CIT-04 resuelta como DEC-074 y propagada (cumplido)"
+  - "DP-CIT-05 resuelta como DEC-075 y propagada (cumplido)"
+  - "Issue real propio creado y enlazado (cumplido: #111)"
 rules:
   - "RN-CIT-01"
   - "RN-RES-02"
@@ -45,6 +45,8 @@ decisions:
   - "DEC-038"
   - "DEC-039"
   - "DEC-047"
+  - "DEC-074"
+  - "DEC-075"
 acceptance_criteria:
   - "CA-062-01"
   - "CA-062-02"
@@ -90,7 +92,7 @@ source_docs:
   - "apps/web/src/shared/time"
   - "apps/web/src/shared/ui"
 created_at: "2026-08-26"
-updated_at: "2026-08-26"
+updated_at: "2026-08-28"
 supersedes: null
 superseded_by: null
 ---
@@ -99,7 +101,7 @@ superseded_by: null
 
 ## Instrucción para el agente
 
-Implementa únicamente la lectura y pantalla de la agenda de hoy. No ejecutes este prompt mientras `issue: pending`, `HU-061` no esté integrada o `DP-CIT-04`/`DP-CIT-05` no tengan decisiones confirmadas y propagadas. `DEC-047` prohíbe inventar un vínculo automático entre `staff_user` y `barber`; la selección o consolidación inicial y la pertenencia diaria de turnos nocturnos deben seguir literalmente las resoluciones del propietario.
+Implementa únicamente la lectura y pantalla de la agenda de hoy. `DP-CIT-04` y `DP-CIT-05` ya tienen decisión confirmada y propagada (`DEC-074` y `DEC-075`, 2026-08-28): selector obligatorio de un barbero, sin vista consolidada; turno nocturno visible en cada agenda diaria cuyo rango interseca su intervalo. El issue real es [#111](https://github.com/bcaceres19/barberia/issues/111). `DEC-047` prohíbe inventar un vínculo automático entre `staff_user` y `barber`; sigue literalmente `DEC-074` y `DEC-075`, no reabras la duda ni elijas otra alternativa.
 
 No adelantes anterior/siguiente/selector de fecha, detalle completo ni acciones sobre citas. Esta historia prepara el contrato diario para que `F-CITA-02` lo reutilice después, pero la interfaz solo abre y recarga hoy.
 
@@ -110,16 +112,16 @@ Que al abrir el panel privado el barbero vea una lista cronológica, accesible y
 ## Preflight obligatorio
 
 1. Verifica árbol limpio, `main` actualizada y `HU-060`/`HU-061` integradas con pruebas y contrato vigentes.
-2. Lee las decisiones que cierren `DP-CIT-04` y `DP-CIT-05`. Si falta alguna o no está propagada a historia/matriz/prompt, detente sin tocar código.
-3. Crea o localiza el issue real, actualiza metadatos/índice y crea `feat/<issue>-hu062-agenda-diaria` desde `main`.
+2. Confirma que `DEC-074`/`DEC-075` siguen vigentes en `registro-decisiones.md` y `dudas-pendientes.md` (ya propagadas a historia/matriz/prompt en esta versión).
+3. Usa el issue real [#111](https://github.com/bcaceres19/barberia/issues/111); crea `feat/111-hu062-agenda-diaria` desde `main`.
 4. Ejecuta Graphify sobre `booking`, consulta de `appointment`, `staff`, shell privado, router, zona horaria, cliente API y componentes base.
 5. Lee completamente los `source_docs`; revisa especialmente `estandar-diseno-visual.md` §§7, 10 y 11.2 y la semántica de estados/citas nocturnas.
 6. Verifica el estado real de evidencia responsive de B2 para no introducir ni copiar un patrón ya marcado como parcial.
 
 ## Alcance incluido
 
-- Operación privada de lectura de agenda diaria con fecha civil explícita o default interno de hoy, seguridad de sesión y alcance multi-barbero según `DP-CIT-04`.
-- Rango civil calculado en la zona IANA de la barbería y pertenencia de citas nocturnas exactamente como resuelva `DP-CIT-05`.
+- Operación privada de lectura de agenda diaria con fecha civil explícita o default interno de hoy, seguridad de sesión y `barberId` obligatorio en la petición (`DEC-074`), sin vista consolidada de varios barberos.
+- Rango civil calculado en la zona IANA de la barbería y pertenencia de citas nocturnas por intersección de rango, no por igualdad de fecha de inicio (`DEC-075`).
 - Respuesta mínima con ID, `startsAt`, `endsAt`, persona atendida, snapshots de servicio, estado y barbero cuando corresponda.
 - Consulta tenant-aware, orden estable y límite/paginación proporcional al volumen; índice/plan verificado.
 - Página principal de agenda que abre en hoy, muestra fecha completa, zona, lista cronológica y acción “Nuevo turno”.
@@ -133,7 +135,7 @@ Que al abrir el panel privado el barbero vea una lista cronológica, accesible y
 - Detalle de contacto, nota, historial o acciones de editar/reprogramar/cancelar/cerrar/corregir.
 - Cálculo y visualización de huecos disponibles; B4 es dueña de disponibilidad pública.
 - Notificaciones, recordatorios, métricas o cierre automático.
-- Resolver `DP-CIT-04`/`DP-CIT-05` mediante defaults de código o crear FK/campo `staff_user`→`barber`.
+- Crear FK/campo `staff_user`→`barber`, o cualquier vista consolidada de varios barberos (`DEC-074` la excluye expresamente).
 - Exponer teléfonos, correos, notas, motivos o IDs internos innecesarios en la lista.
 
 ## Estado existente que debe conservarse
@@ -149,9 +151,9 @@ Que al abrir el panel privado el barbero vea una lista cronológica, accesible y
 
 ### 1. Contrato y consulta
 
-1. Propaga las decisiones de `DP-CIT-04` y `DP-CIT-05`. Si su aplicación requiere un cambio material de criterios, crea una versión nueva del prompt antes de ejecutar.
-2. Diseña la operación bajo `Appointments`, con seguridad explícita, fecha `format: date`, límites, orden y errores RFC 9457. No documentes SQL.
-3. Define la consulta de citas nocturnas de acuerdo con `DP-CIT-05`; no asumas por conveniencia si se filtra por inicio o por intersección.
+1. Las decisiones `DEC-074`/`DEC-075` ya están propagadas a historia/matriz/prompt; si su aplicación durante el desarrollo revela un cambio material de criterio no previsto, detente y regístralo como duda nueva antes de improvisar.
+2. Diseña la operación bajo `Appointments`, con seguridad explícita, `barberId` obligatorio, fecha `format: date`, límites, orden y errores RFC 9457. No documentes SQL.
+3. Filtra citas nocturnas por intersección de rango (`starts_at < fin_civil AND ends_at > inicio_civil`), conforme a `DEC-075`; no filtres por igualdad de fecha de `starts_at`.
 4. Mantén la respuesta cerrada y mínima; usa nombres técnicos en inglés y descripciones en español.
 5. Implementa repositorio con filtro explícito por tenant, alcance de barbero aprobado y rango; ordena por `starts_at`, luego ID estable.
 6. Verifica `EXPLAIN (ANALYZE, BUFFERS)` con volumen representativo. Ajusta índice solo si una consulta demostrada lo necesita y mediante migración nueva.
@@ -159,7 +161,7 @@ Que al abrir el panel privado el barbero vea una lista cronológica, accesible y
 ### 2. Backend Go
 
 1. Añade `ListDailyAgenda` al núcleo `booking` con reloj y zona explícitos; no conozca Chi ni SQL.
-2. Deriva tenant de sesión y valida el alcance multi-barbero según la decisión. Recurso ajeno responde como no encontrado.
+2. Deriva tenant de sesión y exige `barberId` explícito (`DEC-074`); nunca infieras el barbero desde el `staff_user` autenticado. Recurso ajeno responde como no encontrado.
 3. Convierte fecha civil a dos instantes inequívocos en la zona de barbería, incluidos cambios DST; no uses 24 horas fijas si el día local dura 23/25 horas.
 4. Mapea filas a un DTO de respuesta sin contacto/nota/historial. Traduce errores sin filtrar datos.
 5. Prueba cancelación de contexto, límites, agenda vacía y múltiples estados.
@@ -168,7 +170,7 @@ Que al abrir el panel privado el barbero vea una lista cronológica, accesible y
 
 1. Sustituye el stub de agenda por una ruta lazy y página dueña del módulo, sin mover reglas al shell.
 2. Al entrar, consulta hoy según la zona devuelta por el servidor o el contrato aprobado; muestra fecha completa y zona.
-3. Aplica el selector/vista consolidada de `DP-CIT-04` con estados carga/vacío/error y actualización local.
+3. Aplica el selector obligatorio de barbero (`DEC-074`, sin vista consolidada) con estados carga/vacío/error y actualización local.
 4. Renderiza lista cronológica: hora, persona, servicio snapshot, barbero cuando corresponda y `AppointmentStatusBadge` o equivalente basado en tokens.
 5. La acción primaria “Nuevo turno” navega al flujo real de `HU-061`. No agregues acciones futuras deshabilitadas como promesa falsa.
 6. En móvil no uses una cuadrícula espacial obligatoria. En escritorio puede haber composición ampliada solo si conserva la lista accesible equivalente.
@@ -176,11 +178,11 @@ Que al abrir el panel privado el barbero vea una lista cronológica, accesible y
 
 ## Pruebas y evidencia
 
-- Dominio: hoy en zona explícita, servidor/dispositivo en otra zona, día de 23/25 h, medianoche conforme a `DP-CIT-05`, orden y estados.
-- PostgreSQL real: dos tenants, alcance multi-barbero aprobado, citas que empiezan/terminan en los límites, nocturnas, terminales e índice con volumen.
-- HTTP/contrato: agenda vacía/llena, fecha inválida, auth, recurso ajeno, límites y forma exacta sin datos personales innecesarios.
-- Componentes: carga, actualización, vacío, error/reintento, uno/varios turnos, cinco estados y “Nuevo turno”; axe-core.
-- E2E: login, apertura en hoy, dispositivo en otra zona, agenda cronológica con estados y navegación a crear turno.
+- Dominio: hoy en zona explícita, servidor/dispositivo en otra zona, día de 23/25 h, medianoche conforme a `DEC-075`, orden y estados.
+- PostgreSQL real: dos tenants, `barberId` obligatorio, citas que empiezan/terminan en los límites, nocturnas visibles en ambos días, terminales e índice con volumen.
+- HTTP/contrato: agenda vacía/llena, fecha inválida, `barberId` ausente/ajeno, auth, límites y forma exacta sin datos personales innecesarios.
+- Componentes: carga, actualización, vacío, error/reintento, uno/varios turnos, cinco estados, selector de barbero y “Nuevo turno”; axe-core.
+- E2E: login, selección de barbero, apertura en hoy, dispositivo en otra zona, agenda cronológica con estados y navegación a crear turno.
 - Responsive/accesible: 320, 360, 768, 1280 px, zoom 200 %, teclado, foco, contraste y teléfono real antes de versión.
 
 ## Documentación y trazabilidad
@@ -220,7 +222,7 @@ Ejecuta las integraciones contra PostgreSQL 14 real con dos tenants. Entrega `Cr
 
 ## Git y PR
 
-- Rama sugerida después de crear issue: `feat/<issue>-hu062-agenda-diaria`.
+- Rama: `feat/111-hu062-agenda-diaria`.
 - Commit/título: `feat(agenda): implementa HU-062 agenda diaria de hoy`.
 - Usa `Closes #<issue>` solo con los ocho criterios y la evidencia visual/E2E completa; si queda evidencia propia parcial, usa `Refs #<issue>` y mantén el issue abierto.
 - No hagas push directo, force push, merge de `main`, edición de migraciones aplicadas ni implementación oportunista de navegación/acciones futuras.

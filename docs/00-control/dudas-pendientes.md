@@ -1,9 +1,9 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "2.8"
-estado: "Con dudas abiertas de B3"
+version: "2.9"
+estado: "Sin dudas abiertas"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-27"
+ultima_actualizacion: "2026-08-28"
 documentos_relacionados:
   - "registro-decisiones.md"
   - "contradicciones.md"
@@ -17,7 +17,7 @@ documentos_relacionados:
 
 ## 1. Estado
 
-Quedan dos dudas abiertas de B3 (`DP-CIT-04`–`DP-CIT-05`). Las cinco dudas del lote (`DP-CIT-01`–`DP-CIT-05`) se detectaron el 26 de agosto de 2026 al preparar `HU-060`, `HU-061` y `HU-062`: las fuentes confirman el modelo de datos, la exclusión de cruces, la creación manual y la agenda diaria, pero no fijaban la reconciliación de clientes manuales sin teléfono, el efecto de la asignación servicio-barbero sobre una cita manual, la conducta frente a un bloqueo vigente, la vista inicial en una barbería con varios barberos ni el día o días en que aparece un turno que cruza medianoche. El propietario resolvió las tres primeras el 27 de agosto de 2026 como `DEC-071`–`DEC-073`, desbloqueando `HU-061`. `DP-CIT-04` y `DP-CIT-05` siguen abiertas y bloquean `HU-062`; ninguna de esas dos conductas se implementa hasta que el propietario las resuelva como `DEC-*`.
+No quedan dudas abiertas. Las cinco dudas del lote (`DP-CIT-01`–`DP-CIT-05`) se detectaron el 26 de agosto de 2026 al preparar `HU-060`, `HU-061` y `HU-062`: las fuentes confirman el modelo de datos, la exclusión de cruces, la creación manual y la agenda diaria, pero no fijaban la reconciliación de clientes manuales sin teléfono, el efecto de la asignación servicio-barbero sobre una cita manual, la conducta frente a un bloqueo vigente, la vista inicial en una barbería con varios barberos ni el día o días en que aparece un turno que cruza medianoche. El propietario resolvió las tres primeras el 27 de agosto de 2026 como `DEC-071`–`DEC-073`, desbloqueando `HU-061`. `DP-CIT-04` y `DP-CIT-05` quedaron resueltas el 28 de agosto de 2026 como `DEC-074`–`DEC-075`, desbloqueando `HU-062`.
 
 Las tres dudas anteriores de B1 (`DP-SER-01`–`DP-SER-03`) se detectaron el 24 de agosto de 2026 al preparar `HU-022`, `HU-023` y `HU-024` y sus prompts persistentes (issue documental [#73](https://github.com/bcaceres19/barberia/issues/73)); `F-SERV-01`, `F-SERV-02`, `RN-SER-01`–`RN-SER-04` y el modelo físico de referencia no fijaban por sí solos todas las decisiones observables necesarias para contrato, interfaz y pruebas. El propietario las resolvió el mismo 24 de agosto de 2026 como `DEC-067`–`DEC-069`, y se crearon los issues reales de implementación: [#75](https://github.com/bcaceres19/barberia/issues/75) (`HU-022`), [#76](https://github.com/bcaceres19/barberia/issues/76) (`HU-023`) y [#77](https://github.com/bcaceres19/barberia/issues/77) (`HU-024`).
 
@@ -41,10 +41,7 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 
 ## 2. Dudas abiertas
 
-| Código | Pregunta que debe decidir el propietario | Por qué no se puede inferir | Bloquea |
-| --- | --- | --- | --- |
-| `DP-CIT-04` | En una barbería con varios barberos y sin vínculo automático `staff_user`→`barber`, ¿la agenda abre con selector obligatorio de un barbero, con una vista consolidada o con otra selección inicial? | `DEC-019` confirma varios barberos y `DEC-047` prohíbe inventar el vínculo automático; el estándar visual dice mostrar el barbero cuando aporte contexto, pero no define la autoridad ni el valor inicial de la vista. | `HU-062` |
-| `DP-CIT-05` | Si un turno cruza medianoche, ¿aparece solo en el día civil de inicio o en cada agenda diaria cuyo intervalo intersecta? | `DEC-020` permite el cruce y `F-CITA-01` exige agenda diaria, pero ninguna fuente define la regla de pertenencia visual/consulta. Elegir una opción cambia filtros, índices, duplicación visible y la operación durante la madrugada. | `HU-062` |
+Ninguna. La última tanda (`DP-CIT-04`–`DP-CIT-05`) se resolvió el 28 de agosto de 2026 como `DEC-074`–`DEC-075` (ver sección 3).
 
 ## 3. Resoluciones
 
@@ -119,6 +116,8 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 | `DP-CIT-01` | En una cita manual, ¿cómo se identifica o reutiliza `customer` cuando falta el teléfono? | Con correo presente, se reconcilia por correo dentro de la barbería; sin teléfono ni correo, siempre fila nueva, nunca por nombre. | `DEC-071` |
 | `DP-CIT-02` | ¿Una cita manual solo puede usar servicios activos asignados al barbero elegido, o basta que el servicio esté activo en la barbería? | Solo servicios activos ya asignados al barbero elegido (`barber_service` vigente). | `DEC-072` |
 | `DP-CIT-03` | Si el intervalo coincide con un bloqueo vigente, ¿la creación manual se rechaza, se permite con advertencia o exige retirar/exceptuar el bloqueo? | Se rechaza (bloqueo duro), mismo tratamiento que un cruce de citas; el barbero retira o exceptúa el bloqueo desde `HU-041`/`HU-042` antes de crear la cita. | `DEC-073` |
+| `DP-CIT-04` | En una barbería con varios barberos y sin vínculo automático `staff_user`→`barber`, ¿la agenda abre con selector obligatorio de un barbero, con una vista consolidada o con otra selección inicial? | Selector obligatorio de un barbero; sin vista consolidada. Con un solo barbero, preselección sin paso adicional. | `DEC-074` |
+| `DP-CIT-05` | Si un turno cruza medianoche, ¿aparece solo en el día civil de inicio o en cada agenda diaria cuyo intervalo intersecta? | En cada agenda diaria cuyo rango civil interseca el intervalo del turno (día de inicio y día siguiente cuando corresponda). | `DEC-075` |
 
 Al resolverse cada duda se aplica el flujo de la sección 3: `DEC-*`, propagación, conservación de la fila y `CT-*` si revela un conflicto.
 
