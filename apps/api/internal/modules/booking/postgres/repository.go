@@ -542,6 +542,97 @@ func errServiceNotFound() error {
 	return apperr.NotFound("no existe un servicio con ese identificador")
 }
 
+// maxAppointmentDurationLookback acota, además de starts_at < rangeEnd, el
+// extremo inferior del rango explorado por ListDailyAgenda a
+// rangeStart - 24h: MaxDurationMinutesSnapshot (booking.domain.go) nunca
+// deja una cita durar más de un día, así que ninguna cita que interseque
+// [rangeStart, rangeEnd) puede empezar antes de ese límite. Sin esta cota,
+// "starts_at < rangeEnd" por sí solo obligaría a recorrer TODO el historial
+// de citas anteriores del barbero antes de aplicar el filtro ends_at >
+// rangeStart; con ella, PostgreSQL usa idx_appointment_shop_barber_starts_at
+// (barbershop_id, barber_id, starts_at) como un rango acotado en ambos
+// extremos (verificado con EXPLAIN (ANALYZE, BUFFERS), ver postgres/README
+// o el reporte de HU-062).
+const maxAppointmentDurationLookback = 24 * time.Hour
+
+// ListDailyAgenda implementa booking.Repository.ListDailyAgenda (HU-062):
+// lee, sin transacción explícita (una sola SELECT de solo lectura no
+// necesita InTenantTx), las citas de barberID cuyo intervalo interseca
+// [rangeStart, rangeEnd) (DEC-075), tenant-aware por barbershopID además de
+// RLS.
+func (r *Repository) ListDailyAgenda(
+	ctx context.Context,
+	barbershopID, barberID string,
+	rangeStart, rangeEnd time.Time,
+) ([]booking.DailyAgendaEntry, error) {
+	shop, err := database.ValidBarbershopID(barbershopID)
+	if err != nil {
+		return nil, fmt.Errorf("booking/postgres: %w", err)
+	}
+
+	var entries []booking.DailyAgendaEntry
+
+	err = r.db.InTenantTx(ctx, shop, func(ctx context.Context, q database.Queries) error {
+		rows, err := q.Query(ctx, `
+			SELECT id, attendee_name, starts_at, ends_at, status, origin,
+			       service_name_snapshot, duration_minutes_snapshot,
+			       price_amount_snapshot, price_currency_snapshot
+			  FROM appointment
+			 WHERE barbershop_id = $1
+			   AND barber_id = $2
+			   AND starts_at >= $3
+			   AND starts_at < $4
+			   AND ends_at > $5
+			 ORDER BY starts_at, id
+			 LIMIT $6`,
+			barbershopID, barberID,
+			rangeStart.Add(-maxAppointmentDurationLookback), rangeEnd, rangeStart,
+			booking.DailyAgendaLimit,
+		)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			entry, err := scanDailyAgendaEntry(rows)
+			if err != nil {
+				return err
+			}
+			entries = append(entries, entry)
+		}
+		return rows.Err()
+	})
+	if err != nil {
+		return nil, err
+	}
+	return entries, nil
+}
+
+func scanDailyAgendaEntry(row pgx.Row) (booking.DailyAgendaEntry, error) {
+	var (
+		e           booking.DailyAgendaEntry
+		priceAmount string
+		status      string
+		origin      string
+	)
+	err := row.Scan(
+		&e.ID, &e.AttendeeName, &e.StartsAt, &e.EndsAt, &status, &origin,
+		&e.ServiceNameSnapshot, &e.DurationMinutesSnapshot, &priceAmount, &e.CurrencySnapshot,
+	)
+	if err != nil {
+		return booking.DailyAgendaEntry{}, err
+	}
+	e.Status = booking.Status(status)
+	e.Origin = booking.Origin(origin)
+	cents, err := parsePriceAmount(priceAmount)
+	if err != nil {
+		return booking.DailyAgendaEntry{}, fmt.Errorf("booking/postgres: price_amount_snapshot ilegible: %w", err)
+	}
+	e.PriceAmountCentsSnapshot = cents
+	return e, nil
+}
+
 func errCustomerPhoneTaken() error {
 	return apperr.Conflict("ya existe un cliente con ese teléfono en esta barbería")
 }

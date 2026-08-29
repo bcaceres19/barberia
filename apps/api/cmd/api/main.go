@@ -377,6 +377,19 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	createManualAppointmentHandler := bookinghttpapi.NewCreateManualAppointmentHandler(manualBookingService)
 	private.Post("/appointments", createManualAppointmentHandler.ServeHTTP)
 
+	// HU-062: agenda diaria de un único barbero (DEC-074/DEC-075). Mismo
+	// criterio de colaboración por puerto pequeño que ManualBookingService:
+	// AgendaService solo conoce staff.NewBarberLookup(staffService) y
+	// shops.NewTimezoneLookup(shopService), nunca los paquetes staff/shops.
+	agendaService := booking.NewAgendaService(
+		bookingRepo,
+		staff.NewBarberLookup(staffService),
+		shops.NewTimezoneLookup(shopService),
+		clock.System{},
+	)
+	listDailyAgendaHandler := bookinghttpapi.NewListDailyAgendaHandler(agendaService)
+	private.Get("/barbers/{barberId}/appointments/daily-agenda", listDailyAgendaHandler.ServeHTTP)
+
 	// HU-008 (DEC-063-066): recuperación de acceso con código de un solo
 	// uso. sender es el adaptador dual de Meta WhatsApp Cloud API + Resend
 	// cuando hay credenciales configuradas; sin ellas (típicamente

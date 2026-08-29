@@ -18,11 +18,21 @@ vi.mock('../api/sessionContextApi', () => ({ fetchSessionContext: fetchSessionCo
 
 // Mismo patrón de composición que app/router/index.ts (HU-020): authRoutes
 // ya no incluye /panel directamente; privateShellRoute lo construye a
-// partir de las hijas privadas combinadas.
+// partir de las hijas privadas combinadas. Desde HU-062, `auth` ya no
+// contribuye ninguna hija propia (`/panel` lo registra `agenda`): esta
+// prueba verifica el guard del cascarón (requireSession), no qué módulo
+// sirve el contenido, así que usa una hija mínima propia en vez de importar
+// el módulo `agenda` (auth nunca importa internos de otro módulo).
 function buildRouter() {
   return createRouter({
     history: createMemoryHistory(),
-    routes: [...authRoutes, privateShellRoute(privateShellChildRoutes)],
+    routes: [
+      ...authRoutes,
+      privateShellRoute([
+        ...privateShellChildRoutes,
+        { path: '', name: 'panel', component: { template: '<p>contenido del panel</p>' } },
+      ]),
+    ],
   })
 }
 
@@ -43,11 +53,11 @@ describe('authRoutes', () => {
     resetForFreshLogin()
   })
 
-  it('registers /acceso and /recuperar-acceso as authRoutes, and exposes /panel as a shell child', () => {
+  it('registers /acceso and /recuperar-acceso as authRoutes, and contributes no private shell child of its own', () => {
     const paths = authRoutes.map((route) => route.path)
     expect(paths).toEqual(expect.arrayContaining(['/acceso', '/recuperar-acceso']))
     expect(paths).not.toContain('/panel')
-    expect(privateShellChildRoutes.map((route) => route.name)).toContain('panel')
+    expect(privateShellChildRoutes).toEqual([])
   })
 
   it('redirects /panel to /acceso when there is no real session (CA-012-02)', async () => {

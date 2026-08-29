@@ -37,6 +37,10 @@ func (f *fakeRepository) CreateManual(ctx context.Context, barbershopID string, 
 	return f.createFn(ctx, barbershopID, input, key, fingerprint)
 }
 
+func (f *fakeRepository) ListDailyAgenda(context.Context, string, string, time.Time, time.Time) ([]booking.DailyAgendaEntry, error) {
+	panic("no usado")
+}
+
 var _ booking.Repository = (*fakeRepository)(nil)
 
 type fakeCatalog struct{}

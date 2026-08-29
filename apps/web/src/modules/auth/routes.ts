@@ -22,17 +22,15 @@ export const authRoutes: RouteRecordRaw[] = [
   },
 ]
 
-// Hijas privadas propias de `auth` dentro del único cascarón (hoy solo
-// `/panel`, HU-012). `app/router/index.ts` las combina con las hijas
-// privadas de cualquier otro módulo (HU-020 en adelante) antes de
-// pasarlas a `privateShellRoute`.
-export const privateShellChildRoutes: RouteRecordRaw[] = [
-  {
-    path: '',
-    name: 'panel',
-    component: () => import('./pages/PanelPage.vue'),
-  },
-]
+// Hijas privadas propias de `auth`: ninguna desde HU-062. `/panel` (path
+// vacío, name 'panel') lo registra ahora `agenda` (mismo criterio de "cada
+// módulo contribuye sus propias hijas" que ya usan `catalog`/`schedules`),
+// porque abrir el panel privado ahora muestra la agenda diaria real en vez
+// del marcador de posición de HU-012 (`auth/pages/PanelPage.vue`, retirado).
+// Se conserva el arreglo vacío para que `app/router/index.ts` siga
+// componiendo con el mismo patrón `...privateShellChildRoutes` sin un caso
+// especial si `auth` vuelve a necesitar una hija propia más adelante.
+export const privateShellChildRoutes: RouteRecordRaw[] = []
 
 // Fábrica del único cascarón privado (HU-012, DEC-056; composición
 // multi-módulo desde HU-020): un único guard generalizado, montado una

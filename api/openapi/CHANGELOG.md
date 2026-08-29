@@ -4,6 +4,19 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.14.0] - 2026-08-29
+
+### Agregado
+
+- `GET /private/barbers/{barberId}/appointments/daily-agenda`
+  (`operationId: listDailyAgenda`, `CA-062-01` a `CA-062-07`): agenda
+  diaria de lectura de un único barbero (`HU-062`), calculada en la zona
+  IANA de la barbería. La ruta exige `barberId` explícito, sin vista
+  consolidada de varios barberos (`DEC-074`); un turno que cruza
+  medianoche aparece en cada agenda diaria cuyo rango interseca su
+  intervalo (`DEC-075`). Respuesta mínima sin teléfono, correo, nota ni
+  `customerId` (`CA-062-05`). `200`, `400`, `401`, `404`, `500`.
+
 ## [0.13.0] - 2026-08-27
 
 ### Agregado

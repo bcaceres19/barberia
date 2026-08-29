@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -21,6 +22,11 @@ import (
 // appointmentBasePath es la base usada para construir el header Location
 // de una cita creada, relativa a /api/v1.
 const appointmentBasePath = "/private/appointments/"
+
+// agendaBarberIDParam es el nombre del parámetro de ruta que
+// cmd/api.buildRouter registra para
+// /private/barbers/{barberId}/appointments/daily-agenda (HU-062).
+const agendaBarberIDParam = "barberId"
 
 func principalOrInternalError(w http.ResponseWriter, r *http.Request, requestID string) (auth.Principal, bool) {
 	principal, ok := auth.PrincipalFromContext(r.Context())
@@ -122,4 +128,70 @@ func (h *CreateManualAppointmentHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		// (DEC-043): Translate ya sabe convertirlo en 409.
 		httpserver.WriteProblem(w, httpserver.Translate(result.Decision.AsError(), requestID))
 	}
+}
+
+// ListDailyAgendaHandler expone
+// GET /private/barbers/{barberId}/appointments/daily-agenda (HU-062,
+// CA-062-01 a CA-062-07): lectura de la agenda diaria de un único barbero,
+// sin idempotencia (operación de solo lectura).
+type ListDailyAgendaHandler struct {
+	service *booking.AgendaService
+}
+
+// NewListDailyAgendaHandler construye el handler de lectura.
+func NewListDailyAgendaHandler(service *booking.AgendaService) *ListDailyAgendaHandler {
+	return &ListDailyAgendaHandler{service: service}
+}
+
+// ServeHTTP implementa http.Handler.
+func (h *ListDailyAgendaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+	principal, ok := principalOrInternalError(w, r, requestID)
+	if !ok {
+		return
+	}
+
+	barberID := httpserver.URLParam(r, agendaBarberIDParam)
+	date := r.URL.Query().Get("date")
+
+	entries, err := h.service.ListDailyAgenda(r.Context(), principal.BarbershopID, barberID, date)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(newDailyAgendaResponse(entries))
+}
+
+func newDailyAgendaResponse(entries []booking.DailyAgendaEntry) DailyAgendaResponse {
+	items := make([]DailyAgendaEntryResponse, 0, len(entries))
+	for _, e := range entries {
+		items = append(items, DailyAgendaEntryResponse{
+			ID:              e.ID,
+			AttendeeName:    e.AttendeeName,
+			StartsAt:        e.StartsAt,
+			EndsAt:          e.EndsAt,
+			Status:          string(e.Status),
+			Origin:          string(e.Origin),
+			ServiceName:     e.ServiceNameSnapshot,
+			DurationMinutes: e.DurationMinutesSnapshot,
+			PriceAmount:     formatPriceAmount(e.PriceAmountCentsSnapshot),
+			Currency:        e.CurrencySnapshot,
+		})
+	}
+	return DailyAgendaResponse{Items: items}
+}
+
+// formatPriceAmount formatea centavos como el string decimal de dos
+// decimales que el contrato expone (mismo criterio y mismo resultado que
+// bookingpostgres.formatPriceAmount/catalog.FormatPriceCOP; se repite aquí,
+// sin importar el paquete postgres, porque httpapi no depende de detalles
+// de persistencia, mismo criterio de duplicación mínima que
+// booking.LooksLikeBarberID frente a staff/schedule).
+func formatPriceAmount(cents int64) string {
+	whole := cents / 100
+	frac := cents % 100
+	return fmt.Sprintf("%d.%02d", whole, frac)
 }

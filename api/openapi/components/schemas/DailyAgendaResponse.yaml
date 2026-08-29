@@ -1,0 +1,20 @@
+# Lista cronológica cerrada de GET
+# /private/barbers/{barberId}/appointments/daily-agenda (HU-062): sin
+# cursor ni siguiente página, a diferencia de WorkingHourListResponse. Un
+# solo día de un solo barbero (DEC-074) está acotado por diseño, así que
+# esta colección nunca necesita paginación real (CA-062-07).
+type: object
+description: >
+  Turnos del barbero de la ruta cuyo intervalo interseca el día pedido,
+  ordenados de forma estable por `startsAt` y luego por `id` (CA-062-03).
+properties:
+  items:
+    type: array
+    description: >
+      Turnos de la agenda, en el orden estable del servidor. Un turno que
+      cruza medianoche puede aparecer en la respuesta de más de un día
+      distinto (DEC-075), nunca duplicado dentro de la misma respuesta.
+    items:
+      $ref: './DailyAgendaEntry.yaml'
+required:
+  - items

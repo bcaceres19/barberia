@@ -15,7 +15,9 @@ import type {
   FetchAssignedServicesOutcome,
   FetchBarberSummariesOutcome,
   FetchBarbershopTimezoneOutcome,
+  FetchDailyAgendaOutcome,
 } from '../model/appointmentOutcome'
+import type { DailyAgendaEntry } from '../model/dailyAgenda'
 
 const PICKER_LIMIT = 50
 
@@ -97,6 +99,60 @@ export async function fetchBarbershopTimezone(): Promise<FetchBarbershopTimezone
     return { kind: 'unavailable' }
   } catch {
     return { kind: 'unavailable' }
+  }
+}
+
+// fetchDailyAgenda (HU-062): sin `date`, el servidor decide "hoy" en la
+// zona de la barbería (CA-062-01); esta función nunca calcula ni envía una
+// fecha por defecto propia.
+export async function fetchDailyAgenda(
+  barberId: string,
+  date?: string,
+): Promise<FetchDailyAgendaOutcome> {
+  try {
+    const { data, response } = await httpClient.GET(
+      '/private/barbers/{barberId}/appointments/daily-agenda',
+      {
+        params: { path: { barberId }, query: date ? { date } : {} },
+      },
+    )
+    if (response.ok && data) {
+      return { kind: 'success', items: data.items.map(toDailyAgendaEntry) }
+    }
+    switch (response.status) {
+      case 404:
+        return { kind: 'not-found' }
+      default:
+        return { kind: 'unexpected-error' }
+    }
+  } catch {
+    return { kind: 'network-error' }
+  }
+}
+
+function toDailyAgendaEntry(data: {
+  id: string
+  attendeeName: string
+  startsAt: string
+  endsAt: string
+  status: string
+  origin: string
+  serviceName: string
+  durationMinutes: number
+  priceAmount: string
+  currency: string
+}): DailyAgendaEntry {
+  return {
+    id: data.id,
+    attendeeName: data.attendeeName,
+    startsAt: data.startsAt,
+    endsAt: data.endsAt,
+    status: data.status as DailyAgendaEntry['status'],
+    origin: data.origin as DailyAgendaEntry['origin'],
+    serviceName: data.serviceName,
+    durationMinutes: data.durationMinutes,
+    priceAmount: data.priceAmount,
+    currency: data.currency,
   }
 }
 

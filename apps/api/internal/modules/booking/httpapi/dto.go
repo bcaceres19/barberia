@@ -45,3 +45,28 @@ type AppointmentResponse struct {
 	CreatedAt       time.Time `json:"createdAt"`
 	UpdatedAt       time.Time `json:"updatedAt"`
 }
+
+// DailyAgendaResponse es el cuerpo de
+// GET /private/barbers/{barberId}/appointments/daily-agenda (HU-062):
+// lista cronológica cerrada, sin cursor ni siguiente página (CA-062-07,
+// un solo día de un solo barbero está acotado por diseño).
+type DailyAgendaResponse struct {
+	Items []DailyAgendaEntryResponse `json:"items"`
+}
+
+// DailyAgendaEntryResponse es la proyección mínima de un turno que HU-062
+// expone (CA-062-05): nunca teléfono, correo, nota ni customerId. barberId
+// no aparece: la ruta ya lo fija (DEC-074) y repetirlo sería un campo
+// interno innecesario.
+type DailyAgendaEntryResponse struct {
+	ID              string    `json:"id"`
+	AttendeeName    string    `json:"attendeeName"`
+	StartsAt        time.Time `json:"startsAt"`
+	EndsAt          time.Time `json:"endsAt"`
+	Status          string    `json:"status"`
+	Origin          string    `json:"origin"`
+	ServiceName     string    `json:"serviceName"`
+	DurationMinutes int       `json:"durationMinutes"`
+	PriceAmount     string    `json:"priceAmount"`
+	Currency        string    `json:"currency"`
+}

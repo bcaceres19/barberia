@@ -222,3 +222,9 @@ func (s *stubRepository) CreateManual(
 	s.called = true
 	return booking.CreateManualResult{}, nil
 }
+
+func (s *stubRepository) ListDailyAgenda(
+	_ context.Context, _, _ string, _, _ time.Time,
+) ([]booking.DailyAgendaEntry, error) {
+	panic("no usado")
+}

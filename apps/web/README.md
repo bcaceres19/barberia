@@ -777,8 +777,8 @@ type="date">`/`type="time">` nativos ya la producen en el reloj del
 dispositivo, que es el que el barbero ve): el servidor la interpreta
 contra la zona IANA de la barbería (RN-DIS-07), sin ninguna conversión de
 zona en el cliente. El éxito muestra un resumen honesto (servicio,
-duración, precio) sin enlazar a ninguna vista de agenda real: HU-062
-(agenda diaria) todavía no existe.
+duración, precio) sin navegar automáticamente a la agenda: el barbero
+vuelve a "Panel" (HU-062) por su cuenta.
 
 ### Pruebas
 
@@ -798,6 +798,63 @@ contra Chromium real y de evidencia responsiva en los cuatro
 breakpoints (no forma parte de los checks de CI, que solo corren
 `test:unit`), mismo estado que `e2e/horarios.spec.ts` (HU-040) y
 `e2e/excepciones-festivos.spec.ts` (HU-041).
+
+## Agenda diaria de hoy (HU-062)
+
+Reemplaza el marcador de posición de HU-012 en la raíz del panel privado:
+`DailyAgendaPage.vue` (`/panel`, `name: 'panel'`) ahora vive en el módulo
+`agenda` (`src/modules/agenda/routes.ts`), no en `auth`
+(`auth/pages/PanelPage.vue` retirado, `auth/routes.ts` ya no registra
+ninguna hija propia — `privateShellChildRoutes` queda `[]`). Selector
+obligatorio de un barbero (`DEC-074`): la pantalla nunca ofrece una vista
+consolidada de varios barberos ni infiere uno del `staff_user` autenticado.
+Al elegir un barbero, `fetchDailyAgenda` pide
+`GET /private/barbers/{barberId}/appointments/daily-agenda` sin `date`
+(el servidor decide "hoy" en la zona de la barbería, `CA-062-01`); el
+encabezado muestra la fecha civil completa y la zona con
+`formatFullDateInTimezone`/`formatTimeInTimezone`
+(`src/shared/time/formatInstant.ts`, mismo criterio de zona explícita
+obligatoria que `formatInstantInTimezone`, HU-020). Cada fila usa
+`BaseBadge` con las clases de estado ya definidas en el sistema visual
+(`base-badge--status-*`, sin usar hasta esta historia) y la etiqueta en
+español de `APPOINTMENT_STATUS_LABELS`
+(`src/modules/agenda/model/dailyAgenda.ts`): nunca solo color. Una cita
+terminal se atenúa (`opacity`) pero nunca desaparece de la lista
+(`RN-CIT-04`). "Nuevo turno" navega al formulario real de HU-061
+(`router.push`, sin `RouterLink` porque `BaseButton` no admite un
+destino). Cambiar de barbero descarta una respuesta de agenda que llegue
+tarde para una selección ya reemplazada (mismo patrón que
+`SchedulesPage.vue`/`selectBarber`, HU-040).
+
+Fuera de alcance a propósito: anterior/siguiente/selector de fecha
+(`F-CITA-02`), detalle de cita y cualquier acción sobre una cita existente.
+
+### Pruebas
+
+Componente (`src/modules/agenda/pages/__tests__/DailyAgendaPage.test.ts`):
+carga (vacío, error recuperable), selector obligatorio de barbero
+(`DEC-074`), agenda vacía con mensaje explícito, aislamiento entre
+selecciones rápidas de barbero (descarta una respuesta obsoleta), error
+recuperable con reintento, barbero ya no disponible (404), navegación a
+"Nuevo turno" y `vitest-axe` sin violaciones. `src/shared/time/formatInstant.ts`
+gana `formatTimeInTimezone`/`formatFullDateInTimezone`, probadas en
+`src/shared/time/__tests__/formatInstant.test.ts` con el mismo control
+negativo de zona explícita que `formatInstantInTimezone` (HU-020).
+`src/modules/auth/__tests__/routes.test.ts` se actualizó: la prueba del
+guard del cascarón ya no depende de qué módulo sirve `/panel`, usa una
+hija mínima propia en vez de `auth/pages/PanelPage.vue` (retirado).
+
+E2E: `e2e/agenda-diaria.spec.ts` (apertura mostrando fecha completa y
+zona con selector obligatorio, turno recién creado visible con estado
+Confirmado, cambio de barbero muestra la agenda correcta, navegación a
+"Nuevo turno", y un dispositivo en otra zona horaria — `timezoneId:
+'America/Los_Angeles'` — mostrando la zona de la barbería, nunca la del
+dispositivo). `e2e/panel.spec.ts`/`e2e/panel-evidencia-responsiva.spec.ts`
+(HU-012) se actualizaron: el encabezado esperado pasó de "Panel del
+barbero" a "Agenda de hoy". Pendiente de ejecución contra Chromium real
+y de evidencia responsiva en los cuatro breakpoints (no forma parte de
+los checks de CI, que solo corren `test:unit`), mismo estado que
+`e2e/nuevo-turno.spec.ts` (HU-061).
 
 ## Sistema visual base (HU-009)
 

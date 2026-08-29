@@ -1,0 +1,47 @@
+# Proyección mínima de un turno en la agenda diaria (HU-062, CA-062-05):
+# nunca teléfono, correo, nota ni customerId. `barberId` no aparece: la
+# ruta ya lo fija (DEC-074) y repetirlo sería un campo interno innecesario.
+type: object
+properties:
+  id:
+    type: string
+    format: uuid
+  attendeeName:
+    type: string
+  startsAt:
+    type: string
+    format: date-time
+  endsAt:
+    type: string
+    format: date-time
+  status:
+    type: string
+    enum: [confirmed, completed, cancelled_by_customer, cancelled_by_barber, no_show]
+  origin:
+    type: string
+    enum: [public, manual]
+  serviceName:
+    type: string
+    description: Nombre del servicio congelado al momento de crear la cita (DEC-004).
+  durationMinutes:
+    type: integer
+  priceAmount:
+    type: string
+    description: Importe exacto en formato decimal (nunca coma flotante).
+    examples:
+      - "20000.00"
+  currency:
+    type: string
+    examples:
+      - COP
+required:
+  - id
+  - attendeeName
+  - startsAt
+  - endsAt
+  - status
+  - origin
+  - serviceName
+  - durationMinutes
+  - priceAmount
+  - currency

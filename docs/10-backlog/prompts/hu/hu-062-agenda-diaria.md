@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-062-v1"
-version: "1.1"
+version: "1.2"
 kind: "hu"
-status: "ready"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -16,9 +16,9 @@ related_hu:
 issue: 111
 issue_url: "https://github.com/bcaceres19/barberia/issues/111"
 suggested_issue_title: "feat(agenda): implementar HU-062 agenda diaria de hoy"
-branch: null
-pr: null
-pr_url: null
+branch: "feat/111-hu062-agenda-diaria"
+pr: 113
+pr_url: "https://github.com/bcaceres19/barberia/pull/113"
 depends_on:
   - "HU-060 y HU-061 integradas en main (cumplido)"
   - "DP-CIT-04 resuelta como DEC-074 y propagada (cumplido)"
@@ -92,7 +92,7 @@ source_docs:
   - "apps/web/src/shared/time"
   - "apps/web/src/shared/ui"
 created_at: "2026-08-26"
-updated_at: "2026-08-28"
+updated_at: "2026-08-29"
 supersedes: null
 superseded_by: null
 ---
