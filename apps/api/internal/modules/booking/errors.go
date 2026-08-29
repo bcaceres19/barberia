@@ -81,6 +81,18 @@ func errActorInvalid() error {
 	return apperr.Validation("el actor del historial tiene una forma inválida")
 }
 
+// errBarberNotFound cubre HU-062 (CA-062-02): barberID con forma inválida,
+// inexistente o de otra barbería, sin distinguir la causa (RN-TEN-01).
+func errBarberNotFound() error {
+	return apperr.NotFound("no existe un barbero con ese identificador")
+}
+
+// errDateInvalid cubre HU-062: el parámetro date no es una fecha civil
+// AAAA-MM-DD válida.
+func errDateInvalid() error {
+	return apperr.Invalid("date debe ser una fecha civil con el formato AAAA-MM-DD")
+}
+
 // Los errores de conflicto de agenda y de cliente inexistente/ajeno viven
 // en booking/postgres (errScheduleConflict, errCustomerNotFound): solo se
 // detectan al traducir un exclusion_violation/foreign_key_violation real de

@@ -4,7 +4,11 @@
 // (Intl.DateTimeFormat().resolvedOptions().timeZone); solo usa la que
 // recibe explícitamente.
 import { describe, expect, it } from 'vitest'
-import { formatInstantInTimezone } from '../formatInstant'
+import {
+  formatFullDateInTimezone,
+  formatInstantInTimezone,
+  formatTimeInTimezone,
+} from '../formatInstant'
 
 const knownInstant = '2026-09-12T17:00:00Z'
 
@@ -42,5 +46,35 @@ describe('formatInstantInTimezone', () => {
     if (environmentDefault !== configuredTimezone) {
       expect(got).not.toBe(usingEnvironmentInstead)
     }
+  })
+})
+
+describe('formatTimeInTimezone', () => {
+  it('formats only the time, in the explicit timezone (HU-062)', () => {
+    const got = formatTimeInTimezone(knownInstant, 'America/Bogota')
+    expect(got).toContain('12:00')
+    // Nunca incluye el año, ni fragmentos numéricos del mes/día que
+    // pudieran confundirse con una fecha (dateStyle nunca se aplica aquí).
+    expect(got).not.toContain('2026')
+  })
+
+  it('changes with the explicit timezone, proving it governs the result, not the environment', () => {
+    const bogota = formatTimeInTimezone(knownInstant, 'America/Bogota')
+    const madrid = formatTimeInTimezone(knownInstant, 'Europe/Madrid')
+    expect(bogota).not.toBe(madrid)
+  })
+})
+
+describe('formatFullDateInTimezone', () => {
+  it('formats the full civil date in the explicit timezone, never the device default', () => {
+    // 2026-08-29T02:30:00Z es 28 de agosto en America/Bogota (UTC-5) y 29 de
+    // agosto en Europe/Madrid (UTC+2 en verano): el mismo instante produce
+    // fechas civiles DISTINTAS según la zona explícita, nunca la del
+    // dispositivo que ejecuta la prueba.
+    const at = new Date('2026-08-29T02:30:00Z')
+    const bogota = formatFullDateInTimezone('America/Bogota', at)
+    const madrid = formatFullDateInTimezone('Europe/Madrid', at)
+    expect(bogota.toLowerCase()).toContain('28 de agosto')
+    expect(madrid.toLowerCase()).toContain('29 de agosto')
   })
 })

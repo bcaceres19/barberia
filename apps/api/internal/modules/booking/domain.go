@@ -6,6 +6,22 @@ import (
 	"time"
 )
 
+// barberIDPattern refleja la forma de un UUID, mismo criterio que
+// staff.LooksLikeBarberID/schedule.LooksLikeBarberID (CA-002-06: cada
+// módulo repite su propia validación de forma sin importar el paquete
+// dueño). Un identificador que no cumple esta forma no puede corresponder
+// a ninguna fila real: se trata igual que "no existe" (mismo
+// apperr.NotFound) en vez de dejar que la consulta SQL falle con un error
+// de tipo.
+var barberIDPattern = regexp.MustCompile(
+	`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`,
+)
+
+// LooksLikeBarberID informa si id tiene la forma de un UUID válido.
+func LooksLikeBarberID(id string) bool {
+	return barberIDPattern.MatchString(id)
+}
+
 // Status es uno de los cinco estados cerrados de estados-citas.md §2.
 // Texto, nunca números (estados-citas.md §11), igual que la columna
 // `status` de appointment (database/migrations/20260827110000_create_appointment_core.sql).

@@ -57,7 +57,7 @@ test.describe('Cascarón del panel privado (HU-012)', () => {
     await freshPage.goto('/panel')
 
     await expect(freshPage).toHaveURL(/\/panel$/)
-    await expect(freshPage.getByRole('heading', { name: 'Panel del barbero' })).toBeVisible()
+    await expect(freshPage.getByRole('heading', { name: 'Agenda de hoy' })).toBeVisible()
     await freshContext.close()
   })
 
@@ -65,7 +65,7 @@ test.describe('Cascarón del panel privado (HU-012)', () => {
     await login(page)
     await page.reload()
     await expect(page).toHaveURL(/\/panel$/)
-    await expect(page.getByRole('heading', { name: 'Panel del barbero' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Agenda de hoy' })).toBeVisible()
   })
 
   test('la cabecera muestra siempre la barbería activa real (CA-012-04)', async ({ page }) => {
@@ -123,7 +123,7 @@ test.describe('Cascarón del panel privado (HU-012)', () => {
     await expect(page.getByText('No pudimos conectar')).toBeVisible()
 
     await page.getByRole('button', { name: 'Reintentar' }).click()
-    await expect(page.getByRole('heading', { name: 'Panel del barbero' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Agenda de hoy' })).toBeVisible()
   })
 
   test('cerrar sesión invalida el servidor y vuelve a acceso sin bucle (CA-012-07)', async ({

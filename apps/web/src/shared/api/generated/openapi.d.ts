@@ -756,6 +756,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/private/barbers/{barberId}/appointments/daily-agenda": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar la agenda diaria de un barbero
+         * @description Lista cronológica, cerrada y sin cursor (HU-062, CA-062-01 a CA-062-07) de los turnos del barbero de la ruta cuyo intervalo interseca el rango civil de `date` en la zona IANA de la barbería: un turno que cruza medianoche aparece en cada agenda diaria cuyo rango interseca su intervalo (DEC-075), no solo en el día en que empieza. Sin `date`, la respuesta usa "hoy" en esa misma zona (CA-062-01). La ruta exige un `barberId` explícito: no existe una vista consolidada de varios barberos (DEC-074, DEC-047). La respuesta nunca expone teléfono, correo, nota ni `customerId` (CA-062-05); el snapshot de servicio ya congelado en la cita es la única fuente visible (DEC-004), sin unir contra el catálogo vigente.
+         */
+        get: operations["listDailyAgenda"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1789,6 +1809,34 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        DailyAgendaEntry: {
+            /** Format: uuid */
+            id: string;
+            attendeeName: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** @enum {string} */
+            status: "confirmed" | "completed" | "cancelled_by_customer" | "cancelled_by_barber" | "no_show";
+            /** @enum {string} */
+            origin: "public" | "manual";
+            /** @description Nombre del servicio congelado al momento de crear la cita (DEC-004). */
+            serviceName: string;
+            durationMinutes: number;
+            /**
+             * @description Importe exacto en formato decimal (nunca coma flotante).
+             * @example 20000.00
+             */
+            priceAmount: string;
+            /** @example COP */
+            currency: string;
+        };
+        /** @description Turnos del barbero de la ruta cuyo intervalo interseca el día pedido, ordenados de forma estable por `startsAt` y luego por `id` (CA-062-03). */
+        DailyAgendaResponse: {
+            /** @description Turnos de la agenda, en el orden estable del servidor. Un turno que cruza medianoche puede aparecer en la respuesta de más de un día distinto (DEC-075), nunca duplicado dentro de la misma respuesta. */
+            items: components["schemas"]["DailyAgendaEntry"][];
         };
     };
     responses: {
@@ -3735,6 +3783,46 @@ export interface operations {
                 };
             };
             422: components["responses"]["AppointmentValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    listDailyAgenda: {
+        parameters: {
+            query?: {
+                /** @description Fecha civil `AAAA-MM-DD` en la zona de la barbería. Sin este parámetro, la respuesta usa "hoy" en esa zona (CA-062-01). */
+                date?: string;
+            };
+            header?: never;
+            path: {
+                /** @description Identificador del único barbero cuya agenda se consulta (DEC-074). */
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Turnos del barbero cuyo intervalo interseca el día pedido, ordenados por `startsAt` y luego por `id` (orden estable). */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyAgendaResponse"];
+                };
+            };
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            /** @description `barberId` con forma inválida, inexistente o de otra barbería (RN-TEN-01), sin distinguir la causa. */
+            404: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             500: components["responses"]["InternalErrorProblem"];
         };
     };

@@ -3,9 +3,10 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 /**
- * Evidencia visual responsive/accesible de HU-012 (docs/03-desarrollo/
- * estandar-diseno-visual.md §16 y estrategia-pruebas.md §5.4): cascarón
- * autenticado y foco de navegación en 320/360/768/1280 px, más zoom 200%
+ * Evidencia visual responsive/accesible del cascarón autenticado (HU-012) y,
+ * desde HU-062, de la agenda diaria real que ahora abre en `/panel`
+ * (docs/03-desarrollo/estandar-diseno-visual.md §16 y estrategia-pruebas.md
+ * §5.4): foco de navegación en 320/360/768/1280 px, más zoom 200%
  * aproximado (mismo criterio que `e2e/acceso-evidencia-responsiva.spec.ts`).
  * Las capturas se guardan en `e2e/evidence/panel/` (no ignorado por git).
  */
@@ -31,7 +32,7 @@ for (const viewport of viewports) {
       await page.getByLabel('Correo').fill(EMAIL)
       await page.getByLabel('Contraseña').fill(PASSWORD)
       await page.getByRole('button', { name: 'Iniciar sesión' }).click()
-      await expect(page.getByRole('heading', { name: 'Panel del barbero' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Agenda de hoy' })).toBeVisible()
 
       await page.screenshot({
         path: path.join(evidenceDir, viewport.name, 'normal.png'),
@@ -51,7 +52,7 @@ for (const viewport of viewports) {
       await page.getByLabel('Correo').fill(EMAIL)
       await page.getByLabel('Contraseña').fill(PASSWORD)
       await page.getByRole('button', { name: 'Iniciar sesión' }).click()
-      await expect(page.getByRole('heading', { name: 'Panel del barbero' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Agenda de hoy' })).toBeVisible()
 
       await page.getByRole('link', { name: 'Panel' }).focus()
       await expect(page.getByRole('link', { name: 'Panel' })).toBeFocused()

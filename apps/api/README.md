@@ -1573,6 +1573,58 @@ tampoco tiene E2E propio todavía): ninguno de los cuatro checks de CI
 - HTTP: `internal/modules/booking/httpapi/handler_test.go` (201/Location, 400 sin `Idempotency-Key`, 400 campo desconocido, 404, 409, repetición idempotente).
 - Componentes Vue: `apps/web/src/modules/agenda/pages/__tests__/NewAppointmentPage.test.ts` (carga, vacío, error, DEC-072 en el selector de servicio, validación, éxito con resumen honesto, conflicto, error de red con datos conservados, doble envío bloqueado, `vitest-axe`).
 
+## Agenda diaria de un barbero (HU-062)
+
+`GET /private/barbers/{barberId}/appointments/daily-agenda` (`internal/modules/booking/httpapi`):
+`booking.AgendaService.ListDailyAgenda` exige un `barberId` explícito
+(`booking.BarberPort`, adaptador `staff.NewBarberLookup`, `DEC-074`), sin
+vista consolidada de varios barberos; resuelve la zona IANA de la barbería
+(`booking.TimezonePort`, mismo adaptador que HU-061), calcula el rango
+civil `[rangeStart, rangeEnd)` del día pedido (o "hoy", vía `clock.Clock`
+inyectado) con `time.Date` en esa zona -nunca sumando 24 horas fijas, para
+que un día de 23/25 horas por cambio de horario de verano quede
+correctamente representado- y delega en `booking.Repository.ListDailyAgenda`.
+La consulta filtra por intersección de rango (`starts_at`/`ends_at` contra
+`rangeStart`/`rangeEnd`), no por igualdad de fecha de `starts_at`: un turno
+que cruza medianoche aparece en cada agenda diaria cuyo rango interseca su
+intervalo (`DEC-075`). Reutiliza el índice
+`idx_appointment_shop_barber_starts_at (barbershop_id, barber_id, starts_at)`
+ya creado por `20260827110000_create_appointment_core.sql` (comentario
+original: "Agenda diaria del barbero (B3 posterior)"), acotado también por
+`starts_at >= rangeStart - 24h` para que PostgreSQL use un rango de índice
+en vez de recorrer todo el historial del barbero; verificado con
+`EXPLAIN (ANALYZE, BUFFERS)` como `Index Scan using
+idx_appointment_shop_barber_starts_at`. La respuesta es la proyección
+mínima `booking.DailyAgendaEntry` (`CA-062-05`): nunca teléfono, correo,
+nota ni `customerId`, y sin repetir `barberId` por fila (la ruta ya lo
+fija). `booking` nunca importa `staff` ni `shops`, mismo criterio que
+`ManualBookingService`.
+
+### Tabla de criterios de aceptación
+
+| Criterio | Estado | Prueba o evidencia |
+| --- | --- | --- |
+| `CA-062-01` a `CA-062-07` | Backend y frontend cumplidos; evidencia visual/accesible y E2E contra stack real pendientes (ver nota) | `internal/modules/booking/agenda_test.go`, `internal/modules/booking/postgres/agenda_repository_test.go`, `internal/modules/booking/httpapi/agenda_handler_test.go`, `apps/web/src/modules/agenda/pages/__tests__/DailyAgendaPage.test.ts`. |
+
+**Nota de alcance:** esta entrega cubre dominio (zona/día civil, DST,
+`DEC-074`/`DEC-075`), Postgres real (intersección de rango, turno nocturno
+visible en ambos días, aislamiento de tenant, plan de consulta) y
+HTTP/frontend con dobles de prueba, incluida accesibilidad automatizada
+(`vitest-axe`) de la pantalla. El recorrido E2E contra un stack real
+(`apps/web/e2e/agenda-diaria.spec.ts`) y la evidencia visual en
+320/360/768/1280px/zoom 200% quedan como seguimiento explícito, mismo
+patrón que `HU-061`/`NewAppointmentPage`: ninguno de los cuatro checks de
+CI (`Atlas + suites SQL`, `Go`, `Frontend`, `OpenAPI`) ejecuta Playwright.
+`F-CITA-02` (anterior/siguiente/selector de fecha) queda deliberadamente
+fuera de esta entrega.
+
+### Pruebas
+
+- Dominio/servicio: `internal/modules/booking/agenda_test.go` (barbero inválido/inexistente sin tocar el repositorio, "hoy" por reloj inyectado en la zona de la barbería -nunca la del entorno-, fecha explícita, día de 23h por DST, fecha inválida, errores de los puertos).
+- PostgreSQL real: `internal/modules/booking/postgres/agenda_repository_test.go` (extremos del intervalo semiabierto, turno nocturno visible en las dos agendas diarias que interseca, aislamiento de tenant, orden estable).
+- HTTP: `internal/modules/booking/httpapi/agenda_handler_test.go` (200 con/sin turnos, forma exacta sin campos personales, 400 fecha inválida, 401 sin principal, 404 barbero ajeno, 500).
+- Componentes Vue: `apps/web/src/modules/agenda/pages/__tests__/DailyAgendaPage.test.ts` (carga, selector obligatorio de barbero, vacío, error con reintento, aislamiento entre selecciones rápidas, not-found, navegación a "Nuevo turno", `vitest-axe`).
+
 ## Pruebas de integración
 
 Las pruebas en `internal/platform/database/*_test.go` requieren PostgreSQL real

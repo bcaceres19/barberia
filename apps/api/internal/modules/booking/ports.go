@@ -47,6 +47,23 @@ type Repository interface {
 		key idempotency.Key,
 		fingerprint idempotency.Fingerprint,
 	) (CreateManualResult, error)
+
+	// ListDailyAgenda lee, dentro de barbershopID y del único barberID
+	// pedido (DEC-074), las citas cuyo intervalo [starts_at, ends_at)
+	// interseca [rangeStart, rangeEnd) (DEC-075: rangeStart/rangeEnd ya
+	// llegan como los dos instantes civiles resueltos por AgendaService en
+	// la zona de la barbería, nunca calculados aquí). Ordenadas por
+	// starts_at y luego por id para un orden estable. barberID ya fue
+	// verificado por AgendaService antes de llamar aquí (mismo criterio que
+	// schedule.Repository.List frente a schedule.Service.List).
+	ListDailyAgenda(ctx context.Context, barbershopID, barberID string, rangeStart, rangeEnd time.Time) ([]DailyAgendaEntry, error)
+}
+
+// BarberPort confirma que barberID existe dentro de barbershopID
+// (RN-TEN-01), mismo puerto mínimo que schedule.BarberPort. cmd/api lo
+// satisface con staff.NewBarberLookup, sin que booking importe staff.
+type BarberPort interface {
+	Exists(ctx context.Context, barbershopID, barberID string) (bool, error)
 }
 
 // CreateManualResult es el desenlace de un intento de alta manual

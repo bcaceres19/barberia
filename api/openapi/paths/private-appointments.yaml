@@ -142,3 +142,117 @@
         $ref: '../components/responses/AppointmentValidationProblem.yaml'
       "500":
         $ref: '../components/responses/InternalErrorProblem.yaml'
+
+/private/barbers/{barberId}/appointments/daily-agenda:
+  get:
+    tags: [Booking]
+    summary: Consultar la agenda diaria de un barbero
+    description: >
+      Lista cronológica, cerrada y sin cursor (HU-062, CA-062-01 a
+      CA-062-07) de los turnos del barbero de la ruta cuyo intervalo
+      interseca el rango civil de `date` en la zona IANA de la barbería:
+      un turno que cruza medianoche aparece en cada agenda diaria cuyo
+      rango interseca su intervalo (DEC-075), no solo en el día en que
+      empieza. Sin `date`, la respuesta usa "hoy" en esa misma zona
+      (CA-062-01). La ruta exige un `barberId` explícito: no existe una
+      vista consolidada de varios barberos (DEC-074, DEC-047). La
+      respuesta nunca expone teléfono, correo, nota ni `customerId`
+      (CA-062-05); el snapshot de servicio ya congelado en la cita es la
+      única fuente visible (DEC-004), sin unir contra el catálogo vigente.
+    operationId: listDailyAgenda
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-CIT-01, RN-RES-02, RN-RES-03, RN-DIS-07]
+    x-decisions:
+      [DEC-007, DEC-016, DEC-019, DEC-020, DEC-024, DEC-047, DEC-074, DEC-075]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del único barbero cuya agenda se consulta (DEC-074).
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+      - name: date
+        in: query
+        required: false
+        description: >
+          Fecha civil `AAAA-MM-DD` en la zona de la barbería. Sin este
+          parámetro, la respuesta usa "hoy" en esa zona (CA-062-01).
+        schema:
+          type: string
+          format: date
+        examples:
+          hoy:
+            value: "2026-08-28"
+    responses:
+      "200":
+        description: >
+          Turnos del barbero cuyo intervalo interseca el día pedido,
+          ordenados por `startsAt` y luego por `id` (orden estable).
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/DailyAgendaResponse.yaml'
+            examples:
+              conTurnos:
+                summary: Dos turnos, uno de ellos nocturno
+                value:
+                  items:
+                    - id: 3f4a5b6c-7d8e-49f0-a1b2-c3d4e5f60718
+                      attendeeName: Carlos Restrepo
+                      startsAt: "2026-08-28T14:30:00Z"
+                      endsAt: "2026-08-28T15:00:00Z"
+                      status: confirmed
+                      origin: manual
+                      serviceName: Corte clásico
+                      durationMinutes: 30
+                      priceAmount: "20000.00"
+                      currency: COP
+                    - id: 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+                      attendeeName: Ana Gómez
+                      startsAt: "2026-08-28T23:30:00Z"
+                      endsAt: "2026-08-29T00:15:00Z"
+                      status: confirmed
+                      origin: public
+                      serviceName: Barba y corte
+                      durationMinutes: 45
+                      priceAmount: "35000.00"
+                      currency: COP
+              sinTurnos:
+                summary: Barbero sin ningún turno ese día
+                value:
+                  items: []
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        description: >
+          `barberId` con forma inválida, inexistente o de otra barbería
+          (RN-TEN-01), sin distinguir la causa.
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              barberoAjeno:
+                value:
+                  type: /api/v1/problems/not-found
+                  title: No encontrado
+                  status: 404
+                  detail: no existe un barbero con ese identificador
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: not-found
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

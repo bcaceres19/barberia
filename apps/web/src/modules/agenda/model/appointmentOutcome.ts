@@ -2,6 +2,7 @@
 // ningún componente ve `Problem`, `status` HTTP crudo ni cabeceras, mismo
 // criterio que schedules/model/scheduleOutcome.ts.
 import type { BarberSummary, ServiceSummary } from './appointment'
+import type { DailyAgendaEntry } from './dailyAgenda'
 
 export type FetchBarberSummariesOutcome =
   | { kind: 'success'; items: BarberSummary[] }
@@ -35,6 +36,16 @@ export type CreatedManualAppointment = {
 // ambos (el cliente decide por `code`, nunca por `detail`, pero aquí no
 // hay un `code` más específico que distinguirlos); detail trae el mensaje
 // seguro que el backend ya redactó para mostrar directamente.
+// FetchDailyAgendaOutcome (HU-062): 'not-found' cubre un barberId
+// inexistente o de otra barbería (RN-TEN-01), verificado ya en el
+// selector, pero posible si el barbero se retira mientras la pantalla
+// sigue abierta.
+export type FetchDailyAgendaOutcome =
+  | { kind: 'success'; items: DailyAgendaEntry[] }
+  | { kind: 'not-found' }
+  | { kind: 'network-error' }
+  | { kind: 'unexpected-error' }
+
 export type CreateManualAppointmentOutcome =
   | { kind: 'success'; appointment: CreatedManualAppointment }
   | { kind: 'not-found' }
