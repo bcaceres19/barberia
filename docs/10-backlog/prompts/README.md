@@ -1,9 +1,9 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.33"
+version: "1.34"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-29"
+ultima_actualizacion: "2026-08-31"
 documentos_relacionados:
   - "../../../AGENTS.md"
   - "../../../CLAUDE.md"
@@ -153,6 +153,9 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-HU-060-v1](hu/hu-060-nucleo-citas.md) | `hu` | `HU-060` | [#104](https://github.com/bcaceres19/barberia/issues/104) | `executed` | B2 integrado; seguimientos `#90`/`#95`/`#98`/`#100` verificados sin impacto en el contrato interno de B3 | Rama `feat/104-hu060-nucleo-citas`; integrada mediante [PR #105](https://github.com/bcaceres19/barberia/pull/105) |
 | [PROMPT-HU-061-v1](hu/hu-061-creacion-manual-citas.md) | `hu` | `HU-061` | [#107](https://github.com/bcaceres19/barberia/issues/107) (abierto: E2E/evidencia responsiva pendientes) | `executed` | `HU-060` integrada (PR #105); `DP-CIT-01`–`DP-CIT-03` resueltas (`DEC-071`–`DEC-073`) | Integrada mediante [PR #109](https://github.com/bcaceres19/barberia/pull/109) |
 | [PROMPT-HU-062-v1](hu/hu-062-agenda-diaria.md) | `hu` | `HU-062` | [#111](https://github.com/bcaceres19/barberia/issues/111) | `executed` | Todas cumplidas | `feat/111-hu062-agenda-diaria`, integrada mediante [PR #113](https://github.com/bcaceres19/barberia/pull/113); E2E/evidencia responsiva pendientes (issue #111 permanece abierto) |
+| [PROMPT-HU-063-v1](hu/hu-063-navegacion-agenda.md) | `hu` | `HU-063` | `pending` | `draft` | `HU-062` integrada; falta issue real propio | Sin rama/PR; no ejecutar mientras `issue: pending` |
+| [PROMPT-HU-064-v1](hu/hu-064-detalle-historial-turno.md) | `hu` | `HU-064` | `pending` | `draft` | `HU-063` debe integrarse; falta issue real propio | Sin rama/PR; no ejecutar mientras existan dependencias |
+| [PROMPT-HU-065-v1](hu/hu-065-reprogramacion-turno.md) | `hu` | `HU-065` | `pending` | `draft` | `HU-064` debe integrarse; `DP-CIT-06` requiere nuevo `DEC-*`; falta issue real propio | Sin rama/PR; no ejecutar mientras existan dependencias |
 | [PROMPT-DOCS-INFORME-ACADEMICO-v1](docs/pending-informe-academico-secciones-1-a-4-2.md) | `docs` | — | [#81](https://github.com/bcaceres19/barberia/issues/81) | `superseded` | Sustituido por v2 tras retroalimentación sobre lenguaje y audiencia | Rama `docs/81-informe-academico`; [PR #82](https://github.com/bcaceres19/barberia/pull/82) |
 | [PROMPT-DOCS-INFORME-ACADEMICO-v2](docs/informe-academico-secciones-1-a-4-2-v2-gerencial.md) | `docs` | — | [#81](https://github.com/bcaceres19/barberia/issues/81) | `superseded` | Sustituido por v3 para incorporar identidad institucional, equipo confirmado y sistema visual sobrio | Rama `docs/81-informe-academico`; [PR #82](https://github.com/bcaceres19/barberia/pull/82); SHA-256 `6cad6bcc…78bbe0` |
 | [PROMPT-DOCS-INFORME-ACADEMICO-v3](docs/informe-academico-secciones-1-a-4-2-v3-identidad-institucional.md) | `docs` | — | [#81](https://github.com/bcaceres19/barberia/issues/81) | `executed` | Identidad institucional, responsabilidades compartidas, primer participante, Arial y color solo para estados | 26 páginas y 45 RU; QA visual completo; SHA-256 `73554078…72859`; rama `docs/81-informe-academico`; [PR #82](https://github.com/bcaceres19/barberia/pull/82) |
