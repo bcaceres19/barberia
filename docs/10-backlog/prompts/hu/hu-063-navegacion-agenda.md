@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-063-v1"
-version: "1.0"
+version: "1.1"
 kind: "hu"
-status: "draft"
+status: "ready"
 target_agents:
   - "claude"
   - "codex"
@@ -12,15 +12,15 @@ primary_hu: "HU-063"
 related_hu:
   - "HU-062"
   - "HU-064"
-issue: "pending"
-issue_url: null
+issue: 116
+issue_url: "https://github.com/bcaceres19/barberia/issues/116"
 suggested_issue_title: "feat(agenda): implementar HU-063 navegación por fecha"
-branch: null
+branch: "feat/116-hu063-navegacion-agenda"
 pr: null
 pr_url: null
 depends_on:
-  - "HU-062 integrada en main mediante PR #113"
-  - "Issue real propio con CA-063-01 a CA-063-08"
+  - "HU-062 integrada en main mediante PR #113 (cumplido)"
+  - "Issue real propio creado y enlazado (cumplido: #116)"
 rules:
   - "RN-CIT-01"
   - "RN-DIS-05"
@@ -87,7 +87,7 @@ superseded_by: null
 
 Implementa únicamente `HU-063`: anterior, selector de fecha y siguiente sobre la agenda diaria real de `HU-062`. Conserva literalmente `DEC-074` (un `barberId` explícito, sin vista consolidada) y `DEC-075` (un turno nocturno aparece en cada día civil cuyo rango interseca).
 
-Este prompt está en `draft` porque `issue: pending`. No cambies código, contrato ni pruebas hasta enlazar un issue real con `CA-063-01`–`CA-063-08`, actualizar estos metadatos y crear la rama corta correspondiente. No adelantes detalle, historial ni acciones sobre citas.
+El issue real [#116](https://github.com/bcaceres19/barberia/issues/116) ya está enlazado y este prompt pasó a `ready`. No adelantes detalle, historial ni acciones sobre citas de `HU-064`/`HU-065`.
 
 ## Objetivo
 
@@ -97,7 +97,7 @@ Que el barbero navegue a cualquier fecha civil desde la agenda, conserve el barb
 
 1. Comprueba árbol limpio y preserva cambios ajenos; actualiza `main` mediante fast-forward.
 2. Verifica que `HU-062` y PR #113 estén integradas y revisa sus pendientes E2E/responsive para no declararlos resueltos por esta HU.
-3. Localiza el issue real. Mientras siga `pending`, detente antes de modificar el repositorio; con issue real, actualiza metadatos y crea `feat/<issue>-hu063-navegacion-agenda`.
+3. Issue real ya enlazado ([#116](https://github.com/bcaceres19/barberia/issues/116)); crea la rama `feat/116-hu063-navegacion-agenda` desde `main` actualizada.
 4. Ejecuta Graphify sobre `agenda`, router, cliente generado, utilidades de tiempo y operación `listDailyAgenda`.
 5. Lee completamente los `source_docs`, en especial diseño visual §§9, 10, 11.2 y 12.
 6. Confirma que no exista una duda o contradicción abierta sobre fecha, barbero, medianoche o URL. Si aparece una, regístrala antes de codificar.

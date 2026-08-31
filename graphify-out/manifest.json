@@ -460,8 +460,8 @@
     "semantic_hash": ""
   },
   "docs/00-control/dudas-pendientes.md": {
-    "mtime": 1787961094.733521,
-    "ast_hash": "6218804970e020bd3ce7c171ad1a824e",
+    "mtime": 1788216830.9915593,
+    "ast_hash": "e847d87bf4ab0f106776c0b07433fe7b",
     "semantic_hash": ""
   },
   "docs/00-control/glosario.md": {
@@ -470,13 +470,13 @@
     "semantic_hash": ""
   },
   "docs/00-control/historial-cambios.md": {
-    "mtime": 1787966373.887542,
-    "ast_hash": "b19305fc3a0c87897cd8cacbb089ebf5",
+    "mtime": 1788216926.3411689,
+    "ast_hash": "105d8a2bcc191753169720b9e523b960",
     "semantic_hash": ""
   },
   "docs/00-control/matriz-trazabilidad.md": {
-    "mtime": 1787966373.887542,
-    "ast_hash": "52e319ceca2fafa5062d1081d938e855",
+    "mtime": 1788216930.757742,
+    "ast_hash": "82c57702fac9332c5f2175a9230139bd",
     "semantic_hash": ""
   },
   "docs/00-control/registro-decisiones.md": {
@@ -595,13 +595,13 @@
     "semantic_hash": ""
   },
   "docs/02-requisitos/historias-usuario.md": {
-    "mtime": 1787966373.887542,
-    "ast_hash": "3c01581280be34e3795a3791be6374fb",
+    "mtime": 1788216830.996541,
+    "ast_hash": "c72007496ac62c9455e01dd616a4ae6b",
     "semantic_hash": ""
   },
   "docs/10-backlog/plan-bloques.md": {
-    "mtime": 1787966373.887542,
-    "ast_hash": "68fb6795ae203fdf2656e84bafdc6f89",
+    "mtime": 1788216830.996541,
+    "ast_hash": "e58725f4bcff70cc2ceff14f877f3d42",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts-implementacion.md": {
@@ -805,8 +805,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/README.md": {
-    "mtime": 1787966373.887542,
-    "ast_hash": "0f8d1080fb2181d1d8c23c0efac39d42",
+    "mtime": 1788216892.6906607,
+    "ast_hash": "9093d47020f5f85fa15e7647cda1b82d",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/TEMPLATE.md": {
@@ -3982,6 +3982,21 @@
   "api/openapi/components/schemas/DailyAgendaResponse.yaml": {
     "mtime": 1787966373.8487859,
     "ast_hash": "ec1ac6b600766b0b18543d6234f7915d",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/hu/hu-063-navegacion-agenda.md": {
+    "mtime": 1788216870.8968928,
+    "ast_hash": "d36caf687375deabea1e13d9d3fcf60e",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/hu/hu-064-detalle-historial-turno.md": {
+    "mtime": 1788216830.999642,
+    "ast_hash": "a5ca7cefd7cba5a8b90cf45e5d308256",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/hu/hu-065-reprogramacion-turno.md": {
+    "mtime": 1788216830.999642,
+    "ast_hash": "a3f14b00fde97090a7c2e57e5dbb8554",
     "semantic_hash": ""
   }
 }
