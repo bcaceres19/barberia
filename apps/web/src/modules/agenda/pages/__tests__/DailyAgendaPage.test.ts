@@ -10,6 +10,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { axe } from 'vitest-axe'
+import { shiftCivilDate } from '@/shared/time/civilDate'
 
 const fetchBarberSummariesMock = vi.hoisted(() => vi.fn())
 const fetchBarbershopTimezoneMock = vi.hoisted(() => vi.fn())
@@ -77,6 +78,7 @@ async function mountReady(barbers = twoBarbers) {
 }
 
 const axeOptions = { rules: { 'color-contrast': { enabled: false } } }
+const civilDateMatcher = expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/)
 
 describe('DailyAgendaPage', () => {
   beforeEach(() => {
@@ -133,14 +135,17 @@ describe('DailyAgendaPage', () => {
     expect(wrapper.find('#daily-agenda-barber-select').exists()).toBe(true)
   })
 
-  it('auto-selects the first barber and loads its agenda on open (CA-062-01)', async () => {
+  it('auto-selects the first barber and loads its agenda on open, with an explicit civil date (CA-062-01, CA-063)', async () => {
     fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: oneEntry })
-    const { wrapper } = await mountReady()
+    const { wrapper, router } = await mountReady()
 
-    expect(fetchDailyAgendaMock).toHaveBeenCalledWith('b-1')
+    expect(fetchDailyAgendaMock).toHaveBeenCalledWith('b-1', civilDateMatcher)
     expect(wrapper.text()).toContain('Juan Pérez')
     expect(wrapper.text()).toContain('Corte clásico')
     expect(wrapper.text()).toContain('Confirmado')
+    // La URL queda normalizada con barbero y fecha explícitos.
+    expect(router.currentRoute.value.query.barberId).toBe('b-1')
+    expect(router.currentRoute.value.query.date).toMatch(/^\d{4}-\d{2}-\d{2}$/)
   })
 
   it('shows an explicit empty message when the selected barber has no turns today', async () => {
@@ -169,8 +174,8 @@ describe('DailyAgendaPage', () => {
     resolveFirst({ kind: 'success', items: [] })
     await flushPromises()
 
-    expect(fetchDailyAgendaMock).toHaveBeenNthCalledWith(1, 'b-1')
-    expect(fetchDailyAgendaMock).toHaveBeenNthCalledWith(2, 'b-2')
+    expect(fetchDailyAgendaMock).toHaveBeenNthCalledWith(1, 'b-1', civilDateMatcher)
+    expect(fetchDailyAgendaMock).toHaveBeenNthCalledWith(2, 'b-2', civilDateMatcher)
     expect(wrapper.text()).toContain('Juan Pérez')
   })
 
@@ -212,5 +217,168 @@ describe('DailyAgendaPage', () => {
 
     const results = await axe(wrapper.element, axeOptions)
     expect(results).toHaveNoViolations()
+  })
+
+  describe('navegación por fecha (HU-063)', () => {
+    function anteriorButton(wrapper: Awaited<ReturnType<typeof mountReady>>['wrapper']) {
+      return wrapper.findAll('button').find((b) => b.text() === 'Anterior')!
+    }
+
+    function siguienteButton(wrapper: Awaited<ReturnType<typeof mountReady>>['wrapper']) {
+      return wrapper.findAll('button').find((b) => b.text() === 'Siguiente')!
+    }
+
+    it('"Anterior" navigates one civil day back, keeps the same barber and updates the URL (CA-063)', async () => {
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: oneEntry })
+      const { wrapper, router } = await mountReady()
+      const firstDate = router.currentRoute.value.query.date as string
+
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: [] })
+      await anteriorButton(wrapper).trigger('click')
+      await flushPromises()
+
+      const expectedPrevious = shiftCivilDate(firstDate, -1)
+
+      expect(router.currentRoute.value.query.date).toBe(expectedPrevious)
+      expect(router.currentRoute.value.query.barberId).toBe('b-1')
+      expect(fetchDailyAgendaMock).toHaveBeenNthCalledWith(2, 'b-1', expectedPrevious)
+    })
+
+    it('"Siguiente" navigates one civil day forward, keeps the same barber (CA-063)', async () => {
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: oneEntry })
+      const { wrapper, router } = await mountReady()
+      const firstDate = router.currentRoute.value.query.date as string
+
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: [] })
+      await siguienteButton(wrapper).trigger('click')
+      await flushPromises()
+
+      const expectedNext = shiftCivilDate(firstDate, 1)
+
+      expect(router.currentRoute.value.query.date).toBe(expectedNext)
+      expect(fetchDailyAgendaMock).toHaveBeenNthCalledWith(2, 'b-1', expectedNext)
+    })
+
+    it('picking a date in the date selector navigates directly to it (CA-063)', async () => {
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: oneEntry })
+      const { wrapper, router } = await mountReady()
+
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: [] })
+      const dateInput = wrapper.get<HTMLInputElement>('input[type="date"]')
+      await dateInput.setValue('2026-01-15')
+      await flushPromises()
+
+      expect(router.currentRoute.value.query.date).toBe('2026-01-15')
+      expect(fetchDailyAgendaMock).toHaveBeenNthCalledWith(2, 'b-1', '2026-01-15')
+    })
+
+    it('opening the URL with an explicit date/barber (reload) loads exactly that selection, without an extra navigation', async () => {
+      fetchBarberSummariesMock.mockResolvedValueOnce({ kind: 'success', items: twoBarbers })
+      fetchBarbershopTimezoneMock.mockResolvedValueOnce({
+        kind: 'success',
+        timezone: 'America/Bogota',
+      })
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: oneEntry })
+
+      const router = buildRouter()
+      await router.push({ name: 'panel', query: { date: '2026-01-15', barberId: 'b-2' } })
+      await router.isReady()
+      const wrapper = mount(DailyAgendaPage, { global: { plugins: [router] } })
+      await flushPromises()
+
+      expect(fetchDailyAgendaMock).toHaveBeenCalledTimes(1)
+      expect(fetchDailyAgendaMock).toHaveBeenCalledWith('b-2', '2026-01-15')
+      expect(router.currentRoute.value.query.date).toBe('2026-01-15')
+      expect(router.currentRoute.value.query.barberId).toBe('b-2')
+      expect(wrapper.text()).toContain('Ana Gómez')
+    })
+
+    it('the browser back button restores the previous date and its agenda (CA-063)', async () => {
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: oneEntry })
+      const { wrapper, router } = await mountReady()
+      const firstDate = router.currentRoute.value.query.date as string
+
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: [] })
+      await anteriorButton(wrapper).trigger('click')
+      await flushPromises()
+      expect(router.currentRoute.value.query.date).not.toBe(firstDate)
+
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: oneEntry })
+      router.back()
+      await flushPromises()
+
+      expect(router.currentRoute.value.query.date).toBe(firstDate)
+      expect(wrapper.text()).toContain('Juan Pérez')
+    })
+
+    it('discards an out-of-order response from a previous date after navigating again (CA-063)', async () => {
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: oneEntry })
+      const { wrapper, router } = await mountReady()
+      const firstDate = router.currentRoute.value.query.date as string
+
+      let resolveFirstNav: (value: unknown) => void = () => {}
+      fetchDailyAgendaMock.mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveFirstNav = resolve
+        }),
+      )
+      await anteriorButton(wrapper).trigger('click')
+      await flushPromises()
+
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: [] })
+      await anteriorButton(wrapper).trigger('click')
+      await flushPromises()
+
+      // La primera navegación ("Anterior" una vez) llega tarde, después de
+      // que el usuario ya pidió un segundo "Anterior": no debe pisar la
+      // fecha vigente.
+      resolveFirstNav({ kind: 'success', items: oneEntry })
+      await flushPromises()
+
+      const expectedDate = shiftCivilDate(firstDate, -2)
+      expect(router.currentRoute.value.query.date).toBe(expectedDate)
+      expect(wrapper.text()).toContain('No hay turnos para Carlos Ramírez el')
+    })
+
+    it('keeps the previous agenda visible with an "Actualizando…" indicator while navigating to a new date (CA-063)', async () => {
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: oneEntry })
+      const { wrapper } = await mountReady()
+      expect(wrapper.text()).toContain('Juan Pérez')
+
+      let resolveNext: (value: unknown) => void = () => {}
+      fetchDailyAgendaMock.mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveNext = resolve
+        }),
+      )
+      await siguienteButton(wrapper).trigger('click')
+      await flushPromises()
+
+      // La agenda anterior sigue visible (no una pantalla en blanco) con un
+      // indicador local de actualización, mientras la nueva sigue en vuelo.
+      expect(wrapper.text()).toContain('Actualizando…')
+      expect(wrapper.text()).toContain('Juan Pérez')
+
+      resolveNext({ kind: 'success', items: [] })
+      await flushPromises()
+      expect(wrapper.text()).not.toContain('Actualizando…')
+    })
+
+    it('disables date navigation when the barbershop timezone is unavailable (RN-DIS-07)', async () => {
+      fetchBarberSummariesMock.mockResolvedValueOnce({ kind: 'success', items: twoBarbers })
+      fetchBarbershopTimezoneMock.mockResolvedValueOnce({ kind: 'unavailable' })
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: [] })
+      const { wrapper } = await mountPage()
+      await flushPromises()
+
+      // Sin zona conocida, el modelo no puede calcular "hoy" en la
+      // barbería (nunca la sustituye por la del dispositivo): la agenda
+      // sigue siendo legible (comportamiento degradado de HU-062), pero la
+      // navegación por fecha queda deshabilitada en vez de adivinar.
+      expect(fetchDailyAgendaMock).toHaveBeenCalledWith('b-1', undefined)
+      expect(anteriorButton(wrapper).attributes('disabled')).toBeDefined()
+      expect(siguienteButton(wrapper).attributes('disabled')).toBeDefined()
+      expect(wrapper.get<HTMLInputElement>('input[type="date"]').element.disabled).toBe(true)
+    })
   })
 })

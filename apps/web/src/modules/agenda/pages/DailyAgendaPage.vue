@@ -1,16 +1,23 @@
 <script setup lang="ts">
-// Pantalla "Agenda de hoy" (HU-062): abre el panel privado mostrando
-// cronológicamente los turnos de hoy de un único barbero, calculados en la
-// zona IANA de la barbería. Sustituye el marcador de posición de HU-012
-// (`auth/pages/PanelPage.vue`, retirado). Selector obligatorio de un
-// barbero (DEC-074): nunca una vista consolidada de varios a la vez, ni un
-// barbero implícito. Fuera de alcance a propósito: anterior/siguiente/
-// selector de fecha (F-CITA-02), detalle de cita y cualquier acción sobre
-// una cita existente (editar/cancelar/reprogramar/completar).
-import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { BaseAlert, BaseBadge, BaseButton } from '@/shared/ui'
-import { formatFullDateInTimezone, formatTimeInTimezone } from '@/shared/time/formatInstant'
+// Pantalla "Agenda de hoy" (HU-062) + navegación por fecha (HU-063): abre
+// el panel privado mostrando cronológicamente los turnos de un día civil
+// de un único barbero, calculado en la zona IANA de la barbería. Anterior/
+// selector de fecha/siguiente (F-CITA-02) conservan posición estable
+// (estandar-diseno-visual.md §11.2) y viven en `route.query` (`date`,
+// `barberId`): sin estado global, recargable y con atrás/adelante reales.
+// Selector obligatorio de un barbero (DEC-074): nunca una vista
+// consolidada. Fuera de alcance a propósito: detalle de cita y cualquier
+// acción sobre una cita existente (editar/cancelar/reprogramar/completar).
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router'
+import { BaseAlert, BaseBadge, BaseButton, BaseInput } from '@/shared/ui'
+import { formatTimeInTimezone } from '@/shared/time/formatInstant'
+import {
+  formatCivilDateFull,
+  getCivilDateInTimezone,
+  isCivilDateString,
+  shiftCivilDate,
+} from '@/shared/time/civilDate'
 import {
   fetchBarberSummaries,
   fetchBarbershopTimezone,
@@ -24,28 +31,78 @@ import {
 } from '../model/dailyAgenda'
 
 type PageStatus = 'loading' | 'ready' | 'load-error'
-type AgendaStatus = 'idle' | 'loading' | 'ready' | 'error' | 'not-found'
+// 'updating' (CA-063): ya hubo una agenda confirmada antes (para otra
+// fecha/barbero) y esta pantalla la conserva visible mientras llega la
+// siguiente; 'loading' es solo la primera carga, sin nada que conservar.
+type AgendaStatus = 'idle' | 'loading' | 'updating' | 'ready' | 'error' | 'not-found'
 
+const route = useRoute()
 const router = useRouter()
 
 const pageStatus = ref<PageStatus>('loading')
 const barbers = ref<BarberSummary[]>([])
-const selectedBarberId = ref<string | null>(null)
-// CA-062-01: zona IANA de la barbería, nunca la del dispositivo. null solo
-// mientras carga o si la consulta falla; el encabezado se oculta hasta
-// tenerla, en vez de mostrar una zona adivinada.
+// CA-063: zona IANA de la barbería, nunca la del dispositivo. null solo
+// mientras carga o si la consulta falla; sin ella la pantalla no puede
+// resolver "hoy" ni ofrecer navegación por fecha (mismo criterio degradado
+// que HU-062: la agenda del día del servidor sigue siendo legible, solo se
+// oculta la fecha/zona en pantalla y los controles de navegación).
 const barbershopTimezone = ref<string | null>(null)
+
+// selectedBarberId/selectedDate reflejan la última selección ya sincronizada
+// con route.query (fuente de verdad): se fijan justo antes de disparar la
+// carga, nunca antes, para que la plantilla no muestre una selección que la
+// URL todavía no confirma.
+const selectedBarberId = ref<string | null>(null)
+const selectedDate = ref<string | null>(null)
 
 const agendaStatus = ref<AgendaStatus>('idle')
 const entries = ref<DailyAgendaEntry[]>([])
+const hasLoadedEntriesOnce = ref(false)
+
+let agendaRequestSeq = 0
 
 const selectedBarber = computed(
   () => barbers.value.find((b) => b.id === selectedBarberId.value) ?? null,
 )
 
-const todayLabel = computed(() =>
-  barbershopTimezone.value ? formatFullDateInTimezone(barbershopTimezone.value) : null,
+const selectedDateLabel = computed(() =>
+  selectedDate.value ? formatCivilDateFull(selectedDate.value) : null,
 )
+
+const canNavigateDates = computed(() => barbershopTimezone.value !== null)
+
+// isViewingToday decide el texto del estado vacío ("hoy" vs. una fecha
+// explícita): sin zona conocida se asume "hoy" (mismo criterio degradado
+// que HU-062, que nunca navegaba y siempre mostraba "hoy").
+const isViewingToday = computed(() => {
+  if (!selectedDate.value || !barbershopTimezone.value) return true
+  return selectedDate.value === getCivilDateInTimezone(barbershopTimezone.value)
+})
+
+const emptyStateDateText = computed(() =>
+  isViewingToday.value ? 'hoy' : `el ${selectedDateLabel.value}`,
+)
+
+function requestedBarberIdFromRoute(): string | null {
+  const value = route.query.barberId
+  return typeof value === 'string' && value.length > 0 ? value : null
+}
+
+function requestedDateFromRoute(): string | null {
+  const value = route.query.date
+  return typeof value === 'string' && isCivilDateString(value) ? value : null
+}
+
+// withQuery combina route.query con overrides; una clave con valor
+// undefined/vacío se elimina en vez de quedar como "date=undefined"
+// literal en la URL.
+function withQuery(overrides: Record<string, string | undefined>): LocationQueryRaw {
+  const merged: Record<string, string> = {}
+  for (const [key, value] of Object.entries({ ...route.query, ...overrides })) {
+    if (typeof value === 'string' && value.length > 0) merged[key] = value
+  }
+  return merged
+}
 
 async function loadPage() {
   pageStatus.value = 'loading'
@@ -64,9 +121,7 @@ async function loadPage() {
   barbers.value = barbersOutcome.items
   pageStatus.value = 'ready'
 
-  if (barbers.value.length > 0) {
-    await selectBarber(barbers.value[0]!.id)
-  }
+  if (barbers.value.length > 0) await syncFromRoute()
 }
 
 onMounted(loadPage)
@@ -75,19 +130,74 @@ function onRetryLoad() {
   void loadPage()
 }
 
-async function selectBarber(barberId: string) {
-  selectedBarberId.value = barberId
-  agendaStatus.value = 'loading'
+// syncFromRoute (CA-063) es el único punto que traduce route.query a una
+// carga de agenda: se llama una vez al abrir la pantalla (tras resolver
+// barberos/zona) y en cada cambio posterior de `route.query` (recarga,
+// atrás/adelante del navegador, o un router.push propio de esta pantalla).
+// Si la URL no trae una selección válida la normaliza con un único
+// router.replace (nunca crea una entrada de historial por abrir /panel);
+// ese replace vuelve a disparar este mismo watcher, ya con la URL
+// normalizada, así que nunca hay una segunda petición duplicada.
+async function syncFromRoute() {
+  // Guarda de ruta: esta pantalla solo posee `route.query` mientras es la
+  // ruta activa ('panel'). Navegar a otra hija del panel (p. ej. "Nuevo
+  // turno") no la desmonta en las pruebas de componente (que la montan
+  // fuera de un <router-view>), así que sin esta guarda el watcher de
+  // route.query seguiría reaccionando a una ruta que ya no es esta
+  // pantalla.
+  if (route.name !== 'panel' || barbers.value.length === 0) return
 
-  const outcome = await fetchDailyAgenda(barberId)
-  // El barbero seleccionado pudo cambiar mientras la solicitud estaba en
-  // vuelo (cambio rápido en el selector): descarta una respuesta obsoleta.
-  if (selectedBarberId.value !== barberId) return
+  const requestedBarberId = requestedBarberIdFromRoute()
+  const resolvedBarberId =
+    requestedBarberId && barbers.value.some((b) => b.id === requestedBarberId)
+      ? requestedBarberId
+      : barbers.value[0]!.id
+
+  const resolvedDate = barbershopTimezone.value
+    ? (requestedDateFromRoute() ?? getCivilDateInTimezone(barbershopTimezone.value))
+    : null
+
+  // La comparación usa el valor CRUDO de route.query.date (no el ya
+  // validado por requestedDateFromRoute): una fecha inválida en la URL
+  // ("2026-13-40", "hoy") nunca es igual a `resolvedDate` y por eso también
+  // se normaliza, no solo una fecha ausente.
+  const rawDateInUrl = typeof route.query.date === 'string' ? route.query.date : null
+  const needsNormalization = requestedBarberId !== resolvedBarberId || rawDateInUrl !== resolvedDate
+
+  if (needsNormalization) {
+    await router.replace({
+      query: withQuery({ barberId: resolvedBarberId, date: resolvedDate ?? undefined }),
+    })
+    return
+  }
+
+  selectedBarberId.value = resolvedBarberId
+  selectedDate.value = resolvedDate
+  await loadAgenda(resolvedBarberId, resolvedDate)
+}
+
+watch(
+  () => [route.query.date, route.query.barberId],
+  () => void syncFromRoute(),
+)
+
+async function loadAgenda(barberId: string, date: string | null) {
+  const requestId = ++agendaRequestSeq
+  agendaStatus.value = hasLoadedEntriesOnce.value ? 'updating' : 'loading'
+
+  const outcome = await fetchDailyAgenda(barberId, date ?? undefined)
+
+  // Una selección posterior (fecha, barbero o ambas) ya reemplazó el
+  // destino vigente: esta respuesta llegó fuera de orden y se descarta sin
+  // tocar el contenido ya mostrado (nunca sustituye la selección vigente
+  // con una respuesta obsoleta).
+  if (requestId !== agendaRequestSeq) return
 
   switch (outcome.kind) {
     case 'success':
       entries.value = [...outcome.items].sort((a, b) => a.startsAt.localeCompare(b.startsAt))
       agendaStatus.value = 'ready'
+      hasLoadedEntriesOnce.value = true
       return
     case 'not-found':
       agendaStatus.value = 'not-found'
@@ -99,11 +209,28 @@ async function selectBarber(barberId: string) {
 
 function onBarberSelectChange(event: Event) {
   const barberId = (event.target as HTMLSelectElement).value
-  void selectBarber(barberId)
+  void router.push({ query: withQuery({ barberId }) })
 }
 
 function onRetryAgenda() {
-  if (selectedBarberId.value) void selectBarber(selectedBarberId.value)
+  if (selectedBarberId.value) void loadAgenda(selectedBarberId.value, selectedDate.value)
+}
+
+function goToDate(newDate: string) {
+  void router.push({ query: withQuery({ date: newDate }) })
+}
+
+function goToPreviousDay() {
+  if (selectedDate.value) goToDate(shiftCivilDate(selectedDate.value, -1))
+}
+
+function goToNextDay() {
+  if (selectedDate.value) goToDate(shiftCivilDate(selectedDate.value, 1))
+}
+
+function onDateInputChange(event: Event) {
+  const value = (event.target as HTMLInputElement).value
+  if (isCivilDateString(value)) goToDate(value)
 }
 
 function goToNewAppointment() {
@@ -129,8 +256,8 @@ function entryTime(entry: DailyAgendaEntry): string {
     <header class="daily-agenda-page__header">
       <div>
         <h1 id="daily-agenda-page-title" class="daily-agenda-page__title">Agenda de hoy</h1>
-        <p v-if="todayLabel" class="daily-agenda-page__date">
-          {{ todayLabel }} · Zona {{ barbershopTimezone }}
+        <p v-if="selectedDateLabel" class="daily-agenda-page__date">
+          {{ selectedDateLabel }} · Zona {{ barbershopTimezone }}
         </p>
       </div>
       <BaseButton
@@ -170,18 +297,49 @@ function entryTime(entry: DailyAgendaEntry): string {
       </p>
 
       <template v-else>
-        <div class="daily-agenda-page__picker">
-          <label for="daily-agenda-barber-select" class="daily-agenda-page__label">Barbero</label>
-          <select
-            id="daily-agenda-barber-select"
-            class="daily-agenda-page__select"
-            :value="selectedBarberId ?? ''"
-            @change="onBarberSelectChange"
-          >
-            <option v-for="barber in barbers" :key="barber.id" :value="barber.id">
-              {{ barber.fullName }}
-            </option>
-          </select>
+        <div class="daily-agenda-page__controls">
+          <div class="daily-agenda-page__picker">
+            <label for="daily-agenda-barber-select" class="daily-agenda-page__label">Barbero</label>
+            <select
+              id="daily-agenda-barber-select"
+              class="daily-agenda-page__select"
+              :value="selectedBarberId ?? ''"
+              @change="onBarberSelectChange"
+            >
+              <option v-for="barber in barbers" :key="barber.id" :value="barber.id">
+                {{ barber.fullName }}
+              </option>
+            </select>
+          </div>
+
+          <div class="daily-agenda-page__date-nav">
+            <BaseButton
+              type="button"
+              variant="secondary"
+              :disabled="!canNavigateDates"
+              aria-label="Día anterior"
+              @click="goToPreviousDay"
+            >
+              Anterior
+            </BaseButton>
+            <BaseInput
+              type="date"
+              label="Fecha"
+              class="daily-agenda-page__date-input"
+              :model-value="selectedDate ?? ''"
+              :disabled="!canNavigateDates"
+              @change="onDateInputChange"
+            />
+            <BaseButton
+              type="button"
+              variant="secondary"
+              :disabled="!canNavigateDates"
+              aria-label="Día siguiente"
+              @click="goToNextDay"
+            >
+              Siguiente
+            </BaseButton>
+          </div>
         </div>
 
         <div
@@ -193,55 +351,75 @@ function entryTime(entry: DailyAgendaEntry): string {
           <p>Cargando la agenda de {{ selectedBarber?.fullName }}…</p>
         </div>
 
-        <BaseAlert
-          v-else-if="agendaStatus === 'not-found'"
-          variant="warning"
-          title="Este barbero ya no está disponible"
-          role="alert"
-        >
-          Elige otro barbero en la lista.
-        </BaseAlert>
-
-        <BaseAlert
-          v-else-if="agendaStatus === 'error'"
-          variant="warning"
-          title="No pudimos cargar la agenda de este barbero"
-          role="alert"
-        >
-          Revisa tu conexión e inténtalo de nuevo.
-          <template #action>
-            <BaseButton type="button" variant="secondary" @click="onRetryAgenda">
-              Reintentar
-            </BaseButton>
-          </template>
-        </BaseAlert>
-
-        <template v-else-if="agendaStatus === 'ready'">
-          <p v-if="entries.length === 0" class="daily-agenda-page__empty">
-            No hay turnos para {{ selectedBarber?.fullName }} hoy.
+        <template v-else>
+          <p
+            v-if="agendaStatus === 'updating'"
+            class="daily-agenda-page__updating"
+            role="status"
+            aria-live="polite"
+          >
+            Actualizando…
           </p>
 
-          <ul
-            v-else
-            class="daily-agenda-page__list"
-            :aria-label="`Turnos de hoy de ${selectedBarber?.fullName}`"
+          <BaseAlert
+            v-if="agendaStatus === 'not-found'"
+            variant="warning"
+            title="Este barbero ya no está disponible"
+            role="alert"
           >
-            <li
-              v-for="entry in entries"
-              :key="entry.id"
-              class="daily-agenda-page__item"
-              :class="{ 'daily-agenda-page__item--terminal': entry.status !== 'confirmed' }"
+            Elige otro barbero en la lista.
+          </BaseAlert>
+
+          <BaseAlert
+            v-else-if="agendaStatus === 'error'"
+            variant="warning"
+            title="No pudimos cargar la agenda de este barbero"
+            role="alert"
+          >
+            Revisa tu conexión e inténtalo de nuevo.
+            <template #action>
+              <BaseButton type="button" variant="secondary" @click="onRetryAgenda">
+                Reintentar
+              </BaseButton>
+            </template>
+          </BaseAlert>
+
+          <template
+            v-if="
+              agendaStatus === 'ready' || (hasLoadedEntriesOnce && agendaStatus !== 'not-found')
+            "
+          >
+            <p v-if="entries.length === 0" class="daily-agenda-page__empty">
+              No hay turnos para {{ selectedBarber?.fullName }} {{ emptyStateDateText }}.
+            </p>
+
+            <ul
+              v-else
+              class="daily-agenda-page__list"
+              :aria-label="`Turnos de ${selectedBarber?.fullName}`"
             >
-              <div class="daily-agenda-page__item-main">
-                <span class="daily-agenda-page__item-time">{{ entryTime(entry) }}</span>
-                <span class="daily-agenda-page__item-name">{{ entry.attendeeName }}</span>
-                <span class="daily-agenda-page__item-service">{{ entry.serviceName }}</span>
-              </div>
-              <BaseBadge :class="statusBadgeClass(entry)" size="sm" dot :label="statusLabel(entry)">
-                {{ statusLabel(entry) }}
-              </BaseBadge>
-            </li>
-          </ul>
+              <li
+                v-for="entry in entries"
+                :key="entry.id"
+                class="daily-agenda-page__item"
+                :class="{ 'daily-agenda-page__item--terminal': entry.status !== 'confirmed' }"
+              >
+                <div class="daily-agenda-page__item-main">
+                  <span class="daily-agenda-page__item-time">{{ entryTime(entry) }}</span>
+                  <span class="daily-agenda-page__item-name">{{ entry.attendeeName }}</span>
+                  <span class="daily-agenda-page__item-service">{{ entry.serviceName }}</span>
+                </div>
+                <BaseBadge
+                  :class="statusBadgeClass(entry)"
+                  size="sm"
+                  dot
+                  :label="statusLabel(entry)"
+                >
+                  {{ statusLabel(entry) }}
+                </BaseBadge>
+              </li>
+            </ul>
+          </template>
         </template>
       </template>
     </template>
@@ -284,9 +462,23 @@ function entryTime(entry: DailyAgendaEntry): string {
   color: var(--color-text-secondary);
 }
 
+.daily-agenda-page__updating {
+  margin: 0;
+  padding: var(--space-2) 0;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body-sm);
+  color: var(--color-text-secondary);
+}
+
 .daily-agenda-page__empty {
   padding: var(--space-4);
   color: var(--color-text-secondary);
+}
+
+.daily-agenda-page__controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 .daily-agenda-page__picker {
@@ -311,6 +503,20 @@ function entryTime(entry: DailyAgendaEntry): string {
   background-color: var(--color-surface);
   border: var(--border-width-normal) solid var(--color-border-subtle);
   border-radius: var(--radius-md);
+}
+
+/* HU-063: anterior/fecha/siguiente conservan posiciones estables
+   (estandar-diseno-visual.md §11.2), sin reflow al cambiar de estado. */
+.daily-agenda-page__date-nav {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.daily-agenda-page__date-input {
+  flex: 1 1 180px;
+  min-width: 160px;
 }
 
 .daily-agenda-page__list {

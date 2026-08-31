@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-063-v1"
-version: "1.1"
+version: "1.2"
 kind: "hu"
-status: "ready"
+status: "in_progress"
 target_agents:
   - "claude"
   - "codex"

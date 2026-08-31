@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "apps/web/README.md": {
-    "mtime": 1787966373.87124,
-    "ast_hash": "ac23aa4d5e694c182b95c6e2c9510861",
+    "mtime": 1788218396.1198814,
+    "ast_hash": "4b2425f4e835fe92ba1c08e661d577f7",
     "semantic_hash": ""
   },
   "apps/web/e2e/README.md": {
@@ -470,13 +470,13 @@
     "semantic_hash": ""
   },
   "docs/00-control/historial-cambios.md": {
-    "mtime": 1788216926.3411689,
-    "ast_hash": "105d8a2bcc191753169720b9e523b960",
+    "mtime": 1788218611.1633468,
+    "ast_hash": "276cd9ccc0bb5313bf9af0d56c718ad4",
     "semantic_hash": ""
   },
   "docs/00-control/matriz-trazabilidad.md": {
-    "mtime": 1788216930.757742,
-    "ast_hash": "82c57702fac9332c5f2175a9230139bd",
+    "mtime": 1788218537.797909,
+    "ast_hash": "8a04e23635c9ff56cc1be570e7a52f7a",
     "semantic_hash": ""
   },
   "docs/00-control/registro-decisiones.md": {
@@ -595,13 +595,13 @@
     "semantic_hash": ""
   },
   "docs/02-requisitos/historias-usuario.md": {
-    "mtime": 1788216830.996541,
-    "ast_hash": "c72007496ac62c9455e01dd616a4ae6b",
+    "mtime": 1788218511.445416,
+    "ast_hash": "5e1c1799453ada53c0ac901c5f31a317",
     "semantic_hash": ""
   },
   "docs/10-backlog/plan-bloques.md": {
-    "mtime": 1788216830.996541,
-    "ast_hash": "e58725f4bcff70cc2ceff14f877f3d42",
+    "mtime": 1788218563.1802375,
+    "ast_hash": "5e994c6b9f7de4568d22bad959e3ddb2",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts-implementacion.md": {
@@ -805,8 +805,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/README.md": {
-    "mtime": 1788216892.6906607,
-    "ast_hash": "9093d47020f5f85fa15e7647cda1b82d",
+    "mtime": 1788218573.4819398,
+    "ast_hash": "bbe658b734e663568888f271511d2ca1",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/TEMPLATE.md": {
@@ -3965,13 +3965,13 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/pages/DailyAgendaPage.vue": {
-    "mtime": 1787966373.8774261,
-    "ast_hash": "8d9027dcb5f40813f78d134bc575c526",
+    "mtime": 1788218259.3909073,
+    "ast_hash": "fe0d5b28ad3ea9e2e7c134e40992b293",
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/pages/__tests__/DailyAgendaPage.test.ts": {
-    "mtime": 1787966373.8774261,
-    "ast_hash": "3cd4e05e62eec78601afb595aa5ae9fa",
+    "mtime": 1788218178.814927,
+    "ast_hash": "d451e78e4f11b6ad61d28c815d41bd44",
     "semantic_hash": ""
   },
   "api/openapi/components/schemas/DailyAgendaEntry.yaml": {
@@ -3985,8 +3985,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/hu/hu-063-navegacion-agenda.md": {
-    "mtime": 1788216870.8968928,
-    "ast_hash": "d36caf687375deabea1e13d9d3fcf60e",
+    "mtime": 1788218581.7891402,
+    "ast_hash": "1c767dd6b8a979fdaaa5d8acb680272a",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/hu/hu-064-detalle-historial-turno.md": {
@@ -3997,6 +3997,21 @@
   "docs/10-backlog/prompts/hu/hu-065-reprogramacion-turno.md": {
     "mtime": 1788216830.999642,
     "ast_hash": "a3f14b00fde97090a7c2e57e5dbb8554",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/agenda-navegacion-fecha.spec.ts": {
+    "mtime": 1788218322.5855017,
+    "ast_hash": "87550462261dd56c6a2661d210074646",
+    "semantic_hash": ""
+  },
+  "apps/web/src/shared/time/__tests__/civilDate.test.ts": {
+    "mtime": 1788217715.1958323,
+    "ast_hash": "adc14dca1d0905a34de6e6f6c1a4859b",
+    "semantic_hash": ""
+  },
+  "apps/web/src/shared/time/civilDate.ts": {
+    "mtime": 1788217700.7753265,
+    "ast_hash": "470c7aca638f678962e0c6f4e1fe9fc0",
     "semantic_hash": ""
   }
 }

@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.27"
+version: "1.28"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-08-31"
@@ -17,7 +17,7 @@ documentos_relacionados:
 
 # Historias de usuario y criterios de aceptación
 
-> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas confirmadas; no crean alcance por sí solas y requieren aprobación antes de implementarse. B0, `HU-020`–`HU-024` y `HU-040`–`HU-042` ya están integradas en `main`. Las dudas históricas de B0 quedaron resueltas por `DEC-050`–`DEC-066`; `DP-SER-01`–`DP-SER-03` del lote de B1 quedaron resueltas por `DEC-067`–`DEC-069`; `CT-008` del lote de B2 quedó resuelta por `DEC-070`. Los issues [#90](https://github.com/bcaceres19/barberia/issues/90), [#95](https://github.com/bcaceres19/barberia/issues/95), [#98](https://github.com/bcaceres19/barberia/issues/98) y [#100](https://github.com/bcaceres19/barberia/issues/100) conservan seguimientos visuales/E2E parciales de B2. `HU-060`–`HU-062` están integradas en `main` mediante [PR #105](https://github.com/bcaceres19/barberia/pull/105), [PR #109](https://github.com/bcaceres19/barberia/pull/109) y [PR #113](https://github.com/bcaceres19/barberia/pull/113); `DP-CIT-01`–`DP-CIT-05` quedaron resueltas por `DEC-071`–`DEC-075`. El segundo lote de B3 (`HU-063`–`HU-065`) está redactado como propuesta: sus prompts permanecen `draft` con `issue: pending` y no autorizan implementación hasta recibir un issue real por historia. `DP-CIT-06` está abierta y bloquea únicamente `HU-065` hasta decidir la conducta de T2 frente a un bloqueo vigente.
+> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas confirmadas; no crean alcance por sí solas y requieren aprobación antes de implementarse. B0, `HU-020`–`HU-024` y `HU-040`–`HU-042` ya están integradas en `main`. Las dudas históricas de B0 quedaron resueltas por `DEC-050`–`DEC-066`; `DP-SER-01`–`DP-SER-03` del lote de B1 quedaron resueltas por `DEC-067`–`DEC-069`; `CT-008` del lote de B2 quedó resuelta por `DEC-070`. Los issues [#90](https://github.com/bcaceres19/barberia/issues/90), [#95](https://github.com/bcaceres19/barberia/issues/95), [#98](https://github.com/bcaceres19/barberia/issues/98) y [#100](https://github.com/bcaceres19/barberia/issues/100) conservan seguimientos visuales/E2E parciales de B2. `HU-060`–`HU-062` están integradas en `main` mediante [PR #105](https://github.com/bcaceres19/barberia/pull/105), [PR #109](https://github.com/bcaceres19/barberia/pull/109) y [PR #113](https://github.com/bcaceres19/barberia/pull/113); `DP-CIT-01`–`DP-CIT-05` quedaron resueltas por `DEC-071`–`DEC-075`. `HU-063` (navegación de la agenda por fecha) tiene issue real [#116](https://github.com/bcaceres19/barberia/issues/116) y está implementada contra su rama `feat/116-hu063-navegacion-agenda`, pendiente de PR. `HU-064`–`HU-065` siguen redactadas como propuesta: sus prompts permanecen `draft` con `issue: pending` y no autorizan implementación hasta recibir un issue real por historia. `DP-CIT-06` está abierta y bloquea únicamente `HU-065` hasta decidir la conducta de T2 frente a un bloqueo vigente.
 
 ---
 
@@ -51,7 +51,7 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | B0 · Cimientos, seguridad y primeras pantallas | `HU-001` – `HU-012` | Redactadas en este documento |
 | B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | Integradas en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), [PR #83](https://github.com/bcaceres19/barberia/pull/83), [PR #84](https://github.com/bcaceres19/barberia/pull/84)) |
 | B2 · Horario laboral y bloqueos | `HU-040` – `HU-042` | Integradas en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93), [PR #96](https://github.com/bcaceres19/barberia/pull/96), [PR #99](https://github.com/bcaceres19/barberia/pull/99)); seguimientos parciales en `#90`, `#95`, `#98` y `#100` |
-| B3 · Agenda, estados e integridad | `HU-060` – `HU-065` | `HU-060`–`HU-062` integradas; `HU-063`/`HU-064` propuestas con issues pendientes; `HU-065` además bloqueada por `DP-CIT-06` |
+| B3 · Agenda, estados e integridad | `HU-060` – `HU-065` | `HU-060`–`HU-062` integradas; `HU-063` implementada (issue [#116](https://github.com/bcaceres19/barberia/issues/116)), pendiente de PR; `HU-064` propuesta con issue pendiente; `HU-065` además bloqueada por `DP-CIT-06` |
 | B4 · Reserva pública y disponibilidad | `HU-090` – | Pendientes |
 | B5 · Notificaciones y recordatorios | `HU-130` – | Pendientes |
 | B6 · Operación, privacidad y piloto | `HU-150` – | Pendientes |
@@ -1130,7 +1130,7 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 
 ## 6. Bloque B3 · Agenda, estados e integridad
 
-> **B3 en ejecución.** Las primeras tres historias separaron la última defensa de datos (`HU-060`), la primera escritura vertical de negocio (`HU-061`) y la pantalla operativa mínima (`HU-062`); las tres están integradas. El segundo lote amplía esa base en cortes independientes: navegación por fecha (`HU-063`), detalle con historial (`HU-064`) y reprogramación auditada T2 (`HU-065`). Cada prompt nuevo permanece `draft` con `issue: pending`; la redacción no autoriza crear ramas de implementación ni combinar las tres entregas. `HU-065` conserva además el bloqueo explícito `DP-CIT-06`.
+> **B3 en ejecución.** Las primeras tres historias separaron la última defensa de datos (`HU-060`), la primera escritura vertical de negocio (`HU-061`) y la pantalla operativa mínima (`HU-062`); las tres están integradas. El segundo lote amplía esa base en cortes independientes: navegación por fecha (`HU-063`), detalle con historial (`HU-064`) y reprogramación auditada T2 (`HU-065`). `HU-063` tiene issue real ([#116](https://github.com/bcaceres19/barberia/issues/116)) y está implementada, pendiente de PR/integración. `HU-064`/`HU-065` permanecen `draft` con `issue: pending`; la redacción no autoriza crear ramas de implementación ni combinar las tres entregas. `HU-065` conserva además el bloqueo explícito `DP-CIT-06`.
 
 Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` → `HU-065`. La edición de servicio/datos (T3), cancelación, completar, marcar inasistencia, corregir estados y cierre automático se redactan después de verificar este segundo lote.
 
@@ -1329,7 +1329,7 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 | Actor | Barbero autenticado |
 | Depende de | `HU-062` integrada mediante PR #113; contrato diario con parámetro `date` vigente |
 | Bloquea | `HU-064` y recorridos posteriores que deben regresar a la fecha operativa de origen |
-| Estado | Propuesta; prompt `PROMPT-HU-063-v1` en `draft`, `issue: pending` |
+| Estado | Implementada contra el issue real [#116](https://github.com/bcaceres19/barberia/issues/116) en `feat/116-hu063-navegacion-agenda`, pendiente de PR; prompt `PROMPT-HU-063-v1` `ready` |
 | Riesgo | Sumar 24 horas, usar la zona del dispositivo o aceptar respuestas fuera de orden puede mostrar otro día, perder turnos nocturnos o reemplazar una consulta reciente con datos obsoletos. |
 
 **Historia**
@@ -1509,7 +1509,7 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 | --- | --- | --- |
 | B1 | `HU-025` – | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
 | B2 | `HU-040` – `HU-042` | Integradas en `main` (PR `#93`, `#96`, `#99`); seguimientos parciales en issues `#90`, `#95`, `#98` y `#100` |
-| B3 | `HU-066` – | `HU-063`–`HU-065` redactadas; continuar solo después de implementarlas y revisar sus hallazgos |
+| B3 | `HU-066` – | `HU-063` implementada; `HU-064`–`HU-065` redactadas; continuar solo después de implementarlas y revisar sus hallazgos |
 | B4 | `HU-090` – | B3 cumple su criterio de salida |
 | B5 | `HU-130` – | B4 cumple su criterio de salida |
 | B6 | `HU-150` – | B5 cumple su criterio de salida |
