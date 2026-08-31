@@ -809,12 +809,13 @@ ninguna hija propia — `privateShellChildRoutes` queda `[]`). Selector
 obligatorio de un barbero (`DEC-074`): la pantalla nunca ofrece una vista
 consolidada de varios barberos ni infiere uno del `staff_user` autenticado.
 Al elegir un barbero, `fetchDailyAgenda` pide
-`GET /private/barbers/{barberId}/appointments/daily-agenda` sin `date`
-(el servidor decide "hoy" en la zona de la barbería, `CA-062-01`); el
-encabezado muestra la fecha civil completa y la zona con
-`formatFullDateInTimezone`/`formatTimeInTimezone`
-(`src/shared/time/formatInstant.ts`, mismo criterio de zona explícita
-obligatoria que `formatInstantInTimezone`, HU-020). Cada fila usa
+`GET /private/barbers/{barberId}/appointments/daily-agenda` con `date`
+(desde HU-063, casi siempre un día civil explícito en vez de dejar que el
+servidor decida "hoy"; ver la sección "Navegación de agenda por fecha
+(HU-063)" más abajo). El encabezado muestra la fecha civil completa y la
+zona con `formatCivilDateFull`/`formatTimeInTimezone`
+(`src/shared/time/civilDate.ts`/`formatInstant.ts`, mismo criterio de zona
+explícita obligatoria que `formatInstantInTimezone`, HU-020). Cada fila usa
 `BaseBadge` con las clases de estado ya definidas en el sistema visual
 (`base-badge--status-*`, sin usar hasta esta historia) y la etiqueta en
 español de `APPOINTMENT_STATUS_LABELS`
@@ -826,8 +827,9 @@ destino). Cambiar de barbero descarta una respuesta de agenda que llegue
 tarde para una selección ya reemplazada (mismo patrón que
 `SchedulesPage.vue`/`selectBarber`, HU-040).
 
-Fuera de alcance a propósito: anterior/siguiente/selector de fecha
-(`F-CITA-02`), detalle de cita y cualquier acción sobre una cita existente.
+Fuera de alcance a propósito: detalle de cita y cualquier acción sobre una
+cita existente. Anterior/siguiente/selector de fecha (`F-CITA-02`) llegó
+con HU-063 (siguiente sección).
 
 ### Pruebas
 
@@ -855,6 +857,76 @@ barbero" a "Agenda de hoy". Pendiente de ejecución contra Chromium real
 y de evidencia responsiva en los cuatro breakpoints (no forma parte de
 los checks de CI, que solo corren `test:unit`), mismo estado que
 `e2e/nuevo-turno.spec.ts` (HU-061).
+
+## Navegación de agenda por fecha (HU-063)
+
+Tres controles estables en `DailyAgendaPage.vue` (día anterior, selector de
+fecha `BaseInput type="date"`, día siguiente; `estandar-diseno-visual.md`
+§11.2): la fuente de verdad es `route.query` (`date` en `AAAA-MM-DD`,
+`barberId`), nunca un store global. `src/shared/time/civilDate.ts` aporta
+la aritmética de calendario que lo hace posible, siempre sin depender de la
+zona del dispositivo (`RN-DIS-07`):
+
+- `getCivilDateInTimezone(timezone, at?)`: día civil vigente AHORA en la
+  zona explícita recibida (`Intl.DateTimeFormat('en-CA', …)`), correcto en
+  un día local de 23/25 horas por DST.
+- `shiftCivilDate(civilDate, deltaDays)`: aritmética pura en `Date.UTC`
+  sobre el triplete año/mes/día, nunca suma 24h de reloj; cruza mes/año y
+  es indiferente a DST porque la zona de la barbería no participa.
+- `formatCivilDateFull(civilDate)`: formatea una fecha civil YA resuelta
+  ("jueves, 31 de agosto de 2026") anclando a mediodía UTC y formateando en
+  `timeZone: 'UTC'`, para que ninguna zona (ni siquiera un desfase extremo
+  como UTC+14) pueda desplazar el día mostrado.
+
+`syncFromRoute()` (`DailyAgendaPage.vue`) es el único punto que traduce
+`route.query` a una carga de agenda: se invoca una vez al abrir la pantalla
+(tras resolver barberos/zona) y en cada cambio posterior de `route.query`
+vía un `watch`, cubriendo de forma uniforme recarga, atrás/adelante del
+navegador y los `router.push` propios de esta pantalla (cambiar de fecha o
+de barbero). Si la URL no trae una selección válida (`barberId`
+inexistente, `date` ausente o mal formada), la normaliza con un único
+`router.replace` — nunca crea una entrada de historial por el simple hecho
+de abrir `/panel` — que vuelve a disparar el mismo `watch` ya con la URL
+normalizada; nunca hay una segunda petición duplicada. Un contador
+`agendaRequestSeq` descarta cualquier respuesta que llegue fuera de orden
+(cambio rápido de fecha o de barbero), igual que `selectBarber` ya hacía en
+HU-062. Sin zona de la barbería conocida (`fetchBarbershopTimezone`
+`unavailable`), la navegación por fecha se deshabilita en vez de adivinar
+con la zona del dispositivo; la agenda sigue siendo legible con el
+comportamiento degradado de HU-062 (`date` ausente, "hoy" según el
+servidor).
+
+`agendaStatus` distingue `loading` (primera carga, sin nada que conservar)
+de `updating` (ya hubo una agenda confirmada — para otra fecha o barbero —
+que permanece visible con un indicador local "Actualizando…" mientras
+llega la siguiente, `estandar-diseno-visual.md` §9 "Actualización"). Un
+error tras una carga previa exitosa conserva esa agenda visible junto a la
+alerta de reintento, en vez de reemplazar toda la pantalla.
+
+Fuera de alcance a propósito: detalle, historial y cualquier acción sobre
+una cita (HU-064/HU-065); vista semanal/mensual; vista consolidada de
+varios barberos.
+
+### Pruebas
+
+`src/shared/time/__tests__/civilDate.test.ts`: fin de mes/año, año
+bisiesto, aritmética estable alrededor de una transición DST y lectura del
+día civil en dos zonas con desfase suficiente para caer en días distintos.
+
+Componente (`src/modules/agenda/pages/__tests__/DailyAgendaPage.test.ts`,
+bloque "navegación por fecha (HU-063)"): anterior/siguiente/selector de
+fecha, recarga con `date`/`barberId` ya en la URL, atrás del navegador,
+descarte de una respuesta fuera de orden tras navegar dos veces seguidas,
+indicador "Actualizando…" con la agenda anterior visible, y navegación
+deshabilitada sin zona de la barbería conocida.
+
+E2E: `e2e/agenda-navegacion-fecha.spec.ts` (hoy → anterior → siguiente →
+fecha elegida → recarga → atrás/adelante, con fecha y barbero correctos en
+cada paso; un dispositivo en otra zona horaria calcula igual el día civil
+de la zona de la barbería). Pendiente de ejecución contra Chromium real y
+de evidencia responsiva en los cuatro breakpoints (no forma parte de los
+checks de CI, que solo corren `test:unit`), mismo estado que
+`e2e/agenda-diaria.spec.ts` (HU-062).
 
 ## Sistema visual base (HU-009)
 

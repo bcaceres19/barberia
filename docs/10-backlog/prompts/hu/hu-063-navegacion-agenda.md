@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-063-v1"
-version: "1.1"
+version: "1.2"
 kind: "hu"
-status: "ready"
+status: "in_progress"
 target_agents:
   - "claude"
   - "codex"
@@ -16,8 +16,8 @@ issue: 116
 issue_url: "https://github.com/bcaceres19/barberia/issues/116"
 suggested_issue_title: "feat(agenda): implementar HU-063 navegación por fecha"
 branch: "feat/116-hu063-navegacion-agenda"
-pr: null
-pr_url: null
+pr: 118
+pr_url: "https://github.com/bcaceres19/barberia/pull/118"
 depends_on:
   - "HU-062 integrada en main mediante PR #113 (cumplido)"
   - "Issue real propio creado y enlazado (cumplido: #116)"
