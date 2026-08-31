@@ -1,9 +1,9 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "2.9"
-estado: "Sin dudas abiertas"
+version: "2.10"
+estado: "Con duda abierta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-28"
+ultima_actualizacion: "2026-08-31"
 documentos_relacionados:
   - "registro-decisiones.md"
   - "contradicciones.md"
@@ -17,7 +17,9 @@ documentos_relacionados:
 
 ## 1. Estado
 
-No quedan dudas abiertas. Las cinco dudas del lote (`DP-CIT-01`–`DP-CIT-05`) se detectaron el 26 de agosto de 2026 al preparar `HU-060`, `HU-061` y `HU-062`: las fuentes confirman el modelo de datos, la exclusión de cruces, la creación manual y la agenda diaria, pero no fijaban la reconciliación de clientes manuales sin teléfono, el efecto de la asignación servicio-barbero sobre una cita manual, la conducta frente a un bloqueo vigente, la vista inicial en una barbería con varios barberos ni el día o días en que aparece un turno que cruza medianoche. El propietario resolvió las tres primeras el 27 de agosto de 2026 como `DEC-071`–`DEC-073`, desbloqueando `HU-061`. `DP-CIT-04` y `DP-CIT-05` quedaron resueltas el 28 de agosto de 2026 como `DEC-074`–`DEC-075`, desbloqueando `HU-062`.
+Existe una duda abierta: `DP-CIT-06`, detectada el 31 de agosto de 2026 al redactar `HU-065`. `DEC-073` fija un bloqueo duro para **crear** una cita manual sobre un bloqueo vigente, mientras `RN-BLQ-03` permite que un bloqueo nuevo se solape con una cita ya existente; ninguna fuente confirma qué debe ocurrir cuando el barbero intenta **reprogramar** voluntariamente una cita hacia un intervalo bloqueado. La duda bloquea solo `HU-065`; `HU-063` y `HU-064` pueden recibir issues e implementarse en orden sin resolverla.
+
+Las cinco dudas anteriores del lote (`DP-CIT-01`–`DP-CIT-05`) se detectaron el 26 de agosto de 2026 al preparar `HU-060`, `HU-061` y `HU-062`: las fuentes confirmaban el modelo de datos, la exclusión de cruces, la creación manual y la agenda diaria, pero no fijaban la reconciliación de clientes manuales sin teléfono, el efecto de la asignación servicio-barbero sobre una cita manual, la conducta frente a un bloqueo vigente, la vista inicial en una barbería con varios barberos ni el día o días en que aparece un turno que cruza medianoche. El propietario resolvió las tres primeras el 27 de agosto de 2026 como `DEC-071`–`DEC-073`, desbloqueando `HU-061`. `DP-CIT-04` y `DP-CIT-05` quedaron resueltas el 28 de agosto de 2026 como `DEC-074`–`DEC-075`, desbloqueando `HU-062`.
 
 Las tres dudas anteriores de B1 (`DP-SER-01`–`DP-SER-03`) se detectaron el 24 de agosto de 2026 al preparar `HU-022`, `HU-023` y `HU-024` y sus prompts persistentes (issue documental [#73](https://github.com/bcaceres19/barberia/issues/73)); `F-SERV-01`, `F-SERV-02`, `RN-SER-01`–`RN-SER-04` y el modelo físico de referencia no fijaban por sí solos todas las decisiones observables necesarias para contrato, interfaz y pruebas. El propietario las resolvió el mismo 24 de agosto de 2026 como `DEC-067`–`DEC-069`, y se crearon los issues reales de implementación: [#75](https://github.com/bcaceres19/barberia/issues/75) (`HU-022`), [#76](https://github.com/bcaceres19/barberia/issues/76) (`HU-023`) y [#77](https://github.com/bcaceres19/barberia/issues/77) (`HU-024`).
 
@@ -41,7 +43,13 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 
 ## 2. Dudas abiertas
 
-Ninguna. La última tanda (`DP-CIT-04`–`DP-CIT-05`) se resolvió el 28 de agosto de 2026 como `DEC-074`–`DEC-075` (ver sección 3).
+### DP-CIT-06 · Reprogramación hacia un intervalo bloqueado
+
+- **Detectada:** 2026-08-31 al redactar `HU-065` y `PROMPT-HU-065-v1`.
+- **Pregunta:** si el nuevo intervalo de T2 coincide con un bloqueo vigente del mismo barbero, ¿la reprogramación se rechaza como la creación manual de `DEC-073`, se permite con una advertencia porque `RN-BLQ-03` admite bloqueos solapados con citas, o exige primero retirar/exceptuar el bloqueo?
+- **Por qué no se infiere:** `DEC-073` está limitada a la creación manual; `RN-BLQ-03` gobierna el orden inverso —crear el bloqueo cuando la cita ya existe— y prohíbe mover o cancelar automáticamente, pero no autoriza ni prohíbe elegir después ese intervalo como destino.
+- **Bloquea:** issue, paso a `ready` e implementación de `HU-065`; no bloquea `HU-063` ni `HU-064`.
+- **Responsable de resolver:** propietario del proyecto mediante un nuevo `DEC-*`, antes de codificar T2.
 
 ## 3. Resoluciones
 

@@ -1,9 +1,9 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.26"
+version: "1.27"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-29"
+ultima_actualizacion: "2026-08-31"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/reglas-negocio.md"
@@ -17,7 +17,7 @@ documentos_relacionados:
 
 # Historias de usuario y criterios de aceptación
 
-> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas confirmadas; no crean alcance por sí solas y requieren aprobación antes de implementarse. B0, `HU-020`–`HU-024` y `HU-040`–`HU-042` ya están integradas en `main`. Las dudas históricas de B0 quedaron resueltas por `DEC-050`–`DEC-066`; `DP-SER-01`–`DP-SER-03` del lote de B1 quedaron resueltas por `DEC-067`–`DEC-069`; `CT-008` del lote de B2 quedó resuelta por `DEC-070`. Los issues [#90](https://github.com/bcaceres19/barberia/issues/90), [#95](https://github.com/bcaceres19/barberia/issues/95), [#98](https://github.com/bcaceres19/barberia/issues/98) y [#100](https://github.com/bcaceres19/barberia/issues/100) conservan seguimientos visuales/E2E parciales de B2. `HU-060` abre B3 y está integrada en `main` (issue real [#104](https://github.com/bcaceres19/barberia/issues/104), integrada mediante [PR #105](https://github.com/bcaceres19/barberia/pull/105)). `DP-CIT-01`–`DP-CIT-03` quedaron resueltas por `DEC-071`–`DEC-073` (2026-08-27); `HU-061` está integrada en `main` mediante [PR #109](https://github.com/bcaceres19/barberia/pull/109) (issue real [#107](https://github.com/bcaceres19/barberia/issues/107) abierto: E2E/evidencia responsiva pendientes). `DP-CIT-04`–`DP-CIT-05` quedaron resueltas por `DEC-074`–`DEC-075` (2026-08-28); `HU-062` está integrada en `main` mediante [PR #113](https://github.com/bcaceres19/barberia/pull/113) (issue real [#111](https://github.com/bcaceres19/barberia/issues/111) abierto: E2E/evidencia responsiva pendientes, mismo patrón que `HU-061`).
+> **Estado del contenido: Propuesta.** Estas historias **derivan** de funciones P0 y reglas confirmadas; no crean alcance por sí solas y requieren aprobación antes de implementarse. B0, `HU-020`–`HU-024` y `HU-040`–`HU-042` ya están integradas en `main`. Las dudas históricas de B0 quedaron resueltas por `DEC-050`–`DEC-066`; `DP-SER-01`–`DP-SER-03` del lote de B1 quedaron resueltas por `DEC-067`–`DEC-069`; `CT-008` del lote de B2 quedó resuelta por `DEC-070`. Los issues [#90](https://github.com/bcaceres19/barberia/issues/90), [#95](https://github.com/bcaceres19/barberia/issues/95), [#98](https://github.com/bcaceres19/barberia/issues/98) y [#100](https://github.com/bcaceres19/barberia/issues/100) conservan seguimientos visuales/E2E parciales de B2. `HU-060`–`HU-062` están integradas en `main` mediante [PR #105](https://github.com/bcaceres19/barberia/pull/105), [PR #109](https://github.com/bcaceres19/barberia/pull/109) y [PR #113](https://github.com/bcaceres19/barberia/pull/113); `DP-CIT-01`–`DP-CIT-05` quedaron resueltas por `DEC-071`–`DEC-075`. El segundo lote de B3 (`HU-063`–`HU-065`) está redactado como propuesta: sus prompts permanecen `draft` con `issue: pending` y no autorizan implementación hasta recibir un issue real por historia. `DP-CIT-06` está abierta y bloquea únicamente `HU-065` hasta decidir la conducta de T2 frente a un bloqueo vigente.
 
 ---
 
@@ -51,7 +51,7 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | B0 · Cimientos, seguridad y primeras pantallas | `HU-001` – `HU-012` | Redactadas en este documento |
 | B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | Integradas en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), [PR #83](https://github.com/bcaceres19/barberia/pull/83), [PR #84](https://github.com/bcaceres19/barberia/pull/84)) |
 | B2 · Horario laboral y bloqueos | `HU-040` – `HU-042` | Integradas en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93), [PR #96](https://github.com/bcaceres19/barberia/pull/96), [PR #99](https://github.com/bcaceres19/barberia/pull/99)); seguimientos parciales en `#90`, `#95`, `#98` y `#100` |
-| B3 · Agenda, estados e integridad | `HU-060` – `HU-062` | `HU-060` integrada ([PR #105](https://github.com/bcaceres19/barberia/pull/105)); `HU-061` integrada mediante [PR #109](https://github.com/bcaceres19/barberia/pull/109) (issue [#107](https://github.com/bcaceres19/barberia/issues/107) abierto, `DP-CIT-01`–`DP-CIT-03` resueltas por `DEC-071`–`DEC-073`); `HU-062` integrada mediante [PR #113](https://github.com/bcaceres19/barberia/pull/113) (issue [#111](https://github.com/bcaceres19/barberia/issues/111) abierto, `DP-CIT-04`–`DP-CIT-05` resueltas por `DEC-074`–`DEC-075`) |
+| B3 · Agenda, estados e integridad | `HU-060` – `HU-065` | `HU-060`–`HU-062` integradas; `HU-063`/`HU-064` propuestas con issues pendientes; `HU-065` además bloqueada por `DP-CIT-06` |
 | B4 · Reserva pública y disponibilidad | `HU-090` – | Pendientes |
 | B5 · Notificaciones y recordatorios | `HU-130` – | Pendientes |
 | B6 · Operación, privacidad y piloto | `HU-150` – | Pendientes |
@@ -1130,9 +1130,9 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 
 ## 6. Bloque B3 · Agenda, estados e integridad
 
-> **B3 en ejecución.** Las primeras tres historias separan la última defensa de datos (`HU-060`), la primera escritura vertical de negocio (`HU-061`) y la pantalla operativa mínima (`HU-062`). `HU-060` está integrada (issue real [#104](https://github.com/bcaceres19/barberia/issues/104), integrada mediante [PR #105](https://github.com/bcaceres19/barberia/pull/105)): no inventa una API ni una interfaz, solo la base persistente y la primitiva transaccional interna. `HU-061` está integrada en `main` mediante [PR #109](https://github.com/bcaceres19/barberia/pull/109) (`DP-CIT-01`–`DP-CIT-03` resueltas como `DEC-071`–`DEC-073`, 2026-08-27; issue real propio [#107](https://github.com/bcaceres19/barberia/issues/107)); `HU-062` está integrada en `main` mediante [PR #113](https://github.com/bcaceres19/barberia/pull/113) (`DP-CIT-04`/`DP-CIT-05` resueltas como `DEC-074`–`DEC-075`, 2026-08-28; issue real propio [#111](https://github.com/bcaceres19/barberia/issues/111)).
+> **B3 en ejecución.** Las primeras tres historias separaron la última defensa de datos (`HU-060`), la primera escritura vertical de negocio (`HU-061`) y la pantalla operativa mínima (`HU-062`); las tres están integradas. El segundo lote amplía esa base en cortes independientes: navegación por fecha (`HU-063`), detalle con historial (`HU-064`) y reprogramación auditada T2 (`HU-065`). Cada prompt nuevo permanece `draft` con `issue: pending`; la redacción no autoriza crear ramas de implementación ni combinar las tres entregas. `HU-065` conserva además el bloqueo explícito `DP-CIT-06`.
 
-Orden recomendado: `HU-060` → `HU-061` → `HU-062`. Las transiciones, modificaciones, reprogramación, cancelación, navegación por otra fecha y cierre automático se redactan después de verificar estas tres bases.
+Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` → `HU-065`. La edición de servicio/datos (T3), cancelación, completar, marcar inasistencia, corregir estados y cierre automático se redactan después de verificar este segundo lote.
 
 ---
 
@@ -1319,13 +1319,197 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062`. Las transiciones, modific
 
 ---
 
+### HU-063 · Navegación de la agenda por fecha
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-CITA-02`; amplía la lectura diaria de `F-CITA-01` |
+| Reglas | `RN-CIT-01`, `RN-DIS-05`, `RN-DIS-07`, `RN-TEN-01` y estados confirmados de `estados-citas.md` |
+| Decisiones | `DEC-007`, `DEC-016`, `DEC-019`, `DEC-020`, `DEC-024`, `DEC-033`–`DEC-039`, `DEC-047`, `DEC-074`, `DEC-075` |
+| Actor | Barbero autenticado |
+| Depende de | `HU-062` integrada mediante PR #113; contrato diario con parámetro `date` vigente |
+| Bloquea | `HU-064` y recorridos posteriores que deben regresar a la fecha operativa de origen |
+| Estado | Propuesta; prompt `PROMPT-HU-063-v1` en `draft`, `issue: pending` |
+| Riesgo | Sumar 24 horas, usar la zona del dispositivo o aceptar respuestas fuera de orden puede mostrar otro día, perder turnos nocturnos o reemplazar una consulta reciente con datos obsoletos. |
+
+**Historia**
+
+> Como barbero, quiero moverme al día anterior, al siguiente o a una fecha elegida sin perder el barbero seleccionado, para consultar y preparar jornadas distintas de hoy desde la misma agenda.
+
+**Alcance incluido**
+
+- Controles estables de día anterior, selector de fecha y día siguiente sobre la pantalla real de `HU-062`; la primera entrada continúa abriendo hoy.
+- Cálculo por fechas civiles consecutivas en la zona IANA de la barbería, nunca mediante una duración fija de 24 horas ni mediante la zona del dispositivo.
+- Reutilización de `GET /private/barbers/{barberId}/appointments/daily-agenda?date=AAAA-MM-DD`; no se crea una segunda consulta ni otra semántica diaria.
+- Conservación del `barberId` explícito de `DEC-074` al cambiar de fecha y de la fecha elegida al cambiar de barbero.
+- Fecha completa, zona y contexto visible durante carga, actualización, vacío, error y reintento; una respuesta antigua no puede sobrescribir la selección más reciente.
+- Turnos nocturnos visibles en cada día intersecado conforme a `DEC-075`, con límites semiabiertos idénticos a `HU-062`.
+- Estado navegable coherente con recarga, historial del navegador y enlaces posteriores del módulo, sin convertirlo en una agenda semanal o mensual.
+
+**Alcance excluido**
+
+- Cambiar el selector obligatorio por una vista consolidada de varios barberos o inferir `staff_user`→`barber`.
+- Calendario semanal/mensual, arrastrar, redimensionar, desplazamiento infinito, tiempo real o visualización de huecos.
+- Detalle, contacto, historial o cualquier operación de escritura sobre un turno.
+- Modificar el contrato diario, la consulta PostgreSQL o sus índices salvo que una prueba demuestre un defecto real; esta historia consume la capacidad ya integrada.
+- Usar la fecha del servidor o del dispositivo como autoridad después de que la barbería ya proporcionó su zona.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-063-01` | La primera entrada abre la fecha civil completa de hoy en la zona de la barbería y conserva el selector obligatorio de un único barbero de `DEC-074`. |
+| `CA-063-02` | Anterior y siguiente avanzan exactamente un día civil incluso en jornadas locales de 23 o 25 horas; nunca saltan ni repiten una fecha por DST. |
+| `CA-063-03` | Elegir una fecha válida consulta ese mismo `AAAA-MM-DD`; cancelar o introducir una fecha inválida conserva la selección y los datos confirmados anteriores sin enviar una petición ambigua. |
+| `CA-063-04` | Cambiar de fecha conserva el `barberId` vigente y cambiar de barbero conserva la fecha elegida; ninguna combinación produce una vista consolidada ni consulta un tenant distinto. |
+| `CA-063-05` | Un turno que cruza medianoche aparece en cada fecha cuyo intervalo civil interseca, exactamente como en `CA-062-04`, sin duplicarse dentro del mismo día. |
+| `CA-063-06` | Si dos consultas se resuelven fuera de orden, solo la correspondiente a la selección vigente actualiza la pantalla; un error conserva fecha/barbero, contenido confirmado y un reintento accesible. |
+| `CA-063-07` | Recargar, usar atrás/adelante o volver desde una ruta hija restaura una combinación coherente de fecha y barbero sin depender de estado global nuevo. |
+| `CA-063-08` | Los tres controles conservan posición, nombre accesible, foco visible y objetivo de 44 px; la agenda reflowa a 320, 360, 768 y 1280 px, funciona con teclado y zoom 200 %, y axe-core no reporta violaciones conocidas. |
+
+**Pruebas obligatorias**
+
+- Unitarias del modelo de navegación para fin/inicio de mes y año, día local de 23/25 horas y zona del dispositivo distinta.
+- Cliente/contrato para parámetro `date`, codificación, cancelación de solicitud y descarte de respuestas obsoletas.
+- Componente para anterior, selector, siguiente, cambio de barbero, carga/actualización/vacío/error/reintento e historial del navegador.
+- Regresión de PostgreSQL/HTTP de `HU-062` para extremos `[inicio, fin)`, nocturnidad de `DEC-075` y dos tenants; no se duplica una suite si el backend no cambia.
+- E2E real: iniciar en hoy, navegar a anterior/siguiente/fecha elegida, recargar, volver y observar la fecha/barbero correctos con dispositivo en otra zona; evidencia responsive/accesible.
+
+**Terminado cuando** la agenda existente navega por cualquier fecha civil con los tres controles aprobados, conserva el barbero y el contexto de navegación y nunca altera la semántica diaria, la zona o el aislamiento ya verificados en `HU-062`.
+
+---
+
+### HU-064 · Detalle e historial de un turno
+
+| Campo | Valor |
+| --- | --- |
+| Función | Profundiza `F-CITA-01` y hace visible `F-EST-03` |
+| Reglas | `RN-CIT-01`, `RN-HIS-01`, `RN-HIS-02`, `RN-RES-02`, `RN-RES-03`, `RN-DAT-01`, `RN-DAT-02`, `RN-DIS-07`, `RN-TEN-01` |
+| Decisiones | `DEC-004`, `DEC-007`, `DEC-014`, `DEC-016`, `DEC-019`, `DEC-024`, `DEC-033`–`DEC-041`, `DEC-045`, `DEC-046`, `DEC-074`, `DEC-075` |
+| Actor | Barbero autenticado |
+| Depende de | `HU-063` integrada; núcleo e historial append-only de `HU-060` vigentes |
+| Bloquea | `HU-065` y las acciones posteriores que necesitan contexto, estado e historial visibles |
+| Estado | Propuesta; prompt `PROMPT-HU-064-v1` en `draft`, `issue: pending` |
+| Riesgo | Cargar el nombre actual del catálogo, exponer contacto en la lista o presentar un historial incompleto puede reescribir el pasado, filtrar datos personales o impedir auditar una disputa. |
+
+**Historia**
+
+> Como barbero, quiero abrir un turno y ver su hora, persona, contacto, servicio, estado e historial, para entender el compromiso y sus cambios antes de decidir cualquier acción.
+
+**Alcance incluido**
+
+- Lectura privada tenant-aware del detalle de una cita por identificador opaco, separada de la proyección mínima de agenda.
+- Persona atendida y cliente que reservó, contacto opcional, nota del cliente cuando exista, barbero, origen, intervalo, zona, estado y snapshots de servicio, duración, precio y moneda.
+- Servicio mostrado exclusivamente desde los snapshots de la cita; el catálogo vigente no sustituye ni corrige el dato histórico.
+- Token opaco de versión en la representación, destinado a precondiciones de mutaciones posteriores sin convertir `updated_at` en una regla de negocio pública.
+- Historial cronológico append-only con tipo de evento traducido, actor seguro, instante y cambios anterior/nuevo necesarios; motivo solo cuando pertenece al evento y está autorizado.
+- Lectura acotada o paginada por cursor del historial con orden estable, sin `SELECT *`, N+1 ni datos técnicos innecesarios.
+- Ruta de detalle desde cada fila de la agenda y regreso que conserva fecha y barbero de `HU-063`.
+- Estados de carga, vacío de historial, error y reintento; los datos de contacto solo aparecen dentro de la superficie privada de detalle.
+
+**Alcance excluido**
+
+- Modificar, reprogramar, cancelar, completar, marcar inasistencia o corregir una cita.
+- Añadir botones futuros deshabilitados, confirmaciones falsas o una acción contextual que todavía no exista.
+- Editar o borrar entradas de historial, reconstruir eventos ausentes o sintetizar cambios que no fueron persistidos.
+- Mostrar teléfono, correo, nota o historial en la lista diaria, navegación global, URL, logs, métricas o trazas.
+- Usar el nombre/precio/duración actuales del servicio en lugar de los snapshots, o exponer `customerId`, IDs internos de actores y detalles de RLS.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-064-01` | Una sesión válida abre el detalle de una cita propia; un ID inexistente, mal formado o de otra barbería responde `404` uniforme sin revelar existencia ni ejecutar una lectura fuera del tenant. |
+| `CA-064-02` | El detalle muestra persona atendida, cliente/contacto disponibles, nota opcional, barbero, origen, intervalo en la zona de la barbería, estado, snapshots exactos y un token opaco de versión; un cambio posterior de catálogo no altera la representación. |
+| `CA-064-03` | Teléfono, correo y nota solo viajan en la operación de detalle autenticada y no aparecen en la respuesta diaria, logs, URL, errores ni telemetría. |
+| `CA-064-04` | El historial se ordena por `occurredAt` y un desempate estable; cada evento muestra actor comprensible, instante, tipo y pares anterior/nuevo persistidos, sin inventar valores ausentes. |
+| `CA-064-05` | Las entradas y cambios siguen siendo append-only: la entrega no concede `UPDATE`/`DELETE`, no modifica una migración aplicada y conserva las pruebas de `CA-060-06`. |
+| `CA-064-06` | La paginación o cota del historial no omite ni duplica eventos entre páginas y la consulta usa el índice tenant-aware existente o uno nuevo justificado mediante `EXPLAIN (ANALYZE, BUFFERS)`. |
+| `CA-064-07` | Abrir y volver conserva la fecha y el barbero de la agenda; carga, historial vacío, error y reintento mantienen contexto, anuncian el estado y no exhiben acciones no implementadas. |
+| `CA-064-08` | La pantalla sigue la plantilla P0 de detalle, reflowa a 320, 360, 768 y 1280 px, soporta teclado/zoom 200 %, mantiene objetivos de 44 px y axe-core no reporta violaciones conocidas. |
+
+**Pruebas obligatorias**
+
+- Dominio/modelo de vista para snapshots, estados, actores, cambios, zona y orden estable.
+- HTTP/contrato para detalle e historial: `200`, `400`, `401`, `404`, cursor/límite, forma exacta y ausencia de datos internos.
+- PostgreSQL real con dos tenants, varios eventos empatados por instante, paginación sin duplicados, plan de consulta e intentos directos de modificar/borrar historial rechazados.
+- Prueba de privacidad que inspecciona lista diaria, errores y logs para confirmar que no contienen contacto ni nota.
+- Componente y router para abrir/volver, carga, historial vacío/lleno, error/reintento, foco y `vitest-axe`.
+- E2E real desde una fecha distinta de hoy: abrir un turno, comprobar snapshots e historial, volver a la misma agenda y aportar evidencia responsive/accesible.
+
+**Terminado cuando** el barbero puede inspeccionar un turno y su rastro completo desde la agenda sin cambiarlo, sin sustituir snapshots por catálogo vigente y sin ampliar la exposición de datos personales.
+
+---
+
+### HU-065 · Reprogramación auditada de un turno
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-CITA-05`; transición `T2` de `estados-citas.md` |
+| Reglas | `RN-CIT-01`, `RN-CIT-03`, `RN-CON-01`, `RN-CON-03`, `RN-DIS-05`, `RN-DIS-07`, `RN-HIS-01`, `RN-HIS-02`, `RN-TEN-01`, `RN-IDE-01` |
+| Decisiones | `DEC-002`, `DEC-004`, `DEC-007`, `DEC-014`, `DEC-016`, `DEC-020`, `DEC-024`, `DEC-035`–`DEC-039`, `DEC-043`, `DEC-074`, `DEC-075`; `DP-CIT-06` abierta |
+| Actor | Barbero autenticado |
+| Depende de | `HU-064` integrada; `DP-CIT-06` resuelta y propagada mediante un nuevo `DEC-*` |
+| Bloquea | Modificación T3, cancelación y demás transiciones visibles de B3 |
+| Estado | Propuesta bloqueada por `DP-CIT-06`; prompt `PROMPT-HU-065-v1` en `draft`, `issue: pending` |
+| Riesgo | Una reprogramación no atómica, sin precondición de versión o sin la exclusión PostgreSQL puede perder un cambio concurrente, dejar el historial incompleto o guardar dos turnos cruzados. |
+
+**Historia**
+
+> Como barbero, quiero mover un turno confirmado a otra fecha y hora disponibles, para atender un acuerdo con el cliente sin perder el intervalo anterior ni crear un cruce en la agenda.
+
+**Alcance incluido**
+
+- Operación privada contract-first e idempotente para `T2`: cambia únicamente `starts_at`/`ends_at` de una cita `confirmed`; conserva barbero, servicio, duración, precio, persona, cliente, origen y estado.
+- Nuevo inicio estrictamente futuro, expresado como fecha/hora civil en la zona de la barbería; el fin se deriva de `duration_minutes_snapshot`, nunca del cliente.
+- Validación de jornada efectiva mediante los puertos de `schedule`; la conducta frente a un bloqueo vigente se aplica literalmente solo después de que un nuevo `DEC-*` resuelva `DP-CIT-06`. Un bloqueo ya solapado nunca mueve la cita por sí solo.
+- Exclusión GiST como última defensa ante cruce con otra cita que ocupa agenda; contigüidad exacta sigue permitida.
+- Actualización de intervalo y evento `appointment_rescheduled` con valores anterior/nuevo en una sola transacción tenant-aware.
+- Precondición explícita sobre la representación leída: si otra operación cambió el turno antes de confirmar, responde conflicto y obliga a recargar en vez de aplicar un último escritor silencioso.
+- Mismo intervalo como no-op exitoso, sin nueva entrada de historial ni efectos secundarios; repetición de la misma clave/intención devuelve el resultado lógico original.
+- Flujo desde el detalle de `HU-064`, con resumen antes de confirmar y retorno al detalle/agenda en la fecha nueva.
+
+**Alcance excluido**
+
+- Cambiar barbero, servicio, duración, precio, persona atendida, cliente, contacto, nota o estado; `T3` y edición general tendrán historias propias.
+- Reprogramar una cita terminal, reabrir una cancelada o crear una cita nueva como efecto oculto.
+- Reprogramación masiva, arrastrar en calendario, sugerencias de franjas o cálculo de disponibilidad pública.
+- Enviar avisos o regenerar recordatorios antes de B5. La operación deja el hecho de negocio e historial correctos; la ausencia temporal de B5 se documenta y no se simula como envío exitoso.
+- Modificar la migración aplicada de `HU-060`, relajar la exclusión o resolver concurrencia solo con una consulta previa.
+- Elegir por conveniencia una respuesta para `DP-CIT-06`; sin decisión no se implementa `HU-065`.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-065-01` | Con cita propia `confirmed`, precondición vigente y nuevo inicio válido, la operación actualiza una vez el intervalo y agrega un único `appointment_rescheduled` con `starts_at`/`ends_at` anteriores y nuevos dentro de la misma transacción. |
+| `CA-065-02` | El servidor conserva todos los campos fuera de T2, deriva el fin desde la duración snapshot y usa la zona de la barbería; el body no puede cambiar tenant, barbero, servicio, duración, precio, estado ni actor. |
+| `CA-065-03` | Un inicio que no es futuro, una cita terminal o una transición distinta de `confirmed`→`confirmed` se rechaza con el código documentado y sin modificar cita ni historial. |
+| `CA-065-04` | Un intervalo fuera de la jornada efectiva se rechaza sin escritura; ante un bloqueo vigente, contrato, dominio, interfaz y pruebas coinciden literalmente con el `DEC-*` que resuelva `DP-CIT-06`. Una cita ya afectada por un bloqueo permanece intacta hasta una acción explícita. |
+| `CA-065-05` | Un cruce total, parcial o de un minuto responde `409`; la contigüidad exacta es válida y una carrera real de dos reprogramaciones incompatibles no deja más de una agenda válida en PostgreSQL. |
+| `CA-065-06` | El mismo intervalo es un no-op sin historial; la misma `Idempotency-Key` e intención repite el resultado original, contenido distinto entra en conflicto y una precondición obsoleta responde `409` con instrucción segura de recargar. |
+| `CA-065-07` | Un ID ajeno o inexistente responde `404`; con dos tenants reales no se puede leer, reprogramar ni relacionar recursos cruzados y ningún log contiene datos personales. |
+| `CA-065-08` | El formulario conserva datos ante error, evita doble toque, muestra intervalo/zona/consecuencia, pide confirmación explícita y gestiona éxito/conflicto; reflowa a 320, 360, 768 y 1280 px con teclado, foco, zoom 200 % y axe-core limpio. |
+
+**Pruebas obligatorias**
+
+- Dominio/aplicación para fecha futura, zona/DST, fin derivado, mismo intervalo, estado terminal, jornada, cada rama aprobada al resolver `DP-CIT-06` y precondición obsoleta.
+- HTTP/contrato para éxito/repetición, `400`, `401`, `404`, `409`, `422`, campos desconocidos, `Idempotency-Key`, precondición y RFC 9457.
+- PostgreSQL real con dos tenants: atomicidad cita+historial+cambios, contigüidad, cruces, rollback y carrera coordinada de dos conexiones sin `sleep`.
+- Componente para resumen, confirmación, doble envío, conservación de datos, conflicto de agenda/versión, foco y `vitest-axe`.
+- E2E real: abrir una cita futura, reprogramarla a otro día, verificar el historial y ambas agendas; repetir la solicitud y comprobar un solo evento, con evidencia responsive/accesible.
+
+**Terminado cuando** una cita `confirmed` puede moverse una sola vez y de forma auditable a otro intervalo válido, con conflicto seguro ante cruces o datos obsoletos y sin adelantar T3, cancelación, estados ni notificaciones.
+
+---
+
 ## 7. Historias pendientes de redacción
 
 | Bloque | Rango reservado | Se redacta cuando |
 | --- | --- | --- |
 | B1 | `HU-025` – | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
 | B2 | `HU-040` – `HU-042` | Integradas en `main` (PR `#93`, `#96`, `#99`); seguimientos parciales en issues `#90`, `#95`, `#98` y `#100` |
-| B3 | `HU-063` – | `HU-060`–`HU-062` revisadas e implementadas (`DP-CIT-01`–`DP-CIT-05` resueltas; las tres integradas en `main`) |
+| B3 | `HU-066` – | `HU-063`–`HU-065` redactadas; continuar solo después de implementarlas y revisar sus hallazgos |
 | B4 | `HU-090` – | B3 cumple su criterio de salida |
 | B5 | `HU-130` – | B4 cumple su criterio de salida |
 | B6 | `HU-150` – | B5 cumple su criterio de salida |
