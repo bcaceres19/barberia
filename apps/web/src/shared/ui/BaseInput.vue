@@ -214,8 +214,7 @@ const handleFocus = (event: FocusEvent) => {
   color: var(--color-text-primary);
 }
 
-.base-input__label--required::after {
-  content: ' *';
+.base-input__required {
   color: var(--color-danger-action);
   margin-left: 2px;
 }
