@@ -20,8 +20,8 @@ issue: 123
 issue_url: "https://github.com/bcaceres19/barberia/issues/123"
 suggested_issue_title: "feat(booking): implementar HU-065 reprogramación auditada"
 branch: "feat/123-hu065-reprogramacion-turno"
-pr: null
-pr_url: null
+pr: 125
+pr_url: "https://github.com/bcaceres19/barberia/pull/125"
 depends_on:
   - "HU-064 integrada en main con token opaco de versión mediante PR #121 (cumplido)"
   - "DP-CIT-06 resuelta y propagada mediante DEC-076 (cumplido)"
