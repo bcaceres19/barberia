@@ -17,8 +17,8 @@ issue: 120
 issue_url: "https://github.com/bcaceres19/barberia/issues/120"
 suggested_issue_title: "feat(booking): implementar HU-064 detalle e historial de turno"
 branch: "feat/120-hu064-detalle-historial-turno"
-pr: null
-pr_url: null
+pr: 121
+pr_url: "https://github.com/bcaceres19/barberia/pull/121"
 depends_on:
   - "HU-063 integrada en main mediante PR #118 (cumplido)"
   - "Issue real propio con CA-064-01 a CA-064-08 (cumplido: #120)"

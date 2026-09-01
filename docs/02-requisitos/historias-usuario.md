@@ -51,7 +51,7 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | B0 · Cimientos, seguridad y primeras pantallas | `HU-001` – `HU-012` | Redactadas en este documento |
 | B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | Integradas en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), [PR #83](https://github.com/bcaceres19/barberia/pull/83), [PR #84](https://github.com/bcaceres19/barberia/pull/84)) |
 | B2 · Horario laboral y bloqueos | `HU-040` – `HU-042` | Integradas en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93), [PR #96](https://github.com/bcaceres19/barberia/pull/96), [PR #99](https://github.com/bcaceres19/barberia/pull/99)); seguimientos parciales en `#90`, `#95`, `#98` y `#100` |
-| B3 · Agenda, estados e integridad | `HU-060` – `HU-065` | `HU-060`–`HU-062` integradas; `HU-063` implementada (issue [#116](https://github.com/bcaceres19/barberia/issues/116)), integrada en `main` mediante [PR #118](https://github.com/bcaceres19/barberia/pull/118); `HU-064` implementada (issue [#120](https://github.com/bcaceres19/barberia/issues/120)), PR abierto, pendiente de CI; `HU-065` propuesta, bloqueada por `HU-064` integrada y por `DP-CIT-06` |
+| B3 · Agenda, estados e integridad | `HU-060` – `HU-065` | `HU-060`–`HU-062` integradas; `HU-063` implementada (issue [#116](https://github.com/bcaceres19/barberia/issues/116)), integrada en `main` mediante [PR #118](https://github.com/bcaceres19/barberia/pull/118); `HU-064` implementada (issue [#120](https://github.com/bcaceres19/barberia/issues/120)), [PR #121](https://github.com/bcaceres19/barberia/pull/121) abierto, pendiente de CI; `HU-065` propuesta, bloqueada por `HU-064` integrada y por `DP-CIT-06` |
 | B4 · Reserva pública y disponibilidad | `HU-090` – | Pendientes |
 | B5 · Notificaciones y recordatorios | `HU-130` – | Pendientes |
 | B6 · Operación, privacidad y piloto | `HU-150` – | Pendientes |
@@ -1449,7 +1449,7 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 | Reglas | `RN-CIT-01`, `RN-CIT-03`, `RN-CON-01`, `RN-CON-03`, `RN-DIS-05`, `RN-DIS-07`, `RN-HIS-01`, `RN-HIS-02`, `RN-TEN-01`, `RN-IDE-01` |
 | Decisiones | `DEC-002`, `DEC-004`, `DEC-007`, `DEC-014`, `DEC-016`, `DEC-020`, `DEC-024`, `DEC-035`–`DEC-039`, `DEC-043`, `DEC-074`, `DEC-075`; `DP-CIT-06` abierta |
 | Actor | Barbero autenticado |
-| Depende de | `HU-064` integrada en `main` (implementada, PR abierto, pendiente de CI); `DP-CIT-06` resuelta y propagada mediante un nuevo `DEC-*` |
+| Depende de | `HU-064` integrada en `main` (implementada, [PR #121](https://github.com/bcaceres19/barberia/pull/121) abierto, pendiente de CI); `DP-CIT-06` resuelta y propagada mediante un nuevo `DEC-*` |
 | Bloquea | Modificación T3, cancelación y demás transiciones visibles de B3 |
 | Estado | Propuesta bloqueada por `DP-CIT-06`; prompt `PROMPT-HU-065-v1` en `draft`, `issue: pending` |
 | Riesgo | Una reprogramación no atómica, sin precondición de versión o sin la exclusión PostgreSQL puede perder un cambio concurrente, dejar el historial incompleto o guardar dos turnos cruzados. |
