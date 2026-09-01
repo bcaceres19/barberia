@@ -19,6 +19,7 @@ import type {
   FetchBarberSummariesOutcome,
   FetchBarbershopTimezoneOutcome,
   FetchDailyAgendaOutcome,
+  RescheduleAppointmentOutcome,
 } from '../model/appointmentOutcome'
 import type { DailyAgendaEntry } from '../model/dailyAgenda'
 
@@ -275,6 +276,52 @@ function toHistoryEntry(data: {
       previousValue: c.previousValue,
       newValue: c.newValue,
     })),
+  }
+}
+
+// rescheduleAppointment (HU-065, T2): versionToken es el token opaco leído
+// del detalle (HU-064), enviado como precondición `If-Match`; el servidor
+// responde `version-conflict` si la representación ya cambió.
+export async function rescheduleAppointment(
+  appointmentId: string,
+  input: { startsAt: string },
+  versionToken: string,
+  idempotencyKey: string,
+): Promise<RescheduleAppointmentOutcome> {
+  try {
+    const { data, response, error } = await httpClient.POST(
+      '/private/appointments/{appointmentId}/reschedule',
+      {
+        params: {
+          path: { appointmentId },
+          header: { 'Idempotency-Key': idempotencyKey, 'If-Match': versionToken },
+        },
+        body: { startsAt: input.startsAt },
+      },
+    )
+    if (response.ok && data) {
+      return { kind: 'success', startsAt: data.startsAt }
+    }
+    switch (response.status) {
+      case 404:
+        return { kind: 'not-found' }
+      case 409:
+        if (isProblemCode(error, 'version-conflict')) return { kind: 'version-conflict' }
+        if (isProblemCode(error, 'invalid-state')) return { kind: 'invalid-state' }
+        if (
+          isProblemCode(error, 'idempotency-conflict') ||
+          isProblemCode(error, 'idempotency-locked')
+        ) {
+          return { kind: 'idempotency-conflict' }
+        }
+        return { kind: 'conflict', detail: problemDetail(error) }
+      case 422:
+        return { kind: 'validation-error', detail: problemDetail(error) }
+      default:
+        return { kind: 'unexpected-error' }
+    }
+  } catch {
+    return { kind: 'network-error' }
   }
 }
 

@@ -241,6 +241,12 @@ func (s *stubRepository) ListAppointmentHistory(
 	panic("no usado")
 }
 
+func (s *stubRepository) Reschedule(
+	_ context.Context, _ string, _ booking.RescheduleInput, _ idempotency.Key, _ idempotency.Fingerprint,
+) (booking.RescheduleResult, error) {
+	panic("no usado")
+}
+
 func (s *stubRepository) CustomerNames(
 	_ context.Context, _ string, _ []string,
 ) (map[string]string, error) {

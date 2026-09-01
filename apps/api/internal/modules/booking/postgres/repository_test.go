@@ -14,6 +14,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"os"
 	"sync"
 	"testing"
@@ -88,6 +89,21 @@ func uniqueSuffix(t *testing.T) string {
 	return hex.EncodeToString(buf)
 }
 
+// uniqueHistoryID genera un id con forma de UUID a partir de 16 bytes
+// aleatorios frescos: para fixtures de appointment_history insertadas por
+// SQL directo (columna `id uuid`) que necesitan un valor único en cada
+// corrida, nunca un literal fijo como "aaaaaaaa-0000-..." (colisiona con
+// `appointment_history_id_pk` al repetir la suite contra el mismo
+// PostgreSQL persistente).
+func uniqueHistoryID(t *testing.T) string {
+	t.Helper()
+	buf := make([]byte, 16)
+	if _, err := rand.Read(buf); err != nil {
+		t.Fatalf("rand.Read: %v", err)
+	}
+	return fmt.Sprintf("%x-%x-%x-%x-%x", buf[0:4], buf[4:6], buf[6:8], buf[8:10], buf[10:16])
+}
+
 // testStartOffset deriva, de bytes aleatorios frescos, un desplazamiento en
 // minutos sobre una fecha base lejana en el futuro dentro de una ventana de
 // ~500 años (~2.6*10^8 minutos): cada ejecución de la suite reserva su
@@ -107,7 +123,16 @@ func testStartOffset(t *testing.T) time.Duration {
 	for _, b := range buf {
 		n = n<<8 | uint64(b)
 	}
-	const windowMinutes = 262_800_000 // ~500 años
+	// windowMinutes está acotada a que windowMinutes * time.Minute (ambos en
+	// nanosegundos) quepa en int64 (máx. ~9.223e18 ns): 150_000_000 minutos
+	// * 6e10 ns/min = 9e18 ns, con margen. Un valor mayor (262_800_000, la
+	// primera versión de esta constante) desborda int64 en ~41 % de los
+	// sorteos aleatorios -al multiplicar por time.Minute-, produciendo una
+	// fecha corrupta (por ejemplo, un año como 1808) que aun así pasaba la
+	// mayoría de las aserciones (relativas, no absolutas) hasta que una
+	// prueba de HU-065 comparó un valor así contra su propia lectura real
+	// de PostgreSQL y detectó la corrupción.
+	const windowMinutes = 150_000_000 // ~285 años, sin desbordar int64
 	return time.Duration(n%windowMinutes) * time.Minute
 }
 

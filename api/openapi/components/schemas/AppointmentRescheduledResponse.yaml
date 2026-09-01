@@ -1,0 +1,72 @@
+# Representación de una cita ya reprogramada por POST
+# /private/appointments/{appointmentId}/reschedule (HU-065). Deliberadamente
+# SIN updatedAt crudo (HU-064): versionToken es el único dato de
+# concurrencia expuesto, ya actualizado para una reprogramación posterior
+# sin volver a pedir el detalle.
+type: object
+properties:
+  id:
+    type: string
+    format: uuid
+  barberId:
+    type: string
+    format: uuid
+  serviceId:
+    type: string
+    format: uuid
+  customerId:
+    type: string
+    format: uuid
+  attendeeName:
+    type: string
+  startsAt:
+    type: string
+    format: date-time
+  endsAt:
+    type: string
+    format: date-time
+  status:
+    type: string
+    enum: [confirmed, completed, cancelled_by_customer, cancelled_by_barber, no_show]
+  origin:
+    type: string
+    enum: [public, manual]
+  serviceName:
+    type: string
+  durationMinutes:
+    type: integer
+  priceAmount:
+    type: string
+    examples:
+      - "20000.00"
+  currency:
+    type: string
+    examples:
+      - COP
+  customerNote:
+    type: [string, "null"]
+  versionToken:
+    type: string
+    description: >
+      Token opaco de concurrencia ya actualizado tras esta escritura: no lo
+      decodifiques, úsalo como `If-Match` en una reprogramación posterior.
+  createdAt:
+    type: string
+    format: date-time
+required:
+  - id
+  - barberId
+  - serviceId
+  - customerId
+  - attendeeName
+  - startsAt
+  - endsAt
+  - status
+  - origin
+  - serviceName
+  - durationMinutes
+  - priceAmount
+  - currency
+  - customerNote
+  - versionToken
+  - createdAt

@@ -337,3 +337,98 @@ func newAppointmentHistoryChangeResponses(changes []booking.HistoryChange) []App
 	}
 	return items
 }
+
+// ifMatchHeader transporta el token opaco de versión (HU-064) como
+// precondición de concurrencia optimista (HU-065): mismo criterio de
+// cabecera obligatoria para una escritura crítica que
+// httpserver.IdempotencyKeyHeader, pero exclusivo de operaciones que leen
+// una representación antes de mutarla.
+const ifMatchHeader = "If-Match"
+
+// RescheduleAppointmentHandler expone
+// POST /private/appointments/{appointmentId}/reschedule (HU-065, T2,
+// CA-065-01 a CA-065-08), protegido por el protocolo de idempotencia
+// reutilizable de HU-004 (RN-IDE-01, DEC-043) y por la precondición de
+// versión de HU-064 (cabecera If-Match).
+type RescheduleAppointmentHandler struct {
+	service *booking.RescheduleService
+}
+
+// NewRescheduleAppointmentHandler construye el handler de reprogramación.
+func NewRescheduleAppointmentHandler(service *booking.RescheduleService) *RescheduleAppointmentHandler {
+	return &RescheduleAppointmentHandler{service: service}
+}
+
+// ServeHTTP implementa http.Handler.
+func (h *RescheduleAppointmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+	principal, ok := principalOrInternalError(w, r, requestID)
+	if !ok {
+		return
+	}
+
+	appointmentID := httpserver.URLParam(r, appointmentIDParam)
+
+	// 1. Cabeceras: obligatorias, validadas antes de tocar PostgreSQL o leer
+	//    el cuerpo (mismo orden que CreateManualAppointmentHandler).
+	key, err := httpserver.IdempotencyKeyFromRequest(r)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+	versionToken := r.Header.Get(ifMatchHeader)
+	if versionToken == "" {
+		httpserver.WriteProblem(w, httpserver.Translate(
+			apperr.Invalid("falta la cabecera If-Match con el token de versión del turno"), requestID))
+		return
+	}
+
+	// 2. Cuerpo CRUDO, leído una sola vez: la huella de idempotencia debe
+	//    calcularse sobre los bytes exactos recibidos.
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+			return
+		}
+		httpserver.WriteProblem(w, httpserver.Translate(apperr.Invalid("cuerpo de la solicitud ilegible"), requestID))
+		return
+	}
+
+	var req RescheduleAppointmentRequest
+	dec := json.NewDecoder(bytes.NewReader(body))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
+		writeUnknownFieldOrInvalidJSONProblem(w, requestID)
+		return
+	}
+	if dec.More() {
+		writeUnknownFieldOrInvalidJSONProblem(w, requestID)
+		return
+	}
+
+	fingerprint := httpserver.IdempotencyFingerprint(r, body)
+
+	result, err := h.service.RescheduleAppointment(r.Context(), principal.BarbershopID, booking.RescheduleAppointmentRequest{
+		AppointmentID:        appointmentID,
+		NewStartsAtLocal:     req.StartsAt,
+		ExpectedVersionToken: versionToken,
+		ActorStaffUserID:     principal.StaffUserID,
+	}, key, fingerprint)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	switch result.Decision.Outcome {
+	case idempotency.OutcomeProceed, idempotency.OutcomeReplay:
+		httpserver.WriteStoredResponse(w, result.Response)
+	default:
+		// Conflicto de idempotencia (RN-IDE-01) u operación en curso
+		// (DEC-043): Translate ya sabe convertirlo en 409. Los conflictos de
+		// agenda, estado y versión ya se tradujeron arriba, antes de llegar
+		// a esta rama (nunca llegan como una Decision distinta de Proceed).
+		httpserver.WriteProblem(w, httpserver.Translate(result.Decision.AsError(), requestID))
+	}
+}

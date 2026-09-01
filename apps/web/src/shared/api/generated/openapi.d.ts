@@ -816,6 +816,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/private/appointments/{appointmentId}/reschedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reprogramar un turno (T2)
+         * @description Mueve el intervalo de una cita `confirmed` a un nuevo inicio futuro (HU-065, `T2` de `estados-citas.md`), sin cambiar ningún otro dato: barbero, servicio, duración, precio, cliente, persona, origen, nota y estado permanecen iguales. El fin se deriva de `durationMinutesSnapshot`, nunca del cliente. Protegida con clave de idempotencia (RN-IDE-01, DEC-043) y con la precondición `If-Match` (el `versionToken` de una lectura anterior del detalle, HU-064): si la representación vigente ya cambió, responde `409` con `code: version-conflict` en vez de aplicar un último escritor silencioso. Un intervalo idéntico al vigente es un no-op exitoso: no genera una entrada de historial nueva. Un bloqueo vigente del barbero en el nuevo intervalo rechaza la operación con el mismo `409` que un cruce con otra cita (`DEC-076`). El tenant y el actor se derivan exclusivamente de `SessionCookie`.
+         */
+        post: operations["rescheduleAppointment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1941,6 +1961,44 @@ export interface components {
             /** @description Cursor opaco para pedir la siguiente página con el parámetro `cursor`. `null` cuando esta página es la última. */
             nextCursor: string | null;
         };
+        /** @description Nuevo inicio de un turno `confirmed`. El fin se deriva de la duración ya congelada (`durationMinutesSnapshot`), nunca del cliente ni del catálogo vigente. */
+        RescheduleAppointmentRequest: {
+            /**
+             * @description Fecha y hora civiles del nuevo inicio ("AAAA-MM-DDTHH:MM:SS"), sin desplazamiento de zona: se interpreta en la zona IANA vigente de la barbería (RN-DIS-07). Debe ser estrictamente futuro.
+             * @example 2026-09-10T14:30:00
+             */
+            startsAt: string;
+        };
+        AppointmentRescheduledResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            barberId: string;
+            /** Format: uuid */
+            serviceId: string;
+            /** Format: uuid */
+            customerId: string;
+            attendeeName: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** @enum {string} */
+            status: "confirmed" | "completed" | "cancelled_by_customer" | "cancelled_by_barber" | "no_show";
+            /** @enum {string} */
+            origin: "public" | "manual";
+            serviceName: string;
+            durationMinutes: number;
+            /** @example 20000.00 */
+            priceAmount: string;
+            /** @example COP */
+            currency: string;
+            customerNote: string | null;
+            /** @description Token opaco de concurrencia ya actualizado tras esta escritura: no lo decodifiques, úsalo como `If-Match` en una reprogramación posterior. */
+            versionToken: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
     };
     responses: {
         /** @description Sesión cerrada. La cookie de sesión queda limpiada en Set-Cookie. */
@@ -2680,10 +2738,32 @@ export interface components {
                 "application/json": components["schemas"]["AppointmentHistoryResponse"];
             };
         };
+        /** @description El turno se reprogramó (o, si el nuevo inicio coincide exactamente con el vigente, la operación fue un no-op exitoso sin nueva entrada de historial). */
+        AppointmentRescheduled: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["AppointmentRescheduledResponse"];
+            };
+        };
+        /** @description El cuerpo es JSON válido y `startsAt` tiene el formato civil correcto, pero no es un instante futuro. No se persistió nada. */
+        RescheduleValidationProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
     };
     parameters: {
         /** @description Clave elegida por el cliente que identifica un intento de escritura crítica. Repetir la misma clave con el mismo contenido (método, ruta y cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo. Repetirla con contenido distinto es un conflicto: usa una clave nueva para una solicitud distinta. */
         IdempotencyKey: string;
+        /** @description Token opaco de versión de la representación que el cliente leyó antes de esta escritura (`versionToken` de la respuesta de detalle). Si ya no coincide con la versión vigente del recurso, la operación responde `409` con `code: version-conflict`. */
+        IfMatch: string;
     };
     requestBodies: never;
     headers: {
@@ -4006,6 +4086,54 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    rescheduleAppointment: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Clave elegida por el cliente que identifica un intento de escritura crítica. Repetir la misma clave con el mismo contenido (método, ruta y cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo. Repetirla con contenido distinto es un conflicto: usa una clave nueva para una solicitud distinta. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                /** @description Token opaco de versión de la representación que el cliente leyó antes de esta escritura (`versionToken` de la respuesta de detalle). Si ya no coincide con la versión vigente del recurso, la operación responde `409` con `code: version-conflict`. */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                /** @description Identificador de la cita. */
+                appointmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RescheduleAppointmentRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["AppointmentRescheduled"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            /** @description `appointmentId` con forma inválida, inexistente o de otra barbería (RN-TEN-01), sin distinguir la causa. */
+            404: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Cuatro conflictos distinguibles por `code`, nunca por `detail`: conflicto de idempotencia (misma clave con otro contenido u otra operación, `IdempotencyConflictProblem`) u operación en curso con la misma clave (`IdempotencyLockedProblem`, DEC-043); conflicto de agenda (`code: conflict`, cruce con otra cita o bloqueo vigente, `DEC-076`); conflicto de versión (`code: version-conflict`, el `If-Match` enviado ya no coincide con la representación vigente); o estado inválido (`code: invalid-state`, la cita ya no está `confirmed`). */
+            409: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["RescheduleValidationProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

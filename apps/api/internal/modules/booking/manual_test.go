@@ -61,6 +61,12 @@ func (f *fakeManualRepository) CustomerNames(context.Context, string, []string) 
 	panic("no usado por ManualBookingService")
 }
 
+func (f *fakeManualRepository) Reschedule(
+	context.Context, string, booking.RescheduleInput, idempotency.Key, idempotency.Fingerprint,
+) (booking.RescheduleResult, error) {
+	panic("no usado por ManualBookingService")
+}
+
 var _ booking.Repository = (*fakeManualRepository)(nil)
 
 type fakeBarberServicePort struct {

@@ -937,3 +937,340 @@ func (r *Repository) CustomerNames(ctx context.Context, barbershopID string, cus
 	}
 	return names, nil
 }
+
+// ---------------------------------------------------------------------------
+// HU-065: reprogramación auditada (T2)
+// ---------------------------------------------------------------------------
+
+// rescheduleAppointmentOperation identifica, para el protocolo de
+// idempotencia (RN-IDE-01, DEC-043), la operación de HU-065: una clave ya
+// usada para crear un turno o para cualquier otra operación no puede
+// reutilizarse aquí (idempotency_begin responde OutcomeConflictOperation).
+const rescheduleAppointmentOperation idempotency.Operation = "reschedule_appointment"
+
+// rescheduleAppointmentIdempotencyTTL es la vigencia de una reclamación
+// OutcomeProceed sin completar todavía, mismo valor que
+// createManualAppointmentIdempotencyTTL: sin ninguna razón de negocio para
+// diferir de ese precedente.
+const rescheduleAppointmentIdempotencyTTL = 10 * time.Minute
+
+// currentAppointmentForReschedule es la fila que lockAppointmentForReschedule
+// lee con `FOR UPDATE`: exactamente los campos que Reschedule necesita para
+// verificar la precondición y reconstruir la representación final, sin
+// columnas de control innecesarias (occupies_schedule, barbershop_id).
+type currentAppointmentForReschedule struct {
+	id                      string
+	barberID                string
+	serviceID               string
+	customerID              string
+	attendeeName            string
+	startsAt                time.Time
+	endsAt                  time.Time
+	status                  string
+	origin                  string
+	serviceNameSnapshot     string
+	durationMinutesSnapshot int
+	priceAmountSnapshot     string
+	currencySnapshot        string
+	customerNote            *string
+	createdAt               time.Time
+	updatedAt               time.Time
+}
+
+// lockAppointmentForReschedule bloquea la fila (`FOR UPDATE`) dentro de la
+// transacción vigente: ninguna otra transacción puede leer-modificar la
+// misma fila hasta que esta transacción termine (COMMIT o ROLLBACK), lo que
+// hace segura la verificación de versión/estado que Reschedule ejecuta a
+// continuación frente a una segunda solicitud concurrente sobre la misma
+// cita. found=false cubre appointmentID inexistente o de otra barbería.
+func lockAppointmentForReschedule(
+	ctx context.Context,
+	q database.Queries,
+	barbershopID, appointmentID string,
+) (currentAppointmentForReschedule, bool, error) {
+	var row currentAppointmentForReschedule
+	err := q.QueryRow(ctx, `
+		SELECT id, barber_id, service_id, customer_id, attendee_name,
+		       starts_at, ends_at, status, origin,
+		       service_name_snapshot, duration_minutes_snapshot, price_amount_snapshot, price_currency_snapshot,
+		       customer_note, created_at, updated_at
+		  FROM appointment
+		 WHERE barbershop_id = $1 AND id = $2
+		 FOR UPDATE`,
+		barbershopID, appointmentID,
+	).Scan(
+		&row.id, &row.barberID, &row.serviceID, &row.customerID, &row.attendeeName,
+		&row.startsAt, &row.endsAt, &row.status, &row.origin,
+		&row.serviceNameSnapshot, &row.durationMinutesSnapshot, &row.priceAmountSnapshot, &row.currencySnapshot,
+		&row.customerNote, &row.createdAt, &row.updatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return currentAppointmentForReschedule{}, false, nil
+		}
+		return currentAppointmentForReschedule{}, false, err
+	}
+	return row, true, nil
+}
+
+// updateAppointmentInterval aplica el nuevo intervalo sobre la fila YA
+// bloqueada por lockAppointmentForReschedule, dentro de la misma
+// transacción: el disparador appointment_set_updated_at recalcula
+// updated_at, y la misma restricción de exclusión GiST que protege un
+// INSERT (appointment_barber_interval_excl) se evalúa igual sobre este
+// UPDATE, excluyendo automáticamente la propia fila del chequeo.
+func updateAppointmentInterval(
+	ctx context.Context,
+	q database.Queries,
+	barbershopID, appointmentID string,
+	newStartsAt, newEndsAt time.Time,
+) (time.Time, error) {
+	var updatedAt time.Time
+	err := q.QueryRow(ctx, `
+		UPDATE appointment
+		   SET starts_at = $3, ends_at = $4
+		 WHERE barbershop_id = $1 AND id = $2
+		RETURNING updated_at`,
+		barbershopID, appointmentID, newStartsAt, newEndsAt,
+	).Scan(&updatedAt)
+	if err != nil {
+		if isConstraintViolation(err, "23P01", appointmentBarberIntervalExclConstraint) {
+			return time.Time{}, errScheduleConflict()
+		}
+		if isDeadlockDetected(err) {
+			// Mismo criterio que insertAppointment: PostgreSQL puede
+			// reportar 40P01 en vez de 23P01 para la transacción perdedora
+			// de dos escrituras concurrentes que se disputan el mismo
+			// índice GiST.
+			return time.Time{}, errScheduleConflict()
+		}
+		return time.Time{}, err
+	}
+	return updatedAt, nil
+}
+
+// insertAppointmentRescheduledHistory inserta, dentro de la misma
+// transacción, el evento appointment_rescheduled y sus dos cambios
+// anterior/nuevo (starts_at, ends_at), como instantes RFC 3339 en UTC: un
+// valor determinista y sin ambigüedad de zona, apto para
+// appointment_history_change.previous_value/new_value (texto, hasta 1000
+// caracteres).
+func insertAppointmentRescheduledHistory(
+	ctx context.Context,
+	q database.Queries,
+	barbershopID, appointmentID string,
+	actor booking.Actor,
+	prevStartsAt, prevEndsAt, newStartsAt, newEndsAt time.Time,
+) error {
+	var historyID string
+	err := q.QueryRow(ctx, `
+		INSERT INTO appointment_history (
+			barbershop_id, appointment_id, event_type, actor_type, actor_staff_user_id, actor_customer_id
+		) VALUES ($1, $2, 'appointment_rescheduled', $3, $4, $5)
+		RETURNING id`,
+		barbershopID, appointmentID, string(actor.Type), actor.StaffUserID, actor.CustomerID,
+	).Scan(&historyID)
+	if err != nil {
+		return err
+	}
+
+	_, err = q.Exec(ctx, `
+		INSERT INTO appointment_history_change (barbershop_id, history_id, field_name, previous_value, new_value)
+		VALUES
+			($1, $2, 'starts_at', $3, $4),
+			($1, $2, 'ends_at', $5, $6)`,
+		barbershopID, historyID,
+		prevStartsAt.UTC().Format(time.RFC3339), newStartsAt.UTC().Format(time.RFC3339),
+		prevEndsAt.UTC().Format(time.RFC3339), newEndsAt.UTC().Format(time.RFC3339),
+	)
+	return err
+}
+
+func newRescheduleAppointment(row currentAppointmentForReschedule) (booking.RescheduleAppointment, error) {
+	cents, err := parsePriceAmount(row.priceAmountSnapshot)
+	if err != nil {
+		return booking.RescheduleAppointment{}, fmt.Errorf("booking/postgres: price_amount_snapshot ilegible: %w", err)
+	}
+	return booking.RescheduleAppointment{
+		ID:                       row.id,
+		BarberID:                 row.barberID,
+		ServiceID:                row.serviceID,
+		CustomerID:               row.customerID,
+		AttendeeName:             row.attendeeName,
+		StartsAt:                 row.startsAt,
+		EndsAt:                   row.endsAt,
+		Status:                   booking.Status(row.status),
+		Origin:                   booking.Origin(row.origin),
+		ServiceNameSnapshot:      row.serviceNameSnapshot,
+		DurationMinutesSnapshot:  row.durationMinutesSnapshot,
+		PriceAmountCentsSnapshot: cents,
+		CurrencySnapshot:         row.currencySnapshot,
+		CustomerNote:             row.customerNote,
+		VersionToken:             booking.EncodeVersionToken(row.id, row.updatedAt),
+		CreatedAt:                row.createdAt,
+	}, nil
+}
+
+// rescheduleAppointmentResponseWire es la forma exacta que Reschedule
+// serializa como cuerpo almacenado de idempotencia: debe coincidir campo a
+// campo con httpapi.AppointmentRescheduledResponse para que una repetición
+// exacta reproduzca bytes idénticos a los de la respuesta original (mismo
+// criterio que manualAppointmentResponseWire).
+type rescheduleAppointmentResponseWire struct {
+	ID              string  `json:"id"`
+	BarberID        string  `json:"barberId"`
+	ServiceID       string  `json:"serviceId"`
+	CustomerID      string  `json:"customerId"`
+	AttendeeName    string  `json:"attendeeName"`
+	StartsAt        string  `json:"startsAt"`
+	EndsAt          string  `json:"endsAt"`
+	Status          string  `json:"status"`
+	Origin          string  `json:"origin"`
+	ServiceName     string  `json:"serviceName"`
+	DurationMinutes int     `json:"durationMinutes"`
+	PriceAmount     string  `json:"priceAmount"`
+	Currency        string  `json:"currency"`
+	CustomerNote    *string `json:"customerNote"`
+	VersionToken    string  `json:"versionToken"`
+	CreatedAt       string  `json:"createdAt"`
+}
+
+func newRescheduleAppointmentResponseWire(a booking.RescheduleAppointment) rescheduleAppointmentResponseWire {
+	return rescheduleAppointmentResponseWire{
+		ID:              a.ID,
+		BarberID:        a.BarberID,
+		ServiceID:       a.ServiceID,
+		CustomerID:      a.CustomerID,
+		AttendeeName:    a.AttendeeName,
+		StartsAt:        a.StartsAt.Format(time.RFC3339),
+		EndsAt:          a.EndsAt.Format(time.RFC3339),
+		Status:          string(a.Status),
+		Origin:          string(a.Origin),
+		ServiceName:     a.ServiceNameSnapshot,
+		DurationMinutes: a.DurationMinutesSnapshot,
+		PriceAmount:     formatPriceAmount(a.PriceAmountCentsSnapshot),
+		Currency:        a.CurrencySnapshot,
+		CustomerNote:    a.CustomerNote,
+		VersionToken:    a.VersionToken,
+		CreatedAt:       a.CreatedAt.Format(time.RFC3339),
+	}
+}
+
+func errAppointmentNotFound() error {
+	return apperr.NotFound("no existe una cita con ese identificador")
+}
+
+// errVersionConflict cubre HU-065: el token opaco de versión que el cliente
+// envió (cabecera If-Match) ya no coincide con la representación vigente,
+// verificado con la fila ya bloqueada dentro de la transacción.
+func errVersionConflict() error {
+	return apperr.VersionConflict("el turno cambió desde que se leyó; recarga antes de reintentar")
+}
+
+// errAppointmentNotConfirmed cubre HU-065: T2 solo aplica sobre una cita
+// `confirmed`, verificado con la fila ya bloqueada dentro de la transacción
+// (nunca confía en el estado que RescheduleService leyó antes de abrir
+// esta transacción).
+func errAppointmentNotConfirmed() error {
+	return apperr.InvalidState("el turno ya no está confirmado; recarga para ver su estado actual")
+}
+
+// Reschedule implementa booking.Repository.Reschedule (HU-065, T2): Begin,
+// bloquear la fila, verificar versión/estado con la fila ya bloqueada,
+// aplicar el nuevo intervalo (o detectar el no-op del mismo intervalo),
+// insertar el evento appointment_rescheduled y Complete, todo dentro de UNA
+// sola InTenantTx.
+func (r *Repository) Reschedule(
+	ctx context.Context,
+	barbershopID string,
+	input booking.RescheduleInput,
+	key idempotency.Key,
+	fingerprint idempotency.Fingerprint,
+) (booking.RescheduleResult, error) {
+	shop, err := database.ValidBarbershopID(barbershopID)
+	if err != nil {
+		return booking.RescheduleResult{}, fmt.Errorf("booking/postgres: %w", err)
+	}
+
+	var result booking.RescheduleResult
+
+	err = r.db.InTenantTx(ctx, shop, func(ctx context.Context, q database.Queries) error {
+		decision, err := r.coord.Begin(ctx, q, shop, key, rescheduleAppointmentOperation, fingerprint, rescheduleAppointmentIdempotencyTTL)
+		if err != nil {
+			return fmt.Errorf("idempotency begin: %w", err)
+		}
+		result.Decision = decision
+
+		if decision.Outcome != idempotency.OutcomeProceed {
+			if decision.Outcome == idempotency.OutcomeReplay {
+				result.Response = decision.Response
+			}
+			return nil
+		}
+
+		current, found, err := lockAppointmentForReschedule(ctx, q, barbershopID, input.AppointmentID)
+		if err != nil {
+			return err
+		}
+		if !found {
+			return errAppointmentNotFound()
+		}
+
+		if booking.EncodeVersionToken(current.id, current.updatedAt) != input.ExpectedVersionToken {
+			return errVersionConflict()
+		}
+		if current.status != string(booking.StatusConfirmed) {
+			return errAppointmentNotConfirmed()
+		}
+
+		if !current.startsAt.Equal(input.NewStartsAt) || !current.endsAt.Equal(input.NewEndsAt) {
+			updatedAt, err := updateAppointmentInterval(ctx, q, barbershopID, current.id, input.NewStartsAt, input.NewEndsAt)
+			if err != nil {
+				return err
+			}
+			if err := insertAppointmentRescheduledHistory(
+				ctx, q, barbershopID, current.id, input.Actor,
+				current.startsAt, current.endsAt, input.NewStartsAt, input.NewEndsAt,
+			); err != nil {
+				return err
+			}
+			current.startsAt = input.NewStartsAt
+			current.endsAt = input.NewEndsAt
+			current.updatedAt = updatedAt
+		}
+		// El intervalo idéntico es un no-op exitoso (trabajo requerido
+		// §2.6): ni UPDATE ni historial, la fila conserva su updated_at
+		// vigente.
+
+		final, err := newRescheduleAppointment(current)
+		if err != nil {
+			return err
+		}
+
+		body, err := json.Marshal(newRescheduleAppointmentResponseWire(final))
+		if err != nil {
+			return fmt.Errorf("marshal rescheduled appointment: %w", err)
+		}
+		stored := idempotency.StoredResponse{
+			Status:      200,
+			ContentType: "application/json",
+			Body:        string(body),
+		}
+
+		ok, err := r.coord.Complete(ctx, q, shop, key, stored)
+		if err != nil {
+			return fmt.Errorf("idempotency complete: %w", err)
+		}
+		if !ok {
+			return fmt.Errorf("idempotency complete: la reclamación ya no estaba in_progress")
+		}
+
+		result.Appointment = final
+		result.Response = stored
+		return nil
+	})
+	if err != nil {
+		return booking.RescheduleResult{}, err
+	}
+	return result, nil
+}

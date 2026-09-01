@@ -115,6 +115,26 @@ var conflictProblem = problemSpec{
 	status:  http.StatusConflict,
 }
 
+// versionConflictProblem cubre apperr.KindVersionConflict (HU-065): el
+// token opaco de versión que el cliente envió ya no coincide con la
+// representación vigente. Código distinto de "conflict" a propósito: el
+// cliente debe recargar la representación, no elegir otro destino.
+var versionConflictProblem = problemSpec{
+	typeURI: "/api/v1/problems/version-conflict",
+	title:   "Conflicto de versión",
+	code:    "version-conflict",
+	status:  http.StatusConflict,
+}
+
+// invalidStateProblem cubre apperr.KindInvalidState (HU-065): la operación
+// exige un estado previo concreto y el recurso ya no está en ese estado.
+var invalidStateProblem = problemSpec{
+	typeURI: "/api/v1/problems/invalid-state",
+	title:   "Estado inválido",
+	code:    "invalid-state",
+	status:  http.StatusConflict,
+}
+
 // Translate convierte cualquier error en un Problem seguro para el cliente.
 // Es el único punto central de traducción que exige
 // docs/04-arquitectura/backend-go.md sección 5 ("los errores de dominio se
@@ -150,6 +170,10 @@ func Translate(err error, requestID string) Problem {
 			return newProblem(challengeRequiredProblem, appErr.Message, requestID)
 		case apperr.KindConflict:
 			return newProblem(conflictProblem, appErr.Message, requestID)
+		case apperr.KindVersionConflict:
+			return newProblem(versionConflictProblem, appErr.Message, requestID)
+		case apperr.KindInvalidState:
+			return newProblem(invalidStateProblem, appErr.Message, requestID)
 		}
 	}
 

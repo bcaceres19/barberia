@@ -237,9 +237,9 @@ func TestListAppointmentHistory_Pagination_TwoPagesWithoutOverlapOrDuplicate(t *
 	// CreateInternal); se agregan tres filas sintéticas más tarde para
 	// tener 4 en total y forzar dos páginas de tamaño 2.
 	base := start.Add(1 * time.Hour)
-	insertSyntheticHistoryRow(t, db, shopQ, appointmentID, base, "aaaaaaaa-0000-0000-0000-000000000001")
-	insertSyntheticHistoryRow(t, db, shopQ, appointmentID, base.Add(1*time.Minute), "aaaaaaaa-0000-0000-0000-000000000002")
-	insertSyntheticHistoryRow(t, db, shopQ, appointmentID, base.Add(2*time.Minute), "aaaaaaaa-0000-0000-0000-000000000003")
+	insertSyntheticHistoryRow(t, db, shopQ, appointmentID, base, uniqueHistoryID(t))
+	insertSyntheticHistoryRow(t, db, shopQ, appointmentID, base.Add(1*time.Minute), uniqueHistoryID(t))
+	insertSyntheticHistoryRow(t, db, shopQ, appointmentID, base.Add(2*time.Minute), uniqueHistoryID(t))
 
 	page1, next1, found, err := repo.ListAppointmentHistory(context.Background(), string(shopQ), appointmentID, nil, 2)
 	if err != nil {
@@ -296,7 +296,7 @@ func TestListAppointmentHistory_ChangesAttachedToTheirOwnEntry(t *testing.T) {
 		t.Fatalf("CreateInternal: %v", err)
 	}
 	appointmentID := created.Appointment.ID
-	historyID := "bbbbbbbb-0000-0000-0000-000000000001"
+	historyID := uniqueHistoryID(t)
 	insertSyntheticHistoryRow(t, db, shopQ, appointmentID, start.Add(1*time.Hour), historyID)
 
 	err = db.InTenantTx(context.Background(), shopQ, func(ctx context.Context, q database.Queries) error {

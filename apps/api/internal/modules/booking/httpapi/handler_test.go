@@ -53,6 +53,12 @@ func (f *fakeRepository) CustomerNames(context.Context, string, []string) (map[s
 	panic("no usado")
 }
 
+func (f *fakeRepository) Reschedule(
+	context.Context, string, booking.RescheduleInput, idempotency.Key, idempotency.Fingerprint,
+) (booking.RescheduleResult, error) {
+	panic("no usado")
+}
+
 var _ booking.Repository = (*fakeRepository)(nil)
 
 type fakeCatalog struct{}

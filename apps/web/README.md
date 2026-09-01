@@ -981,6 +981,69 @@ evidencia responsiva en los cuatro breakpoints (no forma parte de los
 checks de CI, que solo corren `test:unit`), mismo estado que
 `e2e/agenda-navegacion-fecha.spec.ts` (HU-063).
 
+## Reprogramación auditada de un turno (HU-065, T2)
+
+`AppointmentDetailPage.vue` gana la acción "Reprogramar turno"
+(`canReschedule = computed(() => detail.value?.status === 'confirmed')`):
+ningún estado terminal la muestra, porque `T3`/cancelación/`no_show` no
+existen todavía y no tienen acción propia que renderizar en su lugar. El
+botón abre un `BaseDialog` (mismo patrón que el diálogo de alta de
+`StaffPage.vue`) con la fecha/hora vigentes precargadas —
+`getCivilDateInTimezone`/`Intl.DateTimeFormat` en la zona de la barbería,
+nunca la del dispositivo (`RN-DIS-07`)— y una vista previa del nuevo fin
+calculada con `addMinutesToTimeString`, una función pura de aritmética de
+minutos sobre `"HH:MM"` deliberadamente sin `Date`/`Intl`: es una
+aproximación barata para la UI mientras el barbero escribe, nunca la fuente
+de verdad (el fin real lo deriva el servidor de
+`duration_minutes_snapshot` en la zona real).
+
+El envío llama a `rescheduleAppointment(appointmentId, {startsAt},
+detail.value.versionToken, idempotencyKey)`: `versionToken` viaja como
+cabecera `If-Match` (precondición de `HU-065` sobre el token opaco de
+`HU-064`) y `idempotencyKey` es una `let` mutable de módulo (no un `ref`,
+mismo criterio que `NewAppointmentPage.vue`), regenerada cada vez que el
+diálogo se abre — el límite natural de "un intento lógico" aquí, a
+diferencia de un formulario de página completa que solo la regenera tras un
+éxito. `RescheduleAppointmentOutcome` distingue cuatro conflictos por
+`kind` (`conflict` agenda/bloqueo, `version-conflict`, `invalid-state`,
+`idempotency-conflict`): los dos primeros conservan la fecha/hora elegidas
+en el formulario (el barbero puede corregir sin perder su intención);
+`version-conflict`/`invalid-state` ofrecen "Recargar" en vez de reenviar
+contra una representación que ya cambió.
+
+Al éxito, la respuesta del servidor solo trae `startsAt` — deliberadamente
+nunca `barberFullName`/`customerFullName`/contacto, que `T2` no toca y por
+eso el backend no vuelve a resolver — así que la pantalla nunca reconstruye
+un `AppointmentDetail` parcial con esos campos vacíos: cierra el diálogo y
+llama a `loadPage()`, la misma función de carga completa que `onMounted`,
+para recargar detalle e historial reales. `backDate` (antes una constante
+`backQuery` capturada una sola vez, HU-064) pasa a ser un `ref` que se
+actualiza a la fecha civil del nuevo inicio tras un éxito, para que "Volver
+a la agenda" nunca deje la fecha vieja presentada como vigente.
+
+### Pruebas
+
+Componente (`src/modules/agenda/pages/__tests__/AppointmentDetailPage.test.ts`,
+20 pruebas nuevas): acción visible solo con `status: 'confirmed'`, diálogo
+prellenado con fecha/hora/vista previa, éxito que recarga detalle+historial
+y mueve el enlace "Volver" a la fecha nueva, doble envío bloqueado, misma
+clave de idempotencia entre un reintento tras error de red, conflicto de
+agenda con mensaje del servidor y datos conservados, conflicto de
+versión/estado con "Recargar" que sí refresca, y `vitest-axe` sin
+violaciones con el diálogo abierto. El atrapado/restauración de foco del
+diálogo no se reprueba aquí a propósito (es responsabilidad genérica de
+`BaseDialog`, y jsdom no calcula `offsetParent`, la misma razón por la que
+`BaseDialog.test.ts`/`StaffPage.test.ts` tampoco lo verifican a este nivel).
+
+E2E: `e2e/agenda-reprogramacion-turno.spec.ts` (reprograma a otro día,
+verifica que la agenda del día original queda vacía y la nueva lo muestra,
+un único evento "Turno reprogramado" en el historial; un segundo recorrido
+reintenta el mismo envío tras una caída de red simulada y confirma que no
+se duplica el evento). Pendiente de ejecución contra Chromium real y de
+evidencia responsiva en los cuatro breakpoints (no forma parte de los
+checks de CI, que solo corren `test:unit`), mismo estado que
+`e2e/agenda-detalle-historial.spec.ts` (HU-064).
+
 ## Sistema visual base (HU-009)
 
 Fuente normativa completa:

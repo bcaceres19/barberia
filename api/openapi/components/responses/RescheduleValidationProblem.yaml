@@ -1,0 +1,25 @@
+# 422 de POST /private/appointments/{appointmentId}/reschedule (HU-065):
+# cuerpo bien formado que incumple una validación de negocio, distinto del
+# 400 de JSON/formato inválido y del 409 de conflicto de agenda/estado/
+# versión.
+description: >
+  El cuerpo es JSON válido y `startsAt` tiene el formato civil correcto,
+  pero no es un instante futuro. No se persistió nada.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      noFuturo:
+        summary: El nuevo inicio no es futuro
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: el nuevo inicio debe ser un instante futuro
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

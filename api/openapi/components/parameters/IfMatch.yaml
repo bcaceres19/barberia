@@ -1,0 +1,21 @@
+# Precondición de concurrencia optimista (HU-064, HU-065): el token opaco
+# `versionToken` que una lectura anterior (GET .../appointments/{appointmentId})
+# ya devolvió. El servidor rechaza la escritura con VersionConflictProblem
+# si la representación vigente ya no coincide con este token (otra
+# operación la modificó primero), obligando al cliente a recargar en vez de
+# aplicar un último escritor silencioso. Nunca lo decodifiques: es opaco a
+# propósito, no una codificación de `updatedAt`.
+name: If-Match
+in: header
+description: >
+  Token opaco de versión de la representación que el cliente leyó antes de
+  esta escritura (`versionToken` de la respuesta de detalle). Si ya no
+  coincide con la versión vigente del recurso, la operación responde
+  `409` con `code: version-conflict`.
+required: true
+schema:
+  type: string
+  minLength: 1
+examples:
+  tokenLeido:
+    value: 3n9Kq1x2v8pQwZbJt5Yc0Rr6Hh4Ss7Ff1Gg3Dd8Ee2Aa
