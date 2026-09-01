@@ -181,9 +181,11 @@ describe('BaseInput', () => {
       expect(describedBy).toContain('test-input-error')
     })
 
-    it('required label shows asterisk', () => {
+    it('required label shows exactly one asterisk (issue #51: not two)', () => {
       const wrapper = mount(BaseInput, { props: { label: 'Email', required: true } })
-      expect(wrapper.find('.base-input__label').classes()).toContain('base-input__label--required')
+      const label = wrapper.find('.base-input__label')
+      expect(label.classes()).toContain('base-input__label--required')
+      expect(label.text().replace(/\s+/g, ' ').trim()).toBe('Email *')
     })
   })
 
