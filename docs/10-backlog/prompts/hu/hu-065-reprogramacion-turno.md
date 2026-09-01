@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-065-v1"
-version: "1.2"
+version: "1.3"
 kind: "hu"
-status: "in_progress"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -95,7 +95,7 @@ source_docs:
   - "apps/api/internal/platform/idempotency"
   - "apps/web/src/modules/agenda"
 created_at: "2026-08-31"
-updated_at: "2026-09-01T06:30:00Z"
+updated_at: "2026-09-01T18:30:00Z"
 supersedes: null
 superseded_by: null
 ---
