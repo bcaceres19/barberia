@@ -1,9 +1,9 @@
 ---
 titulo: "Reglas de negocio"
-version: "1.2"
+version: "1.3"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-27"
+ultima_actualizacion: "2026-09-01"
 documentos_relacionados:
   - "../00-control/glosario.md"
   - "../00-control/supuestos.md"
@@ -385,6 +385,7 @@ Crear un bloqueo **nunca** falla por chocar con citas ya agendadas. El sistema d
 **Casos límite:**
 - Un bloqueo sobre una cita ya `completed`: se permite, sin advertencia, porque nada se puede hacer al respecto.
 - Bloqueo creado mientras un cliente está confirmando esa franja: ver `RN-CON-06`.
+- Reprogramar (`T2`) una cita *hacia* un intervalo con un bloqueo vigente es el caso inverso y no queda cubierto por esta regla: se **rechaza** con el mismo tratamiento que un cruce de citas (`DEC-076`), nunca con la advertencia sin bloqueo que esta regla describe para el sentido contrario.
 
 **Módulos afectados:** bloqueos, citas, notificaciones, disponibilidad.
 
