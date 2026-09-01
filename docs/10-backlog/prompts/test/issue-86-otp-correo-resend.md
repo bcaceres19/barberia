@@ -15,9 +15,9 @@ related_hu:
 issue: 86
 issue_url: "https://github.com/bcaceres19/barberia/issues/86"
 suggested_issue_title: "test(qa): verificar flujo OTP real (reto HU-007 y recuperación HU-008/HU-011) con código real"
-branch: null
-pr: null
-pr_url: null
+branch: "docs/86-otp-correo-prompt"
+pr: 129
+pr_url: "https://github.com/bcaceres19/barberia/pull/129"
 depends_on:
   - "HU-008 integrada en main mediante PR #63"
   - "HU-011 integrada en main mediante PR #66"
