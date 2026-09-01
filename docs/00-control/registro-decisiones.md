@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.20"
+version: "1.21"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-28"
+ultima_actualizacion: "2026-09-01"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -825,3 +825,13 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** solo el día civil de inicio — descartada porque un barbero que abre la agenda del día siguiente (donde transcurre la segunda mitad del turno) no vería el turno en curso, contradiciendo el objetivo de la historia de mostrar "los turnos de hoy".
 - **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-CIT-05`), `docs/02-requisitos/historias-usuario.md` (`HU-062`, criterios de aceptación), `docs/10-backlog/prompts/hu/hu-062-agenda-diaria.md`; futura implementación filtra por intersección de rango (`starts_at < fin_civil AND ends_at > inicio_civil`), no por igualdad de fecha de `starts_at`, y un turno nocturno puede aparecer una vez en cada una de las dos agendas sin duplicarse dentro de la misma.
 - **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-CIT-05`; aprobación explícita del propietario el 2026-08-28.
+
+### DEC-076 · Resolución de `DP-CIT-06`: reprogramación (T2) hacia un intervalo con bloqueo vigente
+
+- **Fecha:** 2026-09-01.
+- **Decisión:** si el nuevo intervalo de una reprogramación (`T2`, `HU-065`) coincide con un bloqueo vigente del mismo barbero (cualquier tipo: `break`, `lunch`, `unavailable`, `day_off`, `holiday`, `vacation`, `emergency`), la reprogramación se **rechaza** con el mismo tratamiento de conflicto que un cruce entre dos citas: mismo `409` uniforme, sin advertencia que permita continuar. El barbero debe retirar o exceptuar el bloqueo desde las pantallas reales de `HU-041`/`HU-042` antes de poder reprogramar hacia ese intervalo.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** mismo criterio que `DEC-073` (creación manual frente a un bloqueo vigente): un bloqueo vigente significa que ese tiempo no está disponible para ningún efecto sobre la agenda del barbero, sea una cita nueva o una reprogramada. `RN-BLQ-03` autoriza que un bloqueo se **cree** sobre una cita ya existente sin moverla (el barbero decide después, con aviso), pero eso no implica lo inverso: permitir que el barbero **elija** reprogramar voluntariamente hacia un bloqueo ya vigente reintroduciría, por el lado de T2, la misma ambigüedad que `DEC-073` cerró por el lado de la creación manual. Tratar ambos casos de forma distinta obligaría a la interfaz a explicar por qué "crear aquí" se rechaza pero "mover aquí" no, sin ninguna razón de negocio que lo justifique.
+- **Alternativas descartadas:** permitir con advertencia — descartada por la misma razón que en `DEC-073`: delega en el barbero, en medio de un flujo de reprogramación, una decisión que ya tiene su propio flujo auditable en `HU-041`/`HU-042`; exigir retirar/exceptuar el bloqueo dentro del mismo formulario de reprogramación — descartada por mezclar dos preocupaciones distintas (gestión de bloqueos y reprogramación de una cita) en una sola pantalla y una sola transacción.
+- **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-CIT-06`), `docs/01-producto/reglas-negocio.md` (`RN-BLQ-03`, caso límite nuevo), `docs/02-requisitos/historias-usuario.md` (`HU-065`, criterios de aceptación), `docs/10-backlog/prompts/hu/hu-065-reprogramacion-turno.md`; futura implementación de `T2` consulta la jornada efectiva/bloqueos vigentes de `schedule` (mismo puerto que `ManualBookingService`) antes de confirmar y responde el mismo `409` uniforme que usa para un cruce de citas, nunca una rama de "advertencia".
+- **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-CIT-06`; aprobación explícita del propietario el 2026-09-01.

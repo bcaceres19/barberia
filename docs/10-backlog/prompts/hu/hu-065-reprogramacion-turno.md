@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-HU-065-v1"
-version: "1.0"
+version: "1.1"
 kind: "hu"
-status: "draft"
+status: "ready"
 target_agents:
   - "claude"
   - "codex"
@@ -16,16 +16,16 @@ related_hu:
   - "HU-042"
   - "HU-060"
   - "HU-064"
-issue: "pending"
-issue_url: null
+issue: 123
+issue_url: "https://github.com/bcaceres19/barberia/issues/123"
 suggested_issue_title: "feat(booking): implementar HU-065 reprogramación auditada"
-branch: null
+branch: "feat/123-hu065-reprogramacion-turno"
 pr: null
 pr_url: null
 depends_on:
-  - "HU-064 integrada en main con token opaco de versión"
-  - "DP-CIT-06 resuelta y propagada mediante un nuevo DEC-*"
-  - "Issue real propio con CA-065-01 a CA-065-08"
+  - "HU-064 integrada en main con token opaco de versión mediante PR #121 (cumplido)"
+  - "DP-CIT-06 resuelta y propagada mediante DEC-076 (cumplido)"
+  - "Issue real propio con CA-065-01 a CA-065-08 (cumplido: #123)"
 rules:
   - "RN-CIT-01"
   - "RN-CIT-03"
@@ -53,6 +53,7 @@ decisions:
   - "DEC-043"
   - "DEC-074"
   - "DEC-075"
+  - "DEC-076"
 acceptance_criteria:
   - "CA-065-01"
   - "CA-065-02"
@@ -94,7 +95,7 @@ source_docs:
   - "apps/api/internal/platform/idempotency"
   - "apps/web/src/modules/agenda"
 created_at: "2026-08-31"
-updated_at: "2026-08-31"
+updated_at: "2026-09-01T05:10:00Z"
 supersedes: null
 superseded_by: null
 ---
@@ -105,7 +106,7 @@ superseded_by: null
 
 Implementa únicamente la transición `T2`: mover el intervalo de una cita `confirmed` sin cambiar su estado ni ningún otro dato. El cambio debe ser tenant-aware, idempotente, condicional a la versión leída, protegido por la exclusión PostgreSQL y auditado en la misma transacción.
 
-El prompt está en `draft`: `issue: pending`, `HU-064` aún no consta integrada y `DP-CIT-06` sigue abierta. No modifiques código hasta que un nuevo `DEC-*` fije la conducta de T2 frente a un bloqueo vigente, la decisión esté propagada, se enlace el issue real, se confirme el token opaco de versión del detalle y se cree una rama propia. Si aparece otra contradicción entre contrato, esquema o UX, regístrala antes de codificar.
+El issue real [#123](https://github.com/bcaceres19/barberia/issues/123) ya está enlazado y este prompt pasó a `ready`: `HU-064` está integrada en `main` mediante [PR #121](https://github.com/bcaceres19/barberia/pull/121) con token opaco de versión probado, y `DP-CIT-06` quedó resuelta como `DEC-076` (bloqueo duro frente a un bloqueo vigente, mismo tratamiento que un cruce de citas). Si aparece otra contradicción entre contrato, esquema o UX, regístrala antes de codificar.
 
 ## Objetivo
 
@@ -127,7 +128,7 @@ Que el barbero reprograme un turno confirmado a otra fecha/hora futura válida, 
 - Comando HTTP explícito para reprogramar una cita, con sesión, `Idempotency-Key` y precondición basada en el token opaco de `HU-064`.
 - Solo `starts_at`/`ends_at`; estado, barbero, servicio, duración, precio, cliente, persona, origen y nota permanecen iguales.
 - Inicio estrictamente futuro en la zona de la barbería; fin derivado de la duración snapshot.
-- Jornada efectiva consultada mediante puertos de `schedule`; el tratamiento del bloqueo vigente debe ser exactamente el aprobado al resolver `DP-CIT-06`, sin importar implementación de `schedule` desde `booking`.
+- Jornada efectiva consultada mediante puertos de `schedule`; un bloqueo vigente en el nuevo intervalo **rechaza** la reprogramación con el mismo `409` uniforme que un cruce de citas (`DEC-076`), sin importar implementación de `schedule` desde `booking`.
 - Exclusión PostgreSQL y contigüidad `[inicio, fin)`; conflicto uniforme y seguro.
 - Actualización más evento `appointment_rescheduled` más cambios anterior/nuevo dentro de una sola transacción.
 - No-op del mismo intervalo, idempotencia concurrente y conflicto por token obsoleto.
@@ -165,7 +166,7 @@ Que el barbero reprograme un turno confirmado a otra fecha/hora futura válida, 
 ### 2. Dominio, aplicación y persistencia
 
 1. Crea un caso de uso T2 en `booking` independiente de Chi/pgx, con reloj, zona, `schedule` y repositorio por puertos.
-2. Valida cita propia `confirmed`, token vigente, inicio futuro y jornada efectiva; aplica frente al bloqueo exactamente la decisión que resuelva `DP-CIT-06`.
+2. Valida cita propia `confirmed`, token vigente, inicio futuro y jornada efectiva; un bloqueo vigente en el nuevo intervalo rechaza con el mismo conflicto uniforme que un cruce de citas (`DEC-076`).
 3. Deriva `ends_at` con `duration_minutes_snapshot`; no consulta catálogo ni cambia snapshots.
 4. En una transacción tenant-aware, bloquea/condiciona la fila, vuelve a verificar estado/versión, actualiza intervalo e inserta historial/cambios.
 5. Traduce exclusión `23P01` y resolución concurrente equivalente al mismo conflicto seguro; no deshabilites la restricción.

@@ -1,9 +1,9 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "2.10"
-estado: "Con duda abierta"
+version: "2.11"
+estado: "Sin duda abierta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-31"
+ultima_actualizacion: "2026-09-01"
 documentos_relacionados:
   - "registro-decisiones.md"
   - "contradicciones.md"
@@ -17,9 +17,9 @@ documentos_relacionados:
 
 ## 1. Estado
 
-Existe una duda abierta: `DP-CIT-06`, detectada el 31 de agosto de 2026 al redactar `HU-065`. `DEC-073` fija un bloqueo duro para **crear** una cita manual sobre un bloqueo vigente, mientras `RN-BLQ-03` permite que un bloqueo nuevo se solape con una cita ya existente; ninguna fuente confirma qué debe ocurrir cuando el barbero intenta **reprogramar** voluntariamente una cita hacia un intervalo bloqueado. La duda bloquea solo `HU-065`; `HU-063` y `HU-064` pueden recibir issues e implementarse en orden sin resolverla.
+No hay ninguna duda abierta. La última, `DP-CIT-06` (reprogramación voluntaria hacia un intervalo bloqueado), quedó resuelta el 1 de septiembre de 2026 como `DEC-076` (bloqueo duro, mismo tratamiento que un cruce de citas).
 
-Las cinco dudas anteriores del lote (`DP-CIT-01`–`DP-CIT-05`) se detectaron el 26 de agosto de 2026 al preparar `HU-060`, `HU-061` y `HU-062`: las fuentes confirmaban el modelo de datos, la exclusión de cruces, la creación manual y la agenda diaria, pero no fijaban la reconciliación de clientes manuales sin teléfono, el efecto de la asignación servicio-barbero sobre una cita manual, la conducta frente a un bloqueo vigente, la vista inicial en una barbería con varios barberos ni el día o días en que aparece un turno que cruza medianoche. El propietario resolvió las tres primeras el 27 de agosto de 2026 como `DEC-071`–`DEC-073`, desbloqueando `HU-061`. `DP-CIT-04` y `DP-CIT-05` quedaron resueltas el 28 de agosto de 2026 como `DEC-074`–`DEC-075`, desbloqueando `HU-062`.
+Las cinco dudas anteriores del lote (`DP-CIT-01`–`DP-CIT-05`) se detectaron el 26 de agosto de 2026 al preparar `HU-060`, `HU-061` y `HU-062`: las fuentes confirmaban el modelo de datos, la exclusión de cruces, la creación manual y la agenda diaria, pero no fijaban la reconciliación de clientes manuales sin teléfono, el efecto de la asignación servicio-barbero sobre una cita manual, la conducta frente a un bloqueo vigente, la vista inicial en una barbería con varios barberos ni el día o días en que aparece un turno que cruza medianoche. El propietario resolvió las tres primeras el 27 de agosto de 2026 como `DEC-071`–`DEC-073`, desbloqueando `HU-061`. `DP-CIT-04` y `DP-CIT-05` quedaron resueltas el 28 de agosto de 2026 como `DEC-074`–`DEC-075`, desbloqueando `HU-062`. `DP-CIT-06`, detectada el 31 de agosto de 2026 al redactar `HU-065`, quedó resuelta el 1 de septiembre de 2026 como `DEC-076`, desbloqueando la creación del issue real de `HU-065`.
 
 Las tres dudas anteriores de B1 (`DP-SER-01`–`DP-SER-03`) se detectaron el 24 de agosto de 2026 al preparar `HU-022`, `HU-023` y `HU-024` y sus prompts persistentes (issue documental [#73](https://github.com/bcaceres19/barberia/issues/73)); `F-SERV-01`, `F-SERV-02`, `RN-SER-01`–`RN-SER-04` y el modelo físico de referencia no fijaban por sí solos todas las decisiones observables necesarias para contrato, interfaz y pruebas. El propietario las resolvió el mismo 24 de agosto de 2026 como `DEC-067`–`DEC-069`, y se crearon los issues reales de implementación: [#75](https://github.com/bcaceres19/barberia/issues/75) (`HU-022`), [#76](https://github.com/bcaceres19/barberia/issues/76) (`HU-023`) y [#77](https://github.com/bcaceres19/barberia/issues/77) (`HU-024`).
 
@@ -43,13 +43,7 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 
 ## 2. Dudas abiertas
 
-### DP-CIT-06 · Reprogramación hacia un intervalo bloqueado
-
-- **Detectada:** 2026-08-31 al redactar `HU-065` y `PROMPT-HU-065-v1`.
-- **Pregunta:** si el nuevo intervalo de T2 coincide con un bloqueo vigente del mismo barbero, ¿la reprogramación se rechaza como la creación manual de `DEC-073`, se permite con una advertencia porque `RN-BLQ-03` admite bloqueos solapados con citas, o exige primero retirar/exceptuar el bloqueo?
-- **Por qué no se infiere:** `DEC-073` está limitada a la creación manual; `RN-BLQ-03` gobierna el orden inverso —crear el bloqueo cuando la cita ya existe— y prohíbe mover o cancelar automáticamente, pero no autoriza ni prohíbe elegir después ese intervalo como destino.
-- **Bloquea:** issue, paso a `ready` e implementación de `HU-065`; no bloquea `HU-063` ni `HU-064`.
-- **Responsable de resolver:** propietario del proyecto mediante un nuevo `DEC-*`, antes de codificar T2.
+Ninguna. `DP-CIT-06` (última duda abierta del lote `HU-063`–`HU-065`) quedó resuelta el 1 de septiembre de 2026 como `DEC-076` (sección 3).
 
 ## 3. Resoluciones
 
@@ -126,6 +120,7 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 | `DP-CIT-03` | Si el intervalo coincide con un bloqueo vigente, ¿la creación manual se rechaza, se permite con advertencia o exige retirar/exceptuar el bloqueo? | Se rechaza (bloqueo duro), mismo tratamiento que un cruce de citas; el barbero retira o exceptúa el bloqueo desde `HU-041`/`HU-042` antes de crear la cita. | `DEC-073` |
 | `DP-CIT-04` | En una barbería con varios barberos y sin vínculo automático `staff_user`→`barber`, ¿la agenda abre con selector obligatorio de un barbero, con una vista consolidada o con otra selección inicial? | Selector obligatorio de un barbero; sin vista consolidada. Con un solo barbero, preselección sin paso adicional. | `DEC-074` |
 | `DP-CIT-05` | Si un turno cruza medianoche, ¿aparece solo en el día civil de inicio o en cada agenda diaria cuyo intervalo intersecta? | En cada agenda diaria cuyo rango civil interseca el intervalo del turno (día de inicio y día siguiente cuando corresponda). | `DEC-075` |
+| `DP-CIT-06` | Si el nuevo intervalo de una reprogramación (T2) coincide con un bloqueo vigente del mismo barbero, ¿se rechaza, se permite con advertencia o exige retirar/exceptuar el bloqueo? | Se rechaza (bloqueo duro), mismo tratamiento que un cruce de citas; el barbero retira o exceptúa el bloqueo desde `HU-041`/`HU-042` antes de reprogramar hacia ese intervalo. | `DEC-076` |
 
 Al resolverse cada duda se aplica el flujo de la sección 3: `DEC-*`, propagación, conservación de la fila y `CT-*` si revela un conflicto.
 
