@@ -88,6 +88,24 @@ type Repository interface {
 	// esta lectura no necesita ningún puerto adicional. Un id sin
 	// coincidencia simplemente está ausente del mapa devuelto.
 	CustomerNames(ctx context.Context, barbershopID string, customerIDs []string) (map[string]string, error)
+
+	// Reschedule ejecuta T2 (HU-065) dentro de UNA sola transacción
+	// tenant-aware protegida por el protocolo de idempotencia reutilizable
+	// de HU-004 (RN-IDE-01, DEC-043): Begin, bloquear la fila (`FOR
+	// UPDATE`), verificar de nuevo estado/versión con la fila ya
+	// bloqueada (nunca confiar en la lectura previa de
+	// RescheduleService), aplicar el nuevo intervalo (o detectar el no-op
+	// del mismo intervalo, sin tocar `updated_at` ni el historial),
+	// insertar el evento `appointment_rescheduled` con sus cambios
+	// anterior/nuevo, y Complete. input.NewEndsAt ya llegó derivado de
+	// duration_minutes_snapshot; este método nunca la recalcula.
+	Reschedule(
+		ctx context.Context,
+		barbershopID string,
+		input RescheduleInput,
+		key idempotency.Key,
+		fingerprint idempotency.Fingerprint,
+	) (RescheduleResult, error)
 }
 
 // BarberNamePort resuelve el nombre visible de un barbero por id, dentro de

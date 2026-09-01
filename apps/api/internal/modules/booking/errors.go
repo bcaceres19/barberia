@@ -106,6 +106,33 @@ func errHistoryCursorInvalid() error {
 	return apperr.Invalid("el parámetro cursor tiene un formato inválido")
 }
 
+// errVersionTokenRequired cubre HU-065: la cabecera If-Match (precondición
+// de versión) es obligatoria para reprogramar, mismo criterio de
+// obligatoriedad que Idempotency-Key.
+func errVersionTokenRequired() error {
+	return apperr.Invalid("falta la cabecera If-Match con el token de versión del turno")
+}
+
+// errStartsAtNotFuture cubre HU-065 (CA-065-*): T2 exige un nuevo inicio
+// estrictamente futuro en la zona de la barbería.
+func errStartsAtNotFuture() error {
+	return apperr.Validation("el nuevo inicio debe ser un instante futuro")
+}
+
+// errAppointmentNotConfirmed cubre HU-065: T2 solo aplica sobre una cita
+// `confirmed`; una cita terminal (completada, cancelada, no_show) ya no
+// admite reprogramación.
+func errAppointmentNotConfirmed() error {
+	return apperr.InvalidState("el turno ya no está confirmado; recarga para ver su estado actual")
+}
+
+// errVersionConflict cubre HU-065: el token opaco de versión que el cliente
+// envió (cabecera If-Match) ya no coincide con la representación vigente
+// porque otra escritura tocó el turno primero.
+func errVersionConflict() error {
+	return apperr.VersionConflict("el turno cambió desde que se leyó; recarga antes de reintentar")
+}
+
 // Los errores de conflicto de agenda y de cliente inexistente/ajeno viven
 // en booking/postgres (errScheduleConflict, errCustomerNotFound): solo se
 // detectan al traducir un exclusion_violation/foreign_key_violation real de

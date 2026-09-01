@@ -407,6 +407,20 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	private.Get("/appointments/{appointmentId}", getAppointmentDetailHandler.ServeHTTP)
 	private.Get("/appointments/{appointmentId}/history", listAppointmentHistoryHandler.ServeHTTP)
 
+	// HU-065: reprogramación auditada (T2, DEC-076). Mismo criterio de
+	// colaboración por puerto pequeño que ManualBookingService/AgendaService:
+	// RescheduleService solo conoce schedule.NewManualBookingBlocks(scheduleService)
+	// y shops.NewTimezoneLookup(shopService), nunca los paquetes
+	// schedule/shops.
+	rescheduleService := booking.NewRescheduleService(
+		bookingRepo,
+		schedule.NewManualBookingBlocks(scheduleService),
+		shops.NewTimezoneLookup(shopService),
+		clock.System{},
+	)
+	rescheduleAppointmentHandler := bookinghttpapi.NewRescheduleAppointmentHandler(rescheduleService)
+	private.Post("/appointments/{appointmentId}/reschedule", rescheduleAppointmentHandler.ServeHTTP)
+
 	// HU-008 (DEC-063-066): recuperación de acceso con código de un solo
 	// uso. sender es el adaptador dual de Meta WhatsApp Cloud API + Resend
 	// cuando hay credenciales configuradas; sin ellas (típicamente

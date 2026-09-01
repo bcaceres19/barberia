@@ -70,3 +70,24 @@ export type CreateManualAppointmentOutcome =
   | { kind: 'validation-error'; detail: string }
   | { kind: 'network-error' }
   | { kind: 'unexpected-error' }
+
+// RescheduleAppointmentOutcome (HU-065, T2): cuatro conflictos
+// distinguibles por `kind` (agenda, versión, estado, idempotencia), mismo
+// criterio de "el cliente decide por code, nunca por detail" que el
+// contrato ya aplica del lado del servidor. 'version-conflict' y
+// 'invalid-state' exigen recargar el detalle (la intención del barbero se
+// conserva en el formulario, nunca se descarta silenciosamente). El éxito
+// solo trae `startsAt`: T2 nunca cambia barbero/cliente/contacto/nota, y la
+// pantalla recarga el detalle completo tras confirmar (mismo dato, nunca
+// una copia parcial con campos vacíos que el barbero podría ver como
+// reales).
+export type RescheduleAppointmentOutcome =
+  | { kind: 'success'; startsAt: string }
+  | { kind: 'not-found' }
+  | { kind: 'conflict'; detail: string }
+  | { kind: 'version-conflict' }
+  | { kind: 'invalid-state' }
+  | { kind: 'idempotency-conflict' }
+  | { kind: 'validation-error'; detail: string }
+  | { kind: 'network-error' }
+  | { kind: 'unexpected-error' }

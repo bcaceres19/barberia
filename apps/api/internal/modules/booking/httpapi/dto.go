@@ -46,6 +46,42 @@ type AppointmentResponse struct {
 	UpdatedAt       time.Time `json:"updatedAt"`
 }
 
+// RescheduleAppointmentRequest es el cuerpo JSON de
+// POST /private/appointments/{appointmentId}/reschedule (HU-065, T2):
+// exactamente el nuevo inicio. Ningún otro campo: barbero, servicio,
+// duración, precio, cliente, persona, origen, nota y estado permanecen
+// iguales (el servidor los conserva, nunca los acepta de este cuerpo).
+type RescheduleAppointmentRequest struct {
+	// StartsAt es el instante civil "AAAA-MM-DDTHH:MM:SS" (sin zona) que el
+	// barbero eligió en su propio reloj, mismo formato que
+	// CreateManualAppointmentRequest.StartsAt (RN-DIS-07).
+	StartsAt string `json:"startsAt"`
+}
+
+// AppointmentRescheduledResponse es la representación de la cita ya
+// reprogramada (o, en un no-op del mismo intervalo, la representación
+// vigente sin cambios). Deliberadamente SIN updatedAt crudo (HU-064):
+// versionToken es el único dato de concurrencia expuesto, ya actualizado
+// para una reprogramación posterior sin volver a pedir el detalle.
+type AppointmentRescheduledResponse struct {
+	ID              string    `json:"id"`
+	BarberID        string    `json:"barberId"`
+	ServiceID       string    `json:"serviceId"`
+	CustomerID      string    `json:"customerId"`
+	AttendeeName    string    `json:"attendeeName"`
+	StartsAt        time.Time `json:"startsAt"`
+	EndsAt          time.Time `json:"endsAt"`
+	Status          string    `json:"status"`
+	Origin          string    `json:"origin"`
+	ServiceName     string    `json:"serviceName"`
+	DurationMinutes int       `json:"durationMinutes"`
+	PriceAmount     string    `json:"priceAmount"`
+	Currency        string    `json:"currency"`
+	CustomerNote    *string   `json:"customerNote"`
+	VersionToken    string    `json:"versionToken"`
+	CreatedAt       time.Time `json:"createdAt"`
+}
+
 // DailyAgendaResponse es el cuerpo de
 // GET /private/barbers/{barberId}/appointments/daily-agenda (HU-062):
 // lista cronológica cerrada, sin cursor ni siguiente página (CA-062-07,

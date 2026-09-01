@@ -69,6 +69,20 @@ const (
 	// conflicto no depende de ninguna cabecera Idempotency-Key ni de un
 	// reintento: existiría igual en la primera y única solicitud.
 	KindConflict Kind = "conflict"
+	// KindVersionConflict cubre una precondición de concurrencia optimista
+	// incumplida (HU-065, CA-065-*): el token opaco de versión que el
+	// cliente envió ya no coincide con la representación vigente porque
+	// otra escritura tocó el recurso primero. Distinto de KindConflict
+	// (agenda/negocio) para que el cliente decida por `code` si debe
+	// reintentar con datos nuevos (recargar) en vez de elegir otro destino.
+	KindVersionConflict Kind = "version_conflict"
+	// KindInvalidState cubre una operación que exige un estado previo
+	// concreto (HU-065: solo una cita `confirmed` admite T2) y el recurso
+	// ya no está en ese estado cuando la operación se ejecuta. Distinto de
+	// KindVersionConflict: aquí la representación pudo no haber cambiado de
+	// versión todavía visible para el cliente, pero el estado de negocio ya
+	// no admite la transición pedida.
+	KindInvalidState Kind = "invalid_state"
 )
 
 // Error es el error de aplicación que domain/servicios devuelven.
@@ -160,6 +174,21 @@ func ChallengeRequired(message string, retryAfterSeconds int) *Error {
 // operación. message es el detalle seguro que puede llegar al cliente.
 func Conflict(message string) *Error {
 	return &Error{Kind: KindConflict, Message: message}
+}
+
+// VersionConflict construye el error de una precondición de versión
+// incumplida (HU-065): el token opaco que el cliente envió ya no coincide
+// con la representación vigente. message es el detalle seguro que puede
+// llegar al cliente.
+func VersionConflict(message string) *Error {
+	return &Error{Kind: KindVersionConflict, Message: message}
+}
+
+// InvalidState construye el error de una operación que exige un estado
+// previo concreto (HU-065: T2 exige `confirmed`) y el recurso ya no está en
+// ese estado. message es el detalle seguro que puede llegar al cliente.
+func InvalidState(message string) *Error {
+	return &Error{Kind: KindInvalidState, Message: message}
 }
 
 // As extrae un *Error de la cadena de err, igual que errors.As.

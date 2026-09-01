@@ -4,6 +4,20 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.16.0] - 2026-09-01
+
+### Agregado
+
+- `POST /private/appointments/{appointmentId}/reschedule` (`operationId:
+  rescheduleAppointment`, `CA-065-01` a `CA-065-08`): T2 (`HU-065`), mueve
+  el intervalo de una cita `confirmed` a un nuevo inicio futuro, protegida
+  con `Idempotency-Key` (`RN-IDE-01`, `DEC-043`) y con la precondición
+  `If-Match` (el `versionToken` de `HU-064`). Un bloqueo vigente en el
+  nuevo intervalo rechaza con el mismo `409` que un cruce de citas
+  (`DEC-076`); un intervalo idéntico es un no-op exitoso. `200`, `400`,
+  `401`, `404`, `409` (agenda/versión/estado/idempotencia, códigos
+  distinguibles), `422`, `500`.
+
 ## [0.15.0] - 2026-09-01
 
 ### Agregado

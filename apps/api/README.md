@@ -1696,6 +1696,100 @@ mismo motivo.
 - Adaptadores: `internal/modules/staff/name_lookup_test.go`, `internal/modules/auth/actor_names_test.go` (delegación estructural, sin lógica propia que probar más allá de la traducción de error).
 - Componentes Vue: `apps/web/src/modules/agenda/pages/__tests__/AppointmentDetailPage.test.ts` (detalle listo, sin sección de contacto cuando falta, no encontrado, error/reintento, historial listo con motivo/cambios, "Cargar más" con dos páginas convivientes, error/reintento de historial, enlace "Volver" con fecha/barbero preservados, `vitest-axe`).
 
+## Reprogramación auditada de un turno (HU-065, T2)
+
+`POST /private/appointments/{appointmentId}/reschedule`
+(`internal/modules/booking/httpapi`): `booking.RescheduleService` (nuevo,
+junto a `ManualBookingService`/`AgendaService`/`DetailService`) implementa
+`T2` — mover el intervalo de una cita `confirmed` sin tocar ningún otro
+campo. El comando exige `Idempotency-Key` (protocolo de `HU-004`) y una
+cabecera `If-Match` con el token opaco de `HU-064`
+(`booking.EncodeVersionToken`) como precondición: nunca se confía en un
+`SELECT` previo a la transacción, la precondición se revalida contra la fila
+recién bloqueada.
+
+Dominio (`internal/modules/booking/reschedule.go`): valida forma de
+`appointmentId`, presencia de token/actor, inicio estrictamente futuro en la
+zona de la barbería (mismo `parseCivilLocal` de `HU-063`), deriva
+`NewEndsAt` desde `duration_minutes_snapshot` (nunca del cliente) y consulta
+`BlockCheckPort` (adaptador `schedule.NewManualBookingBlocks`, el mismo ya
+usado por `ManualBookingService`) contra el nuevo intervalo: un bloqueo
+vigente **rechaza** con el mismo conflicto uniforme que un cruce de citas
+(`DEC-076`), sin exigir retirarlo ni advertir y seguir.
+
+Persistencia (`internal/modules/booking/postgres/repository.go`,
+`Reschedule`): primer uso en este código de `SELECT ... FOR UPDATE` dentro
+de una transacción tenant-aware — `CreateInternal`/`CreateManual` solo
+insertan, esta es la primera operación "leer bajo bloqueo, revalidar,
+escribir". La secuencia exacta: `coord.Begin` (idempotencia) →
+`SELECT ... FOR UPDATE` de la fila → compara el token opaco recalculado
+contra el `If-Match` recibido (`apperr.KindVersionConflict`, HTTP 409,
+código `version-conflict`) → exige `status = confirmed`
+(`apperr.KindInvalidState`, HTTP 409, código `invalid-state`) → si el nuevo
+intervalo es idéntico al actual, no-op exitoso (sin `UPDATE`, sin evento) →
+si difiere, `UPDATE appointment SET starts_at/ends_at` (la exclusión
+`appointment_barber_interval_excl` protege también `UPDATE`, no solo
+`INSERT` — verificado contra PostgreSQL real, ver más abajo; `23P01`/`40P01`
+se traducen al mismo conflicto uniforme que un cruce en `CreateInternal`) e
+`INSERT` de un único evento `appointment_rescheduled` con dos
+`appointment_history_change` (`starts_at`/`ends_at`, anterior/nuevo) dentro
+de la misma transacción → `coord.Complete` con la respuesta serializada.
+
+`apperr` gana dos `Kind` nuevos, distintos de `KindConflict` (agenda) y de
+`KindIdempotencyConflict`/`KindIdempotencyLocked` (protocolo de `HU-004`):
+`KindVersionConflict` (código `version-conflict`) y `KindInvalidState`
+(código `invalid-state`), cada uno mapeado 1:1 a su `Problem` RFC 9457 en
+`httpserver/translate.go`. El contrato documenta los cuatro `409`
+distinguibles por `code` (agenda/bloqueo, versión, estado, idempotencia) en
+`api/openapi/paths/private-appointments.yaml`.
+
+La respuesta de éxito nunca incluye `barberFullName`/`customerFullName` ni
+contacto: `T2` no los toca, así que el backend no vuelve a resolverlos (a
+diferencia de `GetAppointmentDetail`, que sí los resuelve para lectura). El
+frontend recarga el detalle completo tras un éxito en vez de reconstruirlo a
+partir de la respuesta parcial.
+
+### Verificación contra PostgreSQL real
+
+A diferencia de `HU-064` (sin Docker disponible en esa sesión), esta entrega
+se verificó contra un contenedor `postgres:14` real, replicando exactamente
+la receta del job `go` de `.github/workflows/ci.yml` (diecisiete
+migraciones, contraseñas de rol, diez fixtures de `database/testdata/`).
+Esto expuso y corrigió tres defectos preexistentes, ninguno introducido por
+`HU-065` pero sí solo detectables con Postgres real:
+
+- `testStartOffset` (`internal/modules/booking/postgres/repository_test.go`) desbordaba `int64` en ~41% de los sorteos aleatorios al multiplicar minutos por `time.Minute`; reducido a un rango seguro.
+- Cuatro IDs de historial sintético hardcodeados en `detail_repository_test.go` colisionaban con `appointment_history_id_pk` al correr la suite una segunda vez contra la misma base persistente (nunca ocurre en CI, que usa un contenedor nuevo cada vez); reemplazados por un `uniqueHistoryID(t)` compartido.
+- Una aserción propia de `TestReschedule_CrossesAnotherAppointment_ReturnsConflict` comparaba un `time.Time` con precisión de Postgres contra uno en memoria con precisión de Go, produciendo un falso negativo posible; corregida para comparar dos lecturas de Postgres.
+
+El contenedor era efímero (creado y destruido dentro de esta sesión); no
+persiste ningún dato ni afecta al entorno del usuario.
+
+### Tabla de criterios de aceptación
+
+| Criterio | Estado | Prueba o evidencia |
+| --- | --- | --- |
+| `CA-065-01` a `CA-065-07` | Backend cumplidos, verificados contra PostgreSQL real | `internal/modules/booking/reschedule_test.go`, `internal/modules/booking/postgres/reschedule_repository_test.go`, `internal/modules/booking/httpapi/reschedule_handler_test.go`. |
+| `CA-065-08` (formulario, doble toque, conflicto de agenda/versión, plantilla P0, `axe-core`) | Frontend cumplido; evidencia visual responsiva contra Chromium real pendiente (ver nota) | `apps/web/src/modules/agenda/pages/__tests__/AppointmentDetailPage.test.ts` (20 pruebas nuevas de reprogramación); captura en 320/360/768/1280px/zoom 200% pendiente. |
+
+**Nota de alcance:** dominio, HTTP/contrato y PostgreSQL real (incluida la
+carrera de dos reprogramaciones concurrentes hacia intervalos que se
+solapan, con exactamente un éxito) se verificaron localmente esta sesión.
+`gofmt`/`go vet`/`go build` y la suite completa `go test -count=1 ./...`
+(incluidas las nuevas de este HU) pasaron 3 veces consecutivas contra el
+contenedor real. `-race` no se ejecutó localmente (sin compilador C/cgo
+disponible en este entorno); CI lo cubre, como en cada HU anterior. El
+recorrido E2E (`apps/web/e2e/agenda-reprogramacion-turno.spec.ts`) y la
+evidencia visual responsiva en 320/360/768/1280px/zoom 200% quedan como
+seguimiento explícito: ninguno de los cuatro checks de CI ejecuta
+Playwright.
+
+### Pruebas
+
+- Dominio/servicio: `internal/modules/booking/reschedule_test.go` (forma de `appointmentId`, token/actor requeridos, formato de fecha, inicio no futuro con zona/DST correctamente resuelta, no encontrado, error de `schedule`/`GetAppointmentDetail`, bloqueo vigente rechaza (`DEC-076`), fin derivado de la duración, paso de resultado del repositorio).
+- HTTP: `internal/modules/booking/httpapi/reschedule_handler_test.go` (200 éxito/replay, 400 sin `Idempotency-Key`/`If-Match`/campo desconocido, 404, 409 versión/estado/agenda/idempotencia con `code` distinguible, 422 no futuro, 500 sin principal).
+- PostgreSQL real: `internal/modules/booking/postgres/reschedule_repository_test.go` (intervalo aplicado con historial exacto, no-op de mismo intervalo sin historial, token obsoleto, estado no confirmado, cruce con otra cita con rollback verificado, aislamiento de tenant, réplica idempotente byte a byte, y `TestReschedule_ConcurrentReschedulesToOverlappingIntervals_ExactlyOneSucceeds`: dos goroutines con barrera, exactamente un éxito y un conflicto).
+
 ## Pruebas de integración
 
 Las pruebas en `internal/platform/database/*_test.go` requieren PostgreSQL real

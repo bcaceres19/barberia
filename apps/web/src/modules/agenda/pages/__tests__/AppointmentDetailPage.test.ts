@@ -1,23 +1,29 @@
 /**
- * Pruebas de AppointmentDetailPage (HU-064): carga del detalle (listo, no
- * encontrado, error/reintento), historial paginado (listo, error/reintento,
- * "Cargar más"), regreso a la agenda conservando fecha/barbero, y
- * accesibilidad. appointmentsApi se sustituye por un doble de prueba; el
- * recorrido real contra el API vive en el E2E de HU-064.
+ * Pruebas de AppointmentDetailPage (HU-064, más reprogramación T2 de
+ * HU-065): carga del detalle (listo, no encontrado, error/reintento),
+ * historial paginado (listo, error/reintento, "Cargar más"), regreso a la
+ * agenda conservando fecha/barbero, reprogramación (visibilidad por
+ * estado, resumen/confirmación, doble toque bloqueado, conflictos de
+ * agenda/versión/estado con conservación de datos, éxito que refresca
+ * detalle+historial y el destino de "Volver"), y accesibilidad.
+ * appointmentsApi se sustituye por un doble de prueba; el recorrido real
+ * contra el API vive en el E2E de HU-064/HU-065.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { axe } from 'vitest-axe'
 
 const fetchAppointmentDetailMock = vi.hoisted(() => vi.fn())
 const fetchAppointmentHistoryMock = vi.hoisted(() => vi.fn())
 const fetchBarbershopTimezoneMock = vi.hoisted(() => vi.fn())
+const rescheduleAppointmentMock = vi.hoisted(() => vi.fn())
 
 vi.mock('../../api/appointmentsApi', () => ({
   fetchAppointmentDetail: fetchAppointmentDetailMock,
   fetchAppointmentHistory: fetchAppointmentHistoryMock,
   fetchBarbershopTimezone: fetchBarbershopTimezoneMock,
+  rescheduleAppointment: rescheduleAppointmentMock,
 }))
 
 const { default: AppointmentDetailPage } = await import('../AppointmentDetailPage.vue')
@@ -71,7 +77,13 @@ async function mountPage(query: Record<string, string> = { date: '2026-08-28', b
   const router = buildRouter()
   await router.push({ name: 'agenda-detalle-turno', params: { appointmentId: 'a-1' }, query })
   await router.isReady()
-  const wrapper = mount(AppointmentDetailPage, { global: { plugins: [router] } })
+  // stubs.teleport hace que Vue Test Utils renderice el contenido de
+  // <Teleport to="body"> (el diálogo de reprogramación, HU-065) EN EL
+  // LUGAR, dentro del árbol del wrapper: mismo criterio que
+  // StaffPage.test.ts.
+  const wrapper = mount(AppointmentDetailPage, {
+    global: { plugins: [router], stubs: { teleport: true } },
+  })
   await flushPromises()
   return { wrapper, router }
 }
@@ -80,6 +92,7 @@ beforeEach(() => {
   fetchAppointmentDetailMock.mockReset()
   fetchAppointmentHistoryMock.mockReset()
   fetchBarbershopTimezoneMock.mockReset()
+  rescheduleAppointmentMock.mockReset()
   fetchBarbershopTimezoneMock.mockResolvedValue({ kind: 'success', timezone: 'America/Bogota' })
   fetchAppointmentHistoryMock.mockResolvedValue({
     kind: 'success',
@@ -87,6 +100,52 @@ beforeEach(() => {
     nextCursor: null,
   })
 })
+
+// --- Ayudantes para el diálogo de reprogramación (HU-065) ----------------
+// Mismo criterio que StaffPage.test.ts: BaseDialog usa Teleport EN EL
+// LUGAR dentro del wrapper (no al document.body real), así que basta con
+// buscar dentro de wrapper.element.
+function openDialogElement(wrapper: VueWrapper): HTMLElement {
+  const el = wrapper.element.querySelector('.base-dialog--open')
+  if (!el) throw new Error('no open dialog found')
+  return el as HTMLElement
+}
+
+function openDialogForm(wrapper: VueWrapper): HTMLFormElement {
+  return openDialogElement(wrapper).querySelector('form') as HTMLFormElement
+}
+
+function rescheduleDateInput(wrapper: VueWrapper): HTMLInputElement {
+  return openDialogElement(wrapper).querySelector(
+    'input[name="rescheduleDate"]',
+  ) as HTMLInputElement
+}
+
+function rescheduleTimeInput(wrapper: VueWrapper): HTMLInputElement {
+  return openDialogElement(wrapper).querySelector(
+    'input[name="rescheduleTime"]',
+  ) as HTMLInputElement
+}
+
+function setInputValue(input: HTMLInputElement, value: string) {
+  input.value = value
+  input.dispatchEvent(new Event('input'))
+}
+
+function submitRescheduleDialog(wrapper: VueWrapper) {
+  openDialogForm(wrapper).dispatchEvent(new Event('submit', { cancelable: true }))
+}
+
+function findButtonByText(wrapper: VueWrapper, text: string) {
+  const button = wrapper.findAll('button').find((b) => b.text() === text)
+  if (!button) throw new Error(`button ${JSON.stringify(text)} not found`)
+  return button
+}
+
+async function openRescheduleDialog(wrapper: VueWrapper) {
+  await findButtonByText(wrapper, 'Reprogramar turno').trigger('click')
+  await flushPromises()
+}
 
 describe('AppointmentDetailPage', () => {
   it('shows the appointment detail once loaded', async () => {
@@ -218,6 +277,189 @@ describe('AppointmentDetailPage', () => {
   it('has no obvious accessibility violations once ready', async () => {
     fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
     const { wrapper } = await mountPage()
+
+    const results = await axe(wrapper.element)
+    expect(results.violations).toEqual([])
+  })
+
+  // --- Reprogramación (HU-065, T2) ---------------------------------------
+
+  it('shows the "Reprogramar turno" action only for a confirmed appointment', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Reprogramar turno')).toBe(true)
+  })
+
+  it('does not show "Reprogramar turno" for a non-confirmed appointment', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'completed' },
+    })
+    const { wrapper } = await mountPage()
+
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Reprogramar turno')).toBe(false)
+  })
+
+  it('opens the reschedule dialog prefilled with the current date and time, and shows a preview', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openRescheduleDialog(wrapper)
+
+    // readyDetail.startsAt = 2026-08-28T19:30:00Z, America/Bogota (UTC-5) => 14:30 local.
+    expect(rescheduleDateInput(wrapper).value).toBe('2026-08-28')
+    expect(rescheduleTimeInput(wrapper).value).toBe('14:30')
+    expect(openDialogElement(wrapper).textContent).toContain('Horario actual')
+
+    setInputValue(rescheduleTimeInput(wrapper), '15:00')
+    await flushPromises()
+    expect(openDialogElement(wrapper).textContent).toContain('15:00 – 15:30')
+  })
+
+  it('on success, refetches the detail and history, closes the dialog, and updates the back link to the new date', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage({ date: '2026-08-28', barberId: 'b-1' })
+    await openRescheduleDialog(wrapper)
+
+    setInputValue(rescheduleDateInput(wrapper), '2026-08-30')
+    setInputValue(rescheduleTimeInput(wrapper), '10:00')
+    await flushPromises()
+
+    rescheduleAppointmentMock.mockResolvedValueOnce({
+      kind: 'success',
+      startsAt: '2026-08-30T15:00:00Z',
+    })
+    fetchAppointmentDetailMock.mockResolvedValueOnce({
+      kind: 'success',
+      detail: { ...readyDetail, startsAt: '2026-08-30T15:00:00Z', endsAt: '2026-08-30T15:30:00Z' },
+    })
+    submitRescheduleDialog(wrapper)
+    await flushPromises()
+
+    expect(rescheduleAppointmentMock).toHaveBeenCalledWith(
+      'a-1',
+      { startsAt: '2026-08-30T10:00:00' },
+      'opaque-token',
+      expect.any(String),
+    )
+    expect(wrapper.element.querySelector('.base-dialog--open')).toBeNull()
+    expect(fetchAppointmentDetailMock).toHaveBeenCalledTimes(2)
+    // 2026-08-30T15:00:00Z en America/Bogota (UTC-5) es todavía 2026-08-30.
+    const back = wrapper.findAll('a').find((a) => a.text().includes('Volver'))
+    expect(back!.attributes('href')).toBe('/panel?date=2026-08-30&barberId=b-1')
+  })
+
+  it('blocks a second submit while the first is still in flight (no double POST)', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openRescheduleDialog(wrapper)
+
+    let resolveReschedule: (value: unknown) => void = () => {}
+    rescheduleAppointmentMock.mockReturnValueOnce(
+      new Promise((resolve) => (resolveReschedule = resolve)),
+    )
+    submitRescheduleDialog(wrapper)
+    submitRescheduleDialog(wrapper)
+    await flushPromises()
+
+    expect(rescheduleAppointmentMock).toHaveBeenCalledTimes(1)
+    resolveReschedule({ kind: 'success', startsAt: readyDetail.startsAt })
+    await flushPromises()
+  })
+
+  it('sends the same idempotency key across a submit and a network-error retry of the same logical attempt', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openRescheduleDialog(wrapper)
+
+    rescheduleAppointmentMock.mockResolvedValueOnce({ kind: 'network-error' })
+    submitRescheduleDialog(wrapper)
+    await flushPromises()
+
+    rescheduleAppointmentMock.mockResolvedValueOnce({
+      kind: 'success',
+      startsAt: readyDetail.startsAt,
+    })
+    submitRescheduleDialog(wrapper)
+    await flushPromises()
+
+    const firstKey = rescheduleAppointmentMock.mock.calls[0]![3]
+    const secondKey = rescheduleAppointmentMock.mock.calls[1]![3]
+    expect(secondKey).toBe(firstKey)
+  })
+
+  it('on an agenda conflict, shows the server message and keeps the chosen date/time', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openRescheduleDialog(wrapper)
+
+    setInputValue(rescheduleDateInput(wrapper), '2026-08-29')
+    setInputValue(rescheduleTimeInput(wrapper), '11:00')
+    await flushPromises()
+
+    rescheduleAppointmentMock.mockResolvedValueOnce({
+      kind: 'conflict',
+      detail: 'El barbero ya tiene un turno en ese horario.',
+    })
+    submitRescheduleDialog(wrapper)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('El barbero ya tiene un turno en ese horario.')
+    expect(wrapper.element.querySelector('.base-dialog--open')).toBeTruthy()
+    expect(rescheduleDateInput(wrapper).value).toBe('2026-08-29')
+    expect(rescheduleTimeInput(wrapper).value).toBe('11:00')
+    expect(fetchAppointmentDetailMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('on a version conflict, offers a reload that refetches the real detail', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openRescheduleDialog(wrapper)
+
+    rescheduleAppointmentMock.mockResolvedValueOnce({ kind: 'version-conflict' })
+    submitRescheduleDialog(wrapper)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('cambió mientras lo editabas')
+    const reload = wrapper.findAll('button').find((b) => b.text() === 'Recargar')
+    expect(reload).toBeTruthy()
+
+    fetchAppointmentDetailMock.mockResolvedValueOnce({
+      kind: 'success',
+      detail: { ...readyDetail, versionToken: 'fresh-token' },
+    })
+    await reload!.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.element.querySelector('.base-dialog--open')).toBeNull()
+    expect(fetchAppointmentDetailMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('on an invalid-state conflict, offers a reload with the same recoverable message', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openRescheduleDialog(wrapper)
+
+    rescheduleAppointmentMock.mockResolvedValueOnce({ kind: 'invalid-state' })
+    submitRescheduleDialog(wrapper)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('ya no se puede reprogramar')
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Recargar')).toBe(true)
+  })
+
+  // El atrapado/restauración de foco es responsabilidad genérica de
+  // BaseDialog (shared/ui/__tests__/BaseDialog.test.ts): esta página solo
+  // usa su API estándar (v-model, @close) sin lógica de foco propia. No se
+  // duplica aquí una prueba de `document.activeElement` porque jsdom no
+  // calcula layout (offsetParent es siempre null), la misma razón por la
+  // que BaseDialog.test.ts y StaffPage.test.ts tampoco lo verifican a este
+  // nivel; el foco real se confirma en el navegador vía el E2E de HU-065.
+
+  it('has no obvious accessibility violations with the reschedule dialog open', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openRescheduleDialog(wrapper)
 
     const results = await axe(wrapper.element)
     expect(results.violations).toEqual([])
