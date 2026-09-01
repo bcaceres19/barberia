@@ -470,12 +470,12 @@
     "semantic_hash": ""
   },
   "docs/00-control/historial-cambios.md": {
-    "mtime": 1788287129.7757378,
-    "ast_hash": "7cff964a796914a662abc90bca454dd2",
+    "mtime": 1788295251.5159943,
+    "ast_hash": "58ad81c638831de3ca64f0a1068bef8f",
     "semantic_hash": ""
   },
   "docs/00-control/matriz-trazabilidad.md": {
-    "mtime": 1788287099.4316583,
+    "mtime": 1788287392.9658716,
     "ast_hash": "3ae854c24750f870a18803efa9ec9182",
     "semantic_hash": ""
   },
@@ -595,12 +595,12 @@
     "semantic_hash": ""
   },
   "docs/02-requisitos/historias-usuario.md": {
-    "mtime": 1788287101.915883,
+    "mtime": 1788287392.9668713,
     "ast_hash": "2d21a98610cd2e5a65eaf764301cb0d8",
     "semantic_hash": ""
   },
   "docs/10-backlog/plan-bloques.md": {
-    "mtime": 1788287104.14475,
+    "mtime": 1788287392.9678776,
     "ast_hash": "4175a22920548a8c872d114a118dd70e",
     "semantic_hash": ""
   },
@@ -700,8 +700,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/BaseInput.vue": {
-    "mtime": 1787709319.4575934,
-    "ast_hash": "c34416d630326b13a709248819712639",
+    "mtime": 1788294475.308181,
+    "ast_hash": "2f3d09ce5e87cb5f21d10e23a9fd21bf",
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/__tests__/BaseAlert.test.ts": {
@@ -725,8 +725,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/__tests__/BaseInput.test.ts": {
-    "mtime": 1786636133.8434205,
-    "ast_hash": "2a543bcdb62685fcdcc5713b52e15543",
+    "mtime": 1788294475.308181,
+    "ast_hash": "8780bf103a450235795b4aa3385712dc",
     "semantic_hash": ""
   },
   "database/migrations/20260811145252_harden_roles_and_definer_functions.sql": {
@@ -805,8 +805,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/README.md": {
-    "mtime": 1788287093.8040228,
-    "ast_hash": "84117af5050bac004ffb723ef4ce8068",
+    "mtime": 1788295235.602682,
+    "ast_hash": "6b36d06ad46d67ce92f45367b0ac3044",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/TEMPLATE.md": {
@@ -3995,7 +3995,7 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/hu/hu-065-reprogramacion-turno.md": {
-    "mtime": 1788287113.7823632,
+    "mtime": 1788287392.9688804,
     "ast_hash": "01b41d4edd6726498a70db1a66087ce5",
     "semantic_hash": ""
   },
@@ -4167,6 +4167,11 @@
   "api/openapi/components/schemas/RescheduleAppointmentRequest.yaml": {
     "mtime": 1788287015.5685675,
     "ast_hash": "6b696a9842f59f144b4dddecd4c21550",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/test/2026-09-01-qa-manual-b2-b3-chrome-mcp.md": {
+    "mtime": 1788295216.012841,
+    "ast_hash": "da662a9de5fb51f3d83cdc5c14d65029",
     "semantic_hash": ""
   }
 }
