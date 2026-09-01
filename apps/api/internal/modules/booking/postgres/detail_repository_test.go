@@ -32,9 +32,13 @@ import (
 func insertSyntheticHistoryRow(t *testing.T, db *database.DB, shop database.BarbershopID, appointmentID string, occurredAt time.Time, id string) {
 	t.Helper()
 	err := db.InTenantTx(context.Background(), shop, func(ctx context.Context, q database.Queries) error {
+		// appointment_history_reason_ck exige reason NOT NULL cuando
+		// event_type = 'appointment_status_corrected' (única razón por la
+		// que este evento se eligió como sintético: no exige ningún otro
+		// dato ni FK que resolver).
 		_, err := q.Exec(ctx, `
-			INSERT INTO appointment_history (id, barbershop_id, appointment_id, event_type, actor_type, occurred_at)
-			VALUES ($1, $2, $3, 'appointment_status_corrected', 'system', $4)`,
+			INSERT INTO appointment_history (id, barbershop_id, appointment_id, event_type, actor_type, reason, occurred_at)
+			VALUES ($1, $2, $3, 'appointment_status_corrected', 'system', 'corrección sintética de prueba', $4)`,
 			id, string(shop), appointmentID, occurredAt)
 		return err
 	})
