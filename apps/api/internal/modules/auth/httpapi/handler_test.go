@@ -36,6 +36,9 @@ func (s stubRepository) LookupCredential(context.Context, string, bool, string) 
 func (s stubRepository) CreateSession(context.Context, string, string, string, time.Time, time.Time) error {
 	return nil
 }
+func (s stubRepository) StaffUserNames(context.Context, string, []string) (map[string]string, error) {
+	return map[string]string{}, nil
+}
 
 type stubHasher struct{ match bool }
 
@@ -60,6 +63,9 @@ func (f failingRepository) LookupCredential(context.Context, string, bool, strin
 }
 func (f failingRepository) CreateSession(context.Context, string, string, string, time.Time, time.Time) error {
 	return nil
+}
+func (f failingRepository) StaffUserNames(context.Context, string, []string) (map[string]string, error) {
+	return map[string]string{}, nil
 }
 
 func newHandler(t *testing.T, repo auth.Repository, match bool) *httpapi.LoginHandler {

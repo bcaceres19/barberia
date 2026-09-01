@@ -1,0 +1,84 @@
+# Detalle privado de un turno (HU-064, CA-064-01 a CA-064-04). Deliberadamente
+# SIN customerId, ningún identificador de actor, barbershopId ni updatedAt
+# crudo (RN-TEN-01, RN-DAT-02): versionToken es el único dato de concurrencia
+# expuesto, opaco (nunca decodificable en un instante real por el cliente).
+type: object
+description: >
+  Detalle completo de un turno, incluido su contacto y nota (solo visibles
+  aquí, nunca en la agenda diaria). serviceName/durationMinutes/priceAmount/
+  currency son el snapshot congelado al crear la cita (DEC-004), nunca el
+  catálogo vigente.
+properties:
+  id:
+    type: string
+    format: uuid
+  barberId:
+    type: string
+    format: uuid
+  barberFullName:
+    type: string
+  attendeeName:
+    type: string
+    description: Persona atendida (RN-RES-03); puede diferir de customerFullName.
+  customerFullName:
+    type: string
+    description: Persona que reservó (RN-RES-02).
+  customerPhone:
+    type: [string, "null"]
+  customerEmail:
+    type: [string, "null"]
+  customerNote:
+    type: [string, "null"]
+  startsAt:
+    type: string
+    format: date-time
+  endsAt:
+    type: string
+    format: date-time
+  status:
+    type: string
+    enum: [confirmed, completed, cancelled_by_customer, cancelled_by_barber, no_show]
+  origin:
+    type: string
+    enum: [public, manual]
+  serviceName:
+    type: string
+  durationMinutes:
+    type: integer
+  priceAmount:
+    type: string
+    description: Importe exacto en formato decimal (nunca coma flotante).
+    examples:
+      - "20000.00"
+  currency:
+    type: string
+    examples:
+      - COP
+  versionToken:
+    type: string
+    description: >
+      Token opaco de concurrencia, determinista a partir del estado vigente
+      de la cita. No es un identificador ni codifica ningún dato legible: no
+      lo decodifiques, guárdalo solo para una precondición futura.
+  createdAt:
+    type: string
+    format: date-time
+required:
+  - id
+  - barberId
+  - barberFullName
+  - attendeeName
+  - customerFullName
+  - customerPhone
+  - customerEmail
+  - customerNote
+  - startsAt
+  - endsAt
+  - status
+  - origin
+  - serviceName
+  - durationMinutes
+  - priceAmount
+  - currency
+  - versionToken
+  - createdAt

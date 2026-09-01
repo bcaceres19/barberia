@@ -1625,6 +1625,77 @@ fuera de esta entrega.
 - HTTP: `internal/modules/booking/httpapi/agenda_handler_test.go` (200 con/sin turnos, forma exacta sin campos personales, 400 fecha inválida, 401 sin principal, 404 barbero ajeno, 500).
 - Componentes Vue: `apps/web/src/modules/agenda/pages/__tests__/DailyAgendaPage.test.ts` (carga, selector obligatorio de barbero, vacío, error con reintento, aislamiento entre selecciones rápidas, not-found, navegación a "Nuevo turno", `vitest-axe`).
 
+## Detalle e historial de un turno (HU-064)
+
+`GET /private/appointments/{appointmentId}` y
+`GET /private/appointments/{appointmentId}/history`
+(`internal/modules/booking/httpapi`): `booking.DetailService` (nuevo, junto a
+`ManualBookingService`/`AgendaService`) implementa la lectura de solo
+detalle e historial, sin ninguna mutación. `GetDetail` valida la forma del
+`appointmentId`, lee `booking.Repository.GetAppointmentDetail` (une
+`appointment`/`customer`, ambas propias de `booking`) y resuelve
+`BarberFullName` aparte, vía `booking.BarberNamePort` (adaptador
+`staff.NewBarberNameLookup`, nuevo junto a `staff.BarberLookup`): la
+respuesta nunca trae `customerId`, `barbershopId` ni `updatedAt` crudo
+(`CA-064-01`–`CA-064-04`). `VersionToken` es un token opaco irreversible
+(`booking.EncodeVersionToken`, SHA-256 de `appointmentId` + `updated_at` en
+nanosegundos, nunca una codificación reversible del instante) destinado a
+una precondición de mutación futura.
+
+`ListHistory` pagina por cursor opaco (`booking.HistoryCursor`, mismo
+criterio que `staff.Cursor`) el historial append-only de `HU-060`
+(`appointment_history`/`appointment_history_change`), orden estable
+`(occurred_at, id)` sobre el índice existente
+`idx_appointment_history_shop_appointment_occurred` (verificado por
+razonamiento sobre el plan, no con `EXPLAIN` real: sin Docker disponible en
+esta sesión, ver nota de alcance). Cada página resuelve, en un solo lote
+por tipo de actor (nunca N+1), el nombre visible del actor: `staff` vía
+`booking.StaffActorNamePort` (adaptador `auth.NewStaffActorNameLookup`
+sobre `authpostgres.Repository.StaffUserNames`, nuevo — `staff_user` es
+tabla propia de `auth`, distinta de `barber`) y `customer` vía
+`booking.Repository.CustomerNames` (tabla propia de `booking`); un id sin
+nombre autorizado usa una etiqueta segura ("Miembro del equipo", "Cliente",
+"Sistema") coherente con el tipo de actor. Ni `booking` importa
+`staff`/`auth`, ni viceversa: `cmd/api` es la única raíz de composición que
+conoce los tres módulos a la vez.
+
+### Tabla de criterios de aceptación
+
+| Criterio | Estado | Prueba o evidencia |
+| --- | --- | --- |
+| `CA-064-01` a `CA-064-07` | Backend y frontend cumplidos | `internal/modules/booking/{detail_test.go,detail_service_test.go}`, `internal/modules/booking/postgres/detail_repository_test.go`, `internal/modules/booking/httpapi/detail_handler_test.go`, `internal/modules/{staff/name_lookup_test.go,auth/{actor_names_test.go,postgres/staff_names_test.go}}`, `apps/web/src/modules/agenda/pages/__tests__/AppointmentDetailPage.test.ts`. |
+| `CA-064-08` (plantilla P0, reflow, teclado/zoom, `axe-core`) | `vitest-axe` sin violaciones; evidencia visual responsiva contra Chromium real pendiente (ver nota) | `apps/web/src/modules/agenda/pages/__tests__/AppointmentDetailPage.test.ts` (prueba de accesibilidad); captura en 320/360/768/1280px/zoom 200% pendiente. |
+
+**Nota de alcance:** esta entrega cubre dominio (validación de forma,
+paginación por cursor, resolución de actor sin N+1, token de versión),
+Postgres real (dos tenants, historial vacío/lleno, paginación sin
+duplicados, `appointment_history_change` propio de cada entrada) y
+HTTP/frontend con dobles de prueba, incluida accesibilidad automatizada
+(`vitest-axe`) de la pantalla. `gofmt`/`go vet`/`go build` y la suite
+completa de pruebas Go que no requiere PostgreSQL real (incluidas todas las
+nuevas de este HU) se ejecutaron localmente con un toolchain Go 1.25
+portátil (sin instalación permanente) y están en verde; las pruebas de
+integración de `internal/modules/*/postgres` (incluidas las nuevas
+`detail_repository_test.go`/`staff_names_test.go`) no pudieron ejecutarse
+contra una base real esta sesión (sin Docker disponible; algo distinto ya
+escuchaba en el puerto 5432 local con credenciales ajenas a este proyecto)
+y quedan cubiertas por CI. El recorrido E2E
+(`apps/web/e2e/agenda-detalle-historial.spec.ts`, mismo patrón que
+`e2e/agenda-navegacion-fecha.spec.ts`) y la evidencia visual responsiva en
+320/360/768/1280px/zoom 200% quedan como seguimiento explícito: ninguno de
+los cuatro checks de CI (`Atlas + suites SQL`, `Go`, `Frontend`, `OpenAPI`)
+ejecuta Playwright. El `EXPLAIN (ANALYZE, BUFFERS)` real del historial
+paginado también queda pendiente de ejecución contra PostgreSQL por el
+mismo motivo.
+
+### Pruebas
+
+- Dominio/servicio: `internal/modules/booking/detail_test.go` (forma de `appointmentId`, `EncodeVersionToken` determinista/irreversible/distinto por cita, cursor codifica/decodifica) y `detail_service_test.go` (no encontrado, error interno, resolución de barbero, límite por defecto/máximo, cursor inválido, resolución de actor en un solo lote por tipo -staff/customer/system-, etiqueta segura de reserva, `Changes` preservados por entrada).
+- PostgreSQL real: `internal/modules/booking/postgres/detail_repository_test.go` (detalle con snapshot de cliente/servicio, token de versión estable sin escritura, aislamiento de tenant en detalle e historial, historial tras `CreateInternal`, paginación de dos páginas sin duplicados/omisiones con filas sintéticas insertadas por SQL directo -HU-064 no expone todavía ninguna mutación que las genere-, `appointment_history_change` propio de cada entrada, `CustomerNames` por lote); `internal/modules/auth/postgres/staff_names_test.go` (nombre real, aislamiento de tenant, lote vacío).
+- HTTP: `internal/modules/booking/httpapi/detail_handler_test.go` (200 con forma exacta sin campos prohibidos, 404 no encontrado, 400 cursor/límite inválidos, 401 sin principal, 500).
+- Adaptadores: `internal/modules/staff/name_lookup_test.go`, `internal/modules/auth/actor_names_test.go` (delegación estructural, sin lógica propia que probar más allá de la traducción de error).
+- Componentes Vue: `apps/web/src/modules/agenda/pages/__tests__/AppointmentDetailPage.test.ts` (detalle listo, sin sección de contacto cuando falta, no encontrado, error/reintento, historial listo con motivo/cambios, "Cargar más" con dos páginas convivientes, error/reintento de historial, enlace "Volver" con fecha/barbero preservados, `vitest-axe`).
+
 ## Pruebas de integración
 
 Las pruebas en `internal/platform/database/*_test.go` requieren PostgreSQL real

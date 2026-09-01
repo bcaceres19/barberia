@@ -390,6 +390,23 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	listDailyAgendaHandler := bookinghttpapi.NewListDailyAgendaHandler(agendaService)
 	private.Get("/barbers/{barberId}/appointments/daily-agenda", listDailyAgendaHandler.ServeHTTP)
 
+	// HU-064: detalle e historial de un turno. Mismo criterio de
+	// colaboración por puerto pequeño que ManualBookingService/AgendaService:
+	// DetailService solo conoce staff.NewBarberNameLookup(staffService) y
+	// auth.NewStaffActorNameLookup(authpostgres.New(db)), nunca los paquetes
+	// staff/auth. authpostgres.New(db) es una instancia propia, igual que
+	// loginService/sessionService construyen la suya (auth/postgres.New es
+	// un envoltorio liviano sobre el mismo *database.DB compartido).
+	detailService := booking.NewDetailService(
+		bookingRepo,
+		staff.NewBarberNameLookup(staffService),
+		auth.NewStaffActorNameLookup(authpostgres.New(db)),
+	)
+	getAppointmentDetailHandler := bookinghttpapi.NewGetAppointmentDetailHandler(detailService)
+	listAppointmentHistoryHandler := bookinghttpapi.NewListAppointmentHistoryHandler(detailService)
+	private.Get("/appointments/{appointmentId}", getAppointmentDetailHandler.ServeHTTP)
+	private.Get("/appointments/{appointmentId}/history", listAppointmentHistoryHandler.ServeHTTP)
+
 	// HU-008 (DEC-063-066): recuperación de acceso con código de un solo
 	// uso. sender es el adaptador dual de Meta WhatsApp Cloud API + Resend
 	// cuando hay credenciales configuradas; sin ellas (típicamente

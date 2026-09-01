@@ -1,0 +1,21 @@
+# Colección paginada por cursor (docs/06-api/estandar-openapi.md §6.10),
+# mismo criterio que BarberListResponse: el historial de un turno con mucha
+# actividad y uno con una sola entrada usan exactamente la misma forma.
+type: object
+description: >
+  Página del historial de un turno, orden estable por instante y luego por
+  identificador (CA-064-05).
+properties:
+  items:
+    type: array
+    description: Entradas de historial de esta página, en el orden estable del servidor.
+    items:
+      $ref: './AppointmentHistoryEntry.yaml'
+  nextCursor:
+    type: [string, "null"]
+    description: >
+      Cursor opaco para pedir la siguiente página con el parámetro `cursor`.
+      `null` cuando esta página es la última.
+required:
+  - items
+  - nextCursor

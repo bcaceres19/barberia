@@ -57,6 +57,57 @@ type Repository interface {
 	// verificado por AgendaService antes de llamar aquí (mismo criterio que
 	// schedule.Repository.List frente a schedule.Service.List).
 	ListDailyAgenda(ctx context.Context, barbershopID, barberID string, rangeStart, rangeEnd time.Time) ([]DailyAgendaEntry, error)
+
+	// GetAppointmentDetail lee el detalle de una cita dentro de barbershopID
+	// (HU-064, CA-064-01 a CA-064-04). found=false cubre appointmentID
+	// inexistente o de otra barbería, sin distinguir la causa (RN-TEN-01);
+	// en ese caso AppointmentDetail queda en su valor cero.
+	// AppointmentDetail.BarberFullName SIEMPRE llega vacío: se resuelve
+	// aparte, vía BarberNamePort, porque este repositorio no puede unir
+	// contra `barber` (CA-002-06).
+	GetAppointmentDetail(ctx context.Context, barbershopID, appointmentID string) (AppointmentDetail, bool, error)
+
+	// ListAppointmentHistory lee una página del historial de appointmentID,
+	// orden estable (occurred_at, id) (HU-064, CA-064-05). cursor es nil
+	// para la primera página; limit ya llegó clamped por DetailService.
+	// found=false cubre appointmentID inexistente o de otra barbería (mismo
+	// criterio que GetAppointmentDetail); en ese caso items/nextCursor
+	// quedan en su valor cero. nextCursor es nil cuando esta página es la
+	// última. Cada HistoryRow.Changes ya viene resuelto (una sola consulta
+	// adicional por página, nunca una por fila).
+	ListAppointmentHistory(
+		ctx context.Context,
+		barbershopID, appointmentID string,
+		cursor *HistoryCursor,
+		limit int,
+	) (items []HistoryRow, nextCursor *HistoryCursor, found bool, err error)
+
+	// CustomerNames resuelve, en un solo lote, el nombre visible de cada
+	// customerID pedido dentro de barbershopID (trabajo requerido §2.3, "sin
+	// generar N+1"): customer es tabla propia de booking (HU-060), así que
+	// esta lectura no necesita ningún puerto adicional. Un id sin
+	// coincidencia simplemente está ausente del mapa devuelto.
+	CustomerNames(ctx context.Context, barbershopID string, customerIDs []string) (map[string]string, error)
+}
+
+// BarberNamePort resuelve el nombre visible de un barbero por id, dentro de
+// barbershopID (RN-TEN-01). found=false cubre inexistente o de otra
+// barbería, mismo criterio que BarberPort.Exists. El adaptador real vive en
+// el paquete staff (staff.NewBarberNameLookup): booking nunca importa staff.
+type BarberNamePort interface {
+	Name(ctx context.Context, barbershopID, barberID string) (fullName string, found bool, err error)
+}
+
+// StaffActorNamePort resuelve, en un solo lote, el nombre visible de cada
+// staff_user_id pedido (RN-HIS-01, HU-064): nunca expone correo ni ningún
+// identificador interno. Un id sin coincidencia simplemente está ausente del
+// mapa devuelto; DetailService decide entonces la etiqueta segura de
+// reserva. El adaptador real vive en el paquete auth
+// (auth.NewStaffActorNameLookup), porque staff_user es una tabla propia de
+// auth (identidad de sesión), distinta de barber (BarberNamePort, arriba):
+// booking nunca importa auth.
+type StaffActorNamePort interface {
+	Names(ctx context.Context, barbershopID string, staffUserIDs []string) (map[string]string, error)
 }
 
 // BarberPort confirma que barberID existe dentro de barbershopID

@@ -2,8 +2,9 @@
 # cancelar y cambiar estado de turnos, con historial. Requiere sesión
 # autenticada. Ver docs/06-api/estandar-openapi.md.
 #
-# HU-061 (B3) agrega la creación manual: el resto (editar, reprogramar,
-# cancelar, cambiar estado) queda sin contenido todavía.
+# HU-061 (B3) agrega la creación manual; HU-064 agrega detalle e historial de
+# solo lectura. Editar, reprogramar, cancelar y cambiar estado quedan sin
+# contenido todavía.
 /private/appointments:
   post:
     tags: [Booking]
@@ -251,6 +252,141 @@
                   title: No encontrado
                   status: 404
                   detail: no existe un barbero con ese identificador
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: not-found
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+
+/private/appointments/{appointmentId}:
+  get:
+    tags: [Booking]
+    summary: Consultar el detalle de un turno
+    description: >
+      Detalle completo de una cita (HU-064, CA-064-01 a CA-064-04): persona
+      atendida, cliente que reservó con su contacto opcional y nota, barbero,
+      origen, intervalo, estado y el snapshot de servicio congelado al crear
+      la cita (DEC-004), nunca el catálogo vigente. La respuesta nunca
+      incluye `customerId`, ningún identificador de actor de historial,
+      `barbershopId` ni `updatedAt` crudo: `versionToken` es el único dato de
+      concurrencia expuesto, opaco.
+    operationId: getAppointmentDetail
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-CIT-01, RN-RES-02, RN-RES-03, RN-DIS-07]
+    x-decisions: [DEC-004, DEC-007, DEC-016, DEC-024]
+    parameters:
+      - name: appointmentId
+        in: path
+        required: true
+        description: Identificador de la cita.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          cita:
+            value: 3f4a5b6c-7d8e-49f0-a1b2-c3d4e5f60718
+    responses:
+      "200":
+        $ref: '../components/responses/AppointmentDetailSuccess.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        description: >
+          `appointmentId` con forma inválida, inexistente o de otra
+          barbería (RN-TEN-01), sin distinguir la causa.
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              citaAjena:
+                value:
+                  type: /api/v1/problems/not-found
+                  title: No encontrado
+                  status: 404
+                  detail: no existe una cita con ese identificador
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: not-found
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+
+/private/appointments/{appointmentId}/history:
+  get:
+    tags: [Booking]
+    summary: Consultar el historial de un turno
+    description: >
+      Historial inmutable y completo de una cita (HU-060, HU-064,
+      CA-064-05), paginado por cursor, orden estable por instante y luego
+      por identificador. Cada entrada trae `actorLabel`, un nombre visible
+      seguro (nunca correo ni ningún identificador de actor): una etiqueta
+      de reserva coherente con `actorType` cuando el nombre autorizado no
+      está disponible.
+    operationId: listAppointmentHistory
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-HIS-01, RN-HIS-02, RN-DIS-07]
+    x-decisions: [DEC-014, DEC-016, DEC-024, DEC-041]
+    parameters:
+      - name: appointmentId
+        in: path
+        required: true
+        description: Identificador de la cita.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          cita:
+            value: 3f4a5b6c-7d8e-49f0-a1b2-c3d4e5f60718
+      - name: cursor
+        in: query
+        required: false
+        description: >
+          Cursor opaco devuelto por una página anterior (`nextCursor`). Sin
+          este parámetro, la respuesta empieza en la primera página.
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: Máximo de entradas de historial por página.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+        examples:
+          porDefecto:
+            value: 20
+    responses:
+      "200":
+        $ref: '../components/responses/AppointmentHistorySuccess.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        description: >
+          `appointmentId` con forma inválida, inexistente o de otra
+          barbería (RN-TEN-01), sin distinguir la causa.
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              citaAjena:
+                value:
+                  type: /api/v1/problems/not-found
+                  title: No encontrado
+                  status: 404
+                  detail: no existe una cita con ese identificador
                   instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
                   code: not-found
                   requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

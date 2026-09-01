@@ -93,6 +93,19 @@ func errDateInvalid() error {
 	return apperr.Invalid("date debe ser una fecha civil con el formato AAAA-MM-DD")
 }
 
+// errAppointmentNotFound cubre HU-064 (CA-064-01, CA-064-07): appointmentId
+// con forma inválida, inexistente o de otra barbería, sin distinguir la
+// causa (RN-TEN-01), mismo criterio que errBarberNotFound.
+func errAppointmentNotFound() error {
+	return apperr.NotFound("no existe una cita con ese identificador")
+}
+
+// errHistoryCursorInvalid cubre HU-064: el parámetro cursor del historial no
+// es un valor opaco válido producido por EncodeHistoryCursor.
+func errHistoryCursorInvalid() error {
+	return apperr.Invalid("el parámetro cursor tiene un formato inválido")
+}
+
 // Los errores de conflicto de agenda y de cliente inexistente/ajeno viven
 // en booking/postgres (errScheduleConflict, errCustomerNotFound): solo se
 // detectan al traducir un exclusion_violation/foreign_key_violation real de

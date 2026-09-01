@@ -54,6 +54,11 @@ function buildRouter() {
         name: 'agenda-nuevo-turno',
         component: { template: '<div>nuevo turno</div>' },
       },
+      {
+        path: '/panel/turnos/:appointmentId',
+        name: 'agenda-detalle-turno',
+        component: { template: '<div>detalle</div>' },
+      },
     ],
   })
 }

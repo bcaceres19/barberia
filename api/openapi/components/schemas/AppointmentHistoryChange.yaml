@@ -1,0 +1,14 @@
+# Campo modificado con su valor anterior y nuevo (RN-HIS-01), proyección
+# directa de appointment_history_change (HU-060).
+type: object
+properties:
+  fieldName:
+    type: string
+  previousValue:
+    type: [string, "null"]
+  newValue:
+    type: [string, "null"]
+required:
+  - fieldName
+  - previousValue
+  - newValue

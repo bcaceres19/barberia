@@ -9,9 +9,12 @@
 // privados de sus propios módulos): mismo criterio que
 // schedulesApi.fetchBarberSummaries frente a staffApi.
 import { httpClient } from '@/shared/api/httpClient'
+import type { AppointmentDetail, HistoryEntry } from '../model/appointmentDetail'
 import type {
   CreateManualAppointmentOutcome,
   CreatedManualAppointment,
+  FetchAppointmentDetailOutcome,
+  FetchAppointmentHistoryOutcome,
   FetchAssignedServicesOutcome,
   FetchBarberSummariesOutcome,
   FetchBarbershopTimezoneOutcome,
@@ -153,6 +156,125 @@ function toDailyAgendaEntry(data: {
     durationMinutes: data.durationMinutes,
     priceAmount: data.priceAmount,
     currency: data.currency,
+  }
+}
+
+// fetchAppointmentDetail (HU-064, CA-064-01 a CA-064-04).
+export async function fetchAppointmentDetail(
+  appointmentId: string,
+): Promise<FetchAppointmentDetailOutcome> {
+  try {
+    const { data, response } = await httpClient.GET('/private/appointments/{appointmentId}', {
+      params: { path: { appointmentId } },
+    })
+    if (response.ok && data) {
+      return { kind: 'success', detail: toAppointmentDetail(data) }
+    }
+    switch (response.status) {
+      case 404:
+        return { kind: 'not-found' }
+      default:
+        return { kind: 'unexpected-error' }
+    }
+  } catch {
+    return { kind: 'network-error' }
+  }
+}
+
+function toAppointmentDetail(data: {
+  id: string
+  barberId: string
+  barberFullName: string
+  attendeeName: string
+  customerFullName: string
+  customerPhone: string | null
+  customerEmail: string | null
+  customerNote: string | null
+  startsAt: string
+  endsAt: string
+  status: string
+  origin: string
+  serviceName: string
+  durationMinutes: number
+  priceAmount: string
+  currency: string
+  versionToken: string
+  createdAt: string
+}): AppointmentDetail {
+  return {
+    id: data.id,
+    barberId: data.barberId,
+    barberFullName: data.barberFullName,
+    attendeeName: data.attendeeName,
+    customerFullName: data.customerFullName,
+    customerPhone: data.customerPhone,
+    customerEmail: data.customerEmail,
+    customerNote: data.customerNote,
+    startsAt: data.startsAt,
+    endsAt: data.endsAt,
+    status: data.status as AppointmentDetail['status'],
+    origin: data.origin as AppointmentDetail['origin'],
+    serviceName: data.serviceName,
+    durationMinutes: data.durationMinutes,
+    priceAmount: data.priceAmount,
+    currency: data.currency,
+    versionToken: data.versionToken,
+    createdAt: data.createdAt,
+  }
+}
+
+// fetchAppointmentHistory (HU-064, CA-064-05): cursor vacío pide la primera
+// página, mismo criterio que fetchDailyAgenda frente a `date`.
+export async function fetchAppointmentHistory(
+  appointmentId: string,
+  cursor?: string,
+): Promise<FetchAppointmentHistoryOutcome> {
+  try {
+    const { data, response } = await httpClient.GET(
+      '/private/appointments/{appointmentId}/history',
+      {
+        params: { path: { appointmentId }, query: cursor ? { cursor } : {} },
+      },
+    )
+    if (response.ok && data) {
+      return {
+        kind: 'success',
+        items: data.items.map(toHistoryEntry),
+        nextCursor: data.nextCursor,
+      }
+    }
+    switch (response.status) {
+      case 404:
+        return { kind: 'not-found' }
+      default:
+        return { kind: 'unexpected-error' }
+    }
+  } catch {
+    return { kind: 'network-error' }
+  }
+}
+
+function toHistoryEntry(data: {
+  id: string
+  eventType: string
+  actorType: string
+  actorLabel: string
+  reason: string | null
+  occurredAt: string
+  changes: { fieldName: string; previousValue: string | null; newValue: string | null }[]
+}): HistoryEntry {
+  return {
+    id: data.id,
+    eventType: data.eventType as HistoryEntry['eventType'],
+    actorType: data.actorType as HistoryEntry['actorType'],
+    actorLabel: data.actorLabel,
+    reason: data.reason,
+    occurredAt: data.occurredAt,
+    changes: data.changes.map((c) => ({
+      fieldName: c.fieldName,
+      previousValue: c.previousValue,
+      newValue: c.newValue,
+    })),
   }
 }
 

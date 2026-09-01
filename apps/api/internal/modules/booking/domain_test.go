@@ -228,3 +228,21 @@ func (s *stubRepository) ListDailyAgenda(
 ) ([]booking.DailyAgendaEntry, error) {
 	panic("no usado")
 }
+
+func (s *stubRepository) GetAppointmentDetail(
+	_ context.Context, _, _ string,
+) (booking.AppointmentDetail, bool, error) {
+	panic("no usado")
+}
+
+func (s *stubRepository) ListAppointmentHistory(
+	_ context.Context, _, _ string, _ *booking.HistoryCursor, _ int,
+) ([]booking.HistoryRow, *booking.HistoryCursor, bool, error) {
+	panic("no usado")
+}
+
+func (s *stubRepository) CustomerNames(
+	_ context.Context, _ string, _ []string,
+) (map[string]string, error) {
+	panic("no usado")
+}

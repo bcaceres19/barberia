@@ -66,4 +66,12 @@ type Repository interface {
 	// SHA-256 hexadecimal del token en claro (ver [HashToken]); el valor en
 	// claro nunca llega a este puerto.
 	CreateSession(ctx context.Context, barbershopID, staffUserID, tokenHash string, issuedAt, expiresAt time.Time) error
+
+	// StaffUserNames resuelve, en una sola consulta por lote, el full_name
+	// de cada id de staffUserIDs dentro de barbershopID (HU-064,
+	// StaffActorNameLookup): nunca expone email ni ninguna otra columna. Un
+	// id sin coincidencia (inexistente o de otra barbería) simplemente está
+	// ausente del mapa devuelto. staffUserIDs vacío devuelve un mapa vacío
+	// sin tocar PostgreSQL.
+	StaffUserNames(ctx context.Context, barbershopID string, staffUserIDs []string) (map[string]string, error)
 }

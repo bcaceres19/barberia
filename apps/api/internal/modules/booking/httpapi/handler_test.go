@@ -41,6 +41,18 @@ func (f *fakeRepository) ListDailyAgenda(context.Context, string, string, time.T
 	panic("no usado")
 }
 
+func (f *fakeRepository) GetAppointmentDetail(context.Context, string, string) (booking.AppointmentDetail, bool, error) {
+	panic("no usado")
+}
+
+func (f *fakeRepository) ListAppointmentHistory(context.Context, string, string, *booking.HistoryCursor, int) ([]booking.HistoryRow, *booking.HistoryCursor, bool, error) {
+	panic("no usado")
+}
+
+func (f *fakeRepository) CustomerNames(context.Context, string, []string) (map[string]string, error) {
+	panic("no usado")
+}
+
 var _ booking.Repository = (*fakeRepository)(nil)
 
 type fakeCatalog struct{}

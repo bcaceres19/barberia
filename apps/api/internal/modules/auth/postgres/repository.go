@@ -129,3 +129,42 @@ func (r *Repository) CreateSession(ctx context.Context, barbershopID, staffUserI
 	}
 	return nil
 }
+
+// StaffUserNames implementa auth.Repository.StaffUserNames (HU-064): una
+// sola consulta por lote con `= ANY($2)`, tenant-aware por barbershop_id
+// además de RLS, que nunca selecciona email ni ninguna otra columna. Un id
+// sin coincidencia simplemente está ausente del mapa devuelto.
+func (r *Repository) StaffUserNames(ctx context.Context, barbershopID string, staffUserIDs []string) (map[string]string, error) {
+	names := make(map[string]string, len(staffUserIDs))
+	if len(staffUserIDs) == 0 {
+		return names, nil
+	}
+
+	shop, err := database.ValidBarbershopID(barbershopID)
+	if err != nil {
+		return nil, fmt.Errorf("auth/postgres: %w", err)
+	}
+
+	err = r.db.InTenantTx(ctx, shop, func(ctx context.Context, q database.Queries) error {
+		rows, err := q.Query(ctx,
+			`SELECT id, full_name FROM staff_user WHERE barbershop_id = $1 AND id = ANY($2)`,
+			barbershopID, staffUserIDs)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var id, name string
+			if err := rows.Scan(&id, &name); err != nil {
+				return err
+			}
+			names[id] = name
+		}
+		return rows.Err()
+	})
+	if err != nil {
+		return nil, fmt.Errorf("auth/postgres: staff user names: %w", err)
+	}
+	return names, nil
+}

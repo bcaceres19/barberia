@@ -776,6 +776,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/private/appointments/{appointmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar el detalle de un turno
+         * @description Detalle completo de una cita (HU-064, CA-064-01 a CA-064-04): persona atendida, cliente que reservó con su contacto opcional y nota, barbero, origen, intervalo, estado y el snapshot de servicio congelado al crear la cita (DEC-004), nunca el catálogo vigente. La respuesta nunca incluye `customerId`, ningún identificador de actor de historial, `barbershopId` ni `updatedAt` crudo: `versionToken` es el único dato de concurrencia expuesto, opaco.
+         */
+        get: operations["getAppointmentDetail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/private/appointments/{appointmentId}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar el historial de un turno
+         * @description Historial inmutable y completo de una cita (HU-060, HU-064, CA-064-05), paginado por cursor, orden estable por instante y luego por identificador. Cada entrada trae `actorLabel`, un nombre visible seguro (nunca correo ni ningún identificador de actor): una etiqueta de reserva coherente con `actorType` cuando el nombre autorizado no está disponible.
+         */
+        get: operations["listAppointmentHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1838,6 +1878,69 @@ export interface components {
             /** @description Turnos de la agenda, en el orden estable del servidor. Un turno que cruza medianoche puede aparecer en la respuesta de más de un día distinto (DEC-075), nunca duplicado dentro de la misma respuesta. */
             items: components["schemas"]["DailyAgendaEntry"][];
         };
+        /** @description Detalle completo de un turno, incluido su contacto y nota (solo visibles aquí, nunca en la agenda diaria). serviceName/durationMinutes/priceAmount/ currency son el snapshot congelado al crear la cita (DEC-004), nunca el catálogo vigente. */
+        AppointmentDetailResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            barberId: string;
+            barberFullName: string;
+            /** @description Persona atendida (RN-RES-03); puede diferir de customerFullName. */
+            attendeeName: string;
+            /** @description Persona que reservó (RN-RES-02). */
+            customerFullName: string;
+            customerPhone: string | null;
+            customerEmail: string | null;
+            customerNote: string | null;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** @enum {string} */
+            status: "confirmed" | "completed" | "cancelled_by_customer" | "cancelled_by_barber" | "no_show";
+            /** @enum {string} */
+            origin: "public" | "manual";
+            serviceName: string;
+            durationMinutes: number;
+            /**
+             * @description Importe exacto en formato decimal (nunca coma flotante).
+             * @example 20000.00
+             */
+            priceAmount: string;
+            /** @example COP */
+            currency: string;
+            /** @description Token opaco de concurrencia, determinista a partir del estado vigente de la cita. No es un identificador ni codifica ningún dato legible: no lo decodifiques, guárdalo solo para una precondición futura. */
+            versionToken: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        AppointmentHistoryChange: {
+            fieldName: string;
+            previousValue: string | null;
+            newValue: string | null;
+        };
+        AppointmentHistoryEntry: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            eventType: "appointment_created" | "appointment_rescheduled" | "appointment_service_changed" | "appointment_completed" | "appointment_cancelled_by_customer" | "appointment_cancelled_by_barber" | "appointment_no_show" | "appointment_status_corrected";
+            /** @enum {string} */
+            actorType: "staff" | "customer" | "system";
+            /** @description Nombre visible seguro del actor (nunca correo ni ningún identificador interno). Una etiqueta de reserva ("Miembro del equipo", "Cliente", "Sistema") cuando el nombre autorizado no está disponible. */
+            actorLabel: string;
+            reason: string | null;
+            /** Format: date-time */
+            occurredAt: string;
+            /** @description Campos modificados con su valor anterior y nuevo (RN-HIS-01). */
+            changes: components["schemas"]["AppointmentHistoryChange"][];
+        };
+        /** @description Página del historial de un turno, orden estable por instante y luego por identificador (CA-064-05). */
+        AppointmentHistoryResponse: {
+            /** @description Entradas de historial de esta página, en el orden estable del servidor. */
+            items: components["schemas"]["AppointmentHistoryEntry"][];
+            /** @description Cursor opaco para pedir la siguiente página con el parámetro `cursor`. `null` cuando esta página es la última. */
+            nextCursor: string | null;
+        };
     };
     responses: {
         /** @description Sesión cerrada. La cookie de sesión queda limpiada en Set-Cookie. */
@@ -2555,6 +2658,26 @@ export interface components {
             };
             content: {
                 "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description Detalle completo de un turno, incluido contacto y nota. */
+        AppointmentDetailSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["AppointmentDetailResponse"];
+            };
+        };
+        /** @description Página del historial inmutable de un turno. */
+        AppointmentHistorySuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["AppointmentHistoryResponse"];
             };
         };
     };
@@ -3814,6 +3937,66 @@ export interface operations {
             400: components["responses"]["InvalidRequestProblem"];
             401: components["responses"]["UnauthorizedProblem"];
             /** @description `barberId` con forma inválida, inexistente o de otra barbería (RN-TEN-01), sin distinguir la causa. */
+            404: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getAppointmentDetail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador de la cita. */
+                appointmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["AppointmentDetailSuccess"];
+            401: components["responses"]["UnauthorizedProblem"];
+            /** @description `appointmentId` con forma inválida, inexistente o de otra barbería (RN-TEN-01), sin distinguir la causa. */
+            404: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    listAppointmentHistory: {
+        parameters: {
+            query?: {
+                /** @description Cursor opaco devuelto por una página anterior (`nextCursor`). Sin este parámetro, la respuesta empieza en la primera página. */
+                cursor?: string;
+                /** @description Máximo de entradas de historial por página. */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description Identificador de la cita. */
+                appointmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["AppointmentHistorySuccess"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            /** @description `appointmentId` con forma inválida, inexistente o de otra barbería (RN-TEN-01), sin distinguir la causa. */
             404: {
                 headers: {
                     "X-Request-Id": components["headers"]["XRequestId"];

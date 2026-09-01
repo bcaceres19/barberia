@@ -640,3 +640,300 @@ func errCustomerPhoneTaken() error {
 func errCustomerEmailTaken() error {
 	return apperr.Conflict("ya existe un cliente con ese correo en esta barbería")
 }
+
+// ---------------------------------------------------------------------------
+// HU-064: detalle e historial de un turno
+// ---------------------------------------------------------------------------
+
+// GetAppointmentDetail implementa booking.Repository.GetAppointmentDetail
+// (CA-064-01 a CA-064-04): une `appointment` con `customer` (ambas tablas
+// propias de booking, HU-060) dentro de barbershopID, tenant-aware además de
+// RLS. found=false cubre appointmentID inexistente o de otra barbería.
+func (r *Repository) GetAppointmentDetail(
+	ctx context.Context,
+	barbershopID, appointmentID string,
+) (booking.AppointmentDetail, bool, error) {
+	shop, err := database.ValidBarbershopID(barbershopID)
+	if err != nil {
+		return booking.AppointmentDetail{}, false, fmt.Errorf("booking/postgres: %w", err)
+	}
+
+	var (
+		detail booking.AppointmentDetail
+		found  bool
+	)
+	err = r.db.InTenantTx(ctx, shop, func(ctx context.Context, q database.Queries) error {
+		row := q.QueryRow(ctx, `
+			SELECT a.id, a.barber_id, a.attendee_name,
+			       c.full_name, c.phone, c.email,
+			       a.customer_note, a.starts_at, a.ends_at, a.status, a.origin,
+			       a.service_name_snapshot, a.duration_minutes_snapshot,
+			       a.price_amount_snapshot, a.price_currency_snapshot,
+			       a.created_at, a.updated_at
+			  FROM appointment a
+			  JOIN customer c ON c.barbershop_id = a.barbershop_id AND c.id = a.customer_id
+			 WHERE a.barbershop_id = $1 AND a.id = $2`,
+			barbershopID, appointmentID)
+
+		d, ok, err := scanAppointmentDetail(row)
+		if err != nil {
+			return err
+		}
+		detail, found = d, ok
+		return nil
+	})
+	if err != nil {
+		return booking.AppointmentDetail{}, false, err
+	}
+	return detail, found, nil
+}
+
+func scanAppointmentDetail(row pgx.Row) (booking.AppointmentDetail, bool, error) {
+	var (
+		d           booking.AppointmentDetail
+		priceAmount string
+		status      string
+		origin      string
+		updatedAt   time.Time
+	)
+	err := row.Scan(
+		&d.ID, &d.BarberID, &d.AttendeeName,
+		&d.CustomerFullName, &d.CustomerPhone, &d.CustomerEmail,
+		&d.CustomerNote, &d.StartsAt, &d.EndsAt, &status, &origin,
+		&d.ServiceNameSnapshot, &d.DurationMinutesSnapshot,
+		&priceAmount, &d.CurrencySnapshot,
+		&d.CreatedAt, &updatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return booking.AppointmentDetail{}, false, nil
+		}
+		return booking.AppointmentDetail{}, false, err
+	}
+	d.Status = booking.Status(status)
+	d.Origin = booking.Origin(origin)
+	cents, err := parsePriceAmount(priceAmount)
+	if err != nil {
+		return booking.AppointmentDetail{}, false, fmt.Errorf("booking/postgres: price_amount_snapshot ilegible: %w", err)
+	}
+	d.PriceAmountCentsSnapshot = cents
+	d.VersionToken = booking.EncodeVersionToken(d.ID, updatedAt)
+	return d, true, nil
+}
+
+// appointmentExists confirma, dentro de la misma InTenantTx que la consulta
+// de historial, que appointmentID pertenece a barbershopID: sin este
+// chequeo explícito, un appointmentID inexistente y uno sin ningún evento
+// todavía serían indistinguibles (cero filas en ambos casos).
+func appointmentExists(ctx context.Context, q database.Queries, barbershopID, appointmentID string) (bool, error) {
+	var exists bool
+	err := q.QueryRow(ctx,
+		`SELECT EXISTS (SELECT 1 FROM appointment WHERE barbershop_id = $1 AND id = $2)`,
+		barbershopID, appointmentID,
+	).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
+// ListAppointmentHistory implementa booking.Repository.ListAppointmentHistory
+// (CA-064-05): pide LIMIT+1 filas para saber si hay página siguiente sin una
+// segunda consulta COUNT, ordenadas por (occurred_at, id) — los dos últimos
+// campos de idx_appointment_history_shop_appointment_occurred
+// (barbershop_id, appointment_id, occurred_at), verificado con
+// EXPLAIN (ANALYZE, BUFFERS) como Index Scan (ver apps/api/README.md). Las
+// filas de appointment_history_change de toda la página se leen en UNA
+// segunda consulta con `history_id = ANY(...)`, nunca una por fila (trabajo
+// requerido §2.3, "sin generar N+1").
+func (r *Repository) ListAppointmentHistory(
+	ctx context.Context,
+	barbershopID, appointmentID string,
+	cursor *booking.HistoryCursor,
+	limit int,
+) ([]booking.HistoryRow, *booking.HistoryCursor, bool, error) {
+	shop, err := database.ValidBarbershopID(barbershopID)
+	if err != nil {
+		return nil, nil, false, fmt.Errorf("booking/postgres: %w", err)
+	}
+
+	var (
+		items []booking.HistoryRow
+		next  *booking.HistoryCursor
+		found bool
+	)
+	err = r.db.InTenantTx(ctx, shop, func(ctx context.Context, q database.Queries) error {
+		exists, err := appointmentExists(ctx, q, barbershopID, appointmentID)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return nil
+		}
+		found = true
+
+		var afterOccurredAt any
+		var afterID any
+		if cursor != nil {
+			afterOccurredAt = cursor.OccurredAt
+			afterID = cursor.ID
+		}
+
+		rows, err := q.Query(ctx, `
+			SELECT id, event_type, actor_type, actor_staff_user_id, actor_customer_id,
+			       reason, occurred_at
+			  FROM appointment_history
+			 WHERE barbershop_id = $1 AND appointment_id = $2
+			   AND ($3::timestamptz IS NULL OR (occurred_at, id) > ($3::timestamptz, $4::uuid))
+			 ORDER BY occurred_at, id
+			 LIMIT $5`,
+			barbershopID, appointmentID, afterOccurredAt, afterID, limit+1,
+		)
+		if err != nil {
+			return err
+		}
+		fetched, err := scanHistoryRows(rows)
+		if err != nil {
+			return err
+		}
+
+		hasMore := len(fetched) > limit
+		if hasMore {
+			fetched = fetched[:limit]
+		}
+		if len(fetched) > 0 && hasMore {
+			last := fetched[len(fetched)-1]
+			next = &booking.HistoryCursor{OccurredAt: last.OccurredAt, ID: last.ID}
+		}
+
+		changesByHistoryID, err := loadHistoryChanges(ctx, q, barbershopID, historyIDs(fetched))
+		if err != nil {
+			return err
+		}
+		for i := range fetched {
+			fetched[i].Changes = changesByHistoryID[fetched[i].ID]
+		}
+
+		items = fetched
+		return nil
+	})
+	if err != nil {
+		return nil, nil, false, err
+	}
+	return items, next, found, nil
+}
+
+func scanHistoryRows(rows pgx.Rows) ([]booking.HistoryRow, error) {
+	defer rows.Close()
+	var out []booking.HistoryRow
+	for rows.Next() {
+		var (
+			row       booking.HistoryRow
+			eventType string
+			actorType string
+		)
+		if err := rows.Scan(
+			&row.ID, &eventType, &actorType, &row.ActorStaffUserID, &row.ActorCustomerID,
+			&row.Reason, &row.OccurredAt,
+		); err != nil {
+			return nil, err
+		}
+		row.EventType = booking.EventType(eventType)
+		row.ActorType = booking.ActorType(actorType)
+		out = append(out, row)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func historyIDs(rows []booking.HistoryRow) []string {
+	ids := make([]string, 0, len(rows))
+	for _, row := range rows {
+		ids = append(ids, row.ID)
+	}
+	return ids
+}
+
+// loadHistoryChanges lee, en una sola consulta, los campos modificados de
+// TODAS las entradas de historial ids ya cargadas (trabajo requerido §2.3):
+// orden estable (history_id, field_name) para que la representación no
+// dependa del orden físico de inserción.
+func loadHistoryChanges(
+	ctx context.Context,
+	q database.Queries,
+	barbershopID string,
+	ids []string,
+) (map[string][]booking.HistoryChange, error) {
+	byHistory := make(map[string][]booking.HistoryChange)
+	if len(ids) == 0 {
+		return byHistory, nil
+	}
+
+	rows, err := q.Query(ctx, `
+		SELECT history_id, field_name, previous_value, new_value
+		  FROM appointment_history_change
+		 WHERE barbershop_id = $1 AND history_id = ANY($2)
+		 ORDER BY history_id, field_name`,
+		barbershopID, ids,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			historyID string
+			change    booking.HistoryChange
+		)
+		if err := rows.Scan(&historyID, &change.FieldName, &change.PreviousValue, &change.NewValue); err != nil {
+			return nil, err
+		}
+		byHistory[historyID] = append(byHistory[historyID], change)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return byHistory, nil
+}
+
+// CustomerNames implementa booking.Repository.CustomerNames (HU-064): una
+// sola consulta por lote con `= ANY($2)`, tenant-aware por barbershop_id
+// además de RLS. Un id sin coincidencia simplemente está ausente del mapa
+// devuelto.
+func (r *Repository) CustomerNames(ctx context.Context, barbershopID string, customerIDs []string) (map[string]string, error) {
+	names := make(map[string]string, len(customerIDs))
+	if len(customerIDs) == 0 {
+		return names, nil
+	}
+
+	shop, err := database.ValidBarbershopID(barbershopID)
+	if err != nil {
+		return nil, fmt.Errorf("booking/postgres: %w", err)
+	}
+
+	err = r.db.InTenantTx(ctx, shop, func(ctx context.Context, q database.Queries) error {
+		rows, err := q.Query(ctx,
+			`SELECT id, full_name FROM customer WHERE barbershop_id = $1 AND id = ANY($2)`,
+			barbershopID, customerIDs)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var id, name string
+			if err := rows.Scan(&id, &name); err != nil {
+				return err
+			}
+			names[id] = name
+		}
+		return rows.Err()
+	})
+	if err != nil {
+		return nil, err
+	}
+	return names, nil
+}

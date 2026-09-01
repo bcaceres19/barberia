@@ -1,0 +1,31 @@
+# Respuesta 200 de GET /private/appointments/{appointmentId} (HU-064).
+description: Detalle completo de un turno, incluido contacto y nota.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/AppointmentDetailResponse.yaml'
+    examples:
+      turnoManual:
+        summary: Turno manual con teléfono y nota
+        value:
+          id: 3f4a5b6c-7d8e-49f0-a1b2-c3d4e5f60718
+          barberId: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+          barberFullName: Ana Gómez
+          attendeeName: Carlos Restrepo
+          customerFullName: Carlos Restrepo
+          customerPhone: "+573001234567"
+          customerEmail: null
+          customerNote: Prefiere silla junto a la ventana
+          startsAt: "2026-08-28T14:30:00Z"
+          endsAt: "2026-08-28T15:00:00Z"
+          status: confirmed
+          origin: manual
+          serviceName: Corte clásico
+          durationMinutes: 30
+          priceAmount: "20000.00"
+          currency: COP
+          versionToken: 3n9Kq1x2v8pQwZbJt5Yc0Rr6Hh4Ss7Ff1Gg3Dd8Ee2Aa
+          createdAt: "2026-08-20T10:00:00Z"

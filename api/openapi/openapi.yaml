@@ -47,7 +47,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.14.0
+  version: 0.15.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -149,6 +149,10 @@ paths:
     $ref: './paths/private-appointments.yaml#/~1private~1appointments'
   /private/barbers/{barberId}/appointments/daily-agenda:
     $ref: './paths/private-appointments.yaml#/~1private~1barbers~1{barberId}~1appointments~1daily-agenda'
+  /private/appointments/{appointmentId}:
+    $ref: './paths/private-appointments.yaml#/~1private~1appointments~1{appointmentId}'
+  /private/appointments/{appointmentId}/history:
+    $ref: './paths/private-appointments.yaml#/~1private~1appointments~1{appointmentId}~1history'
 components:
   schemas:
     Problem:

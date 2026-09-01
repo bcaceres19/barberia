@@ -2,6 +2,7 @@
 // ningún componente ve `Problem`, `status` HTTP crudo ni cabeceras, mismo
 // criterio que schedules/model/scheduleOutcome.ts.
 import type { BarberSummary, ServiceSummary } from './appointment'
+import type { AppointmentDetail, HistoryEntry } from './appointmentDetail'
 import type { DailyAgendaEntry } from './dailyAgenda'
 
 export type FetchBarberSummariesOutcome =
@@ -42,6 +43,21 @@ export type CreatedManualAppointment = {
 // sigue abierta.
 export type FetchDailyAgendaOutcome =
   | { kind: 'success'; items: DailyAgendaEntry[] }
+  | { kind: 'not-found' }
+  | { kind: 'network-error' }
+  | { kind: 'unexpected-error' }
+
+// FetchAppointmentDetailOutcome/FetchAppointmentHistoryOutcome (HU-064):
+// 'not-found' cubre un appointmentId inexistente o de otra barbería
+// (RN-TEN-01).
+export type FetchAppointmentDetailOutcome =
+  | { kind: 'success'; detail: AppointmentDetail }
+  | { kind: 'not-found' }
+  | { kind: 'network-error' }
+  | { kind: 'unexpected-error' }
+
+export type FetchAppointmentHistoryOutcome =
+  | { kind: 'success'; items: HistoryEntry[]; nextCursor: string | null }
   | { kind: 'not-found' }
   | { kind: 'network-error' }
   | { kind: 'unexpected-error' }
