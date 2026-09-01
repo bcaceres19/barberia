@@ -1,0 +1,33 @@
+# Respuesta 200 de GET /private/appointments/{appointmentId}/history
+# (HU-064, CA-064-05).
+description: Página del historial inmutable de un turno.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/AppointmentHistoryResponse.yaml'
+    examples:
+      primeraPagina:
+        summary: Alta y una corrección posterior, primera página
+        value:
+          items:
+            - id: 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
+              eventType: appointment_created
+              actorType: staff
+              actorLabel: Ana Gómez
+              reason: null
+              occurredAt: "2026-08-20T10:00:00Z"
+              changes: []
+            - id: 9a0b1c2d-3e4f-4506-8172-8394a5b6c7d9
+              eventType: appointment_status_corrected
+              actorType: system
+              actorLabel: Sistema
+              reason: corrección administrativa de estado
+              occurredAt: "2026-08-21T09:15:00Z"
+              changes:
+                - fieldName: status
+                  previousValue: confirmed
+                  newValue: cancelled_by_barber
+          nextCursor: null

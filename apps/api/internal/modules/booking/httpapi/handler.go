@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"system-barbershop/internal/modules/auth"
 	"system-barbershop/internal/modules/booking"
@@ -194,4 +195,145 @@ func formatPriceAmount(cents int64) string {
 	whole := cents / 100
 	frac := cents % 100
 	return fmt.Sprintf("%d.%02d", whole, frac)
+}
+
+// appointmentIDParam es el nombre del parámetro de ruta que
+// cmd/api.buildRouter registra para /private/appointments/{appointmentId}
+// (HU-064).
+const appointmentIDParam = "appointmentId"
+
+// GetAppointmentDetailHandler expone
+// GET /private/appointments/{appointmentId} (HU-064, CA-064-01 a CA-064-04):
+// lectura de solo detalle, sin idempotencia (operación de solo lectura).
+type GetAppointmentDetailHandler struct {
+	service *booking.DetailService
+}
+
+// NewGetAppointmentDetailHandler construye el handler de lectura.
+func NewGetAppointmentDetailHandler(service *booking.DetailService) *GetAppointmentDetailHandler {
+	return &GetAppointmentDetailHandler{service: service}
+}
+
+// ServeHTTP implementa http.Handler.
+func (h *GetAppointmentDetailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+	principal, ok := principalOrInternalError(w, r, requestID)
+	if !ok {
+		return
+	}
+
+	appointmentID := httpserver.URLParam(r, appointmentIDParam)
+	detail, err := h.service.GetDetail(r.Context(), principal.BarbershopID, appointmentID)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(newAppointmentDetailResponse(detail))
+}
+
+func newAppointmentDetailResponse(d booking.AppointmentDetail) AppointmentDetailResponse {
+	return AppointmentDetailResponse{
+		ID:               d.ID,
+		BarberID:         d.BarberID,
+		BarberFullName:   d.BarberFullName,
+		AttendeeName:     d.AttendeeName,
+		CustomerFullName: d.CustomerFullName,
+		CustomerPhone:    d.CustomerPhone,
+		CustomerEmail:    d.CustomerEmail,
+		CustomerNote:     d.CustomerNote,
+		StartsAt:         d.StartsAt,
+		EndsAt:           d.EndsAt,
+		Status:           string(d.Status),
+		Origin:           string(d.Origin),
+		ServiceName:      d.ServiceNameSnapshot,
+		DurationMinutes:  d.DurationMinutesSnapshot,
+		PriceAmount:      formatPriceAmount(d.PriceAmountCentsSnapshot),
+		Currency:         d.CurrencySnapshot,
+		VersionToken:     d.VersionToken,
+		CreatedAt:        d.CreatedAt,
+	}
+}
+
+// ListAppointmentHistoryHandler expone
+// GET /private/appointments/{appointmentId}/history (HU-064, CA-064-05):
+// lectura paginada por cursor opaco, sin idempotencia (operación de solo
+// lectura), mismo patrón de parámetros que ListBarbersHandler
+// (staff/httpapi).
+type ListAppointmentHistoryHandler struct {
+	service *booking.DetailService
+}
+
+// NewListAppointmentHistoryHandler construye el handler de lectura.
+func NewListAppointmentHistoryHandler(service *booking.DetailService) *ListAppointmentHistoryHandler {
+	return &ListAppointmentHistoryHandler{service: service}
+}
+
+// ServeHTTP implementa http.Handler.
+func (h *ListAppointmentHistoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+	principal, ok := principalOrInternalError(w, r, requestID)
+	if !ok {
+		return
+	}
+
+	appointmentID := httpserver.URLParam(r, appointmentIDParam)
+	query := r.URL.Query()
+	cursor := query.Get("cursor")
+
+	limit := 0
+	if raw := query.Get("limit"); raw != "" {
+		parsed, err := strconv.Atoi(raw)
+		if err != nil || parsed < 0 {
+			httpserver.WriteProblem(w, httpserver.Translate(
+				apperr.Invalid("el parámetro limit debe ser un entero positivo"), requestID))
+			return
+		}
+		limit = parsed
+	}
+
+	page, err := h.service.ListHistory(r.Context(), principal.BarbershopID, appointmentID, cursor, limit)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(newAppointmentHistoryResponse(page))
+}
+
+func newAppointmentHistoryResponse(page booking.HistoryPage) AppointmentHistoryResponse {
+	items := make([]AppointmentHistoryEntryResponse, 0, len(page.Items))
+	for _, entry := range page.Items {
+		items = append(items, AppointmentHistoryEntryResponse{
+			ID:         entry.ID,
+			EventType:  string(entry.EventType),
+			ActorType:  string(entry.ActorType),
+			ActorLabel: entry.ActorLabel,
+			Reason:     entry.Reason,
+			OccurredAt: entry.OccurredAt,
+			Changes:    newAppointmentHistoryChangeResponses(entry.Changes),
+		})
+	}
+	var next *string
+	if page.NextCursor != "" {
+		v := page.NextCursor
+		next = &v
+	}
+	return AppointmentHistoryResponse{Items: items, NextCursor: next}
+}
+
+func newAppointmentHistoryChangeResponses(changes []booking.HistoryChange) []AppointmentHistoryChangeResponse {
+	items := make([]AppointmentHistoryChangeResponse, 0, len(changes))
+	for _, c := range changes {
+		items = append(items, AppointmentHistoryChangeResponse{
+			FieldName:     c.FieldName,
+			PreviousValue: c.PreviousValue,
+			NewValue:      c.NewValue,
+		})
+	}
+	return items
 }

@@ -49,6 +49,18 @@ func (f *fakeManualRepository) ListDailyAgenda(context.Context, string, string, 
 	panic("no usado por ManualBookingService")
 }
 
+func (f *fakeManualRepository) GetAppointmentDetail(context.Context, string, string) (booking.AppointmentDetail, bool, error) {
+	panic("no usado por ManualBookingService")
+}
+
+func (f *fakeManualRepository) ListAppointmentHistory(context.Context, string, string, *booking.HistoryCursor, int) ([]booking.HistoryRow, *booking.HistoryCursor, bool, error) {
+	panic("no usado por ManualBookingService")
+}
+
+func (f *fakeManualRepository) CustomerNames(context.Context, string, []string) (map[string]string, error) {
+	panic("no usado por ManualBookingService")
+}
+
 var _ booking.Repository = (*fakeManualRepository)(nil)
 
 type fakeBarberServicePort struct {

@@ -1,0 +1,46 @@
+# Entrada del historial inmutable de un turno (HU-064, CA-064-05). Nunca
+# expone actorStaffUserId/actorCustomerId ni correo (RN-HIS-01): actorLabel
+# es un nombre visible seguro, resuelto por el servidor.
+type: object
+properties:
+  id:
+    type: string
+    format: uuid
+  eventType:
+    type: string
+    enum:
+      - appointment_created
+      - appointment_rescheduled
+      - appointment_service_changed
+      - appointment_completed
+      - appointment_cancelled_by_customer
+      - appointment_cancelled_by_barber
+      - appointment_no_show
+      - appointment_status_corrected
+  actorType:
+    type: string
+    enum: [staff, customer, system]
+  actorLabel:
+    type: string
+    description: >
+      Nombre visible seguro del actor (nunca correo ni ningún identificador
+      interno). Una etiqueta de reserva ("Miembro del equipo", "Cliente",
+      "Sistema") cuando el nombre autorizado no está disponible.
+  reason:
+    type: [string, "null"]
+  occurredAt:
+    type: string
+    format: date-time
+  changes:
+    type: array
+    description: Campos modificados con su valor anterior y nuevo (RN-HIS-01).
+    items:
+      $ref: './AppointmentHistoryChange.yaml'
+required:
+  - id
+  - eventType
+  - actorType
+  - actorLabel
+  - reason
+  - occurredAt
+  - changes

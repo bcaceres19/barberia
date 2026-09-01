@@ -21,4 +21,9 @@ export const agendaPrivateShellChildRoutes: RouteRecordRaw[] = [
     name: 'agenda-nuevo-turno',
     component: () => import('./pages/NewAppointmentPage.vue'),
   },
+  {
+    path: 'turnos/:appointmentId',
+    name: 'agenda-detalle-turno',
+    component: () => import('./pages/AppointmentDetailPage.vue'),
+  },
 ]

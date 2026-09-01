@@ -42,6 +42,10 @@ type fakeRepository struct {
 
 	createSessionErr   error
 	createSessionCalls []createSessionCall
+
+	staffNames        map[string]string
+	staffNamesErr     error
+	staffNamesLastIDs []string
 }
 
 func (f *fakeRepository) ResolveLoginTenant(_ context.Context, email string) (string, bool, error) {
@@ -57,6 +61,17 @@ func (f *fakeRepository) LookupCredential(_ context.Context, shop string, resolv
 func (f *fakeRepository) CreateSession(_ context.Context, shop, staffUserID, tokenHash string, issuedAt, expiresAt time.Time) error {
 	f.createSessionCalls = append(f.createSessionCalls, createSessionCall{shop, staffUserID, tokenHash, issuedAt, expiresAt})
 	return f.createSessionErr
+}
+
+func (f *fakeRepository) StaffUserNames(_ context.Context, _ string, ids []string) (map[string]string, error) {
+	f.staffNamesLastIDs = ids
+	if f.staffNamesErr != nil {
+		return nil, f.staffNamesErr
+	}
+	if f.staffNames == nil {
+		return map[string]string{}, nil
+	}
+	return f.staffNames, nil
 }
 
 type verifyCall struct{ encodedHash, password string }

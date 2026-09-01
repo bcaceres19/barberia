@@ -904,7 +904,8 @@ error tras una carga previa exitosa conserva esa agenda visible junto a la
 alerta de reintento, en vez de reemplazar toda la pantalla.
 
 Fuera de alcance a propósito: detalle, historial y cualquier acción sobre
-una cita (HU-064/HU-065); vista semanal/mensual; vista consolidada de
+una cita (ver "Detalle e historial de un turno (HU-064)" más abajo, y
+HU-065 para reprogramación); vista semanal/mensual; vista consolidada de
 varios barberos.
 
 ### Pruebas
@@ -927,6 +928,58 @@ de la zona de la barbería). Pendiente de ejecución contra Chromium real y
 de evidencia responsiva en los cuatro breakpoints (no forma parte de los
 checks de CI, que solo corren `test:unit`), mismo estado que
 `e2e/agenda-diaria.spec.ts` (HU-062).
+
+## Detalle e historial de un turno (HU-064)
+
+`AppointmentDetailPage.vue` (ruta lazy `turnos/:appointmentId`, name
+`agenda-detalle-turno`, hija de `agenda`, registrada después de
+`turnos/nuevo`) abre desde cada fila de `DailyAgendaPage.vue`: el bloque
+`daily-agenda-page__item-main` (hora/persona/servicio) es un `RouterLink`
+hacia el detalle con `query: withQuery({})` (reenvía `date`/`barberId`
+vigentes sin tocarlos); el badge de estado queda fuera del enlace a
+propósito, para no convertir toda la fila en un control ambiguo.
+
+La pantalla sigue la plantilla P0 "Detalle de turno"
+(`estandar-diseno-visual.md` §10): hora con zona, persona atendida,
+servicio (snapshot, nunca el catálogo vigente), barbero, cliente que
+reservó con su contacto opcional y nota (solo visibles aquí, nunca en la
+agenda diaria), estado e historial. Ninguna acción se renderiza (edición,
+reprogramación, cancelación): `HU-064` es de solo lectura. "Volver a la
+agenda" (`RouterLink`, mismo patrón que `RecoveryPage.vue`) usa
+`backQuery`, capturado UNA sola vez al montar desde `route.query.date`/
+`route.query.barberId`, para regresar exactamente a la fecha/barbero de
+origen (`HU-063`) sin depender del historial del navegador.
+
+`pageStatus` (`loading`/`ready`/`not-found`/`error`) gobierna el detalle;
+`historyStatus` (`loading`/`ready`/`error`) gobierna el historial por
+separado, con su propio `historyLoadingMore` para el botón "Cargar más" —
+un error de historial nunca oculta un detalle ya cargado, ni viceversa.
+`loadHistory(cursor?)` reemplaza `historyItems` en la primera página y
+concatena en las siguientes, nunca al revés. `actorLabel` de cada entrada
+llega ya resuelto y seguro desde el servidor (nunca correo ni un
+identificador interno, `RN-HIS-01`); `HISTORY_EVENT_LABELS`/
+`historyFieldLabel` (`model/appointmentDetail.ts`) traducen el vocabulario
+técnico cerrado (ocho eventos, `DEC-041`) y los campos de
+`appointment_history_change` al español, con una etiqueta de reserva para
+cualquier campo no mapeado explícitamente.
+
+### Pruebas
+
+Componente (`src/modules/agenda/pages/__tests__/AppointmentDetailPage.test.ts`):
+detalle listo con todos los campos (y sin sección "Contacto" cuando no hay
+teléfono ni correo), no encontrado, error con reintento, historial listo
+tras el detalle, motivo y cambios anterior/nuevo de una entrada, "Cargar
+más" con dos páginas que conviven (nunca se reemplaza la primera), error de
+historial con reintento, enlace "Volver" con `href` verificado
+literalmente (fecha/barbero preservados), y `vitest-axe` sin violaciones.
+
+E2E: `e2e/agenda-detalle-historial.spec.ts` (desde una fecha no actual,
+abre el turno, verifica snapshots/contacto/nota/historial, vuelve a la
+misma fecha/barbero; un `appointmentId` inexistente muestra el estado "no
+disponible" explícito). Pendiente de ejecución contra Chromium real y de
+evidencia responsiva en los cuatro breakpoints (no forma parte de los
+checks de CI, que solo corren `test:unit`), mismo estado que
+`e2e/agenda-navegacion-fecha.spec.ts` (HU-063).
 
 ## Sistema visual base (HU-009)
 

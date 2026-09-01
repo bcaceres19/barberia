@@ -1,9 +1,9 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.28"
+version: "1.29"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-31"
+ultima_actualizacion: "2026-09-01"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/reglas-negocio.md"
@@ -51,7 +51,7 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | B0 · Cimientos, seguridad y primeras pantallas | `HU-001` – `HU-012` | Redactadas en este documento |
 | B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | Integradas en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), [PR #83](https://github.com/bcaceres19/barberia/pull/83), [PR #84](https://github.com/bcaceres19/barberia/pull/84)) |
 | B2 · Horario laboral y bloqueos | `HU-040` – `HU-042` | Integradas en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93), [PR #96](https://github.com/bcaceres19/barberia/pull/96), [PR #99](https://github.com/bcaceres19/barberia/pull/99)); seguimientos parciales en `#90`, `#95`, `#98` y `#100` |
-| B3 · Agenda, estados e integridad | `HU-060` – `HU-065` | `HU-060`–`HU-062` integradas; `HU-063` implementada (issue [#116](https://github.com/bcaceres19/barberia/issues/116)), integrada en `main` mediante [PR #118](https://github.com/bcaceres19/barberia/pull/118); `HU-064` propuesta con issue pendiente; `HU-065` además bloqueada por `DP-CIT-06` |
+| B3 · Agenda, estados e integridad | `HU-060` – `HU-065` | `HU-060`–`HU-062` integradas; `HU-063` implementada (issue [#116](https://github.com/bcaceres19/barberia/issues/116)), integrada en `main` mediante [PR #118](https://github.com/bcaceres19/barberia/pull/118); `HU-064` implementada (issue [#120](https://github.com/bcaceres19/barberia/issues/120)), [PR #121](https://github.com/bcaceres19/barberia/pull/121) abierto, pendiente de CI; `HU-065` propuesta, bloqueada por `HU-064` integrada y por `DP-CIT-06` |
 | B4 · Reserva pública y disponibilidad | `HU-090` – | Pendientes |
 | B5 · Notificaciones y recordatorios | `HU-130` – | Pendientes |
 | B6 · Operación, privacidad y piloto | `HU-150` – | Pendientes |
@@ -1387,9 +1387,9 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 | Reglas | `RN-CIT-01`, `RN-HIS-01`, `RN-HIS-02`, `RN-RES-02`, `RN-RES-03`, `RN-DAT-01`, `RN-DAT-02`, `RN-DIS-07`, `RN-TEN-01` |
 | Decisiones | `DEC-004`, `DEC-007`, `DEC-014`, `DEC-016`, `DEC-019`, `DEC-024`, `DEC-033`–`DEC-041`, `DEC-045`, `DEC-046`, `DEC-074`, `DEC-075` |
 | Actor | Barbero autenticado |
-| Depende de | `HU-063` integrada; núcleo e historial append-only de `HU-060` vigentes |
+| Depende de | `HU-063` integrada mediante PR #118; núcleo e historial append-only de `HU-060` vigentes |
 | Bloquea | `HU-065` y las acciones posteriores que necesitan contexto, estado e historial visibles |
-| Estado | Propuesta; prompt `PROMPT-HU-064-v1` en `draft`, `issue: pending` |
+| Estado | Implementada, abierta como PR pendiente de CI (sin integrar todavía en `main`) contra el issue real [#120](https://github.com/bcaceres19/barberia/issues/120); prompt `PROMPT-HU-064-v1` `in_progress` |
 | Riesgo | Cargar el nombre actual del catálogo, exponer contacto en la lista o presentar un historial incompleto puede reescribir el pasado, filtrar datos personales o impedir auditar una disputa. |
 
 **Historia**
@@ -1449,7 +1449,7 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 | Reglas | `RN-CIT-01`, `RN-CIT-03`, `RN-CON-01`, `RN-CON-03`, `RN-DIS-05`, `RN-DIS-07`, `RN-HIS-01`, `RN-HIS-02`, `RN-TEN-01`, `RN-IDE-01` |
 | Decisiones | `DEC-002`, `DEC-004`, `DEC-007`, `DEC-014`, `DEC-016`, `DEC-020`, `DEC-024`, `DEC-035`–`DEC-039`, `DEC-043`, `DEC-074`, `DEC-075`; `DP-CIT-06` abierta |
 | Actor | Barbero autenticado |
-| Depende de | `HU-064` integrada; `DP-CIT-06` resuelta y propagada mediante un nuevo `DEC-*` |
+| Depende de | `HU-064` integrada en `main` (implementada, [PR #121](https://github.com/bcaceres19/barberia/pull/121) abierto, pendiente de CI); `DP-CIT-06` resuelta y propagada mediante un nuevo `DEC-*` |
 | Bloquea | Modificación T3, cancelación y demás transiciones visibles de B3 |
 | Estado | Propuesta bloqueada por `DP-CIT-06`; prompt `PROMPT-HU-065-v1` en `draft`, `issue: pending` |
 | Riesgo | Una reprogramación no atómica, sin precondición de versión o sin la exclusión PostgreSQL puede perder un cambio concurrente, dejar el historial incompleto o guardar dos turnos cruzados. |
@@ -1509,7 +1509,7 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 | --- | --- | --- |
 | B1 | `HU-025` – | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
 | B2 | `HU-040` – `HU-042` | Integradas en `main` (PR `#93`, `#96`, `#99`); seguimientos parciales en issues `#90`, `#95`, `#98` y `#100` |
-| B3 | `HU-066` – | `HU-063` implementada; `HU-064`–`HU-065` redactadas; continuar solo después de implementarlas y revisar sus hallazgos |
+| B3 | `HU-066` – | `HU-063`–`HU-064` implementadas; `HU-065` redactada; continuar solo después de integrar `HU-064`/`HU-065` y revisar sus hallazgos |
 | B4 | `HU-090` – | B3 cumple su criterio de salida |
 | B5 | `HU-130` – | B4 cumple su criterio de salida |
 | B6 | `HU-150` – | B5 cumple su criterio de salida |

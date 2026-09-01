@@ -4,6 +4,23 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.15.0] - 2026-09-01
+
+### Agregado
+
+- `GET /private/appointments/{appointmentId}` (`operationId:
+  getAppointmentDetail`, `CA-064-01` a `CA-064-04`): detalle completo de un
+  turno (`HU-064`), incluidos contacto y nota (solo visibles aquí, nunca en
+  la agenda diaria). Nunca incluye `customerId`, ningún identificador de
+  actor, `barbershopId` ni `updatedAt` crudo; `versionToken` es el único
+  dato de concurrencia expuesto, opaco. `200`, `401`, `404`, `500`.
+- `GET /private/appointments/{appointmentId}/history` (`operationId:
+  listAppointmentHistory`, `CA-064-05`): historial inmutable paginado por
+  cursor (`HU-060`, `HU-064`), orden estable por instante y luego por
+  identificador. Cada entrada trae `actorLabel`, un nombre visible seguro
+  (nunca correo ni identificador de actor). `200`, `400`, `401`, `404`,
+  `500`.
+
 ## [0.14.0] - 2026-08-29
 
 ### Agregado

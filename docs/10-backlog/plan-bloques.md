@@ -1,9 +1,9 @@
 ---
 titulo: "Plan de bloques de construcción del MVP"
-version: "1.22"
+version: "1.23"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-31"
+ultima_actualizacion: "2026-09-01"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/prioridades.md"
@@ -47,7 +47,7 @@ Consecuencia deliberada: **el flujo público de reserva, que es la cara visible 
 | **B0** | Cimientos, seguridad y primeras pantallas | 8 | `HU-001` – `HU-012` | Redactado |
 | **B1** | Identidad de la barbería y catálogo | 4 | `HU-020` – `HU-0xx` | `HU-020`–`HU-024` integradas en `main` ([PR #84](https://github.com/bcaceres19/barberia/pull/84), issue real `#77`) |
 | **B2** | Horario laboral y bloqueos | 2 | `HU-040` – `HU-042` | `CT-008` resuelta (`DEC-070`); `HU-040` integrada en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93), issue real [#90](https://github.com/bcaceres19/barberia/issues/90) abierto por `CA-040-08` parcial); `HU-041` integrada en `main` ([PR #96](https://github.com/bcaceres19/barberia/pull/96), issue real [#95](https://github.com/bcaceres19/barberia/issues/95) abierto por `CA-041-08` parcial); `HU-042` integrada en `main` ([PR #99](https://github.com/bcaceres19/barberia/pull/99), issue real [#98](https://github.com/bcaceres19/barberia/issues/98) abierto por seguimiento de UI/E2E, issue [#100](https://github.com/bcaceres19/barberia/issues/100)) |
-| **B3** | Agenda del barbero, estados e integridad | 11 | `HU-060` – `HU-0xx` | `HU-060`–`HU-062` integradas; `HU-063` navegación por fecha implementada (issue real [#116](https://github.com/bcaceres19/barberia/issues/116)), integrada en `main` mediante [PR #118](https://github.com/bcaceres19/barberia/pull/118); `HU-064` detalle/historial y `HU-065` reprogramación auditada redactadas como propuesta; `HU-065` bloqueada por `DP-CIT-06` |
+| **B3** | Agenda del barbero, estados e integridad | 11 | `HU-060` – `HU-0xx` | `HU-060`–`HU-062` integradas; `HU-063` navegación por fecha implementada (issue real [#116](https://github.com/bcaceres19/barberia/issues/116)), integrada en `main` mediante [PR #118](https://github.com/bcaceres19/barberia/pull/118); `HU-064` detalle/historial implementada (issue real [#120](https://github.com/bcaceres19/barberia/issues/120)), [PR #121](https://github.com/bcaceres19/barberia/pull/121) abierto, pendiente de CI; `HU-065` reprogramación auditada redactada como propuesta, bloqueada por `HU-064` integrada y por `DP-CIT-06` |
 | **B4** | Reserva pública y disponibilidad | 13 | `HU-090` – `HU-1xx` | Pendiente de redacción |
 | **B5** | Notificaciones y recordatorios | 3 | `HU-130` – `HU-1xx` | Pendiente de redacción |
 | **B6** | Operación, privacidad y preparación del piloto | 4 | `HU-150` – `HU-1xx` | Pendiente de redacción |
@@ -252,7 +252,7 @@ Tabla de control: ninguna función P0 puede quedar sin bloque.
 | Historias de B0 | Redactadas en [historias-usuario.md](../02-requisitos/historias-usuario.md) |
 | Prompts de implementación de B0 | Redactados en [prompts-implementacion.md](prompts-implementacion.md) |
 | Primeras historias y prompts de B1 | `HU-020`–`HU-024` integradas en `main` ([PR #84](https://github.com/bcaceres19/barberia/pull/84), issue real `#77`) |
-| Historias restantes de B1 a B6 | B2: `HU-040`–`HU-042` integradas; B3: `HU-060`–`HU-062` integradas, `HU-063` implementada (issue [#116](https://github.com/bcaceres19/barberia/issues/116)), `HU-064`–`HU-065` redactadas como propuestas con prompts `draft` (`HU-065` bloqueada por `DP-CIT-06`); `HU-066` y siguientes, B4–B6 pendientes |
+| Historias restantes de B1 a B6 | B2: `HU-040`–`HU-042` integradas; B3: `HU-060`–`HU-062` integradas, `HU-063` implementada (issue [#116](https://github.com/bcaceres19/barberia/issues/116)), `HU-064` implementada (issue [#120](https://github.com/bcaceres19/barberia/issues/120)), PR abierto pendiente de CI; `HU-065` redactada como propuesta con prompt `draft`, bloqueada por `HU-064` integrada y por `DP-CIT-06`; `HU-066` y siguientes, B4–B6 pendientes |
 | Dudas que bloqueaban B0 | `DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`, resueltas el 2026-08-11 como `DEC-050`–`DEC-052` (ver [dudas-pendientes.md](../00-control/dudas-pendientes.md)) |
 
 Redactar historias muy por anticipado está desaconsejado: lo aprendido al construir cambia lo que la historia siguiente debe decir. Por eso el segundo lote de B3 termina en `HU-065`; `HU-066` y siguientes se redactan después de implementar y revisar navegación, detalle/historial y T2. B4 solo se redacta cuando B3 cumpla su criterio de salida.

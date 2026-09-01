@@ -70,3 +70,60 @@ type DailyAgendaEntryResponse struct {
 	PriceAmount     string    `json:"priceAmount"`
 	Currency        string    `json:"currency"`
 }
+
+// AppointmentDetailResponse es el cuerpo de
+// GET /private/appointments/{appointmentId} (HU-064, CA-064-01 a CA-064-04).
+// Deliberadamente SIN customerId, IDs de actor ni updatedAt crudo (trabajo
+// requerido, "Fuera de alcance"): VersionToken es el único dato de
+// concurrencia expuesto, opaco (booking.EncodeVersionToken).
+type AppointmentDetailResponse struct {
+	ID               string    `json:"id"`
+	BarberID         string    `json:"barberId"`
+	BarberFullName   string    `json:"barberFullName"`
+	AttendeeName     string    `json:"attendeeName"`
+	CustomerFullName string    `json:"customerFullName"`
+	CustomerPhone    *string   `json:"customerPhone"`
+	CustomerEmail    *string   `json:"customerEmail"`
+	CustomerNote     *string   `json:"customerNote"`
+	StartsAt         time.Time `json:"startsAt"`
+	EndsAt           time.Time `json:"endsAt"`
+	Status           string    `json:"status"`
+	Origin           string    `json:"origin"`
+	ServiceName      string    `json:"serviceName"`
+	DurationMinutes  int       `json:"durationMinutes"`
+	PriceAmount      string    `json:"priceAmount"`
+	Currency         string    `json:"currency"`
+	VersionToken     string    `json:"versionToken"`
+	CreatedAt        time.Time `json:"createdAt"`
+}
+
+// AppointmentHistoryResponse es el cuerpo de
+// GET /private/appointments/{appointmentId}/history (HU-064, CA-064-05):
+// página paginada por cursor opaco, mismo criterio que BarberListResponse
+// (staff/httpapi). NextCursor es nil cuando esta página es la última.
+type AppointmentHistoryResponse struct {
+	Items      []AppointmentHistoryEntryResponse `json:"items"`
+	NextCursor *string                           `json:"nextCursor"`
+}
+
+// AppointmentHistoryEntryResponse es una entrada del historial ya traducida
+// a un nombre visible de actor: nunca correo ni ningún identificador interno
+// (RN-HIS-01).
+type AppointmentHistoryEntryResponse struct {
+	ID         string                             `json:"id"`
+	EventType  string                             `json:"eventType"`
+	ActorType  string                             `json:"actorType"`
+	ActorLabel string                             `json:"actorLabel"`
+	Reason     *string                            `json:"reason"`
+	OccurredAt time.Time                          `json:"occurredAt"`
+	Changes    []AppointmentHistoryChangeResponse `json:"changes"`
+}
+
+// AppointmentHistoryChangeResponse es un campo modificado con su valor
+// anterior y nuevo (RN-HIS-01), proyección directa de
+// appointment_history_change.
+type AppointmentHistoryChangeResponse struct {
+	FieldName     string  `json:"fieldName"`
+	PreviousValue *string `json:"previousValue"`
+	NewValue      *string `json:"newValue"`
+}

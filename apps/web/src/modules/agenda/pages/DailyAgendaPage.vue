@@ -404,11 +404,18 @@ function entryTime(entry: DailyAgendaEntry): string {
                 class="daily-agenda-page__item"
                 :class="{ 'daily-agenda-page__item--terminal': entry.status !== 'confirmed' }"
               >
-                <div class="daily-agenda-page__item-main">
+                <RouterLink
+                  class="daily-agenda-page__item-main"
+                  :to="{
+                    name: 'agenda-detalle-turno',
+                    params: { appointmentId: entry.id },
+                    query: withQuery({}),
+                  }"
+                >
                   <span class="daily-agenda-page__item-time">{{ entryTime(entry) }}</span>
                   <span class="daily-agenda-page__item-name">{{ entry.attendeeName }}</span>
                   <span class="daily-agenda-page__item-service">{{ entry.serviceName }}</span>
-                </div>
+                </RouterLink>
                 <BaseBadge
                   :class="statusBadgeClass(entry)"
                   size="sm"
@@ -547,12 +554,30 @@ function entryTime(entry: DailyAgendaEntry): string {
   opacity: 0.72;
 }
 
+/* La fila abre el detalle del turno (HU-064) por su bloque principal
+   (hora/persona/servicio), no por toda la tarjeta: el badge de estado queda
+   fuera del enlace, sin volverse un control ambiguo. */
 .daily-agenda-page__item-main {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: var(--space-2);
   min-width: 0;
+  min-height: 44px;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+
+.daily-agenda-page__item-main:hover {
+  text-decoration: underline;
+}
+
+.daily-agenda-page__item-main:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--color-surface),
+    0 0 0 4px var(--color-focus);
 }
 
 .daily-agenda-page__item-time {
