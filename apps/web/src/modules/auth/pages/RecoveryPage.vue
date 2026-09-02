@@ -12,7 +12,7 @@
 // es válido (no queda nada que conservar).
 import { nextTick, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { BaseAlert, BaseButton } from '@/shared/ui'
+import { BaseAlert, BaseButton, NavaWordmark } from '@/shared/ui'
 import RecoveryRequestStep from '../components/RecoveryRequestStep.vue'
 import RecoveryVerifyStep from '../components/RecoveryVerifyStep.vue'
 import RecoveryResetStep from '../components/RecoveryResetStep.vue'
@@ -76,7 +76,7 @@ function onRestart() {
 <template>
   <main class="recovery-page">
     <div class="recovery-page__card">
-      <p class="recovery-page__brand">Barbería</p>
+      <NavaWordmark />
       <p class="recovery-page__progress">Paso {{ STEP_NUMBERS[step] }} de 3</p>
       <h1 ref="headingRef" class="recovery-page__title" tabindex="-1">{{ STEP_TITLES[step] }}</h1>
 
@@ -132,15 +132,6 @@ function onRestart() {
   gap: var(--space-4);
   width: 100%;
   max-width: 360px;
-}
-
-.recovery-page__brand {
-  margin: 0;
-  font-size: var(--font-size-body-sm);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
 }
 
 .recovery-page__progress {
