@@ -273,19 +273,19 @@ async function onToggleService(service: ServiceSummary, event: Event) {
 
           <ul class="barber-services-page__list" aria-label="Catálogo de servicios">
             <li v-for="service in services" :key="service.id" class="barber-services-page__item">
-              <input
-                :id="`barber-services-service-${service.id}`"
-                type="checkbox"
-                class="barber-services-page__checkbox"
-                :checked="isAssigned(service.id)"
-                :disabled="isPending(service.id)"
-                @change="onToggleService(service, $event)"
-              />
               <label
                 :for="`barber-services-service-${service.id}`"
                 class="barber-services-page__item-label"
               >
-                {{ service.name }}
+                <input
+                  :id="`barber-services-service-${service.id}`"
+                  type="checkbox"
+                  class="barber-services-page__checkbox"
+                  :checked="isAssigned(service.id)"
+                  :disabled="isPending(service.id)"
+                  @change="onToggleService(service, $event)"
+                />
+                <span>{{ service.name }}</span>
               </label>
               <span
                 v-if="isPending(service.id)"
@@ -400,20 +400,26 @@ async function onToggleService(service: ServiceSummary, event: Event) {
 }
 
 .barber-services-page__checkbox {
-  /* Objetivo táctil de al menos 44x44px (docs/03-desarrollo/
-     estandar-diseno-visual.md), aunque el control visual sea más pequeño. */
   width: 24px;
   height: 24px;
   min-width: 24px;
   flex-shrink: 0;
 }
 
+/* El label ENVUELVE el checkbox y el nombre: es el objetivo táctil real de
+   al menos 44x44px (estandar-diseno-visual.md), no solo el checkbox visual
+   de 24x24. */
 .barber-services-page__item-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  flex: 1 1 auto;
   font-family: var(--font-family-base);
   font-size: var(--font-size-body);
   color: var(--color-text-primary);
+  cursor: pointer;
   overflow-wrap: anywhere;
-  flex: 1 1 auto;
 }
 
 .barber-services-page__pending {
