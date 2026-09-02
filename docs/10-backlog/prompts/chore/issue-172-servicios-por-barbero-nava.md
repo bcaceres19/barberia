@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-CHORE-172-SERVICIOS-POR-BARBERO-NAVA-v1"
-version: "1.0"
+version: "1.1"
 kind: "chore"
-status: "ready"
+status: "executed"
 target_agents:
   - "claude"
 repository: "bcaceres19/barberia"
@@ -14,8 +14,8 @@ issue: 172
 issue_url: "https://github.com/bcaceres19/barberia/issues/172"
 suggested_issue_title: "feat(web): rediseñar asignación de servicios por barbero NAVA"
 branch: "feat/172-servicios-por-barbero-nava"
-pr: null
-pr_url: null
+pr: 178
+pr_url: "https://github.com/bcaceres19/barberia/pull/178"
 depends_on:
   - "Issue maestro #168 (orquestación NAVA); DEC-077-DEC-079 integradas en main"
 rules: []
@@ -103,5 +103,5 @@ git diff --check
 ## Git y PR
 
 - Rama: `feat/172-servicios-por-barbero-nava`.
-- PR: pendiente de abrir, `Closes #172`.
+- PR: [#178](https://github.com/bcaceres19/barberia/pull/178), `Closes #172`, integrada en `main` con CI 4/4 verde (commit `19be1ca`).
 - Sin push directo ni force-push; squash-merge solo tras CI verde.
