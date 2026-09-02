@@ -1,6 +1,6 @@
-# Sistema de agenda para barberías
+# NAVA
 
-Este repositorio reúne la definición de producto y requisitos de un sistema de agenda para barberías. El objetivo del MVP es que un barbero pueda operar su jornada, permitir reservas públicas, evitar cruces de horario y conservar trazabilidad de los cambios.
+NAVA es una plataforma web de agenda para barberías. Este repositorio reúne su definición de producto, requisitos, arquitectura e implementación. El objetivo del MVP es que un barbero pueda operar su jornada, permitir reservas públicas, evitar cruces de horario y conservar trazabilidad de los cambios. La identidad y la experiencia elegidas se especifican en [`docs/03-desarrollo/especificacion-frontend-nava.md`](docs/03-desarrollo/especificacion-frontend-nava.md).
 
 ## Estado actual
 
@@ -8,7 +8,7 @@ Este repositorio reúne la definición de producto y requisitos de un sistema de
 
 El 7 de agosto de 2026 se agregó el primer backlog verificable: [`docs/10-backlog/plan-bloques.md`](docs/10-backlog/plan-bloques.md) ordena las 45 funciones P0 en siete bloques y [`docs/02-requisitos/historias-usuario.md`](docs/02-requisitos/historias-usuario.md) contiene las historias `HU-001`–`HU-012` del bloque base, con sus criterios de aceptación. Cinco de esas historias están bloqueadas por las dudas `DP-SEG-04`, `DP-SEG-05` y `DP-SEG-06`, que corresponden al propietario.
 
-El 5 y 6 de agosto de 2026 se formalizaron las respuestas del propietario contenidas en [`respuesta-manuales/respuesta-propuestas-oc.txt`](respuesta-manuales/respuesta-propuestas-oc.txt) y [`respuesta-manuales/respuesta-dudas-pendientes.txt`](respuesta-manuales/respuesta-dudas-pendientes.txt), junto con instrucciones posteriores. Las decisiones `DEC-001`–`DEC-039` viven en [`docs/00-control/registro-decisiones.md`](docs/00-control/registro-decisiones.md); los archivos manuales quedan como evidencia de origen.
+Las decisiones `DEC-001`–`DEC-077`, incluida la identidad NAVA (`DEC-077`), viven en [`docs/00-control/registro-decisiones.md`](docs/00-control/registro-decisiones.md). Los archivos de `respuesta-manuales/` conservan evidencia de origen; las decisiones formalizadas tienen precedencia.
 
 ## Cómo revisar o ejecutar el proyecto
 

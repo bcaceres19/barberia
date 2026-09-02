@@ -1,13 +1,14 @@
 ---
 titulo: "Checklist transversal (toda pantalla y flujo)"
-version: "1.0"
+version: "1.1"
 estado: "Herramienta operativa, no normativa"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-25"
+ultima_actualizacion: "2026-09-01"
 documentos_relacionados:
   - "README.md"
   - "01-metodologia-y-uso.md"
   - "../03-desarrollo/estandar-diseno-visual.md"
+  - "../03-desarrollo/especificacion-frontend-nava.md"
   - "../01-producto/reglas-negocio.md"
   - "../03-desarrollo/estrategia-pruebas.md"
 ---
@@ -21,12 +22,12 @@ Aplica a **cada** pantalla privada y cada formulario, además de los checks espe
 - [ ] **320 px**: reflow sin scroll horizontal ni pérdida de contenido o de una acción necesaria.
 - [ ] **360 px**: mismo criterio que 320 px; es el ancho de referencia de los E2E `*-evidencia-responsiva.spec.ts` ya existentes — compara contra esa evidencia si algo se ve distinto.
 - [ ] **768 px**: la composición puede cambiar (una→dos columnas); verificar que no queda contenido huérfano ni duplicado a mitad de transición.
-- [ ] **1024–1279 px**: panel con navegación lateral; el contenido no se estira sin límite.
+- [ ] **1024–1279 px**: panel NAVA con dock inferior; el contenido reserva su espacio y no se estira sin límite.
 - [ ] **1280 px+**: contenido centrado, máximo 1440 px en privado — verificar que no queda una franja vacía absurda ni el formulario estirado a todo el ancho.
 - [ ] **Zoom de texto al 200 %**: ningún control ni texto queda cortado o inaccesible.
 - [ ] **Nombre/texto en el límite máximo del campo** (ver longitudes exactas en [`05-matriz-combinaciones.md`](05-matriz-combinaciones.md)) mostrado en cada lugar donde se repite: lista, tarjeta, selector, insignia, cabecera — ¿trunca con elipsis legible, desborda la tarjeta, o rompe el layout de la fila?
 - [ ] **Objetivo táctil ≥ 44×44 px** en cada botón/control, incluida la fila completa si es interactiva.
-- [ ] **Foco visible** (anillo `#2563EB`) al navegar solo con teclado, incluido dentro de un diálogo.
+- [ ] **Foco visible** (token `--color-focus`, latón oscuro NAVA) al navegar solo con teclado, incluido dentro de un diálogo.
 - [ ] **`prefers-reduced-motion`** activado: transiciones y el giro de carga se atenúan o desaparecen, no se rompe la interfaz.
 - [ ] **Color nunca es la única señal**: todo estado, error o selección tiene también texto o ícono.
 - [ ] Los cinco estados de la pantalla existen y son distinguibles entre sí, no un mismo spinner genérico para todo: **inicial, carga, vacío, error recuperable, éxito**.

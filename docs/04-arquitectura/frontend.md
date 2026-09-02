@@ -1,14 +1,15 @@
 ---
 titulo: "Arquitectura del frontend"
-version: "1.3"
+version: "1.4"
 estado: "Decisión confirmada"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-06"
+ultima_actualizacion: "2026-09-01"
 documentos_relacionados:
   - "../00-control/registro-decisiones.md"
   - "../01-producto/alcance-mvp.md"
   - "../03-desarrollo/estandar-frontend-vue.md"
   - "../03-desarrollo/estandar-diseno-visual.md"
+  - "../03-desarrollo/especificacion-frontend-nava.md"
   - "../03-desarrollo/estrategia-pruebas.md"
   - "../06-api/estandar-openapi.md"
   - "stack-despliegue-operacion.md"
@@ -55,7 +56,9 @@ La decisión busca reducir **tiempo total de construcción y mantenimiento**, no
 8. Servir imágenes en dimensiones adecuadas y no cargar recursos del área privada en el flujo público.
 9. Generar bundles separados para el flujo público y el panel del barbero mediante rutas diferidas.
 10. Medir tamaño, carga e interacción en cada build de candidato al piloto.
-11. Consumir colores, tipografía, espaciado y componentes desde el sistema visual; ningún módulo mantiene una paleta paralela.
+11. Consumir colores, tipografía, espaciado y componentes desde el sistema NAVA; ningún módulo mantiene una paleta paralela.
+12. Self-hostear las fuentes aprobadas en WOFF2 desde assets versionados; no cargar tipografía o iconos desde un CDN en tiempo de ejecución.
+13. Mantener separados los bundles del shell privado y la reserva pública; el wordmark compartido no autoriza importar navegación privada en el flujo del cliente.
 
 ## 4. Estructura inicial
 
@@ -94,7 +97,7 @@ Cada módulo agrupa vistas, componentes y lógica de su capacidad. `shared/` sol
 - no Nuxt ni renderizado del lado del servidor para el panel operativo;
 - no microfrontends;
 - no gestor de estado global obligatorio;
-- no biblioteca visual completa, temas por barbería ni modo oscuro en el MVP; el sistema visual ligero definido por `DEC-039` sí es obligatorio.
+- no biblioteca visual completa, temas por barbería ni modo oscuro en el MVP; el sistema NAVA definido por `DEC-039`/`DEC-077` sí es obligatorio para cada pantalla que se migre o se cree mediante un issue real.
 
 Las páginas públicas de mercadeo pueden generarse como HTML estático separado. El flujo de reservas sigue siendo interactivo y se entrega con Vue.
 
@@ -111,7 +114,7 @@ Las páginas públicas de mercadeo pueden generarse como HTML estático separado
 
 ## 7. Estándares de implementación
 
-La organización por funcionalidades, las reglas de TypeScript, componentes, documentación y accesibilidad son obligatorias según [estandar-frontend-vue.md](../03-desarrollo/estandar-frontend-vue.md). Paleta, tokens, medidas, componentes y plantillas de pantalla siguen [estandar-diseno-visual.md](../03-desarrollo/estandar-diseno-visual.md). Las pruebas unitarias, de componente y E2E se definen en [estrategia-pruebas.md](../03-desarrollo/estrategia-pruebas.md). Los DTO, errores y operaciones HTTP siguen [estandar-openapi.md](../06-api/estandar-openapi.md).
+La organización por funcionalidades, las reglas de TypeScript, componentes, documentación y accesibilidad son obligatorias según [estandar-frontend-vue.md](../03-desarrollo/estandar-frontend-vue.md). Paleta, tokens, medidas y primitivas siguen [estandar-diseno-visual.md](../03-desarrollo/estandar-diseno-visual.md); arquitectura de información, shell, componentes de producto, inventario de pantallas y frontera P0/P1/P2 siguen [especificacion-frontend-nava.md](../03-desarrollo/especificacion-frontend-nava.md). Las pruebas unitarias, de componente y E2E se definen en [estrategia-pruebas.md](../03-desarrollo/estrategia-pruebas.md). Los DTO, errores y operaciones HTTP siguen [estandar-openapi.md](../06-api/estandar-openapi.md).
 
 La organización interna detallada y la dirección de dependencias están en el estándar de desarrollo.
 
