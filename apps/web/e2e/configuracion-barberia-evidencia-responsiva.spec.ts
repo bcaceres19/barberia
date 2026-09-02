@@ -39,7 +39,10 @@ test('pantalla Barbería sin scroll horizontal y con foco visible por teclado en
   await page.getByRole('button', { name: 'Iniciar sesión' }).click()
   await expect(page).toHaveURL(/\/panel$/)
 
-  await page.getByRole('link', { name: 'Barbería' }).click()
+  // El enlace del dock dice "Configuración" desde la Fase 2 del shell NAVA
+  // (src/modules/settings/index.ts); el título de la propia pantalla sigue
+  // siendo "Barbería".
+  await page.getByRole('link', { name: 'Configuración' }).click()
   await expect(page.getByRole('heading', { name: 'Barbería' })).toBeVisible()
 
   for (const viewport of viewports) {

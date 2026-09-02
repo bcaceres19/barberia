@@ -1,6 +1,6 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.56"
+version: "1.57"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-02"
@@ -173,10 +173,7 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-CHORE-144-NUEVO-TURNO-NAVA-v1](chore/issue-144-nuevo-turno-nava.md) | `chore` | `HU-061` | [#144](https://github.com/bcaceres19/barberia/issues/144), cerrado | `executed` | Fase 4a (issue #141/PR #142) integrada en `main` | Rama `feat/144-nuevo-turno-nava`; [PR #145](https://github.com/bcaceres19/barberia/pull/145), integrada en `main` con CI 4/4 verde |
 | [PROMPT-FIX-146-DETALLE-TURNO-TOKENS-v1](fix/issue-146-detalle-turno-tokens.md) | `fix` | `HU-064`, `HU-065` | [#146](https://github.com/bcaceres19/barberia/issues/146), cerrado | `executed` | Fase 4b (issue #144/PR #145) integrada en `main` | Rama `fix/146-detalle-turno-tokens`; [PR #147](https://github.com/bcaceres19/barberia/pull/147), integrada en `main` con CI 4/4 verde (tras un rerun del job Go, fallo flaky no relacionado) |
 | [PROMPT-FIX-149-TOKENS-CONFIGURACION-v1](fix/issue-149-tokens-pantallas-configuracion.md) | `fix` | `HU-020`–`HU-023`, `HU-040`–`HU-042` | [#149](https://github.com/bcaceres19/barberia/issues/149), cerrado | `executed` | Fix de Fase 4c (issue #146/PR #147) integrado en `main` | Rama `fix/149-tokens-pantallas-configuracion`; [PR #150](https://github.com/bcaceres19/barberia/pull/150), integrada en `main` con CI 4/4 verde |
-| [PROMPT-FIX-OTP-CANAL-UNICO-v1](fix/issue-pending-otp-canal-unico.md) | `fix` | `HU-008`, `HU-011` | `pending` | `draft` | `DP-NOT-06`/`CT-009`; no ejecutar hasta decidir canal único, fallback y consentimiento | Sin rama/PR; pendiente de issue y `DEC-*` nueva |
-| [PROMPT-FIX-LOGIN-OTP-DESTINO-VERIFICADO-v1](fix/issue-pending-login-otp-destino-verificado.md) | `fix` | `HU-007` | `pending` | `draft` | `DP-SEG-13`/`CT-010`; depende de la política de canal y contacto verificado | Sin rama/PR; pendiente de issue y `DEC-*` nueva |
-| [PROMPT-ORCH-OTP-CANAL-DESTINO-v1](orchestration/otp-canal-y-destino-seguro.md) | `orchestration` | `HU-007`, `HU-008`, `HU-011` | `pending` | `draft` | Coordina los dos prompts independientes; no autoriza commits combinados | Sin rama/PR; mapa de ejecución pendiente de decisiones e issues reales |
-| [PROMPT-AUDIT-UI-COMPONENTES-ALERTAS-NAVA-v1](audit/2026-09-02-ui-componentes-alertas-nava-v1.md) | `audit` | `HU-009`–`HU-012`, `HU-020`, `HU-022`, `HU-061` | — (no modifica el repositorio funcional) | `executed` | Inventario visual de botones, inputs, tipografía, navegación, modales y alertas con capturas locales; no implementa rediseño | Sin rama/PR; evidencia en `docs/10-backlog/evidence/ui-visual-2026-09-02/` |
+| [PROMPT-CHORE-170-CONFIGURACION-BARBERIA-NAVA-v1](chore/issue-170-configuracion-barberia-nava.md) | `chore` | `HU-020` | [#170](https://github.com/bcaceres19/barberia/issues/170) | `ready` | Fase 7 (issue maestro #168); confirma con evidencia real que la pantalla ya cumple `DEC-079` gracias a la Fase 1 (#132) y al fix #149; corrige selectores E2E desactualizados y añade `vitest-axe` con alertas visibles | Rama `feat/170-configuracion-barberia-nava`; sin PR todavía |
 
 ## 10. Lista de control al guardar o entregar
 

@@ -167,4 +167,36 @@ describe('SettingsPage', () => {
     const results = await axe(wrapper.element)
     expect(results).toHaveNoViolations()
   })
+
+  // heading-order: BaseAlert.vue (HU-009) fija el título de una alerta como
+  // `<h4>` porque es la etiqueta de un widget transitorio (`role="alert"`/
+  // `role="status"`), no un encabezado del esquema del documento; junto al
+  // único `<h1>` real de esta página, axe interpreta ese salto como un
+  // esquema de encabezados roto. Mismo criterio documentado en
+  // LoginPage.test.ts: no es un defecto de esta pantalla ni de BaseAlert,
+  // así que no se inserta un h2/h3 vacío solo para complacer la regla.
+  const axeOptionsWithAlert = { rules: { 'heading-order': { enabled: false } } }
+
+  it('has no axe violations with the validation-error alert visible', async () => {
+    const wrapper = await mountReady()
+    await wrapper.get('input[name="timezone"]').setValue('COT')
+    saveMock.mockResolvedValueOnce({ kind: 'validation-error' })
+
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    const results = await axe(wrapper.element, axeOptionsWithAlert)
+    expect(results).toHaveNoViolations()
+  })
+
+  it('has no axe violations with the saved confirmation visible', async () => {
+    const wrapper = await mountReady()
+    saveMock.mockResolvedValueOnce({ kind: 'success', settings: loadedSettings })
+
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    const results = await axe(wrapper.element, axeOptionsWithAlert)
+    expect(results).toHaveNoViolations()
+  })
 })
