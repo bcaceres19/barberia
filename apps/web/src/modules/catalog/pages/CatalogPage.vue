@@ -98,8 +98,14 @@ async function onLoadMore() {
   }
 }
 
+// No concatena "$" (estandar-diseno-visual.md §10.3: "Dinero se formatea
+// según la moneda definida por el contrato; no se concatena '$' ni se
+// asumen pesos desde el componente"). service.price es un string decimal
+// exacto que nunca se convierte a number en el cliente (docs/06-api/
+// estandar-openapi.md §6); esta función no reformatea sus dígitos, solo
+// añade la moneda real recibida del contrato.
 function formatPrice(service: Service): string {
-  return `$ ${service.price} ${service.currency}`
+  return `${service.price} ${service.currency}`
 }
 
 // --- Alta -----------------------------------------------------------------
@@ -910,6 +916,9 @@ async function reloadAfterConflict(serviceId: string) {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
+  /* Ficha (§6.1, §7.2): al menos 64px en móvil, no el objetivo táctil
+     mínimo de 44px. */
+  min-height: 64px;
   padding: var(--space-4);
   background-color: var(--color-surface);
   border: var(--border-width-normal) solid var(--color-border-subtle);
@@ -949,6 +958,8 @@ async function reloadAfterConflict(serviceId: string) {
   font-family: var(--font-family-base);
   font-size: var(--font-size-body-sm);
   color: var(--color-text-secondary);
+  /* Cifras tabulares: duración y precio (estandar-diseno-visual.md §5.2, §10.3). */
+  font-variant-numeric: tabular-nums;
 }
 
 .catalog-page__item-description {
