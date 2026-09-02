@@ -56,6 +56,19 @@ function onRetryLoad() {
   void load()
 }
 
+// Monograma accesible (especificacion-frontend-nava.md §4.4/§6): "Avatares
+// reales solo si el producto incorpora una fuente y política para fotos.
+// Hasta entonces se usa monograma accesible o ninguna imagen." Toma la
+// primera letra del primer y del último término del nombre completo (o
+// solo la primera si es un único término); decorativo, el nombre visible
+// de la fila ya da el nombre accesible.
+function initials(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return ''
+  if (parts.length === 1) return parts[0]!.charAt(0).toUpperCase()
+  return (parts[0]!.charAt(0) + parts[parts.length - 1]!.charAt(0)).toUpperCase()
+}
+
 async function onLoadMore() {
   if (loadingMore.value || !nextCursor.value) return
   loadingMore.value = true
@@ -241,7 +254,12 @@ async function onSubmitRename() {
 
       <ul v-else class="staff-page__list" aria-label="Barberos de la barbería">
         <li v-for="barber in barbers" :key="barber.id" class="staff-page__item">
-          <span class="staff-page__item-name">{{ barber.fullName }}</span>
+          <span class="staff-page__item-identity">
+            <span class="staff-page__item-avatar" aria-hidden="true">{{
+              initials(barber.fullName)
+            }}</span>
+            <span class="staff-page__item-name">{{ barber.fullName }}</span>
+          </span>
           <BaseButton
             type="button"
             variant="secondary"
@@ -444,6 +462,30 @@ async function onSubmitRename() {
   background-color: var(--color-surface);
   border: var(--border-width-normal) solid var(--color-border-subtle);
   border-radius: var(--radius-md);
+}
+
+.staff-page__item-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* Avatar operativo 40px (estandar-diseno-visual.md §6.2): monograma
+   accesible, nunca un retrato ficticio. */
+.staff-page__item-avatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--color-action-soft);
+  color: var(--color-action-primary);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body-sm);
+  font-weight: 600;
 }
 
 .staff-page__item-name {
