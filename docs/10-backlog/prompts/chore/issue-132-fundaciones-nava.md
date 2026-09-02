@@ -1,6 +1,6 @@
 ---
 prompt_id: "PROMPT-CHORE-132-FUNDACIONES-NAVA-v1"
-version: "1.0"
+version: "1.1"
 kind: "chore"
 status: "executed"
 target_agents:
@@ -102,7 +102,7 @@ git diff --check
 | Pantallas de negocio sin tocar | Cumplido | `git status`/diff de PR #133 limitado a `styles/` |
 | Fuentes NAVA self-hosted | No incluido (fuera de alcance, issue propio pendiente) | — |
 | Formato/lint/tipos/tests/build en verde | Cumplido | Comandos de verificación final, salida capturada en esta sesión |
-| CI real (GitHub Actions) en verde | Pendiente de confirmar | `gh pr checks 133` |
+| CI real (GitHub Actions) en verde | Cumplido | `gh pr checks 133` (4/4 verde); `gh pr view 133 --json state,mergedAt,mergeCommit`: `MERGED`, `2026-09-02T03:11:58Z`, commit `ae7308e` |
 
 ## Git y PR
 
