@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-CHORE-173-DETALLE-HISTORIAL-TURNO-NAVA-v1"
-version: "1.0"
+version: "1.1"
 kind: "chore"
-status: "ready"
+status: "executed"
 target_agents:
   - "claude"
 repository: "bcaceres19/barberia"
@@ -15,8 +15,8 @@ issue: 173
 issue_url: "https://github.com/bcaceres19/barberia/issues/173"
 suggested_issue_title: "feat(web): rediseñar detalle e historial del turno NAVA"
 branch: "feat/173-detalle-historial-reprogramacion-nava"
-pr: null
-pr_url: null
+pr: 179
+pr_url: "https://github.com/bcaceres19/barberia/pull/179"
 depends_on:
   - "Issue maestro #168 (orquestación NAVA); DEC-077-DEC-079 integradas en main"
 rules: []
@@ -104,5 +104,5 @@ git diff --check
 ## Git y PR
 
 - Rama: `feat/173-detalle-historial-reprogramacion-nava`.
-- PR: pendiente de abrir, `Closes #173`.
+- PR: [#179](https://github.com/bcaceres19/barberia/pull/179), `Closes #173`, integrada en `main` con CI 4/4 verde (commit `e6cc85b`, tras un rerun del job Go por el fallo intermitente conocido, issue #158, no relacionado con este cambio).
 - Sin push directo ni force-push; squash-merge solo tras CI verde.
