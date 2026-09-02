@@ -639,7 +639,7 @@ async function onDeleteSeries(item: TimeBlockSeries) {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .blocks-page__item {
@@ -647,19 +647,27 @@ async function onDeleteSeries(item: TimeBlockSeries) {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
+  gap: var(--space-3);
+  /* Ficha (§6.1, §7.2): al menos 64px en móvil, no el objetivo táctil
+     mínimo de 44px. */
+  min-height: 64px;
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-surface);
   border: var(--border-width-normal) solid var(--color-border-subtle);
   border-radius: var(--radius-lg);
 }
 
 .blocks-page__reason {
-  margin: 0.25rem 0 0;
-  color: var(--color-text-secondary, #666);
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-secondary);
 }
 
 .blocks-page__section-title {
-  margin-top: 1.5rem;
+  margin-top: var(--space-6);
+  font-size: var(--font-size-h2);
+  line-height: var(--font-size-h2-line);
+  font-weight: var(--font-weight-h2);
+  color: var(--color-text-primary);
 }
 
 .blocks-page__form {
