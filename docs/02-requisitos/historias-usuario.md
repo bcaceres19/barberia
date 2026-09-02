@@ -1,9 +1,9 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.33"
+version: "1.35"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-01"
+ultima_actualizacion: "2026-09-02"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/reglas-negocio.md"
@@ -62,7 +62,7 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 
 Orden de construcción recomendado: `HU-001` → `HU-002` → `HU-003` → `HU-004` → `HU-009` → `HU-005` → `HU-006` → `HU-010` → `HU-012` → `HU-007` → `HU-008` → `HU-011`.
 
-El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pantalla de acceso sin componentes base produce estilos locales que después hay que desmontar.
+La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para compartir comportamiento accesible y estados. Cada rediseño o pantalla nueva conserva los mockups y la firma cromática NAVA, sin impedir que la pantalla resuelva libremente su composición, escala y tecnología de estilos.
 
 ---
 
@@ -452,17 +452,17 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 ---
 
-### HU-009 · Sistema visual base implementado en componentes
+### HU-009 · Base de experiencia accesible y dirección visual NAVA
 
 | Campo | Valor |
 | --- | --- |
 | Función | Soporte transversal de todas las pantallas P0 |
 | Reglas | Criterios no funcionales de UX y accesibilidad |
-| Decisiones | `DEC-039`, `DEC-033`, `DEC-035` |
+| Decisiones | `DEC-033`, `DEC-035`, `DEC-077`, `DEC-078`, `DEC-079` |
 | Actor | Barbero y cliente (indirectamente) |
 | Depende de | — |
 | Bloquea | `HU-010`, `HU-011`, `HU-012` y toda pantalla posterior |
-| Riesgo | Sin componentes base, cada pantalla inventa su propio botón; el resultado es una interfaz incoherente y un rediseño caro a mitad del proyecto. |
+| Riesgo | Sin una base transversal de comportamiento, cada pantalla puede resolver foco, estados y errores de forma incompatible. La solución visual, en cambio, puede ser propia de cada pantalla siempre que conserve NAVA / Tailored Grid. |
 
 **Historia**
 
@@ -470,35 +470,35 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 **Alcance incluido**
 
-- Componentes base en `apps/web/src/shared/ui/` que realmente usarán las pantallas de B0: botón, campo de texto, alerta, insignia y diálogo. **No se crean componentes sin uso real.**
-- Variantes por intención (`tone`), nunca por valor libre; todo color, medida, radio y tipografía proviene de `tokens.css`.
+- Componentes de comportamiento en `apps/web/src/shared/ui/` que realmente usarán las pantallas de B0: botón, campo de texto, alerta, insignia y diálogo. **No se crean componentes sin uso real.**
+- Variantes tipadas cuando simplifiquen comportamiento o accesibilidad; la composición visual puede definirse en el componente, módulo o pantalla según el problema que resuelva.
 - Patrones de estado de pantalla: inicial, carga, actualización, vacío, error recuperable, error de campo, conflicto y éxito.
-- Foco visible, orden de tabulación coherente, área táctil de 44 × 44 px y respeto de `prefers-reduced-motion`.
+- Foco visible, orden de tabulación coherente, controles cómodos, contraste verificable y respeto de `prefers-reduced-motion`.
 - Evidencia responsive en 320, 360, 768 y 1280 px.
 
 **Alcance excluido**
 
-- Modo oscuro, selector de tema, colores por barbería, CSS libre y biblioteca visual externa: prohibidos por `DEC-039`.
-- Iconografía como dependencia nueva sin justificación.
+- Una configuración funcional de temas o personalización por barbería: requiere una decisión de producto y no nace del mockup.
+- Una dependencia visual nueva sin justificar licencia, accesibilidad, mantenimiento e impacto en el bundle.
 
 **Criterios de aceptación**
 
 | Código | Criterio |
 | --- | --- |
-| `CA-009-01` | Ningún componente contiene un color hexadecimal, un tamaño en píxeles arbitrario ni una fuente literal; todos consumen tokens semánticos. |
+| `CA-009-01` | Todo rediseño o pantalla nueva respeta los mockups, la firma cromática y el contraste editorial/funcional NAVA; composición, escala, nombres de tokens y tecnología permanecen libres. |
 | `CA-009-02` | Cada componente interactivo tiene foco visible conforme al estándar y es operable solo con teclado. |
-| `CA-009-03` | Los controles táctiles ordinarios miden al menos 44 × 44 px. |
+| `CA-009-03` | Los controles son cómodos de usar y conservan el objetivo de usabilidad de 44 × 44 px cuando la composición lo permite; cualquier excepción mantiene operabilidad, foco y legibilidad. |
 | `CA-009-04` | Cada componente tiene prueba de componente que cubre sus estados: normal, deshabilitado, cargando y error cuando apliquen. |
-| `CA-009-05` | El contraste de texto y de bordes cumple WCAG 2.2 AA, verificado con la herramienta definida en la estrategia de pruebas. |
+| `CA-009-05` | El contraste real de texto y señales necesarias cumple WCAG 2.2 AA, verificado sobre las combinaciones elegidas por la pantalla. |
 | `CA-009-06` | Existe evidencia visual en los cuatro anchos de referencia y ninguna pantalla produce desplazamiento horizontal. |
-| `CA-009-07` | Las animaciones, si existen, duran entre 120 y 200 ms y desaparecen con `prefers-reduced-motion`. |
+| `CA-009-07` | Las animaciones, si existen, apoyan la tarea y se reducen o eliminan con `prefers-reduced-motion`; no se exige una duración visual fija. |
 
 **Pruebas obligatorias**
 
 - Pruebas de componente con la herramienta definida en `estrategia-pruebas.md` sección 5.2.
 - Verificación accesible automatizada y revisión manual con teclado.
 
-**Terminado cuando** las pantallas de `HU-010` a `HU-012` se construyen sin agregar un solo estilo local nuevo.
+**Terminado cuando** las pantallas de `HU-010` a `HU-012` pueden reutilizar el comportamiento accesible de la base y expresar NAVA / Tailored Grid sin que una regla visual rígida les impida resolver su propio contenido.
 
 ---
 
@@ -508,7 +508,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 | --- | --- |
 | Función | `F-AUTH-01` |
 | Reglas | Criterios no funcionales de UX; `RN-DAT-02` |
-| Decisiones | `DEC-039`, `DEC-033`, `DEC-056` |
+| Decisiones | `DEC-033`, `DEC-056`, `DEC-078` |
 | Actor | Barbero |
 | Depende de | `HU-005`, `HU-009` |
 | Bloquea | `HU-012` |
@@ -558,7 +558,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 | --- | --- |
 | Función | `F-AUTH-02` |
 | Reglas | Criterios no funcionales de UX; `RN-DAT-01`, `RN-DAT-02` |
-| Decisiones | `DEC-026`, `DEC-039` |
+| Decisiones | `DEC-026`, `DEC-078` |
 | Actor | Barbero |
 | Depende de | `HU-008`, `HU-009`, `HU-010` |
 | Bloquea | — |
@@ -604,7 +604,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 | --- | --- |
 | Función | `F-OPS-01` (comportamiento ante fallos y conexión inestable) |
 | Reglas | `RN-TEN-01`, criterios no funcionales de UX |
-| Decisiones | `DEC-033`, `DEC-039`, `DEC-056`, `DEC-060` |
+| Decisiones | `DEC-033`, `DEC-056`, `DEC-060`, `DEC-078` |
 | Actor | Barbero |
 | Depende de | `HU-006`, `HU-009`, `HU-010` |
 | Bloquea | Todas las pantallas privadas de B1 en adelante |
@@ -616,7 +616,7 @@ El sistema visual (`HU-009`) se adelanta a las pantallas porque construir la pan
 
 **Alcance incluido**
 
-- Estructura de aplicación autenticada: cabecera con el nombre de la barbería, navegación principal y área de contenido, según las estructuras base del estándar visual, construida sobre la ruta `/panel` y el guard mínimo que ya entrega `HU-010` (`DEC-056`) — sin crear un guard paralelo ni cambiar la ruta.
+- Estructura de aplicación autenticada: contexto de la barbería, navegación principal y área de contenido, con una composición visual libre dentro de NAVA / Tailored Grid, construida sobre la ruta `/panel` y el guard mínimo que ya entrega `HU-010` (`DEC-056`) — sin crear un guard paralelo ni cambiar la ruta.
 - Guarda de ruta: sin sesión válida se redirige al acceso, conservando el destino pretendido; generaliza el guard de `/panel` de `HU-010` a todas las rutas privadas.
 - Manejo central de respuestas no autorizadas: la sesión se limpia y se informa el motivo, sin bucles de redirección.
 - Patrones globales de estado: carga con esqueleto, error recuperable con "Reintentar" y aviso de conexión perdida.
@@ -659,7 +659,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | --- | --- |
 | Función | `F-CONF-01` |
 | Reglas | `RN-DIS-07`, `RN-TEN-01` |
-| Decisiones | `DEC-007`, `DEC-024`, `DEC-033`, `DEC-037`, `DEC-039` |
+| Decisiones | `DEC-007`, `DEC-024`, `DEC-033`, `DEC-037`, `DEC-078` |
 | Actor | Barbero autenticado |
 | Depende de | Criterio de salida de B0; en particular `HU-003`, `HU-006`, `HU-009` y `HU-012` |
 | Bloquea | `HU-021` y las pantallas de B1 que necesitan identificar la barbería activa |
@@ -684,7 +684,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 - Enlace público o `public_slug`, que pertenece a `F-PUB-01` en B4.
 - Políticas de cancelación, límites de reserva, recordatorios, canales y proveedores.
 - Conversión o reescritura masiva de instantes existentes al cambiar la zona: un instante almacenado nunca se modifica por una preferencia de presentación.
-- Personalización de colores, tipografías o tema por barbería, prohibida por `DEC-039`.
+- Personalización funcional de colores, tipografías o tema por barbería: no forma parte de esta HU y requiere una decisión de producto; la composición interna de la pantalla sí es libre dentro de NAVA / Tailored Grid.
 
 **Criterios de aceptación**
 
@@ -717,7 +717,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | --- | --- |
 | Función | `F-CONF-02` (registro y listado; servicios y horario se completan en historias posteriores) |
 | Reglas | `RN-TEN-01` |
-| Decisiones | `DEC-019`, `DEC-024`, `DEC-033`, `DEC-037`, `DEC-039` |
+| Decisiones | `DEC-019`, `DEC-024`, `DEC-033`, `DEC-037`, `DEC-078` |
 | Actor | Barbero autenticado |
 | Depende de | `HU-020` y criterio de salida de B0 |
 | Bloquea | Historias de servicios por barbero, B2 y la selección pública de barbero en B4 |
@@ -1264,7 +1264,7 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 | --- | --- |
 | Función | `F-CITA-01`; prepara `F-CITA-02` sin implementar navegación por fecha |
 | Reglas | `RN-CIT-01`, `RN-RES-02`, `RN-RES-03`, `RN-DIS-07`, `RN-TEN-01` y estados confirmados de `estados-citas.md` |
-| Decisiones | `DEC-007`, `DEC-016`, `DEC-019`, `DEC-024`, `DEC-033`–`DEC-039`, `DEC-047` |
+| Decisiones | `DEC-007`, `DEC-016`, `DEC-019`, `DEC-024`, `DEC-033`–`DEC-038`, `DEC-047`, `DEC-078` |
 | Actor | Barbero autenticado |
 | Depende de | `HU-061` integrada (cumplida); `DP-CIT-04` y `DP-CIT-05` resueltas como `DEC-074`–`DEC-075` (cumplida); issue real [#111](https://github.com/bcaceres19/barberia/issues/111) (cumplida) |
 | Bloquea | Navegación por fecha, detalle, modificación, reprogramación, cancelación y transiciones visibles |
@@ -1325,7 +1325,7 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 | --- | --- |
 | Función | `F-CITA-02`; amplía la lectura diaria de `F-CITA-01` |
 | Reglas | `RN-CIT-01`, `RN-DIS-05`, `RN-DIS-07`, `RN-TEN-01` y estados confirmados de `estados-citas.md` |
-| Decisiones | `DEC-007`, `DEC-016`, `DEC-019`, `DEC-020`, `DEC-024`, `DEC-033`–`DEC-039`, `DEC-047`, `DEC-074`, `DEC-075` |
+| Decisiones | `DEC-007`, `DEC-016`, `DEC-019`, `DEC-020`, `DEC-024`, `DEC-033`–`DEC-038`, `DEC-047`, `DEC-074`, `DEC-075`, `DEC-078` |
 | Actor | Barbero autenticado |
 | Depende de | `HU-062` integrada mediante PR #113; contrato diario con parámetro `date` vigente |
 | Bloquea | `HU-064` y recorridos posteriores que deben regresar a la fecha operativa de origen |
@@ -1447,7 +1447,7 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 | --- | --- |
 | Función | `F-CITA-05`; transición `T2` de `estados-citas.md` |
 | Reglas | `RN-CIT-01`, `RN-CIT-03`, `RN-CON-01`, `RN-CON-03`, `RN-DIS-05`, `RN-DIS-07`, `RN-HIS-01`, `RN-HIS-02`, `RN-TEN-01`, `RN-IDE-01` |
-| Decisiones | `DEC-002`, `DEC-004`, `DEC-007`, `DEC-014`, `DEC-016`, `DEC-020`, `DEC-024`, `DEC-035`–`DEC-039`, `DEC-043`, `DEC-074`, `DEC-075`, `DEC-076` |
+| Decisiones | `DEC-002`, `DEC-004`, `DEC-007`, `DEC-014`, `DEC-016`, `DEC-020`, `DEC-024`, `DEC-035`–`DEC-038`, `DEC-043`, `DEC-074`, `DEC-075`, `DEC-076`, `DEC-078` |
 | Actor | Barbero autenticado |
 | Depende de | `HU-064` integrada en `main` mediante [PR #121](https://github.com/bcaceres19/barberia/pull/121) (cumplido); `DP-CIT-06` resuelta como `DEC-076` (cumplido) |
 | Bloquea | Modificación T3, cancelación y demás transiciones visibles de B3 |

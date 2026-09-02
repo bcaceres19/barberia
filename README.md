@@ -50,14 +50,14 @@ están en `apps/api/README.md`, `apps/web/README.md` y
 | Ruta | Contenido |
 | --- | --- |
 | [`apps/api/`](apps/api/) | Backend Go (Chi v5 pendiente): procesos `api` y `worker`, base de plataforma y módulos vacíos |
-| [`apps/web/`](apps/web/) | Frontend Vue 3 + TypeScript + Vite: arranque, router y tokens del sistema visual |
+| [`apps/web/`](apps/web/) | Frontend Vue 3 + TypeScript + Vite: arranque, router y estilos de la interfaz NAVA |
 | [`database/`](database/) | Configuración de Atlas y carpetas de migraciones, seeds, testdata y pruebas |
 | [`api/openapi/`](api/openapi/) | Documento de entrada OpenAPI 3.1.2 y estructura de paths/components |
 | [`docs/README.md`](docs/README.md) | Mapa documental, fuentes de verdad y flujo de cambios |
 | [`docs/00-control/`](docs/00-control/) | Decisiones, contradicciones, trazabilidad, cambios, dudas, supuestos y glosario |
 | [`docs/01-producto/`](docs/01-producto/) | Alcance del MVP, prioridades y reglas de negocio |
 | [`docs/02-requisitos/`](docs/02-requisitos/) | Requisitos detallados, estados de las citas e historias de usuario |
-| [`docs/03-desarrollo/`](docs/03-desarrollo/) | Estándares de código, diseño visual y estrategia de pruebas |
+| [`docs/03-desarrollo/`](docs/03-desarrollo/) | Estándares de código, dirección visual y estrategia de pruebas |
 | [`docs/04-arquitectura/`](docs/04-arquitectura/) | Go + Chi v5, Vue 3 + TypeScript + Vite, despliegue y operación |
 | [`docs/05-backend/`](docs/05-backend/) | PostgreSQL, RLS, normalización y migraciones administradas con Atlas |
 | [`docs/06-api/`](docs/06-api/) | Estándar OpenAPI y gobierno del contrato HTTP |

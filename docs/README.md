@@ -1,9 +1,9 @@
 ---
 titulo: "Mapa documental y fuentes de verdad"
-version: "2.3"
+version: "2.4"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-01"
+ultima_actualizacion: "2026-09-02"
 documentos_relacionados:
   - "00-control/registro-decisiones.md"
   - "00-control/contradicciones.md"
@@ -59,7 +59,7 @@ Los archivos de `respuesta-manuales/` son evidencia de origen. Si difieren de un
 | Backlog | [prompt-endurecimiento-ddl.md](10-backlog/prompt-endurecimiento-ddl.md) | Ejecución por fases de las correcciones de seguridad e integridad del DDL | Propuesta; herramienta, no norma |
 | Desarrollo | [estandar-backend-go.md](03-desarrollo/estandar-backend-go.md) | Código limpio, paquetes y documentación Go | Obligatorio |
 | Desarrollo | [estandar-frontend-vue.md](03-desarrollo/estandar-frontend-vue.md) | Código limpio, módulos, TypeScript y accesibilidad | Obligatorio |
-| Desarrollo | [estandar-diseno-visual.md](03-desarrollo/estandar-diseno-visual.md) | Fundamentos NAVA: paleta, tokens, tipografía, medidas, primitivas y accesibilidad | Obligatorio |
+| Desarrollo | [estandar-diseno-visual.md](03-desarrollo/estandar-diseno-visual.md) | Mockups y firma cromática NAVA obligatorios en rediseños/pantallas nuevas; composición y herramientas libres | Obligatorio en su alcance |
 | Desarrollo | [especificacion-frontend-nava.md](03-desarrollo/especificacion-frontend-nava.md) | Identidad, shell, componentes de producto, inventario integral de pantallas y frontera P0/P1/P2 | Obligatorio para desarrollo incremental |
 | Desarrollo | [estrategia-pruebas.md](03-desarrollo/estrategia-pruebas.md) | Unitarias, componente, integración, E2E y puertas de calidad | Obligatorio |
 | Desarrollo | [flujo-git-github.md](03-desarrollo/flujo-git-github.md) | Ramas, commits, issues, PR, rulesets, squash, hotfix y versiones | Obligatorio; activación remota pendiente |
