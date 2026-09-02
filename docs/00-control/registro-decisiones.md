@@ -1,6 +1,6 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.21"
+version: "1.22"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-01"
@@ -13,6 +13,7 @@ documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../03-desarrollo/flujo-git-github.md"
   - "../03-desarrollo/estandar-diseno-visual.md"
+  - "../03-desarrollo/especificacion-frontend-nava.md"
   - "../../respuesta-manuales/respuesta-propuestas-oc.txt"
   - "../../respuesta-manuales/respuesta-dudas-pendientes.txt"
 ---
@@ -23,7 +24,7 @@ documentos_relacionados:
 
 Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respuestas del propietario sin borrar su fuente. Si una respuesta no alcanza para decidir el asunto al que fue asociada, se registra únicamente lo que sí decidió y se conserva abierta la duda restante.
 
-**Responsable de las decisiones de esta versión:** propietario del proyecto. La identidad nominal está pendiente de documentar.
+**Responsable de las decisiones de esta versión:** propietario del proyecto. La identidad nominal confirmada es NAVA, según `DEC-077`.
 
 ## 2. Resumen
 
@@ -97,6 +98,8 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-073` | 2026-08-27 | Resuelve `DP-CIT-03`: un bloqueo vigente rechaza la creación manual (bloqueo duro), igual que un cruce de citas | `DP-CIT-03`, `HU-061` | Confirmada |
 | `DEC-074` | 2026-08-28 | Resuelve `DP-CIT-04`: la agenda diaria abre con selector obligatorio de un barbero, sin vista consolidada inicial | `DP-CIT-04`, `HU-062` | Confirmada |
 | `DEC-075` | 2026-08-28 | Resuelve `DP-CIT-05`: un turno que cruza medianoche aparece en cada agenda diaria cuyo intervalo intersecta | `DP-CIT-05`, `HU-062` | Confirmada |
+| `DEC-076` | 2026-09-01 | Resuelve `DP-CIT-06`: reprogramar hacia un bloqueo vigente se rechaza como conflicto | `DP-CIT-06`, `HU-065` | Confirmada |
+| `DEC-077` | 2026-09-01 | La plataforma se llama NAVA y adopta la dirección visual Tailored Grid, sin ampliar el alcance funcional del MVP | Identidad y sistema visual frontend | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -835,3 +838,16 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** permitir con advertencia — descartada por la misma razón que en `DEC-073`: delega en el barbero, en medio de un flujo de reprogramación, una decisión que ya tiene su propio flujo auditable en `HU-041`/`HU-042`; exigir retirar/exceptuar el bloqueo dentro del mismo formulario de reprogramación — descartada por mezclar dos preocupaciones distintas (gestión de bloqueos y reprogramación de una cita) en una sola pantalla y una sola transacción.
 - **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-CIT-06`), `docs/01-producto/reglas-negocio.md` (`RN-BLQ-03`, caso límite nuevo), `docs/02-requisitos/historias-usuario.md` (`HU-065`, criterios de aceptación), `docs/10-backlog/prompts/hu/hu-065-reprogramacion-turno.md`; futura implementación de `T2` consulta la jornada efectiva/bloqueos vigentes de `schedule` (mismo puerto que `ManualBookingService`) antes de confirmar y responde el mismo `409` uniforme que usa para un cruce de citas, nunca una rama de "advertencia".
 - **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-CIT-06`; aprobación explícita del propietario el 2026-09-01.
+
+### DEC-077 · Identidad NAVA y dirección visual Tailored Grid
+
+- **Fecha:** 2026-09-01.
+- **Decisión:** la plataforma y el proyecto adoptan el nombre **NAVA**. El frontend adopta como dirección canónica **NAVA / Tailored Grid**: elegancia editorial sobria inspirada en sastrería contemporánea y hospitalidad boutique, con tinta azul marino, marfil cálido, grafito, latón discreto, salvia y piedra; wordmark `NAVA`; contraste entre `Instrument Serif` para marca/display e `Instrument Sans` para interfaz; líneas finas, radios pequeños, sombras mínimas y navegación inferior estable. La implementación conserva un tema claro único, tokens semánticos, diseño móvil primero, objetivo táctil de 44 × 44 px y WCAG 2.2 AA.
+- **Alcance funcional:** la elección es visual y nominal; no convierte en requisitos las funciones dibujadas en un mockup conceptual. Ingresos, caja, reportes, inventario, cuentas de cliente, modo oscuro y personalización por tenant continúan fuera del MVP. “Ahora” es una señal temporal, no el estado futuro `in_progress`. La agenda P0 continúa mostrando un barbero seleccionado a la vez según `DEC-074`; la cuadrícula consolidada multi-barbero queda diferida hasta que una decisión e historia la autoricen. La interfaz conserva “turno” y el código/API conserva `appointment`, según `DEC-016`.
+- **Convivencia con `DEC-039`:** esta decisión sustituye de `DEC-039` la paleta concreta azul/cobre/neutros fríos, la tipografía exclusivamente del sistema y el shell con navegación lateral. Conserva su gobierno por tokens, escala espacial de 4 px, componentes ligeros, tema claro único, accesibilidad, rendimiento y prohibición de estilos libres por módulo o barbería.
+- **Tipografía:** los assets de Instrument se incorporan únicamente mediante un issue real que documente licencia, WOFF2 self-hosted, pesos, fallback, `font-display` y medición de rendimiento. Hasta entonces se usan los fallbacks definidos por el estándar; no se carga una fuente remota desde un componente.
+- **Identidad del tenant:** NAVA identifica la plataforma. El nombre de la barbería sigue siendo dato y contexto principal del tenant; en el flujo público se muestra primero la barbería y como firma secundaria “Reservas con NAVA”. Un logotipo de barbería no se inventa ni se vuelve obligatorio sin una capacidad de carga y almacenamiento aprobada.
+- **Implementación incremental:** la documentación fija el destino, pero no autoriza una migración masiva ni parcial del código. Cada fundación o pantalla se adopta con issue, rama, pruebas, evidencia responsive y preservación del contrato existente. La especificación distingue `P0 existente`, `P0 pendiente`, `P1`, `P2` y `Excluido` para impedir que un agente implemente por inferencia visual.
+- **Alternativas descartadas:** mantener “Block Party” como identidad final — descartada por ser más estridente que la orientación elegante solicitada; copiar literalmente el mockup — descartada porque contradice alcance y decisiones vigentes; rediseñar cada pantalla sin sistema — descartado por producir divergencia; migrar todo el frontend en una rama — descartado por mezclar preocupaciones y aumentar el riesgo de regresión.
+- **Documentos afectados:** `README.md`, `docs/03-desarrollo/estandar-diseno-visual.md`, `docs/03-desarrollo/especificacion-frontend-nava.md`, `docs/03-desarrollo/estandar-frontend-vue.md`, `docs/04-arquitectura/frontend.md`, `docs/07-calidad/02-checklist-transversal.md`, `docs/README.md`, `docs/00-control/matriz-trazabilidad.md`, `docs/10-backlog/prompts/README.md` y el prompt de orquestación NAVA. `apps/web` queda deliberadamente sin cambios hasta que exista un issue de implementación.
+- **Fuente:** selección explícita del propietario de la propuesta NAVA / Tailored Grid y solicitud de orientar el diseño hacia una estética más seria y elegante, 2026-09-01.

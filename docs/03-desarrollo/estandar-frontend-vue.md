@@ -1,14 +1,15 @@
 ---
 titulo: "Estándar de código del frontend en Vue"
-version: "1.2"
+version: "1.3"
 estado: "Obligatorio para desarrollo"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-06"
+ultima_actualizacion: "2026-09-01"
 documentos_relacionados:
   - "../00-control/registro-decisiones.md"
   - "../01-producto/alcance-mvp.md"
   - "../04-arquitectura/frontend.md"
   - "estandar-diseno-visual.md"
+  - "especificacion-frontend-nava.md"
   - "estrategia-pruebas.md"
   - "../06-api/estandar-openapi.md"
 ---
@@ -21,7 +22,7 @@ Estas reglas aplican a la aplicación Vue del flujo público y del panel del bar
 
 Código limpio significa aquí comportamiento explícito, componentes cohesionados, contratos tipados, accesibilidad y dependencias contenidas. No significa fragmentar cada archivo ni convertir toda lógica en un patrón genérico.
 
-Fuentes normativas: `DEC-035` y `DEC-039`.
+Fuentes normativas: `DEC-035`, `DEC-039` y `DEC-077`.
 
 ## 2. Ubicación y estructura
 
@@ -95,7 +96,7 @@ app → shared
 - Props y emits se tipan de forma explícita. El componente no modifica una prop ni un objeto propiedad del padre.
 - Los nombres de componentes son descriptivos y en `PascalCase`: `AppointmentStatusBadge`, no `Card2` ni `CommonModal`.
 - Los componentes base usan el prefijo acordado `Base`; los componentes de negocio permanecen dentro de su módulo.
-- Los componentes consumen los tokens y variantes de [estandar-diseno-visual.md](estandar-diseno-visual.md); una prop expresa intención y no acepta colores o medidas libres.
+- Los componentes consumen los tokens y variantes de [estandar-diseno-visual.md](estandar-diseno-visual.md), y las pantallas respetan arquitectura, estados y frontera de alcance de [especificacion-frontend-nava.md](especificacion-frontend-nava.md); una prop expresa intención y no acepta colores o medidas libres.
 - Slots, eventos y estados visibles forman la API pública del componente y se mantienen pequeños.
 - No se divide un componente solo por cantidad de líneas. Se divide cuando mezcla responsabilidades, repite una unidad o dificulta probarla.
 
@@ -200,7 +201,7 @@ Playwright para los flujos exigidos por el cambio
 - [ ] No se introdujo `any`, estado global o dependencia sin necesidad demostrable.
 - [ ] Carga, vacío, error, reintento y doble envío están resueltos donde aplican.
 - [ ] La acción funciona con teclado, lector semántico y ancho móvil.
-- [ ] La pantalla aplica los tokens, estados, tamaños táctiles y patrones del [estándar visual](estandar-diseno-visual.md), con evidencia en los anchos exigidos.
+- [ ] La pantalla aplica tokens y tamaños del [estándar visual](estandar-diseno-visual.md), y composición, estados y alcance de la [especificación NAVA](especificacion-frontend-nava.md), con evidencia en los anchos exigidos.
 - [ ] No se decidió disponibilidad ni permiso únicamente en el navegador.
 - [ ] Se agregaron pruebas unitarias, de componente o E2E según [estrategia-pruebas.md](estrategia-pruebas.md).
 - [ ] Los comentarios explican decisiones y no repiten la implementación.

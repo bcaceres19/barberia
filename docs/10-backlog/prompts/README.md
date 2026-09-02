@@ -1,6 +1,6 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.41"
+version: "1.42"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-01"
@@ -11,6 +11,7 @@ documentos_relacionados:
   - "../../00-control/registro-decisiones.md"
   - "../../02-requisitos/historias-usuario.md"
   - "../../03-desarrollo/flujo-git-github.md"
+  - "../../03-desarrollo/especificacion-frontend-nava.md"
   - "../prompts-implementacion.md"
 ---
 
@@ -132,6 +133,7 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 
 | Prompt | Tipo | HU | Issue | Estado | Dependencias | Rama / PR |
 | --- | --- | --- | --- | --- | --- | --- |
+| [PROMPT-ORCH-NAVA-FRONTEND-v1](orchestration/adopcion-frontend-nava.md) | `orchestration` | `HU-005`–`HU-012`, `HU-020`–`HU-024`, `HU-040`–`HU-042`, `HU-060`–`HU-065`; B3–B4 futuras solo con HU real | `pending` | `draft` | `DEC-077`; exige un issue y prompt independiente por fundación o pantalla | Sin rama/PR; mapa para Claude/Codex, no autoriza una migración masiva |
 | [PROMPT-HU-003-v1](hu/hu-003-contrato-http.md) | `hu` | `HU-003` | [#37](https://github.com/bcaceres19/barberia/issues/37) | `executed` | `HU-002` terminada | `feat/37-hu003-contrato-http` / [#38](https://github.com/bcaceres19/barberia/pull/38) |
 | [PROMPT-HU-004-v1](hu/hu-004-idempotencia.md) | `hu` | `HU-004` | [#40](https://github.com/bcaceres19/barberia/issues/40) | `executed` | `HU-003` integrada | `feat/40-hu004-idempotencia` / [#41](https://github.com/bcaceres19/barberia/pull/41) |
 | [PROMPT-HU-009-v1](hu/hu-009-sistema-visual.md) | `hu` | `HU-009` | [#42](https://github.com/bcaceres19/barberia/issues/42) | `executed` | Secuencia tras `HU-004` | `feat/42-hu009-sistema-visual` / [#43](https://github.com/bcaceres19/barberia/pull/43) |

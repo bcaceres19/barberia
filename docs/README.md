@@ -1,9 +1,9 @@
 ---
 titulo: "Mapa documental y fuentes de verdad"
-version: "2.2"
+version: "2.3"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-25"
+ultima_actualizacion: "2026-09-01"
 documentos_relacionados:
   - "00-control/registro-decisiones.md"
   - "00-control/contradicciones.md"
@@ -11,6 +11,7 @@ documentos_relacionados:
   - "00-control/historial-cambios.md"
   - "03-desarrollo/flujo-git-github.md"
   - "03-desarrollo/estandar-diseno-visual.md"
+  - "03-desarrollo/especificacion-frontend-nava.md"
   - "10-backlog/prompts/README.md"
 ---
 
@@ -42,7 +43,7 @@ Los archivos de `respuesta-manuales/` son evidencia de origen. Si difieren de un
 | Entrada | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | Guía operativa breve para contribuir | Vigente |
 | Control | [registro-decisiones.md](00-control/registro-decisiones.md) | Decisiones formales `DEC-*` | Vigente |
 | Control | [contradicciones.md](00-control/contradicciones.md) | Conflictos abiertos o resueltos `CT-*` | Vigente; `CT-001` resuelta |
-| Control | [matriz-trazabilidad.md](00-control/matriz-trazabilidad.md) | Función → regla → historia → criterio → API/datos → prueba → métrica | Cobertura hasta `DEC-039` |
+| Control | [matriz-trazabilidad.md](00-control/matriz-trazabilidad.md) | Función → regla → historia → criterio → API/datos → prueba → métrica | Cobertura hasta `DEC-077` |
 | Control | [historial-cambios.md](00-control/historial-cambios.md) | Cambios relevantes entre versiones | Vigente |
 | Control | [dudas-pendientes.md](00-control/dudas-pendientes.md) | Dudas y resoluciones `DP-*` | Tres dudas abiertas que bloquean historias de B0 |
 | Control | [supuestos.md](00-control/supuestos.md) | Suposiciones temporales `SUP-*` | Borrador vivo |
@@ -58,7 +59,8 @@ Los archivos de `respuesta-manuales/` son evidencia de origen. Si difieren de un
 | Backlog | [prompt-endurecimiento-ddl.md](10-backlog/prompt-endurecimiento-ddl.md) | Ejecución por fases de las correcciones de seguridad e integridad del DDL | Propuesta; herramienta, no norma |
 | Desarrollo | [estandar-backend-go.md](03-desarrollo/estandar-backend-go.md) | Código limpio, paquetes y documentación Go | Obligatorio |
 | Desarrollo | [estandar-frontend-vue.md](03-desarrollo/estandar-frontend-vue.md) | Código limpio, módulos, TypeScript y accesibilidad | Obligatorio |
-| Desarrollo | [estandar-diseno-visual.md](03-desarrollo/estandar-diseno-visual.md) | Paleta, tokens, tipografía, medidas, componentes y pantallas | Obligatorio |
+| Desarrollo | [estandar-diseno-visual.md](03-desarrollo/estandar-diseno-visual.md) | Fundamentos NAVA: paleta, tokens, tipografía, medidas, primitivas y accesibilidad | Obligatorio |
+| Desarrollo | [especificacion-frontend-nava.md](03-desarrollo/especificacion-frontend-nava.md) | Identidad, shell, componentes de producto, inventario integral de pantallas y frontera P0/P1/P2 | Obligatorio para desarrollo incremental |
 | Desarrollo | [estrategia-pruebas.md](03-desarrollo/estrategia-pruebas.md) | Unitarias, componente, integración, E2E y puertas de calidad | Obligatorio |
 | Desarrollo | [flujo-git-github.md](03-desarrollo/flujo-git-github.md) | Ramas, commits, issues, PR, rulesets, squash, hotfix y versiones | Obligatorio; activación remota pendiente |
 | Arquitectura | [stack-despliegue-operacion.md](04-arquitectura/stack-despliegue-operacion.md) | Stack, módulos, trabajos y despliegue | Confirmada |
