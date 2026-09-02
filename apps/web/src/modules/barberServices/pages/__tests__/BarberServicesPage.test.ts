@@ -116,6 +116,14 @@ describe('BarberServicesPage', () => {
     expect(fourWrapper.findAll('option').length).toBe(4)
   })
 
+  it('wraps each checkbox and its name in one 44px label, the real tap target (Fase 5, issue #157)', async () => {
+    const wrapper = await mountReady(oneBarber, twoServices, ['s-1'])
+    const input = checkbox(wrapper, 's-1')
+    const label = input.closest('label')
+    expect(label).toBeTruthy()
+    expect(label!.textContent).toContain('Corte clásico')
+  })
+
   it('shows an empty state when there are no barbers, without an interactive picker', async () => {
     fetchBarberSummariesMock.mockResolvedValueOnce({ kind: 'success', items: [] })
     fetchServiceSummariesMock.mockResolvedValueOnce({ kind: 'success', items: twoServices })
