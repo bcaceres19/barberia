@@ -7,6 +7,7 @@
 // existe, así que esta pantalla no enlaza a ninguna vista de agenda real.
 import { computed, ref, watch } from 'vue'
 import { BaseAlert, BaseButton, BaseInput } from '@/shared/ui'
+import { formatCivilDateFull, isCivilDateString } from '@/shared/time/civilDate'
 import {
   createManualAppointment,
   fetchAssignedServices,
@@ -98,6 +99,31 @@ watch(selectedBarberId, async (barberId) => {
 })
 
 const startsAt = computed(() => buildStartsAt(startsAtDate.value, startsAtTime.value))
+
+// Resumen antes del CTA (estandar-diseno-visual.md §10, "Crear/editar
+// turno": secciones cortas en orden, resumen; especificacion-frontend-nava.md
+// §7.3: "resumen antes del CTA" en móvil). Solo refleja selecciones ya
+// hechas, sin inventar datos que el contrato de servicios no expone
+// todavía (ServiceSummary hoy solo trae id/name, sin duración ni precio).
+const selectedBarberName = computed(
+  () => barbers.value.find((b) => b.id === selectedBarberId.value)?.fullName ?? '',
+)
+const selectedServiceName = computed(
+  () => services.value.find((s) => s.id === selectedServiceId.value)?.name ?? '',
+)
+const summaryDateLabel = computed(() =>
+  isCivilDateString(startsAtDate.value) ? formatCivilDateFull(startsAtDate.value) : '',
+)
+const hasSummaryContent = computed(
+  () =>
+    !!(
+      selectedBarberName.value ||
+      selectedServiceName.value ||
+      attendeeName.value.trim() ||
+      summaryDateLabel.value ||
+      startsAtTime.value
+    ),
+)
 
 function validateAll(): boolean {
   const errors: Record<string, string | undefined> = {
@@ -345,6 +371,38 @@ function onRetryLoad() {
           :error="attempted ? fieldErrors.customerNote : undefined"
         />
 
+        <div
+          v-if="hasSummaryContent"
+          class="new-appointment-page__resumen"
+          aria-labelledby="new-appointment-resumen-title"
+        >
+          <h2 id="new-appointment-resumen-title" class="new-appointment-page__resumen-title">
+            Resumen
+          </h2>
+          <dl class="new-appointment-page__resumen-list">
+            <div v-if="selectedBarberName" class="new-appointment-page__resumen-item">
+              <dt>Barbero</dt>
+              <dd>{{ selectedBarberName }}</dd>
+            </div>
+            <div v-if="selectedServiceName" class="new-appointment-page__resumen-item">
+              <dt>Servicio</dt>
+              <dd>{{ selectedServiceName }}</dd>
+            </div>
+            <div v-if="attendeeName.trim()" class="new-appointment-page__resumen-item">
+              <dt>Persona atendida</dt>
+              <dd>{{ attendeeName }}</dd>
+            </div>
+            <div v-if="summaryDateLabel || startsAtTime" class="new-appointment-page__resumen-item">
+              <dt>Fecha y hora</dt>
+              <dd>
+                <span v-if="summaryDateLabel">{{ summaryDateLabel }}</span>
+                <span v-if="summaryDateLabel && startsAtTime"> · </span>
+                <span v-if="startsAtTime">{{ startsAtTime }}</span>
+              </dd>
+            </div>
+          </dl>
+        </div>
+
         <BaseAlert v-if="saveStatus === 'conflict'" variant="danger" role="alert">
           {{ saveErrorDetail }}
         </BaseAlert>
@@ -375,34 +433,81 @@ function onRetryLoad() {
 </template>
 
 <style scoped>
+.new-appointment-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 720px;
+  padding: var(--space-4);
+  margin: 0 auto;
+}
+
+.new-appointment-page__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.new-appointment-page__title {
+  margin: 0;
+  font-size: var(--font-size-h1);
+  line-height: var(--font-size-h1-line);
+  font-weight: var(--font-weight-h1);
+  color: var(--color-text-primary);
+}
+
+.new-appointment-page__timezone {
+  margin: 0;
+  font-size: var(--font-size-body-sm);
+  color: var(--color-text-secondary);
+}
+
+.new-appointment-page__state {
+  padding: var(--space-4);
+  color: var(--color-text-secondary);
+}
+
+.new-appointment-page__empty {
+  padding: var(--space-4);
+  color: var(--color-text-secondary);
+}
+
 .new-appointment-page__form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  max-width: 32rem;
+  gap: var(--space-4);
+  /* Formulario legible (estandar-diseno-visual.md §7.1): máximo 640px. */
+  max-width: 640px;
 }
 
 .new-appointment-page__field {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .new-appointment-page__label {
   font-weight: 600;
+  color: var(--color-text-primary);
 }
 
 .new-appointment-page__select {
-  min-height: 44px;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--color-border, #ccc);
-  border-radius: 0.375rem;
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  border: var(--border-width-normal) solid var(--color-border-control);
+  border-radius: var(--radius-sm);
 }
 
 .new-appointment-page__form-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .new-appointment-page__form-row > * {
@@ -410,19 +515,62 @@ function onRetryLoad() {
 }
 
 .new-appointment-page__error {
-  color: var(--color-danger, #b00020);
   margin: 0;
+  color: var(--color-danger-text);
 }
 
 .new-appointment-page__hint {
-  color: var(--color-text-secondary, #666);
   margin: 0;
+  color: var(--color-text-secondary);
 }
 
 .new-appointment-page__summary {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  max-width: 32rem;
+  gap: var(--space-3);
+  max-width: 640px;
+}
+
+/* Resumen antes del CTA (§7.3): superficie contenida, línea y espacio, sin
+   sombra ni flotación (estandar-diseno-visual.md §6.3). */
+.new-appointment-page__resumen {
+  padding: var(--space-4);
+  background-color: var(--color-surface);
+  border: var(--border-width-normal) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.new-appointment-page__resumen-title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-body-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.new-appointment-page__resumen-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.new-appointment-page__resumen-item {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.new-appointment-page__resumen-item dt {
+  color: var(--color-text-secondary);
+}
+
+.new-appointment-page__resumen-item dd {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-align: right;
 }
 </style>

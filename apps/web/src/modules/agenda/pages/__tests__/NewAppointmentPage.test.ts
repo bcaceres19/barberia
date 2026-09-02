@@ -123,6 +123,34 @@ describe('NewAppointmentPage', () => {
     expect(wrapper.text()).toContain('Elige un barbero')
   })
 
+  it('does not show a "Resumen" section on an untouched form', async () => {
+    const wrapper = await mountReady()
+    expect(wrapper.find('.new-appointment-page__resumen').exists()).toBe(false)
+  })
+
+  it('shows a live "Resumen" with only the fields filled so far (Fase 4b, adopción NAVA)', async () => {
+    const wrapper = await mountReady()
+    fetchAssignedServicesMock.mockResolvedValueOnce({ kind: 'success', items: twoServices })
+    await wrapper.get('#new-appointment-barber').setValue('b-1')
+    await flushPromises()
+
+    const resumen = wrapper.get('.new-appointment-page__resumen')
+    expect(resumen.text()).toContain('Carlos Ramírez')
+    expect(resumen.text()).not.toContain('Servicio')
+  })
+
+  it('reflects every filled field in "Resumen", including the readable date', async () => {
+    const wrapper = await mountReady()
+    await fillValidForm(wrapper)
+
+    const resumen = wrapper.get('.new-appointment-page__resumen')
+    expect(resumen.text()).toContain('Carlos Ramírez')
+    expect(resumen.text()).toContain('Corte clásico')
+    expect(resumen.text()).toContain('Juan Pérez')
+    expect(resumen.text()).toContain('14:30')
+    expect(resumen.text()).toMatch(/jueves.*3.*septiembre/)
+  })
+
   it('submits successfully and shows an honest summary, no link to a non-existent agenda screen', async () => {
     const wrapper = await mountReady()
     await fillValidForm(wrapper)
