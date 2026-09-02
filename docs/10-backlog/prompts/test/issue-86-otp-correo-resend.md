@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-TEST-OTP-EMAIL-RESEND-v1"
 version: "1.0"
 kind: "test"
-status: "blocked"
+status: "executed"
 target_agents:
   - "codex"
   - "claude"
@@ -66,6 +66,7 @@ source_docs:
   - "apps/web/src/modules/auth"
 created_at: "2026-09-01"
 updated_at: "2026-09-02"
+report: "test/issue-86-otp-correo-resend-report.md"
 execution_branch: "test/86-otp-correo-resend"
 supersedes: null
 superseded_by: null
