@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-CHORE-170-CONFIGURACION-BARBERIA-NAVA-v1"
-version: "1.0"
+version: "1.1"
 kind: "chore"
-status: "ready"
+status: "executed"
 target_agents:
   - "claude"
 repository: "bcaceres19/barberia"
@@ -14,8 +14,8 @@ issue: 170
 issue_url: "https://github.com/bcaceres19/barberia/issues/170"
 suggested_issue_title: "feat(web): rediseñar configuración de barbería NAVA"
 branch: "feat/170-configuracion-barberia-nava"
-pr: null
-pr_url: null
+pr: 175
+pr_url: "https://github.com/bcaceres19/barberia/pull/175"
 depends_on:
   - "Issue maestro #168 (orquestación NAVA); DEC-077-DEC-079 integradas en main (issue #166/PR #167)"
 rules: []
@@ -118,5 +118,5 @@ git diff --check
 ## Git y PR
 
 - Rama: `feat/170-configuracion-barberia-nava`.
-- PR: pendiente de abrir, `Closes #170`.
+- PR: [#175](https://github.com/bcaceres19/barberia/pull/175), `Closes #170`, integrada en `main` con CI 4/4 verde (commit `ef6bdae`).
 - Sin push directo ni force-push; squash-merge solo tras CI verde.
