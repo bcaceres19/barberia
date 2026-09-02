@@ -127,6 +127,20 @@ describe('StaffPage', () => {
     expect(fourWrapper.text()).toContain('María Pérez')
   })
 
+  it('shows a decorative, accessible monogram with the initials of each barber (Fase 5, issue #153)', async () => {
+    const wrapper = await mountReady(fourBarbers)
+    const avatars = wrapper.findAll('.staff-page__item-avatar')
+    expect(avatars.map((a) => a.text())).toEqual(['CR', 'AT', 'LG', 'MP'])
+    for (const avatar of avatars) {
+      expect(avatar.attributes('aria-hidden')).toBe('true')
+    }
+  })
+
+  it('uses a single initial for a one-word name', async () => {
+    const wrapper = await mountReady([barber('b-1', 'Madonna')])
+    expect(wrapper.get('.staff-page__item-avatar').text()).toBe('M')
+  })
+
   it('shows an empty state with no special data shape when there are no barbers', async () => {
     const wrapper = await mountReady([])
     expect(wrapper.text()).toContain('Aún no tienes barberos registrados')
