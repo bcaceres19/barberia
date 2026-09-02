@@ -10,6 +10,10 @@ import type { NavItem } from '@/shared/navigation/navItem'
 
 export { settingsPrivateShellChildRoutes } from './routes'
 
+// El rótulo del dock es "Configuración" (destino P0 de
+// especificacion-frontend-nava.md §5.1, que agrupa barbería, reglas de
+// reserva, cancelación, recordatorios y canales conforme existan sus HU);
+// la ruta y el título propio de la pantalla ("Barbería") no cambian.
 export const settingsNavItems: NavItem[] = [
-  { to: { name: 'configuracion-barberia' }, label: 'Barbería' },
+  { to: { name: 'configuracion-barberia' }, label: 'Configuración' },
 ]

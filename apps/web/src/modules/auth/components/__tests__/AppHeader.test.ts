@@ -23,6 +23,11 @@ function buildRouter() {
     routes: [
       { path: '/acceso', name: 'acceso', component: { template: '<div>acceso</div>' } },
       { path: '/panel', name: 'panel', component: { template: '<div>panel</div>' } },
+      {
+        path: '/panel/nuevo-turno',
+        name: 'agenda-nuevo-turno',
+        component: { template: '<div>nuevo turno</div>' },
+      },
     ],
   })
 }
@@ -47,6 +52,13 @@ describe('AppHeader', () => {
   it('always shows the active barbershop name (CA-012-04)', async () => {
     const { wrapper } = await mountHeader('Barbería El Corte')
     expect(wrapper.get('[data-testid="barbershop-name"]').text()).toBe('Barbería El Corte')
+  })
+
+  it('shows the NAVA wordmark and a global "Nuevo turno" action linking to the manual creation route', async () => {
+    const { wrapper } = await mountHeader()
+    expect(wrapper.text()).toContain('NAVA')
+    const cta = wrapper.get('a[href="/panel/nuevo-turno"]')
+    expect(cta.text()).toBe('Nuevo turno')
   })
 
   it('logs out, revokes the server session and navigates to acceso (CA-012-07)', async () => {
