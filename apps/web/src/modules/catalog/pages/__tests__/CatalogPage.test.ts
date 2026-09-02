@@ -162,6 +162,13 @@ describe('CatalogPage', () => {
     expect(wrapper.text()).toContain('65000.00 COP')
   })
 
+  it('never concatenates a literal "$" to the price (estandar-diseno-visual.md §10.3, Fase 5)', async () => {
+    const wrapper = await mountReady([
+      service('s-1', 'Corte clásico', { durationMinutes: 45, price: '65000.00' }),
+    ])
+    expect(wrapper.text()).not.toContain('$')
+  })
+
   it('shows a recoverable error with Reintentar when the initial load fails', async () => {
     fetchMock.mockResolvedValueOnce({ kind: 'network-error' })
     const wrapper = mountPage()
