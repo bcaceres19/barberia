@@ -1,8 +1,9 @@
 /*
- * Reset mínimo, tipografía y elementos HTML base.
- * Fuente normativa: docs/03-desarrollo/estandar-diseno-visual.md.
+ * Reset mínimo, tipografía y elementos HTML base del sistema NAVA.
+ * Fuente normativa: docs/03-desarrollo/estandar-diseno-visual.md (DEC-077).
  * No redefinir aquí un componente base; esto solo fija el punto de partida
- * del documento.
+ * del documento. Los valores de color y tipografía llegan por tokens.css;
+ * este archivo no repite un hexadecimal ni un tamaño suelto.
  */
 
 *,

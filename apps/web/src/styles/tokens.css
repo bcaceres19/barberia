@@ -1,50 +1,54 @@
 /*
- * Tokens primitivos y semánticos del sistema visual.
- * Fuente normativa: docs/03-desarrollo/estandar-diseno-visual.md (DEC-039).
+ * Tokens primitivos y semánticos del sistema visual NAVA / Tailored Grid.
+ * Fuente normativa: docs/03-desarrollo/estandar-diseno-visual.md (DEC-077,
+ * que conserva de DEC-039 el gobierno por tokens, móvil primero, WCAG 2.2 AA
+ * y el tema claro único, y sustituye sus elecciones visuales concretas).
  * No editar un valor aquí sin actualizar ese documento; los componentes
  * consumen solo las variables semánticas, nunca un valor hexadecimal o
  * numérico suelto.
  */
 
 :root {
-  /* Color: superficies y texto */
-  --color-canvas: #f8fafc;
+  /* Color: superficies y texto (estandar-diseno-visual.md §4.2) */
+  --color-canvas: #f4f0e7;
   --color-surface: #ffffff;
-  --color-surface-muted: #f1f5f9;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
-  --color-border-subtle: #cbd5e1;
-  --color-border-control: #64748b;
+  --color-surface-muted: #e8e2d8;
+  --color-surface-strong: #101b2b;
+  --color-text-primary: #2a2d32;
+  --color-text-secondary: #5e625f;
+  --color-border-subtle: #c9c0b2;
+  --color-border-control: #748477;
 
   /* Color: acción */
-  --color-action-primary: #1e3a8a;
-  --color-action-primary-hover: #1e40af;
-  --color-action-primary-active: #172554;
-  --color-action-soft: #eff6ff;
-  --color-action-soft-border: #1d4ed8;
-  --color-action-soft-active: #dbeafe;
-  --color-focus: #2563eb;
-  --color-brand-accent-surface: #fff7ed;
-  --color-brand-accent-text: #9a3412;
+  --color-action-primary: #101b2b;
+  --color-action-primary-hover: #18283d;
+  --color-action-primary-active: #0a1420;
+  --color-action-soft: #f4f0e7;
+  --color-action-soft-border: #765c2f;
+  --color-action-soft-active: #e8e2d8;
+  --color-focus: #765c2f;
+  --color-brand-accent-surface: #b8955a;
+  --color-brand-accent-text: #101b2b;
+  --color-brand-sage: #748477;
 
   /* Color: estado */
-  --color-success-surface: #f0fdf4;
-  --color-success-text: #166534;
-  --color-success-border: #15803d;
-  --color-warning-surface: #fffbeb;
-  --color-warning-text: #92400e;
-  --color-warning-border: #b45309;
-  --color-danger-surface: #fef2f2;
-  --color-danger-text: #b91c1c;
-  --color-danger-border: #b91c1c;
-  --color-danger-action: #b91c1c;
-  --color-info-surface: #eff6ff;
-  --color-info-text: #1d4ed8;
-  --color-info-border: #1d4ed8;
-  --color-inactive-surface: #f1f5f9;
-  --color-inactive-text: #475569;
-  --color-inactive-border: #cbd5e1;
-  --color-on-strong: #ffffff;
+  --color-success-surface: #eaf0eb;
+  --color-success-text: #325d43;
+  --color-success-border: #748477;
+  --color-warning-surface: #f8f1df;
+  --color-warning-text: #775019;
+  --color-warning-border: #9a6a24;
+  --color-danger-surface: #f8edec;
+  --color-danger-text: #8a2c2c;
+  --color-danger-border: #a43a3a;
+  --color-danger-action: #8a2c2c;
+  --color-info-surface: #e9eef3;
+  --color-info-text: #23405b;
+  --color-info-border: #667d93;
+  --color-inactive-surface: #eeece8;
+  --color-inactive-text: #56514a;
+  --color-inactive-border: #c9c0b2;
+  --color-on-strong: #f4f0e7;
 
   /* Color: estados de turno */
   --color-status-confirmed-surface: var(--color-info-surface);
@@ -63,25 +67,39 @@
   --color-status-no-show-text: var(--color-warning-text);
   --color-status-no-show-border: var(--color-warning-border);
 
-  /* Tipografía */
-  --font-family-base: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /*
+   * Tipografía. "Instrument Serif"/"Instrument Sans" todavía no están
+   * self-hosteadas: falta el issue propio que documente licencia, archivos
+   * WOFF2, font-display y medición (estandar-diseno-visual.md §5.1). Hasta
+   * entonces el navegador nunca encuentra esos nombres instalados y cae de
+   * forma determinista al fallback declarado aquí mismo; no se enlaza CDN.
+   * --font-family-base se conserva como alias de --font-sans para no tocar
+   * las pantallas de negocio que ya lo consumen; los componentes nuevos
+   * deben preferir --font-sans/--font-display directamente.
+   */
+  --font-display: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --font-sans:
+    'Instrument Sans', Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-base: var(--font-sans);
 
-  /* Escala tipográfica (estandar-diseno-visual.md §5.2) */
-  /* display: 36/44, h1: 30/38, h2: 24/32, h3: 20/28, body-lg: 18/28, body: 16/24, body-sm: 14/20, caption: 12/16 */
+  /* Escala tipográfica (estandar-diseno-visual.md §5.2). display usa el
+     tamaño móvil por defecto y crece en escritorio (>= 1024px, el mismo
+     punto de corte del shell NAVA en §7.1) mediante la media query de
+     abajo; el resto de roles no varía por ancho. */
   --font-size-display: 36px;
-  --font-size-display-line: 44px;
-  --font-weight-display: 700;
+  --font-size-display-line: 40px;
+  --font-weight-display: 400;
 
-  --font-size-h1: 30px;
+  --font-size-h1: 32px;
   --font-size-h1-line: 38px;
-  --font-weight-h1: 700;
+  --font-weight-h1: 600;
 
   --font-size-h2: 24px;
-  --font-size-h2-line: 32px;
+  --font-size-h2-line: 30px;
   --font-weight-h2: 600;
 
-  --font-size-h3: 20px;
-  --font-size-h3-line: 28px;
+  --font-size-h3: 19px;
+  --font-size-h3-line: 26px;
   --font-weight-h3: 600;
 
   --font-size-body-lg: 18px;
@@ -113,17 +131,18 @@
   --space-12: 48px;
   --space-16: 64px;
 
-  /* Forma */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  /* Forma (estandar-diseno-visual.md §6.3) */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
   --radius-pill: 999px;
   --border-width-normal: 1px;
   --border-width-emphasis: 2px;
 
-  /* Profundidad */
-  --shadow-raised: 0 1px 2px rgb(15 23 42 / 8%), 0 4px 12px rgb(15 23 42 / 6%);
-  --shadow-dialog: 0 16px 40px rgb(15 23 42 / 18%);
+  /* Profundidad. Sombras y overlays derivan de nava-ink (#101b2b =
+     rgb(16 27 43)); nunca un color nuevo (§6.3). */
+  --shadow-raised: 0 1px 2px rgb(16 27 43 / 8%), 0 4px 12px rgb(16 27 43 / 6%);
+  --shadow-dialog: 0 16px 40px rgb(16 27 43 / 18%);
   --layer-base: 0;
   --layer-sticky: 10;
   --layer-menu: 20;
@@ -137,13 +156,13 @@
   /* Botón de icono independiente (estandar-diseno-visual.md §6.2) */
   --control-height-icon: 44px;
 
-  /* Superposición: overlays translúcidos derivados de slate-900 (#0F172A),
+  /* Superposición: overlays translúcidos derivados de nava-ink (#101B2B),
      nunca un color nuevo. --color-overlay-scrim es el fondo no interactivo
      detrás de un diálogo (§8.5); --color-overlay-hover es el realce sutil
      de un control de icono transparente (cerrar, descartar). */
-  --color-overlay-scrim: rgb(15 23 42 / 48%);
-  --color-overlay-hover: rgb(15 23 42 / 8%);
-  --color-overlay-active: rgb(15 23 42 / 16%);
+  --color-overlay-scrim: rgb(16 27 43 / 48%);
+  --color-overlay-hover: rgb(16 27 43 / 8%);
+  --color-overlay-active: rgb(16 27 43 / 16%);
 
   /* Movimiento: toda transición o animación de estado usa una de estas dos
      duraciones (estandar-diseno-visual.md §12, CA-009-07); ningún
@@ -155,4 +174,11 @@
   --motion-duration-fast: 120ms;
   --motion-duration-base: 200ms;
   --motion-easing-standard: ease;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --font-size-display: 48px;
+    --font-size-display-line: 52px;
+  }
 }
