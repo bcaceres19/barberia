@@ -596,6 +596,14 @@ async function onDeleteSeries(item: TimeBlockSeries) {
 </template>
 
 <style scoped>
+.blocks-page__title {
+  margin: 0;
+  font-size: var(--font-size-h1);
+  line-height: var(--font-size-h1-line);
+  font-weight: var(--font-weight-h1);
+  color: var(--color-text-primary);
+}
+
 .blocks-page__header {
   display: flex;
   flex-wrap: wrap;
@@ -621,8 +629,8 @@ async function onDeleteSeries(item: TimeBlockSeries) {
 .blocks-page__select {
   min-height: 44px;
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--color-border, #ccc);
-  border-radius: 0.375rem;
+  border: var(--border-width-normal) solid var(--color-border-control);
+  border-radius: var(--radius-md);
 }
 
 .blocks-page__list {
@@ -641,8 +649,8 @@ async function onDeleteSeries(item: TimeBlockSeries) {
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  border: 1px solid var(--color-border, #ccc);
-  border-radius: 0.5rem;
+  border: var(--border-width-normal) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
 }
 
 .blocks-page__reason {

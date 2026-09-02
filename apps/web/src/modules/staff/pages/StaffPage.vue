@@ -408,7 +408,9 @@ async function onSubmitRename() {
 
 .staff-page__title {
   margin: 0;
-  font-size: var(--font-size-heading-lg);
+  font-size: var(--font-size-h1);
+  line-height: var(--font-size-h1-line);
+  font-weight: var(--font-weight-h1);
   color: var(--color-text-primary);
 }
 
@@ -436,6 +438,8 @@ async function onSubmitRename() {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
+  /* Fila 64-72px en escritorio, ficha 64px mínimo en móvil (§8.2, §7.2). */
+  min-height: 64px;
   padding: var(--space-4);
   background-color: var(--color-surface);
   border: var(--border-width-normal) solid var(--color-border-subtle);
@@ -445,6 +449,7 @@ async function onSubmitRename() {
 .staff-page__item-name {
   font-family: var(--font-family-base);
   font-size: var(--font-size-body);
+  font-weight: 600;
   color: var(--color-text-primary);
   overflow-wrap: anywhere;
 }

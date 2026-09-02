@@ -880,7 +880,9 @@ async function reloadAfterConflict(serviceId: string) {
 
 .catalog-page__title {
   margin: 0;
-  font-size: var(--font-size-heading-lg);
+  font-size: var(--font-size-h1);
+  line-height: var(--font-size-h1-line);
+  font-weight: var(--font-weight-h1);
   color: var(--color-text-primary);
 }
 
