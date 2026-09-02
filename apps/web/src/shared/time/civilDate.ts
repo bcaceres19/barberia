@@ -61,3 +61,32 @@ export function formatCivilDateFull(civilDate: string): string {
   const at = new Date(Date.UTC(year!, month! - 1, day!, 12))
   return new Intl.DateTimeFormat('es-CO', { timeZone: 'UTC', dateStyle: 'full' }).format(at)
 }
+
+// minutesIntoCivilDate (Fase 4a de la adopción NAVA, issue de la línea
+// temporal de escritorio, especificacion-frontend-nava.md §7.2): minutos
+// transcurridos desde la medianoche de `civilDate` (en `timezone`) hasta
+// `isoInstant`, recortados a [0, 1440]. Un turno nocturno que interseca
+// `civilDate` desde el día anterior se recorta a 0 (aparece "desde el
+// inicio" de la línea de este día); uno que termina el día siguiente se
+// recorta a 1440 ("hasta el final"). Puramente visual: no decide
+// disponibilidad ni reinterpreta el instante que el servidor ya confirmó.
+export function minutesIntoCivilDate(
+  isoInstant: string,
+  civilDate: string,
+  timezone: string,
+): number {
+  const at = new Date(isoInstant)
+  const instantCivilDate = getCivilDateInTimezone(timezone, at)
+  if (instantCivilDate < civilDate) return 0
+  if (instantCivilDate > civilDate) return 24 * 60
+
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: timezone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(at)
+  const hour = Number(parts.find((p) => p.type === 'hour')!.value)
+  const minute = Number(parts.find((p) => p.type === 'minute')!.value)
+  return hour * 60 + minute
+}

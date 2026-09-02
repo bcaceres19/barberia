@@ -7,6 +7,7 @@ import {
   formatCivilDateFull,
   getCivilDateInTimezone,
   isCivilDateString,
+  minutesIntoCivilDate,
   shiftCivilDate,
 } from '../civilDate'
 
@@ -66,6 +67,36 @@ describe('getCivilDateInTimezone', () => {
     // mismo día civil.
     const beforeSpringForward = new Date('2026-03-08T06:30:00Z')
     expect(getCivilDateInTimezone('America/New_York', beforeSpringForward)).toBe('2026-03-08')
+  })
+})
+
+describe('minutesIntoCivilDate', () => {
+  it('resolves the minute of day in the explicit timezone, never the device one', () => {
+    // 14:30 America/Bogota (UTC-05) es 19:30 UTC.
+    expect(minutesIntoCivilDate('2026-08-31T19:30:00Z', '2026-08-31', 'America/Bogota')).toBe(
+      14 * 60 + 30,
+    )
+  })
+
+  it('clamps to 0 for an instant whose civil date in that timezone is the day before', () => {
+    // Turno nocturno: empieza a las 23:00 del día anterior.
+    expect(minutesIntoCivilDate('2026-08-30T23:00:00-05:00', '2026-08-31', 'America/Bogota')).toBe(
+      0,
+    )
+  })
+
+  it('clamps to 1440 for an instant whose civil date in that timezone is the day after', () => {
+    // Termina a la 01:00 del día siguiente.
+    expect(minutesIntoCivilDate('2026-09-01T01:00:00-05:00', '2026-08-31', 'America/Bogota')).toBe(
+      24 * 60,
+    )
+  })
+
+  it('is exact at midnight and one minute before the next civil date', () => {
+    expect(minutesIntoCivilDate('2026-08-31T05:00:00Z', '2026-08-31', 'America/Bogota')).toBe(0)
+    expect(minutesIntoCivilDate('2026-09-01T04:59:00Z', '2026-08-31', 'America/Bogota')).toBe(
+      23 * 60 + 59,
+    )
   })
 })
 
