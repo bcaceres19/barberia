@@ -27,6 +27,11 @@ async function mountShell() {
     routes: [
       { path: '/panel', name: 'panel', component: { template: '<p>contenido del panel</p>' } },
       { path: '/acceso', name: 'acceso', component: { template: '<div />' } },
+      {
+        path: '/panel/nuevo-turno',
+        name: 'agenda-nuevo-turno',
+        component: { template: '<div />' },
+      },
     ],
   })
   await router.push('/panel')

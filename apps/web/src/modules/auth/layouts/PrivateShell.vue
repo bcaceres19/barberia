@@ -27,10 +27,10 @@ function onRetry() {
   <div class="private-shell">
     <template v-if="sessionState.bootstrap.status === 'authenticated'">
       <AppHeader :barbershop-name="sessionState.bootstrap.barbershopName" />
-      <AppNav :extra-items="extraNavItems" />
       <main class="private-shell__content">
         <RouterView />
       </main>
+      <AppNav :extra-items="extraNavItems" />
     </template>
 
     <div
@@ -60,6 +60,10 @@ function onRetry() {
 
 .private-shell__content {
   flex: 1;
+  /* El dock (AppNav) queda fijo al pie (64px) fuera del flujo; este padding
+     evita que la última fila de contenido quede oculta debajo
+     (estandar-diseno-visual.md §5.3, §8.3). */
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px) + var(--space-4));
 }
 
 .private-shell__state {
