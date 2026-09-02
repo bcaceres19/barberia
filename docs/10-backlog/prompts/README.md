@@ -1,6 +1,6 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.49"
+version: "1.50"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-01"
@@ -170,6 +170,7 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-CHORE-141-AGENDA-LINEA-TEMPORAL-v1](chore/issue-141-agenda-linea-temporal.md) | `chore` | `HU-062`, `HU-063` | [#141](https://github.com/bcaceres19/barberia/issues/141), cerrado | `executed` | Fase 3 (issue #138/PR #139) integrada en `main` | Rama `feat/141-agenda-linea-temporal`; [PR #142](https://github.com/bcaceres19/barberia/pull/142), integrada en `main` con CI 4/4 verde |
 | [PROMPT-CHORE-144-NUEVO-TURNO-NAVA-v1](chore/issue-144-nuevo-turno-nava.md) | `chore` | `HU-061` | [#144](https://github.com/bcaceres19/barberia/issues/144), cerrado | `executed` | Fase 4a (issue #141/PR #142) integrada en `main` | Rama `feat/144-nuevo-turno-nava`; [PR #145](https://github.com/bcaceres19/barberia/pull/145), integrada en `main` con CI 4/4 verde |
 | [PROMPT-FIX-146-DETALLE-TURNO-TOKENS-v1](fix/issue-146-detalle-turno-tokens.md) | `fix` | `HU-064`, `HU-065` | [#146](https://github.com/bcaceres19/barberia/issues/146), cerrado | `executed` | Fase 4b (issue #144/PR #145) integrada en `main` | Rama `fix/146-detalle-turno-tokens`; [PR #147](https://github.com/bcaceres19/barberia/pull/147), integrada en `main` con CI 4/4 verde (tras un rerun del job Go, fallo flaky no relacionado) |
+| [PROMPT-FIX-149-TOKENS-CONFIGURACION-v1](fix/issue-149-tokens-pantallas-configuracion.md) | `fix` | `HU-020`–`HU-023`, `HU-040`–`HU-042` | [#149](https://github.com/bcaceres19/barberia/issues/149), cerrado | `executed` | Fix de Fase 4c (issue #146/PR #147) integrado en `main` | Rama `fix/149-tokens-pantallas-configuracion`; [PR #150](https://github.com/bcaceres19/barberia/pull/150), integrada en `main` con CI 4/4 verde |
 
 ## 10. Lista de control al guardar o entregar
 
