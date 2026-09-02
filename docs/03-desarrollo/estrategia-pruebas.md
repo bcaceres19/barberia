@@ -1,9 +1,9 @@
 ---
 titulo: "Estrategia de pruebas y controles de calidad"
-version: "1.3"
+version: "1.5"
 estado: "Obligatorio para desarrollo"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-06"
+ultima_actualizacion: "2026-09-02"
 documentos_relacionados:
   - "../00-control/matriz-trazabilidad.md"
   - "../01-producto/alcance-mvp.md"
@@ -25,7 +25,7 @@ Las pruebas deben demostrar que el MVP permite operar la agenda sin cruces, fuga
 
 Toda corrección de defecto comienza con una prueba que falle por el defecto y termina conservando esa prueba como regresión.
 
-Fuentes normativas: `DEC-035` y `DEC-039`.
+Fuentes normativas: `DEC-035`, `DEC-078` y `DEC-079`.
 
 ## 2. Herramientas confirmadas
 
@@ -172,7 +172,7 @@ Casos habituales:
 - permisos que ocultan o deshabilitan una acción;
 - foco y teclado en diálogos o mensajes críticos;
 - zona horaria y texto de “turno” correctos.
-- variantes visuales con nombre accesible, color acompañado por otra señal y objetivo táctil conforme al estándar.
+- variantes visuales con nombre accesible, color acompañado por otra señal y objetivo táctil conforme a la guía de calidad de interfaz.
 
 No se afirman métodos privados, estructura interna de `ref` ni clases CSS salvo que la clase sea el contrato visual. Los snapshots no se usan como única evidencia.
 
@@ -199,11 +199,11 @@ Terceros como WhatsApp o correo se interceptan. El E2E comprueba que el sistema 
 
 ### 5.4 Verificación visual y accesible
 
-Un cambio visible conserva evidencia en 360 y 1280 px; se agrega 320 px para reflow y 768 px cuando cambia la composición. Se revisan los estados afectados —foco, carga, vacío, error, conflicto, éxito e inactivo—, zoom de texto al 200 %, teclado y contraste.
+Un cambio visible conserva evidencia en 360 y 1280 px; se agrega 320 px para reflow y 768 px cuando cambia la composición. Se revisan los estados afectados —foco, carga, vacío, error, conflicto, éxito e inactivo—, zoom de texto al 200 %, teclado y contraste. Si el cambio es un rediseño o una pantalla nueva, la revisión también compara la familia visual, la firma cromática y el contraste editorial/funcional con el mockup aprobado correspondiente, sin convertir la comparación en una prueba de píxeles exactos.
 
 Las capturas verifican composición, no sustituyen las aserciones de comportamiento. Los snapshots visuales, si se incorporan después, se actualizan solo tras revisar la diferencia.
 
-Herramienta de automatización accesible, elegida en la auditoría HU-009: **axe-core**, vía el paquete `vitest-axe` (envoltorio del matcher `toHaveNoViolations` para Vitest). Necesidad: motor de reglas WCAG 2.1/2.2 de referencia de la industria (Deque), integrable en la prueba de componente sin navegador real. Mantenimiento: `axe-core` tiene desarrollo activo y adopción amplia; `vitest-axe` es un envoltorio delgado (el registro automático de su versión publicada resultó incompleto — `dist/extend-expect.js` vacío en 0.1.0 — así que el proyecto registra el matcher a mano en `apps/web/vitest.setup.ts` contra el `matchers.js` de la misma librería, sin parchear su código). Licencia: MIT. Superficie transitiva: pequeña (`axe-core`, `aria-query`, utilidades de formato). La regla `color-contrast` se desactiva en las pruebas de componente porque jsdom no implementa Canvas2D y ese chequeo no puede medir contraste real ahí; el contraste sigue verificado por la tabla aprobada de [estandar-diseno-visual.md](estandar-diseno-visual.md) sección 4.3. No sustituye la revisión manual por teclado que cada prueba de componente ya cubre, ni la verificación en navegador real antes del piloto.
+Herramienta de automatización accesible, elegida en la auditoría HU-009: **axe-core**, vía el paquete `vitest-axe` (envoltorio del matcher `toHaveNoViolations` para Vitest). Necesidad: motor de reglas WCAG 2.1/2.2 de referencia de la industria (Deque), integrable en la prueba de componente sin navegador real. Mantenimiento: `axe-core` tiene desarrollo activo y adopción amplia; `vitest-axe` es un envoltorio delgado (el registro automático de su versión publicada resultó incompleto — `dist/extend-expect.js` vacío en 0.1.0 — así que el proyecto registra el matcher a mano en `apps/web/vitest.setup.ts` contra el `matchers.js` de la misma librería, sin parchear su código). Licencia: MIT. Superficie transitiva: pequeña (`axe-core`, `aria-query`, utilidades de formato). La regla `color-contrast` se desactiva en las pruebas de componente porque jsdom no implementa Canvas2D y ese chequeo no puede medir contraste real ahí; el contraste de las combinaciones que realmente use cada pantalla se verifica en navegador real. No sustituye la revisión manual por teclado que cada prueba de componente ya cubre, ni la verificación en navegador real antes del piloto.
 
 ## 6. Pruebas de migraciones y base de datos
 

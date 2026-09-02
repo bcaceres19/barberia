@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de contradicciones"
-version: "1.8"
+version: "1.9"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-25"
+ultima_actualizacion: "2026-09-02"
 documentos_relacionados:
   - "../../AGENTS.md"
   - "registro-decisiones.md"
@@ -33,6 +33,8 @@ Estados permitidos: `Abierta`, `En análisis`, `Resuelta` y `Descartada por fals
 | `CT-005` | Umbral de `HU-007`: “superar 5 solicitudes” frente a escalar cuando el conteo alcanza 5 en el SQL de referencia | **Resuelta** | `DEC-061` | Cerrada el 2026-08-17 |
 | `CT-006` | Recuperación no enumerable con respuesta idéntica frente a mostrar el destino real enmascarado | **Resuelta** | `DEC-065` | Cerrada el 2026-08-17 |
 | `CT-008` | Modelo físico de B2 propone `ON DELETE CASCADE` frente a la prohibición de borrado en cascada de `AGENTS.md` | **Resuelta** | `DEC-070` | Cerrada el 2026-08-25 |
+| `CT-009` | Recuperación por correo y WhatsApp simultáneos frente a la solicitud de un único canal por código | **Abierta** | `DP-NOT-06`, `DEC-051`, `DEC-066` | Detectada el 2026-09-02 |
+| `CT-010` | Reto de login limitado a WhatsApp frente a enviar al correo o teléfono verificado almacenado | **Abierta** | `DP-SEG-13`, `DEC-062` | Detectada el 2026-09-02 |
 
 ## 3. Contradicciones detalladas
 
@@ -135,6 +137,30 @@ Estados permitidos: `Abierta`, `En análisis`, `Resuelta` y `Descartada por fals
 - **Resolución:** opción 1. Las siete FK pasan a `ON DELETE RESTRICT`; `barber` no tiene borrado físico en su alcance vigente (`HU-021`), así que `RESTRICT` no bloquea ninguna operación existente y deja explícita cualquier limpieza futura (`DEC-070`).
 - **Evidencia:** `AGENTS.md`, sección Calidad; `database/modelo-fisico-referencia.sql`, sección C; `docs/05-backend/estandar-base-datos.md`, secciones 6, 9 y 10; `docs/00-control/registro-decisiones.md`, `DEC-070`.
 
+### CT-009 · Recuperación por dos canales frente a un único canal por código
+
+- **Detectada y registrada:** 2026-09-02, al recoger la solicitud del propietario sobre la experiencia de recuperación de acceso.
+- **Estado:** **Abierta**.
+- **Responsable de resolver:** propietario del proyecto.
+- **Documentos en conflicto:** `DEC-051`/`DEC-066` y `CA-008-01` describen el envío del código de recuperación por correo y WhatsApp; la solicitud nueva pide una opción mutuamente excluyente para enviar por correo electrónico o WhatsApp, nunca ambos en el mismo envío.
+- **Contradicción:** no se puede conservar simultáneamente el envío de ambos canales y garantizar que cada código se entregue por un solo canal elegido. Además, un fallback automático al segundo canal podría contradecir la intención de control explícito y dificultar la auditoría de qué canal autorizó el usuario.
+- **Impacto:** afecta el contrato de `recovery/request`, la selección en `HU-011`, la idempotencia, los adaptadores de notificación, los registros de intento y las pruebas de no enumeración. No se cambia todavía `DEC-051` ni `DEC-066`.
+- **Opciones:** (1) permitir elegir exactamente un canal disponible y enviar solo por ese canal; (2) fijar un canal primario por política y usar el segundo únicamente con una regla de fallback aprobada, sin envío simultáneo; (3) conservar el envío a ambos canales; (4) otra alternativa que defina explícitamente consentimiento, fallback, auditoría y no enumeración.
+- **Resolución:** pendiente. El prompt [`PROMPT-FIX-OTP-CANAL-UNICO-v1`](../10-backlog/prompts/fix/issue-pending-otp-canal-unico.md) conserva la solicitud como cambio propuesto, pero permanece en `draft` hasta crear un issue real y registrar la decisión.
+- **Evidencia:** `docs/00-control/dudas-pendientes.md`, `DP-NOT-06`; `docs/00-control/registro-decisiones.md`, `DEC-051` y `DEC-066`; `docs/02-requisitos/historias-usuario.md`, `HU-008`/`HU-011`.
+
+### CT-010 · Destino del reto de login: WhatsApp fijo frente a contacto verificado en la cuenta
+
+- **Detectada y registrada:** 2026-09-02, al recoger la solicitud del propietario sobre el reto adicional del login.
+- **Estado:** **Abierta**.
+- **Responsable de resolver:** propietario del proyecto.
+- **Documentos en conflicto:** `DEC-062` y `CA-007-02` describen el reto de login como un código enviado por WhatsApp oficial; la solicitud nueva pide que el código se envíe al correo o teléfono que figure verificado en la base de datos, sin pedir al cliente que indique el destino.
+- **Contradicción:** WhatsApp como canal único no equivale a permitir correo o teléfono verificado como destino elegible. Tampoco se ha fijado qué contacto tiene precedencia, cómo se elige el canal ni qué respuesta se entrega cuando la cuenta no tiene un contacto verificado.
+- **Impacto:** afecta `POST /auth/challenge`, la verificación del código, el contrato OpenAPI, el adaptador de notificación, la experiencia web y las pruebas de no enumeración, abuso, RLS e idempotencia.
+- **Opciones:** (1) resolver el destino exclusivamente en servidor desde contactos verificados y aplicar un canal único aprobado; (2) mantener WhatsApp como único canal para el reto de login y reservar correo para recuperación; (3) permitir que el usuario elija entre contactos verificados sin aceptar un destino arbitrario; (4) otra alternativa con precedencia, ausencia de contacto, fallback y respuesta uniforme definidos.
+- **Resolución:** pendiente. El prompt [`PROMPT-FIX-LOGIN-OTP-DESTINO-VERIFICADO-v1`](../10-backlog/prompts/fix/issue-pending-login-otp-destino-verificado.md) conserva la solicitud como cambio propuesto, pero permanece en `draft` hasta crear un issue real y registrar la decisión.
+- **Evidencia:** `docs/00-control/dudas-pendientes.md`, `DP-SEG-13`; `docs/00-control/registro-decisiones.md`, `DEC-026`, `DEC-052` y `DEC-062`; `docs/02-requisitos/historias-usuario.md`, `HU-007`.
+
 ---
 ## 4. Historial de estado
 
@@ -155,3 +181,5 @@ Estados permitidos: `Abierta`, `En análisis`, `Resuelta` y `Descartada por fals
 | 2026-08-23 | `CT-007` | Detectada y resuelta en la misma entrada: mensaje uniforme para código incorrecto/vencido/agotado, no distinto | `HU-011`, issue `#64`, `DEC-064`, `DEC-065` |
 | 2026-08-25 | `CT-008` | Detectada y registrada como abierta: las FK de B2 proponen `ON DELETE CASCADE`, contrario a la prohibición de borrado en cascada | `AGENTS.md`, `database/modelo-fisico-referencia.sql`, preparación de `HU-040`–`HU-042` |
 | 2026-08-25 | `CT-008` | Resuelta: las siete FK pasan a `ON DELETE RESTRICT` | `DEC-070` |
+| 2026-09-02 | `CT-009` | Detectada y registrada como abierta: recuperación por correo y WhatsApp simultáneos frente a la solicitud de un único canal | `DP-NOT-06`, `DEC-051`, `DEC-066`, solicitud del propietario |
+| 2026-09-02 | `CT-010` | Detectada y registrada como abierta: reto de login por WhatsApp frente a destino elegible en contacto verificado de la cuenta | `DP-SEG-13`, `DEC-062`, solicitud del propietario |

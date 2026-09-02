@@ -1,9 +1,9 @@
 ---
 titulo: "Estándar de código del frontend en Vue"
-version: "1.3"
+version: "1.5"
 estado: "Obligatorio para desarrollo"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-01"
+ultima_actualizacion: "2026-09-02"
 documentos_relacionados:
   - "../00-control/registro-decisiones.md"
   - "../01-producto/alcance-mvp.md"
@@ -22,7 +22,7 @@ Estas reglas aplican a la aplicación Vue del flujo público y del panel del bar
 
 Código limpio significa aquí comportamiento explícito, componentes cohesionados, contratos tipados, accesibilidad y dependencias contenidas. No significa fragmentar cada archivo ni convertir toda lógica en un patrón genérico.
 
-Fuentes normativas: `DEC-035`, `DEC-039` y `DEC-077`.
+Fuentes normativas: `DEC-035`, `DEC-077`, `DEC-078` y `DEC-079`.
 
 ## 2. Ubicación y estructura
 
@@ -96,7 +96,7 @@ app → shared
 - Props y emits se tipan de forma explícita. El componente no modifica una prop ni un objeto propiedad del padre.
 - Los nombres de componentes son descriptivos y en `PascalCase`: `AppointmentStatusBadge`, no `Card2` ni `CommonModal`.
 - Los componentes base usan el prefijo acordado `Base`; los componentes de negocio permanecen dentro de su módulo.
-- Los componentes consumen los tokens y variantes de [estandar-diseno-visual.md](estandar-diseno-visual.md), y las pantallas respetan arquitectura, estados y frontera de alcance de [especificacion-frontend-nava.md](especificacion-frontend-nava.md); una prop expresa intención y no acepta colores o medidas libres.
+- Los componentes y pantallas pueden crear su propia solución visual dentro de la dirección NAVA / Tailored Grid. Las props expresan comportamiento o intención funcional, no se convierten en una superficie descontrolada para inyectar lógica, datos sensibles o estados inválidos. La arquitectura, los estados y la frontera de alcance siguen [especificacion-frontend-nava.md](especificacion-frontend-nava.md).
 - Slots, eventos y estados visibles forman la API pública del componente y se mantienen pequeños.
 - No se divide un componente solo por cantidad de líneas. Se divide cuando mezcla responsabilidades, repite una unidad o dificulta probarla.
 
@@ -154,7 +154,7 @@ app → shared
 9. Una dependencia visual o de calendario requiere comparar tamaño, accesibilidad y alternativa nativa.
 10. Las imágenes declaran dimensiones y tamaño apropiado; no se agregan animaciones que bloqueen la tarea principal.
 11. La interfaz se verifica en el ancho y teléfono real del piloto; un emulador no es la única evidencia.
-12. Colores, tipografía, espaciado, radios, sombras y tamaños proceden del sistema visual; un módulo no crea su propia paleta ni redefine una primitiva compartida.
+12. Todo rediseño o pantalla nueva conserva los colores, el contraste serif/sans y la familia visual definidos por el estándar NAVA. Espaciado, escala, radios, sombras, composición y tecnología siguen libres, con legibilidad, foco, estados distinguibles y responsive obligatorios.
 
 ## 8. Nombres, estilo y comentarios
 
@@ -201,7 +201,7 @@ Playwright para los flujos exigidos por el cambio
 - [ ] No se introdujo `any`, estado global o dependencia sin necesidad demostrable.
 - [ ] Carga, vacío, error, reintento y doble envío están resueltos donde aplican.
 - [ ] La acción funciona con teclado, lector semántico y ancho móvil.
-- [ ] La pantalla aplica tokens y tamaños del [estándar visual](estandar-diseno-visual.md), y composición, estados y alcance de la [especificación NAVA](especificacion-frontend-nava.md), con evidencia en los anchos exigidos.
+- [ ] La pantalla expresa la dirección NAVA / Tailored Grid con una solución visual deliberada, conserva composición, estados y alcance de la [especificación NAVA](especificacion-frontend-nava.md), y aporta evidencia en los anchos exigidos.
 - [ ] No se decidió disponibilidad ni permiso únicamente en el navegador.
 - [ ] Se agregaron pruebas unitarias, de componente o E2E según [estrategia-pruebas.md](estrategia-pruebas.md).
 - [ ] Los comentarios explican decisiones y no repiten la implementación.

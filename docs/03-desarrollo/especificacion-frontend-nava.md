@@ -1,9 +1,9 @@
 ---
 titulo: "Especificación integral de experiencia y pantallas NAVA"
-version: "1.0"
-estado: "Obligatorio para desarrollo incremental"
+version: "1.2"
+estado: "Dirección de producto y alcance; composición visual orientativa"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-01"
+ultima_actualizacion: "2026-09-02"
 documentos_relacionados:
   - "../00-control/registro-decisiones.md"
   - "../01-producto/alcance-mvp.md"
@@ -12,6 +12,7 @@ documentos_relacionados:
   - "../02-requisitos/historias-usuario.md"
   - "../04-arquitectura/frontend.md"
   - "../10-backlog/plan-bloques.md"
+  - "../10-backlog/evidence/ui-redesign-nava-2026-09-02/README.md"
   - "estandar-diseno-visual.md"
   - "estandar-frontend-vue.md"
   - "estrategia-pruebas.md"
@@ -21,7 +22,7 @@ documentos_relacionados:
 
 ## 1. Propósito y forma de uso
 
-Este documento convierte la dirección visual **NAVA / Tailored Grid** aprobada por el propietario en un contrato de experiencia para `apps/web`. Debe permitir que Claude, Codex o una persona implemente cada pantalla en entregas futuras sin reinterpretar el mockup, inventar funciones ni crear estilos locales.
+Este documento conserva la dirección visual **NAVA / Tailored Grid** aprobada por el propietario y orienta la experiencia de `apps/web`. Debe permitir que Claude, Codex o una persona implemente cada pantalla sin inventar funciones, respetando la familia visual y cromática de los mockups aprobados, pero con libertad para resolver la composición y usar estilos locales cuando resulten adecuados.
 
 Esta especificación define:
 
@@ -34,7 +35,7 @@ Esta especificación define:
 
 No autoriza por sí sola cambios de código. Cada adopción debe partir de una historia o issue real, una rama corta y pruebas proporcionales al comportamiento afectado. El código actual puede conservar temporalmente el sistema anterior hasta que el issue correspondiente migre una base o una pantalla completa; no se permiten migraciones visuales parciales dentro de una misma pantalla.
 
-Fuentes normativas: `DEC-016`, `DEC-039`, `DEC-074`, `DEC-075` y `DEC-077`. Si un mockup, este documento y una regla de negocio difieren, prevalecen el registro de decisiones, el alcance, las reglas, las historias y los contratos vigentes, en ese orden documental.
+Fuentes normativas: `DEC-016`, `DEC-074`, `DEC-075`, `DEC-077`, `DEC-078` y `DEC-079`. Si un mockup, este documento y una regla de negocio difieren, prevalecen el registro de decisiones, el alcance, las reglas, las historias y los contratos vigentes, en ese orden documental.
 
 ## 2. Dirección de producto y marca
 
@@ -51,7 +52,7 @@ Fuentes normativas: `DEC-016`, `DEC-039`, `DEC-074`, `DEC-075` y `DEC-077`. Si u
 
 NAVA debe sentirse como sastrería contemporánea y hospitalidad boutique: precisa, serena, cálida y profesional. La interfaz toma del concepto “Tailored Grid” las líneas editoriales, la estructura temporal, la tipografía con contraste y el uso medido de marfil, tinta y latón.
 
-Debe evitar:
+Como orientación de tono, NAVA procura evitar:
 
 - estética de fiesta, neón, graffiti, gaming o alto contraste fluorescente;
 - clichés de barbería como bigotes, postes, navajas o tijeras repetidas como decoración;
@@ -80,14 +81,19 @@ Debe evitar:
 | `P2` | Expansión posterior; requiere priorización y decisiones adicionales. |
 | `Excluido` | No debe aparecer en navegación, métricas, placeholders ni mocks de producción. |
 
-### 3.2 Qué se conserva del mockup elegido
+### 3.2 Qué se conserva de los mockups aprobados
 
-- wordmark NAVA y contraste entre serif editorial y sans funcional;
-- lienzo marfil, superficies contenidas, tinta azul marino y latón discreto;
-- agenda estructurada por tiempo, marcador de hora actual y foco en el próximo turno;
-- barra de acciones contextual y navegación inferior estable;
-- reserva móvil por servicio, barbero, fecha y hora;
-- líneas finas, radios pequeños y composición con sensación de ficha editorial.
+Para rediseños y pantallas nuevas, estos rasgos son obligatorios como familia visual; su realización concreta permanece libre:
+
+- identidad NAVA y contraste entre una expresión editorial y una interfaz funcional;
+- firma cromática de tinta, marfil, grafito, latón, salvia, piedra y colores semánticos definida por el estándar visual;
+- calidez, sobriedad, líneas finas, profundidad contenida y sensación de superficies cuidadas;
+- agenda estructurada por tiempo y foco en el próximo turno;
+- acciones contextuales y navegación clara;
+- reserva por servicio, barbero, fecha y hora;
+- composición con sensación editorial cuando favorezca el contenido.
+
+Las cuatro láminas de `docs/10-backlog/evidence/ui-redesign-nava-2026-09-02/` son las referencias canónicas para autenticación, formularios, componentes/alertas y shell/navegación. No obligan a copiar coordenadas, tamaños ni datos sintéticos.
 
 ### 3.3 Qué no se infiere del mockup
 
@@ -100,44 +106,28 @@ Debe evitar:
 | Agenda con todas las filas de barberos | No es la vista P0. `DEC-074` exige seleccionar un barbero; la vista consolidada queda diferida. |
 | Estado “En curso” | No existe en la máquina P0. El marcador “Ahora” expresa tiempo, no cambia el estado `confirmed`. |
 | Perfil o cuenta de cliente | Excluido del flujo público P0. El cliente gestiona un turno mediante enlace de acceso, sin cuenta. |
-| Modo oscuro o color por barbería | Excluido. El MVP tiene un tema claro NAVA. |
+| Modo oscuro, tema o color por barbería | Una variante visual no agrega por sí sola settings, persistencia ni personalización por tenant; esas capacidades siguen requiriendo decisión de producto. |
 | Aplicación nativa | Excluida. La experiencia es web responsive. |
 
-## 4. Fundamentos visuales obligatorios
+## 4. Contrato visual y libertades
 
-Los valores exactos viven en [estandar-diseno-visual.md](estandar-diseno-visual.md). Esta sección define cómo se perciben y se aplican.
+La guía [estandar-diseno-visual.md](estandar-diseno-visual.md) fija la firma cromática y las cualidades NAVA obligatorias para rediseños y pantallas nuevas. La composición, la escala, el grid, los radios, las sombras, el inventario de componentes y la tecnología de estilos continúan siendo decisiones de cada entrega.
 
 ### 4.1 Color
 
-- **Tinta NAVA** domina wordmark, texto, navegación y acción principal.
-- **Marfil** es el lienzo cálido; no se sustituye por blanco azulado.
-- **Blanco** se reserva para controles o superficies que deben despegarse del lienzo.
-- **Latón oscuro** sirve para foco, detalles interactivos secundarios y énfasis sobrio.
-- **Latón decorativo** puede rellenar un distintivo o una superficie editorial con texto tinta; no se usa para texto pequeño sobre marfil.
-- **Salvia** y **piedra** suavizan contenido secundario. Los estados funcionales usan sus tokens semánticos, no el color de marca por aproximación.
+La interfaz usa como anclajes tinta `#101B2B`, marfil `#F4F0E7`, blanco `#FFFFFF`, grafito `#2A2D32`/`#5E625F`, piedra `#E8E2D8`/`#C9C0B2`, salvia `#748477` y latón `#B8955A`/`#765C2F`. Se permiten tintes y derivados accesibles; un color ajeno requiere una necesidad semántica o de legibilidad documentada y no puede sustituir la identidad. Los colores de éxito, advertencia/conflicto, peligro, información e inactivo siguen la tabla del estándar y se distinguen también por texto, forma o iconografía.
 
 ### 4.2 Tipografía
 
-- `Instrument Serif` se reserva al wordmark y títulos editoriales de alta jerarquía. No se usa en labels, tablas, inputs ni párrafos operativos.
-- `Instrument Sans` gobierna toda la interfaz funcional.
-- Horas, precios y métricas usan cifras tabulares.
-- Mayúsculas completas solo se permiten en el wordmark y microetiquetas de hasta cuatro palabras; se añade espaciado de letras y nunca se usan en párrafos.
-- Si las fuentes todavía no están incorporadas mediante un issue que documente licencia, archivos WOFF2 y rendimiento, se usan los fallbacks canónicos; no se enlazan CDN o Google Fonts desde un componente.
+El contraste entre una voz editorial serif y una voz funcional sans-serif forma parte de la firma NAVA. La familia concreta, los pesos, la escala y el modo de carga se eligen según el contenido, la licencia, el rendimiento y la legibilidad de cada entrega. Horas, precios y métricas conservan el contexto y una lectura inequívoca.
 
 ### 4.3 Forma, profundidad y ritmo
 
-- Controles: radio 4 px. Superficies: 6 px. Diálogos: 8 px. Las insignias de estado pueden ser pill.
-- Bordes de 1 px estructuran. Bordes de 2 px se reservan para foco, selección o error.
-- Las tarjetas no flotan por defecto. La separación normal es fondo + línea + espacio.
-- La sombra elevada solo aparece en menú, barra sticky, panel inferior o diálogo.
-- La escala espacial de 4 px es obligatoria. Las columnas, reglas y baseline deben alinear contenidos relacionados.
+Líneas editoriales, proporción, ritmo, bordes finos y profundidad sobria son parte de la intención que debe reconocerse. No existe una lista cerrada de radios, sombras o espaciados. La composición puede ser contenida, expresiva o híbrida siempre que mantenga la jerarquía, la legibilidad y la familia de los mockups.
 
 ### 4.4 Iconografía e imagen
 
-- SVG de línea coherente, caja 20 o 24 px, trazo visual de 1.75–2 px.
-- Todo icono funcional vive dentro de un control nombrado; color solo no comunica estado.
-- Avatares reales solo si el producto incorpora una fuente y política para fotos. Hasta entonces se usa monograma accesible o ninguna imagen.
-- No se generan retratos ficticios para representar barberos o clientes reales.
+La iconografía, fotografía, ilustración o ausencia de imagen se elige por su aporte al flujo y a la identidad. Todo icono funcional vive dentro de un control nombrado; el color no comunica por sí solo. No se usan retratos ficticios ni datos de demostración como si fueran personas o resultados reales.
 
 ## 5. Arquitectura de información
 
@@ -155,13 +145,7 @@ La navegación principal P0 se agrupa así:
 
 ### 5.2 Navegación por ancho
 
-| Ancho | Patrón |
-| --- | --- |
-| 320–767 px | Header compacto; contenido a una columna; dock inferior `Agenda · Nuevo · Horarios · Más`; acciones de formulario sticky cuando ayuden. |
-| 768–1023 px | Header completo; dock inferior o rail compacto según espacio real; contenido en una o dos columnas. No se cambia el orden semántico. |
-| 1024 px o más | Header editorial con NAVA, contexto y acción principal; contenido en grid; dock inferior de escritorio. No hay sidebar lateral en la dirección NAVA. |
-
-El dock inferior de escritorio es parte de la identidad seleccionada. Permanece visible sin cubrir contenido, tiene altura objetivo de 64 px y usa icono más texto. En móvil suma `env(safe-area-inset-bottom)`.
+La navegación y la composición se eligen según el espacio disponible, la tarea y la expresión visual de la pantalla. Puede usarse header, dock, rail, sidebar, tabs u otra solución clara. La representación debe conservar el orden semántico, no ocultar acciones necesarias y respetar el área segura del dispositivo cuando existan superficies fijas.
 
 ### 5.3 Shell privado
 
@@ -182,7 +166,7 @@ El dock inferior de escritorio es parte de la identidad seleccionada. Permanece 
 - El header no contiene métricas sin contrato.
 - La sesión y salida se ubican en el menú de contexto del usuario, no como ítem dominante del dock.
 - El destino activo se identifica con superficie, texto y `aria-current`; nunca solo con color.
-- El contenido reserva padding inferior suficiente para el dock.
+- Si se usa una barra fija, el contenido reserva espacio suficiente para ella y para el área segura del dispositivo.
 
 ### 5.4 Shell público
 
@@ -204,21 +188,21 @@ El dock inferior de escritorio es parte de la identidad seleccionada. Permanece 
 ```
 
 - No tiene navegación del panel, publicidad ni solicitud de registro.
-- El cuerpo no supera 720 px; el formulario de lectura larga no supera 640 px.
+- El cuerpo y los formularios usan un ancho que preserve legibilidad; no se impone una medida única.
 - El CTA principal permanece alcanzable, sin ocultar errores ni el último control.
 - El progreso cuenta solo pasos reales. Si hay un único barbero, se omite esa decisión y se recalcula el total.
 
 ## 6. Componentes del sistema NAVA
 
-Los nombres son responsabilidades de diseño, no obligación de crear un archivo por adelantado. Se construyen solo cuando un issue los usa realmente.
+Los nombres son responsabilidades conceptuales, no obligación de crear un archivo por adelantado ni de copiar una apariencia. Se construyen solo cuando un issue los usa realmente y cada pantalla puede resolverlos con otra estructura.
 
 | Componente conceptual | Responsabilidad | Reglas clave |
 | --- | --- | --- |
 | `NavaWordmark` | Identidad de plataforma | Texto/SVG accesible; variantes tinta e invertida; sin imagen raster. |
-| `PrivateAppShell` | Header, contenido y dock | Maneja safe areas, foco al navegar y contexto de sesión. |
-| `PublicBookingShell` | Marca de barbería, progreso y acciones | Sin dependencias del bundle privado. |
+| `PrivateAppShell` | Contexto privado, navegación y contenido | Maneja safe areas, foco al navegar y contexto de sesión; la forma visual es libre. |
+| `PublicBookingShell` | Marca de barbería, progreso y acciones | Sin dependencias del bundle privado; la composición es libre. |
 | `PageHeader` | Título, ayuda y acción de pantalla | Un solo `h1`; la acción baja a ancho completo en móvil si hace falta. |
-| `DesktopDock` / `MobileDock` | Navegación primaria | `aria-current`, targets de 44 px, sin overflow horizontal oculto. |
+| `DesktopDock` / `MobileDock` | Navegación primaria si la pantalla lo necesita | `aria-current` cuando corresponda, targets cómodos y sin overflow horizontal oculto. |
 | `MetricRibbon` | Resumen operativo aprobado | Solo datos con contrato; label, valor, contexto y estado de carga. |
 | `BarberSelector` | Selección obligatoria de barbero | Select/listbox accesible; no opción consolidada en P0. |
 | `DateNavigator` | Anterior, fecha y siguiente | Tres controles estables; fecha completa anunciable; zona de barbería. |
@@ -231,7 +215,7 @@ Los nombres son responsabilidades de diseño, no obligación de crear un archivo
 | `ServiceOptionRow` | Selección de servicio | Nombre, duración, precio vigente y estado seleccionado. |
 | `BarberOption` | Preferencia de barbero | Nombre real; monograma opcional; “Sin preferencia” solo si lo permite el flujo. |
 | `DateStrip` | Selección de día público | Fecha legible; días no disponibles realmente disabled. |
-| `TimeSlotGrid` | Franjas disponibles | Botones de mínimo 44 px; selección única; zona visible. |
+| `TimeSlotGrid` | Franjas disponibles | Selección única, estado real y controles cómodos; puede representarse como grid, lista u otra composición equivalente. |
 | `BookingStepProgress` | Progreso público | Texto “Paso n de m” y nombre del paso; no depende de una barra visual. |
 | `BookingSummary` | Selección persistente | Servicio, barbero, fecha, hora, duración y precio; permite editar el paso. |
 | `BottomActionBar` | Acciones sticky | No tapa foco, errores o contenido; respeta safe area. |
@@ -267,7 +251,7 @@ No muestra teléfono o correo en la lista. No contiene varios botones pequeños:
 
 Reglas particulares:
 
-- En 1024 px o más, el formulario ocupa una columna de 400–480 px y puede compartir el lienzo con una composición editorial vacía, nunca con funciones simuladas.
+- En escritorio, el formulario puede compartir el lienzo con una composición editorial si eso ayuda a la experiencia; nunca se usan funciones simuladas para llenar espacio.
 - En móvil, NAVA queda arriba, el formulario comienza sin hero que empuje la tarea fuera de pantalla.
 - Los mensajes de seguridad son neutrales y no confirman si una cuenta existe.
 
@@ -297,7 +281,7 @@ Móvil:
 
 - lista vertical por hora, sin exigir scroll horizontal;
 - selector y fecha pueden ser sticky si no cubren el foco;
-- cada ficha tiene al menos 64 px y ordena hora → persona → servicio → estado;
+- cada ficha mantiene una jerarquía reconocible de hora → persona → servicio → estado y controles cómodos;
 - “Nuevo turno” puede recibir fecha y hora prellenadas al iniciarse desde un hueco, pero el backend revalida todo.
 
 Estados:
@@ -322,7 +306,7 @@ Secciones y orden:
 5. resumen;
 6. confirmación.
 
-En escritorio se usa formulario de máximo 760 px con resumen lateral sticky solo si cabe. En móvil, secciones apiladas y resumen antes del CTA. Cambiar barbero invalida de forma explícita un servicio incompatible; no se borra silenciosamente. La hora manual no se fuerza a la rejilla pública. Los conflictos de jornada, bloqueo o cruce conservan datos y llevan el foco a fecha/hora.
+La composición del formulario se adapta al espacio disponible; un resumen lateral o inferior puede usarse solo si ayuda. Cambiar barbero invalida de forma explícita un servicio incompatible; no se borra silenciosamente. La hora manual no se fuerza a la rejilla pública. Los conflictos de jornada, bloqueo o cruce conservan datos y llevan el foco a fecha/hora.
 
 Textos canónicos: “Nuevo turno”, “Persona atendida”, “Hora de inicio”, “Duración prevista”, “Crear turno”, “Creando…”. Nunca “Nueva cita”.
 
@@ -360,7 +344,7 @@ Los estados pendientes no se implementan hasta tener historia, contrato e issue.
 | Renombrar/editar barbero | `P0 existente` | Mismo patrón del alta; impacto visible si el contrato lo exige. | Guardar cambios |
 | Desactivar barbero | `P0 pendiente` | No se diseña como delete; requiere HU sobre impacto y retención. | Según decisión futura |
 
-La lista no muestra tarjetas con retratos ficticios. En escritorio puede usar filas de 64–72 px; en móvil, filas etiquetadas con menú de acciones. Servicios y horario abren su módulo correspondiente con barbero preseleccionado, sin duplicar formularios.
+La lista no muestra tarjetas con retratos ficticios. Puede usar filas, tarjetas o una composición equivalente; las acciones deben conservar nombre accesible y contexto. Servicios y horario abren su módulo correspondiente con barbero preseleccionado, sin duplicar formularios.
 
 ### 7.7 Servicios y asignaciones
 
@@ -386,7 +370,7 @@ No se usa un interruptor silencioso para desactivar. El precio conserva formato 
 | Editar serie/ocurrencia | `P0 existente` | Selector explícito de alcance solo donde el backend/UI lo soporte; la UI actual puede tener seguimiento parcial y no se simulan controles pendientes. |
 | Turnos afectados por bloqueo | `P0 pendiente` | Primero confirma el bloqueo; luego lista cada turno y permite decisiones individuales. |
 
-En móvil, la semana no se comprime en siete columnas ilegibles: cada día es una sección. En escritorio puede usar grid, manteniendo controles y labels reales. No se usa drag para mover segmentos. Crear un bloqueo no cancela ni reprograma turnos existentes en silencio.
+En móvil, la semana no se presenta de una forma que vuelva ilegibles sus controles; puede usar secciones, lista u otra composición equivalente. No se usa drag para mover segmentos. Crear un bloqueo no cancela ni reprograma turnos existentes en silencio.
 
 ### 7.9 Configuración operativa futura del MVP
 
@@ -403,7 +387,7 @@ Cada capacidad es una sección o subruta con guardado propio, descripción del e
 
 Pantallas complementarias:
 
-- **Textos legales y privacidad (`P0 pendiente`)**: páginas públicas de lectura larga, con nombre de barbería/plataforma, fecha de vigencia, navegación de regreso y ancho de unas 72 caracteres. No se generan textos jurídicos desde el diseño ni se publican borradores sin revisión.
+- **Textos legales y privacidad (`P0 pendiente`)**: páginas públicas de lectura larga, con nombre de barbería/plataforma, fecha de vigencia y navegación de regreso. La composición debe favorecer la lectura. No se generan textos jurídicos desde el diseño ni se publican borradores sin revisión.
 - **Estado de canales (`P0 pendiente`)**: puede mostrar canal configurado/no configurado y última validación cuando exista contrato. No revela tokens, credenciales ni respuesta cruda del proveedor.
 - **Operación de notificaciones y retención (`sin pantalla P0`)**: workers, colas, leases y anonimización son capacidades backend/operativas. No se crea un dashboard administrativo salvo que una HU futura defina actor, permiso, datos y acciones.
 
@@ -468,7 +452,7 @@ Estados dedicados:
 | Pagos, caja, ingresos, comisiones | `Excluido` | Sin navegación, métricas ni placeholders. |
 | Inventario, nómina, contabilidad | `Excluido` | Sin navegación, métricas ni placeholders. |
 | Marketplace, marketing, CRM, fidelización | `Excluido` | Sin navegación ni banners. |
-| Multi-sede, modo oscuro, temas por tenant | `Excluido` | No se anticipan variantes en componentes P0. |
+| Multi-sede, temas configurables o temas por tenant | `Excluido` como capacidad de producto | Una expresión visual alternativa puede explorarse internamente; settings, persistencia y personalización por tenant requieren una decisión propia. |
 
 ### 7.13 Estados globales y rutas de sistema
 
@@ -495,12 +479,7 @@ Estas vistas usan el mismo shell cuando la sesión/contexto ya es confiable. En 
 
 ### 8.2 Densidad
 
-| Contexto | Densidad objetivo |
-| --- | --- |
-| Panel móvil | Filas de 56–72 px; texto 14–16 px; un dato principal y metadatos esenciales. |
-| Panel escritorio | Grid de 12 columnas; separación de 24–32 px entre regiones; filas de 52–64 px. |
-| Reserva pública móvil | Controles de 48 px; texto base 16 px; opciones de 64 px o más. |
-| Formularios escritorio | 560–760 px; máximo dos campos por fila si siguen un orden lógico. |
+La densidad es una decisión de composición. El panel puede ser compacto u holgado y la reserva puede ser más editorial o más directa; en ambos casos el contenido, los controles y los errores deben seguir siendo legibles, operables y completos. Las medidas de implementaciones anteriores son referencias históricas, no objetivos obligatorios.
 
 ### 8.3 Barras fijas
 
@@ -526,7 +505,7 @@ Cada página y región que consulta datos define:
 
 ### 9.2 Foco y teclado
 
-- `:focus-visible` usa el token de foco NAVA de 2 px con separación de 2 px.
+- `:focus-visible` usa un tratamiento claramente perceptible dentro de la firma cromática NAVA; su grosor y separación se ajustan a la composición sin perder contraste.
 - Navegar de página mueve foco al `h1` o al contenedor principal anunciado; no lo deja en un dock desmontado.
 - Diálogos contienen foco, cierran con Escape cuando es seguro y lo devuelven al disparador.
 - Fecha, hora, servicio y barbero se pueden operar con teclado sin simular controles incompletos.
@@ -542,9 +521,9 @@ Cada página y región que consulta datos define:
 
 ### 9.4 Movimiento
 
-- Transiciones de 120 o 200 ms solo para continuidad, selección o entrada de una capa.
-- `prefers-reduced-motion` elimina desplazamientos y animación continua.
-- No hay parallax, rebotes, conteos animados ni introducciones que retrasen la tarea.
+- El movimiento solo se usa cuando ayuda a comprender continuidad, selección o entrada de una capa.
+- `prefers-reduced-motion` reduce o elimina el movimiento no esencial.
+- No se retrasa la tarea con parallax, rebotes, conteos animados o introducciones obligatorias.
 
 ## 10. Contenido y vocabulario
 
@@ -584,7 +563,7 @@ Cada issue migra una preocupación completa y verificable. No se debe:
 
 ### 11.2 Orden recomendado
 
-1. Fundaciones: tokens, tipografía self-hosted, base CSS y primitivas afectadas.
+1. Fundaciones opcionales: estilos, tipografía, herramientas o primitivas que la pantalla realmente necesite.
 2. Shell privado: wordmark, header, navegación y safe areas.
 3. Acceso/recuperación y estados de sesión.
 4. Agenda diaria, navegación de fecha, nuevo turno y detalle.
@@ -629,7 +608,7 @@ La evidencia debe incluir al menos carga, vacío, error, conflicto, éxito y dis
 
 - [ ] La pantalla corresponde a una HU/issue real y no amplía alcance.
 - [ ] Usa NAVA como plataforma y conserva el nombre de la barbería como contexto.
-- [ ] Consume tokens y primitivas; no contiene hexadecimales, radios o sombras locales arbitrarios.
+- [ ] Expresa NAVA / Tailored Grid, respeta los mockups y la firma cromática obligatoria, sin quedar atada a la escala, composición o nombres de tokens del estándar anterior.
 - [ ] Usa “turno” y copy orientado a tarea.
 - [ ] Implementa todos los estados asíncronos aplicables.
 - [ ] Mantiene una acción principal por región.

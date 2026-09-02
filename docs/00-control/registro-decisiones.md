@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.22"
+version: "1.24"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-01"
+ultima_actualizacion: "2026-09-02"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -100,6 +100,8 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-075` | 2026-08-28 | Resuelve `DP-CIT-05`: un turno que cruza medianoche aparece en cada agenda diaria cuyo intervalo intersecta | `DP-CIT-05`, `HU-062` | Confirmada |
 | `DEC-076` | 2026-09-01 | Resuelve `DP-CIT-06`: reprogramar hacia un bloqueo vigente se rechaza como conflicto | `DP-CIT-06`, `HU-065` | Confirmada |
 | `DEC-077` | 2026-09-01 | La plataforma se llama NAVA y adopta la dirección visual Tailored Grid, sin ampliar el alcance funcional del MVP | Identidad y sistema visual frontend | Confirmada |
+| `DEC-078` | 2026-09-02 | Se retiran las restricciones visuales prescriptivas y se libera la creación del diseño dentro de NAVA / Tailored Grid | Dirección visual, arquitectura frontend y UX | Confirmada |
+| `DEC-079` | 2026-09-02 | Los mockups aprobados y la firma cromática NAVA gobiernan rediseños y pantallas nuevas, con libertad de composición y herramientas | Dirección visual de nuevas entregas frontend | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -851,3 +853,30 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** mantener “Block Party” como identidad final — descartada por ser más estridente que la orientación elegante solicitada; copiar literalmente el mockup — descartada porque contradice alcance y decisiones vigentes; rediseñar cada pantalla sin sistema — descartado por producir divergencia; migrar todo el frontend en una rama — descartado por mezclar preocupaciones y aumentar el riesgo de regresión.
 - **Documentos afectados:** `README.md`, `docs/03-desarrollo/estandar-diseno-visual.md`, `docs/03-desarrollo/especificacion-frontend-nava.md`, `docs/03-desarrollo/estandar-frontend-vue.md`, `docs/04-arquitectura/frontend.md`, `docs/07-calidad/02-checklist-transversal.md`, `docs/README.md`, `docs/00-control/matriz-trazabilidad.md`, `docs/10-backlog/prompts/README.md` y el prompt de orquestación NAVA. `apps/web` queda deliberadamente sin cambios hasta que exista un issue de implementación.
 - **Fuente:** selección explícita del propietario de la propuesta NAVA / Tailored Grid y solicitud de orientar el diseño hacia una estética más seria y elegante, 2026-09-01.
+
+**Actualización posterior:** `DEC-078` conserva la identidad y la intención visual de esta decisión, pero retira el carácter obligatorio de sus tokens, medidas, tema único, tecnología de estilos y prohibiciones estéticas o de estilos locales.
+
+### DEC-078 · Libertad de creación visual dentro de NAVA / Tailored Grid
+
+- **Fecha:** 2026-09-02.
+- **Decisión:** se retiran las restricciones visuales prescriptivas que fijaban paleta, tokens, tipografías, escalas, radios, sombras, layouts, inventario de componentes, tema y tecnología de estilos. La creación del diseño de cada pantalla y flujo de la plataforma es libre, siempre que respete la dirección NAVA / Tailored Grid elegida el 2026-09-01. CSS, Tailwind CSS, CSS Modules, utility-first, una biblioteca visual u otra herramienta quedan permitidos según lo que mejor materialice el diseño y el resultado se justifique cuando agregue una dependencia.
+- **Qué permanece obligatorio:** buenas prácticas de accesibilidad y UX, HTML semántico, teclado y foco visible, WCAG 2.2 AA, contraste real, señales que no dependan solo del color, controles cómodos, responsive sin pérdida de contenido, estados de carga/vacío/error/conflicto/éxito, movimiento reducido, rendimiento, pruebas, seguridad, privacidad, contratos, reglas de negocio y alcance P0/P1/P2.
+- **Qué no autoriza:** no convierte el mockup en fuente de nuevas funciones, no cambia el vocabulario `turno`, no añade settings o personalización por tenant, no permite una apariencia genérica que contradiga NAVA y no modifica API, datos, permisos, disponibilidad, auditoría, idempotencia o aislamiento entre barberías.
+- **Convivencia con `DEC-039` y `DEC-077`:** conserva de esas decisiones la identidad NAVA / Tailored Grid, la intención editorial y las garantías de calidad; sustituye su carácter obligatorio en materia de tokens, paleta, medidas, componentes, tema único, tecnología de estilos y prohibiciones estéticas o de estilos locales. Las referencias concretas del mockup quedan como orientación, no como contrato visual.
+- **Herramientas:** no se adopta Tailwind ni otra dependencia automáticamente en este cambio documental. Cada issue de implementación puede elegir CSS u otra herramienta y debe documentar, cuando aplique, versión, licencia, alcance, accesibilidad, mantenimiento e impacto en el bundle.
+- **Documentos afectados:** `AGENTS.md`, `docs/03-desarrollo/estandar-diseno-visual.md`, `docs/03-desarrollo/especificacion-frontend-nava.md`, `docs/03-desarrollo/estandar-frontend-vue.md`, `docs/03-desarrollo/estrategia-pruebas.md`, `docs/04-arquitectura/frontend.md`, `docs/02-requisitos/historias-usuario.md` (`HU-009`), `docs/07-calidad/02-checklist-transversal.md`, `docs/README.md`, `README.md`, `docs/00-control/matriz-trazabilidad.md`, `docs/00-control/historial-cambios.md` y el prompt de orquestación NAVA. No modifica el código de `apps/web`.
+- **Fuente:** instrucción explícita del propietario del 2026-09-02 para eliminar los estándares rígidos de diseño, conservar el diseño elegido el día anterior y permitir la herramienta necesaria para implementarlo; issue documental `#166`.
+
+**Actualización posterior:** `DEC-079` conserva la libertad de composición, medidas, componentes y tecnología, pero restablece para rediseños y pantallas nuevas el carácter obligatorio de la firma cromática NAVA y de la familia visual mostrada en los mockups aprobados.
+
+### DEC-079 · Contrato visual mínimo para rediseños y pantallas nuevas
+
+- **Fecha:** 2026-09-02.
+- **Decisión:** toda pantalla, flujo o componente visible nuevo y todo rediseño completo debe pertenecer de forma reconocible a la familia de los mockups NAVA aprobados el 2026-09-02. Son obligatorios los anclajes cromáticos de tinta `#101B2B`, marfil `#F4F0E7`, blanco `#FFFFFF`, grafito `#2A2D32`/`#5E625F`, piedra `#E8E2D8`/`#C9C0B2`, salvia `#748477` y latón `#B8955A`/`#765C2F`, junto con la relación entre voz editorial serif y controles funcionales sans-serif. Las paletas semánticas de éxito, advertencia/conflicto, peligro, información e inactivo quedan fijadas en el estándar visual y el color nunca comunica solo.
+- **Libertad que se conserva:** cada pantalla decide composición, grid, tamaños, espaciado, radios, sombras, movimiento, navegación, componentes y tecnología de estilos. Puede usar CSS, CSS Modules, `<style scoped>`, Tailwind, utility-first o una biblioteca visual; una dependencia nueva se justifica. Se permiten tintes y derivados accesibles de la paleta, y un color adicional solo cuando cubre una necesidad semántica o de legibilidad documentada sin crear otra identidad de marca.
+- **Aplicación incremental:** la regla se aplica al crear o rediseñar. No obliga a migrar de inmediato pantallas existentes que el issue no toca y una corrección aislada no se convierte automáticamente en un rediseño. Cuando sí se rediseña una pantalla, se entrega completa en identidad, estados, responsive y accesibilidad, sin regiones principales a medio migrar.
+- **Mockups aprobados:** `docs/10-backlog/evidence/ui-redesign-nava-2026-09-02/01-autenticacion-movil.png`, `02-nuevo-turno-responsive.png`, `03-componentes-formularios-alertas.png` y `04-servicios-configuracion-navegacion.png`. Son contrato de familia visual y patrones para las áreas representadas, no fuente de datos, copy, funciones ni coordenadas de píxel.
+- **Qué no autoriza:** no crea pagos, caja, reportes, inventario, cuentas de cliente, vista multi-barbero, personalización por tenant ni ninguna capacidad fuera del alcance; no reemplaza reglas, HU, contratos, seguridad, privacidad, idempotencia o aislamiento entre barberías.
+- **Convivencia con `DEC-077` y `DEC-078`:** concreta la identidad de `DEC-077` y matiza únicamente la libertad cromática y el carácter puramente orientativo de los mockups declarados por `DEC-078`. Permanecen vigentes la libertad compositiva y técnica de `DEC-078` y todas las garantías de calidad.
+- **Documentos afectados:** `AGENTS.md`, `docs/03-desarrollo/estandar-diseno-visual.md`, `docs/03-desarrollo/especificacion-frontend-nava.md`, `docs/03-desarrollo/estandar-frontend-vue.md`, `docs/04-arquitectura/frontend.md`, `docs/02-requisitos/historias-usuario.md`, `docs/00-control/matriz-trazabilidad.md`, `docs/00-control/historial-cambios.md`, `docs/README.md`, el handoff de mockups y el prompt de orquestación NAVA. No modifica `apps/web`.
+- **Fuente:** instrucción explícita del propietario del 2026-09-02: convertir los mockups generados en estándar para rediseños y pantallas nuevas, conservar un apartado libre y respetar los colores e identidad definidos; issue documental `#166`.

@@ -1,9 +1,9 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "2.11"
-estado: "Sin duda abierta"
+version: "2.12"
+estado: "Con dudas abiertas"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-01"
+ultima_actualizacion: "2026-09-02"
 documentos_relacionados:
   - "registro-decisiones.md"
   - "contradicciones.md"
@@ -17,7 +17,9 @@ documentos_relacionados:
 
 ## 1. Estado
 
-No hay ninguna duda abierta. La última, `DP-CIT-06` (reprogramación voluntaria hacia un intervalo bloqueado), quedó resuelta el 1 de septiembre de 2026 como `DEC-076` (bloqueo duro, mismo tratamiento que un cruce de citas).
+Hay dos dudas nuevas abiertas, registradas el 2 de septiembre de 2026 a partir de una solicitud del propietario sobre los códigos OTP: la recuperación debe ofrecer un único canal por envío, correo electrónico o WhatsApp, sin enviarlos juntos (`DP-NOT-06`); y el reto de login debe resolver el destino desde un contacto verificado almacenado en la cuenta, sin aceptar un destino proporcionado por el cliente (`DP-SEG-13`). Ambas reabren parcialmente decisiones ya aplicadas (`DEC-051`, `DEC-062` y `DEC-066`) y no autorizan cambios de código hasta contar con una decisión `DEC-*` y un issue real.
+
+La última duda anterior, `DP-CIT-06` (reprogramación voluntaria hacia un intervalo bloqueado), quedó resuelta el 1 de septiembre de 2026 como `DEC-076` (bloqueo duro, mismo tratamiento que un cruce de citas).
 
 Las cinco dudas anteriores del lote (`DP-CIT-01`–`DP-CIT-05`) se detectaron el 26 de agosto de 2026 al preparar `HU-060`, `HU-061` y `HU-062`: las fuentes confirmaban el modelo de datos, la exclusión de cruces, la creación manual y la agenda diaria, pero no fijaban la reconciliación de clientes manuales sin teléfono, el efecto de la asignación servicio-barbero sobre una cita manual, la conducta frente a un bloqueo vigente, la vista inicial en una barbería con varios barberos ni el día o días en que aparece un turno que cruza medianoche. El propietario resolvió las tres primeras el 27 de agosto de 2026 como `DEC-071`–`DEC-073`, desbloqueando `HU-061`. `DP-CIT-04` y `DP-CIT-05` quedaron resueltas el 28 de agosto de 2026 como `DEC-074`–`DEC-075`, desbloqueando `HU-062`. `DP-CIT-06`, detectada el 31 de agosto de 2026 al redactar `HU-065`, quedó resuelta el 1 de septiembre de 2026 como `DEC-076`, desbloqueando la creación del issue real de `HU-065`.
 
@@ -43,7 +45,12 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 
 ## 2. Dudas abiertas
 
-Ninguna. `DP-CIT-06` (última duda abierta del lote `HU-063`–`HU-065`) quedó resuelta el 1 de septiembre de 2026 como `DEC-076` (sección 3).
+| Código | Pregunta | Estado | Artefacto de seguimiento |
+| --- | --- | --- | --- |
+| `DP-NOT-06` | ¿Los códigos de recuperación deben enviarse por exactamente un canal elegido entre correo electrónico y WhatsApp, sin envío simultáneo ni fallback automático al segundo canal? | Abierta | [`PROMPT-FIX-OTP-CANAL-UNICO-v1`](../10-backlog/prompts/fix/issue-pending-otp-canal-unico.md) |
+| `DP-SEG-13` | En el reto de login, ¿el servidor debe derivar el destino exclusivamente desde un correo o teléfono verificado de `staff_user`, sin aceptar ni pedir al cliente un destino de entrega? ¿Qué política aplica si no existe un contacto verificado? | Abierta | [`PROMPT-FIX-LOGIN-OTP-DESTINO-VERIFICADO-v1`](../10-backlog/prompts/fix/issue-pending-login-otp-destino-verificado.md) |
+
+`DP-CIT-06` (última duda anterior del lote `HU-063`–`HU-065`) quedó resuelta el 1 de septiembre de 2026 como `DEC-076` (sección 3).
 
 ## 3. Resoluciones
 

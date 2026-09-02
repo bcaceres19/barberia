@@ -38,7 +38,7 @@ Estas reglas aplican a personas y agentes que modifiquen el repositorio.
 
 - Mantener dominio y servicios Go independientes de Chi y PostgreSQL.
 - Mantener componentes Vue independientes de la forma interna del API mediante un cliente tipado.
-- Aplicar `docs/03-desarrollo/estandar-diseno-visual.md`: los módulos no inventan paletas, tamaños, tipografías ni variantes fuera de los tokens y patrones aprobados.
+- Aplicar `docs/03-desarrollo/estandar-diseno-visual.md`: todo rediseño o pantalla nueva respeta los mockups aprobados, la firma cromática y el lenguaje NAVA / Tailored Grid; composición, tamaños, grid, componentes y tecnología de estilos permanecen libres, con accesibilidad, responsive, rendimiento y pruebas obligatorios.
 - No usar `any`, estado global, ORM, borrado en cascada, `jsonb` o una dependencia nueva sin justificación conforme al estándar correspondiente.
 - Comentarios explican decisiones e invariantes; no repiten el código. Todo `TODO` tiene referencia rastreable.
 - Ningún log, fixture, comentario o prueba contiene datos personales reales, secretos o tokens.
@@ -48,7 +48,7 @@ Estas reglas aplican a personas y agentes que modifiquen el repositorio.
 - Cada regla o defecto modificado conserva una prueba en la capa más baja adecuada.
 - SQL, RLS, migraciones y concurrencia se prueban con PostgreSQL real y al menos dos tenants.
 - Componentes interactivos tienen prueba de componente; recorridos P0 afectados tienen E2E.
-- Todo cambio visible incluye evidencia responsive y verificación accesible en los anchos definidos por el estándar visual.
+- Todo cambio visible incluye evidencia responsive y verificación accesible en los anchos definidos por la guía visual y la estrategia de pruebas.
 - Antes de integrar deben pasar los controles definidos en `docs/03-desarrollo/estrategia-pruebas.md`.
 - No reducir umbrales, ignorar pruebas inestables ni actualizar snapshots sin revisar el comportamiento.
 
