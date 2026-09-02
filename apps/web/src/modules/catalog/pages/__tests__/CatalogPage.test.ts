@@ -551,4 +551,21 @@ describe('CatalogPage', () => {
     const results = await axe(wrapper.element, axeOptions)
     expect(results).toHaveNoViolations()
   })
+
+  // heading-order: BaseAlert.vue (HU-009) fija el título de una alerta como
+  // `<h4>` porque es la etiqueta de un widget transitorio (`role="alert"`),
+  // no un encabezado del esquema del documento; junto al `<h1>` real de esta
+  // página, axe interpreta ese salto como un esquema de encabezados roto.
+  // Mismo criterio documentado en LoginPage.test.ts/SettingsPage.test.ts: no
+  // es un defecto de esta pantalla ni de BaseAlert.
+  it('has no axe violations in the load-error state', async () => {
+    fetchMock.mockResolvedValueOnce({ kind: 'network-error' })
+    const wrapper = mountPage()
+    await flushPromises()
+
+    const results = await axe(wrapper.element, {
+      rules: { ...axeOptions.rules, 'heading-order': { enabled: false } },
+    })
+    expect(results).toHaveNoViolations()
+  })
 })
