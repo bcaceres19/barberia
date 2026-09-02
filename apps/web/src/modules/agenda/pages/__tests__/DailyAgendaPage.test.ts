@@ -386,4 +386,50 @@ describe('DailyAgendaPage', () => {
       expect(wrapper.get<HTMLInputElement>('input[type="date"]').element.disabled).toBe(true)
     })
   })
+
+  describe('línea temporal de escritorio (Fase 4a, adopción NAVA)', () => {
+    async function mountWithFixedDate(items = oneEntry) {
+      fetchBarberSummariesMock.mockResolvedValueOnce({ kind: 'success', items: twoBarbers })
+      fetchBarbershopTimezoneMock.mockResolvedValueOnce({
+        kind: 'success',
+        timezone: 'America/Bogota',
+      })
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items })
+
+      const router = buildRouter()
+      // Fecha fija en el pasado: nunca coincide con "hoy" real al correr la
+      // prueba, así que el marcador "Ahora" tiene un resultado determinista
+      // (no debe aparecer).
+      await router.push({ name: 'panel', query: { date: '2026-08-28', barberId: 'b-1' } })
+      await router.isReady()
+      const wrapper = mount(DailyAgendaPage, { global: { plugins: [router] } })
+      await flushPromises()
+      return { wrapper, router }
+    }
+
+    it('renders one hidden, non-focusable timeline slip per entry, alongside the accessible list', async () => {
+      const { wrapper } = await mountWithFixedDate()
+
+      const timeline = wrapper.get('.daily-agenda-page__timeline')
+      expect(timeline.attributes('aria-hidden')).toBe('true')
+
+      const slips = wrapper.findAll('.daily-agenda-page__timeline-slip')
+      expect(slips.length).toBe(1)
+      expect(slips[0]!.attributes('tabindex')).toBe('-1')
+      expect(slips[0]!.text()).toContain('Juan Pérez')
+
+      // La lista accesible sigue existiendo con la misma información.
+      expect(wrapper.get('.daily-agenda-page__list').text()).toContain('Juan Pérez')
+    })
+
+    it('does not render the timeline when there are no entries for the day', async () => {
+      const { wrapper } = await mountWithFixedDate([])
+      expect(wrapper.find('.daily-agenda-page__timeline').exists()).toBe(false)
+    })
+
+    it('does not show "Ahora" for a date other than today in the barbershop timezone', async () => {
+      const { wrapper } = await mountWithFixedDate()
+      expect(wrapper.find('.daily-agenda-page__timeline-now').exists()).toBe(false)
+    })
+  })
 })

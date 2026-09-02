@@ -16,6 +16,7 @@ import {
   formatCivilDateFull,
   getCivilDateInTimezone,
   isCivilDateString,
+  minutesIntoCivilDate,
   shiftCivilDate,
 } from '@/shared/time/civilDate'
 import {
@@ -249,13 +250,82 @@ function entryTime(entry: DailyAgendaEntry): string {
   if (!barbershopTimezone.value) return ''
   return formatTimeInTimezone(entry.startsAt, barbershopTimezone.value)
 }
+
+// Línea temporal horizontal de escritorio (estandar-diseno-visual.md §11.2,
+// especificacion-frontend-nava.md §7.2): "no es fuente de disponibilidad",
+// solo posiciona visualmente las fichas ya devueltas por el servidor. La
+// lista cronológica de arriba sigue siendo la fuente accesible equivalente;
+// esta franja se marca aria-hidden y sus enlaces quedan fuera del tabulado
+// (mismo turno, doble forma de abrir el detalle sería redundante para
+// teclado/lector).
+const MIN_TIMELINE_SPAN_MINUTES = 4 * 60
+
+const timelineBounds = computed(() => {
+  if (!barbershopTimezone.value || !selectedDate.value || entries.value.length === 0) return null
+  const tz = barbershopTimezone.value
+  const date = selectedDate.value
+  const starts = entries.value.map((e) => minutesIntoCivilDate(e.startsAt, date, tz))
+  const ends = entries.value.map((e) => minutesIntoCivilDate(e.endsAt, date, tz))
+  const startHour = Math.floor(Math.min(...starts) / 60) * 60
+  const endHour = Math.ceil(Math.max(...ends) / 60) * 60
+  const span = Math.max(endHour - startHour, MIN_TIMELINE_SPAN_MINUTES)
+  return { start: startHour, end: startHour + span }
+})
+
+const timelineTicks = computed(() => {
+  const bounds = timelineBounds.value
+  if (!bounds) return []
+  const ticks: { minute: number; label: string }[] = []
+  for (let minute = bounds.start; minute <= bounds.end; minute += 60) {
+    const hour = Math.floor(minute / 60) % 24
+    ticks.push({ minute, label: `${String(hour).padStart(2, '0')}:00` })
+  }
+  return ticks
+})
+
+function timelinePercent(minute: number): string {
+  const bounds = timelineBounds.value
+  if (!bounds) return '0%'
+  return `${((minute - bounds.start) / (bounds.end - bounds.start)) * 100}%`
+}
+
+function timelineSlipStyle(entry: DailyAgendaEntry): { left: string; width: string } {
+  const bounds = timelineBounds.value
+  if (!bounds || !selectedDate.value || !barbershopTimezone.value)
+    return { left: '0%', width: '0%' }
+  const start = minutesIntoCivilDate(entry.startsAt, selectedDate.value, barbershopTimezone.value)
+  const end = minutesIntoCivilDate(entry.endsAt, selectedDate.value, barbershopTimezone.value)
+  const span = bounds.end - bounds.start
+  // Ancho mínimo visual del 4%: una ficha muy corta sigue siendo legible en
+  // la línea de tiempo sin que eso cambie su duración real.
+  const width = Math.max(((end - start) / span) * 100, 4)
+  return { left: timelinePercent(start), width: `${width}%` }
+}
+
+// "Ahora" (estandar-diseno-visual.md §7.2, §9.3): decorativo respecto al
+// estado del turno, nunca cambia `confirmed`. Solo se calcula al montar/
+// recargar la agenda (sin reloj en vivo): un dato de referencia visual, no
+// una fuente de disponibilidad que necesite exactitud al segundo.
+const nowMarkerPercent = computed(() => {
+  const bounds = timelineBounds.value
+  if (!bounds || !selectedDate.value || !barbershopTimezone.value || !isViewingToday.value) {
+    return null
+  }
+  const nowMinute = minutesIntoCivilDate(
+    new Date().toISOString(),
+    selectedDate.value,
+    barbershopTimezone.value,
+  )
+  if (nowMinute < bounds.start || nowMinute > bounds.end) return null
+  return timelinePercent(nowMinute)
+})
 </script>
 
 <template>
   <section class="daily-agenda-page" aria-labelledby="daily-agenda-page-title">
     <header class="daily-agenda-page__header">
       <div>
-        <h1 id="daily-agenda-page-title" class="daily-agenda-page__title">Agenda de hoy</h1>
+        <h1 id="daily-agenda-page-title" class="daily-agenda-page__title">Agenda</h1>
         <p v-if="selectedDateLabel" class="daily-agenda-page__date">
           {{ selectedDateLabel }} · Zona {{ barbershopTimezone }}
         </p>
@@ -393,39 +463,89 @@ function entryTime(entry: DailyAgendaEntry): string {
               No hay turnos para {{ selectedBarber?.fullName }} {{ emptyStateDateText }}.
             </p>
 
-            <ul
-              v-else
-              class="daily-agenda-page__list"
-              :aria-label="`Turnos de ${selectedBarber?.fullName}`"
-            >
-              <li
-                v-for="entry in entries"
-                :key="entry.id"
-                class="daily-agenda-page__item"
-                :class="{ 'daily-agenda-page__item--terminal': entry.status !== 'confirmed' }"
+            <template v-else>
+              <!-- Línea temporal horizontal de escritorio: presentación
+                   visual adicional del mismo turno de la lista de abajo, que
+                   sigue siendo la fuente accesible equivalente (§7.2, §8.1).
+                   aria-hidden + tabindex="-1" evitan una segunda forma
+                   redundante de llegar al mismo detalle para teclado/lector. -->
+              <div v-if="timelineBounds" class="daily-agenda-page__timeline" aria-hidden="true">
+                <div class="daily-agenda-page__timeline-track">
+                  <div
+                    v-for="tick in timelineTicks"
+                    :key="tick.minute"
+                    class="daily-agenda-page__timeline-tick"
+                    :style="{ left: timelinePercent(tick.minute) }"
+                  >
+                    <span class="daily-agenda-page__timeline-tick-label">{{ tick.label }}</span>
+                  </div>
+
+                  <div
+                    v-if="nowMarkerPercent"
+                    class="daily-agenda-page__timeline-now"
+                    :style="{ left: nowMarkerPercent }"
+                  >
+                    <span class="daily-agenda-page__timeline-now-label">Ahora</span>
+                  </div>
+
+                  <RouterLink
+                    v-for="entry in entries"
+                    :key="`timeline-${entry.id}`"
+                    tabindex="-1"
+                    class="daily-agenda-page__timeline-slip"
+                    :class="{
+                      'daily-agenda-page__timeline-slip--terminal': entry.status !== 'confirmed',
+                    }"
+                    :style="timelineSlipStyle(entry)"
+                    :to="{
+                      name: 'agenda-detalle-turno',
+                      params: { appointmentId: entry.id },
+                      query: withQuery({}),
+                    }"
+                  >
+                    <span class="daily-agenda-page__timeline-slip-time">{{
+                      entryTime(entry)
+                    }}</span>
+                    <span class="daily-agenda-page__timeline-slip-name">{{
+                      entry.attendeeName
+                    }}</span>
+                  </RouterLink>
+                </div>
+              </div>
+
+              <ul
+                class="daily-agenda-page__list"
+                :aria-label="`Turnos de ${selectedBarber?.fullName}`"
               >
-                <RouterLink
-                  class="daily-agenda-page__item-main"
-                  :to="{
-                    name: 'agenda-detalle-turno',
-                    params: { appointmentId: entry.id },
-                    query: withQuery({}),
-                  }"
+                <li
+                  v-for="entry in entries"
+                  :key="entry.id"
+                  class="daily-agenda-page__item"
+                  :class="{ 'daily-agenda-page__item--terminal': entry.status !== 'confirmed' }"
                 >
-                  <span class="daily-agenda-page__item-time">{{ entryTime(entry) }}</span>
-                  <span class="daily-agenda-page__item-name">{{ entry.attendeeName }}</span>
-                  <span class="daily-agenda-page__item-service">{{ entry.serviceName }}</span>
-                </RouterLink>
-                <BaseBadge
-                  :class="statusBadgeClass(entry)"
-                  size="sm"
-                  dot
-                  :label="statusLabel(entry)"
-                >
-                  {{ statusLabel(entry) }}
-                </BaseBadge>
-              </li>
-            </ul>
+                  <RouterLink
+                    class="daily-agenda-page__item-main"
+                    :to="{
+                      name: 'agenda-detalle-turno',
+                      params: { appointmentId: entry.id },
+                      query: withQuery({}),
+                    }"
+                  >
+                    <span class="daily-agenda-page__item-time">{{ entryTime(entry) }}</span>
+                    <span class="daily-agenda-page__item-name">{{ entry.attendeeName }}</span>
+                    <span class="daily-agenda-page__item-service">{{ entry.serviceName }}</span>
+                  </RouterLink>
+                  <BaseBadge
+                    :class="statusBadgeClass(entry)"
+                    size="sm"
+                    dot
+                    :label="statusLabel(entry)"
+                  >
+                    {{ statusLabel(entry) }}
+                  </BaseBadge>
+                </li>
+              </ul>
+            </template>
           </template>
         </template>
       </template>
@@ -453,7 +573,9 @@ function entryTime(entry: DailyAgendaEntry): string {
 
 .daily-agenda-page__title {
   margin: 0;
-  font-size: var(--font-size-heading-lg);
+  font-size: var(--font-size-h1);
+  line-height: var(--font-size-h1-line);
+  font-weight: var(--font-weight-h1);
   color: var(--color-text-primary);
 }
 
@@ -540,7 +662,9 @@ function entryTime(entry: DailyAgendaEntry): string {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  min-height: 44px;
+  /* Ficha (§6.1, §7.2): al menos 64px en móvil, no el objetivo táctil
+     mínimo de 44px. */
+  min-height: 64px;
   padding: var(--space-4);
   background-color: var(--color-surface);
   border: var(--border-width-normal) solid var(--color-border-subtle);
@@ -584,12 +708,15 @@ function entryTime(entry: DailyAgendaEntry): string {
   font-family: var(--font-family-base);
   font-size: var(--font-size-body);
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   color: var(--color-text-primary);
 }
 
+/* Persona atendida como texto principal de la ficha (§6.1). */
 .daily-agenda-page__item-name {
   font-family: var(--font-family-base);
   font-size: var(--font-size-body);
+  font-weight: 600;
   color: var(--color-text-primary);
 }
 
@@ -597,5 +724,102 @@ function entryTime(entry: DailyAgendaEntry): string {
   font-family: var(--font-family-base);
   font-size: var(--font-size-body-sm);
   color: var(--color-text-secondary);
+}
+
+/* Línea temporal horizontal de escritorio (§7.2, §11.2): oculta por defecto,
+   visible solo desde 1024px, donde hay espacio real para un eje legible. */
+.daily-agenda-page__timeline {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .daily-agenda-page__timeline {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .daily-agenda-page__timeline-track {
+    position: relative;
+    height: 104px;
+    margin-top: var(--space-6);
+    padding: 0 var(--space-2);
+    background-color: var(--color-surface);
+    border: var(--border-width-normal) solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+  }
+
+  .daily-agenda-page__timeline-tick {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-left: var(--border-width-normal) solid var(--color-border-subtle);
+  }
+
+  .daily-agenda-page__timeline-tick-label {
+    position: absolute;
+    top: calc(-1 * var(--space-6));
+    left: var(--space-1);
+    white-space: nowrap;
+    font-size: var(--font-size-caption);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-secondary);
+  }
+
+  /* Latón oscuro (foco/énfasis secundario, §4.1): el marcador "Ahora" no es
+     una acción primaria y no reutiliza el color de acción. */
+  .daily-agenda-page__timeline-now {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 1;
+    border-left: var(--border-width-emphasis) solid var(--color-focus);
+  }
+
+  .daily-agenda-page__timeline-now-label {
+    position: absolute;
+    top: calc(-1 * var(--space-6));
+    left: var(--space-1);
+    white-space: nowrap;
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    color: var(--color-focus);
+  }
+
+  .daily-agenda-page__timeline-slip {
+    position: absolute;
+    top: var(--space-3);
+    bottom: var(--space-3);
+    display: flex;
+    min-width: 64px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    overflow: hidden;
+    padding: var(--space-1) var(--space-2);
+    background-color: var(--color-action-soft);
+    border: var(--border-width-normal) solid var(--color-action-soft-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-action-primary);
+    text-decoration: none;
+  }
+
+  .daily-agenda-page__timeline-slip--terminal {
+    background-color: var(--color-inactive-surface);
+    border-color: var(--color-inactive-border);
+    color: var(--color-inactive-text);
+  }
+
+  .daily-agenda-page__timeline-slip-time {
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .daily-agenda-page__timeline-slip-name {
+    overflow: hidden;
+    font-size: var(--font-size-caption);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 </style>
