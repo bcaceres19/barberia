@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-ORCH-NAVA-FRONTEND-v1"
 version: "1.4"
 kind: "orchestration"
-status: "draft"
+status: "ready"
 target_agents:
   - "claude"
   - "codex"
@@ -32,14 +32,14 @@ related_hu:
   - "HU-063"
   - "HU-064"
   - "HU-065"
-issue: "pending"
-issue_url: null
+issue: 168
+issue_url: "https://github.com/bcaceres19/barberia/issues/168"
 suggested_issue_title: "chore(web): orquestar el rediseño incremental de todas las pantallas NAVA"
 branch: null
 pr: null
 pr_url: null
 depends_on:
-  - "DEC-077, DEC-078 y DEC-079 registradas; estándar visual y mockups NAVA disponibles"
+  - "DEC-077, DEC-078 y DEC-079 integradas en `main` mediante el issue #166 (PR #167); estándar visual y mockups NAVA disponibles"
   - "Un issue real por cada fundación o pantalla que se vaya a migrar"
 rules:
   - "RN-TEN-01"
