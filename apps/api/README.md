@@ -826,11 +826,22 @@ viva, ni viceversa.
 `DualChannelRecoverySender` intenta SIEMPRE los dos canales, sin importar si
 uno falla (tolerancia a fallo parcial, sin cambiar la respuesta genérica de
 `DEC-065`); cada adaptador aplica un timeout de 5 s sin reintento síncrono
-dentro de la solicitud HTTP. Sin las credenciales de despliegue configuradas
-(típicamente local/test), `cmd/api.buildRouter` usa
-`auth.LoggingRecoveryCodeSender` (marcador de posición que solo registra que
-"habría" enviado, sin teléfono/correo/código) en su lugar — mismo patrón que
-el reto telefónico de HU-007.
+dentro de la solicitud HTTP. `cmd/api.selectRecoverySender` decide qué
+remitente concreto construye `buildRouter`:
+
+| Meta completo | Resend completo | Ambiente | Remitente |
+| --- | --- | --- | --- |
+| sí | sí | cualquiera | `notification.DualChannelRecoverySender` (WhatsApp + correo) |
+| no | sí | `local`/`test` | `notification.EmailOnlyRecoverySender` (solo correo, issue #86) |
+| no | sí | `pilot`/`production` | `auth.LoggingRecoveryCodeSender` (nunca correo único fuera de local/test) |
+| — | no | cualquiera | `auth.LoggingRecoveryCodeSender` |
+
+`auth.LoggingRecoveryCodeSender` es el marcador de posición que solo
+registra que "habría" enviado, sin teléfono/correo/código — mismo patrón que
+el reto telefónico de HU-007. Fuera de local/test, `config.Load` ya exige
+Meta y Resend completos para arrancar (`DEC-066`); la fila de correo único
+en la tabla es una segunda llave dentro de `selectRecoverySender` por si
+algo construye un `config.Config` sin pasar por `Load`.
 
 | Variable | Por defecto | Uso |
 | --- | --- | --- |
@@ -860,6 +871,30 @@ por `cmd/api/main.go`, mismo doble candado que
 `cmd/api/recovery_integration_test.go` para completar el recorrido de
 recuperación real sin un proveedor real ("terceros se interceptan"); el E2E
 visual de tres pasos pertenece a `HU-011`.
+
+### Prueba local con correo real: correo único vía Resend (issue #86)
+
+Para probar el recorrido completo de recuperación (`HU-008`/`HU-011`) con un
+OTP real recibido por correo, sin SIM ni credenciales de Meta, fuera del
+repositorio:
+
+1. Cuenta Resend propia, con un remitente o dominio verificado.
+2. Variables de entorno del proceso `api` (nunca en el repositorio):
+   - `APP_ENVIRONMENT=local` (o `test`).
+   - `APP_RESEND_API_KEY=<tu-api-key-de-resend>`.
+   - `APP_RESEND_FROM_ADDRESS=<tu-remitente-verificado>`.
+   - Sin ninguna variable `APP_META_WHATSAPP_*` (si alguna queda
+     configurada, `selectRecoverySender` prioriza el remitente dual y exige
+     también Meta).
+3. Una cuenta local sintética activa con teléfono marcado como verificado
+   (la precondición de `auth_recovery_request` no cambia) y el correo real
+   que vas a revisar.
+4. Ejecutar `/recuperar-acceso` desde la pantalla real: solicitar el código,
+   confirmar la respuesta genérica, recibir el correo, verificarlo, cambiar
+   la contraseña y comprobar que revoca las sesiones activas.
+
+Nunca pegues la API key, el OTP, la contraseña ni el token de reinicio en
+commits, issues, capturas o logs versionados (`RN-DAT-01`/`RN-DAT-02`).
 
 ### Contención entre paquetes de prueba: solo 2 cuentas con teléfono verificado
 

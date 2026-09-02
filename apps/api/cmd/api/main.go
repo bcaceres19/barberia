@@ -422,30 +422,9 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	private.Post("/appointments/{appointmentId}/reschedule", rescheduleAppointmentHandler.ServeHTTP)
 
 	// HU-008 (DEC-063-066): recuperación de acceso con código de un solo
-	// uso. sender es el adaptador dual de Meta WhatsApp Cloud API + Resend
-	// cuando hay credenciales configuradas; sin ellas (típicamente
-	// local/test, donde config.Load no las exige) se usa el marcador de
-	// posición documentado, igual patrón que el reto telefónico de HU-007.
-	var recoverySender auth.RecoveryCodeSender
-	if cfg.MetaWhatsAppPhoneNumberID != "" && cfg.MetaWhatsAppAccessToken != "" && cfg.MetaWhatsAppTemplateName != "" &&
-		cfg.ResendAPIKey != "" && cfg.ResendFromAddress != "" {
-		recoverySender = notification.NewDualChannelRecoverySender(
-			notification.NewMetaWhatsAppSender(notification.MetaWhatsAppConfig{
-				APIVersion:    cfg.MetaWhatsAppAPIVersion,
-				PhoneNumberID: cfg.MetaWhatsAppPhoneNumberID,
-				AccessToken:   cfg.MetaWhatsAppAccessToken,
-				TemplateName:  cfg.MetaWhatsAppTemplateName,
-				LanguageCode:  cfg.MetaWhatsAppLanguageCode,
-			}, nil),
-			notification.NewResendEmailSender(notification.ResendEmailConfig{
-				APIKey:      cfg.ResendAPIKey,
-				FromAddress: cfg.ResendFromAddress,
-				Subject:     cfg.ResendSubject,
-			}, nil),
-		)
-	} else {
-		recoverySender = auth.NewLoggingRecoveryCodeSender(logger)
-	}
+	// uso. selectRecoverySender concentra la matriz de selección (dual /
+	// correo único local-test / marcador), ver su documentación.
+	recoverySender := selectRecoverySender(cfg, logger)
 	if capturePath := os.Getenv("APP_RECOVERY_CAPTURE_FILE"); capturePath != "" {
 		// Mismo doble candado de entorno que APP_PHONE_CHALLENGE_CAPTURE_FILE
 		// de HU-007: la captura en claro NUNCA puede activarse fuera de
@@ -481,4 +460,59 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	router.Post("/api/v1/public/auth/recovery/reset-password", recoveryResetPasswordHandler.ServeHTTP)
 
 	return router, nil
+}
+
+// selectRecoverySender decide qué [auth.RecoveryCodeSender] usa HU-008
+// (DEC-051/DEC-063-066):
+//
+//   - Meta WhatsApp completo + Resend completo → remitente dual, en
+//     cualquier ambiente (comportamiento sin cambios).
+//   - Solo Resend completo, sin Meta, en APP_ENVIRONMENT=local o test →
+//     remitente exclusivo por correo (excepción de
+//     docs/10-backlog/prompts/test/issue-86-otp-correo-resend.md, issue
+//     #86), para poder probar el recorrido de recuperación con un correo
+//     real sin depender de credenciales de Meta.
+//   - Cualquier otro caso (sin credenciales, o solo Resend fuera de
+//     local/test) → marcador de posición que solo registra en el log.
+//
+// La comprobación de ambiente vive AQUÍ, no solo en config.Load: aunque
+// alguien construya un config.Config a mano fuera de Load (p. ej. en una
+// prueba), esta función nunca elige correo único en pilot/production. Fuera
+// de local/test, config.Load ya exige Meta y Resend completos para arrancar
+// (DEC-066), así que el caso "solo Resend, ambiente endurecido" solo ocurre
+// si alguien evita Load(); aun así, aquí cae al marcador de posición, nunca
+// al correo único.
+func selectRecoverySender(cfg config.Config, logger *slog.Logger) auth.RecoveryCodeSender {
+	metaComplete := cfg.MetaWhatsAppPhoneNumberID != "" && cfg.MetaWhatsAppAccessToken != "" &&
+		cfg.MetaWhatsAppTemplateName != ""
+	resendComplete := cfg.ResendAPIKey != "" && cfg.ResendFromAddress != ""
+	emailOnlyAllowed := cfg.Environment == "local" || cfg.Environment == "test"
+
+	switch {
+	case metaComplete && resendComplete:
+		return notification.NewDualChannelRecoverySender(
+			notification.NewMetaWhatsAppSender(notification.MetaWhatsAppConfig{
+				APIVersion:    cfg.MetaWhatsAppAPIVersion,
+				PhoneNumberID: cfg.MetaWhatsAppPhoneNumberID,
+				AccessToken:   cfg.MetaWhatsAppAccessToken,
+				TemplateName:  cfg.MetaWhatsAppTemplateName,
+				LanguageCode:  cfg.MetaWhatsAppLanguageCode,
+			}, nil),
+			notification.NewResendEmailSender(notification.ResendEmailConfig{
+				APIKey:      cfg.ResendAPIKey,
+				FromAddress: cfg.ResendFromAddress,
+				Subject:     cfg.ResendSubject,
+			}, nil),
+		)
+	case resendComplete && emailOnlyAllowed:
+		return notification.NewEmailOnlyRecoverySender(
+			notification.NewResendEmailSender(notification.ResendEmailConfig{
+				APIKey:      cfg.ResendAPIKey,
+				FromAddress: cfg.ResendFromAddress,
+				Subject:     cfg.ResendSubject,
+			}, nil),
+		)
+	default:
+		return auth.NewLoggingRecoveryCodeSender(logger)
+	}
 }
