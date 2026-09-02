@@ -1771,6 +1771,9 @@ onMounted(loadColombianHolidays)
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
+  /* Ficha (§6.1, §7.2): al menos 64px en móvil, no el objetivo táctil
+     mínimo de 44px. */
+  min-height: 64px;
   padding: var(--space-4);
   background-color: var(--color-surface);
   border: var(--border-width-normal) solid var(--color-border-subtle);
@@ -1781,7 +1784,10 @@ onMounted(loadColombianHolidays)
 .schedules-page__item-time {
   font-family: var(--font-family-base);
   font-size: var(--font-size-body);
+  font-weight: 600;
   color: var(--color-text-primary);
+  /* Cifras tabulares: hora/fecha, el dato principal de la fila (§5.2). */
+  font-variant-numeric: tabular-nums;
 }
 
 .schedules-page__item-actions {
