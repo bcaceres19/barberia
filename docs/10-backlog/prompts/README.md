@@ -1,6 +1,6 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.59"
+version: "1.60"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-02"
@@ -174,7 +174,8 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-FIX-146-DETALLE-TURNO-TOKENS-v1](fix/issue-146-detalle-turno-tokens.md) | `fix` | `HU-064`, `HU-065` | [#146](https://github.com/bcaceres19/barberia/issues/146), cerrado | `executed` | Fase 4b (issue #144/PR #145) integrada en `main` | Rama `fix/146-detalle-turno-tokens`; [PR #147](https://github.com/bcaceres19/barberia/pull/147), integrada en `main` con CI 4/4 verde (tras un rerun del job Go, fallo flaky no relacionado) |
 | [PROMPT-FIX-149-TOKENS-CONFIGURACION-v1](fix/issue-149-tokens-pantallas-configuracion.md) | `fix` | `HU-020`–`HU-023`, `HU-040`–`HU-042` | [#149](https://github.com/bcaceres19/barberia/issues/149), cerrado | `executed` | Fix de Fase 4c (issue #146/PR #147) integrado en `main` | Rama `fix/149-tokens-pantallas-configuracion`; [PR #150](https://github.com/bcaceres19/barberia/pull/150), integrada en `main` con CI 4/4 verde |
 | [PROMPT-CHORE-170-CONFIGURACION-BARBERIA-NAVA-v1.1](chore/issue-170-configuracion-barberia-nava.md) | `chore` | `HU-020` | [#170](https://github.com/bcaceres19/barberia/issues/170), cerrado | `executed` | Fase 7 (issue maestro #168); confirma con evidencia real que la pantalla ya cumple `DEC-079` gracias a la Fase 1 (#132) y al fix #149; corrige selectores E2E desactualizados y añade `vitest-axe` con alertas visibles | Rama `feat/170-configuracion-barberia-nava`; [PR #175](https://github.com/bcaceres19/barberia/pull/175), integrada en `main` con CI 4/4 verde |
-| [PROMPT-CHORE-172-SERVICIOS-POR-BARBERO-NAVA-v1](chore/issue-172-servicios-por-barbero-nava.md) | `chore` | `HU-023` | [#172](https://github.com/bcaceres19/barberia/issues/172) | `ready` | Fase 10 (issue maestro #168); corrige la casilla de asignación sin `accent-color` NAVA (único defecto real encontrado) y añade evidencia/axe en vivo | Rama `feat/172-servicios-por-barbero-nava`; sin PR todavía |
+| [PROMPT-CHORE-172-SERVICIOS-POR-BARBERO-NAVA-v1](chore/issue-172-servicios-por-barbero-nava.md) | `chore` | `HU-023` | [#172](https://github.com/bcaceres19/barberia/issues/172), cerrado | `executed` | Fase 10 (issue maestro #168); corrige la casilla de asignación sin `accent-color` NAVA (único defecto real encontrado) y añade evidencia/axe en vivo | Rama `feat/172-servicios-por-barbero-nava`; [PR #178](https://github.com/bcaceres19/barberia/pull/178), integrada en `main` con CI 4/4 verde |
+| [PROMPT-CHORE-173-DETALLE-HISTORIAL-TURNO-NAVA-v1](chore/issue-173-detalle-historial-turno-nava.md) | `chore` | `HU-064`, `HU-065` | [#173](https://github.com/bcaceres19/barberia/issues/173) | `ready` | Fase 6 (issue maestro #168); confirma con un turno real que detalle/historial/reprogramación ya cumplen `DEC-079`; crea evidencia responsiva nueva (no existía) | Rama `feat/173-detalle-historial-reprogramacion-nava`; sin PR todavía |
 
 ## 10. Lista de control al guardar o entregar
 

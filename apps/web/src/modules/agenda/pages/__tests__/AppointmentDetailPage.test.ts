@@ -464,4 +464,26 @@ describe('AppointmentDetailPage', () => {
     const results = await axe(wrapper.element)
     expect(results.violations).toEqual([])
   })
+
+  // heading-order: BaseAlert.vue (HU-009) fija el título de una alerta como
+  // `<h4>` porque es la etiqueta de un widget transitorio (`role="alert"`),
+  // no un encabezado del esquema del documento; junto al `<h1>`/`<h2>` reales
+  // de esta página, axe interpreta ese salto como un esquema de encabezados
+  // roto. Mismo criterio documentado en LoginPage.test.ts/SettingsPage.test.ts:
+  // no es un defecto de esta pantalla ni de BaseAlert.
+  it('has no obvious accessibility violations with the reschedule conflict alert visible', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openRescheduleDialog(wrapper)
+
+    rescheduleAppointmentMock.mockResolvedValueOnce({
+      kind: 'conflict',
+      detail: 'El barbero ya tiene un turno en ese horario.',
+    })
+    submitRescheduleDialog(wrapper)
+    await flushPromises()
+
+    const results = await axe(wrapper.element, { rules: { 'heading-order': { enabled: false } } })
+    expect(results.violations).toEqual([])
+  })
 })
