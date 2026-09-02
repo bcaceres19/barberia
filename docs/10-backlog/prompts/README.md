@@ -1,6 +1,6 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.44"
+version: "1.45"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-01"
@@ -165,6 +165,7 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-TEST-OTP-EMAIL-RESEND-v1](test/issue-86-otp-correo-resend.md) | `test` | `HU-008`, `HU-011` | [#86](https://github.com/bcaceres19/barberia/issues/86) | `ready` | HU-008/HU-011 integradas; credenciales y buzón Resend se aportan de forma segura al ejecutar | Persistido en `docs/86-otp-correo-prompt` / [PR #129](https://github.com/bcaceres19/barberia/pull/129); ejecución futura en `test/86-otp-correo-resend` |
 | [PROMPT-TEST-QA-B2-B3-CHROME-v1](test/2026-09-01-qa-manual-b2-b3-chrome-mcp.md) | `test` | `HU-040`–`HU-042`, `HU-060`–`HU-065` | — (no modifica el repositorio) | `ready` | Todas las nueve historias integradas en `main`; issues de seguimiento reales (`#90`,`#95`,`#98`,`#100`,`#107`,`#111`,`#116`,`#120`,`#123`) | Sin rama/PR: QA manual en navegador real vía MCP de Chrome, reproduce a mano los `.spec.ts` ya escritos de siete de las nueve historias; pendiente de ejecución |
 | [PROMPT-CHORE-132-FUNDACIONES-NAVA-v1](chore/issue-132-fundaciones-nava.md) | `chore` | — | [#132](https://github.com/bcaceres19/barberia/issues/132), cerrado | `executed` | `DEC-077`/PR #131 integrado en `main` | Rama `feat/132-fundaciones-nava`; [PR #133](https://github.com/bcaceres19/barberia/pull/133), integrada en `main` con CI 4/4 verde |
+| [PROMPT-CHORE-135-SHELL-PRIVADO-NAVA-v1](chore/issue-135-shell-privado-nava.md) | `chore` | — | [#135](https://github.com/bcaceres19/barberia/issues/135), cerrado | `executed` | Fase 1 (issue #132/PR #133) integrada en `main` | Rama `feat/135-shell-privado-nava`; [PR #136](https://github.com/bcaceres19/barberia/pull/136), integrada en `main` con CI 4/4 verde |
 
 ## 10. Lista de control al guardar o entregar
 
