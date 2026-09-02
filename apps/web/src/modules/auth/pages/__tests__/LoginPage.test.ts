@@ -57,9 +57,9 @@ function buildRouter() {
   })
 }
 
-async function mountPage() {
+async function mountPage(query?: Record<string, string>) {
   const router = buildRouter()
-  await router.push({ name: 'acceso' })
+  await router.push({ name: 'acceso', query })
   await router.isReady()
   const wrapper = mount(LoginPage, {
     global: {
@@ -115,6 +115,27 @@ describe('LoginPage', () => {
     await flushPromises()
 
     expect(router.currentRoute.value.path).toBe('/panel/otra-seccion')
+  })
+
+  it('shows a "Tu sesión venció" message when redirected with ?motivo=sesion-expirada (Fase 3, issue #138)', async () => {
+    const { wrapper } = await mountPage({ motivo: 'sesion-expirada' })
+    expect(wrapper.text()).toContain('Tu sesión venció')
+  })
+
+  it('does not show the session-expired message on a plain visit to /acceso', async () => {
+    const { wrapper } = await mountPage()
+    expect(wrapper.text()).not.toContain('Tu sesión venció')
+  })
+
+  it('hides the session-expired message once a submission is attempted', async () => {
+    loginMock.mockResolvedValueOnce({ kind: 'invalid-credentials' })
+    const { wrapper } = await mountPage({ motivo: 'sesion-expirada' })
+    expect(wrapper.text()).toContain('Tu sesión venció')
+
+    await fillAndSubmit(wrapper, 'barbero@ejemplo.test', 'clave-incorrecta')
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Tu sesión venció')
   })
 
   it('ignores an unsafe redirect target and falls back to /panel', async () => {

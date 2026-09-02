@@ -5,6 +5,7 @@
 // el barbero, nunca al revés.
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { BaseAlert, NavaWordmark } from '@/shared/ui'
 import LoginForm, { type LoginServerErrorSummary } from '../components/LoginForm.vue'
 import PhoneChallengeForm from '../components/PhoneChallengeForm.vue'
 import { login } from '../api/loginApi'
@@ -21,6 +22,15 @@ const password = ref('')
 const screenState = ref<LoginScreenState>({ status: 'idle' })
 
 const isSubmitting = computed(() => screenState.value.status === 'submitting')
+
+// "Sesión vencida" (especificacion-frontend-nava.md §7.1): installSessionHandling.ts
+// ya empuja este query param al redirigir tras un 401 fuera de acceso; esta
+// pantalla solo le da el mensaje en contexto que el estándar exige. No
+// distingue más motivo que este (nunca revela detalle de seguridad) y deja
+// de mostrarse en cuanto el barbero reintenta un envío.
+const showSessionExpired = computed(
+  () => route.query.motivo === 'sesion-expirada' && screenState.value.status === 'idle',
+)
 
 // HU-007 (DEC-062): un 429 ofrece el reto telefónico como salida inmediata,
 // sin esperar el escalamiento de 24 horas. `PhoneChallengeForm` es dueño de
@@ -142,8 +152,12 @@ const onChallengeVerified = () => {
 <template>
   <main class="login-page">
     <div class="login-page__card">
-      <p class="login-page__brand">Barbería</p>
-      <h1 class="login-page__title">Inicia sesión</h1>
+      <NavaWordmark />
+      <h1 class="login-page__title">Accede a NAVA</h1>
+
+      <BaseAlert v-if="showSessionExpired" variant="info" title="Tu sesión venció" role="status">
+        Inicia sesión de nuevo para continuar.
+      </BaseAlert>
 
       <LoginForm
         :email="email"
@@ -182,15 +196,6 @@ const onChallengeVerified = () => {
   gap: var(--space-4);
   width: 100%;
   max-width: 360px;
-}
-
-.login-page__brand {
-  margin: 0;
-  font-size: var(--font-size-body-sm);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
 }
 
 .login-page__title {
