@@ -404,6 +404,7 @@ async function onToggleService(service: ServiceSummary, event: Event) {
   height: 24px;
   min-width: 24px;
   flex-shrink: 0;
+  accent-color: var(--color-action-primary);
 }
 
 /* El label ENVUELVE el checkbox y el nombre: es el objetivo táctil real de

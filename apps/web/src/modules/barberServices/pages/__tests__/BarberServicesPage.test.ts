@@ -284,4 +284,37 @@ describe('BarberServicesPage', () => {
     const results = await axe(wrapper.element, axeOptions)
     expect(results).toHaveNoViolations()
   })
+
+  // heading-order: BaseAlert.vue (HU-009) fija el título de una alerta como
+  // `<h4>` porque es la etiqueta de un widget transitorio (`role="alert"`),
+  // no un encabezado del esquema del documento; junto al único `<h1>` real
+  // de esta página, axe interpreta ese salto como un esquema de encabezados
+  // roto. Mismo criterio documentado en LoginPage.test.ts/SettingsPage.test.ts:
+  // no es un defecto de esta pantalla ni de BaseAlert.
+  const axeOptionsWithAlert = {
+    rules: { 'color-contrast': { enabled: false }, 'heading-order': { enabled: false } },
+  }
+
+  it('has no axe violations with the last-active-conflict alert visible', async () => {
+    const wrapper = await mountReady(oneBarber, twoServices, ['s-1'])
+    unassignServiceMock.mockResolvedValueOnce({ kind: 'last-active-conflict' })
+
+    const box = checkbox(wrapper, 's-1')
+    box.checked = false
+    await box.dispatchEvent(new Event('change'))
+    await flushPromises()
+
+    const results = await axe(wrapper.element, axeOptionsWithAlert)
+    expect(results).toHaveNoViolations()
+  })
+
+  it('has no axe violations in the load-error state', async () => {
+    fetchBarberSummariesMock.mockResolvedValueOnce({ kind: 'network-error' })
+    fetchServiceSummariesMock.mockResolvedValueOnce({ kind: 'success', items: twoServices })
+    const wrapper = mountPage()
+    await flushPromises()
+
+    const results = await axe(wrapper.element, axeOptionsWithAlert)
+    expect(results).toHaveNoViolations()
+  })
 })
