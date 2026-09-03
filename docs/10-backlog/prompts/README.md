@@ -1,6 +1,6 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.69"
+version: "1.70"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-03"
@@ -134,7 +134,8 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | Prompt | Tipo | HU | Issue | Estado | Dependencias | Rama / PR |
 | --- | --- | --- | --- | --- | --- | --- |
 | [PROMPT-ORCH-NAVA-ATLAS-v3](orchestration/redisenio-integral-nava-tailored-grid-v3.md) | `orchestration` | `HU-005`–`HU-012`, `HU-020`–`HU-024`, `HU-040`–`HU-042`, `HU-060`–`HU-065` | [#184](https://github.com/bcaceres19/barberia/issues/184) | `ready` | Atlas #183 y protocolo #208 integrados; exige Claude Sonnet 5/high, skill `nava-mockup-fidelity`, contrato medido, app real y evidencia baseline/final/lado a lado/overlay antes de `PASS` | Sin rama/PR propio; orquesta entregas independientes |
-| [PROMPT-FIX-188-ACCESO-RECUPERACION-FIDELIDAD-v1](fix/issue-188-acceso-recuperacion-fidelidad-v1.md) | `fix` | `HU-010`; relacionadas `HU-005`, `HU-007`–`HU-009`, `HU-011` | [#188](https://github.com/bcaceres19/barberia/issues/188) | `executed` | Atlas #183, protocolo de fidelidad #208/PR #209 y rediseño inicial #206/PR #207 integrados | Rama `fix/188-acceso-recuperacion-fidelidad`; PR [#210](https://github.com/bcaceres19/barberia/pull/210) abierto (`Refs #188`) |
+| [PROMPT-FIX-188-REPASO-EXHAUSTIVO-ACCESO-v2](fix/issue-188-repaso-exhaustivo-acceso-v2.md) | `fix` | `HU-010`; relacionadas `HU-005`, `HU-007`, `HU-009` | [#188](https://github.com/bcaceres19/barberia/issues/188) | `ready` | Sustituye el PASS parcial de v1; exige inventario completo de `/acceso`, ausencia visual de asteriscos con semántica required preservada y E2E sin locator ambiguo | Rama `fix/188-acceso-recuperacion-fidelidad`; PR [#210](https://github.com/bcaceres19/barberia/pull/210) abierto |
+| [PROMPT-FIX-188-ACCESO-RECUPERACION-FIDELIDAD-v1](fix/issue-188-acceso-recuperacion-fidelidad-v1.md) | `fix` | `HU-010`; relacionadas `HU-005`, `HU-007`–`HU-009`, `HU-011` | [#188](https://github.com/bcaceres19/barberia/issues/188) | `superseded` | Ejecutado en PR #210; sustituido por v2 porque conservó diferencias visibles y un E2E ambiguo dentro del alcance del propio PR | Historial conservado; no usar para declarar fidelidad final |
 | [PROMPT-AUDIT-UI-COMPONENTES-ALERTAS-NAVA-v1](audit/2026-09-02-ui-componentes-alertas-nava-v1.md) | `audit` | `HU-009`; relacionadas `HU-010`–`HU-012`, `HU-020`, `HU-022`, `HU-061` | — (auditoría de solo lectura) | `executed` | `DEC-039`, `DEC-077` | Inventario y nueve capturas sintéticas persistidos; sin cambios de producto |
 | [PROMPT-FIX-LOGIN-OTP-DESTINO-VERIFICADO-v1](fix/issue-pending-login-otp-destino-verificado.md) | `fix` | `HU-007`; relacionadas `HU-005`, `HU-008`, `HU-011` | `pending` | `draft` | Resolver `DP-SEG-13`/`CT-010` y coordinar con canal único | Sin rama/PR; no ejecutar hasta tener decisión e issue real |
 | [PROMPT-FIX-OTP-CANAL-UNICO-v1](fix/issue-pending-otp-canal-unico.md) | `fix` | `HU-008`; relacionadas `HU-011`, `HU-020` | `pending` | `draft` | Resolver `DP-NOT-06`/`CT-009` | Sin rama/PR; no ejecutar hasta tener decisión e issue real |

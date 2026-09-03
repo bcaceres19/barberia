@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-FIX-188-ACCESO-RECUPERACION-FIDELIDAD-v1"
 version: "1.0"
 kind: "fix"
-status: "executed"
+status: "superseded"
 target_agents:
   - "claude"
 repository: "bcaceres19/barberia"
@@ -74,7 +74,7 @@ source_docs:
 created_at: "2026-09-03"
 updated_at: "2026-09-03"
 supersedes: null
-superseded_by: null
+superseded_by: "PROMPT-FIX-188-REPASO-EXHAUSTIVO-ACCESO-v2"
 ---
 
 # Terminar acceso y recuperación con fidelidad al mockup NAVA
