@@ -1,6 +1,6 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.65"
+version: "1.66"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-02"
@@ -179,6 +179,7 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-CHORE-173-DETALLE-HISTORIAL-TURNO-NAVA-v1](chore/issue-173-detalle-historial-turno-nava.md) | `chore` | `HU-064`, `HU-065` | [#173](https://github.com/bcaceres19/barberia/issues/173), cerrado | `executed` | Fase 6 (issue maestro #168); confirma con un turno real que detalle/historial/reprogramación ya cumplen `DEC-079`; crea evidencia responsiva nueva (no existía) | Rama `feat/173-detalle-historial-reprogramacion-nava`; [PR #179](https://github.com/bcaceres19/barberia/pull/179), integrada en `main` con CI 4/4 verde (tras un rerun del job Go, fallo flaky no relacionado, issue #158) |
 | [PROMPT-CHORE-171-CATALOGO-SERVICIOS-NAVA-v1](chore/issue-171-catalogo-servicios-nava.md) | `chore` | `HU-022`, `HU-024` | [#171](https://github.com/bcaceres19/barberia/issues/171), cerrado | `executed` | Fase 9 (issue maestro #168); confirma con evidencia real que la pantalla ya cumple `DEC-079`; añade `vitest-axe` en el error de carga y evidencia/axe en vivo | Rama `feat/171-catalogo-servicios-nava`; [PR #180](https://github.com/bcaceres19/barberia/pull/180), integrada en `main` con CI 4/4 verde |
 | [PROMPT-TEST-174-REVISION-INTEGRAL-NAVA-v1.1](test/issue-174-revision-integral-nava.md) | `test` | `HU-005`–`HU-012`, `HU-020`–`HU-024`, `HU-040`–`HU-042`, `HU-060`–`HU-065` | [#174](https://github.com/bcaceres19/barberia/issues/174), cerrado | `executed` | Fase 13, última del issue maestro #168; recorrido real de las 11 rutas P0 con `axe-core` en vivo (0 violaciones) y sin defectos nuevos | Rama `test/174-revision-integral-nava`; [PR #181](https://github.com/bcaceres19/barberia/pull/181), integrada en `main` con CI 4/4 verde |
+| [PROMPT-CHORE-186-FUNDACIONES-TAILORED-GRID-v1](chore/issue-186-fundaciones-tailored-grid.md) | `chore` | — | [#186](https://github.com/bcaceres19/barberia/issues/186), cerrado | `executed` | Fase 1 del issue maestro #184 (`PROMPT-ORCH-NAVA-ATLAS-v2`); añade `PageHeader`/`RecordRow` a `shared/ui` sin tocar pantallas de negocio | Rama `chore/186-fundaciones-tailored-grid`; [PR #199](https://github.com/bcaceres19/barberia/pull/199), integrada en `main` con CI 4/4 verde |
 
 ## 10. Lista de control al guardar o entregar
 
