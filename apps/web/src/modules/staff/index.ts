@@ -10,4 +10,6 @@ import type { NavItem } from '@/shared/navigation/navItem'
 
 export { staffPrivateShellChildRoutes } from './routes'
 
-export const staffNavItems: NavItem[] = [{ to: { name: 'staff-barberos' }, label: 'Barberos' }]
+export const staffNavItems: NavItem[] = [
+  { to: { name: 'staff-barberos' }, label: 'Barberos', primary: true },
+]
