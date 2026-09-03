@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-ORCH-NAVA-ATLAS-v2"
 version: "2.1"
 kind: "orchestration"
-status: "ready"
+status: "superseded"
 target_agents:
   - "claude"
 repository: "bcaceres19/barberia"
@@ -111,9 +111,9 @@ source_docs:
   - "apps/web/src/modules/schedules/routes.ts"
   - "apps/web/src/modules/settings/routes.ts"
 created_at: "2026-09-02"
-updated_at: "2026-09-02"
+updated_at: "2026-09-03"
 supersedes: "PROMPT-ORCH-NAVA-FRONTEND-v1.5"
-superseded_by: null
+superseded_by: "PROMPT-ORCH-NAVA-ATLAS-v3"
 ---
 
 # Rediseño integral de NAVA guiado por el atlas Tailored Grid

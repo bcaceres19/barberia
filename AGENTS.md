@@ -38,7 +38,7 @@ Estas reglas aplican a personas y agentes que modifiquen el repositorio.
 
 - Mantener dominio y servicios Go independientes de Chi y PostgreSQL.
 - Mantener componentes Vue independientes de la forma interna del API mediante un cliente tipado.
-- Aplicar `docs/03-desarrollo/estandar-diseno-visual.md`: todo rediseño o pantalla nueva respeta los mockups aprobados, la firma cromática y el lenguaje NAVA / Tailored Grid; composición, tamaños, grid, componentes y tecnología de estilos permanecen libres, con accesibilidad, responsive, rendimiento y pruebas obligatorios.
+- Aplicar `docs/03-desarrollo/estandar-diseno-visual.md`: sin una referencia exacta asignada, la creación visual de cada módulo es libre dentro de NAVA / Tailored Grid. Cuando un issue, prompt o instrucción asigna un mockup concreto o pide igualarlo, se activa el modo de fidelidad: la app real debe reproducir sus colores, proporciones, jerarquía, escalas, centrado, alineaciones, densidad y estados en el viewport representado, con comparación visual y evidencia. En ambos modos se conservan accesibilidad, responsive, rendimiento y pruebas; el mockup nunca crea funciones.
 - No usar `any`, estado global, ORM, borrado en cascada, `jsonb` o una dependencia nueva sin justificación conforme al estándar correspondiente.
 - Comentarios explican decisiones e invariantes; no repiten el código. Todo `TODO` tiene referencia rastreable.
 - Ningún log, fixture, comentario o prueba contiene datos personales reales, secretos o tokens.

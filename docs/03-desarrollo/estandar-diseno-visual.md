@@ -1,9 +1,9 @@
 ---
 titulo: "Estándar visual NAVA para rediseños y pantallas nuevas"
-version: "4.2"
+version: "5.0"
 estado: "Normativo para rediseños y pantallas nuevas"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-02"
+ultima_actualizacion: "2026-09-03"
 documentos_relacionados:
   - "../00-control/registro-decisiones.md"
   - "../01-producto/alcance-mvp.md"
@@ -30,9 +30,9 @@ Este documento define el contrato visual mínimo de NAVA. Es obligatorio cuando 
 
 Una corrección funcional o accesible aislada no obliga a rediseñar la pantalla completa. Las pantallas existentes pueden conservar temporalmente su aspecto hasta que un issue autorice su rediseño; dentro de una pantalla rediseñada no se dejan regiones principales a medio migrar.
 
-La identidad NAVA, su firma cromática, el contraste editorial/funcional y las cualidades visuales de este documento son obligatorios dentro del alcance anterior. Continúan libres la composición concreta, el grid, los tamaños, el espaciado, los radios, las sombras, la navegación, el inventario de componentes y la tecnología de estilos, siempre que el resultado conserve esa identidad y cumpla las garantías de calidad.
+La identidad NAVA, su firma cromática, el contraste editorial/funcional y las cualidades visuales de este documento son obligatorios dentro del alcance anterior. La composición concreta, el grid, los tamaños, el espaciado, los radios, las sombras, la navegación, el inventario de componentes y la tecnología de estilos permanecen libres únicamente cuando no existe una referencia exacta asignada o para decisiones que esa referencia no representa. Si un issue, prompt o instrucción asigna un mockup concreto o pide igualarlo, reproducirlo o corregir la interfaz contra él, se activa el modo de fidelidad de la sección 2.1.
 
-Fuentes normativas: `DEC-077`, `DEC-078` y `DEC-079`. `DEC-079` matiza a `DEC-078`: mantiene la libertad de creación y herramientas, pero vuelve obligatorios para rediseños y pantallas nuevas los anclajes cromáticos y el lenguaje visual reconocido en los mockups aprobados.
+Fuentes normativas: `DEC-077`, `DEC-078`, `DEC-079` y `DEC-080`. `DEC-079` matiza a `DEC-078` en la identidad obligatoria; `DEC-080` distingue libertad creativa sin referencia exacta de fidelidad medible cuando sí existe un mockup asignado.
 
 Si un mockup contradice una regla de negocio, el alcance, una HU, un contrato, la seguridad o la accesibilidad, prevalece la fuente normativa correspondiente. El mockup nunca crea funciones.
 
@@ -50,7 +50,33 @@ Las siguientes láminas forman la referencia canónica para el lenguaje visual d
 
 El [atlas integral de mockups](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-02/README.md) amplía estas referencias a las once rutas implementadas, sus estados transversales y conceptos P0 pendientes. Las láminas rotuladas como no implementadas reservan intención visual, pero no crean alcance, contrato ni autorización de desarrollo.
 
-Respetar los mockups significa conservar su familia visual, color, jerarquía, densidad deliberada, claridad de estados y relación entre voz editorial y controles funcionales. No significa copiar coordenadas, textos sintéticos, datos, tamaños, radios o una composición exacta. La implementación puede apartarse de una distribución concreta cuando el contenido real, el ancho, la accesibilidad o el rendimiento lo exijan.
+### 2.1 Modos de conformidad
+
+Antes de diseñar o editar, el issue y el PR declaran uno de estos modos:
+
+| Modo | Cuándo aplica | Contrato visual |
+| --- | --- | --- |
+| **Identidad guiada** | No existe un mockup exacto asignado a la pantalla/estado, o la instrucción pide explorar o inspirarse sin reproducir una lámina. | Son obligatorias la identidad, firma cromática y cualidades NAVA. Composición, escala, grid, espaciado, componentes y navegación permanecen libres. |
+| **Fidelidad al mockup** | Un issue, prompt o instrucción asigna una imagen concreta a la pantalla/componente o pide igualar, reproducir, implementar o corregir contra esa referencia. | La imagen es contrato visual para el viewport y estado representados. Deben reproducirse sus colores, proporciones, jerarquía tipográfica, escalas de controles e iconos, centrado, alineaciones, densidad, bordes y tratamiento de estados. |
+
+En modo de fidelidad no basta con que la pantalla “se sienta NAVA”, use los mismos tokens o contenga los mismos elementos. El resultado renderizado debe compararse con la referencia. La libertad permanece en la técnica de implementación, el reflow de anchos no representados y las decisiones ausentes de la imagen.
+
+En ambos modos se conservan el copy, los datos y las funciones reales. No se copian textos sintéticos, personas, cifras, módulos o acciones que solo aparezcan como decoración del mockup. La implementación puede desviarse por una regla o contrato superior, contenido real, accesibilidad, privacidad, seguridad, responsive o rendimiento; cada desviación se registra con su causa y tratamiento.
+
+### 2.2 Medición y comparación en modo de fidelidad
+
+Antes de editar se abre la imagen a resolución original y se identifica el panel, viewport y estado aplicables. Se registra como mínimo:
+
+- tamaño del panel de referencia y relación de aspecto;
+- límites y proporción de marca, título, contenido/formulario y acción principal;
+- alineaciones, centrado, distribución de espacio y densidad;
+- tamaño y line-height de texto cuando se conozcan, o jerarquía y wrapping observables cuando deban inferirse;
+- altura de controles, caja visual de iconos, bordes y espacios principales;
+- valores cromáticos normativos y estados representados.
+
+Después de implementar se captura la app real en el mismo viewport y estado. La revisión incluye comparación lado a lado y overlay o diff de imagen; estilos computados y métricas DOM sirven de apoyo, pero nunca sustituyen mirar la comparación.
+
+Como tolerancia de revisión, los límites de regiones principales y alineaciones clave no se apartan más de 4 CSS px o 2 % de la dimensión relevante —lo que sea mayor—; texto y line-height conocidos no se apartan más de 1 CSS px, e iconos equivalentes no más de 2 CSS px. Rasterización de fuentes, antialiasing y longitud del copy real se revisan por su efecto, no se tratan por sí solos como defectos. Una diferencia visible importante no queda aprobada solo por caer dentro de un umbral numérico.
 
 ## 3. Identidad obligatoria
 
@@ -183,7 +209,7 @@ Los mockups favorecen bordes finos, radios pequeños, sombras mínimas, agrupaci
 
 ## 7. Zona de libertad creativa
 
-Cada pantalla o flujo puede decidir libremente:
+En modo de identidad guiada, cada pantalla o flujo puede decidir libremente:
 
 - composición, columnas, orden visual y uso del espacio;
 - tamaños tipográficos, pesos y escala;
@@ -192,6 +218,8 @@ Cada pantalla o flujo puede decidir libremente:
 - componentes locales o compartidos;
 - CSS estándar, `<style scoped>`, CSS Modules, Tailwind, utility-first, biblioteca visual o una solución híbrida;
 - fotografía, ilustración, textura o ausencia de imagen, cuando aporten a la tarea y no contradigan la identidad.
+
+En modo de fidelidad, la misma libertad aplica a la tecnología y a todo lo que el mockup no representa; no autoriza cambiar la geometría, escala o jerarquía visible del panel asignado por preferencia del implementador.
 
 La libertad no permite sustituir la firma cromática, perder el contraste serif/sans característico, producir una apariencia genérica ajena a NAVA, copiar datos sintéticos del mockup como si fueran contrato, omitir estados o debilitar accesibilidad, responsive, rendimiento, seguridad o pruebas.
 
@@ -243,6 +271,8 @@ Cada rediseño o pantalla nueva parte de un issue real y documenta:
 4. estados y anchos que se verificarán;
 5. dependencia visual nueva, si existe, con su justificación;
 6. pruebas de componente, accesibilidad, E2E y rendimiento aplicables.
+7. modo de conformidad (`identidad guiada` o `fidelidad al mockup`).
+8. en modo de fidelidad, mediciones objetivo, captura anterior, captura final, comparación lado a lado y overlay/diff en el viewport efectivo comprobado.
 
 La pantalla está terminada cuando:
 
@@ -253,13 +283,22 @@ La pantalla está terminada cuando:
 - no amplía el alcance ni contradice contrato o reglas;
 - aporta pruebas y evidencia proporcionales.
 
-No se rechaza una solución por usar CSS local, Tailwind, otra composición, otro tamaño, otro radio o una variante propia. Sí se rechaza si sustituye la identidad cromática, pierde el lenguaje NAVA, copia funciones no autorizadas del mockup o incumple las garantías anteriores.
+En modo de fidelidad, además:
+
+- las regiones principales cumplen las tolerancias de la sección 2.2 o documentan una desviación autorizada;
+- se verificó el viewport efectivo con `window.innerWidth`/`window.innerHeight` o mecanismo equivalente;
+- se revisaron la app real y su comparación visual, no solo el código, los tests, un snapshot aislado o métricas DOM;
+- no queda una diferencia visible sin clasificar en color, proporción, tipografía, controles, iconos, centrado, alineación, densidad o estado;
+- el resultado se marca explícitamente `PASS` o `FAIL`; `PASS` no es válido mientras exista una diferencia primaria sin explicar.
+
+No se rechaza una solución por usar CSS local, Tailwind u otra herramienta. En identidad guiada tampoco se rechaza por otra composición, tamaño, radio o variante propia. En fidelidad sí se rechaza una desviación visual no justificada respecto del mockup asignado. En ambos modos se rechaza si sustituye la identidad cromática, pierde el lenguaje NAVA, copia funciones no autorizadas o incumple las garantías anteriores.
 
 ## 12. Referencias
 
 - `DEC-077`: identidad NAVA y dirección Tailored Grid.
 - `DEC-078`: libertad de composición, componentes y herramientas.
 - `DEC-079`: mockups y firma cromática obligatorios para rediseños y pantallas nuevas.
+- `DEC-080`: dos modos de conformidad y fidelidad medible cuando existe un mockup exacto asignado.
 - [Handoff de mockups NAVA](../10-backlog/evidence/ui-redesign-nava-2026-09-02/README.md).
 - [Atlas integral NAVA / Tailored Grid](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-02/README.md).
 - [Especificación de frontend NAVA](especificacion-frontend-nava.md).

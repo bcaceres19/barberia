@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.24"
+version: "1.25"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-02"
+ultima_actualizacion: "2026-09-03"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -880,3 +880,18 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Convivencia con `DEC-077` y `DEC-078`:** concreta la identidad de `DEC-077` y matiza únicamente la libertad cromática y el carácter puramente orientativo de los mockups declarados por `DEC-078`. Permanecen vigentes la libertad compositiva y técnica de `DEC-078` y todas las garantías de calidad.
 - **Documentos afectados:** `AGENTS.md`, `docs/03-desarrollo/estandar-diseno-visual.md`, `docs/03-desarrollo/especificacion-frontend-nava.md`, `docs/03-desarrollo/estandar-frontend-vue.md`, `docs/04-arquitectura/frontend.md`, `docs/02-requisitos/historias-usuario.md`, `docs/00-control/matriz-trazabilidad.md`, `docs/00-control/historial-cambios.md`, `docs/README.md`, el handoff de mockups y el prompt de orquestación NAVA. No modifica `apps/web`.
 - **Fuente:** instrucción explícita del propietario del 2026-09-02: convertir los mockups generados en estándar para rediseños y pantallas nuevas, conservar un apartado libre y respetar los colores e identidad definidos; issue documental `#166`.
+
+**Actualización posterior:** `DEC-080` conserva la libertad creativa cuando no existe una referencia exacta, pero convierte un mockup expresamente asignado en contrato visual medible para el viewport y estado que representa.
+
+### DEC-080 · Fidelidad medible cuando se asigna un mockup exacto
+
+- **Fecha:** 2026-09-03.
+- **Decisión:** el trabajo visual tiene dos modos explícitos. En **identidad guiada**, sin una referencia exacta asignada, se conserva la libertad compositiva y técnica de `DEC-078` dentro de la identidad de `DEC-079`. En **fidelidad al mockup**, cuando un issue, prompt o instrucción asigna una imagen concreta a una pantalla/componente o pide igualarla, reproducirla, implementarla o corregirla contra ella, la imagen es contrato visual para el viewport y estado representados. La app real debe reproducir colores, proporciones, jerarquía tipográfica, escala de controles e iconos, centrado, alineaciones, densidad, bordes y estados; no basta con usar la paleta o contener elementos parecidos.
+- **Verificación:** antes de editar se abre la referencia a resolución original, se mide su estructura y se captura una línea base de la app. Después se renderiza la app real en el mismo viewport, se comprueba el tamaño efectivo, y se revisan captura anterior/final, comparación lado a lado y overlay o diff. Métricas DOM, estilos computados, pruebas automatizadas y screenshots aislados son evidencia auxiliar, no sustituyen la comparación visual. Ninguna entrega se declara terminada con diferencias primarias sin clasificar.
+- **Tolerancia y adaptación:** el estándar visual fija tolerancias de revisión para regiones, texto e iconos. Una diferencia visible importante se corrige aunque caiga dentro del umbral. Se permiten desviaciones únicamente por contenido o contrato real, regla superior, accesibilidad, privacidad, seguridad, responsive, rendimiento o rasterización del navegador; se documentan la causa y el tratamiento.
+- **Libertad que se conserva:** CSS, CSS Modules, estilos scoped, utility-first, Tailwind o bibliotecas siguen permitidos con las justificaciones vigentes. En fidelidad, esa libertad corresponde a cómo producir el resultado y a decisiones no representadas, no a reinterpretar la geometría visible asignada. En viewports que el mockup no representa, el reflow sigue libre siempre que conserve la jerarquía y las garantías de calidad.
+- **Frontera funcional:** un mockup nunca crea datos, copy normativo, funciones, endpoints, permisos, estados de dominio ni destinos. Si una representación visual contradice una autoridad superior, se conserva la autoridad y se registra la desviación.
+- **Ayuda de ejecución:** `.claude/skills/nava-mockup-fidelity/SKILL.md` operacionaliza esta decisión para Claude Code y `.claude/skills/browser-viewport-verification/SKILL.md` demuestra el viewport efectivo. Son ayudas derivadas; no sustituyen este registro ni el estándar.
+- **Convivencia con `DEC-077`–`DEC-079`:** mantiene la identidad, paleta y libertad técnica ya aprobadas. Matiza solo la libertad de composición y medidas cuando el propietario ha entregado una referencia exacta para ese resultado.
+- **Documentos afectados:** `AGENTS.md`, `CLAUDE.md`, `.claude/{CLAUDE.md,settings.json,skills/{nava-mockup-fidelity,browser-viewport-verification}/}`, `docs/03-desarrollo/{estandar-diseno-visual.md,especificacion-frontend-nava.md,estrategia-pruebas.md}`, `docs/00-control/{matriz-trazabilidad.md,historial-cambios.md}` y el prompt de orquestación NAVA v3. La configuración del proyecto fija `claude-sonnet-5` con `effortLevel: high`; no modifica `apps/web`.
+- **Fuente:** instrucción explícita del propietario tras comparar el login implementado con el mockup —centrado, proporciones, color, escala tipográfica e iconos no podían quedar a interpretación— y solicitud del 2026-09-03 de actualizar prompts o skills para evitar la repetición; issue documental `#208`.
