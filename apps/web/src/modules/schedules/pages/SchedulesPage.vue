@@ -10,7 +10,7 @@
 // una respuesta exitosa del servidor cierra el diálogo o cambia una fila
 // (trabajo requerido §4.3/§4.4 de HU-021, mismo criterio aquí).
 import { computed, onMounted, ref } from 'vue'
-import { BaseAlert, BaseButton, BaseDialog, BaseInput, PageHeader } from '@/shared/ui'
+import { BaseAlert, BaseButton, BaseDialog, BaseInput, PageHeader, RecordRow } from '@/shared/ui'
 import {
   createWorkingHour,
   deleteWorkingHour,
@@ -855,31 +855,33 @@ onMounted(loadColombianHolidays)
               <p v-if="day.items.length === 0" class="schedules-page__day-empty">Sin tramos.</p>
 
               <ul v-else class="schedules-page__list" :aria-label="`Tramos del ${day.label}`">
-                <li v-for="wh in day.items" :key="wh.id" class="schedules-page__item">
+                <RecordRow v-for="wh in day.items" :key="wh.id">
                   <span class="schedules-page__item-time">
                     {{ wh.startsTime }} · {{ wh.durationMinutes }} min
                   </span>
-                  <div class="schedules-page__item-actions">
-                    <BaseButton
-                      type="button"
-                      variant="secondary"
-                      :aria-label="`Editar tramo de ${weekdayLabel(wh.isoWeekday)} a las ${wh.startsTime}`"
-                      @click="openEditDialog(wh)"
-                    >
-                      Editar
-                    </BaseButton>
-                    <BaseButton
-                      type="button"
-                      variant="secondary"
-                      :loading="isDeletePending(wh.id)"
-                      :disabled="isDeletePending(wh.id)"
-                      :aria-label="`Retirar tramo de ${weekdayLabel(wh.isoWeekday)} a las ${wh.startsTime}`"
-                      @click="onDelete(wh)"
-                    >
-                      Retirar
-                    </BaseButton>
-                  </div>
-                </li>
+                  <template #trailing>
+                    <div class="schedules-page__item-actions">
+                      <BaseButton
+                        type="button"
+                        variant="secondary"
+                        :aria-label="`Editar tramo de ${weekdayLabel(wh.isoWeekday)} a las ${wh.startsTime}`"
+                        @click="openEditDialog(wh)"
+                      >
+                        Editar
+                      </BaseButton>
+                      <BaseButton
+                        type="button"
+                        variant="secondary"
+                        :loading="isDeletePending(wh.id)"
+                        :disabled="isDeletePending(wh.id)"
+                        :aria-label="`Retirar tramo de ${weekdayLabel(wh.isoWeekday)} a las ${wh.startsTime}`"
+                        @click="onDelete(wh)"
+                      >
+                        Retirar
+                      </BaseButton>
+                    </div>
+                  </template>
+                </RecordRow>
               </ul>
             </section>
           </div>
@@ -1743,21 +1745,6 @@ onMounted(loadColombianHolidays)
   display: flex;
   align-items: flex-end;
   gap: var(--space-3);
-  flex-wrap: wrap;
-}
-
-.schedules-page__item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  /* Ficha (§6.1, §7.2): al menos 64px en móvil, no el objetivo táctil
-     mínimo de 44px. */
-  min-height: 64px;
-  padding: var(--space-4);
-  background-color: var(--color-surface);
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
   flex-wrap: wrap;
 }
 

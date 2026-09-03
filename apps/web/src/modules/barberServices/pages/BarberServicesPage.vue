@@ -13,7 +13,7 @@
 // DEC-068) revierte la casilla a su estado real sin perder la selección de
 // barbero ni el resto de casillas ya marcadas.
 import { computed, ref, onMounted } from 'vue'
-import { BaseAlert, BaseButton, PageHeader } from '@/shared/ui'
+import { BaseAlert, BaseButton, PageHeader, RecordRow } from '@/shared/ui'
 import {
   assignService,
   fetchAssignments,
@@ -268,7 +268,7 @@ async function onToggleService(service: ServiceSummary, event: Event) {
           </BaseAlert>
 
           <ul class="barber-services-page__list" aria-label="Catálogo de servicios">
-            <li v-for="service in services" :key="service.id" class="barber-services-page__item">
+            <RecordRow v-for="service in services" :key="service.id">
               <label
                 :for="`barber-services-service-${service.id}`"
                 class="barber-services-page__item-label"
@@ -283,14 +283,10 @@ async function onToggleService(service: ServiceSummary, event: Event) {
                 />
                 <span>{{ service.name }}</span>
               </label>
-              <span
-                v-if="isPending(service.id)"
-                class="barber-services-page__pending"
-                aria-live="polite"
-              >
-                Guardando…
-              </span>
-            </li>
+              <template v-if="isPending(service.id)" #trailing>
+                <span class="barber-services-page__pending" aria-live="polite"> Guardando… </span>
+              </template>
+            </RecordRow>
           </ul>
         </fieldset>
       </template>
@@ -368,17 +364,6 @@ async function onToggleService(service: ServiceSummary, event: Event) {
   list-style: none;
 }
 
-.barber-services-page__item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  background-color: var(--color-surface);
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
-  flex-wrap: wrap;
-}
-
 .barber-services-page__checkbox {
   width: 24px;
   height: 24px;
@@ -393,6 +378,7 @@ async function onToggleService(service: ServiceSummary, event: Event) {
 .barber-services-page__item-label {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-3);
   min-height: 44px;
   flex: 1 1 auto;
