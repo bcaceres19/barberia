@@ -236,6 +236,57 @@ describe('BaseInput', () => {
     })
   })
 
+  describe('Mostrar/ocultar contraseña', () => {
+    it('no renderiza el botón en campos que no son password', () => {
+      const wrapper = mount(BaseInput, { props: { type: 'text' } })
+      expect(wrapper.find('.base-input__toggle').exists()).toBe(false)
+    })
+
+    it('renderiza el botón y alterna el tipo del input al hacer click', async () => {
+      const wrapper = mount(BaseInput, { props: { type: 'password', modelValue: 'secreta' } })
+      const toggle = wrapper.find('.base-input__toggle')
+      expect(toggle.exists()).toBe(true)
+      expect(wrapper.find('input').attributes('type')).toBe('password')
+      expect(toggle.attributes('aria-label')).toBe('Mostrar contraseña')
+      expect(toggle.attributes('aria-pressed')).toBe('false')
+
+      await toggle.trigger('click')
+
+      expect(wrapper.find('input').attributes('type')).toBe('text')
+      expect(toggle.attributes('aria-label')).toBe('Ocultar contraseña')
+      expect(toggle.attributes('aria-pressed')).toBe('true')
+
+      await toggle.trigger('click')
+      expect(wrapper.find('input').attributes('type')).toBe('password')
+    })
+
+    it('es type="button" para no enviar el formulario al hacer click', () => {
+      const wrapper = mount(BaseInput, { props: { type: 'password' } })
+      expect(wrapper.find('.base-input__toggle').attributes('type')).toBe('button')
+    })
+
+    it('se deshabilita junto con el campo', () => {
+      const wrapper = mount(BaseInput, { props: { type: 'password', disabled: true } })
+      expect(wrapper.find('.base-input__toggle').attributes('disabled')).toBeDefined()
+    })
+
+    it('el slot trailing no se renderiza cuando el campo es password (el botón tiene prioridad)', () => {
+      const wrapper = mount(BaseInput, {
+        props: { type: 'password' },
+        slots: { trailing: '🔍' },
+      })
+      expect(wrapper.find('.base-input__toggle').exists()).toBe(true)
+      expect(wrapper.find('.base-input__icon--trailing').exists()).toBe(false)
+    })
+
+    it('sin violaciones de accesibilidad con el botón visible', async () => {
+      const wrapper = mount(BaseInput, {
+        props: { type: 'password', label: 'Contraseña', modelValue: 'secreta' },
+      })
+      expect(await axe(wrapper.element, axeOptions)).toHaveNoViolations()
+    })
+  })
+
   describe('Fallthrough de clase', () => {
     // class ya no es un prop propio (auditoría HU-009); el fallthrough
     // automático de Vue lo aplica al elemento raíz (base-input__wrapper).

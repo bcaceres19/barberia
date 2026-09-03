@@ -1,0 +1,21 @@
+/*
+ * Fuentes auto-hosteadas: Instrument Serif (editorial) e Instrument Sans
+ * (funcional), Google Fonts, licencia SIL Open Font License. Instrument
+ * Sans se sirve como fuente variable (un solo archivo cubre 400-700) para
+ * no repetir descarga por peso.
+ */
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/instrument-serif-latin-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../assets/fonts/instrument-sans-latin-400-700.woff2') format('woff2');
+}

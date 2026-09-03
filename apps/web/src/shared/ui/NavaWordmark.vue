@@ -44,7 +44,13 @@ withDefaults(defineProps<Props>(), {
 }
 
 .nava-wordmark--lg {
-  font-size: var(--font-size-display);
-  line-height: var(--font-size-display-line);
+  font-size: 44px;
+  line-height: 1;
+}
+
+@media (min-width: 1024px) {
+  .nava-wordmark--lg {
+    font-size: 88px;
+  }
 }
 </style>
