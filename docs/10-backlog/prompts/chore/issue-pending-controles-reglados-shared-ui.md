@@ -16,8 +16,8 @@ issue: "212"
 issue_url: "https://github.com/bcaceres19/barberia/issues/212"
 suggested_issue_title: "chore(web): controles reglados NAVA en shared/ui"
 branch: "chore/212-controles-reglados-shared-ui"
-pr: null
-pr_url: null
+pr: 214
+pr_url: "https://github.com/bcaceres19/barberia/pull/214"
 depends_on:
   - "Issue maestro #211"
   - "PR #210 (issue #188) integrado o cerrado"
