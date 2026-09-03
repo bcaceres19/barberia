@@ -1,6 +1,6 @@
 ---
 prompt_id: "PROMPT-TEST-174-REVISION-INTEGRAL-NAVA-v1"
-version: "1.0"
+version: "1.1"
 kind: "test"
 status: "executed"
 target_agents:
@@ -35,8 +35,8 @@ issue: 174
 issue_url: "https://github.com/bcaceres19/barberia/issues/174"
 suggested_issue_title: "test(web): validar rediseño integral NAVA en rutas P0 existentes"
 branch: "test/174-revision-integral-nava"
-pr: null
-pr_url: null
+pr: 181
+pr_url: "https://github.com/bcaceres19/barberia/pull/181"
 depends_on:
   - "Fases 6, 7, 9, 10 (issues #170, #171, #172, #173) integradas en main"
 rules: []
@@ -148,5 +148,6 @@ git diff --check
 ## Git y PR
 
 - Rama: `test/174-revision-integral-nava`.
-- PR: pendiente de abrir, `Closes #174` y `Closes #168` (cierra el issue maestro al ser su última fase hija).
+- PR: [#181](https://github.com/bcaceres19/barberia/pull/181), `Closes #174`, integrada en `main` con CI 4/4 verde (commit `548fa0f`, tras corregir el formato Prettier de `report.json`).
 - Sin push directo ni force-push; squash-merge solo tras CI verde.
+- Issue maestro [#168](https://github.com/bcaceres19/barberia/issues/168) cerrado manualmente tras confirmar que sus cinco fases hijas (6, 7, 9, 10, 13) están integradas.
