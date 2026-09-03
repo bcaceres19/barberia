@@ -1,6 +1,6 @@
 ---
 titulo: "Estándar visual NAVA para rediseños y pantallas nuevas"
-version: "4.1"
+version: "4.2"
 estado: "Normativo para rediseños y pantallas nuevas"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-02"
@@ -174,6 +174,12 @@ Los mockups favorecen bordes finos, radios pequeños, sombras mínimas, agrupaci
 - Escritorio puede usar header, rail, sidebar o una combinación; móvil puede usar dock, menú o `Más`.
 - La lámina de servicios aprueba como patrón posible cuatro destinos visibles y `Más` para los restantes. No es una obligación si otra solución conserva claridad, orden, área segura y acceso por teclado.
 - La navegación no inventa módulos ni convierte acciones globales en destinos sin respaldo de producto.
+
+### 6.6 Cabecera de página y carril de registro
+
+- `PageHeader` (`shared/ui`) es la cabecera repetible de toda pantalla privada: título editorial (`h1`, único por vista), contexto opcional bajo el título, enlace de retorno opcional y una región de acciones que se apila en móvil. Sustituye el encabezado ad-hoc que cada pantalla redefinía por separado.
+- `RecordRow` (`shared/ui`) es el renglón de carril para listas de registros (barberos, servicios, tramos, bloqueos): divisor fino entre filas en vez de tarjeta blanca con borde, con regiones `leading`/principal/`trailing`. No es interactivo por sí mismo; cuando la fila completa navega, el consumidor coloca el enlace o botón dentro de una de sus regiones.
+- Ambos son opcionales: una pantalla que no encaje en el patrón puede seguir componiendo su propio encabezado o lista, siempre dentro de la firma cromática y los patrones de esta sección.
 
 ## 7. Zona de libertad creativa
 
