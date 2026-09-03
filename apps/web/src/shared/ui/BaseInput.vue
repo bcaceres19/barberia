@@ -321,11 +321,15 @@ const handleFocus = (event: FocusEvent) => {
   right: var(--space-3);
 }
 
-.base-input:has(.base-input__icon--leading) {
+/* `.base-input` es el propio <input> (sin hijos posibles): el icono vive
+   como <span> hermano dentro de `.base-input__input-wrapper`, así que el
+   padding condicional debe anclarse ahí, no en `:has()` sobre el input
+   mismo (nunca coincide con un elemento reemplazado sin descendientes). */
+.base-input__input-wrapper:has(.base-input__icon--leading) .base-input {
   padding-left: calc(var(--input-padding-x) + 20px);
 }
 
-.base-input:has(.base-input__icon--trailing) {
+.base-input__input-wrapper:has(.base-input__icon--trailing) .base-input {
   padding-right: calc(var(--input-padding-x) + 20px);
 }
 

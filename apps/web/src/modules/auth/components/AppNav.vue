@@ -121,8 +121,9 @@ async function onLogoutFromMore() {
   bottom: 0;
   left: 0;
   z-index: var(--layer-sticky);
-  background-color: var(--color-surface);
-  border-top: var(--border-width-normal) solid var(--color-border-subtle);
+  /* Superficie tinta, igual que AppHeader: la navegación es orientación
+     operativa (estandar-diseno-visual.md §3), no un formulario. */
+  background-color: var(--color-surface-strong);
   box-shadow: var(--shadow-raised);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -153,14 +154,19 @@ async function onLogoutFromMore() {
   padding: var(--space-1);
   background: transparent;
   border: none;
-  color: var(--color-text-secondary);
+  border-bottom: var(--border-width-emphasis) solid transparent;
+  color: var(--color-on-strong);
+  opacity: 0.64;
   font-family: var(--font-family-base);
   font-size: var(--font-size-caption);
   font-weight: 500;
   text-align: center;
   text-decoration: none;
   cursor: pointer;
-  transition: color var(--motion-duration-fast) var(--motion-easing-standard);
+  transition:
+    color var(--motion-duration-fast) var(--motion-easing-standard),
+    opacity var(--motion-duration-fast) var(--motion-easing-standard),
+    border-color var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
 .app-nav__link--button {
@@ -186,17 +192,20 @@ async function onLogoutFromMore() {
 }
 
 .app-nav__link:hover {
-  color: var(--color-text-primary);
+  opacity: 1;
 }
 
 .app-nav__link:focus-visible {
   outline: none;
+  opacity: 1;
   box-shadow: inset 0 0 0 var(--border-width-emphasis) var(--color-focus);
 }
 
 .app-nav__link--active,
 .app-nav__link[aria-expanded='true'] {
-  color: var(--color-action-primary);
+  border-bottom-color: var(--color-brand-accent-surface);
+  color: var(--color-brand-accent-surface);
+  opacity: 1;
 }
 
 .app-nav__more-list {

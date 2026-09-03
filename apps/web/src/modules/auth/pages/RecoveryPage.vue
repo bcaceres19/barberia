@@ -12,7 +12,8 @@
 // es válido (no queda nada que conservar).
 import { nextTick, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { BaseAlert, BaseButton, NavaWordmark } from '@/shared/ui'
+import { BaseAlert, BaseButton } from '@/shared/ui'
+import AuthSplitLayout from '../components/AuthSplitLayout.vue'
 import RecoveryRequestStep from '../components/RecoveryRequestStep.vue'
 import RecoveryVerifyStep from '../components/RecoveryVerifyStep.vue'
 import RecoveryResetStep from '../components/RecoveryResetStep.vue'
@@ -74,66 +75,47 @@ function onRestart() {
 </script>
 
 <template>
-  <main class="recovery-page">
-    <div class="recovery-page__card">
-      <NavaWordmark />
-      <p class="recovery-page__progress">Paso {{ STEP_NUMBERS[step] }} de 3</p>
-      <h1 ref="headingRef" class="recovery-page__title" tabindex="-1">{{ STEP_TITLES[step] }}</h1>
+  <AuthSplitLayout>
+    <p class="recovery-page__progress">Paso {{ STEP_NUMBERS[step] }} de 3</p>
+    <h1 ref="headingRef" class="recovery-page__title" tabindex="-1">{{ STEP_TITLES[step] }}</h1>
 
-      <RecoveryRequestStep v-if="step === 'request'" @advance="onRequestAdvance" />
+    <RecoveryRequestStep v-if="step === 'request'" @advance="onRequestAdvance" />
 
-      <RecoveryVerifyStep v-else-if="step === 'verify'" :email="email" @advance="onVerifyAdvance" />
+    <RecoveryVerifyStep v-else-if="step === 'verify'" :email="email" @advance="onVerifyAdvance" />
 
-      <RecoveryResetStep
-        v-else-if="step === 'reset'"
-        :email="email"
-        :reset-token="resetToken"
-        :masked-phone="maskedPhone"
-        :masked-email="maskedEmail"
-        @done="onResetDone"
-        @restart="onRestart"
-      />
+    <RecoveryResetStep
+      v-else-if="step === 'reset'"
+      :email="email"
+      :reset-token="resetToken"
+      :masked-phone="maskedPhone"
+      :masked-email="maskedEmail"
+      @done="onResetDone"
+      @restart="onRestart"
+    />
 
-      <template v-else>
-        <BaseAlert variant="success" title="Listo" role="status">
-          Actualizamos tu contraseña y cerramos todas tus sesiones activas. Inicia sesión de nuevo
-          con la contraseña nueva.
-        </BaseAlert>
-        <BaseButton
-          type="button"
-          variant="primary"
-          size="lg"
-          class="recovery-page__done-action"
-          @click="router.push({ name: 'acceso' })"
-        >
-          Ir al acceso
-        </BaseButton>
-      </template>
+    <template v-else>
+      <BaseAlert variant="success" title="Listo" role="status">
+        Actualizamos tu contraseña y cerramos todas tus sesiones activas. Inicia sesión de nuevo con
+        la contraseña nueva.
+      </BaseAlert>
+      <BaseButton
+        type="button"
+        variant="primary"
+        size="lg"
+        class="recovery-page__done-action"
+        @click="router.push({ name: 'acceso' })"
+      >
+        Ir al acceso
+      </BaseButton>
+    </template>
 
-      <p v-if="step !== 'done'" class="recovery-page__back">
-        <RouterLink :to="{ name: 'acceso' }">Volver al acceso</RouterLink>
-      </p>
-    </div>
-  </main>
+    <p v-if="step !== 'done'" class="recovery-page__back">
+      <RouterLink :to="{ name: 'acceso' }">Volver al acceso</RouterLink>
+    </p>
+  </AuthSplitLayout>
 </template>
 
 <style scoped>
-.recovery-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100dvh;
-  padding: var(--space-6) var(--space-4);
-}
-
-.recovery-page__card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  width: 100%;
-  max-width: 360px;
-}
-
 .recovery-page__progress {
   margin: 0;
   font-size: var(--font-size-body-sm);
@@ -142,6 +124,7 @@ function onRestart() {
 
 .recovery-page__title {
   margin: 0 0 var(--space-2) 0;
+  font-family: var(--font-display);
   font-size: var(--font-size-h2);
   line-height: var(--font-size-h2-line);
   color: var(--color-text-primary);

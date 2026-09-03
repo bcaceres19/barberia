@@ -8,7 +8,15 @@
 // muestra asignaciones a barberos (HU-023), disponibilidad ni citas: fuera
 // de alcance de esta historia.
 import { onMounted, ref } from 'vue'
-import { BaseAlert, BaseBadge, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
+import {
+  BaseAlert,
+  BaseBadge,
+  BaseButton,
+  BaseDialog,
+  BaseInput,
+  PageHeader,
+  RecordRow,
+} from '@/shared/ui'
 import {
   createService,
   deactivateService,
@@ -471,17 +479,13 @@ async function reloadAfterConflict(serviceId: string) {
 
 <template>
   <section class="catalog-page" aria-labelledby="catalog-page-title">
-    <header class="catalog-page__header">
-      <h1 id="catalog-page-title" class="catalog-page__title">Servicios</h1>
-      <BaseButton
-        v-if="loadStatus === 'ready'"
-        type="button"
-        variant="primary"
-        @click="openCreateDialog"
-      >
-        Agregar servicio
-      </BaseButton>
-    </header>
+    <PageHeader title-id="catalog-page-title" title="Servicios">
+      <template v-if="loadStatus === 'ready'" #actions>
+        <BaseButton type="button" variant="primary" @click="openCreateDialog">
+          Agregar servicio
+        </BaseButton>
+      </template>
+    </PageHeader>
 
     <div
       v-if="loadStatus === 'loading'"
@@ -510,57 +514,57 @@ async function reloadAfterConflict(serviceId: string) {
       </p>
 
       <ul v-else class="catalog-page__list" aria-label="Servicios de la barbería">
-        <li v-for="service in services" :key="service.id" class="catalog-page__item">
-          <div class="catalog-page__item-info">
-            <div class="catalog-page__item-heading">
-              <span class="catalog-page__item-name">{{ service.name }}</span>
-              <!-- No depende solo del color: el texto de la etiqueta ya
-                   distingue el estado (CA-024-08). -->
-              <BaseBadge
-                :variant="service.isActive ? 'success' : 'neutral'"
-                size="sm"
-                dot
-                role="status"
+        <RecordRow v-for="service in services" :key="service.id">
+          <div class="catalog-page__item-heading">
+            <span class="catalog-page__item-name">{{ service.name }}</span>
+            <!-- No depende solo del color: el texto de la etiqueta ya
+                 distingue el estado (CA-024-08). -->
+            <BaseBadge
+              :variant="service.isActive ? 'success' : 'neutral'"
+              size="sm"
+              dot
+              role="status"
+            >
+              {{ service.isActive ? 'Activo' : 'Inactivo' }}
+            </BaseBadge>
+          </div>
+          <span class="catalog-page__item-meta">
+            {{ service.durationMinutes }} min · {{ formatPrice(service) }}
+          </span>
+          <span v-if="service.description" class="catalog-page__item-description">
+            {{ service.description }}
+          </span>
+          <template #trailing>
+            <div class="catalog-page__item-actions">
+              <BaseButton
+                type="button"
+                variant="secondary"
+                :aria-label="`Editar ${service.name}`"
+                @click="openEditDialog(service)"
               >
-                {{ service.isActive ? 'Activo' : 'Inactivo' }}
-              </BaseBadge>
+                Editar
+              </BaseButton>
+              <BaseButton
+                v-if="service.isActive"
+                type="button"
+                variant="danger"
+                :aria-label="`Desactivar ${service.name}`"
+                @click="openDeactivateDialog(service)"
+              >
+                Desactivar
+              </BaseButton>
+              <BaseButton
+                v-else
+                type="button"
+                variant="secondary"
+                :aria-label="`Reactivar ${service.name}`"
+                @click="openReactivateDialog(service)"
+              >
+                Reactivar
+              </BaseButton>
             </div>
-            <span class="catalog-page__item-meta">
-              {{ service.durationMinutes }} min · {{ formatPrice(service) }}
-            </span>
-            <span v-if="service.description" class="catalog-page__item-description">
-              {{ service.description }}
-            </span>
-          </div>
-          <div class="catalog-page__item-actions">
-            <BaseButton
-              type="button"
-              variant="secondary"
-              :aria-label="`Editar ${service.name}`"
-              @click="openEditDialog(service)"
-            >
-              Editar
-            </BaseButton>
-            <BaseButton
-              v-if="service.isActive"
-              type="button"
-              variant="danger"
-              :aria-label="`Desactivar ${service.name}`"
-              @click="openDeactivateDialog(service)"
-            >
-              Desactivar
-            </BaseButton>
-            <BaseButton
-              v-else
-              type="button"
-              variant="secondary"
-              :aria-label="`Reactivar ${service.name}`"
-              @click="openReactivateDialog(service)"
-            >
-              Reactivar
-            </BaseButton>
-          </div>
-        </li>
+          </template>
+        </RecordRow>
       </ul>
 
       <div v-if="nextCursor" class="catalog-page__load-more">
@@ -876,22 +880,6 @@ async function reloadAfterConflict(serviceId: string) {
   margin: 0 auto;
 }
 
-.catalog-page__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-}
-
-.catalog-page__title {
-  margin: 0;
-  font-size: var(--font-size-h1);
-  line-height: var(--font-size-h1-line);
-  font-weight: var(--font-weight-h1);
-  color: var(--color-text-primary);
-}
-
 .catalog-page__state {
   padding: var(--space-4);
   color: var(--color-text-secondary);
@@ -909,28 +897,6 @@ async function reloadAfterConflict(serviceId: string) {
   padding: 0;
   margin: 0;
   list-style: none;
-}
-
-.catalog-page__item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  /* Ficha (§6.1, §7.2): al menos 64px en móvil, no el objetivo táctil
-     mínimo de 44px. */
-  min-height: 64px;
-  padding: var(--space-4);
-  background-color: var(--color-surface);
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
-  flex-wrap: wrap;
-}
-
-.catalog-page__item-info {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
 }
 
 .catalog-page__item-heading {

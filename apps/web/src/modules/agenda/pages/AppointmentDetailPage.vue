@@ -336,118 +336,128 @@ function occurredAtLabel(entry: HistoryEntry): string {
         </BaseButton>
       </header>
 
-      <dl class="appointment-detail-page__facts">
-        <div class="appointment-detail-page__fact">
-          <dt>Hora</dt>
-          <dd>
-            {{ timeRangeLabel }}
-            <span v-if="barbershopTimezone">· Zona {{ barbershopTimezone }}</span>
-          </dd>
-        </div>
-        <div class="appointment-detail-page__fact">
-          <dt>Persona atendida</dt>
-          <dd>{{ detail.attendeeName }}</dd>
-        </div>
-        <div class="appointment-detail-page__fact">
-          <dt>Servicio</dt>
-          <dd>
-            {{ detail.serviceName }} · {{ detail.durationMinutes }} min · {{ detail.priceAmount }}
-            {{ detail.currency }}
-          </dd>
-        </div>
-        <div class="appointment-detail-page__fact">
-          <dt>Barbero</dt>
-          <dd>{{ detail.barberFullName }}</dd>
-        </div>
-        <div class="appointment-detail-page__fact">
-          <dt>Cliente que reservó</dt>
-          <dd>{{ detail.customerFullName }}</dd>
-        </div>
-        <div
-          v-if="detail.customerPhone || detail.customerEmail"
-          class="appointment-detail-page__fact"
-        >
-          <dt>Contacto</dt>
-          <dd>
-            <span v-if="detail.customerPhone">{{ detail.customerPhone }}</span>
-            <span v-if="detail.customerPhone && detail.customerEmail"> · </span>
-            <span v-if="detail.customerEmail">{{ detail.customerEmail }}</span>
-          </dd>
-        </div>
-        <div v-if="detail.customerNote" class="appointment-detail-page__fact">
-          <dt>Nota del cliente</dt>
-          <dd>{{ detail.customerNote }}</dd>
-        </div>
-      </dl>
+      <div class="appointment-detail-page__body">
+        <dl class="appointment-detail-page__facts">
+          <div class="appointment-detail-page__fact">
+            <dt>Hora</dt>
+            <dd>
+              {{ timeRangeLabel }}
+              <span v-if="barbershopTimezone">· Zona {{ barbershopTimezone }}</span>
+            </dd>
+          </div>
+          <div class="appointment-detail-page__fact">
+            <dt>Persona atendida</dt>
+            <dd>{{ detail.attendeeName }}</dd>
+          </div>
+          <div class="appointment-detail-page__fact">
+            <dt>Servicio</dt>
+            <dd>
+              {{ detail.serviceName }} · {{ detail.durationMinutes }} min · {{ detail.priceAmount }}
+              {{ detail.currency }}
+            </dd>
+          </div>
+          <div class="appointment-detail-page__fact">
+            <dt>Barbero</dt>
+            <dd>{{ detail.barberFullName }}</dd>
+          </div>
+          <div class="appointment-detail-page__fact">
+            <dt>Cliente que reservó</dt>
+            <dd>{{ detail.customerFullName }}</dd>
+          </div>
+          <div
+            v-if="detail.customerPhone || detail.customerEmail"
+            class="appointment-detail-page__fact"
+          >
+            <dt>Contacto</dt>
+            <dd>
+              <span v-if="detail.customerPhone">{{ detail.customerPhone }}</span>
+              <span v-if="detail.customerPhone && detail.customerEmail"> · </span>
+              <span v-if="detail.customerEmail">{{ detail.customerEmail }}</span>
+            </dd>
+          </div>
+          <div v-if="detail.customerNote" class="appointment-detail-page__fact">
+            <dt>Nota del cliente</dt>
+            <dd>{{ detail.customerNote }}</dd>
+          </div>
+        </dl>
 
-      <section class="appointment-detail-page__history" aria-labelledby="appointment-history-title">
-        <h2 id="appointment-history-title" class="appointment-detail-page__history-title">
-          Historial
-        </h2>
-
-        <div
-          v-if="historyStatus === 'loading'"
-          class="appointment-detail-page__state"
-          role="status"
-          aria-live="polite"
+        <section
+          class="appointment-detail-page__history"
+          aria-labelledby="appointment-history-title"
         >
-          <p>Cargando historial…</p>
-        </div>
+          <h2 id="appointment-history-title" class="appointment-detail-page__history-title">
+            Historial
+          </h2>
 
-        <BaseAlert
-          v-else-if="historyStatus === 'error'"
-          variant="warning"
-          title="No pudimos cargar el historial"
-          role="alert"
-        >
-          Revisa tu conexión e inténtalo de nuevo.
-          <template #action>
-            <BaseButton type="button" variant="secondary" @click="onRetryHistory">
-              Reintentar
+          <div
+            v-if="historyStatus === 'loading'"
+            class="appointment-detail-page__state"
+            role="status"
+            aria-live="polite"
+          >
+            <p>Cargando historial…</p>
+          </div>
+
+          <BaseAlert
+            v-else-if="historyStatus === 'error'"
+            variant="warning"
+            title="No pudimos cargar el historial"
+            role="alert"
+          >
+            Revisa tu conexión e inténtalo de nuevo.
+            <template #action>
+              <BaseButton type="button" variant="secondary" @click="onRetryHistory">
+                Reintentar
+              </BaseButton>
+            </template>
+          </BaseAlert>
+
+          <template v-else>
+            <p v-if="historyItems.length === 0" class="appointment-detail-page__empty">
+              Sin eventos registrados todavía.
+            </p>
+
+            <ol v-else class="appointment-detail-page__history-list" aria-label="Eventos del turno">
+              <li
+                v-for="entry in historyItems"
+                :key="entry.id"
+                class="appointment-detail-page__history-item"
+              >
+                <div class="appointment-detail-page__history-main">
+                  <span class="appointment-detail-page__history-event">{{
+                    eventLabel(entry)
+                  }}</span>
+                  <span class="appointment-detail-page__history-meta">
+                    {{ occurredAtLabel(entry) }} · {{ entry.actorLabel }}
+                  </span>
+                </div>
+                <p v-if="entry.reason" class="appointment-detail-page__history-reason">
+                  {{ entry.reason }}
+                </p>
+                <ul
+                  v-if="entry.changes.length > 0"
+                  class="appointment-detail-page__history-changes"
+                >
+                  <li v-for="change in entry.changes" :key="change.fieldName">
+                    {{ historyFieldLabel(change.fieldName) }}: {{ change.previousValue ?? '—' }} →
+                    {{ change.newValue ?? '—' }}
+                  </li>
+                </ul>
+              </li>
+            </ol>
+
+            <BaseButton
+              v-if="historyNextCursor"
+              type="button"
+              variant="secondary"
+              :loading="historyLoadingMore"
+              @click="onLoadMoreHistory"
+            >
+              Cargar más
             </BaseButton>
           </template>
-        </BaseAlert>
-
-        <template v-else>
-          <p v-if="historyItems.length === 0" class="appointment-detail-page__empty">
-            Sin eventos registrados todavía.
-          </p>
-
-          <ol v-else class="appointment-detail-page__history-list" aria-label="Eventos del turno">
-            <li
-              v-for="entry in historyItems"
-              :key="entry.id"
-              class="appointment-detail-page__history-item"
-            >
-              <div class="appointment-detail-page__history-main">
-                <span class="appointment-detail-page__history-event">{{ eventLabel(entry) }}</span>
-                <span class="appointment-detail-page__history-meta">
-                  {{ occurredAtLabel(entry) }} · {{ entry.actorLabel }}
-                </span>
-              </div>
-              <p v-if="entry.reason" class="appointment-detail-page__history-reason">
-                {{ entry.reason }}
-              </p>
-              <ul v-if="entry.changes.length > 0" class="appointment-detail-page__history-changes">
-                <li v-for="change in entry.changes" :key="change.fieldName">
-                  {{ historyFieldLabel(change.fieldName) }}: {{ change.previousValue ?? '—' }} →
-                  {{ change.newValue ?? '—' }}
-                </li>
-              </ul>
-            </li>
-          </ol>
-
-          <BaseButton
-            v-if="historyNextCursor"
-            type="button"
-            variant="secondary"
-            :loading="historyLoadingMore"
-            @click="onLoadMoreHistory"
-          >
-            Cargar más
-          </BaseButton>
-        </template>
-      </section>
+        </section>
+      </div>
 
       <BaseDialog
         v-model="isRescheduleOpen"
@@ -578,9 +588,34 @@ function occurredAtLabel(entry: HistoryEntry): string {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
-  max-width: 720px;
+  max-width: 1024px;
   padding: var(--space-4);
   margin: 0 auto;
+}
+
+.appointment-detail-page__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+@media (min-width: 1024px) {
+  .appointment-detail-page__body {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .appointment-detail-page__facts {
+    flex: 3;
+  }
+
+  .appointment-detail-page__history {
+    flex: 2;
+    padding-top: 0;
+    padding-left: var(--space-6);
+    border-top: none;
+    border-left: var(--border-width-normal) solid var(--color-border-subtle);
+  }
 }
 
 .appointment-detail-page__back {
@@ -613,6 +648,7 @@ function occurredAtLabel(entry: HistoryEntry): string {
 
 .appointment-detail-page__title {
   margin: 0;
+  font-family: var(--font-display);
   font-size: var(--font-size-h1);
   line-height: var(--font-size-h1-line);
   font-weight: var(--font-weight-h1);
@@ -622,17 +658,22 @@ function occurredAtLabel(entry: HistoryEntry): string {
 .appointment-detail-page__facts {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 0;
   margin: 0;
+  padding-top: var(--space-4);
+  border-top: var(--border-width-normal) solid var(--color-border-subtle);
 }
 
 .appointment-detail-page__fact {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) 0;
+  border-bottom: var(--border-width-normal) solid var(--color-border-subtle);
 }
 
 .appointment-detail-page__fact dt {
+  flex: 0 0 160px;
   font-family: var(--font-family-base);
   font-size: var(--font-size-body-sm);
   font-weight: 500;
@@ -640,6 +681,7 @@ function occurredAtLabel(entry: HistoryEntry): string {
 }
 
 .appointment-detail-page__fact dd {
+  flex: 1 1 240px;
   margin: 0;
   font-family: var(--font-family-base);
   font-size: var(--font-size-body);
@@ -656,6 +698,7 @@ function occurredAtLabel(entry: HistoryEntry): string {
 
 .appointment-detail-page__history-title {
   margin: 0;
+  font-family: var(--font-display);
   font-size: var(--font-size-h2);
   line-height: var(--font-size-h2-line);
   font-weight: var(--font-weight-h2);
@@ -665,17 +708,38 @@ function occurredAtLabel(entry: HistoryEntry): string {
 .appointment-detail-page__history-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 0;
   padding: 0;
   margin: 0;
   list-style: none;
 }
 
+/* Línea de tiempo vertical (atlas: puntos y conexión entre eventos), sin
+   cambiar el orden ni el contenido de cada evento. */
 .appointment-detail-page__history-item {
-  padding: var(--space-3);
-  background-color: var(--color-surface);
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
+  position: relative;
+  padding: 0 0 var(--space-5) var(--space-6);
+  border-left: var(--border-width-normal) solid var(--color-border-subtle);
+}
+
+.appointment-detail-page__history-item:last-child {
+  padding-bottom: 0;
+  border-left-color: transparent;
+}
+
+.appointment-detail-page__history-item::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: calc(-1 * var(--border-width-emphasis) - 3px);
+  width: 10px;
+  height: 10px;
+  background-color: var(--color-brand-accent-surface);
+  border-radius: 999px;
+}
+
+.appointment-detail-page__history-item:first-child::before {
+  background-color: var(--color-surface-strong);
 }
 
 .appointment-detail-page__history-main {

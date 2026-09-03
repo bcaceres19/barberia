@@ -9,21 +9,26 @@
 interface Props {
   /** tinta: para lienzo/superficie clara. invertida: para superficie tinta. */
   variant?: 'ink' | 'inverted'
+  /** sm: chip de identidad en cabeceras (20px). lg: marca editorial de un
+   * panel de marca (paneles partidos de acceso/recuperación). */
+  size?: 'sm' | 'lg'
 }
 
 withDefaults(defineProps<Props>(), {
   variant: 'ink',
+  size: 'sm',
 })
 </script>
 
 <template>
-  <span class="nava-wordmark" :class="`nava-wordmark--${variant}`">NAVA</span>
+  <span class="nava-wordmark" :class="[`nava-wordmark--${variant}`, `nava-wordmark--${size}`]"
+    >NAVA</span
+  >
 </template>
 
 <style scoped>
 .nava-wordmark {
   font-family: var(--font-display);
-  font-size: 20px;
   line-height: 1;
   font-weight: 400;
   letter-spacing: 0.04em;
@@ -32,5 +37,14 @@ withDefaults(defineProps<Props>(), {
 
 .nava-wordmark--inverted {
   color: var(--color-on-strong);
+}
+
+.nava-wordmark--sm {
+  font-size: 20px;
+}
+
+.nava-wordmark--lg {
+  font-size: var(--font-size-display);
+  line-height: var(--font-size-display-line);
 }
 </style>

@@ -5,7 +5,8 @@
 // el barbero, nunca al revés.
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseAlert, NavaWordmark } from '@/shared/ui'
+import { BaseAlert } from '@/shared/ui'
+import AuthSplitLayout from '../components/AuthSplitLayout.vue'
 import LoginForm, { type LoginServerErrorSummary } from '../components/LoginForm.vue'
 import PhoneChallengeForm from '../components/PhoneChallengeForm.vue'
 import { login } from '../api/loginApi'
@@ -150,56 +151,38 @@ const onChallengeVerified = () => {
 </script>
 
 <template>
-  <main class="login-page">
-    <div class="login-page__card">
-      <NavaWordmark />
-      <h1 class="login-page__title">Accede a NAVA</h1>
+  <AuthSplitLayout>
+    <h1 class="login-page__title">Accede a NAVA</h1>
 
-      <BaseAlert v-if="showSessionExpired" variant="info" title="Tu sesión venció" role="status">
-        Inicia sesión de nuevo para continuar.
-      </BaseAlert>
+    <BaseAlert v-if="showSessionExpired" variant="info" title="Tu sesión venció" role="status">
+      Inicia sesión de nuevo para continuar.
+    </BaseAlert>
 
-      <LoginForm
-        :email="email"
-        :password="password"
-        :submitting="isSubmitting"
-        :server-error="serverError"
-        recovery-href="/recuperar-acceso"
-        @update:email="(value) => (email = value)"
-        @update:password="(value) => (password = value)"
-        @submit="onSubmit"
-        @retry="onSubmit"
-      />
+    <LoginForm
+      :email="email"
+      :password="password"
+      :submitting="isSubmitting"
+      :server-error="serverError"
+      recovery-href="/recuperar-acceso"
+      @update:email="(value) => (email = value)"
+      @update:password="(value) => (password = value)"
+      @submit="onSubmit"
+      @retry="onSubmit"
+    />
 
-      <PhoneChallengeForm
-        v-if="showPhoneChallenge"
-        :email="email"
-        :disabled="isSubmitting"
-        @verified="onChallengeVerified"
-      />
-    </div>
-  </main>
+    <PhoneChallengeForm
+      v-if="showPhoneChallenge"
+      :email="email"
+      :disabled="isSubmitting"
+      @verified="onChallengeVerified"
+    />
+  </AuthSplitLayout>
 </template>
 
 <style scoped>
-.login-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100dvh;
-  padding: var(--space-6) var(--space-4);
-}
-
-.login-page__card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  width: 100%;
-  max-width: 360px;
-}
-
 .login-page__title {
   margin: 0 0 var(--space-2) 0;
+  font-family: var(--font-display);
   font-size: var(--font-size-h2);
   line-height: var(--font-size-h2-line);
   color: var(--color-text-primary);

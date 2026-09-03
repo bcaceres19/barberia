@@ -9,7 +9,7 @@
 // barbero ya escribió; solo un guardado exitoso confirmado por el servidor
 // cierra el diálogo.
 import { onMounted, ref } from 'vue'
-import { BaseAlert, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
+import { BaseAlert, BaseButton, BaseDialog, BaseInput, PageHeader, RecordRow } from '@/shared/ui'
 import { createBarber, fetchBarbers, renameBarber } from '../api/staffApi'
 import { newIdempotencyKey } from '../model/idempotencyKey'
 import type { Barber } from '../model/barber'
@@ -219,17 +219,13 @@ async function onSubmitRename() {
 
 <template>
   <section class="staff-page" aria-labelledby="staff-page-title">
-    <header class="staff-page__header">
-      <h1 id="staff-page-title" class="staff-page__title">Barberos</h1>
-      <BaseButton
-        v-if="loadStatus === 'ready'"
-        type="button"
-        variant="primary"
-        @click="openCreateDialog"
-      >
-        Agregar barbero
-      </BaseButton>
-    </header>
+    <PageHeader title-id="staff-page-title" title="Barberos">
+      <template v-if="loadStatus === 'ready'" #actions>
+        <BaseButton type="button" variant="primary" @click="openCreateDialog">
+          Agregar barbero
+        </BaseButton>
+      </template>
+    </PageHeader>
 
     <div v-if="loadStatus === 'loading'" class="staff-page__state" role="status" aria-live="polite">
       <p>Cargando el equipo…</p>
@@ -253,22 +249,24 @@ async function onSubmitRename() {
       </p>
 
       <ul v-else class="staff-page__list" aria-label="Barberos de la barbería">
-        <li v-for="barber in barbers" :key="barber.id" class="staff-page__item">
-          <span class="staff-page__item-identity">
+        <RecordRow v-for="barber in barbers" :key="barber.id">
+          <template #leading>
             <span class="staff-page__item-avatar" aria-hidden="true">{{
               initials(barber.fullName)
             }}</span>
-            <span class="staff-page__item-name">{{ barber.fullName }}</span>
-          </span>
-          <BaseButton
-            type="button"
-            variant="secondary"
-            :aria-label="`Editar ${barber.fullName}`"
-            @click="openRenameDialog(barber)"
-          >
-            Editar
-          </BaseButton>
-        </li>
+          </template>
+          <span class="staff-page__item-name">{{ barber.fullName }}</span>
+          <template #trailing>
+            <BaseButton
+              type="button"
+              variant="secondary"
+              :aria-label="`Editar ${barber.fullName}`"
+              @click="openRenameDialog(barber)"
+            >
+              Editar
+            </BaseButton>
+          </template>
+        </RecordRow>
       </ul>
 
       <div v-if="nextCursor" class="staff-page__load-more">
@@ -416,22 +414,6 @@ async function onSubmitRename() {
   margin: 0 auto;
 }
 
-.staff-page__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-}
-
-.staff-page__title {
-  margin: 0;
-  font-size: var(--font-size-h1);
-  line-height: var(--font-size-h1-line);
-  font-weight: var(--font-weight-h1);
-  color: var(--color-text-primary);
-}
-
 .staff-page__state {
   padding: var(--space-4);
   color: var(--color-text-secondary);
@@ -449,26 +431,6 @@ async function onSubmitRename() {
   padding: 0;
   margin: 0;
   list-style: none;
-}
-
-.staff-page__item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  /* Fila 64-72px en escritorio, ficha 64px mínimo en móvil (§8.2, §7.2). */
-  min-height: 64px;
-  padding: var(--space-4);
-  background-color: var(--color-surface);
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
-}
-
-.staff-page__item-identity {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  min-width: 0;
 }
 
 /* Avatar operativo 40px (estandar-diseno-visual.md §6.2): monograma

@@ -90,14 +90,17 @@ const { loggingOut, logout: onLogout } = useLogout()
   height: var(--control-height);
   align-items: center;
   padding: 0 var(--space-4);
+  border: var(--border-width-normal) solid var(--color-brand-accent-surface);
   border-radius: var(--radius-sm);
-  background-color: var(--color-brand-accent-surface);
-  color: var(--color-brand-accent-text);
+  background-color: transparent;
+  color: var(--color-brand-accent-surface);
   font-family: var(--font-sans);
   font-size: var(--font-size-body);
   font-weight: 500;
   text-decoration: none;
-  transition: filter var(--motion-duration-fast) var(--motion-easing-standard);
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-easing-standard),
+    color var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -107,11 +110,14 @@ const { loggingOut, logout: onLogout } = useLogout()
 }
 
 .app-header__cta:hover {
-  filter: brightness(94%);
+  background-color: var(--color-brand-accent-surface);
+  color: var(--color-brand-accent-text);
 }
 
 .app-header__cta:active {
-  filter: brightness(88%);
+  background-color: var(--color-brand-accent-surface);
+  color: var(--color-brand-accent-text);
+  filter: brightness(92%);
 }
 
 .app-header__cta:focus-visible {
