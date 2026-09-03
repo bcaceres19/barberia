@@ -333,7 +333,8 @@ const nowMarkerPercent = computed(() => {
       <BaseButton
         v-if="pageStatus === 'ready' && barbers.length > 0"
         type="button"
-        variant="primary"
+        variant="secondary"
+        class="daily-agenda-page__cta"
         @click="goToNewAppointment"
       >
         Nuevo turno
@@ -554,13 +555,24 @@ const nowMarkerPercent = computed(() => {
 </template>
 
 <style scoped>
+/* Superficie tinta de punta a punta (estandar-diseno-visual.md §3): la
+   agenda es tiempo y orientación operativa, no un formulario. Las fichas de
+   turno y los estados siguen en superficie clara para conservar el
+   contraste de lectura sobre el fondo oscuro (§6.6, mismo criterio que el
+   atlas: "convivencia de escritorio operativo con flujo móvil"). */
 .daily-agenda-page {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
-  max-width: 720px;
-  padding: var(--space-4);
-  margin: 0 auto;
+  min-height: 100%;
+  padding: var(--space-5) var(--space-4);
+  background-color: var(--color-surface-strong);
+}
+
+@media (min-width: 1024px) {
+  .daily-agenda-page {
+    padding: var(--space-8) var(--space-8);
+  }
 }
 
 .daily-agenda-page__header {
@@ -573,22 +585,29 @@ const nowMarkerPercent = computed(() => {
 
 .daily-agenda-page__title {
   margin: 0;
+  font-family: var(--font-display);
   font-size: var(--font-size-h1);
   line-height: var(--font-size-h1-line);
   font-weight: var(--font-weight-h1);
-  color: var(--color-text-primary);
+  color: var(--color-on-strong);
 }
 
 .daily-agenda-page__date {
   margin: var(--space-1) 0 0;
   font-family: var(--font-family-base);
   font-size: var(--font-size-body-sm);
-  color: var(--color-text-secondary);
+  color: var(--color-on-strong);
+  opacity: 0.64;
+}
+
+.daily-agenda-page__cta {
+  flex-shrink: 0;
 }
 
 .daily-agenda-page__state {
   padding: var(--space-4);
-  color: var(--color-text-secondary);
+  color: var(--color-on-strong);
+  opacity: 0.8;
 }
 
 .daily-agenda-page__updating {
@@ -596,18 +615,32 @@ const nowMarkerPercent = computed(() => {
   padding: var(--space-2) 0;
   font-family: var(--font-family-base);
   font-size: var(--font-size-body-sm);
-  color: var(--color-text-secondary);
+  color: var(--color-on-strong);
+  opacity: 0.8;
 }
 
 .daily-agenda-page__empty {
   padding: var(--space-4);
-  color: var(--color-text-secondary);
+  color: var(--color-on-strong);
+  opacity: 0.8;
 }
 
 .daily-agenda-page__controls {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .daily-agenda-page__controls {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .daily-agenda-page__picker {
+    flex: 1 1 240px;
+  }
 }
 
 .daily-agenda-page__picker {
@@ -620,7 +653,8 @@ const nowMarkerPercent = computed(() => {
   font-family: var(--font-family-base);
   font-size: var(--font-size-body-sm);
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--color-on-strong);
+  opacity: 0.8;
 }
 
 .daily-agenda-page__select {
@@ -628,10 +662,14 @@ const nowMarkerPercent = computed(() => {
   padding: var(--space-2) var(--space-3);
   font-family: var(--font-family-base);
   font-size: var(--font-size-body);
-  color: var(--color-text-primary);
-  background-color: var(--color-surface);
-  border: var(--border-width-normal) solid var(--color-border-subtle);
+  color: var(--color-on-strong);
+  background-color: rgb(244 240 231 / 8%);
+  border: var(--border-width-normal) solid rgb(244 240 231 / 24%);
   border-radius: var(--radius-md);
+}
+
+.daily-agenda-page__select option {
+  color: var(--color-text-primary);
 }
 
 /* HU-063: anterior/fecha/siguiente conservan posiciones estables
@@ -743,16 +781,13 @@ const nowMarkerPercent = computed(() => {
     height: 104px;
     margin-top: var(--space-6);
     padding: 0 var(--space-2);
-    background-color: var(--color-surface);
-    border: var(--border-width-normal) solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
   }
 
   .daily-agenda-page__timeline-tick {
     position: absolute;
     top: 0;
     bottom: 0;
-    border-left: var(--border-width-normal) solid var(--color-border-subtle);
+    border-left: var(--border-width-normal) dashed rgb(244 240 231 / 24%);
   }
 
   .daily-agenda-page__timeline-tick-label {
@@ -762,17 +797,18 @@ const nowMarkerPercent = computed(() => {
     white-space: nowrap;
     font-size: var(--font-size-caption);
     font-variant-numeric: tabular-nums;
-    color: var(--color-text-secondary);
+    color: var(--color-on-strong);
+    opacity: 0.64;
   }
 
-  /* Latón oscuro (foco/énfasis secundario, §4.1): el marcador "Ahora" no es
-     una acción primaria y no reutiliza el color de acción. */
+  /* Latón (foco/énfasis secundario, §4.1): el marcador "Ahora" no es una
+     acción primaria y no reutiliza el color de acción. */
   .daily-agenda-page__timeline-now {
     position: absolute;
     top: 0;
     bottom: 0;
     z-index: 1;
-    border-left: var(--border-width-emphasis) solid var(--color-focus);
+    border-left: var(--border-width-emphasis) solid var(--color-brand-accent-surface);
   }
 
   .daily-agenda-page__timeline-now-label {
@@ -782,7 +818,7 @@ const nowMarkerPercent = computed(() => {
     white-space: nowrap;
     font-size: var(--font-size-caption);
     font-weight: 600;
-    color: var(--color-focus);
+    color: var(--color-brand-accent-surface);
   }
 
   .daily-agenda-page__timeline-slip {

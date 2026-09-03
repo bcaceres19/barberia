@@ -269,107 +269,151 @@ function onRetryLoad() {
       </div>
 
       <form v-else class="new-appointment-page__form" novalidate @submit.prevent="onSubmit">
-        <div class="new-appointment-page__field">
-          <label for="new-appointment-barber" class="new-appointment-page__label">Barbero</label>
-          <select
-            id="new-appointment-barber"
-            v-model="selectedBarberId"
-            class="new-appointment-page__select"
-          >
-            <option value="" disabled>Elige un barbero</option>
-            <option v-for="b in barbers" :key="b.id" :value="b.id">{{ b.fullName }}</option>
-          </select>
+        <div class="new-appointment-page__section">
+          <div class="new-appointment-page__section-heading">
+            <span class="new-appointment-page__section-number" aria-hidden="true">1</span>
+            <div>
+              <h2 class="new-appointment-page__section-title">Selecciona</h2>
+              <p class="new-appointment-page__section-hint">Elige al barbero y el servicio.</p>
+            </div>
+          </div>
+
+          <div class="new-appointment-page__field">
+            <label for="new-appointment-barber" class="new-appointment-page__label">Barbero</label>
+            <select
+              id="new-appointment-barber"
+              v-model="selectedBarberId"
+              class="new-appointment-page__select"
+            >
+              <option value="" disabled>Elige un barbero</option>
+              <option v-for="b in barbers" :key="b.id" :value="b.id">{{ b.fullName }}</option>
+            </select>
+            <p
+              v-if="attempted && fieldErrors.barberId"
+              class="new-appointment-page__error"
+              role="alert"
+            >
+              {{ fieldErrors.barberId }}
+            </p>
+          </div>
+
+          <div class="new-appointment-page__field">
+            <label for="new-appointment-service" class="new-appointment-page__label"
+              >Servicio</label
+            >
+            <select
+              id="new-appointment-service"
+              v-model="selectedServiceId"
+              class="new-appointment-page__select"
+              :disabled="!selectedBarberId || servicesStatus === 'loading'"
+            >
+              <option value="" disabled>
+                {{ selectedBarberId ? 'Elige un servicio' : 'Elige primero un barbero' }}
+              </option>
+              <option v-for="s in services" :key="s.id" :value="s.id">{{ s.name }}</option>
+            </select>
+            <p v-if="servicesStatus === 'loading'" role="status" aria-live="polite">
+              Cargando servicios…
+            </p>
+            <p v-else-if="servicesStatus === 'ready' && services.length === 0">
+              Este barbero no tiene servicios activos asignados.
+            </p>
+            <p v-else-if="servicesStatus === 'error'" role="alert">
+              No pudimos cargar los servicios de este barbero.
+            </p>
+            <p
+              v-if="attempted && fieldErrors.serviceId"
+              class="new-appointment-page__error"
+              role="alert"
+            >
+              {{ fieldErrors.serviceId }}
+            </p>
+          </div>
+        </div>
+
+        <div class="new-appointment-page__section">
+          <div class="new-appointment-page__section-heading">
+            <span class="new-appointment-page__section-number" aria-hidden="true">2</span>
+            <div>
+              <h2 class="new-appointment-page__section-title">Persona atendida</h2>
+              <p class="new-appointment-page__section-hint">Indica quién recibirá el servicio.</p>
+            </div>
+          </div>
+
+          <BaseInput
+            v-model="attendeeName"
+            type="text"
+            label="Persona atendida"
+            required
+            :error="attempted ? fieldErrors.attendeeName : undefined"
+          />
+          <BaseInput
+            v-model="customerFullName"
+            type="text"
+            label="Nombre del cliente"
+            required
+            :error="attempted ? fieldErrors.customerFullName : undefined"
+          />
+          <div class="new-appointment-page__form-row">
+            <BaseInput
+              v-model="customerPhone"
+              type="tel"
+              label="Teléfono (opcional)"
+              placeholder="+573001234567"
+              :error="attempted ? fieldErrors.customerPhone : undefined"
+            />
+            <BaseInput
+              v-model="customerEmail"
+              type="email"
+              label="Correo (opcional)"
+              :error="attempted ? fieldErrors.customerEmail : undefined"
+            />
+          </div>
+          <p v-if="!customerPhone && !customerEmail" class="new-appointment-page__hint">
+            Sin teléfono ni correo, el cliente no recibirá recordatorios.
+          </p>
+        </div>
+
+        <div class="new-appointment-page__section">
+          <div class="new-appointment-page__section-heading">
+            <span class="new-appointment-page__section-number" aria-hidden="true">3</span>
+            <div>
+              <h2 class="new-appointment-page__section-title">Fecha y hora</h2>
+              <p class="new-appointment-page__section-hint">Define cuándo será el turno.</p>
+            </div>
+          </div>
+
+          <div class="new-appointment-page__form-row">
+            <BaseInput v-model="startsAtDate" type="date" label="Fecha del turno" required />
+            <BaseInput v-model="startsAtTime" type="time" label="Hora del turno" required />
+          </div>
           <p
-            v-if="attempted && fieldErrors.barberId"
+            v-if="attempted && fieldErrors.startsAt"
             class="new-appointment-page__error"
             role="alert"
           >
-            {{ fieldErrors.barberId }}
+            {{ fieldErrors.startsAt }}
           </p>
         </div>
 
-        <div class="new-appointment-page__field">
-          <label for="new-appointment-service" class="new-appointment-page__label">Servicio</label>
-          <select
-            id="new-appointment-service"
-            v-model="selectedServiceId"
-            class="new-appointment-page__select"
-            :disabled="!selectedBarberId || servicesStatus === 'loading'"
-          >
-            <option value="" disabled>
-              {{ selectedBarberId ? 'Elige un servicio' : 'Elige primero un barbero' }}
-            </option>
-            <option v-for="s in services" :key="s.id" :value="s.id">{{ s.name }}</option>
-          </select>
-          <p v-if="servicesStatus === 'loading'" role="status" aria-live="polite">
-            Cargando servicios…
-          </p>
-          <p v-else-if="servicesStatus === 'ready' && services.length === 0">
-            Este barbero no tiene servicios activos asignados.
-          </p>
-          <p v-else-if="servicesStatus === 'error'" role="alert">
-            No pudimos cargar los servicios de este barbero.
-          </p>
-          <p
-            v-if="attempted && fieldErrors.serviceId"
-            class="new-appointment-page__error"
-            role="alert"
-          >
-            {{ fieldErrors.serviceId }}
-          </p>
-        </div>
+        <div class="new-appointment-page__section">
+          <div class="new-appointment-page__section-heading">
+            <span class="new-appointment-page__section-number" aria-hidden="true">4</span>
+            <div>
+              <h2 class="new-appointment-page__section-title">Nota (opcional)</h2>
+              <p class="new-appointment-page__section-hint">
+                Agrega información adicional si es necesario.
+              </p>
+            </div>
+          </div>
 
-        <BaseInput
-          v-model="attendeeName"
-          type="text"
-          label="Persona atendida"
-          required
-          :error="attempted ? fieldErrors.attendeeName : undefined"
-        />
-        <BaseInput
-          v-model="customerFullName"
-          type="text"
-          label="Nombre del cliente"
-          required
-          :error="attempted ? fieldErrors.customerFullName : undefined"
-        />
-        <div class="new-appointment-page__form-row">
           <BaseInput
-            v-model="customerPhone"
-            type="tel"
-            label="Teléfono (opcional)"
-            placeholder="+573001234567"
-            :error="attempted ? fieldErrors.customerPhone : undefined"
-          />
-          <BaseInput
-            v-model="customerEmail"
-            type="email"
-            label="Correo (opcional)"
-            :error="attempted ? fieldErrors.customerEmail : undefined"
+            v-model="customerNote"
+            type="text"
+            label="Nota (opcional)"
+            :error="attempted ? fieldErrors.customerNote : undefined"
           />
         </div>
-        <p v-if="!customerPhone && !customerEmail" class="new-appointment-page__hint">
-          Sin teléfono ni correo, el cliente no recibirá recordatorios.
-        </p>
-
-        <div class="new-appointment-page__form-row">
-          <BaseInput v-model="startsAtDate" type="date" label="Fecha del turno" required />
-          <BaseInput v-model="startsAtTime" type="time" label="Hora del turno" required />
-        </div>
-        <p
-          v-if="attempted && fieldErrors.startsAt"
-          class="new-appointment-page__error"
-          role="alert"
-        >
-          {{ fieldErrors.startsAt }}
-        </p>
-
-        <BaseInput
-          v-model="customerNote"
-          type="text"
-          label="Nota (opcional)"
-          :error="attempted ? fieldErrors.customerNote : undefined"
-        />
 
         <div
           v-if="hasSummaryContent"
@@ -424,7 +468,13 @@ function onRetryLoad() {
           No pudimos registrar el turno. Tus datos se conservaron; inténtalo de nuevo.
         </BaseAlert>
 
-        <BaseButton type="submit" variant="primary" :disabled="saveStatus === 'saving'">
+        <BaseButton
+          type="submit"
+          variant="primary"
+          size="lg"
+          class="new-appointment-page__submit"
+          :disabled="saveStatus === 'saving'"
+        >
           {{ saveStatus === 'saving' ? 'Guardando…' : 'Registrar turno' }}
         </BaseButton>
       </form>
@@ -452,6 +502,7 @@ function onRetryLoad() {
 
 .new-appointment-page__title {
   margin: 0;
+  font-family: var(--font-display);
   font-size: var(--font-size-h1);
   line-height: var(--font-size-h1-line);
   font-weight: var(--font-weight-h1);
@@ -480,6 +531,53 @@ function onRetryLoad() {
   gap: var(--space-4);
   /* Formulario legible (estandar-diseno-visual.md §7.1): máximo 640px. */
   max-width: 640px;
+}
+
+.new-appointment-page__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-bottom: var(--space-5);
+  border-bottom: var(--border-width-normal) solid var(--color-border-subtle);
+}
+
+.new-appointment-page__section:last-of-type {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.new-appointment-page__section-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.new-appointment-page__section-number {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: var(--border-width-normal) solid var(--color-brand-accent-surface);
+  border-radius: 999px;
+  color: var(--color-brand-accent-text);
+  font-family: var(--font-display);
+  font-size: var(--font-size-body);
+}
+
+.new-appointment-page__section-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--font-size-h3);
+  line-height: var(--font-size-h3-line);
+  color: var(--color-text-primary);
+}
+
+.new-appointment-page__section-hint {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-body-sm);
+  color: var(--color-text-secondary);
 }
 
 .new-appointment-page__field {
@@ -551,15 +649,14 @@ function onRetryLoad() {
 
 .new-appointment-page__resumen-list {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
   margin: 0;
 }
 
 .new-appointment-page__resumen-item {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
   gap: var(--space-2);
 }
 
@@ -567,10 +664,17 @@ function onRetryLoad() {
   color: var(--color-text-secondary);
 }
 
+.new-appointment-page__resumen-item dt::after {
+  content: ':';
+}
+
 .new-appointment-page__resumen-item dd {
   margin: 0;
   font-weight: 600;
   color: var(--color-text-primary);
-  text-align: right;
+}
+
+.new-appointment-page__submit {
+  width: 100%;
 }
 </style>

@@ -8,7 +8,7 @@
 // todavía no tienen controles propios aquí; quedan como seguimiento
 // explícito, no como huecos silenciosos.
 import { computed, onMounted, ref } from 'vue'
-import { BaseAlert, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
+import { BaseAlert, BaseButton, BaseDialog, BaseInput, PageHeader } from '@/shared/ui'
 import { fetchBarberSummaries, fetchBarbershopTimezone } from '../api/schedulesApi'
 import {
   createTimeBlock,
@@ -357,17 +357,16 @@ async function onDeleteSeries(item: TimeBlockSeries) {
 
 <template>
   <section class="blocks-page" aria-labelledby="blocks-page-title">
-    <header class="blocks-page__header">
-      <h1 id="blocks-page-title" class="blocks-page__title">Horarios y bloqueos</h1>
-      <div v-if="pageStatus === 'ready' && barbers.length > 0" class="blocks-page__header-actions">
+    <PageHeader title-id="blocks-page-title" title="Horarios y bloqueos">
+      <template v-if="pageStatus === 'ready' && barbers.length > 0" #actions>
         <BaseButton type="button" variant="primary" @click="openCreateBlockDialog">
           Agregar bloqueo
         </BaseButton>
         <BaseButton type="button" variant="secondary" @click="openCreateSeriesDialog">
           Agregar serie semanal
         </BaseButton>
-      </div>
-    </header>
+      </template>
+    </PageHeader>
 
     <p v-if="barbershopTimezone" class="blocks-page__timezone">
       Horas en la zona horaria de la barbería: {{ barbershopTimezone }}
@@ -596,28 +595,6 @@ async function onDeleteSeries(item: TimeBlockSeries) {
 </template>
 
 <style scoped>
-.blocks-page__title {
-  margin: 0;
-  font-size: var(--font-size-h1);
-  line-height: var(--font-size-h1-line);
-  font-weight: var(--font-weight-h1);
-  color: var(--color-text-primary);
-}
-
-.blocks-page__header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.blocks-page__header-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
 .blocks-page__picker {
   display: flex;
   flex-direction: column;

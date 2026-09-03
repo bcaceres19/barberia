@@ -10,7 +10,7 @@
 // una respuesta exitosa del servidor cierra el diálogo o cambia una fila
 // (trabajo requerido §4.3/§4.4 de HU-021, mismo criterio aquí).
 import { computed, onMounted, ref } from 'vue'
-import { BaseAlert, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
+import { BaseAlert, BaseButton, BaseDialog, BaseInput, PageHeader } from '@/shared/ui'
 import {
   createWorkingHour,
   deleteWorkingHour,
@@ -754,17 +754,13 @@ onMounted(loadColombianHolidays)
 
 <template>
   <section class="schedules-page" aria-labelledby="schedules-page-title">
-    <header class="schedules-page__header">
-      <h1 id="schedules-page-title" class="schedules-page__title">Horarios</h1>
-      <BaseButton
-        v-if="pageStatus === 'ready' && barbers.length > 0"
-        type="button"
-        variant="primary"
-        @click="openCreateDialog"
-      >
-        Agregar tramo
-      </BaseButton>
-    </header>
+    <PageHeader title-id="schedules-page-title" title="Horarios">
+      <template v-if="pageStatus === 'ready' && barbers.length > 0" #actions>
+        <BaseButton type="button" variant="primary" @click="openCreateDialog">
+          Agregar tramo
+        </BaseButton>
+      </template>
+    </PageHeader>
 
     <p v-if="barbershopTimezone" class="schedules-page__timezone">
       Horas en la zona horaria de la barbería: {{ barbershopTimezone }}
@@ -1621,22 +1617,6 @@ onMounted(loadColombianHolidays)
   max-width: 720px;
   padding: var(--space-4);
   margin: 0 auto;
-}
-
-.schedules-page__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-}
-
-.schedules-page__title {
-  margin: 0;
-  font-size: var(--font-size-h1);
-  line-height: var(--font-size-h1-line);
-  font-weight: var(--font-weight-h1);
-  color: var(--color-text-primary);
 }
 
 .schedules-page__state {

@@ -6,7 +6,7 @@
 // barbero ya escribió (CA-020-08); solo un guardado exitoso confirmado por
 // el servidor reemplaza los valores del formulario.
 import { onMounted, reactive, ref } from 'vue'
-import { BaseAlert, BaseButton, BaseInput } from '@/shared/ui'
+import { BaseAlert, BaseButton, BaseInput, PageHeader } from '@/shared/ui'
 import { updateBarbershopName } from '@/modules/auth'
 import { fetchBarbershopSettings, saveBarbershopSettings } from '../api/settingsApi'
 import { toFormValues, type BarbershopSettingsFormValues } from '../model/barbershopSettings'
@@ -122,7 +122,7 @@ function onRetryLoad() {
 
 <template>
   <section class="settings-page" aria-labelledby="settings-page-title">
-    <h1 id="settings-page-title" class="settings-page__title">Barbería</h1>
+    <PageHeader title-id="settings-page-title" title="Barbería" />
 
     <div
       v-if="loadStatus === 'loading'"
@@ -243,14 +243,6 @@ function onRetryLoad() {
   max-width: 480px;
   padding: var(--space-4);
   margin: 0 auto;
-}
-
-.settings-page__title {
-  margin: 0;
-  font-size: var(--font-size-h1);
-  line-height: var(--font-size-h1-line);
-  font-weight: var(--font-weight-h1);
-  color: var(--color-text-primary);
 }
 
 .settings-page__state {

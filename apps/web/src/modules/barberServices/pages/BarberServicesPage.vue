@@ -13,7 +13,7 @@
 // DEC-068) revierte la casilla a su estado real sin perder la selección de
 // barbero ni el resto de casillas ya marcadas.
 import { computed, ref, onMounted } from 'vue'
-import { BaseAlert, BaseButton } from '@/shared/ui'
+import { BaseAlert, BaseButton, PageHeader } from '@/shared/ui'
 import {
   assignService,
   fetchAssignments,
@@ -180,11 +180,7 @@ async function onToggleService(service: ServiceSummary, event: Event) {
 
 <template>
   <section class="barber-services-page" aria-labelledby="barber-services-page-title">
-    <header class="barber-services-page__header">
-      <h1 id="barber-services-page-title" class="barber-services-page__title">
-        Servicios por barbero
-      </h1>
-    </header>
+    <PageHeader title-id="barber-services-page-title" title="Servicios por barbero" />
 
     <div
       v-if="pageStatus === 'loading'"
@@ -310,22 +306,6 @@ async function onToggleService(service: ServiceSummary, event: Event) {
   max-width: 640px;
   padding: var(--space-4);
   margin: 0 auto;
-}
-
-.barber-services-page__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-}
-
-.barber-services-page__title {
-  margin: 0;
-  font-size: var(--font-size-h1);
-  line-height: var(--font-size-h1-line);
-  font-weight: var(--font-weight-h1);
-  color: var(--color-text-primary);
 }
 
 .barber-services-page__state {

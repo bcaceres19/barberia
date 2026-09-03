@@ -89,7 +89,21 @@ async function onSubmit() {
       :disabled="isSubmitting"
       :error="fieldError"
       @update:model-value="handleEmailInput"
-    />
+    >
+      <template #leading>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          width="18"
+          height="18"
+        >
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <path d="m4 7 8 6 8-6" />
+        </svg>
+      </template>
+    </BaseInput>
 
     <BaseButton
       type="submit"

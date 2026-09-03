@@ -11,6 +11,8 @@ import type { RouteLocationRaw } from 'vue-router'
 interface Props {
   /** Título de la pantalla. Único <h1> real de la vista. */
   title: string
+  /** id del <h1>, para que la sección contenedora use aria-labelledby. */
+  titleId?: string
   /** Línea de contexto bajo el título (fecha, zona horaria, alcance). */
   subtitle?: string
   /** Destino del enlace de retorno. Sin backTo, no se muestra el enlace. */
@@ -20,6 +22,7 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
+  titleId: undefined,
   subtitle: undefined,
   backTo: undefined,
   backLabel: 'Volver',
@@ -33,7 +36,7 @@ withDefaults(defineProps<Props>(), {
     </RouterLink>
     <div class="page-header__row">
       <div class="page-header__heading">
-        <h1 class="page-header__title">
+        <h1 :id="titleId" class="page-header__title">
           {{ title }}
           <slot name="badge" />
         </h1>
