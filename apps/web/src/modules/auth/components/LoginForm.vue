@@ -141,21 +141,7 @@ const onRetry = () => emit('retry')
       :disabled="submitting"
       :error="emailError"
       @update:model-value="handleEmailInput"
-    >
-      <template #leading>
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.75"
-          width="18"
-          height="18"
-        >
-          <rect x="3" y="5" width="18" height="14" rx="2" />
-          <path d="m4 7 8 6 8-6" />
-        </svg>
-      </template>
-    </BaseInput>
+    />
 
     <BaseInput
       :model-value="password"
@@ -168,21 +154,7 @@ const onRetry = () => emit('retry')
       :disabled="submitting"
       :error="passwordError"
       @update:model-value="handlePasswordInput"
-    >
-      <template #leading>
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.75"
-          width="18"
-          height="18"
-        >
-          <rect x="4" y="11" width="16" height="9" rx="1.5" />
-          <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-        </svg>
-      </template>
-    </BaseInput>
+    />
 
     <BaseButton
       type="submit"
@@ -230,32 +202,14 @@ const onRetry = () => emit('retry')
   border-radius: var(--radius-sm);
 }
 
-.login-form :deep(.base-input__input-wrapper:has(.base-input__icon--leading) .base-input) {
-  padding-left: 54px;
-}
-
-.login-form :deep(.base-input__icon--leading) {
-  left: 18px;
-}
-
-.login-form :deep(.base-input__icon svg) {
-  width: 22px;
-  height: 22px;
-}
-
+/* "OCULTAR" (la palabra más larga del conmutador reglado) necesita más
+   ancho reservado que el icono de 22px que ocupaba este mismo lugar. */
 .login-form :deep(.base-input__input-wrapper:has(.base-input__toggle) .base-input) {
-  padding-right: 64px;
+  padding-right: 92px;
 }
 
 .login-form :deep(.base-input__toggle) {
-  width: 64px;
-  color: var(--color-text-primary);
-  border-radius: var(--radius-sm);
-}
-
-.login-form :deep(.base-input__toggle svg) {
-  width: 24px;
-  height: 24px;
+  min-width: 84px;
 }
 
 .login-form :deep(.base-input__toggle:hover:not(:disabled)) {
@@ -346,26 +300,12 @@ const onRetry = () => emit('retry')
     font-size: 18px;
   }
 
-  .login-form :deep(.base-input__input-wrapper:has(.base-input__icon--leading) .base-input) {
-    padding-left: 62px;
-  }
-
-  .login-form :deep(.base-input__icon--leading) {
-    left: 20px;
-  }
-
-  .login-form :deep(.base-input__icon svg),
-  .login-form :deep(.base-input__toggle svg) {
-    width: 26px;
-    height: 26px;
-  }
-
   .login-form :deep(.base-input__input-wrapper:has(.base-input__toggle) .base-input) {
-    padding-right: 72px;
+    padding-right: 96px;
   }
 
   .login-form :deep(.base-input__toggle) {
-    width: 72px;
+    min-width: 88px;
   }
 
   .login-form__submit {

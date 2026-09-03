@@ -30,6 +30,13 @@
   --color-brand-accent-surface: #b8955a;
   --color-brand-accent-text: #101b2b;
   --color-brand-sage: #748477;
+  /* Mismo tono que --color-focus, con un nombre propio: gobierna las
+     versalitas espaciadas de latón (rótulos de campo, conmutador de
+     contraseña, palabra de estado plano) y los filetes de latón de
+     alerta/botón del lenguaje reglado (issue #212, DEC-080). Un cambio
+     futuro al color del anillo de foco no debe mover accidentalmente
+     estos usos tipográficos y viceversa. */
+  --color-accent-brass: #765c2f;
 
   /* Color: estado */
   --color-success-surface: #eaf0eb;

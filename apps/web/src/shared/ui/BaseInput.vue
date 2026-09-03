@@ -213,38 +213,7 @@ const handleFocus = (event: FocusEvent) => {
         :disabled="disabled"
         @click="toggleReveal"
       >
-        <svg
-          v-if="!isRevealed"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.75"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          width="18"
-          height="18"
-          aria-hidden="true"
-        >
-          <path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z" />
-          <circle cx="12" cy="12" r="3" />
-        </svg>
-        <svg
-          v-else
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.75"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          width="18"
-          height="18"
-          aria-hidden="true"
-        >
-          <path
-            d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-6.5 0-10.5-7-10.5-7a21.6 21.6 0 0 1 5.06-6.06M9.9 4.24A10.6 10.6 0 0 1 12 4c6.5 0 10.5 7 10.5 7a21.6 21.6 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
-          />
-          <line x1="1" y1="1" x2="23" y2="23" />
-        </svg>
+        {{ isRevealed ? 'Ocultar' : 'Mostrar' }}
       </button>
       <span
         v-else-if="$slots.trailing"
@@ -269,16 +238,23 @@ const handleFocus = (event: FocusEvent) => {
 .base-input__wrapper {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
   width: 100%;
 }
 
+/* Rótulo reglado: versalitas espaciadas de latón sobre el campo, el mismo
+   tratamiento que "PASO 1 DE 3" y "ACCESO SEGURO" del contrato visual
+   (auth-eventos/README.md, issue #212). Reemplaza el label sans regular
+   anterior; el peso 600 y el letter-spacing compensan el tamaño pequeño
+   para que siga siendo legible como encabezado del campo, no como ayuda. */
 .base-input__label {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body-sm);
-  font-weight: 500;
-  line-height: var(--font-size-body-sm-line);
-  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent-brass);
 }
 
 .base-input__required {
@@ -292,17 +268,21 @@ const handleFocus = (event: FocusEvent) => {
   align-items: center;
 }
 
+/* Campo reglado (issue #212, auth-eventos/README.md "Contrato visual
+   común"): superficie de papel blanco apoyada en una línea base de tinta
+   de 2px, con filete perimetral de 1px a baja opacidad y radio 2px. El
+   perímetro usa --color-border-subtle (piedra, ya de baja opacidad
+   visual en la paleta); la línea base usa --color-action-primary (tinta)
+   para que sea el trazo dominante, no un borde uniforme. */
 .base-input {
   --input-height: var(--control-height);
   --input-padding-x: var(--space-4);
   --input-font-size: var(--font-size-body);
   --input-line-height: var(--font-size-body-line);
   --input-bg: var(--color-surface);
-  --input-border: var(--border-width-normal) solid var(--color-border-control);
-  --input-border-hover: var(--border-width-normal) solid var(--color-border-control);
-  --input-border-focus: var(--border-width-emphasis) solid var(--color-focus);
-  --input-border-invalid: var(--border-width-emphasis) solid var(--color-danger-border);
-  --input-radius: var(--radius-md);
+  --input-border-color: var(--color-border-subtle);
+  --input-border-base-color: var(--color-action-primary);
+  --input-radius: 2px;
   --input-transition:
     border-color var(--motion-duration-fast) var(--motion-easing-standard),
     box-shadow var(--motion-duration-fast) var(--motion-easing-standard),
@@ -317,7 +297,8 @@ const handleFocus = (event: FocusEvent) => {
   line-height: var(--input-line-height);
   color: var(--color-text-primary);
   background-color: var(--input-bg);
-  border: var(--input-border);
+  border: var(--border-width-normal) solid var(--input-border-color);
+  border-bottom: var(--border-width-emphasis) solid var(--input-border-base-color);
   border-radius: var(--input-radius);
   outline: none;
   transition: var(--input-transition);
@@ -349,10 +330,11 @@ const handleFocus = (event: FocusEvent) => {
 
 .base-input:hover:not(:disabled):not(.base-input--readonly):not(.base-input--invalid) {
   border-color: var(--color-text-secondary);
+  border-bottom-color: var(--input-border-base-color);
 }
 
 .base-input:focus-visible {
-  border: var(--input-border-focus);
+  border-color: var(--color-focus);
   box-shadow: var(--input-focus-ring);
 }
 
@@ -360,6 +342,7 @@ const handleFocus = (event: FocusEvent) => {
 .base-input--disabled {
   background-color: var(--color-surface-muted);
   border-color: var(--color-border-subtle);
+  border-bottom-color: var(--color-border-subtle);
   color: var(--color-text-secondary);
   cursor: not-allowed;
   opacity: 0.64;
@@ -369,11 +352,15 @@ const handleFocus = (event: FocusEvent) => {
 .base-input--readonly {
   background-color: var(--color-surface-muted);
   border-color: var(--color-border-subtle);
+  border-bottom-color: var(--color-border-subtle);
   cursor: default;
 }
 
+/* Estado de error (03-validacion.png): el filete completo pasa a peligro,
+   no solo la línea base, para que se lea como rechazo del campo entero. */
 .base-input--invalid {
-  border: var(--input-border-invalid);
+  border-color: var(--color-danger-border);
+  border-bottom-color: var(--color-danger-border);
 }
 
 .base-input--invalid:focus-visible {
@@ -401,10 +388,12 @@ const handleFocus = (event: FocusEvent) => {
   right: var(--space-3);
 }
 
-/* Botón de mostrar/ocultar contraseña: a diferencia de `.base-input__icon`
-   (decorativo, `pointer-events: none`) es un control real, así que ocupa
-   toda la altura del campo como objetivo táctil en vez de solo el tamaño
-   del glifo (estandar-diseno-visual.md §6.2, CA-009-03). */
+/* Conmutador de contraseña reglado: la palabra "Mostrar"/"Ocultar" en
+   versalitas de latón con filete inferior, no un glifo de ojo (contrato
+   visual del issue #212) — así el control tiene nombre accesible propio
+   sin depender de una forma. Sigue ocupando toda la altura del campo como
+   objetivo táctil (estandar-diseno-visual.md §6.2, CA-009-03); el ancho
+   mínimo reserva espacio para "OCULTAR", la palabra más larga. */
 .base-input__toggle {
   position: absolute;
   top: 0;
@@ -412,13 +401,21 @@ const handleFocus = (event: FocusEvent) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: var(--control-height-icon);
+  min-width: var(--control-height-icon);
   height: 100%;
-  padding: 0;
+  padding: 0 var(--space-3);
   background: transparent;
   border: none;
   border-radius: var(--input-radius);
-  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  color: var(--color-accent-brass);
   cursor: pointer;
   transition: color var(--motion-duration-fast) var(--motion-easing-standard);
 }
@@ -430,7 +427,7 @@ const handleFocus = (event: FocusEvent) => {
 }
 
 .base-input__toggle:hover:not(:disabled) {
-  color: var(--color-text-primary);
+  color: var(--color-action-primary);
 }
 
 .base-input__toggle:focus-visible {
@@ -451,9 +448,14 @@ const handleFocus = (event: FocusEvent) => {
   padding-left: calc(var(--input-padding-x) + 20px);
 }
 
-.base-input__input-wrapper:has(.base-input__icon--trailing) .base-input,
-.base-input__input-wrapper:has(.base-input__toggle) .base-input {
+.base-input__input-wrapper:has(.base-input__icon--trailing) .base-input {
   padding-right: calc(var(--input-padding-x) + 20px);
+}
+
+/* "OCULTAR" (la palabra más larga del conmutador) necesita más espacio
+   reservado que un icono de 18px. */
+.base-input__input-wrapper:has(.base-input__toggle) .base-input {
+  padding-right: 84px;
 }
 
 /* Hint y Error */

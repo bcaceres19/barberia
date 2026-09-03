@@ -182,11 +182,6 @@ withDefaults(defineProps<Props>(), {
     font-size: 17px;
     line-height: 24px;
   }
-
-  .auth-split__card :deep(.base-alert__icon) {
-    width: 24px;
-    height: 24px;
-  }
 }
 
 @media (max-width: 359px) {

@@ -20,7 +20,7 @@ describe('BaseAlert', () => {
     })
 
     it('applies variant classes', () => {
-      const variants = ['success', 'warning', 'danger', 'info', 'neutral'] as const
+      const variants = ['success', 'warning', 'danger', 'info', 'neutral', 'plain'] as const
       variants.forEach((variant) => {
         const wrapper = mount(BaseAlert, { props: { variant } })
         expect(wrapper.classes()).toContain(`base-alert--${variant}`)
@@ -30,6 +30,43 @@ describe('BaseAlert', () => {
     it('renders title when provided', () => {
       const wrapper = mount(BaseAlert, { props: { title: 'Alert Title' } })
       expect(wrapper.find('.base-alert__title').text()).toBe('Alert Title')
+    })
+
+    // Contrato visual del issue #212: la palabra de estado en versalitas
+    // reemplaza el glifo circular anterior como el elemento que distingue
+    // el estado además del color (WCAG 2.2 AA 1.4.1).
+    it('shows the status word above the title for each stateful variant', () => {
+      const expectations: Record<string, string> = {
+        danger: 'Error',
+        warning: 'Atención',
+        info: 'Nota',
+        success: 'Confirmación',
+      }
+      Object.entries(expectations).forEach(([variant, word]) => {
+        const wrapper = mount(BaseAlert, {
+          props: { variant: variant as 'danger' | 'warning' | 'info' | 'success', title: 'Título' },
+        })
+        expect(wrapper.find('.base-alert__status').text()).toBe(word)
+      })
+    })
+
+    it('does not show a status word for neutral or plain', () => {
+      const neutral = mount(BaseAlert, { props: { variant: 'neutral', title: 'Título' } })
+      expect(neutral.find('.base-alert__status').exists()).toBe(false)
+
+      const plain = mount(BaseAlert, { props: { variant: 'plain', title: 'Título' } })
+      expect(plain.find('.base-alert__status').exists()).toBe(false)
+    })
+
+    // La variante sin relleno (caja de requisitos de contraseña) compone el
+    // título como versalita única, sin repetirlo también como titular en
+    // negrita (trabajo requerido §4 del issue #212).
+    it('plain variant renders the title as a single brass caption, not a bold heading', () => {
+      const wrapper = mount(BaseAlert, {
+        props: { variant: 'plain', title: 'Requisitos de la contraseña' },
+      })
+      expect(wrapper.find('.base-alert__title--plain').text()).toBe('Requisitos de la contraseña')
+      expect(wrapper.find('h4.base-alert__title').exists()).toBe(false)
     })
 
     it('renders default slot content', () => {
@@ -102,14 +139,23 @@ describe('BaseAlert', () => {
       expect(wrapper.attributes('aria-atomic')).toBe('true')
     })
 
-    it('dismiss button has aria-label', () => {
+    // El control de descarte ahora se rotula "Descartar" en vez de un icono
+    // con aria-label (issue #212): el texto visible es su propio nombre
+    // accesible, así que ya no necesita un aria-label aparte (WCAG 2.5.3
+    // Label in Name).
+    it('dismiss button is labeled "Descartar" and has no separate aria-label', () => {
       const wrapper = mount(BaseAlert, { props: { dismissible: true } })
-      expect(wrapper.find('.base-alert__dismiss').attributes('aria-label')).toBe('Cerrar alerta')
+      const dismiss = wrapper.find('.base-alert__dismiss')
+      expect(dismiss.text()).toBe('Descartar')
+      expect(dismiss.attributes('aria-label')).toBeUndefined()
     })
 
-    it('icon has aria-hidden', () => {
-      const wrapper = mount(BaseAlert)
-      expect(wrapper.find('.base-alert__icon').attributes('aria-hidden')).toBe('true')
+    // El glifo circular genérico se retiró: la palabra de estado en
+    // versalitas es la que ahora cumple "icono, texto y estructura además
+    // del color" (WCAG 2.2 AA 1.4.1).
+    it('has no decorative icon element', () => {
+      const wrapper = mount(BaseAlert, { props: { variant: 'danger', title: 'Título' } })
+      expect(wrapper.find('.base-alert__icon').exists()).toBe(false)
     })
   })
 

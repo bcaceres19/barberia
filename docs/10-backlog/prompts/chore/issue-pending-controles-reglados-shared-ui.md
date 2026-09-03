@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-CHORE-CONTROLES-REGLADOS-SHARED-UI-v1"
 version: "1.0"
 kind: "chore"
-status: "ready"
+status: "executed"
 target_agents:
   - "claude"
 repository: "bcaceres19/barberia"
