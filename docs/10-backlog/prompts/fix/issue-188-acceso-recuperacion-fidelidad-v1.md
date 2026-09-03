@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-FIX-188-ACCESO-RECUPERACION-FIDELIDAD-v1"
 version: "1.0"
 kind: "fix"
-status: "in_progress"
+status: "executed"
 target_agents:
   - "claude"
 repository: "bcaceres19/barberia"
@@ -18,8 +18,8 @@ issue: 188
 issue_url: "https://github.com/bcaceres19/barberia/issues/188"
 suggested_issue_title: "chore(web): rediseñar acceso y recuperación Tailored Grid"
 branch: "fix/188-acceso-recuperacion-fidelidad"
-pr: null
-pr_url: null
+pr: 210
+pr_url: "https://github.com/bcaceres19/barberia/pull/210"
 depends_on:
   - "El atlas del issue #183 está integrado en `main`."
   - "El protocolo de fidelidad visual del issue #208 y PR #209 está integrado en `main`."
@@ -210,6 +210,61 @@ Actualiza este prompt y el catálogo con estado, commit y PR reales. Entrega una
 Commit/PR: `fix(web): completa fidelidad visual de acceso y recuperación`.
 
 Usa `Closes #188` solo si todos los criterios del issue quedan cubiertos; en caso contrario usa `Refs #188`. No integres con diferencias primarias pendientes ni checks rojos.
+
+## Resultado de la ejecución (2026-09-03)
+
+Commit `709cf36` · PR [#210](https://github.com/bcaceres19/barberia/pull/210) (`Refs #188`, abierto contra `main`).
+
+### Diagnóstico inicial (Gate A/B)
+
+Medición en el navegador contra `02-acceso-recuperacion.png` reveló dos defectos primarios en `AuthSplitLayout.vue` (compartido por `/acceso` y `/recuperar-acceso`):
+
+1. **Contrato cromático roto**: `.auth-split` redeclaraba tokens locales con hexadecimales aproximados (`#f5f1ec`, `#03182e`, `#072139`, `#021224`) en vez de usar los tokens globales de `tokens.css`. Por cascada de custom properties, esto afectaba también el botón primario (`BaseButton`) y el enlace "¿Olvidaste tu contraseña?" (`LoginForm`), no solo el panel de marca.
+2. **Regla de latón desproporcionada**: `width: calc(var(--auth-wordmark-font-size) * 2.875)` producía una regla ~55% más ancha que el wordmark "NAVA" en vez de coincidir con él.
+3. **Wordmark móvil subdimensionado**: en el panel de 360px, el wordmark usaba 44px/line-height 48px dentro de una fila de grid fija en 88px, mientras el mockup muestra "NAVA" ocupando ~50% del ancho del header (~32.8% de la altura del panel). Medición por bounding-box en la imagen de referencia vs. `getBoundingClientRect()` en la app confirmó una relación de escala ~1.9x.
+
+### Correcciones aplicadas
+
+- `.auth-split` ahora usa `var(--color-canvas)` sin redeclarar tokens.
+- `.auth-split__rule` se envolvió junto al wordmark en `.auth-split__wordmark-group` (`width: fit-content` en escritorio) y pasó a `width: 100%`, igualando exactamente el ancho del wordmark (verificado: ambos 297.886px / 307.2px en 1440px reales).
+- Wordmark móvil: `font-size: 44px` → `76px`, `line-height: 48px` → `1`. `.auth-split__frame` pasó de `grid-template-rows: 88px minmax(0,1fr)` (altura fija) a `auto minmax(0,1fr)` para que el header crezca con el contenido. Resultado: 117px de alto en 360px de ancho (32.5%), contra 32.8% del mockup.
+
+### Tabla de evidencia
+
+| Ruta/estado | Mockup/panel | Viewport medido | Baseline | Final | Lado a lado | Overlay/diff | Pruebas | Desviaciones | PASS/FAIL |
+|---|---|---|---|---|---|---|---|---|---|
+| `/acceso` normal | ACCESO – ESCRITORIO (1440px) | 1440×900 real (Playwright, `innerWidth` verificado) | Capturado y revisado | Capturado y revisado | Revisado | Revisado (difference-blend) | Colores computados exactos (tinta/marfil/latón/latón-oscuro), wordmark/regla 1:1, heading centrado sobre formulario (mismo left/right que card/inputs/botón), ratio ink/marfil 45.9% vs 46.6% mockup (Δ<1pp) | Asterisco `*` de campo requerido y "Correo/Contraseña" con foco visible en latón: no están en el mockup pero son indicadores funcionales de accesibilidad preexistentes; se conservan | PASS |
+| `/acceso` normal | ACCESO – MÓVIL (360px) | 360×800 real (Playwright) | Capturado y revisado | Capturado y revisado | Revisado | — | Header 117px/360px (32.5%) vs 32.8% mockup; wordmark centrado 142.5px; sin overflow horizontal en 320/360 | Ninguna primaria pendiente | PASS |
+| `/acceso` | 320, 768, 1280, 1440px | Playwright, `hasHScroll:false` en los 4 | Capturado | Capturado | — | — | Sin scroll horizontal, sin recortes, transición fluida a layout de escritorio en 768/1280 | — | PASS |
+| `/acceso` teclado/foco | — | 1396×~700 real (Chrome DevTools) | — | Capturado | — | — | Tab recorre Correo→Contraseña→toggle→botón→enlace; anillo de foco visible en latón sobre el toggle | Test E2E `CA-010-05` falla por bug preexistente (ver abajo), no por regresión visual | PASS visual / E2E bloqueado (preexistente) |
+| `/recuperar-acceso` paso 1 "Solicita tu código" | RECUPERAR ACCESO – MÓVIL panel 1 | 360×900 real | Capturado | Capturado | Revisado | — | Colores exactos (tinta, grafito secundario #5E625F en textos), tipografía y espaciado consistentes con `/acceso` | Sin flecha "←" junto a NAVA en cabecera (el mockup la muestra en los 3 paneles de recuperación); sin hint "El código expira en 15 minutos." Ambos son elementos no presentes en el código/copy actual: añadirlos exige nueva interactividad o copy normativo no verificado, fuera del alcance "netamente visual" / "no inventar funcionalidad" | PASS con desviaciones documentadas |
+| `/recuperar-acceso` paso 2 "Verifica el código" | RECUPERAR ACCESO – MÓVIL panel 2 | 1396×668 real (Chrome DevTools, flujo real con cuenta QA) | Capturado | Capturado | — | — | Colores exactos; estado de error (código inválido) con alerta roja consistente con la franja ESTADOS CLAVE del mockup | Un solo campo de texto (`Código de 6 dígitos`, `autocomplete="one-time-code"`) en vez de 6 casillas separadas del mockup — preserva el autofill nativo de OTP; recrear 6 casillas es cambio funcional/de control sobre lógica OTP, fuera de alcance. Campo "Correo" de solo lectura del mockup no se añadió (dato ya conocido, pero es markup nuevo no solicitado explícitamente). Color latón del contador "Reenviar en Ns" no se replicó: el propio código de `BaseButton.vue` documenta la decisión explícita de no inventar tonos nuevos para estados disabled/secundarios sin decisión de producto | PASS con desviaciones documentadas |
+| `/recuperar-acceso` paso 3 "Nueva contraseña" | RECUPERAR ACCESO – MÓVIL panel 3 | — | — | — | — | — | Reutiliza `BaseInput`/`BaseButton`/`BaseAlert` ya validados visualmente en `/acceso` y paso 1/2; cubierto por `RecoveryResetStep.test.ts` (axe incluido) | No se alcanzó en vivo (requiere el código real enviado por WhatsApp/correo, no disponible en este entorno); validado por revisión de código y pruebas unitarias | No verificado visualmente en vivo |
+| Consola/Red | — | 1440×900 | — | — | — | — | Sin errores nuevos en consola; sin peticiones de red inesperadas | — | PASS |
+
+### Pruebas
+
+```
+format      PASS
+lint        PASS (0 errores; warnings preexistentes ajenos a este cambio)
+typecheck   PASS
+test:unit   PASS (645/645, incluye axe de AuthSplitLayout/RecoveryRequestStep/RecoveryResetStep)
+build       PASS
+test:e2e    23 fallos preexistentes, no relacionados con este diff (ver abajo)
+git diff --check   PASS
+```
+
+### Fallos E2E preexistentes (no introducidos por este cambio)
+
+1. **`getByLabel('Contraseña')` ambiguo** (bug de accesibilidad/testabilidad en `BaseInput`/`LoginForm` desde el commit `c675e79 fix(web): unifica control de contraseña`, previo a esta sesión): el botón de mostrar/ocultar contraseña resuelve al mismo nombre accesible que el campo, produciendo "strict mode violation" en Playwright. Rompe 22 de los 23 tests fallidos (`acceso.spec.ts`, `acceso-evidencia-responsiva.spec.ts`). Verificado con `git log` que `BaseInput.vue`/`LoginForm.vue` no fueron tocados en esta sesión.
+2. **Hash de contraseña de la fixture `duena.a@ejemplo.test` desactualizado** en la base `barberia-qa-local`: confirmado con `curl` directo contra la API (`401 correo o contraseña incorrectos`). Es un problema del entorno local, no del código.
+3. **`recuperacion.spec.ts` "recorrido completo con código válido"**: requiere leer el código OTP real entregado por WhatsApp/correo, no disponible en este entorno.
+
+Ninguno de estos tres motivos toca `AuthSplitLayout.vue` ni ningún archivo modificado en este diff. Se recomienda abrir un issue de seguimiento para el punto 1 (bug real de accesibilidad/testabilidad) antes del próximo trabajo sobre `/acceso`.
+
+### Veredicto
+
+Diferencias visuales primarias de `/acceso` (escritorio y móvil) resueltas y verificadas con medición real, no solo inspección visual. `/recuperar-acceso` con paridad de color/tipografía/espaciado en los pasos alcanzables en vivo; persisten desviaciones de composición documentadas (flecha de retroceso, hint de expiración, casillas de OTP) que se dejaron fuera por no ser "netamente visuales" o por proteger la lógica OTP existente. Dado que el suite E2E no queda en verde localmente (por motivos preexistentes y ajenos a este diff) y quedan desviaciones de composición sin resolver en recuperación, esta entrega usa `Refs #188`, no `Closes #188`.
 
 ## Texto corto para iniciar Claude
 
