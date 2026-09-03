@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-CHORE-FIDELIDAD-ACCESO-RECUPERACION-v1"
 version: "1.0"
 kind: "chore"
-status: "blocked"
+status: "ready"
 target_agents:
   - "claude"
 repository: "bcaceres19/barberia"
@@ -20,7 +20,7 @@ branch: "chore/213-fidelidad-acceso-recuperacion"
 pr: null
 pr_url: null
 depends_on:
-  - "Issue #212 (PROMPT-CHORE-CONTROLES-REGLADOS-SHARED-UI-v1) integrado en main"
+  - "Issue #212 (PROMPT-CHORE-CONTROLES-REGLADOS-SHARED-UI-v1) integrado en main mediante PR #214"
   - "Issue maestro #211"
   - "PR #210 (issue #188) integrado o cerrado"
 rules: []
@@ -52,7 +52,7 @@ source_docs:
   - "docs/03-desarrollo/estrategia-pruebas.md"
   - "docs/00-control/registro-decisiones.md"
 created_at: "2026-09-03"
-updated_at: "2026-09-03"
+updated_at: "2026-09-04"
 supersedes: "PROMPT-CHORE-LENGUAJE-REGLADO-NAVA-AUTH-v1"
 superseded_by: null
 ---
@@ -73,7 +73,38 @@ Esta es la **fase 2 de dos**. La fase 1 entregó los controles reglados en `shar
 
 [#213 · chore(web): fidelidad visual de acceso y recuperación con los mockups por evento](https://github.com/bcaceres19/barberia/issues/213), fase 2 del issue maestro [#211](https://github.com/bcaceres19/barberia/issues/211).
 
-**Estado `blocked`:** no comienza hasta que [#212](https://github.com/bcaceres19/barberia/issues/212) esté integrado en `main` con CI verde y sin regresión abierta.
+La fase 1 quedó integrada en `main` mediante PR [#214](https://github.com/bcaceres19/barberia/pull/214) (commit `bd738ef`), así que esta fase está desbloqueada.
+
+## Estado heredado de la fase 1
+
+El PR [#214](https://github.com/bcaceres19/barberia/pull/214) entregó los controles reglados, pero cerró con verificaciones
+declaradas **no realizadas**. Léelo antes de empezar y trátalo así:
+
+**Llega sin verificación visual y cae dentro de tus propios eventos, así que lo cierras tú:**
+
+- la variante `plain` de `BaseAlert`, que es la caja «Requisitos de la contraseña» de los
+  eventos `07`, `08` y `09` de recuperación;
+- el paso 3 del flujo de recuperación completo, eventos `07` a `11`.
+
+No los des por buenos porque la fase 1 los declaró implementados: son parte de tu evidencia
+por evento y se comparan contra su PNG como cualquier otro.
+
+**Llega sin verificación y queda FUERA de tu alcance —no lo arregles, ni lo uses como
+excusa para no avanzar—:**
+
+- `/panel/turnos/:id` (detalle de turno) y el diálogo «Agregar servicio» de
+  `/panel/servicios`, no recorridos en el barrido de regresión de la fase 1;
+- la suite E2E completa de Playwright de las once rutas P0, que la fase 1 **no ejecutó**.
+
+Ese último punto te afecta de forma directa: cuando corras `pnpm test:e2e` es posible que
+falle algo que la fase 1 introdujo y nadie detectó. **Antes de tocar nada, ejecuta la suite
+E2E sobre `main` sin tus cambios y guarda ese resultado como línea base.** Si un fallo ya
+existía, no es tuyo: repórtalo en [#212](https://github.com/bcaceres19/barberia/issues/212), que sigue abierto, y no lo
+arrastres a tu PR. Si aparece después de tu cambio, sí es tuyo y lo corriges.
+
+**Token nuevo disponible:** `--color-accent-brass` en `apps/web/src/styles/tokens.css`,
+que gobierna las versalitas y filetes de latón del lenguaje reglado. Úsalo; no escribas el
+hexadecimal ni reutilices `--color-focus`, que coincide en valor pero no en concepto.
 
 ## Objetivo
 

@@ -58,6 +58,12 @@ Esta es la **fase 1 de dos**. La fase 2 (composición de `/acceso` y `/recuperar
 
 [#212 · chore(web): controles reglados NAVA en shared/ui](https://github.com/bcaceres19/barberia/issues/212), fase 1 del issue maestro [#211](https://github.com/bcaceres19/barberia/issues/211).
 
+## Resultado
+
+Ejecutado. PR [#214](https://github.com/bcaceres19/barberia/pull/214) integrado en `main` (commit `bd738ef`) con CI 4/4 verde.
+
+El issue [#212](https://github.com/bcaceres19/barberia/issues/212) **permanece abierto**: el PR declaró como no verificadas la variante `plain` de `BaseAlert`, el paso 3 de recuperación, `/panel/turnos/:id`, el diálogo «Agregar servicio» de `/panel/servicios` y la suite E2E completa de Playwright de las once rutas P0. Las dos primeras las cubre la fase 2 ([#213](https://github.com/bcaceres19/barberia/issues/213)) dentro de su evidencia por evento; las tres restantes siguen siendo trabajo de este issue.
+
 ## Objetivo
 
 Los controles compartidos de `apps/web/src/shared/ui` hablan el lenguaje reglado editorial de NAVA, y las once rutas P0 que los consumen siguen funcionando, siendo legibles y pasando sus pruebas.
