@@ -1,9 +1,9 @@
 ---
 titulo: "Especificación integral de experiencia y pantallas NAVA"
-version: "1.2"
+version: "1.3"
 estado: "Dirección de producto y alcance; composición visual orientativa"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-02"
+ultima_actualizacion: "2026-09-03"
 documentos_relacionados:
   - "../00-control/registro-decisiones.md"
   - "../01-producto/alcance-mvp.md"
@@ -22,7 +22,7 @@ documentos_relacionados:
 
 ## 1. Propósito y forma de uso
 
-Este documento conserva la dirección visual **NAVA / Tailored Grid** aprobada por el propietario y orienta la experiencia de `apps/web`. Debe permitir que Claude, Codex o una persona implemente cada pantalla sin inventar funciones, respetando la familia visual y cromática de los mockups aprobados, pero con libertad para resolver la composición y usar estilos locales cuando resulten adecuados.
+Este documento conserva la dirección visual **NAVA / Tailored Grid** aprobada por el propietario y orienta la experiencia de `apps/web`. Debe permitir que Claude, Codex o una persona implemente cada pantalla sin inventar funciones. Cuando no existe una referencia exacta, conserva libertad para resolver la composición; cuando se asigna un mockup concreto, exige fidelidad medible a su resultado renderizado según el estándar visual.
 
 Esta especificación define:
 
@@ -35,7 +35,7 @@ Esta especificación define:
 
 No autoriza por sí sola cambios de código. Cada adopción debe partir de una historia o issue real, una rama corta y pruebas proporcionales al comportamiento afectado. El código actual puede conservar temporalmente el sistema anterior hasta que el issue correspondiente migre una base o una pantalla completa; no se permiten migraciones visuales parciales dentro de una misma pantalla.
 
-Fuentes normativas: `DEC-016`, `DEC-074`, `DEC-075`, `DEC-077`, `DEC-078` y `DEC-079`. Si un mockup, este documento y una regla de negocio difieren, prevalecen el registro de decisiones, el alcance, las reglas, las historias y los contratos vigentes, en ese orden documental.
+Fuentes normativas: `DEC-016`, `DEC-074`, `DEC-075`, `DEC-077`, `DEC-078`, `DEC-079` y `DEC-080`. Si un mockup, este documento y una regla de negocio difieren, prevalecen el registro de decisiones, el alcance, las reglas, las historias y los contratos vigentes, en ese orden documental.
 
 ## 2. Dirección de producto y marca
 
@@ -83,7 +83,7 @@ Como orientación de tono, NAVA procura evitar:
 
 ### 3.2 Qué se conserva de los mockups aprobados
 
-Para rediseños y pantallas nuevas, estos rasgos son obligatorios como familia visual; su realización concreta permanece libre:
+Para rediseños y pantallas nuevas, estos rasgos son obligatorios como familia visual:
 
 - identidad NAVA y contraste entre una expresión editorial y una interfaz funcional;
 - firma cromática de tinta, marfil, grafito, latón, salvia, piedra y colores semánticos definida por el estándar visual;
@@ -93,7 +93,7 @@ Para rediseños y pantallas nuevas, estos rasgos son obligatorios como familia v
 - reserva por servicio, barbero, fecha y hora;
 - composición con sensación editorial cuando favorezca el contenido.
 
-Las cuatro láminas de `docs/10-backlog/evidence/ui-redesign-nava-2026-09-02/` son las referencias canónicas para autenticación, formularios, componentes/alertas y shell/navegación. No obligan a copiar coordenadas, tamaños ni datos sintéticos.
+Las cuatro láminas de `docs/10-backlog/evidence/ui-redesign-nava-2026-09-02/` son las referencias canónicas para autenticación, formularios, componentes/alertas y shell/navegación. Si solo se cita la familia NAVA, orientan la identidad sin cerrar la composición. Si una de ellas o un panel del atlas se asigna de forma expresa a una pantalla, se activa el modo de fidelidad de `DEC-080`: su geometría, escala y jerarquía visibles sí son contrato para el viewport y estado representados. Los datos sintéticos y las funciones fuera de alcance nunca lo son.
 
 ### 3.3 Qué no se infiere del mockup
 
@@ -111,7 +111,7 @@ Las cuatro láminas de `docs/10-backlog/evidence/ui-redesign-nava-2026-09-02/` s
 
 ## 4. Contrato visual y libertades
 
-La guía [estandar-diseno-visual.md](estandar-diseno-visual.md) fija la firma cromática y las cualidades NAVA obligatorias para rediseños y pantallas nuevas. La composición, la escala, el grid, los radios, las sombras, el inventario de componentes y la tecnología de estilos continúan siendo decisiones de cada entrega.
+La guía [estandar-diseno-visual.md](estandar-diseno-visual.md) fija la firma cromática, las cualidades NAVA y los dos modos de conformidad. En identidad guiada, composición, escala, grid, radios, sombras, inventario de componentes y tecnología de estilos son decisiones de cada entrega. En fidelidad al mockup, la tecnología permanece libre, pero el resultado visible del panel asignado debe igualarse y comprobarse; solo los aspectos no representados conservan libertad compositiva.
 
 ### 4.1 Color
 
@@ -604,11 +604,14 @@ Toda pantalla NAVA modificada debe aportar:
 
 La evidencia debe incluir al menos carga, vacío, error, conflicto, éxito y disabled cuando esos estados existan. Una captura estática no sustituye la prueba de interacción.
 
+En modo de fidelidad también debe aportar la imagen original identificada, mediciones objetivo, captura anterior y final de la app real en el mismo viewport efectivo, comparación lado a lado y overlay o diff, y una tabla de diferencias corregidas o justificadas. No se aprueba por inspeccionar únicamente código, tokens, estilos computados, métricas DOM o tests.
+
 ## 13. Criterio de terminado de una pantalla NAVA
 
 - [ ] La pantalla corresponde a una HU/issue real y no amplía alcance.
 - [ ] Usa NAVA como plataforma y conserva el nombre de la barbería como contexto.
-- [ ] Expresa NAVA / Tailored Grid, respeta los mockups y la firma cromática obligatoria, sin quedar atada a la escala, composición o nombres de tokens del estándar anterior.
+- [ ] Declara `identidad guiada` o `fidelidad al mockup`; expresa NAVA / Tailored Grid y respeta la firma cromática obligatoria.
+- [ ] Si tiene mockup exacto asignado, reproduce su geometría, proporciones, jerarquía, escala, centrado, alineaciones, densidad y estados en el viewport representado; la comparación visual queda en `PASS` sin diferencias primarias inexplicadas.
 - [ ] Usa “turno” y copy orientado a tarea.
 - [ ] Implementa todos los estados asíncronos aplicables.
 - [ ] Mantiene una acción principal por región.

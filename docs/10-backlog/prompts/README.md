@@ -1,9 +1,9 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.67"
+version: "1.68"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-02"
+ultima_actualizacion: "2026-09-03"
 documentos_relacionados:
   - "../../../AGENTS.md"
   - "../../../CLAUDE.md"
@@ -133,7 +133,8 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 
 | Prompt | Tipo | HU | Issue | Estado | Dependencias | Rama / PR |
 | --- | --- | --- | --- | --- | --- | --- |
-| [PROMPT-ORCH-NAVA-ATLAS-v2.1](orchestration/redisenio-integral-nava-tailored-grid-v2.md) | `orchestration` | `HU-005`–`HU-012`, `HU-020`–`HU-024`, `HU-040`–`HU-042`, `HU-060`–`HU-065` | [#184](https://github.com/bcaceres19/barberia/issues/184) | `ready` | Integrar primero el atlas #183; después ejecutar un rediseño material y netamente visual, con inspección obligatoria mediante Chrome DevTools y la cuenta QA indicada por el propietario | Sin rama/PR propio; orquesta entregas independientes |
+| [PROMPT-ORCH-NAVA-ATLAS-v3](orchestration/redisenio-integral-nava-tailored-grid-v3.md) | `orchestration` | `HU-005`–`HU-012`, `HU-020`–`HU-024`, `HU-040`–`HU-042`, `HU-060`–`HU-065` | [#184](https://github.com/bcaceres19/barberia/issues/184) | `ready` | Atlas #183 y protocolo #208 integrados; exige Claude Sonnet 5/high, skill `nava-mockup-fidelity`, contrato medido, app real y evidencia baseline/final/lado a lado/overlay antes de `PASS` | Sin rama/PR propio; orquesta entregas independientes |
+| [PROMPT-ORCH-NAVA-ATLAS-v2.1](orchestration/redisenio-integral-nava-tailored-grid-v2.md) | `orchestration` | `HU-005`–`HU-012`, `HU-020`–`HU-024`, `HU-040`–`HU-042`, `HU-060`–`HU-065` | [#184](https://github.com/bcaceres19/barberia/issues/184) | `superseded` | Sustituido por v3: la versión anterior exigía rediseño material, pero aún permitía interpretar libremente la geometría del mockup asignado | Historial conservado; no ejecutar |
 | [PROMPT-ORCH-NAVA-FRONTEND-v1.5](orchestration/adopcion-frontend-nava.md) | `orchestration` | `HU-005`–`HU-012`, `HU-020`–`HU-024`, `HU-040`–`HU-042`, `HU-060`–`HU-065`; futuras solo con HU real | [#168](https://github.com/bcaceres19/barberia/issues/168), cerrado | `executed` | `DEC-077`–`DEC-079` integradas en `main` (issue #166/PR #167). Las cinco fases hijas detectadas en la Fase 0 (configuración #170, servicios por barbero #172, detalle/historial/reprogramación #173, servicios #171, revisión integral #174) están integradas; las 13 filas del inventario quedan cubiertas. Hallazgo del shell (dock trunca a 320/360 px) registrado aparte en #176 | Sin rama/PR propios; prompt maestro para Claude Code |
 | [PROMPT-HU-003-v1](hu/hu-003-contrato-http.md) | `hu` | `HU-003` | [#37](https://github.com/bcaceres19/barberia/issues/37) | `executed` | `HU-002` terminada | `feat/37-hu003-contrato-http` / [#38](https://github.com/bcaceres19/barberia/pull/38) |
 | [PROMPT-HU-004-v1](hu/hu-004-idempotencia.md) | `hu` | `HU-004` | [#40](https://github.com/bcaceres19/barberia/issues/40) | `executed` | `HU-003` integrada | `feat/40-hu004-idempotencia` / [#41](https://github.com/bcaceres19/barberia/pull/41) |

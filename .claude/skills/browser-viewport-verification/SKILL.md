@@ -5,6 +5,10 @@ description: "Use whenever verifying responsive/mobile/tablet layout with claude
 
 # Viewport verification
 
+This skill proves the effective viewport; it does not prove visual fidelity. If
+an exact mockup or screenshot is assigned, also use
+`../nava-mockup-fidelity/SKILL.md` and complete its comparison gates.
+
 Never trust the browser resize tool response by itself.
 
 After requesting a viewport/window resize, verify the actual rendered

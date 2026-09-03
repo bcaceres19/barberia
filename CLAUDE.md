@@ -19,3 +19,10 @@ Rules:
 - Antes de entregar un prompt pensado para otro chat, Claude, Codex o una ejecución futura, aplica `AGENTS.md` y guárdalo en `docs/10-backlog/prompts/` con la plantilla e índice del catálogo.
 - Un prompt mutable no se ejecuta con `issue: pending`: permanece `draft` hasta enlazar un issue real. No inventes issue, rama, PR, evidencia ni estado de una HU.
 - La respuesta al usuario enlaza el archivo persistido. Si no puedes escribirlo, declara de forma explícita que solo entregas un borrador no guardado.
+
+## Fidelidad visual cuando existe mockup
+
+- Cuando un issue, prompt o mensaje asigne una imagen concreta a una pantalla o pida igualarla, reproducirla o corregirla contra ella, carga y sigue `.claude/skills/nava-mockup-fidelity/SKILL.md` antes de editar y antes de declarar la pantalla terminada.
+- En ese modo la referencia es un contrato visual para el viewport y estado representados: colores, proporciones, jerarquía tipográfica, escala de controles e iconos, centrado, alineaciones, densidad y estados se comparan sobre la app real. La libertad compositiva de NAVA aplica a pantallas sin referencia exacta y a decisiones no representadas, no autoriza reinterpretar una lámina asignada.
+- Usa también `.claude/skills/browser-viewport-verification/SKILL.md`; una respuesta exitosa de resize no prueba el ancho real.
+- Ninguna pantalla pasa por métricas DOM, tests o colores aislados. Exige captura antes/después y comparación visual lado a lado más overlay o diff en el viewport de referencia.
