@@ -71,6 +71,19 @@ describe('LoginForm', () => {
       expect(button.text()).toBe('Iniciar sesión')
     })
 
+    it('toggles password visibility with an accessible control', async () => {
+      const wrapper = mountForm({ password: 'contraseña-valida' })
+      const passwordInput = wrapper.get('input[name="password"]')
+      const toggle = wrapper.get('button[aria-label="Mostrar contraseña"]')
+
+      expect(passwordInput.attributes('type')).toBe('password')
+      await toggle.trigger('click')
+      expect(passwordInput.attributes('type')).toBe('text')
+      expect(
+        wrapper.get('button[aria-label="Ocultar contraseña"]').attributes('aria-pressed'),
+      ).toBe('true')
+    })
+
     it('renders a visible, operable recovery link (CA-010-08)', () => {
       const wrapper = mountForm()
       const link = wrapper.get('a')
@@ -221,11 +234,11 @@ describe('LoginForm', () => {
       expect(results).toHaveNoViolations()
     })
 
-    it('keeps a coherent tab order: email, password, submit, recovery link', () => {
+    it('keeps a coherent tab order: email, password, visibility, submit, recovery link', () => {
       const wrapper = mountForm()
       const focusable = wrapper.findAll('input, button, a')
       const order = focusable.map((el) => `${el.element.tagName}:${el.attributes('name') ?? ''}`)
-      expect(order).toEqual(['INPUT:email', 'INPUT:password', 'BUTTON:', 'A:'])
+      expect(order).toEqual(['INPUT:email', 'INPUT:password', 'BUTTON:', 'BUTTON:', 'A:'])
     })
   })
 })

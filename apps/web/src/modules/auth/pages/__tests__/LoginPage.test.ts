@@ -261,7 +261,11 @@ describe('LoginPage', () => {
     await fillAndSubmit(wrapper)
     await flushPromises()
 
-    await wrapper.get('button:not([type="submit"])').trigger('click') // "Enviar código por WhatsApp"
+    const requestCodeButton = wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('Enviar código por WhatsApp'))
+    expect(requestCodeButton).toBeDefined()
+    await requestCodeButton!.trigger('click')
     await flushPromises()
     await wrapper.get('input[name="challengeCode"]').setValue('482913')
     const verifyButton = wrapper

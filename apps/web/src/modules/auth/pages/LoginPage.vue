@@ -154,10 +154,6 @@ const onChallengeVerified = () => {
   <AuthSplitLayout>
     <h1 class="login-page__title">Accede a NAVA</h1>
 
-    <BaseAlert v-if="showSessionExpired" variant="info" title="Tu sesión venció" role="status">
-      Inicia sesión de nuevo para continuar.
-    </BaseAlert>
-
     <LoginForm
       :email="email"
       :password="password"
@@ -170,6 +166,10 @@ const onChallengeVerified = () => {
       @retry="onSubmit"
     />
 
+    <BaseAlert v-if="showSessionExpired" variant="info" title="Tu sesión venció" role="status">
+      Inicia sesión de nuevo para continuar.
+    </BaseAlert>
+
     <PhoneChallengeForm
       v-if="showPhoneChallenge"
       :email="email"
@@ -181,10 +181,20 @@ const onChallengeVerified = () => {
 
 <style scoped>
 .login-page__title {
-  margin: 0 0 var(--space-2) 0;
+  margin: 0;
   font-family: var(--font-display);
-  font-size: var(--font-size-h2);
-  line-height: var(--font-size-h2-line);
+  font-size: 38px;
+  font-weight: 600;
+  line-height: 44px;
+  letter-spacing: -0.015em;
+  text-align: center;
   color: var(--color-text-primary);
+}
+
+@media (min-width: 1024px) {
+  .login-page__title {
+    font-size: 48px;
+    line-height: 56px;
+  }
 }
 </style>

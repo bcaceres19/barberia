@@ -46,6 +46,7 @@ const emit = defineEmits<{
 const fieldErrors = ref<LoginFieldErrors>({})
 const attemptedSubmit = ref(false)
 const summaryRef = ref<HTMLElement | null>(null)
+const passwordVisible = ref(false)
 
 // Solo se muestran errores de campo tras el primer intento de envío: no se
 // regaña al barbero mientras todavía está escribiendo por primera vez.
@@ -156,31 +157,71 @@ const onRetry = () => emit('retry')
       </template>
     </BaseInput>
 
-    <BaseInput
-      :model-value="password"
-      type="password"
-      name="password"
-      label="Contraseña"
-      autocomplete="current-password"
-      required
-      :disabled="submitting"
-      :error="passwordError"
-      @update:model-value="handlePasswordInput"
-    >
-      <template #leading>
+    <div class="login-form__password-field">
+      <BaseInput
+        :model-value="password"
+        :type="passwordVisible ? 'text' : 'password'"
+        name="password"
+        label="Contraseña"
+        autocomplete="current-password"
+        required
+        :disabled="submitting"
+        :error="passwordError"
+        @update:model-value="handlePasswordInput"
+      >
+        <template #leading>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            width="18"
+            height="18"
+          >
+            <rect x="4" y="11" width="16" height="9" rx="1.5" />
+            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+          </svg>
+        </template>
+      </BaseInput>
+
+      <button
+        type="button"
+        class="login-form__password-toggle"
+        :aria-label="passwordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+        :aria-pressed="passwordVisible"
+        :disabled="submitting"
+        @click="passwordVisible = !passwordVisible"
+      >
         <svg
+          v-if="!passwordVisible"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
           stroke-width="1.75"
-          width="18"
-          height="18"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
         >
-          <rect x="4" y="11" width="16" height="9" rx="1.5" />
-          <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+          <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" />
+          <circle cx="12" cy="12" r="2.5" />
         </svg>
-      </template>
-    </BaseInput>
+        <svg
+          v-else
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="m3 3 18 18" />
+          <path d="M10.6 6.2A10.5 10.5 0 0 1 12 6c6.5 0 10 6 10 6a17.4 17.4 0 0 1-2.1 2.8" />
+          <path d="M6.6 6.6C3.6 8.5 2 12 2 12s3.5 6 10 6a9.8 9.8 0 0 0 4.1-.9" />
+          <path d="M10.2 10.2a2.5 2.5 0 0 0 3.6 3.6" />
+        </svg>
+      </button>
+    </div>
 
     <BaseButton
       type="submit"
@@ -203,8 +244,85 @@ const onRetry = () => emit('retry')
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: 26px;
   width: 100%;
+}
+
+.login-form :deep(.base-input__wrapper) {
+  gap: 6px;
+}
+
+.login-form :deep(.base-input__label) {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.login-form :deep(.base-input) {
+  height: 64px;
+  padding-right: var(--space-4);
+  padding-left: var(--space-4);
+  font-size: 17px;
+  line-height: 24px;
+  background-color: var(--color-surface);
+  border-color: var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.login-form :deep(.base-input__input-wrapper:has(.base-input__icon--leading) .base-input) {
+  padding-left: 54px;
+}
+
+.login-form :deep(.base-input__icon--leading) {
+  left: 18px;
+}
+
+.login-form :deep(.base-input__icon svg) {
+  width: 22px;
+  height: 22px;
+}
+
+.login-form__password-field {
+  position: relative;
+}
+
+.login-form__password-field :deep(.base-input) {
+  padding-right: 64px;
+}
+
+.login-form__password-toggle {
+  position: absolute;
+  top: 28px;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  color: var(--color-text-primary);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.login-form__password-toggle svg {
+  width: 24px;
+  height: 24px;
+}
+
+.login-form__password-toggle:hover:not(:disabled) {
+  background-color: var(--color-overlay-hover);
+}
+
+.login-form__password-toggle:focus-visible {
+  outline: var(--border-width-emphasis) solid var(--color-focus);
+  outline-offset: -4px;
+}
+
+.login-form__password-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
 }
 
 .login-form__summary {
@@ -237,16 +355,76 @@ const onRetry = () => emit('retry')
 
 .login-form__submit {
   width: 100%;
+  height: 64px;
+  border-radius: var(--radius-sm);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .login-form__recovery {
   margin: 0;
   text-align: center;
-  font-size: var(--font-size-body-sm);
+  font-size: 18px;
+  line-height: 26px;
 }
 
 .login-form__recovery a {
   color: var(--color-action-primary);
   font-weight: 500;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+@media (min-width: 1024px) {
+  .login-form {
+    gap: 28px;
+  }
+
+  .login-form :deep(.base-input__wrapper) {
+    gap: 8px;
+  }
+
+  .login-form :deep(.base-input__label) {
+    font-size: 18px;
+    line-height: 24px;
+  }
+
+  .login-form :deep(.base-input),
+  .login-form__password-toggle,
+  .login-form__submit {
+    height: 72px;
+  }
+
+  .login-form :deep(.base-input) {
+    font-size: 18px;
+  }
+
+  .login-form :deep(.base-input__input-wrapper:has(.base-input__icon--leading) .base-input) {
+    padding-left: 62px;
+  }
+
+  .login-form :deep(.base-input__icon--leading) {
+    left: 20px;
+  }
+
+  .login-form :deep(.base-input__icon svg),
+  .login-form__password-toggle svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .login-form__password-field :deep(.base-input) {
+    padding-right: 72px;
+  }
+
+  .login-form__password-toggle {
+    top: 32px;
+    width: 72px;
+  }
+
+  .login-form__submit {
+    font-size: 20px;
+  }
 }
 </style>
