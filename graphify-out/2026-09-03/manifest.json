@@ -4255,8 +4255,8 @@
     "semantic_hash": ""
   },
   "tools/mockups/auth-eventos/render.mjs": {
-    "mtime": 1788451784.1590202,
-    "ast_hash": "f71f80b2c187a868ba44f60f6fd8e408",
+    "mtime": 1788450934.8214917,
+    "ast_hash": "ab10621608963a9b64516a8764620be9",
     "semantic_hash": ""
   },
   ".claude/skills/browser-viewport-verification/SKILL.md": {
@@ -4285,8 +4285,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/README.md": {
-    "mtime": 1788451839.7585485,
-    "ast_hash": "c03f4cef9cb5a37b877797468a30978e",
+    "mtime": 1788451054.9491024,
+    "ast_hash": "92ec44cce8b86a9ac4d848d6308b6bef",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-redesign-nava-2026-09-02/README.md": {
@@ -4880,233 +4880,233 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/01-inicial.png": {
-    "mtime": 1788451848.1152704,
-    "ast_hash": "f27120062bfa9da40032204ce29abf74",
+    "mtime": 1788450975.0653446,
+    "ast_hash": "d01e5ec3f602d4003d0f559bd6b665e8",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/02-enviando.png": {
-    "mtime": 1788451848.162171,
-    "ast_hash": "41b71eae04091038dcabebf0e5ce34c2",
+    "mtime": 1788450975.1177766,
+    "ast_hash": "a684852e0c313af63f1026896c4068f3",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/03-validacion.png": {
-    "mtime": 1788451848.213475,
-    "ast_hash": "71d90eb25f4a5485fb3698bd999a8d4d",
+    "mtime": 1788450975.1652644,
+    "ast_hash": "ce3d67cf77bd08b99bdf083fa196bef4",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/04-credenciales-invalidas.png": {
-    "mtime": 1788451848.2621093,
-    "ast_hash": "a16b38c9343cc239e18bd3fdb05fef00",
+    "mtime": 1788450975.216156,
+    "ast_hash": "c00369b4c40e9ecb36c8a40ee1ae31ef",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/05-sin-conexion.png": {
-    "mtime": 1788451848.3124013,
-    "ast_hash": "9b9d2a2312ab3a0d015c7643ae1d9bce",
+    "mtime": 1788450975.2634733,
+    "ast_hash": "6dcd20c1181069959e21a1f3e7173a1b",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/06-sesion-vencida.png": {
-    "mtime": 1788451848.3631663,
-    "ast_hash": "dbf246220fa5139e6a7fa578fdd5074a",
+    "mtime": 1788450975.3143678,
+    "ast_hash": "e3060c2b48d6b50e68b0ee81cdf17add",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/07-reto-envio-correo.png": {
-    "mtime": 1788451848.4134715,
-    "ast_hash": "36aaaf7680a6c48a5b9fb114dc7cd4fa",
+    "mtime": 1788450975.3654208,
+    "ast_hash": "3caf38dce53ada699fa0d78ba11cb4d5",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/08-reto-envio-whatsapp.png": {
-    "mtime": 1788451848.4621253,
-    "ast_hash": "6e65e823cd49c454d5d51cb42b8e6ac8",
+    "mtime": 1788450975.4155643,
+    "ast_hash": "23371ebdb5a39e1df8516dab3e1d2ce8",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/09-reto-envio-ambos.png": {
-    "mtime": 1788451848.5148492,
-    "ast_hash": "603b67e8142f87f8511b5f5b45bc1595",
+    "mtime": 1788450975.4672935,
+    "ast_hash": "435e175d1ba4590a2943d85934c4da23",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/10-reto-codigo-invalido-correo.png": {
-    "mtime": 1788451848.5661516,
-    "ast_hash": "d8e9797fa4ab5b73780ef0a7ca35da1e",
+    "mtime": 1788450975.516884,
+    "ast_hash": "4a77003b4aa21f3a12a33391583e2e52",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/11-reto-codigo-invalido-whatsapp.png": {
-    "mtime": 1788451848.6148796,
-    "ast_hash": "4834f5007c73a38157742549da5fc594",
+    "mtime": 1788450975.5669498,
+    "ast_hash": "23519003e43ddb61523075ec174f8490",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/12-reto-codigo-invalido-ambos.png": {
-    "mtime": 1788451848.6656477,
-    "ast_hash": "a6073cc8699384381a0b9ac1a5688fd0",
+    "mtime": 1788450975.6201751,
+    "ast_hash": "11e6771a20cc9805be28a169648f4686",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/01-solicitud-inicial.png": {
-    "mtime": 1788451848.7122984,
-    "ast_hash": "86e283f6c6aec8b7a6f30a81041fd981",
+    "mtime": 1788450975.664147,
+    "ast_hash": "0011ab9a4976a112292aa49f5afbb5fb",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/02-solicitud-validacion.png": {
-    "mtime": 1788451848.7666676,
-    "ast_hash": "51eaad6d246ee6bb3b618c8024e84eb7",
+    "mtime": 1788450975.714765,
+    "ast_hash": "5a4be174f51ce0268d55f7c9a641b752",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/03-solicitud-enviando.png": {
-    "mtime": 1788451848.815027,
-    "ast_hash": "6013f840684b35f8e11487bfbd857d6d",
+    "mtime": 1788450975.7665405,
+    "ast_hash": "fc7020daf1591dd8d1da8d5a1436563d",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/04-solicitud-sin-conexion.png": {
-    "mtime": 1788451848.8625357,
-    "ast_hash": "7c7dd984968637b1702394b84c080f61",
+    "mtime": 1788450975.8153803,
+    "ast_hash": "8236bafcc46df6be428c663852cee00f",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/05-verificacion-inicial.png": {
-    "mtime": 1788451848.9125466,
-    "ast_hash": "51d1c39252b4b91f82badb456e9413f8",
+    "mtime": 1788450975.8629746,
+    "ast_hash": "9165b3a7f60903cf0e666e8d6b0344ee",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/06-verificacion-codigo-invalido.png": {
-    "mtime": 1788451848.9611223,
-    "ast_hash": "647a89b09888cc8ab06dc6b2ad9ef85a",
+    "mtime": 1788450975.9147093,
+    "ast_hash": "ab17bccbdb973c1614a9054b93a710b3",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/07-contrasena-inicial.png": {
-    "mtime": 1788451849.0144072,
-    "ast_hash": "918131f8a0fd3bb43c49552b2ff42b7e",
+    "mtime": 1788450975.9647908,
+    "ast_hash": "e73617dd8a71c3fbfe129e81c94b3de0",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/08-contrasena-validacion.png": {
-    "mtime": 1788451849.0647178,
-    "ast_hash": "34205e63a590521c4de92b2aef6ea91a",
+    "mtime": 1788450976.0151772,
+    "ast_hash": "69dcfc4bafde6cda9324c3203ae110da",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/09-contrasena-enviando.png": {
-    "mtime": 1788451849.115515,
-    "ast_hash": "f02a62ba7c2b2006b03698a454699f4a",
+    "mtime": 1788450976.0641987,
+    "ast_hash": "788ddbb30d12da741a1f179fee8b28f8",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/10-contrasena-enlace-vencido.png": {
-    "mtime": 1788451849.16222,
-    "ast_hash": "741a685361f4fe7557c5783b5783dadd",
+    "mtime": 1788450976.1180525,
+    "ast_hash": "5c79d7a3d9be4411da36558b05482233",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/11-completado.png": {
-    "mtime": 1788451849.211481,
-    "ast_hash": "417e9efadb098c6de6d9ab06ec7ffe3a",
+    "mtime": 1788450976.163107,
+    "ast_hash": "cb46df29c81d828940f55329fefa14b7",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/01-inicial.png": {
-    "mtime": 1788451849.3497615,
-    "ast_hash": "852bb3bf7c427c02b135d8c529ac7579",
+    "mtime": 1788450976.3321002,
+    "ast_hash": "deb200ac9280104c89f444568ddc3db5",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/02-enviando.png": {
-    "mtime": 1788451849.4142344,
-    "ast_hash": "855c566f79dd8b70b4f5e7c79cb6dbd4",
+    "mtime": 1788450976.3993802,
+    "ast_hash": "18efcbaafd117de75bf8e6dc412e9942",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/03-validacion.png": {
-    "mtime": 1788451849.4828405,
-    "ast_hash": "560b7a3dafb55a3667fa4da2e0b9d8d4",
+    "mtime": 1788450976.4679434,
+    "ast_hash": "17a3660a60a7eaebb1e39a015cf159a5",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/04-credenciales-invalidas.png": {
-    "mtime": 1788451849.5488923,
-    "ast_hash": "8f3835e24137db85d1dd78f3de6360bd",
+    "mtime": 1788450976.5345075,
+    "ast_hash": "6337a97785953d57ff5b248d40eb75b1",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/05-sin-conexion.png": {
-    "mtime": 1788451849.615625,
-    "ast_hash": "dcb414aba3102a8cab2e33172a586666",
+    "mtime": 1788450976.6015115,
+    "ast_hash": "12f80abff9898ab7bdbd0e7c9c95f54c",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/06-sesion-vencida.png": {
-    "mtime": 1788451849.6822946,
-    "ast_hash": "76cd78bc85d013fcf88816795e7a1d68",
+    "mtime": 1788450976.6658218,
+    "ast_hash": "073fe34c878029dc234b2bc6c15bc077",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/07-reto-envio-correo.png": {
-    "mtime": 1788451849.7622273,
-    "ast_hash": "64a744325e5737cef31e8dff1be3492d",
+    "mtime": 1788450976.7441885,
+    "ast_hash": "515ad91c59fff7517ddc3988ea33d090",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/08-reto-envio-whatsapp.png": {
-    "mtime": 1788451849.842314,
-    "ast_hash": "9d6407f8fefec8143a6134a12dc27ffd",
+    "mtime": 1788450976.8270442,
+    "ast_hash": "c47c51024eeb74193313cf3c734e412d",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/09-reto-envio-ambos.png": {
-    "mtime": 1788451849.9248326,
-    "ast_hash": "1a9d1eea7cbdc48ff9170b4e73b01e50",
+    "mtime": 1788450976.8911307,
+    "ast_hash": "a24b013278788513faa7ff471379f8c9",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/10-reto-codigo-invalido-correo.png": {
-    "mtime": 1788451850.0108695,
-    "ast_hash": "3985e7ab482c9ae458b9819e54082789",
+    "mtime": 1788450976.9620447,
+    "ast_hash": "8e5ae0a76bcc5069fdedab9d755e39de",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/11-reto-codigo-invalido-whatsapp.png": {
-    "mtime": 1788451850.091855,
-    "ast_hash": "2cdd7a7583895aff50e0a5618710dde2",
+    "mtime": 1788450977.0478718,
+    "ast_hash": "a64758f491f2ee1bf073b6b0136e2923",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/12-reto-codigo-invalido-ambos.png": {
-    "mtime": 1788451850.177992,
-    "ast_hash": "8f624b0bc23b8da4654ebcd344b96a05",
+    "mtime": 1788450977.1292615,
+    "ast_hash": "9c3de844525f6cdb18f3d54dadcb7fe3",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/01-solicitud-inicial.png": {
-    "mtime": 1788451850.2496896,
-    "ast_hash": "0b412b5d27e7837e0b9b6b9de7045041",
+    "mtime": 1788450977.1999836,
+    "ast_hash": "023c75ca84a4e630adebf67c3991fc5c",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/02-solicitud-validacion.png": {
-    "mtime": 1788451850.3200788,
-    "ast_hash": "5618603d40bd62422fa0c350b2fa5590",
+    "mtime": 1788450977.2674453,
+    "ast_hash": "a473ad488686a9d651c74a1ac753528e",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/03-solicitud-enviando.png": {
-    "mtime": 1788451850.383265,
-    "ast_hash": "cccbc08b81785850b32f6a56197d8b17",
+    "mtime": 1788450977.332688,
+    "ast_hash": "35338c02dba396a703502fd0fd9ede6a",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/04-solicitud-sin-conexion.png": {
-    "mtime": 1788451850.4534764,
-    "ast_hash": "37752565d9193e25bf81874582fb2e8a",
+    "mtime": 1788450977.4006314,
+    "ast_hash": "25245c6a8600f2657a3ad5e28b3d42ed",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/05-verificacion-inicial.png": {
-    "mtime": 1788451850.5161,
-    "ast_hash": "a30d82db9d1a7e23f103854ca6de4559",
+    "mtime": 1788450977.4676237,
+    "ast_hash": "1dde22cb46834a4e5887c270df70ddd9",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/06-verificacion-codigo-invalido.png": {
-    "mtime": 1788451850.584973,
-    "ast_hash": "7cce5028fb4b65329b03d6527f51a04d",
+    "mtime": 1788450977.5348265,
+    "ast_hash": "029ce5a1aba9f618b47e326586b02228",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/07-contrasena-inicial.png": {
-    "mtime": 1788451850.6501913,
-    "ast_hash": "5ef6cf89190236ec56874d97dd04ada5",
+    "mtime": 1788450977.6054802,
+    "ast_hash": "07af04ca12a451495d62f354a910f6ee",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/08-contrasena-validacion.png": {
-    "mtime": 1788451850.7198656,
-    "ast_hash": "a6b5745c8e1c5dfbae21260e75fdf87d",
+    "mtime": 1788450977.672026,
+    "ast_hash": "e628a23167f13fbcd284b0d8fcfe34bc",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/09-contrasena-enviando.png": {
-    "mtime": 1788451850.7828712,
-    "ast_hash": "febc5f229198943411d1bfd57bde8b17",
+    "mtime": 1788450977.7514415,
+    "ast_hash": "f6d4ecdb2c4c3061d2e46e67a21ca7a0",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/10-contrasena-enlace-vencido.png": {
-    "mtime": 1788451850.8472664,
-    "ast_hash": "ec6f75b43818667091c1dfe7738de573",
+    "mtime": 1788450977.8143373,
+    "ast_hash": "a33586315b081e87e63f2611cce5d58e",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/11-completado.png": {
-    "mtime": 1788451850.956302,
-    "ast_hash": "5cd0bad776bd334f9fc5bea512992d47",
+    "mtime": 1788450977.883689,
+    "ast_hash": "823f0b90d4957ca29c69cde51e2f2bb9",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-redesign-nava-2026-09-02/01-autenticacion-movil.png": {
