@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-ORCH-NAVA-FRONTEND-v1"
-version: "1.4"
+version: "1.5"
 kind: "orchestration"
-status: "ready"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -108,6 +108,12 @@ superseded_by: null
 ---
 
 # Orquestación de la adopción incremental del frontend NAVA
+
+## Estado de cierre (2026-09-02)
+
+Las cinco fases hijas detectadas por la Fase 0 quedaron integradas en `main`: Fase 6 (detalle/historial/reprogramación, issue [#173](https://github.com/bcaceres19/barberia/issues/173)), Fase 7 (configuración, [#170](https://github.com/bcaceres19/barberia/issues/170)), Fase 9 (servicios, [#171](https://github.com/bcaceres19/barberia/issues/171)), Fase 10 (servicios por barbero, [#172](https://github.com/bcaceres19/barberia/issues/172)) y Fase 13 (revisión integral, [#174](https://github.com/bcaceres19/barberia/issues/174)). Sumadas a las fases ya cerradas antes de esta orquestación (fundaciones #132, shell #135, acceso/recuperación #138, agenda diaria #141, nuevo turno #144, barberos #153, horarios #160, bloqueos #162), las 13 filas del inventario de la Fase 0 quedan cubiertas. El issue maestro [#168](https://github.com/bcaceres19/barberia/issues/168) se cierra manualmente con esta entrega.
+
+Un hallazgo real quedó registrado aparte, fuera del alcance de este prompt: el dock de navegación trunca etiquetas a 320/360 px (shell, Fase 2), issue [#176](https://github.com/bcaceres19/barberia/issues/176) abierto.
 
 ## Instrucción para Claude o el agente ejecutor
 
