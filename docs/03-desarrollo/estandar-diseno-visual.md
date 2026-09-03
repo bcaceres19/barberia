@@ -1,6 +1,6 @@
 ---
 titulo: "Estándar visual NAVA para rediseños y pantallas nuevas"
-version: "5.0"
+version: "5.1"
 estado: "Normativo para rediseños y pantallas nuevas"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-03"
@@ -120,7 +120,7 @@ Los siguientes colores son los anclajes de identidad. No es obligatorio usar tod
 | Borde piedra | `#C9C0B2` | Divisores y bordes no interactivos. |
 | Salvia | `#748477` | Acento secundario, bordes de control y apoyo de estados positivos. |
 | Latón | `#B8955A` | Acento de marca medido, selección y detalles editoriales. |
-| Latón oscuro | `#765C2F` | Foco visible y acción suave cuando mantenga contraste. |
+| Latón oscuro | `#765C2F` | Foco visible, acción suave y, desde el issue #212, las versalitas espaciadas y filetes de los controles reglados (`--color-accent-brass` en `styles/tokens.css`: rótulos de campo, ranuras de código, palabra de estado de alerta, filete de botón secundario/fantasma). |
 
 Para interacción sobre tinta se admiten `#18283D` en hover y `#0A1420` en activo. Los tonos derivados mediante transparencia, mezcla o aclarado son válidos cuando mantienen la familia cromática y el contraste requerido.
 
@@ -173,6 +173,7 @@ Los mockups favorecen bordes finos, radios pequeños, sombras mínimas, agrupaci
 - La acción destructiva usa el tratamiento de peligro y describe el efecto, por ejemplo “Desactivar servicio”.
 - Carga, deshabilitado, foco, hover y activo son distinguibles. Deshabilitar durante una mutación no sustituye el texto de progreso.
 - Una región no presenta varias acciones con el mismo peso sin una razón explícita.
+- `BaseButton` (issue #212, `shared/ui`): radio `2px` en todas las variantes. La primaria usa tinta llena; secundaria y fantasma llevan filete de latón oscuro (`--color-accent-brass`) con el borde inferior acentuado a `2px`, la misma línea base doble-espesor que `BaseInput`.
 
 ### 6.2 Campos y formularios
 
@@ -182,6 +183,7 @@ Los mockups favorecen bordes finos, radios pequeños, sombras mínimas, agrupaci
 - El foco de teclado es visible y no queda oculto por barras, diálogos o teclado virtual.
 - Un formulario extenso puede agruparse por pasos, secciones o columnas. En móvil se transforma a una columna o a pasos completos sin perder datos ni acciones.
 - Un error de envío muestra resumen persistente cuando existen varios campos afectados; el foco se mueve de forma útil sin encerrar a la persona.
+- **Campo reglado** (issue #212, `BaseInput`/`OtpInput` en `shared/ui`): superficie de papel blanco apoyada en una línea base de tinta de `2px` (`--color-action-primary`), con filete perimetral de `1px` a baja opacidad (`--color-border-subtle`) y radio `2px`. El rótulo va sobre el campo en versalitas espaciadas de latón oscuro (11px, `letter-spacing: 0.08em`, mayúsculas) — el mismo tratamiento que "PASO 1 DE 3" y "ACCESO SEGURO" del mockup de referencia. No lleva iconos decorativos de sobre ni de candado: el rótulo ya nombra el campo; el slot `leading`/`trailing` de `BaseInput` sigue existiendo en la API para quien lo necesite, pero `auth` dejó de usarlo. El conmutador de contraseña es la palabra `Mostrar`/`Ocultar` en versalitas subrayadas, no un glifo de ojo. En estado de error, el filete completo (perímetro y línea base) pasa a color de peligro. `OtpInput` (nuevo, `shared/ui`) repite exactamente esta construcción en seis ranuras estrechas con el dígito compuesto en `--font-display`: un solo valor lógico de seis dígitos hacia afuera, con pegado y distribución automática, avance, retroceso, flechas y `autocomplete="one-time-code"`. Ya está disponible en `shared/ui`, pero ninguna pantalla lo consume todavía — la adopción en `/acceso` y `/recuperar-acceso` es una fase posterior.
 
 ### 6.3 Alertas y estados
 
@@ -189,6 +191,7 @@ Los mockups favorecen bordes finos, radios pequeños, sombras mínimas, agrupaci
 - Un éxito importante permanece dentro de la tarea; no depende solo de un toast efímero.
 - Un conflicto conserva las selecciones válidas y explica qué puede hacer la persona.
 - Un error inesperado no expone stack, proveedor, token ni datos personales; puede mostrar un `request_id` seguro cuando el contrato lo proporcione.
+- **Alerta como nota al margen** (issue #212, `BaseAlert` en `shared/ui`): filete lateral de `4px` del color de estado sobre fondo apenas teñido, radio `2px` — ya no un recuadro con borde perimetral uniforme e icono circular genérico. Sobre el título aparece la palabra de estado en versalitas de latón oscuro: `Error` (`danger`), `Atención` (`warning`), `Nota` (`info`), `Confirmación` (`success`); esa palabra es la que cumple "icono, texto y estructura además del color" (WCAG 2.2 AA 1.4.1). El control de descarte se rotula `Descartar` en vez de un icono con `aria-label` aparte. La variante `plain` (nueva) es la excepción sin relleno para contenido informativo que no comunica un estado del sistema — filete lateral de latón, sin fondo teñido, sin palabra de estado; el título se compone como versalita única en vez de repetirse también como titular en negrita. Es la que usa la caja "Requisitos de la contraseña" de recuperación de acceso.
 
 ### 6.4 Diálogos y capas
 

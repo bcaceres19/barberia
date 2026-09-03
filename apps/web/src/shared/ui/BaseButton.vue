@@ -113,7 +113,7 @@ const handleClick = (event: MouseEvent) => {
   --btn-gap: var(--space-2);
   --btn-font-size: var(--font-size-body);
   --btn-font-weight: 500;
-  --btn-radius: var(--radius-md);
+  --btn-radius: 2px;
   --btn-transition:
     background-color var(--motion-duration-fast) var(--motion-easing-standard),
     border-color var(--motion-duration-fast) var(--motion-easing-standard),
@@ -172,16 +172,19 @@ const handleClick = (event: MouseEvent) => {
   border-color: var(--color-action-primary-active);
 }
 
-/* Variant: secondary */
+/* Variant: secondary — filete de latón con filete inferior acentuado
+   (issue #212): la línea base recibe el mismo doble espesor que el campo
+   reglado, no un borde uniforme de 1px. */
 .base-button--secondary {
   background-color: var(--color-surface);
   color: var(--color-text-primary);
-  border-color: var(--color-border-control);
+  border-color: var(--color-accent-brass);
+  border-bottom-width: var(--border-width-emphasis);
 }
 
 .base-button--secondary:hover:not(:disabled):not(.base-button--loading) {
   background-color: var(--color-surface-muted);
-  border-color: var(--color-border-control);
+  border-color: var(--color-accent-brass);
 }
 
 .base-button--secondary:active:not(:disabled):not(.base-button--loading) {
@@ -204,11 +207,13 @@ const handleClick = (event: MouseEvent) => {
   background-color: var(--color-action-soft-active);
 }
 
-/* Variant: ghost */
+/* Variant: ghost — misma familia reglada que secondary: filete de latón y
+   filete inferior acentuado en vez de borde transparente. */
 .base-button--ghost {
   background-color: transparent;
   color: var(--color-action-primary);
-  border-color: transparent;
+  border-color: var(--color-accent-brass);
+  border-bottom-width: var(--border-width-emphasis);
 }
 
 .base-button--ghost:hover:not(:disabled):not(.base-button--loading) {

@@ -1,16 +1,23 @@
 <script setup lang="ts">
 /**
- * BaseAlert - Alerta/feedback del sistema visual.
- * Variantes: success | warning | danger | info | neutral
- * Con acción opcional (botón/link), icono, dismissible
+ * BaseAlert - Alerta/feedback del sistema visual, "nota al margen"
+ * (issue #212, auth-eventos/README.md "Contrato visual común").
+ * Variantes: success | warning | danger | info | neutral | plain
+ * `plain` es la variante sin relleno para contenido informativo que no
+ * comunica un estado del sistema (por ejemplo, requisitos de contraseña):
+ * filete lateral de latón, sin fondo teñido, sin palabra de estado.
+ * Con acción opcional (botón/link), dismissible.
  * Accesibilidad: role="alert" (assertive) o role="status" (polite),
- * aria-live, focus-visible en acción, focus trap si dismissible
+ * aria-live, focus-visible en acción, focus trap si dismissible. La
+ * palabra de estado en versalitas (Error/Atención/Nota/Confirmación) es
+ * la que cumple "icono, texto y estructura además del color" (WCAG 2.2 AA
+ * 1.4.1): ya no hay un glifo circular genérico.
  */
 import { computed, ref, onMounted, onUnmounted, useSlots } from 'vue'
 
 interface Props {
   /** Variante semántica de la alerta */
-  variant?: 'success' | 'warning' | 'danger' | 'info' | 'neutral'
+  variant?: 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'plain'
   /** Título de la alerta */
   title?: string
   /** Si se puede cerrar */
@@ -48,6 +55,7 @@ const surfaceVar = computed(() => {
     danger: 'var(--color-danger-surface)',
     info: 'var(--color-info-surface)',
     neutral: 'var(--color-inactive-surface)',
+    plain: 'transparent',
   }
   return map[props.variant] || map.info
 })
@@ -59,6 +67,7 @@ const textVar = computed(() => {
     danger: 'var(--color-danger-text)',
     info: 'var(--color-info-text)',
     neutral: 'var(--color-inactive-text)',
+    plain: 'var(--color-text-primary)',
   }
   return map[props.variant] || map.info
 })
@@ -70,22 +79,25 @@ const borderVar = computed(() => {
     danger: 'var(--color-danger-border)',
     info: 'var(--color-info-border)',
     neutral: 'var(--color-inactive-border)',
+    plain: 'var(--color-accent-brass)',
   }
   return map[props.variant] || map.info
 })
 
-const iconSvg = computed(() => {
-  const icons: Record<string, string> = {
-    success: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
-    warning: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
-    danger: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`,
-    info: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
-    neutral: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
+// Palabra de estado en versalitas sobre el título (contrato visual del
+// issue #212): sustituye el glifo circular anterior como el elemento que
+// distingue el estado además del color (WCAG 2.2 AA 1.4.1). `neutral` y
+// `plain` no representan un estado del sistema, así que no llevan palabra.
+const isPlain = computed(() => props.variant === 'plain')
+const statusWord = computed(() => {
+  const map: Partial<Record<string, string>> = {
+    danger: 'Error',
+    warning: 'Atención',
+    info: 'Nota',
+    success: 'Confirmación',
   }
-  return icons[props.variant] || icons.info
+  return map[props.variant]
 })
-
-const dismissSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`
 
 const handleDismiss = () => {
   isVisible.value = false
@@ -166,11 +178,13 @@ const style = computed(() => ({
     :aria-atomic="true"
     @keydown="handleKeyDown"
   >
-    <div class="base-alert__icon" aria-hidden="true" v-html="iconSvg" />
-
     <div class="base-alert__content">
-      <div v-if="title || slots.default" class="base-alert__text">
-        <h4 v-if="title" class="base-alert__title">{{ title }}</h4>
+      <div v-if="statusWord || title || slots.default" class="base-alert__text">
+        <p v-if="statusWord" class="base-alert__status">{{ statusWord }}</p>
+        <h4 v-if="title && !isPlain" class="base-alert__title">{{ title }}</h4>
+        <p v-else-if="title && isPlain" class="base-alert__title base-alert__title--plain">
+          {{ title }}
+        </p>
         <slot />
       </div>
 
@@ -179,25 +193,21 @@ const style = computed(() => ({
       </div>
     </div>
 
-    <button
-      v-if="dismissible"
-      type="button"
-      class="base-alert__dismiss"
-      @click="handleDismiss"
-      aria-label="Cerrar alerta"
-    >
-      <span class="base-alert__dismiss-icon" aria-hidden="true" v-html="dismissSvg" />
+    <button v-if="dismissible" type="button" class="base-alert__dismiss" @click="handleDismiss">
+      Descartar
     </button>
   </div>
 </template>
 
 <style scoped>
+/* Nota al margen (issue #212): filete lateral de 4px del color de estado
+   sobre fondo apenas teñido, radio 2px — ya no un recuadro con borde
+   perimetral uniforme e icono circular. */
 .base-alert {
   --alert-padding: var(--space-4);
   --alert-gap: var(--space-3);
-  --alert-radius: var(--radius-md);
-  --alert-border-width: var(--border-width-normal);
-  --alert-icon-size: 20px;
+  --alert-radius: 2px;
+  --alert-border-width: 4px;
   --alert-font-size: var(--font-size-body);
   --alert-title-size: var(--font-size-body);
   --alert-line-height: var(--font-size-body-line);
@@ -210,7 +220,7 @@ const style = computed(() => ({
   gap: var(--alert-gap);
   padding: var(--alert-padding);
   background-color: var(--alert-surface);
-  border: var(--alert-border-width) solid var(--alert-border);
+  border-left: var(--alert-border-width) solid var(--alert-border);
   border-radius: var(--alert-radius);
   color: var(--alert-text);
   font-family: var(--font-family-base);
@@ -244,14 +254,6 @@ const style = computed(() => ({
   pointer-events: none;
 }
 
-.base-alert__icon {
-  flex-shrink: 0;
-  width: var(--alert-icon-size);
-  height: var(--alert-icon-size);
-  margin-top: 2px;
-  color: var(--alert-text);
-}
-
 .base-alert__content {
   flex: 1;
   min-width: 0;
@@ -259,6 +261,19 @@ const style = computed(() => ({
 
 .base-alert__text {
   margin-bottom: var(--space-2);
+}
+
+/* Palabra de estado (Error/Atención/Nota/Confirmación): versalitas de
+   latón sobre el título, misma familia tipográfica que el rótulo de
+   BaseInput y las ranuras de OtpInput. */
+.base-alert__status {
+  margin: 0 0 var(--space-1) 0;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent-brass);
 }
 
 .base-alert__title {
@@ -270,7 +285,20 @@ const style = computed(() => ({
   color: var(--alert-text);
 }
 
-.base-alert__text:only-child .base-alert__title {
+/* Variante sin relleno (caja de requisitos de contraseña): el título es
+   la única línea de encabezado, compuesto como versalita de latón en vez
+   de repetirse además como titular en negrita. */
+.base-alert__title--plain {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent-brass);
+}
+
+.base-alert__text:only-child .base-alert__title,
+.base-alert__text:only-child .base-alert__title--plain {
   margin-bottom: 0;
 }
 
@@ -280,26 +308,31 @@ const style = computed(() => ({
   flex-wrap: wrap;
 }
 
+/* Control de descarte rotulado "Descartar" (issue #212), no un botón de
+   icono anónimo: el texto visible es su propio nombre accesible (WCAG
+   2.5.3 Label in Name), así que ya no lleva aria-label aparte. La altura
+   mínima conserva el objetivo táctil de 44px (CA-009-03) aunque el
+   contenido visible sea más compacto que el glifo anterior. */
 .base-alert__dismiss {
-  /* Botón de icono independiente (estandar-diseno-visual.md §6.2): 44×44,
-   * no el 28×28 anterior. CA-009-03. */
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: var(--control-height-icon);
-  height: var(--control-height-icon);
-  padding: 0;
-  margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-3)) calc(-1 * var(--space-3))
-    var(--space-1);
+  min-height: var(--control-height-icon);
+  padding: 0 var(--space-2);
+  margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-2)) calc(-1 * var(--space-2)) 0;
   background: transparent;
   border: none;
   border-radius: var(--radius-sm);
-  color: var(--alert-text);
-  opacity: 0.64;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
   cursor: pointer;
   transition:
-    opacity var(--motion-duration-fast) var(--motion-easing-standard),
+    color var(--motion-duration-fast) var(--motion-easing-standard),
     background-color var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
@@ -310,7 +343,7 @@ const style = computed(() => ({
 }
 
 .base-alert__dismiss:hover {
-  opacity: 1;
+  color: var(--alert-text);
   background-color: var(--color-overlay-hover);
 }
 
@@ -319,18 +352,6 @@ const style = computed(() => ({
   box-shadow:
     0 0 0 2px var(--color-surface),
     0 0 0 4px var(--color-focus);
-}
-
-.base-alert__dismiss-icon {
-  width: 16px;
-  height: 16px;
-}
-
-/* Variantes dismissible: más padding a la derecha para el botón. El
-   objetivo táctil real es --control-height-icon (44px); el margen negativo
-   de .base-alert__dismiss recorta cuánto de eso sobresale visualmente. */
-.base-alert--dismissible {
-  padding-right: calc(var(--alert-padding) + var(--control-height-icon) - var(--space-3));
 }
 
 /* Neutral usa texto secundario */

@@ -131,7 +131,11 @@ const onRestart = () => emit('restart')
       Inténtalo de nuevo en unos segundos.
     </BaseAlert>
 
-    <BaseAlert v-if="status !== 'invalid-token'" variant="info" title="Requisitos de la contraseña">
+    <BaseAlert
+      v-if="status !== 'invalid-token'"
+      variant="plain"
+      title="Requisitos de la contraseña"
+    >
       Debe tener entre 10 y 128 caracteres, y ser diferente de tu correo y de tu contraseña actual.
     </BaseAlert>
 
