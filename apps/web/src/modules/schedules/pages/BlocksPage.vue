@@ -8,7 +8,7 @@
 // todavía no tienen controles propios aquí; quedan como seguimiento
 // explícito, no como huecos silenciosos.
 import { computed, onMounted, ref } from 'vue'
-import { BaseAlert, BaseButton, BaseDialog, BaseInput, PageHeader } from '@/shared/ui'
+import { BaseAlert, BaseButton, BaseDialog, BaseInput, PageHeader, RecordRow } from '@/shared/ui'
 import { fetchBarberSummaries, fetchBarbershopTimezone } from '../api/schedulesApi'
 import {
   createTimeBlock,
@@ -431,23 +431,23 @@ async function onDeleteSeries(item: TimeBlockSeries) {
             Este barbero no tiene bloqueos puntuales vigentes.
           </p>
           <ul v-else class="blocks-page__list">
-            <li v-for="block in upcomingBlocks" :key="block.id" class="blocks-page__item">
-              <div>
-                <strong>{{ blockTypeLabel(block.blockType) }}</strong>
-                <span>
-                  — {{ displayInstant(block.startsAt) }} a {{ displayInstant(block.endsAt) }}</span
-                >
-                <p v-if="block.reason" class="blocks-page__reason">{{ block.reason }}</p>
-              </div>
-              <BaseButton
-                type="button"
-                variant="danger"
-                :disabled="pendingDeleteBlockIds.has(block.id)"
-                @click="onDeleteBlock(block)"
+            <RecordRow v-for="block in upcomingBlocks" :key="block.id">
+              <strong>{{ blockTypeLabel(block.blockType) }}</strong>
+              <span>
+                — {{ displayInstant(block.startsAt) }} a {{ displayInstant(block.endsAt) }}</span
               >
-                Retirar
-              </BaseButton>
-            </li>
+              <p v-if="block.reason" class="blocks-page__reason">{{ block.reason }}</p>
+              <template #trailing>
+                <BaseButton
+                  type="button"
+                  variant="danger"
+                  :disabled="pendingDeleteBlockIds.has(block.id)"
+                  @click="onDeleteBlock(block)"
+                >
+                  Retirar
+                </BaseButton>
+              </template>
+            </RecordRow>
           </ul>
 
           <h2 class="blocks-page__section-title">Series semanales</h2>
@@ -455,27 +455,27 @@ async function onDeleteSeries(item: TimeBlockSeries) {
             Este barbero no tiene series de bloqueo configuradas.
           </p>
           <ul v-else class="blocks-page__list">
-            <li v-for="item in activeSeries" :key="item.id" class="blocks-page__item">
-              <div>
-                <strong>{{ blockTypeLabel(item.blockType) }}</strong>
-                <span v-if="item.recurrenceKind === 'weekly' && item.isoWeekday">
-                  — {{ weekdayLabel(item.isoWeekday) }}, {{ item.startsTime }} ({{
-                    item.durationMinutes
-                  }}
-                  min)
-                </span>
-                <span v-else> — lista de fechas explícitas</span>
-                <p v-if="item.reason" class="blocks-page__reason">{{ item.reason }}</p>
-              </div>
-              <BaseButton
-                type="button"
-                variant="danger"
-                :disabled="pendingDeleteSeriesIds.has(item.id)"
-                @click="onDeleteSeries(item)"
-              >
-                Retirar
-              </BaseButton>
-            </li>
+            <RecordRow v-for="item in activeSeries" :key="item.id">
+              <strong>{{ blockTypeLabel(item.blockType) }}</strong>
+              <span v-if="item.recurrenceKind === 'weekly' && item.isoWeekday">
+                — {{ weekdayLabel(item.isoWeekday) }}, {{ item.startsTime }} ({{
+                  item.durationMinutes
+                }}
+                min)
+              </span>
+              <span v-else> — lista de fechas explícitas</span>
+              <p v-if="item.reason" class="blocks-page__reason">{{ item.reason }}</p>
+              <template #trailing>
+                <BaseButton
+                  type="button"
+                  variant="danger"
+                  :disabled="pendingDeleteSeriesIds.has(item.id)"
+                  @click="onDeleteSeries(item)"
+                >
+                  Retirar
+                </BaseButton>
+              </template>
+            </RecordRow>
           </ul>
         </template>
       </template>
@@ -617,21 +617,6 @@ async function onDeleteSeries(item: TimeBlockSeries) {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-}
-
-.blocks-page__item {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  /* Ficha (§6.1, §7.2): al menos 64px en móvil, no el objetivo táctil
-     mínimo de 44px. */
-  min-height: 64px;
-  padding: var(--space-3) var(--space-4);
-  background-color: var(--color-surface);
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: var(--radius-lg);
 }
 
 .blocks-page__reason {
