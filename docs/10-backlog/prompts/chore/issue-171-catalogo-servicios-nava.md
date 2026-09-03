@@ -1,8 +1,8 @@
 ---
 prompt_id: "PROMPT-CHORE-171-CATALOGO-SERVICIOS-NAVA-v1"
-version: "1.0"
+version: "1.1"
 kind: "chore"
-status: "ready"
+status: "executed"
 target_agents:
   - "claude"
 repository: "bcaceres19/barberia"
@@ -15,8 +15,8 @@ issue: 171
 issue_url: "https://github.com/bcaceres19/barberia/issues/171"
 suggested_issue_title: "feat(web): rediseñar catálogo de servicios NAVA"
 branch: "feat/171-catalogo-servicios-nava"
-pr: null
-pr_url: null
+pr: 180
+pr_url: "https://github.com/bcaceres19/barberia/pull/180"
 depends_on:
   - "Issue maestro #168 (orquestación NAVA); DEC-077-DEC-079 integradas en main"
 rules: []
@@ -106,5 +106,5 @@ git diff --check
 ## Git y PR
 
 - Rama: `feat/171-catalogo-servicios-nava`.
-- PR: pendiente de abrir, `Closes #171`.
+- PR: [#180](https://github.com/bcaceres19/barberia/pull/180), `Closes #171`, integrada en `main` con CI 4/4 verde (commit `a908bef`).
 - Sin push directo ni force-push; squash-merge solo tras CI verde.

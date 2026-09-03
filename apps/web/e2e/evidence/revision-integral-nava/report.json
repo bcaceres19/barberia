@@ -1,0 +1,79 @@
+[
+  {
+    "slug": "02-acceso",
+    "url": "/acceso",
+    "hasHorizontalScroll": false,
+    "axeViolations": [],
+    "consoleErrors": []
+  },
+  {
+    "slug": "03-recuperar-acceso",
+    "url": "/recuperar-acceso",
+    "hasHorizontalScroll": false,
+    "axeViolations": [],
+    "consoleErrors": []
+  },
+  {
+    "slug": "04-panel-agenda",
+    "url": "/panel",
+    "hasHorizontalScroll": false,
+    "axeViolations": [],
+    "consoleErrors": []
+  },
+  {
+    "slug": "05-nuevo-turno",
+    "url": "/panel/turnos/nuevo",
+    "hasHorizontalScroll": false,
+    "axeViolations": [],
+    "consoleErrors": []
+  },
+  {
+    "slug": "06-detalle-turno",
+    "url": "/panel/turnos/b915fed5-232e-4252-9d61-3c66d1d99d16?date=2026-09-05&barberId=deadbeef-dead-beef-dead-beefdead0002",
+    "hasHorizontalScroll": false,
+    "axeViolations": [],
+    "consoleErrors": []
+  },
+  {
+    "slug": "07-configuracion",
+    "url": "/panel/barberia",
+    "hasHorizontalScroll": false,
+    "axeViolations": [],
+    "consoleErrors": []
+  },
+  {
+    "slug": "08-barberos",
+    "url": "/panel/barberos",
+    "hasHorizontalScroll": false,
+    "axeViolations": [],
+    "consoleErrors": []
+  },
+  {
+    "slug": "09-servicios",
+    "url": "/panel/servicios",
+    "hasHorizontalScroll": false,
+    "axeViolations": [],
+    "consoleErrors": []
+  },
+  {
+    "slug": "10-servicios-por-barbero",
+    "url": "/panel/servicios-por-barbero",
+    "hasHorizontalScroll": false,
+    "axeViolations": [],
+    "consoleErrors": []
+  },
+  {
+    "slug": "11-horarios",
+    "url": "/panel/horarios",
+    "hasHorizontalScroll": false,
+    "axeViolations": [],
+    "consoleErrors": []
+  },
+  {
+    "slug": "12-bloqueos",
+    "url": "/panel/bloqueos",
+    "hasHorizontalScroll": false,
+    "axeViolations": [],
+    "consoleErrors": []
+  }
+]
