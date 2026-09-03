@@ -11,5 +11,5 @@ import type { NavItem } from '@/shared/navigation/navItem'
 export { catalogPrivateShellChildRoutes } from './routes'
 
 export const catalogNavItems: NavItem[] = [
-  { to: { name: 'catalog-servicios' }, label: 'Servicios' },
+  { to: { name: 'catalog-servicios' }, label: 'Servicios', primary: true },
 ]

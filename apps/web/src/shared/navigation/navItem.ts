@@ -5,4 +5,8 @@
 export interface NavItem {
   to: { name: string }
   label: string
+  /** Visible siempre en el dock. Sin ella, la entrada solo aparece dentro
+   * de "Más" (estandar-diseno-visual.md §6.5: cuatro destinos visibles y
+   * "Más" para el resto). */
+  primary?: boolean
 }
