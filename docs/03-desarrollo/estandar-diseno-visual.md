@@ -44,11 +44,14 @@ Las siguientes láminas forman la referencia canónica para el lenguaje visual d
 | --- | --- |
 | [Referencia maestra Tailored Grid](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-02/00-referencia-tailored-grid.png) | Composición editorial, carriles temporales, densidad ordenada y relación entre escritorio operativo y flujo móvil. Sus módulos fuera de alcance no se copian. |
 | [Autenticación móvil](../10-backlog/evidence/ui-redesign-nava-2026-09-02/01-autenticacion-movil.png) | Acceso, validación y recuperación. |
+| [Acceso y recuperación por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/README.md) | Referencia exacta de `/acceso` y `/recuperar-acceso`: un PNG por pantalla o evento, con pares equivalentes en escritorio y móvil. Sustituye la lámina compuesta como objetivo de implementación. |
 | [Nuevo turno responsive](../10-backlog/evidence/ui-redesign-nava-2026-09-02/02-nuevo-turno-responsive.png) | Formularios extensos, secciones, reflow y conflictos. |
 | [Componentes, formularios y alertas](../10-backlog/evidence/ui-redesign-nava-2026-09-02/03-componentes-formularios-alertas.png) | Botones, campos, foco, estados, alertas y diálogo. |
 | [Servicios, configuración y navegación](../10-backlog/evidence/ui-redesign-nava-2026-09-02/04-servicios-configuracion-navegacion.png) | Shell, navegación responsive, listas operativas, modal y éxito persistente. |
 
 El [atlas integral de mockups](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-02/README.md) amplía estas referencias a las once rutas implementadas, sus estados transversales y conceptos P0 pendientes. Las láminas rotuladas como no implementadas reservan intención visual, pero no crean alcance, contrato ni autorización de desarrollo.
+
+Para acceso y recuperación se asigna siempre el archivo individual del viewport y evento que se implementa; no se usa `02-acceso-recuperacion.png` como objetivo de fidelidad. Los códigos de seis dígitos adoptan seis casillas visuales. Ese patrón solo es conforme si sigue representando un único valor lógico, admite pegar el código completo, distribuye sus dígitos, soporta avance, retroceso y teclado numérico, conserva foco visible y expone un nombre e instrucciones accesibles coherentes.
 
 ### 2.1 Modos de conformidad
 

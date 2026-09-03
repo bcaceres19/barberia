@@ -28,7 +28,7 @@ Estas láminas representan rutas o superficies existentes. La implementación de
 | Archivo | Rutas o patrones cubiertos |
 | --- | --- |
 | [`01-agenda-diaria-responsive.png`](01-agenda-diaria-responsive.png) | `/panel`: agenda de un barbero seleccionado, fecha, carril temporal, lista accesible, carga, vacío y error. |
-| [`02-acceso-recuperacion.png`](02-acceso-recuperacion.png) | `/acceso` y `/recuperar-acceso`: ingreso, reto, solicitud, verificación y nueva contraseña. |
+| [`02-acceso-recuperacion.png`](02-acceso-recuperacion.png) | Lámina histórica de `/acceso` y `/recuperar-acceso`. No se usa como objetivo de implementación porque reúne varias pantallas. La referencia ejecutable separada por viewport y evento está en [`auth-eventos`](../ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/README.md). |
 | [`03-nuevo-turno.png`](03-nuevo-turno.png) | `/panel/turnos/nuevo`: selección, fecha/hora, datos de contacto, resumen, validación y conflicto recuperable. |
 | [`04-detalle-historial-reprogramacion.png`](04-detalle-historial-reprogramacion.png) | `/panel/turnos/:appointmentId`: hechos, estado, historial paginado, reprogramación y conflicto. |
 | [`05-servicios-y-asignacion.png`](05-servicios-y-asignacion.png) | `/panel/servicios` y `/panel/servicios-por-barbero`: catálogo, alta/edición, estado, asignación, guardado y rechazo de última asignación. |
