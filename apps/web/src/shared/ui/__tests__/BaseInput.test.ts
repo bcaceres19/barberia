@@ -187,6 +187,20 @@ describe('BaseInput', () => {
       expect(label.classes()).toContain('base-input__label--required')
       expect(label.text().replace(/\s+/g, ' ').trim()).toBe('Email *')
     })
+
+    // CA-188-REVIEW2-03: /acceso (02-acceso-recuperacion.png) no dibuja el
+    // asterisco. `showRequiredMarker: false` oculta solo la marca visual;
+    // el input sigue siendo requerido de verdad para el resto de la app.
+    it('showRequiredMarker: false hides the asterisk without changing required semantics', () => {
+      const wrapper = mount(BaseInput, {
+        props: { label: 'Correo', required: true, showRequiredMarker: false },
+      })
+      const label = wrapper.find('.base-input__label')
+      expect(wrapper.find('.base-input__required').exists()).toBe(false)
+      expect(label.text().replace(/\s+/g, ' ').trim()).toBe('Correo')
+      expect(wrapper.find('input').attributes('required')).toBeDefined()
+      expect(wrapper.find('input').attributes('aria-required')).toBe('true')
+    })
   })
 
   describe('Validation attributes', () => {

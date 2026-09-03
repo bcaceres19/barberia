@@ -166,7 +166,13 @@ const onChallengeVerified = () => {
       @retry="onSubmit"
     />
 
-    <BaseAlert v-if="showSessionExpired" variant="info" title="Tu sesión venció" role="status">
+    <BaseAlert
+      v-if="showSessionExpired"
+      variant="info"
+      title="Tu sesión venció"
+      role="status"
+      dismissible
+    >
       Inicia sesión de nuevo para continuar.
     </BaseAlert>
 

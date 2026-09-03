@@ -16,8 +16,8 @@ const PASSWORD = process.env.E2E_PASSWORD ?? 'ClaveDePruebaHU010!'
 
 async function login(page: Page) {
   await page.goto('/acceso')
-  await page.getByLabel('Correo').fill(EMAIL)
-  await page.getByLabel('Contraseña').fill(PASSWORD)
+  await page.getByLabel('Correo', { exact: true }).fill(EMAIL)
+  await page.getByLabel('Contraseña', { exact: true }).fill(PASSWORD)
   await page.getByRole('button', { name: 'Iniciar sesión' }).click()
   await expect(page).toHaveURL(/\/panel$/)
 }
@@ -33,8 +33,8 @@ test.describe('Cascarón del panel privado (HU-012)', () => {
     await page.goto('/panel')
     await expect(page).toHaveURL(/\/acceso\?redirect=%2Fpanel$|\/acceso\?redirect=\/panel$/)
 
-    await page.getByLabel('Correo').fill(EMAIL)
-    await page.getByLabel('Contraseña').fill(PASSWORD)
+    await page.getByLabel('Correo', { exact: true }).fill(EMAIL)
+    await page.getByLabel('Contraseña', { exact: true }).fill(PASSWORD)
     await page.getByRole('button', { name: 'Iniciar sesión' }).click()
 
     await expect(page).toHaveURL(/\/panel$/)
@@ -91,8 +91,8 @@ test.describe('Cascarón del panel privado (HU-012)', () => {
       fullLoads += 1
     })
 
-    await page.getByLabel('Correo').fill(EMAIL)
-    await page.getByLabel('Contraseña').fill(PASSWORD)
+    await page.getByLabel('Correo', { exact: true }).fill(EMAIL)
+    await page.getByLabel('Contraseña', { exact: true }).fill(PASSWORD)
     await page.getByRole('button', { name: 'Iniciar sesión' }).click()
     await expect(page).toHaveURL(/\/panel$/)
 
@@ -105,8 +105,8 @@ test.describe('Cascarón del panel privado (HU-012)', () => {
     page,
   }) => {
     await page.goto('/acceso')
-    await page.getByLabel('Correo').fill(EMAIL)
-    await page.getByLabel('Contraseña').fill(PASSWORD)
+    await page.getByLabel('Correo', { exact: true }).fill(EMAIL)
+    await page.getByLabel('Contraseña', { exact: true }).fill(PASSWORD)
 
     let attempt = 0
     await page.route('**/api/v1/private/auth/session', async (route) => {

@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-FIX-188-REPASO-EXHAUSTIVO-ACCESO-v2"
 version: "2.0"
 kind: "fix"
-status: "ready"
+status: "executed"
 target_agents:
   - "claude"
 repository: "bcaceres19/barberia"
@@ -185,3 +185,26 @@ No uses `PASS` si alguna fila del inventario carece de evidencia o conserva una 
 ```text
 El PASS anterior de `/acceso` queda revocado. Lee y ejecuta completo `docs/10-backlog/prompts/fix/issue-188-repaso-exhaustivo-acceso-v2.md` sobre la rama y PR actuales. La referencia vinculante de esta pantalla es `docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-02/02-acceso-recuperacion.png`: usa exclusivamente el panel `ACCESO — ESCRITORIO (1440px)` para escritorio y el panel `ACCESO — MÓVIL (360px)` para móvil; no uses los paneles de recuperación ni otra lámina para decidir la composición de `/acceso`. Abre el PNG a resolución original e identifica físicamente esos dos paneles antes de editar. No corrijas solo el asterisco: vuelve a inventariar y verifica todos los elementos visibles contra esos paneles, elimina los `*` visuales conservando `required`/`aria-required` y validación, resuelve el locator ambiguo de contraseña, genera y abre evidencia v2 baseline/final/lado-a-lado/overlay y autocorrige hasta PASS sin pedirme que encuentre más diferencias.
 ```
+
+## Resultados de ejecución (2026-09-03)
+
+Inventario nuevo contra `ACCESO — ESCRITORIO (1440px)` y `ACCESO — MÓVIL (360px)` (PNG abierto a resolución original, 1672×941, paneles recortados y escalados 3× para inspección; colores muestreados por píxel y contrastados con computed styles reales del navegador, no solo lectura del código):
+
+| Elemento inventariado | Diferencia inicial | Corrección | Evidencia v2 | Estado |
+| --- | --- | --- | --- | --- |
+| Asterisco visual en labels `Correo`/`Contraseña` | El mockup no dibuja `*`; la app sí (span `.base-input__required`, `aria-hidden` pero visible) | `BaseInput` gana prop de presentación `showRequiredMarker` (default `true`, no cambia otras pantallas); `LoginForm` pasa `:show-required-marker="false"` en ambos campos. `required`/`aria-required`/validación intactos | `e2e/evidence/v2-diff-1440.png`, `v2-diff-360.png`: único cluster de píxeles rojos son los dos asteriscos | Corregido |
+| Cierre (✕) de la alerta "Tu sesión venció" | El mockup dibuja un botón de cierre; `LoginPage` no pasaba `dismissible` | Se agrega `dismissible` al `BaseAlert` de sesión expirada (prop ya existente y probada en el componente compartido; sin tocar `BaseAlert.vue`) | Capturado por inspección visual en `?motivo=sesion-expirada` | Corregido |
+| Canvas/frame/proporción tinta-marfil, wordmark NAVA, regla de latón + rombo, tagline, título `Accede a NAVA` (centrado sobre la columna del formulario, confirmado por medición de píxeles del mockup: centro del título ≈ centro del input ≈ centro del panel marfil), labels, inputs (alto/padding/radio/iconos sobre/candado/ojo), CTA, enlace de recuperación, distribución vertical/horizontal | Sin diferencia medible; colores computados (`rgb(16,27,43)` tinta, `rgb(244,240,231)` canvas, `rgb(201,192,178)` borde, `rgb(42,45,50)` texto) coinciden con la paleta declarada del mockup (`#101B2B`/`#F4F0E7`/`#C9C0B2`/`#2A2D32`); tipografías `Instrument Serif`/`Instrument Sans` coherentes | Sin cambio | `e2e/evidence/v2-side-by-side-1440.png`, `v2-side-by-side-360.png` | Verificado, sin desviación |
+| Color de la alerta "info" (sesión expirada) | El panel de `/acceso` la ilustra en tono neutro/ivory; el sheet canónico de componentes (`14-componentes-formularios-alertas.png`, sección "Alertas" → "Información") la define en azul, igual que el `BaseAlert` ya implementado | Sin cambio: se trata como la misma variante semántica "info" que define el sheet de componentes compartido; fragmentar su color solo para `/acceso` rompería la consistencia del lenguaje de alertas ya validado en el resto de la app, sin que ninguna regla de `estandar-diseno-visual.md` §6.3 fije un color exacto por pantalla | Muestreo de píxeles del mockup (`~244,241,236`) vs. computed style real (`rgb(233,238,243)` bg / `rgb(102,125,147)` borde) | Desviación justificada (documentada, no corregida) |
+| Estados error/foco de campos, iconos de error | Rojo de borde/texto en error coincide con el sheet de componentes (`14-...png`) y con los tokens `--color-danger-*` ya usados por `BaseInput` | Sin cambio | Inspección visual de `.base-input--invalid` | Verificado, sin desviación |
+
+| Viewport/estado | Baseline v2 | Final v2 | Lado a lado | Overlay/diff | Pruebas | PASS/FAIL |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1440px, normal | `e2e/evidence/v2-baseline/1440/normal.png` | `e2e/evidence/v2-final/1440/normal.png` | `e2e/evidence/v2-side-by-side-1440.png` | `e2e/evidence/v2-diff-1440.png` (74 px de 1440×960 difieren, solo los asteriscos) | `acceso-evidencia-responsiva.spec.ts` (1440 añadido a `viewports`) | PASS |
+| 360px, normal | `e2e/evidence/v2-baseline/360/normal.png` | `e2e/evidence/v2-final/360/normal.png` | `e2e/evidence/v2-side-by-side-360.png` | `e2e/evidence/v2-diff-360.png` (58 px difieren, solo los asteriscos) | `acceso-evidencia-responsiva.spec.ts` | PASS |
+| 320/360/768/1280/1440/1280-zoom200, normal/foco/carga/error/bloqueado | — | `e2e/evidence/<viewport>/*.png` (regenerado) | — | — | `acceso-evidencia-responsiva.spec.ts` — 48/48 (`chromium-desktop` + `chromium-mobile`) | PASS |
+| Unit + a11y (`vitest-axe`) | — | — | — | — | `test:unit` — 647/647 (incluye 2 pruebas nuevas: asterisco ausente + requerido intacto en `LoginForm.test.ts` y `BaseInput.test.ts`) | PASS |
+| `format` / `lint` / `typecheck` / `build` | — | — | — | — | Los cuatro sin errores nuevos (lint conserva 29 warnings preexistentes, 0 errores) | PASS |
+| E2E `/acceso` funcional (`acceso.spec.ts`) contra API real (`barberia-qa-local`) | — | — | — | — | Locator ambiguo de contraseña **corregido** (`getByLabel(..., { exact: true })` en las 23 specs afectadas del repo, no solo `/acceso`: `Mostrar/Ocultar contraseña` coincidía por substring con `Contraseña`). Regresión de orden de tabulación por el nuevo botón de mostrar/ocultar **corregida** en `CA-010-05`. Tras esas dos correcciones, 3/8 pasan limpio; los 5 restantes fallan por **dos defectos ya presentes en `main` antes de esta rama** (verificado con `git show main:...`): `toHaveURL(/\/panel$/)` no admite los query params (`barberId`/`date`) que `/panel` añade por defecto (ajeno a HU-010/HU-012), y el heading esperado `"Recuperación de acceso"` nunca existió en `RecoveryPage.vue` (los títulos reales son `"Solicita tu código"`/`"Verifica el código"`/etc.). Ninguno de los dos es una regresión introducida por este PR ni por una primitiva compartida modificada aquí; quedan fuera de alcance de `/acceso` | Parcial (bloqueo externo preexistente documentado, no de este PR) |
+
+**Nota:** para reproducir el bloqueo de "23 E2E fallidas" hay que limpiar `login_throttle` en `barberia-qa-local-pg` antes de correr `acceso.spec.ts` contra el backend real — el contador es por IP (no por cuenta) y una sesión de QA manual previa lo satura con `Retry-After` de hasta 24 h.

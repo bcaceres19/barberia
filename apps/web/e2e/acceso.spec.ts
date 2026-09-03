@@ -16,8 +16,8 @@ const EMAIL = process.env.E2E_EMAIL ?? 'duena.a@ejemplo.test'
 const PASSWORD = process.env.E2E_PASSWORD ?? 'ClaveDePruebaHU010!'
 
 async function fillCredentials(page: Page, email: string, password: string) {
-  await page.getByLabel('Correo').fill(email)
-  await page.getByLabel('Contraseña').fill(password)
+  await page.getByLabel('Correo', { exact: true }).fill(email)
+  await page.getByLabel('Contraseña', { exact: true }).fill(password)
 }
 
 test.describe('Acceso del barbero (HU-010)', () => {
@@ -39,8 +39,8 @@ test.describe('Acceso del barbero (HU-010)', () => {
     const wrongPasswordMessage = await page.getByRole('alert').last().textContent()
     await expect(page).toHaveURL(/\/acceso$/)
     // El correo escrito se conserva (CA-010-02); la contraseña no.
-    await expect(page.getByLabel('Correo')).toHaveValue(EMAIL)
-    await expect(page.getByLabel('Contraseña')).toHaveValue('')
+    await expect(page.getByLabel('Correo', { exact: true })).toHaveValue(EMAIL)
+    await expect(page.getByLabel('Contraseña', { exact: true })).toHaveValue('')
 
     await fillCredentials(page, 'correo-que-no-existe@ejemplo.test', 'cualquier-cosa')
     await page.getByRole('button', { name: 'Iniciar sesión' }).click()
@@ -70,8 +70,8 @@ test.describe('Acceso del barbero (HU-010)', () => {
     await page.getByRole('button', { name: 'Iniciar sesión' }).click()
     await expect(page.getByRole('button', { name: 'Reintentar' })).toBeVisible()
     // Los datos siguen ahí sin recargar la página.
-    await expect(page.getByLabel('Correo')).toHaveValue(EMAIL)
-    await expect(page.getByLabel('Contraseña')).toHaveValue(PASSWORD)
+    await expect(page.getByLabel('Correo', { exact: true })).toHaveValue(EMAIL)
+    await expect(page.getByLabel('Contraseña', { exact: true })).toHaveValue(PASSWORD)
 
     await page.getByRole('button', { name: 'Reintentar' }).click()
     await expect(page).toHaveURL(/\/panel$/)
@@ -115,12 +115,16 @@ test.describe('Acceso del barbero (HU-010)', () => {
     page,
   }) => {
     await page.goto('/acceso')
-    await page.getByLabel('Correo').focus()
-    await expect(page.getByLabel('Correo')).toBeFocused()
+    await page.getByLabel('Correo', { exact: true }).focus()
+    await expect(page.getByLabel('Correo', { exact: true })).toBeFocused()
     await page.keyboard.type(EMAIL)
     await page.keyboard.press('Tab')
-    await expect(page.getByLabel('Contraseña')).toBeFocused()
+    await expect(page.getByLabel('Contraseña', { exact: true })).toBeFocused()
     await page.keyboard.type(PASSWORD)
+    await page.keyboard.press('Tab')
+    // El control de mostrar/ocultar contraseña (mockup 02-acceso-recuperacion.png)
+    // es el siguiente elemento enfocable real antes del envío.
+    await expect(page.getByRole('button', { name: 'Mostrar contraseña' })).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(page.getByRole('button', { name: 'Iniciar sesión' })).toBeFocused()
     await page.keyboard.press('Enter')

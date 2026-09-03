@@ -28,6 +28,13 @@ interface Props {
   readonly?: boolean
   /** Si es requerido */
   required?: boolean
+  /** Si se dibuja el asterisco visual junto al label cuando `required` es
+   * verdadero. La semántica (`required`, `aria-required`, validación) no
+   * depende de esta bandera: existe solo para que una pantalla cuyo mockup
+   * no representa el asterisco (docs/10-backlog/evidence/
+   * ui-mockups-nava-tailored-grid-2026-09-02/02-acceso-recuperacion.png)
+   * pueda ocultarlo sin perder "requerido" para el resto de la app. */
+  showRequiredMarker?: boolean
   /** Autocomplete */
   autocomplete?: string
   /** Nombre del campo */
@@ -56,6 +63,7 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   readonly: false,
   required: false,
+  showRequiredMarker: true,
 })
 
 const emit = defineEmits<{
@@ -153,7 +161,9 @@ const handleFocus = (event: FocusEvent) => {
   <div :class="wrapperClasses">
     <label v-if="label" :for="inputId" :class="labelClasses">
       {{ label }}
-      <span v-if="required" class="base-input__required" aria-hidden="true">*</span>
+      <span v-if="required && showRequiredMarker" class="base-input__required" aria-hidden="true"
+        >*</span
+      >
     </label>
 
     <div class="base-input__input-wrapper">

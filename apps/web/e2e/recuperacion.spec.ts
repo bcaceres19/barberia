@@ -71,7 +71,7 @@ async function waitForCapturedCode(): Promise<string> {
 
 async function requestRecovery(page: Page, email: string) {
   await page.goto('/recuperar-acceso')
-  await page.getByLabel('Correo').fill(email)
+  await page.getByLabel('Correo', { exact: true }).fill(email)
   await page.getByRole('button', { name: 'Enviar código' }).click()
   await expect(page.getByText('Paso 2 de 3')).toBeVisible()
 }
@@ -110,8 +110,8 @@ test.describe('Recuperación de acceso (HU-011)', () => {
     // anterior deja de autenticar, la nueva sí).
     await page.getByRole('button', { name: 'Ir al acceso' }).click()
     await expect(page).toHaveURL(/\/acceso$/)
-    await page.getByLabel('Correo').fill(VALID_CODE_EMAIL)
-    await page.getByLabel('Contraseña').fill(NEW_PASSWORD)
+    await page.getByLabel('Correo', { exact: true }).fill(VALID_CODE_EMAIL)
+    await page.getByLabel('Contraseña', { exact: true }).fill(NEW_PASSWORD)
     await page.getByRole('button', { name: 'Iniciar sesión' }).click()
     await expect(page).toHaveURL(/\/panel$/)
   })

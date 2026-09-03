@@ -48,13 +48,13 @@ for (const viewport of viewports) {
       )
       expect(hasHorizontalScroll).toBe(false)
 
-      await page.getByLabel('Correo').focus()
+      await page.getByLabel('Correo', { exact: true }).focus()
       await page.screenshot({ path: path.join(evidenceDir, viewport.name, 'foco.png') })
     })
 
     test(`error de validación de correo (${viewport.name}px)`, async ({ page }) => {
       await page.goto('/recuperar-acceso')
-      await page.getByLabel('Correo').fill('correo-invalido')
+      await page.getByLabel('Correo', { exact: true }).fill('correo-invalido')
       await page.getByRole('button', { name: 'Enviar código' }).click()
       await expect(page.getByRole('alert').or(page.getByText(/correo válido/i))).toBeVisible()
       await page.screenshot({

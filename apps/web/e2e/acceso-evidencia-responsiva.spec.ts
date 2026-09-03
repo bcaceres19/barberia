@@ -23,6 +23,7 @@ const viewports = [
   { name: '360', width: 360, height: 800 },
   { name: '768', width: 768, height: 1024 },
   { name: '1280', width: 1280, height: 900 },
+  { name: '1440', width: 1440, height: 960 },
   // Aproximación de zoom 200% sobre 1280: mitad de ancho.
   { name: '1280-zoom200', width: 640, height: 450 },
 ]
@@ -42,7 +43,7 @@ for (const viewport of viewports) {
         fullPage: true,
       })
 
-      await page.getByLabel('Correo').focus()
+      await page.getByLabel('Correo', { exact: true }).focus()
       await page.screenshot({
         path: path.join(evidenceDir, viewport.name, 'foco.png'),
       })
@@ -57,8 +58,8 @@ for (const viewport of viewports) {
 
     test(`carga (${viewport.name}px)`, async ({ page }) => {
       await page.goto('/acceso')
-      await page.getByLabel('Correo').fill(EMAIL)
-      await page.getByLabel('Contraseña').fill(PASSWORD)
+      await page.getByLabel('Correo', { exact: true }).fill(EMAIL)
+      await page.getByLabel('Contraseña', { exact: true }).fill(PASSWORD)
 
       await page.route('**/api/v1/public/auth/login', async (route) => {
         await new Promise((resolve) => setTimeout(resolve, 400))
@@ -71,8 +72,8 @@ for (const viewport of viewports) {
 
     test(`error de credenciales (${viewport.name}px)`, async ({ page }) => {
       await page.goto('/acceso')
-      await page.getByLabel('Correo').fill(EMAIL)
-      await page.getByLabel('Contraseña').fill('clave-incorrecta')
+      await page.getByLabel('Correo', { exact: true }).fill(EMAIL)
+      await page.getByLabel('Contraseña', { exact: true }).fill('clave-incorrecta')
       await page.getByRole('button', { name: 'Iniciar sesión' }).click()
       await expect(page.getByRole('alert').last()).toBeVisible()
       await page.screenshot({
@@ -83,8 +84,8 @@ for (const viewport of viewports) {
 
     test(`bloqueado por 429 (${viewport.name}px)`, async ({ page }) => {
       await page.goto('/acceso')
-      await page.getByLabel('Correo').fill(EMAIL)
-      await page.getByLabel('Contraseña').fill(PASSWORD)
+      await page.getByLabel('Correo', { exact: true }).fill(EMAIL)
+      await page.getByLabel('Contraseña', { exact: true }).fill(PASSWORD)
       await page.route('**/api/v1/public/auth/login', async (route) => {
         await route.fulfill({
           status: 429,

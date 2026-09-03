@@ -137,6 +137,7 @@ const onRetry = () => emit('retry')
       autocomplete="username"
       placeholder="tu-correo@ejemplo.com"
       required
+      :show-required-marker="false"
       :disabled="submitting"
       :error="emailError"
       @update:model-value="handleEmailInput"
@@ -163,6 +164,7 @@ const onRetry = () => emit('retry')
       label="Contraseña"
       autocomplete="current-password"
       required
+      :show-required-marker="false"
       :disabled="submitting"
       :error="passwordError"
       @update:model-value="handlePasswordInput"

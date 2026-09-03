@@ -35,8 +35,8 @@ test('pantalla Barberos sin scroll horizontal, con foco visible por teclado y si
   page,
 }) => {
   await page.goto('/acceso')
-  await page.getByLabel('Correo').fill(EMAIL)
-  await page.getByLabel('Contraseña').fill(PASSWORD)
+  await page.getByLabel('Correo', { exact: true }).fill(EMAIL)
+  await page.getByLabel('Contraseña', { exact: true }).fill(PASSWORD)
   await page.getByRole('button', { name: 'Iniciar sesión' }).click()
   await expect(page).toHaveURL(/\/panel$/)
 

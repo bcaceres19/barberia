@@ -21,8 +21,8 @@ const PASSWORD = process.env.E2E_PASSWORD ?? 'ClaveDePruebaHU010!'
 
 async function login(page: Page, email: string, password: string) {
   await page.goto('/acceso')
-  await page.getByLabel('Correo').fill(email)
-  await page.getByLabel('Contraseña').fill(password)
+  await page.getByLabel('Correo', { exact: true }).fill(email)
+  await page.getByLabel('Contraseña', { exact: true }).fill(password)
   await page.getByRole('button', { name: 'Iniciar sesión' }).click()
   await expect(page).toHaveURL(/\/panel$/)
 }
