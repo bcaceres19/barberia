@@ -1,6 +1,6 @@
 ---
 titulo: "Estándar visual NAVA para rediseños y pantallas nuevas"
-version: "4.0"
+version: "4.1"
 estado: "Normativo para rediseños y pantallas nuevas"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-02"
@@ -11,6 +11,7 @@ documentos_relacionados:
   - "../02-requisitos/estados-citas.md"
   - "../04-arquitectura/frontend.md"
   - "../10-backlog/evidence/ui-redesign-nava-2026-09-02/README.md"
+  - "../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-02/README.md"
   - "especificacion-frontend-nava.md"
   - "estandar-frontend-vue.md"
   - "estrategia-pruebas.md"
@@ -41,10 +42,13 @@ Las siguientes láminas forman la referencia canónica para el lenguaje visual d
 
 | Referencia | Familia cubierta |
 | --- | --- |
+| [Referencia maestra Tailored Grid](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-02/00-referencia-tailored-grid.png) | Composición editorial, carriles temporales, densidad ordenada y relación entre escritorio operativo y flujo móvil. Sus módulos fuera de alcance no se copian. |
 | [Autenticación móvil](../10-backlog/evidence/ui-redesign-nava-2026-09-02/01-autenticacion-movil.png) | Acceso, validación y recuperación. |
 | [Nuevo turno responsive](../10-backlog/evidence/ui-redesign-nava-2026-09-02/02-nuevo-turno-responsive.png) | Formularios extensos, secciones, reflow y conflictos. |
 | [Componentes, formularios y alertas](../10-backlog/evidence/ui-redesign-nava-2026-09-02/03-componentes-formularios-alertas.png) | Botones, campos, foco, estados, alertas y diálogo. |
 | [Servicios, configuración y navegación](../10-backlog/evidence/ui-redesign-nava-2026-09-02/04-servicios-configuracion-navegacion.png) | Shell, navegación responsive, listas operativas, modal y éxito persistente. |
+
+El [atlas integral de mockups](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-02/README.md) amplía estas referencias a las once rutas implementadas, sus estados transversales y conceptos P0 pendientes. Las láminas rotuladas como no implementadas reservan intención visual, pero no crean alcance, contrato ni autorización de desarrollo.
 
 Respetar los mockups significa conservar su familia visual, color, jerarquía, densidad deliberada, claridad de estados y relación entre voz editorial y controles funcionales. No significa copiar coordenadas, textos sintéticos, datos, tamaños, radios o una composición exacta. La implementación puede apartarse de una distribución concreta cuando el contenido real, el ancho, la accesibilidad o el rendimiento lo exijan.
 
@@ -251,6 +255,7 @@ No se rechaza una solución por usar CSS local, Tailwind, otra composición, otr
 - `DEC-078`: libertad de composición, componentes y herramientas.
 - `DEC-079`: mockups y firma cromática obligatorios para rediseños y pantallas nuevas.
 - [Handoff de mockups NAVA](../10-backlog/evidence/ui-redesign-nava-2026-09-02/README.md).
+- [Atlas integral NAVA / Tailored Grid](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-02/README.md).
 - [Especificación de frontend NAVA](especificacion-frontend-nava.md).
 - [Estándar de frontend Vue](estandar-frontend-vue.md).
 - [Estrategia de pruebas](estrategia-pruebas.md).

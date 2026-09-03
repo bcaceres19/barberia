@@ -104,7 +104,7 @@ source_docs:
 created_at: "2026-09-01"
 updated_at: "2026-09-02"
 supersedes: null
-superseded_by: null
+superseded_by: "PROMPT-ORCH-NAVA-ATLAS-v2"
 ---
 
 # Orquestación de la adopción incremental del frontend NAVA
