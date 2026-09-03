@@ -93,43 +93,23 @@ const onRestart = () => emit('restart')
       Verificamos tu código, enviado a {{ maskedPhone }} y {{ maskedEmail }}.
     </p>
 
-    <BaseAlert
-      v-if="status === 'invalid-token'"
-      variant="danger"
-      title="El enlace de recuperación venció"
-      role="alert"
-    >
-      Este paso ya no es válido. Solicita un código nuevo para continuar.
-      <template #action>
-        <BaseButton variant="secondary" size="md" type="button" @click="onRestart">
-          Solicitar de nuevo
-        </BaseButton>
-      </template>
-    </BaseAlert>
-    <BaseAlert
-      v-if="status === 'policy-violation'"
-      variant="danger"
-      title="La contraseña no cumple la política"
-      role="alert"
-    >
-      Revisa los requisitos e inténtalo de nuevo.
-    </BaseAlert>
-    <BaseAlert
-      v-if="status === 'network-error'"
-      variant="warning"
-      title="No pudimos conectar"
-      role="alert"
-    >
-      Revisa tu conexión e inténtalo de nuevo.
-    </BaseAlert>
-    <BaseAlert
-      v-if="status === 'unexpected-error'"
-      variant="danger"
-      title="Ocurrió un error inesperado"
-      role="alert"
-    >
-      Inténtalo de nuevo en unos segundos.
-    </BaseAlert>
+    <!-- Excepción del ancla de alertas (trabajo requerido §3): la alerta
+         explica por qué la pantalla está en este estado y la acción es su
+         remedio, así que precede al botón en vez de seguirlo. -->
+    <template v-if="status === 'invalid-token'">
+      <BaseAlert variant="danger" title="El enlace de recuperación venció" role="alert">
+        Este paso ya no es válido. Solicita un código nuevo para continuar.
+      </BaseAlert>
+      <BaseButton
+        type="button"
+        variant="primary"
+        size="lg"
+        class="recovery-reset__submit"
+        @click="onRestart"
+      >
+        Solicitar de nuevo
+      </BaseButton>
+    </template>
 
     <BaseAlert
       v-if="status !== 'invalid-token'"
@@ -147,6 +127,7 @@ const onRestart = () => emit('restart')
         label="Contraseña nueva"
         autocomplete="new-password"
         required
+        :show-required-marker="false"
         :disabled="isSubmitting"
         :error="fieldErrors.newPassword"
         @update:model-value="handleNewPasswordInput"
@@ -159,6 +140,7 @@ const onRestart = () => emit('restart')
         label="Confirma la contraseña nueva"
         autocomplete="new-password"
         required
+        :show-required-marker="false"
         :disabled="isSubmitting"
         :error="fieldErrors.confirmPassword"
         @update:model-value="handleConfirmPasswordInput"
@@ -174,6 +156,32 @@ const onRestart = () => emit('restart')
       >
         Guardar contraseña nueva
       </BaseButton>
+
+      <!-- Ancla de alertas: después del grupo de acciones (trabajo requerido §3). -->
+      <BaseAlert
+        v-if="status === 'policy-violation'"
+        variant="danger"
+        title="La contraseña no cumple la política"
+        role="alert"
+      >
+        Revisa los requisitos e inténtalo de nuevo.
+      </BaseAlert>
+      <BaseAlert
+        v-if="status === 'network-error'"
+        variant="warning"
+        title="No pudimos conectar"
+        role="alert"
+      >
+        Revisa tu conexión e inténtalo de nuevo.
+      </BaseAlert>
+      <BaseAlert
+        v-if="status === 'unexpected-error'"
+        variant="danger"
+        title="Ocurrió un error inesperado"
+        role="alert"
+      >
+        Inténtalo de nuevo en unos segundos.
+      </BaseAlert>
     </template>
   </form>
 </template>
@@ -188,11 +196,13 @@ const onRestart = () => emit('restart')
 
 .recovery-reset__confirmed {
   margin: 0;
-  font-size: var(--font-size-body-sm);
+  font-size: 18px;
+  line-height: 26px;
   color: var(--color-text-secondary);
 }
 
 .recovery-reset__submit {
   width: 100%;
+  min-height: 56px;
 }
 </style>

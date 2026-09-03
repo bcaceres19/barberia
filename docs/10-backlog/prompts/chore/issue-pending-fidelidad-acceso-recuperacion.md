@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-CHORE-FIDELIDAD-ACCESO-RECUPERACION-v1"
 version: "1.0"
 kind: "chore"
-status: "ready"
+status: "in_progress"
 target_agents:
   - "claude"
 repository: "bcaceres19/barberia"
@@ -52,7 +52,7 @@ source_docs:
   - "docs/03-desarrollo/estrategia-pruebas.md"
   - "docs/00-control/registro-decisiones.md"
 created_at: "2026-09-03"
-updated_at: "2026-09-04"
+updated_at: "2026-09-03"
 supersedes: "PROMPT-CHORE-LENGUAJE-REGLADO-NAVA-AUTH-v1"
 superseded_by: null
 ---
@@ -63,7 +63,7 @@ superseded_by: null
 
 Trabaja en modo **fidelidad de mockup**. Se te asignan 46 imágenes de referencia exactas y la app real debe reproducirlas.
 
-Esta entrega es **exclusivamente visual**: composición, geometría, jerarquía, color, densidad y estado visual. **No cambia comportamiento, validaciones, endpoints, máquinas de estado ni textos de producto.** Cuando un mockup y el código difieran en *texto* o en *comportamiento*, manda el código: registras la diferencia en la tabla de desviaciones y la deja para el ajuste funcional posterior. Cuando difieran en *composición*, manda el mockup.
+Esta entrega es **exclusivamente visual**: composición, geometría, jerarquía, color, densidad y estado visual. **No cambia comportamiento, validaciones, endpoints, máquinas de estado ni textos de producto.** Cuando un mockup y el código difieran en _texto_ o en _comportamiento_, manda el código: registras la diferencia en la tabla de desviaciones y la deja para el ajuste funcional posterior. Cuando difieran en _composición_, manda el mockup.
 
 Modelo y esfuerzo requeridos: **Claude Sonnet 5 con `effortLevel: high`**. Carga y sigue las skills `nava-mockup-fidelity` y `browser-viewport-verification` antes de editar y antes de declarar terminada cualquier pantalla.
 

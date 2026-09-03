@@ -151,13 +151,17 @@ const onChallengeVerified = () => {
 </script>
 
 <template>
-  <AuthSplitLayout>
-    <h1 class="login-page__title">Accede a NAVA</h1>
+  <AuthSplitLayout caption="ACCESO SEGURO">
+    <div class="login-page__header">
+      <h1 class="login-page__title">Accede a NAVA</h1>
+      <p class="login-page__subtitle">Tu agenda y tu equipo, en un solo lugar.</p>
+    </div>
 
     <LoginForm
       :email="email"
       :password="password"
       :submitting="isSubmitting"
+      :challenge-active="showPhoneChallenge"
       :server-error="serverError"
       recovery-href="/recuperar-acceso"
       @update:email="(value) => (email = value)"
@@ -186,21 +190,40 @@ const onChallengeVerified = () => {
 </template>
 
 <style scoped>
+.login-page__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
 .login-page__title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 38px;
+  font-size: 52px;
   font-weight: 600;
-  line-height: 44px;
+  line-height: 60px;
   letter-spacing: -0.015em;
   text-align: center;
   color: var(--color-text-primary);
+}
+
+.login-page__subtitle {
+  margin: 0;
+  font-size: 20px;
+  line-height: 28px;
+  text-align: center;
+  color: var(--color-text-secondary);
 }
 
 @media (min-width: 1024px) {
   .login-page__title {
     font-size: 48px;
     line-height: 56px;
+  }
+
+  .login-page__subtitle {
+    font-size: 18px;
+    line-height: 26px;
   }
 }
 </style>

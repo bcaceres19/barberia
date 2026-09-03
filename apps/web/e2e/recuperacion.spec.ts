@@ -69,6 +69,15 @@ async function waitForCapturedCode(): Promise<string> {
   return readCapturedCode()
 }
 
+// `OtpInput` (issue #213) no expone un único control asociado a
+// "Código de 6 dígitos" vía `<label>`: es un grupo de seis casillas, cada
+// una con su propio `aria-label` ("Dígito N de 6"). `.fill()` sobre la
+// primera casilla igual distribuye el código completo entre las seis,
+// mismo camino que un pegado real (`OtpInput.vue`, `onInput`).
+async function fillOtp(page: Page, code: string) {
+  await page.getByRole('group', { name: 'Código de 6 dígitos' }).locator('input').first().fill(code)
+}
+
 async function requestRecovery(page: Page, email: string) {
   await page.goto('/recuperar-acceso')
   await page.getByLabel('Correo', { exact: true }).fill(email)
@@ -92,7 +101,7 @@ test.describe('Recuperación de acceso (HU-011)', () => {
     await requestRecovery(page, VALID_CODE_EMAIL)
 
     const code = await waitForCapturedCode()
-    await page.getByLabel('Código de 6 dígitos').fill(code)
+    await fillOtp(page, code)
     await page.getByRole('button', { name: 'Verificar código' }).click()
 
     await expect(page.getByText('Paso 3 de 3')).toBeVisible()
@@ -129,10 +138,13 @@ test.describe('Recuperación de acceso (HU-011)', () => {
     await page.waitForTimeout(3_000)
     const expiredCode = await readCapturedCode()
 
-    await page.getByLabel('Código de 6 dígitos').fill(expiredCode)
+    await fillOtp(page, expiredCode)
     await page.getByRole('button', { name: 'Verificar código' }).click()
 
-    await expect(page.getByText('El código no es válido')).toBeVisible()
+    // El error vive bajo las casillas del código, sin una alerta global
+    // aparte (issue #213, trabajo requerido §6): ya no hay un título de
+    // alerta separado que verificar.
+    await expect(page.getByText('El código no es correcto o ya venció')).toBeVisible()
     await expect(page.getByText('Paso 2 de 3')).toBeVisible()
   })
 })

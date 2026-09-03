@@ -61,6 +61,32 @@ async function onSubmit() {
       y correo.
     </p>
 
+    <BaseInput
+      :model-value="email"
+      type="email"
+      name="email"
+      label="Correo"
+      autocomplete="username"
+      placeholder="tu-correo@ejemplo.com"
+      required
+      :show-required-marker="false"
+      :disabled="isSubmitting"
+      :error="fieldError"
+      @update:model-value="handleEmailInput"
+    />
+
+    <BaseButton
+      type="submit"
+      variant="primary"
+      size="lg"
+      :loading="isSubmitting"
+      :disabled="isSubmitting"
+      class="recovery-request__submit"
+    >
+      {{ isSubmitting ? 'Enviando…' : 'Enviar código' }}
+    </BaseButton>
+
+    <!-- Ancla de alertas: después del grupo de acciones (trabajo requerido §3). -->
     <BaseAlert
       v-if="status === 'network-error'"
       variant="warning"
@@ -77,30 +103,6 @@ async function onSubmit() {
     >
       Inténtalo de nuevo en unos segundos.
     </BaseAlert>
-
-    <BaseInput
-      :model-value="email"
-      type="email"
-      name="email"
-      label="Correo"
-      autocomplete="username"
-      placeholder="tu-correo@ejemplo.com"
-      required
-      :disabled="isSubmitting"
-      :error="fieldError"
-      @update:model-value="handleEmailInput"
-    />
-
-    <BaseButton
-      type="submit"
-      variant="primary"
-      size="lg"
-      :loading="isSubmitting"
-      :disabled="isSubmitting"
-      class="recovery-request__submit"
-    >
-      {{ isSubmitting ? 'Enviando…' : 'Enviar código' }}
-    </BaseButton>
   </form>
 </template>
 
@@ -108,14 +110,45 @@ async function onSubmit() {
 .recovery-request {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-8);
   width: 100%;
+  margin-top: var(--space-8);
+}
+
+.recovery-request :deep(.base-input) {
+  height: 56px;
+  font-size: 18px;
+}
+
+.recovery-request :deep(.base-input__label) {
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.recovery-request :deep(.base-button) {
+  min-height: 56px;
+  font-size: 18px;
+}
+
+@media (min-width: 1024px) {
+  .recovery-request {
+    margin-top: 0;
+  }
 }
 
 .recovery-request__hint {
   margin: 0;
-  font-size: var(--font-size-body-sm);
+  font-size: 20px;
+  line-height: 28px;
   color: var(--color-text-secondary);
+}
+
+@media (min-width: 1024px) {
+  .recovery-request__hint {
+    font-size: 18px;
+    line-height: 26px;
+  }
 }
 
 .recovery-request__submit {

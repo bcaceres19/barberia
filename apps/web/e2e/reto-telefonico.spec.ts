@@ -70,6 +70,15 @@ async function fillCredentials(page: Page, email: string, password: string) {
   await page.getByLabel('Contraseña', { exact: true }).fill(password)
 }
 
+// `OtpInput` (issue #213) no expone un único control asociado a "Código de
+// 6 dígitos" vía `<label>`: es un grupo de seis casillas, cada una con su
+// propio `aria-label` ("Dígito N de 6"). `.fill()` sobre la primera casilla
+// igual distribuye el código completo entre las seis, mismo camino que un
+// pegado real (`OtpInput.vue`, `onInput`).
+async function fillOtp(page: Page, code: string) {
+  await page.getByRole('group', { name: 'Código de 6 dígitos' }).locator('input').first().fill(code)
+}
+
 async function readCapturedCode(): Promise<string> {
   const raw = await readFile(CAPTURE_FILE, 'utf-8')
   const parsed = JSON.parse(raw) as { phone: string; code: string }
@@ -158,7 +167,7 @@ test.describe('Defensa escalonada contra abuso del acceso (HU-007)', () => {
       .not.toBeNull()
     const code = await readCapturedCode()
 
-    await page.getByLabel('Código de 6 dígitos').fill(code)
+    await fillOtp(page, code)
     await page.getByRole('button', { name: 'Verificar código' }).click()
 
     await expect(page).toHaveURL(/\/panel$/)
@@ -180,7 +189,7 @@ test.describe('Defensa escalonada contra abuso del acceso (HU-007)', () => {
     await page.getByRole('button', { name: 'Enviar código por WhatsApp' }).click()
     await expect(page.getByText('Si tu cuenta existe')).toBeVisible()
 
-    await page.getByLabel('Código de 6 dígitos').fill('000000')
+    await fillOtp(page, '000000')
     await page.getByRole('button', { name: 'Verificar código' }).click()
 
     await expect(page.getByText('El código no es válido o venció')).toBeVisible()

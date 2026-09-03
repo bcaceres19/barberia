@@ -1,6 +1,6 @@
 {
   ".claude/settings.json": {
-    "mtime": 1788450278.0191166,
+    "mtime": 1788453255.1863375,
     "ast_hash": "22686d55693a315f5c21f0b8d7f3b6f1",
     "semantic_hash": ""
   },
@@ -135,7 +135,7 @@
     "semantic_hash": ""
   },
   "apps/web/src/main.ts": {
-    "mtime": 1788450278.195846,
+    "mtime": 1788453255.2956119,
     "ast_hash": "5001ec9ae81f180748484a4fb61451a4",
     "semantic_hash": ""
   },
@@ -195,8 +195,8 @@
     "semantic_hash": "e5d96637d5d70857370a7c5ec741517c"
   },
   "apps/web/src/shared/ui/index.ts": {
-    "mtime": 1788450278.2572627,
-    "ast_hash": "e948eb7ee702ad240e1f774665e57255",
+    "mtime": 1788461480.9299736,
+    "ast_hash": "74b8a2f7fef2922946fdc1ebfdd984ae",
     "semantic_hash": ""
   },
   "apps/web/src/shared/validation/index.ts": {
@@ -245,7 +245,7 @@
     "semantic_hash": "f89b6d0f874ab3dce2042f363e033371"
   },
   ".claude/CLAUDE.md": {
-    "mtime": 1788450278.0128694,
+    "mtime": 1788453255.1848032,
     "ast_hash": "a0e2a744c2404cefb62a1b09640e8d74",
     "semantic_hash": ""
   },
@@ -315,12 +315,12 @@
     "semantic_hash": "272429dd079c2d4ecd772e1c299e3df5"
   },
   "AGENTS.md": {
-    "mtime": 1788450278.028882,
+    "mtime": 1788453255.1863375,
     "ast_hash": "ce49e522dfeb737b3f766482c3f4a955",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1788450278.0304523,
+    "mtime": 1788453255.1929457,
     "ast_hash": "3d41df441718650964fbb8c4be30bc05",
     "semantic_hash": ""
   },
@@ -455,12 +455,12 @@
     "semantic_hash": ""
   },
   "docs/00-control/contradicciones.md": {
-    "mtime": 1788450304.9407613,
+    "mtime": 1788453255.3014834,
     "ast_hash": "cbb40247078d0bb55d20ee8d5df15b60",
     "semantic_hash": ""
   },
   "docs/00-control/dudas-pendientes.md": {
-    "mtime": 1788450304.9432635,
+    "mtime": 1788453255.3014834,
     "ast_hash": "c9df03229a1ea98097dbb096c97956c8",
     "semantic_hash": ""
   },
@@ -470,17 +470,17 @@
     "semantic_hash": ""
   },
   "docs/00-control/historial-cambios.md": {
-    "mtime": 1788450278.2572627,
-    "ast_hash": "27287cf690375a078131be978aad97c4",
+    "mtime": 1788465790.750124,
+    "ast_hash": "9749208ac488521be4be1f927782bbb2",
     "semantic_hash": ""
   },
   "docs/00-control/matriz-trazabilidad.md": {
-    "mtime": 1788450278.2572627,
-    "ast_hash": "90ccb2956e87ff13996e38688e26971b",
+    "mtime": 1788465790.40526,
+    "ast_hash": "d0508df573914745d9909a78f8e762f5",
     "semantic_hash": ""
   },
   "docs/00-control/registro-decisiones.md": {
-    "mtime": 1788450304.9432635,
+    "mtime": 1788453255.3014834,
     "ast_hash": "8890b4e838fb3bfcb66d5a8269e18e57",
     "semantic_hash": ""
   },
@@ -515,8 +515,8 @@
     "semantic_hash": "5808a4dbd2de9457e817a4304b86cb7e"
   },
   "docs/03-desarrollo/estandar-diseno-visual.md": {
-    "mtime": 1788450304.9452837,
-    "ast_hash": "e7f711c5aed6cf590a631e6155b7749a",
+    "mtime": 1788461480.9361808,
+    "ast_hash": "0194803e49de4166d410a09857d1423a",
     "semantic_hash": ""
   },
   "docs/03-desarrollo/estandar-frontend-vue.md": {
@@ -525,7 +525,7 @@
     "semantic_hash": ""
   },
   "docs/03-desarrollo/estrategia-pruebas.md": {
-    "mtime": 1788450278.2727354,
+    "mtime": 1788453255.3014834,
     "ast_hash": "5e9c9b41e946a68443f915b75c80b568",
     "semantic_hash": ""
   },
@@ -680,8 +680,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/BaseAlert.vue": {
-    "mtime": 1786636133.8394277,
-    "ast_hash": "aff687a92f241af45d80504591a3c4c2",
+    "mtime": 1788462934.9916909,
+    "ast_hash": "53e96abc069d380eb8a5ad3c082537ec",
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/BaseBadge.vue": {
@@ -690,8 +690,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/BaseButton.vue": {
-    "mtime": 1786636133.8404238,
-    "ast_hash": "4b3258e5944b84a9157378146d6a0f66",
+    "mtime": 1788461480.9280393,
+    "ast_hash": "a09035aff2129eb8bd8b176d136fbc95",
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/BaseDialog.vue": {
@@ -700,13 +700,13 @@
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/BaseInput.vue": {
-    "mtime": 1788450278.2480881,
-    "ast_hash": "0e0478f4ffdd20fd4396d29ce18780df",
+    "mtime": 1788461480.9299736,
+    "ast_hash": "21cd7ccab2a0514f023fe6db5eab6b1a",
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/__tests__/BaseAlert.test.ts": {
-    "mtime": 1786636133.841422,
-    "ast_hash": "7953577a24c5c758eb63fcd055f1094c",
+    "mtime": 1788461480.9299736,
+    "ast_hash": "fa418279b7a64b878750442c0218f589",
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/__tests__/BaseBadge.test.ts": {
@@ -725,7 +725,7 @@
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/__tests__/BaseInput.test.ts": {
-    "mtime": 1788450278.2546034,
+    "mtime": 1788453255.3014834,
     "ast_hash": "a5f88f69320fae1a060b8a3d1cf3b8f8",
     "semantic_hash": ""
   },
@@ -805,8 +805,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/README.md": {
-    "mtime": 1788450278.4962087,
-    "ast_hash": "bd7fb684c880f016edcbd08510b1aa61",
+    "mtime": 1788465790.284891,
+    "ast_hash": "a7e63cb140b6816e595b0cbf669d5b42",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/TEMPLATE.md": {
@@ -1225,12 +1225,12 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/acceso-evidencia-responsiva.spec.ts": {
-    "mtime": 1788450278.0315495,
-    "ast_hash": "e49b33770a52c1171eb888ad69e42ded",
+    "mtime": 1788465332.7749145,
+    "ast_hash": "96cb67779bc4abcf3320bd1b54b7ee98",
     "semantic_hash": ""
   },
   "apps/web/e2e/acceso.spec.ts": {
-    "mtime": 1788450278.0315495,
+    "mtime": 1788453255.194069,
     "ast_hash": "378cbde57bf679d685ef6ba0238d6180",
     "semantic_hash": ""
   },
@@ -1250,13 +1250,13 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/LoginForm.vue": {
-    "mtime": 1788450278.2110906,
-    "ast_hash": "4f07f9d7791b0beb48c8e64a9a062697",
+    "mtime": 1788465405.664367,
+    "ast_hash": "e2e18153ee9a2d408377a239afe9ac03",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/__tests__/LoginForm.test.ts": {
-    "mtime": 1788450278.2110906,
-    "ast_hash": "a1c41476ec15386348b5c037aed354a7",
+    "mtime": 1788465072.4002352,
+    "ast_hash": "f2e36bd85c49cf9f0ed8f9cb2d393c66",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/guards/requireSession.ts": {
@@ -1275,13 +1275,13 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/pages/LoginPage.vue": {
-    "mtime": 1788450278.2249544,
-    "ast_hash": "1bc8dd250b3f95abc5483a1e97af697a",
+    "mtime": 1788465332.5554693,
+    "ast_hash": "29c09a7ab6ac143f02c5a5277965002c",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/pages/__tests__/LoginPage.test.ts": {
-    "mtime": 1788450278.2249544,
-    "ast_hash": "6af226ce3888b25fea90b5b7fb3da0a3",
+    "mtime": 1788464993.916774,
+    "ast_hash": "b10028f3108442b4b6fc18e767d95774",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/routes.ts": {
@@ -1310,128 +1310,128 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280-zoom200/bloqueado.png": {
-    "mtime": 1788450278.0434363,
-    "ast_hash": "8b58802baa5d321ee8bf834c1c0036c9",
+    "mtime": 1788465431.7305493,
+    "ast_hash": "2a2953a67892729f3848ce52d8e71de1",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280-zoom200/carga.png": {
-    "mtime": 1788450278.0434363,
-    "ast_hash": "13998a5a72b32e3481348c1d818feb8c",
+    "mtime": 1788465431.6293547,
+    "ast_hash": "893353ca7b5d93b56f269e728e0de472",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280-zoom200/error.png": {
-    "mtime": 1788450278.0498502,
-    "ast_hash": "4e41e2c9de5b7b94e8b266ac6fdf70a6",
+    "mtime": 1788465431.8406694,
+    "ast_hash": "5295a7978083e22df5b3b8972ef3594f",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280-zoom200/foco.png": {
-    "mtime": 1788450278.0514941,
-    "ast_hash": "dd8ff39ec15685cd2b30d59fbe44424a",
+    "mtime": 1788465431.3862877,
+    "ast_hash": "c25d0abc9ecd707fd0674ed4e625cd7b",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280-zoom200/normal.png": {
-    "mtime": 1788450278.0531483,
-    "ast_hash": "751c6a4d47d46297e0f0efb278a59971",
+    "mtime": 1788465431.2322552,
+    "ast_hash": "8e600fdafc5b2456e11cb5532ba5f874",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280/bloqueado.png": {
-    "mtime": 1788450278.0563886,
-    "ast_hash": "d4ca0fc02184ec1de8da033e7cb03a91",
+    "mtime": 1788465429.720626,
+    "ast_hash": "e3bfc9f5daae64683150974e1e7d7bcc",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280/carga.png": {
-    "mtime": 1788450278.059251,
-    "ast_hash": "5de9a640c56dd1b8b0397affca3dfca7",
+    "mtime": 1788465428.8354454,
+    "ast_hash": "5512659108643a3bcc3e409b435c01c2",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280/error.png": {
-    "mtime": 1788450278.0598443,
-    "ast_hash": "03eac12037509a152cc87015acc59920",
+    "mtime": 1788465429.4872446,
+    "ast_hash": "2c19517aa0a6ba9b0dd536c567eee54c",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280/foco.png": {
-    "mtime": 1788450278.0598443,
-    "ast_hash": "0e3ad63a0b9b9e9d845fa4846f043431",
+    "mtime": 1788465429.00231,
+    "ast_hash": "b434626a9d645b8ffdc4ce1c3e360ae9",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280/normal.png": {
-    "mtime": 1788450278.0598443,
-    "ast_hash": "8768e3e268ee15ef02a1dfbfc8464fa2",
+    "mtime": 1788465428.8203583,
+    "ast_hash": "1c3894f0cb172423425213bf219588d2",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/320/bloqueado.png": {
-    "mtime": 1788450278.0825849,
-    "ast_hash": "df8369baf0b099f8de37fae2f7be9c75",
+    "mtime": 1788465423.02728,
+    "ast_hash": "ff6b78d4764ca8e9bbb1e20fed80ce42",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/320/carga.png": {
-    "mtime": 1788450278.0825849,
-    "ast_hash": "df52ce2c7059fca2987a1143b39db84f",
+    "mtime": 1788465426.3896575,
+    "ast_hash": "b687364ada721bcc225989846861a88e",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/320/error.png": {
-    "mtime": 1788450278.0879886,
-    "ast_hash": "c481546293500fbd3aa193965c776553",
+    "mtime": 1788465422.9594414,
+    "ast_hash": "608585c08ecd044b03595718a11bab7b",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/320/foco.png": {
-    "mtime": 1788450278.0890265,
-    "ast_hash": "ba77a59d6a5561c185408f1228985662",
+    "mtime": 1788465426.0401983,
+    "ast_hash": "63d98474384250812935445ca5ad69e1",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/320/normal.png": {
-    "mtime": 1788450278.0890265,
-    "ast_hash": "549fccc1d9dc6a16116b6905d97671b7",
+    "mtime": 1788465425.847603,
+    "ast_hash": "bdbb9750d884e6abfa4fecff3dc1d98c",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/360/bloqueado.png": {
-    "mtime": 1788450278.0952225,
-    "ast_hash": "03aa9fa98e2464d7652d7dad254c1005",
+    "mtime": 1788465423.2909327,
+    "ast_hash": "84e3b92ca3011fbb91c593ab8b7910de",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/360/carga.png": {
-    "mtime": 1788450278.0975661,
-    "ast_hash": "97a86d7505ba080547e119369827c96c",
+    "mtime": 1788465423.4983728,
+    "ast_hash": "bcb33d6254a2060936bb4b5843a23714",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/360/error.png": {
-    "mtime": 1788450278.1002605,
-    "ast_hash": "c114c6ec5dbebff25b8e8bec86a29fc4",
+    "mtime": 1788465426.3362274,
+    "ast_hash": "7bbbaa9b93ca4d7e6373d68455a90180",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/360/foco.png": {
-    "mtime": 1788450278.1020553,
-    "ast_hash": "fbbfc69f66d3bf575409558f94ca07ef",
+    "mtime": 1788465422.6991475,
+    "ast_hash": "74c8272b7fb16c55b9dd4c9c9966ba77",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/360/normal.png": {
-    "mtime": 1788450278.1020553,
-    "ast_hash": "96ff2b5880c3e606b55723b70e42afec",
+    "mtime": 1788465422.57844,
+    "ast_hash": "22a0365391a300da07c9d4ddff3479ab",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/768/bloqueado.png": {
-    "mtime": 1788450278.1020553,
-    "ast_hash": "80a65f9146c54f431d01248d4bee2f20",
+    "mtime": 1788465427.5722036,
+    "ast_hash": "f4e2372a685b9246a175d8b651ae021f",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/768/carga.png": {
-    "mtime": 1788450278.1020553,
-    "ast_hash": "a09c535e27947be6167728200aefdd3f",
+    "mtime": 1788465428.0720124,
+    "ast_hash": "702508c4caba6bc47c6ce38d819a43c9",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/768/error.png": {
-    "mtime": 1788450278.1020553,
-    "ast_hash": "feef1bff9df308c1a81aead74efdb430",
+    "mtime": 1788465428.4412658,
+    "ast_hash": "b1d1dccf332e50b51a82d80ac695f04c",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/768/foco.png": {
-    "mtime": 1788450278.11249,
-    "ast_hash": "95290590c4c079d903b047fca69aed14",
+    "mtime": 1788465425.7813807,
+    "ast_hash": "39dafde5aec78469d86e5c0f198dabcb",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/768/normal.png": {
-    "mtime": 1788450278.1147015,
-    "ast_hash": "79d029d1eac7935c87c3798741edf925",
+    "mtime": 1788465425.580372,
+    "ast_hash": "e050456836eb7a10256009de8d894827",
     "semantic_hash": ""
   },
   "apps/api/cmd/api/recovery_integration_test.go": {
@@ -1660,18 +1660,18 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/panel-evidencia-responsiva.spec.ts": {
-    "mtime": 1788450278.1807532,
+    "mtime": 1788453255.2830143,
     "ast_hash": "5c2b649e71f0f3bc478cd1a59dc6f7ee",
     "semantic_hash": ""
   },
   "apps/web/e2e/panel.spec.ts": {
-    "mtime": 1788450278.1807532,
+    "mtime": 1788453255.2830143,
     "ast_hash": "045c88b94e50901f124869c9bffa5a09",
     "semantic_hash": ""
   },
   "apps/web/e2e/reto-telefonico.spec.ts": {
-    "mtime": 1788450278.1807532,
-    "ast_hash": "8b2eac61773069ba5d93dc098124b542",
+    "mtime": 1788463921.1115828,
+    "ast_hash": "58d5821ebafbece8d17278e9af9b06c5",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/api/__tests__/challengeApi.test.ts": {
@@ -1715,8 +1715,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/PhoneChallengeForm.vue": {
-    "mtime": 1787006768.5626612,
-    "ast_hash": "0424fe9351ccf128cf311d4c97f0d2c0",
+    "mtime": 1788465067.5865965,
+    "ast_hash": "99752869d8adb8cd49e86c2bd4d53e51",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/__tests__/AppHeader.test.ts": {
@@ -1730,8 +1730,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/__tests__/PhoneChallengeForm.test.ts": {
-    "mtime": 1787006768.5626612,
-    "ast_hash": "c1f0788e9e1276c961f9894261961425",
+    "mtime": 1788465068.0721252,
+    "ast_hash": "55c17a728891374d17514afff8804838",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/layouts/PrivateShell.vue": {
@@ -1900,58 +1900,58 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/1280-zoom200/foco.png": {
-    "mtime": 1788450278.1159527,
+    "mtime": 1788453255.2497194,
     "ast_hash": "0df06ed1c301717085275ee293d78132",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/1280-zoom200/normal.png": {
-    "mtime": 1788450278.1191466,
+    "mtime": 1788453255.2505138,
     "ast_hash": "89084b47bf19104f5cf6185bf21f0de2",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/1280/foco.png": {
-    "mtime": 1788450278.1211917,
+    "mtime": 1788453255.2505138,
     "ast_hash": "77b66cf160ad148e0dbec886e3c71047",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/1280/normal.png": {
-    "mtime": 1788450278.1229348,
+    "mtime": 1788453255.2505138,
     "ast_hash": "77b66cf160ad148e0dbec886e3c71047",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/320/foco.png": {
-    "mtime": 1788450278.1229348,
+    "mtime": 1788453255.2505138,
     "ast_hash": "7ad293fd37316fdc64c95f541813bf16",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/320/normal.png": {
-    "mtime": 1788450278.1229348,
+    "mtime": 1788453255.2505138,
     "ast_hash": "db661b71fbd4e214560341cfa81d49d7",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/360/foco.png": {
-    "mtime": 1788450278.1229348,
+    "mtime": 1788453255.2505138,
     "ast_hash": "4f271b38efd759bd9657e1793948b9a6",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/360/normal.png": {
-    "mtime": 1788450278.1298158,
+    "mtime": 1788453255.258343,
     "ast_hash": "4f271b38efd759bd9657e1793948b9a6",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/768/foco.png": {
-    "mtime": 1788450278.1334708,
+    "mtime": 1788453255.2596073,
     "ast_hash": "6c523a241a26fbf72278b03e0d0753d8",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/768/normal.png": {
-    "mtime": 1788450278.1334708,
+    "mtime": 1788453255.2596073,
     "ast_hash": "6c523a241a26fbf72278b03e0d0753d8",
     "semantic_hash": ""
   },
   "apps/web/e2e/recuperacion.spec.ts": {
-    "mtime": 1788450278.1807532,
-    "ast_hash": "06dea457e8cb1fa8a2a8c71a53ced9d0",
+    "mtime": 1788463921.0427144,
+    "ast_hash": "a166a5339a9d6a6305d1dee380002a64",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/api/__tests__/recoveryApi.test.ts": {
@@ -1965,18 +1965,18 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/RecoveryRequestStep.vue": {
-    "mtime": 1788450278.2110906,
-    "ast_hash": "ab6044a447798ccbfd25723a78fe5a7e",
+    "mtime": 1788465553.8630202,
+    "ast_hash": "3776bb60c7c23072b2e07ede462020f7",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/RecoveryResetStep.vue": {
-    "mtime": 1787507297.7451334,
-    "ast_hash": "50ff022ff75647b0c43a9838db120d1b",
+    "mtime": 1788465554.3506784,
+    "ast_hash": "bdfc710a58ff595a22a4e069c0dda7a0",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/RecoveryVerifyStep.vue": {
-    "mtime": 1788416522.2131665,
-    "ast_hash": "1809ab2a9312e86cc89999a541c1c5bf",
+    "mtime": 1788465554.1022575,
+    "ast_hash": "d5812a92c57601835e9ae265cfca3796",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/__tests__/RecoveryRequestStep.test.ts": {
@@ -1990,8 +1990,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/__tests__/RecoveryVerifyStep.test.ts": {
-    "mtime": 1787507297.7451334,
-    "ast_hash": "3a794173ab4ab74fe091df13f9002239",
+    "mtime": 1788465068.291937,
+    "ast_hash": "1c2847afcb1597a67f65f1befa3795b1",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/model/recoveryOutcome.ts": {
@@ -2000,13 +2000,13 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/pages/RecoveryPage.vue": {
-    "mtime": 1788450278.2249544,
-    "ast_hash": "0468449c909b58a2b323ceb3f6e6a0f1",
+    "mtime": 1788465553.6043928,
+    "ast_hash": "400c17c26047f60d2f6c9238d9f5840c",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/pages/__tests__/RecoveryPage.test.ts": {
-    "mtime": 1787507297.747784,
-    "ast_hash": "9d72d7ffe2dc4014197b89c9dd02d9bf",
+    "mtime": 1788464782.0761452,
+    "ast_hash": "c286fbb8ac83ead2ede254e6644ff83b",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/validation/recoveryValidation.ts": {
@@ -2080,12 +2080,12 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/configuracion-barberia-evidencia-responsiva.spec.ts": {
-    "mtime": 1788450278.0401714,
+    "mtime": 1788453255.1990626,
     "ast_hash": "c383e9fc7545d845ec1023a260fb66c9",
     "semantic_hash": ""
   },
   "apps/web/e2e/configuracion-barberia.spec.ts": {
-    "mtime": 1788450278.0434363,
+    "mtime": 1788453255.2000656,
     "ast_hash": "21587d26a963f5a9b41b7928a7a32069",
     "semantic_hash": ""
   },
@@ -2315,12 +2315,12 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/barberos-evidencia-responsiva.spec.ts": {
-    "mtime": 1788450278.0401714,
+    "mtime": 1788453255.1982446,
     "ast_hash": "c306f0caa9bf14d34935a812f94b10c4",
     "semantic_hash": ""
   },
   "apps/web/e2e/barberos.spec.ts": {
-    "mtime": 1788450278.0401714,
+    "mtime": 1788453255.1990626,
     "ast_hash": "1baa30ca0144ab7a67fb0111683ef33a",
     "semantic_hash": ""
   },
@@ -2560,12 +2560,12 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/servicios-evidencia-responsiva.spec.ts": {
-    "mtime": 1788450278.193299,
+    "mtime": 1788453255.29112,
     "ast_hash": "b644d57ca6e757562d08a8634f353c8a",
     "semantic_hash": ""
   },
   "apps/web/e2e/servicios.spec.ts": {
-    "mtime": 1788450278.195846,
+    "mtime": 1788453255.2936924,
     "ast_hash": "0f9abe1c36a7a77d48a334c53032e322",
     "semantic_hash": ""
   },
@@ -2815,12 +2815,12 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/servicios-por-barbero-evidencia-responsiva.spec.ts": {
-    "mtime": 1788450278.1953142,
+    "mtime": 1788453255.2922664,
     "ast_hash": "76bd2e57c0bad00ba8dcbc32828745fb",
     "semantic_hash": ""
   },
   "apps/web/e2e/servicios-por-barbero.spec.ts": {
-    "mtime": 1788450278.195846,
+    "mtime": 1788453255.292647,
     "ast_hash": "a106a9a0780c4129c6b4e2e86a414844",
     "semantic_hash": ""
   },
@@ -2975,7 +2975,7 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/servicios-ciclo-vida.spec.ts": {
-    "mtime": 1788450278.1807532,
+    "mtime": 1788453255.29112,
     "ast_hash": "05a4e887f3531702411f00d38187d74e",
     "semantic_hash": ""
   },
@@ -3155,7 +3155,7 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/horarios.spec.ts": {
-    "mtime": 1788450278.1807532,
+    "mtime": 1788453255.2830143,
     "ast_hash": "261fee33310bacc26eec2aba6b1c9f3e",
     "semantic_hash": ""
   },
@@ -3345,7 +3345,7 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/excepciones-festivos.spec.ts": {
-    "mtime": 1788450278.1807532,
+    "mtime": 1788453255.2830143,
     "ast_hash": "b3f9c21d1c8695f5e2d14b8539455dc3",
     "semantic_hash": ""
   },
@@ -3870,7 +3870,7 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/nuevo-turno.spec.ts": {
-    "mtime": 1788450278.1807532,
+    "mtime": 1788453255.2830143,
     "ast_hash": "5a33d546a040f5599134fd738e15c660",
     "semantic_hash": ""
   },
@@ -3955,7 +3955,7 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/agenda-diaria.spec.ts": {
-    "mtime": 1788450278.0355687,
+    "mtime": 1788453255.1961992,
     "ast_hash": "9222adf9257ddceada680533172c6692",
     "semantic_hash": ""
   },
@@ -4000,7 +4000,7 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/agenda-navegacion-fecha.spec.ts": {
-    "mtime": 1788450278.0355687,
+    "mtime": 1788453255.1961992,
     "ast_hash": "8f069bd20622c3e4a3ef68d9c361f70d",
     "semantic_hash": ""
   },
@@ -4070,7 +4070,7 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/agenda-detalle-historial.spec.ts": {
-    "mtime": 1788450278.0355687,
+    "mtime": 1788453255.194069,
     "ast_hash": "dce9aecfa2563964c8995f8205dc26d1",
     "semantic_hash": ""
   },
@@ -4140,7 +4140,7 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/agenda-reprogramacion-turno.spec.ts": {
-    "mtime": 1788450278.0355687,
+    "mtime": 1788453255.1977353,
     "ast_hash": "cc9279e5187b0e885d8bece86aac48e2",
     "semantic_hash": ""
   },
@@ -4170,12 +4170,12 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/test/2026-09-01-qa-manual-b2-b3-chrome-mcp.md": {
-    "mtime": 1788450278.5102785,
+    "mtime": 1788453255.3627627,
     "ast_hash": "e4fd95aa331fd07fa44eb9d376ab3006",
     "semantic_hash": ""
   },
   ".claude/launch.json": {
-    "mtime": 1788450278.0140579,
+    "mtime": 1788453255.1863375,
     "ast_hash": "61c3520abc585a7cf818e2c8f07c9ce3",
     "semantic_hash": ""
   },
@@ -4200,18 +4200,18 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/recuperacion-evidencia-responsiva.spec.ts": {
-    "mtime": 1788450278.1807532,
-    "ast_hash": "5baf9f5b3ee5d5bf58bba622c472e775",
+    "mtime": 1788465554.5758696,
+    "ast_hash": "da86f657c816776ef8d1558f5025a987",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/AuthSplitLayout.vue": {
-    "mtime": 1788450278.2110906,
-    "ast_hash": "7988b87a804bfcef04f39da1608daf72",
+    "mtime": 1788465342.3741436,
+    "ast_hash": "e4d30351912e5c4b75bead25b27dce11",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/__tests__/AuthSplitLayout.test.ts": {
-    "mtime": 1788450278.2110906,
-    "ast_hash": "aab60b0111f334a8bdf5439291d685a3",
+    "mtime": 1788463434.525429,
+    "ast_hash": "d0669e9815b2e4e91a2e6eb4f2b688dc",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/model/logout.ts": {
@@ -4220,12 +4220,12 @@
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/EmptyState.vue": {
-    "mtime": 1788450278.2480881,
+    "mtime": 1788453255.3014834,
     "ast_hash": "bd2efca1b894a91ff4e3ec2ba47b45f6",
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/NavaWordmark.vue": {
-    "mtime": 1788450278.2480881,
+    "mtime": 1788453255.3014834,
     "ast_hash": "20ef7371f38917668b8ea2e3c6749cee",
     "semantic_hash": ""
   },
@@ -4250,42 +4250,42 @@
     "semantic_hash": ""
   },
   "tools/mockups/auth-eventos/content.mjs": {
-    "mtime": 1788450967.807215,
+    "mtime": 1788453255.4114676,
     "ast_hash": "00d41bff224a782804ecf011120fb6be",
     "semantic_hash": ""
   },
   "tools/mockups/auth-eventos/render.mjs": {
-    "mtime": 1788451784.1590202,
+    "mtime": 1788453255.4114676,
     "ast_hash": "f71f80b2c187a868ba44f60f6fd8e408",
     "semantic_hash": ""
   },
   ".claude/skills/browser-viewport-verification/SKILL.md": {
-    "mtime": 1788450278.0229695,
+    "mtime": 1788453255.1863375,
     "ast_hash": "8c0addc1c984e0b809981d869ea5f60c",
     "semantic_hash": ""
   },
   ".claude/skills/nava-mockup-fidelity/SKILL.md": {
-    "mtime": 1788450278.0239954,
+    "mtime": 1788453255.1863375,
     "ast_hash": "2645a502cc50ebae5fe5d0d970bad50f",
     "semantic_hash": ""
   },
   ".claude/skills/nava-mockup-fidelity/references/acceptance-gates.md": {
-    "mtime": 1788450278.0273426,
+    "mtime": 1788453255.1863375,
     "ast_hash": "61ab7a6493cc702ff5bf5a1246aa8301",
     "semantic_hash": ""
   },
   "docs/03-desarrollo/especificacion-frontend-nava.md": {
-    "mtime": 1788450278.2572627,
+    "mtime": 1788453255.3014834,
     "ast_hash": "1b811f97236c9b22c05307abff5be286",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-02/README.md": {
-    "mtime": 1788450304.948483,
+    "mtime": 1788453255.311571,
     "ast_hash": "bafcb748cfe2b5e0368bef1cd9f29c2f",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/README.md": {
-    "mtime": 1788451839.7585485,
+    "mtime": 1788453255.311571,
     "ast_hash": "c03f4cef9cb5a37b877797468a30978e",
     "semantic_hash": ""
   },
@@ -4295,7 +4295,7 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/audit/2026-09-02-ui-componentes-alertas-nava-v1.md": {
-    "mtime": 1788450278.4962087,
+    "mtime": 1788453255.3553438,
     "ast_hash": "593585229e9c4fa3bb57977fad84be0b",
     "semantic_hash": ""
   },
@@ -4365,22 +4365,22 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/fix/issue-188-acceso-recuperacion-fidelidad-v1.md": {
-    "mtime": 1788450278.4962087,
+    "mtime": 1788453255.3553438,
     "ast_hash": "f20dc500b335b461c063d9fa287e1211",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/fix/issue-188-repaso-exhaustivo-acceso-v2.md": {
-    "mtime": 1788450278.5032003,
+    "mtime": 1788453255.3627627,
     "ast_hash": "5ce5947868d0d2ba3baf0a11b13589ee",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/fix/issue-pending-login-otp-destino-verificado.md": {
-    "mtime": 1788450278.5032003,
+    "mtime": 1788453255.3627627,
     "ast_hash": "bb21a9c185c97da1aea85ecdb668c5dd",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/fix/issue-pending-otp-canal-unico.md": {
-    "mtime": 1788450278.5053577,
+    "mtime": 1788453255.3627627,
     "ast_hash": "4d7ce46f875f8166ddf921fb5c788167",
     "semantic_hash": ""
   },
@@ -4390,32 +4390,32 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/orchestration/otp-canal-y-destino-seguro.md": {
-    "mtime": 1788450278.5053577,
+    "mtime": 1788453255.3627627,
     "ast_hash": "12697c4f5c8728dd759be9e956a0648b",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/orchestration/redisenio-integral-nava-tailored-grid-v2.md": {
-    "mtime": 1788450278.5102785,
+    "mtime": 1788453255.3627627,
     "ast_hash": "44c8032d048ceaa62004e1408492b5c6",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/orchestration/redisenio-integral-nava-tailored-grid-v3.md": {
-    "mtime": 1788450278.5102785,
+    "mtime": 1788453255.3627627,
     "ast_hash": "32429d56cf59272ae8e8253dbc9c4de9",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/test/2026-09-02-qa-browser-exploratorio-nava-v1.md": {
-    "mtime": 1788450278.5102785,
+    "mtime": 1788453255.3627627,
     "ast_hash": "1fea8dee0c53ce62396127727281d2bd",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/test/2026-09-02-qa-integral-b0-b3-luna-high-v2-report.md": {
-    "mtime": 1788450278.5102785,
+    "mtime": 1788453255.3627627,
     "ast_hash": "f743c5c2f03bbdea32204f33f74049ba",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/test/2026-09-02-qa-integral-b0-b3-luna-high-v2.md": {
-    "mtime": 1788450278.5102785,
+    "mtime": 1788453255.3627627,
     "ast_hash": "a7d72688beb208f5147bb76d9e6e0d5b",
     "semantic_hash": ""
   },
@@ -4435,28 +4435,28 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1440/bloqueado.png": {
-    "mtime": 1788450278.0598443,
-    "ast_hash": "f6f13ccc76d3e292442d5328a2d81760",
+    "mtime": 1788465431.385288,
+    "ast_hash": "9aaa774831beb2fb54c838df88bbb34d",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1440/carga.png": {
-    "mtime": 1788450278.0749972,
-    "ast_hash": "e5c0fb16da99ec003f8a34cf606fbc2c",
+    "mtime": 1788465430.2709062,
+    "ast_hash": "010cca414afd2c2d29c02f65d425672b",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1440/error.png": {
-    "mtime": 1788450278.0749972,
-    "ast_hash": "3fbdbe30e6dc7c92e71c98488f69b699",
+    "mtime": 1788465431.2656415,
+    "ast_hash": "2f67a26c8776c52c76788189895f4881",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1440/foco.png": {
-    "mtime": 1788450278.0749972,
-    "ast_hash": "a90954509680596c716ff541791db144",
+    "mtime": 1788465429.7953527,
+    "ast_hash": "0490501f6843aacdc57ea9d18d243ce0",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1440/normal.png": {
-    "mtime": 1788450278.0815518,
-    "ast_hash": "f7aa314b931c4fead63e88fa20b0efa7",
+    "mtime": 1788465429.5143967,
+    "ast_hash": "ab776e253580da14a86c2a9e6f7d12d0",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle-historial/1280-zoom200/foco.png": {
@@ -4535,103 +4535,103 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/1280-zoom200/mas-abierto.png": {
-    "mtime": 1788450278.1176786,
+    "mtime": 1788453255.2505138,
     "ast_hash": "4c13733ae88ee42e3f0f0707df9e15f8",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/1280/mas-abierto.png": {
-    "mtime": 1788450278.12192,
+    "mtime": 1788453255.2505138,
     "ast_hash": "78c30c72385f7094cc13d456bac2ec7b",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/320/mas-abierto.png": {
-    "mtime": 1788450278.1229348,
+    "mtime": 1788453255.2505138,
     "ast_hash": "9f234d89549475220e74e20796799dc4",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/360/mas-abierto.png": {
-    "mtime": 1788450278.1298158,
+    "mtime": 1788453255.2505138,
     "ast_hash": "a0da26254256d26272a1478a54566232",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/768/mas-abierto.png": {
-    "mtime": 1788450278.1334708,
+    "mtime": 1788453255.2596073,
     "ast_hash": "5e5ce4bb0040935e59c3382f222fd14c",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/1280-zoom200/error.png": {
-    "mtime": 1788450278.1334708,
-    "ast_hash": "22e67b4d227654ce616c14c7cd98b8d1",
+    "mtime": 1788465590.8078046,
+    "ast_hash": "c505cd01b4353d43a86d7429f7e5903a",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/1280-zoom200/foco.png": {
-    "mtime": 1788450278.1334708,
-    "ast_hash": "f8504e2f3624d69f90d3bc5961bfc309",
+    "mtime": 1788465590.8503046,
+    "ast_hash": "2b24a5231f3768a49ad299cab2eea651",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/1280-zoom200/normal.png": {
-    "mtime": 1788450278.1334708,
-    "ast_hash": "cc2edefb5036150ccc775463252a08ae",
+    "mtime": 1788465590.714457,
+    "ast_hash": "0d878525b12e108f68e0d453c3777163",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/1280/error.png": {
-    "mtime": 1788450278.1430945,
-    "ast_hash": "b586c44ba62aa0cae07ab0a0e71a0af8",
+    "mtime": 1788465590.616192,
+    "ast_hash": "905c0ecfbbe157850e008e910ff882a8",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/1280/foco.png": {
-    "mtime": 1788450278.144687,
-    "ast_hash": "137cda1c6c8cdb77f44edb97cf4f310c",
+    "mtime": 1788465590.3903897,
+    "ast_hash": "4dcd946e945f55be338978f1cf4a15c4",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/1280/normal.png": {
-    "mtime": 1788450278.1458468,
-    "ast_hash": "2ca818434d83a35fe2bfd450ead064e4",
+    "mtime": 1788465590.178779,
+    "ast_hash": "22ac9746705662808cc14509b7bc7f96",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/320/error.png": {
-    "mtime": 1788450278.1490703,
-    "ast_hash": "99da13252cb10d1bcd5c176118f30f4c",
+    "mtime": 1788465588.4060245,
+    "ast_hash": "a7603b0a02084d1b84b4b3c177d0eb81",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/320/foco.png": {
-    "mtime": 1788450278.150082,
-    "ast_hash": "e23db9f8c19f2ab3d1ae35f1dd6ef2c7",
+    "mtime": 1788465588.0183942,
+    "ast_hash": "ba057417ca15f6fbaff11a7e16327976",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/320/normal.png": {
-    "mtime": 1788450278.150082,
-    "ast_hash": "cbcc8072192bf6f95379e05a3755d2a4",
+    "mtime": 1788465587.8939383,
+    "ast_hash": "ad0dd998b247a553d3ab64dae257dcd8",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/360/error.png": {
-    "mtime": 1788450278.150082,
-    "ast_hash": "dca7fcdb870dd16c5f0004b67321bbad",
+    "mtime": 1788465589.677183,
+    "ast_hash": "29e9771de34658674b06edd469fbfdf9",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/360/foco.png": {
-    "mtime": 1788450278.1548657,
-    "ast_hash": "b2370d135146dc85b40a45dd654d8f0d",
+    "mtime": 1788465588.1277964,
+    "ast_hash": "4651ac616b198a7cad9786dc77c8592f",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/360/normal.png": {
-    "mtime": 1788450278.1548657,
-    "ast_hash": "d7c6b6726a587313ac5c80a985a6f825",
+    "mtime": 1788465587.925244,
+    "ast_hash": "50ebd738f7d90669fed609e70b5e4ed5",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/768/error.png": {
-    "mtime": 1788450278.1548657,
-    "ast_hash": "d784591804d1f37d00725871a3b2b65b",
+    "mtime": 1788465588.3495517,
+    "ast_hash": "da984e017f9b97deb502f6079a1d0a61",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/768/foco.png": {
-    "mtime": 1788450278.1548657,
-    "ast_hash": "f5e28a0026b0be8ed0649548b37b875d",
+    "mtime": 1788465588.1713016,
+    "ast_hash": "917891a3822ac399c51a579497bd542c",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/768/normal.png": {
-    "mtime": 1788450278.1548657,
-    "ast_hash": "590f6c2abde89c11774d5243b03a2378",
+    "mtime": 1788465587.9307585,
+    "ast_hash": "93dc131ea3b51c22ca671ea5300e4670",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/revision-integral-nava/02-acceso-1280.png": {
@@ -4745,62 +4745,62 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/v2-baseline/1440/foco.png": {
-    "mtime": 1788450278.161578,
+    "mtime": 1788453255.2752237,
     "ast_hash": "47b01922366d52162f3085cd330d66d6",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/v2-baseline/1440/normal.png": {
-    "mtime": 1788450278.161578,
+    "mtime": 1788453255.2752237,
     "ast_hash": "99b95bb69f5092db616194039b800496",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/v2-baseline/360/foco.png": {
-    "mtime": 1788450278.1670904,
+    "mtime": 1788453255.2752237,
     "ast_hash": "cb46205e29065345b4c910d853ea12a0",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/v2-baseline/360/normal.png": {
-    "mtime": 1788450278.1670904,
+    "mtime": 1788453255.2752237,
     "ast_hash": "aa74ec0d1aa3116b3b4e0aed6b6d4867",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/v2-diff-1440.png": {
-    "mtime": 1788450278.170868,
+    "mtime": 1788453255.2752237,
     "ast_hash": "d1c533d0cd7d2d1dd17d847f3fafa701",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/v2-diff-360.png": {
-    "mtime": 1788450278.170868,
+    "mtime": 1788453255.2752237,
     "ast_hash": "ac0184bf6ecb791ded14df24358e899d",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/v2-final/1440/foco.png": {
-    "mtime": 1788450278.170868,
+    "mtime": 1788453255.2803571,
     "ast_hash": "a90954509680596c716ff541791db144",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/v2-final/1440/normal.png": {
-    "mtime": 1788450278.170868,
+    "mtime": 1788453255.2803571,
     "ast_hash": "f7aa314b931c4fead63e88fa20b0efa7",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/v2-final/360/foco.png": {
-    "mtime": 1788450278.178287,
+    "mtime": 1788453255.2821915,
     "ast_hash": "fbbfc69f66d3bf575409558f94ca07ef",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/v2-final/360/normal.png": {
-    "mtime": 1788450278.178287,
+    "mtime": 1788453255.2821915,
     "ast_hash": "96ff2b5880c3e606b55723b70e42afec",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/v2-side-by-side-1440.png": {
-    "mtime": 1788450278.1807532,
+    "mtime": 1788453255.2830143,
     "ast_hash": "2995f57cdb50d7537f03a86c483ac86e",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/v2-side-by-side-360.png": {
-    "mtime": 1788450278.1807532,
+    "mtime": 1788453255.2830143,
     "ast_hash": "01d7d327dc887b1d7aacd375c1568d30",
     "semantic_hash": ""
   },
@@ -4880,232 +4880,232 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/01-inicial.png": {
-    "mtime": 1788451848.1152704,
+    "mtime": 1788453255.313362,
     "ast_hash": "f27120062bfa9da40032204ce29abf74",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/02-enviando.png": {
-    "mtime": 1788451848.162171,
+    "mtime": 1788453255.3146594,
     "ast_hash": "41b71eae04091038dcabebf0e5ce34c2",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/03-validacion.png": {
-    "mtime": 1788451848.213475,
+    "mtime": 1788453255.3154595,
     "ast_hash": "71d90eb25f4a5485fb3698bd999a8d4d",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/04-credenciales-invalidas.png": {
-    "mtime": 1788451848.2621093,
+    "mtime": 1788453255.3154595,
     "ast_hash": "a16b38c9343cc239e18bd3fdb05fef00",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/05-sin-conexion.png": {
-    "mtime": 1788451848.3124013,
+    "mtime": 1788453255.3154595,
     "ast_hash": "9b9d2a2312ab3a0d015c7643ae1d9bce",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/06-sesion-vencida.png": {
-    "mtime": 1788451848.3631663,
+    "mtime": 1788453255.3154595,
     "ast_hash": "dbf246220fa5139e6a7fa578fdd5074a",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/07-reto-envio-correo.png": {
-    "mtime": 1788451848.4134715,
+    "mtime": 1788453255.3154595,
     "ast_hash": "36aaaf7680a6c48a5b9fb114dc7cd4fa",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/08-reto-envio-whatsapp.png": {
-    "mtime": 1788451848.4621253,
+    "mtime": 1788453255.3154595,
     "ast_hash": "6e65e823cd49c454d5d51cb42b8e6ac8",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/09-reto-envio-ambos.png": {
-    "mtime": 1788451848.5148492,
+    "mtime": 1788453255.3154595,
     "ast_hash": "603b67e8142f87f8511b5f5b45bc1595",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/10-reto-codigo-invalido-correo.png": {
-    "mtime": 1788451848.5661516,
+    "mtime": 1788453255.3154595,
     "ast_hash": "d8e9797fa4ab5b73780ef0a7ca35da1e",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/11-reto-codigo-invalido-whatsapp.png": {
-    "mtime": 1788451848.6148796,
+    "mtime": 1788453255.3154595,
     "ast_hash": "4834f5007c73a38157742549da5fc594",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/acceso/12-reto-codigo-invalido-ambos.png": {
-    "mtime": 1788451848.6656477,
+    "mtime": 1788453255.3154595,
     "ast_hash": "a6073cc8699384381a0b9ac1a5688fd0",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/01-solicitud-inicial.png": {
-    "mtime": 1788451848.7122984,
+    "mtime": 1788453255.3154595,
     "ast_hash": "86e283f6c6aec8b7a6f30a81041fd981",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/02-solicitud-validacion.png": {
-    "mtime": 1788451848.7666676,
+    "mtime": 1788453255.3154595,
     "ast_hash": "51eaad6d246ee6bb3b618c8024e84eb7",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/03-solicitud-enviando.png": {
-    "mtime": 1788451848.815027,
+    "mtime": 1788453255.3154595,
     "ast_hash": "6013f840684b35f8e11487bfbd857d6d",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/04-solicitud-sin-conexion.png": {
-    "mtime": 1788451848.8625357,
+    "mtime": 1788453255.3154595,
     "ast_hash": "7c7dd984968637b1702394b84c080f61",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/05-verificacion-inicial.png": {
-    "mtime": 1788451848.9125466,
+    "mtime": 1788453255.3154595,
     "ast_hash": "51d1c39252b4b91f82badb456e9413f8",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/06-verificacion-codigo-invalido.png": {
-    "mtime": 1788451848.9611223,
+    "mtime": 1788453255.3154595,
     "ast_hash": "647a89b09888cc8ab06dc6b2ad9ef85a",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/07-contrasena-inicial.png": {
-    "mtime": 1788451849.0144072,
+    "mtime": 1788453255.3314352,
     "ast_hash": "918131f8a0fd3bb43c49552b2ff42b7e",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/08-contrasena-validacion.png": {
-    "mtime": 1788451849.0647178,
+    "mtime": 1788453255.3314352,
     "ast_hash": "34205e63a590521c4de92b2aef6ea91a",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/09-contrasena-enviando.png": {
-    "mtime": 1788451849.115515,
+    "mtime": 1788453255.3314352,
     "ast_hash": "f02a62ba7c2b2006b03698a454699f4a",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/10-contrasena-enlace-vencido.png": {
-    "mtime": 1788451849.16222,
+    "mtime": 1788453255.3314352,
     "ast_hash": "741a685361f4fe7557c5783b5783dadd",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/desktop/recuperacion/11-completado.png": {
-    "mtime": 1788451849.211481,
+    "mtime": 1788453255.3314352,
     "ast_hash": "417e9efadb098c6de6d9ab06ec7ffe3a",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/01-inicial.png": {
-    "mtime": 1788451849.3497615,
+    "mtime": 1788453255.3314352,
     "ast_hash": "852bb3bf7c427c02b135d8c529ac7579",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/02-enviando.png": {
-    "mtime": 1788451849.4142344,
+    "mtime": 1788453255.3314352,
     "ast_hash": "855c566f79dd8b70b4f5e7c79cb6dbd4",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/03-validacion.png": {
-    "mtime": 1788451849.4828405,
+    "mtime": 1788453255.3314352,
     "ast_hash": "560b7a3dafb55a3667fa4da2e0b9d8d4",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/04-credenciales-invalidas.png": {
-    "mtime": 1788451849.5488923,
+    "mtime": 1788453255.3314352,
     "ast_hash": "8f3835e24137db85d1dd78f3de6360bd",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/05-sin-conexion.png": {
-    "mtime": 1788451849.615625,
+    "mtime": 1788453255.3314352,
     "ast_hash": "dcb414aba3102a8cab2e33172a586666",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/06-sesion-vencida.png": {
-    "mtime": 1788451849.6822946,
+    "mtime": 1788453255.3314352,
     "ast_hash": "76cd78bc85d013fcf88816795e7a1d68",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/07-reto-envio-correo.png": {
-    "mtime": 1788451849.7622273,
+    "mtime": 1788453255.3314352,
     "ast_hash": "64a744325e5737cef31e8dff1be3492d",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/08-reto-envio-whatsapp.png": {
-    "mtime": 1788451849.842314,
+    "mtime": 1788453255.3314352,
     "ast_hash": "9d6407f8fefec8143a6134a12dc27ffd",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/09-reto-envio-ambos.png": {
-    "mtime": 1788451849.9248326,
+    "mtime": 1788453255.3314352,
     "ast_hash": "1a9d1eea7cbdc48ff9170b4e73b01e50",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/10-reto-codigo-invalido-correo.png": {
-    "mtime": 1788451850.0108695,
+    "mtime": 1788453255.3314352,
     "ast_hash": "3985e7ab482c9ae458b9819e54082789",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/11-reto-codigo-invalido-whatsapp.png": {
-    "mtime": 1788451850.091855,
+    "mtime": 1788453255.3314352,
     "ast_hash": "2cdd7a7583895aff50e0a5618710dde2",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/acceso/12-reto-codigo-invalido-ambos.png": {
-    "mtime": 1788451850.177992,
+    "mtime": 1788453255.3466306,
     "ast_hash": "8f624b0bc23b8da4654ebcd344b96a05",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/01-solicitud-inicial.png": {
-    "mtime": 1788451850.2496896,
+    "mtime": 1788453255.3482563,
     "ast_hash": "0b412b5d27e7837e0b9b6b9de7045041",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/02-solicitud-validacion.png": {
-    "mtime": 1788451850.3200788,
+    "mtime": 1788453255.3482563,
     "ast_hash": "5618603d40bd62422fa0c350b2fa5590",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/03-solicitud-enviando.png": {
-    "mtime": 1788451850.383265,
+    "mtime": 1788453255.3482563,
     "ast_hash": "cccbc08b81785850b32f6a56197d8b17",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/04-solicitud-sin-conexion.png": {
-    "mtime": 1788451850.4534764,
+    "mtime": 1788453255.3482563,
     "ast_hash": "37752565d9193e25bf81874582fb2e8a",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/05-verificacion-inicial.png": {
-    "mtime": 1788451850.5161,
+    "mtime": 1788453255.3482563,
     "ast_hash": "a30d82db9d1a7e23f103854ca6de4559",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/06-verificacion-codigo-invalido.png": {
-    "mtime": 1788451850.584973,
+    "mtime": 1788453255.3532324,
     "ast_hash": "7cce5028fb4b65329b03d6527f51a04d",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/07-contrasena-inicial.png": {
-    "mtime": 1788451850.6501913,
+    "mtime": 1788453255.3532324,
     "ast_hash": "5ef6cf89190236ec56874d97dd04ada5",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/08-contrasena-validacion.png": {
-    "mtime": 1788451850.7198656,
+    "mtime": 1788453255.3553438,
     "ast_hash": "a6b5745c8e1c5dfbae21260e75fdf87d",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/09-contrasena-enviando.png": {
-    "mtime": 1788451850.7828712,
+    "mtime": 1788453255.3553438,
     "ast_hash": "febc5f229198943411d1bfd57bde8b17",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/10-contrasena-enlace-vencido.png": {
-    "mtime": 1788451850.8472664,
+    "mtime": 1788453255.3553438,
     "ast_hash": "ec6f75b43818667091c1dfe7738de573",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/mobile/recuperacion/11-completado.png": {
-    "mtime": 1788451850.956302,
+    "mtime": 1788453255.3553438,
     "ast_hash": "5cd0bad776bd334f9fc5bea512992d47",
     "semantic_hash": ""
   },
@@ -5127,6 +5127,96 @@
   "docs/10-backlog/evidence/ui-redesign-nava-2026-09-02/04-servicios-configuracion-navegacion.png": {
     "mtime": 1788387602.880994,
     "ast_hash": "d1d07a88b47cf678400a528c0b3be958",
+    "semantic_hash": ""
+  },
+  "apps/web/src/shared/ui/OtpInput.vue": {
+    "mtime": 1788461480.9299736,
+    "ast_hash": "a538feaf9ddcb86fe06c835472ae4e1e",
+    "semantic_hash": ""
+  },
+  "apps/web/src/shared/ui/__tests__/OtpInput.test.ts": {
+    "mtime": 1788461480.9299736,
+    "ast_hash": "2b18a99bf25fce11cac2313d6c86fcaf",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/auth-fidelidad-desviaciones.md": {
+    "mtime": 1788465790.7664595,
+    "ast_hash": "1534b8e9d08718603687451c869c4c3a",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-pending-controles-reglados-shared-ui.md": {
+    "mtime": 1788461939.9189768,
+    "ast_hash": "271a95cc3eb489a9ecdfaa9d2c5331f4",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-pending-fidelidad-acceso-recuperacion.md": {
+    "mtime": 1788465790.172571,
+    "ast_hash": "356afbaed1eb59874908e03ebb04a88b",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-pending-lenguaje-reglado-nava-auth.md": {
+    "mtime": 1788453255.3553438,
+    "ast_hash": "6547cb921e362f0a7878bb57b35699f6",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/orchestration/lenguaje-reglado-nava.md": {
+    "mtime": 1788453255.3627627,
+    "ast_hash": "43d90c950343f7189a61819f455196bd",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/420/bloqueado.png": {
+    "mtime": 1788465425.6378846,
+    "ast_hash": "e2c4522d2a45a11af389d49c31cf45d1",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/420/carga.png": {
+    "mtime": 1788465424.5737133,
+    "ast_hash": "1bcc4e015838cb6092d30ae1c1c27819",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/420/error.png": {
+    "mtime": 1788465424.9489088,
+    "ast_hash": "454bb101c110d8209509e3eec126ab8c",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/420/foco.png": {
+    "mtime": 1788465424.281891,
+    "ast_hash": "2411ae726153b51ecf5d180bdda57a5d",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/420/normal.png": {
+    "mtime": 1788465424.135407,
+    "ast_hash": "f46f27c6ccc19ec7c8830f333354f6e7",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/recuperacion/1440/error.png": {
+    "mtime": 1788465590.8875937,
+    "ast_hash": "357bca803cb9384f1ff7a11c2f7bc4ad",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/recuperacion/1440/foco.png": {
+    "mtime": 1788465590.547327,
+    "ast_hash": "b0bafc6b46436ac7fb8cd84ecef12892",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/recuperacion/1440/normal.png": {
+    "mtime": 1788465590.3154182,
+    "ast_hash": "bb680f97143efa412b2ab3a72598d714",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/recuperacion/420/error.png": {
+    "mtime": 1788465588.2798955,
+    "ast_hash": "f0b18a5cdf6e3e588c4cbd6937b384ae",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/recuperacion/420/foco.png": {
+    "mtime": 1788465588.1883912,
+    "ast_hash": "881caf5e98769f533c2c623321589159",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/recuperacion/420/normal.png": {
+    "mtime": 1788465588.0339413,
+    "ast_hash": "f9f7bc72ae7921599b3bec6b75ffc3a9",
     "semantic_hash": ""
   }
 }
