@@ -187,6 +187,20 @@ describe('BaseInput', () => {
       expect(label.classes()).toContain('base-input__label--required')
       expect(label.text().replace(/\s+/g, ' ').trim()).toBe('Email *')
     })
+
+    // CA-188-REVIEW2-03: /acceso (02-acceso-recuperacion.png) no dibuja el
+    // asterisco. `showRequiredMarker: false` oculta solo la marca visual;
+    // el input sigue siendo requerido de verdad para el resto de la app.
+    it('showRequiredMarker: false hides the asterisk without changing required semantics', () => {
+      const wrapper = mount(BaseInput, {
+        props: { label: 'Correo', required: true, showRequiredMarker: false },
+      })
+      const label = wrapper.find('.base-input__label')
+      expect(wrapper.find('.base-input__required').exists()).toBe(false)
+      expect(label.text().replace(/\s+/g, ' ').trim()).toBe('Correo')
+      expect(wrapper.find('input').attributes('required')).toBeDefined()
+      expect(wrapper.find('input').attributes('aria-required')).toBe('true')
+    })
   })
 
   describe('Validation attributes', () => {
@@ -231,6 +245,57 @@ describe('BaseInput', () => {
     it('sin violaciones deshabilitado', async () => {
       const wrapper = mount(BaseInput, {
         props: { label: 'Correo', disabled: true, modelValue: 'a@b.com' },
+      })
+      expect(await axe(wrapper.element, axeOptions)).toHaveNoViolations()
+    })
+  })
+
+  describe('Mostrar/ocultar contraseña', () => {
+    it('no renderiza el botón en campos que no son password', () => {
+      const wrapper = mount(BaseInput, { props: { type: 'text' } })
+      expect(wrapper.find('.base-input__toggle').exists()).toBe(false)
+    })
+
+    it('renderiza el botón y alterna el tipo del input al hacer click', async () => {
+      const wrapper = mount(BaseInput, { props: { type: 'password', modelValue: 'secreta' } })
+      const toggle = wrapper.find('.base-input__toggle')
+      expect(toggle.exists()).toBe(true)
+      expect(wrapper.find('input').attributes('type')).toBe('password')
+      expect(toggle.attributes('aria-label')).toBe('Mostrar contraseña')
+      expect(toggle.attributes('aria-pressed')).toBe('false')
+
+      await toggle.trigger('click')
+
+      expect(wrapper.find('input').attributes('type')).toBe('text')
+      expect(toggle.attributes('aria-label')).toBe('Ocultar contraseña')
+      expect(toggle.attributes('aria-pressed')).toBe('true')
+
+      await toggle.trigger('click')
+      expect(wrapper.find('input').attributes('type')).toBe('password')
+    })
+
+    it('es type="button" para no enviar el formulario al hacer click', () => {
+      const wrapper = mount(BaseInput, { props: { type: 'password' } })
+      expect(wrapper.find('.base-input__toggle').attributes('type')).toBe('button')
+    })
+
+    it('se deshabilita junto con el campo', () => {
+      const wrapper = mount(BaseInput, { props: { type: 'password', disabled: true } })
+      expect(wrapper.find('.base-input__toggle').attributes('disabled')).toBeDefined()
+    })
+
+    it('el slot trailing no se renderiza cuando el campo es password (el botón tiene prioridad)', () => {
+      const wrapper = mount(BaseInput, {
+        props: { type: 'password' },
+        slots: { trailing: '🔍' },
+      })
+      expect(wrapper.find('.base-input__toggle').exists()).toBe(true)
+      expect(wrapper.find('.base-input__icon--trailing').exists()).toBe(false)
+    })
+
+    it('sin violaciones de accesibilidad con el botón visible', async () => {
+      const wrapper = mount(BaseInput, {
+        props: { type: 'password', label: 'Contraseña', modelValue: 'secreta' },
       })
       expect(await axe(wrapper.element, axeOptions)).toHaveNoViolations()
     })

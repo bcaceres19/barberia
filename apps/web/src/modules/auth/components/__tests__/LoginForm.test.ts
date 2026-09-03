@@ -96,6 +96,22 @@ describe('LoginForm', () => {
       const wrapper = mountForm()
       expect(wrapper.find('.base-input__error').exists()).toBe(false)
     })
+
+    // CA-188-REVIEW2-03: el mockup de /acceso (02-acceso-recuperacion.png)
+    // no dibuja un asterisco junto a "Correo" ni "Contraseña"; ambos campos
+    // deben seguir siendo requeridos de verdad (atributo nativo + ARIA),
+    // solo sin la marca visual.
+    it('hides the visual required marker while keeping both fields semantically required', () => {
+      const wrapper = mountForm()
+      expect(wrapper.find('.base-input__required').exists()).toBe(false)
+
+      const emailInput = wrapper.get('input[name="email"]')
+      const passwordInput = wrapper.get('input[name="password"]')
+      expect(emailInput.attributes('required')).toBeDefined()
+      expect(emailInput.attributes('aria-required')).toBe('true')
+      expect(passwordInput.attributes('required')).toBeDefined()
+      expect(passwordInput.attributes('aria-required')).toBe('true')
+    })
   })
 
   describe('Validación de forma en cliente', () => {

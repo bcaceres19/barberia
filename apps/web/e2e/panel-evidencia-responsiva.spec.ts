@@ -38,8 +38,8 @@ const viewports = [
 
 async function login(page: import('@playwright/test').Page) {
   await page.goto('/acceso')
-  await page.getByLabel('Correo').fill(EMAIL)
-  await page.getByLabel('Contraseña').fill(PASSWORD)
+  await page.getByLabel('Correo', { exact: true }).fill(EMAIL)
+  await page.getByLabel('Contraseña', { exact: true }).fill(PASSWORD)
   await page.getByRole('button', { name: 'Iniciar sesión' }).click()
   await expect(page.getByRole('heading', { name: 'Agenda', exact: true })).toBeVisible()
 }

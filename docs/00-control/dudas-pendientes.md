@@ -1,7 +1,7 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "2.12"
-estado: "Con dudas abiertas"
+version: "2.13"
+estado: "Sin dudas abiertas"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-02"
 documentos_relacionados:
@@ -17,7 +17,7 @@ documentos_relacionados:
 
 ## 1. Estado
 
-Hay dos dudas nuevas abiertas, registradas el 2 de septiembre de 2026 a partir de una solicitud del propietario sobre los códigos OTP: la recuperación debe ofrecer un único canal por envío, correo electrónico o WhatsApp, sin enviarlos juntos (`DP-NOT-06`); y el reto de login debe resolver el destino desde un contacto verificado almacenado en la cuenta, sin aceptar un destino proporcionado por el cliente (`DP-SEG-13`). Ambas reabren parcialmente decisiones ya aplicadas (`DEC-051`, `DEC-062` y `DEC-066`) y no autorizan cambios de código hasta contar con una decisión `DEC-*` y un issue real.
+Las dos dudas sobre códigos OTP abiertas el 2 de septiembre de 2026 quedaron resueltas el 3 de septiembre mediante `DEC-081`: correo es el canal predeterminado; cada evento puede configurar correo, WhatsApp oficial o ambos; y el servidor deriva siempre los destinos desde contactos verificados, sin aceptar un destino arbitrario escrito en el reto. La adaptación funcional conserva issue propio y no forma parte del issue visual `#188`.
 
 La última duda anterior, `DP-CIT-06` (reprogramación voluntaria hacia un intervalo bloqueado), quedó resuelta el 1 de septiembre de 2026 como `DEC-076` (bloqueo duro, mismo tratamiento que un cruce de citas).
 
@@ -47,8 +47,7 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 
 | Código | Pregunta | Estado | Artefacto de seguimiento |
 | --- | --- | --- | --- |
-| `DP-NOT-06` | ¿Los códigos de recuperación deben enviarse por exactamente un canal elegido entre correo electrónico y WhatsApp, sin envío simultáneo ni fallback automático al segundo canal? | Abierta | [`PROMPT-FIX-OTP-CANAL-UNICO-v1`](../10-backlog/prompts/fix/issue-pending-otp-canal-unico.md) |
-| `DP-SEG-13` | En el reto de login, ¿el servidor debe derivar el destino exclusivamente desde un correo o teléfono verificado de `staff_user`, sin aceptar ni pedir al cliente un destino de entrega? ¿Qué política aplica si no existe un contacto verificado? | Abierta | [`PROMPT-FIX-LOGIN-OTP-DESTINO-VERIFICADO-v1`](../10-backlog/prompts/fix/issue-pending-login-otp-destino-verificado.md) |
+| — | No hay dudas abiertas. | — | — |
 
 `DP-CIT-06` (última duda anterior del lote `HU-063`–`HU-065`) quedó resuelta el 1 de septiembre de 2026 como `DEC-076` (sección 3).
 
@@ -56,6 +55,8 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 
 | Código | Pregunta resumida | Resolución incorporada | Decisión |
 | --- | --- | --- | --- |
+| `DP-NOT-06` | ¿Canal único o entrega configurable para códigos de recuperación? | Configuración por evento: correo por defecto, WhatsApp oficial o ambos; sin fallback a un canal no configurado. | `DEC-081` |
+| `DP-SEG-13` | ¿Cómo se determina canal y destino del reto de acceso? | El servidor usa la configuración del evento y contactos verificados; la interfaz no acepta destinos arbitrarios y la respuesta permanece uniforme. | `DEC-081` |
 | `DP-PRD-01` | ¿Turnos o citas? | “Turno” para el usuario; “cita” para documentación técnica, API y datos. | `DEC-016` |
 | `DP-PRD-02` | ¿Construir `no_show`? | Sí, como P0 antes del piloto. | `DEC-017` |
 | `DP-PRD-03` | Plazo de cancelación | 20 minutos iniciales, configurable por barbería. | `DEC-018` |

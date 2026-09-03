@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-TEST-QA-B2-B3-CHROME-v1"
 version: "1.0"
 kind: "test"
-status: "ready"
+status: "superseded"
 target_agents:
   - "codex"
 repository: "bcaceres19/barberia"
@@ -112,10 +112,10 @@ source_docs:
   - "apps/web/src/modules/schedules/pages/SchedulesPage.vue"
   - "apps/web/src/modules/schedules/pages/BlocksPage.vue"
 created_at: "2026-09-01"
-updated_at: "2026-09-01"
+updated_at: "2026-09-02"
 execution_report: null
 supersedes: null
-superseded_by: null
+superseded_by: "PROMPT-TEST-QA-PLATAFORMA-B0-B3-LUNA-v2"
 ---
 
 # QA manual en navegador real de B2 y B3 (HU-040–HU-042, HU-060–HU-065)

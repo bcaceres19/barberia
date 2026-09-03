@@ -66,8 +66,8 @@ async function withIsolatedIP(page: Page): Promise<string> {
 }
 
 async function fillCredentials(page: Page, email: string, password: string) {
-  await page.getByLabel('Correo').fill(email)
-  await page.getByLabel('Contraseña').fill(password)
+  await page.getByLabel('Correo', { exact: true }).fill(email)
+  await page.getByLabel('Contraseña', { exact: true }).fill(password)
 }
 
 async function readCapturedCode(): Promise<string> {

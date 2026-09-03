@@ -1,6 +1,6 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.25"
+version: "1.26"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-03"
@@ -895,3 +895,14 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Convivencia con `DEC-077`–`DEC-079`:** mantiene la identidad, paleta y libertad técnica ya aprobadas. Matiza solo la libertad de composición y medidas cuando el propietario ha entregado una referencia exacta para ese resultado.
 - **Documentos afectados:** `AGENTS.md`, `CLAUDE.md`, `.claude/{CLAUDE.md,settings.json,skills/{nava-mockup-fidelity,browser-viewport-verification}/}`, `docs/03-desarrollo/{estandar-diseno-visual.md,especificacion-frontend-nava.md,estrategia-pruebas.md}`, `docs/00-control/{matriz-trazabilidad.md,historial-cambios.md}` y el prompt de orquestación NAVA v3. La configuración del proyecto fija `claude-sonnet-5` con `effortLevel: high`; no modifica `apps/web`.
 - **Fuente:** instrucción explícita del propietario tras comparar el login implementado con el mockup —centrado, proporciones, color, escala tipográfica e iconos no podían quedar a interpretación— y solicitud del 2026-09-03 de actualizar prompts o skills para evitar la repetición; issue documental `#208`.
+
+### DEC-081 · Canal configurable y destino verificado para códigos OTP de autenticación
+
+- **Fecha:** 2026-09-03.
+- **Decisión:** los códigos OTP de recuperación y del reto adicional de acceso se entregan conforme a la configuración del evento de la barbería: **correo electrónico por defecto**, **WhatsApp oficial** o **ambos**. Cuando se habilitan ambos, una emisión usa el mismo código y conserva una sola operación lógica, aunque produzca dos intentos de entrega trazables. La interfaz informa el canal o combinación configurada, pero no pide ni acepta un correo o teléfono de destino escrito por la persona durante el reto.
+- **Destino y seguridad:** el servidor resuelve exclusivamente contactos verificados y almacenados para la cuenta dentro de la barbería. Antes de que el contrato vigente autorice revelar un destino, el texto permanece condicional y uniforme (`Si la cuenta existe...` / `Si la cuenta puede continuar...`); ningún estado distingue cuenta inexistente, código incorrecto, vencido o agotado. Si el canal configurado no tiene un contacto verificado utilizable, la operación responde de forma uniforme y registra internamente el fallo sin probar silenciosamente otro canal no configurado.
+- **Configuración:** “cliente” en la instrucción del propietario se interpreta como la barbería/tenant que configura el sistema, no como una cuenta del consumidor final; el producto no crea cuentas de cliente. Correo es el valor inicial cuando todavía no existe una preferencia explícita. Cambiar el canal requiere la capacidad de configuración, permisos y contrato correspondientes.
+- **Impacto sobre decisiones previas:** sustituye la obligación de WhatsApp único del reto en `DEC-062`, sustituye el envío siempre simultáneo de recuperación de `DEC-051` y descarta la solicitud intermedia de “exactamente un canal” registrada en `DP-NOT-06`. Conserva los proveedores oficiales de `DEC-066`, la no enumeración de `DEC-065`, la vigencia/intentos de `DEC-064` y la evidencia por intento de `RN-REC-04`.
+- **Separación de alcance:** esta decisión resuelve `DP-NOT-06`, `DP-SEG-13`, `CT-009` y `CT-010`, pero no autoriza a implementar configuración, contrato, proveedores o persistencia dentro del issue visual `#188`. El atlas de autenticación representa las variantes para evitar ambigüedad; la adaptación funcional requiere issue y pruebas propios antes de modificar API o backend.
+- **Documentos afectados:** `docs/00-control/{dudas-pendientes.md,contradicciones.md,matriz-trazabilidad.md}`, `docs/01-producto/reglas-negocio.md`, `docs/02-requisitos/historias-usuario.md`, `docs/03-desarrollo/{estandar-diseno-visual.md,especificacion-frontend-nava.md}` y `docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/README.md`.
+- **Fuente:** observación explícita del propietario del 2026-09-03 al revisar los mockups: correo por defecto, opción de WhatsApp o ambos según configuración del sistema, notificación unificada y un mockup separado por evento/canal.

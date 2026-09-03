@@ -28,6 +28,13 @@ interface Props {
   readonly?: boolean
   /** Si es requerido */
   required?: boolean
+  /** Si se dibuja el asterisco visual junto al label cuando `required` es
+   * verdadero. La semántica (`required`, `aria-required`, validación) no
+   * depende de esta bandera: existe solo para que una pantalla cuyo mockup
+   * no representa el asterisco (docs/10-backlog/evidence/
+   * ui-mockups-nava-tailored-grid-2026-09-02/02-acceso-recuperacion.png)
+   * pueda ocultarlo sin perder "requerido" para el resto de la app. */
+  showRequiredMarker?: boolean
   /** Autocomplete */
   autocomplete?: string
   /** Nombre del campo */
@@ -56,6 +63,7 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   readonly: false,
   required: false,
+  showRequiredMarker: true,
 })
 
 const emit = defineEmits<{
@@ -86,6 +94,21 @@ const describedBy = computed(() => {
   return ids.length ? ids.join(' ') : undefined
 })
 const hasError = computed(() => !!props.error)
+
+// Mostrar/ocultar contraseña (mockup 02-acceso-recuperacion.png): todo
+// BaseInput type="password" lo gana automáticamente, sin que cada
+// formulario (login, nueva contraseña, confirmar) tenga que repetir el
+// botón. El tipo real solo cambia mientras el barbero mantiene la
+// revelación activa; el valor y el resto de atributos (autocomplete,
+// required, etc.) no se tocan.
+const isPasswordField = computed(() => props.type === 'password')
+const isRevealed = ref(false)
+const effectiveType = computed(() =>
+  isPasswordField.value ? (isRevealed.value ? 'text' : 'password') : props.type,
+)
+const toggleReveal = () => {
+  isRevealed.value = !isRevealed.value
+}
 
 const classes = computed(() => {
   const base = 'base-input'
@@ -138,7 +161,9 @@ const handleFocus = (event: FocusEvent) => {
   <div :class="wrapperClasses">
     <label v-if="label" :for="inputId" :class="labelClasses">
       {{ label }}
-      <span v-if="required" class="base-input__required" aria-hidden="true">*</span>
+      <span v-if="required && showRequiredMarker" class="base-input__required" aria-hidden="true"
+        >*</span
+      >
     </label>
 
     <div class="base-input__input-wrapper">
@@ -153,7 +178,7 @@ const handleFocus = (event: FocusEvent) => {
       <input
         ref="inputRef"
         :id="inputId"
-        :type="type"
+        :type="effectiveType"
         :class="classes"
         :value="modelValue"
         :placeholder="placeholder"
@@ -179,8 +204,50 @@ const handleFocus = (event: FocusEvent) => {
         @focus="handleFocus"
       />
 
+      <button
+        v-if="isPasswordField"
+        type="button"
+        class="base-input__toggle"
+        :aria-label="isRevealed ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+        :aria-pressed="isRevealed"
+        :disabled="disabled"
+        @click="toggleReveal"
+      >
+        <svg
+          v-if="!isRevealed"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          width="18"
+          height="18"
+          aria-hidden="true"
+        >
+          <path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+        <svg
+          v-else
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          width="18"
+          height="18"
+          aria-hidden="true"
+        >
+          <path
+            d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-6.5 0-10.5-7-10.5-7a21.6 21.6 0 0 1 5.06-6.06M9.9 4.24A10.6 10.6 0 0 1 12 4c6.5 0 10.5 7 10.5 7a21.6 21.6 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+          />
+          <line x1="1" y1="1" x2="23" y2="23" />
+        </svg>
+      </button>
       <span
-        v-if="$slots.trailing"
+        v-else-if="$slots.trailing"
         class="base-input__icon base-input__icon--trailing"
         aria-hidden="true"
       >
@@ -267,6 +334,19 @@ const handleFocus = (event: FocusEvent) => {
   opacity: 0.64;
 }
 
+/* El navegador pinta los campos autocompletados (correo/contraseña
+   guardados) con su propio fondo -amarillo en Chrome, azul/lavanda en
+   Edge-, que rompe el fondo blanco del sistema visual. El truco del
+   box-shadow inset lo sustituye sin tocar el valor real del campo. */
+.base-input:-webkit-autofill,
+.base-input:-webkit-autofill:hover,
+.base-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-text-primary);
+  -webkit-box-shadow: 0 0 0 1000px var(--input-bg) inset;
+  box-shadow: 0 0 0 1000px var(--input-bg) inset;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
 .base-input:hover:not(:disabled):not(.base-input--readonly):not(.base-input--invalid) {
   border-color: var(--color-text-secondary);
 }
@@ -321,6 +401,48 @@ const handleFocus = (event: FocusEvent) => {
   right: var(--space-3);
 }
 
+/* Botón de mostrar/ocultar contraseña: a diferencia de `.base-input__icon`
+   (decorativo, `pointer-events: none`) es un control real, así que ocupa
+   toda la altura del campo como objetivo táctil en vez de solo el tamaño
+   del glifo (estandar-diseno-visual.md §6.2, CA-009-03). */
+.base-input__toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height-icon);
+  height: 100%;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--input-radius);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .base-input__toggle {
+    transition: none;
+  }
+}
+
+.base-input__toggle:hover:not(:disabled) {
+  color: var(--color-text-primary);
+}
+
+.base-input__toggle:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--color-focus);
+}
+
+.base-input__toggle:disabled {
+  color: var(--color-border-subtle);
+  cursor: not-allowed;
+}
+
 /* `.base-input` es el propio <input> (sin hijos posibles): el icono vive
    como <span> hermano dentro de `.base-input__input-wrapper`, así que el
    padding condicional debe anclarse ahí, no en `:has()` sobre el input
@@ -329,7 +451,8 @@ const handleFocus = (event: FocusEvent) => {
   padding-left: calc(var(--input-padding-x) + 20px);
 }
 
-.base-input__input-wrapper:has(.base-input__icon--trailing) .base-input {
+.base-input__input-wrapper:has(.base-input__icon--trailing) .base-input,
+.base-input__input-wrapper:has(.base-input__toggle) .base-input {
   padding-right: calc(var(--input-padding-x) + 20px);
 }
 

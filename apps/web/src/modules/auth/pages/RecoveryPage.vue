@@ -130,6 +130,13 @@ function onRestart() {
   color: var(--color-text-primary);
 }
 
+@media (min-width: 1024px) {
+  .recovery-page__title {
+    font-size: 36px;
+    line-height: 42px;
+  }
+}
+
 .recovery-page__title:focus-visible {
   outline: none;
 }

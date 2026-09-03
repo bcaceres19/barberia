@@ -23,8 +23,10 @@ withDefaults(defineProps<Props>(), {
   <main class="auth-split">
     <div class="auth-split__frame">
       <div class="auth-split__brand" aria-hidden="true">
-        <NavaWordmark variant="inverted" size="lg" />
-        <span class="auth-split__rule"></span>
+        <div class="auth-split__wordmark-group">
+          <NavaWordmark variant="inverted" size="lg" />
+          <span class="auth-split__rule"></span>
+        </div>
         <p class="auth-split__tagline">{{ tagline }}</p>
       </div>
       <div class="auth-split__content">
@@ -38,26 +40,15 @@ withDefaults(defineProps<Props>(), {
 
 <style scoped>
 .auth-split {
-  --color-canvas: #f5f1ec;
-  --color-surface: #ffffff;
-  --color-surface-strong: #03182e;
-  --color-text-primary: #2a2d32;
-  --color-border-subtle: #c9c0b2;
-  --color-action-primary: #03182e;
-  --color-action-primary-hover: #072139;
-  --color-action-primary-active: #021224;
-  --color-on-strong: #f5f1ec;
-  --color-brand-accent-surface: #b8955a;
-
   display: grid;
   place-items: center;
   min-height: 100dvh;
-  background-color: #f3efeb;
+  background-color: var(--color-canvas);
 }
 
 .auth-split__frame {
   display: grid;
-  grid-template-rows: 88px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   width: 100%;
   min-height: 100dvh;
   background-color: var(--color-canvas);
@@ -75,9 +66,15 @@ withDefaults(defineProps<Props>(), {
 }
 
 .auth-split__brand :deep(.nava-wordmark--lg) {
-  font-size: 44px;
-  line-height: 48px;
-  letter-spacing: 0.035em;
+  font-size: 76px;
+  line-height: 1;
+  letter-spacing: 0.03em;
+}
+
+.auth-split__wordmark-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .auth-split__rule {
@@ -158,9 +155,13 @@ withDefaults(defineProps<Props>(), {
     letter-spacing: 0.025em;
   }
 
+  .auth-split__wordmark-group {
+    width: fit-content;
+  }
+
   .auth-split__rule {
     display: block;
-    width: calc(var(--auth-wordmark-font-size) * 2.875);
+    width: 100%;
   }
 
   .auth-split__tagline {
