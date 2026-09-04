@@ -161,7 +161,12 @@ async function onSubmit() {
       </BaseButton>
     </div>
 
-    <!-- Ancla de alertas: después del grupo de acciones (trabajo requerido §3). -->
+    <p class="recovery-back">
+      <RouterLink :to="{ name: 'acceso' }">Volver al acceso</RouterLink>
+    </p>
+
+    <!-- Ancla de alertas: después del grupo de acciones y de "Volver al
+         acceso" (trabajo requerido §3, auth-eventos/README.md). -->
     <BaseAlert
       v-if="verifyStatus === 'network-error'"
       variant="warning"
@@ -169,6 +174,11 @@ async function onSubmit() {
       role="alert"
     >
       Revisa tu conexión e inténtalo de nuevo.
+      <template #action>
+        <BaseButton variant="secondary" size="md" type="button" @click="onSubmit">
+          Reintentar
+        </BaseButton>
+      </template>
     </BaseAlert>
     <BaseAlert
       v-if="verifyStatus === 'unexpected-error'"
@@ -205,5 +215,16 @@ async function onSubmit() {
 .recovery-verify__submit {
   width: 100%;
   min-height: 56px;
+}
+
+.recovery-back {
+  margin: 0;
+  text-align: center;
+  font-size: var(--font-size-body-sm);
+}
+
+.recovery-back a {
+  color: var(--color-action-primary);
+  font-weight: 500;
 }
 </style>

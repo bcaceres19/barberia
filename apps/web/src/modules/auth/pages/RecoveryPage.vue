@@ -110,10 +110,6 @@ function onRestart() {
         Ir al acceso
       </BaseButton>
     </template>
-
-    <p v-if="step !== 'done'" class="recovery-page__back">
-      <RouterLink :to="{ name: 'acceso' }">Volver al acceso</RouterLink>
-    </p>
   </AuthSplitLayout>
 </template>
 
@@ -164,16 +160,5 @@ function onRestart() {
 .recovery-page__done-action {
   width: 100%;
   text-align: center;
-}
-
-.recovery-page__back {
-  margin: 0;
-  text-align: center;
-  font-size: var(--font-size-body-sm);
-}
-
-.recovery-page__back a {
-  color: var(--color-action-primary);
-  font-weight: 500;
 }
 </style>

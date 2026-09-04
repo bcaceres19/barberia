@@ -8,9 +8,11 @@
 // El mensaje de "código enviado" es deliberadamente genérico (DEC-062, no
 // enumeración): nunca afirma que un mensaje real llegó, porque el servidor
 // tampoco lo confirma.
-import { computed, ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import { BaseAlert, BaseButton, OtpInput } from '@/shared/ui'
 import { requestChallenge, verifyChallenge } from '../api/challengeApi'
+
+const RESEND_COOLDOWN_SECONDS = 60
 
 // DEC-081: el backend vigente solo resuelve un canal (WhatsApp). El
 // mockup asignado (auth-eventos/README.md, eventos 07-12) representa tres
@@ -38,15 +40,35 @@ type VerifyPhase = 'idle' | 'verifying' | 'invalid' | 'error'
 const requestPhase = ref<RequestPhase>('idle')
 const verifyPhase = ref<VerifyPhase>('idle')
 const code = ref('')
-const resendCooldownActive = ref(false)
+// Cuenta regresiva visible del cooldown de reenvío (mockups 07-12, mismo
+// tratamiento que `RecoveryVerifyStep.vue`: "cuánto falta", no solo un
+// botón deshabilitado).
+const resendCooldownRemaining = ref(0)
+let cooldownTimer: ReturnType<typeof setInterval> | undefined
 
 const codeDigitsOnly = computed(() => /^[0-9]{6}$/.test(code.value))
 const canVerify = computed(
   () => codeDigitsOnly.value && verifyPhase.value !== 'verifying' && !props.disabled,
 )
 const canRequest = computed(
-  () => requestPhase.value !== 'requesting' && !resendCooldownActive.value && !props.disabled,
+  () =>
+    requestPhase.value !== 'requesting' && resendCooldownRemaining.value <= 0 && !props.disabled,
 )
+
+function startResendCooldown() {
+  resendCooldownRemaining.value = RESEND_COOLDOWN_SECONDS
+  cooldownTimer = setInterval(() => {
+    resendCooldownRemaining.value = Math.max(0, resendCooldownRemaining.value - 1)
+    if (resendCooldownRemaining.value === 0 && cooldownTimer) {
+      clearInterval(cooldownTimer)
+      cooldownTimer = undefined
+    }
+  }, 1_000)
+}
+
+onUnmounted(() => {
+  if (cooldownTimer) clearInterval(cooldownTimer)
+})
 
 async function onRequestCode() {
   if (!canRequest.value) return
@@ -63,10 +85,7 @@ async function onRequestCode() {
   // Cooldown de cliente (60 s, DEC-062) para que el botón no invite a un
   // reenvío que el servidor descartará en silencio; el servidor sigue
   // siendo la única autoridad real del límite.
-  resendCooldownActive.value = true
-  setTimeout(() => {
-    resendCooldownActive.value = false
-  }, 60_000)
+  startResendCooldown()
 }
 
 async function onVerifyCode() {
@@ -154,7 +173,7 @@ async function onVerifyCode() {
           :disabled="!canRequest"
           @click="onRequestCode"
         >
-          Reenviar código
+          {{ canRequest ? 'Reenviar código' : `Reenviar en ${resendCooldownRemaining} s` }}
         </BaseButton>
       </div>
 
@@ -221,8 +240,12 @@ async function onVerifyCode() {
 
 .phone-challenge__actions {
   display: flex;
+  flex-direction: column;
   gap: var(--space-3);
-  flex-wrap: wrap;
+}
+
+.phone-challenge__actions :deep(.base-button) {
+  width: 100%;
 }
 
 .phone-challenge__error {

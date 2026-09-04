@@ -34,12 +34,19 @@ const status = ref<
 >('idle')
 
 const isSubmitting = computed(() => status.value === 'submitting')
+const errorCount = computed(() => Object.keys(fieldErrors.value).length)
+// Resumen visible cuando hay más de un error de campo a la vez (mockup
+// 08-contrasena-validacion), mismo umbral que LoginForm (CA-010-05).
+const showSummary = computed(() => attemptedSubmit.value && errorCount.value > 1)
 
 function runValidation() {
   const errors: { newPassword?: string; confirmPassword?: string } = {}
   const passwordError = validateNewPassword(newPassword.value, props.email)
   if (passwordError) errors.newPassword = passwordError
-  if (!errors.newPassword && confirmPassword.value !== newPassword.value) {
+  // Ambos chequeos son independientes (longitud/política de la contraseña
+  // nueva y coincidencia con su confirmación): el mockup 08 los muestra a
+  // la vez, así que uno no suprime al otro.
+  if (confirmPassword.value !== newPassword.value) {
     errors.confirmPassword = 'Las dos contraseñas no coinciden.'
   }
   return errors
@@ -109,6 +116,9 @@ const onRestart = () => emit('restart')
       >
         Solicitar de nuevo
       </BaseButton>
+      <p class="recovery-back">
+        <RouterLink :to="{ name: 'acceso' }">Volver al acceso</RouterLink>
+      </p>
     </template>
 
     <BaseAlert
@@ -154,10 +164,23 @@ const onRestart = () => emit('restart')
         :disabled="isSubmitting"
         class="recovery-reset__submit"
       >
-        Guardar contraseña nueva
+        {{ isSubmitting ? 'Guardando contraseña…' : 'Guardar contraseña nueva' }}
       </BaseButton>
 
-      <!-- Ancla de alertas: después del grupo de acciones (trabajo requerido §3). -->
+      <p class="recovery-back">
+        <RouterLink :to="{ name: 'acceso' }">Volver al acceso</RouterLink>
+      </p>
+
+      <!-- Ancla de alertas: después del grupo de acciones y de "Volver al
+           acceso" (trabajo requerido §3, auth-eventos/README.md). Resumen
+           enumerado (mockup 08-contrasena-validacion), mismo tratamiento
+           que LoginForm cuando hay más de un error de campo. -->
+      <BaseAlert v-if="showSummary" variant="danger" title="Revisa estos campos" role="alert">
+        <ul class="recovery-reset__summary-list">
+          <li v-if="fieldErrors.newPassword">{{ fieldErrors.newPassword }}</li>
+          <li v-if="fieldErrors.confirmPassword">{{ fieldErrors.confirmPassword }}</li>
+        </ul>
+      </BaseAlert>
       <BaseAlert
         v-if="status === 'policy-violation'"
         variant="danger"
@@ -204,5 +227,21 @@ const onRestart = () => emit('restart')
 .recovery-reset__submit {
   width: 100%;
   min-height: 56px;
+}
+
+.recovery-reset__summary-list {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.recovery-back {
+  margin: 0;
+  text-align: center;
+  font-size: var(--font-size-body-sm);
+}
+
+.recovery-back a {
+  color: var(--color-action-primary);
+  font-weight: 500;
 }
 </style>

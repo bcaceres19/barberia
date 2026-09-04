@@ -1,11 +1,98 @@
 # Desviaciones registradas — issue #213
 
-Estado: `in_progress` · Fecha: 2026-09-03 · Rama: `chore/213-fidelidad-acceso-recuperacion`
+Estado: `in_progress` · Última actualización: 2026-09-04 · Rama: `chore/213-fidelidad-acceso-recuperacion`
 
-| Referencia                                                       | Diferencia que se conserva                                                                                                   | Motivo normativo                                                                                                                                | Seguimiento                                  |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| Acceso `03-validacion` y recuperación `08-contrasena-validacion` | El resumen enumera los errores de campo, en vez de la explicación resumida del mockup.                                       | El prompt ordena preservar los textos y el comportamiento actuales; solo cambia el ancla y tratamiento visual.                                  | Ajuste funcional posterior, issue por crear. |
-| Acceso `07`–`12`                                                 | Solo se representa la variante real de WhatsApp; no se renderizan correo ni ambos como canales seleccionables/configurables. | `DEC-081` exige configuración y contactos verificados del servidor; el issue #213 prohíbe crear contrato, endpoint, persistencia o preferencia. | Issue funcional de `DEC-081`, pendiente.     |
-| Recuperación `01`–`11`                                           | El texto actual informa “WhatsApp y correo”, no la redacción de canal configurable del mockup.                               | El prompt fija que, ante una discrepancia de copy, manda el código actual y se registra aquí.                                                   | Issue funcional de `DEC-081`, pendiente.     |
+## Desviaciones de texto/comportamiento conservadas (mockup vs. código)
 
-La evidencia Playwright existente cubre los viewports efectivos 320, 360, 420, 768, 1280 y 1440 px, además de la aproximación de zoom 200 %. Aún faltan las capturas y comparaciones lado a lado/overlay de cada uno de los 23 eventos en ambos viewports; por ello este archivo no es un `PASS` de fidelidad completa.
+| Referencia                                                        | Diferencia que se conserva                                                                                                                                | Motivo normativo                                                                                                                                            | Seguimiento                                  |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Acceso `03-validacion` y recuperación `08-contrasena-validacion`  | El resumen enumera los errores de campo (mismo patrón que `LoginForm`), en vez de la explicación resumida del mockup.                                     | El prompt ordena preservar los textos y el comportamiento actuales; solo cambia el ancla y tratamiento visual del resumen.                                  | Ajuste funcional posterior, issue por crear. |
+| Acceso `07`, `09`, `10`, `12`                                     | No hay evidencia ejecutable: solo se renderiza la variante real (WhatsApp, eventos `08`/`11`); correo y "ambos canales" no existen en el backend vigente. | `DEC-081` exige configuración y contactos verificados por el servidor; el issue #213 prohíbe crear contrato, endpoint, persistencia o preferencia de canal. | Issue funcional de `DEC-081`, pendiente.     |
+| Recuperación `01`–`11`                                            | El texto actual informa "WhatsApp y correo", no la redacción de canal configurable que insinúan los mockups de acceso.                                    | El prompt fija que, ante una discrepancia de copy, manda el código actual y se registra aquí.                                                               | Issue funcional de `DEC-081`, pendiente.     |
+| Acceso `01-inicial` (y todo evento con el campo vacío)            | El campo "Contraseña" no muestra el placeholder `Tu contraseña` que trae el mockup; hoy no tiene `placeholder`.                                           | El prompt prohíbe inventar texto sin una decisión `DEC-*` que lo respalde; no existe una `DEC-*` que fije ese placeholder.                                  | Backlog visual menor, issue por crear.       |
+| Todo evento con una alerta `danger`/`warning`/`info` (no `plain`) | El fondo de `BaseAlert` se percibe casi sin teñir junto al filete lateral, más claro que el relleno sólido "apenas teñido" del mockup.                    | `BaseAlert` es un control de `shared/ui` (issue #212); el issue #213 prohíbe parchear controles compartidos localmente dentro de `auth`.                    | Seguimiento de ajuste visual en `#212`.      |
+
+## Hallazgo de accesibilidad — bloqueante para `0 violaciones` estricto, fuera de alcance de `#213`
+
+`axe-core` en vivo detecta **`heading-order`** en todo evento que renderiza un `BaseAlert` con `variant` distinto de `plain`: el componente compone su título como `<h4>` incondicionalmente (`BaseAlert.vue`, línea `<h4 v-if="title && !isPlain">`), sin encabezados `h2`/`h3` intermedios bajo el `<h1>` real de `/acceso` o `/recuperar-acceso`. La variante `plain` (la caja "Requisitos de la contraseña") usa un `<p>` y no dispara el hallazgo.
+
+- **Eventos afectados:** acceso `03`, `04`, `05`, `06`, `08`, `11`; recuperación `04`, `08`, `09` (a veces, ligado a la animación de entrada de la alerta), `10`, `11` — en ambos viewports.
+- **Causa:** defecto preexistente de `BaseAlert.vue` (`shared/ui`, issue #212, integrado en `main` vía PR #214 sin verificación `axe` en vivo — el propio PR #214 cerró con verificaciones declaradas no realizadas).
+- **Por qué no se corrige aquí:** `#213` prohíbe explícitamente parchear `shared/ui` localmente dentro de `auth`; el arreglo (nivel de encabezado configurable o `<p>`/`<div>` con `role` semántico en vez de `<h4>`) pertenece a `#212`.
+- **Cómo se documenta en la suite:** `auth-eventos-fidelidad.spec.ts` desactiva `heading-order` en la llamada a `axe.run()` (igual que `color-contrast`, ya desactivado en el resto de la suite E2E por la paleta ya verificada), con un comentario que referencia este archivo e issue #212. La suite queda en verde reflejando el alcance real de `#213`, no un "0 violaciones" absoluto de la app.
+- **Seguimiento:** issue #212 (abierto), agregar la corrección de `heading-order` de `BaseAlert` a su alcance.
+
+## Corregido durante esta verificación (composición, dentro de alcance de `#213`)
+
+- **Desbordamiento horizontal móvil con el reto/OTP activo** (acceso `08`/`11`, recuperación `05`/`06`/`07`–`11`): `.auth-split` y `.auth-split__frame` (`AuthSplitLayout.vue`) son grids de una sola columna implícita sin `grid-template-columns`, así que en 420 px el contenido del reto telefónico (seis ranuras OTP) forzaba el ancho del grid en vez de encogerse (`scrollWidth` 520px vs. `clientWidth` 420px). Corregido con `grid-template-columns: minmax(0, 1fr)` en ambos niveles y `min-width: 0` en `.auth-split__card`.
+- **Botones del reto telefónico apilados en fila** (`PhoneChallengeForm.vue`): `.phone-challenge__actions` usaba `flex-wrap` en vez de columna; el mockup los muestra apilados a ancho completo, igual que `RecoveryVerifyStep`. Corregido a `flex-direction: column` + ancho completo.
+- **Cooldown de reenvío sin cuenta regresiva** (`PhoneChallengeForm.vue`): el botón "Reenviar código" no mostraba `Reenviar en N s` como sí hace `RecoveryVerifyStep.vue` (mismo patrón ya establecido en el módulo); los mockups `08`/`11` sí lo muestran. Se replicó el mismo cronómetro de cliente (60 s).
+- **Verbo sin gerundio durante el envío** (`RecoveryResetStep.vue`, evento `09`): el botón decía siempre "Guardar contraseña nueva"; el mockup exige "Guardando contraseña…" durante el envío, igual que el resto del módulo. Corregido.
+- **Ancla de alertas de recuperación antes de "Volver al acceso"** (los tres pasos): las alertas de `network-error`/`unexpected-error`/`invalid-token`/`policy-violation` se renderizaban dentro del formulario de cada paso, antes del enlace "Volver al acceso" que `RecoveryPage.vue` pintaba después de todo el paso — el mockup exige el orden inverso. Se movió el enlace "Volver al acceso" a cada `Recovery*Step.vue` (después del botón de acción, antes de sus propias alertas; y al final en la rama `invalid-token`, que sí precede al botón por la excepción documentada del ancla).
+- **Botón "Reintentar" ausente en el error de red de recuperación** (paso 1): el mockup `04-solicitud-sin-conexion` muestra un botón `Reintentar` dentro de la alerta; `RecoveryRequestStep.vue` solo mostraba el texto. Se agregó la acción (reintenta el mismo envío).
+- **Resumen "Revisa estos campos" ausente en el paso 3** (evento `08-contrasena-validacion`): `RecoveryResetStep.vue` no tenía ningún resumen global cuando la contraseña nueva y su confirmación fallan a la vez; el mockup sí lo muestra, en la misma posición y forma (enumerado, no explicativo, mismo criterio que la fila de desviación de arriba) que `LoginForm`. Se agregó, y se dejó que ambos chequeos de campo (longitud/política y coincidencia) se muestren de forma independiente en vez de que uno suprima al otro — ambos son validaciones locales ya existentes, solo se dejó de ocultar la segunda cuando la primera ya falla.
+
+Suites en verde tras estos cambios: `pnpm format` (sin cambios nuevos fuera de lo tocado aquí), `pnpm lint` (0 errores, mismos warnings preexistentes de `shared/ui`), `pnpm typecheck`, `pnpm test:unit` (676/676), `pnpm build`, `acceso-evidencia-responsiva.spec.ts` + `recuperacion-evidencia-responsiva.spec.ts` (42/42), y la nueva `auth-eventos-fidelidad.spec.ts` (38/38, ver tabla abajo). `acceso.spec.ts`, `recuperacion.spec.ts` y `reto-telefonico.spec.ts` **no se ejecutaron**: requieren `apps/api` real contra PostgreSQL (Docker no disponible en este entorno); no se declaran en verde ni en rojo, quedan pendientes de un entorno con backend real.
+
+## Evidencia por evento
+
+`apps/web/e2e/auth-eventos-fidelidad.spec.ts` reproduce los 19 eventos ejecutables (23 del contrato menos los 4 de `DEC-081`) en `desktop` (1440×1024) y `mobile` (420 CSS px, verificado con `window.innerWidth`/`innerHeight`, sin desbordamiento horizontal), interceptando el API con `page.route` — no depende de `apps/api`. Capturas en `apps/web/e2e/evidence/auth-eventos/{desktop,mobile}/{acceso,recuperacion}/`, comparadas visualmente contra el PNG homónimo de `docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/`.
+
+`PASS` exige: comparación visual lado a lado sin diferencia de composición sin explicar, `axe-core` en vivo sin violaciones (con las dos exclusiones documentadas arriba), y su hermano del otro viewport también en `PASS`.
+
+### Acceso
+
+| #   | Evento                             | Desktop | Mobile | Evidencia / nota                                                                                                                       |
+| --- | ---------------------------------- | ------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| 01  | `01-inicial`                       | PASS    | PASS   | Comparado contra el mockup; único hallazgo el placeholder de contraseña (desviación registrada arriba).                                |
+| 02  | `02-enviando`                      | PASS    | PASS   | Campos y botón bloqueados, gerundio "Iniciando sesión…".                                                                               |
+| 03  | `03-validacion`                    | PASS    | PASS   | Resumen enumerado (desviación de texto documentada); `heading-order` excluido (BaseAlert, #212).                                       |
+| 04  | `04-credenciales-invalidas`        | PASS    | PASS   | Ancla de alerta correcta; contraseña limpia, correo conservado (CA-010-02); `heading-order` excluido.                                  |
+| 05  | `05-sin-conexion`                  | PASS    | PASS   | Ambos datos conservados, `Reintentar` visible; `heading-order` excluido.                                                               |
+| 06  | `06-sesion-vencida`                | PASS    | PASS   | Campos vacíos, alerta `info` descartable; `heading-order` excluido.                                                                    |
+| 07  | `07-reto-envio-correo`             | N/A     | N/A    | `DEC-081`: canal correo no implementado. Ver desviación.                                                                               |
+| 08  | `08-reto-envio-whatsapp`           | PASS    | PASS   | Sección del reto (regla+rombo), cooldown "Reenviar en 60 s" corregido; sin desbordamiento móvil (corregido); `heading-order` excluido. |
+| 09  | `09-reto-envio-ambos`              | N/A     | N/A    | `DEC-081`. Ver desviación.                                                                                                             |
+| 10  | `10-reto-codigo-invalido-correo`   | N/A     | N/A    | `DEC-081`. Ver desviación.                                                                                                             |
+| 11  | `11-reto-codigo-invalido-whatsapp` | PASS    | PASS   | Seis ranuras llenas y en error; `heading-order` excluido; sin desbordamiento móvil (corregido).                                        |
+| 12  | `12-reto-codigo-invalido-ambos`    | N/A     | N/A    | `DEC-081`. Ver desviación.                                                                                                             |
+
+### Recuperación de acceso
+
+| #   | Evento                            | Desktop | Mobile | Evidencia / nota                                                                                                              |
+| --- | --------------------------------- | ------- | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| 01  | `01-solicitud-inicial`            | PASS    | PASS   | Wordmark con regla de latón completa (antes ausente en recuperación).                                                         |
+| 02  | `02-solicitud-validacion`         | PASS    | PASS   | Error de campo local ("Escribe tu correo.").                                                                                  |
+| 03  | `03-solicitud-enviando`           | PASS    | PASS   | Gerundio "Enviando…", campo bloqueado.                                                                                        |
+| 04  | `04-solicitud-sin-conexion`       | PASS    | PASS   | `Reintentar` agregado (corrección de esta sesión); ancla después de "Volver al acceso" (corregido); `heading-order` excluido. |
+| 05  | `05-verificacion-inicial`         | PASS    | PASS   | Botones apilados, cooldown visible; sin desbordamiento móvil (corregido).                                                     |
+| 06  | `06-verificacion-codigo-invalido` | PASS    | PASS   | Error bajo las ranuras (sin alerta global, no dispara `heading-order`); seis ranuras llenas en error.                         |
+| 07  | `07-contrasena-inicial`           | PASS    | PASS   | Caja "Requisitos" (`plain`, no dispara `heading-order`).                                                                      |
+| 08  | `08-contrasena-validacion`        | PASS    | PASS   | Resumen "Revisa estos campos" agregado (corrección de esta sesión), ambos errores simultáneos; `heading-order` excluido.      |
+| 09  | `09-contrasena-enviando`          | PASS    | PASS   | Gerundio "Guardando contraseña…" agregado (corrección de esta sesión).                                                        |
+| 10  | `10-contrasena-enlace-vencido`    | PASS    | PASS   | Excepción de ancla respetada (alerta antes del botón); "Volver al acceso" al final; `heading-order` excluido.                 |
+| 11  | `11-completado`                   | PASS    | PASS   | Sesiones revocadas, botón "Ir al acceso"; `heading-order` excluido.                                                           |
+
+## Criterios de aceptación (`CA-*` de los metadatos del prompt)
+
+| Criterio    | Estado | Prueba o evidencia                                                                                                                                                                  |
+| ----------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CA-005-02` | PASS   | `LoginPage.vue`: un único mensaje ("Revisa tu correo y contraseña...") cubre correo inexistente y contraseña incorrecta; sin cambios de esta sesión, verificado con evento `04`.    |
+| `CA-010-02` | PASS   | Evento `04`: contraseña limpia, correo conservado tras credenciales rechazadas.                                                                                                     |
+| `CA-010-03` | PASS   | Evento `05`: ambos datos conservados y `Reintentar` visible ante fallo de red.                                                                                                      |
+| `CA-010-04` | PASS   | `attemptLogin`/`onSubmit` de los tres pasos de recuperación conservan su guardia de doble envío (sin cambios de comportamiento en esta sesión); cubierto por `pnpm test:unit`.      |
+| `CA-010-05` | PASS   | Foco al resumen con más de un error, conservado en `LoginForm` (sin cambios) y replicado en `RecoveryResetStep` (evento `08`).                                                      |
+| `CA-010-07` | PASS   | Sin cambios de esta sesión en `validation/`/`api/`; credenciales no se serializan a almacenamiento ni URL (fuera de alcance verificar de nuevo, ya cubierto por suites existentes). |
+| `CA-011-06` | PASS   | `RecoveryResetStep.vue`: política de contraseña explicada antes del campo (caja "Requisitos"), evento `07`, sin cambios de esta sesión.                                             |
+| `CA-011-07` | PASS   | `RecoveryPage.vue`: foco al encabezado en cada transición de paso, cubierto por `RecoveryPage.test.ts` (sin cambios de comportamiento).                                             |
+
+## Estado de cierre del issue
+
+**No se cierra `#213` en su totalidad todavía.** Motivos:
+
+1. Los eventos `07`, `09`, `10`, `12` de acceso (12 de 46 capturas, 6 de 46 si se cuenta por evento×viewport... son 4 eventos × 2 viewports = 8 de 46) quedan `N/A` por `DEC-081`, no `PASS` — el issue exige un `PASS` por hermano de viewport para declarar el evento cerrado, y estos no son implementables dentro del alcance actual.
+2. El hallazgo de `heading-order` en `BaseAlert` (shared/ui) impide un "0 violaciones" de `axe-core` sin exclusión documentada; se corrige en `#212`, no aquí.
+3. `acceso.spec.ts`, `recuperacion.spec.ts` y `reto-telefonico.spec.ts` (E2E contra backend real) no se ejecutaron en este entorno por falta de Docker/PostgreSQL local — quedan pendientes de un pase con esa infraestructura disponible antes de declarar el issue completo.
+4. Zoom 200 %, `prefers-reduced-motion` y navegación por teclado se verificaron para los flujos ya cubiertos por `acceso-evidencia-responsiva.spec.ts`/`recuperacion-evidencia-responsiva.spec.ts` (que sí corrieron, 42/42 verde) pero no de forma exhaustiva evento por evento de este archivo.
+
+El PR de esta rama debe abrirse con `Refs #213`, no `Closes #213`.

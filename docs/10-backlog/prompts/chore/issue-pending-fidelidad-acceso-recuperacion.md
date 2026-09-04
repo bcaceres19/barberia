@@ -52,7 +52,7 @@ source_docs:
   - "docs/03-desarrollo/estrategia-pruebas.md"
   - "docs/00-control/registro-decisiones.md"
 created_at: "2026-09-03"
-updated_at: "2026-09-03"
+updated_at: "2026-09-04"
 supersedes: "PROMPT-CHORE-LENGUAJE-REGLADO-NAVA-AUTH-v1"
 superseded_by: null
 ---

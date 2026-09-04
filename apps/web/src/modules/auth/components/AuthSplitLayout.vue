@@ -52,6 +52,12 @@ withDefaults(defineProps<Props>(), {
 <style scoped>
 .auth-split {
   display: grid;
+  /* Sin esta pista explícita, la columna implícita de este grid se
+     dimensiona a su contenido (min-content/max-content) en vez de al
+     ancho disponible: el reto telefónico y sus seis ranuras de OTP tienen
+     contenido intrínseco más ancho que 420 px, y el grid se desborda en
+     vez de encogerse (issue #213, evidencia de auth-eventos-fidelidad). */
+  grid-template-columns: minmax(0, 1fr);
   place-items: center;
   min-height: 100dvh;
   background-color: var(--color-canvas);
@@ -59,6 +65,7 @@ withDefaults(defineProps<Props>(), {
 
 .auth-split__frame {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   width: 100%;
   min-height: 100dvh;
@@ -189,6 +196,7 @@ withDefaults(defineProps<Props>(), {
   flex-direction: column;
   gap: var(--space-6);
   width: 100%;
+  min-width: 0;
   max-width: 470px;
 }
 
