@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-CHORE-FIDELIDAD-ACCESO-RECUPERACION-v1"
 version: "1.0"
 kind: "chore"
-status: "in_progress"
+status: "executed"
 target_agents:
   - "claude"
 repository: "bcaceres19/barberia"
@@ -17,8 +17,8 @@ issue: "213"
 issue_url: "https://github.com/bcaceres19/barberia/issues/213"
 suggested_issue_title: "chore(web): fidelidad visual de acceso y recuperación con los mockups por evento"
 branch: "chore/213-fidelidad-acceso-recuperacion"
-pr: null
-pr_url: null
+pr: 218
+pr_url: "https://github.com/bcaceres19/barberia/pull/218"
 depends_on:
   - "Issue #212 (PROMPT-CHORE-CONTROLES-REGLADOS-SHARED-UI-v1) integrado en main mediante PR #214"
   - "Issue maestro #211"
