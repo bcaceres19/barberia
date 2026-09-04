@@ -29,7 +29,9 @@ withDefaults(defineProps<Props>(), {
 
 <template>
   <div class="agenda-skeleton" role="status" aria-live="polite">
-    <p class="agenda-skeleton__label"><span class="agenda-skeleton__spinner" aria-hidden="true" />{{ label }}</p>
+    <p class="agenda-skeleton__label">
+      <span class="agenda-skeleton__spinner" aria-hidden="true" />{{ label }}
+    </p>
 
     <div class="agenda-skeleton__timeline" aria-hidden="true">
       <span
