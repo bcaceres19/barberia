@@ -320,13 +320,19 @@ const timelineBounds = computed(() => {
   return { start: startHour, end: startHour + span }
 })
 
+// `align` evita que la etiqueta centrada de la primera o la última hora se
+// salga del carril (issue #189): centrar (translateX(-50%)) es correcto
+// para una marca interior, pero en los dos extremos la mitad de la
+// etiqueta cae fuera del carril — ahí se ancla hacia adentro en vez de
+// centrarse, sin recortar el texto ni disparar scroll horizontal.
 const timelineTicks = computed(() => {
   const bounds = timelineBounds.value
   if (!bounds) return []
-  const ticks: { minute: number; label: string }[] = []
+  const ticks: { minute: number; label: string; align: 'start' | 'center' | 'end' }[] = []
   for (let minute = bounds.start; minute <= bounds.end; minute += 60) {
     const hour = Math.floor(minute / 60) % 24
-    ticks.push({ minute, label: `${String(hour).padStart(2, '0')}:00` })
+    const align = minute === bounds.start ? 'start' : minute === bounds.end ? 'end' : 'center'
+    ticks.push({ minute, label: `${String(hour).padStart(2, '0')}:00`, align })
   }
   return ticks
 })
@@ -603,7 +609,11 @@ const dayChangeMarkerPercent = computed(() => {
                   class="daily-agenda-page__timeline-tick"
                   :style="{ left: timelinePercent(tick.minute) }"
                 >
-                  <span class="daily-agenda-page__timeline-tick-label">{{ tick.label }}</span>
+                  <span
+                    class="daily-agenda-page__timeline-tick-label"
+                    :class="`daily-agenda-page__timeline-tick-label--${tick.align}`"
+                    >{{ tick.label }}</span
+                  >
                 </div>
 
                 <div
@@ -1046,7 +1056,12 @@ const dayChangeMarkerPercent = computed(() => {
 @media (min-width: 1024px) {
   .daily-agenda-page__timeline {
     display: block;
-    overflow-x: auto;
+    /* El carril es 100% ancho relativo (posiciones en %, nunca px fijos):
+       no necesita scroll propio. `hidden`, no `auto` (issue #189): con
+       overflow-x:auto, la etiqueta de la última hora en punto podía sangrar
+       unos px fuera del borde y disparaba una barra de scroll visible por
+       ese detalle, en vez de adaptarse al ancho real de la pantalla. */
+    overflow-x: hidden;
   }
 
   /* El carril es una región definida (issue #189, atlas panel-agenda-eventos):
@@ -1088,6 +1103,20 @@ const dayChangeMarkerPercent = computed(() => {
     font-size: var(--font-size-caption);
     font-variant-numeric: tabular-nums;
     color: var(--color-on-strong-muted);
+  }
+
+  /* Una marca interior se centra sobre su línea; en los dos extremos del
+     carril centrar saca la mitad de la etiqueta fuera del borde, así que
+     ahí se ancla hacia adentro en su lugar (issue #189: esto era la causa
+     real del scroll horizontal — no un carril genuinamente más ancho que
+     la pantalla, solo una etiqueta de borde sangrando unos px). */
+  .daily-agenda-page__timeline-tick-label--center {
+    transform: translateX(-50%);
+  }
+
+  .daily-agenda-page__timeline-tick-label--end {
+    left: auto;
+    right: 0;
   }
 
   .daily-agenda-page__timeline-mark {

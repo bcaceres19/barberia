@@ -2,6 +2,14 @@ import { createServer } from 'node:http'
 
 // Servidor efímero de demostración para `/panel`. Solo lo consume Vite en
 // desarrollo; no pertenece a src/, al cliente HTTP ni al backend de producto.
+//
+// Los turnos se generan relativos a la fecha PEDIDA (query `date`, o "hoy"
+// en America/Bogota si no llega ninguna) en vez de una fecha fija: una
+// fecha fija queda "vieja" apenas pasa un día real y el turno más viejo
+// termina el día anterior al que se está viendo, lo que rompe por completo
+// el cálculo de la línea temporal (bounds/posición) porque esos turnos ya
+// no son adyacentes al día mostrado. Con fecha relativa la demo sigue
+// siendo válida sin importar cuándo se ejecute.
 const barbers = [
   { id: 'barber-julian', fullName: 'Julián Rodríguez' },
   { id: 'barber-andres', fullName: 'Andrés Beltrán' },
@@ -9,18 +17,40 @@ const barbers = [
   { id: 'barber-tomas', fullName: 'Tomás Iriarte' },
 ]
 
+const BOGOTA_OFFSET = '-05:00'
+
+function todayInBogota() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Bogota',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date())
+  const year = parts.find((p) => p.type === 'year').value
+  const month = parts.find((p) => p.type === 'month').value
+  const day = parts.find((p) => p.type === 'day').value
+  return `${year}-${month}-${day}`
+}
+
+// Instante ISO para `hhmm` del día civil `civilDate` en America/Bogota
+// (desfase fijo, sin horario de verano en esa zona).
+function instantAt(civilDate, hhmm) {
+  return `${civilDate}T${hhmm}:00${BOGOTA_OFFSET}`
+}
+
 const appointment = (
   id,
   attendeeName,
-  startsAt,
-  endsAt,
+  civilDate,
+  startHHMM,
+  endHHMM,
   status = 'confirmed',
   serviceName = 'Corte clásico',
 ) => ({
   id,
   attendeeName,
-  startsAt,
-  endsAt,
+  startsAt: instantAt(civilDate, startHHMM),
+  endsAt: instantAt(civilDate, endHHMM),
   status,
   origin: 'manual',
   serviceName,
@@ -29,33 +59,30 @@ const appointment = (
   currency: 'COP',
 })
 
-const agenda = [
-  appointment('turno-mateo', 'Mateo Rojas', '2026-09-03T14:00:00Z', '2026-09-03T14:45:00Z'),
-  appointment(
-    'turno-samuel',
-    'Samuel Díaz',
-    '2026-09-03T15:30:00Z',
-    '2026-09-03T16:30:00Z',
-    'confirmed',
-    'Corte + barba',
-  ),
-  appointment(
-    'turno-carlos',
-    'Carlos Ruiz',
-    '2026-09-03T18:00:00Z',
-    '2026-09-03T18:30:00Z',
-    'completed',
-    'Barba',
-  ),
-  appointment(
-    'turno-daniel',
-    'Daniel López',
-    '2026-09-03T20:30:00Z',
-    '2026-09-03T21:20:00Z',
-    'cancelled_by_customer',
-    'Fade premium',
-  ),
-]
+function agendaFor(civilDate) {
+  return [
+    appointment('turno-mateo', 'Mateo Rojas', civilDate, '09:00', '09:45'),
+    appointment(
+      'turno-samuel',
+      'Samuel Díaz',
+      civilDate,
+      '10:30',
+      '11:30',
+      'confirmed',
+      'Corte + barba',
+    ),
+    appointment('turno-carlos', 'Carlos Ruiz', civilDate, '13:00', '13:30', 'completed', 'Barba'),
+    appointment(
+      'turno-daniel',
+      'Daniel López',
+      civilDate,
+      '15:30',
+      '16:20',
+      'cancelled_by_customer',
+      'Fade premium',
+    ),
+  ]
+}
 
 function respond(response, status, body) {
   response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' })
@@ -63,12 +90,13 @@ function respond(response, status, body) {
 }
 
 createServer((request, response) => {
-  const { pathname } = new URL(request.url ?? '/', 'http://localhost')
+  const url = new URL(request.url ?? '/', 'http://localhost')
+  const { pathname } = url
 
   if (pathname === '/api/v1/private/auth/session') {
     respond(response, 200, {
       barbershop: { id: 'shop-mock', name: 'Taller NAVA' },
-      expiresAt: '2026-09-04T00:00:00Z',
+      expiresAt: '2099-01-01T00:00:00Z',
     })
     return
   }
@@ -81,7 +109,8 @@ createServer((request, response) => {
     return
   }
   if (pathname.endsWith('/appointments/daily-agenda')) {
-    respond(response, 200, { items: agenda })
+    const requestedDate = url.searchParams.get('date') || todayInBogota()
+    respond(response, 200, { items: agendaFor(requestedDate) })
     return
   }
 
