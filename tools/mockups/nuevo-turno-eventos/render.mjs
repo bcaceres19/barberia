@@ -6,10 +6,34 @@
  * y `tools/mockups/auth-eventos`: HTML compuesto con los tokens reales del
  * sistema y las fuentes auto-hosteadas del proyecto, rasterizado con el
  * Chromium de Playwright que ya usa la suite e2e. El encabezado y el dock
- * reutilizan exactamente el cascarón de `panel-agenda-eventos`: la lámina
- * compuesta `03-nuevo-turno.png` mostraba botones de cuenta decorativos y
- * navegación duplicada en el encabezado, la misma inconsistencia que ya se
- * corrigió al construir `auth-eventos` y `panel-agenda-eventos`.
+ * reutilizan exactamente el cascarón de `panel-agenda-eventos`.
+ *
+ * Revisión 2026-09-04 (pulido contra los atlas hermanos). Lo que cambia y
+ * por qué:
+ *
+ *  - El formulario deja de ser una pila de tarjetas de pergamino con campos
+ *    blancos. Sobre el canvas de tinta, el sistema ya tiene una forma
+ *    resuelta de control (`panel-agenda-eventos`: superficie translúcida,
+ *    filete de latón inferior y rótulo en versalitas de latón) y el
+ *    pergamino está reservado para REGISTROS (fichas y filas de turno), no
+ *    para el cromo de un formulario. Los campos blancos sobre pergamino
+ *    sobre tinta apilaban tres materiales para una sola tarea.
+ *  - Cada sección pasa a componerse en dos columnas (rótulo numerado a la
+ *    izquierda, campos a la derecha): el formulario cabía en 900 px
+ *    centrados y dejaba media pantalla vacía, con el encabezado
+ *    desalineado del de `/panel`. Ahora el encabezado comparte gutter con
+ *    el resto del panel y el alto de escritorio entra en un viewport.
+ *  - La espera deja de ser un spinner solo en una pantalla vacía y pasa a
+ *    esqueleto con la geometría del formulario por llegar, igual que el
+ *    evento `05` de la agenda.
+ *  - El resumen usa el título y las cuatro entradas reales del `<dl>` del
+ *    código (`Resumen`; Barbero, Servicio, Persona atendida, Fecha y hora)
+ *    y aparece siempre que `hasSummaryContent` sea cierto, no solo con el
+ *    formulario completo. En escritorio vive en una columna lateral; en
+ *    móvil, antes del CTA (§7.3).
+ *  - El éxito se compone como pantalla completa (divisor NAVA, titular en
+ *    serif y ficha de pergamino con el turno) en vez de una alerta pequeña
+ *    flotando en el vacío.
  *
  * Uso:
  *   node tools/mockups/nuevo-turno-eventos/render.mjs
@@ -55,20 +79,25 @@ const NAV_ICONS = {
 const navIcon = (n) =>
   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${NAV_ICONS[n]}</svg>`
 
-const FIELD_ICONS = {
-  person:
-    '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>',
-  service:
-    '<path d="M6 4 18 16M18 4 6 16"/><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="18" r="2.2"/>',
-  schedule: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
-  phone:
-    '<path d="M6 3h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4 6.2 2 2 0 0 1 6 3z"/>',
-  timezone: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a13 13 0 0 1 0 18 13 13 0 0 1 0-18z"/>',
-}
-const fieldIcon = (n) =>
-  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${FIELD_ICONS[n]}</svg>`
-
 const ALERT_EYEBROW = { danger: 'Error', warning: 'Atención', info: 'Nota', success: 'Confirmación' }
+
+/*
+ * Retrato del barbero, tomado tal cual de `panel-agenda-eventos`: dondequiera
+ * que un barbero se ve o se elige, su nombre va acompañado de un monograma
+ * cuadrado con filete de latón. Aquí aparece en el selector cerrado y en la
+ * entrada «Barbero» del resumen.
+ */
+const initials = (name) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+
+const avatarHtml = (name, size = 'sm') =>
+  `<span class="avatar avatar--${size}" aria-hidden="true">${esc(initials(name))}</span>`
 
 const alertHtml = (a) => `
   <div class="alert alert--${a.variant}" role="alert">
@@ -112,7 +141,13 @@ const navHtml = (viewport) => {
 
 const spinnerHtml = (size = 'lg') => `<span class="spinner spinner--${size}"><i></i><b></b></span>`
 
-const highlightDest = (t) => t.replace(/«([^»]+)»/g, '<span class="pagestate__dest">«$1»</span>')
+// Un destino del producto nombrado dentro de un mensaje se resalta en latón,
+// igual que «Barberos» en el evento 04 de la agenda. El código lo escribe
+// entre comillas rectas, así que se aceptan ambas formas sin tocar el copy.
+const highlightDest = (t) =>
+  t
+    .replace(/«([^»]+)»/g, '<span class="pagestate__dest">«$1»</span>')
+    .replace(/"([^"]+)"/g, '<span class="pagestate__dest">"$1"</span>')
 
 const pageStateHtml = (s) => `
   <div class="pagestate pagestate--${s.tone}">
@@ -131,66 +166,108 @@ const pageStateHtml = (s) => `
 
 const reqMark = '<span class="field__req" aria-hidden="true">*</span>'
 
-const fieldHtml = ({ label, required, value, placeholder, error, hint, disabled, type = 'text' }) => `
+const NOTE_TONE = { loading: 'loading', empty: 'warning', error: 'danger' }
+
+/*
+ * Control de formulario sobre tinta: misma familia que los controles de la
+ * agenda (superficie translúcida, filete inferior de latón, rótulo en
+ * versalitas). Un campo con error cambia el filete al rojo del sistema y
+ * agrega el mensaje debajo; uno deshabilitado se atenúa y pierde el latón.
+ */
+const fieldHtml = ({
+  label,
+  required,
+  value,
+  placeholder,
+  error,
+  note,
+  noteTone,
+  disabled,
+  avatar,
+  type = 'text',
+}) => `
   <div class="field${error ? ' field--error' : ''}">
-    <label class="field__label">${esc(label)}${required ? reqMark : ''}</label>
-    <div class="input${disabled ? ' input--disabled' : ''}${type === 'select' ? ' input--select' : ''}">
-      ${
-        value
-          ? `<span class="input__value">${esc(value)}</span>`
-          : `<span class="input__value input__value--ph">${esc(placeholder)}</span>`
-      }
-      ${type === 'select' ? '<span class="input__caret">▾</span>' : ''}
+    <span class="field__label">${esc(label)}${required ? reqMark : ''}</span>
+    <div class="control${value && !disabled ? ' control--filled' : ''}${disabled ? ' control--off' : ''}${type === 'select' ? ' control--select' : ''}">
+      ${avatar && value ? avatarHtml(value) : ''}
+      <span class="control__value${value ? '' : ' control__value--ph'}">${esc(value || placeholder)}</span>
+      ${type === 'select' ? '<span class="control__caret">▾</span>' : ''}
     </div>
-    ${hint ? `<p class="field__hint">${esc(hint)}</p>` : ''}
-    ${error ? `<p class="field__error-text" role="alert">${esc(error)}</p>` : ''}
+    ${
+      note
+        ? `<p class="field__note field__note--${noteTone ?? 'muted'}">
+             ${noteTone === 'loading' ? spinnerHtml('xs') : ''}<span>${esc(note)}</span>
+           </p>`
+        : ''
+    }
+    ${error ? `<p class="field__error" role="alert">${esc(error)}</p>` : ''}
   </div>`
 
-const textareaHtml = ({ label, value, hint, counter }) => `
+const noteFieldHtml = ({ label, value }) => `
   <div class="field">
-    <label class="field__label">${esc(label)}</label>
-    <div class="input input--textarea">
-      <span class="input__value${value ? '' : ' input__value--ph'}">${esc(value || '')}</span>
+    <span class="field__label">${esc(label)}</span>
+    <div class="control control--textarea${value ? ' control--filled' : ''}">
+      <span class="control__value${value ? '' : ' control__value--ph'}">${esc(value)}</span>
     </div>
     <div class="field__foot">
-      ${hint ? `<p class="field__hint">${esc(hint)}</p>` : '<span></span>'}
-      <span class="field__counter">${esc(counter)}</span>
+      <span></span>
+      <span class="field__counter">${value.length}/${COPY.noteMax}</span>
     </div>
   </div>`
 
-const cardHtml = (n, title, hint, body) => `
-  <section class="card">
-    <div class="card__head">
-      <span class="card__badge" aria-hidden="true">${n}</span>
-      <div>
-        <h2 class="card__title">${esc(title)}</h2>
-        <p class="card__hint">${esc(hint)}</p>
+const sectionHtml = (n, title, hint, body) => `
+  <section class="sec">
+    <div class="sec__head">
+      <span class="sec__num" aria-hidden="true">${n}</span>
+      <div class="sec__stack">
+        <h2 class="sec__title">${esc(title)}</h2>
+        <p class="sec__hint">${esc(hint)}</p>
       </div>
     </div>
-    <div class="card__body">${body}</div>
+    <div class="sec__body">${body}</div>
   </section>`
 
-const resumenRow = (icon, label, value) => `
+// ------------------------------------------------------------- resumen
+
+/*
+ * Resumen del turno. Refleja literalmente el `<dl>` del código: aparece en
+ * cuanto hay UNA selección hecha (`hasSummaryContent`) y cada entrada se
+ * dibuja solo si su dato existe. No se agregan teléfono, correo ni zona
+ * horaria: el resumen real no los lista.
+ */
+const hasSummary = (f) => !!(f.barber || f.service || f.attendee || f.dateFull || f.time)
+
+const resumenItem = (label, value, avatar = false) => `
   <div class="resumen__item">
-    <span class="resumen__icon">${fieldIcon(icon)}</span>
-    <span class="resumen__stack">
-      <span class="resumen__value">${esc(value)}</span>
-      <span class="resumen__label">${esc(label)}</span>
-    </span>
+    <dt class="resumen__label">${esc(label)}</dt>
+    <dd class="resumen__value">${avatar ? avatarHtml(value) : ''}<span>${esc(value)}</span></dd>
   </div>`
 
-const resumenHtml = (f, tz) => `
-  <div class="resumen">
-    <p class="resumen__title">${esc(COPY.resumenTitle)}</p>
-    <div class="resumen__grid">
-      ${resumenRow('person', COPY.resumenBarber, f.barber)}
-      ${resumenRow('service', COPY.resumenService, f.service)}
-      ${resumenRow('schedule', COPY.resumenSchedule, `${f.date} · ${f.time}`)}
-      ${resumenRow('person', COPY.resumenAttendee, f.attendee)}
-      ${f.phone ? resumenRow('phone', COPY.resumenPhone, f.phone) : ''}
-      ${resumenRow('timezone', COPY.resumenTimezone, tz)}
-    </div>
-  </div>`
+const scheduleValue = (f) => [f.dateFull, f.time].filter(Boolean).join(' · ')
+
+/*
+ * Columna lateral. Lleva la alerta global y el resumen, en ese orden: en
+ * escritorio quedan junto al CTA sin empujar el formulario hacia abajo, y en
+ * móvil —donde la retícula colapsa a una columna— caen exactamente entre el
+ * último campo y el CTA, que es donde §7.3 pide el resumen.
+ */
+const railHtml = (f, alert) => `
+  <aside class="rail">
+    ${alert ? alertHtml(alert) : ''}
+    ${
+      hasSummary(f)
+        ? `<div class="resumen">
+             <p class="resumen__title">${esc(COPY.resumenTitle)}</p>
+             <dl class="resumen__list">
+               ${f.barber ? resumenItem(COPY.resumenBarber, f.barber, true) : ''}
+               ${f.service ? resumenItem(COPY.resumenService, f.service) : ''}
+               ${f.attendee ? resumenItem(COPY.resumenAttendee, f.attendee) : ''}
+               ${f.dateFull || f.time ? resumenItem(COPY.resumenSchedule, scheduleValue(f)) : ''}
+             </dl>
+           </div>`
+        : ''
+    }
+  </aside>`
 
 // ----------------------------------------------------------- contenido
 
@@ -198,15 +275,17 @@ const formHtml = (screen) => {
   const f = screen.fields
   const fe = screen.fieldErrors ?? {}
   const attempted = !!screen.attempted
+  const rail = hasSummary(f) || !!screen.alert
 
   const barberField = fieldHtml({
     label: COPY.barberLabel,
     type: 'select',
     value: f.barber,
     placeholder: COPY.barberPlaceholder,
+    avatar: true,
     error: attempted ? fe.barber : undefined,
   })
-  const serviceHint =
+  const serviceNote =
     screen.servicesStatus === 'loading'
       ? COPY.servicesLoading
       : screen.servicesStatus === 'empty'
@@ -220,70 +299,126 @@ const formHtml = (screen) => {
     value: f.service,
     placeholder: f.barber ? COPY.servicePlaceholder : COPY.servicePlaceholderNoBarber,
     disabled: !f.barber || screen.servicesStatus === 'loading',
-    hint: serviceHint,
+    note: serviceNote,
+    noteTone: NOTE_TONE[screen.servicesStatus],
     error: attempted ? fe.service : undefined,
   })
 
-  const section1 = cardHtml(
+  const section1 = sectionHtml(
     1,
     COPY.section1Title,
     COPY.section1Hint,
-    `<div class="form-row">${barberField}${serviceField}</div>`,
+    `<div class="row">${barberField}${serviceField}</div>`,
   )
 
-  const section2 = cardHtml(
+  const section2 = sectionHtml(
     2,
     COPY.section2Title,
     COPY.section2Hint,
-    `${fieldHtml({ label: COPY.attendeeLabel, required: true, value: f.attendee, placeholder: COPY.attendeeLabel, error: attempted ? fe.attendee : undefined })}
-     ${fieldHtml({ label: COPY.customerNameLabel, required: true, value: f.customerName, placeholder: COPY.customerNameLabel, error: attempted ? fe.customerName : undefined })}
-     <div class="form-row">
+    `<div class="row">
+       ${fieldHtml({ label: COPY.attendeeLabel, required: true, value: f.attendee, placeholder: COPY.attendeeLabel, error: attempted ? fe.attendee : undefined })}
+       ${fieldHtml({ label: COPY.customerNameLabel, required: true, value: f.customerName, placeholder: COPY.customerNameLabel, error: attempted ? fe.customerName : undefined })}
+     </div>
+     <div class="row">
        ${fieldHtml({ label: COPY.phoneLabel, value: f.phone, placeholder: COPY.phonePlaceholder, error: attempted ? fe.phone : undefined })}
        ${fieldHtml({ label: COPY.emailLabel, value: f.email, placeholder: COPY.emailLabel, error: attempted ? fe.email : undefined })}
      </div>
-     ${!f.phone && !f.email ? `<p class="field__hint">${esc(COPY.noContactHint)}</p>` : ''}`,
+     ${!f.phone && !f.email ? `<p class="sec__note">${esc(COPY.noContactHint)}</p>` : ''}`,
   )
 
-  const section3 = cardHtml(
+  const section3 = sectionHtml(
     3,
     COPY.section3Title,
     COPY.section3Hint,
-    `<div class="form-row">
-       ${fieldHtml({ label: COPY.dateLabel, required: true, value: f.date, placeholder: COPY.dateLabel })}
-       ${fieldHtml({ label: COPY.timeLabel, required: true, value: f.time, placeholder: COPY.timeLabel, error: attempted ? fe.time : undefined })}
+    `<div class="row">
+       ${fieldHtml({ label: COPY.dateLabel, required: true, value: f.date, placeholder: 'dd/mm/aaaa' })}
+       ${fieldHtml({ label: COPY.timeLabel, required: true, value: f.time, placeholder: '--:--', error: attempted ? fe.time : undefined })}
      </div>`,
   )
 
-  const section4 = cardHtml(
+  const section4 = sectionHtml(
     4,
     COPY.section4Title,
     COPY.section4Hint,
-    textareaHtml({ label: COPY.noteLabel, value: f.note, counter: `${f.note.length}/300` }),
+    noteFieldHtml({ label: COPY.noteLabel, value: f.note }),
   )
 
-  const resumen = screen.resumen ? resumenHtml(f, screen.timezone) : ''
-  const alert = screen.alert ? alertHtml(screen.alert) : ''
-
   return `
-    ${section1}${section2}${section3}${section4}
-    ${resumen}
-    ${alert}
-    <span class="btn btn--primary btn--submit${screen.saving ? ' btn--disabled' : ''}">
-      ${esc(screen.saving ? COPY.submitting : COPY.submit)}
-    </span>`
+    <div class="layout${rail ? '' : ' layout--solo'}">
+      <div class="form"><div class="sheet">${section1}${section2}${section3}${section4}</div></div>
+      ${rail ? railHtml(f, screen.alert) : ''}
+      <div class="actions">
+        <span class="btn btn--primary${screen.saving ? ' btn--disabled' : ''}">
+          ${esc(screen.saving ? COPY.submitting : COPY.submit)}
+        </span>
+      </div>
+    </div>`
 }
 
+/*
+ * Éxito. La confirmación es la pantalla completa, no una nota al margen: el
+ * turno recién creado se muestra como ficha de pergamino —el mismo material
+ * con el que la agenda dibuja un turno vigente— bajo el divisor y el titular
+ * en serif del sistema.
+ */
 const successHtml = (screen) => `
-  <div class="success">
-    ${alertHtml({ variant: 'success', title: COPY.successTitle, body: COPY.successSummary(screen.created) })}
-    <p class="success__note">${esc(COPY.successNote)}</p>
-    <span class="btn btn--primary btn--submit">${esc(COPY.successAgain)}</span>
+  <div class="pagestate pagestate--success success">
+    <span class="pagestate__divider"><i></i><b></b><i></i></span>
+    <p class="pagestate__eyebrow">${esc(ALERT_EYEBROW.success)}</p>
+    <p class="pagestate__title">${esc(COPY.successTitle)}</p>
+    <p class="ticket">${esc(COPY.successSummary(screen.created))}</p>
+    <p class="pagestate__body">${esc(COPY.successNote)}</p>
+    <span class="btn btn--primary pagestate__action">${esc(COPY.successAgain)}</span>
   </div>`
 
+/*
+ * Esqueleto del formulario. Con el contexto todavía sin resolver, la espera
+ * conserva la geometría de lo que va a llegar —cuatro secciones numeradas y
+ * sus campos— en vez de dejar la pantalla vacía con un indicador suelto.
+ */
+const skeletonHtml = () => {
+  const bars = (n) =>
+    Array.from({ length: n })
+      .map(
+        () => `<span class="skel__field">
+                 <span class="skel__bar skel__bar--label"></span>
+                 <span class="skel__bar skel__bar--control"></span>
+               </span>`,
+      )
+      .join('')
+  const sec = (rows) => `
+    <div class="sec sec--skel">
+      <div class="sec__head">
+        <span class="skel__bar skel__bar--num"></span>
+        <span class="sec__stack">
+          <span class="skel__bar skel__bar--title"></span>
+          <span class="skel__bar skel__bar--hint"></span>
+        </span>
+      </div>
+      <div class="sec__body">
+        ${rows.map((n) => `<div class="row">${bars(n)}</div>`).join('')}
+      </div>
+    </div>`
+
+  return `
+    <div class="skel" aria-hidden="true">
+      <p class="skel__status">${spinnerHtml('sm')}<span>${esc(COPY.loadingBarbers)}</span></p>
+      <div class="layout layout--solo">
+        <div class="form">
+          <div class="sheet">
+            ${sec([2])}
+            ${sec([2, 2])}
+            ${sec([2])}
+            ${sec([1])}
+          </div>
+        </div>
+        <div class="actions"><span class="skel__bar skel__bar--cta"></span></div>
+      </div>
+    </div>`
+}
+
 const contentHtml = (screen) => {
-  if (screen.page === 'loading') {
-    return pageStateHtml({ tone: 'loading', title: COPY.loadingBarbers })
-  }
+  if (screen.page === 'loading') return skeletonHtml()
   if (screen.page === 'load-error') {
     return pageStateHtml({
       tone: 'warning',
@@ -294,7 +429,11 @@ const contentHtml = (screen) => {
     })
   }
   if (screen.page === 'empty') {
-    return pageStateHtml({ tone: 'note', title: COPY.noBarbers })
+    return pageStateHtml({
+      tone: 'note',
+      title: COPY.noBarbersTitle,
+      body: COPY.noBarbersBody,
+    })
   }
   if (screen.page === 'success') return successHtml(screen)
   return formHtml(screen)
@@ -316,6 +455,12 @@ const CSS = `
   --info-s:#e9eef3; --info-t:#23405b; --info-b:#667d93;
   --success-s:#eaf0eb; --success-t:#325d43; --success-b:#748477;
   --inactive-s:#eeece8; --inactive-t:#56514a; --inactive-b:#c9c0b2;
+  /* Tintes de estado LEVANTADOS al canvas de tinta. Los pares del sistema
+     están calculados para superficies claras: #a43a3a sobre #101b2b no
+     alcanza AA. Estos tres son el mismo matiz aclarado hasta pasar AA sobre
+     tinta, y solo se usan para texto y filetes sobre tinta; las alertas y
+     fichas siguen usando los pares claros del sistema. */
+  --danger-ink:#e3928d; --warning-ink:#dfb063; --success-ink:#9dc2a9;
   --serif:'Instrument Serif',Georgia,serif;
   --sans:'Instrument Sans',system-ui,sans-serif;
 }
@@ -323,81 +468,140 @@ const CSS = `
 body{font-family:var(--sans);background:var(--ink);color:var(--on-ink);-webkit-font-smoothing:antialiased}
 .shell{display:flex;flex-direction:column;min-height:100vh}
 
+/* ---- barra de aplicación (idéntica a panel-agenda-eventos) ---- */
 .appbar{display:flex;align-items:center;justify-content:space-between;
   border-bottom:1px solid rgba(184,149,90,.45)}
 .appbar__brand{display:flex;align-items:baseline;gap:14px}
 .appbar__mark{font-family:var(--serif);color:var(--on-ink);letter-spacing:.02em;line-height:1}
 .appbar__shop{color:var(--on-ink-2)}
 
+/* ---- encabezado de página ---- */
 .main{flex:1;display:flex;flex-direction:column}
 .pagehead{display:flex;flex-direction:column}
 .pagehead__title{font-family:var(--serif);color:var(--on-ink);line-height:1.05}
 .pagehead__meta{color:var(--on-ink-2)}
 
-/* ---- tarjetas numeradas (formulario sobre pergamino) ---- */
-.card{background:var(--paper);border-radius:6px;display:flex;flex-direction:column}
-.card__head{display:flex;align-items:flex-start}
-.card__badge{flex:none;display:flex;align-items:center;justify-content:center;
-  border:1.5px solid var(--brass);border-radius:999px;color:var(--brass-deep);
-  font-family:var(--serif)}
-.card__title{font-family:var(--serif);color:var(--text);line-height:1.2}
-.card__hint{color:var(--text-2)}
-.card__body{display:flex;flex-direction:column}
+/* ---- retícula: formulario + resumen ---- */
+.layout{display:grid;align-items:start}
+.form{grid-area:form;display:flex;flex-direction:column}
+.rail{grid-area:rail;display:flex;flex-direction:column}
+.actions{grid-area:acts;display:flex;flex-direction:column}
 
-.form-row{display:flex}
-.field{display:flex;flex-direction:column;flex:1}
-.field__label{font-weight:600;color:var(--text)}
-.field__req{color:var(--brass-deep)}
-.field__hint{color:var(--text-2)}
-.field__error-text{color:var(--danger-t);font-weight:600}
+/* ---- hoja del formulario ----
+   Las cuatro secciones son bandas de UNA sola hoja separadas por filete, no
+   cuatro tarjetas apiladas: con borde propio cada una, el formulario se leía
+   como una pila rayada de objetos sueltos en vez de un documento. */
+.sheet{background:rgba(244,240,231,.035);border:1px solid rgba(244,240,231,.1);
+  border-left:3px solid rgba(184,149,90,.55);border-radius:2px}
+.sec + .sec{border-top:1px solid rgba(244,240,231,.1)}
+.sec__head{display:flex;align-items:flex-start}
+.sec__num{flex:none;display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(184,149,90,.6);border-radius:2px;color:var(--brass);
+  font-family:var(--serif);line-height:1}
+.sec__stack{display:flex;flex-direction:column;min-width:0}
+.sec__title{font-family:var(--serif);color:var(--on-ink);line-height:1.15;font-weight:400}
+/* Equilibra la última línea: el único subtítulo que no cabe en un renglón
+   partía dejando «necesario.» solo. */
+.sec__hint{color:var(--on-ink-2);text-wrap:balance}
+.sec__body{display:flex;flex-direction:column}
+.sec__note{color:var(--on-ink-2)}
+
+/* ---- campos sobre tinta (misma familia que los controles de la agenda) ---- */
+.row{display:flex}
+.field{display:flex;flex-direction:column;flex:1;min-width:0}
+.field__label{color:var(--brass);font-weight:600;text-transform:uppercase}
+.field__req{color:var(--brass);opacity:.8}
+/* El filete inferior de latón marca el campo YA RESUELTO; uno vacío lleva
+   filete neutro. Ocho subrayados dorados a la vez convertían el formulario
+   en un muestrario de oro y ya no distinguían lo hecho de lo pendiente. */
+.control{display:flex;align-items:center;justify-content:space-between;
+  background:rgba(244,240,231,.04);border:1px solid rgba(244,240,231,.12);
+  border-bottom:2px solid rgba(244,240,231,.3);border-radius:2px}
+.control--filled{background:rgba(244,240,231,.06);border-bottom-color:var(--brass)}
+.control__value{flex:1;color:var(--on-ink);line-height:1.3;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.control__value--ph{color:var(--on-ink-2)}
+.control__caret{color:var(--brass);line-height:1;flex:none}
+.control--off{opacity:.45;border-bottom-color:rgba(244,240,231,.2)}
+.control--textarea{align-items:flex-start}
+.control--textarea .control__value{white-space:normal}
+.field--error .control{border-bottom-color:var(--danger-ink);
+  background:rgba(227,146,141,.07)}
+.field__error{color:var(--danger-ink);font-weight:600}
+.field__note{display:flex;align-items:center;color:var(--on-ink-2)}
+.field__note--loading{color:var(--brass);font-weight:600;text-transform:uppercase}
+.field__note--warning{color:var(--warning-ink)}
+.field__note--danger{color:var(--danger-ink)}
 .field__foot{display:flex;align-items:center;justify-content:space-between}
-.field__counter{color:var(--text-2)}
+.field__counter{color:var(--on-ink-2);font-variant-numeric:tabular-nums}
 
-.input{display:flex;align-items:center;justify-content:space-between;background:#fff;
-  border:1px solid var(--border);border-radius:4px;color:var(--text)}
-.input__value--ph{color:var(--text-2)}
-.input__caret{color:var(--text-2)}
-.input--disabled{opacity:.55;background:var(--paper-2)}
-.input--textarea{align-items:flex-start;min-height:64px}
-.field--error .input{border-color:var(--danger-b)}
+/* ---- retrato del barbero (mismo componente que la agenda) ---- */
+.avatar{flex:none;display:flex;align-items:center;justify-content:center;
+  background:var(--ink-2);border:1px solid rgba(184,149,90,.55);border-radius:2px;
+  font-family:var(--serif);color:var(--brass);line-height:1;letter-spacing:.04em}
 
-/* ---- resumen ---- */
-.resumen{background:var(--ink-2);border-radius:6px;border:1px solid rgba(184,149,90,.3)}
-.resumen__title{color:var(--on-ink-2);font-weight:600;text-transform:uppercase}
-.resumen__grid{display:flex;flex-wrap:wrap}
-.resumen__item{display:flex;align-items:center}
-.resumen__icon{flex:none;color:var(--brass);display:flex}
-.resumen__stack{display:flex;flex-direction:column;min-width:0}
-.resumen__value{color:var(--on-ink);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.resumen__label{color:var(--on-ink-2)}
+/* ---- resumen antes del CTA ---- */
+.resumen{background:var(--ink-2);border:1px solid rgba(244,240,231,.12);
+  border-top:2px solid var(--brass);border-radius:2px}
+.resumen__title{color:var(--brass);font-weight:600;text-transform:uppercase}
+.resumen__list{display:flex;flex-direction:column}
+.resumen__item{display:flex;flex-direction:column}
+.resumen__item + .resumen__item{border-top:1px solid rgba(244,240,231,.1)}
+.resumen__label{color:var(--on-ink-2);text-transform:uppercase;font-weight:600}
+.resumen__value{display:flex;align-items:center;color:var(--on-ink);font-weight:600}
 
 /* ---- acciones ---- */
-.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:4px;
-  font-weight:600;letter-spacing:.02em}
+.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:2px;
+  font-weight:600;letter-spacing:.02em;white-space:nowrap}
 .btn--primary{background:var(--brass);color:var(--ink)}
 .btn--secondary{background:var(--canvas);color:var(--ink)}
-.btn--submit{width:100%}
-.btn--disabled{opacity:.45}
+.btn--disabled{opacity:.55}
 
 /* ---- estados de página ---- */
 .pagestate{display:flex;flex-direction:column;align-items:center;text-align:center;
-  margin:auto;max-width:460px}
+  margin:auto;max-width:520px}
 .pagestate__mark{display:flex;align-items:center;justify-content:center}
 .pagestate__divider{display:flex;align-items:center;justify-content:center}
 .pagestate__divider i{display:block;height:1px;background:var(--brass);opacity:.65}
 .pagestate__divider b{display:block;background:var(--brass);transform:rotate(45deg);flex:none}
-.pagestate--warning .pagestate__divider b{background:var(--warning-b)}
-.pagestate__eyebrow{font-weight:600;text-transform:uppercase;color:var(--warning-b)}
+.pagestate--warning .pagestate__divider b{background:var(--warning-ink)}
+.pagestate--success .pagestate__divider b{background:var(--success-ink)}
+.pagestate__eyebrow{font-weight:600;text-transform:uppercase;color:var(--brass)}
+.pagestate--warning .pagestate__eyebrow{color:var(--warning-ink)}
+.pagestate--success .pagestate__eyebrow{color:var(--success-ink)}
 .pagestate__title{font-family:var(--serif);color:var(--on-ink);line-height:1.15}
 .pagestate__body{color:var(--on-ink-2)}
+.pagestate__dest{color:var(--brass);font-weight:600}
+/* La espera y el vacío se componen como titular; un párrafo largo no se
+   compone al tamaño de un titular de error. */
+.pagestate--note .pagestate__title{font-family:var(--serif)}
+
+/* Ficha del turno recién creado: pergamino, el mismo material con el que la
+   agenda dibuja un turno vigente. */
+.ticket{background:var(--paper);color:var(--text);border-radius:2px;
+  border-left:3px solid var(--brass-deep);font-weight:600;
+  font-variant-numeric:tabular-nums;text-align:left}
+
 .spinner{position:relative;display:inline-block;flex:none}
 .spinner i{position:absolute;inset:0;border-radius:50%;
   border:2px solid rgba(184,149,90,.22);border-top-color:var(--brass);
   border-right-color:var(--brass);transform:rotate(-38deg)}
 .spinner b{position:absolute;top:50%;left:50%;background:var(--brass);
   transform:translate(-50%,-50%) rotate(45deg)}
+.spinner--xs i{border-width:1.5px}
 
-/* ---- alertas ---- */
+/* ---- esqueleto del formulario ---- */
+.skel{display:flex;flex-direction:column}
+.skel__status{display:flex;align-items:center;color:var(--brass);font-weight:600;
+  text-transform:uppercase}
+.skel__field{flex:1;display:flex;flex-direction:column;min-width:0}
+.skel__bar{display:block;background:rgba(244,240,231,.14);border-radius:2px}
+.skel__bar--control{background:rgba(244,240,231,.07);
+  border-bottom:2px solid rgba(184,149,90,.45)}
+.skel__bar--hint{background:rgba(244,240,231,.09)}
+.skel__bar--cta{background:rgba(184,149,90,.35)}
+
+/* ---- alertas: misma nota al margen de los atlas hermanos ---- */
 .alert{display:flex;border:1px solid;border-left-width:4px;border-radius:2px}
 .alert__body{flex:1;display:flex;flex-direction:column}
 .alert__eyebrow{font-weight:600;text-transform:uppercase;opacity:.85}
@@ -405,9 +609,6 @@ body{font-family:var(--sans);background:var(--ink);color:var(--on-ink);-webkit-f
 .alert--danger{background:var(--danger-s);border-color:var(--danger-b);color:var(--danger-t)}
 .alert--warning{background:var(--warning-s);border-color:var(--warning-b);color:var(--warning-t)}
 .alert--success{background:var(--success-s);border-color:var(--success-b);color:var(--success-t)}
-
-.success{display:flex;flex-direction:column}
-.success__note{color:var(--on-ink-2)}
 
 /* ---- dock ---- */
 .dock{display:flex;border-top:1px solid rgba(244,240,231,.14);margin-top:auto}
@@ -422,49 +623,94 @@ const SCALES = {
     .appbar{padding:20px 40px}
     .appbar__mark{font-size:34px}
     .appbar__shop{font-size:16px}
-    .main{padding:26px 40px 30px;gap:22px;max-width:900px;margin:0 auto;width:100%}
-    .pagehead{gap:6px}
+    .main{padding:22px 40px 24px;gap:18px}
+    .pagehead{gap:5px}
     .pagehead__title{font-size:38px}
     .pagehead__meta{font-size:15px}
-    .card{gap:20px;padding:24px 28px}
-    .card__head{gap:16px}
-    .card__badge{width:36px;height:36px;font-size:16px}
-    .card__title{font-size:22px}
-    .card__hint{font-size:14px;margin-top:2px}
-    .card__body{gap:16px}
-    .form-row{gap:20px}
-    .field{gap:6px}
-    .field__label{font-size:14px}
-    .field__hint{font-size:13px}
-    .field__error-text{font-size:13px}
-    .field__counter{font-size:12px}
-    .input{height:46px;padding:0 14px;font-size:15px}
-    .input--textarea{padding:12px 14px;font-size:15px}
-    .resumen{padding:20px 24px;gap:14px;display:flex;flex-direction:column}
-    .resumen__title{font-size:12px;letter-spacing:.12em}
-    .resumen__grid{gap:22px 32px}
-    .resumen__item{gap:12px}
-    .resumen__icon svg{width:20px;height:20px}
-    .resumen__value{font-size:15px;max-width:220px}
-    .resumen__label{font-size:12px}
-    .btn--submit{height:52px;font-size:16px}
+
+    .layout{grid-template-columns:minmax(0,1fr) 340px;
+      grid-template-areas:"form rail" "acts rail";column-gap:32px}
+    .layout--solo{grid-template-columns:minmax(0,980px);
+      grid-template-areas:"form" "acts"}
+    /* Rejilla de la hoja: la misma medida gobierna la columna de rótulos de
+       cada banda y la sangría del CTA, para que el botón caiga exactamente
+       bajo los campos y no bajo el título de la sección. */
+    .layout{--label-col:288px;--band-gap:28px;--band-pad:26px}
+    .form{gap:10px}
+    .rail{gap:14px}
+    .actions{gap:14px;margin-top:16px;
+      padding-left:calc(var(--band-pad) + var(--label-col) + var(--band-gap) + 3px)}
+
+    .sec{display:grid;grid-template-columns:var(--label-col) minmax(0,1fr);
+      gap:var(--band-gap);padding:20px var(--band-pad)}
+    .sec__head{gap:12px}
+    .sec__num{width:27px;height:27px;font-size:15px}
+    .sec__title{font-size:21px}
+    .sec__hint{font-size:13px;line-height:18px;margin-top:3px}
+    .sec__body{gap:14px}
+    .sec__note{font-size:13px;line-height:18px}
+
+    .row{gap:20px}
+    .field{gap:7px}
+    .field__label{font-size:11px;line-height:15px;letter-spacing:.14em}
+    .control{height:46px;padding:0 14px;gap:10px}
+    .control__value{font-size:15px}
+    .control--textarea{height:74px;padding:12px 14px}
+    .field__note{gap:8px;font-size:12px;line-height:16px;margin-top:1px}
+    .field__note--loading{letter-spacing:.12em}
+    .field__error{font-size:12px;line-height:16px}
+    .field__foot{margin-top:2px}
+    .field__counter{font-size:11px}
+    .avatar{width:26px;height:26px;font-size:12px}
+
+    .resumen{padding:18px 20px}
+    .resumen__title{font-size:11px;line-height:15px;letter-spacing:.16em}
+    .resumen__list{margin-top:14px}
+    .resumen__item{gap:5px;padding:12px 0}
+    .resumen__item:first-child{padding-top:0}
+    .resumen__item:last-child{padding-bottom:0}
+    .resumen__label{font-size:10px;line-height:14px;letter-spacing:.14em}
+    .resumen__value{gap:10px;font-size:16px;line-height:22px}
+
+    .btn{height:50px;padding:0 30px;font-size:16px}
+    .btn--primary{align-self:flex-start;min-width:240px}
+    .pagestate .btn{align-self:center;min-width:0}
+
     .pagestate{gap:14px;padding:40px 0}
     .pagestate__divider{gap:12px;margin:2px 0 4px}
     .pagestate__divider i{width:98px}
     .pagestate__divider b{width:7px;height:7px}
     .pagestate__eyebrow{font-size:11px;line-height:15px;letter-spacing:.16em}
-    .pagestate__title{font-size:28px}
-    .pagestate__body{font-size:16px;line-height:24px;max-width:452px}
-    .pagestate__action{margin-top:10px;height:48px;padding:0 22px;font-size:15px}
+    .pagestate__title{font-size:30px}
+    .pagestate--note .pagestate__title{font-size:28px;line-height:36px;max-width:460px}
+    .pagestate__body{font-size:16px;line-height:24px;max-width:470px}
+    .pagestate__action{margin-top:10px}
+    .ticket{padding:14px 18px;font-size:16px;line-height:23px;margin-top:4px}
+    .success .pagestate__body{max-width:480px}
+
     .spinner--lg{width:54px;height:54px}
     .spinner--lg b{width:10px;height:10px}
-    .alert{padding:15px 18px}
+    .spinner--sm{width:18px;height:18px}
+    .spinner--sm b{width:5px;height:5px}
+    .spinner--xs{width:13px;height:13px}
+    .spinner--xs b{width:4px;height:4px}
+
+    .skel{gap:18px}
+    .skel__status{gap:12px;font-size:12px;letter-spacing:.14em}
+    .skel__field{gap:9px}
+    .skel__bar--num{width:28px;height:28px}
+    .skel__bar--title{width:150px;height:15px}
+    .skel__bar--hint{width:190px;height:10px;margin-top:9px}
+    .skel__bar--label{width:88px;height:9px}
+    .skel__bar--control{height:46px;width:100%}
+    .skel__bar--cta{width:240px;height:50px}
+
+    .alert{padding:15px 18px;max-width:640px}
     .alert__body{gap:5px}
     .alert__eyebrow{font-size:11px;line-height:15px;letter-spacing:.15em}
     .alert__title{font-size:17px;line-height:24px}
     .alert__text{font-size:15px;line-height:22px}
-    .success{gap:18px;max-width:520px}
-    .success__note{font-size:15px;line-height:22px}
+
     .dock{padding:0 40px}
     .dock__item{gap:10px;height:64px;font-size:14px}
     .dock__icon svg{width:19px;height:19px}
@@ -475,47 +721,85 @@ const SCALES = {
     .appbar__shop{font-size:13px}
     .main{padding:20px;gap:18px}
     .pagehead{gap:5px}
-    .pagehead__title{font-size:30px}
-    .pagehead__meta{font-size:13px}
-    .card{gap:16px;padding:18px}
-    .card__head{gap:12px}
-    .card__badge{width:30px;height:30px;font-size:14px}
-    .card__title{font-size:18px}
-    .card__hint{font-size:13px;margin-top:2px}
-    .card__body{gap:14px}
-    .form-row{flex-direction:column;gap:14px}
-    .field{gap:5px}
-    .field__label{font-size:13px}
-    .field__hint{font-size:12px}
-    .field__error-text{font-size:12px}
+    .pagehead__title{font-size:32px}
+    .pagehead__meta{font-size:14px;line-height:20px}
+
+    /* Una sola columna: el resumen queda entre el formulario y el CTA, que
+       es donde §7.3 lo pide en móvil. */
+    .layout{--band-pad:16px;grid-template-columns:minmax(0,1fr);
+      grid-template-areas:"form" "rail" "acts";row-gap:16px}
+    .layout--solo{grid-template-areas:"form" "acts"}
+    .form{gap:12px}
+    .rail{gap:14px}
+    .actions{gap:14px;padding-left:0}
+
+    .sec{display:flex;flex-direction:column;gap:14px;padding:18px var(--band-pad)}
+    .sec__head{gap:11px}
+    .sec__num{width:26px;height:26px;font-size:14px}
+    .sec__title{font-size:19px}
+    .sec__hint{font-size:13px;line-height:18px;margin-top:2px}
+    .sec__body{gap:13px}
+    .sec__note{font-size:12px;line-height:17px}
+
+    .row{flex-direction:column;gap:13px}
+    .field{gap:6px}
+    .field__label{font-size:10px;line-height:14px;letter-spacing:.14em}
+    .control{height:46px;padding:0 13px;gap:10px}
+    .control__value{font-size:15px}
+    .control--textarea{height:70px;padding:12px 13px}
+    .field__note{gap:8px;font-size:12px;line-height:16px}
+    .field__note--loading{letter-spacing:.12em}
+    .field__error{font-size:12px;line-height:16px}
     .field__counter{font-size:11px}
-    .input{height:44px;padding:0 12px;font-size:14px}
-    .input--textarea{padding:11px 12px;font-size:14px}
-    .resumen{padding:16px;gap:12px;display:flex;flex-direction:column}
-    .resumen__title{font-size:11px;letter-spacing:.1em}
-    .resumen__grid{flex-direction:column;gap:12px}
-    .resumen__item{gap:10px}
-    .resumen__icon svg{width:18px;height:18px}
-    .resumen__value{font-size:14px;max-width:240px}
-    .resumen__label{font-size:11px}
-    .btn--submit{height:48px;font-size:15px}
-    .pagestate{gap:12px;padding:34px 0;max-width:300px}
+    .avatar{width:26px;height:26px;font-size:12px}
+
+    .resumen{padding:16px}
+    .resumen__title{font-size:10px;line-height:14px;letter-spacing:.16em}
+    .resumen__list{margin-top:12px}
+    .resumen__item{gap:5px;padding:11px 0}
+    .resumen__item:first-child{padding-top:0}
+    .resumen__item:last-child{padding-bottom:0}
+    .resumen__label{font-size:10px;line-height:14px;letter-spacing:.14em}
+    .resumen__value{gap:9px;font-size:15px;line-height:21px}
+
+    .btn{height:48px;padding:0 22px;font-size:15px}
+    .btn--primary{width:100%}
+
+    .pagestate{gap:12px;padding:34px 0;max-width:330px}
     .pagestate__divider{gap:10px;margin:2px 0 4px}
     .pagestate__divider i{width:78px}
     .pagestate__divider b{width:6px;height:6px}
     .pagestate__eyebrow{font-size:10px;line-height:14px;letter-spacing:.16em}
-    .pagestate__title{font-size:23px}
-    .pagestate__body{font-size:14px;line-height:21px}
-    .pagestate__action{margin-top:8px;height:46px;padding:0 18px;font-size:14px}
+    .pagestate__title{font-size:25px}
+    .pagestate--note .pagestate__title{font-size:23px;line-height:30px}
+    .pagestate__body{font-size:15px;line-height:22px}
+    .pagestate__action{margin-top:8px}
+    .success .btn--primary{width:auto;align-self:stretch}
+    .ticket{padding:13px 15px;font-size:15px;line-height:22px;margin-top:2px}
+
     .spinner--lg{width:46px;height:46px}
     .spinner--lg b{width:9px;height:9px}
+    .spinner--sm{width:16px;height:16px}
+    .spinner--sm b{width:5px;height:5px}
+    .spinner--xs{width:13px;height:13px}
+    .spinner--xs b{width:4px;height:4px}
+
+    .skel{gap:16px}
+    .skel__status{gap:10px;font-size:11px;letter-spacing:.14em}
+    .skel__field{gap:8px}
+    .skel__bar--num{width:26px;height:26px}
+    .skel__bar--title{width:130px;height:14px}
+    .skel__bar--hint{width:170px;height:10px;margin-top:8px}
+    .skel__bar--label{width:80px;height:9px}
+    .skel__bar--control{height:46px;width:100%}
+    .skel__bar--cta{width:100%;height:48px}
+
     .alert{padding:13px 15px}
     .alert__body{gap:4px}
     .alert__eyebrow{font-size:10px;line-height:14px;letter-spacing:.15em}
     .alert__title{font-size:16px;line-height:23px}
     .alert__text{font-size:14px;line-height:20px}
-    .success{gap:16px}
-    .success__note{font-size:14px;line-height:21px}
+
     .dock{padding:0 8px}
     .dock__item{flex-direction:column;gap:5px;height:66px;font-size:11px}
     .dock__icon svg{width:19px;height:19px}
@@ -528,14 +812,10 @@ const page = (viewport, screen) => `<!doctype html>
   <div class="shell">
     ${headerHtml()}
     <main class="main">
-      ${
-        screen.page === 'form' || screen.page === 'success'
-          ? `<div class="pagehead">
-               <h1 class="pagehead__title">${esc(COPY.title)}</h1>
-               ${screen.timezone ? `<p class="pagehead__meta">${esc(COPY.timezoneLine(screen.timezone))}</p>` : ''}
-             </div>`
-          : `<div class="pagehead"><h1 class="pagehead__title">${esc(COPY.title)}</h1></div>`
-      }
+      <div class="pagehead">
+        <h1 class="pagehead__title">${esc(COPY.title)}</h1>
+        ${screen.timezone ? `<p class="pagehead__meta">${esc(COPY.timezoneLine(screen.timezone))}</p>` : ''}
+      </div>
       ${contentHtml(screen)}
     </main>
     ${navHtml(viewport)}
@@ -550,6 +830,7 @@ const VIEWPORTS = {
 async function main() {
   const browser = await chromium.launch()
   const problems = []
+  const heights = []
 
   for (const [viewport, cfg] of Object.entries(VIEWPORTS)) {
     const ctx = await browser.newContext({
@@ -569,10 +850,16 @@ async function main() {
       if (box.w > cfg.width) {
         problems.push(`${viewport}/${name}: desborde horizontal ${box.w}px`)
       }
+      // El formulario de escritorio debe caber en un viewport: si vuelve a
+      // necesitar scroll, la composición se salió de presupuesto.
+      if (viewport === 'desktop' && box.h > cfg.height) {
+        problems.push(`${viewport}/${name}: desborde vertical ${box.h}px`)
+      }
+      if (viewport === 'desktop') heights.push(`${name}: ${box.h}px`)
 
       const dir = resolve(OUT, viewport, 'nuevo-turno')
       mkdirSync(dir, { recursive: true })
-      await tab.screenshot({ path: resolve(dir, `${name}.png`), fullPage: true })
+      await tab.screenshot({ path: resolve(dir, `${name}.png`), fullPage: viewport === 'mobile' })
     }
     await ctx.close()
   }
@@ -584,6 +871,7 @@ async function main() {
     process.exitCode = 1
   } else {
     console.log(`${Object.keys(SCREENS).length * 2} mockups regenerados sin desbordes.`)
+    console.log('Alto de escritorio:\n- ' + heights.join('\n- '))
   }
 }
 

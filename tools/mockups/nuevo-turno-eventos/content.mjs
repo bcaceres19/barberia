@@ -7,7 +7,8 @@
  * puedan divergir en copy, orden ni estado.
  *
  * Los textos provienen del módulo real
- * `apps/web/src/modules/agenda/pages/NewAppointmentPage.vue` (HU-061).
+ * `apps/web/src/modules/agenda/pages/NewAppointmentPage.vue` (HU-061) y de
+ * `apps/web/src/modules/agenda/validation/appointmentValidation.ts`.
  * Ningún texto se inventa: si una cadena no existe en el código, procede de
  * una `DEC-*` registrada.
  */
@@ -20,8 +21,10 @@ export const COPY = {
   loadErrorTitle: 'No pudimos cargar esta sección',
   loadErrorBody: 'Revisa tu conexión e inténtalo de nuevo.',
   retry: 'Reintentar',
-  noBarbers:
-    'Aún no tienes barberos registrados. Agrega uno en la sección "Barberos" antes de registrar turnos.',
+  // Misma cadena del código, partida por su punto: titular en serif y
+  // cuerpo, igual que el evento `04` de `panel-agenda-eventos`.
+  noBarbersTitle: 'Aún no tienes barberos registrados.',
+  noBarbersBody: 'Agrega uno en la sección "Barberos" antes de registrar turnos.',
 
   section1Title: 'Selecciona',
   section1Hint: 'Elige al barbero y el servicio.',
@@ -51,14 +54,18 @@ export const COPY = {
   section4Title: 'Nota (opcional)',
   section4Hint: 'Agrega información adicional si es necesario.',
   noteLabel: 'Nota (opcional)',
+  // `validateCustomerNote` rechaza más de 500 caracteres: el contador del
+  // mockup refleja ese límite real, no uno inventado.
+  noteMax: 500,
 
-  resumenTitle: 'Resumen del turno',
+  // Resumen real (`hasSummaryContent` + `<dl>` de la página): título
+  // «Resumen» y solo estas cuatro entradas, cada una visible únicamente
+  // cuando su dato ya está elegido.
+  resumenTitle: 'Resumen',
   resumenBarber: 'Barbero',
   resumenService: 'Servicio',
+  resumenAttendee: 'Persona atendida',
   resumenSchedule: 'Fecha y hora',
-  resumenAttendee: 'Cliente atendido',
-  resumenPhone: 'Teléfono',
-  resumenTimezone: 'Zona horaria',
 
   submit: 'Registrar turno',
   submitting: 'Guardando…',
@@ -92,9 +99,25 @@ const ATTENDEE = 'Diego Molina'
 const CUSTOMER = 'Diego Molina'
 const PHONE = '+57 300 123 4567'
 const EMAIL = 'diego.molina@email.com'
-const DATE = '24/05/2025'
-const TIME = '11:30 AM'
 const NOTE = 'Cliente frecuente.'
+
+/*
+ * Fecha del turno de ejemplo. Es un día futuro respecto de la fecha del atlas
+ * hermano (`panel-agenda-eventos` muestra «Hoy, 3 de septiembre»): registrar
+ * un turno en el pasado contradiría la pantalla.
+ *
+ * `date` es lo que dibuja el control nativo `type="date"` en es-CO y `time`
+ * el valor de `type="time"` (24 h), que es exactamente el que el resumen
+ * concatena en el código. `dateFull` usa el mismo `Intl.DateTimeFormat` que
+ * `formatCivilDateFull`, así que el rótulo del resumen no puede desalinearse
+ * del día real.
+ */
+const CIVIL_DATE = '2026-09-04'
+const DATE = '04/09/2026'
+const TIME = '11:30'
+const DATE_FULL = new Intl.DateTimeFormat('es-CO', { timeZone: 'UTC', dateStyle: 'full' }).format(
+  new Date(`${CIVIL_DATE}T12:00:00Z`),
+)
 
 /** Estado por defecto de cada campo: vacío, salvo que el evento lo llene. */
 const fields = (over = {}) => ({
@@ -105,6 +128,7 @@ const fields = (over = {}) => ({
   phone: '',
   email: '',
   date: '',
+  dateFull: '',
   time: '',
   note: '',
   ...over,
@@ -118,6 +142,7 @@ const FILLED = fields({
   phone: PHONE,
   email: EMAIL,
   date: DATE,
+  dateFull: DATE_FULL,
   time: TIME,
   note: NOTE,
 })
@@ -138,7 +163,8 @@ export const SCREENS = {
     page: 'empty',
   },
 
-  // Formulario recién abierto: nada elegido todavía, sin resumen.
+  // Formulario recién abierto: nada elegido todavía. Único evento sin
+  // resumen, porque `hasSummaryContent` todavía es falso.
   '04-formulario-vacio': {
     page: 'form',
     timezone: TZ,
@@ -170,12 +196,11 @@ export const SCREENS = {
     servicesStatus: 'error',
   },
 
-  // Formulario completo, con el resumen visible antes del envío.
+  // Formulario completo, con el resumen ya cerrado antes del envío.
   '08-formulario-completo': {
     page: 'form',
     timezone: TZ,
     fields: FILLED,
-    resumen: true,
   },
 
   // Envío intentado con campos inválidos: error por campo (aquí, barbero y
@@ -183,7 +208,13 @@ export const SCREENS = {
   '09-error-validacion': {
     page: 'form',
     timezone: TZ,
-    fields: fields({ attendee: ATTENDEE, customerName: CUSTOMER, date: DATE, time: TIME }),
+    fields: fields({
+      attendee: ATTENDEE,
+      customerName: CUSTOMER,
+      date: DATE,
+      dateFull: DATE_FULL,
+      time: TIME,
+    }),
     attempted: true,
     fieldErrors: { barber: 'Elige un barbero.', service: 'Elige un servicio.' },
     alert: { variant: 'danger', title: COPY.validationErrorTitle, body: COPY.validationErrorBody },
@@ -194,7 +225,6 @@ export const SCREENS = {
     page: 'form',
     timezone: TZ,
     fields: FILLED,
-    resumen: true,
     saving: true,
   },
 
@@ -204,7 +234,6 @@ export const SCREENS = {
     page: 'form',
     timezone: TZ,
     fields: FILLED,
-    resumen: true,
     attempted: true,
     fieldErrors: { time: COPY.startsAtConflict },
     alert: { variant: 'danger', title: COPY.conflictTitle, body: COPY.conflictBody },
