@@ -62,6 +62,16 @@
      estado de página lo usan de forma consistente en todo el atlas. */
   --color-on-strong-muted: #a8b0bd;
 
+  /* Tintes de estado LEVANTADOS al canvas de tinta (issue #190, atlas
+     nuevo-turno-eventos "Contrato visual común"): los pares de arriba están
+     calculados para superficies claras y #a43a3a sobre #101b2b no alcanza AA.
+     Son el mismo matiz aclarado hasta pasar AA sobre tinta y solo se usan
+     para TEXTO y FILETES sobre --color-surface-strong; las alertas y las
+     fichas siguen usando los pares claros del sistema. */
+  --color-danger-on-strong: #e3928d;
+  --color-warning-on-strong: #dfb063;
+  --color-success-on-strong: #9dc2a9;
+
   /* Color: estados de turno */
   --color-status-confirmed-surface: var(--color-info-surface);
   --color-status-confirmed-text: var(--color-info-text);

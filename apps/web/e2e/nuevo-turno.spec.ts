@@ -57,6 +57,15 @@ async function assignServiceToBarber(page: Page, barberName: string, serviceName
   await expect(page.getByRole('checkbox', { name: serviceName })).toBeChecked()
 }
 
+// El campo "Barbero" de esta pantalla es el listbox con monograma
+// (BarberSelect, issue #190): el atlas nuevo-turno-eventos muestra el retrato
+// dentro del control cerrado y una `<option>` nativa no puede llevarlo. El
+// selector de "Servicio" sigue siendo un `<select>` nativo.
+async function chooseBarber(page: Page, barberName: string) {
+  await page.getByRole('button', { name: 'Barbero', exact: true }).click()
+  await page.getByRole('option', { name: barberName }).click()
+}
+
 async function openNewAppointment(page: Page) {
   await page.getByRole('link', { name: 'Nuevo turno' }).click()
   await expect(page).toHaveURL(/\/panel\/turnos\/nuevo$/)
@@ -93,7 +102,7 @@ test.describe('Creación manual de turnos (HU-061)', () => {
     await assignServiceToBarber(page, barberName, serviceName)
 
     await openNewAppointment(page)
-    await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
+    await chooseBarber(page, barberName)
     await expect(
       page.getByLabel('Servicio', { exact: true }).locator('option', { hasText: serviceName }),
     ).toHaveCount(1)
@@ -123,7 +132,7 @@ test.describe('Creación manual de turnos (HU-061)', () => {
 
     async function submitOnce(attendeeName: string) {
       await openNewAppointment(page)
-      await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
+      await chooseBarber(page, barberName)
       await page.getByLabel('Servicio', { exact: true }).selectOption({ label: serviceName })
       await page.getByLabel('Persona atendida').fill(attendeeName)
       await page.getByLabel('Nombre del cliente').fill(attendeeName)
@@ -153,7 +162,7 @@ test.describe('Creación manual de turnos (HU-061)', () => {
     // está asignado a este barbero.
 
     await openNewAppointment(page)
-    await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
+    await chooseBarber(page, barberName)
     await expect(
       page
         .getByLabel('Servicio', { exact: true })

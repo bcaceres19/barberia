@@ -45,11 +45,25 @@ async function mountReady(barbers = oneBarber) {
   return wrapper
 }
 
+/**
+ * El campo "Barbero" es el listbox con monograma (BarberSelect), no un
+ * `<select>` nativo: el atlas nuevo-turno-eventos (issue #190) muestra el
+ * retrato del barbero dentro del control cerrado, y una `<option>` nativa no
+ * puede llevarlo. Elegir = abrir el disparador y activar su opción.
+ */
+async function chooseBarber(
+  wrapper: Awaited<ReturnType<typeof mountReady>>,
+  index = 0,
+): Promise<void> {
+  await wrapper.get('#new-appointment-barber').trigger('click')
+  await flushPromises()
+  await wrapper.findAll('[role="option"]')[index]!.trigger('click')
+  await flushPromises()
+}
+
 async function fillValidForm(wrapper: Awaited<ReturnType<typeof mountReady>>) {
   fetchAssignedServicesMock.mockResolvedValueOnce({ kind: 'success', items: twoServices })
-  const barberSelect = wrapper.get<HTMLSelectElement>('#new-appointment-barber')
-  await barberSelect.setValue('b-1')
-  await flushPromises()
+  await chooseBarber(wrapper)
 
   const serviceSelect = wrapper.get<HTMLSelectElement>('#new-appointment-service')
   await serviceSelect.setValue('s-1')
@@ -108,8 +122,7 @@ describe('NewAppointmentPage', () => {
   it('loads only the services assigned to the selected barber (DEC-072)', async () => {
     const wrapper = await mountReady()
     fetchAssignedServicesMock.mockResolvedValueOnce({ kind: 'success', items: twoServices })
-    await wrapper.get('#new-appointment-barber').setValue('b-1')
-    await flushPromises()
+    await chooseBarber(wrapper)
     expect(fetchAssignedServicesMock).toHaveBeenCalledWith('b-1')
     const options = wrapper.findAll('#new-appointment-service option')
     expect(options.map((o) => o.text())).toContain('Corte clásico')
@@ -131,8 +144,7 @@ describe('NewAppointmentPage', () => {
   it('shows a live "Resumen" with only the fields filled so far (Fase 4b, adopción NAVA)', async () => {
     const wrapper = await mountReady()
     fetchAssignedServicesMock.mockResolvedValueOnce({ kind: 'success', items: twoServices })
-    await wrapper.get('#new-appointment-barber').setValue('b-1')
-    await flushPromises()
+    await chooseBarber(wrapper)
 
     const resumen = wrapper.get('.new-appointment-page__resumen')
     expect(resumen.text()).toContain('Carlos Ramírez')
@@ -236,8 +248,95 @@ describe('NewAppointmentPage', () => {
     await flushPromises()
   })
 
+  // Fidelidad con el atlas nuevo-turno-eventos (issue #190). Estas pruebas
+  // describen la NUEVA geometría/estado visual, nunca ocultan una diferencia.
+
+  it('keeps every field and marks the time field on a 409 (atlas evento 11)', async () => {
+    const wrapper = await mountReady()
+    await fillValidForm(wrapper)
+    createManualAppointmentMock.mockResolvedValueOnce({
+      kind: 'conflict',
+      detail: 'el barbero ya tiene una cita en ese intervalo',
+    })
+    await wrapper.get('form').trigger('submit.prevent')
+    await flushPromises()
+
+    // Dos niveles a la vez: alerta global + mismo detalle junto al campo.
+    const occurrences = wrapper.text().split('el barbero ya tiene una cita en ese intervalo').length
+    expect(occurrences).toBe(3)
+
+    const inputs = wrapper.findAll('input')
+    const byLabel = (text: string) =>
+      inputs.find((i) => i.element.labels?.[0]?.textContent?.includes(text))!
+    expect(byLabel('Hora del turno').element.value).toBe('14:30')
+    expect(byLabel('Nombre del cliente').element.value).toBe('Juan Pérez')
+  })
+
+  it('counts the note against the real validateCustomerNote limit (500)', async () => {
+    const wrapper = await mountReady()
+    expect(wrapper.get('.new-appointment-page__counter').text()).toBe('0/500')
+
+    await wrapper.get('#new-appointment-note').setValue('Cliente frecuente.')
+    expect(wrapper.get('.new-appointment-page__counter').text()).toBe('18/500')
+  })
+
+  it('waits with the skeleton of the form, not with an empty screen', async () => {
+    fetchBarberSummariesMock.mockReturnValueOnce(new Promise(() => {}))
+    fetchBarbershopTimezoneMock.mockResolvedValueOnce({ kind: 'unavailable' })
+    const wrapper = mountPage()
+    await flushPromises()
+
+    const skeleton = wrapper.get('.nt-skeleton')
+    expect(skeleton.attributes('role')).toBe('status')
+    expect(skeleton.text()).toContain('Cargando barberos')
+    expect(wrapper.findAll('.nt-skeleton__band')).toHaveLength(4)
+  })
+
+  it('does not render the summary rail on an untouched form (atlas evento 04)', async () => {
+    const wrapper = await mountReady()
+    expect(wrapper.find('.new-appointment-page__rail').exists()).toBe(false)
+    expect(wrapper.get('.new-appointment-page__layout').classes()).toContain(
+      'new-appointment-page__layout--solo',
+    )
+  })
+
   it('has no detectable axe violations in the ready state', async () => {
     const wrapper = await mountReady()
+    const results = await axe(wrapper.element, axeOptions)
+    expect(results.violations).toEqual([])
+  })
+
+  it('has no detectable axe violations with the global alert visible', async () => {
+    const wrapper = await mountReady()
+    await wrapper.get('form').trigger('submit.prevent')
+    await flushPromises()
+    expect(wrapper.find('.new-appointment-page__rail').exists()).toBe(true)
+
+    const results = await axe(wrapper.element, axeOptions)
+    expect(results.violations).toEqual([])
+  })
+
+  it('has no detectable axe violations on the success screen', async () => {
+    const wrapper = await mountReady()
+    await fillValidForm(wrapper)
+    createManualAppointmentMock.mockResolvedValueOnce({
+      kind: 'success',
+      appointment: {
+        id: 'appt-1',
+        barberId: 'b-1',
+        serviceId: 's-1',
+        attendeeName: 'Juan Pérez',
+        startsAt: '2026-09-03T14:30:00-05:00',
+        endsAt: '2026-09-03T15:00:00-05:00',
+        serviceName: 'Corte clásico',
+        durationMinutes: 30,
+        priceAmount: '20000.00',
+        currency: 'COP',
+      },
+    })
+    await wrapper.get('form').trigger('submit.prevent')
+    await flushPromises()
+
     const results = await axe(wrapper.element, axeOptions)
     expect(results.violations).toEqual([])
   })

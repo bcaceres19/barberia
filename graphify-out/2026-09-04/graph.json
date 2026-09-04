@@ -2520,7 +2520,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_challenge_handler",
-      "community": 184,
+      "community": 97,
       "community_name": "ThrottleService",
       "norm_label": "challenge_handler.go"
     },
@@ -2531,7 +2531,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "httpapi_challengehandler",
-      "community": 184,
+      "community": 97,
       "community_name": "ThrottleService",
       "norm_label": "challengehandler"
     },
@@ -2542,7 +2542,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_challenge_handler_newchallengehandler",
-      "community": 184,
+      "community": 97,
       "community_name": "ThrottleService",
       "norm_label": "newchallengehandler()"
     },
@@ -2586,7 +2586,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "httpapi_challengeverifyhandler",
-      "community": 184,
+      "community": 97,
       "community_name": "ThrottleService",
       "norm_label": "challengeverifyhandler"
     },
@@ -2597,7 +2597,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_challenge_handler_newchallengeverifyhandler",
-      "community": 184,
+      "community": 97,
       "community_name": "ThrottleService",
       "norm_label": "newchallengeverifyhandler()"
     },
@@ -3500,7 +3500,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_handler",
       "community": 184,
-      "community_name": "ThrottleService",
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "auth/httpapi/handler.go"
     },
     {
@@ -3511,7 +3511,7 @@
       "_origin": "ast",
       "id": "httpapi_cookieconfig",
       "community": 184,
-      "community_name": "ThrottleService",
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "cookieconfig"
     },
     {
@@ -3522,7 +3522,7 @@
       "_origin": "ast",
       "id": "samesite",
       "community": 184,
-      "community_name": "ThrottleService",
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "samesite"
     },
     {
@@ -3533,7 +3533,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_handler_defaultcookieconfig",
       "community": 184,
-      "community_name": "ThrottleService",
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "defaultcookieconfig()"
     },
     {
@@ -3544,7 +3544,7 @@
       "_origin": "ast",
       "id": "httpapi_loginhandler",
       "community": 184,
-      "community_name": "ThrottleService",
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "loginhandler"
     },
     {
@@ -3555,7 +3555,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_handler_newloginhandler",
       "community": 184,
-      "community_name": "ThrottleService",
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "newloginhandler()"
     },
     {
@@ -4039,7 +4039,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_login_throttle_test",
       "community": 184,
-      "community_name": "ThrottleService",
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "login_throttle_test.go"
     },
     {
@@ -4050,7 +4050,7 @@
       "_origin": "ast",
       "id": "httpapi_escalatedthrottlerepository",
       "community": 184,
-      "community_name": "ThrottleService",
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "escalatedthrottlerepository"
     },
     {
@@ -4061,7 +4061,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_login_throttle_test_go_time",
       "community": 184,
-      "community_name": "ThrottleService",
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "time"
     },
     {
@@ -4072,7 +4072,7 @@
       "_origin": "ast",
       "id": "httpapi_escalatedthrottlerepository_registerattempt",
       "community": 184,
-      "community_name": "ThrottleService",
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": ".registerattempt()"
     },
     {
@@ -4083,7 +4083,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_login_throttle_test_go_context",
       "community": 184,
-      "community_name": "ThrottleService",
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "context"
     },
     {
@@ -4094,7 +4094,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_login_throttle_test_newloginhandlerwiththrottle",
       "community": 184,
-      "community_name": "ThrottleService",
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "newloginhandlerwiththrottle()"
     },
     {
@@ -4105,7 +4105,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_login_throttle_test_go_t",
       "community": 184,
-      "community_name": "ThrottleService",
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "t"
     },
     {
@@ -4116,7 +4116,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_login_throttle_test_go_repository",
       "community": 184,
-      "community_name": "ThrottleService",
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "repository"
     },
     {
@@ -4127,7 +4127,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_login_throttle_test_testloginhandler_escalated_returns429withretryafterandnevertouchesrepository",
       "community": 184,
-      "community_name": "ThrottleService",
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "testloginhandler_escalated_returns429withretryafterandnevertouchesrepository()"
     },
     {
@@ -4138,7 +4138,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_login_throttle_test_testloginhandler_notescalated_proceedsnormally",
       "community": 184,
-      "community_name": "ThrottleService",
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "testloginhandler_notescalated_proceedsnormally()"
     },
     {
@@ -4149,7 +4149,7 @@
       "_origin": "ast",
       "id": "httpapi_countingrepository",
       "community": 184,
-      "community_name": "ThrottleService",
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "countingrepository"
     },
     {
@@ -4160,7 +4160,7 @@
       "_origin": "ast",
       "id": "stubrepository",
       "community": 184,
-      "community_name": "ThrottleService",
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": "stubrepository"
     },
     {
@@ -4171,7 +4171,7 @@
       "_origin": "ast",
       "id": "httpapi_countingrepository_resolvelogintenant",
       "community": 184,
-      "community_name": "ThrottleService",
+      "community_name": "newLoginHandlerWithThrottle",
       "norm_label": ".resolvelogintenant()"
     },
     {
@@ -4632,8 +4632,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_recovery_handler",
-      "community": 177,
-      "community_name": "RecoveryService",
+      "community": 367,
+      "community_name": "recovery_handler_test.go",
       "norm_label": "recovery_handler.go"
     },
     {
@@ -4643,8 +4643,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "httpapi_recoveryrequesthandler",
-      "community": 177,
-      "community_name": "RecoveryService",
+      "community": 367,
+      "community_name": "recovery_handler_test.go",
       "norm_label": "recoveryrequesthandler"
     },
     {
@@ -4654,8 +4654,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_recovery_handler_go_logger",
-      "community": 177,
-      "community_name": "RecoveryService",
+      "community": 367,
+      "community_name": "recovery_handler_test.go",
       "norm_label": "logger"
     },
     {
@@ -4665,8 +4665,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_recovery_handler_newrecoveryrequesthandler",
-      "community": 177,
-      "community_name": "RecoveryService",
+      "community": 367,
+      "community_name": "recovery_handler_test.go",
       "norm_label": "newrecoveryrequesthandler()"
     },
     {
@@ -4709,8 +4709,8 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "httpapi_recoveryverifyhandler",
-      "community": 177,
-      "community_name": "RecoveryService",
+      "community": 367,
+      "community_name": "recovery_handler_test.go",
       "norm_label": "recoveryverifyhandler"
     },
     {
@@ -4720,8 +4720,8 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_httpapi_recovery_handler_newrecoveryverifyhandler",
-      "community": 177,
-      "community_name": "RecoveryService",
+      "community": 367,
+      "community_name": "recovery_handler_test.go",
       "norm_label": "newrecoveryverifyhandler()"
     },
     {
@@ -4742,8 +4742,8 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "httpapi_recoveryresetpasswordhandler",
-      "community": 177,
-      "community_name": "RecoveryService",
+      "community": 367,
+      "community_name": "recovery_handler_test.go",
       "norm_label": "recoveryresetpasswordhandler"
     },
     {
@@ -6051,7 +6051,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_ports",
-      "community": 184,
+      "community": 97,
       "community_name": "ThrottleService",
       "norm_label": "auth/ports.go"
     },
@@ -6062,7 +6062,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "auth_passwordhasher",
-      "community": 184,
+      "community": 97,
       "community_name": "ThrottleService",
       "norm_label": "passwordhasher"
     },
@@ -6073,7 +6073,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "auth_tokengenerator",
-      "community": 184,
+      "community": 97,
       "community_name": "ThrottleService",
       "norm_label": "tokengenerator"
     },
@@ -6095,7 +6095,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "auth_repository",
-      "community": 184,
+      "community": 97,
       "community_name": "ThrottleService",
       "norm_label": "repository"
     },
@@ -8141,7 +8141,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_service",
-      "community": 184,
+      "community": 97,
       "community_name": "ThrottleService",
       "norm_label": "auth/service.go"
     },
@@ -8152,7 +8152,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "auth_loginservice",
-      "community": 184,
+      "community": 97,
       "community_name": "ThrottleService",
       "norm_label": "loginservice"
     },
@@ -8163,7 +8163,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_service_go_repository",
-      "community": 184,
+      "community": 97,
       "community_name": "ThrottleService",
       "norm_label": "repository"
     },
@@ -8174,7 +8174,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_service_newloginservice",
-      "community": 184,
+      "community": 97,
       "community_name": "ThrottleService",
       "norm_label": "newloginservice()"
     },
@@ -9109,7 +9109,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "auth_throttleservice",
-      "community": 184,
+      "community": 97,
       "community_name": "ThrottleService",
       "norm_label": "throttleservice"
     },
@@ -9132,7 +9132,7 @@
       "_origin": "ast",
       "id": "auth_throttleservice_haship",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": ".haship()"
     },
     {
@@ -9143,7 +9143,7 @@
       "_origin": "ast",
       "id": "auth_throttleservice_check",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": ".check()"
     },
     {
@@ -9154,7 +9154,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_auth_throttle_go_context",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": "context"
     },
     {
@@ -11353,8 +11353,8 @@
       "source_location": "L125",
       "_origin": "ast",
       "id": "apps_api_internal_modules_booking_errors_errappointmentnotconfirmed",
-      "community": 12,
-      "community_name": "Validation",
+      "community": 326,
+      "community_name": "NotFound",
       "norm_label": "errappointmentnotconfirmed()"
     },
     {
@@ -11365,7 +11365,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_booking_errors_errversionconflict",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": "errversionconflict()"
     },
     {
@@ -21033,8 +21033,8 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_domain_validaterecurrencekind",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 101,
+      "community_name": "block_domain.go",
       "norm_label": "validaterecurrencekind()"
     },
     {
@@ -21088,8 +21088,8 @@
       "source_location": "L119",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_domain_validateweekdayshape",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 101,
+      "community_name": "block_domain.go",
       "norm_label": "validateweekdayshape()"
     },
     {
@@ -21099,8 +21099,8 @@
       "source_location": "L137",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_domain_validateeffectiverange",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 101,
+      "community_name": "block_domain.go",
       "norm_label": "validateeffectiverange()"
     },
     {
@@ -21374,8 +21374,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_errors",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 101,
+      "community_name": "block_domain.go",
       "norm_label": "block_errors.go"
     },
     {
@@ -21385,8 +21385,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_errors_errtimeblocknotfound",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 260,
+      "community_name": "Internal",
       "norm_label": "errtimeblocknotfound()"
     },
     {
@@ -21418,8 +21418,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_errors_errrecurrencekindinvalid",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 101,
+      "community_name": "block_domain.go",
       "norm_label": "errrecurrencekindinvalid()"
     },
     {
@@ -21429,8 +21429,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_errors_errdateinvalid",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 101,
+      "community_name": "block_domain.go",
       "norm_label": "errdateinvalid()"
     },
     {
@@ -21462,8 +21462,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_errors_errweekdayshapeinvalid",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 101,
+      "community_name": "block_domain.go",
       "norm_label": "errweekdayshapeinvalid()"
     },
     {
@@ -21473,8 +21473,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_errors_erreffectiverangeinvalid",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 101,
+      "community_name": "block_domain.go",
       "norm_label": "erreffectiverangeinvalid()"
     },
     {
@@ -21495,8 +21495,8 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_errors_errdateoutofseriesrange",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 101,
+      "community_name": "block_domain.go",
       "norm_label": "errdateoutofseriesrange()"
     },
     {
@@ -21506,8 +21506,8 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_errors_errduplicateseriesdate",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 101,
+      "community_name": "block_domain.go",
       "norm_label": "errduplicateseriesdate()"
     },
     {
@@ -21517,7 +21517,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_errors_errseriesdatenotfound",
-      "community": 289,
+      "community": 326,
       "community_name": "NotFound",
       "norm_label": "errseriesdatenotfound()"
     },
@@ -21528,8 +21528,8 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_errors_errduplicateseriesexception",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 101,
+      "community_name": "block_domain.go",
       "norm_label": "errduplicateseriesexception()"
     },
     {
@@ -21539,7 +21539,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_errors_errseriesexceptionnotfound",
-      "community": 289,
+      "community": 326,
       "community_name": "NotFound",
       "norm_label": "errseriesexceptionnotfound()"
     },
@@ -21550,8 +21550,8 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_errors_errupdatescopeinvalid",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 101,
+      "community_name": "block_domain.go",
       "norm_label": "errupdatescopeinvalid()"
     },
     {
@@ -21561,8 +21561,8 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_errors_errsplitonlyweekly",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 101,
+      "community_name": "block_domain.go",
       "norm_label": "errsplitonlyweekly()"
     },
     {
@@ -21572,8 +21572,8 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_errors_errsplitdateoutofrange",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 101,
+      "community_name": "block_domain.go",
       "norm_label": "errsplitdateoutofrange()"
     },
     {
@@ -21583,8 +21583,8 @@
       "source_location": "L105",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_errors_errrecurrencekindimmutable",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 101,
+      "community_name": "block_domain.go",
       "norm_label": "errrecurrencekindimmutable()"
     },
     {
@@ -21594,8 +21594,8 @@
       "source_location": "L111",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_errors_errexplicitdatesonlydatelist",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 101,
+      "community_name": "block_domain.go",
       "norm_label": "errexplicitdatesonlydatelist()"
     },
     {
@@ -21605,8 +21605,8 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_errors_errqueryrangeinvalid",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 101,
+      "community_name": "block_domain.go",
       "norm_label": "errqueryrangeinvalid()"
     },
     {
@@ -21760,7 +21760,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_service",
       "community": 289,
-      "community_name": "NotFound",
+      "community_name": "block_service.go",
       "norm_label": "block_service.go"
     },
     {
@@ -21826,7 +21826,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_service_go_timeblock",
       "community": 289,
-      "community_name": "NotFound",
+      "community_name": "block_service.go",
       "norm_label": "timeblock"
     },
     {
@@ -21913,8 +21913,8 @@
       "source_location": "L277",
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_service_validateseriesinput",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 101,
+      "community_name": "block_domain.go",
       "norm_label": "validateseriesinput()"
     },
     {
@@ -21991,7 +21991,7 @@
       "_origin": "ast",
       "id": "schedule_seriesoccurrence",
       "community": 289,
-      "community_name": "NotFound",
+      "community_name": "block_service.go",
       "norm_label": "seriesoccurrence"
     },
     {
@@ -22002,7 +22002,7 @@
       "_origin": "ast",
       "id": "schedule_effectiveblocksresult",
       "community": 289,
-      "community_name": "NotFound",
+      "community_name": "block_service.go",
       "norm_label": "effectiveblocksresult"
     },
     {
@@ -22024,7 +22024,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_service_expandseriesoccurrences",
       "community": 289,
-      "community_name": "NotFound",
+      "community_name": "block_service.go",
       "norm_label": "expandseriesoccurrences()"
     },
     {
@@ -22035,7 +22035,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_service_isoweekdayof",
       "community": 289,
-      "community_name": "NotFound",
+      "community_name": "block_service.go",
       "norm_label": "isoweekdayof()"
     },
     {
@@ -22046,7 +22046,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_modules_schedule_block_service_go_time",
       "community": 289,
-      "community_name": "NotFound",
+      "community_name": "block_service.go",
       "norm_label": "time"
     },
     {
@@ -28898,8 +28898,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_domain",
-      "community": 12,
-      "community_name": "Validation",
+      "community": 172,
+      "community_name": ".Update",
       "norm_label": "shops/domain.go"
     },
     {
@@ -28920,8 +28920,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_domain_normalizename",
-      "community": 12,
-      "community_name": "Validation",
+      "community": 172,
+      "community_name": ".Update",
       "norm_label": "normalizename()"
     },
     {
@@ -28931,8 +28931,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_domain_normalizecontact",
-      "community": 12,
-      "community_name": "Validation",
+      "community": 172,
+      "community_name": ".Update",
       "norm_label": "normalizecontact()"
     },
     {
@@ -28942,8 +28942,8 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_domain_normalizecontactemail",
-      "community": 12,
-      "community_name": "Validation",
+      "community": 172,
+      "community_name": ".Update",
       "norm_label": "normalizecontactemail()"
     },
     {
@@ -28953,8 +28953,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_errors",
-      "community": 12,
-      "community_name": "Validation",
+      "community": 172,
+      "community_name": ".Update",
       "norm_label": "shops/errors.go"
     },
     {
@@ -28964,8 +28964,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_errors_errnamerequired",
-      "community": 12,
-      "community_name": "Validation",
+      "community": 172,
+      "community_name": ".Update",
       "norm_label": "errnamerequired()"
     },
     {
@@ -28975,8 +28975,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_errors_errnametoolong",
-      "community": 12,
-      "community_name": "Validation",
+      "community": 172,
+      "community_name": ".Update",
       "norm_label": "errnametoolong()"
     },
     {
@@ -28986,8 +28986,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_errors_errtimezonerequired",
-      "community": 12,
-      "community_name": "Validation",
+      "community": 172,
+      "community_name": ".Update",
       "norm_label": "errtimezonerequired()"
     },
     {
@@ -28997,8 +28997,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_errors_errtimezonetoolong",
-      "community": 12,
-      "community_name": "Validation",
+      "community": 172,
+      "community_name": ".Update",
       "norm_label": "errtimezonetoolong()"
     },
     {
@@ -29008,8 +29008,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_errors_errtimezoneinvalid",
-      "community": 12,
-      "community_name": "Validation",
+      "community": 172,
+      "community_name": ".Update",
       "norm_label": "errtimezoneinvalid()"
     },
     {
@@ -29019,8 +29019,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_errors_errcontactemailinvalid",
-      "community": 12,
-      "community_name": "Validation",
+      "community": 172,
+      "community_name": ".Update",
       "norm_label": "errcontactemailinvalid()"
     },
     {
@@ -29030,8 +29030,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_errors_errcontactphoneinvalid",
-      "community": 12,
-      "community_name": "Validation",
+      "community": 172,
+      "community_name": ".Update",
       "norm_label": "errcontactphoneinvalid()"
     },
     {
@@ -29822,8 +29822,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "shops_service_get",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 172,
+      "community_name": ".Update",
       "norm_label": ".get()"
     },
     {
@@ -29833,8 +29833,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "apps_api_internal_modules_shops_service_go_context",
-      "community": 289,
-      "community_name": "NotFound",
+      "community": 172,
+      "community_name": ".Update",
       "norm_label": "context"
     },
     {
@@ -29855,8 +29855,8 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "shops_service_update",
-      "community": 12,
-      "community_name": "Validation",
+      "community": 172,
+      "community_name": ".Update",
       "norm_label": ".update()"
     },
     {
@@ -32628,7 +32628,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_apperr_apperr",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": "apperr.go"
     },
     {
@@ -32639,7 +32639,7 @@
       "_origin": "ast",
       "id": "apperr_kind",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": "kind"
     },
     {
@@ -32650,7 +32650,7 @@
       "_origin": "ast",
       "id": "apperr_error",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": "error"
     },
     {
@@ -32661,7 +32661,7 @@
       "_origin": "ast",
       "id": "apperr_error_error",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": ".error()"
     },
     {
@@ -32672,7 +32672,7 @@
       "_origin": "ast",
       "id": "apperr_error_unwrap",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": ".unwrap()"
     },
     {
@@ -32682,7 +32682,7 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "apps_api_internal_platform_apperr_apperr_notfound",
-      "community": 289,
+      "community": 326,
       "community_name": "NotFound",
       "norm_label": "notfound()"
     },
@@ -32716,7 +32716,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_apperr_apperr_idempotencyconflict",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": "idempotencyconflict()"
     },
     {
@@ -32727,7 +32727,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_apperr_apperr_idempotencylocked",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": "idempotencylocked()"
     },
     {
@@ -32760,7 +32760,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_apperr_apperr_challengerequired",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": "challengerequired()"
     },
     {
@@ -32782,7 +32782,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_apperr_apperr_versionconflict",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": "versionconflict()"
     },
     {
@@ -32793,7 +32793,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_apperr_apperr_invalidstate",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": "invalidstate()"
     },
     {
@@ -33298,7 +33298,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "clock_clock",
-      "community": 184,
+      "community": 97,
       "community_name": "ThrottleService",
       "norm_label": "clock"
     },
@@ -34278,7 +34278,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_contract_test",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": "httpserver/contract_test.go"
     },
     {
@@ -34289,7 +34289,7 @@
       "_origin": "ast",
       "id": "httpserver_problemschema",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": "problemschema"
     },
     {
@@ -34300,7 +34300,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_contract_test_loadproblemschema",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": "loadproblemschema()"
     },
     {
@@ -34311,7 +34311,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_contract_test_go_t",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": "t"
     },
     {
@@ -34322,7 +34322,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_contract_test_findreporoot",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": "findreporoot()"
     },
     {
@@ -34333,7 +34333,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_contract_test_testcontract_problemstructmatchesopenapischema",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": "testcontract_problemstructmatchesopenapischema()"
     },
     {
@@ -34344,7 +34344,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_contract_test_testcontract_translatealwaysfillsrequiredfields",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": "testcontract_translatealwaysfillsrequiredfields()"
     },
     {
@@ -34355,7 +34355,7 @@
       "_origin": "ast",
       "id": "apps_api_internal_platform_httpserver_contract_test_iszerovalue",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": "iszerovalue()"
     },
     {
@@ -35884,7 +35884,7 @@
       "_origin": "ast",
       "id": "idempotency_decision_aserror",
       "community": 326,
-      "community_name": "Error",
+      "community_name": "NotFound",
       "norm_label": ".aserror()"
     },
     {
@@ -38742,8 +38742,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "apps_web_package_devdependencies_openapi_typescript",
-      "community": 4,
-      "community_name": "devDependencies",
+      "community": 423,
+      "community_name": "openapi-typescript",
       "norm_label": "openapi-typescript"
     },
     {
@@ -38753,8 +38753,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "openapi_typescript",
-      "community": 4,
-      "community_name": "devDependencies",
+      "community": 423,
+      "community_name": "openapi-typescript",
       "norm_label": "openapi-typescript"
     },
     {
@@ -38786,8 +38786,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "apps_web_package_devdependencies_typescript",
-      "community": 97,
-      "community_name": "typescript",
+      "community": 4,
+      "community_name": "devDependencies",
       "norm_label": "typescript"
     },
     {
@@ -38797,8 +38797,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "typescript",
-      "community": 97,
-      "community_name": "typescript",
+      "community": 4,
+      "community_name": "devDependencies",
       "norm_label": "typescript"
     },
     {
@@ -42309,8 +42309,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_bootstrap_installsessionhandling",
-      "community": 112,
-      "community_name": "sessionStore.ts",
+      "community": 129,
+      "community_name": "routes.test.ts",
       "norm_label": "installsessionhandling.ts"
     },
     {
@@ -42321,8 +42321,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_bootstrap_installsessionhandling_installsessionhandling",
-      "community": 112,
-      "community_name": "sessionStore.ts",
+      "community": 129,
+      "community_name": "routes.test.ts",
       "norm_label": "installsessionhandling()"
     },
     {
@@ -42526,8 +42526,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_components_loginform_loginservererrorsummary",
-      "community": 172,
-      "community_name": "LoginForm.test.ts",
+      "community": 38,
+      "community_name": "LoginForm.vue",
       "norm_label": "loginservererrorsummary"
     },
     {
@@ -43422,8 +43422,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_components_tests_loginform_test",
-      "community": 172,
-      "community_name": "LoginForm.test.ts",
+      "community": 38,
+      "community_name": "LoginForm.vue",
       "norm_label": "loginform.test.ts"
     },
     {
@@ -43433,8 +43433,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_components_tests_loginform_test_axeoptions",
-      "community": 172,
-      "community_name": "LoginForm.test.ts",
+      "community": 38,
+      "community_name": "LoginForm.vue",
       "norm_label": "axeoptions"
     },
     {
@@ -43444,8 +43444,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_components_tests_loginform_test_routerlinkstub",
-      "community": 172,
-      "community_name": "LoginForm.test.ts",
+      "community": 38,
+      "community_name": "LoginForm.vue",
       "norm_label": "routerlinkstub"
     },
     {
@@ -43457,8 +43457,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_components_tests_loginform_test_mountformoptions",
-      "community": 172,
-      "community_name": "LoginForm.test.ts",
+      "community": 38,
+      "community_name": "LoginForm.vue",
       "norm_label": "mountformoptions"
     },
     {
@@ -43469,8 +43469,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_components_tests_loginform_test_mountform",
-      "community": 172,
-      "community_name": "LoginForm.test.ts",
+      "community": 38,
+      "community_name": "LoginForm.vue",
       "norm_label": "mountform()"
     },
     {
@@ -43480,8 +43480,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_components_tests_loginform_test_ts_docref_rfc_9457",
-      "community": 172,
-      "community_name": "LoginForm.test.ts",
+      "community": 38,
+      "community_name": "LoginForm.vue",
       "norm_label": "rfc-9457"
     },
     {
@@ -43787,8 +43787,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_layouts_privateshell",
-      "community": 127,
-      "community_name": "requireSession.ts",
+      "community": 112,
+      "community_name": "sessionStore.ts",
       "norm_label": "privateshell.vue"
     },
     {
@@ -43799,8 +43799,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_layouts_privateshell_onretry",
-      "community": 127,
-      "community_name": "requireSession.ts",
+      "community": 112,
+      "community_name": "sessionStore.ts",
       "norm_label": "onretry()"
     },
     {
@@ -44187,8 +44187,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_model_sessionstore_sessionstate",
-      "community": 127,
-      "community_name": "requireSession.ts",
+      "community": 112,
+      "community_name": "sessionStore.ts",
       "norm_label": "sessionstate"
     },
     {
@@ -44199,8 +44199,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_model_sessionstore_setchecking",
-      "community": 117,
-      "community_name": "LoginPage.vue",
+      "community": 112,
+      "community_name": "sessionStore.ts",
       "norm_label": "setchecking()"
     },
     {
@@ -44283,8 +44283,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_model_sessionstore_resetforfreshlogin",
-      "community": 117,
-      "community_name": "LoginPage.vue",
+      "community": 112,
+      "community_name": "sessionStore.ts",
       "norm_label": "resetforfreshlogin()"
     },
     {
@@ -44295,8 +44295,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_model_sessionstore_retrybootstrap",
-      "community": 127,
-      "community_name": "requireSession.ts",
+      "community": 112,
+      "community_name": "sessionStore.ts",
       "norm_label": "retrybootstrap()"
     },
     {
@@ -44331,8 +44331,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_auth_model_sessionstore_onunauthorized",
-      "community": 112,
-      "community_name": "sessionStore.ts",
+      "community": 129,
+      "community_name": "routes.test.ts",
       "norm_label": "onunauthorized()"
     },
     {
@@ -48695,8 +48695,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_schedules_pages_blockspage_selectbarber",
-      "community": 91,
-      "community_name": "BlocksPage.vue",
+      "community": 207,
+      "community_name": "timeBlocksApi.ts",
       "norm_label": "selectbarber()"
     },
     {
@@ -48707,8 +48707,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_schedules_pages_blockspage_onbarberselectchange",
-      "community": 91,
-      "community_name": "BlocksPage.vue",
+      "community": 207,
+      "community_name": "timeBlocksApi.ts",
       "norm_label": "onbarberselectchange()"
     },
     {
@@ -48719,8 +48719,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "apps_web_src_modules_schedules_pages_blockspage_onretryblocks",
-      "community": 91,
-      "community_name": "BlocksPage.vue",
+      "community": 207,
+      "community_name": "timeBlocksApi.ts",
       "norm_label": "onretryblocks()"
     },
     {
@@ -56147,7 +56147,7 @@
       "label": "contentHtml()",
       "file_type": "code",
       "source_file": "tools/mockups/nuevo-turno-eventos/render.mjs",
-      "source_location": "L418",
+      "source_location": "L420",
       "_callable": true,
       "_origin": "ast",
       "id": "tools_mockups_nuevo_turno_eventos_render_contenthtml",
@@ -56159,7 +56159,7 @@
       "label": "SCALES",
       "file_type": "code",
       "source_file": "tools/mockups/nuevo-turno-eventos/render.mjs",
-      "source_location": "L609",
+      "source_location": "L621",
       "_origin": "ast",
       "id": "tools_mockups_nuevo_turno_eventos_render_scales",
       "community": 183,
@@ -56170,7 +56170,7 @@
       "label": "page()",
       "file_type": "code",
       "source_file": "tools/mockups/nuevo-turno-eventos/render.mjs",
-      "source_location": "L792",
+      "source_location": "L809",
       "_callable": true,
       "_origin": "ast",
       "id": "tools_mockups_nuevo_turno_eventos_render_page",
@@ -56182,7 +56182,7 @@
       "label": "VIEWPORTS",
       "file_type": "code",
       "source_file": "tools/mockups/nuevo-turno-eventos/render.mjs",
-      "source_location": "L808",
+      "source_location": "L825",
       "_origin": "ast",
       "id": "tools_mockups_nuevo_turno_eventos_render_viewports",
       "community": 183,
@@ -56193,7 +56193,7 @@
       "label": "main()",
       "file_type": "code",
       "source_file": "tools/mockups/nuevo-turno-eventos/render.mjs",
-      "source_location": "L813",
+      "source_location": "L830",
       "_callable": true,
       "_origin": "ast",
       "id": "tools_mockups_nuevo_turno_eventos_render_main",
@@ -59086,7 +59086,7 @@
       "label": "Uso por agentes de implementaci\u00f3n",
       "file_type": "document",
       "source_file": "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/README.md",
-      "source_location": "L54",
+      "source_location": "L56",
       "_origin": "ast",
       "id": "docs_10_backlog_evidence_ui_mockups_nava_tailored_grid_2026_09_03_nuevo_turno_eventos_readme_uso_por_agentes_de_implementaci\u00f3n",
       "community": 307,
@@ -59097,7 +59097,7 @@
       "label": "Procedencia",
       "file_type": "document",
       "source_file": "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/README.md",
-      "source_location": "L64",
+      "source_location": "L66",
       "_origin": "ast",
       "id": "docs_10_backlog_evidence_ui_mockups_nava_tailored_grid_2026_09_03_nuevo_turno_eventos_readme_procedencia",
       "community": 307,
@@ -221755,7 +221755,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tools/mockups/nuevo-turno-eventos/render.mjs",
-      "source_location": "L418",
+      "source_location": "L420",
       "weight": 1.0,
       "_origin": "ast",
       "source": "tools_mockups_nuevo_turno_eventos_render",
@@ -221876,7 +221876,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tools/mockups/nuevo-turno-eventos/render.mjs",
-      "source_location": "L813",
+      "source_location": "L830",
       "weight": 1.0,
       "_origin": "ast",
       "source": "tools_mockups_nuevo_turno_eventos_render",
@@ -221953,7 +221953,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tools/mockups/nuevo-turno-eventos/render.mjs",
-      "source_location": "L792",
+      "source_location": "L809",
       "weight": 1.0,
       "_origin": "ast",
       "source": "tools_mockups_nuevo_turno_eventos_render",
@@ -222019,7 +222019,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tools/mockups/nuevo-turno-eventos/render.mjs",
-      "source_location": "L609",
+      "source_location": "L621",
       "weight": 1.0,
       "_origin": "ast",
       "source": "tools_mockups_nuevo_turno_eventos_render",
@@ -222096,7 +222096,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tools/mockups/nuevo-turno-eventos/render.mjs",
-      "source_location": "L808",
+      "source_location": "L825",
       "weight": 1.0,
       "_origin": "ast",
       "source": "tools_mockups_nuevo_turno_eventos_render",
@@ -222192,7 +222192,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tools/mockups/nuevo-turno-eventos/render.mjs",
-      "source_location": "L799",
+      "source_location": "L816",
       "weight": 1.0,
       "_origin": "ast",
       "source": "tools_mockups_nuevo_turno_eventos_render_page",
@@ -222336,7 +222336,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tools/mockups/nuevo-turno-eventos/render.mjs",
-      "source_location": "L796",
+      "source_location": "L813",
       "weight": 1.0,
       "_origin": "ast",
       "source": "tools_mockups_nuevo_turno_eventos_render_page",
@@ -222348,7 +222348,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tools/mockups/nuevo-turno-eventos/render.mjs",
-      "source_location": "L804",
+      "source_location": "L821",
       "weight": 1.0,
       "_origin": "ast",
       "source": "tools_mockups_nuevo_turno_eventos_render_page",
@@ -222408,7 +222408,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tools/mockups/nuevo-turno-eventos/render.mjs",
-      "source_location": "L421",
+      "source_location": "L423",
       "weight": 1.0,
       "_origin": "ast",
       "source": "tools_mockups_nuevo_turno_eventos_render_contenthtml",
@@ -222516,7 +222516,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tools/mockups/nuevo-turno-eventos/render.mjs",
-      "source_location": "L437",
+      "source_location": "L439",
       "weight": 1.0,
       "_origin": "ast",
       "source": "tools_mockups_nuevo_turno_eventos_render_contenthtml",
@@ -222528,7 +222528,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tools/mockups/nuevo-turno-eventos/render.mjs",
-      "source_location": "L436",
+      "source_location": "L438",
       "weight": 1.0,
       "_origin": "ast",
       "source": "tools_mockups_nuevo_turno_eventos_render_contenthtml",
@@ -222540,7 +222540,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tools/mockups/nuevo-turno-eventos/render.mjs",
-      "source_location": "L419",
+      "source_location": "L421",
       "weight": 1.0,
       "_origin": "ast",
       "source": "tools_mockups_nuevo_turno_eventos_render_contenthtml",
@@ -222552,7 +222552,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tools/mockups/nuevo-turno-eventos/render.mjs",
-      "source_location": "L802",
+      "source_location": "L819",
       "weight": 1.0,
       "_origin": "ast",
       "source": "tools_mockups_nuevo_turno_eventos_render_page",
@@ -222564,7 +222564,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tools/mockups/nuevo-turno-eventos/render.mjs",
-      "source_location": "L826",
+      "source_location": "L843",
       "weight": 1.0,
       "_origin": "ast",
       "source": "tools_mockups_nuevo_turno_eventos_render_main",
@@ -225955,7 +225955,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/README.md",
-      "source_location": "L74",
+      "source_location": "L76",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_evidence_ui_mockups_nava_tailored_grid_2026_09_03_nuevo_turno_eventos_readme",
@@ -225988,7 +225988,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/README.md",
-      "source_location": "L64",
+      "source_location": "L66",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_evidence_ui_mockups_nava_tailored_grid_2026_09_03_nuevo_turno_eventos_readme_mockups_de_panel_turnos_nuevo_nuevo_turno_por_viewport_y_evento",
@@ -226010,7 +226010,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/README.md",
-      "source_location": "L54",
+      "source_location": "L56",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_10_backlog_evidence_ui_mockups_nava_tailored_grid_2026_09_03_nuevo_turno_eventos_readme_mockups_de_panel_turnos_nuevo_nuevo_turno_por_viewport_y_evento",
