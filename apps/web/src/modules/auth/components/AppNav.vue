@@ -64,7 +64,15 @@ async function onLogoutFromMore() {
 
 <template>
   <nav class="app-nav" aria-label="Navegación principal">
-    <ul class="app-nav__list">
+    <ul class="app-nav__list app-nav__list--desktop">
+      <li v-for="item in items" :key="item.label" class="app-nav__item">
+        <RouterLink :to="item.to" class="app-nav__link" active-class="app-nav__link--active">
+          <span class="app-nav__icon" aria-hidden="true" v-html="iconFor(item.to.name)" />
+          <span class="app-nav__label">{{ item.label }}</span>
+        </RouterLink>
+      </li>
+    </ul>
+    <ul class="app-nav__list app-nav__list--mobile">
       <li v-for="item in primaryItems" :key="item.label" class="app-nav__item">
         <RouterLink :to="item.to" class="app-nav__link" active-class="app-nav__link--active">
           <span class="app-nav__icon" aria-hidden="true" v-html="iconFor(item.to.name)" />
@@ -116,15 +124,13 @@ async function onLogoutFromMore() {
 
 <style scoped>
 .app-nav {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: var(--layer-sticky);
+  margin-top: auto;
   /* Superficie tinta, igual que AppHeader: la navegación es orientación
-     operativa (estandar-diseno-visual.md §3), no un formulario. */
+     operativa (estandar-diseno-visual.md §3), no un formulario. Filete
+     superior del atlas (issue #189): rgba(244,240,231,.14), no una sombra
+     alzada — el dock no "flota" sobre el contenido. */
   background-color: var(--color-surface-strong);
-  box-shadow: var(--shadow-raised);
+  border-top: var(--border-width-normal) solid rgb(244 240 231 / 14%);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
@@ -136,6 +142,10 @@ async function onLogoutFromMore() {
   margin: 0;
   padding: 0 var(--space-1);
   list-style: none;
+}
+
+.app-nav__list--desktop {
+  display: none;
 }
 
 .app-nav__item {
@@ -155,8 +165,7 @@ async function onLogoutFromMore() {
   background: transparent;
   border: none;
   border-bottom: var(--border-width-emphasis) solid transparent;
-  color: var(--color-on-strong);
-  opacity: 0.64;
+  color: var(--color-on-strong-muted);
   font-family: var(--font-family-base);
   font-size: var(--font-size-caption);
   font-weight: 500;
@@ -165,7 +174,6 @@ async function onLogoutFromMore() {
   cursor: pointer;
   transition:
     color var(--motion-duration-fast) var(--motion-easing-standard),
-    opacity var(--motion-duration-fast) var(--motion-easing-standard),
     border-color var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
@@ -192,12 +200,12 @@ async function onLogoutFromMore() {
 }
 
 .app-nav__link:hover {
-  opacity: 1;
+  color: var(--color-on-strong);
 }
 
 .app-nav__link:focus-visible {
   outline: none;
-  opacity: 1;
+  color: var(--color-on-strong);
   box-shadow: inset 0 0 0 var(--border-width-emphasis) var(--color-focus);
 }
 
@@ -205,7 +213,35 @@ async function onLogoutFromMore() {
 .app-nav__link[aria-expanded='true'] {
   border-bottom-color: var(--color-brand-accent-surface);
   color: var(--color-brand-accent-surface);
-  opacity: 1;
+}
+
+@media (min-width: 1024px) {
+  .app-nav__list--mobile {
+    display: none;
+  }
+
+  .app-nav__list--desktop {
+    display: flex;
+    justify-content: flex-start;
+    height: 64px;
+    padding: 0 40px;
+  }
+
+  .app-nav__item {
+    flex: 1;
+  }
+
+  .app-nav__link {
+    flex-direction: row;
+    gap: 10px;
+    padding: 0 8px;
+    font-size: 14px;
+  }
+
+  .app-nav__icon :deep(svg) {
+    width: 19px;
+    height: 19px;
+  }
 }
 
 .app-nav__more-list {

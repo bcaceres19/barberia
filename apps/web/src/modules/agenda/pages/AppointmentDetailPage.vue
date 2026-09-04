@@ -22,7 +22,7 @@ import {
 import { newIdempotencyKey } from '../model/idempotencyKey'
 import type { AppointmentDetail, HistoryEntry } from '../model/appointmentDetail'
 import { HISTORY_EVENT_LABELS, historyFieldLabel } from '../model/appointmentDetail'
-import { APPOINTMENT_STATUS_BADGE_CLASS, APPOINTMENT_STATUS_LABELS } from '../model/dailyAgenda'
+import { APPOINTMENT_STATUS_BADGE_VARIANT, APPOINTMENT_STATUS_LABELS } from '../model/dailyAgenda'
 
 type PageStatus = 'loading' | 'ready' | 'not-found' | 'error'
 type HistoryStatus = 'loading' | 'ready' | 'error'
@@ -66,8 +66,8 @@ const historyLoadingMore = ref(false)
 const statusLabel = computed(() =>
   detail.value ? APPOINTMENT_STATUS_LABELS[detail.value.status] : '',
 )
-const statusBadgeClass = computed(() =>
-  detail.value ? APPOINTMENT_STATUS_BADGE_CLASS[detail.value.status] : '',
+const statusBadgeVariant = computed(() =>
+  detail.value ? APPOINTMENT_STATUS_BADGE_VARIANT[detail.value.status] : 'neutral',
 )
 
 const timeRangeLabel = computed(() => {
@@ -323,7 +323,7 @@ function occurredAtLabel(entry: HistoryEntry): string {
         <h1 id="appointment-detail-page-title" class="appointment-detail-page__title">
           {{ detail.attendeeName }}
         </h1>
-        <BaseBadge :class="statusBadgeClass" size="sm" dot :label="statusLabel">
+        <BaseBadge :variant="statusBadgeVariant" size="sm" dot :label="statusLabel">
           {{ statusLabel }}
         </BaseBadge>
         <BaseButton

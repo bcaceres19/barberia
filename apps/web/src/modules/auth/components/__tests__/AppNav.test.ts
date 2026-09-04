@@ -71,13 +71,22 @@ describe('AppNav', () => {
     expect(icon.find('svg').exists()).toBe(true)
   })
 
-  it('composes only primary extra items directly in the dock, after "Agenda"', async () => {
+  it('composes only primary extra items directly in the mobile dock, after "Agenda" (issue #189: desktop shows every destination flat instead)', async () => {
     const { wrapper } = await mountNav('/panel', [
       { to: { name: 'panel' }, label: 'Servicios', primary: true },
       { to: { name: 'schedules-horarios' }, label: 'Horarios' },
     ])
-    const links = wrapper.findAll('a')
+    const links = wrapper.get('.app-nav__list--mobile').findAll('a')
     expect(links.map((l) => l.text())).toEqual(['Agenda', 'Servicios'])
+  })
+
+  it('shows every destination flat in the desktop list, with no "Más" grouping (issue #189, atlas panel-agenda-eventos)', async () => {
+    const { wrapper } = await mountNav('/panel', [
+      { to: { name: 'panel' }, label: 'Servicios', primary: true },
+      { to: { name: 'schedules-horarios' }, label: 'Horarios' },
+    ])
+    const links = wrapper.get('.app-nav__list--desktop').findAll('a')
+    expect(links.map((l) => l.text())).toEqual(['Agenda', 'Servicios', 'Horarios'])
   })
 
   it('does not render a "Más" trigger when every item is primary', async () => {

@@ -40,14 +40,15 @@ Si un mockup contradice una regla de negocio, el alcance, una HU, un contrato, l
 
 Las siguientes láminas forman la referencia canónica para el lenguaje visual de las familias que representan:
 
-| Referencia | Familia cubierta |
-| --- | --- |
-| [Referencia maestra Tailored Grid](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-02/00-referencia-tailored-grid.png) | Composición editorial, carriles temporales, densidad ordenada y relación entre escritorio operativo y flujo móvil. Sus módulos fuera de alcance no se copian. |
-| [Autenticación móvil](../10-backlog/evidence/ui-redesign-nava-2026-09-02/01-autenticacion-movil.png) | Acceso, validación y recuperación. |
-| [Acceso y recuperación por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/README.md) | Referencia exacta de `/acceso` y `/recuperar-acceso`: un PNG por pantalla o evento, con pares equivalentes en escritorio y móvil. Sustituye la lámina compuesta como objetivo de implementación. |
-| [Nuevo turno responsive](../10-backlog/evidence/ui-redesign-nava-2026-09-02/02-nuevo-turno-responsive.png) | Formularios extensos, secciones, reflow y conflictos. |
-| [Componentes, formularios y alertas](../10-backlog/evidence/ui-redesign-nava-2026-09-02/03-componentes-formularios-alertas.png) | Botones, campos, foco, estados, alertas y diálogo. |
-| [Servicios, configuración y navegación](../10-backlog/evidence/ui-redesign-nava-2026-09-02/04-servicios-configuracion-navegacion.png) | Shell, navegación responsive, listas operativas, modal y éxito persistente. |
+| Referencia                                                                                                                            | Familia cubierta                                                                                                                                                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Referencia maestra Tailored Grid](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-02/00-referencia-tailored-grid.png)   | Composición editorial, carriles temporales, densidad ordenada y relación entre escritorio operativo y flujo móvil. Sus módulos fuera de alcance no se copian.                                                                                                                 |
+| [Autenticación móvil](../10-backlog/evidence/ui-redesign-nava-2026-09-02/01-autenticacion-movil.png)                                  | Acceso, validación y recuperación.                                                                                                                                                                                                                                            |
+| [Acceso y recuperación por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/README.md) | Referencia exacta de `/acceso` y `/recuperar-acceso`: un PNG por pantalla o evento, con pares equivalentes en escritorio y móvil. Sustituye la lámina compuesta como objetivo de implementación.                                                                              |
+| [Agenda diaria por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/README.md) | Referencia exacta de `/panel`: agenda, carga inicial, actualización, vacío, errores, barbero ausente, zona no disponible y turno nocturno (issue #189). Sustituye `ui-mockups-nava-tailored-grid-2026-09-02/01-agenda-diaria-responsive.png` como objetivo de implementación. |
+| [Nuevo turno responsive](../10-backlog/evidence/ui-redesign-nava-2026-09-02/02-nuevo-turno-responsive.png)                            | Formularios extensos, secciones, reflow y conflictos.                                                                                                                                                                                                                         |
+| [Componentes, formularios y alertas](../10-backlog/evidence/ui-redesign-nava-2026-09-02/03-componentes-formularios-alertas.png)       | Botones, campos, foco, estados, alertas y diálogo.                                                                                                                                                                                                                            |
+| [Servicios, configuración y navegación](../10-backlog/evidence/ui-redesign-nava-2026-09-02/04-servicios-configuracion-navegacion.png) | Shell, navegación responsive, listas operativas, modal y éxito persistente.                                                                                                                                                                                                   |
 
 El [atlas integral de mockups](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-02/README.md) amplía estas referencias a las once rutas implementadas, sus estados transversales y conceptos P0 pendientes. Las láminas rotuladas como no implementadas reservan intención visual, pero no crean alcance, contrato ni autorización de desarrollo.
 
@@ -59,9 +60,9 @@ En autenticación, el error local se muestra debajo de su campo y el resumen glo
 
 Antes de diseñar o editar, el issue y el PR declaran uno de estos modos:
 
-| Modo | Cuándo aplica | Contrato visual |
-| --- | --- | --- |
-| **Identidad guiada** | No existe un mockup exacto asignado a la pantalla/estado, o la instrucción pide explorar o inspirarse sin reproducir una lámina. | Son obligatorias la identidad, firma cromática y cualidades NAVA. Composición, escala, grid, espaciado, componentes y navegación permanecen libres. |
+| Modo                    | Cuándo aplica                                                                                                                                                | Contrato visual                                                                                                                                                                                                                              |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Identidad guiada**    | No existe un mockup exacto asignado a la pantalla/estado, o la instrucción pide explorar o inspirarse sin reproducir una lámina.                             | Son obligatorias la identidad, firma cromática y cualidades NAVA. Composición, escala, grid, espaciado, componentes y navegación permanecen libres.                                                                                          |
 | **Fidelidad al mockup** | Un issue, prompt o instrucción asigna una imagen concreta a la pantalla/componente o pide igualar, reproducir, implementar o corregir contra esa referencia. | La imagen es contrato visual para el viewport y estado representados. Deben reproducirse sus colores, proporciones, jerarquía tipográfica, escalas de controles e iconos, centrado, alineaciones, densidad, bordes y tratamiento de estados. |
 
 En modo de fidelidad no basta con que la pantalla “se sienta NAVA”, use los mismos tokens o contenga los mismos elementos. El resultado renderizado debe compararse con la referencia. La libertad permanece en la técnica de implementación, el reflow de anchos no representados y las decisiones ausentes de la imagen.
@@ -111,30 +112,30 @@ Se evitan como lenguaje dominante los clichés de barbería —tijeras, navajas,
 
 Los siguientes colores son los anclajes de identidad. No es obligatorio usar todos en cada pantalla, pero la pantalla no puede sustituirlos por una paleta de marca diferente.
 
-| Rol | Valor de referencia | Uso esperado |
-| --- | --- | --- |
-| Tinta NAVA | `#101B2B` | Wordmark, acciones primarias, shell y superficies de alto contraste. |
-| Marfil cálido | `#F4F0E7` | Canvas y fondos dominantes. |
-| Blanco | `#FFFFFF` | Campos, diálogos y superficies elevadas o de lectura. |
-| Grafito principal | `#2A2D32` | Texto principal sobre superficies claras. |
-| Grafito secundario | `#5E625F` | Ayuda, metadatos y texto secundario. |
-| Piedra | `#E8E2D8` | Superficie atenuada, agrupación y separación suave. |
-| Borde piedra | `#C9C0B2` | Divisores y bordes no interactivos. |
-| Salvia | `#748477` | Acento secundario, bordes de control y apoyo de estados positivos. |
-| Latón | `#B8955A` | Acento de marca medido, selección y detalles editoriales. |
-| Latón oscuro | `#765C2F` | Foco visible, acción suave y, desde el issue #212, las versalitas espaciadas y filetes de los controles reglados (`--color-accent-brass` en `styles/tokens.css`: rótulos de campo, ranuras de código, palabra de estado de alerta, filete de botón secundario/fantasma). |
+| Rol                | Valor de referencia | Uso esperado                                                                                                                                                                                                                                                             |
+| ------------------ | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Tinta NAVA         | `#101B2B`           | Wordmark, acciones primarias, shell y superficies de alto contraste.                                                                                                                                                                                                     |
+| Marfil cálido      | `#F4F0E7`           | Canvas y fondos dominantes.                                                                                                                                                                                                                                              |
+| Blanco             | `#FFFFFF`           | Campos, diálogos y superficies elevadas o de lectura.                                                                                                                                                                                                                    |
+| Grafito principal  | `#2A2D32`           | Texto principal sobre superficies claras.                                                                                                                                                                                                                                |
+| Grafito secundario | `#5E625F`           | Ayuda, metadatos y texto secundario.                                                                                                                                                                                                                                     |
+| Piedra             | `#E8E2D8`           | Superficie atenuada, agrupación y separación suave.                                                                                                                                                                                                                      |
+| Borde piedra       | `#C9C0B2`           | Divisores y bordes no interactivos.                                                                                                                                                                                                                                      |
+| Salvia             | `#748477`           | Acento secundario, bordes de control y apoyo de estados positivos.                                                                                                                                                                                                       |
+| Latón              | `#B8955A`           | Acento de marca medido, selección y detalles editoriales.                                                                                                                                                                                                                |
+| Latón oscuro       | `#765C2F`           | Foco visible, acción suave y, desde el issue #212, las versalitas espaciadas y filetes de los controles reglados (`--color-accent-brass` en `styles/tokens.css`: rótulos de campo, ranuras de código, palabra de estado de alerta, filete de botón secundario/fantasma). |
 
 Para interacción sobre tinta se admiten `#18283D` en hover y `#0A1420` en activo. Los tonos derivados mediante transparencia, mezcla o aclarado son válidos cuando mantienen la familia cromática y el contraste requerido.
 
 ### 4.2 Colores semánticos
 
-| Estado | Superficie | Texto | Borde |
-| --- | --- | --- | --- |
-| Éxito | `#EAF0EB` | `#325D43` | `#748477` |
-| Advertencia o conflicto | `#F8F1DF` | `#775019` | `#9A6A24` |
-| Error o peligro | `#F8EDEC` | `#8A2C2C` | `#A43A3A` |
-| Información | `#E9EEF3` | `#23405B` | `#667D93` |
-| Inactivo | `#EEECE8` | `#56514A` | `#C9C0B2` |
+| Estado                  | Superficie | Texto     | Borde     |
+| ----------------------- | ---------- | --------- | --------- |
+| Éxito                   | `#EAF0EB`  | `#325D43` | `#748477` |
+| Advertencia o conflicto | `#F8F1DF`  | `#775019` | `#9A6A24` |
+| Error o peligro         | `#F8EDEC`  | `#8A2C2C` | `#A43A3A` |
+| Información             | `#E9EEF3`  | `#23405B` | `#667D93` |
+| Inactivo                | `#EEECE8`  | `#56514A` | `#C9C0B2` |
 
 El color nunca es la única señal: un estado incluye texto y, cuando ayude a reconocerlo, icono, forma o borde. La acción destructiva usa rojo únicamente cuando la consecuencia es destructiva; no se usa como acento decorativo.
 
@@ -214,6 +215,13 @@ Los mockups favorecen bordes finos, radios pequeños, sombras mínimas, agrupaci
 - `PageHeader` (`shared/ui`) es la cabecera repetible de toda pantalla privada: título editorial (`h1`, único por vista), contexto opcional bajo el título, enlace de retorno opcional y una región de acciones que se apila en móvil. Sustituye el encabezado ad-hoc que cada pantalla redefinía por separado.
 - `RecordRow` (`shared/ui`) es el renglón de carril para listas de registros (barberos, servicios, tramos, bloqueos): divisor fino entre filas en vez de tarjeta blanca con borde, con regiones `leading`/principal/`trailing`. No es interactivo por sí mismo; cuando la fila completa navega, el consumidor coloca el enlace o botón dentro de una de sus regiones.
 - Ambos son opcionales: una pantalla que no encaje en el patrón puede seguir componiendo su propio encabezado o lista, siempre dentro de la firma cromática y los patrones de esta sección.
+
+### 6.7 Estado de página, progreso y retrato de persona
+
+- `BaseSpinner` (issue #189, `shared/ui`): anillo de latón interrumpido (~75% de la circunferencia, nunca un círculo completo) con el rombo del divisor NAVA fijo al centro — misma construcción regla-rombo-regla que `AuthSplitLayout`, aquí como anillo en vez de barra. Tamaños `sm`/`md`/`lg` (20/40/64px); tono `brass` por defecto, con variantes de estado disponibles. Gira en `900ms` lineal continuo; `prefers-reduced-motion: reduce` detiene la rotación por completo, el rombo central nunca giró.
+- `PageState` (issue #189, `shared/ui`): estado de página centrado — carga, error o vacío que ocupa toda el área de contenido. `variant="loading"` compone `BaseSpinner` + titular, sin divisor. Las demás variantes componen el divisor regla-rombo-regla, un rótulo de estado opcional en versalitas (mismo lenguaje que la palabra de estado de `BaseAlert`, omitido para contenido puramente informativo), titular serif y cuerpo; la acción real (`BaseButton`) es responsabilidad del consumidor vía el slot `action`. Se reserva para cuando el estado reemplaza toda la pantalla — cuando acompaña contenido que sigue visible, la pantalla sigue usando `BaseAlert` como nota al margen (issue #212).
+- `BarberAvatar` (issue #189, `shared/ui`): retrato cuadrado de radio `2px` con filete de latón, `28px` (`26px` en móvil) en un selector cerrado y `34px` (`32px` en móvil) en cada opción de una lista. Sin fotografía, muestra el monograma derivado de `fullName` (inicial única para un nombre de una palabra; primera letra del primer y del último término para varias palabras) en `--font-display` sobre tinta. Siempre decorativo (`aria-hidden`): el nombre visible adyacente es la identidad accesible, nunca aparece un retrato sin nombre junto a él. El prop `photoUrl` queda preparado para una fotografía real, pero ningún consumidor lo usa todavía — el contrato de `Barber` no declara ese campo.
+- Ficha y fila reglada (issue #189): fichas y filas de registro usan pergamino (`--color-surface-muted`, no blanco puro) sobre tinta. Un registro terminal (cancelado, completado, no-show) cambia de **material**, no de peso: pasa de superficie de papel a contorno sobre tinta, en vez de un relleno gris o una opacidad reducida que lo dejaría pesando igual o más que un registro vigente. `BaseBadge` (issue #189) gana el prop `outline`: mismo borde y texto de cada variante/estado, solo anula el relleno, para que la insignia se apoye en contorno sobre pergamino o tinta en vez de competir con esas superficies.
 
 ## 7. Zona de libertad creativa
 

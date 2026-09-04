@@ -56,6 +56,11 @@
   --color-inactive-text: #56514a;
   --color-inactive-border: #c9c0b2;
   --color-on-strong: #f4f0e7;
+  /* Texto secundario sobre tinta (issue #189, atlas panel-agenda-eventos):
+     azul-gris apagado, no marfil con opacidad reducida — la fecha/zona, las
+     etiquetas del eje, el texto de un turno terminal y el cuerpo de un
+     estado de página lo usan de forma consistente en todo el atlas. */
+  --color-on-strong-muted: #a8b0bd;
 
   /* Color: estados de turno */
   --color-status-confirmed-surface: var(--color-info-surface);

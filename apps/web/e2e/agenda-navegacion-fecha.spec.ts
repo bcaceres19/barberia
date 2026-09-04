@@ -60,7 +60,14 @@ async function assignServiceToBarber(page: Page, barberName: string, serviceName
 async function goToAgenda(page: Page) {
   await page.getByRole('link', { name: 'Panel' }).click()
   await expect(page).toHaveURL(/\/panel$/)
-  await expect(page.getByRole('heading', { name: 'Agenda de hoy' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Agenda', exact: true })).toBeVisible()
+}
+
+async function selectAgendaBarber(page: Page, fullName: string) {
+  const trigger = page.getByRole('button', { name: 'Barbero', exact: true })
+  await trigger.click()
+  await page.getByRole('option', { name: fullName, exact: true }).click()
+  await expect(trigger).toContainText(fullName)
 }
 
 function civilDateAt(offsetDays: number): string {
@@ -117,14 +124,16 @@ test.describe('Navegación de la agenda por fecha (HU-063)', () => {
     await registerManualAppointment(page, barberName, serviceName, attendeeName, 30)
 
     await goToAgenda(page)
-    await page.getByLabel('Barbero').selectOption({ label: barberName })
+    await selectAgendaBarber(page, barberName)
     await expect(page.getByText(attendeeName)).toBeVisible()
     await expect(page).toHaveURL(new RegExp(`date=${civilDateAt(0)}`))
 
     // Anterior: el turno de hoy deja de verse; barbero se conserva.
     await page.getByRole('button', { name: 'Anterior' }).click()
     await expect(page).toHaveURL(new RegExp(`date=${civilDateAt(-1)}`))
-    await expect(page.getByLabel('Barbero')).toHaveValue(await barberIdFromUrl(page))
+    await expect(page.getByRole('button', { name: 'Barbero', exact: true })).toContainText(
+      barberName,
+    )
     await expect(page.getByText(attendeeName)).not.toBeVisible()
 
     // Siguiente, dos veces: vuelve a hoy y luego avanza un día.
@@ -143,9 +152,11 @@ test.describe('Navegación de la agenda por fecha (HU-063)', () => {
 
     // Recarga: conserva la fecha y el barbero de la URL.
     await page.reload()
-    await expect(page.getByRole('heading', { name: 'Agenda de hoy' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Agenda', exact: true })).toBeVisible()
     await expect(page).toHaveURL(new RegExp(`date=${farDate}`))
-    await expect(page.getByLabel('Barbero')).toHaveValue(await barberIdFromUrl(page))
+    await expect(page.getByRole('button', { name: 'Barbero', exact: true })).toContainText(
+      barberName,
+    )
 
     // Atrás/adelante del navegador restauran la fecha anterior/siguiente.
     await page.goBack()
@@ -153,11 +164,6 @@ test.describe('Navegación de la agenda por fecha (HU-063)', () => {
     await page.goForward()
     await expect(page).toHaveURL(new RegExp(`date=${farDate}`))
   })
-
-  async function barberIdFromUrl(page: Page): Promise<string> {
-    const url = new URL(page.url())
-    return url.searchParams.get('barberId') ?? ''
-  }
 })
 
 test.describe('Agenda en un dispositivo de otra zona horaria durante la navegación (RN-DIS-07)', () => {
@@ -167,7 +173,7 @@ test.describe('Agenda en un dispositivo de otra zona horaria durante la navegaci
     page,
   }) => {
     await login(page)
-    await expect(page.getByRole('heading', { name: 'Agenda de hoy' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Agenda', exact: true })).toBeVisible()
     await expect(page.getByText('Zona America/Bogota')).toBeVisible()
 
     const bogotaToday = civilDateAt(0)

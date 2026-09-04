@@ -19,6 +19,11 @@ interface Props {
   dismissible?: boolean
   /** Label para accesibilidad (requerido si solo icono/punto) */
   label?: string
+  /** Contorno sobre superficie clara/oscura en vez de relleno: el sistema de
+   * rellenos claros desaparece sobre pergamino o tinta (issue #189, atlas
+   * panel-agenda-eventos). El borde y el texto siguen los del variant/status;
+   * solo cambia el fondo. */
+  outline?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -26,6 +31,7 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'md',
   dot: false,
   dismissible: false,
+  outline: false,
 })
 
 const emit = defineEmits<{
@@ -40,6 +46,7 @@ const classes = computed(() => {
     `${base}--${props.size}`,
     props.dot ? `${base}--dot` : '',
     props.dismissible ? `${base}--dismissible` : '',
+    props.outline ? `${base}--outline` : '',
   ]
     .filter(Boolean)
     .join(' ')
@@ -264,34 +271,10 @@ const style = computed(() => ({
   height: 12px;
 }
 
-/* Estados de turno - variantes específicas para compatibilidad semántica */
-.base-badge--status-confirmed {
-  --badge-surface: var(--color-status-confirmed-surface);
-  --badge-text: var(--color-status-confirmed-text);
-  --badge-border: var(--color-status-confirmed-border);
-}
-
-.base-badge--status-completed {
-  --badge-surface: var(--color-status-completed-surface);
-  --badge-text: var(--color-status-completed-text);
-  --badge-border: var(--color-status-completed-border);
-}
-
-.base-badge--status-cancelled-customer {
-  --badge-surface: var(--color-status-cancelled-customer-surface);
-  --badge-text: var(--color-status-cancelled-customer-text);
-  --badge-border: var(--color-status-cancelled-customer-border);
-}
-
-.base-badge--status-cancelled-barber {
-  --badge-surface: var(--color-status-cancelled-barber-surface);
-  --badge-text: var(--color-status-cancelled-barber-text);
-  --badge-border: var(--color-status-cancelled-barber-border);
-}
-
-.base-badge--status-no-show {
-  --badge-surface: var(--color-status-no-show-surface);
-  --badge-text: var(--color-status-no-show-text);
-  --badge-border: var(--color-status-no-show-border);
+/* Contorno (issue #189): el borde y el texto ya declarados por variant/status
+ * bastan; solo se anula el relleno para que la insignia se apoye en contorno
+ * sobre pergamino o tinta en vez de competir con esas superficies. */
+.base-badge--outline {
+  background-color: transparent;
 }
 </style>

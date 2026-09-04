@@ -55,15 +55,41 @@ function onRetry() {
 .private-shell {
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  height: 100dvh;
+  background-color: var(--color-surface-strong);
 }
 
+/* min-height: 0 es necesario para que este hijo flex pueda encogerse por
+   debajo de la altura de su contenido: sin esto, un contenido largo crece
+   la columna entera más allá de 100dvh y arrastra el header y el dock
+   fuera de pantalla en vez de quedarse fijos mientras solo el contenido
+   se desplaza (reporte en vivo, issue #189). */
 .private-shell__content {
   flex: 1;
-  /* El dock (AppNav) queda fijo al pie (64px) fuera del flujo; este padding
-     evita que la última fila de contenido quede oculta debajo
-     (estandar-diseno-visual.md §5.3, §8.3). */
-  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px) + var(--space-4));
+  min-height: 0;
+  overflow-y: auto;
+  /* Barra de scroll propia (latón sobre tinta), no la gris genérica del
+     navegador — mismo acento que el resto del cascarón. */
+  scrollbar-width: thin;
+  scrollbar-color: rgb(184 149 90 / 45%) transparent;
+}
+
+.private-shell__content::-webkit-scrollbar {
+  width: 10px;
+}
+
+.private-shell__content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.private-shell__content::-webkit-scrollbar-thumb {
+  background-color: rgb(184 149 90 / 45%);
+  border: 2px solid var(--color-surface-strong);
+  border-radius: var(--radius-pill);
+}
+
+.private-shell__content::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(184 149 90 / 70%);
 }
 
 .private-shell__state {

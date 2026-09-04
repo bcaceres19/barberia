@@ -54,11 +54,14 @@ describe('AppHeader', () => {
     expect(wrapper.get('[data-testid="barbershop-name"]').text()).toBe('Barbería El Corte')
   })
 
-  it('shows the NAVA wordmark and a global "Nuevo turno" action linking to the manual creation route', async () => {
+  it('shows the NAVA wordmark; the global "Nuevo turno" shortcut moved out of the header (issue #189)', async () => {
+    // El atlas panel-agenda-eventos no dibuja ninguna acción en la barra de
+    // marca; "Nuevo turno" ya vive como acción real de la propia pantalla
+    // (DailyAgendaPage.vue), así que repetirla aquí duplicaba la misma
+    // acción primaria en la misma vista.
     const { wrapper } = await mountHeader()
     expect(wrapper.text()).toContain('NAVA')
-    const cta = wrapper.get('a[href="/panel/nuevo-turno"]')
-    expect(cta.text()).toBe('Nuevo turno')
+    expect(wrapper.find('a[href="/panel/nuevo-turno"]').exists()).toBe(false)
   })
 
   it('logs out, revokes the server session and navigates to acceso (CA-012-07)', async () => {
