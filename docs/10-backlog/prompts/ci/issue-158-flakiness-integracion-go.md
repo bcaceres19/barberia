@@ -19,8 +19,8 @@ issue: 158
 issue_url: "https://github.com/bcaceres19/barberia/issues/158"
 suggested_issue_title: null
 branch: "fix/158-flakiness-integracion-go"
-pr: null
-pr_url: null
+pr: 219
+pr_url: "https://github.com/bcaceres19/barberia/pull/219"
 depends_on: []
 rules:
   - "RN-TEN-01"
