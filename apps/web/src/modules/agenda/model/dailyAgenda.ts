@@ -31,16 +31,25 @@ export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
   no_show: 'No se presentó',
 }
 
-// Clases de BaseBadge ya definidas en el sistema visual
-// (shared/ui/BaseBadge.vue, "Estados de turno") para los cinco estados:
-// cada etiqueta lleva color Y texto, nunca solo color (CA-062-03,
-// estandar-diseno-visual.md).
-export const APPOINTMENT_STATUS_BADGE_CLASS: Record<AppointmentStatus, string> = {
-  confirmed: 'base-badge--status-confirmed',
-  completed: 'base-badge--status-completed',
-  cancelled_by_customer: 'base-badge--status-cancelled-customer',
-  cancelled_by_barber: 'base-badge--status-cancelled-barber',
-  no_show: 'base-badge--status-no-show',
+// Variante de BaseBadge para cada uno de los cinco estados (CA-062-03):
+// cada etiqueta lleva color Y texto, nunca solo color. Debe ir por la prop
+// `variant`, no por una clase CSS externa: BaseBadge calcula
+// --badge-surface/--badge-text/--badge-border a partir de `variant` y los
+// aplica por `:style` en línea (shared/ui/BaseBadge.vue) — un estilo en
+// línea siempre gana sobre cualquier clase CSS externa que intente
+// redefinir esa misma custom property, así que una clase
+// "base-badge--status-confirmed" añadida por fuera nunca tenía efecto
+// (bug preexistente: cada insignia salía con la paleta neutra por
+// defecto sin importar el estado, issue #189).
+export const APPOINTMENT_STATUS_BADGE_VARIANT: Record<
+  AppointmentStatus,
+  'neutral' | 'success' | 'warning' | 'danger' | 'info'
+> = {
+  confirmed: 'info',
+  completed: 'success',
+  cancelled_by_customer: 'neutral',
+  cancelled_by_barber: 'danger',
+  no_show: 'warning',
 }
 
 // isTerminalStatus separa las citas activas de las terminales

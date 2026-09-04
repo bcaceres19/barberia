@@ -44,6 +44,38 @@ const oneEntry = [
   },
 ]
 
+// 23:30 (2026-08-28, America/Bogota) → 00:30 del día siguiente: cruza
+// medianoche, para probar la marca "Cambio de día" (issue #189, evento 11).
+const nightEntry = [
+  {
+    id: 'a-2',
+    attendeeName: 'Laura Méndez',
+    startsAt: '2026-08-29T04:30:00Z',
+    endsAt: '2026-08-29T05:30:00Z',
+    status: 'confirmed',
+    origin: 'manual',
+    serviceName: 'Corte clásico',
+    durationMinutes: 60,
+    priceAmount: '25000.00',
+    currency: 'COP',
+  },
+]
+
+const terminalEntry = [
+  {
+    id: 'a-3',
+    attendeeName: 'Carlos Ruiz',
+    startsAt: '2026-08-28T18:00:00Z',
+    endsAt: '2026-08-28T18:30:00Z',
+    status: 'completed',
+    origin: 'manual',
+    serviceName: 'Barba',
+    durationMinutes: 30,
+    priceAmount: '15000.00',
+    currency: 'COP',
+  },
+]
+
 function buildRouter() {
   return createRouter({
     history: createMemoryHistory(),
@@ -59,8 +91,26 @@ function buildRouter() {
         name: 'agenda-detalle-turno',
         component: { template: '<div>detalle</div>' },
       },
+      {
+        path: '/barberos',
+        name: 'staff-barberos',
+        component: { template: '<div>barberos</div>' },
+      },
     ],
   })
+}
+
+// El listbox propio de BarberSelect no tiene un <select> nativo que
+// setValue() pueda usar (issue #189): abre el disparador y hace click en la
+// opción con el nombre buscado, mismo resultado observable que antes.
+async function selectBarber(
+  wrapper: Awaited<ReturnType<typeof mountPage>>['wrapper'],
+  fullName: string,
+) {
+  await wrapper.get('#daily-agenda-barber-select').trigger('click')
+  const option = wrapper.findAll('[role="option"]').find((o) => o.text().includes(fullName))
+  if (!option) throw new Error(`No option found for barber "${fullName}"`)
+  await option.trigger('click')
 }
 
 async function mountPage() {
@@ -170,8 +220,7 @@ describe('DailyAgendaPage', () => {
     const { wrapper } = await mountReady()
 
     fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: oneEntry })
-    const select = wrapper.get<HTMLSelectElement>('#daily-agenda-barber-select')
-    await select.setValue('b-2')
+    await selectBarber(wrapper, 'Ana Gómez')
     await flushPromises()
 
     // La respuesta lenta del primer barbero (b-1) llega tarde: no debe
@@ -222,6 +271,59 @@ describe('DailyAgendaPage', () => {
 
     const results = await axe(wrapper.element, axeOptions)
     expect(results).toHaveNoViolations()
+  })
+
+  it('has no detectable axe violations in the initial loading state (PageState)', async () => {
+    fetchBarberSummariesMock.mockReturnValueOnce(new Promise(() => {}))
+    fetchBarbershopTimezoneMock.mockReturnValueOnce(new Promise(() => {}))
+    const { wrapper } = await mountPage()
+    await flushPromises()
+
+    expect(await axe(wrapper.element, axeOptions)).toHaveNoViolations()
+  })
+
+  it('has no detectable axe violations with a terminal entry present (outline badge on parchment)', async () => {
+    fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: terminalEntry })
+    const { wrapper } = await mountReady()
+
+    expect(await axe(wrapper.element, axeOptions)).toHaveNoViolations()
+  })
+
+  it('has no detectable axe violations in the empty-day-today composition', async () => {
+    fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: [] })
+    const { wrapper } = await mountReady()
+
+    expect(await axe(wrapper.element, axeOptions)).toHaveNoViolations()
+  })
+
+  // Cada badge lleva la variante de BaseBadge que corresponde a su estado
+  // real (issue #189, bug preexistente corregido: antes pasaba una clase
+  // CSS externa que BaseBadge siempre ignoraba —resuelve sus colores por
+  // :style en línea según `variant`— así que todo badge salía con la
+  // paleta neutra sin importar el estado). El estado terminal ya no se
+  // marca en el propio badge (se retiró la caja con borde: "parecen
+  // botones", rediseño local de esta pantalla) sino en la fila que lo
+  // contiene, que es quien atenúa su color vía CSS.
+  it('gives each status badge its matching BaseBadge variant (issue #189)', async () => {
+    fetchDailyAgendaMock.mockResolvedValueOnce({
+      kind: 'success',
+      items: [...oneEntry, ...terminalEntry],
+    })
+    const { wrapper } = await mountReady()
+
+    const badges = wrapper.findAll('.base-badge')
+    expect(badges.length).toBe(2)
+    const confirmedBadge = badges.find((b) => b.text() === 'Confirmado')!
+    const terminalBadge = badges.find((b) => b.text() === 'Completado')!
+    expect(confirmedBadge.classes()).toContain('base-badge--info')
+    expect(terminalBadge.classes()).toContain('base-badge--success')
+
+    expect(confirmedBadge.element.closest('.daily-agenda-page__item')?.className).not.toContain(
+      'daily-agenda-page__item--terminal',
+    )
+    expect(terminalBadge.element.closest('.daily-agenda-page__item')?.className).toContain(
+      'daily-agenda-page__item--terminal',
+    )
   })
 
   describe('navegación por fecha (HU-063)', () => {
@@ -430,6 +532,122 @@ describe('DailyAgendaPage', () => {
     it('does not show "Ahora" for a date other than today in the barbershop timezone', async () => {
       const { wrapper } = await mountWithFixedDate()
       expect(wrapper.find('.daily-agenda-page__timeline-now').exists()).toBe(false)
+    })
+
+    it('positions and sizes a slip from its own startsAt/endsAt, never an arbitrary spread', async () => {
+      const { wrapper } = await mountWithFixedDate()
+
+      // 2026-08-28T19:30-20:00Z = 14:30-15:00 America/Bogota (UTC-05).
+      // bounds: [00:00, 24:00) (pedido explícito del propietario, el carril
+      // siempre cubre el día completo) → left=870/1440=60.4166...%,
+      // width=(900-870)/1440=2.08...%, pero nunca baja del 4% mínimo
+      // visual de una ficha corta.
+      const slip = wrapper.get('.daily-agenda-page__timeline-slip')
+      const style = slip.attributes('style') ?? ''
+      expect(style).toContain('left: 60.416666666666664%')
+      expect(style).toContain('width: 4%')
+    })
+
+    it('shows "Cambio de día" exactly at midnight when a shift ends the next civil day (evento 11)', async () => {
+      const { wrapper } = await mountWithFixedDate(nightEntry)
+
+      // La marca (línea vertical del carril) y su etiqueta ("Cambio de
+      // día") son elementos distintos desde issue #189: viven en filas
+      // propias (eje/marcas/carril, calcadas del atlas) para que una marca
+      // nunca pueda quedar encima de una hora en punto.
+      const mark = wrapper.get('.daily-agenda-page__timeline-mark--day-change')
+      // bounds: [00:00, 24:30) — el carril cubre el día completo y se
+      // extiende solo lo necesario para el turno que cruza medianoche
+      // (termina a las 00:30 del día siguiente, minuto 1470). left de
+      // medianoche (1440): 1440/1470=97.95...%.
+      expect(mark.attributes('style')).toContain('left: 97.95918367346938%')
+
+      const label = wrapper.get('.daily-agenda-page__timeline-mark-label--day-change')
+      expect(label.attributes('style')).toContain('left: 97.95918367346938%')
+      expect(label.text()).toBe('Cambio de día')
+
+      // La ficha ocupa su duración real (60min) más allá de medianoche, no
+      // recortada a la medianoche del día que se está viendo.
+      const slip = wrapper.get('.daily-agenda-page__timeline-slip')
+      const style = slip.attributes('style') ?? ''
+      expect(style).toContain('width: 4.081632653061225%') // (1470-1410)/1470
+    })
+
+    it('keeps the timeline (with "Ahora") visible for a valid empty day when viewing today (evento 09)', async () => {
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: [] })
+      const { wrapper } = await mountReady()
+
+      expect(wrapper.find('.daily-agenda-page__timeline').exists()).toBe(true)
+      expect(wrapper.find('.daily-agenda-page__timeline-mark--now').exists()).toBe(true)
+    })
+
+    // Zoom del carril (pedido explícito del propietario, 2026-09-04): no
+    // representado en el atlas, función nueva autorizada aparte del modo
+    // de fidelidad visual del resto de esta pantalla.
+    describe('zoom del carril', () => {
+      function zoomButtons(wrapper: Awaited<ReturnType<typeof mountWithFixedDate>>['wrapper']) {
+        const out = wrapper.get('[aria-label="Alejar el calendario"]')
+        const zoomIn = wrapper.get('[aria-label="Acercar el calendario"]')
+        return { out, zoomIn }
+      }
+
+      it('starts at 1h ticks, "Alejar" disabled, "Acercar" enabled', async () => {
+        const { wrapper } = await mountWithFixedDate()
+
+        expect(wrapper.get('.daily-agenda-page__timeline-zoom-label').text()).toBe('1 h')
+        const { out, zoomIn } = zoomButtons(wrapper)
+        expect(out.attributes('disabled')).toBeDefined()
+        expect(zoomIn.attributes('disabled')).toBeUndefined()
+
+        const ticks = wrapper.findAll('.daily-agenda-page__timeline-tick-label')
+        expect(ticks[0]!.text()).toMatch(/:00$/)
+
+        const scroll = wrapper.get('.daily-agenda-page__timeline-scroll')
+        expect(scroll.attributes('style')).toContain('width: 100%')
+      })
+
+      it('narrows the tick step and widens the track on each zoom-in, down to 15min', async () => {
+        const { wrapper } = await mountWithFixedDate()
+        const { zoomIn } = zoomButtons(wrapper)
+
+        await zoomIn.trigger('click')
+        expect(wrapper.get('.daily-agenda-page__timeline-zoom-label').text()).toBe('30 min')
+        expect(wrapper.get('.daily-agenda-page__timeline-scroll').attributes('style')).toContain(
+          'width: 200%',
+        )
+
+        await zoomIn.trigger('click')
+        expect(wrapper.get('.daily-agenda-page__timeline-zoom-label').text()).toBe('15 min')
+        expect(wrapper.get('.daily-agenda-page__timeline-scroll').attributes('style')).toContain(
+          'width: 400%',
+        )
+        const ticks = wrapper.findAll('.daily-agenda-page__timeline-tick-label')
+        expect(ticks.some((t) => t.text().endsWith(':15'))).toBe(true)
+
+        // Al tope: "Acercar" se deshabilita, "Alejar" sigue disponible.
+        const { out, zoomIn: zoomInAtMax } = zoomButtons(wrapper)
+        expect(zoomInAtMax.attributes('disabled')).toBeDefined()
+        expect(out.attributes('disabled')).toBeUndefined()
+      })
+
+      it('widening the track lets a short slip show its full detail (time+name+service)', async () => {
+        // 10min: 10/240=4.16% a zoom 1 (bajo el umbral del 8.5%, modo
+        // compacto); a zoom 4 (dos clics de "Acercar") 16.67% (≥8.5%, modo
+        // completo) — mismo bounds de 4h que oneEntry, solo la duración
+        // real cambia.
+        const shortEntry = [{ ...oneEntry[0]!, endsAt: '2026-08-28T19:40:00Z' }]
+        const { wrapper } = await mountWithFixedDate(shortEntry)
+        const { zoomIn } = zoomButtons(wrapper)
+
+        expect(wrapper.get('.daily-agenda-page__timeline-slip').text()).not.toContain(
+          'Corte clásico',
+        )
+
+        await zoomIn.trigger('click')
+        await zoomIn.trigger('click')
+
+        expect(wrapper.get('.daily-agenda-page__timeline-slip').text()).toContain('Corte clásico')
+      })
     })
   })
 })

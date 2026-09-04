@@ -12,7 +12,7 @@
 // y "Nuevo turno" usa el acento latón reservado para foco destacado; la
 // lógica de cierre de sesión vive en `useLogout` (compartida con el menú
 // "Más" del dock en móvil, ver AppNav.vue).
-import { BaseButton, NavaWordmark } from '@/shared/ui'
+import { NavaWordmark } from '@/shared/ui'
 import { useLogout } from '../model/logout'
 
 defineProps<{
@@ -26,104 +26,104 @@ const { loggingOut, logout: onLogout } = useLogout()
   <header class="app-header">
     <div class="app-header__identity">
       <NavaWordmark variant="inverted" />
-      <span class="app-header__divider" aria-hidden="true">·</span>
       <p class="app-header__barbershop" data-testid="barbershop-name">{{ barbershopName }}</p>
     </div>
-    <div class="app-header__actions">
-      <RouterLink :to="{ name: 'agenda-nuevo-turno' }" class="app-header__cta">
-        Nuevo turno
-      </RouterLink>
-      <BaseButton
-        variant="secondary"
-        :disabled="loggingOut"
-        :loading="loggingOut"
-        @click="onLogout"
-      >
-        Cerrar sesión
-      </BaseButton>
-    </div>
+    <!-- El atlas de /panel no dibuja un botón con relleno en la barra, pero
+         "no elimines... logout... existentes solo porque un PNG estático no
+         muestre la acción; la función prevalece y se compone de la forma
+         menos intrusiva posible" (autorización del propietario, 2026-09-03):
+         texto discreto en vez del botón con filete anterior, siempre visible
+         para cualquier persona con mouse, no solo al enfocar con teclado. -->
+    <button type="button" class="app-header__logout" :disabled="loggingOut" @click="onLogout">
+      Cerrar sesión
+    </button>
   </header>
 </template>
 
 <style scoped>
 .app-header {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
+  min-height: 75px;
+  padding: 20px 40px;
   background-color: var(--color-surface-strong);
+  /* Filete inferior del atlas panel-agenda-eventos (issue #189):
+     rgba(184,149,90,.45), el mismo latón de marca a baja opacidad. */
+  border-bottom: 1px solid rgb(184 149 90 / 45%);
 }
 
 .app-header__identity {
   display: flex;
   min-width: 0;
   align-items: baseline;
-  gap: var(--space-2);
+  gap: 14px;
 }
 
-.app-header__divider {
-  color: var(--color-on-strong);
-  opacity: 0.48;
+.app-header__identity :deep(.nava-wordmark) {
+  font-size: 34px;
 }
 
 .app-header__barbershop {
   margin: 0;
   overflow: hidden;
-  font-size: var(--font-size-body);
-  font-weight: 600;
-  color: var(--color-on-strong);
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--color-on-strong-muted);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.app-header__actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.app-header__cta {
-  display: inline-flex;
+/* Texto discreto, no un botón con filete: pesa menos que "Nuevo turno" de
+   la ficha de la página, pero sigue siendo un control real y visible en
+   todo momento — nunca solo al enfocar (issue #189, ver comentario del
+   template). */
+.app-header__logout {
+  flex-shrink: 0;
   height: var(--control-height);
-  align-items: center;
-  padding: 0 var(--space-4);
-  border: var(--border-width-normal) solid var(--color-brand-accent-surface);
+  padding: 0 var(--space-2);
+  background: transparent;
+  border: none;
   border-radius: var(--radius-sm);
-  background-color: transparent;
-  color: var(--color-brand-accent-surface);
-  font-family: var(--font-sans);
-  font-size: var(--font-size-body);
-  font-weight: 500;
-  text-decoration: none;
-  transition:
-    background-color var(--motion-duration-fast) var(--motion-easing-standard),
-    color var(--motion-duration-fast) var(--motion-easing-standard);
+  color: var(--color-on-strong);
+  opacity: 0.72;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body-sm);
+  cursor: pointer;
+  transition: opacity var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-header__cta {
+  .app-header__logout {
     transition: none;
   }
 }
 
-.app-header__cta:hover {
-  background-color: var(--color-brand-accent-surface);
-  color: var(--color-brand-accent-text);
+.app-header__logout:hover {
+  opacity: 1;
 }
 
-.app-header__cta:active {
-  background-color: var(--color-brand-accent-surface);
-  color: var(--color-brand-accent-text);
-  filter: brightness(92%);
+.app-header__logout:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
 }
 
-.app-header__cta:focus-visible {
+.app-header__logout:focus-visible {
   outline: none;
+  opacity: 1;
   box-shadow:
     0 0 0 2px var(--color-surface-strong),
     0 0 0 4px var(--color-focus);
+}
+
+@media (max-width: 1023px) {
+  .app-header {
+    min-height: 59px;
+    padding: 16px 20px;
+  }
+
+  .app-header__barbershop {
+    font-size: 13px;
+  }
 }
 </style>

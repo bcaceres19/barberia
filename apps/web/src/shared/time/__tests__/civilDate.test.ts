@@ -8,6 +8,7 @@ import {
   getCivilDateInTimezone,
   isCivilDateString,
   minutesIntoCivilDate,
+  minutesSinceCivilMidnight,
   shiftCivilDate,
 } from '../civilDate'
 
@@ -97,6 +98,28 @@ describe('minutesIntoCivilDate', () => {
     expect(minutesIntoCivilDate('2026-09-01T04:59:00Z', '2026-08-31', 'America/Bogota')).toBe(
       23 * 60 + 59,
     )
+  })
+})
+
+describe('minutesSinceCivilMidnight', () => {
+  it('matches minutesIntoCivilDate for an instant within the same civil date', () => {
+    expect(minutesSinceCivilMidnight('2026-08-31T19:30:00Z', '2026-08-31', 'America/Bogota')).toBe(
+      14 * 60 + 30,
+    )
+  })
+
+  it('extends past 1440 instead of clamping for an instant the next civil day', () => {
+    // Termina a las 00:30 del día siguiente: 24h + 30min, no 1440.
+    expect(
+      minutesSinceCivilMidnight('2026-09-01T00:30:00-05:00', '2026-08-31', 'America/Bogota'),
+    ).toBe(24 * 60 + 30)
+  })
+
+  it('goes negative instead of clamping to 0 for an instant the day before', () => {
+    // Empieza a las 23:30 del día anterior: -30, no 0.
+    expect(
+      minutesSinceCivilMidnight('2026-08-30T23:30:00-05:00', '2026-08-31', 'America/Bogota'),
+    ).toBe(-30)
   })
 })
 

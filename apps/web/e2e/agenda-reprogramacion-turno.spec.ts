@@ -60,7 +60,7 @@ async function assignServiceToBarber(page: Page, barberName: string, serviceName
 async function goToAgenda(page: Page) {
   await page.getByRole('link', { name: 'Panel' }).click()
   await expect(page).toHaveURL(/\/panel$/)
-  await expect(page.getByRole('heading', { name: 'Agenda de hoy' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Agenda', exact: true })).toBeVisible()
 }
 
 function nearFutureCivilDateTime(minutesFromNow: number): { date: string; time: string } {
