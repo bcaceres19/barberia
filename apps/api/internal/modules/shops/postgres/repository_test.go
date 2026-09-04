@@ -24,8 +24,16 @@ import (
 const (
 	testDatabaseURL = "postgres://barberia_app@localhost:5432/barberia_test?sslmode=disable"
 
-	shopA = "11111111-1111-1111-1111-111111111111"
-	shopB = "22222222-2222-2222-2222-222222222222"
+	// NO shopA/shopB reales (11111111.../22222222...) ni el par "shopC/shopD"
+	// de hu021_barberos.sql (33333333.../44444444..., ajeno a este archivo):
+	// este paquete corre como un binario de test SEPARADO del de cmd/api, y
+	// `go test ./...` ejecuta binarios de paquete en paralelo por defecto.
+	// cmd/api/settings_integration_test.go ya hace UPDATE confirmado sobre
+	// las mismas columnas del par real A/B; compartir esa fila aquí produjo
+	// una fuga de estado real entre paquetes (issue #158). Este es el par
+	// dedicado de dos_barberias.sql reservado para ese caso.
+	shopA = "12121212-1212-1212-1212-121212121212"
+	shopB = "34343434-3434-3434-3434-343434343434"
 )
 
 func setupTestDB(t *testing.T) *database.DB {
@@ -85,7 +93,7 @@ func restoreShopA(t *testing.T, db *database.DB) {
 		err := db.InTenantTx(context.Background(), database.BarbershopID(shopA), func(ctx context.Context, q database.Queries) error {
 			_, err := q.Exec(ctx,
 				`UPDATE barbershop SET name = $2, timezone = $3, contact_email = NULL, contact_phone = NULL WHERE id = $1`,
-				shopA, "Barbería de prueba A", "America/Bogota",
+				shopA, "Barbería de prueba (aislamiento de paquete) 1", "America/Bogota",
 			)
 			return err
 		})
@@ -107,7 +115,7 @@ func TestGet_ReturnsTheFourAuthorizedFields(t *testing.T) {
 	if !found {
 		t.Fatal("expected shopA to be found")
 	}
-	if b.Name != "Barbería de prueba A" || b.Timezone != "America/Bogota" {
+	if b.Name != "Barbería de prueba (aislamiento de paquete) 1" || b.Timezone != "America/Bogota" {
 		t.Fatalf("unexpected barbershop: %+v", b)
 	}
 	if b.ContactEmail != nil || b.ContactPhone != nil {
@@ -126,7 +134,7 @@ func TestUpdate_ValidContact_PersistsAndRoundTrips(t *testing.T) {
 	email := "contacto@ejemplo.test"
 	phone := "+573001234567"
 	result, err := repo.Update(context.Background(), shopA, shops.UpdateInput{
-		Name: "Barbería de prueba A renombrada", Timezone: "America/Bogota",
+		Name: "Barbería de prueba (aislamiento de paquete) 1 renombrada", Timezone: "America/Bogota",
 		ContactEmail: &email, ContactPhone: &phone,
 	})
 	if err != nil {
@@ -135,7 +143,7 @@ func TestUpdate_ValidContact_PersistsAndRoundTrips(t *testing.T) {
 	if !result.TimezoneValid || !result.Found {
 		t.Fatalf("expected a successful update, got %+v", result)
 	}
-	if result.Barbershop.Name != "Barbería de prueba A renombrada" {
+	if result.Barbershop.Name != "Barbería de prueba (aislamiento de paquete) 1 renombrada" {
 		t.Fatalf("unexpected name: %+v", result.Barbershop)
 	}
 	if result.Barbershop.ContactEmail == nil || *result.Barbershop.ContactEmail != email {
@@ -163,7 +171,7 @@ func TestUpdate_NilContact_PersistsAsNullNotEmptyString(t *testing.T) {
 	restoreShopA(t, db)
 
 	if _, err := repo.Update(context.Background(), shopA, shops.UpdateInput{
-		Name: "Barbería de prueba A", Timezone: "America/Bogota",
+		Name: "Barbería de prueba (aislamiento de paquete) 1", Timezone: "America/Bogota",
 		ContactEmail: nil, ContactPhone: nil,
 	}); err != nil {
 		t.Fatalf("Update: %v", err)
