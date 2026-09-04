@@ -4,8 +4,9 @@ import { createServer } from 'node:http'
 // desarrollo; no pertenece a src/, al cliente HTTP ni al backend de producto.
 const barbers = [
   { id: 'barber-julian', fullName: 'Julián Rodríguez' },
-  { id: 'barber-lucia', fullName: 'Lucía Pérez' },
-  { id: 'barber-sol', fullName: 'Sol' },
+  { id: 'barber-andres', fullName: 'Andrés Beltrán' },
+  { id: 'barber-camilo', fullName: 'Camilo Restrepo' },
+  { id: 'barber-tomas', fullName: 'Tomás Iriarte' },
 ]
 
 const appointment = (

@@ -264,12 +264,12 @@ function formatAgendaTime(instant: string): string {
   }).format(new Date(instant))
 }
 
-function entryTime(entry: DailyAgendaEntry): string {
-  return formatAgendaTime(entry.startsAt)
-}
-
 function entryTimeRange(entry: DailyAgendaEntry): string {
   return `${formatAgendaTime(entry.startsAt)}–${formatAgendaTime(entry.endsAt)}`
+}
+
+function entryTime(entry: DailyAgendaEntry): string {
+  return formatAgendaTime(entry.startsAt)
 }
 
 // Línea temporal horizontal de escritorio (estandar-diseno-visual.md §11.2,
@@ -311,7 +311,11 @@ const timelineBounds = computed(() => {
   // último turno. El intervalo sigue naciendo de sus horas reales, pero evita
   // que una ficha extrema quede pegada al borde del carril.
   const startHour = Math.max(0, Math.floor(Math.min(...starts) / 60) * 60 - 60)
-  const endHour = Math.min(24 * 60, Math.ceil(Math.max(...ends) / 60) * 60 + 60)
+  // En jornada diurna el atlas deja dos horas completas tras el último
+  // turno. El caso nocturno conserva una sola para que 22:00–02:00 sitúe
+  // «Cambio de día» exactamente a mitad del carril, sin recortar el turno.
+  const lastEnd = Math.max(...ends)
+  const endHour = Math.ceil(lastEnd / 60) * 60 + (lastEnd > 24 * 60 ? 60 : 120)
   const span = Math.max(endHour - startHour, MIN_TIMELINE_SPAN_MINUTES)
   return { start: startHour, end: startHour + span }
 })
@@ -346,10 +350,9 @@ function timelinePercent(minute: number): string {
   return `${((minute - bounds.start) / (bounds.end - bounds.start)) * 100}%`
 }
 
-function timelineSlipStyle(entry: DailyAgendaEntry): { left: string; width: string } {
+function timelineSlipWidthPercent(entry: DailyAgendaEntry): number {
   const bounds = timelineBounds.value
-  if (!bounds || !selectedDate.value || !barbershopTimezone.value)
-    return { left: '0%', width: '0%' }
+  if (!bounds || !selectedDate.value || !barbershopTimezone.value) return 0
   const start = minutesIntoCivilDate(entry.startsAt, selectedDate.value, barbershopTimezone.value)
   // Fin sin recortar, igual que en timelineBounds: la ficha ocupa su
   // duración real aunque cruce medianoche.
@@ -357,8 +360,26 @@ function timelineSlipStyle(entry: DailyAgendaEntry): { left: string; width: stri
   const span = bounds.end - bounds.start
   // Ancho mínimo visual del 4%: una ficha muy corta sigue siendo legible en
   // la línea de tiempo sin que eso cambie su duración real.
-  const width = Math.max(((end - start) / span) * 100, 4)
-  return { left: timelinePercent(start), width: `${width}%` }
+  return Math.max(((end - start) / span) * 100, 4)
+}
+
+function timelineSlipStyle(entry: DailyAgendaEntry): { left: string; width: string } {
+  const bounds = timelineBounds.value
+  if (!bounds || !selectedDate.value || !barbershopTimezone.value)
+    return { left: '0%', width: '0%' }
+  const start = minutesIntoCivilDate(entry.startsAt, selectedDate.value, barbershopTimezone.value)
+  return { left: timelinePercent(start), width: `${timelineSlipWidthPercent(entry)}%` }
+}
+
+// La ficha muestra rango horario, persona y servicio cuando la duración le
+// da ancho; con poco ancho conserva solo la hora de inicio y la persona,
+// sin el rango completo ni el servicio (issue #189, atlas evento 01: solo
+// la ficha más ancha del ejemplo — Samuel Díaz, 60min — lleva las tres
+// líneas; el resto muestra hora de inicio + nombre). El umbral es el mismo
+// porcentaje que ya gobierna el ancho real de la ficha, no un breakpoint de
+// viewport aparte.
+function timelineSlipDetail(entry: DailyAgendaEntry): 'full' | 'compact' {
+  return timelineSlipWidthPercent(entry) >= 8.5 ? 'full' : 'compact'
 }
 
 // "Ahora" (estandar-diseno-visual.md §7.2, §9.3): decorativo respecto al
@@ -616,10 +637,17 @@ const dayChangeMarkerPercent = computed(() => {
                     query: withQuery({}),
                   }"
                 >
-                  <span class="daily-agenda-page__timeline-slip-time">{{ entryTime(entry) }}</span>
+                  <span class="daily-agenda-page__timeline-slip-time">{{
+                    timelineSlipDetail(entry) === 'full' ? entryTimeRange(entry) : entryTime(entry)
+                  }}</span>
                   <span class="daily-agenda-page__timeline-slip-name">{{
                     entry.attendeeName
                   }}</span>
+                  <span
+                    v-if="timelineSlipDetail(entry) === 'full'"
+                    class="daily-agenda-page__timeline-slip-service"
+                    >{{ entry.serviceName }}</span
+                  >
                 </RouterLink>
               </div>
             </div>
@@ -668,7 +696,6 @@ const dayChangeMarkerPercent = computed(() => {
                   :class="statusBadgeClass(entry)"
                   size="sm"
                   outline
-                  dot
                   :label="statusLabel(entry)"
                 >
                   {{ statusLabel(entry) }}
@@ -691,15 +718,15 @@ const dayChangeMarkerPercent = computed(() => {
 .daily-agenda-page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: 14px;
   min-height: 100%;
-  padding: var(--space-5) var(--space-4);
+  padding: 20px;
   background-color: var(--color-surface-strong);
 }
 
 @media (min-width: 1024px) {
   .daily-agenda-page {
-    padding: var(--space-8) var(--space-8);
+    padding: 26px 40px 30px;
   }
 }
 
@@ -718,6 +745,13 @@ const dayChangeMarkerPercent = computed(() => {
   line-height: var(--font-size-h1-line);
   font-weight: var(--font-weight-h1);
   color: var(--color-on-strong);
+}
+
+@media (min-width: 1024px) {
+  .daily-agenda-page__title {
+    font-size: 40px;
+    line-height: 46px;
+  }
 }
 
 .daily-agenda-page__date {
@@ -744,7 +778,7 @@ const dayChangeMarkerPercent = computed(() => {
 .daily-agenda-page__controls {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 16px;
 }
 
 @media (min-width: 640px) {
@@ -851,7 +885,7 @@ const dayChangeMarkerPercent = computed(() => {
 .daily-agenda-page__list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 10px;
   padding: 0;
   margin: 0;
   list-style: none;
@@ -865,16 +899,16 @@ const dayChangeMarkerPercent = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: 20px;
   /* Ficha (§6.1, §7.2): al menos 64px en móvil, no el objetivo táctil
      mínimo de 44px. */
   min-height: 64px;
-  padding: var(--space-4);
+  min-height: 64px;
+  padding: 13px 18px;
   background-color: var(--color-surface-muted);
   border: var(--border-width-normal) solid var(--color-border-subtle);
   border-left: var(--border-width-emphasis) solid var(--color-accent-brass);
-  border-radius: var(--radius-md);
-  flex-wrap: wrap;
+  border-radius: 2px;
 }
 
 /* Turno terminal (issue #189): cambia de MATERIAL, no de peso — un relleno
@@ -905,8 +939,8 @@ const dayChangeMarkerPercent = computed(() => {
   flex: 1;
   min-width: 0;
   align-items: center;
-  gap: var(--space-2);
-  min-height: 44px;
+  gap: 20px;
+  min-height: 0;
   color: inherit;
   text-decoration: none;
   border-radius: var(--radius-sm);
@@ -924,9 +958,9 @@ const dayChangeMarkerPercent = computed(() => {
 }
 
 .daily-agenda-page__item-time {
-  flex: 0 0 120px;
+  flex: 0 0 118px;
   font-family: var(--font-family-base);
-  font-size: var(--font-size-body);
+  font-size: 15px;
   font-weight: 400;
   font-variant-numeric: tabular-nums;
   color: var(--color-text-primary);
@@ -936,20 +970,23 @@ const dayChangeMarkerPercent = computed(() => {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: var(--space-0);
+  gap: 0;
+  line-height: 20px;
 }
 
 /* Persona atendida como texto principal de la ficha (§6.1). */
 .daily-agenda-page__item-name {
   font-family: var(--font-family-base);
-  font-size: var(--font-size-body);
+  font-size: 17px;
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
 .daily-agenda-page__item-service {
   font-family: var(--font-family-base);
-  font-size: var(--font-size-body-sm);
+  margin-top: 2px;
+  font-size: 14px;
+  line-height: 16px;
   color: var(--color-text-secondary);
 }
 
@@ -971,31 +1008,31 @@ const dayChangeMarkerPercent = computed(() => {
   .daily-agenda-page__item {
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--space-2);
-    padding: var(--space-3) var(--space-4);
+    gap: 6px;
+    padding: 13px 15px;
   }
 
   .daily-agenda-page__item-main {
     flex-direction: column;
     align-items: flex-start;
     min-height: 0;
-    gap: var(--space-0);
+    gap: 0;
   }
 
   .daily-agenda-page__item-time {
     flex-basis: auto;
-    font-size: var(--font-size-body-sm);
+    font-size: 13px;
     color: var(--color-text-secondary);
   }
 
   .daily-agenda-page__item-name {
-    font-size: var(--font-size-body);
-    line-height: var(--font-size-body-line);
+    font-size: 16px;
+    line-height: 22px;
   }
 
   .daily-agenda-page__item-service {
-    font-size: var(--font-size-body-sm);
-    line-height: var(--font-size-body-sm-line);
+    font-size: 13px;
+    line-height: 18px;
   }
 }
 
@@ -1015,15 +1052,17 @@ const dayChangeMarkerPercent = computed(() => {
      un borde propio, no solo marcas de hora flotando sobre el fondo. */
   .daily-agenda-page__timeline-track {
     position: relative;
-    height: 104px;
+    height: 96px;
     /* Banda superior propia para las marcas (Ahora/Cambio de día, ~32px) y
        otra más baja para las etiquetas de hora (~16px): issue #189 corrige
        que antes compartían la misma fila y podían superponerse cuando una
-       marca caía cerca de una hora en punto. */
-    margin-top: var(--space-10);
-    padding: 0 var(--space-2);
+       marca caía cerca de una hora en punto. Espacio extra arriba: cuando
+       "Ahora" y "Cambio de día" coinciden en x (turno nocturno que empieza
+       hoy), la segunda insignia sube a una tercera banda propia. */
+    margin-top: 62px;
+    padding: 0;
     border: var(--border-width-normal) solid rgb(244 240 231 / 16%);
-    border-radius: var(--radius-md);
+    border-radius: 2px;
   }
 
   .daily-agenda-page__timeline-guide {
@@ -1042,8 +1081,8 @@ const dayChangeMarkerPercent = computed(() => {
 
   .daily-agenda-page__timeline-tick-label {
     position: absolute;
-    top: calc(-1 * var(--space-4));
-    left: var(--space-1);
+    top: -20px;
+    left: 0;
     white-space: nowrap;
     font-size: var(--font-size-caption);
     font-variant-numeric: tabular-nums;
@@ -1063,16 +1102,16 @@ const dayChangeMarkerPercent = computed(() => {
      rellena — es la marca de mayor prioridad del eje. */
   .daily-agenda-page__timeline-mark-label {
     position: absolute;
-    top: calc(-1 * var(--space-8));
+    top: -28px;
     left: 50%;
     transform: translateX(-50%);
-    padding: 2px var(--space-2);
+    padding: 4px 9px;
     white-space: nowrap;
     font-size: var(--font-size-caption);
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    border-radius: var(--radius-sm);
+    border-radius: 2px;
   }
 
   .daily-agenda-page__timeline-mark--now .daily-agenda-page__timeline-mark-label {
@@ -1081,8 +1120,12 @@ const dayChangeMarkerPercent = computed(() => {
   }
 
   /* "Cambio de día": misma familia que "Ahora" pero de menor prioridad —
-     contorno en vez de relleno, para que las dos convivan sin competir. */
+     contorno en vez de relleno. Una banda propia más arriba (issue #189):
+     un turno nocturno que empieza "hoy" puede coincidir en x con "Ahora"
+     (evento 11 con reloj cercano a medianoche), y las dos insignias
+     necesitan no superponerse aunque caigan en el mismo punto del carril. */
   .daily-agenda-page__timeline-mark--day-change .daily-agenda-page__timeline-mark-label {
+    top: -56px;
     color: var(--color-brand-accent-surface);
     background-color: transparent;
     border: var(--border-width-normal) solid var(--color-brand-accent-surface);
@@ -1090,18 +1133,19 @@ const dayChangeMarkerPercent = computed(() => {
 
   .daily-agenda-page__timeline-slip {
     position: absolute;
-    top: var(--space-3);
-    bottom: var(--space-3);
+    top: 10px;
+    bottom: 10px;
     display: flex;
-    min-width: 64px;
+    min-width: 0;
     flex-direction: column;
     justify-content: center;
     gap: 2px;
     overflow: hidden;
-    padding: var(--space-1) var(--space-2);
+    padding: 0 12px;
     background-color: var(--color-surface-muted);
-    border: var(--border-width-normal) solid var(--color-accent-brass);
-    border-radius: var(--radius-sm);
+    border: 0;
+    border-left: 3px solid var(--color-accent-brass);
+    border-radius: 2px;
     color: var(--color-action-primary);
     text-decoration: none;
   }
@@ -1111,20 +1155,46 @@ const dayChangeMarkerPercent = computed(() => {
   .daily-agenda-page__timeline-slip--terminal {
     background-color: transparent;
     border-color: rgb(244 240 231 / 24%);
+    border-left-color: rgb(244 240 231 / 24%);
     color: var(--color-on-strong);
   }
 
   .daily-agenda-page__timeline-slip-time {
-    font-size: var(--font-size-caption);
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 400;
     font-variant-numeric: tabular-nums;
   }
 
   .daily-agenda-page__timeline-slip-name {
     overflow: hidden;
-    font-size: var(--font-size-caption);
+    font-size: 13px;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .daily-agenda-page__timeline-slip-service {
+    overflow: hidden;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+:deep(.base-badge) {
+  height: auto;
+  padding: 5px 12px;
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 14px;
+}
+
+@media (max-width: 1023px) {
+  :deep(.base-badge) {
+    margin-top: 4px;
+    padding: 4px 9px;
+    font-size: 11px;
   }
 }
 </style>

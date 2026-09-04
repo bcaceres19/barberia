@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-CHORE-189-AGENDA-DIARIA-FIDELIDAD-v3"
 version: "3.0"
 kind: "chore"
-status: "in_progress"
+status: "superseded"
 target_agents:
   - "codex"
 repository: "bcaceres19/barberia"
@@ -43,7 +43,7 @@ source_docs:
 created_at: "2026-09-03"
 updated_at: "2026-09-03"
 supersedes: "PROMPT-CHORE-189-AGENDA-DIARIA-FIDELIDAD-v2"
-superseded_by: null
+superseded_by: "PROMPT-CHORE-189-AGENDA-DIARIA-FIDELIDAD-v4"
 ---
 
 # Fidelidad visual de `/panel` con mocks verificables y demo local

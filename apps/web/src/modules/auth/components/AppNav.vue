@@ -64,7 +64,15 @@ async function onLogoutFromMore() {
 
 <template>
   <nav class="app-nav" aria-label="Navegación principal">
-    <ul class="app-nav__list">
+    <ul class="app-nav__list app-nav__list--desktop">
+      <li v-for="item in items" :key="item.label" class="app-nav__item">
+        <RouterLink :to="item.to" class="app-nav__link" active-class="app-nav__link--active">
+          <span class="app-nav__icon" aria-hidden="true" v-html="iconFor(item.to.name)" />
+          <span class="app-nav__label">{{ item.label }}</span>
+        </RouterLink>
+      </li>
+    </ul>
+    <ul class="app-nav__list app-nav__list--mobile">
       <li v-for="item in primaryItems" :key="item.label" class="app-nav__item">
         <RouterLink :to="item.to" class="app-nav__link" active-class="app-nav__link--active">
           <span class="app-nav__icon" aria-hidden="true" v-html="iconFor(item.to.name)" />
@@ -116,11 +124,7 @@ async function onLogoutFromMore() {
 
 <style scoped>
 .app-nav {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: var(--layer-sticky);
+  margin-top: auto;
   /* Superficie tinta, igual que AppHeader: la navegación es orientación
      operativa (estandar-diseno-visual.md §3), no un formulario. */
   background-color: var(--color-surface-strong);
@@ -136,6 +140,10 @@ async function onLogoutFromMore() {
   margin: 0;
   padding: 0 var(--space-1);
   list-style: none;
+}
+
+.app-nav__list--desktop {
+  display: none;
 }
 
 .app-nav__item {
@@ -206,6 +214,30 @@ async function onLogoutFromMore() {
   border-bottom-color: var(--color-brand-accent-surface);
   color: var(--color-brand-accent-surface);
   opacity: 1;
+}
+
+@media (min-width: 1024px) {
+  .app-nav__list--mobile {
+    display: none;
+  }
+
+  .app-nav__list--desktop {
+    display: flex;
+    justify-content: flex-start;
+    height: 64px;
+    padding: 0 40px;
+  }
+
+  .app-nav__item {
+    flex: 1;
+  }
+
+  .app-nav__link {
+    flex-direction: row;
+    gap: 10px;
+    padding: 0 18px;
+    font-size: 14px;
+  }
 }
 
 .app-nav__more-list {

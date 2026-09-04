@@ -31,8 +31,9 @@ const evidenceRoot = path.join(
 
 const barbers = [
   { id: 'barber-julian', fullName: 'Julián Rodríguez' },
-  { id: 'barber-lucia', fullName: 'Lucía Pérez' },
-  { id: 'barber-sol', fullName: 'Sol' },
+  { id: 'barber-andres', fullName: 'Andrés Beltrán' },
+  { id: 'barber-camilo', fullName: 'Camilo Restrepo' },
+  { id: 'barber-tomas', fullName: 'Tomás Iriarte' },
 ]
 
 const agendaEntries = [
@@ -242,6 +243,8 @@ for (const viewport of [
   test.describe(`fidelidad mock de /panel en ${viewport.name}`, () => {
     if (viewport.name === 'mobile') {
       test.use({ deviceScaleFactor: 2 })
+    } else {
+      test.use({ deviceScaleFactor: 1 })
     }
 
     for (const scenario of scenarios) {
@@ -261,7 +264,10 @@ for (const viewport of [
         expect(await page.evaluate(() => window.innerHeight)).toBe(viewport.height)
         await page.screenshot({
           path: path.join(evidenceRoot, viewport.name, `${scenario.file}.png`),
-          fullPage: true,
+          // El atlas conserva el viewport de escritorio completo; en móvil
+          // registra el recorrido vertical entero para incluir el dock tras
+          // la última tarjeta.
+          fullPage: viewport.name === 'mobile',
         })
 
         pending?.release()
