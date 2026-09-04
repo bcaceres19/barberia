@@ -18,7 +18,6 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router'
 import { BaseAlert, BaseBadge, BaseButton, BaseInput, PageState } from '@/shared/ui'
-import { formatTimeInTimezone } from '@/shared/time/formatInstant'
 import {
   formatCivilDateFull,
   getCivilDateInTimezone,
@@ -255,9 +254,22 @@ function statusBadgeClass(entry: DailyAgendaEntry): string {
   return APPOINTMENT_STATUS_BADGE_CLASS[entry.status]
 }
 
-function entryTime(entry: DailyAgendaEntry): string {
+function formatAgendaTime(instant: string): string {
   if (!barbershopTimezone.value) return ''
-  return formatTimeInTimezone(entry.startsAt, barbershopTimezone.value)
+  return new Intl.DateTimeFormat('es-CO', {
+    timeZone: barbershopTimezone.value,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(new Date(instant))
+}
+
+function entryTime(entry: DailyAgendaEntry): string {
+  return formatAgendaTime(entry.startsAt)
+}
+
+function entryTimeRange(entry: DailyAgendaEntry): string {
+  return `${formatAgendaTime(entry.startsAt)}–${formatAgendaTime(entry.endsAt)}`
 }
 
 // Línea temporal horizontal de escritorio (estandar-diseno-visual.md §11.2,
@@ -295,8 +307,11 @@ const timelineBounds = computed(() => {
   // en vez de cortarlo en medianoche, para que la ficha se vea completa y la
   // marca "Cambio de día" tenga carril donde dibujarse.
   const ends = entries.value.map((e) => minutesSinceCivilMidnight(e.endsAt, date, tz))
-  const startHour = Math.floor(Math.min(...starts) / 60) * 60
-  const endHour = Math.ceil(Math.max(...ends) / 60) * 60
+  // El atlas conserva una hora de contexto antes y después del primer y el
+  // último turno. El intervalo sigue naciendo de sus horas reales, pero evita
+  // que una ficha extrema quede pegada al borde del carril.
+  const startHour = Math.max(0, Math.floor(Math.min(...starts) / 60) * 60 - 60)
+  const endHour = Math.min(24 * 60, Math.ceil(Math.max(...ends) / 60) * 60 + 60)
   const span = Math.max(endHour - startHour, MIN_TIMELINE_SPAN_MINUTES)
   return { start: startHour, end: startHour + span }
 })
@@ -643,9 +658,11 @@ const dayChangeMarkerPercent = computed(() => {
                     query: withQuery({}),
                   }"
                 >
-                  <span class="daily-agenda-page__item-time">{{ entryTime(entry) }}</span>
-                  <span class="daily-agenda-page__item-name">{{ entry.attendeeName }}</span>
-                  <span class="daily-agenda-page__item-service">{{ entry.serviceName }}</span>
+                  <span class="daily-agenda-page__item-time">{{ entryTimeRange(entry) }}</span>
+                  <span class="daily-agenda-page__item-details">
+                    <span class="daily-agenda-page__item-name">{{ entry.attendeeName }}</span>
+                    <span class="daily-agenda-page__item-service">{{ entry.serviceName }}</span>
+                  </span>
                 </RouterLink>
                 <BaseBadge
                   :class="statusBadgeClass(entry)"
@@ -752,8 +769,9 @@ const dayChangeMarkerPercent = computed(() => {
   font-family: var(--font-family-base);
   font-size: var(--font-size-body-sm);
   font-weight: 500;
-  color: var(--color-on-strong);
-  opacity: 0.8;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-brand-accent-surface);
 }
 
 /* HU-063: anterior/fecha/siguiente conservan posiciones estables
@@ -768,6 +786,25 @@ const dayChangeMarkerPercent = computed(() => {
 .daily-agenda-page__date-input {
   flex: 1 1 180px;
   min-width: 160px;
+}
+
+@media (min-width: 1024px) {
+  .daily-agenda-page__controls {
+    flex-wrap: nowrap;
+  }
+
+  .daily-agenda-page__picker {
+    flex: 0 0 280px;
+  }
+
+  .daily-agenda-page__date-nav {
+    flex-wrap: nowrap;
+  }
+
+  .daily-agenda-page__date-input {
+    flex: 0 0 150px;
+    min-width: 150px;
+  }
 }
 
 /* Evento 09 del atlas: divisor-titular-acción locales, mismo lenguaje
@@ -865,10 +902,10 @@ const dayChangeMarkerPercent = computed(() => {
    fuera del enlace, sin volverse un control ambiguo. */
 .daily-agenda-page__item-main {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-2);
+  flex: 1;
   min-width: 0;
+  align-items: center;
+  gap: var(--space-2);
   min-height: 44px;
   color: inherit;
   text-decoration: none;
@@ -887,11 +924,19 @@ const dayChangeMarkerPercent = computed(() => {
 }
 
 .daily-agenda-page__item-time {
+  flex: 0 0 120px;
   font-family: var(--font-family-base);
   font-size: var(--font-size-body);
-  font-weight: 600;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
   color: var(--color-text-primary);
+}
+
+.daily-agenda-page__item-details {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-0);
 }
 
 /* Persona atendida como texto principal de la ficha (§6.1). */
@@ -906,6 +951,52 @@ const dayChangeMarkerPercent = computed(() => {
   font-family: var(--font-family-base);
   font-size: var(--font-size-body-sm);
   color: var(--color-text-secondary);
+}
+
+@media (max-width: 1023px) {
+  .daily-agenda-page__cta {
+    width: 100%;
+  }
+
+  .daily-agenda-page__date-nav {
+    display: grid;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.65fr) minmax(0, 1.05fr);
+  }
+
+  .daily-agenda-page__date-input {
+    min-width: 0;
+  }
+
+  .daily-agenda-page__item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .daily-agenda-page__item-main {
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: 0;
+    gap: var(--space-0);
+  }
+
+  .daily-agenda-page__item-time {
+    flex-basis: auto;
+    font-size: var(--font-size-body-sm);
+    color: var(--color-text-secondary);
+  }
+
+  .daily-agenda-page__item-name {
+    font-size: var(--font-size-body);
+    line-height: var(--font-size-body-line);
+  }
+
+  .daily-agenda-page__item-service {
+    font-size: var(--font-size-body-sm);
+    line-height: var(--font-size-body-sm-line);
+  }
 }
 
 /* Línea temporal horizontal de escritorio (§7.2, §11.2): oculta por defecto,

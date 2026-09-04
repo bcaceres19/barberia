@@ -61,7 +61,14 @@ async function assignServiceToBarber(page: Page, barberName: string, serviceName
 async function goToAgenda(page: Page) {
   await page.getByRole('link', { name: 'Panel' }).click()
   await expect(page).toHaveURL(/\/panel$/)
-  await expect(page.getByRole('heading', { name: 'Agenda de hoy' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Agenda', exact: true })).toBeVisible()
+}
+
+async function selectAgendaBarber(page: Page, fullName: string) {
+  const trigger = page.getByRole('button', { name: 'Barbero', exact: true })
+  await trigger.click()
+  await page.getByRole('option', { name: fullName, exact: true }).click()
+  await expect(trigger).toContainText(fullName)
 }
 
 function nearFutureCivilDateTime(minutesFromNow: number): { date: string; time: string } {
@@ -128,7 +135,7 @@ test.describe('Agenda diaria de hoy (HU-062)', () => {
     await registerManualAppointment(page, barberName, serviceName, attendeeName, 30)
 
     await goToAgenda(page)
-    await page.getByLabel('Barbero').selectOption({ label: barberName })
+    await selectAgendaBarber(page, barberName)
 
     await expect(page.getByText(attendeeName)).toBeVisible()
     await expect(page.getByText(serviceName)).toBeVisible()
@@ -152,10 +159,10 @@ test.describe('Agenda diaria de hoy (HU-062)', () => {
     await registerManualAppointment(page, barberOne, serviceName, attendeeOne, 45)
 
     await goToAgenda(page)
-    await page.getByLabel('Barbero').selectOption({ label: barberOne })
+    await selectAgendaBarber(page, barberOne)
     await expect(page.getByText(attendeeOne)).toBeVisible()
 
-    await page.getByLabel('Barbero').selectOption({ label: barberTwo })
+    await selectAgendaBarber(page, barberTwo)
     await expect(page.getByText(attendeeOne)).not.toBeVisible()
     await expect(page.getByText(`No hay turnos para ${barberTwo} hoy`)).toBeVisible()
   })
@@ -180,7 +187,7 @@ test.describe('Agenda diaria en un dispositivo de otra zona horaria (CA-062-01, 
     page,
   }) => {
     await login(page)
-    await expect(page.getByRole('heading', { name: 'Agenda de hoy' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Agenda', exact: true })).toBeVisible()
     await expect(page.getByText('Zona America/Bogota')).toBeVisible()
   })
 })

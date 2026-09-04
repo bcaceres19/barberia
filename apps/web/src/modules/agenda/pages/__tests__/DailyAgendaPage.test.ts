@@ -522,12 +522,13 @@ describe('DailyAgendaPage', () => {
       const { wrapper } = await mountWithFixedDate()
 
       // 2026-08-28T19:30-20:00Z = 14:30-15:00 America/Bogota (UTC-05).
-      // bounds: [14:00, 18:00) redondeado a hora completa con el piso de
-      // 4h (MIN_TIMELINE_SPAN_MINUTES) → left=(870-840)/240=12.5%,
+      // bounds: [13:00, 17:00): una hora de contexto a cada lado y piso de
+      // 4h (MIN_TIMELINE_SPAN_MINUTES) → left=(870-780)/240=37.5%,
       // width=(900-870)/240=12.5%.
       const slip = wrapper.get('.daily-agenda-page__timeline-slip')
       const style = slip.attributes('style') ?? ''
-      expect(style).toContain('left: 12.5%')
+      // El eje conserva una hora de contexto antes y después del rango.
+      expect(style).toContain('left: 37.5%')
       expect(style).toContain('width: 12.5%')
     })
 
@@ -535,10 +536,12 @@ describe('DailyAgendaPage', () => {
       const { wrapper } = await mountWithFixedDate(nightEntry)
 
       const mark = wrapper.get('.daily-agenda-page__timeline-mark--day-change')
-      // bounds: start 23:00 (1380), turno termina 00:30 del día siguiente
-      // (1470) sin recortar → span mínimo de 4h → end=1620.
-      // left de medianoche (1440): (1440-1380)/(1620-1380)=25%.
-      expect(mark.attributes('style')).toContain('left: 25%')
+      // bounds: start 22:00 (1320), turno termina 00:30 del día siguiente
+      // (1470) sin recortar, con hora de contexto y span mínimo de 4h.
+      // left de medianoche (1440): (1440-1320)/(1560-1320)=50%.
+      // La hora de contexto inicia el carril a las 22:00; medianoche queda
+      // en su centro, sin mover la ficha fuera de su duración real.
+      expect(mark.attributes('style')).toContain('left: 50%')
       expect(mark.text()).toBe('Cambio de día')
 
       // La ficha ocupa su duración real (60min) más allá de medianoche, no
