@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-CHORE-190-NUEVO-TURNO-FIDELIDAD-v2"
 version: "2.0"
 kind: "chore"
-status: "ready"
+status: "executed"
 target_agents:
   - "claude"
 repository: "bcaceres19/barberia"
@@ -14,7 +14,7 @@ related_hu:
 issue: 190
 issue_url: "https://github.com/bcaceres19/barberia/issues/190"
 suggested_issue_title: null
-branch: null
+branch: "chore/190-nuevo-turno-fidelidad"
 pr: null
 pr_url: null
 depends_on:
@@ -243,3 +243,33 @@ aquello que no esté probado ni comparado visualmente.
 - Commit/PR: `chore(web): reproduce Nuevo turno según el atlas NAVA`.
 - `Closes #190` solo con toda la evidencia; en otro caso `Refs #190`.
 - No hagas push directo, force push ni merge de `main`. No mezcles #191.
+
+## Resultado (2026-09-04)
+
+Ejecutado en `chore/190-nuevo-turno-fidelidad`, sobre el atlas ya integrado en
+`main` por el PR [#221](https://github.com/bcaceres19/barberia/pull/221)
+(el preflight se cumplió sin trabajo local pendiente: la revisión del atlas y
+esta misma v2 del prompt ya estaban en `main` y la rama remota anterior
+estaba borrada).
+
+Implementado: hoja continua de cuatro bandas con filete de latón, rejilla de
+dos columnas (`288 px` de rótulos, CTA sangrado a la columna de campos),
+campo reglado sobre tinta resuelto redefiniendo `--input-bg` /
+`--input-border-color` / `--input-border-base-color` en el ámbito de la página
+(sin tocar `shared/ui`), latón reservado al campo ya resuelto, resumen de
+cuatro entradas con monograma bajo `hasSummaryContent`, esqueleto propio
+(`NewAppointmentSkeleton.vue`, hermano de `AgendaSkeleton`), estados de
+página con `PageState` y éxito a pantalla completa con ficha de pergamino.
+Los doce eventos de escritorio entran en `1024 px` de alto —lo verifica la
+propia spec— y ninguno desborda a lo ancho en ningún viewport.
+
+Evidencia: `nuevo-turno-fidelidad-mock.spec.ts` (24 pares evento×viewport, un
+escenario por evento con el mismo número y nombre del atlas),
+`nuevo-turno-evidencia-responsiva.spec.ts` (320/360/768/1280, zoom 200 %,
+teclado con foco visible y `prefers-reduced-motion`) y
+`nuevo-turno-fidelidad-comparacion.mjs` (lado a lado + diff absoluto por
+evento, con `resumen.txt`). Verificación en verde: `format`, `lint`,
+`typecheck`, `test:unit` (723/723), `build` y las dos specs mock.
+
+Desviaciones y decisiones que cambian código, con su autoridad, en
+`apps/web/e2e/evidence/nuevo-turno-fidelidad-190-desviaciones.md`.

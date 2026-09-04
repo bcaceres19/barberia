@@ -1,0 +1,24 @@
+desktop/01-carga-contexto: 5.7% de píxeles distintos
+desktop/02-error-contexto: 2.5% de píxeles distintos
+desktop/03-sin-barberos: 1.8% de píxeles distintos
+desktop/04-formulario-vacio: 6.5% de píxeles distintos
+desktop/05-cargando-servicios: 6.9% de píxeles distintos
+desktop/06-sin-servicios-asignados: 7.1% de píxeles distintos
+desktop/07-error-servicios: 7.1% de píxeles distintos
+desktop/08-formulario-completo: 7.6% de píxeles distintos
+desktop/09-error-validacion: 8.7% de píxeles distintos
+desktop/10-guardando: 7.6% de píxeles distintos
+desktop/11-conflicto-horario: 8.8% de píxeles distintos
+desktop/12-turno-registrado: 4.3% de píxeles distintos
+mobile/01-carga-contexto: 12.0% de píxeles distintos · alto atlas 2558 vs app 2590
+mobile/02-error-contexto: 6.6% de píxeles distintos
+mobile/03-sin-barberos: 4.8% de píxeles distintos
+mobile/04-formulario-vacio: 13.3% de píxeles distintos · alto atlas 2824 vs app 2876
+mobile/05-cargando-servicios: 12.9% de píxeles distintos · alto atlas 3112 vs app 3164
+mobile/06-sin-servicios-asignados: 13.1% de píxeles distintos · alto atlas 3112 vs app 3164
+mobile/07-error-servicios: 13.1% de píxeles distintos · alto atlas 3112 vs app 3164
+mobile/08-formulario-completo: 12.9% de píxeles distintos · alto atlas 3386 vs app 3438
+mobile/09-error-validacion: 13.6% de píxeles distintos · alto atlas 3486 vs app 3506
+mobile/10-guardando: 12.9% de píxeles distintos · alto atlas 3386 vs app 3438
+mobile/11-conflicto-horario: 13.6% de píxeles distintos · alto atlas 3644 vs app 3664
+mobile/12-turno-registrado: 13.3% de píxeles distintos

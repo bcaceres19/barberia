@@ -31,9 +31,21 @@ interface Props {
   modelValue: string | null
   barbers: BarberSummary[]
   disabled?: boolean
+  /** id del botón disparador, para que el `<label for>` de la pantalla que
+   * lo monta lo nombre. Por defecto conserva el de `/panel` (HU-062/063),
+   * que ya vive en pruebas y evidencia; "Nuevo turno" (issue #190) pasa el
+   * suyo para no duplicar un id en el documento. */
+  triggerId?: string
+  /** Texto visible mientras no hay barbero elegido. El código de cada
+   * pantalla lo escribe; este componente no lo redacta. */
+  placeholder?: string
 }
 
-const props = withDefaults(defineProps<Props>(), { disabled: false })
+const props = withDefaults(defineProps<Props>(), {
+  disabled: false,
+  triggerId: 'daily-agenda-barber-select',
+  placeholder: 'Selecciona un barbero',
+})
 
 const emit = defineEmits<{
   'update:modelValue': [barberId: string]
@@ -147,7 +159,7 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
 <template>
   <div ref="rootRef" class="barber-select">
     <button
-      id="daily-agenda-barber-select"
+      :id="triggerId"
       ref="triggerRef"
       type="button"
       class="barber-select__trigger"
@@ -164,7 +176,7 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
         class="barber-select__trigger-label"
         :class="{ 'barber-select__trigger-label--placeholder': !selectedBarber }"
       >
-        {{ selectedBarber?.fullName ?? 'Selecciona un barbero' }}
+        {{ selectedBarber?.fullName ?? placeholder }}
       </span>
       <span class="barber-select__chevron" aria-hidden="true" />
     </button>

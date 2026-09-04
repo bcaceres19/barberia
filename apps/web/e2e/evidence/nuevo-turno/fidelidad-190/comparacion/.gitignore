@@ -1,0 +1,9 @@
+# Las láminas lado a lado pesan ~8 MB y son DERIVADAS: se recomponen enteras
+# desde artefactos que sí están versionados (el atlas en docs/ y las capturas
+# de `mock/`) con un solo comando:
+#
+#   node apps/web/e2e/nuevo-turno-fidelidad-comparacion.mjs
+#
+# El diff absoluto por evento y `resumen.txt` sí se versionan: son el resultado
+# de la comparación, no su materia prima.
+*-lado-a-lado.png
