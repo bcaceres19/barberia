@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-CHORE-190-NUEVO-TURNO-FIDELIDAD-v1"
 version: "1.0"
 kind: "chore"
-status: "ready"
+status: "superseded"
 target_agents: ["claude", "codex"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
@@ -39,10 +39,16 @@ source_docs:
 created_at: "2026-09-04"
 updated_at: "2026-09-04"
 supersedes: null
-superseded_by: null
+superseded_by: "PROMPT-CHORE-190-NUEVO-TURNO-FIDELIDAD-v2"
 ---
 
 # Fidelidad de Nuevo turno al atlas NAVA
+
+> **Sustituido el 2026-09-04 por [`PROMPT-CHORE-190-NUEVO-TURNO-FIDELIDAD-v2`](issue-190-nuevo-turno-fidelidad-v2.md).**
+> El atlas al que apuntaba este archivo se regeneró con un segundo pase sobre
+> el formulario (hoja continua en vez de tarjetas de pergamino, campos sobre
+> tinta, esqueleto de carga, éxito a pantalla completa y encabezado alineado
+> con `/panel`). No ejecutar esta versión: su objetivo visual ya no existe.
 
 ## Instrucción
 
@@ -53,7 +59,7 @@ Rediseña únicamente `/panel/turnos/nuevo` para reproducir, evento por evento, 
 ## Trabajo requerido
 
 1. Lee completos los `source_docs`, inspecciona la ruta, componentes y pruebas reales, y preserva cambios ajenos.
-2. Abre cada PNG de `nuevo-turno-eventos` a resolución original y mide canvas, tarjetas numeradas, encabezado, grupos de campos, resumen, CTA, errores y densidad para el evento correspondiente.
+2. Abre cada PNG de `nuevo-turno-eventos` a resolución original y mide canvas, secciones numeradas a dos columnas, encabezado, controles y sus filetes de latón, columna del resumen, CTA, errores y densidad para el evento correspondiente. En escritorio el formulario completo entra en `1024 px` de alto: si tu implementación necesita scroll, la densidad todavía no coincide.
 3. Captura baseline en la app real y cubre vacío, relleno, validación, envío, éxito y conflicto `409` sin pérdida de datos.
 4. Reproduce composición, jerarquía, color, tipografía, espaciado, alineación, iconos y estados. Reutiliza `shared/ui`; no agregues controles sin comportamiento existente.
 5. Entrega referencia/baseline/final/lado a lado/overlay o diff en el viewport del mockup y evidencia 320/360/768/1280, zoom 200 %, teclado, foco y movimiento reducido.
