@@ -25,6 +25,47 @@ texto.** Lo que sigue es todo lo que no se pudo igualar, con su autoridad.
   `e2e/evidence/nuevo-turno/fidelidad-190/responsiva/`
   (`nuevo-turno-evidencia-responsiva.spec.ts`).
 
+## Criterio | Estado | Evidencia
+
+Una fila por evento y viewport. «Píxeles distintos» es el porcentaje que
+reporta `resumen.txt` sobre la región común, con umbral de 16/255 para no
+contar el antialias del texto; en escritorio incluye el desplazamiento
+uniforme de ~13 px que introduce el encabezado real (ver la tabla siguiente),
+y en móvil se añade la diferencia de alto total entre lámina y app.
+
+| Evento                     | Viewport           | Estado                           | Evidencia                                                       |
+| -------------------------- | ------------------ | -------------------------------- | --------------------------------------------------------------- |
+| 01 carga de contexto       | desktop 1440×1024  | Conforme                         | 5,7 % · `comparacion/desktop/01-carga-contexto-diff.png`        |
+| 01 carga de contexto       | mobile 420×935 @2x | Conforme                         | 12,0 % · alto 2590 vs 2558 (+32 px)                             |
+| 02 error de contexto       | desktop            | Conforme                         | 2,5 %                                                           |
+| 02 error de contexto       | mobile             | Conforme                         | 6,6 % · mismo alto                                              |
+| 03 sin barberos            | desktop            | Conforme                         | 1,8 %                                                           |
+| 03 sin barberos            | mobile             | Conforme                         | 4,8 % · mismo alto                                              |
+| 04 formulario vacío        | desktop            | Conforme                         | 6,5 % · fija la geometría de los demás                          |
+| 04 formulario vacío        | mobile             | Conforme                         | 13,3 % · alto 2876 vs 2824 (+52 px)                             |
+| 05 cargando servicios      | desktop            | Conforme                         | 6,9 % · servicio atenuado y sin latón                           |
+| 05 cargando servicios      | mobile             | Conforme                         | 12,9 % · alto 3164 vs 3112 (+52 px)                             |
+| 06 sin servicios asignados | desktop            | Conforme                         | 7,1 %                                                           |
+| 06 sin servicios asignados | mobile             | Conforme                         | 13,1 % · alto 3164 vs 3112 (+52 px)                             |
+| 07 error de servicios      | desktop            | Conforme                         | 7,1 %                                                           |
+| 07 error de servicios      | mobile             | Conforme                         | 13,1 % · alto 3164 vs 3112 (+52 px)                             |
+| 08 formulario completo     | desktop            | Conforme                         | 7,6 % · resumen lateral de 340 px, ocho filetes en latón        |
+| 08 formulario completo     | mobile             | Conforme                         | 12,9 % · alto 3438 vs 3386 (+52 px); resumen entre campos y CTA |
+| 09 error de validación     | desktop            | Conforme con desviación de texto | 8,7 % · alerta global sin segunda línea (ver tabla siguiente)   |
+| 09 error de validación     | mobile             | Conforme con desviación de texto | 13,6 % · alto 3506 vs 3486 (+20 px)                             |
+| 10 guardando               | desktop            | Conforme                         | 7,6 % · CTA atenuado con «Guardando…», sin segundo indicador    |
+| 10 guardando               | mobile             | Conforme                         | 12,9 % · alto 3438 vs 3386 (+52 px)                             |
+| 11 conflicto de horario    | desktop            | Conforme con desviación de texto | 8,8 % · alerta global + error junto al campo de hora            |
+| 11 conflicto de horario    | mobile             | Conforme con desviación de texto | 13,6 % · alto 3664 vs 3644 (+20 px)                             |
+| 12 turno registrado        | desktop            | Conforme con desviación de dato  | 4,3 % · importe crudo del API (ver tabla siguiente)             |
+| 12 turno registrado        | mobile             | Conforme con desviación de dato  | 13,3 % · mismo alto                                             |
+
+Guardas automáticas que respaldan la densidad, verificadas por
+`nuevo-turno-fidelidad-mock.spec.ts` en cada uno de los 24 casos: el documento
+no desborda a lo ancho, y en escritorio los doce eventos entran en `1024 px`
+de alto sin exigir scroll dentro del cascarón. Es la misma condición con la
+que aborta el generador del atlas.
+
 ## Diferencia | Autoridad | Tratamiento
 
 | Diferencia                                                                                                                                                                                              | Autoridad                                                                                                                              | Tratamiento                                                                                                                                                         |
