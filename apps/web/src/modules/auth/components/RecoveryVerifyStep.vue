@@ -11,7 +11,7 @@
 // `PhoneChallengeForm.vue`, pero con cuenta regresiva visible (CA-011-04
 // exige "cuánto falta", no solo un botón deshabilitado).
 import { computed, onUnmounted, ref } from 'vue'
-import { BaseAlert, BaseButton, BaseInput } from '@/shared/ui'
+import { BaseAlert, BaseButton, OtpInput } from '@/shared/ui'
 import { requestRecovery, verifyRecovery } from '../api/recoveryApi'
 import { validateRecoveryCode } from '../validation/recoveryValidation'
 
@@ -36,6 +36,15 @@ let cooldownTimer: ReturnType<typeof setInterval> | undefined
 
 const isVerifying = computed(() => verifyStatus.value === 'verifying')
 const canResend = computed(() => resendCooldownRemaining.value <= 0)
+// El error del código vive bajo las casillas, sin una alerta global que lo
+// repita (mockup 06-verificacion-codigo-invalido, trabajo requerido §6):
+// mismo tratamiento que el reto de acceso. Conserva el texto actual del
+// código (CA-011-*: no se toca contenido, solo su ancla).
+const otpError = computed(() =>
+  verifyStatus.value === 'invalid-code'
+    ? 'El código no es correcto o ya venció. Puedes reenviarlo o revisar lo que escribiste.'
+    : fieldError.value,
+)
 
 function startResendCooldown() {
   resendCooldownRemaining.value = RESEND_COOLDOWN_SECONDS
@@ -65,10 +74,8 @@ async function onResend() {
   await requestRecovery(props.email)
 }
 
-const handleCodeInput = (value: string | number) => {
-  code.value = String(value)
-    .replace(/[^0-9]/g, '')
-    .slice(0, 6)
+const handleCodeInput = (value: string) => {
+  code.value = value
   if (attemptedSubmit.value) {
     fieldError.value = validateRecoveryCode(code.value)
   }
@@ -99,7 +106,10 @@ async function onSubmit() {
       // distinguir el motivo. CT-007 (docs/00-control/contradicciones.md)
       // registra el conflicto entre esta uniformidad y el texto literal
       // de CA-011-03.
-      code.value = ''
+      // El estado rechazado conserva las seis ranuras llenas y en error,
+      // como el contrato visual de los eventos 06/10–12. La uniformidad de
+      // seguridad reside en el mensaje y el resultado, no en borrar el
+      // valor que la persona acaba de revisar.
       verifyStatus.value = 'invalid-code'
       return
     case 'validation-error':
@@ -120,43 +130,11 @@ async function onSubmit() {
       Si tu cuenta existe, recibirás un código de 6 dígitos por WhatsApp y correo.
     </p>
 
-    <BaseAlert
-      v-if="verifyStatus === 'invalid-code'"
-      variant="danger"
-      title="El código no es válido"
-      role="alert"
-    >
-      El código no es correcto o ya venció. Puedes reenviarlo o revisar lo que escribiste.
-    </BaseAlert>
-    <BaseAlert
-      v-if="verifyStatus === 'network-error'"
-      variant="warning"
-      title="No pudimos conectar"
-      role="alert"
-    >
-      Revisa tu conexión e inténtalo de nuevo.
-    </BaseAlert>
-    <BaseAlert
-      v-if="verifyStatus === 'unexpected-error'"
-      variant="danger"
-      title="Ocurrió un error inesperado"
-      role="alert"
-    >
-      Inténtalo de nuevo en unos segundos.
-    </BaseAlert>
-
-    <BaseInput
+    <OtpInput
       :model-value="code"
-      type="text"
-      name="code"
       label="Código de 6 dígitos"
-      pattern="[0-9]*"
-      :maxlength="6"
-      autocomplete="one-time-code"
-      placeholder="000000"
-      required
       :disabled="isVerifying"
-      :error="fieldError"
+      :error="otpError"
       @update:model-value="handleCodeInput"
     />
 
@@ -172,10 +150,44 @@ async function onSubmit() {
         Verificar código
       </BaseButton>
 
-      <BaseButton type="button" variant="ghost" size="md" :disabled="!canResend" @click="onResend">
+      <BaseButton
+        type="button"
+        variant="secondary"
+        size="md"
+        :disabled="!canResend"
+        @click="onResend"
+      >
         {{ canResend ? 'Reenviar código' : `Reenviar en ${resendCooldownRemaining} s` }}
       </BaseButton>
     </div>
+
+    <p class="recovery-back">
+      <RouterLink :to="{ name: 'acceso' }">Volver al acceso</RouterLink>
+    </p>
+
+    <!-- Ancla de alertas: después del grupo de acciones y de "Volver al
+         acceso" (trabajo requerido §3, auth-eventos/README.md). -->
+    <BaseAlert
+      v-if="verifyStatus === 'network-error'"
+      variant="warning"
+      title="No pudimos conectar"
+      role="alert"
+    >
+      Revisa tu conexión e inténtalo de nuevo.
+      <template #action>
+        <BaseButton variant="secondary" size="md" type="button" @click="onSubmit">
+          Reintentar
+        </BaseButton>
+      </template>
+    </BaseAlert>
+    <BaseAlert
+      v-if="verifyStatus === 'unexpected-error'"
+      variant="danger"
+      title="Ocurrió un error inesperado"
+      role="alert"
+    >
+      Inténtalo de nuevo en unos segundos.
+    </BaseAlert>
   </form>
 </template>
 
@@ -189,7 +201,8 @@ async function onSubmit() {
 
 .recovery-verify__sent {
   margin: 0;
-  font-size: var(--font-size-body-sm);
+  font-size: 18px;
+  line-height: 26px;
   color: var(--color-text-secondary);
 }
 
@@ -201,5 +214,17 @@ async function onSubmit() {
 
 .recovery-verify__submit {
   width: 100%;
+  min-height: 56px;
+}
+
+.recovery-back {
+  margin: 0;
+  text-align: center;
+  font-size: var(--font-size-body-sm);
+}
+
+.recovery-back a {
+  color: var(--color-action-primary);
+  font-weight: 500;
 }
 </style>

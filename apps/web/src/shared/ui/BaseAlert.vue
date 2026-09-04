@@ -160,6 +160,13 @@ const updateFocusableElements = () => {
 const slots = useSlots()
 const hasActionSlot = computed(() => !!slots.action)
 
+// Permite a un consumidor (por ejemplo, un resumen de validación con más
+// de un error, CA-010-05) mover el foco al propio recuadro de la alerta
+// sin duplicar su `role`/estructura en un wrapper aparte.
+defineExpose({
+  focus: () => alertRef.value?.focus(),
+})
+
 const style = computed(() => ({
   '--alert-surface': surfaceVar.value,
   '--alert-text': textVar.value,
@@ -246,6 +253,15 @@ const style = computed(() => ({
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Foco del propio recuadro (consumidores que reciben `tabindex="-1"` para
+   moverle el foco, p. ej. un resumen de validación con más de un error). */
+.base-alert:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--color-surface),
+    0 0 0 4px var(--color-focus);
 }
 
 .base-alert[v-show='false'] {

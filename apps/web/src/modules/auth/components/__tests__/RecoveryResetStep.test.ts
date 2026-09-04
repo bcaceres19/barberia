@@ -62,6 +62,24 @@ describe('RecoveryResetStep', () => {
     expect(wrapper.text()).toContain('no coinciden')
   })
 
+  it('shows a gerund label and blocks the fields while submitting', async () => {
+    let resolveOutcome!: (value: { kind: 'success' }) => void
+    resetRecoveryPasswordMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveOutcome = resolve
+      }),
+    )
+    const wrapper = mountStep()
+
+    await fillAndSubmit(wrapper)
+
+    expect(wrapper.get('input[name="newPassword"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.get('button[type="submit"]').text()).toBe('Guardando contraseña…')
+
+    resolveOutcome({ kind: 'success' })
+    await flushPromises()
+  })
+
   it('emits done on success (CA-011-05)', async () => {
     resetRecoveryPasswordMock.mockResolvedValueOnce({ kind: 'success' })
     const wrapper = mountStep()

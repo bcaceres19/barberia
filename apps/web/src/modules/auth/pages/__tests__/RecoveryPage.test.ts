@@ -34,6 +34,13 @@ function buildRouter() {
   })
 }
 
+async function fillOtp(wrapper: ReturnType<typeof mount>, code: string) {
+  // `OtpInput` conserva un valor lógico de seis dígitos, aunque lo renderiza
+  // en seis casillas accesibles. Escribir/pegar en la primera distribuye el
+  // valor completo, igual que en el recorrido real.
+  await wrapper.get('.otp-input__slot').setValue(code)
+}
+
 async function mountPage(options: { attachToBody?: boolean } = {}) {
   const router = buildRouter()
   await router.push({ name: 'recuperar-acceso' })
@@ -76,7 +83,7 @@ describe('RecoveryPage', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('Paso 2 de 3')
 
-    await wrapper.get('input[name="code"]').setValue('482913')
+    await fillOtp(wrapper, '482913')
     await wrapper.get('form').trigger('submit')
     await flushPromises()
     expect(wrapper.text()).toContain('Paso 3 de 3')
@@ -121,7 +128,7 @@ describe('RecoveryPage', () => {
     await wrapper.get('input[name="email"]').setValue('barbero@ejemplo.test')
     await wrapper.get('form').trigger('submit')
     await flushPromises()
-    await wrapper.get('input[name="code"]').setValue('482913')
+    await fillOtp(wrapper, '482913')
     await wrapper.get('form').trigger('submit')
     await flushPromises()
     await wrapper.get('input[name="newPassword"]').setValue('contraseña-nueva-valida')

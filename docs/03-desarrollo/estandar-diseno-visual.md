@@ -54,6 +54,8 @@ El [atlas integral de mockups](../10-backlog/evidence/ui-mockups-nava-tailored-g
 
 Para acceso y recuperación se asigna siempre el archivo individual del viewport y evento que se implementa; no se usa `02-acceso-recuperacion.png` como objetivo de fidelidad. Los códigos de seis dígitos adoptan seis casillas visuales. Ese patrón solo es conforme si sigue representando un único valor lógico, admite pegar el código completo, distribuye sus dígitos, soporta avance, retroceso y teclado numérico, conserva foco visible y expone un nombre e instrucciones accesibles coherentes.
 
+En autenticación, el error local se muestra debajo de su campo y el resumen global después de las acciones/enlaces del formulario, sin repetir literalmente los errores locales. `Input`, `PasswordInput`, `OtpInput` e `InlineAlert` mantienen una sola anatomía visual entre acceso y recuperación. Durante un envío, campos y acción principal quedan bloqueados en todos los viewports. Las alertas entran en `160 ms` mediante opacidad y una traslación vertical máxima de `6 px`, sin mover el foco; `prefers-reduced-motion` elimina la traslación y cualquier retraso no esencial.
+
 ### 2.1 Modos de conformidad
 
 Antes de diseñar o editar, el issue y el PR declaran uno de estos modos:

@@ -28,11 +28,15 @@ const props = withDefaults(
     email: string
     password: string
     submitting: boolean
+    /** El reto adicional deja las credenciales visibles pero bloqueadas:
+     * mientras esté activo, su única acción primaria es verificar el OTP. */
+    challengeActive?: boolean
     serverError?: LoginServerErrorSummary | null
     recoveryHref: string
   }>(),
   {
     serverError: null,
+    challengeActive: false,
   },
 )
 
@@ -45,7 +49,7 @@ const emit = defineEmits<{
 
 const fieldErrors = ref<LoginFieldErrors>({})
 const attemptedSubmit = ref(false)
-const summaryRef = ref<HTMLElement | null>(null)
+const summaryRef = ref<{ focus: () => void } | null>(null)
 
 // Solo se muestran errores de campo tras el primer intento de envío: no se
 // regaña al barbero mientras todavía está escribiendo por primera vez.
@@ -94,7 +98,7 @@ const onSubmit = async () => {
     // ya es suficiente y un resumen de un solo ítem sería ruido.
     if (errorCount.value > 1) {
       await nextTick()
-      summaryRef.value?.focus()
+      summaryRef.value?.focus?.()
     }
     return
   }
@@ -107,13 +111,67 @@ const onRetry = () => emit('retry')
 
 <template>
   <form class="login-form" novalidate @submit.prevent="onSubmit">
-    <div v-if="showSummary" ref="summaryRef" class="login-form__summary" role="alert" tabindex="-1">
-      <p class="login-form__summary-title">Revisa estos campos:</p>
-      <ul>
+    <BaseInput
+      :model-value="email"
+      type="email"
+      name="email"
+      label="Correo"
+      autocomplete="username"
+      placeholder="tu-correo@ejemplo.com"
+      required
+      :show-required-marker="false"
+      :disabled="submitting || challengeActive"
+      :error="emailError"
+      @update:model-value="handleEmailInput"
+    />
+
+    <BaseInput
+      :model-value="password"
+      type="password"
+      name="password"
+      label="Contraseña"
+      autocomplete="current-password"
+      required
+      :show-required-marker="false"
+      :disabled="submitting || challengeActive"
+      :error="passwordError"
+      @update:model-value="handlePasswordInput"
+    />
+
+    <BaseButton
+      type="submit"
+      variant="primary"
+      size="lg"
+      :loading="submitting"
+      :disabled="submitting || challengeActive"
+      class="login-form__submit"
+    >
+      {{ submitting ? 'Iniciando sesión…' : 'Iniciar sesión' }}
+    </BaseButton>
+
+    <p class="login-form__recovery">
+      <RouterLink :to="recoveryHref">¿Olvidaste tu contraseña?</RouterLink>
+    </p>
+
+    <!-- Ancla de alertas (issue #213, auth-eventos/README.md): la alerta
+         global va después del botón y del enlace de recuperación, nunca
+         entre el título y los campos. -->
+    <BaseAlert
+      v-if="showSummary"
+      ref="summaryRef"
+      variant="danger"
+      title="Revisa estos campos"
+      role="alert"
+      tabindex="-1"
+    >
+      <!-- Desviación conocida (trabajo requerido §7): el mockup muestra un
+           resumen que explica qué falta; el código sigue enumerando cada
+           error de campo tal como ya se comporta hoy. -->
+      <ul class="login-form__summary-list">
         <li v-if="fieldErrors.email">{{ fieldErrors.email }}</li>
         <li v-if="fieldErrors.password">{{ fieldErrors.password }}</li>
       </ul>
-    </div>
+    </BaseAlert>
 
     <BaseAlert
       v-if="serverError"
@@ -128,48 +186,6 @@ const onRetry = () => emit('retry')
         </BaseButton>
       </template>
     </BaseAlert>
-
-    <BaseInput
-      :model-value="email"
-      type="email"
-      name="email"
-      label="Correo"
-      autocomplete="username"
-      placeholder="tu-correo@ejemplo.com"
-      required
-      :show-required-marker="false"
-      :disabled="submitting"
-      :error="emailError"
-      @update:model-value="handleEmailInput"
-    />
-
-    <BaseInput
-      :model-value="password"
-      type="password"
-      name="password"
-      label="Contraseña"
-      autocomplete="current-password"
-      required
-      :show-required-marker="false"
-      :disabled="submitting"
-      :error="passwordError"
-      @update:model-value="handlePasswordInput"
-    />
-
-    <BaseButton
-      type="submit"
-      variant="primary"
-      size="lg"
-      :loading="submitting"
-      :disabled="submitting"
-      class="login-form__submit"
-    >
-      {{ submitting ? 'Iniciando sesión…' : 'Iniciar sesión' }}
-    </BaseButton>
-
-    <p class="login-form__recovery">
-      <RouterLink :to="recoveryHref">¿Olvidaste tu contraseña?</RouterLink>
-    </p>
   </form>
 </template>
 
@@ -192,10 +208,10 @@ const onRetry = () => emit('retry')
 }
 
 .login-form :deep(.base-input) {
-  height: 64px;
+  height: 56px;
   padding-right: var(--space-4);
   padding-left: var(--space-4);
-  font-size: 17px;
+  font-size: 18px;
   line-height: 24px;
   background-color: var(--color-surface);
   border-color: var(--color-border-subtle);
@@ -226,37 +242,14 @@ const onRetry = () => emit('retry')
   opacity: 0.48;
 }
 
-.login-form__summary {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-4);
-  background-color: var(--color-danger-surface);
-  border: var(--border-width-normal) solid var(--color-danger-border);
-  border-radius: var(--radius-md);
-  color: var(--color-danger-text);
-}
-
-.login-form__summary:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 2px var(--color-surface),
-    0 0 0 4px var(--color-focus);
-}
-
-.login-form__summary-title {
-  margin: 0;
-  font-weight: 600;
-}
-
-.login-form__summary ul {
+.login-form__summary-list {
   margin: 0;
   padding-left: var(--space-5);
 }
 
 .login-form__submit {
   width: 100%;
-  height: 64px;
+  height: 56px;
   border-radius: var(--radius-sm);
   font-size: 18px;
   font-weight: 600;
@@ -291,25 +284,12 @@ const onRetry = () => emit('retry')
     line-height: 24px;
   }
 
-  .login-form :deep(.base-input),
-  .login-form__submit {
-    height: 72px;
-  }
-
-  .login-form :deep(.base-input) {
-    font-size: 18px;
-  }
-
   .login-form :deep(.base-input__input-wrapper:has(.base-input__toggle) .base-input) {
     padding-right: 96px;
   }
 
   .login-form :deep(.base-input__toggle) {
     min-width: 88px;
-  }
-
-  .login-form__submit {
-    font-size: 20px;
   }
 }
 </style>

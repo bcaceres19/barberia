@@ -61,23 +61,6 @@ async function onSubmit() {
       y correo.
     </p>
 
-    <BaseAlert
-      v-if="status === 'network-error'"
-      variant="warning"
-      title="No pudimos conectar"
-      role="alert"
-    >
-      Revisa tu conexión e inténtalo de nuevo.
-    </BaseAlert>
-    <BaseAlert
-      v-if="status === 'unexpected-error'"
-      variant="danger"
-      title="Ocurrió un error inesperado"
-      role="alert"
-    >
-      Inténtalo de nuevo en unos segundos.
-    </BaseAlert>
-
     <BaseInput
       :model-value="email"
       type="email"
@@ -86,6 +69,7 @@ async function onSubmit() {
       autocomplete="username"
       placeholder="tu-correo@ejemplo.com"
       required
+      :show-required-marker="false"
       :disabled="isSubmitting"
       :error="fieldError"
       @update:model-value="handleEmailInput"
@@ -101,6 +85,34 @@ async function onSubmit() {
     >
       {{ isSubmitting ? 'Enviando…' : 'Enviar código' }}
     </BaseButton>
+
+    <p class="recovery-back">
+      <RouterLink :to="{ name: 'acceso' }">Volver al acceso</RouterLink>
+    </p>
+
+    <!-- Ancla de alertas: después del grupo de acciones y de "Volver al
+         acceso" (trabajo requerido §3, auth-eventos/README.md). -->
+    <BaseAlert
+      v-if="status === 'network-error'"
+      variant="warning"
+      title="No pudimos conectar"
+      role="alert"
+    >
+      Revisa tu conexión e inténtalo de nuevo.
+      <template #action>
+        <BaseButton variant="secondary" size="md" type="button" @click="onSubmit">
+          Reintentar
+        </BaseButton>
+      </template>
+    </BaseAlert>
+    <BaseAlert
+      v-if="status === 'unexpected-error'"
+      variant="danger"
+      title="Ocurrió un error inesperado"
+      role="alert"
+    >
+      Inténtalo de nuevo en unos segundos.
+    </BaseAlert>
   </form>
 </template>
 
@@ -108,17 +120,56 @@ async function onSubmit() {
 .recovery-request {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-8);
   width: 100%;
+  margin-top: var(--space-8);
 }
 
-.recovery-request__hint {
-  margin: 0;
-  font-size: var(--font-size-body-sm);
-  color: var(--color-text-secondary);
+.recovery-request :deep(.base-input) {
+  height: 56px;
+  font-size: 18px;
+}
+
+.recovery-request :deep(.base-input__label) {
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .recovery-request__submit {
   width: 100%;
+  min-height: 56px;
+  font-size: 18px;
+}
+
+@media (min-width: 1024px) {
+  .recovery-request {
+    margin-top: 0;
+  }
+}
+
+.recovery-request__hint {
+  margin: 0;
+  font-size: 20px;
+  line-height: 28px;
+  color: var(--color-text-secondary);
+}
+
+@media (min-width: 1024px) {
+  .recovery-request__hint {
+    font-size: 18px;
+    line-height: 26px;
+  }
+}
+
+.recovery-back {
+  margin: 0;
+  text-align: center;
+  font-size: var(--font-size-body-sm);
+}
+
+.recovery-back a {
+  color: var(--color-action-primary);
+  font-weight: 500;
 }
 </style>

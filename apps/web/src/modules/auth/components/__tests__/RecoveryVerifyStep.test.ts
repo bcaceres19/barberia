@@ -3,9 +3,13 @@
  * de reenvío con cuenta regresiva (CA-011-04) y error uniforme para código
  * incorrecto/vencido/agotado (CA-011-03 según el contrato real de HU-008,
  * ver CT-007 en docs/00-control/contradicciones.md).
+ *
+ * El código ya no vive en un único `input[name="code"]` (issue #213 adopta
+ * `OtpInput`, seis casillas sin `name`): las pruebas que necesitan leer o
+ * escribir el código completo usan los helpers `fillOtp`/`readOtp`.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
 import RecoveryVerifyStep from '../RecoveryVerifyStep.vue'
 
@@ -22,6 +26,20 @@ function mountStep() {
   return mount(RecoveryVerifyStep, { props: { email: 'barbero@ejemplo.test' } })
 }
 
+// `OtpInput` distribuye el código completo cuando el primer slot recibe un
+// valor con más de un carácter (mismo camino que un pegado real,
+// `OtpInput.vue` `onInput`).
+async function fillOtp(wrapper: VueWrapper, code: string) {
+  await wrapper.findAll('input')[0].setValue(code)
+}
+
+function readOtp(wrapper: VueWrapper): string {
+  return wrapper
+    .findAll('input')
+    .map((input) => (input.element as HTMLInputElement).value)
+    .join('')
+}
+
 describe('RecoveryVerifyStep', () => {
   beforeEach(() => {
     requestRecoveryMock.mockReset()
@@ -35,10 +53,9 @@ describe('RecoveryVerifyStep', () => {
     expect(wrapper.text()).toContain('Si tu cuenta existe')
   })
 
-  it('strips non-digit characters and caps the code at 6 digits', async () => {
+  it('renders exactly six OTP slots for the code', () => {
     const wrapper = mountStep()
-    await wrapper.get('input[name="code"]').setValue('4a8-2 91399999')
-    expect((wrapper.get('input[name="code"]').element as HTMLInputElement).value).toBe('482913')
+    expect(wrapper.findAll('input')).toHaveLength(6)
   })
 
   it('verifies a correct code and emits advance with resetToken/masked destination', async () => {
@@ -50,7 +67,7 @@ describe('RecoveryVerifyStep', () => {
     })
     const wrapper = mountStep()
 
-    await wrapper.get('input[name="code"]').setValue('482913')
+    await fillOtp(wrapper, '482913')
     await wrapper.get('form').trigger('submit')
     await flushPromises()
 
@@ -60,35 +77,38 @@ describe('RecoveryVerifyStep', () => {
     ])
   })
 
-  it('shows one uniform message and clears the field on invalid-code (incorrect/expired/exhausted, CA-011-03)', async () => {
+  it('shows one uniform message under six filled error slots on invalid-code (incorrect/expired/exhausted, CA-011-03)', async () => {
     verifyRecoveryMock.mockResolvedValueOnce({ kind: 'invalid-code' })
     const wrapper = mountStep()
 
-    await wrapper.get('input[name="code"]').setValue('000000')
+    await fillOtp(wrapper, '000000')
     await wrapper.get('form').trigger('submit')
     await flushPromises()
 
     expect(wrapper.emitted('advance')).toBeUndefined()
-    expect(wrapper.text()).toContain('El código no es válido')
-    expect((wrapper.get('input[name="code"]').element as HTMLInputElement).value).toBe('')
+    // El error vive bajo las casillas, sin una alerta global aparte
+    // (mockup 06-verificacion-codigo-invalido, trabajo requerido §6).
+    expect(wrapper.text()).toContain('El código no es correcto o ya venció')
+    expect(wrapper.findAll('[role="alert"].base-alert')).toHaveLength(0)
+    expect(readOtp(wrapper)).toBe('000000')
   })
 
-  it('shows a real transport error on network-error, without clearing the code', async () => {
+  it('shows a real transport error after the actions group, without clearing the code', async () => {
     verifyRecoveryMock.mockResolvedValueOnce({ kind: 'network-error' })
     const wrapper = mountStep()
 
-    await wrapper.get('input[name="code"]').setValue('482913')
+    await fillOtp(wrapper, '482913')
     await wrapper.get('form').trigger('submit')
     await flushPromises()
 
     expect(wrapper.text()).toContain('No pudimos conectar')
-    expect((wrapper.get('input[name="code"]').element as HTMLInputElement).value).toBe('482913')
+    expect(readOtp(wrapper)).toBe('482913')
   })
 
   it('blocks submission with a field error when fewer than 6 digits are entered', async () => {
     const wrapper = mountStep()
 
-    await wrapper.get('input[name="code"]').setValue('12345')
+    await fillOtp(wrapper, '12345')
     await wrapper.get('form').trigger('submit')
 
     expect(wrapper.text()).toContain('6 dígitos')

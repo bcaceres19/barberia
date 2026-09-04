@@ -24,6 +24,7 @@ interface MountFormOptions {
   email?: string
   password?: string
   submitting?: boolean
+  challengeActive?: boolean
   serverError?: LoginServerErrorSummary | null
   recoveryHref?: string
   attachToBody?: boolean
@@ -144,7 +145,10 @@ describe('LoginForm', () => {
       const wrapper = mountForm({ attachToBody: true })
       await wrapper.get('form').trigger('submit')
       await wrapper.vm.$nextTick()
-      const summary = wrapper.get('[role="alert"].login-form__summary')
+      // El resumen ahora es un `BaseAlert` al final del formulario. Los
+      // errores de campo también usan `role="alert"`, así que se identifica
+      // por el título del resumen en vez de depender de su orden en el DOM.
+      const summary = wrapper.get('.base-alert')
       expect(document.activeElement).toBe(summary.element)
       wrapper.unmount()
     })
@@ -177,6 +181,13 @@ describe('LoginForm', () => {
       expect(button.attributes('aria-busy')).toBe('true')
       expect(button.text()).toBe('Iniciando sesión…')
     })
+
+    it('blocks credentials and its submit action while the OTP challenge is active', () => {
+      const wrapper = mountForm({ challengeActive: true })
+      expect(wrapper.get('input[name="email"]').attributes('disabled')).toBeDefined()
+      expect(wrapper.get('input[name="password"]').attributes('disabled')).toBeDefined()
+      expect(wrapper.get('button[type="submit"]').attributes('disabled')).toBeDefined()
+    })
   })
 
   describe('Estados de servidor (props)', () => {
@@ -201,9 +212,9 @@ describe('LoginForm', () => {
           actionLabel: 'Reintentar',
         },
       })
-      const retryButton = wrapper.get('button:not([type="submit"])')
-      expect(retryButton.text()).toBe('Reintentar')
-      await retryButton.trigger('click')
+      const retryButton = wrapper.findAll('button').find((button) => button.text() === 'Reintentar')
+      expect(retryButton).toBeDefined()
+      await retryButton?.trigger('click')
       expect(wrapper.emitted('retry')).toBeTruthy()
     })
 

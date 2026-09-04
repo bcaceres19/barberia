@@ -1,17 +1,22 @@
 <script setup lang="ts">
 // Cascarón compartido de las pantallas públicas de acceso/recuperación
-// (Fase 3 del rediseño Tailored Grid, issue #188): panel de marca en tinta
-// (editorial, decorativo) junto al formulario real sobre marfil. En
-// escritorio (>= 1024px, mismo punto de corte que el resto de NAVA) el
-// panel ocupa la mitad izquierda; en móvil se condensa a una franja
-// superior con solo la marca, sin repetir el wordmark dentro de la
-// tarjeta del formulario. `LoginPage`/`RecoveryPage` conservan su propio
-// estado y encabezado real (`<h1>`); este componente no es un landmark de
-// contenido, por eso su panel de marca lleva `aria-hidden`.
+// (Fase 3 del rediseño Tailored Grid, issue #188; contrato reglado del
+// issue #212/#213). En escritorio (>= 1024px, mismo punto de corte que el
+// resto de NAVA) un panel de marca en tinta (editorial, decorativo) ocupa
+// la mitad izquierda; en móvil ese panel se oculta por completo y el
+// lienzo entero queda en marfil, con la marca reglada (wordmark + regla de
+// latón a su ancho) como encabezado de la propia columna de contenido —
+// misma marca que en escritorio, ya no una franja de tinta aparte.
+// `LoginPage`/`RecoveryPage` conservan su propio estado y encabezado real
+// (`<h1>`); ni el panel de marca ni la marca reglada del encabezado son un
+// landmark de contenido, por eso ambos llevan `aria-hidden`.
 import { NavaWordmark } from '@/shared/ui'
 
 interface Props {
   tagline?: string
+  /** Leyenda reglada del panel de marca / pie móvil: "ACCESO SEGURO" o
+   * "RECUPERACIÓN SEGURA" (contrato visual, auth-eventos/README.md). */
+  caption: string
 }
 
 withDefaults(defineProps<Props>(), {
@@ -28,10 +33,16 @@ withDefaults(defineProps<Props>(), {
           <span class="auth-split__rule"></span>
         </div>
         <p class="auth-split__tagline">{{ tagline }}</p>
+        <p class="auth-split__caption">{{ caption }} · NAVA</p>
       </div>
       <div class="auth-split__content">
         <div class="auth-split__card">
+          <div class="auth-split__mark" aria-hidden="true">
+            <NavaWordmark variant="ink" size="lg" />
+            <span class="auth-split__mark-rule"></span>
+          </div>
           <slot />
+          <p class="auth-split__mobile-caption" aria-hidden="true">{{ caption }} · NAVA</p>
         </div>
       </div>
     </div>
@@ -41,6 +52,12 @@ withDefaults(defineProps<Props>(), {
 <style scoped>
 .auth-split {
   display: grid;
+  /* Sin esta pista explícita, la columna implícita de este grid se
+     dimensiona a su contenido (min-content/max-content) en vez de al
+     ancho disponible: el reto telefónico y sus seis ranuras de OTP tienen
+     contenido intrínseco más ancho que 420 px, y el grid se desborda en
+     vez de encogerse (issue #213, evidencia de auth-eventos-fidelidad). */
+  grid-template-columns: minmax(0, 1fr);
   place-items: center;
   min-height: 100dvh;
   background-color: var(--color-canvas);
@@ -48,14 +65,18 @@ withDefaults(defineProps<Props>(), {
 
 .auth-split__frame {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   width: 100%;
   min-height: 100dvh;
   background-color: var(--color-canvas);
 }
 
+/* Oculto por completo en móvil (< 1024px): el mockup mobile no repite una
+   franja de tinta, la marca reglada de `.auth-split__mark` ya cumple ese
+   rol dentro de la columna de contenido. */
 .auth-split__brand {
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -99,7 +120,6 @@ withDefaults(defineProps<Props>(), {
 }
 
 .auth-split__tagline {
-  display: none;
   margin: 0;
   max-width: 15ch;
   font-family: var(--font-display);
@@ -109,11 +129,65 @@ withDefaults(defineProps<Props>(), {
   opacity: 0.92;
 }
 
+/* Leyenda reglada del panel de marca ("ACCESO SEGURO · NAVA" /
+   "RECUPERACIÓN SEGURA · NAVA"): versalitas de baja énfasis al pie del
+   panel de tinta, mismo tratamiento tipográfico que el resto de las
+   etiquetas regladas del contrato visual. */
+.auth-split__caption {
+  margin: var(--space-10) 0 0;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-on-strong);
+  opacity: 0.56;
+}
+
+/* Marca reglada de la columna de contenido: wordmark a escala de chip
+   editorial + regla de latón a su propio ancho, encabezado compartido por
+   `/acceso` y `/recuperar-acceso` en los dos viewports (issue #213,
+   auth-eventos/README.md "Ambas rutas muestran el wordmark con la regla
+   de latón a su ancho completo"). */
+.auth-split__mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: fit-content;
+  margin: 0 auto 48px;
+}
+
+.auth-split__mark :deep(.nava-wordmark--lg) {
+  font-size: 80px;
+  line-height: 1;
+  letter-spacing: 0.03em;
+}
+
+.auth-split__mark-rule {
+  width: 100%;
+  height: 2px;
+  margin-top: var(--space-4);
+  background-color: var(--color-accent-brass);
+}
+
+/* Leyenda reglada al pie de la tarjeta, solo en móvil (el panel de tinta
+   la reemplaza en escritorio). */
+.auth-split__mobile-caption {
+  margin: var(--space-8) 0 0;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
 .auth-split__content {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 48px clamp(var(--space-5), 6vw, var(--space-10)) var(--space-12);
+  padding: 88px clamp(var(--space-5), 6vw, var(--space-10)) var(--space-12);
   background-color: var(--color-canvas);
 }
 
@@ -122,28 +196,26 @@ withDefaults(defineProps<Props>(), {
   flex-direction: column;
   gap: var(--space-6);
   width: 100%;
+  min-width: 0;
   max-width: 470px;
 }
 
 @media (min-width: 1024px) {
   .auth-split {
-    padding: var(--space-8);
+    padding: 0;
   }
 
   .auth-split__frame {
     grid-template-rows: none;
-    grid-template-columns: minmax(390px, 46fr) minmax(480px, 54fr);
-    width: min(1440px, 100%);
-    min-height: min(960px, calc(100dvh - 64px));
-    overflow: hidden;
-    border: var(--border-width-normal) solid var(--color-border-subtle);
-    border-radius: 10px;
-    box-shadow: var(--shadow-dialog);
+    grid-template-columns: 43.0556fr 56.9444fr;
+    width: 100%;
+    min-height: 100dvh;
   }
 
   .auth-split__brand {
-    --auth-wordmark-font-size: clamp(120px, 11.5vw, 168px);
+    --auth-wordmark-font-size: clamp(120px, 9vw, 132px);
 
+    display: flex;
     padding: var(--space-16) var(--space-10);
     border-right: var(--border-width-normal) solid var(--color-action-soft-border);
     border-bottom: 0;
@@ -155,6 +227,15 @@ withDefaults(defineProps<Props>(), {
     letter-spacing: 0.025em;
   }
 
+  .auth-split__tagline {
+    font-size: 44px;
+    line-height: 56px;
+  }
+
+  .auth-split__caption {
+    margin-top: 64px;
+  }
+
   .auth-split__wordmark-group {
     width: fit-content;
   }
@@ -162,10 +243,12 @@ withDefaults(defineProps<Props>(), {
   .auth-split__rule {
     display: block;
     width: 100%;
+    margin: 48px 0 56px;
+    background-color: var(--color-accent-brass);
   }
 
-  .auth-split__tagline {
-    display: block;
+  .auth-split__mobile-caption {
+    display: none;
   }
 
   .auth-split__content {
@@ -174,13 +257,21 @@ withDefaults(defineProps<Props>(), {
   }
 
   .auth-split__card {
-    max-width: 620px;
+    max-width: 580px;
   }
 
   .auth-split__card :deep(.base-alert) {
     padding: 18px 20px;
     font-size: 17px;
     line-height: 24px;
+  }
+
+  .auth-split__mark :deep(.nava-wordmark--lg) {
+    font-size: 56px;
+  }
+
+  .auth-split__mark {
+    margin-bottom: var(--space-8);
   }
 }
 

@@ -75,9 +75,11 @@ function onRestart() {
 </script>
 
 <template>
-  <AuthSplitLayout>
-    <p class="recovery-page__progress">Paso {{ STEP_NUMBERS[step] }} de 3</p>
-    <h1 ref="headingRef" class="recovery-page__title" tabindex="-1">{{ STEP_TITLES[step] }}</h1>
+  <AuthSplitLayout caption="RECUPERACIÓN SEGURA">
+    <div class="recovery-page__header">
+      <p class="recovery-page__progress">Paso {{ STEP_NUMBERS[step] }} de 3</p>
+      <h1 ref="headingRef" class="recovery-page__title" tabindex="-1">{{ STEP_TITLES[step] }}</h1>
+    </div>
 
     <RecoveryRequestStep v-if="step === 'request'" @advance="onRequestAdvance" />
 
@@ -108,29 +110,43 @@ function onRestart() {
         Ir al acceso
       </BaseButton>
     </template>
-
-    <p v-if="step !== 'done'" class="recovery-page__back">
-      <RouterLink :to="{ name: 'acceso' }">Volver al acceso</RouterLink>
-    </p>
   </AuthSplitLayout>
 </template>
 
 <style scoped>
+.recovery-page__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* Versalitas de latón, mismo tratamiento reglado que "ACCESO SEGURO" y
+   los rótulos de campo (contrato visual, issue #212/#213). */
 .recovery-page__progress {
   margin: 0;
-  font-size: var(--font-size-body-sm);
-  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--color-accent-brass);
 }
 
 .recovery-page__title {
-  margin: 0 0 var(--space-2) 0;
+  margin: 0;
   font-family: var(--font-display);
-  font-size: var(--font-size-h2);
-  line-height: var(--font-size-h2-line);
+  font-size: 52px;
+  line-height: 60px;
+  text-align: center;
   color: var(--color-text-primary);
 }
 
 @media (min-width: 1024px) {
+  .recovery-page__header {
+    gap: var(--space-2);
+  }
+
   .recovery-page__title {
     font-size: 36px;
     line-height: 42px;
@@ -144,16 +160,5 @@ function onRestart() {
 .recovery-page__done-action {
   width: 100%;
   text-align: center;
-}
-
-.recovery-page__back {
-  margin: 0;
-  text-align: center;
-  font-size: var(--font-size-body-sm);
-}
-
-.recovery-page__back a {
-  color: var(--color-action-primary);
-  font-weight: 500;
 }
 </style>

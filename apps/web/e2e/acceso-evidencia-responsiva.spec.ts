@@ -21,9 +21,10 @@ const evidenceDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'evi
 const viewports = [
   { name: '320', width: 320, height: 720 },
   { name: '360', width: 360, height: 800 },
+  { name: '420', width: 420, height: 935 },
   { name: '768', width: 768, height: 1024 },
   { name: '1280', width: 1280, height: 900 },
-  { name: '1440', width: 1440, height: 960 },
+  { name: '1440', width: 1440, height: 1024 },
   // Aproximación de zoom 200% sobre 1280: mitad de ancho.
   { name: '1280-zoom200', width: 640, height: 450 },
 ]

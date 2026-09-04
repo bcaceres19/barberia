@@ -211,7 +211,9 @@ describe('LoginPage', () => {
       kind: 'success',
       expiresAt: new Date(Date.now() + 60_000).toISOString(),
     } satisfies LoginOutcome)
-    await wrapper.get('button:not([type="submit"])').trigger('click')
+    const retryButton = wrapper.findAll('button').find((button) => button.text() === 'Reintentar')
+    expect(retryButton).toBeDefined()
+    await retryButton?.trigger('click')
     await flushPromises()
 
     expect(loginMock).toHaveBeenCalledTimes(2)
@@ -267,7 +269,10 @@ describe('LoginPage', () => {
     expect(requestCodeButton).toBeDefined()
     await requestCodeButton!.trigger('click')
     await flushPromises()
-    await wrapper.get('input[name="challengeCode"]').setValue('482913')
+    // El código del reto vive en `OtpInput` (issue #213, seis casillas sin
+    // `name`): igual que un pegado real, el primer slot distribuye el
+    // valor completo entre las seis (`OtpInput.vue`, `onInput`).
+    await wrapper.get('.phone-challenge').findAll('input')[0].setValue('482913')
     const verifyButton = wrapper
       .findAll('button')
       .find((b) => b.text().includes('Verificar código'))

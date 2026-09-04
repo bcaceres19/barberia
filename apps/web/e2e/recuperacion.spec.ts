@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { randomBytes } from 'node:crypto'
 import { readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -69,6 +70,43 @@ async function waitForCapturedCode(): Promise<string> {
   return readCapturedCode()
 }
 
+// `OtpInput` (issue #213) no expone un único control asociado a
+// "Código de 6 dígitos" vía `<label>`: es un grupo de seis casillas, cada
+// una con su propio `aria-label` ("Dígito N de 6") y `maxlength="1"`
+// nativo. Verificado contra el navegador real (2026-09-04): `.fill()`
+// sobre la primera casilla NO reproduce un pegado — Playwright inserta el
+// valor completo y el navegador lo trunca a 1 carácter por el `maxlength`
+// antes de que `onInput` lo lea, así que solo el primer dígito llega a
+// distribuirse. Un pegado real dispara `onPaste` (que sí lee
+// `clipboardData` completo, sin pasar por `value`/`maxlength`), pero
+// simularlo aquí exige menos que llenar cada casilla con su propio dígito:
+// mismo estado final, mismo camino de producción (`onInput`, rama de un
+// solo carácter) que un usuario tecleando dígito por dígito.
+async function fillOtp(page: Page, code: string) {
+  const inputs = page.getByRole('group', { name: 'Código de 6 dígitos' }).locator('input')
+  for (let i = 0; i < code.length; i += 1) {
+    await inputs.nth(i).fill(code[i])
+  }
+}
+
+// El único login real de este archivo (verificación final de CA-011-01)
+// comparte el peer real con `acceso.spec.ts` cuando ambos corren en la
+// misma invocación de Playwright: si `acceso.spec.ts` ya agotó el umbral
+// de `login_throttle` (DEC-061) contra ese peer, esta prueba tropezaría
+// con el reto telefónico en vez de completar el login. Mismo aislamiento
+// por IP sintética que `acceso.spec.ts`/`reto-telefonico.spec.ts`.
+function syntheticIP(): string {
+  const octets = Array.from({ length: 3 }, () => randomBytes(1)[0])
+  return `10.${octets[0]}.${octets[1]}.${octets[2]}`
+}
+
+async function withIsolatedIP(page: Page): Promise<void> {
+  const ip = syntheticIP()
+  await page.route('**/api/v1/public/auth/**', async (route) => {
+    await route.continue({ headers: { ...route.request().headers(), 'x-forwarded-for': ip } })
+  })
+}
+
 async function requestRecovery(page: Page, email: string) {
   await page.goto('/recuperar-acceso')
   await page.getByLabel('Correo', { exact: true }).fill(email)
@@ -89,10 +127,11 @@ test.describe('Recuperación de acceso (HU-011)', () => {
   test('recorrido completo con código válido: solicitar, verificar y establecer contraseña (CA-011-01, CA-011-02, CA-011-05)', async ({
     page,
   }) => {
+    await withIsolatedIP(page)
     await requestRecovery(page, VALID_CODE_EMAIL)
 
     const code = await waitForCapturedCode()
-    await page.getByLabel('Código de 6 dígitos').fill(code)
+    await fillOtp(page, code)
     await page.getByRole('button', { name: 'Verificar código' }).click()
 
     await expect(page.getByText('Paso 3 de 3')).toBeVisible()
@@ -129,10 +168,13 @@ test.describe('Recuperación de acceso (HU-011)', () => {
     await page.waitForTimeout(3_000)
     const expiredCode = await readCapturedCode()
 
-    await page.getByLabel('Código de 6 dígitos').fill(expiredCode)
+    await fillOtp(page, expiredCode)
     await page.getByRole('button', { name: 'Verificar código' }).click()
 
-    await expect(page.getByText('El código no es válido')).toBeVisible()
+    // El error vive bajo las casillas del código, sin una alerta global
+    // aparte (issue #213, trabajo requerido §6): ya no hay un título de
+    // alerta separado que verificar.
+    await expect(page.getByText('El código no es correcto o ya venció')).toBeVisible()
     await expect(page.getByText('Paso 2 de 3')).toBeVisible()
   })
 })

@@ -34,12 +34,19 @@ const status = ref<
 >('idle')
 
 const isSubmitting = computed(() => status.value === 'submitting')
+const errorCount = computed(() => Object.keys(fieldErrors.value).length)
+// Resumen visible cuando hay más de un error de campo a la vez (mockup
+// 08-contrasena-validacion), mismo umbral que LoginForm (CA-010-05).
+const showSummary = computed(() => attemptedSubmit.value && errorCount.value > 1)
 
 function runValidation() {
   const errors: { newPassword?: string; confirmPassword?: string } = {}
   const passwordError = validateNewPassword(newPassword.value, props.email)
   if (passwordError) errors.newPassword = passwordError
-  if (!errors.newPassword && confirmPassword.value !== newPassword.value) {
+  // Ambos chequeos son independientes (longitud/política de la contraseña
+  // nueva y coincidencia con su confirmación): el mockup 08 los muestra a
+  // la vez, así que uno no suprime al otro.
+  if (confirmPassword.value !== newPassword.value) {
     errors.confirmPassword = 'Las dos contraseñas no coinciden.'
   }
   return errors
@@ -93,43 +100,26 @@ const onRestart = () => emit('restart')
       Verificamos tu código, enviado a {{ maskedPhone }} y {{ maskedEmail }}.
     </p>
 
-    <BaseAlert
-      v-if="status === 'invalid-token'"
-      variant="danger"
-      title="El enlace de recuperación venció"
-      role="alert"
-    >
-      Este paso ya no es válido. Solicita un código nuevo para continuar.
-      <template #action>
-        <BaseButton variant="secondary" size="md" type="button" @click="onRestart">
-          Solicitar de nuevo
-        </BaseButton>
-      </template>
-    </BaseAlert>
-    <BaseAlert
-      v-if="status === 'policy-violation'"
-      variant="danger"
-      title="La contraseña no cumple la política"
-      role="alert"
-    >
-      Revisa los requisitos e inténtalo de nuevo.
-    </BaseAlert>
-    <BaseAlert
-      v-if="status === 'network-error'"
-      variant="warning"
-      title="No pudimos conectar"
-      role="alert"
-    >
-      Revisa tu conexión e inténtalo de nuevo.
-    </BaseAlert>
-    <BaseAlert
-      v-if="status === 'unexpected-error'"
-      variant="danger"
-      title="Ocurrió un error inesperado"
-      role="alert"
-    >
-      Inténtalo de nuevo en unos segundos.
-    </BaseAlert>
+    <!-- Excepción del ancla de alertas (trabajo requerido §3): la alerta
+         explica por qué la pantalla está en este estado y la acción es su
+         remedio, así que precede al botón en vez de seguirlo. -->
+    <template v-if="status === 'invalid-token'">
+      <BaseAlert variant="danger" title="El enlace de recuperación venció" role="alert">
+        Este paso ya no es válido. Solicita un código nuevo para continuar.
+      </BaseAlert>
+      <BaseButton
+        type="button"
+        variant="primary"
+        size="lg"
+        class="recovery-reset__submit"
+        @click="onRestart"
+      >
+        Solicitar de nuevo
+      </BaseButton>
+      <p class="recovery-back">
+        <RouterLink :to="{ name: 'acceso' }">Volver al acceso</RouterLink>
+      </p>
+    </template>
 
     <BaseAlert
       v-if="status !== 'invalid-token'"
@@ -147,6 +137,7 @@ const onRestart = () => emit('restart')
         label="Contraseña nueva"
         autocomplete="new-password"
         required
+        :show-required-marker="false"
         :disabled="isSubmitting"
         :error="fieldErrors.newPassword"
         @update:model-value="handleNewPasswordInput"
@@ -159,6 +150,7 @@ const onRestart = () => emit('restart')
         label="Confirma la contraseña nueva"
         autocomplete="new-password"
         required
+        :show-required-marker="false"
         :disabled="isSubmitting"
         :error="fieldErrors.confirmPassword"
         @update:model-value="handleConfirmPasswordInput"
@@ -172,8 +164,47 @@ const onRestart = () => emit('restart')
         :disabled="isSubmitting"
         class="recovery-reset__submit"
       >
-        Guardar contraseña nueva
+        {{ isSubmitting ? 'Guardando contraseña…' : 'Guardar contraseña nueva' }}
       </BaseButton>
+
+      <p class="recovery-back">
+        <RouterLink :to="{ name: 'acceso' }">Volver al acceso</RouterLink>
+      </p>
+
+      <!-- Ancla de alertas: después del grupo de acciones y de "Volver al
+           acceso" (trabajo requerido §3, auth-eventos/README.md). Resumen
+           enumerado (mockup 08-contrasena-validacion), mismo tratamiento
+           que LoginForm cuando hay más de un error de campo. -->
+      <BaseAlert v-if="showSummary" variant="danger" title="Revisa estos campos" role="alert">
+        <ul class="recovery-reset__summary-list">
+          <li v-if="fieldErrors.newPassword">{{ fieldErrors.newPassword }}</li>
+          <li v-if="fieldErrors.confirmPassword">{{ fieldErrors.confirmPassword }}</li>
+        </ul>
+      </BaseAlert>
+      <BaseAlert
+        v-if="status === 'policy-violation'"
+        variant="danger"
+        title="La contraseña no cumple la política"
+        role="alert"
+      >
+        Revisa los requisitos e inténtalo de nuevo.
+      </BaseAlert>
+      <BaseAlert
+        v-if="status === 'network-error'"
+        variant="warning"
+        title="No pudimos conectar"
+        role="alert"
+      >
+        Revisa tu conexión e inténtalo de nuevo.
+      </BaseAlert>
+      <BaseAlert
+        v-if="status === 'unexpected-error'"
+        variant="danger"
+        title="Ocurrió un error inesperado"
+        role="alert"
+      >
+        Inténtalo de nuevo en unos segundos.
+      </BaseAlert>
     </template>
   </form>
 </template>
@@ -188,11 +219,29 @@ const onRestart = () => emit('restart')
 
 .recovery-reset__confirmed {
   margin: 0;
-  font-size: var(--font-size-body-sm);
+  font-size: 18px;
+  line-height: 26px;
   color: var(--color-text-secondary);
 }
 
 .recovery-reset__submit {
   width: 100%;
+  min-height: 56px;
+}
+
+.recovery-reset__summary-list {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.recovery-back {
+  margin: 0;
+  text-align: center;
+  font-size: var(--font-size-body-sm);
+}
+
+.recovery-back a {
+  color: var(--color-action-primary);
+  font-weight: 500;
 }
 </style>

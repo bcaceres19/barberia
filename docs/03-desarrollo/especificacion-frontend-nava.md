@@ -1,6 +1,6 @@
 ---
 titulo: "Especificación integral de experiencia y pantallas NAVA"
-version: "1.3"
+version: "1.4"
 estado: "Dirección de producto y alcance; composición visual orientativa"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-03"
@@ -93,7 +93,7 @@ Para rediseños y pantallas nuevas, estos rasgos son obligatorios como familia v
 - reserva por servicio, barbero, fecha y hora;
 - composición con sensación editorial cuando favorezca el contenido.
 
-Las cuatro láminas de `docs/10-backlog/evidence/ui-redesign-nava-2026-09-02/` son las referencias canónicas para autenticación, formularios, componentes/alertas y shell/navegación. Si solo se cita la familia NAVA, orientan la identidad sin cerrar la composición. Si una de ellas o un panel del atlas se asigna de forma expresa a una pantalla, se activa el modo de fidelidad de `DEC-080`: su geometría, escala y jerarquía visibles sí son contrato para el viewport y estado representados. Los datos sintéticos y las funciones fuera de alcance nunca lo son.
+Las cuatro láminas de `docs/10-backlog/evidence/ui-redesign-nava-2026-09-02/` son referencias de familia para autenticación, formularios, componentes/alertas y shell/navegación. El atlas individual `ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/` es la referencia ejecutable para las rutas y estados que enumera. Si solo se cita la familia NAVA, orientan la identidad sin cerrar la composición. Si un PNG individual se asigna de forma expresa a una pantalla, se activa el modo de fidelidad de `DEC-080`: su geometría, escala y jerarquía visibles sí son contrato para el viewport y estado representados. Los datos sintéticos y las funciones fuera de alcance nunca lo son.
 
 ### 3.3 Qué no se infiere del mockup
 
