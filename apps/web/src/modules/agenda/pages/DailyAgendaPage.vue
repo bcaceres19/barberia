@@ -279,45 +279,64 @@ function entryTime(entry: DailyAgendaEntry): string {
 // esta franja se marca aria-hidden y sus enlaces quedan fuera del tabulado
 // (mismo turno, doble forma de abrir el detalle sería redundante para
 // teclado/lector).
-const MIN_TIMELINE_SPAN_MINUTES = 4 * 60
+
+// Zoom del carril (pedido explícito del propietario, 2026-09-04: "habilita
+// que se pueda hacer zoom al calendario para que se parta en 15 en 15...
+// y se puedan ver bien las cards"). No representado en el atlas panel-
+// agenda-eventos (una imagen estática sin controles): es una función
+// nueva, fuera del modo "fidelidad medible" de DEC-080 para el resto de
+// esta pantalla, autorizada aparte. Cada nivel reduce el paso del eje
+// (60min → 30min → 15min) y ensancha el carril en la misma proporción;
+// timelineBounds/timelinePercent no cambian, solo el ancho en px del
+// contenedor que las interpreta.
+const TIMELINE_ZOOM_LEVELS = [1, 2, 4] as const
+const timelineZoomIndex = ref(0)
+const timelineZoom = computed(() => TIMELINE_ZOOM_LEVELS[timelineZoomIndex.value]!)
+const canZoomInTimeline = computed(() => timelineZoomIndex.value < TIMELINE_ZOOM_LEVELS.length - 1)
+const canZoomOutTimeline = computed(() => timelineZoomIndex.value > 0)
+
+function zoomTimelineIn() {
+  if (canZoomInTimeline.value) timelineZoomIndex.value += 1
+}
+
+function zoomTimelineOut() {
+  if (canZoomOutTimeline.value) timelineZoomIndex.value -= 1
+}
+
+const timelineTickStepMinutes = computed(() => {
+  const zoom = timelineZoom.value
+  if (zoom >= 4) return 15
+  if (zoom >= 2) return 30
+  return 60
+})
+
+const timelineZoomLabel = computed(() => {
+  const step = timelineTickStepMinutes.value
+  return step === 60 ? '1 h' : `${step} min`
+})
 
 const timelineBounds = computed(() => {
   if (!barbershopTimezone.value || !selectedDate.value) return null
   const tz = barbershopTimezone.value
   const date = selectedDate.value
 
-  // Día vacío (issue #189, evento 09 del atlas): se conserva el eje con el
-  // marcador "Ahora" en vez de ocultar la línea temporal. Sin turnos que
-  // fijen un rango, y sin un concepto de horario comercial en este
-  // contrato, el eje se centra en la hora actual — el único dato real
-  // disponible — en vez de inventar un rango de negocio no verificable. Un
-  // día vacío que no es "hoy" no tiene "Ahora" que centrar, así que
-  // conserva el comportamiento anterior (sin línea temporal).
-  if (entries.value.length === 0) {
-    if (!isViewingToday.value) return null
-    const nowMinute = minutesIntoCivilDate(new Date().toISOString(), date, tz)
-    const start = Math.max(0, Math.floor(nowMinute / 60) - 2) * 60
-    const end = Math.min(24, Math.ceil(nowMinute / 60) + 2) * 60
-    return { start, end: Math.max(end, start + MIN_TIMELINE_SPAN_MINUTES) }
-  }
+  // Pedido explícito del propietario (2026-09-04): el carril siempre
+  // cubre el día completo (00:00–24:00), no una ventana recortada
+  // alrededor de los turnos reales — el zoom (arriba) ya resuelve ver el
+  // detalle de una franja concreta. Un día vacío que no es "hoy" conserva
+  // el comportamiento anterior (sin línea temporal): sin turnos ni "Ahora"
+  // que centrar no hay nada real que el eje esté mostrando.
+  if (entries.value.length === 0 && !isViewingToday.value) return null
+  if (entries.value.length === 0) return { start: 0, end: 24 * 60 }
 
-  const starts = entries.value.map((e) => minutesIntoCivilDate(e.startsAt, date, tz))
   // El fin usa la versión SIN recortar (issue #189): un turno que termina el
   // día siguiente (evento 11 del atlas) extiende el eje hasta esa hora real
   // en vez de cortarlo en medianoche, para que la ficha se vea completa y la
-  // marca "Cambio de día" tenga carril donde dibujarse.
+  // marca "Cambio de día" tenga carril donde dibujarse. En cualquier otro
+  // caso el fin es medianoche (24:00), nunca antes.
   const ends = entries.value.map((e) => minutesSinceCivilMidnight(e.endsAt, date, tz))
-  // El atlas conserva una hora de contexto antes y después del primer y el
-  // último turno. El intervalo sigue naciendo de sus horas reales, pero evita
-  // que una ficha extrema quede pegada al borde del carril.
-  const startHour = Math.max(0, Math.floor(Math.min(...starts) / 60) * 60 - 60)
-  // En jornada diurna el atlas deja dos horas completas tras el último
-  // turno. El caso nocturno conserva una sola para que 22:00–02:00 sitúe
-  // «Cambio de día» exactamente a mitad del carril, sin recortar el turno.
   const lastEnd = Math.max(...ends)
-  const endHour = Math.ceil(lastEnd / 60) * 60 + (lastEnd > 24 * 60 ? 60 : 120)
-  const span = Math.max(endHour - startHour, MIN_TIMELINE_SPAN_MINUTES)
-  return { start: startHour, end: startHour + span }
+  return { start: 0, end: Math.max(24 * 60, lastEnd) }
 })
 
 // `align` evita que la etiqueta centrada de la primera o la última hora se
@@ -328,21 +347,29 @@ const timelineBounds = computed(() => {
 const timelineTicks = computed(() => {
   const bounds = timelineBounds.value
   if (!bounds) return []
+  const step = timelineTickStepMinutes.value
   const ticks: { minute: number; label: string; align: 'start' | 'center' | 'end' }[] = []
-  for (let minute = bounds.start; minute <= bounds.end; minute += 60) {
+  for (let minute = bounds.start; minute <= bounds.end; minute += step) {
     const hour = Math.floor(minute / 60) % 24
+    const mins = minute % 60
     const align = minute === bounds.start ? 'start' : minute === bounds.end ? 'end' : 'center'
-    ticks.push({ minute, label: `${String(hour).padStart(2, '0')}:00`, align })
+    ticks.push({
+      minute,
+      label: `${String(hour).padStart(2, '0')}:${String(mins).padStart(2, '0')}`,
+      align,
+    })
   }
   return ticks
 })
 
 // Guías de media hora (issue #189): tenues, sin etiqueta — solo marcan el
 // carril entre cada par de horas para que una ficha corta se pueda leer
-// contra el eje sin contar píxeles.
+// contra el eje sin contar píxeles. Con zoom >1 el eje ya etiqueta cada
+// 30/15min (arriba), así que esta guía intermedia deja de aportar nada
+// nuevo y se apaga.
 const timelineHalfHourGuides = computed(() => {
   const bounds = timelineBounds.value
-  if (!bounds) return []
+  if (!bounds || timelineZoom.value > 1) return []
   const guides: number[] = []
   for (let minute = bounds.start + 30; minute < bounds.end; minute += 60) {
     guides.push(minute)
@@ -385,7 +412,11 @@ function timelineSlipStyle(entry: DailyAgendaEntry): { left: string; width: stri
 // porcentaje que ya gobierna el ancho real de la ficha, no un breakpoint de
 // viewport aparte.
 function timelineSlipDetail(entry: DailyAgendaEntry): 'full' | 'compact' {
-  return timelineSlipWidthPercent(entry) >= 8.5 ? 'full' : 'compact'
+  // El umbral se mide en ancho real (%×zoom), no en el % crudo respecto al
+  // carril: con el carril ensanchado por zoom, una ficha que antes no
+  // cabía con las tres líneas ahora sí tiene espacio real, aunque su %
+  // respecto a timelineBounds no haya cambiado.
+  return timelineSlipWidthPercent(entry) * timelineZoom.value >= 8.5 ? 'full' : 'compact'
 }
 
 // "Ahora" (estandar-diseno-visual.md §7.2, §9.3): decorativo respecto al
@@ -609,99 +640,139 @@ const dayChangeMarkerPercent = computed(() => {
                  redundante de llegar al mismo detalle para teclado/lector.
                  Se dibuja también con la lista vacía (evento 09): el eje del
                  día vacío se conserva con el marcador "Ahora". -->
-            <div v-if="timelineBounds" class="daily-agenda-page__timeline" aria-hidden="true">
-              <!-- Eje (horas) y marcas (Ahora/Cambio de día) del atlas son dos
-                   filas propias, apiladas ANTES del carril (.axis → .marks →
-                   .track en tools/mockups/panel-agenda-eventos/render.mjs) —
-                   nunca texto flotando dentro del carril con un top negativo.
-                   Con eso una marca nunca puede quedar encima de una hora en
-                   punto (issue #189, reporte en vivo: "está por encima del
-                   tiempo"): ocupan bandas verticales disjuntas, no compiten
-                   por el mismo espacio aunque coincidan en x. -->
-              <div class="daily-agenda-page__timeline-axis">
-                <span
-                  v-for="tick in timelineTicks"
-                  :key="tick.minute"
-                  class="daily-agenda-page__timeline-tick-wrap"
-                  :style="{ left: timelinePercent(tick.minute) }"
+            <div v-if="timelineBounds" class="daily-agenda-page__timeline-wrapper">
+              <!-- Control de zoom (pedido explícito del propietario,
+                   2026-09-04): no representado en el atlas — es una imagen
+                   estática sin controles — y por eso vive fuera del bloque
+                   aria-hidden de abajo, como un control real más de la
+                   pantalla. Cada nivel reduce el paso del eje (1h → 30min →
+                   15min) y ensancha el carril en la misma proporción, para
+                   que una ficha corta deje de ir en modo compacto. -->
+              <div class="daily-agenda-page__timeline-zoom">
+                <button
+                  type="button"
+                  class="daily-agenda-page__timeline-zoom-btn"
+                  :disabled="!canZoomOutTimeline"
+                  aria-label="Alejar el calendario"
+                  @click="zoomTimelineOut"
                 >
-                  <span
-                    class="daily-agenda-page__timeline-tick-label"
-                    :class="`daily-agenda-page__timeline-tick-label--${tick.align}`"
-                    >{{ tick.label }}</span
-                  >
-                </span>
+                  −
+                </button>
+                <span class="daily-agenda-page__timeline-zoom-label">{{ timelineZoomLabel }}</span>
+                <button
+                  type="button"
+                  class="daily-agenda-page__timeline-zoom-btn"
+                  :disabled="!canZoomInTimeline"
+                  aria-label="Acercar el calendario"
+                  @click="zoomTimelineIn"
+                >
+                  +
+                </button>
               </div>
 
-              <div class="daily-agenda-page__timeline-marks">
-                <span
-                  v-if="nowMarkerPercent"
-                  class="daily-agenda-page__timeline-mark-label daily-agenda-page__timeline-mark-label--now"
-                  :style="{ left: nowMarkerPercent }"
-                  >Ahora</span
+              <div class="daily-agenda-page__timeline" aria-hidden="true">
+                <div
+                  class="daily-agenda-page__timeline-scroll"
+                  :style="{ width: `${timelineZoom * 100}%` }"
                 >
-                <span
-                  v-if="dayChangeMarkerPercent"
-                  class="daily-agenda-page__timeline-mark-label daily-agenda-page__timeline-mark-label--day-change"
-                  :style="{ left: dayChangeMarkerPercent }"
-                  >Cambio de día</span
-                >
-              </div>
+                  <!-- Eje (horas) y marcas (Ahora/Cambio de día) del atlas son
+                       dos filas propias, apiladas ANTES del carril (.axis →
+                       .marks → .track en
+                       tools/mockups/panel-agenda-eventos/render.mjs) — nunca
+                       texto flotando dentro del carril con un top negativo.
+                       Con eso una marca nunca puede quedar encima de una hora
+                       en punto (issue #189, reporte en vivo: "está por
+                       encima del tiempo"): ocupan bandas verticales
+                       disjuntas, no compiten por el mismo espacio aunque
+                       coincidan en x. -->
+                  <div class="daily-agenda-page__timeline-axis">
+                    <span
+                      v-for="tick in timelineTicks"
+                      :key="tick.minute"
+                      class="daily-agenda-page__timeline-tick-wrap"
+                      :style="{ left: timelinePercent(tick.minute) }"
+                    >
+                      <span
+                        class="daily-agenda-page__timeline-tick-label"
+                        :class="`daily-agenda-page__timeline-tick-label--${tick.align}`"
+                        >{{ tick.label }}</span
+                      >
+                    </span>
+                  </div>
 
-              <div class="daily-agenda-page__timeline-track">
-                <div
-                  v-for="minute in timelineHalfHourGuides"
-                  :key="`half-${minute}`"
-                  class="daily-agenda-page__timeline-guide"
-                  :style="{ left: timelinePercent(minute) }"
-                />
+                  <div class="daily-agenda-page__timeline-marks">
+                    <span
+                      v-if="nowMarkerPercent"
+                      class="daily-agenda-page__timeline-mark-label daily-agenda-page__timeline-mark-label--now"
+                      :style="{ left: nowMarkerPercent }"
+                      >Ahora</span
+                    >
+                    <span
+                      v-if="dayChangeMarkerPercent"
+                      class="daily-agenda-page__timeline-mark-label daily-agenda-page__timeline-mark-label--day-change"
+                      :style="{ left: dayChangeMarkerPercent }"
+                      >Cambio de día</span
+                    >
+                  </div>
 
-                <div
-                  v-for="tick in timelineTicks"
-                  :key="tick.minute"
-                  class="daily-agenda-page__timeline-tick"
-                  :style="{ left: timelinePercent(tick.minute) }"
-                />
+                  <div class="daily-agenda-page__timeline-track">
+                    <div
+                      v-for="minute in timelineHalfHourGuides"
+                      :key="`half-${minute}`"
+                      class="daily-agenda-page__timeline-guide"
+                      :style="{ left: timelinePercent(minute) }"
+                    />
 
-                <div
-                  v-if="nowMarkerPercent"
-                  class="daily-agenda-page__timeline-mark daily-agenda-page__timeline-mark--now"
-                  :style="{ left: nowMarkerPercent }"
-                />
+                    <div
+                      v-for="tick in timelineTicks"
+                      :key="tick.minute"
+                      class="daily-agenda-page__timeline-tick"
+                      :style="{ left: timelinePercent(tick.minute) }"
+                    />
 
-                <div
-                  v-if="dayChangeMarkerPercent"
-                  class="daily-agenda-page__timeline-mark daily-agenda-page__timeline-mark--day-change"
-                  :style="{ left: dayChangeMarkerPercent }"
-                />
+                    <div
+                      v-if="nowMarkerPercent"
+                      class="daily-agenda-page__timeline-mark daily-agenda-page__timeline-mark--now"
+                      :style="{ left: nowMarkerPercent }"
+                    />
 
-                <RouterLink
-                  v-for="entry in entries"
-                  :key="`timeline-${entry.id}`"
-                  tabindex="-1"
-                  class="daily-agenda-page__timeline-slip"
-                  :class="{
-                    'daily-agenda-page__timeline-slip--terminal': entry.status !== 'confirmed',
-                  }"
-                  :style="timelineSlipStyle(entry)"
-                  :to="{
-                    name: 'agenda-detalle-turno',
-                    params: { appointmentId: entry.id },
-                    query: withQuery({}),
-                  }"
-                >
-                  <span class="daily-agenda-page__timeline-slip-time">{{
-                    timelineSlipDetail(entry) === 'full' ? entryTimeRange(entry) : entryTime(entry)
-                  }}</span>
-                  <span class="daily-agenda-page__timeline-slip-name">{{
-                    entry.attendeeName
-                  }}</span>
-                  <span
-                    v-if="timelineSlipDetail(entry) === 'full'"
-                    class="daily-agenda-page__timeline-slip-service"
-                    >{{ entry.serviceName }}</span
-                  >
-                </RouterLink>
+                    <div
+                      v-if="dayChangeMarkerPercent"
+                      class="daily-agenda-page__timeline-mark daily-agenda-page__timeline-mark--day-change"
+                      :style="{ left: dayChangeMarkerPercent }"
+                    />
+
+                    <RouterLink
+                      v-for="entry in entries"
+                      :key="`timeline-${entry.id}`"
+                      tabindex="-1"
+                      class="daily-agenda-page__timeline-slip"
+                      :class="{
+                        'daily-agenda-page__timeline-slip--terminal': entry.status !== 'confirmed',
+                      }"
+                      :style="timelineSlipStyle(entry)"
+                      :to="{
+                        name: 'agenda-detalle-turno',
+                        params: { appointmentId: entry.id },
+                        query: withQuery({}),
+                      }"
+                    >
+                      <span class="daily-agenda-page__timeline-slip-time">{{
+                        timelineSlipDetail(entry) === 'full'
+                          ? entryTimeRange(entry)
+                          : entryTime(entry)
+                      }}</span>
+                      <span class="daily-agenda-page__timeline-slip-name">{{
+                        entry.attendeeName
+                      }}</span>
+                      <span
+                        v-if="timelineSlipDetail(entry) === 'full'"
+                        class="daily-agenda-page__timeline-slip-service"
+                        >{{ entry.serviceName }}</span
+                      >
+                    </RouterLink>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -748,7 +819,6 @@ const dayChangeMarkerPercent = computed(() => {
                 <BaseBadge
                   :variant="statusBadgeVariant(entry)"
                   size="sm"
-                  :outline="entry.status !== 'confirmed'"
                   :label="statusLabel(entry)"
                 >
                   {{ statusLabel(entry) }}
@@ -1175,19 +1245,75 @@ const dayChangeMarkerPercent = computed(() => {
 
 /* Línea temporal horizontal de escritorio (§7.2, §11.2): oculta por defecto,
    visible solo desde 1024px, donde hay espacio real para un eje legible. */
+.daily-agenda-page__timeline-wrapper {
+  display: none;
+}
+
 .daily-agenda-page__timeline {
   display: none;
 }
 
 @media (min-width: 1024px) {
+  .daily-agenda-page__timeline-wrapper {
+    display: block;
+  }
+
+  .daily-agenda-page__timeline-zoom {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+
+  .daily-agenda-page__timeline-zoom-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background-color: transparent;
+    color: var(--color-brand-accent-surface);
+    border: 1px solid rgb(184 149 90 / 50%);
+    border-radius: 2px;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .daily-agenda-page__timeline-zoom-btn:hover:not(:disabled) {
+    background-color: rgb(184 149 90 / 12%);
+  }
+
+  .daily-agenda-page__timeline-zoom-btn:disabled {
+    opacity: 0.42;
+    cursor: not-allowed;
+  }
+
+  .daily-agenda-page__timeline-zoom-label {
+    min-width: 40px;
+    font-size: var(--font-size-caption);
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    color: var(--color-on-strong-muted);
+  }
+
   .daily-agenda-page__timeline {
     display: block;
-    /* El carril es 100% ancho relativo (posiciones en %, nunca px fijos):
-       no necesita scroll propio. `hidden`, no `auto` (issue #189): con
-       overflow-x:auto, la etiqueta de la última hora en punto podía sangrar
-       unos px fuera del borde y disparaba una barra de scroll visible por
-       ese detalle, en vez de adaptarse al ancho real de la pantalla. */
-    overflow-x: hidden;
+    /* El carril es 100% ancho relativo (posiciones en %, nunca px fijos) al
+       nivel de zoom por defecto: no necesita scroll propio. `auto`, no
+       `hidden` (issue #189): con zoom > 1 el carril interno
+       (.timeline-scroll) se ensancha más allá de este contenedor a
+       propósito y necesita poder desplazarse; al zoom por defecto nunca
+       sobra ancho real (la etiqueta de la última hora ya se ancla hacia
+       adentro, ver --end más abajo), así que `auto` no dibuja una barra
+       de scroll que no haga falta. */
+    overflow-x: auto;
+  }
+
+  .daily-agenda-page__timeline-scroll {
+    min-width: 100%;
   }
 
   /* Eje, marcas y carril: tres filas propias apiladas, calcadas de
@@ -1396,40 +1522,55 @@ const dayChangeMarkerPercent = computed(() => {
   }
 }
 
+/* Rediseño local del estado de turno (issue #189, pedido explícito del
+   propietario 2026-09-04: "parecen botones" — el badge con caja del atlas
+   es fiel al mockup, pero al lado de Anterior/Siguiente/Nuevo turno (todas
+   cajas con borde) se lee como un control más, no como un dato de la
+   fila. Se abandona la caja por un rótulo — punto de color + versalitas
+   espaciadas, el mismo vocabulario que "BARBERO"/"FECHA"/"AHORA" en esta
+   misma pantalla — nunca inventando un color nuevo: sigue siendo el color
+   de la variante (`--badge-text`), solo cambia cómo se presenta. */
 :deep(.base-badge) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   height: auto;
-  padding: 5px 12px;
-  border-radius: 2px;
-  font-size: 12px;
+  padding: 0;
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  font-size: 11px;
   font-weight: 600;
   line-height: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-/* "Confirmado" (única insignia no terminal en esta lista) lleva el
-   relleno tenue del atlas: 8% del propio color de texto del estado, no
-   el swatch plano --color-info-surface (.badge--confirmed en el atlas usa
-   rgba(35,64,91,.08), el mismo rgb que --color-info-text — nunca
-   --info-s). Se fija `background-color` directamente, no `--badge-surface`:
-   BaseBadge la resuelve por :style en línea, que gana sobre cualquier
-   clase CSS que solo redefina la custom property. */
-:deep(.base-badge--info) {
-  background-color: rgb(35 64 91 / 8%);
+:deep(.base-badge)::before {
+  content: '';
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  /* currentColor, no --badge-dot-color: el punto sigue el mismo color de
+     texto que ya resuelve la variante (y su atenuado terminal de abajo),
+     sin depender de la mecánica de padding negativo del prop `dot`
+     original de BaseBadge (pensada para su badge con caja). */
+  background-color: currentColor;
 }
 
-/* Terminal (atlas .row--terminal .badge): pierde su color de estado
-   individual y pasa al mismo contorno tenue sobre tinta que el resto del
-   material terminal de la fila — el texto de la insignia ("Completado",
-   "Cancelado...") sigue distinguiendo el estado, el color ya no compite. */
-.daily-agenda-page__item--terminal :deep(.base-badge--outline) {
-  border-color: rgb(244 240 231 / 32%);
+/* Terminal (atlas .row--terminal .badge: pierde su color de estado
+   individual): mismo criterio que el resto del material terminal de la
+   fila — el texto de la insignia ("Completado", "Cancelado...") sigue
+   distinguiendo el estado, el color ya no compite con un turno vigente. */
+.daily-agenda-page__item--terminal :deep(.base-badge) {
   color: var(--color-on-strong-muted);
 }
 
 @media (max-width: 1023px) {
   :deep(.base-badge) {
     margin-top: 4px;
-    padding: 4px 9px;
-    font-size: 11px;
+    font-size: 10px;
   }
 }
 </style>
