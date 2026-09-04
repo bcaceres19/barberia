@@ -296,7 +296,17 @@ describe('DailyAgendaPage', () => {
     expect(await axe(wrapper.element, axeOptions)).toHaveNoViolations()
   })
 
-  it('gives every status badge an outline treatment (issue #189: no light fills on parchment/ink)', async () => {
+  // Sustituye "gives every status badge an outline treatment": esa premisa
+  // era incorrecta frente al atlas — .badge--confirmed en
+  // tools/mockups/panel-agenda-eventos/render.mjs SÍ lleva relleno (8% de
+  // --info-t), solo el badge de un turno terminal pasa a contorno
+  // (.row--terminal .badge). Confirmado además debe pasar por la prop
+  // `variant`, no por una clase agregada por fuera: BaseBadge resuelve sus
+  // colores por :style en línea, que gana sobre cualquier clase CSS
+  // externa que solo redefina la misma custom property (issue #189, bug
+  // preexistente: todo badge salía con la paleta neutra sin importar el
+  // estado).
+  it('gives the confirmed badge its info fill and only the terminal badge an outline (issue #189)', async () => {
     fetchDailyAgendaMock.mockResolvedValueOnce({
       kind: 'success',
       items: [...oneEntry, ...terminalEntry],
@@ -305,9 +315,12 @@ describe('DailyAgendaPage', () => {
 
     const badges = wrapper.findAll('.base-badge')
     expect(badges.length).toBe(2)
-    for (const badge of badges) {
-      expect(badge.classes()).toContain('base-badge--outline')
-    }
+    const confirmedBadge = badges.find((b) => b.text() === 'Confirmado')!
+    const terminalBadge = badges.find((b) => b.text() === 'Completado')!
+    expect(confirmedBadge.classes()).toContain('base-badge--info')
+    expect(confirmedBadge.classes()).not.toContain('base-badge--outline')
+    expect(terminalBadge.classes()).toContain('base-badge--success')
+    expect(terminalBadge.classes()).toContain('base-badge--outline')
   })
 
   describe('navegación por fecha (HU-063)', () => {
@@ -535,6 +548,10 @@ describe('DailyAgendaPage', () => {
     it('shows "Cambio de día" exactly at midnight when a shift ends the next civil day (evento 11)', async () => {
       const { wrapper } = await mountWithFixedDate(nightEntry)
 
+      // La marca (línea vertical del carril) y su etiqueta ("Cambio de
+      // día") son elementos distintos desde issue #189: viven en filas
+      // propias (eje/marcas/carril, calcadas del atlas) para que una marca
+      // nunca pueda quedar encima de una hora en punto.
       const mark = wrapper.get('.daily-agenda-page__timeline-mark--day-change')
       // bounds: start 22:00 (1320), turno termina 00:30 del día siguiente
       // (1470) sin recortar, con hora de contexto y span mínimo de 4h.
@@ -542,7 +559,10 @@ describe('DailyAgendaPage', () => {
       // La hora de contexto inicia el carril a las 22:00; medianoche queda
       // en su centro, sin mover la ficha fuera de su duración real.
       expect(mark.attributes('style')).toContain('left: 50%')
-      expect(mark.text()).toBe('Cambio de día')
+
+      const label = wrapper.get('.daily-agenda-page__timeline-mark-label--day-change')
+      expect(label.attributes('style')).toContain('left: 50%')
+      expect(label.text()).toBe('Cambio de día')
 
       // La ficha ocupa su duración real (60min) más allá de medianoche, no
       // recortada a la medianoche del día que se está viendo.

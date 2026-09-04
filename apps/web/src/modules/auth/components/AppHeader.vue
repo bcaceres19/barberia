@@ -68,8 +68,8 @@ const { loggingOut, logout: onLogout } = useLogout()
   margin: 0;
   overflow: hidden;
   font-size: 16px;
-  font-weight: 600;
-  color: var(--color-on-strong);
+  font-weight: 400;
+  color: var(--color-on-strong-muted);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

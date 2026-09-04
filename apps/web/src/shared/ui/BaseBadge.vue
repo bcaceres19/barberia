@@ -277,35 +277,4 @@ const style = computed(() => ({
 .base-badge--outline {
   background-color: transparent;
 }
-
-/* Estados de turno - variantes específicas para compatibilidad semántica */
-.base-badge--status-confirmed {
-  --badge-surface: var(--color-status-confirmed-surface);
-  --badge-text: var(--color-status-confirmed-text);
-  --badge-border: var(--color-status-confirmed-border);
-}
-
-.base-badge--status-completed {
-  --badge-surface: var(--color-status-completed-surface);
-  --badge-text: var(--color-status-completed-text);
-  --badge-border: var(--color-status-completed-border);
-}
-
-.base-badge--status-cancelled-customer {
-  --badge-surface: var(--color-status-cancelled-customer-surface);
-  --badge-text: var(--color-status-cancelled-customer-text);
-  --badge-border: var(--color-status-cancelled-customer-border);
-}
-
-.base-badge--status-cancelled-barber {
-  --badge-surface: var(--color-status-cancelled-barber-surface);
-  --badge-text: var(--color-status-cancelled-barber-text);
-  --badge-border: var(--color-status-cancelled-barber-border);
-}
-
-.base-badge--status-no-show {
-  --badge-surface: var(--color-status-no-show-surface);
-  --badge-text: var(--color-status-no-show-text);
-  --badge-border: var(--color-status-no-show-border);
-}
 </style>

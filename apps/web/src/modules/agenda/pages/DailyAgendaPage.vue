@@ -33,7 +33,7 @@ import {
 } from '../api/appointmentsApi'
 import type { BarberSummary } from '../model/appointment'
 import {
-  APPOINTMENT_STATUS_BADGE_CLASS,
+  APPOINTMENT_STATUS_BADGE_VARIANT,
   APPOINTMENT_STATUS_LABELS,
   type DailyAgendaEntry,
 } from '../model/dailyAgenda'
@@ -250,8 +250,8 @@ function statusLabel(entry: DailyAgendaEntry): string {
   return APPOINTMENT_STATUS_LABELS[entry.status]
 }
 
-function statusBadgeClass(entry: DailyAgendaEntry): string {
-  return APPOINTMENT_STATUS_BADGE_CLASS[entry.status]
+function statusBadgeVariant(entry: DailyAgendaEntry) {
+  return APPOINTMENT_STATUS_BADGE_VARIANT[entry.status]
 }
 
 function formatAgendaTime(instant: string): string {
@@ -490,24 +490,39 @@ const dayChangeMarkerPercent = computed(() => {
           <div class="daily-agenda-page__date-nav">
             <BaseButton
               type="button"
-              variant="secondary"
+              variant="ghost"
               :disabled="!canNavigateDates"
               aria-label="Día anterior"
               @click="goToPreviousDay"
             >
               Anterior
             </BaseButton>
-            <BaseInput
-              type="date"
-              label="Fecha"
-              class="daily-agenda-page__date-input"
-              :model-value="selectedDate ?? ''"
-              :disabled="!canNavigateDates"
-              @change="onDateInputChange"
-            />
+            <div class="daily-agenda-page__date-input-wrap">
+              <BaseInput
+                type="date"
+                label="Fecha"
+                class="daily-agenda-page__date-input"
+                :model-value="selectedDate ?? ''"
+                :disabled="!canNavigateDates"
+                @change="onDateInputChange"
+              />
+              <!-- El valor de un input[type=date] siempre es ISO (YYYY-MM-DD)
+                   aunque el navegador lo pinte con el formato del locale del
+                   SO (issue #189: el atlas muestra "2026-09-03" literal). Esta
+                   capa superpuesta —no interactiva— reemplaza visualmente ese
+                   render nativo por el mismo valor ya en ISO, sin tocar la
+                   interacción real (el campo de abajo sigue enfocable,
+                   editable por teclado y con el picker nativo). -->
+              <span
+                v-if="selectedDate"
+                class="daily-agenda-page__date-display"
+                aria-hidden="true"
+                >{{ selectedDate }}</span
+              >
+            </div>
             <BaseButton
               type="button"
-              variant="secondary"
+              variant="ghost"
               :disabled="!canNavigateDates"
               aria-label="Día siguiente"
               @click="goToNextDay"
@@ -595,6 +610,44 @@ const dayChangeMarkerPercent = computed(() => {
                  Se dibuja también con la lista vacía (evento 09): el eje del
                  día vacío se conserva con el marcador "Ahora". -->
             <div v-if="timelineBounds" class="daily-agenda-page__timeline" aria-hidden="true">
+              <!-- Eje (horas) y marcas (Ahora/Cambio de día) del atlas son dos
+                   filas propias, apiladas ANTES del carril (.axis → .marks →
+                   .track en tools/mockups/panel-agenda-eventos/render.mjs) —
+                   nunca texto flotando dentro del carril con un top negativo.
+                   Con eso una marca nunca puede quedar encima de una hora en
+                   punto (issue #189, reporte en vivo: "está por encima del
+                   tiempo"): ocupan bandas verticales disjuntas, no compiten
+                   por el mismo espacio aunque coincidan en x. -->
+              <div class="daily-agenda-page__timeline-axis">
+                <span
+                  v-for="tick in timelineTicks"
+                  :key="tick.minute"
+                  class="daily-agenda-page__timeline-tick-wrap"
+                  :style="{ left: timelinePercent(tick.minute) }"
+                >
+                  <span
+                    class="daily-agenda-page__timeline-tick-label"
+                    :class="`daily-agenda-page__timeline-tick-label--${tick.align}`"
+                    >{{ tick.label }}</span
+                  >
+                </span>
+              </div>
+
+              <div class="daily-agenda-page__timeline-marks">
+                <span
+                  v-if="nowMarkerPercent"
+                  class="daily-agenda-page__timeline-mark-label daily-agenda-page__timeline-mark-label--now"
+                  :style="{ left: nowMarkerPercent }"
+                  >Ahora</span
+                >
+                <span
+                  v-if="dayChangeMarkerPercent"
+                  class="daily-agenda-page__timeline-mark-label daily-agenda-page__timeline-mark-label--day-change"
+                  :style="{ left: dayChangeMarkerPercent }"
+                  >Cambio de día</span
+                >
+              </div>
+
               <div class="daily-agenda-page__timeline-track">
                 <div
                   v-for="minute in timelineHalfHourGuides"
@@ -608,29 +661,19 @@ const dayChangeMarkerPercent = computed(() => {
                   :key="tick.minute"
                   class="daily-agenda-page__timeline-tick"
                   :style="{ left: timelinePercent(tick.minute) }"
-                >
-                  <span
-                    class="daily-agenda-page__timeline-tick-label"
-                    :class="`daily-agenda-page__timeline-tick-label--${tick.align}`"
-                    >{{ tick.label }}</span
-                  >
-                </div>
+                />
 
                 <div
                   v-if="nowMarkerPercent"
                   class="daily-agenda-page__timeline-mark daily-agenda-page__timeline-mark--now"
                   :style="{ left: nowMarkerPercent }"
-                >
-                  <span class="daily-agenda-page__timeline-mark-label">Ahora</span>
-                </div>
+                />
 
                 <div
                   v-if="dayChangeMarkerPercent"
                   class="daily-agenda-page__timeline-mark daily-agenda-page__timeline-mark--day-change"
                   :style="{ left: dayChangeMarkerPercent }"
-                >
-                  <span class="daily-agenda-page__timeline-mark-label">Cambio de día</span>
-                </div>
+                />
 
                 <RouterLink
                   v-for="entry in entries"
@@ -703,9 +746,9 @@ const dayChangeMarkerPercent = computed(() => {
                   </span>
                 </RouterLink>
                 <BaseBadge
-                  :class="statusBadgeClass(entry)"
+                  :variant="statusBadgeVariant(entry)"
                   size="sm"
-                  outline
+                  :outline="entry.status !== 'confirmed'"
                   :label="statusLabel(entry)"
                 >
                   {{ statusLabel(entry) }}
@@ -825,9 +868,87 @@ const dayChangeMarkerPercent = computed(() => {
   flex-wrap: wrap;
 }
 
-.daily-agenda-page__date-input {
+.daily-agenda-page__date-input-wrap {
+  position: relative;
   flex: 1 1 180px;
   min-width: 160px;
+}
+
+/* Anterior/Siguiente/Fecha se apoyan directamente sobre
+   --color-surface-strong (tinta): BaseButton--ghost y BaseInput están
+   calibrados para superficie clara (blanco/latón oscuro), pero el atlas
+   panel-agenda-eventos usa latón claro sobre un campo casi transparente
+   para este control (.btn--ghost/.control en tools/mockups/
+   panel-agenda-eventos/render.mjs). Se sobrescribe solo aquí, no en los
+   componentes compartidos, porque el resto de sus usos (auth-eventos)
+   sí está sobre superficie clara y necesita el latón oscuro. */
+.daily-agenda-page__date-nav :deep(.base-button--ghost) {
+  color: var(--color-brand-accent-surface);
+  border-color: rgb(184 149 90 / 50%);
+  border-bottom-color: var(--color-brand-accent-surface);
+}
+
+.daily-agenda-page__date-nav
+  :deep(.base-button--ghost:hover:not(:disabled):not(.base-button--loading)) {
+  background-color: rgb(184 149 90 / 12%);
+}
+
+.daily-agenda-page__date-input :deep(.base-input__label) {
+  color: var(--color-brand-accent-surface);
+}
+
+.daily-agenda-page__date-input :deep(.base-input) {
+  --input-bg: rgb(244 240 231 / 5%);
+  --input-border-color: rgb(244 240 231 / 16%);
+  --input-border-base-color: var(--color-brand-accent-surface);
+  color: var(--color-on-strong);
+}
+
+/* El control del atlas (.control en tools/mockups/panel-agenda-eventos/
+   render.mjs) es solo texto, sin icono: el calendario propio del navegador
+   se oculta. El campo entero — no solo el icono — sigue abriendo el
+   selector nativo al hacer clic en Chromium, así que la interacción no se
+   pierde. El texto propio del navegador (formato del locale del SO, no el
+   ISO literal del atlas) también se vuelve transparente: la capa
+   `.daily-agenda-page__date-display` de abajo lo reemplaza visualmente sin
+   tocar el valor real ni la edición por teclado. */
+.daily-agenda-page__date-input :deep(.base-input::-webkit-calendar-picker-indicator) {
+  display: none;
+}
+
+.daily-agenda-page__date-input :deep(.base-input::-webkit-datetime-edit) {
+  color: transparent;
+}
+
+.daily-agenda-page__date-input :deep(.base-input:disabled),
+.daily-agenda-page__date-input :deep(.base-input--disabled) {
+  background-color: var(--input-bg);
+  border-color: var(--input-border-color);
+  border-bottom-color: rgb(244 240 231 / 28%);
+  color: var(--color-on-strong-muted);
+  opacity: 0.42;
+}
+
+.daily-agenda-page__date-display {
+  position: absolute;
+  right: var(--space-4);
+  bottom: 0;
+  left: var(--space-4);
+  display: flex;
+  align-items: center;
+  height: var(--control-height);
+  overflow: hidden;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  color: var(--color-on-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.daily-agenda-page__date-input:has(:disabled) ~ .daily-agenda-page__date-display {
+  color: var(--color-on-strong-muted);
+  opacity: 0.42;
 }
 
 @media (min-width: 1024px) {
@@ -843,7 +964,7 @@ const dayChangeMarkerPercent = computed(() => {
     flex-wrap: nowrap;
   }
 
-  .daily-agenda-page__date-input {
+  .daily-agenda-page__date-input-wrap {
     flex: 0 0 150px;
     min-width: 150px;
   }
@@ -915,7 +1036,10 @@ const dayChangeMarkerPercent = computed(() => {
   padding: 13px 18px;
   background-color: var(--color-surface-muted);
   border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-left: var(--border-width-emphasis) solid var(--color-accent-brass);
+  /* 3px literal, no --border-width-emphasis (2px): igual que
+     .daily-agenda-page__timeline-slip, calcado del filete de .row en el
+     atlas (border-left:3px solid var(--brass-deep)). */
+  border-left: 3px solid var(--color-accent-brass);
   border-radius: 2px;
 }
 
@@ -925,8 +1049,10 @@ const dayChangeMarkerPercent = computed(() => {
    un hecho del día (RN-CIT-04), solo dejó de ser el foco de atención. */
 .daily-agenda-page__item--terminal {
   background-color: transparent;
-  border-color: rgb(244 240 231 / 24%);
-  border-left-color: rgb(244 240 231 / 24%);
+  /* Más visible que el 24% original del atlas (issue #189, reporte en
+     vivo: "las tarjetas transparentes... ni se notan"). */
+  border-color: rgb(244 240 231 / 45%);
+  border-left-color: rgb(244 240 231 / 55%);
 }
 
 /* El nombre conserva color pleno incluso en un turno terminal — sigue
@@ -1012,7 +1138,7 @@ const dayChangeMarkerPercent = computed(() => {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.65fr) minmax(0, 1.05fr);
   }
 
-  .daily-agenda-page__date-input {
+  .daily-agenda-page__date-input-wrap {
     min-width: 0;
   }
 
@@ -1064,18 +1190,110 @@ const dayChangeMarkerPercent = computed(() => {
     overflow-x: hidden;
   }
 
-  /* El carril es una región definida (issue #189, atlas panel-agenda-eventos):
-     un borde propio, no solo marcas de hora flotando sobre el fondo. */
+  /* Eje, marcas y carril: tres filas propias apiladas, calcadas de
+     .axis/.marks/.track en tools/mockups/panel-agenda-eventos/render.mjs
+     (issue #189). Nunca texto posicionado con un top negativo dentro del
+     carril — así una marca ("Ahora"/"Cambio de día") nunca puede quedar
+     encima de una hora en punto: viven en bandas verticales disjuntas, no
+     compiten por el mismo espacio aunque coincidan en x. */
+  .daily-agenda-page__timeline-axis {
+    position: relative;
+    height: 18px;
+  }
+
+  .daily-agenda-page__timeline-tick-wrap {
+    position: absolute;
+    top: 0;
+  }
+
+  .daily-agenda-page__timeline-tick-label {
+    display: block;
+    white-space: nowrap;
+    font-size: var(--font-size-caption);
+    /* Mismo motivo que .timeline-mark-label: sin esto hereda
+       line-height:24px de body y desborda la fila de 18px del eje. */
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-on-strong-muted);
+  }
+
+  /* Una marca interior se centra sobre su línea; en los dos extremos del
+     eje centrar saca la mitad de la etiqueta fuera del carril, así que ahí
+     se ancla hacia adentro en su lugar (issue #189: esto era la causa real
+     del scroll horizontal — no un carril genuinamente más ancho que la
+     pantalla, solo una etiqueta de borde sangrando unos px). translateX en
+     vez de left/right: el wrap ya lleva su posición por `:style`, y un
+     estilo en línea siempre gana sobre cualquier `left`/`right` de clase. */
+  .daily-agenda-page__timeline-tick-label--center {
+    transform: translateX(-50%);
+  }
+
+  .daily-agenda-page__timeline-tick-label--end {
+    transform: translateX(-100%);
+  }
+
+  .daily-agenda-page__timeline-marks {
+    position: relative;
+    height: 22px;
+  }
+
+  /* "Ahora" (latón, foco/énfasis secundario, §4.1): etiqueta como insignia
+     rellena — es la marca de mayor prioridad del eje. */
+  .daily-agenda-page__timeline-mark-label {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    padding: 4px 9px;
+    white-space: nowrap;
+    /* Literal 10px + .12em, no --font-size-caption (12px) ni el
+       letter-spacing de otras insignias (issue #189, reporte en vivo:
+       "está muy grande") — .mark em en el atlas usa exactamente estos dos
+       valores en escritorio, más angostos que el resto del sistema de
+       insignias porque esta es la única marca que flota sola sobre el eje,
+       no dentro de una fila con más contexto alrededor. */
+    font-size: 10px;
+    /* Sin esto hereda line-height:24px de body (src/styles/base.css) — el
+       atlas nunca fija un line-height para .mark em porque su body no
+       redefine el valor por defecto del navegador (issue #189, reporte en
+       vivo: "está muy grande" / "muy pegado al calendario"). Con la
+       herencia de 24px el badge medía 32px de alto real pese a su
+       font-size de 10px, desbordaba la fila de 22px y terminaba
+       superponiendo el borde del carril en vez de dejar aire antes de él. */
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border-radius: 2px;
+  }
+
+  .daily-agenda-page__timeline-mark-label--now {
+    color: var(--color-surface-strong);
+    background-color: var(--color-brand-accent-surface);
+  }
+
+  /* "Cambio de día": misma familia que "Ahora" pero de menor prioridad —
+     contorno en vez de relleno. Cuando un turno nocturno que empieza "hoy"
+     hace coincidir "Ahora" y "Cambio de día" en el mismo x (evento 11), la
+     segunda insignia baja una fila dentro de esta misma banda en vez de
+     superponerse. */
+  .daily-agenda-page__timeline-mark-label--day-change {
+    top: 22px;
+    color: var(--color-brand-accent-surface);
+    background-color: transparent;
+    border: var(--border-width-normal) solid var(--color-brand-accent-surface);
+  }
+
+  .daily-agenda-page__timeline-marks:has(.daily-agenda-page__timeline-mark-label--day-change) {
+    height: 44px;
+  }
+
+  /* El carril es una región definida: un borde propio, no solo marcas de
+     hora flotando sobre el fondo. */
   .daily-agenda-page__timeline-track {
     position: relative;
     height: 96px;
-    /* Banda superior propia para las marcas (Ahora/Cambio de día, ~32px) y
-       otra más baja para las etiquetas de hora (~16px): issue #189 corrige
-       que antes compartían la misma fila y podían superponerse cuando una
-       marca caía cerca de una hora en punto. Espacio extra arriba: cuando
-       "Ahora" y "Cambio de día" coinciden en x (turno nocturno que empieza
-       hoy), la segunda insignia sube a una tercera banda propia. */
-    margin-top: 62px;
+    /* Sin margen: en el atlas .axis/.marks/.track se apilan sin espacio
+       (issue #189, reporte en vivo: "está muy separado ahora"). */
     padding: 0;
     border: var(--border-width-normal) solid rgb(244 240 231 / 16%);
     border-radius: 2px;
@@ -1095,69 +1313,12 @@ const dayChangeMarkerPercent = computed(() => {
     border-left: var(--border-width-normal) dashed rgb(244 240 231 / 24%);
   }
 
-  .daily-agenda-page__timeline-tick-label {
-    position: absolute;
-    top: -20px;
-    left: 0;
-    white-space: nowrap;
-    font-size: var(--font-size-caption);
-    font-variant-numeric: tabular-nums;
-    color: var(--color-on-strong-muted);
-  }
-
-  /* Una marca interior se centra sobre su línea; en los dos extremos del
-     carril centrar saca la mitad de la etiqueta fuera del borde, así que
-     ahí se ancla hacia adentro en su lugar (issue #189: esto era la causa
-     real del scroll horizontal — no un carril genuinamente más ancho que
-     la pantalla, solo una etiqueta de borde sangrando unos px). */
-  .daily-agenda-page__timeline-tick-label--center {
-    transform: translateX(-50%);
-  }
-
-  .daily-agenda-page__timeline-tick-label--end {
-    left: auto;
-    right: 0;
-  }
-
   .daily-agenda-page__timeline-mark {
     position: absolute;
     top: 0;
     bottom: 0;
     z-index: 1;
     border-left: var(--border-width-emphasis) solid var(--color-brand-accent-surface);
-  }
-
-  /* "Ahora" (latón, foco/énfasis secundario, §4.1): etiqueta como insignia
-     rellena — es la marca de mayor prioridad del eje. */
-  .daily-agenda-page__timeline-mark-label {
-    position: absolute;
-    top: -28px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 4px 9px;
-    white-space: nowrap;
-    font-size: var(--font-size-caption);
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    border-radius: 2px;
-  }
-
-  .daily-agenda-page__timeline-mark--now .daily-agenda-page__timeline-mark-label {
-    color: var(--color-surface-strong);
-    background-color: var(--color-brand-accent-surface);
-  }
-
-  /* "Cambio de día": misma familia que "Ahora" pero de menor prioridad —
-     contorno en vez de relleno. Una banda propia más arriba (issue #189):
-     un turno nocturno que empieza "hoy" puede coincidir en x con "Ahora"
-     (evento 11 con reloj cercano a medianoche), y las dos insignias
-     necesitan no superponerse aunque caigan en el mismo punto del carril. */
-  .daily-agenda-page__timeline-mark--day-change .daily-agenda-page__timeline-mark-label {
-    top: -56px;
-    color: var(--color-brand-accent-surface);
-    background-color: transparent;
-    border: var(--border-width-normal) solid var(--color-brand-accent-surface);
   }
 
   .daily-agenda-page__timeline-slip {
@@ -1183,8 +1344,17 @@ const dayChangeMarkerPercent = computed(() => {
      no un relleno gris que pese igual o más que un turno vigente. */
   .daily-agenda-page__timeline-slip--terminal {
     background-color: transparent;
-    border-color: rgb(244 240 231 / 24%);
-    border-left-color: rgb(244 240 231 / 24%);
+    /* La base (.daily-agenda-page__timeline-slip) fija `border: 0` en los
+       cuatro lados y solo repone el izquierdo — un turno vigente no
+       necesita perímetro, apoya en el relleno de pergamino. Terminal SÍ
+       necesita un perímetro real (issue #189, reporte en vivo: "no está
+       la caja literal"): sin `border-width`/`border-style` propios aquí,
+       `border-color` no tenía nada que colorear y la ficha quedaba sin
+       contorno visible, solo con el filete izquierdo. Más visible que el
+       24% original del atlas ("las tarjetas transparentes... ni se
+       notan"). */
+    border: var(--border-width-normal) solid rgb(244 240 231 / 45%);
+    border-left: 3px solid rgb(244 240 231 / 55%);
     color: var(--color-on-strong);
   }
 
@@ -1233,6 +1403,26 @@ const dayChangeMarkerPercent = computed(() => {
   font-size: 12px;
   font-weight: 600;
   line-height: 14px;
+}
+
+/* "Confirmado" (única insignia no terminal en esta lista) lleva el
+   relleno tenue del atlas: 8% del propio color de texto del estado, no
+   el swatch plano --color-info-surface (.badge--confirmed en el atlas usa
+   rgba(35,64,91,.08), el mismo rgb que --color-info-text — nunca
+   --info-s). Se fija `background-color` directamente, no `--badge-surface`:
+   BaseBadge la resuelve por :style en línea, que gana sobre cualquier
+   clase CSS que solo redefina la custom property. */
+:deep(.base-badge--info) {
+  background-color: rgb(35 64 91 / 8%);
+}
+
+/* Terminal (atlas .row--terminal .badge): pierde su color de estado
+   individual y pasa al mismo contorno tenue sobre tinta que el resto del
+   material terminal de la fila — el texto de la insignia ("Completado",
+   "Cancelado...") sigue distinguiendo el estado, el color ya no compite. */
+.daily-agenda-page__item--terminal :deep(.base-badge--outline) {
+  border-color: rgb(244 240 231 / 32%);
+  color: var(--color-on-strong-muted);
 }
 
 @media (max-width: 1023px) {

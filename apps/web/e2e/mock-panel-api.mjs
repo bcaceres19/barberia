@@ -59,8 +59,47 @@ const appointment = (
   currency: 'COP',
 })
 
+function bogotaNowHHMM() {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'America/Bogota',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date())
+  const hour = Number(parts.find((p) => p.type === 'hour').value)
+  const minute = Number(parts.find((p) => p.type === 'minute').value)
+  return hour * 60 + minute
+}
+
+function hhmm(minutesOfDay) {
+  const clamped = Math.min(23 * 60 + 59, Math.max(0, minutesOfDay))
+  const hour = Math.floor(clamped / 60)
+  const minute = clamped % 60
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+}
+
+// Un turno extra, anclado a la hora real de Bogotá, solo para el día de
+// hoy: sin esto, el marcador "Ahora" del carril solo aparece si alguien
+// prueba la demo entre las 08:00 y las 19:00 (el rango de los cuatro
+// turnos fijos de abajo) — fuera de ese horario simplemente no hay nada
+// que mostrar, aunque el cálculo esté bien (issue #189, reporte en vivo:
+// "falta el coso naranja"). Con este turno el marcador siempre cae dentro
+// del rango visible, sin importar cuándo se abra la demo.
+function nowAnchoredAppointment(civilDate) {
+  const nowMinutes = bogotaNowHHMM()
+  return appointment(
+    'turno-ahora',
+    'Turno en curso',
+    civilDate,
+    hhmm(nowMinutes - 20),
+    hhmm(nowMinutes + 25),
+    'confirmed',
+    'Demo en vivo',
+  )
+}
+
 function agendaFor(civilDate) {
-  return [
+  const items = [
     appointment('turno-mateo', 'Mateo Rojas', civilDate, '09:00', '09:45'),
     appointment(
       'turno-samuel',
@@ -82,6 +121,10 @@ function agendaFor(civilDate) {
       'Fade premium',
     ),
   ]
+  if (civilDate === todayInBogota()) {
+    items.push(nowAnchoredAppointment(civilDate))
+  }
+  return items
 }
 
 function respond(response, status, body) {
