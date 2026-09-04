@@ -60,8 +60,11 @@ const classes = computed(() => ['barber-avatar', `barber-avatar--${props.size}`]
   width: var(--avatar-size);
   height: var(--avatar-size);
   overflow: hidden;
-  background-color: var(--color-surface-strong);
-  border: var(--border-width-normal) solid var(--color-accent-brass);
+  /* Tinta ligeramente más clara que el fondo de página (atlas: --ink-2,
+     #16243a) para que el retrato se distinga incluso antes de leer el
+     monograma o el filete. */
+  background-color: #16243a;
+  border: var(--border-width-normal) solid rgb(184 149 90 / 55%);
   border-radius: 2px;
 }
 
@@ -91,6 +94,6 @@ const classes = computed(() => ['barber-avatar', `barber-avatar--${props.size}`]
   line-height: 1;
   letter-spacing: -0.04em;
   white-space: nowrap;
-  color: var(--color-on-strong);
+  color: var(--color-brand-accent-surface);
 }
 </style>

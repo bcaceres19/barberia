@@ -135,8 +135,7 @@ const style = computed(() => ({ '--page-state-mark': markVar.value }))
   font-family: var(--font-family-base);
   font-size: var(--font-size-body);
   line-height: var(--font-size-body-line);
-  color: var(--color-on-strong);
-  opacity: 0.8;
+  color: var(--color-on-strong-muted);
 }
 
 /* Destino de otra sección del producto (evento 04, "Barberos"): el

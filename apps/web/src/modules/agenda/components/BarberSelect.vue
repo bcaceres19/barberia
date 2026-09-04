@@ -160,7 +160,10 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
     >
       <BarberAvatar v-if="selectedBarber" :full-name="selectedBarber.fullName" size="closed" />
       <span v-else class="barber-select__trigger-icon" aria-hidden="true" />
-      <span class="barber-select__trigger-label">
+      <span
+        class="barber-select__trigger-label"
+        :class="{ 'barber-select__trigger-label--placeholder': !selectedBarber }"
+      >
         {{ selectedBarber?.fullName ?? 'Selecciona un barbero' }}
       </span>
       <span class="barber-select__chevron" aria-hidden="true" />
@@ -186,7 +189,7 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
         @click="selectBarber(barber.id)"
       >
         <BarberAvatar :full-name="barber.fullName" size="option" />
-        <span>{{ barber.fullName }}</span>
+        <span class="barber-select__option-name">{{ barber.fullName }}</span>
       </li>
     </ul>
   </div>
@@ -197,10 +200,12 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
   position: relative;
 }
 
+/* Control reglado sobre tinta (atlas panel-agenda-eventos): caja tenue con
+   línea base de latón de doble peso, el mismo lenguaje que BaseInput. */
 .barber-select__trigger {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 12px;
   width: 100%;
   min-height: 44px;
   padding: var(--space-2) var(--space-3);
@@ -208,15 +213,21 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
   font-size: var(--font-size-body);
   color: var(--color-on-strong);
   text-align: left;
-  background-color: rgb(244 240 231 / 8%);
-  border: var(--border-width-normal) solid rgb(244 240 231 / 24%);
-  border-radius: var(--radius-md);
+  background-color: rgb(244 240 231 / 5%);
+  border: var(--border-width-normal) solid rgb(244 240 231 / 16%);
+  border-bottom: var(--border-width-emphasis) solid var(--color-accent-brass);
+  border-radius: 2px;
   cursor: pointer;
+}
+
+.barber-select__trigger[aria-expanded='true'] {
+  border-bottom-color: var(--color-accent-brass);
 }
 
 .barber-select__trigger:disabled {
   cursor: not-allowed;
-  opacity: 0.56;
+  opacity: 0.42;
+  border-bottom-color: rgb(244 240 231 / 28%);
 }
 
 .barber-select__trigger:focus-visible {
@@ -230,7 +241,8 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
   width: 28px;
   height: 28px;
   flex-shrink: 0;
-  border: var(--border-width-normal) solid var(--color-accent-brass);
+  background-color: #16243a;
+  border: var(--border-width-normal) solid rgb(184 149 90 / 55%);
   border-radius: 2px;
 }
 
@@ -239,6 +251,12 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Sin barbero resuelto (evento 08 del atlas): el placeholder se distingue
+   por color, no solo por su texto. */
+.barber-select__trigger-label--placeholder {
+  color: var(--color-on-strong-muted);
 }
 
 .barber-select__chevron {
@@ -259,10 +277,10 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
   padding: 0;
   margin: 0;
   list-style: none;
-  background-color: var(--color-surface-strong);
-  border: var(--border-width-normal) solid var(--color-accent-brass);
-  border-top: none;
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background-color: #16243a;
+  border: var(--border-width-normal) solid rgb(244 240 231 / 16%);
+  border-top: var(--border-width-emphasis) solid var(--color-accent-brass);
+  border-radius: 2px;
   box-shadow: var(--shadow-dialog);
 }
 
@@ -274,9 +292,13 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
   padding: var(--space-2) var(--space-3);
   font-family: var(--font-family-base);
   font-size: var(--font-size-body);
-  font-weight: 600;
   color: var(--color-on-strong);
   cursor: pointer;
+}
+
+/* Filete tenue entre opciones, no un borde perimetral por fila. */
+.barber-select__option + .barber-select__option {
+  border-top: var(--border-width-normal) solid rgb(244 240 231 / 8%);
 }
 
 .barber-select__option:hover,
@@ -286,6 +308,17 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
 }
 
 .barber-select__option--selected {
-  background-color: rgb(244 240 231 / 8%);
+  background-color: rgb(184 149 90 / 12%);
+}
+
+.barber-select__option--selected .barber-select__option-name {
+  font-weight: 600;
+}
+
+.barber-select__option-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

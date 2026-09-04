@@ -758,8 +758,7 @@ const dayChangeMarkerPercent = computed(() => {
   margin: var(--space-1) 0 0;
   font-family: var(--font-family-base);
   font-size: var(--font-size-body-sm);
-  color: var(--color-on-strong);
-  opacity: 0.64;
+  color: var(--color-on-strong-muted);
 }
 
 .daily-agenda-page__cta {
@@ -771,8 +770,7 @@ const dayChangeMarkerPercent = computed(() => {
   padding: var(--space-2) 0;
   font-family: var(--font-family-base);
   font-size: var(--font-size-body-sm);
-  color: var(--color-on-strong);
-  opacity: 0.8;
+  color: var(--color-on-strong-muted);
 }
 
 .daily-agenda-page__controls {
@@ -921,14 +919,16 @@ const dayChangeMarkerPercent = computed(() => {
   border-left-color: rgb(244 240 231 / 24%);
 }
 
-.daily-agenda-page__item--terminal .daily-agenda-page__item-time,
+/* El nombre conserva color pleno incluso en un turno terminal — sigue
+   siendo el dato principal de la fila (atlas: .row--terminal solo atenúa
+   hora y servicio, nunca la persona). */
 .daily-agenda-page__item--terminal .daily-agenda-page__item-name {
   color: var(--color-on-strong);
 }
 
+.daily-agenda-page__item--terminal .daily-agenda-page__item-time,
 .daily-agenda-page__item--terminal .daily-agenda-page__item-service {
-  color: var(--color-on-strong);
-  opacity: 0.64;
+  color: var(--color-on-strong-muted);
 }
 
 /* La fila abre el detalle del turno (HU-064) por su bloque principal
@@ -963,7 +963,8 @@ const dayChangeMarkerPercent = computed(() => {
   font-size: 15px;
   font-weight: 400;
   font-variant-numeric: tabular-nums;
-  color: var(--color-text-primary);
+  letter-spacing: 0.02em;
+  color: var(--color-text-secondary);
 }
 
 .daily-agenda-page__item-details {
@@ -1086,8 +1087,7 @@ const dayChangeMarkerPercent = computed(() => {
     white-space: nowrap;
     font-size: var(--font-size-caption);
     font-variant-numeric: tabular-nums;
-    color: var(--color-on-strong);
-    opacity: 0.64;
+    color: var(--color-on-strong-muted);
   }
 
   .daily-agenda-page__timeline-mark {
@@ -1159,15 +1159,31 @@ const dayChangeMarkerPercent = computed(() => {
     color: var(--color-on-strong);
   }
 
+  /* Igual que la fila de lista: la hora se atenúa, la persona conserva
+     color pleno pero baja de peso (atlas: .slip--terminal redefine
+     .slip__time a --on-ink-2 y .slip__name a --on-ink/500, nunca 600). */
+  .daily-agenda-page__timeline-slip--terminal .daily-agenda-page__timeline-slip-time {
+    color: var(--color-on-strong-muted);
+  }
+
+  .daily-agenda-page__timeline-slip--terminal .daily-agenda-page__timeline-slip-name {
+    color: var(--color-on-strong);
+    font-weight: 500;
+  }
+
   .daily-agenda-page__timeline-slip-time {
     font-size: 11px;
     font-weight: 400;
     font-variant-numeric: tabular-nums;
+    letter-spacing: 0.03em;
+    color: var(--color-text-secondary);
   }
 
   .daily-agenda-page__timeline-slip-name {
     overflow: hidden;
     font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-primary);
     text-overflow: ellipsis;
     white-space: nowrap;
   }

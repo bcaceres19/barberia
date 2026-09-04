@@ -26,7 +26,6 @@ const { loggingOut, logout: onLogout } = useLogout()
   <header class="app-header">
     <div class="app-header__identity">
       <NavaWordmark variant="inverted" />
-      <span class="app-header__divider" aria-hidden="true">·</span>
       <p class="app-header__barbershop" data-testid="barbershop-name">{{ barbershopName }}</p>
     </div>
     <!-- El atlas de /panel no dibuja un botón con relleno en la barra, pero
@@ -49,24 +48,26 @@ const { loggingOut, logout: onLogout } = useLogout()
   min-height: 75px;
   padding: 20px 40px;
   background-color: var(--color-surface-strong);
+  /* Filete inferior del atlas panel-agenda-eventos (issue #189):
+     rgba(184,149,90,.45), el mismo latón de marca a baja opacidad. */
+  border-bottom: 1px solid rgb(184 149 90 / 45%);
 }
 
 .app-header__identity {
   display: flex;
   min-width: 0;
   align-items: baseline;
-  gap: var(--space-2);
+  gap: 14px;
 }
 
-.app-header__divider {
-  color: var(--color-on-strong);
-  opacity: 0.48;
+.app-header__identity :deep(.nava-wordmark) {
+  font-size: 34px;
 }
 
 .app-header__barbershop {
   margin: 0;
   overflow: hidden;
-  font-size: var(--font-size-body);
+  font-size: 16px;
   font-weight: 600;
   color: var(--color-on-strong);
   text-overflow: ellipsis;
