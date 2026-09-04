@@ -145,8 +145,8 @@ BEGIN
 
   SELECT count(*) INTO v_shops FROM barbershop;
 
-  IF v_visible_a <> 2 THEN
-    RAISE EXCEPTION 'CA-001-01: se esperaban 2 usuarios de A y se vieron %.', v_visible_a;
+  IF v_visible_a <> 3 THEN
+    RAISE EXCEPTION 'CA-001-01: se esperaban 3 usuarios de A y se vieron %.', v_visible_a;
   END IF;
 
   IF v_visible_b <> 0 THEN

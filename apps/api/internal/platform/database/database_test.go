@@ -87,14 +87,18 @@ func TestInTenantTx_CA002_01(t *testing.T) {
 			return fmt.Errorf("expected %q, got %q", shopA, setting)
 		}
 
-		// Verificar que solo ve usuarios de A
+		// Verificar que solo ve usuarios de A. 3, no 2: dos_barberias.sql
+		// añadió un tercer usuario (aaaaaaa3) dedicado a que cmd/api abra
+		// sesiones sin pisar las cuentas de recuperación (issue #158); este
+		// conteo sigue probando aislamiento RLS por tenant, solo con el
+		// tamaño real de la fixture.
 		var count int
 		err = q.QueryRow(ctx, "SELECT count(*) FROM staff_user").Scan(&count)
 		if err != nil {
 			return fmt.Errorf("count users: %w", err)
 		}
-		if count != 2 {
-			return fmt.Errorf("expected 2 users for shop A, got %d", count)
+		if count != 3 {
+			return fmt.Errorf("expected 3 users for shop A, got %d", count)
 		}
 		return nil
 	})
@@ -118,8 +122,8 @@ func TestInTenantTx_CA002_01(t *testing.T) {
 		if err != nil {
 			return fmt.Errorf("count users: %w", err)
 		}
-		if count != 2 {
-			return fmt.Errorf("expected 2 users for shop B, got %d", count)
+		if count != 3 {
+			return fmt.Errorf("expected 3 users for shop B, got %d", count)
 		}
 		return nil
 	})
@@ -159,8 +163,8 @@ func TestInTenantTx_CA002_02(t *testing.T) {
 					if err != nil {
 						return err
 					}
-					if count != 2 {
-						return fmt.Errorf("iteration %d: shop A saw %d users, expected 2", j, count)
+					if count != 3 {
+						return fmt.Errorf("iteration %d: shop A saw %d users, expected 3", j, count)
 					}
 					return nil
 				})
@@ -179,8 +183,8 @@ func TestInTenantTx_CA002_02(t *testing.T) {
 					if err != nil {
 						return err
 					}
-					if count != 2 {
-						return fmt.Errorf("iteration %d: shop B saw %d users, expected 2", j, count)
+					if count != 3 {
+						return fmt.Errorf("iteration %d: shop B saw %d users, expected 3", j, count)
 					}
 					return nil
 				})
