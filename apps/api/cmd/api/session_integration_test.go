@@ -35,8 +35,20 @@ const (
 	shopA = "11111111-1111-1111-1111-111111111111"
 	shopB = "22222222-2222-2222-2222-222222222222"
 
-	staffUserActiveA = "aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1"
-	staffUserActiveB = "bbbbbbb1-bbbb-bbbb-bbbb-bbbbbbbbbbb1"
+	// aaaaaaa3/bbbbbbb3 (NO aaaaaaa1/bbbbbbb1 = duena.a/dueno.b): estas
+	// constantes las usan ~11 archivos de este paquete para abrir UNA sesión
+	// válida y ejercitar features ajenas a recuperación (catálogo, barberos,
+	// turnos, servicios, settings...). duena.a/dueno.b son las únicas
+	// cuentas con teléfono verificado y las que cmd/api/recovery_integration_
+	// test.go (y otros paquetes) usan para completar un flujo de
+	// recuperación real; auth_recovery_change_password revoca TODAS las
+	// sesiones activas del usuario cuya contraseña cambia (CA-008-05), así
+	// que una sesión abierta aquí sobre esas cuentas puede morir a mitad de
+	// prueba si un paquete concurrente termina esa recuperación (issue
+	// #158). aaaaaaa3/bbbbbbb3 nunca son el objetivo de una prueba de
+	// recuperación: no los reutilices para eso.
+	staffUserActiveA = "aaaaaaa3-aaaa-aaaa-aaaa-aaaaaaaaaaa3"
+	staffUserActiveB = "bbbbbbb3-bbbb-bbbb-bbbb-bbbbbbbbbbb3"
 )
 
 func setupTestDB(t *testing.T) *database.DB {
