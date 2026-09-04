@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-ORCH-OTP-CANAL-DESTINO-v1"
 version: "1.0"
 kind: "orchestration"
-status: "draft"
+status: "superseded"
 target_agents:
   - "codex"
   - "claude"
@@ -52,9 +52,9 @@ source_docs:
   - "docs/03-desarrollo/estrategia-pruebas.md"
   - "docs/10-backlog/prompts/README.md"
 created_at: "2026-09-02"
-updated_at: "2026-09-02"
+updated_at: "2026-09-03"
 supersedes: null
-superseded_by: null
+superseded_by: "PROMPT-FIX-OTP-CANALES-CONFIGURADOS-v2"
 ---
 
 # Orquestación: canal único y destino verificado de OTP

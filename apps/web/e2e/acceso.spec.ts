@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { randomBytes } from 'node:crypto'
 
 /**
  * Recorrido E2E de HU-010 (docs/03-desarrollo/estrategia-pruebas.md §5.3,
@@ -20,19 +21,42 @@ async function fillCredentials(page: Page, email: string, password: string) {
   await page.getByLabel('Contraseña', { exact: true }).fill(password)
 }
 
+// Este archivo por sí solo emite más de cinco solicitudes reales de login
+// (umbral por defecto de DEC-061, APP_LOGIN_THROTTLE_THRESHOLD=5): sin
+// aislar cada prueba en su propia IP sintética, la quinta o sexta prueba
+// tropieza con el reto telefónico de HU-007 contra su propia cuenta, no
+// contra un escenario real de abuso. Mismo patrón que
+// `reto-telefonico.spec.ts` (`withIsolatedIP`), verificado en vivo
+// (2026-09-04): sin esto, `login_throttle` se comparte entre TODAS las
+// pruebas de este archivo (y de `recuperacion.spec.ts` si corre en la
+// misma invocación) porque todas comparten el mismo peer real.
+function syntheticIP(): string {
+  const octets = Array.from({ length: 3 }, () => randomBytes(1)[0])
+  return `10.${octets[0]}.${octets[1]}.${octets[2]}`
+}
+
+async function withIsolatedIP(page: Page): Promise<void> {
+  const ip = syntheticIP()
+  await page.route('**/api/v1/public/auth/**', async (route) => {
+    await route.continue({ headers: { ...route.request().headers(), 'x-forwarded-for': ip } })
+  })
+}
+
 test.describe('Acceso del barbero (HU-010)', () => {
   test('accede con credenciales válidas y llega a /panel (CA-010-01)', async ({ page }) => {
+    await withIsolatedIP(page)
     await page.goto('/acceso')
     await fillCredentials(page, EMAIL, PASSWORD)
     await page.getByRole('button', { name: 'Iniciar sesión' }).click()
 
     await expect(page).toHaveURL(/\/panel$/)
-    await expect(page.getByRole('heading', { name: 'Panel del barbero' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Agenda' })).toBeVisible()
   })
 
   test('credenciales inválidas son indistinguibles entre correo inexistente y contraseña incorrecta (CA-010-02)', async ({
     page,
   }) => {
+    await withIsolatedIP(page)
     await page.goto('/acceso')
     await fillCredentials(page, EMAIL, 'contraseña-incorrecta-a-proposito')
     await page.getByRole('button', { name: 'Iniciar sesión' }).click()
@@ -56,7 +80,11 @@ test.describe('Acceso del barbero (HU-010)', () => {
     await fillCredentials(page, EMAIL, PASSWORD)
 
     // Simula un fallo de red real interceptando exactamente la primera
-    // solicitud de login; la segunda (el reintento) llega al API real.
+    // solicitud de login; la segunda (el reintento) llega al API real. La
+    // IP sintética va en este mismo handler (no en `withIsolatedIP`,
+    // registrado antes): Playwright invoca el handler más reciente
+    // primero, así que uno externo nunca se alcanzaría aquí.
+    const ip = syntheticIP()
     let attempt = 0
     await page.route('**/api/v1/public/auth/login', async (route) => {
       attempt += 1
@@ -64,7 +92,7 @@ test.describe('Acceso del barbero (HU-010)', () => {
         await route.abort('connectionfailed')
         return
       }
-      await route.continue()
+      await route.continue({ headers: { ...route.request().headers(), 'x-forwarded-for': ip } })
     })
 
     await page.getByRole('button', { name: 'Iniciar sesión' }).click()
@@ -83,6 +111,7 @@ test.describe('Acceso del barbero (HU-010)', () => {
     await page.goto('/acceso')
     await fillCredentials(page, EMAIL, PASSWORD)
 
+    const ip = syntheticIP()
     let requestCount = 0
     await page.route('**/api/v1/public/auth/login', async (route) => {
       requestCount += 1
@@ -90,7 +119,7 @@ test.describe('Acceso del barbero (HU-010)', () => {
       // estado "enviando" y disparar un segundo toque mientras está en
       // curso, sin sustituir el recorrido real por un mock de resultado.
       await new Promise((resolve) => setTimeout(resolve, 300))
-      await route.continue()
+      await route.continue({ headers: { ...route.request().headers(), 'x-forwarded-for': ip } })
     })
 
     // Selector estable (no por nombre accesible, que cambia a "Iniciando
@@ -114,6 +143,7 @@ test.describe('Acceso del barbero (HU-010)', () => {
   test('opera completamente con teclado, con foco visible y orden coherente (CA-010-05)', async ({
     page,
   }) => {
+    await withIsolatedIP(page)
     await page.goto('/acceso')
     await page.getByLabel('Correo', { exact: true }).focus()
     await expect(page.getByLabel('Correo', { exact: true })).toBeFocused()
@@ -142,7 +172,7 @@ test.describe('Acceso del barbero (HU-010)', () => {
     await link.click()
     await expect(page).toHaveURL(/\/recuperar-acceso$/)
     // No es una ruta rota: la respuesta HTTP de navegación es real.
-    await expect(page.getByRole('heading', { name: 'Recuperación de acceso' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Solicita tu código' })).toBeVisible()
   })
 
   test('sin sesión, /panel redirige al acceso conservando el destino (DEC-056, generalizado por HU-012/CA-012-02)', async ({

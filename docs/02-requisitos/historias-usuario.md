@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.35"
+version: "1.36"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-02"
@@ -362,7 +362,7 @@ La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para c
 | --- | --- |
 | Función | `F-SEG-03` |
 | Reglas | `RN-DAT-02` |
-| Decisiones | `DEC-026`, `DEC-052`, `DEC-061`, `DEC-062` |
+| Decisiones | `DEC-026`, `DEC-052`, `DEC-061`, `DEC-062`, `DEC-081` |
 | Actor | Propietario (protege), barbero (afectado si se excede) |
 | Depende de | `HU-003`, `HU-005` |
 | Bloquea | — |
@@ -372,12 +372,12 @@ La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para c
 
 > Como propietario del sistema, necesito que el formulario de acceso limite los intentos por IP y exija una prueba adicional cuando se supera el umbral, para frenar el abuso sin castigar al barbero que se equivocó dos veces.
 
-> **Bloqueo resuelto:** `DEC-026` fijaba el umbral inicial de **5 solicitudes por IP** sin la duración de la ventana ni la del escalamiento. `DP-SEG-06` quedó resuelta el 2026-08-11 como `DEC-052`: ventana de 15 minutos, escalamiento a verificación telefónica de 24 horas. `CT-005` (¿la quinta o la sexta solicitud exige el reto?) y `DP-SEG-10` (reto telefónico completo) quedaron resueltas el 2026-08-17 como `DEC-061` y `DEC-062`: las cinco primeras solicitudes se evalúan con normalidad, la sexta exige completar el reto en `POST /api/v1/public/auth/challenge` y `.../challenge/verify` (código de 6 dígitos por WhatsApp oficial, 5 min, 5 intentos) antes de evaluar la contraseña.
+> **Bloqueo resuelto:** `DEC-026` fijaba el umbral inicial de **5 solicitudes por IP** sin la duración de la ventana ni la del escalamiento. `DP-SEG-06` quedó resuelta el 2026-08-11 como `DEC-052`: ventana de 15 minutos, escalamiento a verificación adicional de 24 horas. `CT-005` y `DP-SEG-10` quedaron resueltas el 2026-08-17 como `DEC-061`/`DEC-062`: las cinco primeras solicitudes se evalúan con normalidad y la sexta exige completar un código de 6 dígitos, 5 min y 5 intentos antes de evaluar la contraseña. `DEC-081` sustituyó el WhatsApp único: correo es el canal predeterminado y la configuración del evento puede usar correo, WhatsApp oficial o ambos, siempre sobre contactos verificados resueltos por el servidor.
 
 **Alcance incluido**
 
 - Conteo por IP con ventana de 15 minutos y umbral de 5 solicitudes (`DEC-052`), ambos configurables.
-- Escalamiento: al superar el umbral (la sexta solicitud, `DEC-061`), esa solicitud y las siguientes exigen completar el reto telefónico de `DEC-062` antes de evaluar la contraseña, durante 24 horas o hasta completarlo con éxito.
+- Escalamiento: al superar el umbral (la sexta solicitud, `DEC-061`), esa solicitud y las siguientes exigen completar el reto OTP de `DEC-062`/`DEC-081` antes de evaluar la contraseña, durante 24 horas o hasta completarlo con éxito.
 - Respuesta `429` con formato uniforme y con indicación de cuándo reintentar.
 - Configuración expuesta como parámetros, no como números incrustados en el código.
 - Los contadores no almacenan datos personales; la IP se guarda de forma acotada y con vencimiento.
@@ -387,7 +387,7 @@ La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para c
 | Código | Criterio |
 | --- | --- |
 | `CA-007-01` | Dadas hasta cinco solicitudes desde la misma IP dentro de la ventana, entonces todas se evalúan normalmente, incluida la contraseña (`DEC-061`). |
-| `CA-007-02` | La sexta solicitud desde esa IP dentro de la ventana exige completar el reto telefónico de `DEC-062` y no evalúa la contraseña hasta lograrlo. |
+| `CA-007-02` | La sexta solicitud desde esa IP dentro de la ventana exige completar el reto OTP de `DEC-062`/`DEC-081` y no evalúa la contraseña hasta lograrlo; canal y destino se resuelven en servidor desde configuración y contactos verificados. |
 | `CA-007-03` | La respuesta al superar el umbral usa el formato uniforme, indica cuándo reintentar y no revela si el correo existe. |
 | `CA-007-04` | Transcurrida la ventana sin nuevos intentos, el conteo se reinicia; el reto telefónico sigue vigente si `escalated_until` no venció o no se completó con éxito (`DEC-062`). |
 | `CA-007-05` | El umbral y la ventana se cambian por configuración, sin recompilar ni editar código. |
@@ -409,7 +409,7 @@ La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para c
 | --- | --- |
 | Función | `F-AUTH-02` |
 | Reglas | `RN-DAT-01`, `RN-DAT-02` |
-| Decisiones | `DEC-026`, `DEC-051`, `DEC-063`, `DEC-064`, `DEC-065` |
+| Decisiones | `DEC-026`, `DEC-051`, `DEC-063`, `DEC-064`, `DEC-065`, `DEC-081` |
 | Actor | Barbero |
 | Depende de | `HU-005`, `HU-007` |
 | Bloquea | `HU-011` |
@@ -417,7 +417,7 @@ La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para c
 
 **Historia**
 
-> Como barbero que olvidó su contraseña, quiero recuperar el acceso con un código enviado por WhatsApp y correo, para volver a mi agenda el mismo día sin depender de que alguien me responda.
+> Como barbero que olvidó su contraseña, quiero recuperar el acceso con un código enviado por los canales configurados, para volver a mi agenda el mismo día sin depender de que alguien me responda.
 
 > **Bloqueo resuelto:** `DEC-026` definía el mecanismo (código al teléfono verificado) sin fijar canal ni proveedor. `DP-SEG-05` quedó resuelta el 2026-08-11 como `DEC-051`: WhatsApp oficial y correo, reutilizando el proveedor ya habilitado por `DEC-027`. El 2026-08-17 se resolvieron las últimas cuatro dudas: `DP-SEG-11` (política de contraseña) como `DEC-063`, `DP-SEG-12` (formato/vigencia/intentos/token de reinicio del código) como `DEC-064`, `CT-006` (respuesta idéntica frente a destino enmascarado) como `DEC-065`, y `DP-NOT-05` (proveedor/adaptador real de WhatsApp y correo: Meta Cloud API + Resend) como `DEC-066`. `HU-008` ya no depende de ninguna decisión pendiente; solo espera que `HU-007` se integre en `main`.
 
@@ -425,7 +425,7 @@ La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para c
 
 - Migración con la tabla de códigos de recuperación: hash del código, vencimiento corto, intentos, marca de uso, `barbershop_id` y RLS.
 - Solicitud de recuperación, verificación del código y establecimiento de contraseña nueva.
-- Envío por WhatsApp oficial y por correo (`DEC-051`), mismo proveedor de `DEC-027`.
+- Envío según la configuración del evento: correo por defecto, WhatsApp oficial o ambos (`DEC-081`), con los proveedores oficiales de `DEC-066`.
 - Código de un solo uso, con vencimiento, con límite de intentos y con reenvío controlado.
 - Invalidación de las sesiones activas al cambiar la contraseña.
 - Destino mostrado enmascarado en la interfaz y en las respuestas.
@@ -434,7 +434,7 @@ La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para c
 
 | Código | Criterio |
 | --- | --- |
-| `CA-008-01` | Dado un correo registrado, cuando se solicita recuperación, entonces se envía un código al teléfono/correo verificados y la respuesta de `POST /recovery/request` es idéntica a la de un correo no registrado, sin destino en el cuerpo (`DEC-065`). |
+| `CA-008-01` | Dado un correo registrado, cuando se solicita recuperación, entonces se envía un mismo código por el canal o canales configurados sobre contactos verificados —correo por defecto, WhatsApp oficial o ambos— y la respuesta de `POST /recovery/request` es idéntica a la de un correo no registrado, sin destino en el cuerpo (`DEC-065`, `DEC-081`). |
 | `CA-008-02` | El código vence en 15 minutos (`DEC-064`), se acepta una sola vez y queda inválido tras usarse. |
 | `CA-008-03` | Superados 5 intentos fallidos (`DEC-064`), el código se invalida por completo y debe solicitarse uno nuevo. |
 | `CA-008-04` | El código se almacena como `HMAC-SHA256` con secreto de despliegue (`DEC-064`); la base de datos no contiene el valor enviado ni una representación recuperable sin ese secreto. |

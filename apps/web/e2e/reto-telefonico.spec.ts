@@ -72,11 +72,18 @@ async function fillCredentials(page: Page, email: string, password: string) {
 
 // `OtpInput` (issue #213) no expone un único control asociado a "Código de
 // 6 dígitos" vía `<label>`: es un grupo de seis casillas, cada una con su
-// propio `aria-label` ("Dígito N de 6"). `.fill()` sobre la primera casilla
-// igual distribuye el código completo entre las seis, mismo camino que un
-// pegado real (`OtpInput.vue`, `onInput`).
+// propio `aria-label` ("Dígito N de 6") y `maxlength="1"` nativo.
+// Verificado contra el navegador real (2026-09-04): `.fill()` sobre la
+// primera casilla NO reproduce un pegado — el navegador trunca el valor a
+// 1 carácter por el `maxlength` antes de que `onInput` lo lea. Se llena
+// cada casilla con su propio dígito: mismo camino de producción
+// (`onInput`, rama de un solo carácter) que un usuario tecleando dígito
+// por dígito, mismo estado final que un pegado.
 async function fillOtp(page: Page, code: string) {
-  await page.getByRole('group', { name: 'Código de 6 dígitos' }).locator('input').first().fill(code)
+  const inputs = page.getByRole('group', { name: 'Código de 6 dígitos' }).locator('input')
+  for (let i = 0; i < code.length; i += 1) {
+    await inputs.nth(i).fill(code[i])
+  }
 }
 
 async function readCapturedCode(): Promise<string> {
@@ -171,7 +178,7 @@ test.describe('Defensa escalonada contra abuso del acceso (HU-007)', () => {
     await page.getByRole('button', { name: 'Verificar código' }).click()
 
     await expect(page).toHaveURL(/\/panel$/)
-    await expect(page.getByRole('heading', { name: 'Panel del barbero' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Agenda' })).toBeVisible()
   })
 
   test('un código incorrecto no desbloquea el acceso y no revela la causa (CA-007-03, no enumeración)', async ({

@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-FIX-LOGIN-OTP-DESTINO-VERIFICADO-v1"
 version: "1.0"
 kind: "fix"
-status: "draft"
+status: "superseded"
 target_agents:
   - "codex"
   - "claude"
@@ -54,9 +54,9 @@ source_docs:
   - "docs/10-backlog/prompts/README.md"
   - "docs/10-backlog/prompts/hu/hu-007-defensa-abuso.md"
 created_at: "2026-09-02"
-updated_at: "2026-09-02"
+updated_at: "2026-09-03"
 supersedes: null
-superseded_by: null
+superseded_by: "PROMPT-FIX-OTP-CANALES-CONFIGURADOS-v2"
 ---
 
 # Destino verificado para el OTP del login

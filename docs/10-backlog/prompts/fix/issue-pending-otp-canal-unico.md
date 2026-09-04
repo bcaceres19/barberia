@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-FIX-OTP-CANAL-UNICO-v1"
 version: "1.0"
 kind: "fix"
-status: "draft"
+status: "superseded"
 target_agents:
   - "codex"
   - "claude"
@@ -55,9 +55,9 @@ source_docs:
   - "docs/10-backlog/prompts/README.md"
   - "docs/10-backlog/prompts/hu/hu-008-recuperacion-acceso.md"
 created_at: "2026-09-02"
-updated_at: "2026-09-02"
+updated_at: "2026-09-03"
 supersedes: null
-superseded_by: null
+superseded_by: "PROMPT-FIX-OTP-CANALES-CONFIGURADOS-v2"
 ---
 
 # Canal único para códigos de recuperación

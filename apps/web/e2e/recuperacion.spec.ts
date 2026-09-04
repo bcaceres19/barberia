@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { randomBytes } from 'node:crypto'
 import { readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -71,11 +72,39 @@ async function waitForCapturedCode(): Promise<string> {
 
 // `OtpInput` (issue #213) no expone un único control asociado a
 // "Código de 6 dígitos" vía `<label>`: es un grupo de seis casillas, cada
-// una con su propio `aria-label` ("Dígito N de 6"). `.fill()` sobre la
-// primera casilla igual distribuye el código completo entre las seis,
-// mismo camino que un pegado real (`OtpInput.vue`, `onInput`).
+// una con su propio `aria-label` ("Dígito N de 6") y `maxlength="1"`
+// nativo. Verificado contra el navegador real (2026-09-04): `.fill()`
+// sobre la primera casilla NO reproduce un pegado — Playwright inserta el
+// valor completo y el navegador lo trunca a 1 carácter por el `maxlength`
+// antes de que `onInput` lo lea, así que solo el primer dígito llega a
+// distribuirse. Un pegado real dispara `onPaste` (que sí lee
+// `clipboardData` completo, sin pasar por `value`/`maxlength`), pero
+// simularlo aquí exige menos que llenar cada casilla con su propio dígito:
+// mismo estado final, mismo camino de producción (`onInput`, rama de un
+// solo carácter) que un usuario tecleando dígito por dígito.
 async function fillOtp(page: Page, code: string) {
-  await page.getByRole('group', { name: 'Código de 6 dígitos' }).locator('input').first().fill(code)
+  const inputs = page.getByRole('group', { name: 'Código de 6 dígitos' }).locator('input')
+  for (let i = 0; i < code.length; i += 1) {
+    await inputs.nth(i).fill(code[i])
+  }
+}
+
+// El único login real de este archivo (verificación final de CA-011-01)
+// comparte el peer real con `acceso.spec.ts` cuando ambos corren en la
+// misma invocación de Playwright: si `acceso.spec.ts` ya agotó el umbral
+// de `login_throttle` (DEC-061) contra ese peer, esta prueba tropezaría
+// con el reto telefónico en vez de completar el login. Mismo aislamiento
+// por IP sintética que `acceso.spec.ts`/`reto-telefonico.spec.ts`.
+function syntheticIP(): string {
+  const octets = Array.from({ length: 3 }, () => randomBytes(1)[0])
+  return `10.${octets[0]}.${octets[1]}.${octets[2]}`
+}
+
+async function withIsolatedIP(page: Page): Promise<void> {
+  const ip = syntheticIP()
+  await page.route('**/api/v1/public/auth/**', async (route) => {
+    await route.continue({ headers: { ...route.request().headers(), 'x-forwarded-for': ip } })
+  })
 }
 
 async function requestRecovery(page: Page, email: string) {
@@ -98,6 +127,7 @@ test.describe('Recuperación de acceso (HU-011)', () => {
   test('recorrido completo con código válido: solicitar, verificar y establecer contraseña (CA-011-01, CA-011-02, CA-011-05)', async ({
     page,
   }) => {
+    await withIsolatedIP(page)
     await requestRecovery(page, VALID_CODE_EMAIL)
 
     const code = await waitForCapturedCode()
