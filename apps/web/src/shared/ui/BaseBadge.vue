@@ -19,6 +19,11 @@ interface Props {
   dismissible?: boolean
   /** Label para accesibilidad (requerido si solo icono/punto) */
   label?: string
+  /** Contorno sobre superficie clara/oscura en vez de relleno: el sistema de
+   * rellenos claros desaparece sobre pergamino o tinta (issue #189, atlas
+   * panel-agenda-eventos). El borde y el texto siguen los del variant/status;
+   * solo cambia el fondo. */
+  outline?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -26,6 +31,7 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'md',
   dot: false,
   dismissible: false,
+  outline: false,
 })
 
 const emit = defineEmits<{
@@ -40,6 +46,7 @@ const classes = computed(() => {
     `${base}--${props.size}`,
     props.dot ? `${base}--dot` : '',
     props.dismissible ? `${base}--dismissible` : '',
+    props.outline ? `${base}--outline` : '',
   ]
     .filter(Boolean)
     .join(' ')
@@ -262,6 +269,13 @@ const style = computed(() => ({
 .base-badge__dismiss-icon {
   width: 12px;
   height: 12px;
+}
+
+/* Contorno (issue #189): el borde y el texto ya declarados por variant/status
+ * bastan; solo se anula el relleno para que la insignia se apoye en contorno
+ * sobre pergamino o tinta en vez de competir con esas superficies. */
+.base-badge--outline {
+  background-color: transparent;
 }
 
 /* Estados de turno - variantes específicas para compatibilidad semántica */

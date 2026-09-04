@@ -90,3 +90,35 @@ export function minutesIntoCivilDate(
   const minute = Number(parts.find((p) => p.type === 'minute')!.value)
   return hour * 60 + minute
 }
+
+// minutesSinceCivilMidnight (issue #189, línea temporal de escritorio):
+// igual que minutesIntoCivilDate pero SIN recortar a [0, 1440] — la
+// geometría del carril necesita saber cuánto se extiende un turno más allá
+// de medianoche (evento 11 del atlas panel-agenda-eventos) para dibujar su
+// ficha completa y el eje hasta esa hora real del día siguiente. Solo asume
+// un cruce de un día inmediato (anterior o siguiente), el único caso que un
+// turno real produce; nunca decide pertenencia de día ni disponibilidad
+// (eso lo resuelve minutesIntoCivilDate/el servidor, DEC-075) — es
+// exclusivamente geometría visual del carril.
+export function minutesSinceCivilMidnight(
+  isoInstant: string,
+  civilDate: string,
+  timezone: string,
+): number {
+  const at = new Date(isoInstant)
+  const instantCivilDate = getCivilDateInTimezone(timezone, at)
+
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: timezone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(at)
+  const hour = Number(parts.find((p) => p.type === 'hour')!.value)
+  const minute = Number(parts.find((p) => p.type === 'minute')!.value)
+  const clockMinutes = hour * 60 + minute
+
+  if (instantCivilDate === civilDate) return clockMinutes
+  if (instantCivilDate > civilDate) return 1440 + clockMinutes
+  return clockMinutes - 1440
+}

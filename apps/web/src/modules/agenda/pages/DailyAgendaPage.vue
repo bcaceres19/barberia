@@ -8,15 +8,23 @@
 // Selector obligatorio de un barbero (DEC-074): nunca una vista
 // consolidada. Fuera de alcance a propósito: detalle de cita y cualquier
 // acción sobre una cita existente (editar/cancelar/reprogramar/completar).
+//
+// Fidelidad visual con el atlas panel-agenda-eventos (issue #189): esta
+// revisión es exclusivamente de composición/color/jerarquía/estado visual,
+// nunca de comportamiento. Los comentarios que citan un evento del atlas
+// (docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/
+// panel-agenda-eventos/README.md) documentan a qué panel responde cada
+// bloque.
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router'
-import { BaseAlert, BaseBadge, BaseButton, BaseInput } from '@/shared/ui'
+import { BaseAlert, BaseBadge, BaseButton, BaseInput, PageState } from '@/shared/ui'
 import { formatTimeInTimezone } from '@/shared/time/formatInstant'
 import {
   formatCivilDateFull,
   getCivilDateInTimezone,
   isCivilDateString,
   minutesIntoCivilDate,
+  minutesSinceCivilMidnight,
   shiftCivilDate,
 } from '@/shared/time/civilDate'
 import {
@@ -30,6 +38,8 @@ import {
   APPOINTMENT_STATUS_LABELS,
   type DailyAgendaEntry,
 } from '../model/dailyAgenda'
+import AgendaSkeleton from '../components/AgendaSkeleton.vue'
+import BarberSelect from '../components/BarberSelect.vue'
 
 type PageStatus = 'loading' | 'ready' | 'load-error'
 // 'updating' (CA-063): ya hubo una agenda confirmada antes (para otra
@@ -208,8 +218,7 @@ async function loadAgenda(barberId: string, date: string | null) {
   }
 }
 
-function onBarberSelectChange(event: Event) {
-  const barberId = (event.target as HTMLSelectElement).value
+function onBarberSelect(barberId: string) {
   void router.push({ query: withQuery({ barberId }) })
 }
 
@@ -261,11 +270,31 @@ function entryTime(entry: DailyAgendaEntry): string {
 const MIN_TIMELINE_SPAN_MINUTES = 4 * 60
 
 const timelineBounds = computed(() => {
-  if (!barbershopTimezone.value || !selectedDate.value || entries.value.length === 0) return null
+  if (!barbershopTimezone.value || !selectedDate.value) return null
   const tz = barbershopTimezone.value
   const date = selectedDate.value
+
+  // Día vacío (issue #189, evento 09 del atlas): se conserva el eje con el
+  // marcador "Ahora" en vez de ocultar la línea temporal. Sin turnos que
+  // fijen un rango, y sin un concepto de horario comercial en este
+  // contrato, el eje se centra en la hora actual — el único dato real
+  // disponible — en vez de inventar un rango de negocio no verificable. Un
+  // día vacío que no es "hoy" no tiene "Ahora" que centrar, así que
+  // conserva el comportamiento anterior (sin línea temporal).
+  if (entries.value.length === 0) {
+    if (!isViewingToday.value) return null
+    const nowMinute = minutesIntoCivilDate(new Date().toISOString(), date, tz)
+    const start = Math.max(0, Math.floor(nowMinute / 60) - 2) * 60
+    const end = Math.min(24, Math.ceil(nowMinute / 60) + 2) * 60
+    return { start, end: Math.max(end, start + MIN_TIMELINE_SPAN_MINUTES) }
+  }
+
   const starts = entries.value.map((e) => minutesIntoCivilDate(e.startsAt, date, tz))
-  const ends = entries.value.map((e) => minutesIntoCivilDate(e.endsAt, date, tz))
+  // El fin usa la versión SIN recortar (issue #189): un turno que termina el
+  // día siguiente (evento 11 del atlas) extiende el eje hasta esa hora real
+  // en vez de cortarlo en medianoche, para que la ficha se vea completa y la
+  // marca "Cambio de día" tenga carril donde dibujarse.
+  const ends = entries.value.map((e) => minutesSinceCivilMidnight(e.endsAt, date, tz))
   const startHour = Math.floor(Math.min(...starts) / 60) * 60
   const endHour = Math.ceil(Math.max(...ends) / 60) * 60
   const span = Math.max(endHour - startHour, MIN_TIMELINE_SPAN_MINUTES)
@@ -283,6 +312,19 @@ const timelineTicks = computed(() => {
   return ticks
 })
 
+// Guías de media hora (issue #189): tenues, sin etiqueta — solo marcan el
+// carril entre cada par de horas para que una ficha corta se pueda leer
+// contra el eje sin contar píxeles.
+const timelineHalfHourGuides = computed(() => {
+  const bounds = timelineBounds.value
+  if (!bounds) return []
+  const guides: number[] = []
+  for (let minute = bounds.start + 30; minute < bounds.end; minute += 60) {
+    guides.push(minute)
+  }
+  return guides
+})
+
 function timelinePercent(minute: number): string {
   const bounds = timelineBounds.value
   if (!bounds) return '0%'
@@ -294,7 +336,9 @@ function timelineSlipStyle(entry: DailyAgendaEntry): { left: string; width: stri
   if (!bounds || !selectedDate.value || !barbershopTimezone.value)
     return { left: '0%', width: '0%' }
   const start = minutesIntoCivilDate(entry.startsAt, selectedDate.value, barbershopTimezone.value)
-  const end = minutesIntoCivilDate(entry.endsAt, selectedDate.value, barbershopTimezone.value)
+  // Fin sin recortar, igual que en timelineBounds: la ficha ocupa su
+  // duración real aunque cruce medianoche.
+  const end = minutesSinceCivilMidnight(entry.endsAt, selectedDate.value, barbershopTimezone.value)
   const span = bounds.end - bounds.start
   // Ancho mínimo visual del 4%: una ficha muy corta sigue siendo legible en
   // la línea de tiempo sin que eso cambie su duración real.
@@ -319,6 +363,16 @@ const nowMarkerPercent = computed(() => {
   if (nowMinute < bounds.start || nowMinute > bounds.end) return null
   return timelinePercent(nowMinute)
 })
+
+// "Cambio de día" (issue #189, evento 11 del atlas): decorativa igual que
+// "Ahora" — marca dónde el carril cruza medianoche cuando un turno de este
+// día se extiende hasta el siguiente. Nunca decide a qué día pertenece una
+// cita (eso ya lo resolvió el servidor, DEC-075): es solo geometría.
+const dayChangeMarkerPercent = computed(() => {
+  const bounds = timelineBounds.value
+  if (!bounds || bounds.end <= 24 * 60) return null
+  return timelinePercent(24 * 60)
+})
 </script>
 
 <template>
@@ -327,7 +381,8 @@ const nowMarkerPercent = computed(() => {
       <div>
         <h1 id="daily-agenda-page-title" class="daily-agenda-page__title">Agenda</h1>
         <p v-if="selectedDateLabel" class="daily-agenda-page__date">
-          {{ selectedDateLabel }} · Zona {{ barbershopTimezone }}
+          {{ selectedDateLabel
+          }}<template v-if="barbershopTimezone"> · Zona {{ barbershopTimezone }}</template>
         </p>
       </div>
       <BaseButton
@@ -341,46 +396,53 @@ const nowMarkerPercent = computed(() => {
       </BaseButton>
     </header>
 
-    <div
+    <!-- Evento 02 del atlas: sin barbero/zona resueltos, nada que anticipar
+         todavía — estado de página centrado con spinner, sin divisor. -->
+    <PageState
       v-if="pageStatus === 'loading'"
-      class="daily-agenda-page__state"
+      variant="loading"
+      headline="Cargando barberos…"
       role="status"
-      aria-live="polite"
-    >
-      <p>Cargando barberos…</p>
-    </div>
+    />
 
-    <BaseAlert
+    <!-- Evento 03: fallo al cargar el contexto inicial. -->
+    <PageState
       v-else-if="pageStatus === 'load-error'"
       variant="warning"
-      title="No pudimos cargar esta sección"
+      status-label="Atención"
+      headline="No pudimos cargar esta sección"
       role="alert"
     >
       Revisa tu conexión e inténtalo de nuevo.
       <template #action>
         <BaseButton type="button" variant="secondary" @click="onRetryLoad">Reintentar</BaseButton>
       </template>
-    </BaseAlert>
+    </PageState>
 
     <template v-else>
-      <p v-if="barbers.length === 0" class="daily-agenda-page__empty">
-        Aún no tienes barberos registrados. Agrega uno en la sección "Barberos" para ver su agenda.
-      </p>
+      <!-- Evento 04: sin barberos activos, sin selección inventada ni CTA. -->
+      <PageState
+        v-if="barbers.length === 0"
+        variant="info"
+        headline="Aún no tienes barberos registrados."
+        role="status"
+      >
+        Agrega uno en la sección
+        <RouterLink class="page-state__link" :to="{ name: 'staff-barberos' }"
+          >«Barberos»</RouterLink
+        >
+        para ver su agenda.
+      </PageState>
 
       <template v-else>
         <div class="daily-agenda-page__controls">
           <div class="daily-agenda-page__picker">
             <label for="daily-agenda-barber-select" class="daily-agenda-page__label">Barbero</label>
-            <select
-              id="daily-agenda-barber-select"
-              class="daily-agenda-page__select"
-              :value="selectedBarberId ?? ''"
-              @change="onBarberSelectChange"
-            >
-              <option v-for="barber in barbers" :key="barber.id" :value="barber.id">
-                {{ barber.fullName }}
-              </option>
-            </select>
+            <BarberSelect
+              :model-value="selectedBarberId"
+              :barbers="barbers"
+              @update:model-value="onBarberSelect"
+            />
           </div>
 
           <div class="daily-agenda-page__date-nav">
@@ -413,16 +475,34 @@ const nowMarkerPercent = computed(() => {
           </div>
         </div>
 
-        <div
-          v-if="agendaStatus === 'loading'"
-          class="daily-agenda-page__state"
-          role="status"
-          aria-live="polite"
+        <!-- Evento 10: la zona horaria no se pudo confirmar. La agenda sigue
+             visible (§ trabajo requerido 5): esta es una nota al margen que
+             acompaña contenido que sigue visible, no un PageState de página
+             completa. -->
+        <BaseAlert
+          v-if="pageStatus === 'ready' && !barbershopTimezone"
+          variant="warning"
+          title="No pudimos confirmar la zona horaria"
+          role="alert"
         >
-          <p>Cargando la agenda de {{ selectedBarber?.fullName }}…</p>
-        </div>
+          La agenda sigue visible, pero la navegación por fecha queda bloqueada hasta recuperar ese
+          dato.
+          <template #action>
+            <BaseButton type="button" variant="secondary" @click="onRetryLoad">
+              Reintentar
+            </BaseButton>
+          </template>
+        </BaseAlert>
+
+        <!-- Evento 05: barbero y fecha ya resueltos, la espera conserva la
+             geometría del contenido por llegar (esqueleto, no spinner). -->
+        <AgendaSkeleton
+          v-if="agendaStatus === 'loading'"
+          :label="`Cargando la agenda de ${selectedBarber?.fullName}…`"
+        />
 
         <template v-else>
+          <!-- Evento 06: cambio de fecha, agenda anterior conservada. -->
           <p
             v-if="agendaStatus === 'updating'"
             class="daily-agenda-page__updating"
@@ -432,19 +512,24 @@ const nowMarkerPercent = computed(() => {
             Actualizando…
           </p>
 
-          <BaseAlert
+          <!-- Evento 08: el barbero solicitado ya no está disponible. -->
+          <PageState
             v-if="agendaStatus === 'not-found'"
             variant="warning"
-            title="Este barbero ya no está disponible"
+            status-label="Atención"
+            headline="Este barbero ya no está disponible"
             role="alert"
           >
             Elige otro barbero en la lista.
-          </BaseAlert>
+          </PageState>
 
-          <BaseAlert
+          <!-- Evento 07: error recuperable de la agenda, barbero/fecha
+               conservados para reintentar. -->
+          <PageState
             v-else-if="agendaStatus === 'error'"
             variant="warning"
-            title="No pudimos cargar la agenda de este barbero"
+            status-label="Atención"
+            headline="No pudimos cargar la agenda de este barbero"
             role="alert"
           >
             Revisa tu conexión e inténtalo de nuevo.
@@ -453,100 +538,126 @@ const nowMarkerPercent = computed(() => {
                 Reintentar
               </BaseButton>
             </template>
-          </BaseAlert>
+          </PageState>
 
           <template
             v-if="
               agendaStatus === 'ready' || (hasLoadedEntriesOnce && agendaStatus !== 'not-found')
             "
           >
-            <p v-if="entries.length === 0" class="daily-agenda-page__empty">
-              No hay turnos para {{ selectedBarber?.fullName }} {{ emptyStateDateText }}.
-            </p>
+            <!-- Línea temporal horizontal de escritorio: presentación
+                 visual adicional del mismo turno de la lista de abajo, que
+                 sigue siendo la fuente accesible equivalente (§7.2, §8.1).
+                 aria-hidden + tabindex="-1" evitan una segunda forma
+                 redundante de llegar al mismo detalle para teclado/lector.
+                 Se dibuja también con la lista vacía (evento 09): el eje del
+                 día vacío se conserva con el marcador "Ahora". -->
+            <div v-if="timelineBounds" class="daily-agenda-page__timeline" aria-hidden="true">
+              <div class="daily-agenda-page__timeline-track">
+                <div
+                  v-for="minute in timelineHalfHourGuides"
+                  :key="`half-${minute}`"
+                  class="daily-agenda-page__timeline-guide"
+                  :style="{ left: timelinePercent(minute) }"
+                />
 
-            <template v-else>
-              <!-- Línea temporal horizontal de escritorio: presentación
-                   visual adicional del mismo turno de la lista de abajo, que
-                   sigue siendo la fuente accesible equivalente (§7.2, §8.1).
-                   aria-hidden + tabindex="-1" evitan una segunda forma
-                   redundante de llegar al mismo detalle para teclado/lector. -->
-              <div v-if="timelineBounds" class="daily-agenda-page__timeline" aria-hidden="true">
-                <div class="daily-agenda-page__timeline-track">
-                  <div
-                    v-for="tick in timelineTicks"
-                    :key="tick.minute"
-                    class="daily-agenda-page__timeline-tick"
-                    :style="{ left: timelinePercent(tick.minute) }"
-                  >
-                    <span class="daily-agenda-page__timeline-tick-label">{{ tick.label }}</span>
-                  </div>
-
-                  <div
-                    v-if="nowMarkerPercent"
-                    class="daily-agenda-page__timeline-now"
-                    :style="{ left: nowMarkerPercent }"
-                  >
-                    <span class="daily-agenda-page__timeline-now-label">Ahora</span>
-                  </div>
-
-                  <RouterLink
-                    v-for="entry in entries"
-                    :key="`timeline-${entry.id}`"
-                    tabindex="-1"
-                    class="daily-agenda-page__timeline-slip"
-                    :class="{
-                      'daily-agenda-page__timeline-slip--terminal': entry.status !== 'confirmed',
-                    }"
-                    :style="timelineSlipStyle(entry)"
-                    :to="{
-                      name: 'agenda-detalle-turno',
-                      params: { appointmentId: entry.id },
-                      query: withQuery({}),
-                    }"
-                  >
-                    <span class="daily-agenda-page__timeline-slip-time">{{
-                      entryTime(entry)
-                    }}</span>
-                    <span class="daily-agenda-page__timeline-slip-name">{{
-                      entry.attendeeName
-                    }}</span>
-                  </RouterLink>
-                </div>
-              </div>
-
-              <ul
-                class="daily-agenda-page__list"
-                :aria-label="`Turnos de ${selectedBarber?.fullName}`"
-              >
-                <li
-                  v-for="entry in entries"
-                  :key="entry.id"
-                  class="daily-agenda-page__item"
-                  :class="{ 'daily-agenda-page__item--terminal': entry.status !== 'confirmed' }"
+                <div
+                  v-for="tick in timelineTicks"
+                  :key="tick.minute"
+                  class="daily-agenda-page__timeline-tick"
+                  :style="{ left: timelinePercent(tick.minute) }"
                 >
-                  <RouterLink
-                    class="daily-agenda-page__item-main"
-                    :to="{
-                      name: 'agenda-detalle-turno',
-                      params: { appointmentId: entry.id },
-                      query: withQuery({}),
-                    }"
-                  >
-                    <span class="daily-agenda-page__item-time">{{ entryTime(entry) }}</span>
-                    <span class="daily-agenda-page__item-name">{{ entry.attendeeName }}</span>
-                    <span class="daily-agenda-page__item-service">{{ entry.serviceName }}</span>
-                  </RouterLink>
-                  <BaseBadge
-                    :class="statusBadgeClass(entry)"
-                    size="sm"
-                    dot
-                    :label="statusLabel(entry)"
-                  >
-                    {{ statusLabel(entry) }}
-                  </BaseBadge>
-                </li>
-              </ul>
-            </template>
+                  <span class="daily-agenda-page__timeline-tick-label">{{ tick.label }}</span>
+                </div>
+
+                <div
+                  v-if="nowMarkerPercent"
+                  class="daily-agenda-page__timeline-mark daily-agenda-page__timeline-mark--now"
+                  :style="{ left: nowMarkerPercent }"
+                >
+                  <span class="daily-agenda-page__timeline-mark-label">Ahora</span>
+                </div>
+
+                <div
+                  v-if="dayChangeMarkerPercent"
+                  class="daily-agenda-page__timeline-mark daily-agenda-page__timeline-mark--day-change"
+                  :style="{ left: dayChangeMarkerPercent }"
+                >
+                  <span class="daily-agenda-page__timeline-mark-label">Cambio de día</span>
+                </div>
+
+                <RouterLink
+                  v-for="entry in entries"
+                  :key="`timeline-${entry.id}`"
+                  tabindex="-1"
+                  class="daily-agenda-page__timeline-slip"
+                  :class="{
+                    'daily-agenda-page__timeline-slip--terminal': entry.status !== 'confirmed',
+                  }"
+                  :style="timelineSlipStyle(entry)"
+                  :to="{
+                    name: 'agenda-detalle-turno',
+                    params: { appointmentId: entry.id },
+                    query: withQuery({}),
+                  }"
+                >
+                  <span class="daily-agenda-page__timeline-slip-time">{{ entryTime(entry) }}</span>
+                  <span class="daily-agenda-page__timeline-slip-name">{{
+                    entry.attendeeName
+                  }}</span>
+                </RouterLink>
+              </div>
+            </div>
+
+            <!-- Evento 09: día válido sin turnos. El eje vacío se conserva
+                 (arriba); esta composición local vive dentro del contenido,
+                 no reemplaza la pantalla completa como PageState — por eso
+                 no usa ese componente. "Nuevo turno" vive aquí una sola vez,
+                 no se repite en el encabezado. -->
+            <div v-if="entries.length === 0" class="daily-agenda-page__empty-state">
+              <span class="daily-agenda-page__empty-divider" aria-hidden="true" />
+              <p class="daily-agenda-page__empty-headline">
+                No hay turnos para {{ selectedBarber?.fullName }} {{ emptyStateDateText }}.
+              </p>
+              <BaseButton type="button" variant="primary" @click="goToNewAppointment">
+                Nuevo turno
+              </BaseButton>
+            </div>
+
+            <ul
+              v-else
+              class="daily-agenda-page__list"
+              :aria-label="`Turnos de ${selectedBarber?.fullName}`"
+            >
+              <li
+                v-for="entry in entries"
+                :key="entry.id"
+                class="daily-agenda-page__item"
+                :class="{ 'daily-agenda-page__item--terminal': entry.status !== 'confirmed' }"
+              >
+                <RouterLink
+                  class="daily-agenda-page__item-main"
+                  :to="{
+                    name: 'agenda-detalle-turno',
+                    params: { appointmentId: entry.id },
+                    query: withQuery({}),
+                  }"
+                >
+                  <span class="daily-agenda-page__item-time">{{ entryTime(entry) }}</span>
+                  <span class="daily-agenda-page__item-name">{{ entry.attendeeName }}</span>
+                  <span class="daily-agenda-page__item-service">{{ entry.serviceName }}</span>
+                </RouterLink>
+                <BaseBadge
+                  :class="statusBadgeClass(entry)"
+                  size="sm"
+                  outline
+                  dot
+                  :label="statusLabel(entry)"
+                >
+                  {{ statusLabel(entry) }}
+                </BaseBadge>
+              </li>
+            </ul>
           </template>
         </template>
       </template>
@@ -604,23 +715,11 @@ const nowMarkerPercent = computed(() => {
   flex-shrink: 0;
 }
 
-.daily-agenda-page__state {
-  padding: var(--space-4);
-  color: var(--color-on-strong);
-  opacity: 0.8;
-}
-
 .daily-agenda-page__updating {
   margin: 0;
   padding: var(--space-2) 0;
   font-family: var(--font-family-base);
   font-size: var(--font-size-body-sm);
-  color: var(--color-on-strong);
-  opacity: 0.8;
-}
-
-.daily-agenda-page__empty {
-  padding: var(--space-4);
   color: var(--color-on-strong);
   opacity: 0.8;
 }
@@ -657,21 +756,6 @@ const nowMarkerPercent = computed(() => {
   opacity: 0.8;
 }
 
-.daily-agenda-page__select {
-  min-height: 44px;
-  padding: var(--space-2) var(--space-3);
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body);
-  color: var(--color-on-strong);
-  background-color: rgb(244 240 231 / 8%);
-  border: var(--border-width-normal) solid rgb(244 240 231 / 24%);
-  border-radius: var(--radius-md);
-}
-
-.daily-agenda-page__select option {
-  color: var(--color-text-primary);
-}
-
 /* HU-063: anterior/fecha/siguiente conservan posiciones estables
    (estandar-diseno-visual.md §11.2), sin reflow al cambiar de estado. */
 .daily-agenda-page__date-nav {
@@ -686,6 +770,47 @@ const nowMarkerPercent = computed(() => {
   min-width: 160px;
 }
 
+/* Evento 09 del atlas: divisor-titular-acción locales, mismo lenguaje
+   visual que PageState pero sin ocupar toda el área de contenido — el eje
+   del día vacío sigue visible arriba. */
+.daily-agenda-page__empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+}
+
+.daily-agenda-page__empty-divider {
+  position: relative;
+  width: 220px;
+  height: 2px;
+  background-color: var(--color-accent-brass);
+}
+
+.daily-agenda-page__empty-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background-color: var(--color-accent-brass);
+  box-shadow: 0 0 0 8px var(--color-surface-strong);
+}
+
+.daily-agenda-page__empty-headline {
+  margin: 0;
+  max-width: 32ch;
+  font-family: var(--font-display);
+  font-size: var(--font-size-h2);
+  line-height: var(--font-size-h2-line);
+  font-weight: var(--font-weight-h2);
+  color: var(--color-on-strong);
+}
+
 .daily-agenda-page__list {
   display: flex;
   flex-direction: column;
@@ -695,6 +820,10 @@ const nowMarkerPercent = computed(() => {
   list-style: none;
 }
 
+/* Ficha (§6.1, §7.2): pergamino, no blanco puro — sobre tinta el blanco
+   deslumbra en una pantalla de uso continuo (issue #189). El filete
+   izquierdo de latón es la misma regla que BaseAlert usa para su nota al
+   margen, aquí en el color neutro de "turno vigente". */
 .daily-agenda-page__item {
   display: flex;
   align-items: center;
@@ -704,16 +833,31 @@ const nowMarkerPercent = computed(() => {
      mínimo de 44px. */
   min-height: 64px;
   padding: var(--space-4);
-  background-color: var(--color-surface);
+  background-color: var(--color-surface-muted);
   border: var(--border-width-normal) solid var(--color-border-subtle);
+  border-left: var(--border-width-emphasis) solid var(--color-accent-brass);
   border-radius: var(--radius-md);
   flex-wrap: wrap;
 }
 
-/* Atenuada, nunca oculta ni borrada: una cita terminal sigue siendo un
-   hecho del día (RN-CIT-04). */
+/* Turno terminal (issue #189): cambia de MATERIAL, no de peso — un relleno
+   gris u opacidad reducida lo dejaba pesando igual o más que un turno
+   vigente. Pasa a ser un registro con contorno sobre la tinta: sigue siendo
+   un hecho del día (RN-CIT-04), solo dejó de ser el foco de atención. */
 .daily-agenda-page__item--terminal {
-  opacity: 0.72;
+  background-color: transparent;
+  border-color: rgb(244 240 231 / 24%);
+  border-left-color: rgb(244 240 231 / 24%);
+}
+
+.daily-agenda-page__item--terminal .daily-agenda-page__item-time,
+.daily-agenda-page__item--terminal .daily-agenda-page__item-name {
+  color: var(--color-on-strong);
+}
+
+.daily-agenda-page__item--terminal .daily-agenda-page__item-service {
+  color: var(--color-on-strong);
+  opacity: 0.64;
 }
 
 /* La fila abre el detalle del turno (HU-064) por su bloque principal
@@ -776,11 +920,26 @@ const nowMarkerPercent = computed(() => {
     overflow-x: auto;
   }
 
+  /* El carril es una región definida (issue #189, atlas panel-agenda-eventos):
+     un borde propio, no solo marcas de hora flotando sobre el fondo. */
   .daily-agenda-page__timeline-track {
     position: relative;
     height: 104px;
-    margin-top: var(--space-6);
+    /* Banda superior propia para las marcas (Ahora/Cambio de día, ~32px) y
+       otra más baja para las etiquetas de hora (~16px): issue #189 corrige
+       que antes compartían la misma fila y podían superponerse cuando una
+       marca caía cerca de una hora en punto. */
+    margin-top: var(--space-10);
     padding: 0 var(--space-2);
+    border: var(--border-width-normal) solid rgb(244 240 231 / 16%);
+    border-radius: var(--radius-md);
+  }
+
+  .daily-agenda-page__timeline-guide {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-left: var(--border-width-normal) dashed rgb(244 240 231 / 10%);
   }
 
   .daily-agenda-page__timeline-tick {
@@ -792,7 +951,7 @@ const nowMarkerPercent = computed(() => {
 
   .daily-agenda-page__timeline-tick-label {
     position: absolute;
-    top: calc(-1 * var(--space-6));
+    top: calc(-1 * var(--space-4));
     left: var(--space-1);
     white-space: nowrap;
     font-size: var(--font-size-caption);
@@ -801,9 +960,7 @@ const nowMarkerPercent = computed(() => {
     opacity: 0.64;
   }
 
-  /* Latón (foco/énfasis secundario, §4.1): el marcador "Ahora" no es una
-     acción primaria y no reutiliza el color de acción. */
-  .daily-agenda-page__timeline-now {
+  .daily-agenda-page__timeline-mark {
     position: absolute;
     top: 0;
     bottom: 0;
@@ -811,14 +968,33 @@ const nowMarkerPercent = computed(() => {
     border-left: var(--border-width-emphasis) solid var(--color-brand-accent-surface);
   }
 
-  .daily-agenda-page__timeline-now-label {
+  /* "Ahora" (latón, foco/énfasis secundario, §4.1): etiqueta como insignia
+     rellena — es la marca de mayor prioridad del eje. */
+  .daily-agenda-page__timeline-mark-label {
     position: absolute;
-    top: calc(-1 * var(--space-6));
-    left: var(--space-1);
+    top: calc(-1 * var(--space-8));
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 2px var(--space-2);
     white-space: nowrap;
     font-size: var(--font-size-caption);
     font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-radius: var(--radius-sm);
+  }
+
+  .daily-agenda-page__timeline-mark--now .daily-agenda-page__timeline-mark-label {
+    color: var(--color-surface-strong);
+    background-color: var(--color-brand-accent-surface);
+  }
+
+  /* "Cambio de día": misma familia que "Ahora" pero de menor prioridad —
+     contorno en vez de relleno, para que las dos convivan sin competir. */
+  .daily-agenda-page__timeline-mark--day-change .daily-agenda-page__timeline-mark-label {
     color: var(--color-brand-accent-surface);
+    background-color: transparent;
+    border: var(--border-width-normal) solid var(--color-brand-accent-surface);
   }
 
   .daily-agenda-page__timeline-slip {
@@ -832,17 +1008,19 @@ const nowMarkerPercent = computed(() => {
     gap: 2px;
     overflow: hidden;
     padding: var(--space-1) var(--space-2);
-    background-color: var(--color-action-soft);
-    border: var(--border-width-normal) solid var(--color-action-soft-border);
+    background-color: var(--color-surface-muted);
+    border: var(--border-width-normal) solid var(--color-accent-brass);
     border-radius: var(--radius-sm);
     color: var(--color-action-primary);
     text-decoration: none;
   }
 
+  /* Mismo criterio de material que la ficha de lista: contorno sobre tinta,
+     no un relleno gris que pese igual o más que un turno vigente. */
   .daily-agenda-page__timeline-slip--terminal {
-    background-color: var(--color-inactive-surface);
-    border-color: var(--color-inactive-border);
-    color: var(--color-inactive-text);
+    background-color: transparent;
+    border-color: rgb(244 240 231 / 24%);
+    color: var(--color-on-strong);
   }
 
   .daily-agenda-page__timeline-slip-time {
