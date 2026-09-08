@@ -27,7 +27,11 @@ interface Props {
   /** Descripción adicional (para aria-describedby) */
   description?: string
   /** Tamaño del diálogo */
-  size?: 'sm' | 'md' | 'lg' | 'full'
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
+  /** Ubicación visual dentro del viewport. El foco y el backdrop no cambian. */
+  placement?: 'center' | 'bottom'
+  /** Clase opcional para una superficie de diálogo con contrato visual propio. */
+  contentClass?: string
   /** Si se cierra al hacer click en el backdrop */
   closeOnBackdrop?: boolean
   /** Si se cierra con ESC */
@@ -39,6 +43,8 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   modelValue: false,
   size: 'md',
+  placement: 'center',
+  contentClass: undefined,
   closeOnBackdrop: true,
   closeOnEscape: true,
   showClose: true,
@@ -63,14 +69,16 @@ const isOpen = computed({
 
 const classes = computed(() => {
   const base = 'base-dialog'
-  return [base, `${base}--${props.size}`, isOpen.value ? `${base}--open` : '']
+  return [base, `${base}--${props.size}`, props.contentClass, isOpen.value ? `${base}--open` : '']
     .filter(Boolean)
     .join(' ')
 })
 
 const overlayClasses = computed(() => {
   const base = 'base-dialog__overlay'
-  return [base, isOpen.value ? `${base}--open` : ''].filter(Boolean).join(' ')
+  return [base, `${base}--${props.placement}`, isOpen.value ? `${base}--open` : '']
+    .filter(Boolean)
+    .join(' ')
 })
 
 // useId() (Vue 3.5+) genera un identificador estable y único por instancia,
@@ -321,6 +329,10 @@ onUnmounted(() => {
     visibility var(--motion-duration-base) var(--motion-easing-standard);
 }
 
+.base-dialog__overlay--bottom {
+  align-items: flex-end;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .base-dialog__overlay {
     transition: none;
@@ -372,6 +384,14 @@ onUnmounted(() => {
 .base-dialog--lg .base-dialog__container {
   width: 100%;
   max-width: 720px;
+}
+
+.base-dialog--xl .base-dialog__container {
+  width: min(100%, 1092px);
+}
+
+.base-dialog--xl {
+  width: min(100%, 1092px);
 }
 
 .base-dialog--full .base-dialog__container {

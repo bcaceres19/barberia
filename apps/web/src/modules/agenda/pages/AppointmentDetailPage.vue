@@ -10,7 +10,7 @@
 // cualquier otro cambio de estado (ninguna otra acción se renderiza).
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, type LocationQueryRaw } from 'vue-router'
-import { BaseAlert, BaseBadge, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
+import { BaseAlert, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
 import { formatInstantInTimezone } from '@/shared/time/formatInstant'
 import { getCivilDateInTimezone } from '@/shared/time/civilDate'
 import {
@@ -22,7 +22,7 @@ import {
 import { newIdempotencyKey } from '../model/idempotencyKey'
 import type { AppointmentDetail, HistoryEntry } from '../model/appointmentDetail'
 import { HISTORY_EVENT_LABELS, historyFieldLabel } from '../model/appointmentDetail'
-import { APPOINTMENT_STATUS_BADGE_VARIANT, APPOINTMENT_STATUS_LABELS } from '../model/dailyAgenda'
+import { APPOINTMENT_STATUS_LABELS } from '../model/dailyAgenda'
 
 type PageStatus = 'loading' | 'ready' | 'not-found' | 'error'
 type HistoryStatus = 'loading' | 'ready' | 'error'
@@ -66,9 +66,38 @@ const historyLoadingMore = ref(false)
 const statusLabel = computed(() =>
   detail.value ? APPOINTMENT_STATUS_LABELS[detail.value.status] : '',
 )
-const statusBadgeVariant = computed(() =>
-  detail.value ? APPOINTMENT_STATUS_BADGE_VARIANT[detail.value.status] : 'neutral',
-)
+const attendeeInitials = computed(() => {
+  if (!detail.value) return ''
+  return detail.value.attendeeName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.slice(0, 1).toUpperCase())
+    .join('')
+})
+
+// El atlas usa una fotografía editorial, pero ese activo no pertenece al
+// contrato de la cita. El monograma conserva la jerarquía sin inventar una
+// imagen ni exponer un dato adicional.
+const FACT_ICONS: Record<string, string> = {
+  time: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>`,
+  attendee: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3.5"></circle><path d="M4.5 21c.6-4.2 3.5-6.5 7.5-6.5s6.9 2.3 7.5 6.5"></path></svg>`,
+  service: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3c3 3 4 6 4 9s-1 6-4 9"></path><path d="M18 3c-3 3-4 6-4 9s1 6 4 9"></path><path d="M8.5 8.5 15.5 15.5"></path><path d="M15.5 8.5 8.5 15.5"></path></svg>`,
+  barber: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3.5"></circle><path d="M4.5 21c.6-4.2 3.5-6.5 7.5-6.5s6.9 2.3 7.5 6.5"></path><path d="M3.5 12.5h3M17.5 12.5h3"></path></svg>`,
+  contact: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m4 7 8 6 8-6"></path></svg>`,
+  note: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v12H9l-4 4V4Z"></path></svg>`,
+  calendar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M8 3v4M16 3v4M4 10h16"></path></svg>`,
+}
+
+function factIcon(name: keyof typeof FACT_ICONS): string {
+  return FACT_ICONS[name]
+}
+
+function historyIcon(entry: HistoryEntry): string {
+  return entry.eventType === 'appointment_rescheduled'
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17.5V20h2.5L18 8.5 15.5 6 4 17.5Z"></path><path d="m14.5 7 2.5 2.5"></path></svg>`
+    : FACT_ICONS.calendar
+}
 
 const timeRangeLabel = computed(() => {
   if (!detail.value || !barbershopTimezone.value) return ''
@@ -319,19 +348,38 @@ function occurredAtLabel(entry: HistoryEntry): string {
     </BaseAlert>
 
     <template v-else-if="detail">
-      <header class="appointment-detail-page__header">
-        <h1 id="appointment-detail-page-title" class="appointment-detail-page__title">
-          {{ detail.attendeeName }}
-        </h1>
-        <BaseBadge :variant="statusBadgeVariant" size="sm" dot :label="statusLabel">
-          {{ statusLabel }}
-        </BaseBadge>
+      <header class="appointment-detail-page__hero">
+        <div class="appointment-detail-page__avatar" aria-hidden="true">{{ attendeeInitials }}</div>
+        <div class="appointment-detail-page__identity">
+          <h1 id="appointment-detail-page-title" class="appointment-detail-page__title">
+            {{ detail.attendeeName }}
+          </h1>
+          <p class="appointment-detail-page__status" role="status">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="8"></circle>
+              <path d="m8.5 12 2.2 2.2 4.8-5" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            {{ statusLabel }}
+          </p>
+        </div>
         <BaseButton
           v-if="canReschedule"
           type="button"
           variant="secondary"
+          class="appointment-detail-page__reschedule"
           @click="onOpenReschedule"
         >
+          <span
+            class="appointment-detail-page__button-icon"
+            aria-hidden="true"
+            v-html="factIcon('calendar')"
+          />
           Reprogramar turno
         </BaseButton>
       </header>
@@ -339,6 +387,11 @@ function occurredAtLabel(entry: HistoryEntry): string {
       <div class="appointment-detail-page__body">
         <dl class="appointment-detail-page__facts">
           <div class="appointment-detail-page__fact">
+            <span
+              class="appointment-detail-page__fact-icon"
+              aria-hidden="true"
+              v-html="factIcon('time')"
+            />
             <dt>Hora</dt>
             <dd>
               {{ timeRangeLabel }}
@@ -346,10 +399,20 @@ function occurredAtLabel(entry: HistoryEntry): string {
             </dd>
           </div>
           <div class="appointment-detail-page__fact">
+            <span
+              class="appointment-detail-page__fact-icon"
+              aria-hidden="true"
+              v-html="factIcon('attendee')"
+            />
             <dt>Persona atendida</dt>
             <dd>{{ detail.attendeeName }}</dd>
           </div>
           <div class="appointment-detail-page__fact">
+            <span
+              class="appointment-detail-page__fact-icon"
+              aria-hidden="true"
+              v-html="factIcon('service')"
+            />
             <dt>Servicio</dt>
             <dd>
               {{ detail.serviceName }} · {{ detail.durationMinutes }} min · {{ detail.priceAmount }}
@@ -357,10 +420,20 @@ function occurredAtLabel(entry: HistoryEntry): string {
             </dd>
           </div>
           <div class="appointment-detail-page__fact">
+            <span
+              class="appointment-detail-page__fact-icon"
+              aria-hidden="true"
+              v-html="factIcon('barber')"
+            />
             <dt>Barbero</dt>
             <dd>{{ detail.barberFullName }}</dd>
           </div>
           <div class="appointment-detail-page__fact">
+            <span
+              class="appointment-detail-page__fact-icon"
+              aria-hidden="true"
+              v-html="factIcon('attendee')"
+            />
             <dt>Cliente que reservó</dt>
             <dd>{{ detail.customerFullName }}</dd>
           </div>
@@ -368,6 +441,11 @@ function occurredAtLabel(entry: HistoryEntry): string {
             v-if="detail.customerPhone || detail.customerEmail"
             class="appointment-detail-page__fact"
           >
+            <span
+              class="appointment-detail-page__fact-icon"
+              aria-hidden="true"
+              v-html="factIcon('contact')"
+            />
             <dt>Contacto</dt>
             <dd>
               <span v-if="detail.customerPhone">{{ detail.customerPhone }}</span>
@@ -376,6 +454,11 @@ function occurredAtLabel(entry: HistoryEntry): string {
             </dd>
           </div>
           <div v-if="detail.customerNote" class="appointment-detail-page__fact">
+            <span
+              class="appointment-detail-page__fact-icon"
+              aria-hidden="true"
+              v-html="factIcon('note')"
+            />
             <dt>Nota del cliente</dt>
             <dd>{{ detail.customerNote }}</dd>
           </div>
@@ -423,6 +506,11 @@ function occurredAtLabel(entry: HistoryEntry): string {
                 :key="entry.id"
                 class="appointment-detail-page__history-item"
               >
+                <span
+                  class="appointment-detail-page__history-icon"
+                  aria-hidden="true"
+                  v-html="historyIcon(entry)"
+                />
                 <div class="appointment-detail-page__history-main">
                   <span class="appointment-detail-page__history-event">{{
                     eventLabel(entry)
@@ -462,7 +550,9 @@ function occurredAtLabel(entry: HistoryEntry): string {
       <BaseDialog
         v-model="isRescheduleOpen"
         title="Reprogramar turno"
-        size="sm"
+        size="xl"
+        placement="bottom"
+        content-class="appointment-detail-page__reschedule-dialog"
         @close="onRescheduleDialogClosed"
       >
         <form
@@ -476,7 +566,6 @@ function occurredAtLabel(entry: HistoryEntry): string {
             title="Este turno cambió mientras lo editabas"
             role="alert"
           >
-            Alguien más lo modificó. Recarga para ver los datos vigentes antes de reprogramar.
             <template #action>
               <BaseButton type="button" variant="secondary" @click="onReloadAfterConflict">
                 Recargar
@@ -537,11 +626,12 @@ function occurredAtLabel(entry: HistoryEntry): string {
             Inténtalo de nuevo en unos segundos. No perdiste lo que elegiste.
           </BaseAlert>
 
-          <p class="appointment-detail-page__dialog-current">
-            Horario actual: {{ timeRangeLabel }}
-          </p>
-
-          <div class="appointment-detail-page__dialog-row">
+          <div class="appointment-detail-page__dialog-grid">
+            <p class="appointment-detail-page__dialog-current">
+              <strong>Horario actual</strong>
+              {{ timeRangeLabel }}
+              <span v-if="barbershopTimezone">Zona {{ barbershopTimezone }}</span>
+            </p>
             <BaseInput
               v-model="rescheduleDate"
               type="date"
@@ -558,11 +648,12 @@ function occurredAtLabel(entry: HistoryEntry): string {
               required
               :disabled="rescheduleStatus === 'saving'"
             />
+            <p v-if="rescheduleNewEndLabel" class="appointment-detail-page__dialog-preview">
+              <strong>Vista previa</strong>
+              {{ rescheduleTime }} – {{ rescheduleNewEndLabel }}
+              <span v-if="barbershopTimezone">Zona {{ barbershopTimezone }}</span>
+            </p>
           </div>
-
-          <p v-if="rescheduleNewEndLabel" class="appointment-detail-page__dialog-preview">
-            Nuevo horario aproximado: {{ rescheduleTime }} – {{ rescheduleNewEndLabel }}
-          </p>
 
           <div class="appointment-detail-page__dialog-actions">
             <BaseButton type="button" variant="secondary" @click="isRescheduleOpen = false">
@@ -586,50 +677,34 @@ function occurredAtLabel(entry: HistoryEntry): string {
 <style scoped>
 .appointment-detail-page {
   display: flex;
+  position: relative;
   flex-direction: column;
-  gap: var(--space-5);
-  max-width: 1024px;
-  padding: var(--space-4);
-  margin: 0 auto;
+  gap: var(--space-6);
+  min-height: 100%;
+  padding: 24px 40px 16px;
+  background: var(--color-canvas);
 }
 
 .appointment-detail-page__body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-}
-
-@media (min-width: 1024px) {
-  .appointment-detail-page__body {
-    flex-direction: row;
-    align-items: flex-start;
-  }
-
-  .appointment-detail-page__facts {
-    flex: 3;
-  }
-
-  .appointment-detail-page__history {
-    flex: 2;
-    padding-top: 0;
-    padding-left: var(--space-6);
-    border-top: none;
-    border-left: var(--border-width-normal) solid var(--color-border-subtle);
-  }
+  display: grid;
+  grid-template-columns: minmax(0, 1.78fr) minmax(260px, 0.82fr);
+  gap: 48px;
+  align-items: start;
 }
 
 .appointment-detail-page__back {
   margin: 0;
   font-family: var(--font-family-base);
-  font-size: var(--font-size-body-sm);
+  font-size: var(--font-size-body);
 }
 
 .appointment-detail-page__back a {
   color: var(--color-action-primary);
+  text-decoration: none;
 }
 
 .appointment-detail-page__state {
-  padding: var(--space-4);
+  padding: var(--space-6);
   color: var(--color-text-secondary);
 }
 
@@ -638,12 +713,34 @@ function occurredAtLabel(entry: HistoryEntry): string {
   color: var(--color-text-secondary);
 }
 
-.appointment-detail-page__header {
+.appointment-detail-page__hero {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  flex-wrap: wrap;
+  gap: var(--space-4);
+  min-height: 74px;
+}
+
+.appointment-detail-page__avatar {
+  display: grid;
+  width: 72px;
+  height: 72px;
+  flex: 0 0 72px;
+  place-items: center;
+  overflow: hidden;
+  background: var(--color-surface-strong);
+  border: 2px solid var(--color-border-subtle);
+  border-radius: 50%;
+  color: var(--color-on-strong);
+  font-family: var(--font-display);
+  font-size: 24px;
+}
+
+.appointment-detail-page__identity {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 .appointment-detail-page__title {
@@ -655,45 +752,90 @@ function occurredAtLabel(entry: HistoryEntry): string {
   color: var(--color-text-primary);
 }
 
+.appointment-detail-page__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: var(--color-success-text);
+  font-size: var(--font-size-body);
+  line-height: var(--font-size-body-line);
+}
+
+.appointment-detail-page__status svg {
+  width: 20px;
+  height: 20px;
+}
+
+.appointment-detail-page__reschedule {
+  flex: 0 0 auto;
+  min-width: 194px;
+}
+
+.appointment-detail-page__button-icon {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+}
+
+.appointment-detail-page__button-icon :deep(svg) {
+  width: 100%;
+  height: 100%;
+}
+
 .appointment-detail-page__facts {
   display: flex;
   flex-direction: column;
   gap: 0;
   margin: 0;
-  padding-top: var(--space-4);
+  padding-top: 1px;
   border-top: var(--border-width-normal) solid var(--color-border-subtle);
 }
 
 .appointment-detail-page__fact {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
-  padding: var(--space-3) 0;
+  display: grid;
+  grid-template-columns: 40px minmax(132px, 0.62fr) minmax(0, 1.35fr);
+  align-items: center;
+  min-height: 56px;
+  gap: var(--space-2);
+  padding: 9px 10px;
   border-bottom: var(--border-width-normal) solid var(--color-border-subtle);
 }
 
+.appointment-detail-page__fact-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--color-surface-strong);
+}
+
+.appointment-detail-page__fact-icon :deep(svg) {
+  width: 100%;
+  height: 100%;
+}
+
 .appointment-detail-page__fact dt {
-  flex: 0 0 160px;
   font-family: var(--font-family-base);
-  font-size: var(--font-size-body-sm);
-  font-weight: 500;
-  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
 }
 
 .appointment-detail-page__fact dd {
-  flex: 1 1 240px;
   margin: 0;
   font-family: var(--font-family-base);
-  font-size: var(--font-size-body);
+  font-size: 14px;
+  line-height: 20px;
   color: var(--color-text-primary);
 }
 
 .appointment-detail-page__history {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding-top: var(--space-4);
-  border-top: var(--border-width-normal) solid var(--color-border-subtle);
+  gap: var(--space-4);
+  min-width: 0;
+  padding-left: 24px;
+  border-left: var(--border-width-normal) solid var(--color-border-subtle);
 }
 
 .appointment-detail-page__history-title {
@@ -718,7 +860,8 @@ function occurredAtLabel(entry: HistoryEntry): string {
    cambiar el orden ni el contenido de cada evento. */
 .appointment-detail-page__history-item {
   position: relative;
-  padding: 0 0 var(--space-5) var(--space-6);
+  min-height: 74px;
+  padding: 0 0 var(--space-5) 48px;
   border-left: var(--border-width-normal) solid var(--color-border-subtle);
 }
 
@@ -727,39 +870,45 @@ function occurredAtLabel(entry: HistoryEntry): string {
   border-left-color: transparent;
 }
 
-.appointment-detail-page__history-item::before {
-  content: '';
+.appointment-detail-page__history-icon {
   position: absolute;
-  top: 4px;
-  left: calc(-1 * var(--border-width-emphasis) - 3px);
-  width: 10px;
-  height: 10px;
+  top: 0;
+  left: -18px;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
   background-color: var(--color-brand-accent-surface);
+  color: var(--color-surface-strong);
   border-radius: 999px;
 }
 
-.appointment-detail-page__history-item:first-child::before {
+.appointment-detail-page__history-icon :deep(svg) {
+  width: 19px;
+  height: 19px;
+}
+
+.appointment-detail-page__history-item:first-child .appointment-detail-page__history-icon {
   background-color: var(--color-surface-strong);
+  color: var(--color-on-strong);
 }
 
 .appointment-detail-page__history-main {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-2);
+  flex-direction: column;
+  gap: 2px;
 }
 
 .appointment-detail-page__history-event {
   font-family: var(--font-family-base);
-  font-size: var(--font-size-body);
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
 .appointment-detail-page__history-meta {
   font-family: var(--font-family-base);
-  font-size: var(--font-size-body-sm);
+  font-size: 13px;
   color: var(--color-text-secondary);
 }
 
@@ -784,27 +933,33 @@ function occurredAtLabel(entry: HistoryEntry): string {
   gap: var(--space-4);
 }
 
-.appointment-detail-page__dialog-current {
-  margin: 0;
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body-sm);
-  color: var(--color-text-secondary);
+.appointment-detail-page__dialog-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: end;
 }
 
-.appointment-detail-page__dialog-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-}
-
-.appointment-detail-page__dialog-row > * {
-  flex: 1 1 10rem;
-}
-
+.appointment-detail-page__dialog-current,
 .appointment-detail-page__dialog-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   margin: 0;
   font-family: var(--font-family-base);
   font-size: var(--font-size-body-sm);
+  line-height: var(--font-size-body-sm-line);
+  color: var(--color-text-primary);
+}
+
+.appointment-detail-page__dialog-current strong,
+.appointment-detail-page__dialog-preview strong {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-caption);
+}
+
+.appointment-detail-page__dialog-current span,
+.appointment-detail-page__dialog-preview span {
   color: var(--color-text-secondary);
 }
 
@@ -813,5 +968,146 @@ function occurredAtLabel(entry: HistoryEntry): string {
   justify-content: flex-end;
   gap: var(--space-3);
   flex-wrap: wrap;
+}
+
+:global(.appointment-detail-page__reschedule-dialog .base-dialog__header) {
+  padding: 14px 18px;
+}
+
+:global(.appointment-detail-page__reschedule-dialog .base-dialog__title) {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 400;
+}
+
+:global(.appointment-detail-page__reschedule-dialog .base-dialog__content) {
+  padding: 12px 18px 16px;
+}
+
+@media (max-width: 767px) {
+  .appointment-detail-page {
+    gap: var(--space-4);
+    padding: 12px 12px 0;
+  }
+
+  .appointment-detail-page__back {
+    display: none;
+  }
+
+  .appointment-detail-page__hero {
+    gap: var(--space-3);
+    min-height: 102px;
+  }
+
+  .appointment-detail-page__avatar {
+    width: 58px;
+    height: 58px;
+    flex-basis: 58px;
+    font-size: 19px;
+  }
+
+  .appointment-detail-page__title {
+    font-size: 25px;
+    line-height: 30px;
+  }
+
+  .appointment-detail-page__status {
+    font-size: 14px;
+  }
+
+  .appointment-detail-page__reschedule {
+    position: absolute;
+    top: 123px;
+    right: 12px;
+    left: 12px;
+    width: calc(100% - 24px);
+  }
+
+  .appointment-detail-page__body {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+    padding-top: 44px;
+  }
+
+  .appointment-detail-page__fact {
+    grid-template-columns: 26px minmax(100px, 0.86fr) minmax(0, 1.25fr);
+    min-height: 44px;
+    gap: 4px;
+    padding: 7px 0;
+  }
+
+  .appointment-detail-page__fact-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .appointment-detail-page__fact dt,
+  .appointment-detail-page__fact dd {
+    font-size: 11px;
+    line-height: 15px;
+  }
+
+  .appointment-detail-page__history {
+    gap: var(--space-3);
+    padding: 2px 0 0;
+    border-top: var(--border-width-normal) solid var(--color-border-subtle);
+    border-left: none;
+  }
+
+  .appointment-detail-page__history-title {
+    font-size: 20px;
+    line-height: 25px;
+  }
+
+  .appointment-detail-page__history-item {
+    min-height: 64px;
+    padding-left: 42px;
+  }
+
+  .appointment-detail-page__history-icon {
+    left: -15px;
+    width: 30px;
+    height: 30px;
+  }
+
+  .appointment-detail-page__history-event {
+    font-size: 12px;
+  }
+
+  .appointment-detail-page__history-meta,
+  .appointment-detail-page__history-reason,
+  .appointment-detail-page__history-changes {
+    font-size: 11px;
+    line-height: 15px;
+  }
+
+  .appointment-detail-page__dialog-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .appointment-detail-page__dialog-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  :global(.appointment-detail-page__reschedule-dialog .base-dialog__container) {
+    max-height: calc(100vh - 20px);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .appointment-detail-page {
+    padding: 24px;
+  }
+
+  .appointment-detail-page__body {
+    grid-template-columns: minmax(0, 1.3fr) minmax(240px, 0.7fr);
+    gap: 28px;
+  }
+
+  .appointment-detail-page__dialog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 </style>
