@@ -9,7 +9,7 @@
 // barbero ya escribió; solo un guardado exitoso confirmado por el servidor
 // cierra el diálogo.
 import { onMounted, ref } from 'vue'
-import { BaseAlert, BaseButton, BaseDialog, BaseInput, PageHeader, RecordRow } from '@/shared/ui'
+import { BaseAlert, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
 import { createBarber, fetchBarbers, renameBarber } from '../api/staffApi'
 import { newIdempotencyKey } from '../model/idempotencyKey'
 import type { Barber } from '../model/barber'
@@ -219,13 +219,21 @@ async function onSubmitRename() {
 
 <template>
   <section class="staff-page" aria-labelledby="staff-page-title">
-    <PageHeader title-id="staff-page-title" title="Barberos">
-      <template v-if="loadStatus === 'ready'" #actions>
-        <BaseButton type="button" variant="primary" @click="openCreateDialog">
-          Agregar barbero
-        </BaseButton>
-      </template>
-    </PageHeader>
+    <header class="staff-page__header">
+      <h1 id="staff-page-title" class="staff-page__title">Barberos</h1>
+      <BaseButton
+        v-if="loadStatus === 'ready'"
+        type="button"
+        variant="primary"
+        class="staff-page__create-button"
+        @click="openCreateDialog"
+      >
+        <svg class="staff-page__button-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        <span class="staff-page__create-label">Agregar barbero</span>
+      </BaseButton>
+    </header>
 
     <div v-if="loadStatus === 'loading'" class="staff-page__state" role="status" aria-live="polite">
       <p>Cargando el equipo…</p>
@@ -244,30 +252,65 @@ async function onSubmitRename() {
     </BaseAlert>
 
     <template v-else>
-      <p v-if="barbers.length === 0" class="staff-page__empty">
-        Aún no tienes barberos registrados. Agrega el primero para empezar.
-      </p>
+      <div v-if="barbers.length === 0" class="staff-page__empty">
+        <span class="staff-page__empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
+          </svg>
+        </span>
+        <p>Aún no tienes <span>barberos registrados.</span></p>
+        <BaseButton type="button" variant="primary" @click="openCreateDialog">
+          <svg class="staff-page__button-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Agregar barbero
+        </BaseButton>
+      </div>
 
-      <ul v-else class="staff-page__list" aria-label="Barberos de la barbería">
-        <RecordRow v-for="barber in barbers" :key="barber.id">
-          <template #leading>
+      <div v-else class="staff-page__records">
+        <div class="staff-page__column-labels" aria-hidden="true">
+          <span>NOMBRE</span>
+          <span>ACCIÓN</span>
+        </div>
+        <ul class="staff-page__list" aria-label="Barberos de la barbería">
+          <li v-for="barber in barbers" :key="barber.id" class="staff-page__item">
             <span class="staff-page__item-avatar" aria-hidden="true">{{
               initials(barber.fullName)
             }}</span>
-          </template>
-          <span class="staff-page__item-name">{{ barber.fullName }}</span>
-          <template #trailing>
-            <BaseButton
+            <span class="staff-page__item-name">{{ barber.fullName }}</span>
+            <button
               type="button"
-              variant="secondary"
+              class="staff-page__edit-button"
               :aria-label="`Editar ${barber.fullName}`"
               @click="openRenameDialog(barber)"
             >
-              Editar
-            </BaseButton>
-          </template>
-        </RecordRow>
-      </ul>
+              <svg
+                class="staff-page__edit-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                aria-hidden="true"
+              >
+                <path d="m4 20 4.1-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z" />
+                <path d="m13.8 7.2 3 3" />
+              </svg>
+              <span class="staff-page__edit-label">Editar</span>
+              <svg
+                class="staff-page__chevron"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                aria-hidden="true"
+              >
+                <path d="m9 5 7 7-7 7" />
+              </svg>
+            </button>
+          </li>
+        </ul>
+      </div>
 
       <div v-if="nextCursor" class="staff-page__load-more">
         <BaseButton
@@ -287,6 +330,7 @@ async function onSubmitRename() {
       v-model="isCreateOpen"
       title="Agregar barbero"
       size="sm"
+      content-class="staff-page__dialog"
       @close="onCreateDialogClosed"
     >
       <form class="staff-page__create-form" novalidate @submit.prevent="onSubmitCreate">
@@ -347,6 +391,7 @@ async function onSubmitRename() {
       v-model="isRenameOpen"
       title="Editar barbero"
       size="sm"
+      content-class="staff-page__dialog"
       @close="onRenameDialogClosed"
     >
       <form class="staff-page__rename-form" novalidate @submit.prevent="onSubmitRename">
@@ -408,10 +453,44 @@ async function onSubmitRename() {
 .staff-page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
-  max-width: 640px;
-  padding: var(--space-4);
-  margin: 0 auto;
+  align-items: center;
+  width: 100%;
+  gap: var(--space-6);
+  max-width: none;
+  min-height: 100%;
+  padding: 42px 48px 56px;
+  background-color: var(--color-surface);
+  box-sizing: border-box;
+}
+
+.staff-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(100%, 520px);
+  gap: var(--space-4);
+}
+
+.staff-page__title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 38px;
+}
+
+.staff-page__create-button {
+  min-width: 166px;
+}
+
+.staff-page__button-icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
 }
 
 .staff-page__state {
@@ -420,17 +499,78 @@ async function onSubmitRename() {
 }
 
 .staff-page__empty {
-  padding: var(--space-4);
+  display: flex;
+  min-height: 300px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  border: var(--border-width-normal) solid var(--color-border-subtle);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  text-align: center;
+}
+
+.staff-page__empty p {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--font-size-h2);
+  line-height: var(--font-size-h2-line);
+}
+
+.staff-page__empty p span {
+  display: block;
+}
+
+.staff-page__empty-icon {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-canvas);
+}
+
+.staff-page__empty-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.staff-page__records {
+  width: min(100%, 520px);
+}
+
+.staff-page__column-labels {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  padding: 0 var(--space-2) var(--space-2);
   color: var(--color-text-secondary);
+  font-family: var(--font-family-base);
+  font-size: 11px;
+  line-height: 16px;
 }
 
 .staff-page__list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
   padding: 0;
   margin: 0;
+  border: var(--border-width-normal) solid var(--color-border-subtle);
+  background: var(--color-surface);
   list-style: none;
+}
+
+.staff-page__item {
+  display: flex;
+  min-height: 92px;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: var(--border-width-normal) solid var(--color-border-subtle);
+}
+
+.staff-page__item:last-child {
+  border-bottom: none;
 }
 
 /* Avatar operativo 40px (estandar-diseno-visual.md §6.2): monograma
@@ -440,34 +580,173 @@ async function onSubmitRename() {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background-color: var(--color-action-soft);
-  color: var(--color-action-primary);
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body-sm);
-  font-weight: 600;
+  background-color: var(--color-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 400;
 }
 
 .staff-page__item-name {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body);
-  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 400;
   color: var(--color-text-primary);
   overflow-wrap: anywhere;
 }
 
+.staff-page__edit-button {
+  display: inline-flex;
+  min-width: var(--control-height);
+  min-height: var(--control-height);
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-2);
+  border: 0;
+  background: transparent;
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body-sm);
+  cursor: pointer;
+}
+
+.staff-page__edit-button:hover {
+  color: var(--color-action-primary-hover);
+  background: var(--color-canvas);
+}
+
+.staff-page__edit-button:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--color-surface),
+    0 0 0 4px var(--color-focus);
+}
+
+.staff-page__edit-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.staff-page__chevron {
+  display: none;
+  width: 18px;
+  height: 18px;
+}
+
 .staff-page__load-more {
   display: flex;
+  width: min(100%, 520px);
   justify-content: center;
 }
 
 .staff-page__dialog-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: var(--space-3);
   margin-top: var(--space-5);
   flex-wrap: wrap;
+}
+
+.staff-page :deep(.staff-page__dialog .base-dialog__header) {
+  padding: 22px 24px;
+}
+
+.staff-page :deep(.staff-page__dialog .base-dialog__title) {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
+}
+
+@media (max-width: 1023px) {
+  .staff-page {
+    padding: 28px 24px 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .staff-page {
+    gap: var(--space-5);
+    align-items: stretch;
+    padding: 16px 0 28px;
+  }
+
+  .staff-page__header {
+    padding: 0 var(--space-4);
+  }
+
+  .staff-page__title {
+    font-size: 18px;
+    line-height: 28px;
+  }
+
+  .staff-page__create-button {
+    width: var(--control-height);
+    min-width: var(--control-height);
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  .staff-page__create-label,
+  .staff-page__column-labels,
+  .staff-page__edit-label,
+  .staff-page__edit-icon {
+    display: none;
+  }
+
+  .staff-page__records {
+    border-top: var(--border-width-normal) solid var(--color-border-subtle);
+  }
+
+  .staff-page__list {
+    border-width: 0 0 var(--border-width-normal);
+  }
+
+  .staff-page__item {
+    min-height: 64px;
+    gap: var(--space-3);
+    padding: 8px var(--space-4);
+  }
+
+  .staff-page__item-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 12px;
+  }
+
+  .staff-page__item-name {
+    font-family: var(--font-family-base);
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  .staff-page__edit-button {
+    width: var(--control-height);
+    padding: 0;
+    color: var(--color-text-secondary);
+  }
+
+  .staff-page__chevron {
+    display: block;
+  }
+
+  .staff-page__empty {
+    min-height: 320px;
+    border-left: 0;
+    border-right: 0;
+  }
+
+  .staff-page__dialog-actions {
+    flex-wrap: nowrap;
+  }
+
+  .staff-page__dialog-actions :deep(.base-button) {
+    flex: 1;
+  }
 }
 </style>
