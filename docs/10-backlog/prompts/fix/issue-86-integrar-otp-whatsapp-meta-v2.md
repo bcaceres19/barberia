@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-FIX-86-OTP-WHATSAPP-META-v2"
 version: "2.0"
 kind: "fix"
-status: "in_progress"
+status: "executed"
 target_agents:
   - "codex"
 target_model: "gpt-5.6-terra"
@@ -18,8 +18,8 @@ issue: 86
 issue_url: "https://github.com/bcaceres19/barberia/issues/86"
 suggested_issue_title: null
 branch: "fix/86-reto-otp-whatsapp-meta"
-pr: null
-pr_url: null
+pr: 223
+pr_url: "https://github.com/bcaceres19/barberia/pull/223"
 depends_on:
   - "HU-007 integrada mediante PR #61"
   - "HU-008 integrada mediante PR #63"
