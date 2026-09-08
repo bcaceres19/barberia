@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-CHORE-191-DETALLE-HISTORIAL-REPROGRAMACION-FIDELIDAD-v1.1"
 version: "1.1"
 kind: "chore"
-status: "in_progress"
+status: "executed"
 target_agents: ["claude", "codex"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
