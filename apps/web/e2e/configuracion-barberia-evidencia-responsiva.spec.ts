@@ -43,7 +43,7 @@ test('pantalla Barbería sin scroll horizontal y con foco visible por teclado en
   // (src/modules/settings/index.ts); el título de la propia pantalla sigue
   // siendo "Barbería".
   await page.getByRole('link', { name: 'Configuración' }).click()
-  await expect(page.getByRole('heading', { name: 'Barbería' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Configuración de barbería' })).toBeVisible()
 
   for (const viewport of viewports) {
     await page.setViewportSize({ width: viewport.width, height: viewport.height })

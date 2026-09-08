@@ -38,7 +38,7 @@ test.describe('Configuración básica de la barbería (HU-020)', () => {
     // siendo "Barbería".
     await page.getByRole('link', { name: 'Configuración' }).click()
     await expect(page).toHaveURL(/\/panel\/barberia$/)
-    await expect(page.getByRole('heading', { name: 'Barbería' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Configuración de barbería' })).toBeVisible()
 
     // Nombre único por corrida: evita depender del estado dejado por una
     // ejecución anterior de este mismo recorrido.

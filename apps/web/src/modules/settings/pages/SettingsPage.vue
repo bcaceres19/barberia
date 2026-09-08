@@ -6,7 +6,7 @@
 // barbero ya escribió (CA-020-08); solo un guardado exitoso confirmado por
 // el servidor reemplaza los valores del formulario.
 import { onMounted, reactive, ref } from 'vue'
-import { BaseAlert, BaseButton, BaseInput, PageHeader } from '@/shared/ui'
+import { BaseAlert, BaseButton, BaseInput } from '@/shared/ui'
 import { updateBarbershopName } from '@/modules/auth'
 import { fetchBarbershopSettings, saveBarbershopSettings } from '../api/settingsApi'
 import { toFormValues, type BarbershopSettingsFormValues } from '../model/barbershopSettings'
@@ -122,7 +122,16 @@ function onRetryLoad() {
 
 <template>
   <section class="settings-page" aria-labelledby="settings-page-title">
-    <PageHeader title-id="settings-page-title" title="Barbería" />
+    <header class="settings-page__header">
+      <h1
+        id="settings-page-title"
+        class="settings-page__title"
+        aria-label="Configuración de barbería"
+      >
+        <span class="settings-page__title--desktop">Configuración de barbería</span>
+        <span class="settings-page__title--mobile">Barbería</span>
+      </h1>
+    </header>
 
     <div
       v-if="loadStatus === 'loading'"
@@ -146,9 +155,13 @@ function onRetryLoad() {
     </BaseAlert>
 
     <form v-else class="settings-page__form" novalidate @submit.prevent="onSubmit">
-      <BaseAlert v-if="saveStatus === 'saved'" variant="success" title="Guardado" role="status">
-        Los cambios se guardaron correctamente.
-      </BaseAlert>
+      <div v-if="saveStatus === 'saved'" class="settings-page__saved" role="status">
+        <span class="settings-page__saved-icon" aria-hidden="true">✓</span>
+        <div>
+          <p class="settings-page__saved-title">Guardado</p>
+          <p class="settings-page__saved-copy">Los cambios se guardaron correctamente.</p>
+        </div>
+      </div>
       <BaseAlert
         v-if="saveStatus === 'validation-error'"
         variant="danger"
@@ -180,6 +193,7 @@ function onRetryLoad() {
         name="name"
         label="Nombre"
         required
+        :show-required-marker="false"
         :maxlength="120"
         :disabled="saveStatus === 'saving'"
         :error="fieldErrors.name"
@@ -190,8 +204,8 @@ function onRetryLoad() {
         :model-value="form.timezone"
         name="timezone"
         label="Zona horaria"
-        hint="Identificador IANA, por ejemplo America/Bogota. Gobierna toda hora que se muestre de esta barbería."
         required
+        :show-required-marker="false"
         :maxlength="64"
         :disabled="saveStatus === 'saving'"
         :error="fieldErrors.timezone"
@@ -203,7 +217,6 @@ function onRetryLoad() {
         type="email"
         name="contactEmail"
         label="Correo de contacto"
-        hint="Opcional. Déjalo vacío si la barbería no tiene uno."
         :maxlength="254"
         :disabled="saveStatus === 'saving'"
         :error="fieldErrors.contactEmail"
@@ -215,7 +228,6 @@ function onRetryLoad() {
         type="tel"
         name="contactPhone"
         label="Teléfono de contacto"
-        hint="Opcional, formato internacional (ej. +573001234567). Déjalo vacío si la barbería no tiene uno."
         :disabled="saveStatus === 'saving'"
         :error="fieldErrors.contactPhone"
         @update:model-value="(value) => onFieldInput('contactPhone', value)"
@@ -237,26 +249,194 @@ function onRetryLoad() {
 
 <style scoped>
 .settings-page {
+  --settings-form-width: 540px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
-  max-width: 480px;
-  padding: var(--space-4);
+  min-height: 100%;
+  gap: 0;
+  max-width: none;
+  padding: 34px 32px 48px;
   margin: 0 auto;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+}
+
+.settings-page__header,
+.settings-page__form,
+.settings-page__state,
+.settings-page > :deep(.base-alert) {
+  width: min(100%, var(--settings-form-width));
+  margin-inline: auto;
+}
+
+.settings-page__header {
+  margin-bottom: 12px;
+}
+
+.settings-page__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 2.3vw, 34px);
+  font-weight: var(--font-weight-h1);
+  line-height: 1.14;
+  color: var(--color-text-primary);
+}
+
+.settings-page__title--mobile {
+  display: none;
 }
 
 .settings-page__state {
-  padding: var(--space-4);
+  padding: var(--space-5) 0;
   color: var(--color-text-secondary);
 }
 
 .settings-page__form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: 14px;
+}
+
+.settings-page__saved {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-height: 60px;
+  padding: 13px 14px;
+  color: var(--color-success-text);
+  background: var(--color-success-surface);
+  border: var(--border-width-normal) solid var(--color-success-border);
+  border-radius: 3px;
+}
+
+.settings-page__saved-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  place-items: center;
+  margin-top: 1px;
+  border: var(--border-width-normal) solid currentColor;
+  border-radius: 50%;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.settings-page__saved-title,
+.settings-page__saved-copy {
+  margin: 0;
+}
+
+.settings-page__saved-title {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.settings-page__saved-copy {
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.settings-page__form :deep(.base-input__wrapper) {
+  gap: 4px;
+}
+
+.settings-page__form :deep(.base-input__label) {
+  color: var(--color-text-primary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 14px;
+  text-transform: none;
+}
+
+.settings-page__form :deep(.base-input) {
+  height: 34px;
+  padding-inline: 10px;
+  font-size: 12px;
+  border-color: var(--color-border-subtle);
+  border-bottom-width: var(--border-width-normal);
+  border-radius: 3px;
+}
+
+.settings-page__form :deep(.base-input:focus-visible) {
+  border-color: var(--color-focus);
+  box-shadow:
+    0 0 0 2px var(--color-surface),
+    0 0 0 4px var(--color-focus);
+}
+
+.settings-page__form :deep(.base-button) {
+  height: 34px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 3px;
 }
 
 .settings-page__submit {
   width: 100%;
+  margin-top: 4px;
+}
+
+@media (max-width: 640px) {
+  .settings-page {
+    padding: 16px 16px 28px;
+  }
+
+  .settings-page__header {
+    margin-bottom: 10px;
+  }
+
+  .settings-page__title {
+    font-size: 20px;
+    line-height: 1.2;
+  }
+
+  .settings-page__title--desktop {
+    display: none;
+  }
+
+  .settings-page__title--mobile {
+    display: inline;
+  }
+
+  .settings-page__form {
+    gap: 10px;
+  }
+
+  .settings-page__saved {
+    gap: 10px;
+    min-height: 58px;
+    padding: 9px 10px;
+  }
+
+  .settings-page__saved-title {
+    font-size: 10px;
+    line-height: 14px;
+  }
+
+  .settings-page__saved-copy {
+    font-size: 9px;
+    line-height: 13px;
+  }
+
+  .settings-page__form :deep(.base-input) {
+    height: 28px;
+    padding-inline: 8px;
+    font-size: 11px;
+  }
+
+  .settings-page__form :deep(.base-input__label) {
+    font-size: 10px;
+    line-height: 12px;
+  }
+
+  .settings-page__form :deep(.base-button) {
+    height: 30px;
+    font-size: 11px;
+  }
 }
 </style>
