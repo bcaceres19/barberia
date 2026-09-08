@@ -11,8 +11,8 @@ related_hu: ["HU-009", "HU-012"]
 issue: 193
 issue_url: "https://github.com/bcaceres19/barberia/issues/193"
 branch: "chore/193-configuracion-barberia-fidelidad"
-pr: null
-pr_url: null
+pr: 231
+pr_url: "https://github.com/bcaceres19/barberia/pull/231"
 depends_on: ["Issue #192 integrado en main con CI verde", "Issue maestro #184"]
 rules: ["RN-TEN-01", "RN-DAT-02"]
 decisions: ["DEC-007", "DEC-077", "DEC-079", "DEC-080"]
