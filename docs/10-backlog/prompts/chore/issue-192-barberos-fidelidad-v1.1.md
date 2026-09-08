@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-CHORE-192-BARBEROS-FIDELIDAD-v1.1"
 version: "1.1"
 kind: "chore"
-status: "in_progress"
+status: "executed"
 target_agents: ["codex"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
