@@ -11,8 +11,8 @@ related_hu: ["HU-024", "HU-009", "HU-012"]
 issue: 194
 issue_url: "https://github.com/bcaceres19/barberia/issues/194"
 branch: "chore/194-servicios-fidelidad"
-pr: null
-pr_url: null
+pr: 232
+pr_url: "https://github.com/bcaceres19/barberia/pull/232"
 depends_on: ["Issue #193 integrado en main con CI verde", "Issue maestro #184"]
 rules: ["RN-SER-01", "RN-SER-02", "RN-SER-03", "RN-SER-04", "RN-TEN-01", "RN-DAT-02"]
 decisions: ["DEC-067", "DEC-069", "DEC-077", "DEC-079", "DEC-080"]
