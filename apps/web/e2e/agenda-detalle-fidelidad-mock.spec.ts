@@ -195,7 +195,8 @@ test('fidelidad #191: movimiento reducido elimina la transición del diálogo', 
     Number.parseFloat(
       await page.evaluate(
         () =>
-          getComputedStyle(document.querySelector('.base-dialog') as HTMLElement).transitionDuration,
+          getComputedStyle(document.querySelector('.base-dialog') as HTMLElement)
+            .transitionDuration,
       ),
     ),
   ).toBeLessThanOrEqual(0.001)
