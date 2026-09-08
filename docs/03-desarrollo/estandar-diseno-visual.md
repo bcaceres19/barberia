@@ -1,9 +1,9 @@
 ---
 titulo: "Estándar visual NAVA para rediseños y pantallas nuevas"
-version: "5.2"
+version: "5.3"
 estado: "Normativo para rediseños y pantallas nuevas"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-03"
+ultima_actualizacion: "2026-09-08"
 documentos_relacionados:
   - "../00-control/registro-decisiones.md"
   - "../01-producto/alcance-mvp.md"
@@ -46,6 +46,13 @@ Las siguientes láminas forman la referencia canónica para el lenguaje visual d
 | [Autenticación móvil](../10-backlog/evidence/ui-redesign-nava-2026-09-02/01-autenticacion-movil.png)                                  | Acceso, validación y recuperación.                                                                                                                                                                                                                                            |
 | [Acceso y recuperación por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/README.md) | Referencia exacta de `/acceso` y `/recuperar-acceso`: un PNG por pantalla o evento, con pares equivalentes en escritorio y móvil. Sustituye la lámina compuesta como objetivo de implementación.                                                                              |
 | [Agenda diaria por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/README.md) | Referencia exacta de `/panel`: agenda, carga inicial, actualización, vacío, errores, barbero ausente, zona no disponible y turno nocturno (issue #189). Sustituye `ui-mockups-nava-tailored-grid-2026-09-02/01-agenda-diaria-responsive.png` como objetivo de implementación. |
+| [Barberos por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/README.md) | Referencia exacta de `/panel/barberos`: listado, paginación, carga, vacío, errores y recorridos completos de alta y cambio de nombre, con pares equivalentes en escritorio y móvil (issue #192). |
+| [Configuración de barbería por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/README.md) | Referencia exacta de `/panel/barberia`: carga, error, datos parciales, edición, validación, guardado y confirmación (issue #193). |
+| [Servicios por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/README.md) | Referencia exacta de `/panel/servicios`: catálogo, alta, edición, desactivación y reactivación (issue #194). |
+| [Servicios por barbero por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/README.md) | Referencia exacta de `/panel/servicios-por-barbero`: selección, asignación, retiro y conflictos (issue #195). |
+| [Horarios por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/README.md) | Referencia exacta de `/panel/horarios`: tramos recurrentes, excepciones, festivos, validación y errores (issue #196). |
+| [Bloqueos por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/README.md) | Referencia exacta de `/panel/bloqueos`: bloqueos puntuales, series, validación, conflictos y retiro (issue #197). |
+| [Detalle de turno por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/README.md) | Referencia exacta de `/panel/turnos/:appointmentId`: detalle, historial, terminales y reprogramación (issue #191). |
 | [Nuevo turno responsive](../10-backlog/evidence/ui-redesign-nava-2026-09-02/02-nuevo-turno-responsive.png)                            | Formularios extensos, secciones, reflow y conflictos.                                                                                                                                                                                                                         |
 | [Componentes, formularios y alertas](../10-backlog/evidence/ui-redesign-nava-2026-09-02/03-componentes-formularios-alertas.png)       | Botones, campos, foco, estados, alertas y diálogo.                                                                                                                                                                                                                            |
 | [Servicios, configuración y navegación](../10-backlog/evidence/ui-redesign-nava-2026-09-02/04-servicios-configuracion-navegacion.png) | Shell, navegación responsive, listas operativas, modal y éxito persistente.                                                                                                                                                                                                   |
