@@ -1,9 +1,9 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.36"
+version: "1.37"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-02"
+ultima_actualizacion: "2026-09-08"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/reglas-negocio.md"
@@ -51,7 +51,7 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | B0 · Cimientos, seguridad y primeras pantallas | `HU-001` – `HU-012` | Redactadas en este documento |
 | B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | Integradas en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), [PR #83](https://github.com/bcaceres19/barberia/pull/83), [PR #84](https://github.com/bcaceres19/barberia/pull/84)) |
 | B2 · Horario laboral y bloqueos | `HU-040` – `HU-042` | Integradas en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93), [PR #96](https://github.com/bcaceres19/barberia/pull/96), [PR #99](https://github.com/bcaceres19/barberia/pull/99)); seguimientos parciales en `#90`, `#95`, `#98` y `#100` |
-| B3 · Agenda, estados e integridad | `HU-060` – `HU-065` | `HU-060`–`HU-062` integradas; `HU-063` implementada (issue [#116](https://github.com/bcaceres19/barberia/issues/116)), integrada en `main` mediante [PR #118](https://github.com/bcaceres19/barberia/pull/118); `HU-064` implementada (issue [#120](https://github.com/bcaceres19/barberia/issues/120)), integrada en `main` mediante [PR #121](https://github.com/bcaceres19/barberia/pull/121); `HU-065` implementada (issue [#123](https://github.com/bcaceres19/barberia/issues/123)), integrada en `main` mediante [PR #125](https://github.com/bcaceres19/barberia/pull/125) |
+| B3 · Agenda, estados e integridad | `HU-060` – `HU-068` | `HU-060`–`HU-065` integradas; `HU-066`–`HU-068` redactadas con issues reales [#225](https://github.com/bcaceres19/barberia/issues/225)–[#227](https://github.com/bcaceres19/barberia/issues/227); `HU-066` `ready`, `HU-067`/`HU-068` bloqueadas por secuencia |
 | B4 · Reserva pública y disponibilidad | `HU-090` – | Pendientes |
 | B5 · Notificaciones y recordatorios | `HU-130` – | Pendientes |
 | B6 · Operación, privacidad y piloto | `HU-150` – | Pendientes |
@@ -1503,13 +1503,189 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 
 ---
 
+### HU-066 · Cancelación de un turno por el barbero
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-CITA-06`; transición `T6` de `estados-citas.md` |
+| Reglas | `RN-CIT-01`, `RN-CIT-03`, `RN-CAN-03`, `RN-CAN-04`, `RN-HIS-01`, `RN-HIS-02`, `RN-TEN-01`, `RN-IDE-01` |
+| Decisiones | `DEC-011`, `DEC-012`, `DEC-014`, `DEC-016`, `DEC-017`, `DEC-024`, `DEC-035`–`DEC-038`, `DEC-041`, `DEC-043`, `DEC-077`–`DEC-080` |
+| Actor | Barbero autenticado |
+| Depende de | `HU-064` y `HU-065` integradas en `main` |
+| Bloquea | Cancelación pública de B4 y efectos de notificación de B5 |
+| Estado | Redactada contra el issue real [#225](https://github.com/bcaceres19/barberia/issues/225); prompt `PROMPT-HU-066-v1` `ready` |
+| Riesgo | Una cancelación no atómica puede liberar la agenda sin dejar rastro, atribuirla al actor equivocado o aplicar un cambio sobre una versión ya obsoleta. |
+
+**Historia**
+
+> Como barbero, quiero cancelar un turno confirmado incluso después de su hora de inicio, para resolver una contingencia operativa, liberar la franja cuando todavía sea futura y conservar quién tomó la decisión.
+
+**Alcance incluido**
+
+- Comando privado y explícito para `T6`, con sesión, `Idempotency-Key` y precondición basada en el token opaco de versión del detalle.
+- Transición exclusiva `confirmed` → `cancelled_by_barber`, sin límite temporal; el servidor deriva tenant, actor y estado destino.
+- Cambio de estado y evento `appointment_cancelled_by_barber` dentro de una sola transacción tenant-aware.
+- La cita cancelada sale de la restricción de exclusión; una franja futura queda disponible inmediatamente salvo que exista otro bloqueo o cita vigente.
+- Repetición exacta por el mismo actor como éxito sin evento adicional; una cita ya terminada de otra forma produce conflicto y obliga a recargar.
+- Acción desde el detalle, visible solo para `confirmed`, con consecuencia explícita, confirmación, espera, conflicto, error recuperable y foco administrado.
+
+**Alcance excluido**
+
+- Cancelación iniciada por el cliente, política de plazo o motivo obligatorio de `RN-CAN-01`/`RN-CAN-02` (B4).
+- Cancelación masiva, selección de citas afectadas por un servicio o bloqueo y reapertura de una cita cancelada.
+- Enviar avisos, invalidar recordatorios o afirmar entrega por correo/WhatsApp antes de B5.
+- Cambiar intervalo, servicio, duración, precio, persona, contacto, nota o barbero.
+- Añadir un motivo obligatorio para T6: ninguna fuente vigente lo exige.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-066-01` | Con una cita propia `confirmed`, precondición vigente y clave nueva, la operación cambia una vez a `cancelled_by_barber` e inserta un único evento `appointment_cancelled_by_barber` con actor barbero dentro de la misma transacción. |
+| `CA-066-02` | La cancelación se permite antes, durante o después del intervalo mientras la cita siga `confirmed`; ningún reloj del cliente impone un límite y el servidor no acepta un estado o actor enviado por el body. |
+| `CA-066-03` | Tras cancelar una cita futura, su intervalo deja de participar en la exclusión en la misma confirmación; una cita nueva contigua o coincidente solo se rechaza si otra cita o bloqueo vigente todavía ocupa la franja. |
+| `CA-066-04` | Una cita `completed`, `no_show` o cancelada por otro actor responde `409` sin cambiar estado ni historial; una cancelación repetida por el barbero devuelve éxito sin duplicar el evento. |
+| `CA-066-05` | La misma `Idempotency-Key` e intención reproduce el resultado lógico, contenido distinto entra en conflicto y una precondición obsoleta responde `409` distinguible con instrucción segura de recargar. |
+| `CA-066-06` | Un ID inexistente, mal formado o de otra barbería no permite inferir existencia ni mutar datos: responde según el contrato uniforme y dos tenants reales permanecen aislados. |
+| `CA-066-07` | La operación no cambia intervalo, snapshots, cliente, persona, contacto, nota ni barbero; tampoco crea intentos de notificación o recordatorios ficticios y ningún log contiene datos personales. |
+| `CA-066-08` | El detalle ofrece la acción solo para `confirmed`, comunica la consecuencia antes de confirmar, evita doble toque, conserva contexto ante error y representa el resultado terminal en 320, 360, 768 y 1280 px, teclado y zoom 200 %, con axe-core limpio. |
+
+**Pruebas obligatorias**
+
+- Dominio/aplicación para cita activa antes/durante/después del intervalo, estados terminales, repetición y precondición obsoleta.
+- HTTP/contrato para `200`, `400`, `401`, `404`, `409`, campos desconocidos, `Idempotency-Key`, precondición y RFC 9457.
+- PostgreSQL real con dos tenants: atomicidad estado+historial, rollback, liberación de la exclusión y carrera coordinada entre cancelar y otra mutación.
+- Componente y E2E desde el detalle: confirmación, doble envío, conflicto, error, regreso a la agenda y nueva ocupación válida de la franja futura.
+- Evidencia responsive/accesible; el estado terminal reutiliza el tratamiento de `detalle-turno-eventos/10-turno-cancelado.png`, adaptando la atribución sin inventar un mockup de diálogo.
+
+**Terminado cuando** un barbero puede cancelar una cita activa una sola vez, sin límite temporal, con liberación e historial atómicos y sin adelantar cancelación pública ni B5.
+
+---
+
+### HU-067 · Cierre manual como atendido o no asistió
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-EST-01`, `F-EST-02`, `F-EST-04`; transiciones manuales `T4` y `T7` |
+| Reglas | `RN-CIT-01`, `RN-CIT-03`, `RN-CIT-05`, `RN-HIS-01`, `RN-HIS-02`, `RN-TEN-01`, `RN-IDE-01` |
+| Decisiones | `DEC-002`, `DEC-014`, `DEC-016`, `DEC-017`, `DEC-018`, `DEC-024`, `DEC-035`–`DEC-038`, `DEC-041`, `DEC-043`, `DEC-077`–`DEC-080` |
+| Actor | Barbero autenticado |
+| Depende de | `HU-066` integrada en `main` sin romper el núcleo de `HU-060` |
+| Bloquea | `HU-068` y cierre automático posterior |
+| Estado | Redactada contra el issue real [#226](https://github.com/bcaceres19/barberia/issues/226); prompt `PROMPT-HU-067-v1` `blocked` hasta integrar `HU-066` |
+| Riesgo | Cerrar antes de tiempo o duplicar el evento falsea las métricas del piloto; confundir `completed` con `no_show` exige después una corrección auditable. |
+
+**Historia**
+
+> Como barbero, quiero cerrar manualmente un turno cuya hora de inicio ya pasó como atendido o no asistió, para que la agenda refleje el resultado real y las métricas del piloto no confundan ambos casos.
+
+**Alcance incluido**
+
+- Dos comandos privados explícitos para `T4` manual y `T7`; no existe un `PATCH status` genérico.
+- Solo una cita propia `confirmed` cuyo `starts_at` ya pasó según el reloj del servidor puede cerrarse.
+- Transición a `completed` con evento `appointment_completed` o a `no_show` con evento `appointment_no_show`, atómica y tenant-aware.
+- `completed` y `no_show` siguen ocupando agenda; el intervalo y los snapshots no se reescriben aunque el servicio terminara antes o después.
+- `Idempotency-Key`, token opaco de versión y regla de repetición: el mismo resultado no duplica historial; un resultado distinto exige T8 y responde conflicto.
+- Acciones contextuales desde el detalle con lenguaje “Marcar como atendido” y “Marcar que no asistió”, confirmación y estados accesibles.
+
+**Alcance excluido**
+
+- Cierre automático, configuración de modo/demora X, job del worker o aviso de citas vencidas.
+- Aviso de inasistencia, invalidación de recordatorios y cualquier efecto de B5.
+- Corrección T8, cancelaciones, T3, medición de duración real o desplazamiento de citas siguientes.
+- Marcar `completed` o `no_show` desde una cita terminal o antes de `starts_at`.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-067-01` | Con cita propia `confirmed`, `starts_at` pasado, versión vigente y clave nueva, completar cambia una vez a `completed` e inserta un único `appointment_completed` con actor barbero en la misma transacción. |
+| `CA-067-02` | Bajo las mismas precondiciones, marcar inasistencia cambia una vez a `no_show` e inserta un único `appointment_no_show`; ambas representaciones quedan distinguibles por texto además del color. |
+| `CA-067-03` | Exactamente en `starts_at` la acción ya es válida según el reloj del servidor; antes de ese instante responde `422` sin modificar cita, historial ni idempotencia de forma que impida reintentar. |
+| `CA-067-04` | Ambos resultados conservan intervalo, snapshots y demás datos y continúan ocupando agenda; no se crea otra cita cruzada sobre su intervalo ni se recalcula `ends_at` por duración real. |
+| `CA-067-05` | Repetir el mismo resultado devuelve éxito sin evento adicional; intentar el resultado contrario u operar sobre cualquier otro terminal responde `409` y orienta a la futura corrección T8. |
+| `CA-067-06` | Idempotencia concurrente, contenido divergente y token obsoleto siguen el protocolo existente; una carrera entre completar, marcar inasistencia y cancelar deja exactamente un estado terminal y un evento aplicable. |
+| `CA-067-07` | Un recurso ajeno o inexistente no se distingue, dos tenants reales permanecen aislados y errores/logs no exponen contacto, nota, nombres ni valores internos. |
+| `CA-067-08` | Las acciones aparecen solo cuando el turno `confirmed` ya puede cerrarse, anuncian consecuencia y espera, conservan foco/contexto ante error y muestran los estados terminales con evidencia en 320, 360, 768 y 1280 px, teclado, zoom 200 % y axe-core limpio. |
+
+**Pruebas obligatorias**
+
+- Tabla completa de dominio para ambos comandos: antes/exacto/después de `starts_at`, cada estado terminal, repetición y reloj cancelable.
+- HTTP/contrato cerrado para ambas rutas y todos los errores, sin aceptar `status`, actor ni timestamps arbitrarios.
+- PostgreSQL real con dos tenants, atomicidad, historial exacto, exclusión conservada y carrera de tres operaciones mediante barreras, nunca `sleep`.
+- Componentes y E2E para las dos confirmaciones, espera, éxito, conflicto de versión/estado y estado terminal visible en detalle y agenda.
+- Evidencia responsive/accesible; `completed` usa el evento `09-turno-completado.png` del atlas de detalle y `no_show` su variante documentada.
+
+**Terminado cuando** el barbero registra exactamente uno de los dos resultados reales de un turno iniciado, sin liberar su intervalo, duplicar historial ni simular automatización o avisos.
+
+---
+
+### HU-068 · Corrección auditada de un resultado terminal
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-EST-02`, `F-EST-03`, `F-EST-04`; transición `T8` |
+| Reglas | `RN-CIT-01`, `RN-CIT-03`, `RN-CIT-04`, `RN-HIS-01`, `RN-HIS-02`, `RN-CON-01`, `RN-CON-03`, `RN-TEN-01`, `RN-IDE-01` |
+| Decisiones | `DEC-011`, `DEC-012`, `DEC-014`, `DEC-016`, `DEC-017`, `DEC-024`, `DEC-035`–`DEC-038`, `DEC-041`, `DEC-043`, `DEC-077`–`DEC-080` |
+| Actor | Barbero autenticado |
+| Depende de | `HU-066` y `HU-067` integradas |
+| Bloquea | Verificación completa de T8 y del criterio de salida de B3 |
+| Estado | Redactada contra el issue real [#227](https://github.com/bcaceres19/barberia/issues/227); prompt `PROMPT-HU-068-v1` `blocked` hasta integrar `HU-066` y `HU-067` |
+| Riesgo | Editar el evento original o reocupar una franja sin verificar la exclusión destruye la auditoría o permite dos turnos superpuestos. |
+
+**Historia**
+
+> Como barbero, quiero corregir un resultado terminal marcado por error indicando el motivo, para que el estado vigente sea correcto sin borrar la decisión anterior ni reabrir silenciosamente el turno.
+
+**Alcance incluido**
+
+- Comando privado y explícito para T8 con estado terminal destino, motivo obligatorio, `Idempotency-Key` y token opaco de versión.
+- Corrección solo entre `completed`, `cancelled_by_customer`, `cancelled_by_barber` y `no_show`; nunca hacia `confirmed`.
+- Cambio de estado más evento `appointment_status_corrected`, con estado anterior/nuevo y motivo, dentro de una sola transacción tenant-aware.
+- Los eventos anteriores permanecen intactos; la corrección agrega evidencia y el detalle muestra la secuencia completa.
+- Al pasar de cancelado a `completed`/`no_show`, se vuelven a aplicar la validación temporal del resultado y la exclusión PostgreSQL; un intervalo ya ocupado produce `409` sin escritura.
+- Al pasar de `completed`/`no_show` a cancelado, la cita deja de ocupar agenda en la misma transacción.
+
+**Alcance excluido**
+
+- Corregir hacia `confirmed`, reabrir o recrear automáticamente una cita; se crea una nueva tras validar disponibilidad.
+- Editar o borrar historial, reemplazar el evento equivocado o ocultar una corrección posterior.
+- Cambiar intervalo, snapshots, persona, cliente, contacto, nota o barbero.
+- Notificar el cambio, regenerar recordatorios o ejecutar efectos de B5.
+- Configuración/cierre automático y edición T3.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-068-01` | Con cita terminal propia, destino terminal distinto, motivo válido, versión vigente y clave nueva, la operación cambia una vez el estado y agrega un único `appointment_status_corrected` con actor, estado anterior/nuevo y motivo en la misma transacción. |
+| `CA-068-02` | `confirmed`, un valor desconocido o un motivo vacío/blanco se rechazan según el contrato; una solicitud nueva al mismo estado responde como éxito sin efecto. Ninguno de esos casos modifica cita, historial ni registros previos. |
+| `CA-068-03` | Ninguna corrección ejecuta `UPDATE`/`DELETE` sobre historial; los eventos originales y sus cambios conservan orden y contenido, y el nuevo evento queda visible después de ellos. |
+| `CA-068-04` | Corregir desde un estado cancelado hacia `completed` o `no_show` exige que `starts_at` ya haya pasado y que el intervalo pueda volver a ocupar agenda; un cruce responde `409` y la transacción completa hace rollback. |
+| `CA-068-05` | Corregir desde `completed`/`no_show` hacia un estado cancelado libera la exclusión en la misma confirmación; no crea disponibilidad pasada ni ignora bloqueos/citas que afecten una futura reutilización. |
+| `CA-068-06` | Repetición exacta no duplica el evento; contenido distinto con la misma clave, versión obsoleta o carrera con otra corrección deja un único estado vigente y un historial coherente. |
+| `CA-068-07` | Un ID ajeno o inexistente responde sin revelar existencia; dos tenants reales permanecen aislados y motivo, contacto y nombres no aparecen en logs ni errores técnicos. |
+| `CA-068-08` | El detalle muestra la acción solo en estados terminales, exige motivo y destino explícitos, resume la consecuencia sobre agenda, administra foco/errores y presenta el historial corregido en 320, 360, 768 y 1280 px, teclado, zoom 200 % y axe-core limpio. |
+
+**Pruebas obligatorias**
+
+- Matriz de dominio con los 12 cambios posibles entre cuatro terminales, destinos inválidos, motivo, frontera temporal y repetición.
+- HTTP/contrato para éxito y errores; request cerrado sin `confirmed`, actor, tenant ni campos de la cita.
+- PostgreSQL real con dos tenants: append-only, atomicidad, liberación/reocupación de exclusión, rollback por cruce y carrera coordinada.
+- Componente y E2E: corregir `completed` → `no_show`, ver ambos eventos, probar conflicto de versión y demostrar que una cancelada no revive a `confirmed`.
+- Evidencia responsive/accesible en los anchos normativos; sin mockup exacto asignado, la composición es libre dentro de NAVA / Tailored Grid.
+
+**Terminado cuando** un error de clasificación terminal puede corregirse con motivo y rastro inmutable, sin reapertura, pérdida de auditoría, fuga tenant o cruce de agenda.
+
+---
+
 ## 7. Historias pendientes de redacción
 
 | Bloque | Rango reservado | Se redacta cuando |
 | --- | --- | --- |
 | B1 | `HU-025` – | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
 | B2 | `HU-040` – `HU-042` | Integradas en `main` (PR `#93`, `#96`, `#99`); seguimientos parciales en issues `#90`, `#95`, `#98` y `#100` |
-| B3 | `HU-066` – | `HU-063`–`HU-065` integradas en `main`; continuar solo después de revisar los hallazgos de `HU-065` |
+| B3 | `HU-069` – | `HU-066`–`HU-068` ya redactadas; continuar con T3 y cierre automático solo después de revisar este lote y resolver cualquier duda de semántica de snapshots/configuración |
 | B4 | `HU-090` – | B3 cumple su criterio de salida |
 | B5 | `HU-130` – | B4 cumple su criterio de salida |
 | B6 | `HU-150` – | B5 cumple su criterio de salida |
