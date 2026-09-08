@@ -11,8 +11,8 @@ related_hu: ["HU-009", "HU-063", "HU-065"]
 issue: 191
 issue_url: "https://github.com/bcaceres19/barberia/issues/191"
 branch: "chore/191-detalle-historial-reprogramacion-fidelidad"
-pr: null
-pr_url: null
+pr: 229
+pr_url: "https://github.com/bcaceres19/barberia/pull/229"
 depends_on: ["Issue #190 integrado en main con CI verde", "Issue maestro #184"]
 rules: ["RN-CIT-03", "RN-HIS-01", "RN-HIS-02", "RN-TEN-01"]
 decisions: ["DEC-004", "DEC-014", "DEC-041", "DEC-076", "DEC-077", "DEC-079", "DEC-080"]
@@ -52,4 +52,4 @@ Rediseña únicamente `/panel/turnos/:appointmentId` y su diálogo de reprograma
 - Cambiar backend, OpenAPI, migraciones, paginación, concurrencia o reglas de reprogramación.
 - Sustituir snapshots por catálogo actual o crear botones decorativos.
 
-Antes de abrir el PR, ejecutar formato, lint, tipos, componentes, E2E afectada, build y `git diff --check`. El PR usa `Closes #191` solo cuando la evidencia y los checks estén completos; no mezcla #192.
+El [PR #229](https://github.com/bcaceres19/barberia/pull/229) contiene formato, lint, tipos, 54 pruebas de componente, seis E2E visuales en Chromium, build y `git diff --check`; no mezcla #192.
