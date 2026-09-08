@@ -8,15 +8,7 @@
 // muestra asignaciones a barberos (HU-023), disponibilidad ni citas: fuera
 // de alcance de esta historia.
 import { onMounted, ref } from 'vue'
-import {
-  BaseAlert,
-  BaseBadge,
-  BaseButton,
-  BaseDialog,
-  BaseInput,
-  PageHeader,
-  RecordRow,
-} from '@/shared/ui'
+import { BaseAlert, BaseBadge, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
 import {
   createService,
   deactivateService,
@@ -479,13 +471,21 @@ async function reloadAfterConflict(serviceId: string) {
 
 <template>
   <section class="catalog-page" aria-labelledby="catalog-page-title">
-    <PageHeader title-id="catalog-page-title" title="Servicios">
-      <template v-if="loadStatus === 'ready'" #actions>
-        <BaseButton type="button" variant="primary" @click="openCreateDialog">
-          Agregar servicio
-        </BaseButton>
-      </template>
-    </PageHeader>
+    <header class="catalog-page__header">
+      <div>
+        <h1 id="catalog-page-title" class="catalog-page__title">Servicios</h1>
+        <p class="catalog-page__subtitle">Catálogo de servicios en NAVA.</p>
+      </div>
+      <BaseButton
+        v-if="loadStatus === 'ready'"
+        type="button"
+        variant="primary"
+        class="catalog-page__create"
+        @click="openCreateDialog"
+      >
+        Agregar servicio
+      </BaseButton>
+    </header>
 
     <div
       v-if="loadStatus === 'loading'"
@@ -513,12 +513,22 @@ async function reloadAfterConflict(serviceId: string) {
         Aún no tienes servicios registrados. Agrega el primero para empezar.
       </p>
 
-      <ul v-else class="catalog-page__list" aria-label="Servicios de la barbería">
-        <RecordRow v-for="service in services" :key="service.id">
-          <div class="catalog-page__item-heading">
-            <span class="catalog-page__item-name">{{ service.name }}</span>
-            <!-- No depende solo del color: el texto de la etiqueta ya
-                 distingue el estado (CA-024-08). -->
+      <div v-else class="catalog-page__table">
+        <div class="catalog-page__columns" aria-hidden="true">
+          <span>Servicio</span><span>Duración</span><span>Precio (COP)</span><span>Estado</span>
+        </div>
+        <ul class="catalog-page__list" aria-label="Servicios de la barbería">
+          <li v-for="service in services" :key="service.id" class="catalog-page__row">
+            <div class="catalog-page__item-heading">
+              <span class="catalog-page__item-icon" aria-hidden="true">▧</span>
+              <span class="catalog-page__item-name">{{ service.name }}</span>
+            </div>
+            <span class="catalog-page__item-meta catalog-page__item-duration">
+              {{ service.durationMinutes }} min
+            </span>
+            <span class="catalog-page__item-meta catalog-page__item-price">{{
+              formatPrice(service)
+            }}</span>
             <BaseBadge
               :variant="service.isActive ? 'success' : 'neutral'"
               size="sm"
@@ -527,14 +537,6 @@ async function reloadAfterConflict(serviceId: string) {
             >
               {{ service.isActive ? 'Activo' : 'Inactivo' }}
             </BaseBadge>
-          </div>
-          <span class="catalog-page__item-meta">
-            {{ service.durationMinutes }} min · {{ formatPrice(service) }}
-          </span>
-          <span v-if="service.description" class="catalog-page__item-description">
-            {{ service.description }}
-          </span>
-          <template #trailing>
             <div class="catalog-page__item-actions">
               <BaseButton
                 type="button"
@@ -563,9 +565,9 @@ async function reloadAfterConflict(serviceId: string) {
                 Reactivar
               </BaseButton>
             </div>
-          </template>
-        </RecordRow>
-      </ul>
+          </li>
+        </ul>
+      </div>
 
       <div v-if="nextCursor" class="catalog-page__load-more">
         <BaseButton
@@ -872,12 +874,62 @@ async function reloadAfterConflict(serviceId: string) {
 
 <style scoped>
 .catalog-page {
+  --catalog-width: 580px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
-  max-width: 640px;
-  padding: var(--space-4);
+  gap: 16px;
+  min-height: 100%;
+  max-width: none;
+  padding: 34px 32px 48px;
   margin: 0 auto;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+}
+
+.catalog-page__header,
+.catalog-page__table,
+.catalog-page__list,
+.catalog-page__state,
+.catalog-page__empty,
+.catalog-page__load-more,
+.catalog-page > :deep(.base-alert) {
+  width: min(100%, var(--catalog-width));
+  margin-inline: auto;
+}
+
+.catalog-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-bottom: 16px;
+  border-bottom: var(--border-width-normal) solid var(--color-border-subtle);
+}
+
+.catalog-page__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: var(--font-weight-h1);
+  line-height: 1.14;
+}
+
+.catalog-page__subtitle {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--color-text-secondary);
+}
+
+.catalog-page__create :deep(.base-button) {
+  height: 34px;
+  padding-inline: 14px;
+  font-size: 11px;
+}
+
+.catalog-page__create :deep(.base-button__content)::before {
+  content: '+';
+  margin-right: 6px;
 }
 
 .catalog-page__state {
@@ -893,17 +945,51 @@ async function reloadAfterConflict(serviceId: string) {
 .catalog-page__list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
   padding: 0;
   margin: 0;
   list-style: none;
+  border: var(--border-width-normal) solid var(--color-border-subtle);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.catalog-page__columns,
+.catalog-page__row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) 76px 98px 76px 82px;
+  align-items: center;
+  gap: 12px;
+}
+
+.catalog-page__columns {
+  min-height: 34px;
+  padding: 0 14px;
+  margin: 0;
+  border: none;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.catalog-page__row {
+  min-height: 76px;
+  padding: 12px 14px;
+  border-top: var(--border-width-normal) solid var(--color-border-subtle);
 }
 
 .catalog-page__item-heading {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+  min-width: 0;
+  gap: 12px;
+}
+
+.catalog-page__item-icon {
+  flex: 0 0 auto;
+  color: var(--color-text-secondary);
+  font-size: 22px;
+  line-height: 1;
 }
 
 .catalog-page__item-name {
@@ -916,8 +1002,15 @@ async function reloadAfterConflict(serviceId: string) {
 
 .catalog-page__item-actions {
   display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.catalog-page__item-actions :deep(.base-button) {
+  height: 30px;
+  padding-inline: 8px;
+  font-size: 10px;
 }
 
 .catalog-page__item-meta {
@@ -958,5 +1051,92 @@ async function reloadAfterConflict(serviceId: string) {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+}
+
+@media (max-width: 640px) {
+  .catalog-page {
+    gap: 12px;
+    padding: 16px 16px 28px;
+  }
+
+  .catalog-page__header {
+    padding-bottom: 10px;
+  }
+
+  .catalog-page__title {
+    font-size: 21px;
+  }
+
+  .catalog-page__subtitle {
+    font-size: 10px;
+  }
+
+  .catalog-page__create :deep(.base-button) {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    overflow: hidden;
+    font-size: 0;
+  }
+
+  .catalog-page__create :deep(.base-button__content) {
+    font-size: 0;
+  }
+
+  .catalog-page__create :deep(.base-button__content)::before {
+    margin: 0;
+    font-size: 21px;
+  }
+
+  .catalog-page__columns {
+    display: none;
+  }
+
+  .catalog-page__row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 10px;
+    min-height: 62px;
+    padding: 9px 10px;
+  }
+
+  .catalog-page__item-heading {
+    gap: 9px;
+  }
+
+  .catalog-page__item-icon {
+    font-size: 18px;
+  }
+
+  .catalog-page__item-name {
+    font-size: 11px;
+  }
+
+  .catalog-page__item-duration,
+  .catalog-page__item-price {
+    grid-column: 1;
+    margin-left: 27px;
+    font-size: 10px;
+  }
+
+  .catalog-page__item-price {
+    display: none;
+  }
+
+  .catalog-page__row > :deep(.base-badge) {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .catalog-page__item-actions {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    flex-direction: column;
+  }
+
+  .catalog-page__item-actions :deep(.base-button) {
+    height: 22px;
+    padding-inline: 5px;
+    font-size: 8px;
+  }
 }
 </style>
