@@ -167,10 +167,10 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	loginHandler := authhttpapi.NewLoginHandler(loginService, authhttpapi.DefaultCookieConfig(), trustedProxies)
 	router.Post("/api/v1/public/auth/login", loginHandler.ServeHTTP)
 
-	// HU-007: reto telefónico que desbloquea el login tras el escalamiento
-	// (DEC-062). sender es un marcador de posición (auth.LoggingPhoneCodeSender):
-	// el adaptador real de WhatsApp es DEC-066, decisión de HU-008.
-	var phoneSender auth.PhoneCodeSender = auth.NewLoggingPhoneCodeSender(logger)
+	// HU-007: reto telefónico que desbloquea el login tras el escalamiento.
+	// Usa Meta al estar completamente configurado y el marcador seguro solo
+	// para local/test sin configuración Meta.
+	phoneSender := selectPhoneChallengeSender(cfg, logger)
 	if capturePath := os.Getenv("APP_PHONE_CHALLENGE_CAPTURE_FILE"); capturePath != "" {
 		// Doble candado de entorno (aquí y en el propio nombre de la
 		// variable): la captura de código en claro en un archivo NUNCA
@@ -515,4 +515,26 @@ func selectRecoverySender(cfg config.Config, logger *slog.Logger) auth.RecoveryC
 	default:
 		return auth.NewLoggingRecoveryCodeSender(logger)
 	}
+}
+
+// selectPhoneChallengeSender decide qué [auth.PhoneCodeSender] usa HU-007.
+// Meta completo usa el mismo adaptador oficial en cualquier ambiente; su
+// ausencia total conserva el marcador únicamente en local/test. config.Load
+// rechaza Meta parcial y toda ausencia fuera de local/test antes de llegar
+// aquí, de modo que este fallback nunca oculta una configuración inválida.
+func selectPhoneChallengeSender(cfg config.Config, logger *slog.Logger) auth.PhoneCodeSender {
+	metaComplete := cfg.MetaWhatsAppPhoneNumberID != "" && cfg.MetaWhatsAppAccessToken != "" &&
+		cfg.MetaWhatsAppTemplateName != ""
+	if metaComplete {
+		return notification.NewPhoneChallengeSender(
+			notification.NewMetaWhatsAppSender(notification.MetaWhatsAppConfig{
+				APIVersion:    cfg.MetaWhatsAppAPIVersion,
+				PhoneNumberID: cfg.MetaWhatsAppPhoneNumberID,
+				AccessToken:   cfg.MetaWhatsAppAccessToken,
+				TemplateName:  cfg.MetaWhatsAppTemplateName,
+				LanguageCode:  cfg.MetaWhatsAppLanguageCode,
+			}, nil),
+		)
+	}
+	return auth.NewLoggingPhoneCodeSender(logger)
 }
