@@ -754,7 +754,11 @@ onMounted(loadColombianHolidays)
 
 <template>
   <section class="schedules-page" aria-labelledby="schedules-page-title">
-    <PageHeader title-id="schedules-page-title" title="Horarios">
+    <PageHeader
+      title-id="schedules-page-title"
+      title="Horarios"
+      subtitle="Jornada semanal, festivos y excepciones."
+    >
       <template v-if="pageStatus === 'ready' && barbers.length > 0" #actions>
         <BaseButton type="button" variant="primary" @click="openCreateDialog">
           Agregar tramo
@@ -848,9 +852,14 @@ onMounted(loadColombianHolidays)
               class="schedules-page__day"
               :aria-labelledby="`schedules-day-${day.value}-title`"
             >
-              <h2 :id="`schedules-day-${day.value}-title`" class="schedules-page__day-title">
-                {{ day.label }}
-              </h2>
+              <header class="schedules-page__day-header">
+                <h2 :id="`schedules-day-${day.value}-title`" class="schedules-page__day-title">
+                  {{ day.label }}
+                </h2>
+                <span class="schedules-page__day-count">
+                  {{ day.items.length === 1 ? '1 tramo' : `${day.items.length} tramos` }}
+                </span>
+              </header>
 
               <p v-if="day.items.length === 0" class="schedules-page__day-empty">Sin tramos.</p>
 
@@ -1791,5 +1800,313 @@ onMounted(loadColombianHolidays)
   gap: var(--space-3);
   margin-top: var(--space-5);
   flex-wrap: wrap;
+}
+</style>
+
+<style scoped>
+.schedules-page {
+  --schedules-width: 1058px;
+  gap: 12px;
+  min-height: 100%;
+  max-width: none;
+  padding: 26px 32px 48px;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+}
+
+.schedules-page > :deep(.page-header),
+.schedules-page__timezone,
+.schedules-page__state,
+.schedules-page__empty,
+.schedules-page > :deep(.base-alert),
+.schedules-page__picker,
+.schedules-page__days,
+.schedules-page__holiday-calendar,
+.schedules-page__exceptions,
+.schedules-page__holidays-reference {
+  width: min(100%, var(--schedules-width));
+  margin-inline: auto;
+}
+
+.schedules-page > :deep(.page-header) {
+  padding-bottom: 12px;
+  margin-bottom: 0;
+}
+
+.schedules-page :deep(.page-header__title) {
+  font-size: 28px;
+  line-height: 1.14;
+}
+
+.schedules-page :deep(.page-header__subtitle),
+.schedules-page__timezone {
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.schedules-page :deep(.page-header__actions .base-button) {
+  min-height: 32px;
+  padding-inline: 14px;
+  font-size: 11px;
+}
+
+.schedules-page :deep(.page-header__actions .base-button__content)::before {
+  content: '+';
+  margin-right: 6px;
+}
+
+.schedules-page__timezone {
+  margin-top: -6px;
+  text-align: right;
+}
+
+.schedules-page__picker {
+  display: grid;
+  grid-template-columns: 82px 226px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border: var(--border-width-normal) solid var(--color-border-subtle);
+  border-radius: 3px;
+}
+
+.schedules-page__label,
+.schedules-page__picker .schedules-page__label {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.schedules-page__select {
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 11px;
+  border-radius: 4px;
+}
+
+.schedules-page__days {
+  gap: 0;
+  overflow: hidden;
+  border: var(--border-width-normal) solid var(--color-border-subtle);
+  border-radius: 3px;
+}
+
+.schedules-page__day {
+  display: grid;
+  grid-template-columns: 142px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  min-height: 64px;
+  padding: 10px 18px;
+  border-bottom: var(--border-width-normal) solid var(--color-border-subtle);
+}
+
+.schedules-page__day:last-child {
+  border-bottom: none;
+}
+
+.schedules-page__day-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.schedules-page__day-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.schedules-page__day-count,
+.schedules-page__day-empty {
+  font-size: 10px;
+}
+
+.schedules-page__day-empty {
+  grid-column: 2;
+  padding: 7px 10px;
+  border: var(--border-width-normal) dashed var(--color-border-subtle);
+}
+
+.schedules-page__list {
+  gap: 0;
+}
+
+.schedules-page__day .schedules-page__list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.schedules-page__day .schedules-page__list :deep(.record-row) {
+  flex: 1 1 360px;
+  min-height: 38px;
+  padding: 0;
+  border: none;
+}
+
+.schedules-page__day .schedules-page__list :deep(.record-row__main) {
+  flex: 0 1 auto;
+}
+
+.schedules-page__day .schedules-page__list :deep(.record-row__trailing) {
+  margin-left: auto;
+}
+
+.schedules-page__item-time {
+  min-height: 28px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  border: var(--border-width-normal) solid var(--color-border-subtle);
+  border-radius: 3px;
+  background: var(--color-surface-muted);
+}
+
+.schedules-page__item-actions {
+  gap: 6px;
+}
+
+.schedules-page__item-actions :deep(.base-button) {
+  min-height: 28px;
+  padding-inline: 10px;
+  font-size: 10px;
+}
+
+.schedules-page__holiday-calendar,
+.schedules-page__exceptions,
+.schedules-page__holidays-reference {
+  padding: 14px;
+  border: var(--border-width-normal) solid var(--color-border-subtle);
+  border-radius: 3px;
+}
+
+.schedules-page__holiday-calendar,
+.schedules-page__exceptions,
+.schedules-page__holidays-reference {
+  width: min(100%, calc(var(--schedules-width) / 3 - 12px));
+}
+
+.schedules-page__holiday-calendar {
+  grid-column: 1;
+}
+
+.schedules-page__exceptions {
+  grid-column: 2;
+}
+
+.schedules-page__holidays-reference {
+  grid-column: 3;
+}
+
+.schedules-page__holiday-calendar,
+.schedules-page__exceptions,
+.schedules-page__holidays-reference {
+  margin: 0;
+}
+
+.schedules-page:has(.schedules-page__holiday-calendar) {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-content: start;
+}
+
+.schedules-page > :deep(.page-header),
+.schedules-page__timezone,
+.schedules-page__state,
+.schedules-page__empty,
+.schedules-page > :deep(.base-alert),
+.schedules-page__picker,
+.schedules-page__days {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 760px) {
+  .schedules-page {
+    display: flex;
+    gap: 12px;
+    padding: 16px 16px 28px;
+  }
+
+  .schedules-page > :deep(.page-header) {
+    padding-bottom: 8px;
+  }
+
+  .schedules-page :deep(.page-header__title) {
+    font-size: 22px;
+  }
+
+  .schedules-page :deep(.page-header__actions) {
+    width: 100%;
+  }
+
+  .schedules-page :deep(.page-header__actions .base-button) {
+    width: 100%;
+  }
+
+  .schedules-page__timezone {
+    margin-top: -8px;
+    text-align: left;
+  }
+
+  .schedules-page__picker {
+    grid-template-columns: 1fr;
+    gap: 5px;
+    padding: 0;
+    border: none;
+  }
+
+  .schedules-page__day {
+    display: block;
+    min-height: 0;
+    padding: 10px;
+  }
+
+  .schedules-page__day-header {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
+  .schedules-page__day-title {
+    font-size: 14px;
+  }
+
+  .schedules-page__day .schedules-page__list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .schedules-page__day .schedules-page__list :deep(.record-row) {
+    flex: none;
+    width: 100%;
+  }
+
+  .schedules-page__day .schedules-page__list :deep(.record-row__main) {
+    flex: 1;
+  }
+
+  .schedules-page__item-time {
+    font-size: 10px;
+  }
+
+  .schedules-page__item-actions :deep(.base-button) {
+    min-height: 26px;
+    padding-inline: 7px;
+    font-size: 9px;
+  }
+
+  .schedules-page__day-empty {
+    margin-top: 8px;
+  }
+
+  .schedules-page__holiday-calendar,
+  .schedules-page__exceptions,
+  .schedules-page__holidays-reference {
+    width: 100%;
+    margin: 0;
+  }
 }
 </style>
