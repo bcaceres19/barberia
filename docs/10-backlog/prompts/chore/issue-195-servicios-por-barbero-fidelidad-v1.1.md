@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-CHORE-195-SERVICIOS-POR-BARBERO-FIDELIDAD-v1.1"
 version: "1.1"
 kind: "chore"
-status: "in_progress"
+status: "executed"
 target_agents: ["codex"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
@@ -18,7 +18,7 @@ rules: ["RN-SER-03", "RN-SER-04", "RN-TEN-01", "RN-DAT-02"]
 decisions: ["DEC-068", "DEC-077", "DEC-079", "DEC-080"]
 acceptance_criteria: ["CA-023-01", "CA-023-02", "CA-023-03", "CA-023-04", "CA-023-05", "CA-023-06", "CA-023-07", "CA-023-08"]
 created_at: "2026-09-08"
-updated_at: "2026-09-08"
+updated_at: "2026-09-09"
 supersedes: null
 superseded_by: null
 ---
@@ -56,5 +56,5 @@ desde la rama indicada, usando la mitad derecha de
 
 ## Pull request
 
-- [PR #233](https://github.com/bcaceres19/barberia/pull/233), pendiente de
-  checks antes del squash merge autorizado.
+- Integrada mediante [PR #233](https://github.com/bcaceres19/barberia/pull/233),
+  squash `0b39cda`; issue #195 cerrado tras checks CI verdes.
