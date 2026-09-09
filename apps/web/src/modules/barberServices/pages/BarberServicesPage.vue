@@ -13,7 +13,7 @@
 // DEC-068) revierte la casilla a su estado real sin perder la selección de
 // barbero ni el resto de casillas ya marcadas.
 import { computed, ref, onMounted } from 'vue'
-import { BaseAlert, BaseButton, PageHeader, RecordRow } from '@/shared/ui'
+import { BaseAlert, BaseButton, PageHeader } from '@/shared/ui'
 import {
   assignService,
   fetchAssignments,
@@ -180,7 +180,11 @@ async function onToggleService(service: ServiceSummary, event: Event) {
 
 <template>
   <section class="barber-services-page" aria-labelledby="barber-services-page-title">
-    <PageHeader title-id="barber-services-page-title" title="Servicios por barbero" />
+    <PageHeader
+      title-id="barber-services-page-title"
+      title="Servicios por barbero"
+      subtitle="Gestiona los servicios que presta cada barbero."
+    />
 
     <div
       v-if="pageStatus === 'loading'"
@@ -261,6 +265,7 @@ async function onToggleService(service: ServiceSummary, event: Event) {
           <BaseAlert
             v-if="toggleError"
             variant="danger"
+            title="No puedes retirar la última asignación activa de este servicio"
             role="alert"
             class="barber-services-page__toggle-error"
           >
@@ -268,7 +273,7 @@ async function onToggleService(service: ServiceSummary, event: Event) {
           </BaseAlert>
 
           <ul class="barber-services-page__list" aria-label="Catálogo de servicios">
-            <RecordRow v-for="service in services" :key="service.id">
+            <li v-for="service in services" :key="service.id" class="barber-services-page__row">
               <label
                 :for="`barber-services-service-${service.id}`"
                 class="barber-services-page__item-label"
@@ -281,12 +286,24 @@ async function onToggleService(service: ServiceSummary, event: Event) {
                   :disabled="isPending(service.id)"
                   @change="onToggleService(service, $event)"
                 />
-                <span>{{ service.name }}</span>
+                <span class="barber-services-page__service-icon" aria-hidden="true">▧</span>
+                <span class="barber-services-page__service-name">{{ service.name }}</span>
               </label>
-              <template v-if="isPending(service.id)" #trailing>
-                <span class="barber-services-page__pending" aria-live="polite"> Guardando… </span>
-              </template>
-            </RecordRow>
+              <span
+                v-if="isPending(service.id)"
+                class="barber-services-page__pending"
+                aria-live="polite"
+              >
+                <span class="barber-services-page__spinner" aria-hidden="true" /> Guardando…
+              </span>
+              <span
+                v-else
+                class="barber-services-page__assignment"
+                :class="{ 'barber-services-page__assignment--assigned': isAssigned(service.id) }"
+              >
+                {{ isAssigned(service.id) ? 'Asignado' : 'No asignado' }}
+              </span>
+            </li>
           </ul>
         </fieldset>
       </template>
@@ -397,5 +414,196 @@ async function onToggleService(service: ServiceSummary, event: Event) {
 
 .barber-services-page__toggle-error {
   margin: 0;
+}
+</style>
+
+<style scoped>
+.barber-services-page {
+  --barber-services-width: 478px;
+  gap: 16px;
+  min-height: 100%;
+  max-width: none;
+  padding: 34px 32px 48px;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+}
+
+.barber-services-page > :deep(.page-header),
+.barber-services-page__state,
+.barber-services-page__empty,
+.barber-services-page > :deep(.base-alert),
+.barber-services-page__picker,
+.barber-services-page__fieldset {
+  width: min(100%, var(--barber-services-width));
+  margin-inline: auto;
+}
+
+.barber-services-page > :deep(.page-header) {
+  padding-bottom: 16px;
+  margin-bottom: 0;
+}
+
+.barber-services-page :deep(.page-header__title) {
+  font-size: 30px;
+  line-height: 1.14;
+}
+
+.barber-services-page :deep(.page-header__subtitle) {
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.barber-services-page__picker {
+  gap: 6px;
+}
+
+.barber-services-page__label {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.barber-services-page__select {
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 11px;
+  border-radius: 4px;
+}
+
+.barber-services-page__fieldset {
+  gap: 12px;
+}
+
+.barber-services-page__legend {
+  font-family: var(--font-display);
+  font-size: 17px;
+}
+
+.barber-services-page__list {
+  gap: 0;
+  overflow: hidden;
+  border: var(--border-width-normal) solid var(--color-border-subtle);
+  border-radius: 3px;
+}
+
+.barber-services-page__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 71px;
+  padding: 11px 12px;
+  border-bottom: var(--border-width-normal) solid var(--color-border-subtle);
+}
+
+.barber-services-page__row:last-child {
+  border-bottom: none;
+}
+
+.barber-services-page__checkbox {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+}
+
+.barber-services-page__item-label {
+  flex-wrap: nowrap;
+  gap: 11px;
+  min-width: 0;
+  flex: 1;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.barber-services-page__service-icon {
+  flex: 0 0 auto;
+  color: var(--color-text-secondary);
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.barber-services-page__service-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.barber-services-page__assignment,
+.barber-services-page__pending {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-family: var(--font-family-base);
+  font-size: 10px;
+  line-height: 1.2;
+  color: var(--color-text-secondary);
+  background: var(--color-surface-muted);
+}
+
+.barber-services-page__assignment--assigned {
+  color: var(--color-success-text);
+  background: var(--color-success-surface);
+}
+
+.barber-services-page__pending {
+  gap: 6px;
+  background: transparent;
+}
+
+.barber-services-page__spinner {
+  width: 11px;
+  height: 11px;
+  border: 1px solid var(--color-border-control);
+  border-top-color: transparent;
+  border-radius: 50%;
+}
+
+.barber-services-page__toggle-error {
+  margin: 0 0 4px;
+}
+
+@media (max-width: 640px) {
+  .barber-services-page {
+    gap: 12px;
+    padding: 16px 16px 28px;
+  }
+
+  .barber-services-page > :deep(.page-header) {
+    padding-bottom: 10px;
+  }
+
+  .barber-services-page :deep(.page-header__title) {
+    font-size: 21px;
+  }
+
+  .barber-services-page :deep(.page-header__subtitle) {
+    font-size: 10px;
+  }
+
+  .barber-services-page__legend {
+    font-size: 12px;
+  }
+
+  .barber-services-page__row {
+    min-height: 62px;
+    gap: 8px;
+    padding: 8px 9px;
+  }
+
+  .barber-services-page__item-label {
+    gap: 8px;
+    font-size: 11px;
+  }
+
+  .barber-services-page__service-icon {
+    display: none;
+  }
+
+  .barber-services-page__assignment,
+  .barber-services-page__pending {
+    padding: 3px 6px;
+    font-size: 8px;
+  }
 }
 </style>
