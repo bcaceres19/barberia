@@ -11,8 +11,8 @@ related_hu: ["HU-021", "HU-022", "HU-024", "HU-009", "HU-012"]
 issue: 195
 issue_url: "https://github.com/bcaceres19/barberia/issues/195"
 branch: "chore/195-servicios-por-barbero-fidelidad"
-pr: null
-pr_url: null
+pr: 233
+pr_url: "https://github.com/bcaceres19/barberia/pull/233"
 depends_on: ["Issue #194 integrado en main con squash d2c0f06", "Issue maestro #184"]
 rules: ["RN-SER-03", "RN-SER-04", "RN-TEN-01", "RN-DAT-02"]
 decisions: ["DEC-068", "DEC-077", "DEC-079", "DEC-080"]
@@ -53,3 +53,8 @@ desde la rama indicada, usando la mitad derecha de
   ser una decisión heredada del shell (#187), fuera de esta ruta.
 - Antes de integrar: formato dirigido, tipo, lint, componente, E2E mock, build,
   `git diff --check` y checks CI verdes.
+
+## Pull request
+
+- [PR #233](https://github.com/bcaceres19/barberia/pull/233), pendiente de
+  checks antes del squash merge autorizado.
