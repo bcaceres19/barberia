@@ -11,8 +11,8 @@ related_hu: ["HU-041", "HU-009", "HU-012"]
 issue: 196
 issue_url: "https://github.com/bcaceres19/barberia/issues/196"
 branch: "chore/196-horarios-fidelidad"
-pr: null
-pr_url: null
+pr: 234
+pr_url: "https://github.com/bcaceres19/barberia/pull/234"
 depends_on: ["Issue #195 integrado en main con squash 0b39cda", "Issue maestro #184"]
 rules: ["RN-DIS-06", "RN-DIS-07", "RN-BLQ-01", "RN-BLQ-02", "RN-TEN-01", "RN-DAT-02"]
 decisions: ["DEC-006", "DEC-007", "DEC-020", "DEC-077", "DEC-079", "DEC-080"]
@@ -45,3 +45,8 @@ exacta sin ampliar las operaciones reales de jornada, calendario y excepciones.
 - Verificar teclado, axe, tipo, lint, build, `git diff --check` y CI antes de
   abrir PR; la diferencia heredada entre dock móvil y sidebar del atlas queda
   aislada en el shell.
+
+## Pull request
+
+- [PR #234](https://github.com/bcaceres19/barberia/pull/234), pendiente de
+  checks antes del squash merge autorizado.
