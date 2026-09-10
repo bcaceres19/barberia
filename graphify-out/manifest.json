@@ -475,8 +475,8 @@
     "semantic_hash": ""
   },
   "docs/00-control/matriz-trazabilidad.md": {
-    "mtime": 1788872285.7979743,
-    "ast_hash": "25446ab4e230cb73cc4982d117750917",
+    "mtime": 1789065203.7843175,
+    "ast_hash": "cad07681635541a2eca14138ec3c1e16",
     "semantic_hash": ""
   },
   "docs/00-control/registro-decisiones.md": {
@@ -595,13 +595,13 @@
     "semantic_hash": ""
   },
   "docs/02-requisitos/historias-usuario.md": {
-    "mtime": 1788872802.1689928,
-    "ast_hash": "74f1a3fe66725c51a5161ad9ee60e5e7",
+    "mtime": 1789065168.4691484,
+    "ast_hash": "07909b4d11c294729aadce5f694bccb4",
     "semantic_hash": ""
   },
   "docs/10-backlog/plan-bloques.md": {
-    "mtime": 1788872209.9288876,
-    "ast_hash": "926da6039b13924f9b83d250bf7f9b0a",
+    "mtime": 1789065231.4177554,
+    "ast_hash": "1a20bf1fd16533ab2ce29edfe53c5228",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts-implementacion.md": {
@@ -805,8 +805,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/README.md": {
-    "mtime": 1789061824.7339907,
-    "ast_hash": "661234e69b2d6a91c3f129ed23246eed",
+    "mtime": 1789065244.7454028,
+    "ast_hash": "bf06a990333128de27469a4c0c3c22ee",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/TEMPLATE.md": {
@@ -6610,8 +6610,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/hu/hu-066-cancelacion-barbero.md": {
-    "mtime": 1789063191.039322,
-    "ast_hash": "480aaa6285e592370a77fd97d90fc8cd",
+    "mtime": 1789065261.884451,
+    "ast_hash": "80627a1764c46d6bfbd06bf71d486a4c",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/hu/hu-067-cierre-manual-turno.md": {
