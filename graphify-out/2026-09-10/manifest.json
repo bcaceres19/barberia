@@ -5,8 +5,8 @@
     "semantic_hash": ""
   },
   "apps/api/cmd/api/main.go": {
-    "mtime": 1788363080.342634,
-    "ast_hash": "88e6bb654e31d33fa8ec679bbbb3667d",
+    "mtime": 1789061791.1388755,
+    "ast_hash": "895b11cc0bbd47570d3b5aa13e25d039",
     "semantic_hash": ""
   },
   "apps/api/cmd/worker/main.go": {
@@ -65,8 +65,8 @@
     "semantic_hash": "e7678df9532554a00d1a7246117c1631"
   },
   "apps/api/internal/platform/config/config.go": {
-    "mtime": 1787503632.9707274,
-    "ast_hash": "ce4307dbf76acb9d3e39c2aa96a059b5",
+    "mtime": 1789061791.1388755,
+    "ast_hash": "3ed3bd779eeebe2a395b616a99286309",
     "semantic_hash": ""
   },
   "apps/api/internal/platform/database/doc.go": {
@@ -410,8 +410,8 @@
     "semantic_hash": ""
   },
   "apps/api/README.md": {
-    "mtime": 1788363080.342634,
-    "ast_hash": "e42455d4c4f65130d575d02f4c26198f",
+    "mtime": 1789061791.1388755,
+    "ast_hash": "f333807b88dacff05862182d9d935265",
     "semantic_hash": ""
   },
   "apps/web/README.md": {
@@ -645,8 +645,8 @@
     "semantic_hash": ""
   },
   "apps/api/internal/platform/config/config_test.go": {
-    "mtime": 1787503632.9707274,
-    "ast_hash": "757b146f9425e4449c1de179373b4f91",
+    "mtime": 1789061791.1388755,
+    "ast_hash": "69e76fdecacd4f66b5f31f743aa49cc4",
     "semantic_hash": ""
   },
   "apps/api/internal/platform/database/database.go": {
@@ -695,8 +695,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/BaseDialog.vue": {
-    "mtime": 1787580646.2127864,
-    "ast_hash": "a44bdbab2886cd05bc73394ca6580616",
+    "mtime": 1789061791.2044015,
+    "ast_hash": "0b4b0a1ac12a1fcaac824ca51755ffe9",
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/BaseInput.vue": {
@@ -805,8 +805,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/README.md": {
-    "mtime": 1788872550.2511756,
-    "ast_hash": "a8f5a344fbcc0cd6d1f24e4a8de61400",
+    "mtime": 1789061824.7339907,
+    "ast_hash": "661234e69b2d6a91c3f129ed23246eed",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/TEMPLATE.md": {
@@ -1520,8 +1520,8 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/auth/phone_sender.go": {
-    "mtime": 1787006768.521317,
-    "ast_hash": "80957301aa2063c24cf90ecd6e614eae",
+    "mtime": 1789061791.1388755,
+    "ast_hash": "c1f0058899878c67e686a78b2fa62423",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/auth/phone_sender_capture.go": {
@@ -2080,13 +2080,13 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/configuracion-barberia-evidencia-responsiva.spec.ts": {
-    "mtime": 1788453255.1990626,
-    "ast_hash": "c383e9fc7545d845ec1023a260fb66c9",
+    "mtime": 1789061791.1388755,
+    "ast_hash": "3d1a019890ac9d8a49097e4840b50435",
     "semantic_hash": ""
   },
   "apps/web/e2e/configuracion-barberia.spec.ts": {
-    "mtime": 1788453255.2000656,
-    "ast_hash": "21587d26a963f5a9b41b7928a7a32069",
+    "mtime": 1789061791.1388755,
+    "ast_hash": "0950e74e1ca998beccade757ac98324f",
     "semantic_hash": ""
   },
   "apps/web/src/modules/settings/api/__tests__/settingsApi.test.ts": {
@@ -2110,8 +2110,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/settings/pages/SettingsPage.vue": {
-    "mtime": 1788450278.241693,
-    "ast_hash": "aa748ed6d5f3751fdd2b1742bb8fd983",
+    "mtime": 1789061791.1986575,
+    "ast_hash": "d3eb559a630296d43741c0d43ac6538e",
     "semantic_hash": ""
   },
   "apps/web/src/modules/settings/pages/__tests__/SettingsPage.test.ts": {
@@ -2350,8 +2350,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/staff/pages/StaffPage.vue": {
-    "mtime": 1788450278.241693,
-    "ast_hash": "17cf69752511f8cdc22a462793e991b7",
+    "mtime": 1789061791.1986575,
+    "ast_hash": "7188499c6880da955dedcd84f5f1704b",
     "semantic_hash": ""
   },
   "apps/web/src/modules/staff/pages/__tests__/StaffPage.test.ts": {
@@ -2595,8 +2595,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/catalog/pages/CatalogPage.vue": {
-    "mtime": 1788450278.231432,
-    "ast_hash": "d6d7a7e6aa568aab382d707a30a21235",
+    "mtime": 1789061791.1986575,
+    "ast_hash": "31509183e1745a1ed08a797faae8f198",
     "semantic_hash": ""
   },
   "apps/web/src/modules/catalog/pages/__tests__/CatalogPage.test.ts": {
@@ -2850,8 +2850,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/barberServices/pages/BarberServicesPage.vue": {
-    "mtime": 1788450278.230918,
-    "ast_hash": "22a31fc33662e7b8f13c2e49da5cc630",
+    "mtime": 1789061791.1986575,
+    "ast_hash": "b0f0a7eaebcdd738de9f9010e08ba254",
     "semantic_hash": ""
   },
   "apps/web/src/modules/barberServices/pages/__tests__/BarberServicesPage.test.ts": {
@@ -3185,8 +3185,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/pages/SchedulesPage.vue": {
-    "mtime": 1788450278.2358706,
-    "ast_hash": "5f998248c82272dc310cd2a36a9cd09d",
+    "mtime": 1789061791.1986575,
+    "ast_hash": "f81fd8cacb304a0af7e34138d6862a60",
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/pages/__tests__/SchedulesPage.test.ts": {
@@ -4080,8 +4080,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/pages/AppointmentDetailPage.vue": {
-    "mtime": 1788550980.5585496,
-    "ast_hash": "d96cbb9b2d50959e4ee350ae5b56acc2",
+    "mtime": 1789061791.1986575,
+    "ast_hash": "6ee97beda3dc7f1ce611b03f7566e1aa",
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/pages/__tests__/AppointmentDetailPage.test.ts": {
@@ -6605,8 +6605,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/fix/issue-86-integrar-otp-whatsapp-meta-v2.md": {
-    "mtime": 1788832440.936202,
-    "ast_hash": "2d96919b496ed56f4bdc39a57aec3d31",
+    "mtime": 1789061797.8445923,
+    "ast_hash": "8bffc94fdb21b1e79d8b3903ede871c4",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/hu/hu-066-cancelacion-barbero.md": {
@@ -7917,6 +7917,381 @@
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/tablet/servicios-por-barbero/03-principal-768.png": {
     "mtime": 1788831472.4301977,
     "ast_hash": "c984ee147450714976a361b0aa4f852d",
+    "semantic_hash": ""
+  },
+  "apps/api/cmd/api/phone_sender_selection_test.go": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "408f641bab6b9ead2288ce58ecab0214",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/notification/phone_challenge_sender.go": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "d61979acd8a7ec7c94f21768f7da1c97",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/notification/phone_challenge_sender_test.go": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "e1ff8f43df71ba9a442cf4996aeaa0e4",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/agenda-detalle-fidelidad-mock.spec.ts": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "ecb030ce8992a9580c99a173478b0c3c",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/barberos-fidelidad-comparacion.mjs": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "7f7478c4b6101530ba8678f4d1fd5571",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/barberos-fidelidad-mock.spec.ts": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "029603ab388dd3e135f80c7670046007",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/configuracion-barberia-fidelidad-comparacion.mjs": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "f7a4bb2b43a46412ff82bb359f16d2eb",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/configuracion-barberia-fidelidad-mock.spec.ts": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "30983b4b39945e645f4a5f98135ad860",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/horarios-fidelidad-mock.spec.ts": {
+    "mtime": 1789061791.1986575,
+    "ast_hash": "da79d255f69cd97e7de0fb8257959577",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/servicios-fidelidad-mock.spec.ts": {
+    "mtime": 1789061791.1986575,
+    "ast_hash": "9359d35f128dacbc215b933f6dc11a35",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/servicios-por-barbero-fidelidad-mock.spec.ts": {
+    "mtime": 1789061791.1986575,
+    "ast_hash": "135b45f7a52263ef436d179c9c03023b",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/comparacion/resumen.txt": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "b0fbb93c7981387a40bd114b6cbe4a21",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/comparacion/resumen.txt": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "c94eacc9b320b2690e2f9a16d15ca819",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-191-detalle-historial-reprogramacion-fidelidad-v1.1.md": {
+    "mtime": 1789061791.2059348,
+    "ast_hash": "992ec7d5eff6766d823553a7af869352",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-192-barberos-fidelidad-v1.1.md": {
+    "mtime": 1789061791.2059348,
+    "ast_hash": "c05b2870545fd6413a3c53a6bac6e094",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-193-configuracion-barberia-fidelidad-v1.1.md": {
+    "mtime": 1789061791.2059348,
+    "ast_hash": "1aefb5ce1678e51d8c80482454df0585",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-194-servicios-fidelidad-v1.1.md": {
+    "mtime": 1789061791.2059348,
+    "ast_hash": "788fa612d0d05114a47e4ffb2c388fe4",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-195-servicios-por-barbero-fidelidad-v1.1.md": {
+    "mtime": 1789061791.2059348,
+    "ast_hash": "02cba0e4fa9e1a2426e20e104a8a0ea4",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-196-horarios-fidelidad-v1.1.md": {
+    "mtime": 1789061791.2059348,
+    "ast_hash": "86feeda22b75b70545ef06e1b9c6ba48",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/desktop/detalle-listo.png": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "12e9743a2d9ba5089c090827dc482b6b",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/desktop/reprogramar-conflicto.png": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "85e8d47b91752fcca04284e75601020b",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/mobile/detalle-listo.png": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "b15e5f72a2dbe76bee0def00ba43bb78",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/mobile/reprogramar-conflicto.png": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "ddea862d781333f5725aca7ed5cefef0",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/responsive/1280-zoom200/foco-reprogramar.png": {
+    "mtime": 1789061791.1516273,
+    "ast_hash": "d13605e73544ffe8a1047dd33dd81961",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/responsive/1280/foco-reprogramar.png": {
+    "mtime": 1789061791.1516273,
+    "ast_hash": "f41b0bb053ac3fc122f0c6a72c5dd259",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/responsive/320/foco-reprogramar.png": {
+    "mtime": 1789061791.1516273,
+    "ast_hash": "9575741788f0653e0227e550eb5689c0",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/responsive/360/foco-reprogramar.png": {
+    "mtime": 1789061791.1539106,
+    "ast_hash": "e851c31920aa91c7dead2fc395db2a51",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/responsive/768/foco-reprogramar.png": {
+    "mtime": 1789061791.1539106,
+    "ast_hash": "e1df72349be9a675ef1878cef3e757a8",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/comparacion/desktop/lista-diff.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "eadbb3ad32d933350a1ae02770790ec9",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/comparacion/desktop/lista-lado-a-lado.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "58eb72ac89c84c3c7962d77ba055b745",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/comparacion/mobile/lista-diff.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "ff4a19f86ffe489c09d5ad198eb28b90",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/comparacion/mobile/lista-lado-a-lado.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "3e6aa5d54c2d40ba5128dc37a395120a",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/desktop/alta-error.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "7c23c637d6cde33ac93e1e71dd3d9b3d",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/desktop/lista.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "56c0db5f1f6bc3214615d19c8afb1535",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/desktop/vacio.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "330634929c46fbb1241591cbdf6e8034",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/mobile/lista.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "f2384bc988ef17d9b1d24225a614b061",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/responsive/1280-zoom200/foco-agregar.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "93259af440555ca86cdda91de7e57fc1",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/responsive/1280/foco-agregar.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "16e6ceaca07d61f66cafd73581bddf78",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/responsive/320/foco-agregar.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "21a85c24be14c300bf9ec74465e406c2",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/responsive/360/foco-agregar.png": {
+    "mtime": 1789061791.1673198,
+    "ast_hash": "f19b995b0e38e8aa4efb02556ea55e7d",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/responsive/768/foco-agregar.png": {
+    "mtime": 1789061791.1673198,
+    "ast_hash": "1d1531173f3c1d4644e855ea62d0bfcf",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/comparacion/desktop/guardado-diff.png": {
+    "mtime": 1789061791.1673198,
+    "ast_hash": "ba69ef2f8af5ea8bc3584d796415dcc2",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/comparacion/desktop/guardado-lado-a-lado.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "6682ad8ade30ed5c238f11a0c2b49dbd",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/comparacion/mobile/guardado-diff.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "243fec5461985ea1cc57c243762eb101",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/comparacion/mobile/guardado-lado-a-lado.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "61d6946982dc1ac2c3153c6f1c7f2e88",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/desktop/guardado.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "d486e5631a02de121cae4ebbc0e4bc4d",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/desktop/validacion.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "4bdb575cbf7963154c5ac22d9912a679",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/mobile/guardado.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "a4780e7c46a3b5f119a890f0232208d0",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/responsive/1280-zoom200/foco-nombre.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "f86c3fbfc12230952a586b1f2a34e505",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/responsive/1280/foco-nombre.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "9cf69cd206b2620488f8e796a7ff1e84",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/responsive/320/foco-nombre.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "35cae6b43b09d56d093a5cac72674b19",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/responsive/360/foco-nombre.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "8bc3a2f94065ce99e35b5cc1162e83a7",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/responsive/768/foco-nombre.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "8ce2ae378ccb41d6e7fa8e65da489add",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/horarios/fidelidad-196/desktop/horarios.png": {
+    "mtime": 1789061791.1829617,
+    "ast_hash": "abae8db280fe7370856570f6293d889c",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/horarios/fidelidad-196/mobile/horarios.png": {
+    "mtime": 1789061791.1829617,
+    "ast_hash": "697f4585bd0dbac5ca255be7fda213a9",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/horarios/fidelidad-196/responsive/1280-zoom200/foco-agregar.png": {
+    "mtime": 1789061791.1829617,
+    "ast_hash": "8d684c17a0d1eac6a95f1ea9336ad12d",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/horarios/fidelidad-196/responsive/1280/foco-agregar.png": {
+    "mtime": 1789061791.1829617,
+    "ast_hash": "cf769d9f25de3a3af742e900484ecffd",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/horarios/fidelidad-196/responsive/320/foco-agregar.png": {
+    "mtime": 1789061791.1864772,
+    "ast_hash": "cfac342945aea86168a5187204637f70",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/horarios/fidelidad-196/responsive/360/foco-agregar.png": {
+    "mtime": 1789061791.1864772,
+    "ast_hash": "38ae95b62d6b93a22a48bd107b37fb5a",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/horarios/fidelidad-196/responsive/768/foco-agregar.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "92faee8fc0e981dba96f19c1158d70e5",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios-por-barbero/fidelidad-195/desktop/asignaciones.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "06d136dac8f888c3e587c18340d4c243",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios-por-barbero/fidelidad-195/desktop/conflicto.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "3d5aa645f3e3fbb1afffbf865e82c2a8",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios-por-barbero/fidelidad-195/mobile/asignaciones.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "819c2eac566d97592f07558f2bbd39f9",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios-por-barbero/fidelidad-195/responsive/1280-zoom200/foco-barbero.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "ca55f8def883e5406a0c6b2283441d71",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios-por-barbero/fidelidad-195/responsive/1280/foco-barbero.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "05a4f8fc216a51a6c7b07cf92fbfe3d6",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios-por-barbero/fidelidad-195/responsive/320/foco-barbero.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "76e825df77bd2c2a7202caa497f6f6b6",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios-por-barbero/fidelidad-195/responsive/360/foco-barbero.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "29dd96489140dcffcca3c4ceeb20b8ae",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios-por-barbero/fidelidad-195/responsive/768/foco-barbero.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "a1a6a1f2fd8db069ea9d9f9fd3afff01",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios/fidelidad-194/desktop/catalogo.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "0a102ce497061807c7c1c93948903436",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios/fidelidad-194/mobile/catalogo.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "c7186343499b59f4dbba12c39ec04ff4",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios/fidelidad-194/responsive/1280-zoom200/foco-agregar.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "4b446337aba59121cbd2ffe638f9503e",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios/fidelidad-194/responsive/1280/foco-agregar.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "76fe11d329c9e9863b6cb02f8816a32c",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios/fidelidad-194/responsive/320/foco-agregar.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "5582fc53301cdbe429884e1de7a389a3",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios/fidelidad-194/responsive/360/foco-agregar.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "3e120cb904a4d17d445b4f5422798669",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios/fidelidad-194/responsive/768/foco-agregar.png": {
+    "mtime": 1789061791.1986575,
+    "ast_hash": "12ee8b57d56dcb638be6d5d4fb643f1f",
     "semantic_hash": ""
   }
 }
