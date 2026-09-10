@@ -19,6 +19,8 @@ const fetchAppointmentHistoryMock = vi.hoisted(() => vi.fn())
 const fetchBarbershopTimezoneMock = vi.hoisted(() => vi.fn())
 const rescheduleAppointmentMock = vi.hoisted(() => vi.fn())
 const cancelAppointmentByBarberMock = vi.hoisted(() => vi.fn())
+const completeAppointmentMock = vi.hoisted(() => vi.fn())
+const markAppointmentNoShowMock = vi.hoisted(() => vi.fn())
 
 vi.mock('../../api/appointmentsApi', () => ({
   fetchAppointmentDetail: fetchAppointmentDetailMock,
@@ -26,6 +28,8 @@ vi.mock('../../api/appointmentsApi', () => ({
   fetchBarbershopTimezone: fetchBarbershopTimezoneMock,
   rescheduleAppointment: rescheduleAppointmentMock,
   cancelAppointmentByBarber: cancelAppointmentByBarberMock,
+  completeAppointment: completeAppointmentMock,
+  markAppointmentNoShow: markAppointmentNoShowMock,
 }))
 
 const { default: AppointmentDetailPage } = await import('../AppointmentDetailPage.vue')
@@ -96,6 +100,8 @@ beforeEach(() => {
   fetchBarbershopTimezoneMock.mockReset()
   rescheduleAppointmentMock.mockReset()
   cancelAppointmentByBarberMock.mockReset()
+  completeAppointmentMock.mockReset()
+  markAppointmentNoShowMock.mockReset()
   fetchBarbershopTimezoneMock.mockResolvedValue({ kind: 'success', timezone: 'America/Bogota' })
   fetchAppointmentHistoryMock.mockResolvedValue({
     kind: 'success',
@@ -159,6 +165,28 @@ async function openCancelDialog(wrapper: VueWrapper) {
 
 async function confirmCancel(wrapper: VueWrapper) {
   await findButtonByText(wrapper, 'Sí, cancelar turno').trigger('click')
+  await flushPromises()
+}
+
+// --- Ayudantes para el diálogo de cierre manual (HU-067, T4 manual/T7) ---
+
+async function openCompleteDialog(wrapper: VueWrapper) {
+  await findButtonByText(wrapper, 'Marcar como atendido').trigger('click')
+  await flushPromises()
+}
+
+async function openNoShowDialog(wrapper: VueWrapper) {
+  await findButtonByText(wrapper, 'Marcar que no asistió').trigger('click')
+  await flushPromises()
+}
+
+async function confirmComplete(wrapper: VueWrapper) {
+  await findButtonByText(wrapper, 'Sí, marcar como atendido').trigger('click')
+  await flushPromises()
+}
+
+async function confirmNoShow(wrapper: VueWrapper) {
+  await findButtonByText(wrapper, 'Sí, marcar que no asistió').trigger('click')
   await flushPromises()
 }
 
@@ -663,6 +691,261 @@ describe('AppointmentDetailPage', () => {
     fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
     const { wrapper } = await mountPage()
     await openCancelDialog(wrapper)
+
+    const results = await axe(wrapper.element)
+    expect(results.violations).toEqual([])
+  })
+
+  // --- Cierre manual (HU-067, T4 manual y T7) -----------------------------
+  // readyDetail.startsAt (2026-08-28) ya pasó respecto al reloj real: sirve
+  // tal cual como el caso "ya se puede cerrar" (CA-067-08), sin fixture
+  // aparte. futureDetail cubre el caso "confirmed pero aún no empieza".
+
+  const futureDetail = {
+    ...readyDetail,
+    startsAt: '2999-01-01T10:00:00Z',
+    endsAt: '2999-01-01T10:30:00Z',
+  }
+
+  it('shows "Marcar como atendido" and "Marcar que no asistió" only once startsAt has passed', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Marcar como atendido')).toBe(true)
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Marcar que no asistió')).toBe(true)
+  })
+
+  it('does not show the close actions for a confirmed appointment that has not started yet', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: futureDetail })
+    const { wrapper } = await mountPage()
+
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Marcar como atendido')).toBe(false)
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Marcar que no asistió')).toBe(false)
+  })
+
+  it('does not show the close actions for a non-confirmed appointment', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'cancelled_by_barber' },
+    })
+    const { wrapper } = await mountPage()
+
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Marcar como atendido')).toBe(false)
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Marcar que no asistió')).toBe(false)
+  })
+
+  it('opens the complete dialog with the consequence explained before confirming', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openCompleteDialog(wrapper)
+
+    expect(openDialogElement(wrapper).textContent).toContain('Juan Pérez')
+    expect(openDialogElement(wrapper).textContent).toContain('atendido')
+    expect(openDialogElement(wrapper).textContent).toContain('no se puede deshacer')
+  })
+
+  it('opens the no-show dialog with the consequence explained before confirming', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openNoShowDialog(wrapper)
+
+    expect(openDialogElement(wrapper).textContent).toContain('Juan Pérez')
+    expect(openDialogElement(wrapper).textContent).toContain('no asistió')
+  })
+
+  it('on complete success, calls the API with a fresh idempotency key, closes the dialog, and refetches the detail', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openCompleteDialog(wrapper)
+
+    completeAppointmentMock.mockResolvedValueOnce({ kind: 'success' })
+    fetchAppointmentDetailMock.mockResolvedValueOnce({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'completed' },
+    })
+    await confirmComplete(wrapper)
+
+    expect(completeAppointmentMock).toHaveBeenCalledWith('a-1', 'opaque-token', expect.any(String))
+    expect(markAppointmentNoShowMock).not.toHaveBeenCalled()
+    expect(wrapper.element.querySelector('.base-dialog--open')).toBeNull()
+    expect(fetchAppointmentDetailMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('on no-show success, calls the API with a fresh idempotency key, closes the dialog, and refetches the detail', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openNoShowDialog(wrapper)
+
+    markAppointmentNoShowMock.mockResolvedValueOnce({ kind: 'success' })
+    fetchAppointmentDetailMock.mockResolvedValueOnce({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'no_show' },
+    })
+    await confirmNoShow(wrapper)
+
+    expect(markAppointmentNoShowMock).toHaveBeenCalledWith(
+      'a-1',
+      'opaque-token',
+      expect.any(String),
+    )
+    expect(completeAppointmentMock).not.toHaveBeenCalled()
+    expect(wrapper.element.querySelector('.base-dialog--open')).toBeNull()
+    expect(fetchAppointmentDetailMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('blocks a second confirm while the first close attempt is still in flight (no double POST)', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openCompleteDialog(wrapper)
+
+    let resolveComplete: (value: unknown) => void = () => {}
+    completeAppointmentMock.mockReturnValueOnce(
+      new Promise((resolve) => (resolveComplete = resolve)),
+    )
+    await confirmComplete(wrapper)
+    await confirmComplete(wrapper)
+
+    expect(completeAppointmentMock).toHaveBeenCalledTimes(1)
+    resolveComplete({ kind: 'success' })
+    await flushPromises()
+  })
+
+  it('renews the idempotency key each time the close dialog is reopened', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+
+    await openCompleteDialog(wrapper)
+    completeAppointmentMock.mockResolvedValueOnce({ kind: 'network-error' })
+    await confirmComplete(wrapper)
+
+    await findButtonByText(wrapper, 'Volver').trigger('click')
+    await flushPromises()
+
+    await openCompleteDialog(wrapper)
+    completeAppointmentMock.mockResolvedValueOnce({ kind: 'success' })
+    fetchAppointmentDetailMock.mockResolvedValueOnce({ kind: 'success', detail: readyDetail })
+    await confirmComplete(wrapper)
+
+    const firstKey = completeAppointmentMock.mock.calls[0]![2]
+    const secondKey = completeAppointmentMock.mock.calls[1]![2]
+    expect(secondKey).not.toBe(firstKey)
+  })
+
+  it('on a version conflict, offers a reload that refetches the real detail', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openCompleteDialog(wrapper)
+
+    completeAppointmentMock.mockResolvedValueOnce({ kind: 'version-conflict' })
+    await confirmComplete(wrapper)
+
+    expect(wrapper.text()).toContain('cambió mientras lo revisabas')
+    const reload = wrapper.findAll('button').find((b) => b.text() === 'Recargar')
+    expect(reload).toBeTruthy()
+
+    fetchAppointmentDetailMock.mockResolvedValueOnce({
+      kind: 'success',
+      detail: { ...readyDetail, versionToken: 'fresh-token' },
+    })
+    await reload!.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.element.querySelector('.base-dialog--open')).toBeNull()
+    expect(fetchAppointmentDetailMock).toHaveBeenCalledTimes(2)
+  })
+
+  // CA-067-05: el resultado contrario (o cualquier otro terminal) responde
+  // el mismo invalid-state que cualquier operación sobre un turno que ya
+  // dejó de estar confirmed.
+  it('on an invalid-state conflict (opposite result or other terminal), offers a reload', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openCompleteDialog(wrapper)
+
+    completeAppointmentMock.mockResolvedValueOnce({ kind: 'invalid-state' })
+    await confirmComplete(wrapper)
+
+    expect(wrapper.text()).toContain('ya tiene un resultado registrado')
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Recargar')).toBe(true)
+  })
+
+  // CA-067-03: antes de startsAt, el servidor responde 422 (validation
+  // error) en vez de un conflicto -- distinto de cancelar/reprogramar, que
+  // no tienen esta frontera temporal.
+  it('on a validation error (turn not started yet), offers a reload with an explanatory message', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openNoShowDialog(wrapper)
+
+    markAppointmentNoShowMock.mockResolvedValueOnce({
+      kind: 'validation-error',
+      detail: 'el turno todavía no comienza; espera hasta su hora de inicio',
+    })
+    await confirmNoShow(wrapper)
+
+    expect(wrapper.text()).toContain('todavía no comienza')
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Recargar')).toBe(true)
+  })
+
+  it('on an idempotency conflict, keeps the dialog open with a recoverable message', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openCompleteDialog(wrapper)
+
+    completeAppointmentMock.mockResolvedValueOnce({ kind: 'idempotency-conflict' })
+    await confirmComplete(wrapper)
+
+    expect(wrapper.text()).toContain('No pudimos completar el intento anterior')
+    expect(wrapper.element.querySelector('.base-dialog--open')).toBeTruthy()
+  })
+
+  it('on a network error, keeps the dialog open without losing the intent', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openNoShowDialog(wrapper)
+
+    markAppointmentNoShowMock.mockResolvedValueOnce({ kind: 'network-error' })
+    await confirmNoShow(wrapper)
+
+    expect(wrapper.text()).toContain('No pudimos conectar')
+    expect(wrapper.element.querySelector('.base-dialog--open')).toBeTruthy()
+  })
+
+  it('renders a status badge distinguishable by text for completed and no_show', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'completed' },
+    })
+    const { wrapper } = await mountPage()
+
+    expect(wrapper.text()).toContain('Completado')
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Marcar como atendido')).toBe(false)
+  })
+
+  it('renders a status badge distinguishable by text for no_show', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'no_show' },
+    })
+    const { wrapper } = await mountPage()
+
+    expect(wrapper.text()).toContain('No se presentó')
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Marcar que no asistió')).toBe(false)
+  })
+
+  it('has no obvious accessibility violations with the complete dialog open', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openCompleteDialog(wrapper)
+
+    const results = await axe(wrapper.element)
+    expect(results.violations).toEqual([])
+  })
+
+  it('has no obvious accessibility violations with the no-show dialog open', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openNoShowDialog(wrapper)
 
     const results = await axe(wrapper.element)
     expect(results.violations).toEqual([])

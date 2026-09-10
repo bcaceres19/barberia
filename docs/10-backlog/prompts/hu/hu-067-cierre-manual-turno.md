@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-067-v1"
 version: "1.0"
 kind: "hu"
-status: "blocked"
+status: "in_progress"
 target_agents: ["codex", "claude"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
@@ -11,7 +11,7 @@ related_hu: ["HU-004", "HU-060", "HU-064", "HU-066", "HU-068"]
 issue: 226
 issue_url: "https://github.com/bcaceres19/barberia/issues/226"
 suggested_issue_title: "feat(booking): implementar HU-067 cierre manual de turno"
-branch: null
+branch: "feat/226-hu067-cierre-manual-turno"
 pr: null
 pr_url: null
 depends_on:
@@ -48,7 +48,7 @@ source_docs:
   - "apps/api/internal/modules/booking"
   - "apps/web/src/modules/agenda"
 created_at: "2026-09-08"
-updated_at: "2026-09-08"
+updated_at: "2026-09-10"
 supersedes: null
 superseded_by: null
 ---

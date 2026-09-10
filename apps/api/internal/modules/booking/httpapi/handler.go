@@ -528,3 +528,158 @@ func (h *CancelAppointmentByBarberHandler) ServeHTTP(w http.ResponseWriter, r *h
 		httpserver.WriteProblem(w, httpserver.Translate(result.Decision.AsError(), requestID))
 	}
 }
+
+// readClosedAppointmentBody lee y valida el cuerpo crudo compartido por T4
+// manual y T7 (HU-067): ningún campo aceptado, mismo criterio exacto que
+// CancelAppointmentByBarberHandler.ServeHTTP (comentario §2 arriba). ok=false
+// ya escribió la respuesta de error; el llamador debe retornar de inmediato.
+func readClosedAppointmentBody(w http.ResponseWriter, r *http.Request, requestID string) (body []byte, ok bool) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+			return nil, false
+		}
+		httpserver.WriteProblem(w, httpserver.Translate(apperr.Invalid("cuerpo de la solicitud ilegible"), requestID))
+		return nil, false
+	}
+	if len(body) > 0 {
+		var empty struct{}
+		dec := json.NewDecoder(bytes.NewReader(body))
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(&empty); err != nil {
+			writeUnknownFieldOrInvalidJSONProblem(w, requestID)
+			return nil, false
+		}
+		if dec.More() {
+			writeUnknownFieldOrInvalidJSONProblem(w, requestID)
+			return nil, false
+		}
+	}
+	return body, true
+}
+
+// CompleteAppointmentHandler expone
+// POST /private/appointments/{appointmentId}/complete (HU-067, T4 manual,
+// CA-067-01 a CA-067-08), protegido por el protocolo de idempotencia
+// reutilizable de HU-004 (RN-IDE-01, DEC-043) y por la precondición de
+// versión de HU-064 (cabecera If-Match). Sin cuerpo de solicitud, mismo
+// criterio que CancelAppointmentByBarberHandler.
+type CompleteAppointmentHandler struct {
+	service *booking.CompleteAppointmentService
+}
+
+// NewCompleteAppointmentHandler construye el handler de cierre como
+// atendido.
+func NewCompleteAppointmentHandler(service *booking.CompleteAppointmentService) *CompleteAppointmentHandler {
+	return &CompleteAppointmentHandler{service: service}
+}
+
+// ServeHTTP implementa http.Handler.
+func (h *CompleteAppointmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+	principal, ok := principalOrInternalError(w, r, requestID)
+	if !ok {
+		return
+	}
+
+	appointmentID := httpserver.URLParam(r, appointmentIDParam)
+
+	key, err := httpserver.IdempotencyKeyFromRequest(r)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+	versionToken := r.Header.Get(ifMatchHeader)
+	if versionToken == "" {
+		httpserver.WriteProblem(w, httpserver.Translate(
+			apperr.Invalid("falta la cabecera If-Match con el token de versión del turno"), requestID))
+		return
+	}
+
+	body, ok := readClosedAppointmentBody(w, r, requestID)
+	if !ok {
+		return
+	}
+
+	fingerprint := httpserver.IdempotencyFingerprint(r, body)
+
+	result, err := h.service.CompleteAppointment(r.Context(), principal.BarbershopID, booking.CloseAppointmentRequest{
+		AppointmentID:        appointmentID,
+		ExpectedVersionToken: versionToken,
+		ActorStaffUserID:     principal.StaffUserID,
+	}, key, fingerprint)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	switch result.Decision.Outcome {
+	case idempotency.OutcomeProceed, idempotency.OutcomeReplay:
+		httpserver.WriteStoredResponse(w, result.Response)
+	default:
+		httpserver.WriteProblem(w, httpserver.Translate(result.Decision.AsError(), requestID))
+	}
+}
+
+// MarkAppointmentNoShowHandler expone
+// POST /private/appointments/{appointmentId}/no-show (HU-067, T7,
+// CA-067-01 a CA-067-08), mismo criterio exacto que
+// CompleteAppointmentHandler.
+type MarkAppointmentNoShowHandler struct {
+	service *booking.MarkNoShowService
+}
+
+// NewMarkAppointmentNoShowHandler construye el handler de cierre como
+// inasistencia.
+func NewMarkAppointmentNoShowHandler(service *booking.MarkNoShowService) *MarkAppointmentNoShowHandler {
+	return &MarkAppointmentNoShowHandler{service: service}
+}
+
+// ServeHTTP implementa http.Handler.
+func (h *MarkAppointmentNoShowHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+	principal, ok := principalOrInternalError(w, r, requestID)
+	if !ok {
+		return
+	}
+
+	appointmentID := httpserver.URLParam(r, appointmentIDParam)
+
+	key, err := httpserver.IdempotencyKeyFromRequest(r)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+	versionToken := r.Header.Get(ifMatchHeader)
+	if versionToken == "" {
+		httpserver.WriteProblem(w, httpserver.Translate(
+			apperr.Invalid("falta la cabecera If-Match con el token de versión del turno"), requestID))
+		return
+	}
+
+	body, ok := readClosedAppointmentBody(w, r, requestID)
+	if !ok {
+		return
+	}
+
+	fingerprint := httpserver.IdempotencyFingerprint(r, body)
+
+	result, err := h.service.MarkNoShow(r.Context(), principal.BarbershopID, booking.CloseAppointmentRequest{
+		AppointmentID:        appointmentID,
+		ExpectedVersionToken: versionToken,
+		ActorStaffUserID:     principal.StaffUserID,
+	}, key, fingerprint)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	switch result.Decision.Outcome {
+	case idempotency.OutcomeProceed, idempotency.OutcomeReplay:
+		httpserver.WriteStoredResponse(w, result.Response)
+	default:
+		httpserver.WriteProblem(w, httpserver.Translate(result.Decision.AsError(), requestID))
+	}
+}

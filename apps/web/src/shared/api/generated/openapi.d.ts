@@ -856,6 +856,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/private/appointments/{appointmentId}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cerrar un turno como atendido (T4 manual)
+         * @description Cierra una cita `confirmed` cuyo `starts_at` ya pasó (HU-067, `T4` manual de `estados-citas.md`) como `completed`, insertando un único evento `appointment_completed` dentro de la misma transacción que la actualización de estado (CA-067-01). Exactamente en `starts_at` la acción ya es válida según el reloj del servidor; antes de ese instante responde `422` sin persistir nada, ni siquiera una reclamación de idempotencia que impida reintentar (CA-067-03). No cambia intervalo, snapshots, cliente, persona, contacto, nota ni barbero; el turno sigue ocupando agenda (CA-067-04). Protegida con clave de idempotencia (RN-IDE-01, DEC-043) y con la precondición `If-Match` (el `versionToken` de una lectura anterior del detalle, HU-064). Repetir el cierre sobre una cita ya `completed` es un no-op exitoso, sin duplicar el evento; intentar `no_show` sobre una cita ya `completed`, o cerrar cualquier otro estado terminal (`cancelled_by_barber`, `cancelled_by_customer`), responde `409` orientando a la futura corrección `T8` (CA-067-05). El tenant y el actor se derivan exclusivamente de `SessionCookie`; el cuerpo no acepta ningún campo.
+         */
+        post: operations["completeAppointment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/private/appointments/{appointmentId}/no-show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cerrar un turno como inasistencia (T7)
+         * @description Cierra una cita `confirmed` cuyo `starts_at` ya pasó (HU-067, `T7` de `estados-citas.md`) como `no_show`, insertando un único evento `appointment_no_show` dentro de la misma transacción que la actualización de estado (CA-067-02). Exactamente en `starts_at` la acción ya es válida según el reloj del servidor; antes de ese instante responde `422` sin persistir nada, ni siquiera una reclamación de idempotencia que impida reintentar (CA-067-03). No cambia intervalo, snapshots, cliente, persona, contacto, nota ni barbero; el turno sigue ocupando agenda (CA-067-04). Protegida con clave de idempotencia (RN-IDE-01, DEC-043) y con la precondición `If-Match` (el `versionToken` de una lectura anterior del detalle, HU-064). Repetir el cierre sobre una cita ya `no_show` es un no-op exitoso, sin duplicar el evento; intentar `completed` sobre una cita ya `no_show`, o cerrar cualquier otro estado terminal (`cancelled_by_barber`, `cancelled_by_customer`), responde `409` orientando a la futura corrección `T8` (CA-067-05). El tenant y el actor se derivan exclusivamente de `SessionCookie`; el cuerpo no acepta ningún campo.
+         */
+        post: operations["markAppointmentNoShow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2049,6 +2089,66 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        AppointmentCompletedResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            barberId: string;
+            /** Format: uuid */
+            serviceId: string;
+            /** Format: uuid */
+            customerId: string;
+            attendeeName: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** @enum {string} */
+            status: "confirmed" | "completed" | "cancelled_by_customer" | "cancelled_by_barber" | "no_show";
+            /** @enum {string} */
+            origin: "public" | "manual";
+            serviceName: string;
+            durationMinutes: number;
+            /** @example 20000.00 */
+            priceAmount: string;
+            /** @example COP */
+            currency: string;
+            customerNote: string | null;
+            /** @description Token opaco de concurrencia ya actualizado tras esta escritura: no lo decodifiques, úsalo como `If-Match` en una operación posterior. */
+            versionToken: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        AppointmentNoShowResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            barberId: string;
+            /** Format: uuid */
+            serviceId: string;
+            /** Format: uuid */
+            customerId: string;
+            attendeeName: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** @enum {string} */
+            status: "confirmed" | "completed" | "cancelled_by_customer" | "cancelled_by_barber" | "no_show";
+            /** @enum {string} */
+            origin: "public" | "manual";
+            serviceName: string;
+            durationMinutes: number;
+            /** @example 20000.00 */
+            priceAmount: string;
+            /** @example COP */
+            currency: string;
+            customerNote: string | null;
+            /** @description Token opaco de concurrencia ya actualizado tras esta escritura: no lo decodifiques, úsalo como `If-Match` en una operación posterior. */
+            versionToken: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
     };
     responses: {
         /** @description Sesión cerrada. La cookie de sesión queda limpiada en Set-Cookie. */
@@ -2816,6 +2916,36 @@ export interface components {
             };
             content: {
                 "application/json": components["schemas"]["AppointmentCancelledResponse"];
+            };
+        };
+        /** @description El turno se cerró como `completed` (o, si ya estaba `completed`, la operación fue un no-op exitoso sin nueva entrada de historial, CA-067-05). */
+        AppointmentCompleted: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["AppointmentCompletedResponse"];
+            };
+        };
+        /** @description El cuerpo es válido y la cita sigue `confirmed`, pero `startsAt` todavía no llegó según el reloj del servidor. No se persistió nada. */
+        AppointmentNotStartedProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description El turno se cerró como `no_show` (o, si ya estaba `no_show`, la operación fue un no-op exitoso sin nueva entrada de historial, CA-067-05). */
+        AppointmentNoShow: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["AppointmentNoShowResponse"];
             };
         };
     };
@@ -4237,6 +4367,94 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    completeAppointment: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Clave elegida por el cliente que identifica un intento de escritura crítica. Repetir la misma clave con el mismo contenido (método, ruta y cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo. Repetirla con contenido distinto es un conflicto: usa una clave nueva para una solicitud distinta. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                /** @description Token opaco de versión de la representación que el cliente leyó antes de esta escritura (`versionToken` de la respuesta de detalle). Si ya no coincide con la versión vigente del recurso, la operación responde `409` con `code: version-conflict`. */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                /** @description Identificador de la cita. */
+                appointmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["AppointmentCompleted"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            /** @description `appointmentId` con forma inválida, inexistente o de otra barbería (RN-TEN-01), sin distinguir la causa. */
+            404: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Tres conflictos distinguibles por `code`, nunca por `detail`: conflicto de idempotencia (misma clave con otro contenido u otra operación, `IdempotencyConflictProblem`) u operación en curso con la misma clave (`IdempotencyLockedProblem`, DEC-043); conflicto de versión (`code: version-conflict`, el `If-Match` enviado ya no coincide con la representación vigente mientras el turno sigue `confirmed`); o estado inválido (`code: invalid-state`, el turno ya tiene un resultado terminal distinto: `no_show`, `cancelled_by_barber` o `cancelled_by_customer`). Cerrar una cita ya `completed` NUNCA produce este `409`: es un `200` no-op (CA-067-05). */
+            409: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["AppointmentNotStartedProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    markAppointmentNoShow: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Clave elegida por el cliente que identifica un intento de escritura crítica. Repetir la misma clave con el mismo contenido (método, ruta y cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo. Repetirla con contenido distinto es un conflicto: usa una clave nueva para una solicitud distinta. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                /** @description Token opaco de versión de la representación que el cliente leyó antes de esta escritura (`versionToken` de la respuesta de detalle). Si ya no coincide con la versión vigente del recurso, la operación responde `409` con `code: version-conflict`. */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                /** @description Identificador de la cita. */
+                appointmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["AppointmentNoShow"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            /** @description `appointmentId` con forma inválida, inexistente o de otra barbería (RN-TEN-01), sin distinguir la causa. */
+            404: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Tres conflictos distinguibles por `code`, nunca por `detail`: conflicto de idempotencia (misma clave con otro contenido u otra operación, `IdempotencyConflictProblem`) u operación en curso con la misma clave (`IdempotencyLockedProblem`, DEC-043); conflicto de versión (`code: version-conflict`, el `If-Match` enviado ya no coincide con la representación vigente mientras el turno sigue `confirmed`); o estado inválido (`code: invalid-state`, el turno ya tiene un resultado terminal distinto: `completed`, `cancelled_by_barber` o `cancelled_by_customer`). Cerrar una cita ya `no_show` NUNCA produce este `409`: es un `200` no-op (CA-067-05). */
+            409: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["AppointmentNotStartedProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

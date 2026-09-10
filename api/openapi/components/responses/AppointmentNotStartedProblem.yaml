@@ -1,0 +1,27 @@
+# 422 de POST /private/appointments/{appointmentId}/complete y
+# .../no-show (HU-067, CA-067-03): la cita sigue `confirmed` pero su
+# `startsAt` todavía no llegó según el reloj del servidor. No se persiste
+# nada -- ni el estado, ni el historial, ni una reclamación de idempotencia
+# -- de forma que un reintento tras el instante exacto de inicio no quede
+# bloqueado por este intento prematuro.
+description: >
+  El cuerpo es válido y la cita sigue `confirmed`, pero `startsAt` todavía
+  no llegó según el reloj del servidor. No se persistió nada.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      aunNoComienza:
+        summary: El turno todavía no comienza
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: el turno todavía no comienza; espera hasta su hora de inicio
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

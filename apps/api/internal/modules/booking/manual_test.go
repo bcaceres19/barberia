@@ -73,6 +73,18 @@ func (f *fakeManualRepository) CancelByBarber(
 	panic("no usado por ManualBookingService")
 }
 
+func (f *fakeManualRepository) CompleteAppointment(
+	context.Context, string, booking.CloseAppointmentInput, idempotency.Key, idempotency.Fingerprint,
+) (booking.CompleteAppointmentResult, error) {
+	panic("no usado por ManualBookingService")
+}
+
+func (f *fakeManualRepository) MarkNoShow(
+	context.Context, string, booking.CloseAppointmentInput, idempotency.Key, idempotency.Fingerprint,
+) (booking.MarkNoShowResult, error) {
+	panic("no usado por ManualBookingService")
+}
+
 var _ booking.Repository = (*fakeManualRepository)(nil)
 
 type fakeBarberServicePort struct {

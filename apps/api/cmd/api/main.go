@@ -428,6 +428,19 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	cancelAppointmentByBarberHandler := bookinghttpapi.NewCancelAppointmentByBarberHandler(cancelAppointmentByBarberService)
 	private.Post("/appointments/{appointmentId}/cancel", cancelAppointmentByBarberHandler.ServeHTTP)
 
+	// HU-067: cierre manual como atendido (T4 manual) o no asistió (T7).
+	// Mismo criterio que CancelAppointmentByBarberService: sin
+	// colaboradores externos, solo el reloj del sistema inyectado
+	// (clock.System{}, mismo criterio que AgendaService/RescheduleService)
+	// para resolver la frontera de starts_at (CA-067-03).
+	completeAppointmentService := booking.NewCompleteAppointmentService(bookingRepo, clock.System{})
+	completeAppointmentHandler := bookinghttpapi.NewCompleteAppointmentHandler(completeAppointmentService)
+	private.Post("/appointments/{appointmentId}/complete", completeAppointmentHandler.ServeHTTP)
+
+	markAppointmentNoShowService := booking.NewMarkNoShowService(bookingRepo, clock.System{})
+	markAppointmentNoShowHandler := bookinghttpapi.NewMarkAppointmentNoShowHandler(markAppointmentNoShowService)
+	private.Post("/appointments/{appointmentId}/no-show", markAppointmentNoShowHandler.ServeHTTP)
+
 	// HU-008 (DEC-063-066): recuperación de acceso con código de un solo
 	// uso. selectRecoverySender concentra la matriz de selección (dual /
 	// correo único local-test / marcador), ver su documentación.
