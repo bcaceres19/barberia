@@ -195,7 +195,7 @@
     "semantic_hash": "e5d96637d5d70857370a7c5ec741517c"
   },
   "apps/web/src/shared/ui/index.ts": {
-    "mtime": 1788542686.0662212,
+    "mtime": 1788550980.576086,
     "ast_hash": "9a19be1dfd09a7a8df637e90cfe45009",
     "semantic_hash": ""
   },
@@ -470,12 +470,12 @@
     "semantic_hash": ""
   },
   "docs/00-control/historial-cambios.md": {
-    "mtime": 1788542815.1650634,
+    "mtime": 1788550980.5817034,
     "ast_hash": "3cc78481091681c1b959c830e6e508de",
     "semantic_hash": ""
   },
   "docs/00-control/matriz-trazabilidad.md": {
-    "mtime": 1788543013.8885782,
+    "mtime": 1788550980.5826976,
     "ast_hash": "598d25eb7200008295aa88f73b36a02c",
     "semantic_hash": ""
   },
@@ -500,7 +500,7 @@
     "semantic_hash": "f341e2a40168c458b77b9de395b6d94a"
   },
   "docs/01-producto/reglas-negocio.md": {
-    "mtime": 1788542684.6398058,
+    "mtime": 1788550980.5836859,
     "ast_hash": "d3ee77288c4c69659e65235dfb77504b",
     "semantic_hash": ""
   },
@@ -515,7 +515,7 @@
     "semantic_hash": "5808a4dbd2de9457e817a4304b86cb7e"
   },
   "docs/03-desarrollo/estandar-diseno-visual.md": {
-    "mtime": 1788542686.0854273,
+    "mtime": 1788550980.5856898,
     "ast_hash": "48d052c22e8250dea4d175f56c1a3e8b",
     "semantic_hash": ""
   },
@@ -595,7 +595,7 @@
     "semantic_hash": ""
   },
   "docs/02-requisitos/historias-usuario.md": {
-    "mtime": 1788542684.6464448,
+    "mtime": 1788550980.584692,
     "ast_hash": "35a091bc4cd8fe0e2d5022135b362ae1",
     "semantic_hash": ""
   },
@@ -625,12 +625,12 @@
     "semantic_hash": ""
   },
   "database/testdata/dos_barberias.sql": {
-    "mtime": 1788543767.9054396,
+    "mtime": 1788550980.5767076,
     "ast_hash": "ef44938e214707d29e090795423f6362",
     "semantic_hash": ""
   },
   "database/tests/hu001_aislamiento_rls.sql": {
-    "mtime": 1788543767.9054396,
+    "mtime": 1788550980.5778117,
     "ast_hash": "465ac0aeaad7d5f995bc43c644cf329e",
     "semantic_hash": ""
   },
@@ -655,7 +655,7 @@
     "semantic_hash": ""
   },
   "apps/api/internal/platform/database/database_test.go": {
-    "mtime": 1788543767.9044335,
+    "mtime": 1788550980.4360342,
     "ast_hash": "534ce81a0a57d265f5b1640b939b5645",
     "semantic_hash": ""
   },
@@ -680,12 +680,12 @@
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/BaseAlert.vue": {
-    "mtime": 1788542684.613775,
+    "mtime": 1788550980.5730844,
     "ast_hash": "53e96abc069d380eb8a5ad3c082537ec",
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/BaseBadge.vue": {
-    "mtime": 1788542686.055179,
+    "mtime": 1788550980.5740924,
     "ast_hash": "5e4d6456ab58cb32fa33f785ec35ef83",
     "semantic_hash": ""
   },
@@ -805,8 +805,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/README.md": {
-    "mtime": 1788543810.9978516,
-    "ast_hash": "867ef6543d912b63a04f0884cb007e3b",
+    "mtime": 1788554178.1186278,
+    "ast_hash": "a18f76c9b73ab2cc104120aef840130b",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/TEMPLATE.md": {
@@ -1155,7 +1155,7 @@
     "semantic_hash": ""
   },
   "apps/api/cmd/api/session_integration_test.go": {
-    "mtime": 1788543767.902452,
+    "mtime": 1788550980.4345202,
     "ast_hash": "af422635a708d24f65b23eb6dd582a91",
     "semantic_hash": ""
   },
@@ -1225,12 +1225,12 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/acceso-evidencia-responsiva.spec.ts": {
-    "mtime": 1788542684.3522143,
+    "mtime": 1788550980.4360342,
     "ast_hash": "96cb67779bc4abcf3320bd1b54b7ee98",
     "semantic_hash": ""
   },
   "apps/web/e2e/acceso.spec.ts": {
-    "mtime": 1788542684.3522143,
+    "mtime": 1788550980.4386988,
     "ast_hash": "fe5f24318851473f15f5d4b76ff9a7c0",
     "semantic_hash": ""
   },
@@ -1250,12 +1250,12 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/LoginForm.vue": {
-    "mtime": 1788542684.570171,
+    "mtime": 1788550980.5585496,
     "ast_hash": "e2e18153ee9a2d408377a239afe9ac03",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/__tests__/LoginForm.test.ts": {
-    "mtime": 1788542684.586295,
+    "mtime": 1788550980.5671015,
     "ast_hash": "f2e36bd85c49cf9f0ed8f9cb2d393c66",
     "semantic_hash": ""
   },
@@ -1275,12 +1275,12 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/pages/LoginPage.vue": {
-    "mtime": 1788542684.59933,
+    "mtime": 1788550980.5691173,
     "ast_hash": "29c09a7ab6ac143f02c5a5277965002c",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/pages/__tests__/LoginPage.test.ts": {
-    "mtime": 1788542684.6026917,
+    "mtime": 1788550980.5700915,
     "ast_hash": "b10028f3108442b4b6fc18e767d95774",
     "semantic_hash": ""
   },
@@ -1310,127 +1310,127 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280-zoom200/bloqueado.png": {
-    "mtime": 1788542684.367674,
+    "mtime": 1788550980.445739,
     "ast_hash": "327efc0f21755273b96180ad653384a7",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280-zoom200/carga.png": {
-    "mtime": 1788542684.3701959,
+    "mtime": 1788550980.445739,
     "ast_hash": "d83660be9cbd95a0dc92bff8e1966546",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280-zoom200/error.png": {
-    "mtime": 1788542684.3722546,
+    "mtime": 1788550980.4472754,
     "ast_hash": "bc2bbf4befe350d164252658a44ae540",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280-zoom200/foco.png": {
-    "mtime": 1788542684.3742816,
+    "mtime": 1788550980.4482994,
     "ast_hash": "c25d0abc9ecd707fd0674ed4e625cd7b",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280-zoom200/normal.png": {
-    "mtime": 1788542684.3742816,
+    "mtime": 1788550980.4493158,
     "ast_hash": "8e600fdafc5b2456e11cb5532ba5f874",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280/bloqueado.png": {
-    "mtime": 1788542684.3742816,
+    "mtime": 1788550980.4503155,
     "ast_hash": "847d99c6303f77e088ee5250bc67c5bf",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280/carga.png": {
-    "mtime": 1788542684.3742816,
+    "mtime": 1788550980.4513156,
     "ast_hash": "fc66bcc046001efabb0153d98e7a95cb",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280/error.png": {
-    "mtime": 1788542684.3840494,
+    "mtime": 1788550980.4523163,
     "ast_hash": "6298d8660fd491c82d3fd688749048c3",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280/foco.png": {
-    "mtime": 1788542684.3866932,
+    "mtime": 1788550980.4533162,
     "ast_hash": "27889295d215ee8fdc485b228f840a5a",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1280/normal.png": {
-    "mtime": 1788542684.39239,
+    "mtime": 1788550980.4543188,
     "ast_hash": "1c3894f0cb172423425213bf219588d2",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/320/bloqueado.png": {
-    "mtime": 1788542684.4022152,
+    "mtime": 1788550980.458907,
     "ast_hash": "351121a18f5ea929719eb7a896d49896",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/320/carga.png": {
-    "mtime": 1788542684.4086185,
+    "mtime": 1788550980.4599068,
     "ast_hash": "51fd77d6e567257379b541b17a654db0",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/320/error.png": {
-    "mtime": 1788542684.4086185,
+    "mtime": 1788550980.4599068,
     "ast_hash": "364be757c0e142ee6ed63941f9981074",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/320/foco.png": {
-    "mtime": 1788542684.4086185,
+    "mtime": 1788550980.460908,
     "ast_hash": "29259378bdbfd5f22720364011ae3c2a",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/320/normal.png": {
-    "mtime": 1788542684.4140902,
+    "mtime": 1788550980.4619927,
     "ast_hash": "bdbb9750d884e6abfa4fecff3dc1d98c",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/360/bloqueado.png": {
-    "mtime": 1788542684.416599,
+    "mtime": 1788550980.463666,
     "ast_hash": "2ea7c3e5a15e146e9117be2df2a4cd7d",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/360/carga.png": {
-    "mtime": 1788542684.4181938,
+    "mtime": 1788550980.463666,
     "ast_hash": "8e4a83de231e143877fe729bf9bf8125",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/360/error.png": {
-    "mtime": 1788542684.4181938,
+    "mtime": 1788550980.463666,
     "ast_hash": "40993d93c903808def2aa2e84271029b",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/360/foco.png": {
-    "mtime": 1788542684.4181938,
+    "mtime": 1788550980.463666,
     "ast_hash": "e52e677c601f150e497d4c02dd080172",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/360/normal.png": {
-    "mtime": 1788542684.424326,
+    "mtime": 1788550980.463666,
     "ast_hash": "22a0365391a300da07c9d4ddff3479ab",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/768/bloqueado.png": {
-    "mtime": 1788542684.4334667,
+    "mtime": 1788550980.4698613,
     "ast_hash": "bc75d935e0b526ae696fd50dce4516c0",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/768/carga.png": {
-    "mtime": 1788542684.435128,
+    "mtime": 1788550980.4698613,
     "ast_hash": "c598ed9d3d35968576dca697788ff5cc",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/768/error.png": {
-    "mtime": 1788542684.4380703,
+    "mtime": 1788550980.4698613,
     "ast_hash": "0a0de822154c6f494c03394ba3134cef",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/768/foco.png": {
-    "mtime": 1788542684.4402313,
+    "mtime": 1788550980.4698613,
     "ast_hash": "e397c196fe9a4c992dd3851e6e10138a",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/768/normal.png": {
-    "mtime": 1788542684.4424064,
+    "mtime": 1788550980.4698613,
     "ast_hash": "e050456836eb7a10256009de8d894827",
     "semantic_hash": ""
   },
@@ -1665,12 +1665,12 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/panel.spec.ts": {
-    "mtime": 1788542686.0175478,
+    "mtime": 1788550980.5486374,
     "ast_hash": "9bd2141bc8fce1084ff8015b09275b4d",
     "semantic_hash": ""
   },
   "apps/web/e2e/reto-telefonico.spec.ts": {
-    "mtime": 1788542684.5550904,
+    "mtime": 1788550980.5486374,
     "ast_hash": "31260a203ef2039f92ada829a54fedb9",
     "semantic_hash": ""
   },
@@ -1705,37 +1705,37 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/AppHeader.vue": {
-    "mtime": 1788542686.0385394,
+    "mtime": 1788550980.5585496,
     "ast_hash": "2d6bd4af0d6b6b52a023232ba1a6f500",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/AppNav.vue": {
-    "mtime": 1788542686.0411797,
+    "mtime": 1788550980.5585496,
     "ast_hash": "16f00862f4197b88822f01d96cbae1a4",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/PhoneChallengeForm.vue": {
-    "mtime": 1788542684.5711803,
+    "mtime": 1788550980.5585496,
     "ast_hash": "9dfa7dcab4cbfa628ef79dbc94d82fec",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/__tests__/AppHeader.test.ts": {
-    "mtime": 1788542686.0411797,
+    "mtime": 1788550980.565099,
     "ast_hash": "938523a295a7a03cc1b3b37df45b799d",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/__tests__/AppNav.test.ts": {
-    "mtime": 1788542686.0411797,
+    "mtime": 1788550980.5661025,
     "ast_hash": "be0b86ce6cea58e920449ac35e868adb",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/__tests__/PhoneChallengeForm.test.ts": {
-    "mtime": 1788542684.5884993,
+    "mtime": 1788550980.5671015,
     "ast_hash": "55c17a728891374d17514afff8804838",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/layouts/PrivateShell.vue": {
-    "mtime": 1788542686.0468678,
+    "mtime": 1788550980.5691173,
     "ast_hash": "b1a5f8d83369c0bf6080628ebdb5730b",
     "semantic_hash": ""
   },
@@ -1950,7 +1950,7 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/recuperacion.spec.ts": {
-    "mtime": 1788542684.5495086,
+    "mtime": 1788550980.5486374,
     "ast_hash": "2ce4da31512407b8791970667d65a1d0",
     "semantic_hash": ""
   },
@@ -1965,17 +1965,17 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/RecoveryRequestStep.vue": {
-    "mtime": 1788542684.5735857,
+    "mtime": 1788550980.563601,
     "ast_hash": "53b5a15b39a23ed7a0577513ce416c0f",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/RecoveryResetStep.vue": {
-    "mtime": 1788542684.5735857,
+    "mtime": 1788550980.5639524,
     "ast_hash": "28fb43533f4ca38cb54398ea2bd25720",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/RecoveryVerifyStep.vue": {
-    "mtime": 1788542684.5774457,
+    "mtime": 1788550980.5639524,
     "ast_hash": "d4ab04c5261c033dbaceed6b630e9091",
     "semantic_hash": ""
   },
@@ -1985,12 +1985,12 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/__tests__/RecoveryResetStep.test.ts": {
-    "mtime": 1788542684.5906942,
+    "mtime": 1788550980.5680919,
     "ast_hash": "d37e94aa742269c8a70eeb06febb5106",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/__tests__/RecoveryVerifyStep.test.ts": {
-    "mtime": 1788542684.5942266,
+    "mtime": 1788550980.5680919,
     "ast_hash": "1c2847afcb1597a67f65f1befa3795b1",
     "semantic_hash": ""
   },
@@ -2000,12 +2000,12 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/pages/RecoveryPage.vue": {
-    "mtime": 1788542684.600919,
+    "mtime": 1788550980.5700915,
     "ast_hash": "c05893b840c7a83a3ad6816dccd9f87f",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/pages/__tests__/RecoveryPage.test.ts": {
-    "mtime": 1788542684.6047094,
+    "mtime": 1788550980.5711074,
     "ast_hash": "c286fbb8ac83ead2ede254e6644ff83b",
     "semantic_hash": ""
   },
@@ -2065,7 +2065,7 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/shops/postgres/repository_test.go": {
-    "mtime": 1788543767.902452,
+    "mtime": 1788550980.43553,
     "ast_hash": "afc0076f6022928d549c060313767032",
     "semantic_hash": ""
   },
@@ -3870,8 +3870,8 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/nuevo-turno.spec.ts": {
-    "mtime": 1788453255.2830143,
-    "ast_hash": "5a33d546a040f5599134fd738e15c660",
+    "mtime": 1788554178.110447,
+    "ast_hash": "f4f033371bfe0d53a514b4ab215d5200",
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/api/appointmentsApi.ts": {
@@ -3895,13 +3895,13 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/pages/NewAppointmentPage.vue": {
-    "mtime": 1788450278.2092206,
-    "ast_hash": "d875d952bafd725d3e2ba47ec22babdb",
+    "mtime": 1788569534.2476425,
+    "ast_hash": "005b4d6b3378a6f1193d179b1f657f0e",
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/pages/__tests__/NewAppointmentPage.test.ts": {
-    "mtime": 1788362822.946977,
-    "ast_hash": "47e2f4658a4e2f53dfe464a56514ba89",
+    "mtime": 1788554178.1155074,
+    "ast_hash": "7b0ad8e5f1204d694410c5e1ea215160",
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/routes.ts": {
@@ -3955,22 +3955,22 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/agenda-diaria.spec.ts": {
-    "mtime": 1788542685.9319413,
+    "mtime": 1788550980.439696,
     "ast_hash": "b12723fc9a8d4bf49073adad7c30e946",
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/model/dailyAgenda.ts": {
-    "mtime": 1788542686.0245526,
+    "mtime": 1788550980.5568182,
     "ast_hash": "b19691cd56383834b8a9870091ffa8a9",
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/pages/DailyAgendaPage.vue": {
-    "mtime": 1788542686.0330768,
+    "mtime": 1788550980.5585496,
     "ast_hash": "36ecfa94d3dbc53dfed8a2d41d89b572",
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/pages/__tests__/DailyAgendaPage.test.ts": {
-    "mtime": 1788542686.0353186,
+    "mtime": 1788550980.5585496,
     "ast_hash": "1fe3b084e1021c472605e8d609bf0a94",
     "semantic_hash": ""
   },
@@ -4000,17 +4000,17 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/agenda-navegacion-fecha.spec.ts": {
-    "mtime": 1788542685.9329417,
+    "mtime": 1788550980.4407134,
     "ast_hash": "f0b66f8c806cd3ab547631c41896ab8a",
     "semantic_hash": ""
   },
   "apps/web/src/shared/time/__tests__/civilDate.test.ts": {
-    "mtime": 1788542686.0489173,
+    "mtime": 1788550980.572104,
     "ast_hash": "4640132689c8c81615d56713bdbe24f6",
     "semantic_hash": ""
   },
   "apps/web/src/shared/time/civilDate.ts": {
-    "mtime": 1788542686.0489173,
+    "mtime": 1788550980.572104,
     "ast_hash": "88683f15417df8702b8942e80e21ca88",
     "semantic_hash": ""
   },
@@ -4070,7 +4070,7 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/agenda-detalle-historial.spec.ts": {
-    "mtime": 1788542685.9299412,
+    "mtime": 1788550980.4386988,
     "ast_hash": "0e301caa6735e6c74ba49a2366e97531",
     "semantic_hash": ""
   },
@@ -4080,7 +4080,7 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/pages/AppointmentDetailPage.vue": {
-    "mtime": 1788542686.0295467,
+    "mtime": 1788550980.5585496,
     "ast_hash": "d96cbb9b2d50959e4ee350ae5b56acc2",
     "semantic_hash": ""
   },
@@ -4140,7 +4140,7 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/agenda-reprogramacion-turno.spec.ts": {
-    "mtime": 1788542685.9349692,
+    "mtime": 1788550980.4407134,
     "ast_hash": "4ac1dfbeac049f59e5aa74d846a1adb6",
     "semantic_hash": ""
   },
@@ -4200,17 +4200,17 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/recuperacion-evidencia-responsiva.spec.ts": {
-    "mtime": 1788542684.5495086,
+    "mtime": 1788550980.5486374,
     "ast_hash": "da86f657c816776ef8d1558f5025a987",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/AuthSplitLayout.vue": {
-    "mtime": 1788542684.564346,
+    "mtime": 1788550980.5585496,
     "ast_hash": "8cd5daf3e72d645e894f5d59e82ecaaa",
     "semantic_hash": ""
   },
   "apps/web/src/modules/auth/components/__tests__/AuthSplitLayout.test.ts": {
-    "mtime": 1788542684.5806031,
+    "mtime": 1788550980.5661025,
     "ast_hash": "d0669e9815b2e4e91a2e6eb4f2b688dc",
     "semantic_hash": ""
   },
@@ -4275,7 +4275,7 @@
     "semantic_hash": ""
   },
   "docs/03-desarrollo/especificacion-frontend-nava.md": {
-    "mtime": 1788542684.6489098,
+    "mtime": 1788550980.5856898,
     "ast_hash": "fc4258064d94110ff47654b2f7808c57",
     "semantic_hash": ""
   },
@@ -4370,12 +4370,12 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/fix/issue-pending-login-otp-destino-verificado.md": {
-    "mtime": 1788542684.6631067,
+    "mtime": 1788550980.6305046,
     "ast_hash": "b998fdc814d0a981e7f27ef706a00bc4",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/fix/issue-pending-otp-canal-unico.md": {
-    "mtime": 1788542684.665128,
+    "mtime": 1788550980.637329,
     "ast_hash": "509cd48e8fe15b4f7572639d3ab97dbb",
     "semantic_hash": ""
   },
@@ -4385,7 +4385,7 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/orchestration/otp-canal-y-destino-seguro.md": {
-    "mtime": 1788542684.6681218,
+    "mtime": 1788550980.637329,
     "ast_hash": "0210a72a41090c5663d68370d8d920fb",
     "semantic_hash": ""
   },
@@ -4430,27 +4430,27 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1440/bloqueado.png": {
-    "mtime": 1788542684.3950343,
+    "mtime": 1788550980.455323,
     "ast_hash": "aca00bb520a842b6fb5380f2c11ef66c",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1440/carga.png": {
-    "mtime": 1788542684.398237,
+    "mtime": 1788550980.455323,
     "ast_hash": "010cca414afd2c2d29c02f65d425672b",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1440/error.png": {
-    "mtime": 1788542684.4017012,
+    "mtime": 1788550980.4568534,
     "ast_hash": "764e5d453922a9a373b8b46a29b3a0a5",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1440/foco.png": {
-    "mtime": 1788542684.4022152,
+    "mtime": 1788550980.4568534,
     "ast_hash": "d0ef9d3dd93d314a1375f0c362bc466d",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/1440/normal.png": {
-    "mtime": 1788542684.4022152,
+    "mtime": 1788550980.457878,
     "ast_hash": "ab776e253580da14a86c2a9e6f7d12d0",
     "semantic_hash": ""
   },
@@ -4555,77 +4555,77 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/1280-zoom200/error.png": {
-    "mtime": 1788542684.507472,
+    "mtime": 1788550980.5265322,
     "ast_hash": "400169a104c165784da3995d17a17bc1",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/1280-zoom200/foco.png": {
-    "mtime": 1788542684.5093758,
+    "mtime": 1788550980.5265322,
     "ast_hash": "f9f01544a3520dafb5048a258bdcc62b",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/1280-zoom200/normal.png": {
-    "mtime": 1788542684.5111003,
+    "mtime": 1788550980.5265322,
     "ast_hash": "32e9a085655b703eaa14d4c0237c4102",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/1280/error.png": {
-    "mtime": 1788542684.5134883,
+    "mtime": 1788550980.5265322,
     "ast_hash": "57e877971be65c5df867c9707f052349",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/1280/foco.png": {
-    "mtime": 1788542684.5165288,
+    "mtime": 1788550980.539438,
     "ast_hash": "e72e2733bdb7b0556dc363e88627c116",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/1280/normal.png": {
-    "mtime": 1788542684.518764,
+    "mtime": 1788550980.539438,
     "ast_hash": "b21caf25b63e424234cbabcd10d796bb",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/320/error.png": {
-    "mtime": 1788542684.5279236,
+    "mtime": 1788550980.5439148,
     "ast_hash": "144a8cc0a71aef0907fc724bbe1c35fd",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/320/foco.png": {
-    "mtime": 1788542684.531036,
+    "mtime": 1788550980.5439148,
     "ast_hash": "bb4a7065a83db989dfc6c1e6dfceaf09",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/320/normal.png": {
-    "mtime": 1788542684.531036,
+    "mtime": 1788550980.5439148,
     "ast_hash": "bc526f69364cb80f0fe95e2fcca23025",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/360/error.png": {
-    "mtime": 1788542684.531036,
+    "mtime": 1788550980.5439148,
     "ast_hash": "4bcf2bd889621f3c187eb7cc43db8774",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/360/foco.png": {
-    "mtime": 1788542684.531036,
+    "mtime": 1788550980.5439148,
     "ast_hash": "1870e291e895755746dd97d3fd075015",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/360/normal.png": {
-    "mtime": 1788542684.5375137,
+    "mtime": 1788550980.5486374,
     "ast_hash": "72c84dfe98320c591d157b1420335934",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/768/error.png": {
-    "mtime": 1788542684.545897,
+    "mtime": 1788550980.5486374,
     "ast_hash": "5b769e1e024ac9d8cdeb9c538f465429",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/768/foco.png": {
-    "mtime": 1788542684.5479052,
+    "mtime": 1788550980.5486374,
     "ast_hash": "c889cd9e7957d54131303df5a6dc1e9c",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/768/normal.png": {
-    "mtime": 1788542684.5495086,
+    "mtime": 1788550980.5486374,
     "ast_hash": "a0d0765cede93fa8237544a29439cd59",
     "semantic_hash": ""
   },
@@ -5115,7 +5115,7 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-fidelidad-desviaciones.md": {
-    "mtime": 1788542684.5013046,
+    "mtime": 1788550980.5046456,
     "ast_hash": "01d624df0ab759f62577650bf11a773f",
     "semantic_hash": ""
   },
@@ -5125,7 +5125,7 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/chore/issue-pending-fidelidad-acceso-recuperacion.md": {
-    "mtime": 1788542684.6606994,
+    "mtime": 1788550980.6305046,
     "ast_hash": "53eb50181fd5d586392586abc5fbdc55",
     "semantic_hash": ""
   },
@@ -5140,818 +5140,1393 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/420/bloqueado.png": {
-    "mtime": 1788542684.425901,
+    "mtime": 1788550980.463666,
     "ast_hash": "7907435ffa3848b5ea41f65584b359a4",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/420/carga.png": {
-    "mtime": 1788542684.4279258,
+    "mtime": 1788550980.4682639,
     "ast_hash": "de94b46b652cc8cc5973a8348f872113",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/420/error.png": {
-    "mtime": 1788542684.4294906,
+    "mtime": 1788550980.468835,
     "ast_hash": "66d31a25a84b3809ea226a4bedeea662",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/420/foco.png": {
-    "mtime": 1788542684.4301503,
+    "mtime": 1788550980.468835,
     "ast_hash": "cbd2a3de21c739c219347dd62fc8332c",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/420/normal.png": {
-    "mtime": 1788542684.4312465,
+    "mtime": 1788550980.4698613,
     "ast_hash": "f46f27c6ccc19ec7c8830f333354f6e7",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/1440/error.png": {
-    "mtime": 1788542684.5207827,
+    "mtime": 1788550980.541451,
     "ast_hash": "3635a10203cfe1a4dc2240de0eca698f",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/1440/foco.png": {
-    "mtime": 1788542684.5223675,
+    "mtime": 1788550980.5430253,
     "ast_hash": "7f4a13d58bb60dceffbcaf60f339d21c",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/1440/normal.png": {
-    "mtime": 1788542684.523394,
+    "mtime": 1788550980.5439148,
     "ast_hash": "17f169efb25809eb22648825f10be7c5",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/420/error.png": {
-    "mtime": 1788542684.5398614,
+    "mtime": 1788550980.5486374,
     "ast_hash": "da3bf99f509f775ad457d93b05f71acf",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/420/foco.png": {
-    "mtime": 1788542684.541881,
+    "mtime": 1788550980.5486374,
     "ast_hash": "6686e458f48c78d5534e4de04cdb4904",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/recuperacion/420/normal.png": {
-    "mtime": 1788542684.5438898,
+    "mtime": 1788550980.5486374,
     "ast_hash": "805ffecdf8e0a7bd4d18e7fb6dd056e8",
     "semantic_hash": ""
   },
   "apps/web/e2e/auth-eventos-fidelidad.spec.ts": {
-    "mtime": 1788542684.363914,
+    "mtime": 1788550980.4447224,
     "ast_hash": "663c1174d42f6b7c764a86225fe74629",
     "semantic_hash": ""
   },
   "apps/web/e2e/mock-panel-api.mjs": {
-    "mtime": 1788542686.0154257,
-    "ast_hash": "50df23250024d39d2f4c52d61bd0ea5d",
+    "mtime": 1788568743.8256729,
+    "ast_hash": "3c48303c17e2693716ea361fc6662b02",
     "semantic_hash": ""
   },
   "apps/web/e2e/panel-fidelidad-mock.spec.ts": {
-    "mtime": 1788542686.0175478,
+    "mtime": 1788550980.5486374,
     "ast_hash": "dce4a80342d75eba8163a74114505b1b",
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/components/AgendaSkeleton.vue": {
-    "mtime": 1788542686.0218058,
+    "mtime": 1788550980.5568182,
     "ast_hash": "e7081a085a7fa4a55a1465523f667f39",
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/components/BarberSelect.vue": {
-    "mtime": 1788542686.0245526,
-    "ast_hash": "17313ec7bd51cf650c65417e89068ca4",
+    "mtime": 1788554178.1124735,
+    "ast_hash": "10b55eac27362130bfb8752fd8a1eb34",
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/BarberAvatar.vue": {
-    "mtime": 1788542686.0525618,
+    "mtime": 1788550980.5730844,
     "ast_hash": "4d25f5f37717f955b305ba2100653d79",
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/BaseSpinner.vue": {
-    "mtime": 1788542686.0562043,
+    "mtime": 1788550980.5740924,
     "ast_hash": "9b70f1ddc135a83b56a54d2feb144f73",
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/PageState.vue": {
-    "mtime": 1788542686.058189,
+    "mtime": 1788550980.5740924,
     "ast_hash": "b6996e9e41e9c7390f96d035e6856deb",
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/__tests__/BarberAvatar.test.ts": {
-    "mtime": 1788542686.0606203,
+    "mtime": 1788550980.575082,
     "ast_hash": "8e1b571f41d02fcc78b303f0f8be01c6",
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/__tests__/BaseSpinner.test.ts": {
-    "mtime": 1788542686.0606203,
+    "mtime": 1788550980.575082,
     "ast_hash": "5da6e23cbb852195ef2f310086c10d2b",
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/__tests__/PageState.test.ts": {
-    "mtime": 1788542686.0606203,
+    "mtime": 1788550980.576086,
     "ast_hash": "72a8cea27c23a883696ee9610ca3326c",
     "semantic_hash": ""
   },
   "tools/mockups/nuevo-turno-eventos/content.mjs": {
-    "mtime": 1788548585.5099044,
+    "mtime": 1788550980.703068,
     "ast_hash": "91c10a8f897704a7fe5d141437e914ba",
     "semantic_hash": ""
   },
   "tools/mockups/nuevo-turno-eventos/render.mjs": {
-    "mtime": 1788549508.8321478,
+    "mtime": 1788550980.703068,
     "ast_hash": "3c7a573a68200ba9cbf7fa6a99038184",
     "semantic_hash": ""
   },
   "tools/mockups/panel-agenda-eventos/content.mjs": {
-    "mtime": 1788542686.15724,
+    "mtime": 1788550980.7046926,
     "ast_hash": "51e95b168b9f61a6c23370bb3c3cebe2",
     "semantic_hash": ""
   },
   "tools/mockups/panel-agenda-eventos/render.mjs": {
-    "mtime": 1788542686.1598966,
+    "mtime": 1788550980.7046926,
     "ast_hash": "a30fd9362267e0783ca133b24e6a6c47",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel-fidelidad-189-desviaciones.md": {
-    "mtime": 1788542685.9365273,
+    "mtime": 1788550980.5046456,
     "ast_hash": "520c41c14c0cb8bfb8789ec59d833e82",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/verificacion-manual/README.md": {
-    "mtime": 1788542686.0154257,
+    "mtime": 1788550980.5265322,
     "ast_hash": "47ff049711f7641a6f2d6ea2f603ee70",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/README.md": {
-    "mtime": 1788549556.715291,
+    "mtime": 1788550980.586692,
     "ast_hash": "a6769ee48814a6c099f9f8cc95de10e3",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/README.md": {
-    "mtime": 1788542686.0884473,
+    "mtime": 1788550980.6112494,
     "ast_hash": "23492b1db6fa143f302167549c641a03",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/chore/issue-189-agenda-diaria-fidelidad-v2.md": {
-    "mtime": 1788542686.1481771,
+    "mtime": 1788550980.6305046,
     "ast_hash": "e80b662c08c3c62db69b3720bd75e16b",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/chore/issue-189-agenda-diaria-fidelidad-v3.md": {
-    "mtime": 1788542686.1511657,
+    "mtime": 1788550980.6305046,
     "ast_hash": "bbb5acd2228f5713e357c9b1eb3ab05d",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/chore/issue-189-agenda-diaria-fidelidad-v4.md": {
-    "mtime": 1788542686.152702,
+    "mtime": 1788550980.6305046,
     "ast_hash": "be35c113aeeccf3d3f4e5ca13822454f",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/chore/issue-189-agenda-diaria-fidelidad.md": {
-    "mtime": 1788542686.152702,
+    "mtime": 1788550980.6305046,
     "ast_hash": "5658e54c5c3318c798aff72fef201eca",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/chore/issue-190-nuevo-turno-fidelidad.md": {
-    "mtime": 1788549071.7398245,
-    "ast_hash": "4b010cd40426983627addea06eaa6426",
+    "mtime": 1788550980.6305046,
+    "ast_hash": "23f7cfb7fc6188d5baad83c258bd62ca",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/chore/issue-191-detalle-historial-reprogramacion-fidelidad.md": {
-    "mtime": 1788541769.7053034,
+    "mtime": 1788550768.3407965,
     "ast_hash": "7d903eeb484d8cfacf78a426fe000a9a",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/chore/issue-192-barberos-fidelidad.md": {
-    "mtime": 1788541769.7053034,
+    "mtime": 1788550768.3415189,
     "ast_hash": "2aad1944116762c4da617c29bd7d6c98",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/chore/issue-193-configuracion-barberia-fidelidad.md": {
-    "mtime": 1788541769.7053034,
+    "mtime": 1788550768.3415189,
     "ast_hash": "c98272d323bb3b2d6aa2f03da384811e",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/chore/issue-194-servicios-ciclo-vida-fidelidad.md": {
-    "mtime": 1788541769.7053034,
+    "mtime": 1788550768.3425238,
     "ast_hash": "7f19a3f5ad69f5cc4540c4dfa4134422",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/chore/issue-195-servicios-por-barbero-fidelidad.md": {
-    "mtime": 1788541769.7053034,
+    "mtime": 1788550768.3425238,
     "ast_hash": "acc4ad8771bcf310255913650c05b34d",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/chore/issue-196-horarios-excepciones-fidelidad.md": {
-    "mtime": 1788541769.7053034,
+    "mtime": 1788550768.3435233,
     "ast_hash": "5793ff95ec213b127f6aa8291f65e2ea",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/chore/issue-197-bloqueos-fidelidad.md": {
-    "mtime": 1788541769.7053034,
+    "mtime": 1788550768.3435233,
     "ast_hash": "83a833a38943d517c9b357fb7caa5051",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/ci/issue-158-flakiness-integracion-go.md": {
-    "mtime": 1788543767.9054396,
+    "mtime": 1788550980.6305046,
     "ast_hash": "b70c199c67b35c3b2c5dbcfea6a664f9",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/fix/issue-pending-otp-canales-configurados-v2.md": {
-    "mtime": 1788542684.6661181,
+    "mtime": 1788550980.637329,
     "ast_hash": "488ced9380934708e808331373dffdfc",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/test/issue-198-revision-integral-atlas-nava.md": {
-    "mtime": 1788541769.7053034,
+    "mtime": 1788550768.3435233,
     "ast_hash": "d0a5aabe4ad5367dcb1e514cbe76a084",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/test/issue-86-reto-whatsapp-meta.md": {
-    "mtime": 1788541769.7053034,
+    "mtime": 1788550768.3445232,
     "ast_hash": "b42349bb1280caacd3d24a4d06ce0a8f",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/test/issue-87-aislamiento-cross-tenant-http.md": {
-    "mtime": 1788541769.7053034,
+    "mtime": 1788550768.345523,
     "ast_hash": "7c99ed994ccbc718cc35609ac2ff3210",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/desktop/acceso/01-inicial.png": {
-    "mtime": 1788542684.4464393,
+    "mtime": 1788550980.4698613,
     "ast_hash": "ab776e253580da14a86c2a9e6f7d12d0",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/desktop/acceso/02-enviando.png": {
-    "mtime": 1788542684.4481044,
+    "mtime": 1788550980.4698613,
     "ast_hash": "7fa1e9b02d359d68b79b8db4109becea",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/desktop/acceso/03-validacion.png": {
-    "mtime": 1788542684.449726,
+    "mtime": 1788550980.4698613,
     "ast_hash": "369643913b120934c8bf68154c312246",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/desktop/acceso/04-credenciales-invalidas.png": {
-    "mtime": 1788542684.4519117,
+    "mtime": 1788550980.4698613,
     "ast_hash": "1e835d10bd02f347b7882b1fd49021c2",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/desktop/acceso/05-sin-conexion.png": {
-    "mtime": 1788542684.453556,
+    "mtime": 1788550980.4789662,
     "ast_hash": "cc699ace267ef7773f169264eefc5a1f",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/desktop/acceso/06-sesion-vencida.png": {
-    "mtime": 1788542684.45518,
+    "mtime": 1788550980.4789662,
     "ast_hash": "277ca48bcbf16e342bd5549175516aaf",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/desktop/acceso/08-reto-envio-whatsapp.png": {
-    "mtime": 1788542684.4568222,
+    "mtime": 1788550980.4789662,
     "ast_hash": "22bf469e3c58ea119a93ab8c28927235",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/desktop/acceso/11-reto-codigo-invalido-whatsapp.png": {
-    "mtime": 1788542684.4584136,
+    "mtime": 1788550980.4789662,
     "ast_hash": "4f350d68b7f994b244bf5422b92971ed",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/desktop/recuperacion/01-solicitud-inicial.png": {
-    "mtime": 1788542684.4616785,
+    "mtime": 1788550980.4789662,
     "ast_hash": "17f169efb25809eb22648825f10be7c5",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/desktop/recuperacion/02-solicitud-validacion.png": {
-    "mtime": 1788542684.4637823,
+    "mtime": 1788550980.4789662,
     "ast_hash": "d6f76fd234a9d8842b79313194b4b4c3",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/desktop/recuperacion/03-solicitud-enviando.png": {
-    "mtime": 1788542684.465359,
+    "mtime": 1788550980.4789662,
     "ast_hash": "4fac98b65e837fba1afc3d67785b4084",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/desktop/recuperacion/04-solicitud-sin-conexion.png": {
-    "mtime": 1788542684.4669502,
+    "mtime": 1788550980.4789662,
     "ast_hash": "0132295812ba737e031cf43628686bb3",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/desktop/recuperacion/05-verificacion-inicial.png": {
-    "mtime": 1788542684.468036,
+    "mtime": 1788550980.4789662,
     "ast_hash": "dacd17b0cc56282de48d3bca04fadee1",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/desktop/recuperacion/06-verificacion-codigo-invalido.png": {
-    "mtime": 1788542684.4696784,
+    "mtime": 1788550980.4789662,
     "ast_hash": "b6341445fee14a6c2c9cd63ae46a19a5",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/desktop/recuperacion/07-contrasena-inicial.png": {
-    "mtime": 1788542684.4712672,
+    "mtime": 1788550980.4789662,
     "ast_hash": "04185219a44096e461fe66e428b25713",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/desktop/recuperacion/08-contrasena-validacion.png": {
-    "mtime": 1788542684.472886,
+    "mtime": 1788550980.4789662,
     "ast_hash": "a284c428f3119c988638861124a5f5ba",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/desktop/recuperacion/09-contrasena-enviando.png": {
-    "mtime": 1788542684.4745152,
+    "mtime": 1788550980.49012,
     "ast_hash": "779c886b7f331e8bec7643382cd89f1f",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/desktop/recuperacion/10-contrasena-enlace-vencido.png": {
-    "mtime": 1788542684.4761553,
+    "mtime": 1788550980.49012,
     "ast_hash": "8d22fd18ff6b6220320afd74c29f3eb1",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/desktop/recuperacion/11-completado.png": {
-    "mtime": 1788542684.477775,
+    "mtime": 1788550980.4912415,
     "ast_hash": "1278202ea8ee80356ff8ad9e2bd8bb6d",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/mobile/acceso/01-inicial.png": {
-    "mtime": 1788542684.4803972,
+    "mtime": 1788550980.4912415,
     "ast_hash": "f46f27c6ccc19ec7c8830f333354f6e7",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/mobile/acceso/02-enviando.png": {
-    "mtime": 1788542684.4814603,
+    "mtime": 1788550980.4912415,
     "ast_hash": "6863a90c18b984f810e31c9425b37b1b",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/mobile/acceso/03-validacion.png": {
-    "mtime": 1788542684.4825437,
+    "mtime": 1788550980.4912415,
     "ast_hash": "628e7a2db7b1a659730dc36a5fffdc9a",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/mobile/acceso/04-credenciales-invalidas.png": {
-    "mtime": 1788542684.4841802,
+    "mtime": 1788550980.4947853,
     "ast_hash": "e5043f75027dac48ac5b0eb8a980745d",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/mobile/acceso/05-sin-conexion.png": {
-    "mtime": 1788542684.4852662,
+    "mtime": 1788550980.4956353,
     "ast_hash": "6b4d728222570cacf8a8fa169bf8c828",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/mobile/acceso/06-sesion-vencida.png": {
-    "mtime": 1788542684.4852662,
+    "mtime": 1788550980.4956353,
     "ast_hash": "949cd746eafcd8b7c6e4633f4d3e2702",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/mobile/acceso/08-reto-envio-whatsapp.png": {
-    "mtime": 1788542684.4879575,
+    "mtime": 1788550980.4956353,
     "ast_hash": "8607e29345fa244d639ccc4c925f1360",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/mobile/acceso/11-reto-codigo-invalido-whatsapp.png": {
-    "mtime": 1788542684.4879575,
+    "mtime": 1788550980.4956353,
     "ast_hash": "93f028ddaf782c66e6a0df8d55faf835",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/mobile/recuperacion/01-solicitud-inicial.png": {
-    "mtime": 1788542684.4879575,
+    "mtime": 1788550980.4956353,
     "ast_hash": "805ffecdf8e0a7bd4d18e7fb6dd056e8",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/mobile/recuperacion/02-solicitud-validacion.png": {
-    "mtime": 1788542684.4919937,
+    "mtime": 1788550980.4956353,
     "ast_hash": "d169c79702665b79754448381ec61a5d",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/mobile/recuperacion/03-solicitud-enviando.png": {
-    "mtime": 1788542684.4919937,
+    "mtime": 1788550980.4956353,
     "ast_hash": "fdccf3502e155f11f1797ab727128223",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/mobile/recuperacion/04-solicitud-sin-conexion.png": {
-    "mtime": 1788542684.494531,
+    "mtime": 1788550980.4956353,
     "ast_hash": "04af59eb1552cb4a87f39b24106e0312",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/mobile/recuperacion/05-verificacion-inicial.png": {
-    "mtime": 1788542684.495571,
+    "mtime": 1788550980.4956353,
     "ast_hash": "3ab8a7654ef1a7ab51c120252fd0730f",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/mobile/recuperacion/06-verificacion-codigo-invalido.png": {
-    "mtime": 1788542684.4971395,
+    "mtime": 1788550980.4956353,
     "ast_hash": "3a0fea1a85b24617d689453d9999516f",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/mobile/recuperacion/07-contrasena-inicial.png": {
-    "mtime": 1788542684.4982665,
+    "mtime": 1788550980.4956353,
     "ast_hash": "8cb1849183ccb4f02811b5e4cc52d169",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/mobile/recuperacion/08-contrasena-validacion.png": {
-    "mtime": 1788542684.4982665,
+    "mtime": 1788550980.4956353,
     "ast_hash": "b43bd0f864042f4f310e624c73dbed02",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/mobile/recuperacion/09-contrasena-enviando.png": {
-    "mtime": 1788542684.5013046,
+    "mtime": 1788550980.4956353,
     "ast_hash": "bef583727e80680250b96379f82ffb38",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/mobile/recuperacion/10-contrasena-enlace-vencido.png": {
-    "mtime": 1788542684.5013046,
+    "mtime": 1788550980.5046456,
     "ast_hash": "e7e87bdc347b5deb827cf4f7350103a5",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/auth-eventos/mobile/recuperacion/11-completado.png": {
-    "mtime": 1788542684.5013046,
+    "mtime": 1788550980.5046456,
     "ast_hash": "43879fb328f32b44ef62e2d0ca83de60",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/dec-081-canal-verificacion/reto-canal-hardcodeado-whatsapp.jpg": {
-    "mtime": 1788542684.5013046,
+    "mtime": 1788550980.5046456,
     "ast_hash": "5ea91d1ca3ff4b8945a40f7b69525fcc",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/desktop/01-agenda-lista.png": {
-    "mtime": 1788542685.940599,
+    "mtime": 1788550980.508296,
     "ast_hash": "5fdbf0ae31b86c16fb799738640f4a83",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/desktop/02-carga-contexto.png": {
-    "mtime": 1788542685.940599,
+    "mtime": 1788550980.5104873,
     "ast_hash": "0b1e310e3d362083c5f247f4f37f0aff",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/desktop/03-error-contexto.png": {
-    "mtime": 1788542685.9446666,
+    "mtime": 1788550980.5104873,
     "ast_hash": "92181cee312fd8f38ba6e3222d936dec",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/desktop/04-sin-barberos.png": {
-    "mtime": 1788542685.9446666,
+    "mtime": 1788550980.5104873,
     "ast_hash": "d497afbf1fa4565f515a3b5a44be7318",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/desktop/05-carga-agenda.png": {
-    "mtime": 1788542685.9490864,
+    "mtime": 1788550980.5104873,
     "ast_hash": "dcee73f68e3614a710252c7289edc9a7",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/desktop/06-actualizando-fecha.png": {
-    "mtime": 1788542685.950598,
+    "mtime": 1788550980.5104873,
     "ast_hash": "a0662aac369817113261e84e1dcae2e8",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/desktop/07-error-agenda.png": {
-    "mtime": 1788542685.950598,
+    "mtime": 1788550980.5104873,
     "ast_hash": "266ddeb33a2bde4009f9209c73a7d604",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/desktop/08-barbero-no-disponible.png": {
-    "mtime": 1788542685.9532979,
+    "mtime": 1788550980.5104873,
     "ast_hash": "01ce943c7f53746b38b3a9adc588ec98",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/desktop/09-dia-sin-turnos.png": {
-    "mtime": 1788542685.9582314,
+    "mtime": 1788550980.5104873,
     "ast_hash": "8590a9ea501ed3b9bc60bf26c7aadea1",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/desktop/10-zona-horaria-no-disponible.png": {
-    "mtime": 1788542685.9602525,
+    "mtime": 1788550980.5104873,
     "ast_hash": "7339cfbbccff693d29c1114018314f09",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/desktop/11-turno-nocturno.png": {
-    "mtime": 1788542685.9622593,
+    "mtime": 1788550980.5104873,
     "ast_hash": "55ed0f906fb3cb498d63316a0ff4200e",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/desktop/12-seleccion-barbero.png": {
-    "mtime": 1788542685.9642673,
+    "mtime": 1788550980.5104873,
     "ast_hash": "1e973ca3ec208f561a5e80078e64e3c8",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/mobile/01-agenda-lista.png": {
-    "mtime": 1788542685.9701893,
+    "mtime": 1788550980.5104873,
     "ast_hash": "5ac08e24603c7874ac3a1b8af68c7127",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/mobile/02-carga-contexto.png": {
-    "mtime": 1788542685.9744606,
+    "mtime": 1788550980.5104873,
     "ast_hash": "ceceeef4e95802fb7e1ca6831da373d5",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/mobile/03-error-contexto.png": {
-    "mtime": 1788542685.9744606,
+    "mtime": 1788550980.5104873,
     "ast_hash": "89f09223ba620b9679dd9bf4dbd11961",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/mobile/04-sin-barberos.png": {
-    "mtime": 1788542685.9802327,
+    "mtime": 1788550980.522995,
     "ast_hash": "42ca048f8e6e224d27ec2c97b5e73b18",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/mobile/05-carga-agenda.png": {
-    "mtime": 1788542685.9802327,
+    "mtime": 1788550980.5246773,
     "ast_hash": "17484713531bf7f04b2b428de11014df",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/mobile/06-actualizando-fecha.png": {
-    "mtime": 1788542685.9802327,
+    "mtime": 1788550980.5246773,
     "ast_hash": "83659cf45b082a21bc226b3cf16172c8",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/mobile/07-error-agenda.png": {
-    "mtime": 1788542685.986796,
+    "mtime": 1788550980.5265322,
     "ast_hash": "bab3429e86da1d5ef6e118e06167c0a1",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/mobile/08-barbero-no-disponible.png": {
-    "mtime": 1788542685.9905038,
+    "mtime": 1788550980.5265322,
     "ast_hash": "5949a001851f59869753cfa0aaf7e58f",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/mobile/09-dia-sin-turnos.png": {
-    "mtime": 1788542685.9923694,
+    "mtime": 1788550980.5265322,
     "ast_hash": "7ef0ea62642a197bb7faefc6fca2e34b",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/mobile/10-zona-horaria-no-disponible.png": {
-    "mtime": 1788542685.9923694,
+    "mtime": 1788550980.5265322,
     "ast_hash": "afca23c55c044868cdadaeb3e00e36b7",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/mobile/11-turno-nocturno.png": {
-    "mtime": 1788542685.9995577,
+    "mtime": 1788550980.5265322,
     "ast_hash": "ff1657ba6be39c3bb66b25cd62a800e7",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/mock/mobile/12-seleccion-barbero.png": {
-    "mtime": 1788542686.0026329,
+    "mtime": 1788550980.5265322,
     "ast_hash": "89dfe553466603a87b5ccfe2797914bc",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/verificacion-manual/01-agenda-lista-1280.png": {
-    "mtime": 1788542686.0051033,
+    "mtime": 1788550980.5265322,
     "ast_hash": "92bc442e7ba489581a5900f7b3fe8971",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/verificacion-manual/01-agenda-lista-375.png": {
-    "mtime": 1788542686.0083253,
+    "mtime": 1788550980.5265322,
     "ast_hash": "443b8e404bdac534f6cdfc1bcb1e957a",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/verificacion-manual/09-dia-sin-turnos-1280.png": {
-    "mtime": 1788542686.0083253,
+    "mtime": 1788550980.5265322,
     "ast_hash": "fda7b69ca901dd6bf9d6293183737368",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/verificacion-manual/12-seleccion-barbero-1280.png": {
-    "mtime": 1788542686.0134122,
+    "mtime": 1788550980.5265322,
     "ast_hash": "dd3f0f62d08dbe788309e5702c3b65b4",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/panel/fidelidad-189/verificacion-manual/12-seleccion-barbero-monograma-detalle.png": {
-    "mtime": 1788542686.0134122,
+    "mtime": 1788550980.5265322,
     "ast_hash": "80367974dbf7159c860d1761f1674684",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/desktop/nuevo-turno/01-carga-contexto.png": {
-    "mtime": 1788549515.9294074,
+    "mtime": 1788550980.5876813,
     "ast_hash": "556c58f3a32789af1d4819eb9cdfe366",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/desktop/nuevo-turno/02-error-contexto.png": {
-    "mtime": 1788549515.9751341,
+    "mtime": 1788550980.5886855,
     "ast_hash": "33ebe3bda53e545a4b50fc4628a49116",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/desktop/nuevo-turno/03-sin-barberos.png": {
-    "mtime": 1788549516.0291193,
+    "mtime": 1788550980.5896883,
     "ast_hash": "f065c49d1d1bbb84596d0493f12c03a7",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/desktop/nuevo-turno/04-formulario-vacio.png": {
-    "mtime": 1788549516.0832431,
+    "mtime": 1788550980.5896883,
     "ast_hash": "9bf71110e9ce83cfb9db3ae480bdab14",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/desktop/nuevo-turno/05-cargando-servicios.png": {
-    "mtime": 1788549516.135429,
+    "mtime": 1788550980.5913043,
     "ast_hash": "93ea8608fbc6e58062772e9d07e30a74",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/desktop/nuevo-turno/06-sin-servicios-asignados.png": {
-    "mtime": 1788549516.1856322,
+    "mtime": 1788550980.5924194,
     "ast_hash": "ebf86b7c9bc3baf5032713a4dba4ad76",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/desktop/nuevo-turno/07-error-servicios.png": {
-    "mtime": 1788549516.2356312,
+    "mtime": 1788550980.5934298,
     "ast_hash": "5a14914667e49624140ef2cdf1e722dc",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/desktop/nuevo-turno/08-formulario-completo.png": {
-    "mtime": 1788549516.2863114,
+    "mtime": 1788550980.594422,
     "ast_hash": "379020c338a9c9a87111dbf949b57837",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/desktop/nuevo-turno/09-error-validacion.png": {
-    "mtime": 1788549516.3357165,
+    "mtime": 1788550980.594422,
     "ast_hash": "04c086cffbe1488661e34c29e1d68686",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/desktop/nuevo-turno/10-guardando.png": {
-    "mtime": 1788549516.3862727,
+    "mtime": 1788550980.596433,
     "ast_hash": "3e78f1002668f0d9fe3521905aa6aef9",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/desktop/nuevo-turno/11-conflicto-horario.png": {
-    "mtime": 1788549516.4353304,
+    "mtime": 1788550980.596433,
     "ast_hash": "7cb4dd9c2951cd780e9d3633b1588ebd",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/desktop/nuevo-turno/12-turno-registrado.png": {
-    "mtime": 1788549516.4794192,
+    "mtime": 1788550980.597429,
     "ast_hash": "390b0a4a7174273102db754e46ace29f",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/mobile/nuevo-turno/01-carga-contexto.png": {
-    "mtime": 1788549516.664242,
+    "mtime": 1788550980.5984168,
     "ast_hash": "333f994fbe87d6f94e7b80939975de35",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/mobile/nuevo-turno/02-error-contexto.png": {
-    "mtime": 1788549516.746344,
+    "mtime": 1788550980.5984168,
     "ast_hash": "4e2d1f3b30411ef0efd088dae2cc865f",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/mobile/nuevo-turno/03-sin-barberos.png": {
-    "mtime": 1788549516.8189354,
+    "mtime": 1788550980.5984168,
     "ast_hash": "88a16f90dca10c86bd6037f60e3e4756",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/mobile/nuevo-turno/04-formulario-vacio.png": {
-    "mtime": 1788549516.9182115,
+    "mtime": 1788550980.5984168,
     "ast_hash": "25ce5e79ff153471f0dfd54ce9d51e16",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/mobile/nuevo-turno/05-cargando-servicios.png": {
-    "mtime": 1788549517.00492,
+    "mtime": 1788550980.5984168,
     "ast_hash": "e845c6158a0113ace98479337c166f00",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/mobile/nuevo-turno/06-sin-servicios-asignados.png": {
-    "mtime": 1788549517.1066408,
+    "mtime": 1788550980.5984168,
     "ast_hash": "bc5e1c46faaa0243f448382d19465bdc",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/mobile/nuevo-turno/07-error-servicios.png": {
-    "mtime": 1788549517.1914227,
+    "mtime": 1788550980.6047,
     "ast_hash": "38144c7c8e21fa3171521e6e78beeaff",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/mobile/nuevo-turno/08-formulario-completo.png": {
-    "mtime": 1788549517.2963667,
+    "mtime": 1788550980.6047,
     "ast_hash": "f06110126336dd6d6258c0c14ffca234",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/mobile/nuevo-turno/09-error-validacion.png": {
-    "mtime": 1788549517.3994,
+    "mtime": 1788550980.6047,
     "ast_hash": "9eaa3452645f45b204e6de40ecc60ecd",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/mobile/nuevo-turno/10-guardando.png": {
-    "mtime": 1788549517.4968214,
+    "mtime": 1788550980.6047,
     "ast_hash": "4af9169ba82ce8156437965fd89209ed",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/mobile/nuevo-turno/11-conflicto-horario.png": {
-    "mtime": 1788549517.5995593,
+    "mtime": 1788550980.6047,
     "ast_hash": "a1aeb53a9058c5ae16ec3506d8fa30e6",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/mobile/nuevo-turno/12-turno-registrado.png": {
-    "mtime": 1788549517.6666458,
+    "mtime": 1788550980.6112494,
     "ast_hash": "c5e0b4059fb89c3c93f6c5fcf3bdf4a2",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/desktop/panel/01-agenda-lista.png": {
-    "mtime": 1788542686.0901804,
+    "mtime": 1788550980.6128056,
     "ast_hash": "7aa99610bdc58d85e25b4b6a216bfead",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/desktop/panel/02-carga-contexto.png": {
-    "mtime": 1788542686.0901804,
+    "mtime": 1788550980.6128056,
     "ast_hash": "92a53f0f4ab47db006ba2071d1ceee59",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/desktop/panel/03-error-contexto.png": {
-    "mtime": 1788542686.1005163,
+    "mtime": 1788550980.6144142,
     "ast_hash": "932bb74f0a6d58396d5cceae784f15cf",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/desktop/panel/04-sin-barberos.png": {
-    "mtime": 1788542686.102129,
+    "mtime": 1788550980.6144142,
     "ast_hash": "a2554a4da85bf849fb4ef0e78c6d1eb0",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/desktop/panel/05-carga-agenda.png": {
-    "mtime": 1788542686.102129,
+    "mtime": 1788550980.6144142,
     "ast_hash": "07584635f1d7fa5d1fc6f2904bdcc912",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/desktop/panel/06-actualizando-fecha.png": {
-    "mtime": 1788542686.1051788,
+    "mtime": 1788550980.6144142,
     "ast_hash": "e182e631f11b7f4471565b9e5e7772b6",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/desktop/panel/07-error-agenda.png": {
-    "mtime": 1788542686.106969,
+    "mtime": 1788550980.6144142,
     "ast_hash": "0721aac8ba5be70bac51713cbf1f77be",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/desktop/panel/08-barbero-no-disponible.png": {
-    "mtime": 1788542686.1095543,
+    "mtime": 1788550980.6144142,
     "ast_hash": "5c32071df6280681ace1aac25fffc200",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/desktop/panel/09-dia-sin-turnos.png": {
-    "mtime": 1788542686.1095543,
+    "mtime": 1788550980.6144142,
     "ast_hash": "acc882faeac6dd8528e3fbc666b313c6",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/desktop/panel/10-zona-horaria-no-disponible.png": {
-    "mtime": 1788542686.111826,
+    "mtime": 1788550980.6144142,
     "ast_hash": "35a8061711cfbe0a400f1fa962915d76",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/desktop/panel/11-turno-nocturno.png": {
-    "mtime": 1788542686.111826,
+    "mtime": 1788550980.6144142,
     "ast_hash": "47137b3ffa8507802974ed10b1ac1c28",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/desktop/panel/12-seleccion-barbero.png": {
-    "mtime": 1788542686.116366,
+    "mtime": 1788550980.6144142,
     "ast_hash": "b2a16fbfc71b61c1a61847af5cd7694e",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/mobile/panel/01-agenda-lista.png": {
-    "mtime": 1788542686.119519,
+    "mtime": 1788550980.6144142,
     "ast_hash": "a189b6daa896db6cc4d2924a8f14c0da",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/mobile/panel/02-carga-contexto.png": {
-    "mtime": 1788542686.1224391,
+    "mtime": 1788550980.6231668,
     "ast_hash": "c91f79d93461adcb45e4d28db7dedbec",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/mobile/panel/03-error-contexto.png": {
-    "mtime": 1788542686.1224391,
+    "mtime": 1788550980.6231668,
     "ast_hash": "792f4b46e3175d3fd6fd129d43166b72",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/mobile/panel/04-sin-barberos.png": {
-    "mtime": 1788542686.1224391,
+    "mtime": 1788550980.6231668,
     "ast_hash": "7730b79248110eed5404cd9cf3ce54ba",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/mobile/panel/05-carga-agenda.png": {
-    "mtime": 1788542686.1289933,
+    "mtime": 1788550980.624874,
     "ast_hash": "0fe0e2a5fda7d6f017508ba6fc919034",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/mobile/panel/06-actualizando-fecha.png": {
-    "mtime": 1788542686.132521,
+    "mtime": 1788550980.624874,
     "ast_hash": "8935e40efeb34be49bc784168cd1ae27",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/mobile/panel/07-error-agenda.png": {
-    "mtime": 1788542686.134146,
+    "mtime": 1788550980.624874,
     "ast_hash": "0a4b63966a4fce14fb122d3d49943f1a",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/mobile/panel/08-barbero-no-disponible.png": {
-    "mtime": 1788542686.1351724,
+    "mtime": 1788550980.624874,
     "ast_hash": "ee1aef6e15c14bb567eb6a27444e8436",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/mobile/panel/09-dia-sin-turnos.png": {
-    "mtime": 1788542686.138421,
+    "mtime": 1788550980.624874,
     "ast_hash": "2cca9b975c0de7eddb63d6ff1eead634",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/mobile/panel/10-zona-horaria-no-disponible.png": {
-    "mtime": 1788542686.141594,
+    "mtime": 1788550980.624874,
     "ast_hash": "adcb96d54e9e233e9c5d89b7dacfb2e2",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/mobile/panel/11-turno-nocturno.png": {
-    "mtime": 1788542686.1441267,
+    "mtime": 1788550980.6305046,
     "ast_hash": "41d03d3e04791632a441feda51eb95b2",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/mobile/panel/12-seleccion-barbero.png": {
-    "mtime": 1788542686.1461637,
+    "mtime": 1788550980.6305046,
     "ast_hash": "bfef81d6f2f0d61d20460c3dd9d817d3",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/nuevo-turno-evidencia-responsiva.spec.ts": {
+    "mtime": 1788554178.1067796,
+    "ast_hash": "3f37e00dd56bf972f97bc5a2bde75087",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/nuevo-turno-fidelidad-comparacion.mjs": {
+    "mtime": 1788554178.108408,
+    "ast_hash": "3a837479cd40dcd5a2e6e2ceaf700ed6",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/nuevo-turno-fidelidad-mock.spec.ts": {
+    "mtime": 1788554178.108408,
+    "ast_hash": "3a426569abeba9beb6aaf3eb11aef6eb",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/nuevo-turno-mock.ts": {
+    "mtime": 1788554178.110447,
+    "ast_hash": "7d69ced83ad2b8ece4f2220d9c855b4a",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/agenda/components/NewAppointmentSkeleton.vue": {
+    "mtime": 1788554178.1124735,
+    "ast_hash": "22aec665f9e79af366172ce8a1cf6abd",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno-fidelidad-190-desviaciones.md": {
+    "mtime": 1788554177.988871,
+    "ast_hash": "13bcc2257e3d1bcad552ccaa8d3def6e",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/resumen.txt": {
+    "mtime": 1788554178.0372374,
+    "ast_hash": "04b0ac7c4a2d45fea9a2f4b90e911ee3",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-190-nuevo-turno-fidelidad-v2.md": {
+    "mtime": 1788554178.1191387,
+    "ast_hash": "5693a98094d398593726d4a7bbf5e300",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/01-carga-contexto-diff.png": {
+    "mtime": 1788554177.988871,
+    "ast_hash": "585fb2fb58c8a3b1ea117621d12a39e1",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/02-error-contexto-diff.png": {
+    "mtime": 1788554177.9980917,
+    "ast_hash": "6c4add245cb6ae2808758edbe228ee9a",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/03-sin-barberos-diff.png": {
+    "mtime": 1788554177.9996676,
+    "ast_hash": "b35bda14e5907d704d2fd7e49edad8e1",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/04-formulario-vacio-diff.png": {
+    "mtime": 1788554178.0013876,
+    "ast_hash": "e62ce77bcebae1a5e9495b8a5a55e966",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/05-cargando-servicios-diff.png": {
+    "mtime": 1788554178.0013876,
+    "ast_hash": "7661463aa588ad7721ca56f761ab4692",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/06-sin-servicios-asignados-diff.png": {
+    "mtime": 1788554178.0013876,
+    "ast_hash": "5034121c794f5ff062a0ad97ce6ca939",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/07-error-servicios-diff.png": {
+    "mtime": 1788554178.0046568,
+    "ast_hash": "a9d9686c415ddc37a16317eeaf95ad45",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/08-formulario-completo-diff.png": {
+    "mtime": 1788554178.0061736,
+    "ast_hash": "6066dd05348888a7f1df4078eb68cd9c",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/09-error-validacion-diff.png": {
+    "mtime": 1788554178.0081935,
+    "ast_hash": "0c88b0a997b8f86d05e392cc9ddb8c2f",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/10-guardando-diff.png": {
+    "mtime": 1788554178.0081935,
+    "ast_hash": "8306dfb46d42b659dfe28fddc03ae4bd",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/11-conflicto-horario-diff.png": {
+    "mtime": 1788554178.0081935,
+    "ast_hash": "8f56f72c22ea41f190b3d12638f546a2",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/12-turno-registrado-diff.png": {
+    "mtime": 1788554178.0081935,
+    "ast_hash": "8dbc6fa187ea5291a69dd2f05c0b4ef0",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/01-carga-contexto-diff.png": {
+    "mtime": 1788554178.0081935,
+    "ast_hash": "bf158ae4dbb1de60cffc4230912e9934",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/02-error-contexto-diff.png": {
+    "mtime": 1788554178.0154371,
+    "ast_hash": "4b5dc55e5a9d0d36a03b7bbc5cb5b7bb",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/03-sin-barberos-diff.png": {
+    "mtime": 1788554178.0166793,
+    "ast_hash": "cb94fdb86f56d3043623d7980a014340",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/04-formulario-vacio-diff.png": {
+    "mtime": 1788554178.0166793,
+    "ast_hash": "b00c77687997267eddd21a0e2d2a71d6",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/05-cargando-servicios-diff.png": {
+    "mtime": 1788554178.0207264,
+    "ast_hash": "4649b7fbe6526dcc2b27fa67ad6531dc",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/06-sin-servicios-asignados-diff.png": {
+    "mtime": 1788554178.0228066,
+    "ast_hash": "469c2ae9f5cc864af0a0285c28867c5b",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/07-error-servicios-diff.png": {
+    "mtime": 1788554178.023147,
+    "ast_hash": "6ac7897399230b1eb258f65d804430f7",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/08-formulario-completo-diff.png": {
+    "mtime": 1788554178.0251555,
+    "ast_hash": "2d81333f71ecbc74ccd0d016ff240dcd",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/09-error-validacion-diff.png": {
+    "mtime": 1788554178.0298622,
+    "ast_hash": "394d718908eff1751dd1d4237da18126",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/10-guardando-diff.png": {
+    "mtime": 1788554178.032562,
+    "ast_hash": "1c910f58776551349093b52507191930",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/11-conflicto-horario-diff.png": {
+    "mtime": 1788554178.0346951,
+    "ast_hash": "7b825b83934f26975aa39e7faed405aa",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/12-turno-registrado-diff.png": {
+    "mtime": 1788554178.0372374,
+    "ast_hash": "37fbf499d91412fe1c3f8fa1edd03c33",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/01-carga-contexto.png": {
+    "mtime": 1788554178.0397966,
+    "ast_hash": "3d522df1d6d0f2e7ccb7b7026f443452",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/02-error-contexto.png": {
+    "mtime": 1788554178.0413196,
+    "ast_hash": "13b905221088acf4809b62dbaf25cd60",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/03-sin-barberos.png": {
+    "mtime": 1788554178.0413196,
+    "ast_hash": "cebff6db6a44145bde17b642ac4410a2",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/04-formulario-vacio.png": {
+    "mtime": 1788554178.0439756,
+    "ast_hash": "a94b99567bd9801e3c698939c0150fca",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/05-cargando-servicios.png": {
+    "mtime": 1788554178.0439756,
+    "ast_hash": "6d58482ec4e8fd28bd716e6b8a89777e",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/06-sin-servicios-asignados.png": {
+    "mtime": 1788554178.0456455,
+    "ast_hash": "ed5cdd7cae1923acc6146dee336f6848",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/07-error-servicios.png": {
+    "mtime": 1788554178.048048,
+    "ast_hash": "673e293543a3a42d0925cd6fe5aa8134",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/08-formulario-completo.png": {
+    "mtime": 1788554178.0493531,
+    "ast_hash": "6020895cc89b9a0d253e85952971137d",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/09-error-validacion.png": {
+    "mtime": 1788554178.0506577,
+    "ast_hash": "1b75f817d197ba740d3e9814ccc3f14a",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/10-guardando.png": {
+    "mtime": 1788554178.052285,
+    "ast_hash": "ee8d772006684b69836002f76b1fd2c6",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/11-conflicto-horario.png": {
+    "mtime": 1788554178.0538757,
+    "ast_hash": "44c1da51a64646cbcca0825a511be9c2",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/12-turno-registrado.png": {
+    "mtime": 1788554178.0554,
+    "ast_hash": "d22c5f90b64f90181e1adb506d7c7da1",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/01-carga-contexto.png": {
+    "mtime": 1788554178.0570135,
+    "ast_hash": "7f5521f7a6a363b355ac301da8614239",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/02-error-contexto.png": {
+    "mtime": 1788554178.058023,
+    "ast_hash": "0362439b4b374084361c5cae91f07eaf",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/03-sin-barberos.png": {
+    "mtime": 1788554178.0600233,
+    "ast_hash": "09ad954970fedd2a8cd0281c7fd409d3",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/04-formulario-vacio.png": {
+    "mtime": 1788554178.0610232,
+    "ast_hash": "c4a6411c8349fa45b7e72119b14f772d",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/05-cargando-servicios.png": {
+    "mtime": 1788554178.0640213,
+    "ast_hash": "c2477dd57fa29837bfd12a5c7f3ddc06",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/06-sin-servicios-asignados.png": {
+    "mtime": 1788554178.0657969,
+    "ast_hash": "07087f8dcbddbd3214ec8c2913737269",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/07-error-servicios.png": {
+    "mtime": 1788554178.0683217,
+    "ast_hash": "05e03f1cf1907fa9db138af5f835cbaa",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/08-formulario-completo.png": {
+    "mtime": 1788554178.0703204,
+    "ast_hash": "1390a89cc37f86d50a1e0aff9af0079b",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/09-error-validacion.png": {
+    "mtime": 1788554178.0723226,
+    "ast_hash": "783a3614fedb3f0092f2834a3c1d08eb",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/10-guardando.png": {
+    "mtime": 1788554178.0751162,
+    "ast_hash": "544bce15581bab48a3c5af89fbfd13bf",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/11-conflicto-horario.png": {
+    "mtime": 1788554178.0772097,
+    "ast_hash": "07381bb302c0818f90b7bb77ac11b46e",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/12-turno-registrado.png": {
+    "mtime": 1788554178.0782099,
+    "ast_hash": "8f015fc67ae4ed15a070f8f63aba90c0",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/1280-zoom200/foco-barbero.png": {
+    "mtime": 1788554178.0802107,
+    "ast_hash": "f1794c0cf8c6e6d5aaa8cea723aa5ade",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/1280-zoom200/foco-cta.png": {
+    "mtime": 1788554178.0812101,
+    "ast_hash": "5f3aea972df1e5bae3c8eb1830de58aa",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/1280-zoom200/formulario.png": {
+    "mtime": 1788554178.082443,
+    "ast_hash": "d45d6bc94beeb5beaca884f7d468d79d",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/1280-zoom200/listbox-barbero.png": {
+    "mtime": 1788554178.082443,
+    "ast_hash": "ffe5254c424ec8ff908f6ffab7952407",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/1280/foco-barbero.png": {
+    "mtime": 1788554178.082443,
+    "ast_hash": "c5c371517d12be5e7ce403a551ce55a1",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/1280/foco-cta.png": {
+    "mtime": 1788554178.082443,
+    "ast_hash": "ec185b3af94128b4fe05a5da9393455c",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/1280/formulario.png": {
+    "mtime": 1788554178.0868354,
+    "ast_hash": "cd1beea13e015fbd50dbe2774c3647d7",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/1280/listbox-barbero.png": {
+    "mtime": 1788554178.089346,
+    "ast_hash": "b081a6e965decb7c74a1bd6912df2769",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/320/conflicto.png": {
+    "mtime": 1788554178.090657,
+    "ast_hash": "1072f23874eaf79022eafc34543457ba",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/320/foco-barbero.png": {
+    "mtime": 1788554178.090657,
+    "ast_hash": "47a8091581ce5eebaa78162c6e7cb124",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/320/foco-cta.png": {
+    "mtime": 1788554178.090657,
+    "ast_hash": "3089f60b2576aff83dd57f87c3305c38",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/320/formulario.png": {
+    "mtime": 1788554178.0945787,
+    "ast_hash": "c208079adb0493c40dcb0bfd587f80ea",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/320/listbox-barbero.png": {
+    "mtime": 1788554178.0945787,
+    "ast_hash": "74ac830addc0d379c28545ed7458a574",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/360/foco-barbero.png": {
+    "mtime": 1788554178.0964503,
+    "ast_hash": "3e09ccbe4e0764df2c7b2db68b64da60",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/360/foco-cta.png": {
+    "mtime": 1788554178.0964503,
+    "ast_hash": "4ba55adce432e2ab66147552c1aa8453",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/360/formulario.png": {
+    "mtime": 1788554178.0981903,
+    "ast_hash": "4dda29bd4121f017ce0f29c8a3314811",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/360/listbox-barbero.png": {
+    "mtime": 1788554178.0987008,
+    "ast_hash": "1ebd9a3c12df0c3d44d81400d3b3e338",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/768/foco-barbero.png": {
+    "mtime": 1788554178.0987008,
+    "ast_hash": "75a3ef2f9fb74c4143c2cee865795769",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/768/foco-cta.png": {
+    "mtime": 1788554178.0987008,
+    "ast_hash": "c2214eb09f6bdfa55812a75f9f967173",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/768/formulario.png": {
+    "mtime": 1788554178.1037033,
+    "ast_hash": "1db729b82603e6af8c9244b8ae19a9e7",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/768/listbox-barbero.png": {
+    "mtime": 1788554178.1052568,
+    "ast_hash": "6d247d6844ca04a963188de277277d7a",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/reduced-motion/esqueleto.png": {
+    "mtime": 1788554178.1067796,
+    "ast_hash": "52c692ee21c99421b9589178cad3c462",
+    "semantic_hash": ""
+  },
+  "tools/mockups/detalle-turno-eventos/content.mjs": {
+    "mtime": 1788571356.36749,
+    "ast_hash": "0e2475f00e9af1f6c4bea345736f730b",
+    "semantic_hash": ""
+  },
+  "tools/mockups/detalle-turno-eventos/render.mjs": {
+    "mtime": 1788571472.3098752,
+    "ast_hash": "9354d79a06956b4ad3068b320be8ef42",
+    "semantic_hash": ""
+  },
+  "apps/web/src/assets/fonts/instrument-sans-latin-400-700.b64.txt": {
+    "mtime": 1788570069.6070263,
+    "ast_hash": "95512656298b5c2779c144c4f0fa656d",
+    "semantic_hash": ""
+  },
+  "apps/web/src/assets/fonts/instrument-serif-latin-400.b64.txt": {
+    "mtime": 1788570069.5965722,
+    "ast_hash": "f6a4f05f68028a93c8805fb04e823f7d",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/README.md": {
+    "mtime": 1788571611.6255414,
+    "ast_hash": "3bb98e341f93fcc8b2824273ff25bf0b",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/01-carga-detalle.png": {
+    "mtime": 1788571477.8221943,
+    "ast_hash": "3939cdb5df366e72e56c4bfccbf2457e",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/02-turno-no-disponible.png": {
+    "mtime": 1788571477.8789473,
+    "ast_hash": "72b78b570c835bd15e9b93292a78d63f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/03-error-detalle.png": {
+    "mtime": 1788571477.9278126,
+    "ast_hash": "fcd2f920ee2a14a0ce401008a38a9b60",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/04-detalle-confirmado.png": {
+    "mtime": 1788571478.0163684,
+    "ast_hash": "b66f0a2c112e7735d39c2397b618afbf",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/05-historial-cargando.png": {
+    "mtime": 1788571478.077274,
+    "ast_hash": "a048e7e99e3c8d95209286f718ad6018",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/06-historial-vacio.png": {
+    "mtime": 1788571478.1847448,
+    "ast_hash": "7732bbc5a25b717579771687a0a882e9",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/07-error-historial.png": {
+    "mtime": 1788571478.2351553,
+    "ast_hash": "8c4b464264d18990db02d083eb1867ed",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/08-historial-paginado.png": {
+    "mtime": 1788571478.3491342,
+    "ast_hash": "109437bc7421d5750c0a0107c7bbfd79",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/09-turno-completado.png": {
+    "mtime": 1788571478.4337244,
+    "ast_hash": "6a5acc2a686c448a9d274c92326f7ba7",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/10-turno-cancelado.png": {
+    "mtime": 1788571478.4946778,
+    "ast_hash": "dac9fa3666094a55725d7a09ad1fc519",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/11-dialogo-reprogramar.png": {
+    "mtime": 1788571478.5586717,
+    "ast_hash": "c018c93fe9b82052f36c12ebc2a9156b",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/12-dialogo-guardando.png": {
+    "mtime": 1788571478.637201,
+    "ast_hash": "4e98be3eeac7540b150f54ed38904037",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/13-dialogo-conflicto-agenda.png": {
+    "mtime": 1788571478.7237139,
+    "ast_hash": "35e00992b740ee5933c10f4f56cd4785",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/14-dialogo-version-obsoleta.png": {
+    "mtime": 1788571478.8062978,
+    "ast_hash": "9d331f0c8328acafe72c07409e107fd7",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/15-dialogo-sin-conexion.png": {
+    "mtime": 1788571478.8901193,
+    "ast_hash": "e25e11d21422f218678c6d53f764f58f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/16-reprogramacion-aplicada.png": {
+    "mtime": 1788571478.9803677,
+    "ast_hash": "452f1b520377d01fab5ff446ea5de041",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/01-carga-detalle.png": {
+    "mtime": 1788571479.1824324,
+    "ast_hash": "c8f1dbf94e96c6c5536c249a7206b3ef",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/02-turno-no-disponible.png": {
+    "mtime": 1788571479.267066,
+    "ast_hash": "b6e527f1c03ed861bf491c1537041b08",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/03-error-detalle.png": {
+    "mtime": 1788571479.36387,
+    "ast_hash": "a967d70ef0edfaed154f0c6fe7d82309",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/04-detalle-confirmado.png": {
+    "mtime": 1788571479.5210335,
+    "ast_hash": "990f7179d84b6d894eb93cb90f9a2387",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/05-historial-cargando.png": {
+    "mtime": 1788571479.6404183,
+    "ast_hash": "1ad11364285ea082fee20a07d8b5190d",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/06-historial-vacio.png": {
+    "mtime": 1788571479.7353332,
+    "ast_hash": "5f6f7c16ff87b4c8ef51e324672abe2e",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/07-error-historial.png": {
+    "mtime": 1788571479.826419,
+    "ast_hash": "daf93ec858cfb3d73541905818f4afdf",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/08-historial-paginado.png": {
+    "mtime": 1788571479.9451277,
+    "ast_hash": "7c861dbbd5437eec275636224c34ad1e",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/09-turno-completado.png": {
+    "mtime": 1788571480.0619195,
+    "ast_hash": "6167f85a8e9d949312374e059e2d1384",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/10-turno-cancelado.png": {
+    "mtime": 1788571480.1805153,
+    "ast_hash": "0425fa23f0901623766e92b43b0171c4",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/11-dialogo-reprogramar.png": {
+    "mtime": 1788571480.2708864,
+    "ast_hash": "961dd8425033a1a2862287053bfae379",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/12-dialogo-guardando.png": {
+    "mtime": 1788571480.3615046,
+    "ast_hash": "1f57e7b7703b932d88cf7408f921e30a",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/13-dialogo-conflicto-agenda.png": {
+    "mtime": 1788571480.4670966,
+    "ast_hash": "adf29e231e63543ca9ece9ecbc315512",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/14-dialogo-version-obsoleta.png": {
+    "mtime": 1788571480.5587816,
+    "ast_hash": "b3575391dc46baf7f84c9cc96ad67eb3",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/15-dialogo-sin-conexion.png": {
+    "mtime": 1788571480.6489358,
+    "ast_hash": "fce78d5fab3df1e4ea15565d666bd950",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/16-reprogramacion-aplicada.png": {
+    "mtime": 1788571480.778366,
+    "ast_hash": "25a0aa9b52fe623ec08a0a4491a36570",
     "semantic_hash": ""
   }
 }

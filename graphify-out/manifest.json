@@ -5,8 +5,8 @@
     "semantic_hash": ""
   },
   "apps/api/cmd/api/main.go": {
-    "mtime": 1788363080.342634,
-    "ast_hash": "88e6bb654e31d33fa8ec679bbbb3667d",
+    "mtime": 1789061791.1388755,
+    "ast_hash": "895b11cc0bbd47570d3b5aa13e25d039",
     "semantic_hash": ""
   },
   "apps/api/cmd/worker/main.go": {
@@ -65,8 +65,8 @@
     "semantic_hash": "e7678df9532554a00d1a7246117c1631"
   },
   "apps/api/internal/platform/config/config.go": {
-    "mtime": 1787503632.9707274,
-    "ast_hash": "ce4307dbf76acb9d3e39c2aa96a059b5",
+    "mtime": 1789061791.1388755,
+    "ast_hash": "3ed3bd779eeebe2a395b616a99286309",
     "semantic_hash": ""
   },
   "apps/api/internal/platform/database/doc.go": {
@@ -410,8 +410,8 @@
     "semantic_hash": ""
   },
   "apps/api/README.md": {
-    "mtime": 1788363080.342634,
-    "ast_hash": "e42455d4c4f65130d575d02f4c26198f",
+    "mtime": 1789061791.1388755,
+    "ast_hash": "f333807b88dacff05862182d9d935265",
     "semantic_hash": ""
   },
   "apps/web/README.md": {
@@ -470,13 +470,13 @@
     "semantic_hash": ""
   },
   "docs/00-control/historial-cambios.md": {
-    "mtime": 1788550980.5817034,
-    "ast_hash": "3cc78481091681c1b959c830e6e508de",
+    "mtime": 1788872439.7119102,
+    "ast_hash": "3adedae2e78d3ebbcb6f38f1b687f08c",
     "semantic_hash": ""
   },
   "docs/00-control/matriz-trazabilidad.md": {
-    "mtime": 1788550980.5826976,
-    "ast_hash": "598d25eb7200008295aa88f73b36a02c",
+    "mtime": 1788872285.7979743,
+    "ast_hash": "25446ab4e230cb73cc4982d117750917",
     "semantic_hash": ""
   },
   "docs/00-control/registro-decisiones.md": {
@@ -515,8 +515,8 @@
     "semantic_hash": "5808a4dbd2de9457e817a4304b86cb7e"
   },
   "docs/03-desarrollo/estandar-diseno-visual.md": {
-    "mtime": 1788550980.5856898,
-    "ast_hash": "48d052c22e8250dea4d175f56c1a3e8b",
+    "mtime": 1788872152.047607,
+    "ast_hash": "1b2ace8bd2d474393bffc22444d8ee1e",
     "semantic_hash": ""
   },
   "docs/03-desarrollo/estandar-frontend-vue.md": {
@@ -595,13 +595,13 @@
     "semantic_hash": ""
   },
   "docs/02-requisitos/historias-usuario.md": {
-    "mtime": 1788550980.584692,
-    "ast_hash": "35a091bc4cd8fe0e2d5022135b362ae1",
+    "mtime": 1788872802.1689928,
+    "ast_hash": "74f1a3fe66725c51a5161ad9ee60e5e7",
     "semantic_hash": ""
   },
   "docs/10-backlog/plan-bloques.md": {
-    "mtime": 1788287392.9678776,
-    "ast_hash": "4175a22920548a8c872d114a118dd70e",
+    "mtime": 1788872209.9288876,
+    "ast_hash": "926da6039b13924f9b83d250bf7f9b0a",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts-implementacion.md": {
@@ -645,8 +645,8 @@
     "semantic_hash": ""
   },
   "apps/api/internal/platform/config/config_test.go": {
-    "mtime": 1787503632.9707274,
-    "ast_hash": "757b146f9425e4449c1de179373b4f91",
+    "mtime": 1789061791.1388755,
+    "ast_hash": "69e76fdecacd4f66b5f31f743aa49cc4",
     "semantic_hash": ""
   },
   "apps/api/internal/platform/database/database.go": {
@@ -695,8 +695,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/BaseDialog.vue": {
-    "mtime": 1787580646.2127864,
-    "ast_hash": "a44bdbab2886cd05bc73394ca6580616",
+    "mtime": 1789061791.2044015,
+    "ast_hash": "0b4b0a1ac12a1fcaac824ca51755ffe9",
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/BaseInput.vue": {
@@ -805,8 +805,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/README.md": {
-    "mtime": 1788550980.6305046,
-    "ast_hash": "32e41416af7a2d0f34b98c32d0277e9f",
+    "mtime": 1789061824.7339907,
+    "ast_hash": "661234e69b2d6a91c3f129ed23246eed",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/TEMPLATE.md": {
@@ -1520,8 +1520,8 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/auth/phone_sender.go": {
-    "mtime": 1787006768.521317,
-    "ast_hash": "80957301aa2063c24cf90ecd6e614eae",
+    "mtime": 1789061791.1388755,
+    "ast_hash": "c1f0058899878c67e686a78b2fa62423",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/auth/phone_sender_capture.go": {
@@ -2080,13 +2080,13 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/configuracion-barberia-evidencia-responsiva.spec.ts": {
-    "mtime": 1788453255.1990626,
-    "ast_hash": "c383e9fc7545d845ec1023a260fb66c9",
+    "mtime": 1789061791.1388755,
+    "ast_hash": "3d1a019890ac9d8a49097e4840b50435",
     "semantic_hash": ""
   },
   "apps/web/e2e/configuracion-barberia.spec.ts": {
-    "mtime": 1788453255.2000656,
-    "ast_hash": "21587d26a963f5a9b41b7928a7a32069",
+    "mtime": 1789061791.1388755,
+    "ast_hash": "0950e74e1ca998beccade757ac98324f",
     "semantic_hash": ""
   },
   "apps/web/src/modules/settings/api/__tests__/settingsApi.test.ts": {
@@ -2110,8 +2110,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/settings/pages/SettingsPage.vue": {
-    "mtime": 1788450278.241693,
-    "ast_hash": "aa748ed6d5f3751fdd2b1742bb8fd983",
+    "mtime": 1789061791.1986575,
+    "ast_hash": "d3eb559a630296d43741c0d43ac6538e",
     "semantic_hash": ""
   },
   "apps/web/src/modules/settings/pages/__tests__/SettingsPage.test.ts": {
@@ -2350,8 +2350,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/staff/pages/StaffPage.vue": {
-    "mtime": 1788450278.241693,
-    "ast_hash": "17cf69752511f8cdc22a462793e991b7",
+    "mtime": 1789061791.1986575,
+    "ast_hash": "7188499c6880da955dedcd84f5f1704b",
     "semantic_hash": ""
   },
   "apps/web/src/modules/staff/pages/__tests__/StaffPage.test.ts": {
@@ -2595,8 +2595,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/catalog/pages/CatalogPage.vue": {
-    "mtime": 1788450278.231432,
-    "ast_hash": "d6d7a7e6aa568aab382d707a30a21235",
+    "mtime": 1789061791.1986575,
+    "ast_hash": "31509183e1745a1ed08a797faae8f198",
     "semantic_hash": ""
   },
   "apps/web/src/modules/catalog/pages/__tests__/CatalogPage.test.ts": {
@@ -2850,8 +2850,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/barberServices/pages/BarberServicesPage.vue": {
-    "mtime": 1788450278.230918,
-    "ast_hash": "22a31fc33662e7b8f13c2e49da5cc630",
+    "mtime": 1789061791.1986575,
+    "ast_hash": "b0f0a7eaebcdd738de9f9010e08ba254",
     "semantic_hash": ""
   },
   "apps/web/src/modules/barberServices/pages/__tests__/BarberServicesPage.test.ts": {
@@ -3185,8 +3185,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/pages/SchedulesPage.vue": {
-    "mtime": 1788450278.2358706,
-    "ast_hash": "5f998248c82272dc310cd2a36a9cd09d",
+    "mtime": 1789061791.1986575,
+    "ast_hash": "f81fd8cacb304a0af7e34138d6862a60",
     "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/pages/__tests__/SchedulesPage.test.ts": {
@@ -3870,7 +3870,7 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/nuevo-turno.spec.ts": {
-    "mtime": 1788552328.7645972,
+    "mtime": 1788554178.110447,
     "ast_hash": "f4f033371bfe0d53a514b4ab215d5200",
     "semantic_hash": ""
   },
@@ -3895,12 +3895,12 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/pages/NewAppointmentPage.vue": {
-    "mtime": 1788553111.979256,
-    "ast_hash": "297865366797ea478ef8e3e77ab9a8ec",
+    "mtime": 1788569534.2476425,
+    "ast_hash": "005b4d6b3378a6f1193d179b1f657f0e",
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/pages/__tests__/NewAppointmentPage.test.ts": {
-    "mtime": 1788551914.2618234,
+    "mtime": 1788554178.1155074,
     "ast_hash": "7b0ad8e5f1204d694410c5e1ea215160",
     "semantic_hash": ""
   },
@@ -4080,8 +4080,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/pages/AppointmentDetailPage.vue": {
-    "mtime": 1788550980.5585496,
-    "ast_hash": "d96cbb9b2d50959e4ee350ae5b56acc2",
+    "mtime": 1789061791.1986575,
+    "ast_hash": "6ee97beda3dc7f1ce611b03f7566e1aa",
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/pages/__tests__/AppointmentDetailPage.test.ts": {
@@ -5200,8 +5200,8 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/mock-panel-api.mjs": {
-    "mtime": 1788550980.5486374,
-    "ast_hash": "50df23250024d39d2f4c52d61bd0ea5d",
+    "mtime": 1788568743.8256729,
+    "ast_hash": "3c48303c17e2693716ea361fc6662b02",
     "semantic_hash": ""
   },
   "apps/web/e2e/panel-fidelidad-mock.spec.ts": {
@@ -5215,7 +5215,7 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/components/BarberSelect.vue": {
-    "mtime": 1788551552.084832,
+    "mtime": 1788554178.1124735,
     "ast_hash": "10b55eac27362130bfb8752fd8a1eb34",
     "semantic_hash": ""
   },
@@ -5365,8 +5365,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/test/issue-86-reto-whatsapp-meta.md": {
-    "mtime": 1788550768.3445232,
-    "ast_hash": "b42349bb1280caacd3d24a4d06ce0a8f",
+    "mtime": 1788832441.717135,
+    "ast_hash": "204c058404c671dbbee2881a293ec98a",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/test/issue-87-aislamiento-cross-tenant-http.md": {
@@ -5955,393 +5955,2343 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/nuevo-turno-evidencia-responsiva.spec.ts": {
-    "mtime": 1788553460.1622627,
+    "mtime": 1788554178.1067796,
     "ast_hash": "3f37e00dd56bf972f97bc5a2bde75087",
     "semantic_hash": ""
   },
   "apps/web/e2e/nuevo-turno-fidelidad-comparacion.mjs": {
-    "mtime": 1788552934.854811,
+    "mtime": 1788554178.108408,
     "ast_hash": "3a837479cd40dcd5a2e6e2ceaf700ed6",
     "semantic_hash": ""
   },
   "apps/web/e2e/nuevo-turno-fidelidad-mock.spec.ts": {
-    "mtime": 1788553303.4597497,
+    "mtime": 1788554178.108408,
     "ast_hash": "3a426569abeba9beb6aaf3eb11aef6eb",
     "semantic_hash": ""
   },
   "apps/web/e2e/nuevo-turno-mock.ts": {
-    "mtime": 1788553261.5883949,
+    "mtime": 1788554178.110447,
     "ast_hash": "7d69ced83ad2b8ece4f2220d9c855b4a",
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/components/NewAppointmentSkeleton.vue": {
-    "mtime": 1788551584.8285697,
+    "mtime": 1788554178.1124735,
     "ast_hash": "22aec665f9e79af366172ce8a1cf6abd",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno-fidelidad-190-desviaciones.md": {
-    "mtime": 1788553667.6006863,
-    "ast_hash": "0d06b4ce68e5ab60e249e2cbcbab9030",
+    "mtime": 1788554177.988871,
+    "ast_hash": "13bcc2257e3d1bcad552ccaa8d3def6e",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/resumen.txt": {
-    "mtime": 1788553143.734148,
-    "ast_hash": "8a0a2b2b0f831ef7d0fc3ee8de8fcf21",
+    "mtime": 1788554178.0372374,
+    "ast_hash": "04b0ac7c4a2d45fea9a2f4b90e911ee3",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/chore/issue-190-nuevo-turno-fidelidad-v2.md": {
-    "mtime": 1788550980.6305046,
-    "ast_hash": "595cd9cab755b0dd0b92a35025323f02",
+    "mtime": 1788554178.1191387,
+    "ast_hash": "5693a98094d398593726d4a7bbf5e300",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/01-carga-contexto-diff.png": {
-    "mtime": 1788553140.346169,
+    "mtime": 1788554177.988871,
     "ast_hash": "585fb2fb58c8a3b1ea117621d12a39e1",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/02-error-contexto-diff.png": {
-    "mtime": 1788553140.45766,
+    "mtime": 1788554177.9980917,
     "ast_hash": "6c4add245cb6ae2808758edbe228ee9a",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/03-sin-barberos-diff.png": {
-    "mtime": 1788553140.5618093,
+    "mtime": 1788554177.9996676,
     "ast_hash": "b35bda14e5907d704d2fd7e49edad8e1",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/04-formulario-vacio-diff.png": {
-    "mtime": 1788553140.677686,
+    "mtime": 1788554178.0013876,
     "ast_hash": "e62ce77bcebae1a5e9495b8a5a55e966",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/05-cargando-servicios-diff.png": {
-    "mtime": 1788553140.7898426,
+    "mtime": 1788554178.0013876,
     "ast_hash": "7661463aa588ad7721ca56f761ab4692",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/06-sin-servicios-asignados-diff.png": {
-    "mtime": 1788553140.9031477,
+    "mtime": 1788554178.0013876,
     "ast_hash": "5034121c794f5ff062a0ad97ce6ca939",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/07-error-servicios-diff.png": {
-    "mtime": 1788553141.020841,
+    "mtime": 1788554178.0046568,
     "ast_hash": "a9d9686c415ddc37a16317eeaf95ad45",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/08-formulario-completo-diff.png": {
-    "mtime": 1788553141.1424186,
+    "mtime": 1788554178.0061736,
     "ast_hash": "6066dd05348888a7f1df4078eb68cd9c",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/09-error-validacion-diff.png": {
-    "mtime": 1788553141.2534242,
+    "mtime": 1788554178.0081935,
     "ast_hash": "0c88b0a997b8f86d05e392cc9ddb8c2f",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/10-guardando-diff.png": {
-    "mtime": 1788553141.362865,
+    "mtime": 1788554178.0081935,
     "ast_hash": "8306dfb46d42b659dfe28fddc03ae4bd",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/11-conflicto-horario-diff.png": {
-    "mtime": 1788553141.472414,
+    "mtime": 1788554178.0081935,
     "ast_hash": "8f56f72c22ea41f190b3d12638f546a2",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/desktop/12-turno-registrado-diff.png": {
-    "mtime": 1788553141.561373,
+    "mtime": 1788554178.0081935,
     "ast_hash": "8dbc6fa187ea5291a69dd2f05c0b4ef0",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/01-carga-contexto-diff.png": {
-    "mtime": 1788553141.6932683,
+    "mtime": 1788554178.0081935,
     "ast_hash": "bf158ae4dbb1de60cffc4230912e9934",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/02-error-contexto-diff.png": {
-    "mtime": 1788553141.7931728,
+    "mtime": 1788554178.0154371,
     "ast_hash": "4b5dc55e5a9d0d36a03b7bbc5cb5b7bb",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/03-sin-barberos-diff.png": {
-    "mtime": 1788553141.8943932,
+    "mtime": 1788554178.0166793,
     "ast_hash": "cb94fdb86f56d3043623d7980a014340",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/04-formulario-vacio-diff.png": {
-    "mtime": 1788553142.0748065,
+    "mtime": 1788554178.0166793,
     "ast_hash": "b00c77687997267eddd21a0e2d2a71d6",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/05-cargando-servicios-diff.png": {
-    "mtime": 1788553142.2645915,
+    "mtime": 1788554178.0207264,
     "ast_hash": "4649b7fbe6526dcc2b27fa67ad6531dc",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/06-sin-servicios-asignados-diff.png": {
-    "mtime": 1788553142.4631064,
+    "mtime": 1788554178.0228066,
     "ast_hash": "469c2ae9f5cc864af0a0285c28867c5b",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/07-error-servicios-diff.png": {
-    "mtime": 1788553142.6581645,
+    "mtime": 1788554178.023147,
     "ast_hash": "6ac7897399230b1eb258f65d804430f7",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/08-formulario-completo-diff.png": {
-    "mtime": 1788553142.8897872,
+    "mtime": 1788554178.0251555,
     "ast_hash": "2d81333f71ecbc74ccd0d016ff240dcd",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/09-error-validacion-diff.png": {
-    "mtime": 1788553143.1167955,
+    "mtime": 1788554178.0298622,
     "ast_hash": "394d718908eff1751dd1d4237da18126",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/10-guardando-diff.png": {
-    "mtime": 1788553143.332533,
+    "mtime": 1788554178.032562,
     "ast_hash": "1c910f58776551349093b52507191930",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/11-conflicto-horario-diff.png": {
-    "mtime": 1788553143.5506825,
+    "mtime": 1788554178.0346951,
     "ast_hash": "7b825b83934f26975aa39e7faed405aa",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/comparacion/mobile/12-turno-registrado-diff.png": {
-    "mtime": 1788553143.656287,
+    "mtime": 1788554178.0372374,
     "ast_hash": "37fbf499d91412fe1c3f8fa1edd03c33",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/01-carga-contexto.png": {
-    "mtime": 1788553382.265339,
+    "mtime": 1788554178.0397966,
     "ast_hash": "3d522df1d6d0f2e7ccb7b7026f443452",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/02-error-contexto.png": {
-    "mtime": 1788553382.9243436,
+    "mtime": 1788554178.0413196,
     "ast_hash": "13b905221088acf4809b62dbaf25cd60",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/03-sin-barberos.png": {
-    "mtime": 1788553383.576248,
+    "mtime": 1788554178.0413196,
     "ast_hash": "cebff6db6a44145bde17b642ac4410a2",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/04-formulario-vacio.png": {
-    "mtime": 1788553384.250746,
+    "mtime": 1788554178.0439756,
     "ast_hash": "a94b99567bd9801e3c698939c0150fca",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/05-cargando-servicios.png": {
-    "mtime": 1788553384.9216533,
+    "mtime": 1788554178.0439756,
     "ast_hash": "6d58482ec4e8fd28bd716e6b8a89777e",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/06-sin-servicios-asignados.png": {
-    "mtime": 1788553385.5799878,
+    "mtime": 1788554178.0456455,
     "ast_hash": "ed5cdd7cae1923acc6146dee336f6848",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/07-error-servicios.png": {
-    "mtime": 1788553386.4593258,
+    "mtime": 1788554178.048048,
     "ast_hash": "673e293543a3a42d0925cd6fe5aa8134",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/08-formulario-completo.png": {
-    "mtime": 1788553387.2832928,
+    "mtime": 1788554178.0493531,
     "ast_hash": "6020895cc89b9a0d253e85952971137d",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/09-error-validacion.png": {
-    "mtime": 1788553387.9566934,
+    "mtime": 1788554178.0506577,
     "ast_hash": "1b75f817d197ba740d3e9814ccc3f14a",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/10-guardando.png": {
-    "mtime": 1788553388.827284,
+    "mtime": 1788554178.052285,
     "ast_hash": "ee8d772006684b69836002f76b1fd2c6",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/11-conflicto-horario.png": {
-    "mtime": 1788553389.7761695,
+    "mtime": 1788554178.0538757,
     "ast_hash": "44c1da51a64646cbcca0825a511be9c2",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/desktop/12-turno-registrado.png": {
-    "mtime": 1788553390.6254256,
+    "mtime": 1788554178.0554,
     "ast_hash": "d22c5f90b64f90181e1adb506d7c7da1",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/01-carga-contexto.png": {
-    "mtime": 1788553391.1164925,
+    "mtime": 1788554178.0570135,
     "ast_hash": "7f5521f7a6a363b355ac301da8614239",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/02-error-contexto.png": {
-    "mtime": 1788553391.680408,
+    "mtime": 1788554178.058023,
     "ast_hash": "0362439b4b374084361c5cae91f07eaf",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/03-sin-barberos.png": {
-    "mtime": 1788553392.297127,
+    "mtime": 1788554178.0600233,
     "ast_hash": "09ad954970fedd2a8cd0281c7fd409d3",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/04-formulario-vacio.png": {
-    "mtime": 1788553393.0011353,
+    "mtime": 1788554178.0610232,
     "ast_hash": "c4a6411c8349fa45b7e72119b14f772d",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/05-cargando-servicios.png": {
-    "mtime": 1788553393.7595954,
+    "mtime": 1788554178.0640213,
     "ast_hash": "c2477dd57fa29837bfd12a5c7f3ddc06",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/06-sin-servicios-asignados.png": {
-    "mtime": 1788553394.5265577,
+    "mtime": 1788554178.0657969,
     "ast_hash": "07087f8dcbddbd3214ec8c2913737269",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/07-error-servicios.png": {
-    "mtime": 1788553395.2256567,
+    "mtime": 1788554178.0683217,
     "ast_hash": "05e03f1cf1907fa9db138af5f835cbaa",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/08-formulario-completo.png": {
-    "mtime": 1788553396.2568355,
+    "mtime": 1788554178.0703204,
     "ast_hash": "1390a89cc37f86d50a1e0aff9af0079b",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/09-error-validacion.png": {
-    "mtime": 1788553397.1612823,
+    "mtime": 1788554178.0723226,
     "ast_hash": "783a3614fedb3f0092f2834a3c1d08eb",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/10-guardando.png": {
-    "mtime": 1788553398.1077397,
+    "mtime": 1788554178.0751162,
     "ast_hash": "544bce15581bab48a3c5af89fbfd13bf",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/11-conflicto-horario.png": {
-    "mtime": 1788553399.1164546,
+    "mtime": 1788554178.0772097,
     "ast_hash": "07381bb302c0818f90b7bb77ac11b46e",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/mock/mobile/12-turno-registrado.png": {
-    "mtime": 1788553399.9544525,
+    "mtime": 1788554178.0782099,
     "ast_hash": "8f015fc67ae4ed15a070f8f63aba90c0",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/1280-zoom200/foco-barbero.png": {
-    "mtime": 1788553380.063602,
+    "mtime": 1788554178.0802107,
     "ast_hash": "f1794c0cf8c6e6d5aaa8cea723aa5ade",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/1280-zoom200/foco-cta.png": {
-    "mtime": 1788553380.1798239,
+    "mtime": 1788554178.0812101,
     "ast_hash": "5f3aea972df1e5bae3c8eb1830de58aa",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/1280-zoom200/formulario.png": {
-    "mtime": 1788553376.9492736,
+    "mtime": 1788554178.082443,
     "ast_hash": "d45d6bc94beeb5beaca884f7d468d79d",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/1280-zoom200/listbox-barbero.png": {
-    "mtime": 1788553380.1201458,
+    "mtime": 1788554178.082443,
     "ast_hash": "ffe5254c424ec8ff908f6ffab7952407",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/1280/foco-barbero.png": {
-    "mtime": 1788553379.430937,
+    "mtime": 1788554178.082443,
     "ast_hash": "c5c371517d12be5e7ce403a551ce55a1",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/1280/foco-cta.png": {
-    "mtime": 1788553379.6268382,
+    "mtime": 1788554178.082443,
     "ast_hash": "ec185b3af94128b4fe05a5da9393455c",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/1280/formulario.png": {
-    "mtime": 1788553376.842903,
+    "mtime": 1788554178.0868354,
     "ast_hash": "cd1beea13e015fbd50dbe2774c3647d7",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/1280/listbox-barbero.png": {
-    "mtime": 1788553379.5149007,
+    "mtime": 1788554178.089346,
     "ast_hash": "b081a6e965decb7c74a1bd6912df2769",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/320/conflicto.png": {
-    "mtime": 1788553381.739028,
+    "mtime": 1788554178.090657,
     "ast_hash": "1072f23874eaf79022eafc34543457ba",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/320/foco-barbero.png": {
-    "mtime": 1788553377.5842328,
+    "mtime": 1788554178.090657,
     "ast_hash": "47a8091581ce5eebaa78162c6e7cb124",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/320/foco-cta.png": {
-    "mtime": 1788553377.7336562,
+    "mtime": 1788554178.090657,
     "ast_hash": "3089f60b2576aff83dd57f87c3305c38",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/320/formulario.png": {
-    "mtime": 1788553376.4865289,
+    "mtime": 1788554178.0945787,
     "ast_hash": "c208079adb0493c40dcb0bfd587f80ea",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/320/listbox-barbero.png": {
-    "mtime": 1788553377.635496,
+    "mtime": 1788554178.0945787,
     "ast_hash": "74ac830addc0d379c28545ed7458a574",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/360/foco-barbero.png": {
-    "mtime": 1788553378.1695812,
+    "mtime": 1788554178.0964503,
     "ast_hash": "3e09ccbe4e0764df2c7b2db68b64da60",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/360/foco-cta.png": {
-    "mtime": 1788553378.3081918,
+    "mtime": 1788554178.0964503,
     "ast_hash": "4ba55adce432e2ab66147552c1aa8453",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/360/formulario.png": {
-    "mtime": 1788553376.6048243,
+    "mtime": 1788554178.0981903,
     "ast_hash": "4dda29bd4121f017ce0f29c8a3314811",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/360/listbox-barbero.png": {
-    "mtime": 1788553378.2240307,
+    "mtime": 1788554178.0987008,
     "ast_hash": "1ebd9a3c12df0c3d44d81400d3b3e338",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/768/foco-barbero.png": {
-    "mtime": 1788553378.751813,
+    "mtime": 1788554178.0987008,
     "ast_hash": "75a3ef2f9fb74c4143c2cee865795769",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/768/foco-cta.png": {
-    "mtime": 1788553378.9530282,
+    "mtime": 1788554178.0987008,
     "ast_hash": "c2214eb09f6bdfa55812a75f9f967173",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/768/formulario.png": {
-    "mtime": 1788553376.7191281,
+    "mtime": 1788554178.1037033,
     "ast_hash": "1db729b82603e6af8c9244b8ae19a9e7",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/768/listbox-barbero.png": {
-    "mtime": 1788553378.8282585,
+    "mtime": 1788554178.1052568,
     "ast_hash": "6d247d6844ca04a963188de277277d7a",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/nuevo-turno/fidelidad-190/responsiva/reduced-motion/esqueleto.png": {
-    "mtime": 1788553380.83947,
+    "mtime": 1788554178.1067796,
     "ast_hash": "52c692ee21c99421b9589178cad3c462",
+    "semantic_hash": ""
+  },
+  "tools/mockups/detalle-turno-eventos/content.mjs": {
+    "mtime": 1788571356.36749,
+    "ast_hash": "0e2475f00e9af1f6c4bea345736f730b",
+    "semantic_hash": ""
+  },
+  "tools/mockups/detalle-turno-eventos/render.mjs": {
+    "mtime": 1788572233.3468606,
+    "ast_hash": "79c646e0161d0397dea1dd19241dd9c7",
+    "semantic_hash": ""
+  },
+  "apps/web/src/assets/fonts/instrument-sans-latin-400-700.b64.txt": {
+    "mtime": 1788570069.6070263,
+    "ast_hash": "95512656298b5c2779c144c4f0fa656d",
+    "semantic_hash": ""
+  },
+  "apps/web/src/assets/fonts/instrument-serif-latin-400.b64.txt": {
+    "mtime": 1788570069.5965722,
+    "ast_hash": "f6a4f05f68028a93c8805fb04e823f7d",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/README.md": {
+    "mtime": 1788572311.5500398,
+    "ast_hash": "2a1d4e26ea0cd7cec6dbffd93c8b8d01",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/01-carga-detalle.png": {
+    "mtime": 1788572320.1470823,
+    "ast_hash": "8b5cb02b65e0ce952a598829857fe82d",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/02-turno-no-disponible.png": {
+    "mtime": 1788572320.2357972,
+    "ast_hash": "72b78b570c835bd15e9b93292a78d63f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/03-error-detalle.png": {
+    "mtime": 1788572320.3023393,
+    "ast_hash": "fcd2f920ee2a14a0ce401008a38a9b60",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/04-detalle-confirmado.png": {
+    "mtime": 1788572320.4023888,
+    "ast_hash": "4b559f2ea7495951bff1569b79932cff",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/05-historial-cargando.png": {
+    "mtime": 1788572320.4593585,
+    "ast_hash": "b41ba360728eac096fbac4ad78248224",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/06-historial-vacio.png": {
+    "mtime": 1788572320.581846,
+    "ast_hash": "d42640d2f67dbcfa218f61c222421676",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/07-error-historial.png": {
+    "mtime": 1788572320.647518,
+    "ast_hash": "260d6ad449f64e6e79bac5c9344dfe17",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/08-historial-paginado.png": {
+    "mtime": 1788572320.712084,
+    "ast_hash": "5dab3ee98d7d32d503b17cdc5a6b28f2",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/09-turno-completado.png": {
+    "mtime": 1788572320.842407,
+    "ast_hash": "3e6d67fa540ad1ad712bcc2410728d2d",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/10-turno-cancelado.png": {
+    "mtime": 1788572320.9072518,
+    "ast_hash": "851e6e40e5033669fcd78f9e041c05fa",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/11-dialogo-reprogramar.png": {
+    "mtime": 1788572320.9836612,
+    "ast_hash": "3c8388d8dc355540f585300f4ecd0d41",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/12-dialogo-guardando.png": {
+    "mtime": 1788572321.0835967,
+    "ast_hash": "a1c9c44754a8dfe72c18f461f1879fba",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/13-dialogo-conflicto-agenda.png": {
+    "mtime": 1788572321.1666443,
+    "ast_hash": "342775e07eb4321aa9d88ef749254e6c",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/14-dialogo-version-obsoleta.png": {
+    "mtime": 1788572321.2658546,
+    "ast_hash": "2a375fa3c2cef9c1c6710539df8ea381",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/15-dialogo-sin-conexion.png": {
+    "mtime": 1788572321.3614876,
+    "ast_hash": "494781910dd798e9a6385f1cde0206d2",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/16-reprogramacion-aplicada.png": {
+    "mtime": 1788572321.4332669,
+    "ast_hash": "347262e2fc52422e20afafc146340c70",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/01-carga-detalle.png": {
+    "mtime": 1788572321.6369157,
+    "ast_hash": "56dac9acf73f4040a3391b9b2d61fa39",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/02-turno-no-disponible.png": {
+    "mtime": 1788572321.7118688,
+    "ast_hash": "b6e527f1c03ed861bf491c1537041b08",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/03-error-detalle.png": {
+    "mtime": 1788572321.8024988,
+    "ast_hash": "a967d70ef0edfaed154f0c6fe7d82309",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/04-detalle-confirmado.png": {
+    "mtime": 1788572321.9572096,
+    "ast_hash": "be905638f8cbc6e6a8be0b86bae155d0",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/05-historial-cargando.png": {
+    "mtime": 1788572322.066182,
+    "ast_hash": "7b5af8b94dfdaba1ccf08320995edff9",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/06-historial-vacio.png": {
+    "mtime": 1788572322.1597028,
+    "ast_hash": "148391554d5d34d094be675ca3cc031a",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/07-error-historial.png": {
+    "mtime": 1788572322.2638648,
+    "ast_hash": "81b6edd03b181999a489b1b2ae57d4be",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/08-historial-paginado.png": {
+    "mtime": 1788572322.3893442,
+    "ast_hash": "53fa38ecdf9828acfa3361bd55e75b69",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/09-turno-completado.png": {
+    "mtime": 1788572322.5319483,
+    "ast_hash": "0fe477215f1a3f49450f04869c41d872",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/10-turno-cancelado.png": {
+    "mtime": 1788572322.6396487,
+    "ast_hash": "7759039aaf77d55701188940ed51c985",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/11-dialogo-reprogramar.png": {
+    "mtime": 1788572322.743471,
+    "ast_hash": "5fe8cf9bbff8efc6942e3dbb05d7047b",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/12-dialogo-guardando.png": {
+    "mtime": 1788572322.8353162,
+    "ast_hash": "df649ee65a0ebbd63987970bf9f36527",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/13-dialogo-conflicto-agenda.png": {
+    "mtime": 1788572322.9236267,
+    "ast_hash": "26bbccdff38cbb3009d17965fd48b905",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/14-dialogo-version-obsoleta.png": {
+    "mtime": 1788572323.0221412,
+    "ast_hash": "5651c6ed6a728cf708165145eb7af0b6",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/15-dialogo-sin-conexion.png": {
+    "mtime": 1788572323.1307857,
+    "ast_hash": "5c36a1c01eb8f6391a99b944a6fa2853",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/16-reprogramacion-aplicada.png": {
+    "mtime": 1788572323.276763,
+    "ast_hash": "c07a8da8c490dca530840497963f2e94",
+    "semantic_hash": ""
+  },
+  ".agents/skills/generacion-mockups-nava/SKILL.md": {
+    "mtime": 1788797507.7832897,
+    "ast_hash": "d9b5a0974a214e9926899c2c846eac41",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/README.md": {
+    "mtime": 1788872439.247451,
+    "ast_hash": "7d0d17abf15c7df0d929c1b3eef27887",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/README.md": {
+    "mtime": 1788816622.5190141,
+    "ast_hash": "88cfed17e9acd973a84d1846213cbfb6",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/README.md": {
+    "mtime": 1788816622.3074455,
+    "ast_hash": "d99c52f63f83d997030fa92b355c6fee",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/README.md": {
+    "mtime": 1788872869.3083217,
+    "ast_hash": "dcbe3c231641fa9d89fe928a8aadcdbd",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/README.md": {
+    "mtime": 1788872869.668919,
+    "ast_hash": "d081b7b17e845f39f029e229cc7e4d24",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/README.md": {
+    "mtime": 1788872870.0402565,
+    "ast_hash": "03605cd1dc83bb9595bd917fc1fa45ae",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/README.md": {
+    "mtime": 1788872870.3857894,
+    "ast_hash": "593d0cd85dc97926dbac954c2f64e437",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-191-generacion-mockup-detalle-turno-penpot.md": {
+    "mtime": 1788815094.8915436,
+    "ast_hash": "e36ab2e632869a854bc30b8549e1bdb0",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-192-generacion-mockup-barberos-penpot.md": {
+    "mtime": 1788815095.124566,
+    "ast_hash": "8900b63f0e587b32fee6da5bad5d10e3",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-193-generacion-mockup-barberia-penpot.md": {
+    "mtime": 1788831724.1546745,
+    "ast_hash": "66e296bfad6fdc6cdbbf5c63663c06f1",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-194-generacion-mockup-servicios-penpot.md": {
+    "mtime": 1788831724.513354,
+    "ast_hash": "3851ffe7a39396e178ab58035c980662",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-195-generacion-mockup-servicios-barbero-penpot.md": {
+    "mtime": 1788831725.0444293,
+    "ast_hash": "f86d41043fa30b3039fd4e3173a3bdcd",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-196-generacion-mockup-horarios-penpot.md": {
+    "mtime": 1788870287.0295172,
+    "ast_hash": "a509c0613d58ba2cc93b4eae39b5a7fa",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-197-generacion-mockup-bloqueos-penpot.md": {
+    "mtime": 1788870287.5380647,
+    "ast_hash": "d179a4c18f2c7e207581ef6d0206b7a6",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/fix/issue-86-integrar-otp-whatsapp-meta-v2.md": {
+    "mtime": 1789061797.8445923,
+    "ast_hash": "8bffc94fdb21b1e79d8b3903ede871c4",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/hu/hu-066-cancelacion-barbero.md": {
+    "mtime": 1788872870.730991,
+    "ast_hash": "d14ba2d4dcf8720ac8e628fa395b00e6",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/hu/hu-067-cierre-manual-turno.md": {
+    "mtime": 1788872871.2403934,
+    "ast_hash": "19f9b9eab8e3846ae57a760892789d06",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/hu/hu-068-correccion-resultado-terminal.md": {
+    "mtime": 1788872056.0706537,
+    "ast_hash": "b681782d6c0db3aa456fdf655339abd6",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/orchestration/generacion-mockups-pendientes-penpot.md": {
+    "mtime": 1788815132.9344962,
+    "ast_hash": "12b3f9382d056e11fa78c5926e239975",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/desktop/barberia/01-carga-inicial.png": {
+    "mtime": 1788831423.318072,
+    "ast_hash": "12cfc7fa1f0fe650eea6024ff4c4d5f1",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/desktop/barberia/02-error-carga.png": {
+    "mtime": 1788831424.0027125,
+    "ast_hash": "852995db44f058650012204eb71fb00f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/desktop/barberia/03-principal-sin-cambios.png": {
+    "mtime": 1788831424.6229706,
+    "ast_hash": "87997ba8fdf5023174cbaacaa19c85f1",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/desktop/barberia/03a-principal-1280.png": {
+    "mtime": 1788831469.2710948,
+    "ast_hash": "3ba3abaa3b4b98e37fc3d7abf650acf0",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/desktop/barberia/04-contactos-vacios.png": {
+    "mtime": 1788831425.217788,
+    "ast_hash": "0617341e6d3039294c410bbacd9d547b",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/desktop/barberia/05-cambios-pendientes-foco.png": {
+    "mtime": 1788831425.7414024,
+    "ast_hash": "53602791fe2cd395b4d05efd01882fca",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/desktop/barberia/06-validacion-campos.png": {
+    "mtime": 1788831426.3156083,
+    "ast_hash": "14c7b9a47c99e7a22cabcf6ac323fa1c",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/desktop/barberia/07-guardando.png": {
+    "mtime": 1788831426.668915,
+    "ast_hash": "74979910736f7d601e18f403c576bbc5",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/desktop/barberia/08-zona-iana-no-reconocida.png": {
+    "mtime": 1788831427.1824534,
+    "ast_hash": "fea6a5335338fcdc92367722b05b9ddc",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/desktop/barberia/09-error-red.png": {
+    "mtime": 1788831427.7997165,
+    "ast_hash": "dff72eaa227ca62c4cfda6f453d8e5a5",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/desktop/barberia/10-error-inesperado.png": {
+    "mtime": 1788831428.468207,
+    "ast_hash": "cb929fb82e8f4d3d2391e19bf00a450c",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/desktop/barberia/11-guardado-confirmado.png": {
+    "mtime": 1788831429.2326417,
+    "ast_hash": "b749cee56b9c26fbb18194a25a085330",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/desktop/barberia/12-nombre-largo-reflow.png": {
+    "mtime": 1788831429.9476614,
+    "ast_hash": "02bc30601ef9c69eb2bc91c95a7bf535",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/mobile/barberia/01-carga-inicial.png": {
+    "mtime": 1788831423.6943567,
+    "ast_hash": "44b25c3ef48658bb1cb7a0d58820bd09",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/mobile/barberia/02-error-carga.png": {
+    "mtime": 1788831424.335314,
+    "ast_hash": "3980d0d13af436cc52ba2da2d26af80b",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/mobile/barberia/03-principal-sin-cambios.png": {
+    "mtime": 1788831424.952502,
+    "ast_hash": "8d5b7d5ab6bec270f012999c664cce71",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/mobile/barberia/03a-principal-320.png": {
+    "mtime": 1788831470.5930648,
+    "ast_hash": "caea3a92245f9e986871c46e59927d4d",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/mobile/barberia/04-contactos-vacios.png": {
+    "mtime": 1788831425.4948528,
+    "ast_hash": "9658054e169e7685bac5838d9e34b6e2",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/mobile/barberia/05-cambios-pendientes-foco.png": {
+    "mtime": 1788831426.0338066,
+    "ast_hash": "869901ddb268478eb1e926ed53bc56b4",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/mobile/barberia/06-validacion-campos.png": {
+    "mtime": 1788831426.5186894,
+    "ast_hash": "8b0518ab2b56f9a22d28971c07cce284",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/mobile/barberia/07-guardando.png": {
+    "mtime": 1788831426.9414904,
+    "ast_hash": "6fd86f2cd92948790707d13ac295838e",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/mobile/barberia/08-zona-iana-no-reconocida.png": {
+    "mtime": 1788831427.4961643,
+    "ast_hash": "5d86069f80abb0d0746fe1f4e1cce400",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/mobile/barberia/09-error-red.png": {
+    "mtime": 1788831428.1505938,
+    "ast_hash": "67e5bbb26d58c83820b7bf52925249dc",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/mobile/barberia/10-error-inesperado.png": {
+    "mtime": 1788831428.8697424,
+    "ast_hash": "cf927978fcc1ff4c8415229d5353ba96",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/mobile/barberia/11-guardado-confirmado.png": {
+    "mtime": 1788831429.6298673,
+    "ast_hash": "8e47acf1010a1a16b9701d2ab1a41fe2",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/mobile/barberia/12-nombre-largo-reflow.png": {
+    "mtime": 1788831430.3295894,
+    "ast_hash": "f33eb749263572ec98eee2662dd4486e",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/tablet/barberia/03-principal-768.png": {
+    "mtime": 1788831471.767514,
+    "ast_hash": "3c3d5d1601c33b800ace08535522e350",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/01-carga-inicial.png": {
+    "mtime": 1788831411.0756142,
+    "ast_hash": "9a77c33a4971608ca520d717b4eb5bea",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/02-lista-un-barbero.png": {
+    "mtime": 1788831411.3780556,
+    "ast_hash": "630f0a860544b1f9012d9048691bebae",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/03-lista-cuatro-barberos.png": {
+    "mtime": 1788831411.7292635,
+    "ast_hash": "3cb82e1f42ae0025d3e907b278238182",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/03a-principal-1280.png": {
+    "mtime": 1788831468.9502606,
+    "ast_hash": "ca68266ed82685a4eda7aa1944921e1b",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/04-lista-nombre-largo.png": {
+    "mtime": 1788831412.0739725,
+    "ast_hash": "5b4b6291786e1eae5144f74f36f2fc40",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/05-lista-paginada.png": {
+    "mtime": 1788831412.4718745,
+    "ast_hash": "bbfc0dcdf0ebf2205b9e357896400535",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/06-cargando-mas.png": {
+    "mtime": 1788831412.847833,
+    "ast_hash": "339b54ebbbb41d7e156f59eeec2e619b",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/07-vacio.png": {
+    "mtime": 1788831413.1777465,
+    "ast_hash": "0bd49841759a6b88c7d21bcb4745a1b4",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/08-error-carga.png": {
+    "mtime": 1788831413.5593083,
+    "ast_hash": "a28fdbad6162e26cb1ced1e1a3c3f4e7",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/09-dialogo-agregar.png": {
+    "mtime": 1788831414.0674505,
+    "ast_hash": "64857f1bde1865ba477461387b3959c8",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/10-alta-validacion.png": {
+    "mtime": 1788831414.645385,
+    "ast_hash": "f9fb47fd0ead450c07eeea6cc1c8b541",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/11-alta-guardando.png": {
+    "mtime": 1788831415.3005683,
+    "ast_hash": "f301f171adadbd19250b969da5385540",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/12-alta-conflicto-idempotencia.png": {
+    "mtime": 1788831415.9642522,
+    "ast_hash": "f107120c56278b75d0d0d17dcbfaafc9",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/13-alta-sin-conexion.png": {
+    "mtime": 1788831416.601657,
+    "ast_hash": "0cb99dbab6af1de6bc78bd91ab80e9cc",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/14-alta-error-inesperado.png": {
+    "mtime": 1788831417.2509744,
+    "ast_hash": "0360b784cac2be159908e9326efe6197",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/15-alta-aplicada.png": {
+    "mtime": 1788831417.8610978,
+    "ast_hash": "9ae6a778aa78184305d7f1e9e801e6cd",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/16-dialogo-renombrar.png": {
+    "mtime": 1788831418.5017736,
+    "ast_hash": "6f40d95bff64e30b44f70cd2a9ff0a86",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/17-renombrar-validacion.png": {
+    "mtime": 1788831419.1315515,
+    "ast_hash": "c0448490625641d611e34574d5e218b4",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/18-renombrar-guardando.png": {
+    "mtime": 1788831419.7101345,
+    "ast_hash": "3e999328bd00651bf2b492b3e9c496ef",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/19-renombrar-no-disponible.png": {
+    "mtime": 1788831420.3694,
+    "ast_hash": "591c38d558eb29efaebd5a46a34570b3",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/20-renombrar-sin-conexion.png": {
+    "mtime": 1788831421.1716304,
+    "ast_hash": "0b869f776c55c4f2c503fa1d1df1b3f1",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/21-renombrar-error-inesperado.png": {
+    "mtime": 1788831421.907565,
+    "ast_hash": "e75591d361b4977d9c3455e1257d11cc",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/desktop/barberos/22-renombrado-aplicado.png": {
+    "mtime": 1788831422.6500409,
+    "ast_hash": "987b62a590e0b527060ca6175f326dca",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/01-carga-inicial.png": {
+    "mtime": 1788831411.2319548,
+    "ast_hash": "c59fe3db6a6ee2818346de290fc57f47",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/02-lista-un-barbero.png": {
+    "mtime": 1788831411.5616887,
+    "ast_hash": "8593b9fd17bd46050855913d5424f5af",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/03-lista-cuatro-barberos.png": {
+    "mtime": 1788831411.8922403,
+    "ast_hash": "22c3c344103829ae4126d8083d3f4a86",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/03a-principal-320.png": {
+    "mtime": 1788831470.2638254,
+    "ast_hash": "5593481d367ea83ef1282ac62114e300",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/04-lista-nombre-largo.png": {
+    "mtime": 1788831412.272463,
+    "ast_hash": "86ac2caf8ad0c14eef15f16bc35563e9",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/05-lista-paginada.png": {
+    "mtime": 1788831412.669235,
+    "ast_hash": "ce976045af7a05ac6b40e3be986759ee",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/06-cargando-mas.png": {
+    "mtime": 1788831413.0177531,
+    "ast_hash": "165859f8f36b2c1e2583c05ab4642305",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/07-vacio.png": {
+    "mtime": 1788831413.3547366,
+    "ast_hash": "b7b54fb0f7da7e1014c6f908d9a8fa09",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/08-error-carga.png": {
+    "mtime": 1788831413.8004074,
+    "ast_hash": "7b2477ff4ded7f2cf49e2b18dfcd63e9",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/09-dialogo-agregar.png": {
+    "mtime": 1788831414.3644612,
+    "ast_hash": "fe2a66d4763ce9233a0a76412c908e4f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/10-alta-validacion.png": {
+    "mtime": 1788831414.9775262,
+    "ast_hash": "f51836f9a3f8e296ebc3875c4e336f69",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/11-alta-guardando.png": {
+    "mtime": 1788831415.6606894,
+    "ast_hash": "5d2ec27a68a87be5c6655740608adf8d",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/12-alta-conflicto-idempotencia.png": {
+    "mtime": 1788831416.277267,
+    "ast_hash": "2bd0d8bb22a36d21f42e9f04aba8e540",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/13-alta-sin-conexion.png": {
+    "mtime": 1788831416.9407532,
+    "ast_hash": "c042e02af51717082ff3434b0b584398",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/14-alta-error-inesperado.png": {
+    "mtime": 1788831417.5887935,
+    "ast_hash": "1eeef079600969fe634f7b680f89db7d",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/15-alta-aplicada.png": {
+    "mtime": 1788831418.1926146,
+    "ast_hash": "4ce88ed0b7f2285780a495743a67500b",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/16-dialogo-renombrar.png": {
+    "mtime": 1788831418.8438435,
+    "ast_hash": "fd70907833379844f7efe18906b8e8dc",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/17-renombrar-validacion.png": {
+    "mtime": 1788831419.447685,
+    "ast_hash": "e79332d4ce0a725de5e9535bc28ffc4f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/18-renombrar-guardando.png": {
+    "mtime": 1788831419.997203,
+    "ast_hash": "b71989e2e2fdb1518a8b77135ec4d94f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/19-renombrar-no-disponible.png": {
+    "mtime": 1788831420.7605503,
+    "ast_hash": "d7fd948ee87ff1608e5631a4934362f1",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/20-renombrar-sin-conexion.png": {
+    "mtime": 1788831421.5762167,
+    "ast_hash": "357b4327406a48687de5990427a0b185",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/21-renombrar-error-inesperado.png": {
+    "mtime": 1788831422.2955365,
+    "ast_hash": "8e241980832d006d06400a940b3daad9",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/mobile/barberos/22-renombrado-aplicado.png": {
+    "mtime": 1788831422.9941,
+    "ast_hash": "efaf319681330a927735d7dc33e09b03",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/tablet/barberos/03-principal-768.png": {
+    "mtime": 1788831471.502951,
+    "ast_hash": "25c618e4d35685d508fb15b383eea074",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/desktop/bloqueos/01-carga-inicial.png": {
+    "mtime": 1788836233.660563,
+    "ast_hash": "e6df630a9f53f838951fbbdd7ad469d2",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/desktop/bloqueos/02-sin-barberos.png": {
+    "mtime": 1788836530.210765,
+    "ast_hash": "964779fbf1dd33d40e0b5cc47ba5a2b1",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/desktop/bloqueos/03-error-carga.png": {
+    "mtime": 1788836530.4812882,
+    "ast_hash": "d301c4b3de7118865121bcdf32b1212e",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/desktop/bloqueos/04-principal.png": {
+    "mtime": 1788833359.866373,
+    "ast_hash": "300d5c756a44401bb74ad3f6ba57bd9f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/desktop/bloqueos/04a-principal-1280.png": {
+    "mtime": 1788869672.896741,
+    "ast_hash": "a03a641fefdba04a640f1234578b187d",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/desktop/bloqueos/05-vacio.png": {
+    "mtime": 1788848484.241961,
+    "ast_hash": "98d8193dbcc49123fac0c437d8e79cb4",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/desktop/bloqueos/06-error-bloqueos.png": {
+    "mtime": 1788849094.5843978,
+    "ast_hash": "7730ad701f61e24fda990ae3474e324e",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/desktop/bloqueos/07-dialogo-bloqueo-puntual.png": {
+    "mtime": 1788869629.5212862,
+    "ast_hash": "747c0c2664a1c4607eaf61293b8db0c2",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/desktop/bloqueos/08-bloqueo-validacion.png": {
+    "mtime": 1788869629.9543204,
+    "ast_hash": "11c6f381effaaf1c500b9accdc78c69a",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/desktop/bloqueos/09-bloqueo-guardando.png": {
+    "mtime": 1788869630.4424658,
+    "ast_hash": "2d0b57a2fa5d6ef1d0b707b18d37b24a",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/desktop/bloqueos/10-dialogo-serie-semanal.png": {
+    "mtime": 1788869630.9684331,
+    "ast_hash": "f2d54ec052d46d5528705ae4f3d0ccc3",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/desktop/bloqueos/11-serie-validacion.png": {
+    "mtime": 1788869631.4269588,
+    "ast_hash": "a4713f433b9af67e21d574a9a89b9354",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/desktop/bloqueos/12-serie-guardando.png": {
+    "mtime": 1788869631.9948728,
+    "ast_hash": "60c2428ef0f0502fb5ff45aeff8abb1c",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/desktop/bloqueos/13-bloqueo-conflicto-idempotencia.png": {
+    "mtime": 1788869632.5134482,
+    "ast_hash": "7d49dbbeed10c00145bee562026b6759",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/desktop/bloqueos/14-serie-sin-conexion.png": {
+    "mtime": 1788869633.0858638,
+    "ast_hash": "57658d148f1ddd64e32bc4ccbe221403",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/desktop/bloqueos/15-retirando-bloqueo.png": {
+    "mtime": 1788869633.6037138,
+    "ast_hash": "ddf76d1df1a02df14da0e80acf26125c",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/mobile/bloqueos/01-carga-inicial.png": {
+    "mtime": 1788836233.9553356,
+    "ast_hash": "a3e2dd1e007943a5b2a4080eb6efbdf4",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/mobile/bloqueos/02-sin-barberos.png": {
+    "mtime": 1788836530.3532107,
+    "ast_hash": "4f1db904400f28474dd8c7e3224e6e6f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/mobile/bloqueos/03-error-carga.png": {
+    "mtime": 1788836530.6666284,
+    "ast_hash": "d691e7d78194230e9790a4a9ef0a0325",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/mobile/bloqueos/04-principal.png": {
+    "mtime": 1788833213.9108727,
+    "ast_hash": "cc04bf7be9d777f14827c8d50b4094ce",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/mobile/bloqueos/04a-principal-320.png": {
+    "mtime": 1788869673.1066153,
+    "ast_hash": "42c276a452dc077c7952a7ec07dc68ed",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/mobile/bloqueos/05-vacio.png": {
+    "mtime": 1788849094.374531,
+    "ast_hash": "9d3e91e484775c1437e6195b197cc7d0",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/mobile/bloqueos/06-error-bloqueos.png": {
+    "mtime": 1788849094.890668,
+    "ast_hash": "a9c03f8c93e02afee6ccb06a44ad6c03",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/mobile/bloqueos/07-dialogo-bloqueo-puntual.png": {
+    "mtime": 1788870550.7446134,
+    "ast_hash": "8e5a77e57e087e032c1a66d481e29c54",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/mobile/bloqueos/08-bloqueo-validacion.png": {
+    "mtime": 1788870550.8880658,
+    "ast_hash": "aa99043de83042238baee15dcdfe750a",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/mobile/bloqueos/09-bloqueo-guardando.png": {
+    "mtime": 1788870551.0680068,
+    "ast_hash": "fb7971b6f1feacf06a093e488fb91a6e",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/mobile/bloqueos/10-dialogo-serie-semanal.png": {
+    "mtime": 1788870551.4271033,
+    "ast_hash": "09212a51a0c0057bddf1fce893b8abc1",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/mobile/bloqueos/11-serie-validacion.png": {
+    "mtime": 1788870551.8886983,
+    "ast_hash": "58dbfb9ec3d034391debee32f03c393e",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/mobile/bloqueos/12-serie-guardando.png": {
+    "mtime": 1788870552.3308544,
+    "ast_hash": "03b457a273477bc5061b7c88556499e1",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/mobile/bloqueos/13-bloqueo-conflicto-idempotencia.png": {
+    "mtime": 1788870552.7371962,
+    "ast_hash": "c7ccce6514b9d769fa712eeb33f97363",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/mobile/bloqueos/14-serie-sin-conexion.png": {
+    "mtime": 1788870553.1390445,
+    "ast_hash": "a79939ca69899e51af82bb336c9be7c5",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/mobile/bloqueos/15-retirando-bloqueo.png": {
+    "mtime": 1788870553.5586479,
+    "ast_hash": "c47e7e3da75fad34f4ec9bbe7174c1e7",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/tablet/bloqueos/04-principal-768.png": {
+    "mtime": 1788869673.365165,
+    "ast_hash": "89556c09d0a5c278aa13d14a4d645f5c",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/desktop/horarios/01-carga-inicial.png": {
+    "mtime": 1788836233.2119539,
+    "ast_hash": "1012dd1b0f262d2b24288f1ce397f01b",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/desktop/horarios/02-sin-barberos.png": {
+    "mtime": 1788836529.5779226,
+    "ast_hash": "bedfbaa2c76503058c966acbfcbad708",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/desktop/horarios/03-error-carga.png": {
+    "mtime": 1788836529.8967054,
+    "ast_hash": "e3cdd2d204cc127c8af38eba35395283",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/desktop/horarios/04-principal.png": {
+    "mtime": 1788833213.4439852,
+    "ast_hash": "1ab01ce4ca8bfd2ff2aebe4772ecaa27",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/desktop/horarios/04a-principal-1280.png": {
+    "mtime": 1788869672.0958588,
+    "ast_hash": "c76809f3cf921ed2e5c10616d234d1df",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/desktop/horarios/05-horario-sin-tramos.png": {
+    "mtime": 1788848483.3727446,
+    "ast_hash": "8c10bfb68655248846eeb90fad7caef8",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/desktop/horarios/06-error-horario.png": {
+    "mtime": 1788848483.7995427,
+    "ast_hash": "44f7b952faa3ce92e8b02334888138ac",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/desktop/horarios/07-dialogo-agregar-tramo.png": {
+    "mtime": 1788849095.1129024,
+    "ast_hash": "2600dec0a7cef5641e24166d51467df4",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/desktop/horarios/08-tramo-validacion.png": {
+    "mtime": 1788849095.6423378,
+    "ast_hash": "085f9daeed578d7a25eed980a72d06c9",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/desktop/horarios/09-tramo-solape.png": {
+    "mtime": 1788849096.0885897,
+    "ast_hash": "f0fd38d637da0849a3b155c7284c5031",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/desktop/horarios/10-tramo-guardando.png": {
+    "mtime": 1788849096.6768513,
+    "ast_hash": "b7e629fc2dad41a2e529c0387189cf12",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/desktop/horarios/11-dialogo-excepcion-cerrada.png": {
+    "mtime": 1788849097.7325969,
+    "ast_hash": "53f7c9f4a50a009cc35f1e63a3565d92",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/desktop/horarios/12-dialogo-excepcion-segmentos.png": {
+    "mtime": 1788869634.6205893,
+    "ast_hash": "ccd214aa051b5d8dbc4e3214255dbb4f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/desktop/horarios/13-excepcion-fecha-duplicada.png": {
+    "mtime": 1788869635.1228068,
+    "ast_hash": "3bb5e5399c5384ad54d7fba000b23ccd",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/desktop/horarios/14-excepcion-guardando.png": {
+    "mtime": 1788869635.6718178,
+    "ast_hash": "8a5eef5709df6eba4b5b70fc2f2d3e18",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/desktop/horarios/15-calendario-festivos-error.png": {
+    "mtime": 1788869636.1405945,
+    "ast_hash": "dfef09c5f72930b33dbebc13af45db67",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/desktop/horarios/16-retirando-excepcion.png": {
+    "mtime": 1788869636.6576605,
+    "ast_hash": "82851dd93dd8961099f9d97479b3ef41",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/mobile/horarios/01-carga-inicial.png": {
+    "mtime": 1788836233.462116,
+    "ast_hash": "65bbb8c366133cf4499383fa8510fb3b",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/mobile/horarios/02-sin-barberos.png": {
+    "mtime": 1788836529.7752526,
+    "ast_hash": "f7fa2c5308805507ce5c81092251566f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/mobile/horarios/03-error-carga.png": {
+    "mtime": 1788836530.082962,
+    "ast_hash": "ff65e90f907821cc71ae847afe53a04b",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/mobile/horarios/04-principal.png": {
+    "mtime": 1788833213.6828573,
+    "ast_hash": "72514f09b63ead5755b812529c488715",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/mobile/horarios/04a-principal-320.png": {
+    "mtime": 1788869672.3855083,
+    "ast_hash": "3af16f09cdf8c666adbd8bd3c99bbfe4",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/mobile/horarios/05-horario-sin-tramos.png": {
+    "mtime": 1788848483.5975,
+    "ast_hash": "8b3b25da51a5c86d964b067143a5e463",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/mobile/horarios/06-error-horario.png": {
+    "mtime": 1788848484.0240433,
+    "ast_hash": "fbf396d44ac66ebc6b379fde10ef0787",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/mobile/horarios/07-dialogo-agregar-tramo.png": {
+    "mtime": 1788870549.0926094,
+    "ast_hash": "32e77d28c82de21adbcc9b1bb9403f58",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/mobile/horarios/08-tramo-validacion.png": {
+    "mtime": 1788870549.3191698,
+    "ast_hash": "39f27d8fa19d09cbb384f71a29722e0b",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/mobile/horarios/09-tramo-solape.png": {
+    "mtime": 1788870549.510442,
+    "ast_hash": "abef05381329947d27f2058a0fa42831",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/mobile/horarios/10-tramo-guardando.png": {
+    "mtime": 1788870549.6681378,
+    "ast_hash": "dadf070aec25590d456ef27a4c99b3ba",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/mobile/horarios/11-dialogo-excepcion-cerrada.png": {
+    "mtime": 1788870549.8108482,
+    "ast_hash": "46db1d8689e0cdb3345e8886cdd57b84",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/mobile/horarios/12-dialogo-excepcion-segmentos.png": {
+    "mtime": 1788870549.9787307,
+    "ast_hash": "fac04c469a40f4e00f29c6d79cdb0686",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/mobile/horarios/13-excepcion-fecha-duplicada.png": {
+    "mtime": 1788870550.1272745,
+    "ast_hash": "1997b84ba8a7dd85b8c5cf4e075aa626",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/mobile/horarios/14-excepcion-guardando.png": {
+    "mtime": 1788870550.2722003,
+    "ast_hash": "2b37352b200b80d1c763782a68920ac9",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/mobile/horarios/15-calendario-festivos-error.png": {
+    "mtime": 1788870550.4269297,
+    "ast_hash": "573bf6726832ffec1f8fef82b989987f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/mobile/horarios/16-retirando-excepcion.png": {
+    "mtime": 1788870550.5912519,
+    "ast_hash": "79d8555fa8384a211f7f9c7852ddbe16",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/tablet/horarios/04-principal-768.png": {
+    "mtime": 1788869672.6063764,
+    "ast_hash": "0414b2420e42f391c856ceb10ece4b06",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/01-carga-inicial.png": {
+    "mtime": 1788831430.6332772,
+    "ast_hash": "95ddd3b108bc48412e8dbd9dae593692",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/02-lista-un-servicio.png": {
+    "mtime": 1788831431.2943583,
+    "ast_hash": "779f8beb41175aa923b937feb09af730",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/03-catalogo-activos-inactivos.png": {
+    "mtime": 1788831431.832358,
+    "ast_hash": "8a431ebe05039f9d46a3b7591660d52f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/03a-principal-1280.png": {
+    "mtime": 1788831469.5395205,
+    "ast_hash": "59a3e286b1c331a0624c0f393e553d06",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/04-nombre-descripcion-largos.png": {
+    "mtime": 1788831432.4429233,
+    "ast_hash": "39ed1fb828cd5167b1f94813aa3e3d6d",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/05-lista-paginada.png": {
+    "mtime": 1788831433.0537817,
+    "ast_hash": "e36a2816e445b49f447560b3488bbdb2",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/06-cargando-mas.png": {
+    "mtime": 1788831433.6314852,
+    "ast_hash": "6af2d6e44c7c19a8e6e48a22697fe7cf",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/07-vacio.png": {
+    "mtime": 1788831434.1654005,
+    "ast_hash": "15bdacd829c6c2e2cc722e1290ff19ba",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/08-error-carga.png": {
+    "mtime": 1788831434.7468405,
+    "ast_hash": "a476b25fe2710fc2a1ebf47e43962dc9",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/09-dialogo-agregar.png": {
+    "mtime": 1788831435.4552522,
+    "ast_hash": "cb8b2529f152a22e8ee71a174f14b97f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/10-alta-validacion.png": {
+    "mtime": 1788831436.2347212,
+    "ast_hash": "f1ba666d82bff9d7331f730914dc688a",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/11-alta-guardando.png": {
+    "mtime": 1788831437.00828,
+    "ast_hash": "def4e166a05506982d8a32b4f22daab4",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/12-alta-nombre-duplicado.png": {
+    "mtime": 1788831437.7995193,
+    "ast_hash": "b4aa39438cb2d22ed82674e830a5d470",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/13-alta-conflicto-idempotencia.png": {
+    "mtime": 1788831438.6151366,
+    "ast_hash": "a8b666f321f31397bce7a742812d5c7d",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/14-alta-sin-conexion.png": {
+    "mtime": 1788831439.4479463,
+    "ast_hash": "847d9ad8688cc29e79434b101da74a53",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/15-alta-error-inesperado.png": {
+    "mtime": 1788831440.091718,
+    "ast_hash": "05b365494c30015cfc136b0032a60140",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/16-alta-aplicada.png": {
+    "mtime": 1788831440.7054589,
+    "ast_hash": "8a4bb64f3212d4b904958f190b4984a6",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/17-dialogo-editar.png": {
+    "mtime": 1788831441.354329,
+    "ast_hash": "0b1ef26aafbe713cd50ee697171afa31",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/18-edicion-validacion.png": {
+    "mtime": 1788831442.1996284,
+    "ast_hash": "6b2f22d15dcac5a5bcc501233cbe4bd6",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/19-edicion-guardando.png": {
+    "mtime": 1788831443.00127,
+    "ast_hash": "9d28e58328b7b1c0a749474ce2398a68",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/20-edicion-nombre-duplicado.png": {
+    "mtime": 1788831443.7383468,
+    "ast_hash": "367fb12897f8c2c8390400208b1f1c1f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/21-edicion-no-disponible.png": {
+    "mtime": 1788831444.5880919,
+    "ast_hash": "457611126bb7c7aea33130114f59fb57",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/22-edicion-sin-conexion.png": {
+    "mtime": 1788831445.46707,
+    "ast_hash": "a2b56b6748aabe039defc38a7e3dd61d",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/23-edicion-error-inesperado.png": {
+    "mtime": 1788831446.2801363,
+    "ast_hash": "c447920c4184472a173a91e6bac3060b",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/24-edicion-aplicada.png": {
+    "mtime": 1788831447.0443017,
+    "ast_hash": "9fcbf733ce0a1e20b389ce555b15d9a0",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/25-desactivar-impacto-cargando.png": {
+    "mtime": 1788831447.67308,
+    "ast_hash": "e5d8d80e652ba3933e95d6f76fed72c0",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/26-desactivar-sin-citas-futuras.png": {
+    "mtime": 1788831448.305493,
+    "ast_hash": "f7614ffa060dc9872078ad1696e47060",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/27-desactivar-con-impacto.png": {
+    "mtime": 1788831449.0443661,
+    "ast_hash": "6ada230f83daa91f46b0b794432cb918",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/28-desactivando.png": {
+    "mtime": 1788831449.7578757,
+    "ast_hash": "755f9f096a0896e2d7709966f24c5d41",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/29-desactivar-conflicto-estado.png": {
+    "mtime": 1788831450.5228887,
+    "ast_hash": "5f44bcc59926b82429aac40fc9f00563",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/30-desactivar-conflicto-idempotencia.png": {
+    "mtime": 1788831451.2585914,
+    "ast_hash": "1af0ed341dcde33a9509b7199bae8880",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/31-desactivar-sin-conexion.png": {
+    "mtime": 1788831452.1576953,
+    "ast_hash": "1d5c639f84eef5ee8a44937ff6cdd71d",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/32-desactivar-error-inesperado.png": {
+    "mtime": 1788831452.996812,
+    "ast_hash": "2ef2a24bbde53fece598572c3af0336f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/33-desactivado-aplicado.png": {
+    "mtime": 1788831453.8180366,
+    "ast_hash": "6a240469725a5b138349209da00e9a13",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/34-dialogo-reactivar.png": {
+    "mtime": 1788831454.4684289,
+    "ast_hash": "6f0bebcf66891597d8a03fb577154536",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/35-reactivando.png": {
+    "mtime": 1788831455.077271,
+    "ast_hash": "d1c5012ec6f1f84b7ebe5cfe56270b09",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/36-reactivar-conflicto-estado.png": {
+    "mtime": 1788831455.741961,
+    "ast_hash": "d3ed4540cd057ca657e7241b700fbf53",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/37-reactivar-sin-conexion.png": {
+    "mtime": 1788831456.3848474,
+    "ast_hash": "e1c3bd6d9fc43a0aa5b96a606f81640a",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/desktop/servicios/38-reactivado-aplicado.png": {
+    "mtime": 1788831456.9250443,
+    "ast_hash": "40dd88f8a82e308da1a5fbb015a13eb1",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/01-carga-inicial.png": {
+    "mtime": 1788831430.969653,
+    "ast_hash": "4a020fee1d5e1abbefb2c5fd5a80bace",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/02-lista-un-servicio.png": {
+    "mtime": 1788831431.5490704,
+    "ast_hash": "25040a989df27d7061d335084fa451e5",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/03-catalogo-activos-inactivos.png": {
+    "mtime": 1788831432.143977,
+    "ast_hash": "ff297ea3a05580d928f50ca0f781f6d1",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/03a-principal-320.png": {
+    "mtime": 1788831470.8877757,
+    "ast_hash": "79c18416565ec2fca11b780ae9726a35",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/04-nombre-descripcion-largos.png": {
+    "mtime": 1788831432.74367,
+    "ast_hash": "dc7e909f49491e03c9d9f3158aed3e2d",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/05-lista-paginada.png": {
+    "mtime": 1788831433.3616197,
+    "ast_hash": "aec00783701c09066f782e959aab0f96",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/06-cargando-mas.png": {
+    "mtime": 1788831433.9008853,
+    "ast_hash": "721931582cbc2bce6f15ae677ae6f023",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/07-vacio.png": {
+    "mtime": 1788831434.436563,
+    "ast_hash": "565f89876b215b6347457cbfb0068b0d",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/08-error-carga.png": {
+    "mtime": 1788831435.0780022,
+    "ast_hash": "f543d704ed2da93783109e718fafaae9",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/09-dialogo-agregar.png": {
+    "mtime": 1788831435.8366802,
+    "ast_hash": "92300058790041b4cbfc29db9da1f18a",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/10-alta-validacion.png": {
+    "mtime": 1788831436.6320953,
+    "ast_hash": "dbe8ea0d98e6c955729e07a20aa8f714",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/11-alta-guardando.png": {
+    "mtime": 1788831437.4170914,
+    "ast_hash": "6640301f889c1d7bad315f7e2522df39",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/12-alta-nombre-duplicado.png": {
+    "mtime": 1788831438.2056065,
+    "ast_hash": "7310e30a10aa5946072f862b05fc0268",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/13-alta-conflicto-idempotencia.png": {
+    "mtime": 1788831439.043952,
+    "ast_hash": "f9f0700d369ca89dcaca754858576844",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/14-alta-sin-conexion.png": {
+    "mtime": 1788831439.761807,
+    "ast_hash": "287ca9c34a703b50c1c9eb3df30c5069",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/15-alta-error-inesperado.png": {
+    "mtime": 1788831440.4139612,
+    "ast_hash": "c6146f490138a2328b9da24f82ac3937",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/16-alta-aplicada.png": {
+    "mtime": 1788831441.039966,
+    "ast_hash": "2262a7418453c0886dd3826003cd5d00",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/17-dialogo-editar.png": {
+    "mtime": 1788831441.7226229,
+    "ast_hash": "4e94399d201aa34f901e3fef0b897d33",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/18-edicion-validacion.png": {
+    "mtime": 1788831442.617127,
+    "ast_hash": "33407120efe8e5f1be58ad95d588be44",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/19-edicion-guardando.png": {
+    "mtime": 1788831443.3834207,
+    "ast_hash": "35e9226d41b191dbdbb0fd2adeba50ef",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/20-edicion-nombre-duplicado.png": {
+    "mtime": 1788831444.2273219,
+    "ast_hash": "c838c7b847dc03475bba941af67f7279",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/21-edicion-no-disponible.png": {
+    "mtime": 1788831445.0009446,
+    "ast_hash": "7d9762c2653e8885be5a165164e280ca",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/22-edicion-sin-conexion.png": {
+    "mtime": 1788831445.9049428,
+    "ast_hash": "d36dea506160e25d05271dc3ed39fe99",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/23-edicion-error-inesperado.png": {
+    "mtime": 1788831446.7253318,
+    "ast_hash": "c12037a0b08a731a4f6e9250d401fa0f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/24-edicion-aplicada.png": {
+    "mtime": 1788831447.3652697,
+    "ast_hash": "202453bb9f0d63736001f8ae26200b21",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/25-desactivar-impacto-cargando.png": {
+    "mtime": 1788831447.9894614,
+    "ast_hash": "a20248e5ff957fa2bf058912671db7e8",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/26-desactivar-sin-citas-futuras.png": {
+    "mtime": 1788831448.683963,
+    "ast_hash": "b1de20bf6b1e2b135378303dda10e3b2",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/27-desactivar-con-impacto.png": {
+    "mtime": 1788831449.429389,
+    "ast_hash": "ae0da98ace5eb4f8c40d21bf77cae09a",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/28-desactivando.png": {
+    "mtime": 1788831450.1380892,
+    "ast_hash": "59543be3efbd0e62b4d3af3ed0e560a5",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/29-desactivar-conflicto-estado.png": {
+    "mtime": 1788831450.8845966,
+    "ast_hash": "5715030608c34312ee388cb1ab451001",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/30-desactivar-conflicto-idempotencia.png": {
+    "mtime": 1788831451.6793518,
+    "ast_hash": "dfec487459f9401f803a713ba1e7fd4f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/31-desactivar-sin-conexion.png": {
+    "mtime": 1788831452.5935133,
+    "ast_hash": "21e8229177b983ccdb428b51757b9835",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/32-desactivar-error-inesperado.png": {
+    "mtime": 1788831453.4468763,
+    "ast_hash": "c40c3b6d9aeb983db22e621be3840c69",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/33-desactivado-aplicado.png": {
+    "mtime": 1788831454.1587915,
+    "ast_hash": "8a617b81a15b563e3d8b44a6e1b99120",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/34-dialogo-reactivar.png": {
+    "mtime": 1788831454.7815204,
+    "ast_hash": "19efda2e228599cbe148b91504846fb5",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/35-reactivando.png": {
+    "mtime": 1788831455.4097738,
+    "ast_hash": "f3aee5c03207424e439cabb5b7484f74",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/36-reactivar-conflicto-estado.png": {
+    "mtime": 1788831456.0810754,
+    "ast_hash": "21ce9ffc08f49f72750f7ccdc3bde433",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/37-reactivar-sin-conexion.png": {
+    "mtime": 1788831456.6671364,
+    "ast_hash": "768f222ddd4f2efbad09c07183cb350c",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/mobile/servicios/38-reactivado-aplicado.png": {
+    "mtime": 1788831457.2563448,
+    "ast_hash": "75d4fc418fbf122efb6d8381e7eed0ef",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/tablet/servicios/03-principal-768.png": {
+    "mtime": 1788831472.062569,
+    "ast_hash": "9a2e660de99e745865ec04d0332fdb5c",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/desktop/servicios-por-barbero/01-carga-inicial.png": {
+    "mtime": 1788831457.5893917,
+    "ast_hash": "5cf94a78246d1ba3bea7517712fd1bd9",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/desktop/servicios-por-barbero/02-sin-barberos.png": {
+    "mtime": 1788831458.244869,
+    "ast_hash": "b371399fb68a5a6ebe9eb7836325462c",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/desktop/servicios-por-barbero/03-sin-servicios.png": {
+    "mtime": 1788831458.8728278,
+    "ast_hash": "2df0684f3370e47cdcccd3a67e7f5149",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/desktop/servicios-por-barbero/03a-principal-1280.png": {
+    "mtime": 1788831469.89684,
+    "ast_hash": "f6257d2aa4202df31b2ed4dad06b68e6",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/desktop/servicios-por-barbero/04-error-carga.png": {
+    "mtime": 1788831459.4738264,
+    "ast_hash": "ffa6a75e04017da9e374b250c27b16dc",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/desktop/servicios-por-barbero/05-principal-un-barbero.png": {
+    "mtime": 1788831460.231359,
+    "ast_hash": "a305ad7e64905f9f8120dc6d03fb4b69",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/desktop/servicios-por-barbero/06-principal-equipo-completo.png": {
+    "mtime": 1788831461.0063434,
+    "ast_hash": "f151f892d97c7bc37c487d2963596752",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/desktop/servicios-por-barbero/07-cambio-barbero-cargando.png": {
+    "mtime": 1788831461.5840507,
+    "ast_hash": "e2306ef495bff5092b6d63648b3df583",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/desktop/servicios-por-barbero/08-error-carga-asignaciones.png": {
+    "mtime": 1788831462.157115,
+    "ast_hash": "12c066c07a2baa146ff4e7c283fe01b1",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/desktop/servicios-por-barbero/09-asignando-servicio.png": {
+    "mtime": 1788831462.7827196,
+    "ast_hash": "48fb46ebcec5f8bc0fe8697a03449eab",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/desktop/servicios-por-barbero/10-asignacion-aplicada.png": {
+    "mtime": 1788831463.3889465,
+    "ast_hash": "050db2024349e3107d88da6eeb463a39",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/desktop/servicios-por-barbero/11-retirando-servicio.png": {
+    "mtime": 1788831464.037918,
+    "ast_hash": "ef2f1816b4defdbb842af4a19381fd8a",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/desktop/servicios-por-barbero/12-retiro-aplicado.png": {
+    "mtime": 1788831464.6844153,
+    "ast_hash": "4f7fb5a43070a55fddde99f34e750701",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/desktop/servicios-por-barbero/13-ultima-asignacion-rechazada.png": {
+    "mtime": 1788831465.3353858,
+    "ast_hash": "591132d87e17d0e9ff5e3190c4852697",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/desktop/servicios-por-barbero/14-barbero-o-servicio-no-disponible.png": {
+    "mtime": 1788831466.102112,
+    "ast_hash": "bd8891b2e7e1cc15265332a7d6e72a31",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/desktop/servicios-por-barbero/15-cambio-sin-conexion.png": {
+    "mtime": 1788831466.8515906,
+    "ast_hash": "484f6779a6c6228c38e7303bfc36fd24",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/desktop/servicios-por-barbero/16-cambio-error-inesperado.png": {
+    "mtime": 1788831467.4726582,
+    "ast_hash": "5add9612c1ef683f29edb88d945f42f7",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/desktop/servicios-por-barbero/17-nombres-largos-reflow.png": {
+    "mtime": 1788831468.2267888,
+    "ast_hash": "e48fb9c5e86a98792e846c198474f005",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/mobile/servicios-por-barbero/01-carga-inicial.png": {
+    "mtime": 1788831457.9000702,
+    "ast_hash": "3a8c0106f05ecdb886b541d2bcc007e5",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/mobile/servicios-por-barbero/02-sin-barberos.png": {
+    "mtime": 1788831458.5660615,
+    "ast_hash": "d7f03aefc4d403fa4701a22957b5e2c5",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/mobile/servicios-por-barbero/03-sin-servicios.png": {
+    "mtime": 1788831459.19301,
+    "ast_hash": "0a67e49d15ba77b21a733bf43f0877a8",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/mobile/servicios-por-barbero/03a-principal-320.png": {
+    "mtime": 1788831471.2433774,
+    "ast_hash": "a502730b601967e6e2ab4769f52603bf",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/mobile/servicios-por-barbero/04-error-carga.png": {
+    "mtime": 1788831459.8414505,
+    "ast_hash": "ae2ffc3abb1ddd3bf551f12b9b7124c6",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/mobile/servicios-por-barbero/05-principal-un-barbero.png": {
+    "mtime": 1788831460.616647,
+    "ast_hash": "5891f56b551552f75383a135ef4e319e",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/mobile/servicios-por-barbero/06-principal-equipo-completo.png": {
+    "mtime": 1788831461.3305447,
+    "ast_hash": "649c3146036a4618979c26e0bcc0ffca",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/mobile/servicios-por-barbero/07-cambio-barbero-cargando.png": {
+    "mtime": 1788831461.8716931,
+    "ast_hash": "36d077371fc010557606d90052ae13af",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/mobile/servicios-por-barbero/08-error-carga-asignaciones.png": {
+    "mtime": 1788831462.4859009,
+    "ast_hash": "4f72ae45c138badcd9c1c3e48e423cb7",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/mobile/servicios-por-barbero/09-asignando-servicio.png": {
+    "mtime": 1788831463.1096961,
+    "ast_hash": "809d4148d5118fff6378c2658f259799",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/mobile/servicios-por-barbero/10-asignacion-aplicada.png": {
+    "mtime": 1788831463.729775,
+    "ast_hash": "8bb4482094e5702b94464ba5b9f419f0",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/mobile/servicios-por-barbero/11-retirando-servicio.png": {
+    "mtime": 1788831464.4210691,
+    "ast_hash": "744d8ef07ef03bca0de9d68566ed3a3d",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/mobile/servicios-por-barbero/12-retiro-aplicado.png": {
+    "mtime": 1788831465.011959,
+    "ast_hash": "04e7480314b389a036c921f3f3fc54ab",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/mobile/servicios-por-barbero/13-ultima-asignacion-rechazada.png": {
+    "mtime": 1788831465.7134833,
+    "ast_hash": "10a9d9a122de9db018f25d97b8f559f9",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/mobile/servicios-por-barbero/14-barbero-o-servicio-no-disponible.png": {
+    "mtime": 1788831466.5340433,
+    "ast_hash": "963845e157187bd86e36e561a62d2a05",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/mobile/servicios-por-barbero/15-cambio-sin-conexion.png": {
+    "mtime": 1788831467.1791468,
+    "ast_hash": "e463df372c8306b39893d3979c369254",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/mobile/servicios-por-barbero/16-cambio-error-inesperado.png": {
+    "mtime": 1788831467.8807724,
+    "ast_hash": "fbeb03aacbc5b710344065a184b1b8d6",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/mobile/servicios-por-barbero/17-nombres-largos-reflow.png": {
+    "mtime": 1788831468.646454,
+    "ast_hash": "94d8f85728049e61cf3f93d1c4604fa5",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/tablet/servicios-por-barbero/03-principal-768.png": {
+    "mtime": 1788831472.4301977,
+    "ast_hash": "c984ee147450714976a361b0aa4f852d",
+    "semantic_hash": ""
+  },
+  "apps/api/cmd/api/phone_sender_selection_test.go": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "408f641bab6b9ead2288ce58ecab0214",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/notification/phone_challenge_sender.go": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "d61979acd8a7ec7c94f21768f7da1c97",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/notification/phone_challenge_sender_test.go": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "e1ff8f43df71ba9a442cf4996aeaa0e4",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/agenda-detalle-fidelidad-mock.spec.ts": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "ecb030ce8992a9580c99a173478b0c3c",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/barberos-fidelidad-comparacion.mjs": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "7f7478c4b6101530ba8678f4d1fd5571",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/barberos-fidelidad-mock.spec.ts": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "029603ab388dd3e135f80c7670046007",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/configuracion-barberia-fidelidad-comparacion.mjs": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "f7a4bb2b43a46412ff82bb359f16d2eb",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/configuracion-barberia-fidelidad-mock.spec.ts": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "30983b4b39945e645f4a5f98135ad860",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/horarios-fidelidad-mock.spec.ts": {
+    "mtime": 1789061791.1986575,
+    "ast_hash": "da79d255f69cd97e7de0fb8257959577",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/servicios-fidelidad-mock.spec.ts": {
+    "mtime": 1789061791.1986575,
+    "ast_hash": "9359d35f128dacbc215b933f6dc11a35",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/servicios-por-barbero-fidelidad-mock.spec.ts": {
+    "mtime": 1789061791.1986575,
+    "ast_hash": "135b45f7a52263ef436d179c9c03023b",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/comparacion/resumen.txt": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "b0fbb93c7981387a40bd114b6cbe4a21",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/comparacion/resumen.txt": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "c94eacc9b320b2690e2f9a16d15ca819",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-191-detalle-historial-reprogramacion-fidelidad-v1.1.md": {
+    "mtime": 1789061791.2059348,
+    "ast_hash": "992ec7d5eff6766d823553a7af869352",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-192-barberos-fidelidad-v1.1.md": {
+    "mtime": 1789061791.2059348,
+    "ast_hash": "c05b2870545fd6413a3c53a6bac6e094",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-193-configuracion-barberia-fidelidad-v1.1.md": {
+    "mtime": 1789061791.2059348,
+    "ast_hash": "1aefb5ce1678e51d8c80482454df0585",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-194-servicios-fidelidad-v1.1.md": {
+    "mtime": 1789061791.2059348,
+    "ast_hash": "788fa612d0d05114a47e4ffb2c388fe4",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-195-servicios-por-barbero-fidelidad-v1.1.md": {
+    "mtime": 1789061791.2059348,
+    "ast_hash": "02cba0e4fa9e1a2426e20e104a8a0ea4",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/chore/issue-196-horarios-fidelidad-v1.1.md": {
+    "mtime": 1789061791.2059348,
+    "ast_hash": "86feeda22b75b70545ef06e1b9c6ba48",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/desktop/detalle-listo.png": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "12e9743a2d9ba5089c090827dc482b6b",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/desktop/reprogramar-conflicto.png": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "85e8d47b91752fcca04284e75601020b",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/mobile/detalle-listo.png": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "b15e5f72a2dbe76bee0def00ba43bb78",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/mobile/reprogramar-conflicto.png": {
+    "mtime": 1789061791.1388755,
+    "ast_hash": "ddea862d781333f5725aca7ed5cefef0",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/responsive/1280-zoom200/foco-reprogramar.png": {
+    "mtime": 1789061791.1516273,
+    "ast_hash": "d13605e73544ffe8a1047dd33dd81961",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/responsive/1280/foco-reprogramar.png": {
+    "mtime": 1789061791.1516273,
+    "ast_hash": "f41b0bb053ac3fc122f0c6a72c5dd259",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/responsive/320/foco-reprogramar.png": {
+    "mtime": 1789061791.1516273,
+    "ast_hash": "9575741788f0653e0227e550eb5689c0",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/responsive/360/foco-reprogramar.png": {
+    "mtime": 1789061791.1539106,
+    "ast_hash": "e851c31920aa91c7dead2fc395db2a51",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/responsive/768/foco-reprogramar.png": {
+    "mtime": 1789061791.1539106,
+    "ast_hash": "e1df72349be9a675ef1878cef3e757a8",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/comparacion/desktop/lista-diff.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "eadbb3ad32d933350a1ae02770790ec9",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/comparacion/desktop/lista-lado-a-lado.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "58eb72ac89c84c3c7962d77ba055b745",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/comparacion/mobile/lista-diff.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "ff4a19f86ffe489c09d5ad198eb28b90",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/comparacion/mobile/lista-lado-a-lado.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "3e6aa5d54c2d40ba5128dc37a395120a",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/desktop/alta-error.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "7c23c637d6cde33ac93e1e71dd3d9b3d",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/desktop/lista.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "56c0db5f1f6bc3214615d19c8afb1535",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/desktop/vacio.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "330634929c46fbb1241591cbdf6e8034",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/mobile/lista.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "f2384bc988ef17d9b1d24225a614b061",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/responsive/1280-zoom200/foco-agregar.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "93259af440555ca86cdda91de7e57fc1",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/responsive/1280/foco-agregar.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "16e6ceaca07d61f66cafd73581bddf78",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/responsive/320/foco-agregar.png": {
+    "mtime": 1789061791.155451,
+    "ast_hash": "21a85c24be14c300bf9ec74465e406c2",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/responsive/360/foco-agregar.png": {
+    "mtime": 1789061791.1673198,
+    "ast_hash": "f19b995b0e38e8aa4efb02556ea55e7d",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/barberos/fidelidad-192/responsive/768/foco-agregar.png": {
+    "mtime": 1789061791.1673198,
+    "ast_hash": "1d1531173f3c1d4644e855ea62d0bfcf",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/comparacion/desktop/guardado-diff.png": {
+    "mtime": 1789061791.1673198,
+    "ast_hash": "ba69ef2f8af5ea8bc3584d796415dcc2",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/comparacion/desktop/guardado-lado-a-lado.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "6682ad8ade30ed5c238f11a0c2b49dbd",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/comparacion/mobile/guardado-diff.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "243fec5461985ea1cc57c243762eb101",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/comparacion/mobile/guardado-lado-a-lado.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "61d6946982dc1ac2c3153c6f1c7f2e88",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/desktop/guardado.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "d486e5631a02de121cae4ebbc0e4bc4d",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/desktop/validacion.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "4bdb575cbf7963154c5ac22d9912a679",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/mobile/guardado.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "a4780e7c46a3b5f119a890f0232208d0",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/responsive/1280-zoom200/foco-nombre.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "f86c3fbfc12230952a586b1f2a34e505",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/responsive/1280/foco-nombre.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "9cf69cd206b2620488f8e796a7ff1e84",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/responsive/320/foco-nombre.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "35cae6b43b09d56d093a5cac72674b19",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/responsive/360/foco-nombre.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "8bc3a2f94065ce99e35b5cc1162e83a7",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/configuracion-barberia/fidelidad-193/responsive/768/foco-nombre.png": {
+    "mtime": 1789061791.172173,
+    "ast_hash": "8ce2ae378ccb41d6e7fa8e65da489add",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/horarios/fidelidad-196/desktop/horarios.png": {
+    "mtime": 1789061791.1829617,
+    "ast_hash": "abae8db280fe7370856570f6293d889c",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/horarios/fidelidad-196/mobile/horarios.png": {
+    "mtime": 1789061791.1829617,
+    "ast_hash": "697f4585bd0dbac5ca255be7fda213a9",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/horarios/fidelidad-196/responsive/1280-zoom200/foco-agregar.png": {
+    "mtime": 1789061791.1829617,
+    "ast_hash": "8d684c17a0d1eac6a95f1ea9336ad12d",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/horarios/fidelidad-196/responsive/1280/foco-agregar.png": {
+    "mtime": 1789061791.1829617,
+    "ast_hash": "cf769d9f25de3a3af742e900484ecffd",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/horarios/fidelidad-196/responsive/320/foco-agregar.png": {
+    "mtime": 1789061791.1864772,
+    "ast_hash": "cfac342945aea86168a5187204637f70",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/horarios/fidelidad-196/responsive/360/foco-agregar.png": {
+    "mtime": 1789061791.1864772,
+    "ast_hash": "38ae95b62d6b93a22a48bd107b37fb5a",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/horarios/fidelidad-196/responsive/768/foco-agregar.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "92faee8fc0e981dba96f19c1158d70e5",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios-por-barbero/fidelidad-195/desktop/asignaciones.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "06d136dac8f888c3e587c18340d4c243",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios-por-barbero/fidelidad-195/desktop/conflicto.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "3d5aa645f3e3fbb1afffbf865e82c2a8",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios-por-barbero/fidelidad-195/mobile/asignaciones.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "819c2eac566d97592f07558f2bbd39f9",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios-por-barbero/fidelidad-195/responsive/1280-zoom200/foco-barbero.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "ca55f8def883e5406a0c6b2283441d71",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios-por-barbero/fidelidad-195/responsive/1280/foco-barbero.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "05a4f8fc216a51a6c7b07cf92fbfe3d6",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios-por-barbero/fidelidad-195/responsive/320/foco-barbero.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "76e825df77bd2c2a7202caa497f6f6b6",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios-por-barbero/fidelidad-195/responsive/360/foco-barbero.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "29dd96489140dcffcca3c4ceeb20b8ae",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios-por-barbero/fidelidad-195/responsive/768/foco-barbero.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "a1a6a1f2fd8db069ea9d9f9fd3afff01",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios/fidelidad-194/desktop/catalogo.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "0a102ce497061807c7c1c93948903436",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios/fidelidad-194/mobile/catalogo.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "c7186343499b59f4dbba12c39ec04ff4",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios/fidelidad-194/responsive/1280-zoom200/foco-agregar.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "4b446337aba59121cbd2ffe638f9503e",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios/fidelidad-194/responsive/1280/foco-agregar.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "76fe11d329c9e9863b6cb02f8816a32c",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios/fidelidad-194/responsive/320/foco-agregar.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "5582fc53301cdbe429884e1de7a389a3",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios/fidelidad-194/responsive/360/foco-agregar.png": {
+    "mtime": 1789061791.1880214,
+    "ast_hash": "3e120cb904a4d17d445b4f5422798669",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/servicios/fidelidad-194/responsive/768/foco-agregar.png": {
+    "mtime": 1789061791.1986575,
+    "ast_hash": "12ee8b57d56dcb638be6d5d4fb643f1f",
     "semantic_hash": ""
   }
 }
