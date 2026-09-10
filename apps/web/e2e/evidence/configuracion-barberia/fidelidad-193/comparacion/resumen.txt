@@ -1,0 +1,2 @@
+desktop: 0.4414 · atlas 744×514 · app 1280×900
+mobile: 0.5367 · atlas 266×440 · app 360×800

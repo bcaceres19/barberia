@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-FIX-86-OTP-WHATSAPP-META-v2"
 version: "2.0"
 kind: "fix"
-status: "ready"
+status: "executed"
 target_agents:
   - "codex"
 target_model: "gpt-5.6-terra"
@@ -17,9 +17,9 @@ related_hu:
 issue: 86
 issue_url: "https://github.com/bcaceres19/barberia/issues/86"
 suggested_issue_title: null
-branch: null
-pr: null
-pr_url: null
+branch: "fix/86-reto-otp-whatsapp-meta"
+pr: 223
+pr_url: "https://github.com/bcaceres19/barberia/pull/223"
 depends_on:
   - "HU-007 integrada mediante PR #61"
   - "HU-008 integrada mediante PR #63"
@@ -316,4 +316,3 @@ Actualiza el prompt a `executed` solo si produjo el resultado/PR correspondiente
 - Usa `Refs #86` mientras falte cualquier comprobación manual del issue, incluida la evidencia de entrega real o los pendientes que el informe de correo dejó parciales.
 - Usa `Closes #86` únicamente si todo el cuerpo vigente del issue queda demostrado, no solo el envío de WhatsApp.
 - No hagas push directo, force push ni merge de `main`; no resuelvas conversaciones ni omitas checks por conveniencia.
-
