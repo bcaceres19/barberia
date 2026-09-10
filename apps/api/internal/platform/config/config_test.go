@@ -208,6 +208,40 @@ func TestLoad_LocalEnvironment_MissingProviderCredentials_StillLoads(t *testing.
 	})
 }
 
+func TestLoad_MetaWhatsAppPartialConfigurationRejectedInEveryEnvironment(t *testing.T) {
+	for _, environment := range []string{"local", "test", "pilot", "production"} {
+		for _, partial := range []map[string]string{
+			{"APP_META_WHATSAPP_PHONE_NUMBER_ID": "fake-phone-number-id"},
+			{"APP_META_WHATSAPP_ACCESS_TOKEN": "fake-access-token"},
+			{"APP_META_WHATSAPP_TEMPLATE_NAME": "fake-template"},
+			{
+				"APP_META_WHATSAPP_PHONE_NUMBER_ID": "fake-phone-number-id",
+				"APP_META_WHATSAPP_ACCESS_TOKEN":    "fake-access-token",
+			},
+		} {
+			t.Run(environment, func(t *testing.T) {
+				env := baseLocalEnv()
+				env["APP_ENVIRONMENT"] = environment
+				env["APP_META_WHATSAPP_PHONE_NUMBER_ID"] = ""
+				env["APP_META_WHATSAPP_ACCESS_TOKEN"] = ""
+				env["APP_META_WHATSAPP_TEMPLATE_NAME"] = ""
+				if environment == "pilot" || environment == "production" {
+					env["APP_DATABASE_URL"] = "postgres://barberia_app:secret@db:5432/barberia?sslmode=require"
+					env["APP_WORKER_DATABASE_URL"] = "postgres://barberia_worker:secret@db:5432/barberia?sslmode=require"
+				}
+				for key, value := range partial {
+					env[key] = value
+				}
+				withEnv(t, env, func() {
+					if _, err := config.Load(); err == nil {
+						t.Fatal("expected partial Meta WhatsApp configuration to be rejected")
+					}
+				})
+			})
+		}
+	}
+}
+
 func TestLoad_RecoveryParamsOutOfRangeRejected(t *testing.T) {
 	env := baseLocalEnv()
 	env["APP_RECOVERY_CODE_MAX_ATTEMPTS"] = "0"

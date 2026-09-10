@@ -424,6 +424,23 @@ func Load() (Config, error) {
 		}
 	}
 
+	metaConfiguredValues := 0
+	for _, value := range []string{
+		cfg.MetaWhatsAppPhoneNumberID,
+		cfg.MetaWhatsAppAccessToken,
+		cfg.MetaWhatsAppTemplateName,
+	} {
+		if value != "" {
+			metaConfiguredValues++
+		}
+	}
+	if metaConfiguredValues > 0 && metaConfiguredValues < 3 {
+		return Config{}, fmt.Errorf(
+			"config: APP_META_WHATSAPP_PHONE_NUMBER_ID/APP_META_WHATSAPP_ACCESS_TOKEN/" +
+				"APP_META_WHATSAPP_TEMPLATE_NAME deben configurarse juntas o permanecer ausentes",
+		)
+	}
+
 	requiresHardening := !entornosSinTLSObligatorio[cfg.Environment]
 
 	if requiresHardening {

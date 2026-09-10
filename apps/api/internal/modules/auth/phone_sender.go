@@ -5,16 +5,12 @@ import (
 	"log/slog"
 )
 
-// LoggingPhoneCodeSender implementa [PhoneCodeSender] como marcador de
-// posición documentado, NO como un adaptador real de WhatsApp: el proveedor
-// concreto (Meta WhatsApp Cloud API, DEC-066) es una decisión de HU-008, y
-// HU-007 no puede adelantarla sin ampliar su propio alcance ("Elegir el
-// proveedor/canal... sin decisión expresa" queda fuera de HU-007). Esta
-// implementación deja constancia en el log de que un envío HABRÍA ocurrido,
-// sin phone ni code (RN-DAT-02), y nunca falla: permite demostrar
-// CA-007-02 de punta a punta contra HTTP/PostgreSQL reales sin depender de
-// una cuenta de WhatsApp real. cmd/api/main.go debe reemplazarla por el
-// adaptador real cuando HU-008 lo defina.
+// LoggingPhoneCodeSender implementa [PhoneCodeSender] como marcador para
+// desarrollo sin configuración completa de Meta. Solo deja constancia de que
+// un envío habría ocurrido, sin phone ni code (RN-DAT-02), y nunca falla:
+// permite que las pruebas locales y E2E no dependan de un tercero. cmd/api
+// lo selecciona exclusivamente cuando Meta está totalmente ausente en
+// local/test; en cualquier configuración completa se usa el adaptador oficial.
 type LoggingPhoneCodeSender struct {
 	logger *slog.Logger
 }

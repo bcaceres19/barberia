@@ -689,9 +689,44 @@ resuelve tenant ni llama `PasswordHasher.Verify` en esa rama). Responde
   Éxito: `204`, limpia `escalated_until`/`attempt_count` de esa IP en la
   misma transacción (`auth_phone_challenge_verify`); el barbero reintenta
   el login normalmente, sin token adicional.
-- El envío real de WhatsApp es un marcador de posición
-  (`auth.LoggingPhoneCodeSender`, solo registra que "habría" enviado, sin
-  `phone` ni `code`): el proveedor real es `DEC-066`, decisión de HU-008.
+- `cmd/api.selectPhoneChallengeSender` reutiliza `MetaWhatsAppSender` mediante
+  `notification.PhoneChallengeSender` cuando `APP_META_WHATSAPP_PHONE_NUMBER_ID`,
+  `APP_META_WHATSAPP_ACCESS_TOKEN` y `APP_META_WHATSAPP_TEMPLATE_NAME` están
+  completos. La misma plantilla Authentication aprobada se usa para HU-007 y
+  recuperación; no hay un segundo cliente Meta ni un destino configurable.
+- Si las tres variables están totalmente ausentes en `local` o `test`, usa
+  `auth.LoggingPhoneCodeSender` para conservar las E2E sin terceros. Una
+  configuración parcial falla al arrancar en cualquier ambiente; fuera de
+  `local`/`test`, la ausencia total también falla en `config.Load`.
+
+| Meta completa | Ambiente | Remitente HU-007 |
+| --- | --- | --- |
+| sí | cualquiera | `notification.PhoneChallengeSender` sobre `MetaWhatsAppSender` |
+| no | `local`/`test` | `auth.LoggingPhoneCodeSender` |
+| no | `pilot`/`production` | arranque rechazado por configuración |
+
+### Activación local de Meta para el reto
+
+El archivo local `apps/api/.env` está ignorado y no se versiona. Go no lo
+carga automáticamente; desde `apps/api`, cárgalo solo en la sesión de
+PowerShell que iniciará el proceso, sin imprimir variables:
+
+```powershell
+Get-Content .env | Where-Object { $_ -match '^[^#][^=]*=' } | ForEach-Object {
+  $name, $value = $_ -split '=', 2
+  Set-Item -Path "Env:$name" -Value $value
+}
+go run ./cmd/api
+```
+
+La configuración requiere presencia —nunca valores en logs o capturas— de
+`APP_META_WHATSAPP_API_VERSION`, `APP_META_WHATSAPP_PHONE_NUMBER_ID`,
+`APP_META_WHATSAPP_ACCESS_TOKEN`, `APP_META_WHATSAPP_TEMPLATE_NAME` y
+`APP_META_WHATSAPP_LANGUAGE_CODE`. El destinatario sigue resolviéndose solo
+desde `staff_user.phone` verificado. Para una prueba real, confirme en Meta
+que la plantilla es `AUTHENTICATION`, está `APPROVED`, usa el idioma exacto y
+tiene botón `COPY_CODE`; no use `APP_PHONE_CHALLENGE_CAPTURE_FILE`, pues esa
+captura es únicamente para E2E local y no demuestra entrega de Meta.
 
 ### Variables de entorno nuevas
 
