@@ -253,6 +253,18 @@ func (s *stubRepository) CancelByBarber(
 	panic("no usado")
 }
 
+func (s *stubRepository) CompleteAppointment(
+	_ context.Context, _ string, _ booking.CloseAppointmentInput, _ idempotency.Key, _ idempotency.Fingerprint,
+) (booking.CompleteAppointmentResult, error) {
+	panic("no usado")
+}
+
+func (s *stubRepository) MarkNoShow(
+	_ context.Context, _ string, _ booking.CloseAppointmentInput, _ idempotency.Key, _ idempotency.Fingerprint,
+) (booking.MarkNoShowResult, error) {
+	panic("no usado")
+}
+
 func (s *stubRepository) CustomerNames(
 	_ context.Context, _ string, _ []string,
 ) (map[string]string, error) {

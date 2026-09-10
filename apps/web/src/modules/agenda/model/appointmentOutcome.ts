@@ -106,3 +106,21 @@ export type CancelAppointmentOutcome =
   | { kind: 'idempotency-conflict' }
   | { kind: 'network-error' }
   | { kind: 'unexpected-error' }
+
+// CloseAppointmentOutcome (HU-067, T4 manual y T7): compartido por
+// completeAppointment y markAppointmentNoShow porque ambos comandos
+// devuelven exactamente la misma forma de desenlaces, solo con un estado
+// final distinto. 'invalid-state' cubre tanto el resultado contrario
+// (completed vs no_show) como cualquier otro estado terminal (CA-067-05);
+// 'validation-error' cubre exclusivamente CA-067-03 (el turno todavía no
+// comienza). El éxito no trae ningún dato: la pantalla recarga el detalle
+// completo tras confirmar, mismo criterio que CancelAppointmentOutcome.
+export type CloseAppointmentOutcome =
+  | { kind: 'success' }
+  | { kind: 'not-found' }
+  | { kind: 'version-conflict' }
+  | { kind: 'invalid-state' }
+  | { kind: 'idempotency-conflict' }
+  | { kind: 'validation-error'; detail: string }
+  | { kind: 'network-error' }
+  | { kind: 'unexpected-error' }

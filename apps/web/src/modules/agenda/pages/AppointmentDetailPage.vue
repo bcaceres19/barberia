@@ -1,13 +1,14 @@
 <script setup lang="ts">
-// Detalle e historial de un turno (HU-064) más reprogramación T2 (HU-065):
-// persona atendida, cliente que reservó con su contacto opcional y nota,
-// servicio snapshot (DEC-004), precio, estado e historial inmutable
-// paginado, siguiendo la plantilla P0 "Detalle de turno"
-// (estandar-diseno-visual.md §10). "Volver" conserva la fecha/barbero de
-// origen (HU-063) mediante `route.query`; tras reprogramar con éxito, la
-// fecha se actualiza a la del nuevo inicio para no dejar la fecha vieja
-// presentada como vigente. Fuera de alcance a propósito: T3, cancelación o
-// cualquier otro cambio de estado (ninguna otra acción se renderiza).
+// Detalle e historial de un turno (HU-064) más reprogramación T2 (HU-065),
+// cancelación T6 (HU-066) y cierre manual T4/T7 (HU-067): persona atendida,
+// cliente que reservó con su contacto opcional y nota, servicio snapshot
+// (DEC-004), precio, estado e historial inmutable paginado, siguiendo la
+// plantilla P0 "Detalle de turno" (estandar-diseno-visual.md §10). "Volver"
+// conserva la fecha/barbero de origen (HU-063) mediante `route.query`; tras
+// reprogramar con éxito, la fecha se actualiza a la del nuevo inicio para no
+// dejar la fecha vieja presentada como vigente. Fuera de alcance a
+// propósito: T3, T8 (corrección auditada) o cualquier cambio de estado
+// distinto de los cinco comandos ya implementados.
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, type LocationQueryRaw } from 'vue-router'
 import { BaseAlert, BaseBadge, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
@@ -15,9 +16,11 @@ import { formatInstantInTimezone } from '@/shared/time/formatInstant'
 import { getCivilDateInTimezone } from '@/shared/time/civilDate'
 import {
   cancelAppointmentByBarber,
+  completeAppointment,
   fetchAppointmentDetail,
   fetchAppointmentHistory,
   fetchBarbershopTimezone,
+  markAppointmentNoShow,
   rescheduleAppointment,
 } from '../api/appointmentsApi'
 import { newIdempotencyKey } from '../model/idempotencyKey'
@@ -95,6 +98,8 @@ const FACT_ICONS: Record<string, string> = {
   contact: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m4 7 8 6 8-6"></path></svg>`,
   note: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v12H9l-4 4V4Z"></path></svg>`,
   calendar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M8 3v4M16 3v4M4 10h16"></path></svg>`,
+  check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 9.5 17 19 7"></path></svg>`,
+  absent: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9 9l6 6M15 9l-6 6"></path></svg>`,
 }
 
 function factIcon(name: keyof typeof FACT_ICONS): string {
@@ -119,9 +124,21 @@ const timeRangeLabel = computed(() => {
 
 // Reprogramar turno (HU-065, T2) y cancelar turno (HU-066, T6): ambas
 // acciones solo aplican sobre un turno `confirmed` (CA-066-08); ningún otro
-// estado ofrece una acción propia todavía (T3/T4/T7/T8 no existen).
+// estado ofrece una acción propia todavía (T3/T8 no existen).
 const canReschedule = computed(() => detail.value?.status === 'confirmed')
 const canCancel = computed(() => detail.value?.status === 'confirmed')
+
+// Cerrar turno como atendido (T4 manual) o no asistió (T7, HU-067):
+// CA-067-08, "las acciones aparecen solo cuando el turno confirmed ya puede
+// cerrarse" — a diferencia de reprogramar/cancelar, exige además que
+// startsAt ya haya pasado. Comparación del lado del cliente, solo para
+// mostrar/ocultar el botón (UX): el servidor vuelve a verificar la frontera
+// exacta contra su propio reloj (CA-067-03) y responde 422 si se adelanta,
+// nunca confiando en este cálculo.
+const canCloseTurn = computed(() => {
+  if (!detail.value || detail.value.status !== 'confirmed') return false
+  return new Date(detail.value.startsAt).getTime() <= Date.now()
+})
 
 const isRescheduleOpen = ref(false)
 const rescheduleDate = ref('')
@@ -327,6 +344,102 @@ function onReloadCancelAfterConflict() {
   void loadPage()
 }
 
+// Cerrar turno como atendido (T4 manual) o no asistió (T7, HU-067): un solo
+// diálogo compartido por ambos comandos (closeMode decide cuál), mismo
+// criterio de confirmación explícita, clave de idempotencia por intento y
+// recarga completa tras confirmar que ya usan reprogramar/cancelar — sin
+// mockup exacto para el diálogo en sí (se diseña dentro de NAVA, igual que
+// el de cancelar); el estado terminal resultante sí reutiliza el badge del
+// atlas de detalle (statusBadgeVariant/statusLabel, sin cambios).
+type CloseMode = 'complete' | 'no-show'
+type CloseStatus =
+  | 'idle'
+  | 'saving'
+  | 'version-conflict'
+  | 'invalid-state'
+  | 'idempotency-conflict'
+  | 'validation-error'
+  | 'network-error'
+  | 'unexpected-error'
+
+const isCloseOpen = ref(false)
+const closeMode = ref<CloseMode>('complete')
+const closeStatus = ref<CloseStatus>('idle')
+const closeErrorDetail = ref<string | null>(null)
+let closeIdempotencyKey = newIdempotencyKey()
+
+const closeDialogTitle = computed(() =>
+  closeMode.value === 'complete' ? 'Marcar como atendido' : 'Marcar que no asistió',
+)
+const closeConfirmLabel = computed(() =>
+  closeMode.value === 'complete' ? 'Sí, marcar como atendido' : 'Sí, marcar que no asistió',
+)
+
+function onOpenComplete() {
+  closeMode.value = 'complete'
+  closeStatus.value = 'idle'
+  closeErrorDetail.value = null
+  closeIdempotencyKey = newIdempotencyKey()
+  isCloseOpen.value = true
+}
+
+function onOpenNoShow() {
+  closeMode.value = 'no-show'
+  closeStatus.value = 'idle'
+  closeErrorDetail.value = null
+  closeIdempotencyKey = newIdempotencyKey()
+  isCloseOpen.value = true
+}
+
+function onCloseDialogClosed() {
+  isCloseOpen.value = false
+}
+
+async function onConfirmClose() {
+  if (!detail.value || closeStatus.value === 'saving') return
+
+  closeStatus.value = 'saving'
+
+  const action = closeMode.value === 'complete' ? completeAppointment : markAppointmentNoShow
+  const outcome = await action(appointmentId.value, detail.value.versionToken, closeIdempotencyKey)
+
+  switch (outcome.kind) {
+    case 'success':
+      isCloseOpen.value = false
+      await loadPage()
+      return
+    // 'not-found' aquí solo puede significar que el turno desapareció
+    // mientras el diálogo estaba abierto, mismo criterio que
+    // onConfirmCancel.
+    case 'not-found':
+      closeStatus.value = 'version-conflict'
+      return
+    case 'version-conflict':
+      closeStatus.value = 'version-conflict'
+      return
+    case 'invalid-state':
+      closeStatus.value = 'invalid-state'
+      return
+    case 'validation-error':
+      closeErrorDetail.value = outcome.detail
+      closeStatus.value = 'validation-error'
+      return
+    case 'idempotency-conflict':
+      closeStatus.value = 'idempotency-conflict'
+      return
+    case 'network-error':
+      closeStatus.value = 'network-error'
+      return
+    case 'unexpected-error':
+      closeStatus.value = 'unexpected-error'
+  }
+}
+
+function onReloadCloseAfterConflict() {
+  isCloseOpen.value = false
+  void loadPage()
+}
+
 async function loadPage() {
   pageStatus.value = 'loading'
   const [detailOutcome, timezoneOutcome] = await Promise.all([
@@ -457,6 +570,34 @@ function occurredAtLabel(entry: HistoryEntry): string {
               v-html="factIcon('calendar')"
             />
             Reprogramar turno
+          </BaseButton>
+          <BaseButton
+            v-if="canCloseTurn"
+            type="button"
+            variant="primary"
+            class="appointment-detail-page__complete"
+            @click="onOpenComplete"
+          >
+            <span
+              class="appointment-detail-page__button-icon"
+              aria-hidden="true"
+              v-html="factIcon('check')"
+            />
+            Marcar como atendido
+          </BaseButton>
+          <BaseButton
+            v-if="canCloseTurn"
+            type="button"
+            variant="secondary"
+            class="appointment-detail-page__no-show"
+            @click="onOpenNoShow"
+          >
+            <span
+              class="appointment-detail-page__button-icon"
+              aria-hidden="true"
+              v-html="factIcon('absent')"
+            />
+            Marcar que no asistió
           </BaseButton>
           <BaseButton
             v-if="canCancel"
@@ -836,6 +977,104 @@ function occurredAtLabel(entry: HistoryEntry): string {
           </div>
         </div>
       </BaseDialog>
+
+      <BaseDialog
+        v-model="isCloseOpen"
+        :title="closeDialogTitle"
+        size="md"
+        @close="onCloseDialogClosed"
+      >
+        <div class="appointment-detail-page__dialog-form">
+          <BaseAlert
+            v-if="closeStatus === 'version-conflict'"
+            variant="warning"
+            title="Este turno cambió mientras lo revisabas"
+            role="alert"
+          >
+            <template #action>
+              <BaseButton type="button" variant="secondary" @click="onReloadCloseAfterConflict">
+                Recargar
+              </BaseButton>
+            </template>
+          </BaseAlert>
+          <BaseAlert
+            v-if="closeStatus === 'invalid-state'"
+            variant="warning"
+            title="Este turno ya tiene un resultado registrado"
+            role="alert"
+          >
+            Su estado cambió mientras lo revisabas.
+            <template #action>
+              <BaseButton type="button" variant="secondary" @click="onReloadCloseAfterConflict">
+                Recargar
+              </BaseButton>
+            </template>
+          </BaseAlert>
+          <BaseAlert
+            v-if="closeStatus === 'validation-error'"
+            variant="warning"
+            title="Este turno todavía no comienza"
+            role="alert"
+          >
+            {{ closeErrorDetail }}
+            <template #action>
+              <BaseButton type="button" variant="secondary" @click="onReloadCloseAfterConflict">
+                Recargar
+              </BaseButton>
+            </template>
+          </BaseAlert>
+          <BaseAlert
+            v-if="closeStatus === 'idempotency-conflict'"
+            variant="danger"
+            title="No pudimos completar el intento anterior"
+            role="alert"
+          >
+            Inténtalo de nuevo.
+          </BaseAlert>
+          <BaseAlert
+            v-if="closeStatus === 'network-error'"
+            variant="warning"
+            title="No pudimos conectar"
+            role="alert"
+          >
+            Revisa tu conexión e inténtalo de nuevo.
+          </BaseAlert>
+          <BaseAlert
+            v-if="closeStatus === 'unexpected-error'"
+            variant="danger"
+            title="Ocurrió un error inesperado"
+            role="alert"
+          >
+            Inténtalo de nuevo en unos segundos.
+          </BaseAlert>
+
+          <p class="appointment-detail-page__cancel-copy">
+            <template v-if="closeMode === 'complete'">
+              Vas a marcar el turno de <strong>{{ detail.attendeeName }}</strong> el
+              {{ timeRangeLabel }} como atendido. Esta acción no se puede deshacer desde aquí.
+            </template>
+            <template v-else>
+              Vas a marcar el turno de <strong>{{ detail.attendeeName }}</strong> el
+              {{ timeRangeLabel }} como que no asistió. Esta acción no se puede deshacer desde aquí.
+            </template>
+          </p>
+
+          <div class="appointment-detail-page__dialog-actions">
+            <BaseButton type="button" variant="secondary" @click="isCloseOpen = false">
+              Volver
+            </BaseButton>
+            <BaseButton
+              type="button"
+              variant="primary"
+              :loading="closeStatus === 'saving'"
+              :disabled="closeStatus === 'saving'"
+              @click="onConfirmClose"
+            >
+              {{ closeConfirmLabel }}
+            </BaseButton>
+          </div>
+        </div>
+      </BaseDialog>
     </template>
   </section>
 </template>
@@ -932,6 +1171,8 @@ function occurredAtLabel(entry: HistoryEntry): string {
 }
 
 .appointment-detail-page__reschedule,
+.appointment-detail-page__complete,
+.appointment-detail-page__no-show,
 .appointment-detail-page__cancel {
   flex: 0 0 auto;
   min-width: 194px;
@@ -1168,6 +1409,7 @@ function occurredAtLabel(entry: HistoryEntry): string {
   }
 
   .appointment-detail-page__hero {
+    flex-wrap: wrap;
     gap: var(--space-3);
     min-height: 102px;
   }
@@ -1188,17 +1430,25 @@ function occurredAtLabel(entry: HistoryEntry): string {
     font-size: 14px;
   }
 
+  /* Hasta cuatro acciones pueden coexistir sobre un turno confirmed ya
+     cerrable (CA-067-08): con etiquetas largas ("Marcar que no asistió")
+     una grilla de dos columnas desborda a 320/360px (BaseButton usa
+     white-space: nowrap). Una sola columna en flujo normal, debajo del
+     hero, evita el desborde para cualquier cantidad de acciones sin
+     necesitar reservar una altura fija adivinada (a diferencia del recorte
+     posicionado en absoluto que este bloque reemplaza).
+   */
   .appointment-detail-page__actions {
-    position: absolute;
-    top: 123px;
-    right: 12px;
-    left: 12px;
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    width: calc(100% - 24px);
+    flex-basis: 100%;
+    grid-template-columns: 1fr;
+    width: 100%;
+    margin-top: var(--space-3);
   }
 
   .appointment-detail-page__reschedule,
+  .appointment-detail-page__complete,
+  .appointment-detail-page__no-show,
   .appointment-detail-page__cancel {
     min-width: 0;
     width: 100%;
@@ -1207,7 +1457,6 @@ function occurredAtLabel(entry: HistoryEntry): string {
   .appointment-detail-page__body {
     grid-template-columns: 1fr;
     gap: var(--space-4);
-    padding-top: 44px;
   }
 
   .appointment-detail-page__fact {
@@ -1280,6 +1529,28 @@ function occurredAtLabel(entry: HistoryEntry): string {
 @media (min-width: 768px) and (max-width: 1023px) {
   .appointment-detail-page {
     padding: 24px;
+  }
+
+  /* Mismo motivo que el bloque <768px: hasta cuatro acciones con
+     min-width: 194px cada una (776px+gaps) ya no caben junto al
+     avatar/identidad en un viewport de 768px. */
+  .appointment-detail-page__hero {
+    flex-wrap: wrap;
+  }
+
+  .appointment-detail-page__actions {
+    display: grid;
+    flex-basis: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    margin-top: var(--space-3);
+  }
+
+  .appointment-detail-page__reschedule,
+  .appointment-detail-page__complete,
+  .appointment-detail-page__no-show,
+  .appointment-detail-page__cancel {
+    min-width: 0;
   }
 
   .appointment-detail-page__body {

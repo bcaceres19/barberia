@@ -12,6 +12,7 @@ import { httpClient } from '@/shared/api/httpClient'
 import type { AppointmentDetail, HistoryEntry } from '../model/appointmentDetail'
 import type {
   CancelAppointmentOutcome,
+  CloseAppointmentOutcome,
   CreateManualAppointmentOutcome,
   CreatedManualAppointment,
   FetchAppointmentDetailOutcome,
@@ -368,6 +369,83 @@ export async function cancelAppointmentByBarber(
   } catch {
     return { kind: 'network-error' }
   }
+}
+
+// closeAppointment es el helper privado compartido por completeAppointment
+// y markAppointmentNoShow (HU-067, T4 manual y T7): ambas rutas comparten
+// forma de cabeceras, cuerpo vacío y traducción de errores, solo difieren
+// en el path. versionToken es el token opaco leído del detalle (HU-064),
+// enviado como precondición `If-Match`.
+async function closeAppointment(
+  path:
+    | '/private/appointments/{appointmentId}/complete'
+    | '/private/appointments/{appointmentId}/no-show',
+  appointmentId: string,
+  versionToken: string,
+  idempotencyKey: string,
+): Promise<CloseAppointmentOutcome> {
+  try {
+    const { response, error } = await httpClient.POST(path, {
+      params: {
+        path: { appointmentId },
+        header: { 'Idempotency-Key': idempotencyKey, 'If-Match': versionToken },
+      },
+    })
+    if (response.ok) {
+      return { kind: 'success' }
+    }
+    switch (response.status) {
+      case 404:
+        return { kind: 'not-found' }
+      case 409:
+        if (isProblemCode(error, 'version-conflict')) return { kind: 'version-conflict' }
+        if (isProblemCode(error, 'invalid-state')) return { kind: 'invalid-state' }
+        if (
+          isProblemCode(error, 'idempotency-conflict') ||
+          isProblemCode(error, 'idempotency-locked')
+        ) {
+          return { kind: 'idempotency-conflict' }
+        }
+        return { kind: 'unexpected-error' }
+      case 422:
+        return { kind: 'validation-error', detail: problemDetail(error) }
+      default:
+        return { kind: 'unexpected-error' }
+    }
+  } catch {
+    return { kind: 'network-error' }
+  }
+}
+
+// completeAppointment (HU-067, T4 manual): cierra un turno `confirmed` cuyo
+// `startsAt` ya pasó como `completed`. Sin cuerpo de solicitud: el servidor
+// deriva tenant/actor/estado destino.
+export async function completeAppointment(
+  appointmentId: string,
+  versionToken: string,
+  idempotencyKey: string,
+): Promise<CloseAppointmentOutcome> {
+  return closeAppointment(
+    '/private/appointments/{appointmentId}/complete',
+    appointmentId,
+    versionToken,
+    idempotencyKey,
+  )
+}
+
+// markAppointmentNoShow (HU-067, T7): cierra un turno `confirmed` cuyo
+// `startsAt` ya pasó como `no_show`. Mismo criterio que completeAppointment.
+export async function markAppointmentNoShow(
+  appointmentId: string,
+  versionToken: string,
+  idempotencyKey: string,
+): Promise<CloseAppointmentOutcome> {
+  return closeAppointment(
+    '/private/appointments/{appointmentId}/no-show',
+    appointmentId,
+    versionToken,
+    idempotencyKey,
+  )
 }
 
 export async function createManualAppointment(

@@ -5,8 +5,8 @@
     "semantic_hash": ""
   },
   "apps/api/cmd/api/main.go": {
-    "mtime": 1789061791.1388755,
-    "ast_hash": "895b11cc0bbd47570d3b5aa13e25d039",
+    "mtime": 1789063312.9847171,
+    "ast_hash": "26a0075e9a3ce79cb3d57a87882b72b4",
     "semantic_hash": ""
   },
   "apps/api/cmd/worker/main.go": {
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "api/openapi/CHANGELOG.md": {
-    "mtime": 1788287015.567057,
-    "ast_hash": "e5968440e7fabec11a21223491edd938",
+    "mtime": 1789063860.761092,
+    "ast_hash": "d3758901d97fa3dd15293c58ef0fc9b6",
     "semantic_hash": ""
   },
   "api/openapi/README.md": {
@@ -375,8 +375,8 @@
     "semantic_hash": "72ebdeafb399c1fc6afba7f4c79dd076"
   },
   "api/openapi/openapi.yaml": {
-    "mtime": 1788287015.570302,
-    "ast_hash": "c7a807a42a89ea32db624aa877679d96",
+    "mtime": 1789063851.5981567,
+    "ast_hash": "79370cd754664ba40f95421633b97947",
     "semantic_hash": ""
   },
   "api/openapi/paths/catalog.yaml": {
@@ -390,8 +390,8 @@
     "semantic_hash": "a6283d03c1ef0df00098dcfe9ba5ee94"
   },
   "api/openapi/paths/private-appointments.yaml": {
-    "mtime": 1788287015.570829,
-    "ast_hash": "19b725c15c9182d196870b5772ca8952",
+    "mtime": 1789063825.1695294,
+    "ast_hash": "2e26695c44ef57b5adacb3a94077fc52",
     "semantic_hash": ""
   },
   "api/openapi/paths/public-booking.yaml": {
@@ -475,8 +475,8 @@
     "semantic_hash": ""
   },
   "docs/00-control/matriz-trazabilidad.md": {
-    "mtime": 1788872285.7979743,
-    "ast_hash": "25446ab4e230cb73cc4982d117750917",
+    "mtime": 1789065203.7843175,
+    "ast_hash": "cad07681635541a2eca14138ec3c1e16",
     "semantic_hash": ""
   },
   "docs/00-control/registro-decisiones.md": {
@@ -595,13 +595,13 @@
     "semantic_hash": ""
   },
   "docs/02-requisitos/historias-usuario.md": {
-    "mtime": 1788872802.1689928,
-    "ast_hash": "74f1a3fe66725c51a5161ad9ee60e5e7",
+    "mtime": 1789065168.4691484,
+    "ast_hash": "07909b4d11c294729aadce5f694bccb4",
     "semantic_hash": ""
   },
   "docs/10-backlog/plan-bloques.md": {
-    "mtime": 1788872209.9288876,
-    "ast_hash": "926da6039b13924f9b83d250bf7f9b0a",
+    "mtime": 1789065231.4177554,
+    "ast_hash": "1a20bf1fd16533ab2ce29edfe53c5228",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts-implementacion.md": {
@@ -805,8 +805,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/README.md": {
-    "mtime": 1789061824.7339907,
-    "ast_hash": "661234e69b2d6a91c3f129ed23246eed",
+    "mtime": 1789065244.7454028,
+    "ast_hash": "bf06a990333128de27469a4c0c3c22ee",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/TEMPLATE.md": {
@@ -1295,8 +1295,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/shared/api/generated/openapi.d.ts": {
-    "mtime": 1788287015.5921266,
-    "ast_hash": "f7f09f6e5a332a047a13beb0a8875772",
+    "mtime": 1789063906.592245,
+    "ast_hash": "b787ff20432f5ea6ab9019cdc95d61f7",
     "semantic_hash": ""
   },
   "apps/web/src/shared/api/httpClient.ts": {
@@ -3760,8 +3760,8 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/domain_test.go": {
-    "mtime": 1788287015.5739477,
-    "ast_hash": "ee50bf78a2f813285e47e9c99979c043",
+    "mtime": 1789063401.5373003,
+    "ast_hash": "581bccfa87421d4fc338d93ce96c2edd",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/errors.go": {
@@ -3770,13 +3770,13 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/ports.go": {
-    "mtime": 1788287015.5783436,
-    "ast_hash": "41d61b886724885dd03fe868ddc474aa",
+    "mtime": 1789063225.6683257,
+    "ast_hash": "a3df1ec0aca2a20bf979ceb765161e9b",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/postgres/repository.go": {
-    "mtime": 1788287015.5800836,
-    "ast_hash": "d68a71dee37306bc3dad097bc2a92ee3",
+    "mtime": 1789063267.5020616,
+    "ast_hash": "9d67af475f342d820b7b35b975bd1c1c",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/postgres/repository_test.go": {
@@ -3820,18 +3820,18 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/httpapi/dto.go": {
-    "mtime": 1788287015.5755644,
-    "ast_hash": "ec9cf55c5dfffb07ae4c01d40694c46f",
+    "mtime": 1789063278.4260862,
+    "ast_hash": "e9c43cccb85e44e480502c378249a108",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/httpapi/handler.go": {
-    "mtime": 1788287015.5761023,
-    "ast_hash": "3e85b0de3fd85296705bd45dd0f4d8a0",
+    "mtime": 1789063301.6892376,
+    "ast_hash": "405d27bede618aed926abbb165cb7757",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/httpapi/handler_test.go": {
-    "mtime": 1788287015.576698,
-    "ast_hash": "bc65891fac132955f8d91801e2de7829",
+    "mtime": 1789063370.9717138,
+    "ast_hash": "67c24725dfdc13d77b769f492b91ae02",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/manual.go": {
@@ -3845,8 +3845,8 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/manual_test.go": {
-    "mtime": 1788287015.5778108,
-    "ast_hash": "ab64e7b9fefe433dd2a68c5464c39021",
+    "mtime": 1789063352.5326996,
+    "ast_hash": "c294c335b1b2ef19590614c9d2ab2764",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/postgres/manual_repository_test.go": {
@@ -3875,8 +3875,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/api/appointmentsApi.ts": {
-    "mtime": 1788287015.5888395,
-    "ast_hash": "f7bce0af51c3861e4d9df61b98a9addb",
+    "mtime": 1789063945.0303588,
+    "ast_hash": "2334f68f9beec4b39599124539c1b93b",
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/model/appointment.ts": {
@@ -3885,8 +3885,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/model/appointmentOutcome.ts": {
-    "mtime": 1788287015.5899146,
-    "ast_hash": "01f0ea3ae3e3e620f9928cfbc0cfe856",
+    "mtime": 1789063930.1881986,
+    "ast_hash": "0857ee6f42ea1d7481dd83ffb6fde9b5",
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/model/idempotencyKey.ts": {
@@ -4080,13 +4080,13 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/pages/AppointmentDetailPage.vue": {
-    "mtime": 1789061791.1986575,
-    "ast_hash": "6ee97beda3dc7f1ce611b03f7566e1aa",
+    "mtime": 1789064125.8551288,
+    "ast_hash": "ed4352c0da2a545f46da49c2cbeb3760",
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/pages/__tests__/AppointmentDetailPage.test.ts": {
-    "mtime": 1788392438.5165937,
-    "ast_hash": "defdcfed3bb3110814ba5545c2506593",
+    "mtime": 1789064443.8951983,
+    "ast_hash": "24c3742e4fc795c1620fe435fb1fe8cb",
     "semantic_hash": ""
   },
   "api/openapi/components/responses/AppointmentDetailSuccess.yaml": {
@@ -6610,8 +6610,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/hu/hu-066-cancelacion-barbero.md": {
-    "mtime": 1788872870.730991,
-    "ast_hash": "d14ba2d4dcf8720ac8e628fa395b00e6",
+    "mtime": 1789065261.884451,
+    "ast_hash": "80627a1764c46d6bfbd06bf71d486a4c",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/hu/hu-067-cierre-manual-turno.md": {
@@ -7935,8 +7935,8 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/agenda-detalle-fidelidad-mock.spec.ts": {
-    "mtime": 1789061791.1388755,
-    "ast_hash": "ecb030ce8992a9580c99a173478b0c3c",
+    "mtime": 1789064916.3598082,
+    "ast_hash": "c9ab85471395f1743cddfbcb5198832c",
     "semantic_hash": ""
   },
   "apps/web/e2e/barberos-fidelidad-comparacion.mjs": {
@@ -8015,48 +8015,48 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/desktop/detalle-listo.png": {
-    "mtime": 1789061791.1388755,
-    "ast_hash": "12e9743a2d9ba5089c090827dc482b6b",
+    "mtime": 1789064931.4015465,
+    "ast_hash": "dbab25fa581e4f673c45aee45d600971",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/desktop/reprogramar-conflicto.png": {
-    "mtime": 1789061791.1388755,
-    "ast_hash": "85e8d47b91752fcca04284e75601020b",
+    "mtime": 1789064931.7999957,
+    "ast_hash": "02c412e7130a16413b199f7b5da253c3",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/mobile/detalle-listo.png": {
-    "mtime": 1789061791.1388755,
-    "ast_hash": "b15e5f72a2dbe76bee0def00ba43bb78",
+    "mtime": 1789064931.3827846,
+    "ast_hash": "27697a9da56714279e648e938d85e47d",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/mobile/reprogramar-conflicto.png": {
-    "mtime": 1789061791.1388755,
-    "ast_hash": "ddea862d781333f5725aca7ed5cefef0",
+    "mtime": 1789064931.306132,
+    "ast_hash": "eddc9a7a7620da94a467d30565c42215",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/responsive/1280-zoom200/foco-reprogramar.png": {
-    "mtime": 1789061791.1516273,
-    "ast_hash": "d13605e73544ffe8a1047dd33dd81961",
+    "mtime": 1789064935.0962183,
+    "ast_hash": "00fc958fe98580e2743b3c7da4adb0a2",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/responsive/1280/foco-reprogramar.png": {
-    "mtime": 1789061791.1516273,
-    "ast_hash": "f41b0bb053ac3fc122f0c6a72c5dd259",
+    "mtime": 1789064934.7510002,
+    "ast_hash": "242079de3f0f3c12e1604453b3bb6714",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/responsive/320/foco-reprogramar.png": {
-    "mtime": 1789061791.1516273,
-    "ast_hash": "9575741788f0653e0227e550eb5689c0",
+    "mtime": 1789064933.1526265,
+    "ast_hash": "6349823694159e8337990d038b5bdc6c",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/responsive/360/foco-reprogramar.png": {
-    "mtime": 1789061791.1539106,
-    "ast_hash": "e851c31920aa91c7dead2fc395db2a51",
+    "mtime": 1789064933.7349598,
+    "ast_hash": "e20af8700cfa64dff7416f668553a9e7",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/fidelidad-191/responsive/768/foco-reprogramar.png": {
-    "mtime": 1789061791.1539106,
-    "ast_hash": "e1df72349be9a675ef1878cef3e757a8",
+    "mtime": 1789064934.2567894,
+    "ast_hash": "044f7db4c8ccdb3de911f21a3ed04558",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/barberos/fidelidad-192/comparacion/desktop/lista-diff.png": {
@@ -8292,6 +8292,96 @@
   "apps/web/e2e/evidence/servicios/fidelidad-194/responsive/768/foco-agregar.png": {
     "mtime": 1789061791.1986575,
     "ast_hash": "12ee8b57d56dcb638be6d5d4fb643f1f",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/booking/cancel.go": {
+    "mtime": 1789063213.376427,
+    "ast_hash": "817960d0d00a26d8b96e2ea3d9b28148",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/booking/cancel_test.go": {
+    "mtime": 1789063444.514801,
+    "ast_hash": "d11cae6fc31b211053cfb706d675cabc",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/booking/httpapi/cancel_handler_test.go": {
+    "mtime": 1789063489.6263204,
+    "ast_hash": "275b4cd44c0ce1c1d5ec6667565abcf2",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/booking/postgres/cancel_repository_test.go": {
+    "mtime": 1789063581.4032526,
+    "ast_hash": "3747bdcef0dc91280999ac20e7845e6d",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/agenda-cancelacion-turno.spec.ts": {
+    "mtime": 1789064885.2086961,
+    "ast_hash": "07c4871dd3639eeef9421274739be811",
+    "semantic_hash": ""
+  },
+  "api/openapi/components/responses/AppointmentCancelled.yaml": {
+    "mtime": 1789063791.7971733,
+    "ast_hash": "9e64fe78a4e99ee3cf3fb60de33b5c12",
+    "semantic_hash": ""
+  },
+  "api/openapi/components/schemas/AppointmentCancelledResponse.yaml": {
+    "mtime": 1789063780.209257,
+    "ast_hash": "b11fc56e4fb6ffc8dbc994d23bdb99a9",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/cancelacion-225/desktop/confirmar-cancelacion.png": {
+    "mtime": 1789064931.6947024,
+    "ast_hash": "2d07aaf30516e4f8fd3f249dd41496e0",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/cancelacion-225/desktop/conflicto-version.png": {
+    "mtime": 1789064931.8030064,
+    "ast_hash": "ec1b45a6b39f1f1078d2225ae4bca862",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/cancelacion-225/desktop/turno-cancelado.png": {
+    "mtime": 1789064931.5754464,
+    "ast_hash": "bb48fcedd0524654da14e630078740ae",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/cancelacion-225/mobile/confirmar-cancelacion.png": {
+    "mtime": 1789064931.8185444,
+    "ast_hash": "e6d00a6b0c06d92be61254accc7f96a8",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/cancelacion-225/mobile/conflicto-version.png": {
+    "mtime": 1789064932.5784507,
+    "ast_hash": "78dc323ccf5400372ebd81d97d56f6b2",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/cancelacion-225/mobile/turno-cancelado.png": {
+    "mtime": 1789064932.2535279,
+    "ast_hash": "f4c45614ad2af77246e45e0c9b6991ec",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/cancelacion-225/responsive/1280-zoom200/foco-cancelar.png": {
+    "mtime": 1789064935.063189,
+    "ast_hash": "2a1f64a9b62bb3fa734d4463436914d6",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/cancelacion-225/responsive/1280/foco-cancelar.png": {
+    "mtime": 1789064934.6199262,
+    "ast_hash": "4103abefea1937434845b5dfdab086eb",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/cancelacion-225/responsive/320/foco-cancelar.png": {
+    "mtime": 1789064933.1341066,
+    "ast_hash": "a77cb2f96923cf8f23b4d5c5f067215d",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/cancelacion-225/responsive/360/foco-cancelar.png": {
+    "mtime": 1789064933.7188513,
+    "ast_hash": "b67e02f5d79bbcd56d875214a78ab2ce",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/agenda-detalle/cancelacion-225/responsive/768/foco-cancelar.png": {
+    "mtime": 1789064934.2372668,
+    "ast_hash": "36bd24b3f23879f8b100452a49c0189c",
     "semantic_hash": ""
   }
 }

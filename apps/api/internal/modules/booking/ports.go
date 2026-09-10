@@ -131,6 +131,44 @@ type Repository interface {
 		key idempotency.Key,
 		fingerprint idempotency.Fingerprint,
 	) (CancelAppointmentByBarberResult, error)
+
+	// CompleteAppointment ejecuta T4 manual (HU-067) dentro de UNA sola
+	// transacción tenant-aware protegida por el protocolo de idempotencia
+	// reutilizable de HU-004 (RN-IDE-01, DEC-043): Begin, bloquear la fila
+	// (`FOR UPDATE`), verificar de nuevo con la fila ya bloqueada (nunca
+	// confiar en una lectura previa), aplicar `completed` + insertar
+	// `appointment_completed`, y Complete. Semántica exacta de los
+	// desenlaces posibles con la fila ya bloqueada (CA-067-01/03/05):
+	//   - ya está `completed` -> no-op exitoso, sin UPDATE ni historial
+	//     nuevo.
+	//   - `confirmed` con starts_at > input.Now -> Validation (422), sin
+	//     tocar nada.
+	//   - `confirmed` con starts_at <= input.Now -> compara versionToken
+	//     (mismatch = VersionConflict), luego UPDATE status/resolved_at +
+	//     INSERT historial.
+	//   - cualquier otro estado (`no_show`, `cancelled_by_barber`,
+	//     `cancelled_by_customer`) -> InvalidState (409).
+	CompleteAppointment(
+		ctx context.Context,
+		barbershopID string,
+		input CloseAppointmentInput,
+		key idempotency.Key,
+		fingerprint idempotency.Fingerprint,
+	) (CompleteAppointmentResult, error)
+
+	// MarkNoShow ejecuta T7 (HU-067) con la misma estructura y el mismo
+	// protocolo de idempotencia/bloqueo que CompleteAppointment, aplicando
+	// `no_show` + `appointment_no_show` en vez de `completed` +
+	// `appointment_completed`. Repetir sobre una cita ya `no_show` es el
+	// no-op de este comando; una cita ya `completed` cae en InvalidState
+	// (409), mismo criterio simétrico.
+	MarkNoShow(
+		ctx context.Context,
+		barbershopID string,
+		input CloseAppointmentInput,
+		key idempotency.Key,
+		fingerprint idempotency.Fingerprint,
+	) (MarkNoShowResult, error)
 }
 
 // BarberNamePort resuelve el nombre visible de un barbero por id, dentro de

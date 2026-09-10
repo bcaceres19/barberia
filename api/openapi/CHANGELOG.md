@@ -4,6 +4,27 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.18.0] - 2026-09-10
+
+### Agregado
+
+- `POST /private/appointments/{appointmentId}/complete` (`operationId:
+  completeAppointment`) y `POST /private/appointments/{appointmentId}/no-show`
+  (`operationId: markAppointmentNoShow`) (`CA-067-01` a `CA-067-08`): `T4`
+  manual y `T7` (`HU-067`), cierran una cita `confirmed` cuyo `starts_at` ya
+  pasó según el reloj del servidor como `completed` o `no_show`
+  respectivamente, insertando un único evento (`appointment_completed` o
+  `appointment_no_show`) dentro de la misma transacción que la
+  actualización de estado. Antes de `starts_at` responden `422` sin
+  persistir nada, ni siquiera una reclamación de idempotencia
+  (`CA-067-03`). Protegidas con `Idempotency-Key` (`RN-IDE-01`, `DEC-043`)
+  y con la precondición `If-Match` (el `versionToken` de `HU-064`). Sin
+  cuerpo de solicitud. Repetir el mismo resultado es un no-op exitoso sin
+  duplicar el evento; el resultado contrario o cualquier otro estado
+  terminal responde `409` orientando a la futura corrección `T8`
+  (`CA-067-05`). `200`, `400`, `401`, `404`, `409`
+  (versión/estado/idempotencia, códigos distinguibles), `422`, `500`.
+
 ## [0.17.0] - 2026-09-10
 
 ### Agregado

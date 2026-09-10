@@ -1175,6 +1175,25 @@ func errAppointmentNotConfirmed() error {
 	return apperr.InvalidState("el turno ya no está confirmado; recarga para ver su estado actual")
 }
 
+// errAppointmentNotStarted cubre HU-067 (CA-067-03): T4 manual/T7 solo
+// aplican sobre una cita `confirmed` cuyo starts_at ya pasó, verificado con
+// la fila ya bloqueada dentro de la transacción contra el instante que el
+// dominio resolvió (input.Now). apperr.Validation (422), nunca un estado
+// de conflicto: la operación es inválida, no está en disputa con otra
+// escritura.
+func errAppointmentNotStarted() error {
+	return apperr.Validation("el turno todavía no comienza; espera hasta su hora de inicio")
+}
+
+// errAppointmentAlreadyClosed cubre HU-067 (CA-067-05): el turno, con la
+// fila ya bloqueada, tiene un resultado terminal distinto del que el
+// comando intenta aplicar (el resultado contrario, o cualquier estado
+// cancelado). Repetir el MISMO resultado nunca llega aquí: se resuelve como
+// no-op antes de esta rama.
+func errAppointmentAlreadyClosed() error {
+	return apperr.InvalidState("el turno ya tiene un resultado terminal registrado; una futura corrección (T8) permitirá cambiarlo")
+}
+
 // Reschedule implementa booking.Repository.Reschedule (HU-065, T2): Begin,
 // bloquear la fila, verificar versión/estado con la fila ya bloqueada,
 // aplicar el nuevo intervalo (o detectar el no-op del mismo intervalo),
@@ -1516,6 +1535,401 @@ func (r *Repository) CancelByBarber(
 	})
 	if err != nil {
 		return booking.CancelAppointmentByBarberResult{}, err
+	}
+	return result, nil
+}
+
+// completeAppointmentOperation identifica, para el protocolo de
+// idempotencia (RN-IDE-01, DEC-043), el comando T4 manual de HU-067 frente
+// a cualquier otra operación de booking, mismo criterio que
+// cancelAppointmentByBarberOperation.
+const completeAppointmentOperation idempotency.Operation = "complete_appointment"
+
+// completeAppointmentIdempotencyTTL es la vigencia de una reclamación de
+// idempotencia de T4 manual, mismo criterio que las demás operaciones de
+// escritura de booking.
+const completeAppointmentIdempotencyTTL = 10 * time.Minute
+
+// markAppointmentNoShowOperation identifica el comando T7 de HU-067.
+const markAppointmentNoShowOperation idempotency.Operation = "mark_appointment_no_show"
+
+// markAppointmentNoShowIdempotencyTTL es la vigencia de una reclamación de
+// idempotencia de T7.
+const markAppointmentNoShowIdempotencyTTL = 10 * time.Minute
+
+// updateAppointmentStatusCompleted aplica `completed` sobre la fila YA
+// bloqueada por lockAppointmentForReschedule, dentro de la misma
+// transacción: mismo criterio que updateAppointmentStatusCancelledByBarber.
+// `completed` sigue ocupando agenda (occupies_schedule ya lo incluye desde
+// HU-060), así que este UPDATE tampoco puede violar
+// appointment_barber_interval_excl (mismo intervalo, mismo barbero, nunca
+// compite por la exclusión).
+func updateAppointmentStatusCompleted(
+	ctx context.Context,
+	q database.Queries,
+	barbershopID, appointmentID string,
+) (time.Time, error) {
+	var updatedAt time.Time
+	err := q.QueryRow(ctx, `
+		UPDATE appointment
+		   SET status = 'completed', resolved_at = now()
+		 WHERE barbershop_id = $1 AND id = $2
+		RETURNING updated_at`,
+		barbershopID, appointmentID,
+	).Scan(&updatedAt)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return updatedAt, nil
+}
+
+// updateAppointmentStatusNoShow aplica `no_show` sobre la fila YA bloqueada,
+// mismo criterio que updateAppointmentStatusCompleted.
+func updateAppointmentStatusNoShow(
+	ctx context.Context,
+	q database.Queries,
+	barbershopID, appointmentID string,
+) (time.Time, error) {
+	var updatedAt time.Time
+	err := q.QueryRow(ctx, `
+		UPDATE appointment
+		   SET status = 'no_show', resolved_at = now()
+		 WHERE barbershop_id = $1 AND id = $2
+		RETURNING updated_at`,
+		barbershopID, appointmentID,
+	).Scan(&updatedAt)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return updatedAt, nil
+}
+
+// insertAppointmentCompletedHistory inserta, dentro de la misma
+// transacción, el evento appointment_completed y su único cambio (status:
+// confirmed -> completed), mismo criterio de dos INSERT que
+// insertAppointmentCancelledByBarberHistory.
+func insertAppointmentCompletedHistory(
+	ctx context.Context,
+	q database.Queries,
+	barbershopID, appointmentID string,
+	actor booking.Actor,
+) error {
+	var historyID string
+	err := q.QueryRow(ctx, `
+		INSERT INTO appointment_history (
+			barbershop_id, appointment_id, event_type, actor_type, actor_staff_user_id, actor_customer_id
+		) VALUES ($1, $2, 'appointment_completed', $3, $4, $5)
+		RETURNING id`,
+		barbershopID, appointmentID, string(actor.Type), actor.StaffUserID, actor.CustomerID,
+	).Scan(&historyID)
+	if err != nil {
+		return err
+	}
+
+	_, err = q.Exec(ctx, `
+		INSERT INTO appointment_history_change (barbershop_id, history_id, field_name, previous_value, new_value)
+		VALUES ($1, $2, 'status', 'confirmed', 'completed')`,
+		barbershopID, historyID,
+	)
+	return err
+}
+
+// insertAppointmentNoShowHistory inserta el evento appointment_no_show,
+// mismo criterio que insertAppointmentCompletedHistory.
+func insertAppointmentNoShowHistory(
+	ctx context.Context,
+	q database.Queries,
+	barbershopID, appointmentID string,
+	actor booking.Actor,
+) error {
+	var historyID string
+	err := q.QueryRow(ctx, `
+		INSERT INTO appointment_history (
+			barbershop_id, appointment_id, event_type, actor_type, actor_staff_user_id, actor_customer_id
+		) VALUES ($1, $2, 'appointment_no_show', $3, $4, $5)
+		RETURNING id`,
+		barbershopID, appointmentID, string(actor.Type), actor.StaffUserID, actor.CustomerID,
+	).Scan(&historyID)
+	if err != nil {
+		return err
+	}
+
+	_, err = q.Exec(ctx, `
+		INSERT INTO appointment_history_change (barbershop_id, history_id, field_name, previous_value, new_value)
+		VALUES ($1, $2, 'status', 'confirmed', 'no_show')`,
+		barbershopID, historyID,
+	)
+	return err
+}
+
+func newClosedAppointment(row currentAppointmentForReschedule) (booking.ClosedAppointment, error) {
+	cents, err := parsePriceAmount(row.priceAmountSnapshot)
+	if err != nil {
+		return booking.ClosedAppointment{}, fmt.Errorf("booking/postgres: price_amount_snapshot ilegible: %w", err)
+	}
+	return booking.ClosedAppointment{
+		ID:                       row.id,
+		BarberID:                 row.barberID,
+		ServiceID:                row.serviceID,
+		CustomerID:               row.customerID,
+		AttendeeName:             row.attendeeName,
+		StartsAt:                 row.startsAt,
+		EndsAt:                   row.endsAt,
+		Status:                   booking.Status(row.status),
+		Origin:                   booking.Origin(row.origin),
+		ServiceNameSnapshot:      row.serviceNameSnapshot,
+		DurationMinutesSnapshot:  row.durationMinutesSnapshot,
+		PriceAmountCentsSnapshot: cents,
+		CurrencySnapshot:         row.currencySnapshot,
+		CustomerNote:             row.customerNote,
+		VersionToken:             booking.EncodeVersionToken(row.id, row.updatedAt),
+		CreatedAt:                row.createdAt,
+	}, nil
+}
+
+// closedAppointmentResponseWire es la forma exacta que CompleteAppointment y
+// MarkNoShow serializan como cuerpo almacenado de idempotencia: debe
+// coincidir campo a campo con httpapi.AppointmentClosedResponse (ambas
+// rutas comparten la misma forma de respuesta, solo status difiere) para
+// que una repetición exacta reproduzca bytes idénticos a los de la
+// respuesta original, mismo criterio que cancelAppointmentByBarberResponseWire.
+type closedAppointmentResponseWire struct {
+	ID              string  `json:"id"`
+	BarberID        string  `json:"barberId"`
+	ServiceID       string  `json:"serviceId"`
+	CustomerID      string  `json:"customerId"`
+	AttendeeName    string  `json:"attendeeName"`
+	StartsAt        string  `json:"startsAt"`
+	EndsAt          string  `json:"endsAt"`
+	Status          string  `json:"status"`
+	Origin          string  `json:"origin"`
+	ServiceName     string  `json:"serviceName"`
+	DurationMinutes int     `json:"durationMinutes"`
+	PriceAmount     string  `json:"priceAmount"`
+	Currency        string  `json:"currency"`
+	CustomerNote    *string `json:"customerNote"`
+	VersionToken    string  `json:"versionToken"`
+	CreatedAt       string  `json:"createdAt"`
+}
+
+func newClosedAppointmentResponseWire(a booking.ClosedAppointment) closedAppointmentResponseWire {
+	return closedAppointmentResponseWire{
+		ID:              a.ID,
+		BarberID:        a.BarberID,
+		ServiceID:       a.ServiceID,
+		CustomerID:      a.CustomerID,
+		AttendeeName:    a.AttendeeName,
+		StartsAt:        a.StartsAt.Format(time.RFC3339),
+		EndsAt:          a.EndsAt.Format(time.RFC3339),
+		Status:          string(a.Status),
+		Origin:          string(a.Origin),
+		ServiceName:     a.ServiceNameSnapshot,
+		DurationMinutes: a.DurationMinutesSnapshot,
+		PriceAmount:     formatPriceAmount(a.PriceAmountCentsSnapshot),
+		Currency:        a.CurrencySnapshot,
+		CustomerNote:    a.CustomerNote,
+		VersionToken:    a.VersionToken,
+		CreatedAt:       a.CreatedAt.Format(time.RFC3339),
+	}
+}
+
+// CompleteAppointment implementa booking.Repository.CompleteAppointment
+// (HU-067, T4 manual): Begin, bloquear la fila, verificar de nuevo con la
+// fila ya bloqueada (no-op si ya está `completed`, Validation 422 si sigue
+// `confirmed` pero starts_at > input.Now, InvalidState si es cualquier otro
+// estado terminal, VersionConflict si el token no coincide mientras sigue
+// `confirmed` y ya puede cerrarse), aplicar `completed` + insertar
+// `appointment_completed`, y Complete, todo dentro de UNA sola InTenantTx.
+// Reutiliza lockAppointmentForReschedule/currentAppointmentForReschedule
+// (HU-065/HU-066): misma fila, mismas columnas, ningún motivo para duplicar
+// el SELECT ... FOR UPDATE.
+func (r *Repository) CompleteAppointment(
+	ctx context.Context,
+	barbershopID string,
+	input booking.CloseAppointmentInput,
+	key idempotency.Key,
+	fingerprint idempotency.Fingerprint,
+) (booking.CompleteAppointmentResult, error) {
+	shop, err := database.ValidBarbershopID(barbershopID)
+	if err != nil {
+		return booking.CompleteAppointmentResult{}, fmt.Errorf("booking/postgres: %w", err)
+	}
+
+	var result booking.CompleteAppointmentResult
+
+	err = r.db.InTenantTx(ctx, shop, func(ctx context.Context, q database.Queries) error {
+		decision, err := r.coord.Begin(ctx, q, shop, key, completeAppointmentOperation, fingerprint, completeAppointmentIdempotencyTTL)
+		if err != nil {
+			return fmt.Errorf("idempotency begin: %w", err)
+		}
+		result.Decision = decision
+
+		if decision.Outcome != idempotency.OutcomeProceed {
+			if decision.Outcome == idempotency.OutcomeReplay {
+				result.Response = decision.Response
+			}
+			return nil
+		}
+
+		current, found, err := lockAppointmentForReschedule(ctx, q, barbershopID, input.AppointmentID)
+		if err != nil {
+			return err
+		}
+		if !found {
+			return errAppointmentNotFound()
+		}
+
+		switch {
+		case current.status == string(booking.StatusCompleted):
+			// CA-067-05: repetir el mismo resultado siempre tiene éxito,
+			// sin comparar versionToken y sin duplicar el evento.
+		case current.status != string(booking.StatusConfirmed):
+			return errAppointmentAlreadyClosed()
+		case current.startsAt.After(input.Now):
+			// CA-067-03: antes de starts_at la operación es inválida; no
+			// se toca la fila ni el historial.
+			return errAppointmentNotStarted()
+		default:
+			if booking.EncodeVersionToken(current.id, current.updatedAt) != input.ExpectedVersionToken {
+				return errVersionConflict()
+			}
+			updatedAt, err := updateAppointmentStatusCompleted(ctx, q, barbershopID, current.id)
+			if err != nil {
+				return err
+			}
+			if err := insertAppointmentCompletedHistory(ctx, q, barbershopID, current.id, input.Actor); err != nil {
+				return err
+			}
+			current.status = string(booking.StatusCompleted)
+			current.updatedAt = updatedAt
+		}
+
+		final, err := newClosedAppointment(current)
+		if err != nil {
+			return err
+		}
+
+		body, err := json.Marshal(newClosedAppointmentResponseWire(final))
+		if err != nil {
+			return fmt.Errorf("marshal completed appointment: %w", err)
+		}
+		stored := idempotency.StoredResponse{
+			Status:      200,
+			ContentType: "application/json",
+			Body:        string(body),
+		}
+
+		ok, err := r.coord.Complete(ctx, q, shop, key, stored)
+		if err != nil {
+			return fmt.Errorf("idempotency complete: %w", err)
+		}
+		if !ok {
+			return fmt.Errorf("idempotency complete: la reclamación ya no estaba in_progress")
+		}
+
+		result.Appointment = final
+		result.Response = stored
+		return nil
+	})
+	if err != nil {
+		return booking.CompleteAppointmentResult{}, err
+	}
+	return result, nil
+}
+
+// MarkNoShow implementa booking.Repository.MarkNoShow (HU-067, T7): mismo
+// criterio exacto que CompleteAppointment, con `no_show` +
+// `appointment_no_show` en vez de `completed` + `appointment_completed`.
+func (r *Repository) MarkNoShow(
+	ctx context.Context,
+	barbershopID string,
+	input booking.CloseAppointmentInput,
+	key idempotency.Key,
+	fingerprint idempotency.Fingerprint,
+) (booking.MarkNoShowResult, error) {
+	shop, err := database.ValidBarbershopID(barbershopID)
+	if err != nil {
+		return booking.MarkNoShowResult{}, fmt.Errorf("booking/postgres: %w", err)
+	}
+
+	var result booking.MarkNoShowResult
+
+	err = r.db.InTenantTx(ctx, shop, func(ctx context.Context, q database.Queries) error {
+		decision, err := r.coord.Begin(ctx, q, shop, key, markAppointmentNoShowOperation, fingerprint, markAppointmentNoShowIdempotencyTTL)
+		if err != nil {
+			return fmt.Errorf("idempotency begin: %w", err)
+		}
+		result.Decision = decision
+
+		if decision.Outcome != idempotency.OutcomeProceed {
+			if decision.Outcome == idempotency.OutcomeReplay {
+				result.Response = decision.Response
+			}
+			return nil
+		}
+
+		current, found, err := lockAppointmentForReschedule(ctx, q, barbershopID, input.AppointmentID)
+		if err != nil {
+			return err
+		}
+		if !found {
+			return errAppointmentNotFound()
+		}
+
+		switch {
+		case current.status == string(booking.StatusNoShow):
+			// CA-067-05: repetir el mismo resultado siempre tiene éxito,
+			// sin comparar versionToken y sin duplicar el evento.
+		case current.status != string(booking.StatusConfirmed):
+			return errAppointmentAlreadyClosed()
+		case current.startsAt.After(input.Now):
+			// CA-067-03: antes de starts_at la operación es inválida; no
+			// se toca la fila ni el historial.
+			return errAppointmentNotStarted()
+		default:
+			if booking.EncodeVersionToken(current.id, current.updatedAt) != input.ExpectedVersionToken {
+				return errVersionConflict()
+			}
+			updatedAt, err := updateAppointmentStatusNoShow(ctx, q, barbershopID, current.id)
+			if err != nil {
+				return err
+			}
+			if err := insertAppointmentNoShowHistory(ctx, q, barbershopID, current.id, input.Actor); err != nil {
+				return err
+			}
+			current.status = string(booking.StatusNoShow)
+			current.updatedAt = updatedAt
+		}
+
+		final, err := newClosedAppointment(current)
+		if err != nil {
+			return err
+		}
+
+		body, err := json.Marshal(newClosedAppointmentResponseWire(final))
+		if err != nil {
+			return fmt.Errorf("marshal no-show appointment: %w", err)
+		}
+		stored := idempotency.StoredResponse{
+			Status:      200,
+			ContentType: "application/json",
+			Body:        string(body),
+		}
+
+		ok, err := r.coord.Complete(ctx, q, shop, key, stored)
+		if err != nil {
+			return fmt.Errorf("idempotency complete: %w", err)
+		}
+		if !ok {
+			return fmt.Errorf("idempotency complete: la reclamación ya no estaba in_progress")
+		}
+
+		result.Appointment = final
+		result.Response = stored
+		return nil
+	})
+	if err != nil {
+		return booking.MarkNoShowResult{}, err
 	}
 	return result, nil
 }

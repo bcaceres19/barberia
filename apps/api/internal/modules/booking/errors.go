@@ -133,6 +133,22 @@ func errVersionConflict() error {
 	return apperr.VersionConflict("el turno cambió desde que se leyó; recarga antes de reintentar")
 }
 
+// errAppointmentNotStarted cubre HU-067 (CA-067-03): T4 manual y T7 solo
+// aplican sobre una cita `confirmed` cuyo starts_at ya pasó según el reloj
+// del servidor; antes de ese instante exacto la operación es inválida.
+func errAppointmentNotStarted() error {
+	return apperr.Validation("el turno todavía no comienza; espera hasta su hora de inicio")
+}
+
+// errAppointmentAlreadyClosed cubre HU-067 (CA-067-05): el turno ya tiene
+// un resultado terminal distinto del que el comando intenta aplicar
+// (completed/no_show contrario, o cancelled_by_barber/cancelled_by_customer).
+// Repetir el MISMO resultado nunca produce este error: es un no-op exitoso
+// resuelto dentro del repositorio, antes de llegar a esta rama.
+func errAppointmentAlreadyClosed() error {
+	return apperr.InvalidState("el turno ya tiene un resultado terminal registrado; una futura corrección (T8) permitirá cambiarlo")
+}
+
 // Los errores de conflicto de agenda y de cliente inexistente/ajeno viven
 // en booking/postgres (errScheduleConflict, errCustomerNotFound): solo se
 // detectan al traducir un exclusion_violation/foreign_key_violation real de

@@ -106,6 +106,55 @@ type CancelAppointmentByBarberResponse struct {
 	CreatedAt       time.Time `json:"createdAt"`
 }
 
+// AppointmentCompletedResponse es la representación de la cita ya cerrada
+// como `completed` (o, en una repetición no-op, la representación vigente
+// sin cambios adicionales). No hay cuerpo de solicitud: T4 manual
+// (POST /private/appointments/{appointmentId}/complete) no acepta ningún
+// campo, el servidor deriva tenant/actor/estado destino (CA-067-*), mismo
+// criterio que CancelAppointmentByBarberResponse.
+type AppointmentCompletedResponse struct {
+	ID              string    `json:"id"`
+	BarberID        string    `json:"barberId"`
+	ServiceID       string    `json:"serviceId"`
+	CustomerID      string    `json:"customerId"`
+	AttendeeName    string    `json:"attendeeName"`
+	StartsAt        time.Time `json:"startsAt"`
+	EndsAt          time.Time `json:"endsAt"`
+	Status          string    `json:"status"`
+	Origin          string    `json:"origin"`
+	ServiceName     string    `json:"serviceName"`
+	DurationMinutes int       `json:"durationMinutes"`
+	PriceAmount     string    `json:"priceAmount"`
+	Currency        string    `json:"currency"`
+	CustomerNote    *string   `json:"customerNote"`
+	VersionToken    string    `json:"versionToken"`
+	CreatedAt       time.Time `json:"createdAt"`
+}
+
+// AppointmentNoShowResponse es la representación de la cita ya cerrada como
+// `no_show` (o, en una repetición no-op, la representación vigente sin
+// cambios adicionales). No hay cuerpo de solicitud: T7
+// (POST /private/appointments/{appointmentId}/no-show) no acepta ningún
+// campo, mismo criterio que AppointmentCompletedResponse.
+type AppointmentNoShowResponse struct {
+	ID              string    `json:"id"`
+	BarberID        string    `json:"barberId"`
+	ServiceID       string    `json:"serviceId"`
+	CustomerID      string    `json:"customerId"`
+	AttendeeName    string    `json:"attendeeName"`
+	StartsAt        time.Time `json:"startsAt"`
+	EndsAt          time.Time `json:"endsAt"`
+	Status          string    `json:"status"`
+	Origin          string    `json:"origin"`
+	ServiceName     string    `json:"serviceName"`
+	DurationMinutes int       `json:"durationMinutes"`
+	PriceAmount     string    `json:"priceAmount"`
+	Currency        string    `json:"currency"`
+	CustomerNote    *string   `json:"customerNote"`
+	VersionToken    string    `json:"versionToken"`
+	CreatedAt       time.Time `json:"createdAt"`
+}
+
 // DailyAgendaResponse es el cuerpo de
 // GET /private/barbers/{barberId}/appointments/daily-agenda (HU-062):
 // lista cronológica cerrada, sin cursor ni siguiente página (CA-062-07,
