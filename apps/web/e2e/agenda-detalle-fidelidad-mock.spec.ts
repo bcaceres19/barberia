@@ -66,7 +66,19 @@ function json(body: unknown, status = 200) {
   return { status, contentType: 'application/json', body: JSON.stringify(body) }
 }
 
-async function installDetailMock(page: Page) {
+// cancelOutcome controla la respuesta de POST .../cancel (HU-066, T6):
+// 'success' (por defecto) cancela de verdad -la lectura GET posterior ya
+// refleja cancelled_by_barber, mismo criterio que el turno real tras
+// confirmar-, 'version-conflict' reproduce el 409 distinguible sin mutar
+// nada, para la evidencia del diálogo de conflicto.
+async function installDetailMock(
+  page: Page,
+  options: { cancelOutcome?: 'success' | 'version-conflict'; cancelDelayMs?: number } = {},
+) {
+  const cancelOutcome = options.cancelOutcome ?? 'success'
+  const cancelDelayMs = options.cancelDelayMs ?? 0
+  const state = { cancelRequests: 0 }
+  let cancelled = false
   await page.route('**/api/v1/private/**', async (route) => {
     const url = new URL(route.request().url())
     if (url.pathname.endsWith('/auth/session')) {
@@ -101,22 +113,61 @@ async function installDetailMock(page: Page) {
       )
       return
     }
+    if (url.pathname.endsWith('/appointments/turno-mateo/cancel')) {
+      state.cancelRequests += 1
+      if (cancelDelayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, cancelDelayMs))
+      }
+      if (cancelOutcome === 'version-conflict') {
+        await route.fulfill(
+          json(
+            {
+              type: 'https://nava.example/problems/version-conflict',
+              title: 'Conflicto de versión',
+              status: 409,
+              detail: 'La representación del turno cambió.',
+              code: 'version-conflict',
+            },
+            409,
+          ),
+        )
+        return
+      }
+      cancelled = true
+      await route.fulfill(
+        json({ ...detail, status: 'cancelled_by_barber', versionToken: 'opaque-version-token-2' }),
+      )
+      return
+    }
     if (url.pathname.endsWith('/appointments/turno-mateo')) {
-      await route.fulfill(json(detail))
+      await route.fulfill(
+        json(
+          cancelled
+            ? { ...detail, status: 'cancelled_by_barber', versionToken: 'opaque-version-token-2' }
+            : detail,
+        ),
+      )
       return
     }
     await route.fulfill(json({ title: 'Mock endpoint not found' }, 404))
   })
+  return state
 }
 
-async function openDetail(page: Page, width: number, height: number) {
+async function openDetail(
+  page: Page,
+  width: number,
+  height: number,
+  mockOptions: { cancelOutcome?: 'success' | 'version-conflict'; cancelDelayMs?: number } = {},
+) {
   await page.setViewportSize({ width, height })
-  await installDetailMock(page)
+  const mockState = await installDetailMock(page, mockOptions)
   await page.goto('/panel/turnos/turno-mateo?date=2026-05-24&barberId=barbero-julian')
   await expect(page.getByRole('heading', { name: 'Mateo Rojas' })).toBeVisible()
   await expect(page.getByText('Turno reprogramado')).toBeVisible()
   expect(await page.evaluate(() => window.innerWidth)).toBe(width)
   expect(await page.evaluate(() => window.innerHeight)).toBe(height)
+  return mockState
 }
 
 for (const viewport of [
@@ -147,6 +198,184 @@ for (const viewport of [
     })
   })
 }
+
+// --- HU-066 (T6): cancelación por el barbero, issue #225 -----------------
+// El estado terminal (badge "Cancelado por el barbero") reutiliza el mismo
+// componente/variant que el atlas ya fija para cancelled_by_barber
+// (dailyAgenda.ts APPOINTMENT_STATUS_BADGE_VARIANT = 'danger', mismo
+// tratamiento que detalle-turno-eventos/10-turno-cancelado.png); el diálogo
+// de confirmación no tiene mockup exacto y se diseñó dentro de NAVA.
+const evidenceDirCancel = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  'evidence',
+  'agenda-detalle',
+  'cancelacion-225',
+)
+
+const axeScriptPath = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..',
+  'node_modules',
+  'axe-core',
+  'axe.min.js',
+)
+
+for (const viewport of [
+  { name: 'desktop', width: 1280, height: 900 },
+  { name: 'mobile', width: 360, height: 800 },
+] as const) {
+  test(`HU-066: diálogo de confirmación de cancelación en ${viewport.name}`, async ({ page }) => {
+    await openDetail(page, viewport.width, viewport.height)
+    await page.getByRole('button', { name: 'Cancelar turno' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Cancelar turno' })
+    await expect(dialog.getByText('no se puede deshacer')).toBeVisible()
+    await page.screenshot({
+      path: path.join(evidenceDirCancel, viewport.name, 'confirmar-cancelacion.png'),
+      animations: 'disabled',
+    })
+  })
+
+  test(`HU-066: turno cancelado (estado terminal) en ${viewport.name}`, async ({ page }) => {
+    await openDetail(page, viewport.width, viewport.height)
+    await page.getByRole('button', { name: 'Cancelar turno' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Cancelar turno' })
+    await dialog.getByRole('button', { name: 'Sí, cancelar turno' }).click()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(page.getByText('Cancelado por el barbero')).toBeVisible()
+    // El turno ya cancelado no vuelve a ofrecer "Cancelar turno" (solo
+    // aplica sobre confirmed, CA-066-08).
+    await expect(page.getByRole('button', { name: 'Cancelar turno' })).toHaveCount(0)
+    await page.screenshot({
+      path: path.join(evidenceDirCancel, viewport.name, 'turno-cancelado.png'),
+      animations: 'disabled',
+    })
+  })
+
+  test(`HU-066: conflicto de versión al cancelar en ${viewport.name}`, async ({ page }) => {
+    await openDetail(page, viewport.width, viewport.height, { cancelOutcome: 'version-conflict' })
+    await page.getByRole('button', { name: 'Cancelar turno' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Cancelar turno' })
+    await dialog.getByRole('button', { name: 'Sí, cancelar turno' }).click()
+    await expect(dialog.getByText('cambió mientras lo revisabas')).toBeVisible()
+    await page.screenshot({
+      path: path.join(evidenceDirCancel, viewport.name, 'conflicto-version.png'),
+      animations: 'disabled',
+    })
+  })
+}
+
+test('HU-066: doble toque no duplica la solicitud de cancelación', async ({ page }) => {
+  const mockState = await openDetail(page, 1280, 900, { cancelDelayMs: 200 })
+
+  await page.getByRole('button', { name: 'Cancelar turno' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Cancelar turno' })
+  const confirm = dialog.getByRole('button', { name: 'Sí, cancelar turno' })
+  await confirm.click()
+  // El segundo toque llega mientras la solicitud sigue en curso: el botón
+  // ya está deshabilitado (BaseButton :disabled), así que un clic nativo
+  // real no dispara un segundo evento — la protección real (cancelStatus
+  // === 'saving' en AppointmentDetailPage.vue) es la que importa aquí.
+  await confirm.click({ force: true }).catch(() => {})
+  await expect(page.getByText('Cancelado por el barbero')).toBeVisible()
+
+  expect(mockState.cancelRequests).toBe(1)
+})
+
+test('HU-066: recorrido completo por teclado, sin ratón', async ({ page }) => {
+  await openDetail(page, 1280, 900)
+  await page.getByRole('button', { name: 'Cancelar turno' }).focus()
+  await page.keyboard.press('Enter')
+  const dialog = page.getByRole('dialog', { name: 'Cancelar turno' })
+  await expect(dialog).toBeVisible()
+
+  await page.keyboard.press('Tab')
+  await page.keyboard.press('Tab')
+  await expect(dialog.getByRole('button', { name: 'Sí, cancelar turno' })).toBeFocused()
+  await page.keyboard.press('Enter')
+
+  await expect(page.getByText('Cancelado por el barbero')).toBeVisible()
+})
+
+async function runAxe(page: Page) {
+  await page.addScriptTag({ path: axeScriptPath })
+  return page.evaluate(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const axeGlobal = (window as any).axe
+    return axeGlobal.run(document, { rules: { 'color-contrast': { enabled: false } } })
+  }) as Promise<{ violations: unknown[] }>
+}
+
+test('HU-066: axe-core sin violaciones en el diálogo y en el estado terminal', async ({ page }) => {
+  await openDetail(page, 1280, 900)
+
+  await page.getByRole('button', { name: 'Cancelar turno' }).click()
+  const dialogResults = await runAxe(page)
+  expect(dialogResults.violations, JSON.stringify(dialogResults.violations, null, 2)).toEqual([])
+
+  const dialog = page.getByRole('dialog', { name: 'Cancelar turno' })
+  await dialog.getByRole('button', { name: 'Sí, cancelar turno' }).click()
+  await expect(page.getByText('Cancelado por el barbero')).toBeVisible()
+  const terminalResults = await runAxe(page)
+  expect(terminalResults.violations, JSON.stringify(terminalResults.violations, null, 2)).toEqual(
+    [],
+  )
+})
+
+test('HU-066: reflow y foco del botón Cancelar en los viewports obligatorios', async ({ page }) => {
+  await installDetailMock(page)
+  const viewports = [
+    { name: '320', width: 320, height: 720 },
+    { name: '360', width: 360, height: 800 },
+    { name: '768', width: 768, height: 1024 },
+    { name: '1280', width: 1280, height: 900 },
+    // El harness del repositorio aproxima el zoom de texto al 200 % con este viewport.
+    { name: '1280-zoom200', width: 640, height: 450 },
+  ]
+
+  for (const viewport of viewports) {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height })
+    await page.goto('/panel/turnos/turno-mateo?date=2026-05-24&barberId=barbero-julian')
+    await expect(page.getByRole('heading', { name: 'Mateo Rojas' })).toBeVisible()
+    expect(await page.evaluate(() => window.innerWidth)).toBe(viewport.width)
+    expect(await page.evaluate(() => window.innerHeight)).toBe(viewport.height)
+    expect(
+      await page.evaluate(() => {
+        const content = document.querySelector('.private-shell__content')
+        return (
+          document.documentElement.scrollWidth > document.documentElement.clientWidth ||
+          (!!content && content.scrollWidth > content.clientWidth)
+        )
+      }),
+      `${viewport.name}: no hay desborde horizontal`,
+    ).toBe(false)
+
+    const action = page.getByRole('button', { name: 'Cancelar turno' })
+    await action.focus()
+    await expect(action).toBeFocused()
+    await page.screenshot({
+      path: path.join(evidenceDirCancel, 'responsive', viewport.name, 'foco-cancelar.png'),
+      animations: 'disabled',
+    })
+  }
+})
+
+test('HU-066: movimiento reducido elimina la transición del diálogo de cancelación', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await openDetail(page, 1280, 900)
+  await page.getByRole('button', { name: 'Cancelar turno' }).click()
+  await expect(page.getByRole('dialog', { name: 'Cancelar turno' })).toBeVisible()
+  expect(
+    Number.parseFloat(
+      await page.evaluate(
+        () =>
+          getComputedStyle(document.querySelector('.base-dialog') as HTMLElement)
+            .transitionDuration,
+      ),
+    ),
+  ).toBeLessThanOrEqual(0.001)
+})
 
 test('fidelidad #191: reflow, teclado y foco en los viewports obligatorios', async ({ page }) => {
   await installDetailMock(page)

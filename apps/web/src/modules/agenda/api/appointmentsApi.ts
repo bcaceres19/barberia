@@ -11,6 +11,7 @@
 import { httpClient } from '@/shared/api/httpClient'
 import type { AppointmentDetail, HistoryEntry } from '../model/appointmentDetail'
 import type {
+  CancelAppointmentOutcome,
   CreateManualAppointmentOutcome,
   CreatedManualAppointment,
   FetchAppointmentDetailOutcome,
@@ -317,6 +318,50 @@ export async function rescheduleAppointment(
         return { kind: 'conflict', detail: problemDetail(error) }
       case 422:
         return { kind: 'validation-error', detail: problemDetail(error) }
+      default:
+        return { kind: 'unexpected-error' }
+    }
+  } catch {
+    return { kind: 'network-error' }
+  }
+}
+
+// cancelAppointmentByBarber (HU-066, T6): versionToken es el token opaco
+// leído del detalle (HU-064), enviado como precondición `If-Match`; el
+// servidor responde `version-conflict` si la representación ya cambió.
+// Sin cuerpo de solicitud: T6 no acepta ningún campo (el servidor deriva
+// tenant/actor/estado destino).
+export async function cancelAppointmentByBarber(
+  appointmentId: string,
+  versionToken: string,
+  idempotencyKey: string,
+): Promise<CancelAppointmentOutcome> {
+  try {
+    const { response, error } = await httpClient.POST(
+      '/private/appointments/{appointmentId}/cancel',
+      {
+        params: {
+          path: { appointmentId },
+          header: { 'Idempotency-Key': idempotencyKey, 'If-Match': versionToken },
+        },
+      },
+    )
+    if (response.ok) {
+      return { kind: 'success' }
+    }
+    switch (response.status) {
+      case 404:
+        return { kind: 'not-found' }
+      case 409:
+        if (isProblemCode(error, 'version-conflict')) return { kind: 'version-conflict' }
+        if (isProblemCode(error, 'invalid-state')) return { kind: 'invalid-state' }
+        if (
+          isProblemCode(error, 'idempotency-conflict') ||
+          isProblemCode(error, 'idempotency-locked')
+        ) {
+          return { kind: 'idempotency-conflict' }
+        }
+        return { kind: 'unexpected-error' }
       default:
         return { kind: 'unexpected-error' }
     }

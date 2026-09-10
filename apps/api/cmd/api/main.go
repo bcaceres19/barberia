@@ -421,6 +421,13 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	rescheduleAppointmentHandler := bookinghttpapi.NewRescheduleAppointmentHandler(rescheduleService)
 	private.Post("/appointments/{appointmentId}/reschedule", rescheduleAppointmentHandler.ServeHTTP)
 
+	// HU-066: cancelación auditada por el barbero (T6). Sin colaboradores
+	// externos: T6 no tiene ventana temporal ni interseca con
+	// blocks/timezone (a diferencia de T2).
+	cancelAppointmentByBarberService := booking.NewCancelAppointmentByBarberService(bookingRepo)
+	cancelAppointmentByBarberHandler := bookinghttpapi.NewCancelAppointmentByBarberHandler(cancelAppointmentByBarberService)
+	private.Post("/appointments/{appointmentId}/cancel", cancelAppointmentByBarberHandler.ServeHTTP)
+
 	// HU-008 (DEC-063-066): recuperación de acceso con código de un solo
 	// uso. selectRecoverySender concentra la matriz de selección (dual /
 	// correo único local-test / marcador), ver su documentación.

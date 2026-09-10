@@ -91,3 +91,18 @@ export type RescheduleAppointmentOutcome =
   | { kind: 'validation-error'; detail: string }
   | { kind: 'network-error' }
   | { kind: 'unexpected-error' }
+
+// CancelAppointmentOutcome (HU-066, T6): sin 'conflict' ni
+// 'validation-error' — T6 nunca cruza con otra cita (no mueve intervalo) y
+// no tiene ningún campo que validar (sin cuerpo de solicitud). 'not-found'
+// y 'version-conflict'/'invalid-state' exigen recargar el detalle, mismo
+// criterio que RescheduleAppointmentOutcome. El éxito no trae ningún dato:
+// la pantalla recarga el detalle completo tras confirmar.
+export type CancelAppointmentOutcome =
+  | { kind: 'success' }
+  | { kind: 'not-found' }
+  | { kind: 'version-conflict' }
+  | { kind: 'invalid-state' }
+  | { kind: 'idempotency-conflict' }
+  | { kind: 'network-error' }
+  | { kind: 'unexpected-error' }

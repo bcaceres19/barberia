@@ -432,3 +432,99 @@ func (h *RescheduleAppointmentHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		httpserver.WriteProblem(w, httpserver.Translate(result.Decision.AsError(), requestID))
 	}
 }
+
+// CancelAppointmentByBarberHandler expone
+// POST /private/appointments/{appointmentId}/cancel (HU-066, T6,
+// CA-066-01 a CA-066-08), protegido por el protocolo de idempotencia
+// reutilizable de HU-004 (RN-IDE-01, DEC-043) y por la precondición de
+// versión de HU-064 (cabecera If-Match). Sin cuerpo de solicitud: T6 no
+// acepta ningún campo (CA-066-02, "el servidor no acepta un estado o actor
+// enviado por el body").
+type CancelAppointmentByBarberHandler struct {
+	service *booking.CancelAppointmentByBarberService
+}
+
+// NewCancelAppointmentByBarberHandler construye el handler de cancelación.
+func NewCancelAppointmentByBarberHandler(service *booking.CancelAppointmentByBarberService) *CancelAppointmentByBarberHandler {
+	return &CancelAppointmentByBarberHandler{service: service}
+}
+
+// ServeHTTP implementa http.Handler.
+func (h *CancelAppointmentByBarberHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+	principal, ok := principalOrInternalError(w, r, requestID)
+	if !ok {
+		return
+	}
+
+	appointmentID := httpserver.URLParam(r, appointmentIDParam)
+
+	// 1. Cabeceras: obligatorias, validadas antes de tocar PostgreSQL o leer
+	//    el cuerpo (mismo orden que RescheduleAppointmentHandler).
+	key, err := httpserver.IdempotencyKeyFromRequest(r)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+	versionToken := r.Header.Get(ifMatchHeader)
+	if versionToken == "" {
+		httpserver.WriteProblem(w, httpserver.Translate(
+			apperr.Invalid("falta la cabecera If-Match con el token de versión del turno"), requestID))
+		return
+	}
+
+	// 2. Cuerpo CRUDO, leído una sola vez (mismo criterio que
+	//    RescheduleAppointmentHandler: la huella de idempotencia debe
+	//    calcularse sobre los bytes exactos recibidos). Este comando no
+	//    acepta ningún campo (CA-066-02): un cuerpo vacío/ausente se acepta
+	//    tal cual (mismo criterio que POST /private/auth/logout), y
+	//    cualquier cuerpo no vacío debe decodificar como un objeto JSON sin
+	//    propiedades — cualquier campo, conocido o no, se rechaza como
+	//    "cerrado" (el comando no tiene ningún campo que aceptar).
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+			return
+		}
+		httpserver.WriteProblem(w, httpserver.Translate(apperr.Invalid("cuerpo de la solicitud ilegible"), requestID))
+		return
+	}
+	if len(body) > 0 {
+		var empty struct{}
+		dec := json.NewDecoder(bytes.NewReader(body))
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(&empty); err != nil {
+			writeUnknownFieldOrInvalidJSONProblem(w, requestID)
+			return
+		}
+		if dec.More() {
+			writeUnknownFieldOrInvalidJSONProblem(w, requestID)
+			return
+		}
+	}
+
+	fingerprint := httpserver.IdempotencyFingerprint(r, body)
+
+	result, err := h.service.CancelAppointmentByBarber(r.Context(), principal.BarbershopID, booking.CancelAppointmentByBarberRequest{
+		AppointmentID:        appointmentID,
+		ExpectedVersionToken: versionToken,
+		ActorStaffUserID:     principal.StaffUserID,
+	}, key, fingerprint)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	switch result.Decision.Outcome {
+	case idempotency.OutcomeProceed, idempotency.OutcomeReplay:
+		httpserver.WriteStoredResponse(w, result.Response)
+	default:
+		// Conflicto de idempotencia (RN-IDE-01) u operación en curso
+		// (DEC-043): Translate ya sabe convertirlo en 409. Los conflictos de
+		// estado y versión ya se tradujeron arriba, antes de llegar a esta
+		// rama (nunca llegan como una Decision distinta de Proceed).
+		httpserver.WriteProblem(w, httpserver.Translate(result.Decision.AsError(), requestID))
+	}
+}

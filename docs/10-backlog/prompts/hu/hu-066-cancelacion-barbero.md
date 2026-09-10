@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-066-v1"
 version: "1.0"
 kind: "hu"
-status: "ready"
+status: "in_progress"
 target_agents:
   - "codex"
   - "claude"
@@ -13,9 +13,9 @@ related_hu: ["HU-004", "HU-060", "HU-064", "HU-065"]
 issue: 225
 issue_url: "https://github.com/bcaceres19/barberia/issues/225"
 suggested_issue_title: "feat(booking): implementar HU-066 cancelación de turno por barbero"
-branch: null
-pr: null
-pr_url: null
+branch: "feat/225-hu066-cancelacion-barbero"
+pr: 235
+pr_url: "https://github.com/bcaceres19/barberia/pull/235"
 depends_on:
   - "HU-064 y HU-065 integradas en main"
   - "Issue #225 con CA-066-01 a CA-066-08"
@@ -51,7 +51,7 @@ source_docs:
   - "apps/api/internal/modules/booking"
   - "apps/web/src/modules/agenda"
 created_at: "2026-09-08"
-updated_at: "2026-09-08"
+updated_at: "2026-09-10"
 supersedes: null
 superseded_by: null
 ---

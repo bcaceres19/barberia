@@ -10,10 +10,11 @@
 // cualquier otro cambio de estado (ninguna otra acción se renderiza).
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, type LocationQueryRaw } from 'vue-router'
-import { BaseAlert, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
+import { BaseAlert, BaseBadge, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
 import { formatInstantInTimezone } from '@/shared/time/formatInstant'
 import { getCivilDateInTimezone } from '@/shared/time/civilDate'
 import {
+  cancelAppointmentByBarber,
   fetchAppointmentDetail,
   fetchAppointmentHistory,
   fetchBarbershopTimezone,
@@ -22,7 +23,7 @@ import {
 import { newIdempotencyKey } from '../model/idempotencyKey'
 import type { AppointmentDetail, HistoryEntry } from '../model/appointmentDetail'
 import { HISTORY_EVENT_LABELS, historyFieldLabel } from '../model/appointmentDetail'
-import { APPOINTMENT_STATUS_LABELS } from '../model/dailyAgenda'
+import { APPOINTMENT_STATUS_BADGE_VARIANT, APPOINTMENT_STATUS_LABELS } from '../model/dailyAgenda'
 
 type PageStatus = 'loading' | 'ready' | 'not-found' | 'error'
 type HistoryStatus = 'loading' | 'ready' | 'error'
@@ -65,6 +66,13 @@ const historyLoadingMore = ref(false)
 
 const statusLabel = computed(() =>
   detail.value ? APPOINTMENT_STATUS_LABELS[detail.value.status] : '',
+)
+// Mismo mapa que DailyAgendaPage.vue: cancelled_by_barber ya tiene el
+// tratamiento terminal 'danger' que el atlas asigna a un turno cancelado
+// (docs/10-backlog/evidence/.../detalle-turno-eventos/10-turno-cancelado.png),
+// reutilizado tal cual en vez de inventar un color nuevo para HU-066.
+const statusBadgeVariant = computed(() =>
+  detail.value ? APPOINTMENT_STATUS_BADGE_VARIANT[detail.value.status] : 'neutral',
 )
 const attendeeInitials = computed(() => {
   if (!detail.value) return ''
@@ -109,10 +117,11 @@ const timeRangeLabel = computed(() => {
   return `${start} – ${end}`
 })
 
-// Reprogramar turno (HU-065, T2): solo visible sobre un turno confirmado
-// (RN-* del prompt — T3/cancelación no existen todavía, así que ningún
-// otro estado ofrece una acción propia).
+// Reprogramar turno (HU-065, T2) y cancelar turno (HU-066, T6): ambas
+// acciones solo aplican sobre un turno `confirmed` (CA-066-08); ningún otro
+// estado ofrece una acción propia todavía (T3/T4/T7/T8 no existen).
 const canReschedule = computed(() => detail.value?.status === 'confirmed')
+const canCancel = computed(() => detail.value?.status === 'confirmed')
 
 const isRescheduleOpen = ref(false)
 const rescheduleDate = ref('')
@@ -244,6 +253,80 @@ function onReloadAfterConflict() {
   void loadPage()
 }
 
+// Cancelar turno (HU-066, T6): mismo criterio de diálogo de confirmación,
+// clave de idempotencia por intento y recarga completa tras confirmar que
+// ya usa reprogramar — sin mockup exacto (el diálogo se diseña dentro de
+// NAVA), solo el tratamiento terminal del badge de estado reutiliza el del
+// atlas.
+type CancelStatus =
+  | 'idle'
+  | 'saving'
+  | 'not-found'
+  | 'version-conflict'
+  | 'invalid-state'
+  | 'idempotency-conflict'
+  | 'network-error'
+  | 'unexpected-error'
+
+const isCancelOpen = ref(false)
+const cancelStatus = ref<CancelStatus>('idle')
+let cancelIdempotencyKey = newIdempotencyKey()
+
+function onOpenCancel() {
+  cancelStatus.value = 'idle'
+  cancelIdempotencyKey = newIdempotencyKey()
+  isCancelOpen.value = true
+}
+
+function onCancelDialogClosed() {
+  isCancelOpen.value = false
+}
+
+async function onConfirmCancel() {
+  if (!detail.value || cancelStatus.value === 'saving') return
+
+  cancelStatus.value = 'saving'
+
+  const outcome = await cancelAppointmentByBarber(
+    appointmentId.value,
+    detail.value.versionToken,
+    cancelIdempotencyKey,
+  )
+
+  switch (outcome.kind) {
+    case 'success':
+      isCancelOpen.value = false
+      await loadPage()
+      return
+    // 'not-found' aquí solo puede significar que el turno desapareció
+    // mientras el diálogo estaba abierto (eliminado o de otra barbería):
+    // la única salida coherente es la misma que un conflicto de versión,
+    // recargar el detalle real.
+    case 'not-found':
+      cancelStatus.value = 'version-conflict'
+      return
+    case 'version-conflict':
+      cancelStatus.value = 'version-conflict'
+      return
+    case 'invalid-state':
+      cancelStatus.value = 'invalid-state'
+      return
+    case 'idempotency-conflict':
+      cancelStatus.value = 'idempotency-conflict'
+      return
+    case 'network-error':
+      cancelStatus.value = 'network-error'
+      return
+    case 'unexpected-error':
+      cancelStatus.value = 'unexpected-error'
+  }
+}
+
+function onReloadCancelAfterConflict() {
+  isCancelOpen.value = false
+  void loadPage()
+}
+
 async function loadPage() {
   pageStatus.value = 'loading'
   const [detailOutcome, timezoneOutcome] = await Promise.all([
@@ -355,33 +438,36 @@ function occurredAtLabel(entry: HistoryEntry): string {
             {{ detail.attendeeName }}
           </h1>
           <p class="appointment-detail-page__status" role="status">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="8"></circle>
-              <path d="m8.5 12 2.2 2.2 4.8-5" stroke-linecap="round" stroke-linejoin="round"></path>
-            </svg>
-            {{ statusLabel }}
+            <BaseBadge :variant="statusBadgeVariant" size="sm" :label="statusLabel">
+              {{ statusLabel }}
+            </BaseBadge>
           </p>
         </div>
-        <BaseButton
-          v-if="canReschedule"
-          type="button"
-          variant="secondary"
-          class="appointment-detail-page__reschedule"
-          @click="onOpenReschedule"
-        >
-          <span
-            class="appointment-detail-page__button-icon"
-            aria-hidden="true"
-            v-html="factIcon('calendar')"
-          />
-          Reprogramar turno
-        </BaseButton>
+        <div class="appointment-detail-page__actions">
+          <BaseButton
+            v-if="canReschedule"
+            type="button"
+            variant="secondary"
+            class="appointment-detail-page__reschedule"
+            @click="onOpenReschedule"
+          >
+            <span
+              class="appointment-detail-page__button-icon"
+              aria-hidden="true"
+              v-html="factIcon('calendar')"
+            />
+            Reprogramar turno
+          </BaseButton>
+          <BaseButton
+            v-if="canCancel"
+            type="button"
+            variant="danger"
+            class="appointment-detail-page__cancel"
+            @click="onOpenCancel"
+          >
+            Cancelar turno
+          </BaseButton>
+        </div>
       </header>
 
       <div class="appointment-detail-page__body">
@@ -670,6 +756,86 @@ function occurredAtLabel(entry: HistoryEntry): string {
           </div>
         </form>
       </BaseDialog>
+
+      <BaseDialog
+        v-model="isCancelOpen"
+        title="Cancelar turno"
+        size="md"
+        @close="onCancelDialogClosed"
+      >
+        <div class="appointment-detail-page__dialog-form">
+          <BaseAlert
+            v-if="cancelStatus === 'version-conflict'"
+            variant="warning"
+            title="Este turno cambió mientras lo revisabas"
+            role="alert"
+          >
+            <template #action>
+              <BaseButton type="button" variant="secondary" @click="onReloadCancelAfterConflict">
+                Recargar
+              </BaseButton>
+            </template>
+          </BaseAlert>
+          <BaseAlert
+            v-if="cancelStatus === 'invalid-state'"
+            variant="warning"
+            title="Este turno ya no se puede cancelar"
+            role="alert"
+          >
+            Su estado cambió mientras lo revisabas.
+            <template #action>
+              <BaseButton type="button" variant="secondary" @click="onReloadCancelAfterConflict">
+                Recargar
+              </BaseButton>
+            </template>
+          </BaseAlert>
+          <BaseAlert
+            v-if="cancelStatus === 'idempotency-conflict'"
+            variant="danger"
+            title="No pudimos completar el intento anterior"
+            role="alert"
+          >
+            Inténtalo de nuevo.
+          </BaseAlert>
+          <BaseAlert
+            v-if="cancelStatus === 'network-error'"
+            variant="warning"
+            title="No pudimos conectar"
+            role="alert"
+          >
+            Revisa tu conexión e inténtalo de nuevo.
+          </BaseAlert>
+          <BaseAlert
+            v-if="cancelStatus === 'unexpected-error'"
+            variant="danger"
+            title="Ocurrió un error inesperado"
+            role="alert"
+          >
+            Inténtalo de nuevo en unos segundos.
+          </BaseAlert>
+
+          <p class="appointment-detail-page__cancel-copy">
+            Vas a cancelar el turno de <strong>{{ detail.attendeeName }}</strong> el
+            {{ timeRangeLabel }}. Si es una hora futura, la franja queda disponible de inmediato
+            para otro turno. Esta acción no se puede deshacer desde aquí.
+          </p>
+
+          <div class="appointment-detail-page__dialog-actions">
+            <BaseButton type="button" variant="secondary" @click="isCancelOpen = false">
+              Volver
+            </BaseButton>
+            <BaseButton
+              type="button"
+              variant="danger"
+              :loading="cancelStatus === 'saving'"
+              :disabled="cancelStatus === 'saving'"
+              @click="onConfirmCancel"
+            >
+              Sí, cancelar turno
+            </BaseButton>
+          </div>
+        </div>
+      </BaseDialog>
     </template>
   </section>
 </template>
@@ -755,19 +921,18 @@ function occurredAtLabel(entry: HistoryEntry): string {
 .appointment-detail-page__status {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
   margin: 0;
-  color: var(--color-success-text);
-  font-size: var(--font-size-body);
-  line-height: var(--font-size-body-line);
 }
 
-.appointment-detail-page__status svg {
-  width: 20px;
-  height: 20px;
+.appointment-detail-page__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-3);
 }
 
-.appointment-detail-page__reschedule {
+.appointment-detail-page__reschedule,
+.appointment-detail-page__cancel {
   flex: 0 0 auto;
   min-width: 194px;
 }
@@ -970,6 +1135,14 @@ function occurredAtLabel(entry: HistoryEntry): string {
   flex-wrap: wrap;
 }
 
+.appointment-detail-page__cancel-copy {
+  margin: 0;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  line-height: var(--font-size-body-line);
+  color: var(--color-text-primary);
+}
+
 :global(.appointment-detail-page__reschedule-dialog .base-dialog__header) {
   padding: 14px 18px;
 }
@@ -1015,12 +1188,20 @@ function occurredAtLabel(entry: HistoryEntry): string {
     font-size: 14px;
   }
 
-  .appointment-detail-page__reschedule {
+  .appointment-detail-page__actions {
     position: absolute;
     top: 123px;
     right: 12px;
     left: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     width: calc(100% - 24px);
+  }
+
+  .appointment-detail-page__reschedule,
+  .appointment-detail-page__cancel {
+    min-width: 0;
+    width: 100%;
   }
 
   .appointment-detail-page__body {

@@ -106,6 +106,31 @@ type Repository interface {
 		key idempotency.Key,
 		fingerprint idempotency.Fingerprint,
 	) (RescheduleResult, error)
+
+	// CancelByBarber ejecuta T6 (HU-066) dentro de UNA sola transacción
+	// tenant-aware protegida por el protocolo de idempotencia reutilizable
+	// de HU-004 (RN-IDE-01, DEC-043): Begin, bloquear la fila (`FOR
+	// UPDATE`), verificar de nuevo con la fila ya bloqueada (nunca confiar
+	// en una lectura previa), aplicar `cancelled_by_barber` + insertar
+	// `appointment_cancelled_by_barber`, y Complete. Semántica exacta de
+	// los tres desenlaces posibles con la fila ya bloqueada
+	// (CA-066-01/04/05):
+	//   - ya está `cancelled_by_barber` -> no-op exitoso (sin comparar
+	//     versionToken: una cancelación repetida por CUALQUIER barbero de
+	//     la barbería siempre tiene éxito, aunque el token que el cliente
+	//     conserva haya quedado obsoleto tras la primera cancelación), sin
+	//     UPDATE ni historial nuevo.
+	//   - `confirmed` -> compara versionToken (mismatch = VersionConflict),
+	//     luego UPDATE status/resolved_at + INSERT historial.
+	//   - cualquier otro estado (`completed`, `no_show`,
+	//     `cancelled_by_customer`) -> InvalidState (409), sin tocar nada.
+	CancelByBarber(
+		ctx context.Context,
+		barbershopID string,
+		input CancelAppointmentByBarberInput,
+		key idempotency.Key,
+		fingerprint idempotency.Fingerprint,
+	) (CancelAppointmentByBarberResult, error)
 }
 
 // BarberNamePort resuelve el nombre visible de un barbero por id, dentro de

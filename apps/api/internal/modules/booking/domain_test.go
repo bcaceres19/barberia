@@ -247,6 +247,12 @@ func (s *stubRepository) Reschedule(
 	panic("no usado")
 }
 
+func (s *stubRepository) CancelByBarber(
+	_ context.Context, _ string, _ booking.CancelAppointmentByBarberInput, _ idempotency.Key, _ idempotency.Fingerprint,
+) (booking.CancelAppointmentByBarberResult, error) {
+	panic("no usado")
+}
+
 func (s *stubRepository) CustomerNames(
 	_ context.Context, _ string, _ []string,
 ) (map[string]string, error) {
