@@ -1572,7 +1572,7 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 | Actor | Barbero autenticado |
 | Depende de | `HU-066` integrada en `main` sin romper el núcleo de `HU-060` |
 | Bloquea | `HU-068` y cierre automático posterior |
-| Estado | Implementada contra el issue real [#226](https://github.com/bcaceres19/barberia/issues/226); prompt `PROMPT-HU-067-v1` `executed`; [PR #237](https://github.com/bcaceres19/barberia/pull/237) abierto contra `main`, pendiente de CI/merge |
+| Estado | Implementada contra el issue real [#226](https://github.com/bcaceres19/barberia/issues/226); prompt `PROMPT-HU-067-v1` `executed`; [PR #237](https://github.com/bcaceres19/barberia/pull/237) integrado en `main` |
 | Riesgo | Cerrar antes de tiempo o duplicar el evento falsea las métricas del piloto; confundir `completed` con `no_show` exige después una corrección auditable. |
 
 **Historia**
