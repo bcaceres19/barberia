@@ -82,6 +82,30 @@ type AppointmentRescheduledResponse struct {
 	CreatedAt       time.Time `json:"createdAt"`
 }
 
+// CancelAppointmentByBarberResponse es la representación de la cita ya
+// cancelada por el barbero (o, en una repetición no-op, la representación
+// vigente sin cambios adicionales). No hay cuerpo de solicitud: T6
+// (POST /private/appointments/{appointmentId}/cancel) no acepta ningún
+// campo, el servidor deriva tenant/actor/estado destino (CA-066-02).
+type CancelAppointmentByBarberResponse struct {
+	ID              string    `json:"id"`
+	BarberID        string    `json:"barberId"`
+	ServiceID       string    `json:"serviceId"`
+	CustomerID      string    `json:"customerId"`
+	AttendeeName    string    `json:"attendeeName"`
+	StartsAt        time.Time `json:"startsAt"`
+	EndsAt          time.Time `json:"endsAt"`
+	Status          string    `json:"status"`
+	Origin          string    `json:"origin"`
+	ServiceName     string    `json:"serviceName"`
+	DurationMinutes int       `json:"durationMinutes"`
+	PriceAmount     string    `json:"priceAmount"`
+	Currency        string    `json:"currency"`
+	CustomerNote    *string   `json:"customerNote"`
+	VersionToken    string    `json:"versionToken"`
+	CreatedAt       time.Time `json:"createdAt"`
+}
+
 // DailyAgendaResponse es el cuerpo de
 // GET /private/barbers/{barberId}/appointments/daily-agenda (HU-062):
 // lista cronológica cerrada, sin cursor ni siguiente página (CA-062-07,

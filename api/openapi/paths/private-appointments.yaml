@@ -546,3 +546,136 @@
         $ref: '../components/responses/RescheduleValidationProblem.yaml'
       "500":
         $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/appointments/{appointmentId}/cancel:
+  post:
+    tags: [Booking]
+    summary: Cancelar un turno por el barbero (T6)
+    description: >
+      Cancela una cita `confirmed` (HU-066, `T6` de `estados-citas.md`) en
+      cualquier momento antes, durante o después de su intervalo: ningún
+      reloj del cliente ni ventana de tiempo lo restringe (CA-066-02).
+      Cambia el estado a `cancelled_by_barber` e inserta un único evento
+      `appointment_cancelled_by_barber` dentro de la misma transacción que
+      la actualización de estado. La cita deja de participar en la
+      restricción de exclusión de inmediato, liberando su franja si es
+      futura (CA-066-03). Protegida con clave de idempotencia (RN-IDE-01,
+      DEC-043) y con la precondición `If-Match` (el `versionToken` de una
+      lectura anterior del detalle, HU-064). Repetir la cancelación sobre
+      una cita ya `cancelled_by_barber` es un no-op exitoso, sin duplicar
+      el evento (CA-066-04); una cita ya terminada de otra forma
+      (`completed`, `no_show`, `cancelled_by_customer`) responde `409`. No
+      cambia intervalo, snapshots, cliente, persona, contacto, nota ni
+      barbero (CA-066-07). El tenant y el actor se derivan exclusivamente
+      de `SessionCookie`; el cuerpo no acepta ningún campo.
+    operationId: cancelAppointmentByBarber
+    security:
+      - SessionCookie: []
+    x-business-rules:
+      [RN-CIT-01, RN-CIT-03, RN-CAN-03, RN-CAN-04, RN-HIS-01, RN-HIS-02, RN-TEN-01, RN-IDE-01]
+    x-decisions:
+      [DEC-011, DEC-012, DEC-014, DEC-016, DEC-017, DEC-024, DEC-035, DEC-036,
+       DEC-037, DEC-038, DEC-041, DEC-043, DEC-077, DEC-078, DEC-079, DEC-080]
+    parameters:
+      - name: appointmentId
+        in: path
+        required: true
+        description: Identificador de la cita.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          cita:
+            value: 3f4a5b6c-7d8e-49f0-a1b2-c3d4e5f60718
+      - $ref: '../components/parameters/IdempotencyKey.yaml'
+      - $ref: '../components/parameters/IfMatch.yaml'
+    responses:
+      "200":
+        $ref: '../components/responses/AppointmentCancelled.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        description: >
+          `appointmentId` con forma inválida, inexistente o de otra
+          barbería (RN-TEN-01), sin distinguir la causa.
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              citaAjena:
+                value:
+                  type: /api/v1/problems/not-found
+                  title: No encontrado
+                  status: 404
+                  detail: no existe una cita con ese identificador
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: not-found
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "409":
+        description: >
+          Tres conflictos distinguibles por `code`, nunca por `detail`:
+          conflicto de idempotencia (misma clave con otro contenido u otra
+          operación, `IdempotencyConflictProblem`) u operación en curso con
+          la misma clave (`IdempotencyLockedProblem`, DEC-043); conflicto de
+          versión (`code: version-conflict`, el `If-Match` enviado ya no
+          coincide con la representación vigente mientras el turno sigue
+          `confirmed`); o estado inválido (`code: invalid-state`, el turno
+          ya terminó de otra forma: `completed`, `no_show` o
+          `cancelled_by_customer`). Cancelar una cita ya
+          `cancelled_by_barber` NUNCA produce este `409`: es un `200`
+          no-op (CA-066-04).
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              contenidoDistinto:
+                summary: Misma clave, cuerpo distinto
+                value:
+                  type: /api/v1/problems/idempotency-conflict
+                  title: Conflicto de idempotencia
+                  status: 409
+                  detail: la clave de idempotencia ya se usó con un contenido distinto; usa una clave nueva
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              operacionEnCurso:
+                summary: Otra transacción tiene el bloqueo de esta clave ahora mismo
+                value:
+                  type: /api/v1/problems/idempotency-locked
+                  title: Operación en curso
+                  status: 409
+                  detail: la operación con esta clave de idempotencia todavía está en curso; reintenta en unos segundos
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-locked
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              versionDesactualizada:
+                summary: El If-Match enviado ya no coincide con la representación vigente
+                value:
+                  type: /api/v1/problems/version-conflict
+                  title: Conflicto de versión
+                  status: 409
+                  detail: el turno cambió desde que se leyó; recarga antes de reintentar
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: version-conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              estadoInvalido:
+                summary: El turno ya terminó de otra forma (completed, no_show o cancelled_by_customer)
+                value:
+                  type: /api/v1/problems/invalid-state
+                  title: Estado inválido
+                  status: 409
+                  detail: el turno ya no está confirmado; recarga para ver su estado actual
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: invalid-state
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

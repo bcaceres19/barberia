@@ -67,6 +67,12 @@ func (f *fakeManualRepository) Reschedule(
 	panic("no usado por ManualBookingService")
 }
 
+func (f *fakeManualRepository) CancelByBarber(
+	context.Context, string, booking.CancelAppointmentByBarberInput, idempotency.Key, idempotency.Fingerprint,
+) (booking.CancelAppointmentByBarberResult, error) {
+	panic("no usado por ManualBookingService")
+}
+
 var _ booking.Repository = (*fakeManualRepository)(nil)
 
 type fakeBarberServicePort struct {

@@ -18,12 +18,14 @@ const fetchAppointmentDetailMock = vi.hoisted(() => vi.fn())
 const fetchAppointmentHistoryMock = vi.hoisted(() => vi.fn())
 const fetchBarbershopTimezoneMock = vi.hoisted(() => vi.fn())
 const rescheduleAppointmentMock = vi.hoisted(() => vi.fn())
+const cancelAppointmentByBarberMock = vi.hoisted(() => vi.fn())
 
 vi.mock('../../api/appointmentsApi', () => ({
   fetchAppointmentDetail: fetchAppointmentDetailMock,
   fetchAppointmentHistory: fetchAppointmentHistoryMock,
   fetchBarbershopTimezone: fetchBarbershopTimezoneMock,
   rescheduleAppointment: rescheduleAppointmentMock,
+  cancelAppointmentByBarber: cancelAppointmentByBarberMock,
 }))
 
 const { default: AppointmentDetailPage } = await import('../AppointmentDetailPage.vue')
@@ -93,6 +95,7 @@ beforeEach(() => {
   fetchAppointmentHistoryMock.mockReset()
   fetchBarbershopTimezoneMock.mockReset()
   rescheduleAppointmentMock.mockReset()
+  cancelAppointmentByBarberMock.mockReset()
   fetchBarbershopTimezoneMock.mockResolvedValue({ kind: 'success', timezone: 'America/Bogota' })
   fetchAppointmentHistoryMock.mockResolvedValue({
     kind: 'success',
@@ -144,6 +147,18 @@ function findButtonByText(wrapper: VueWrapper, text: string) {
 
 async function openRescheduleDialog(wrapper: VueWrapper) {
   await findButtonByText(wrapper, 'Reprogramar turno').trigger('click')
+  await flushPromises()
+}
+
+// --- Ayudantes para el diálogo de cancelación (HU-066) -------------------
+
+async function openCancelDialog(wrapper: VueWrapper) {
+  await findButtonByText(wrapper, 'Cancelar turno').trigger('click')
+  await flushPromises()
+}
+
+async function confirmCancel(wrapper: VueWrapper) {
+  await findButtonByText(wrapper, 'Sí, cancelar turno').trigger('click')
   await flushPromises()
 }
 
@@ -484,6 +499,172 @@ describe('AppointmentDetailPage', () => {
     await flushPromises()
 
     const results = await axe(wrapper.element, { rules: { 'heading-order': { enabled: false } } })
+    expect(results.violations).toEqual([])
+  })
+
+  // --- Cancelación (HU-066, T6) -------------------------------------------
+
+  it('shows the "Cancelar turno" action only for a confirmed appointment', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Cancelar turno')).toBe(true)
+  })
+
+  it('does not show "Cancelar turno" for a non-confirmed appointment', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'completed' },
+    })
+    const { wrapper } = await mountPage()
+
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Cancelar turno')).toBe(false)
+  })
+
+  it('opens the cancel dialog with the consequence explained before confirming', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openCancelDialog(wrapper)
+
+    expect(openDialogElement(wrapper).textContent).toContain('Juan Pérez')
+    expect(openDialogElement(wrapper).textContent).toContain('no se puede deshacer')
+  })
+
+  it('on success, calls the API with a fresh idempotency key, closes the dialog, and refetches the detail', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openCancelDialog(wrapper)
+
+    cancelAppointmentByBarberMock.mockResolvedValueOnce({ kind: 'success' })
+    fetchAppointmentDetailMock.mockResolvedValueOnce({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'cancelled_by_barber' },
+    })
+    await confirmCancel(wrapper)
+
+    expect(cancelAppointmentByBarberMock).toHaveBeenCalledWith(
+      'a-1',
+      'opaque-token',
+      expect.any(String),
+    )
+    expect(wrapper.element.querySelector('.base-dialog--open')).toBeNull()
+    expect(fetchAppointmentDetailMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('blocks a second confirm while the first is still in flight (no double POST)', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openCancelDialog(wrapper)
+
+    let resolveCancel: (value: unknown) => void = () => {}
+    cancelAppointmentByBarberMock.mockReturnValueOnce(
+      new Promise((resolve) => (resolveCancel = resolve)),
+    )
+    await confirmCancel(wrapper)
+    await confirmCancel(wrapper)
+
+    expect(cancelAppointmentByBarberMock).toHaveBeenCalledTimes(1)
+    resolveCancel({ kind: 'success' })
+    await flushPromises()
+  })
+
+  it('renews the idempotency key each time the dialog is reopened', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+
+    await openCancelDialog(wrapper)
+    cancelAppointmentByBarberMock.mockResolvedValueOnce({ kind: 'network-error' })
+    await confirmCancel(wrapper)
+
+    await findButtonByText(wrapper, 'Volver').trigger('click')
+    await flushPromises()
+
+    await openCancelDialog(wrapper)
+    cancelAppointmentByBarberMock.mockResolvedValueOnce({ kind: 'success' })
+    fetchAppointmentDetailMock.mockResolvedValueOnce({ kind: 'success', detail: readyDetail })
+    await confirmCancel(wrapper)
+
+    const firstKey = cancelAppointmentByBarberMock.mock.calls[0]![2]
+    const secondKey = cancelAppointmentByBarberMock.mock.calls[1]![2]
+    expect(secondKey).not.toBe(firstKey)
+  })
+
+  it('on a version conflict, offers a reload that refetches the real detail', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openCancelDialog(wrapper)
+
+    cancelAppointmentByBarberMock.mockResolvedValueOnce({ kind: 'version-conflict' })
+    await confirmCancel(wrapper)
+
+    expect(wrapper.text()).toContain('cambió mientras lo revisabas')
+    const reload = wrapper.findAll('button').find((b) => b.text() === 'Recargar')
+    expect(reload).toBeTruthy()
+
+    fetchAppointmentDetailMock.mockResolvedValueOnce({
+      kind: 'success',
+      detail: { ...readyDetail, versionToken: 'fresh-token' },
+    })
+    await reload!.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.element.querySelector('.base-dialog--open')).toBeNull()
+    expect(fetchAppointmentDetailMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('on an invalid-state conflict, offers a reload with the same recoverable message', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openCancelDialog(wrapper)
+
+    cancelAppointmentByBarberMock.mockResolvedValueOnce({ kind: 'invalid-state' })
+    await confirmCancel(wrapper)
+
+    expect(wrapper.text()).toContain('ya no se puede cancelar')
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Recargar')).toBe(true)
+  })
+
+  it('on an idempotency conflict, keeps the dialog open with a recoverable message', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openCancelDialog(wrapper)
+
+    cancelAppointmentByBarberMock.mockResolvedValueOnce({ kind: 'idempotency-conflict' })
+    await confirmCancel(wrapper)
+
+    expect(wrapper.text()).toContain('No pudimos completar el intento anterior')
+    expect(wrapper.element.querySelector('.base-dialog--open')).toBeTruthy()
+  })
+
+  it('on a network error, keeps the dialog open without losing the intent', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openCancelDialog(wrapper)
+
+    cancelAppointmentByBarberMock.mockResolvedValueOnce({ kind: 'network-error' })
+    await confirmCancel(wrapper)
+
+    expect(wrapper.text()).toContain('No pudimos conectar')
+    expect(wrapper.element.querySelector('.base-dialog--open')).toBeTruthy()
+  })
+
+  it('renders a status badge reflecting the terminal cancelled_by_barber state', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'cancelled_by_barber' },
+    })
+    const { wrapper } = await mountPage()
+
+    expect(wrapper.text()).toContain('Cancelado por el barbero')
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Cancelar turno')).toBe(false)
+  })
+
+  it('has no obvious accessibility violations with the cancel dialog open', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+    await openCancelDialog(wrapper)
+
+    const results = await axe(wrapper.element)
     expect(results.violations).toEqual([])
   })
 })

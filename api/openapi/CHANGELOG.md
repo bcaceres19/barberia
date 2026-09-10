@@ -4,6 +4,22 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.17.0] - 2026-09-10
+
+### Agregado
+
+- `POST /private/appointments/{appointmentId}/cancel` (`operationId:
+  cancelAppointmentByBarber`, `CA-066-01` a `CA-066-08`): T6 (`HU-066`),
+  cancela una cita `confirmed` en cualquier momento (sin ventana temporal),
+  cambiándola a `cancelled_by_barber` e insertando un único evento
+  `appointment_cancelled_by_barber`, protegida con `Idempotency-Key`
+  (`RN-IDE-01`, `DEC-043`) y con la precondición `If-Match` (el
+  `versionToken` de `HU-064`). Sin cuerpo de solicitud. Repetir la
+  cancelación sobre una cita ya `cancelled_by_barber` es un no-op exitoso
+  sin duplicar el evento (`CA-066-04`); cualquier otro estado terminal
+  responde `409`. `200`, `400`, `401`, `404`, `409`
+  (versión/estado/idempotencia, códigos distinguibles), `500`.
+
 ## [0.16.0] - 2026-09-01
 
 ### Agregado

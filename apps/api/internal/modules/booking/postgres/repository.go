@@ -1274,3 +1274,248 @@ func (r *Repository) Reschedule(
 	}
 	return result, nil
 }
+
+// ---------------------------------------------------------------------------
+// HU-066: cancelación auditada por el barbero (T6)
+// ---------------------------------------------------------------------------
+
+// cancelAppointmentByBarberOperation identifica, para el protocolo de
+// idempotencia (RN-IDE-01, DEC-043), la operación de HU-066: una clave ya
+// usada para crear o reprogramar un turno no puede reutilizarse aquí
+// (idempotency_begin responde OutcomeConflictOperation).
+const cancelAppointmentByBarberOperation idempotency.Operation = "cancel_appointment_by_barber"
+
+// cancelAppointmentByBarberIdempotencyTTL es la vigencia de una reclamación
+// OutcomeProceed sin completar todavía, mismo valor que
+// rescheduleAppointmentIdempotencyTTL: sin ninguna razón de negocio para
+// diferir de ese precedente.
+const cancelAppointmentByBarberIdempotencyTTL = 10 * time.Minute
+
+// updateAppointmentStatusCancelledByBarber aplica el estado terminal sobre
+// la fila YA bloqueada por lockAppointmentForReschedule, dentro de la misma
+// transacción. appointment_resolved_at_ck exige resolved_at NOT NULL (y
+// >= created_at) para cualquier estado distinto de `confirmed`: por eso
+// status y resolved_at se fijan en la MISMA sentencia, nunca en dos pasos
+// que dejarían una fila transitoriamente inconsistente con el CHECK.
+// Cancelar nunca puede violar appointment_barber_interval_excl (mover un
+// turno FUERA de occupies_schedule solo puede liberar la exclusión, nunca
+// competir por ella), así que este UPDATE no necesita traducir 23P01.
+func updateAppointmentStatusCancelledByBarber(
+	ctx context.Context,
+	q database.Queries,
+	barbershopID, appointmentID string,
+) (time.Time, error) {
+	var updatedAt time.Time
+	err := q.QueryRow(ctx, `
+		UPDATE appointment
+		   SET status = 'cancelled_by_barber', resolved_at = now()
+		 WHERE barbershop_id = $1 AND id = $2
+		RETURNING updated_at`,
+		barbershopID, appointmentID,
+	).Scan(&updatedAt)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return updatedAt, nil
+}
+
+// insertAppointmentCancelledByBarberHistory inserta, dentro de la misma
+// transacción, el evento appointment_cancelled_by_barber y su único cambio
+// (status: confirmed -> cancelled_by_barber), mismo criterio de dos INSERT
+// que insertAppointmentRescheduledHistory.
+func insertAppointmentCancelledByBarberHistory(
+	ctx context.Context,
+	q database.Queries,
+	barbershopID, appointmentID string,
+	actor booking.Actor,
+) error {
+	var historyID string
+	err := q.QueryRow(ctx, `
+		INSERT INTO appointment_history (
+			barbershop_id, appointment_id, event_type, actor_type, actor_staff_user_id, actor_customer_id
+		) VALUES ($1, $2, 'appointment_cancelled_by_barber', $3, $4, $5)
+		RETURNING id`,
+		barbershopID, appointmentID, string(actor.Type), actor.StaffUserID, actor.CustomerID,
+	).Scan(&historyID)
+	if err != nil {
+		return err
+	}
+
+	_, err = q.Exec(ctx, `
+		INSERT INTO appointment_history_change (barbershop_id, history_id, field_name, previous_value, new_value)
+		VALUES ($1, $2, 'status', 'confirmed', 'cancelled_by_barber')`,
+		barbershopID, historyID,
+	)
+	return err
+}
+
+func newCancelledAppointment(row currentAppointmentForReschedule) (booking.CancelledAppointment, error) {
+	cents, err := parsePriceAmount(row.priceAmountSnapshot)
+	if err != nil {
+		return booking.CancelledAppointment{}, fmt.Errorf("booking/postgres: price_amount_snapshot ilegible: %w", err)
+	}
+	return booking.CancelledAppointment{
+		ID:                       row.id,
+		BarberID:                 row.barberID,
+		ServiceID:                row.serviceID,
+		CustomerID:               row.customerID,
+		AttendeeName:             row.attendeeName,
+		StartsAt:                 row.startsAt,
+		EndsAt:                   row.endsAt,
+		Status:                   booking.Status(row.status),
+		Origin:                   booking.Origin(row.origin),
+		ServiceNameSnapshot:      row.serviceNameSnapshot,
+		DurationMinutesSnapshot:  row.durationMinutesSnapshot,
+		PriceAmountCentsSnapshot: cents,
+		CurrencySnapshot:         row.currencySnapshot,
+		CustomerNote:             row.customerNote,
+		VersionToken:             booking.EncodeVersionToken(row.id, row.updatedAt),
+		CreatedAt:                row.createdAt,
+	}, nil
+}
+
+// cancelAppointmentByBarberResponseWire es la forma exacta que CancelByBarber
+// serializa como cuerpo almacenado de idempotencia: debe coincidir campo a
+// campo con httpapi.CancelAppointmentByBarberResponse para que una
+// repetición exacta reproduzca bytes idénticos a los de la respuesta
+// original (mismo criterio que rescheduleAppointmentResponseWire).
+type cancelAppointmentByBarberResponseWire struct {
+	ID              string  `json:"id"`
+	BarberID        string  `json:"barberId"`
+	ServiceID       string  `json:"serviceId"`
+	CustomerID      string  `json:"customerId"`
+	AttendeeName    string  `json:"attendeeName"`
+	StartsAt        string  `json:"startsAt"`
+	EndsAt          string  `json:"endsAt"`
+	Status          string  `json:"status"`
+	Origin          string  `json:"origin"`
+	ServiceName     string  `json:"serviceName"`
+	DurationMinutes int     `json:"durationMinutes"`
+	PriceAmount     string  `json:"priceAmount"`
+	Currency        string  `json:"currency"`
+	CustomerNote    *string `json:"customerNote"`
+	VersionToken    string  `json:"versionToken"`
+	CreatedAt       string  `json:"createdAt"`
+}
+
+func newCancelAppointmentByBarberResponseWire(a booking.CancelledAppointment) cancelAppointmentByBarberResponseWire {
+	return cancelAppointmentByBarberResponseWire{
+		ID:              a.ID,
+		BarberID:        a.BarberID,
+		ServiceID:       a.ServiceID,
+		CustomerID:      a.CustomerID,
+		AttendeeName:    a.AttendeeName,
+		StartsAt:        a.StartsAt.Format(time.RFC3339),
+		EndsAt:          a.EndsAt.Format(time.RFC3339),
+		Status:          string(a.Status),
+		Origin:          string(a.Origin),
+		ServiceName:     a.ServiceNameSnapshot,
+		DurationMinutes: a.DurationMinutesSnapshot,
+		PriceAmount:     formatPriceAmount(a.PriceAmountCentsSnapshot),
+		Currency:        a.CurrencySnapshot,
+		CustomerNote:    a.CustomerNote,
+		VersionToken:    a.VersionToken,
+		CreatedAt:       a.CreatedAt.Format(time.RFC3339),
+	}
+}
+
+// CancelByBarber implementa booking.Repository.CancelByBarber (HU-066, T6):
+// Begin, bloquear la fila, verificar de nuevo con la fila ya bloqueada
+// (no-op si ya está cancelled_by_barber, InvalidState si es cualquier otro
+// estado terminal, VersionConflict si el token no coincide mientras sigue
+// confirmed), aplicar el estado terminal + insertar
+// appointment_cancelled_by_barber, y Complete, todo dentro de UNA sola
+// InTenantTx. Reutiliza lockAppointmentForReschedule/
+// currentAppointmentForReschedule (HU-065): misma fila, mismas columnas,
+// ningún motivo para duplicar el SELECT ... FOR UPDATE.
+func (r *Repository) CancelByBarber(
+	ctx context.Context,
+	barbershopID string,
+	input booking.CancelAppointmentByBarberInput,
+	key idempotency.Key,
+	fingerprint idempotency.Fingerprint,
+) (booking.CancelAppointmentByBarberResult, error) {
+	shop, err := database.ValidBarbershopID(barbershopID)
+	if err != nil {
+		return booking.CancelAppointmentByBarberResult{}, fmt.Errorf("booking/postgres: %w", err)
+	}
+
+	var result booking.CancelAppointmentByBarberResult
+
+	err = r.db.InTenantTx(ctx, shop, func(ctx context.Context, q database.Queries) error {
+		decision, err := r.coord.Begin(ctx, q, shop, key, cancelAppointmentByBarberOperation, fingerprint, cancelAppointmentByBarberIdempotencyTTL)
+		if err != nil {
+			return fmt.Errorf("idempotency begin: %w", err)
+		}
+		result.Decision = decision
+
+		if decision.Outcome != idempotency.OutcomeProceed {
+			if decision.Outcome == idempotency.OutcomeReplay {
+				result.Response = decision.Response
+			}
+			return nil
+		}
+
+		current, found, err := lockAppointmentForReschedule(ctx, q, barbershopID, input.AppointmentID)
+		if err != nil {
+			return err
+		}
+		if !found {
+			return errAppointmentNotFound()
+		}
+
+		switch {
+		case current.status == string(booking.StatusCancelledByBarber):
+			// CA-066-04: una cancelación repetida por CUALQUIER barbero de
+			// la barbería siempre tiene éxito, sin comparar versionToken
+			// (el que el cliente conserva ya quedó obsoleto tras la
+			// primera cancelación) y sin duplicar el evento de historial.
+		case current.status != string(booking.StatusConfirmed):
+			return errAppointmentNotConfirmed()
+		default:
+			if booking.EncodeVersionToken(current.id, current.updatedAt) != input.ExpectedVersionToken {
+				return errVersionConflict()
+			}
+			updatedAt, err := updateAppointmentStatusCancelledByBarber(ctx, q, barbershopID, current.id)
+			if err != nil {
+				return err
+			}
+			if err := insertAppointmentCancelledByBarberHistory(ctx, q, barbershopID, current.id, input.Actor); err != nil {
+				return err
+			}
+			current.status = string(booking.StatusCancelledByBarber)
+			current.updatedAt = updatedAt
+		}
+
+		final, err := newCancelledAppointment(current)
+		if err != nil {
+			return err
+		}
+
+		body, err := json.Marshal(newCancelAppointmentByBarberResponseWire(final))
+		if err != nil {
+			return fmt.Errorf("marshal cancelled appointment: %w", err)
+		}
+		stored := idempotency.StoredResponse{
+			Status:      200,
+			ContentType: "application/json",
+			Body:        string(body),
+		}
+
+		ok, err := r.coord.Complete(ctx, q, shop, key, stored)
+		if err != nil {
+			return fmt.Errorf("idempotency complete: %w", err)
+		}
+		if !ok {
+			return fmt.Errorf("idempotency complete: la reclamación ya no estaba in_progress")
+		}
+
+		result.Appointment = final
+		result.Response = stored
+		return nil
+	})
+	if err != nil {
+		return booking.CancelAppointmentByBarberResult{}, err
+	}
+	return result, nil
+}
