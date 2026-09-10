@@ -132,9 +132,38 @@ function respond(response, status, body) {
   response.end(JSON.stringify(body))
 }
 
-createServer((request, response) => {
+const DEMO_EMAIL = 'demo@nava.test'
+const DEMO_PASSWORD = 'Demo1234!'
+
+function readJsonBody(request) {
+  return new Promise((resolve) => {
+    let raw = ''
+    request.on('data', (chunk) => {
+      raw += chunk
+    })
+    request.on('end', () => {
+      try {
+        resolve(raw ? JSON.parse(raw) : {})
+      } catch {
+        resolve({})
+      }
+    })
+  })
+}
+
+createServer(async (request, response) => {
   const url = new URL(request.url ?? '/', 'http://localhost')
   const { pathname } = url
+
+  if (request.method === 'POST' && pathname.endsWith('/public/auth/login')) {
+    const body = await readJsonBody(request)
+    if (body.email === DEMO_EMAIL && body.password === DEMO_PASSWORD) {
+      respond(response, 200, { expiresAt: '2099-01-01T00:00:00Z' })
+      return
+    }
+    respond(response, 401, { title: 'Credenciales inválidas' })
+    return
+  }
 
   if (pathname === '/api/v1/private/auth/session') {
     respond(response, 200, {

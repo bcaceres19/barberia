@@ -12,7 +12,7 @@
 // que citan un evento del atlas (docs/10-backlog/evidence/
 // ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/README.md)
 // documentan a qué panel responde cada bloque.
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { BaseAlert, BaseButton, BaseInput, BarberAvatar, PageState } from '@/shared/ui'
 import { formatCivilDateFull, isCivilDateString } from '@/shared/time/civilDate'
 import {
@@ -68,6 +68,22 @@ const customerEmail = ref('')
 const customerNote = ref('')
 const startsAtDate = ref('')
 const startsAtTime = ref('')
+const noteRef = ref<HTMLTextAreaElement | null>(null)
+
+// La nota crece con su contenido en vez de dejar que la persona la
+// arrastre a mano (`resize: none` en el estilo): el alto sigue al
+// `scrollHeight` real del contenido en cada cambio, incluido el reinicio a
+// '' de `onStartNewAppointment`.
+function autoGrowNote() {
+  const el = noteRef.value
+  if (!el) return
+  el.style.height = 'auto'
+  el.style.height = `${el.scrollHeight}px`
+}
+
+watch(customerNote, () => {
+  void nextTick(autoGrowNote)
+})
 
 const fieldErrors = ref<Record<string, string | undefined>>({})
 const attempted = ref(false)
@@ -138,12 +154,26 @@ const hasSummaryContent = computed(
     ),
 )
 
-// El campo de servicio depende del barbero (DEC-072): sin barbero elegido, o
-// mientras llegan sus servicios, queda deshabilitado y pierde el filete de
-// latón (atlas, eventos 04 y 05).
+// El campo de servicio depende del barbero (DEC-072): sin barbero elegido,
+// mientras llegan sus servicios, o sin servicios activos que ofrecer, queda
+// deshabilitado y pierde el filete de latón (atlas, eventos 04 y 05).
 const isServiceDisabled = computed(
-  () => !selectedBarberId.value || servicesStatus.value === 'loading',
+  () =>
+    !selectedBarberId.value ||
+    servicesStatus.value === 'loading' ||
+    (servicesStatus.value !== 'idle' && services.value.length === 0),
 )
+
+// Rótulo de la opción vacía del `<select>`: sin esto, un barbero sin
+// servicios activos (o cuya carga falló) mostraba "Elige un servicio" como
+// única opción, prometiendo una lista que no existe.
+const serviceSelectPlaceholder = computed(() => {
+  if (!selectedBarberId.value) return 'Elige primero un barbero'
+  if (servicesStatus.value === 'loading') return 'Cargando servicios…'
+  if (servicesStatus.value === 'error') return 'No pudimos cargar los servicios'
+  if (services.value.length === 0) return 'Sin servicios activos asignados'
+  return 'Elige un servicio'
+})
 
 // Alerta global. En escritorio encabeza la columna lateral y en móvil cae
 // justo encima del CTA: es el mismo nodo, la retícula lo recoloca.
@@ -361,6 +391,7 @@ function onBarberSelect(barberId: string) {
                   >
                     <label for="new-appointment-barber" class="new-appointment-page__label">
                       Barbero
+                      <span class="new-appointment-page__required" aria-hidden="true">*</span>
                     </label>
                     <BarberSelect
                       :model-value="selectedBarberId || null"
@@ -388,6 +419,7 @@ function onBarberSelect(barberId: string) {
                   >
                     <label for="new-appointment-service" class="new-appointment-page__label">
                       Servicio
+                      <span class="new-appointment-page__required" aria-hidden="true">*</span>
                     </label>
                     <div class="new-appointment-page__select-wrap">
                       <select
@@ -397,7 +429,7 @@ function onBarberSelect(barberId: string) {
                         :disabled="isServiceDisabled"
                       >
                         <option value="" disabled>
-                          {{ selectedBarberId ? 'Elige un servicio' : 'Elige primero un barbero' }}
+                          {{ serviceSelectPlaceholder }}
                         </option>
                         <option v-for="s in services" :key="s.id" :value="s.id">
                           {{ s.name }}
@@ -554,6 +586,7 @@ function onBarberSelect(barberId: string) {
                        silencio. -->
                   <textarea
                     id="new-appointment-note"
+                    ref="noteRef"
                     v-model="customerNote"
                     class="new-appointment-page__textarea"
                     rows="2"
@@ -899,7 +932,8 @@ function onBarberSelect(barberId: string) {
    espacio en blanco que la plantilla de BaseInput deja entre el rótulo y el
    asterisco: en versalitas espaciadas ese espacio se lee como un asterisco
    suelto, y el atlas lo pega al rótulo ("PERSONA ATENDIDA*"). */
-.new-appointment-page :deep(.base-input__required) {
+.new-appointment-page :deep(.base-input__required),
+.new-appointment-page__required {
   margin-left: -5px;
   color: var(--color-brand-accent-surface);
 }
@@ -1063,7 +1097,7 @@ function onBarberSelect(barberId: string) {
 
 .new-appointment-page__textarea {
   width: 100%;
-  height: 70px;
+  min-height: 70px;
   padding: 12px 13px;
   font-family: var(--font-family-base);
   font-size: 15px;
@@ -1074,7 +1108,8 @@ function onBarberSelect(barberId: string) {
   border-bottom: var(--border-width-emphasis) solid rgb(244 240 231 / 30%);
   border-radius: 2px;
   outline: none;
-  resize: vertical;
+  overflow-y: hidden;
+  resize: none;
 }
 
 .new-appointment-page__textarea:focus-visible {
@@ -1455,7 +1490,7 @@ function onBarberSelect(barberId: string) {
   }
 
   .new-appointment-page__textarea {
-    height: 74px;
+    min-height: 74px;
     padding: 12px 14px;
   }
 
