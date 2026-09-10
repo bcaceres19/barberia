@@ -6350,8 +6350,8 @@
     "semantic_hash": ""
   },
   "tools/mockups/detalle-turno-eventos/render.mjs": {
-    "mtime": 1788571472.3098752,
-    "ast_hash": "9354d79a06956b4ad3068b320be8ef42",
+    "mtime": 1788572233.3468606,
+    "ast_hash": "79c646e0161d0397dea1dd19241dd9c7",
     "semantic_hash": ""
   },
   "apps/web/src/assets/fonts/instrument-sans-latin-400-700.b64.txt": {
@@ -6365,168 +6365,168 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/README.md": {
-    "mtime": 1788571611.6255414,
-    "ast_hash": "3bb98e341f93fcc8b2824273ff25bf0b",
+    "mtime": 1788572311.5500398,
+    "ast_hash": "2a1d4e26ea0cd7cec6dbffd93c8b8d01",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/01-carga-detalle.png": {
-    "mtime": 1788571477.8221943,
-    "ast_hash": "3939cdb5df366e72e56c4bfccbf2457e",
+    "mtime": 1788572320.1470823,
+    "ast_hash": "8b5cb02b65e0ce952a598829857fe82d",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/02-turno-no-disponible.png": {
-    "mtime": 1788571477.8789473,
+    "mtime": 1788572320.2357972,
     "ast_hash": "72b78b570c835bd15e9b93292a78d63f",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/03-error-detalle.png": {
-    "mtime": 1788571477.9278126,
+    "mtime": 1788572320.3023393,
     "ast_hash": "fcd2f920ee2a14a0ce401008a38a9b60",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/04-detalle-confirmado.png": {
-    "mtime": 1788571478.0163684,
-    "ast_hash": "b66f0a2c112e7735d39c2397b618afbf",
+    "mtime": 1788572320.4023888,
+    "ast_hash": "4b559f2ea7495951bff1569b79932cff",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/05-historial-cargando.png": {
-    "mtime": 1788571478.077274,
-    "ast_hash": "a048e7e99e3c8d95209286f718ad6018",
+    "mtime": 1788572320.4593585,
+    "ast_hash": "b41ba360728eac096fbac4ad78248224",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/06-historial-vacio.png": {
-    "mtime": 1788571478.1847448,
-    "ast_hash": "7732bbc5a25b717579771687a0a882e9",
+    "mtime": 1788572320.581846,
+    "ast_hash": "d42640d2f67dbcfa218f61c222421676",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/07-error-historial.png": {
-    "mtime": 1788571478.2351553,
-    "ast_hash": "8c4b464264d18990db02d083eb1867ed",
+    "mtime": 1788572320.647518,
+    "ast_hash": "260d6ad449f64e6e79bac5c9344dfe17",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/08-historial-paginado.png": {
-    "mtime": 1788571478.3491342,
-    "ast_hash": "109437bc7421d5750c0a0107c7bbfd79",
+    "mtime": 1788572320.712084,
+    "ast_hash": "5dab3ee98d7d32d503b17cdc5a6b28f2",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/09-turno-completado.png": {
-    "mtime": 1788571478.4337244,
-    "ast_hash": "6a5acc2a686c448a9d274c92326f7ba7",
+    "mtime": 1788572320.842407,
+    "ast_hash": "3e6d67fa540ad1ad712bcc2410728d2d",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/10-turno-cancelado.png": {
-    "mtime": 1788571478.4946778,
-    "ast_hash": "dac9fa3666094a55725d7a09ad1fc519",
+    "mtime": 1788572320.9072518,
+    "ast_hash": "851e6e40e5033669fcd78f9e041c05fa",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/11-dialogo-reprogramar.png": {
-    "mtime": 1788571478.5586717,
-    "ast_hash": "c018c93fe9b82052f36c12ebc2a9156b",
+    "mtime": 1788572320.9836612,
+    "ast_hash": "3c8388d8dc355540f585300f4ecd0d41",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/12-dialogo-guardando.png": {
-    "mtime": 1788571478.637201,
-    "ast_hash": "4e98be3eeac7540b150f54ed38904037",
+    "mtime": 1788572321.0835967,
+    "ast_hash": "a1c9c44754a8dfe72c18f461f1879fba",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/13-dialogo-conflicto-agenda.png": {
-    "mtime": 1788571478.7237139,
-    "ast_hash": "35e00992b740ee5933c10f4f56cd4785",
+    "mtime": 1788572321.1666443,
+    "ast_hash": "342775e07eb4321aa9d88ef749254e6c",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/14-dialogo-version-obsoleta.png": {
-    "mtime": 1788571478.8062978,
-    "ast_hash": "9d331f0c8328acafe72c07409e107fd7",
+    "mtime": 1788572321.2658546,
+    "ast_hash": "2a375fa3c2cef9c1c6710539df8ea381",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/15-dialogo-sin-conexion.png": {
-    "mtime": 1788571478.8901193,
-    "ast_hash": "e25e11d21422f218678c6d53f764f58f",
+    "mtime": 1788572321.3614876,
+    "ast_hash": "494781910dd798e9a6385f1cde0206d2",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/desktop/detalle-turno/16-reprogramacion-aplicada.png": {
-    "mtime": 1788571478.9803677,
-    "ast_hash": "452f1b520377d01fab5ff446ea5de041",
+    "mtime": 1788572321.4332669,
+    "ast_hash": "347262e2fc52422e20afafc146340c70",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/01-carga-detalle.png": {
-    "mtime": 1788571479.1824324,
-    "ast_hash": "c8f1dbf94e96c6c5536c249a7206b3ef",
+    "mtime": 1788572321.6369157,
+    "ast_hash": "56dac9acf73f4040a3391b9b2d61fa39",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/02-turno-no-disponible.png": {
-    "mtime": 1788571479.267066,
+    "mtime": 1788572321.7118688,
     "ast_hash": "b6e527f1c03ed861bf491c1537041b08",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/03-error-detalle.png": {
-    "mtime": 1788571479.36387,
+    "mtime": 1788572321.8024988,
     "ast_hash": "a967d70ef0edfaed154f0c6fe7d82309",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/04-detalle-confirmado.png": {
-    "mtime": 1788571479.5210335,
-    "ast_hash": "990f7179d84b6d894eb93cb90f9a2387",
+    "mtime": 1788572321.9572096,
+    "ast_hash": "be905638f8cbc6e6a8be0b86bae155d0",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/05-historial-cargando.png": {
-    "mtime": 1788571479.6404183,
-    "ast_hash": "1ad11364285ea082fee20a07d8b5190d",
+    "mtime": 1788572322.066182,
+    "ast_hash": "7b5af8b94dfdaba1ccf08320995edff9",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/06-historial-vacio.png": {
-    "mtime": 1788571479.7353332,
-    "ast_hash": "5f6f7c16ff87b4c8ef51e324672abe2e",
+    "mtime": 1788572322.1597028,
+    "ast_hash": "148391554d5d34d094be675ca3cc031a",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/07-error-historial.png": {
-    "mtime": 1788571479.826419,
-    "ast_hash": "daf93ec858cfb3d73541905818f4afdf",
+    "mtime": 1788572322.2638648,
+    "ast_hash": "81b6edd03b181999a489b1b2ae57d4be",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/08-historial-paginado.png": {
-    "mtime": 1788571479.9451277,
-    "ast_hash": "7c861dbbd5437eec275636224c34ad1e",
+    "mtime": 1788572322.3893442,
+    "ast_hash": "53fa38ecdf9828acfa3361bd55e75b69",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/09-turno-completado.png": {
-    "mtime": 1788571480.0619195,
-    "ast_hash": "6167f85a8e9d949312374e059e2d1384",
+    "mtime": 1788572322.5319483,
+    "ast_hash": "0fe477215f1a3f49450f04869c41d872",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/10-turno-cancelado.png": {
-    "mtime": 1788571480.1805153,
-    "ast_hash": "0425fa23f0901623766e92b43b0171c4",
+    "mtime": 1788572322.6396487,
+    "ast_hash": "7759039aaf77d55701188940ed51c985",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/11-dialogo-reprogramar.png": {
-    "mtime": 1788571480.2708864,
-    "ast_hash": "961dd8425033a1a2862287053bfae379",
+    "mtime": 1788572322.743471,
+    "ast_hash": "5fe8cf9bbff8efc6942e3dbb05d7047b",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/12-dialogo-guardando.png": {
-    "mtime": 1788571480.3615046,
-    "ast_hash": "1f57e7b7703b932d88cf7408f921e30a",
+    "mtime": 1788572322.8353162,
+    "ast_hash": "df649ee65a0ebbd63987970bf9f36527",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/13-dialogo-conflicto-agenda.png": {
-    "mtime": 1788571480.4670966,
-    "ast_hash": "adf29e231e63543ca9ece9ecbc315512",
+    "mtime": 1788572322.9236267,
+    "ast_hash": "26bbccdff38cbb3009d17965fd48b905",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/14-dialogo-version-obsoleta.png": {
-    "mtime": 1788571480.5587816,
-    "ast_hash": "b3575391dc46baf7f84c9cc96ad67eb3",
+    "mtime": 1788572323.0221412,
+    "ast_hash": "5651c6ed6a728cf708165145eb7af0b6",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/15-dialogo-sin-conexion.png": {
-    "mtime": 1788571480.6489358,
-    "ast_hash": "fce78d5fab3df1e4ea15565d666bd950",
+    "mtime": 1788572323.1307857,
+    "ast_hash": "5c36a1c01eb8f6391a99b944a6fa2853",
     "semantic_hash": ""
   },
   "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/mobile/detalle-turno/16-reprogramacion-aplicada.png": {
-    "mtime": 1788571480.778366,
-    "ast_hash": "25a0aa9b52fe623ec08a0a4491a36570",
+    "mtime": 1788572323.276763,
+    "ast_hash": "c07a8da8c490dca530840497963f2e94",
     "semantic_hash": ""
   }
 }
