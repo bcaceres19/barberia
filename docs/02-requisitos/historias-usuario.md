@@ -1513,7 +1513,7 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 | Actor | Barbero autenticado |
 | Depende de | `HU-064` y `HU-065` integradas en `main` |
 | Bloquea | Cancelación pública de B4 y efectos de notificación de B5 |
-| Estado | Redactada contra el issue real [#225](https://github.com/bcaceres19/barberia/issues/225); prompt `PROMPT-HU-066-v1` `ready` |
+| Estado | Implementada contra el issue real [#225](https://github.com/bcaceres19/barberia/issues/225); prompt `PROMPT-HU-066-v1` `executed`; [PR #235](https://github.com/bcaceres19/barberia/pull/235) abierto contra `main`, pendiente de CI/merge |
 | Riesgo | Una cancelación no atómica puede liberar la agenda sin dejar rastro, atribuirla al actor equivocado o aplicar un cambio sobre una versión ya obsoleta. |
 
 **Historia**

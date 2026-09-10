@@ -14,8 +14,8 @@ issue: 225
 issue_url: "https://github.com/bcaceres19/barberia/issues/225"
 suggested_issue_title: "feat(booking): implementar HU-066 cancelación de turno por barbero"
 branch: "feat/225-hu066-cancelacion-barbero"
-pr: null
-pr_url: null
+pr: 235
+pr_url: "https://github.com/bcaceres19/barberia/pull/235"
 depends_on:
   - "HU-064 y HU-065 integradas en main"
   - "Issue #225 con CA-066-01 a CA-066-08"
@@ -51,7 +51,7 @@ source_docs:
   - "apps/api/internal/modules/booking"
   - "apps/web/src/modules/agenda"
 created_at: "2026-09-08"
-updated_at: "2026-09-08"
+updated_at: "2026-09-10"
 supersedes: null
 superseded_by: null
 ---
