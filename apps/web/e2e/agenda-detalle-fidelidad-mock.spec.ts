@@ -110,7 +110,8 @@ async function installDetailMock(
         type: 'https://nava.example/problems/invalid-state',
         title: 'Estado inválido',
         status: 409,
-        detail: 'el turno ya tiene un resultado terminal registrado; una futura corrección (T8) permitirá cambiarlo',
+        detail:
+          'el turno ya tiene un resultado terminal registrado; una futura corrección (T8) permitirá cambiarlo',
         code: 'invalid-state',
       },
       409,
