@@ -12,4 +12,9 @@ export const settingsPrivateShellChildRoutes: RouteRecordRaw[] = [
     name: 'configuracion-barberia',
     component: () => import('./pages/SettingsPage.vue'),
   },
+  {
+    path: 'reserva-publica',
+    name: 'configuracion-reserva-publica',
+    component: () => import('./pages/BookingPolicyPage.vue'),
+  },
 ]

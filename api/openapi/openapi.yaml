@@ -2,17 +2,21 @@
 # docs/06-api/estandar-openapi.md (DEC-037). No se edita el bundle generado
 # en dist/; este archivo y los que referencia son la fuente.
 #
+# HU-093 agrega la política pública de reserva y cancelación al tag
+# Settings: GET/PUT /private/settings/booking-policy (paths/settings.yaml),
+# anticipación, ventana, rejilla, plazo y cancelación tardía, protegida por
+# la precondición de versión If-Match (CA-093-01 a CA-093-04). Resuelve
+# DP-PUB-02 como DEC-083.
+#
 # HU-092 agrega la tercera operación pública de reserva: GET
 # /public/barbershops/{slug}/services/{serviceId}/barbers
 # (paths/public-booking.yaml), barberos con asignación vigente al servicio
-# activo resuelto, sin sesión (CA-092-01 a CA-092-03). El resto del flujo
-# público llega con HU-093 en adelante.
+# activo resuelto, sin sesión (CA-092-01 a CA-092-03).
 #
 # HU-091 agrega la segunda operación pública de reserva: GET
 # /public/barbershops/{slug}/services (paths/public-booking.yaml),
 # catálogo público de servicios activos y con al menos una asignación
-# vigente, resuelto por el mismo slug sin sesión (CA-091-01). Resuelve
-# DP-PUB-02 como DEC-083.
+# vigente, resuelto por el mismo slug sin sesión (CA-091-01).
 #
 # HU-090 agrega el tag PublicBooking y la primera operación pública de
 # reserva: GET /public/barbershops/{slug} (paths/public-booking.yaml),
@@ -128,6 +132,8 @@ paths:
     $ref: './paths/private-auth.yaml#/~1private~1auth~1session'
   /private/settings/barbershop:
     $ref: './paths/settings.yaml#/~1private~1settings~1barbershop'
+  /private/settings/booking-policy:
+    $ref: './paths/settings.yaml#/~1private~1settings~1booking-policy'
   /private/barbers:
     $ref: './paths/staff.yaml#/~1private~1barbers'
   /private/barbers/{barberId}:

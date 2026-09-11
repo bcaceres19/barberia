@@ -19,7 +19,7 @@ documentos_relacionados:
 
 El 10 de septiembre de 2026, al redactar `HU-090`–`HU-099` y sus prompts en el issue documental [#240](https://github.com/bcaceres19/barberia/issues/240), se detectaron seis decisiones que las fuentes vigentes no fijan. Las historias permanecen como propuesta y sus prompts como `draft`; ninguna se implementa hasta resolver las dudas que le correspondan. También se registró `CT-011` por la secuencia entre confirmación por correo de B4 y la maquinaria de notificaciones de B5.
 
-El propietario resolvió `DP-PUB-01` el mismo 10 de septiembre de 2026 como `DEC-082` (generación automática desde el nombre, edición con ruptura del enlace anterior, respuesta uniforme al deshabilitar), desbloqueando `HU-090` una vez B3 cierre. `DP-PUB-02`–`DP-PUB-06` y `CT-011` siguen abiertas y bloquean el resto del lote.
+El propietario resolvió `DP-PUB-01` el mismo 10 de septiembre de 2026 como `DEC-082` (generación automática desde el nombre, edición con ruptura del enlace anterior, respuesta uniforme al deshabilitar), desbloqueando `HU-090` una vez B3 cierre. El 11 de septiembre de 2026 resolvió también `DP-PUB-02` como `DEC-083` (rangos configurables de anticipación/ventana/rejilla/plazo y default de cancelación tardía), desbloqueando `HU-093`. `DP-PUB-03`–`DP-PUB-06` y `CT-011` siguen abiertas y bloquean `HU-094`–`HU-099`.
 
 Las dos dudas sobre códigos OTP abiertas el 2 de septiembre de 2026 quedaron resueltas el 3 de septiembre mediante `DEC-081`: correo es el canal predeterminado; cada evento puede configurar correo, WhatsApp oficial o ambos; y el servidor deriva siempre los destinos desde contactos verificados, sin aceptar un destino arbitrario escrito en el reto. La adaptación funcional conserva issue propio y no forma parte del issue visual `#188`.
 
@@ -51,7 +51,7 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 
 | Código | Pregunta | Estado | Artefacto de seguimiento |
 | --- | --- | --- | --- |
-| `DP-PUB-02` | ¿Cuáles son los rangos permitidos y los valores predeterminados faltantes de anticipación, ventana, rejilla, plazo y política/motivo de cancelación tardía? | Abierta; bloquea `HU-093`, `HU-094` y `HU-099` | Issue documental [#240](https://github.com/bcaceres19/barberia/issues/240) |
+| `DP-PUB-02` | ¿Cuáles son los rangos permitidos y los valores predeterminados faltantes de anticipación, ventana, rejilla, plazo y política/motivo de cancelación tardía? | Resuelta por `DEC-083` (2026-09-11) | Issue documental [#240](https://github.com/bcaceres19/barberia/issues/240) |
 | `DP-PUB-03` | Cuando una interrupción termina fuera de la rejilla original, ¿la generación reinicia desde ese instante o conserva el anclaje del tramo laboral? | Abierta; bloquea `HU-094` | `RN-DIS-06` lo conserva solo como propuesta; issue [#240](https://github.com/bcaceres19/barberia/issues/240) |
 | `DP-PUB-04` | En reserva pública, ¿cómo se reconcilia `customer` cuando teléfono y correo coinciden con filas distintas o solo uno coincide? | Abierta; bloquea `HU-096`/`HU-097` | Issue documental [#240](https://github.com/bcaceres19/barberia/issues/240) |
 | `DP-PUB-05` | ¿Qué entropía/formato, vigencia, rotación, revocación y reemisión tiene el token de acceso del turno, y qué partes nacen en la transacción de creación? | Abierta; bloquea `HU-097`–`HU-099` | Issue documental [#240](https://github.com/bcaceres19/barberia/issues/240) |
