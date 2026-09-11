@@ -1697,7 +1697,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Actor | Visitante sin cuenta |
 | Depende de | Criterio de salida de B3 |
 | Bloquea | `HU-091`–`HU-099` |
-| Estado | Implementada contra el issue real [#243](https://github.com/bcaceres19/barberia/issues/243); `DP-PUB-01` resuelta (`DEC-082`); prompt `PROMPT-HU-090-v1` en `in_progress`, PR abierto pendiente de CI/merge |
+| Estado | Implementada contra el issue real [#243](https://github.com/bcaceres19/barberia/issues/243); `DP-PUB-01` resuelta (`DEC-082`); prompt `PROMPT-HU-090-v1` en `in_progress`, [PR #244](https://github.com/bcaceres19/barberia/pull/244) abierto pendiente de CI/merge |
 | Riesgo | Un identificador público enumerable o una resolución tenant incorrecta expone barberías ajenas o abre el flujo con contexto falso. |
 
 **Historia**

@@ -12,8 +12,8 @@ issue: 243
 issue_url: "https://github.com/bcaceres19/barberia/issues/243"
 suggested_issue_title: "feat(public-booking): implementar HU-090 entrada pública"
 branch: "feat/243-hu090-entrada-publica"
-pr: null
-pr_url: null
+pr: 244
+pr_url: "https://github.com/bcaceres19/barberia/pull/244"
 depends_on: ["B3 con criterio de salida cumplido (cerrado)", "DP-PUB-01 resuelta mediante DEC-082 (resuelta)", "Issue real #243 con CA-090-01 a CA-090-05"]
 rules: ["RN-TEN-01", "RN-DAT-01", "RN-DAT-02"]
 decisions: ["DEC-016", "DEC-019", "DEC-022", "DEC-024", "DEC-033", "DEC-034", "DEC-035", "DEC-036", "DEC-037", "DEC-038", "DEC-039", "DEC-077", "DEC-078", "DEC-079", "DEC-082"]
