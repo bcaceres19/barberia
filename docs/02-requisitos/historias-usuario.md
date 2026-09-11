@@ -51,8 +51,8 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | B0 · Cimientos, seguridad y primeras pantallas | `HU-001` – `HU-012` | Redactadas en este documento |
 | B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | Integradas en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), [PR #83](https://github.com/bcaceres19/barberia/pull/83), [PR #84](https://github.com/bcaceres19/barberia/pull/84)) |
 | B2 · Horario laboral y bloqueos | `HU-040` – `HU-042` | Integradas en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93), [PR #96](https://github.com/bcaceres19/barberia/pull/96), [PR #99](https://github.com/bcaceres19/barberia/pull/99)); seguimientos parciales en `#90`, `#95`, `#98` y `#100` |
-| B3 · Agenda, estados e integridad | `HU-060` – `HU-068` | `HU-060`–`HU-065` integradas; `HU-066`–`HU-068` redactadas con issues reales [#225](https://github.com/bcaceres19/barberia/issues/225)–[#227](https://github.com/bcaceres19/barberia/issues/227); `HU-066` `ready`, `HU-067`/`HU-068` bloqueadas por secuencia |
-| B4 · Reserva pública y disponibilidad | `HU-090` – `HU-099` | Redactadas como propuesta en issue [#240](https://github.com/bcaceres19/barberia/issues/240); implementación bloqueada por cierre de B3 y decisiones `DP-PUB-01`–`DP-PUB-06`/`CT-011` |
+| B3 · Agenda, estados e integridad | `HU-060` – `HU-068` | `HU-060`–`HU-068` integradas en `main`, issues reales [#225](https://github.com/bcaceres19/barberia/issues/225)–[#227](https://github.com/bcaceres19/barberia/issues/227); tercer lote de B3 completo, T3/cierre automático pendientes |
+| B4 · Reserva pública y disponibilidad | `HU-090` – `HU-099` | Redactadas como propuesta en issue [#240](https://github.com/bcaceres19/barberia/issues/240); implementación bloqueada por decisiones `DP-PUB-01`–`DP-PUB-06`/`CT-011` |
 | B5 · Notificaciones y recordatorios | `HU-130` – | Pendientes |
 | B6 · Operación, privacidad y piloto | `HU-150` – | Pendientes |
 
@@ -1630,7 +1630,7 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 | Actor | Barbero autenticado |
 | Depende de | `HU-066` y `HU-067` integradas |
 | Bloquea | Verificación completa de T8 y del criterio de salida de B3 |
-| Estado | Redactada contra el issue real [#227](https://github.com/bcaceres19/barberia/issues/227); prompt `PROMPT-HU-068-v1` `ready` — `HU-066` y `HU-067` ya integradas en `main` con CI verde |
+| Estado | Implementada contra el issue real [#227](https://github.com/bcaceres19/barberia/issues/227); prompt `PROMPT-HU-068-v1` `executed`, integrada en `main` mediante [PR #239](https://github.com/bcaceres19/barberia/pull/239) |
 | Riesgo | Editar el evento original o reocupar una franja sin verificar la exclusión destruye la auditoría o permite dos turnos superpuestos. |
 
 **Historia**
@@ -2147,8 +2147,8 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | --- | --- | --- |
 | B1 | `HU-025` – | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
 | B2 | `HU-040` – `HU-042` | Integradas en `main` (PR `#93`, `#96`, `#99`); seguimientos parciales en issues `#90`, `#95`, `#98` y `#100` |
-| B3 | `HU-069` – | `HU-066`–`HU-068` ya redactadas; continuar con T3 y cierre automático solo después de revisar este lote y resolver cualquier duda de semántica de snapshots/configuración |
-| B4 | `HU-100` – | `HU-090`–`HU-099` ya redactadas; continuar solo después de cerrar B3 y resolver `DP-PUB-01`–`DP-PUB-06`/`CT-011` |
+| B3 | `HU-069` – | `HU-066`–`HU-068` ya integradas en `main`; continuar con T3 y cierre automático solo después de revisar este lote y resolver cualquier duda de semántica de snapshots/configuración |
+| B4 | `HU-100` – | `HU-090`–`HU-099` ya redactadas; continuar solo después de resolver `DP-PUB-01`–`DP-PUB-06`/`CT-011` |
 | B5 | `HU-130` – | B4 cumple su criterio de salida |
 | B6 | `HU-150` – | B5 cumple su criterio de salida |
 
