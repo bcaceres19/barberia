@@ -98,3 +98,40 @@ func (s *Service) ListPublicServices(ctx context.Context, rawSlug string, cursor
 	}
 	return result, nil
 }
+
+// ListPublicBarbers resuelve rawSlug -mismo criterio de recorte y forma que
+// ResolveBarbershop- y devuelve los barberos con asignación vigente al
+// servicio activo rawServiceID (HU-092, CA-092-02). Un slug inválido,
+// desconocido o de una barbería no publicable produce el mismo
+// apperr.NotFound uniforme que ResolveBarbershop. rawServiceID sin forma de
+// UUID, ajeno a esta barbería, inexistente o de un servicio inactivo NUNCA
+// produce un error distinto (CA-092-03): en todos esos casos el resultado es
+// una lista vacía, exactamente igual que un servicio sin ningún barbero
+// asignado hoy -la causa no se distingue ni en el valor ni en el tiempo de
+// respuesta.
+func (s *Service) ListPublicBarbers(ctx context.Context, rawSlug string, rawServiceID string) (PublicBarberListResult, error) {
+	if err := ctx.Err(); err != nil {
+		return PublicBarberListResult{}, apperr.Internal(fmt.Errorf("publicbooking: contexto cancelado antes de listar barberos públicos: %w", err))
+	}
+
+	slug := strings.TrimSpace(rawSlug)
+	if slug == "" || len(slug) > MaxSlugLength {
+		return PublicBarberListResult{}, errBarbershopNotPublic()
+	}
+
+	// rawServiceID sin forma de UUID nunca llega a la base de datos (evita
+	// un error de tipo de PostgreSQL sobre una columna `uuid`), pero SÍ deja
+	// que el repositorio resuelva la barbería primero: CA-092-03 exige que
+	// esta causa sea indistinguible de "ajeno" o "ya no asignado" -lista
+	// vacía-, nunca del universo distinto de "barbería desconocida"
+	// (CA-090-02, errBarbershopNotPublic), que sigue dependiendo solo del
+	// slug.
+	result, found, err := s.repo.ListPublicBarbers(ctx, slug, rawServiceID)
+	if err != nil {
+		return PublicBarberListResult{}, apperr.Internal(fmt.Errorf("publicbooking: listar barberos públicos: %w", err))
+	}
+	if !found {
+		return PublicBarberListResult{}, errBarbershopNotPublic()
+	}
+	return result, nil
+}

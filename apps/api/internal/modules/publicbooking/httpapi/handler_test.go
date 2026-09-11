@@ -28,6 +28,10 @@ type fakeRepository struct {
 	listResult publicbooking.PublicServiceListResult
 	listFound  bool
 	listErr    error
+
+	barbersResult publicbooking.PublicBarberListResult
+	barbersFound  bool
+	barbersErr    error
 }
 
 func (f *fakeRepository) ResolveBySlug(_ context.Context, slug string) (publicbooking.BarbershopProfile, bool, error) {
@@ -40,7 +44,14 @@ func (f *fakeRepository) ListPublicServices(_ context.Context, slug string, _ *p
 	return f.listResult, f.listFound, f.listErr
 }
 
+func (f *fakeRepository) ListPublicBarbers(_ context.Context, slug string, _ string) (publicbooking.PublicBarberListResult, bool, error) {
+	f.calls = append(f.calls, slug)
+	return f.barbersResult, f.barbersFound, f.barbersErr
+}
+
 var _ publicbooking.Repository = (*fakeRepository)(nil)
+
+const validServiceID = "11111111-1111-1111-1111-111111111111"
 
 func requestWithSlug(slug string) *http.Request {
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/public/barbershops/"+slug, nil)
@@ -276,6 +287,137 @@ func TestListPublicServicesHandler_RepositoryError_ReturnsSafe500(t *testing.T) 
 	h := httpapi.NewListPublicServicesHandler(publicbooking.NewService(repo))
 
 	req := requestWithSlugAndQuery("barberia-ejemplo", "")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), "boom") {
+		t.Fatalf("CA-003-02: the internal cause must never reach the response body: %s", rec.Body.String())
+	}
+}
+
+func requestWithSlugAndServiceID(slug, serviceID string) *http.Request {
+	target := "/api/v1/public/barbershops/" + slug + "/services/" + serviceID + "/barbers"
+	req := httptest.NewRequest(http.MethodGet, target, nil)
+	req = httpserver.RequestWithURLParam(req, "slug", slug)
+	return httpserver.RequestWithURLParam(req, "serviceId", serviceID)
+}
+
+func TestListPublicBarbersHandler_OneBarber_ReturnsSingleItem(t *testing.T) {
+	repo := &fakeRepository{
+		barbersFound: true,
+		barbersResult: publicbooking.PublicBarberListResult{
+			Items: []publicbooking.PublicBarber{{ID: "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4", FullName: "Juan Pérez"}},
+		},
+	}
+	h := httpapi.NewListPublicBarbersHandler(publicbooking.NewService(repo))
+
+	req := requestWithSlugAndServiceID("barberia-ejemplo", validServiceID)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var body httpapi.PublicBarberListResponse
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+	if len(body.Items) != 1 || body.Items[0].FullName != "Juan Pérez" {
+		t.Fatalf("unexpected items: %+v", body.Items)
+	}
+}
+
+func TestListPublicBarbersHandler_ZeroBarbers_ReturnsEmptyArrayNotNull(t *testing.T) {
+	repo := &fakeRepository{barbersFound: true}
+	h := httpapi.NewListPublicBarbersHandler(publicbooking.NewService(repo))
+
+	req := requestWithSlugAndServiceID("barberia-ejemplo", validServiceID)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var raw map[string]any
+	if err := json.NewDecoder(rec.Body).Decode(&raw); err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+	items, ok := raw["items"].([]any)
+	if !ok {
+		t.Fatalf("expected items to be a JSON array, got %T: %v", raw["items"], raw["items"])
+	}
+	if len(items) != 0 {
+		t.Fatalf("expected an empty array, got %v", items)
+	}
+}
+
+func TestListPublicBarbersHandler_ManyBarbers_ReturnsAllItemsInOrder(t *testing.T) {
+	repo := &fakeRepository{
+		barbersFound: true,
+		barbersResult: publicbooking.PublicBarberListResult{
+			Items: []publicbooking.PublicBarber{
+				{ID: "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4", FullName: "Ana Gómez"},
+				{ID: "1c9a7f2d-3b4e-4a5f-9c6d-7e8f9a0b1c2d", FullName: "Luis Rojas"},
+			},
+		},
+	}
+	h := httpapi.NewListPublicBarbersHandler(publicbooking.NewService(repo))
+
+	req := requestWithSlugAndServiceID("barberia-ejemplo", validServiceID)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	var body httpapi.PublicBarberListResponse
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+	if len(body.Items) != 2 || body.Items[0].FullName != "Ana Gómez" || body.Items[1].FullName != "Luis Rojas" {
+		t.Fatalf("unexpected items: %+v", body.Items)
+	}
+}
+
+func TestListPublicBarbersHandler_BarbershopNotFound_ReturnsUniform404(t *testing.T) {
+	repo := &fakeRepository{barbersFound: false}
+	h := httpapi.NewListPublicBarbersHandler(publicbooking.NewService(repo))
+
+	req := requestWithSlugAndServiceID("no-existe", validServiceID)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+// TestListPublicBarbersHandler_ForeignOrMalformedServiceID_ReturnsSameSuccessAsZeroBarbers
+// cubre CA-092-03: un serviceID ajeno, inexistente o malformado nunca
+// produce un error distinto de "cero barberos elegibles" -misma respuesta
+// 200 con items=[], sin importar la causa concreta.
+func TestListPublicBarbersHandler_ForeignOrMalformedServiceID_ReturnsSameSuccessAsZeroBarbers(t *testing.T) {
+	for _, serviceID := range []string{validServiceID, "no-es-un-uuid", "00000000-0000-0000-0000-000000000000"} {
+		t.Run(serviceID, func(t *testing.T) {
+			repo := &fakeRepository{barbersFound: true}
+			h := httpapi.NewListPublicBarbersHandler(publicbooking.NewService(repo))
+
+			req := requestWithSlugAndServiceID("barberia-ejemplo", serviceID)
+			rec := httptest.NewRecorder()
+			h.ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+			}
+		})
+	}
+}
+
+func TestListPublicBarbersHandler_RepositoryError_ReturnsSafe500(t *testing.T) {
+	repo := &fakeRepository{barbersErr: errors.New("boom")}
+	h := httpapi.NewListPublicBarbersHandler(publicbooking.NewService(repo))
+
+	req := requestWithSlugAndServiceID("barberia-ejemplo", validServiceID)
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 

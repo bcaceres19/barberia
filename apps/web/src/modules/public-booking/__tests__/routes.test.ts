@@ -34,4 +34,21 @@ describe('publicBookingRoutes', () => {
     await router.isReady()
     expect(router.currentRoute.value.params.slug).toBe('barberia-ejemplo')
   })
+
+  it('registers /reservar/:slug/servicios/:serviceId/barbero (HU-092)', () => {
+    const paths = publicBookingRoutes.map((route) => route.path)
+    expect(paths).toContain('/reservar/:slug/servicios/:serviceId/barbero')
+  })
+
+  it('resolves the barber selection route with both params as props, without any session guard', async () => {
+    const router = buildRouter()
+    await router.push(
+      '/reservar/barberia-ejemplo/servicios/8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4/barbero',
+    )
+    await router.isReady()
+    expect(router.currentRoute.value.name).toBe('reserva-publica-barbero')
+    expect(router.currentRoute.value.matched.length).toBeGreaterThan(0)
+    expect(router.currentRoute.value.params.slug).toBe('barberia-ejemplo')
+    expect(router.currentRoute.value.params.serviceId).toBe('8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4')
+  })
 })

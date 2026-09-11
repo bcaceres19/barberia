@@ -1787,7 +1787,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Actor | Cliente que ya eligió un servicio |
 | Depende de | `HU-091`; `HU-021`/`HU-023` integradas |
 | Bloquea | `HU-094`–`HU-097` |
-| Estado | Propuesta; prompt `PROMPT-HU-092-v1` en `draft`, `issue: pending` |
+| Estado | En desarrollo; issue real [#247](https://github.com/bcaceres19/barberia/issues/247), rama `feat/247-hu092-seleccion-barbero` |
 | Riesgo | Permitir un barbero no asignado al servicio produce disponibilidad y reservas inválidas. |
 
 **Historia**

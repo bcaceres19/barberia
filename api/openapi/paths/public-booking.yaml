@@ -1,12 +1,12 @@
 # Operaciones públicas de reserva (sin sesión del barbero): HU-090 agrega
 # la primera, entrada pública de reservas; HU-091 agrega el catálogo
-# público de servicios. security: [] en cada operación, según
-# docs/06-api/estandar-openapi.md. Las siguientes capacidades del flujo
-# público (selección de barbero, disponibilidad, creación de turnos,
-# acceso/cancelación del cliente) llegan con HU-092 en adelante, bloqueadas
-# hoy por decisiones abiertas (DP-PUB-03–DP-PUB-06, CT-011:
-# docs/00-control/dudas-pendientes.md; DP-PUB-02 quedó resuelta como
-# DEC-083).
+# público de servicios; HU-092 agrega la selección pública de barbero.
+# security: [] en cada operación, según docs/06-api/estandar-openapi.md.
+# Las siguientes capacidades del flujo público (disponibilidad, creación de
+# turnos, acceso/cancelación del cliente) llegan con HU-093 en adelante,
+# bloqueadas hoy por decisiones abiertas (DP-PUB-04–DP-PUB-06, CT-011:
+# docs/00-control/dudas-pendientes.md; DP-PUB-02 y DP-PUB-03 quedaron
+# resueltas como DEC-083 y DEC-084).
 /public/barbershops/{slug}:
   get:
     tags: [PublicBooking]
@@ -48,6 +48,84 @@
     responses:
       "200":
         $ref: '../components/responses/PublicBarbershopProfileSuccess.yaml'
+      "404":
+        description: >
+          `slug` con forma inválida, inexistente o de una barbería no
+          publicable, sin distinguir la causa (CA-090-02, RN-TEN-01).
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              enlaceNoDisponible:
+                value:
+                  type: /api/v1/problems/not-found
+                  title: No encontrado
+                  status: 404
+                  detail: no existe una barbería pública con ese enlace
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: not-found
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/public/barbershops/{slug}/services/{serviceId}/barbers:
+  get:
+    tags: [PublicBooking]
+    summary: Listar los barberos elegibles para un servicio público
+    description: >
+      Lista (HU-092, CA-092-02) los barberos de la barbería resuelta por
+      `slug` con asignación vigente al servicio activo `serviceId`. Mismo
+      `slug` y misma resolución sin contexto de tenant que `GET
+      /public/barbershops/{slug}` (`public_resolve_barbershop_by_slug`); un
+      `slug` mal formado, desconocido o de una barbería no publicable
+      produce EXACTAMENTE la misma respuesta `404` uniforme (CA-090-02,
+      RN-TEN-01). `serviceId` sin forma de UUID, ajeno a esta barbería,
+      inexistente o de un servicio inactivo NUNCA produce un error distinto
+      (CA-092-03): en todos esos casos la respuesta es `200` con `items: []`,
+      exactamente igual que un servicio sin ningún barbero asignado hoy -la
+      causa no se distingue. La proyección es mínima: id y nombre completo;
+      nunca foto, biografía, preferencia ni ningún identificador de tenant
+      (CA-092-02, RN-DAT-02). El cliente decide la preselección automática
+      (exactamente un elemento) o la elección explícita (varios elementos)
+      a partir del tamaño de `items`; el contrato no agrega un campo
+      adicional para eso (CA-092-01).
+    operationId: listPublicBarbers
+    security: []
+    x-business-rules: [RN-TEN-01, RN-CON-01, RN-DAT-02]
+    x-decisions: [DEC-019, DEC-024, DEC-047, DEC-068, DEC-077, DEC-078, DEC-079]
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        description: >
+          Identificador del enlace público de reservas, tal como aparece en
+          la URL. No es un identificador interno: su forma, generación y
+          ciclo de vida los fija DEC-082 (resuelve DP-PUB-01).
+        schema:
+          type: string
+          maxLength: 100
+        examples:
+          slug:
+            value: barberia-ejemplo
+      - name: serviceId
+        in: path
+        required: true
+        description: >
+          Identificador del servicio activo ya elegido (HU-091). No
+          confiado: se revalida pertenencia, vigencia y asignación contra la
+          barbería resuelta por `slug` en cada lectura (CA-092-03).
+        schema:
+          type: string
+          format: uuid
+        examples:
+          serviceId:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+    responses:
+      "200":
+        $ref: '../components/responses/PublicBarberListSuccess.yaml'
       "404":
         description: >
           `slug` con forma inválida, inexistente o de una barbería no

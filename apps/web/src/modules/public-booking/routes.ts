@@ -4,13 +4,15 @@
 // `app/router/index.ts` las importa y las compone, sin conocer los
 // componentes internos del módulo.
 //
-// `/reservar/:slug` es la entrada pública (HU-090) y `/reservar/:slug/servicios`
-// el catálogo público de servicios (HU-091): dos cascarones propios,
-// separados del panel autenticado (`auth.privateShellRoute`) y sin el guard
-// `requireSession` -ninguna ruta pública de reserva exige sesión
-// (CA-090-03). `props: true` entrega `slug` como prop del componente, no
-// vía `useRoute()`: la página no depende del router para su propio
-// parámetro, lo que la hace verificable en aislamiento (component tests).
+// `/reservar/:slug` es la entrada pública (HU-090), `/reservar/:slug/servicios`
+// el catálogo público de servicios (HU-091) y
+// `/reservar/:slug/servicios/:serviceId/barbero` la selección pública de
+// barbero (HU-092): tres cascarones propios, separados del panel
+// autenticado (`auth.privateShellRoute`) y sin el guard `requireSession`
+// -ninguna ruta pública de reserva exige sesión (CA-090-03). `props: true`
+// entrega `slug`/`serviceId` como props del componente, no vía
+// `useRoute()`: la página no depende del router para sus propios
+// parámetros, lo que la hace verificable en aislamiento (component tests).
 import type { RouteRecordRaw } from 'vue-router'
 
 export const publicBookingRoutes: RouteRecordRaw[] = [
@@ -24,6 +26,12 @@ export const publicBookingRoutes: RouteRecordRaw[] = [
     path: '/reservar/:slug/servicios',
     name: 'reserva-publica-servicios',
     component: () => import('./pages/PublicServiceCatalogPage.vue'),
+    props: true,
+  },
+  {
+    path: '/reservar/:slug/servicios/:serviceId/barbero',
+    name: 'reserva-publica-barbero',
+    component: () => import('./pages/PublicBarberSelectionPage.vue'),
     props: true,
   },
 ]

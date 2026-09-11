@@ -9,9 +9,9 @@
 // mismo patrón de teclado que BarberSelect.vue, sin el popup/colapso que
 // ese widget sí necesita). La selección se indica con `aria-checked`, un
 // borde de énfasis y un ícono de marca -nunca solo color (CA-091-04)-. Esta
-// historia no crea ninguna cita ni navega a la siguiente pantalla (fuera de
-// alcance de HU-091, HU-092 en adelante); elegir un servicio solo deja
-// constancia local de cuál quedó marcado.
+// historia no crea ninguna cita (fuera de alcance de HU-091 y HU-092); tras
+// elegir un servicio, el botón "Continuar" (HU-092) navega a la selección
+// pública de barbero de ESE servicio.
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { BaseButton, EmptyState, PageState } from '@/shared/ui'
 import { listPublicServices } from '../api/listPublicServicesApi'
@@ -224,6 +224,17 @@ const unexpectedErrorMessage = computed(() => {
           </span>
         </li>
       </ul>
+
+      <RouterLink
+        v-if="selectedServiceId"
+        :to="{
+          name: 'reserva-publica-barbero',
+          params: { slug: props.slug, serviceId: selectedServiceId },
+        }"
+        class="service-catalog__cta"
+      >
+        Continuar
+      </RouterLink>
     </div>
   </main>
 </template>
@@ -350,6 +361,39 @@ const unexpectedErrorMessage = computed(() => {
   gap: var(--space-2);
   color: var(--color-text-secondary);
   font-size: var(--font-size-body-sm);
+}
+
+/* Enlace de navegación con apariencia de botón primario (mismos tokens que
+   BaseButton--primary--lg y PublicBarbershopEntryPage.vue__cta): un
+   <RouterLink> es la etiqueta semánticamente correcta para navegar a otra
+   ruta. */
+.service-catalog__cta {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  justify-content: center;
+  height: var(--control-height-primary-mobile);
+  padding: 0 var(--space-5);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 500;
+  color: var(--color-on-strong);
+  text-decoration: none;
+  background-color: var(--color-action-primary);
+  border: var(--border-width-normal) solid var(--color-action-primary);
+  border-radius: 2px;
+}
+
+.service-catalog__cta:hover {
+  background-color: var(--color-action-primary-hover);
+  border-color: var(--color-action-primary-hover);
+}
+
+.service-catalog__cta:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--color-canvas),
+    0 0 0 4px var(--color-focus);
 }
 
 @media (min-width: 1024px) {

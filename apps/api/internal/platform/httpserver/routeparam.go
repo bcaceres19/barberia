@@ -25,9 +25,15 @@ func URLParam(r *http.Request, name string) string {
 // TestDomainAndServicesDoNotImportChi cubre también archivos _test.go)
 // puedan construir un *http.Request de prueba con un parámetro de ruta sin
 // levantar el router real; producción nunca la llama (chi.Mux ya hace este
-// trabajo).
+// trabajo). Reutiliza el *chi.Context ya presente en r (si lo hay) en vez de
+// reemplazarlo: encadenar dos llamadas para inyectar dos parámetros de ruta
+// distintos (p. ej. `slug` y `serviceId`, HU-092) acumula ambos en el mismo
+// contexto en lugar de que la segunda llamada borre el primero.
 func RequestWithURLParam(r *http.Request, name, value string) *http.Request {
-	routeCtx := chi.NewRouteContext()
+	routeCtx, ok := r.Context().Value(chi.RouteCtxKey).(*chi.Context)
+	if !ok || routeCtx == nil {
+		routeCtx = chi.NewRouteContext()
+	}
 	routeCtx.URLParams.Add(name, value)
 	ctx := context.WithValue(r.Context(), chi.RouteCtxKey, routeCtx)
 	return r.WithContext(ctx)
