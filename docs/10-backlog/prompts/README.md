@@ -1,9 +1,9 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.86"
+version: "1.87"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-10"
+ultima_actualizacion: "2026-09-11"
 documentos_relacionados:
   - "../../../AGENTS.md"
   - "../../../CLAUDE.md"
@@ -197,7 +197,7 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-HU-067-v1](hu/hu-067-cierre-manual-turno.md)                                                      | `hu`            | `HU-067`                                                                                             | [#226](https://github.com/bcaceres19/barberia/issues/226)                                                                                                  | `executed`     | `CompleteAppointment`/`MarkNoShow` con no-op sobre el mismo resultado, `409` sobre el contrario u otro terminal, `422` antes de `starts_at` sin tocar idempotencia; sin migración nueva                                                                                                                                                                                                                                                                                            | Rama `feat/226-hu067-cierre-manual-turno`; [PR #237](https://github.com/bcaceres19/barberia/pull/237) integrado en `main`                                                                                                                                                                                                 |
 | [PROMPT-HU-068-v1](hu/hu-068-correccion-resultado-terminal.md)                                            | `hu`            | `HU-068`                                                                                             | [#227](https://github.com/bcaceres19/barberia/issues/227)                                                                                                  | `executed`     | `CorrectAppointmentStatus` con matriz de 12 transiciones entre los cuatro terminales, no-op sobre el mismo destino, `409` si sigue `confirmed` o cruza otra cita, `422` en la frontera temporal; sin migración nueva                                                                                                                                                                                                                                                                                                  | Rama `feat/227-hu068-correccion-resultado`; [PR #239](https://github.com/bcaceres19/barberia/pull/239) integrado en `main`                                                                                                                                                                                                 |
 | [PROMPT-HU-090-v1](hu/hu-090-entrada-publica-reservas.md) | `hu` | `HU-090` | `243` | `in_progress` | Ninguna: B3 cerrado y `DP-PUB-01` resuelta (`DEC-082`) | Rama `feat/243-hu090-entrada-publica`; [PR #244](https://github.com/bcaceres19/barberia/pull/244) abierto pendiente de CI/merge |
-| [PROMPT-HU-091-v1](hu/hu-091-catalogo-publico-servicios.md) | `hu` | `HU-091` | `pending` | `draft` | `HU-090` integrada e issue real | Sin rama/PR; creado en lote documental #240 |
+| [PROMPT-HU-091-v1](hu/hu-091-catalogo-publico-servicios.md) | `hu` | `HU-091` | [245](https://github.com/bcaceres19/barberia/issues/245) | `in_progress` | `HU-090` integrada e issue real (cumplido) | Rama `feat/245-hu091-catalogo-publico` |
 | [PROMPT-HU-092-v1](hu/hu-092-seleccion-publica-barbero.md) | `hu` | `HU-092` | `pending` | `draft` | `HU-091` integrada e issue real | Sin rama/PR; creado en lote documental #240 |
 | [PROMPT-HU-093-v1](hu/hu-093-configuracion-reserva-cancelacion.md) | `hu` | `HU-093` | `pending` | `draft` | Cierre de B3, `DP-PUB-02` e issue real | Sin rama/PR; creado en lote documental #240 |
 | [PROMPT-HU-094-v1](hu/hu-094-motor-disponibilidad-publica.md) | `hu` | `HU-094` | `pending` | `draft` | `HU-091`–`HU-093`, `DP-PUB-03` e issue real | Sin rama/PR; creado en lote documental #240 |

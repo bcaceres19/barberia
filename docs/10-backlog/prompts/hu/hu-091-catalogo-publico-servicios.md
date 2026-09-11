@@ -2,25 +2,25 @@
 prompt_id: "PROMPT-HU-091-v1"
 version: "1.0"
 kind: "hu"
-status: "draft"
+status: "in_progress"
 target_agents: ["codex", "claude"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
 primary_hu: "HU-091"
 related_hu: ["HU-022", "HU-023", "HU-024", "HU-090"]
-issue: "pending"
-issue_url: null
+issue: 245
+issue_url: "https://github.com/bcaceres19/barberia/issues/245"
 suggested_issue_title: "feat(public-booking): implementar HU-091 catálogo público"
-branch: null
-pr: null
-pr_url: null
+branch: "feat/245-hu091-catalogo-publico"
+pr: 246
+pr_url: "https://github.com/bcaceres19/barberia/pull/246"
 depends_on: ["HU-090 integrada", "HU-022 a HU-024 integradas", "Issue real con CA-091-01 a CA-091-05"]
 rules: ["RN-SER-01", "RN-SER-02", "RN-SER-03", "RN-SER-04", "RN-TEN-01", "RN-DAT-02"]
 decisions: ["DEC-002", "DEC-003", "DEC-004", "DEC-016", "DEC-019", "DEC-024", "DEC-067", "DEC-068", "DEC-069", "DEC-077", "DEC-078", "DEC-079"]
 acceptance_criteria: ["CA-091-01", "CA-091-02", "CA-091-03", "CA-091-04", "CA-091-05"]
 source_docs: ["AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "docs/00-control/registro-decisiones.md", "docs/01-producto/alcance-mvp.md", "docs/01-producto/reglas-negocio.md", "docs/02-requisitos/historias-usuario.md", "docs/03-desarrollo/estandar-backend-go.md", "docs/03-desarrollo/estandar-frontend-vue.md", "docs/03-desarrollo/estandar-diseno-visual.md", "docs/03-desarrollo/estrategia-pruebas.md", "docs/05-backend/estandar-base-datos.md", "docs/06-api/estandar-openapi.md", "apps/api/internal/modules/catalog", "apps/web/src/modules/catalog"]
 created_at: "2026-09-10"
-updated_at: "2026-09-10"
+updated_at: "2026-09-11"
 supersedes: null
 superseded_by: null
 ---

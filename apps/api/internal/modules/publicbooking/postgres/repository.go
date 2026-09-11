@@ -8,8 +8,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
+	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"system-barbershop/internal/modules/publicbooking"
 	"system-barbershop/internal/platform/database"
@@ -77,4 +80,140 @@ func (r *Repository) ResolveBySlug(ctx context.Context, slug string) (publicbook
 		return publicbooking.BarbershopProfile{}, false, fmt.Errorf("publicbooking/postgres: read public profile: %w", err)
 	}
 	return profile, profileFound, nil
+}
+
+// centsFromNumeric convierte price_amount (pgtype.Numeric) a centavos
+// exactos, sin pasar nunca por coma flotante. Duplica
+// catalog/postgres.centsFromNumeric a propósito: el núcleo de publicbooking
+// no importa catalog (CA-002-06, docs/03-desarrollo/estandar-backend-go.md
+// §5.23, mismo criterio ya aplicado por publicbooking.ServiceCursor frente
+// a catalog.Cursor).
+func centsFromNumeric(n pgtype.Numeric) (int64, error) {
+	if !n.Valid || n.NaN || n.Int == nil {
+		return 0, fmt.Errorf("publicbooking/postgres: price_amount nulo, NaN o sin valor")
+	}
+	exp := n.Exp + 2
+	result := new(big.Int).Set(n.Int)
+	switch {
+	case exp == 0:
+		// ya está en centavos.
+	case exp > 0:
+		scale := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(exp)), nil)
+		result.Mul(result, scale)
+	default:
+		scale := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(-exp)), nil)
+		result.Quo(result, scale)
+	}
+	if !result.IsInt64() {
+		return 0, fmt.Errorf("publicbooking/postgres: price_amount fuera de rango representable")
+	}
+	return result.Int64(), nil
+}
+
+// ListPublicServices implementa publicbooking.Repository.ListPublicServices
+// con el mismo patrón de dos pasos que ResolveBySlug: resuelve slug SIN
+// contexto de tenant mediante public_resolve_barbershop_by_slug y, si
+// resuelve, abre una transacción tenant-aware (InTenantTx) para leer la
+// página de servicios activos con al menos una asignación vigente
+// (HU-091, CA-091-01). El filtro EXISTS sobre barber_service ya queda
+// acotado al mismo tenant por barbershop_service_select_tenant_policy
+// (RLS), pero se repite explícitamente por bs.barbershop_id = s.barbershop_id
+// siguiendo el mismo criterio que catalog/postgres.Repository.List
+// ("cada consulta filtra explícitamente por barbershopID además de RLS").
+// Paginación "pedir uno de más" (mismo patrón que catalog.Repository.List).
+func (r *Repository) ListPublicServices(ctx context.Context, slug string, cursor *publicbooking.ServiceCursor, limit int) (publicbooking.PublicServiceListResult, bool, error) {
+	barbershopID, found, err := r.db.ResolveTenant(ctx,
+		`SELECT public_resolve_barbershop_by_slug($1)`,
+		slug,
+	)
+	if err != nil {
+		return publicbooking.PublicServiceListResult{}, false, fmt.Errorf("publicbooking/postgres: resolve tenant by slug: %w", err)
+	}
+	if !found {
+		return publicbooking.PublicServiceListResult{}, false, nil
+	}
+
+	const baseQuery = `
+		SELECT s.id, s.name, s.description, s.duration_minutes, s.price_amount, s.price_currency,
+		       s.created_at
+		  FROM service s
+		 WHERE s.barbershop_id = $1
+		   AND s.is_active = true
+		   AND EXISTS (
+		       SELECT 1 FROM barber_service bs
+		        WHERE bs.barbershop_id = s.barbershop_id AND bs.service_id = s.id
+		   )`
+
+	var result publicbooking.PublicServiceListResult
+	err = r.db.InTenantTx(ctx, barbershopID, func(ctx context.Context, q database.Queries) error {
+		var (
+			rows pgx.Rows
+			err  error
+		)
+		fetchLimit := limit + 1
+
+		if cursor == nil {
+			rows, err = q.Query(ctx,
+				baseQuery+`
+			 ORDER BY s.created_at, s.id
+			 LIMIT $2`,
+				string(barbershopID), fetchLimit,
+			)
+		} else {
+			rows, err = q.Query(ctx,
+				baseQuery+`
+			   AND (s.created_at, s.id) > ($2, $3)
+			 ORDER BY s.created_at, s.id
+			 LIMIT $4`,
+				string(barbershopID), cursor.CreatedAt, cursor.ID, fetchLimit,
+			)
+		}
+		if err != nil {
+			return fmt.Errorf("list public services: query: %w", err)
+		}
+		defer rows.Close()
+
+		items := make([]publicbooking.PublicService, 0, fetchLimit)
+		createdAts := make([]time.Time, 0, fetchLimit)
+		for rows.Next() {
+			var (
+				svc          publicbooking.PublicService
+				priceNumeric pgtype.Numeric
+				createdAt    time.Time
+			)
+			if err := rows.Scan(&svc.ID, &svc.Name, &svc.Description, &svc.DurationMinutes, &priceNumeric, &svc.Currency, &createdAt); err != nil {
+				return fmt.Errorf("list public services: scan: %w", err)
+			}
+			cents, err := centsFromNumeric(priceNumeric)
+			if err != nil {
+				return fmt.Errorf("list public services: %w", err)
+			}
+			svc.PriceCents = cents
+			items = append(items, svc)
+			createdAts = append(createdAts, createdAt)
+		}
+		if err := rows.Err(); err != nil {
+			return fmt.Errorf("list public services: rows: %w", err)
+		}
+
+		hasMore := len(items) > limit
+		if hasMore {
+			items = items[:limit]
+			createdAts = createdAts[:limit]
+		}
+
+		result.Items = items
+		if hasMore {
+			last := len(items) - 1
+			result.NextCursor = publicbooking.EncodeServiceCursor(publicbooking.ServiceCursor{
+				CreatedAt: createdAts[last],
+				ID:        items[last].ID,
+			})
+		}
+		return nil
+	})
+	if err != nil {
+		return publicbooking.PublicServiceListResult{}, false, fmt.Errorf("publicbooking/postgres: read public services: %w", err)
+	}
+	return result, true, nil
 }

@@ -1,10 +1,12 @@
 # Operaciones públicas de reserva (sin sesión del barbero): HU-090 agrega
-# la primera, entrada pública de reservas. security: [] en cada operación,
-# según docs/06-api/estandar-openapi.md. Las siguientes capacidades del
-# flujo público (catálogo, selección de barbero, disponibilidad, creación
-# de turnos, acceso/cancelación del cliente) llegan con HU-091 en adelante,
-# bloqueadas hoy por decisiones abiertas (DP-PUB-02–DP-PUB-06, CT-011:
-# docs/00-control/dudas-pendientes.md).
+# la primera, entrada pública de reservas; HU-091 agrega el catálogo
+# público de servicios. security: [] en cada operación, según
+# docs/06-api/estandar-openapi.md. Las siguientes capacidades del flujo
+# público (selección de barbero, disponibilidad, creación de turnos,
+# acceso/cancelación del cliente) llegan con HU-092 en adelante, bloqueadas
+# hoy por decisiones abiertas (DP-PUB-03–DP-PUB-06, CT-011:
+# docs/00-control/dudas-pendientes.md; DP-PUB-02 quedó resuelta como
+# DEC-083).
 /public/barbershops/{slug}:
   get:
     tags: [PublicBooking]
@@ -46,6 +48,93 @@
     responses:
       "200":
         $ref: '../components/responses/PublicBarbershopProfileSuccess.yaml'
+      "404":
+        description: >
+          `slug` con forma inválida, inexistente o de una barbería no
+          publicable, sin distinguir la causa (CA-090-02, RN-TEN-01).
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              enlaceNoDisponible:
+                value:
+                  type: /api/v1/problems/not-found
+                  title: No encontrado
+                  status: 404
+                  detail: no existe una barbería pública con ese enlace
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: not-found
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/public/barbershops/{slug}/services:
+  get:
+    tags: [PublicBooking]
+    summary: Listar el catálogo público de servicios de una barbería
+    description: >
+      Lista paginada por cursor (HU-091, CA-091-01) de los servicios
+      ACTIVOS con al menos una asignación vigente a un barbero de la
+      barbería resuelta por `slug`, sin sesión. Mismo `slug` y misma
+      resolución sin contexto de tenant que `GET
+      /public/barbershops/{slug}` (`public_resolve_barbershop_by_slug`); un
+      `slug` mal formado, desconocido o de una barbería no publicable
+      produce EXACTAMENTE la misma respuesta `404` uniforme (CA-090-02,
+      RN-TEN-01). Un servicio inactivo o sin ninguna asignación vigente
+      nunca aparece (CA-091-01, CA-091-02); desactivar un servicio lo
+      retira de esta lista sin alterar ninguna cita existente (RN-SER-04).
+      La proyección es mínima: nombre, descripción, duración, precio y
+      moneda; nunca estado de ciclo de vida, auditoría ni ningún
+      identificador de tenant (CA-091-01, RN-DAT-02).
+    operationId: listPublicServices
+    security: []
+    x-business-rules: [RN-SER-01, RN-SER-02, RN-SER-03, RN-SER-04, RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-002, DEC-003, DEC-004, DEC-016, DEC-019, DEC-024, DEC-067, DEC-068, DEC-069, DEC-077, DEC-078, DEC-079]
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        description: >
+          Identificador del enlace público de reservas, tal como aparece en
+          la URL. No es un identificador interno: su forma, generación y
+          ciclo de vida los fija DEC-082 (resuelve DP-PUB-01).
+        schema:
+          type: string
+          maxLength: 100
+        examples:
+          slug:
+            value: barberia-ejemplo
+      - name: cursor
+        in: query
+        required: false
+        description: >
+          Cursor opaco devuelto por una página anterior (`nextCursor`). Sin
+          este parámetro, la respuesta empieza en la primera página.
+        schema:
+          type: string
+        examples:
+          continuacion:
+            value: eyJjcmVhdGVkQXQiOiIyMDI2LTA5LTExVDE1OjA1OjEwWiIsImlkIjoiMWEyYjNjNGQtNWU2Zi00NzA4LTlhMGItMWMyZDNlNGY1MDYxIn0=
+      - name: limit
+        in: query
+        required: false
+        description: Máximo de servicios por página.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+        examples:
+          porDefecto:
+            value: 20
+    responses:
+      "200":
+        $ref: '../components/responses/PublicServiceListSuccess.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
       "404":
         description: >
           `slug` con forma inválida, inexistente o de una barbería no

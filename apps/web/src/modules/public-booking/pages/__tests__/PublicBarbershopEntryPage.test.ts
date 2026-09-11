@@ -24,6 +24,17 @@ function errorResponse(status: number): Response {
   return { ok: false, status, headers: new Headers() } as Response
 }
 
+// RouterLink stubbed en vez de un router real (mismo patrón que
+// LoginPage.test.ts): esta suite verifica el componente en aislamiento, no
+// el enrutamiento, y el CTA de la pantalla de éxito ("Reservar un turno")
+// navega a la ruta del catálogo público (HU-091).
+function mountEntryPage(props: { slug: string }) {
+  return mount(PublicBarbershopEntryPage, {
+    props,
+    global: { stubs: { RouterLink: { props: ['to'], template: '<a><slot /></a>' } } },
+  })
+}
+
 beforeEach(() => {
   getMock.mockReset()
 })
@@ -36,7 +47,7 @@ describe('PublicBarbershopEntryPage', () => {
         resolveRequest = resolve
       }),
     )
-    const wrapper = mount(PublicBarbershopEntryPage, { props: { slug: 'barberia-ejemplo' } })
+    const wrapper = mountEntryPage({ slug: 'barberia-ejemplo' })
 
     expect(wrapper.text()).toContain('Abriendo tu barbería')
 
@@ -55,7 +66,7 @@ describe('PublicBarbershopEntryPage', () => {
       error: undefined,
       response: okResponse(),
     })
-    mount(PublicBarbershopEntryPage, { props: { slug: 'barberia-ejemplo' } })
+    mountEntryPage({ slug: 'barberia-ejemplo' })
     await flushPromises()
 
     expect(getMock).toHaveBeenCalledWith(
@@ -75,7 +86,7 @@ describe('PublicBarbershopEntryPage', () => {
       error: undefined,
       response: okResponse(),
     })
-    const wrapper = mount(PublicBarbershopEntryPage, { props: { slug: 'barberia-ejemplo' } })
+    const wrapper = mountEntryPage({ slug: 'barberia-ejemplo' })
     await flushPromises()
 
     expect(wrapper.text()).toContain('Barbería Ejemplo')
@@ -93,7 +104,7 @@ describe('PublicBarbershopEntryPage', () => {
       error: undefined,
       response: okResponse(),
     })
-    const withContact = mount(PublicBarbershopEntryPage, { props: { slug: 'barberia-ejemplo' } })
+    const withContact = mountEntryPage({ slug: 'barberia-ejemplo' })
     await flushPromises()
     expect(withContact.text()).toContain('contacto@ejemplo.test')
     expect(withContact.text()).toContain('+573001234567')
@@ -108,7 +119,7 @@ describe('PublicBarbershopEntryPage', () => {
       error: undefined,
       response: okResponse(),
     })
-    const withoutContact = mount(PublicBarbershopEntryPage, { props: { slug: 'barberia-ejemplo' } })
+    const withoutContact = mountEntryPage({ slug: 'barberia-ejemplo' })
     await flushPromises()
     expect(withoutContact.text()).not.toContain('Teléfono:')
     expect(withoutContact.text()).not.toContain('Correo:')
@@ -125,9 +136,7 @@ describe('PublicBarbershopEntryPage', () => {
       error: undefined,
       response: okResponse(),
     })
-    const wrapper = mount(PublicBarbershopEntryPage, {
-      props: { slug: 'barberia-secreta-interna' },
-    })
+    const wrapper = mountEntryPage({ slug: 'barberia-secreta-interna' })
     await flushPromises()
 
     expect(wrapper.html()).not.toContain('barberia-secreta-interna')
@@ -140,7 +149,7 @@ describe('PublicBarbershopEntryPage', () => {
       error: { status: 404 },
       response: errorResponse(404),
     })
-    const wrapper = mount(PublicBarbershopEntryPage, { props: { slug: 'no-existe' } })
+    const wrapper = mountEntryPage({ slug: 'no-existe' })
     await flushPromises()
 
     expect(wrapper.text()).toContain('No encontramos ese enlace')
@@ -148,7 +157,7 @@ describe('PublicBarbershopEntryPage', () => {
 
   it('offers a retry action on a network error, re-fetching the same slug (CA-090-05)', async () => {
     getMock.mockRejectedValueOnce(new TypeError('Failed to fetch'))
-    const wrapper = mount(PublicBarbershopEntryPage, { props: { slug: 'barberia-ejemplo' } })
+    const wrapper = mountEntryPage({ slug: 'barberia-ejemplo' })
     await flushPromises()
     expect(wrapper.text()).toContain('No pudimos conectar')
 
@@ -179,7 +188,7 @@ describe('PublicBarbershopEntryPage', () => {
       error: { status: 500, code: 'internal', title: 'Error interno', requestId: 'req-abc-123' },
       response: errorResponse(500),
     })
-    const wrapper = mount(PublicBarbershopEntryPage, { props: { slug: 'barberia-ejemplo' } })
+    const wrapper = mountEntryPage({ slug: 'barberia-ejemplo' })
     await flushPromises()
 
     expect(wrapper.text()).toContain('req-abc-123')
@@ -188,7 +197,7 @@ describe('PublicBarbershopEntryPage', () => {
 
   it('has no accessibility violations in the loading state', async () => {
     getMock.mockReturnValueOnce(new Promise(() => {}))
-    const wrapper = mount(PublicBarbershopEntryPage, { props: { slug: 'barberia-ejemplo' } })
+    const wrapper = mountEntryPage({ slug: 'barberia-ejemplo' })
     const results = await axe(wrapper.element)
     expect(results).toHaveNoViolations()
   })
@@ -204,7 +213,7 @@ describe('PublicBarbershopEntryPage', () => {
       error: undefined,
       response: okResponse(),
     })
-    const wrapper = mount(PublicBarbershopEntryPage, { props: { slug: 'barberia-ejemplo' } })
+    const wrapper = mountEntryPage({ slug: 'barberia-ejemplo' })
     await flushPromises()
     const results = await axe(wrapper.element)
     expect(results).toHaveNoViolations()
@@ -216,7 +225,7 @@ describe('PublicBarbershopEntryPage', () => {
       error: { status: 404 },
       response: errorResponse(404),
     })
-    const wrapper = mount(PublicBarbershopEntryPage, { props: { slug: 'no-existe' } })
+    const wrapper = mountEntryPage({ slug: 'no-existe' })
     await flushPromises()
     const results = await axe(wrapper.element)
     expect(results).toHaveNoViolations()

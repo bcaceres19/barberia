@@ -4,6 +4,21 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.20.0] - 2026-09-11
+
+### Agregado
+
+- `GET /public/barbershops/{slug}/services` (`operationId:
+  listPublicServices`, `CA-091-01` a `CA-091-03`, tag `PublicBooking`):
+  catálogo público de servicios (`HU-091`). Lista paginada por cursor de los
+  servicios ACTIVOS con al menos una asignación vigente a un barbero de la
+  barbería resuelta por el mismo `slug` de `GET /public/barbershops/{slug}`
+  (misma resolución sin sesión, mismo `404` uniforme para forma inválida,
+  desconocida o no publicable). Proyección mínima:
+  `PublicServiceResponse` (`id`, `name`, `description`, `durationMinutes`,
+  `price`, `currency`) — nunca estado de ciclo de vida, auditoría ni ningún
+  identificador de tenant. Resuelve `DP-PUB-02` como `DEC-083`.
+
 ## [0.19.0] - 2026-09-11
 
 ### Agregado

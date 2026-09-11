@@ -1,0 +1,59 @@
+# Proyección pública mínima de un servicio (HU-091, CA-091-01): id, name,
+# description, durationMinutes, price, currency. Nunca isActive,
+# deactivatedAt, createdAt ni updatedAt -esos campos son alcance exclusivo
+# del catálogo privado (ServiceResponse.yaml, HU-022/HU-024)-, ni
+# barbershopId ni ningún otro identificador de tenant.
+type: object
+description: >
+  Servicio ofrecido públicamente por la barbería resuelta: activo y con al
+  menos una asignación vigente a un barbero (HU-091, CA-091-01). currency es
+  siempre "COP" (DEC-067).
+properties:
+  id:
+    type: string
+    format: uuid
+    description: Identificador del servicio, necesario para seleccionarlo al reservar.
+    examples:
+      - 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+  name:
+    type: string
+    minLength: 1
+    maxLength: 120
+    description: Nombre visible del servicio.
+    examples:
+      - Corte clásico
+  description:
+    type: [string, "null"]
+    maxLength: 500
+    description: Descripción opcional del servicio. `null` cuando no tiene.
+    examples:
+      - Corte con máquina y tijera, incluye lavado.
+  durationMinutes:
+    type: integer
+    minimum: 1
+    maximum: 1440
+    description: Duración planificada en minutos enteros.
+    examples:
+      - 30
+  price:
+    type: string
+    pattern: '^[0-9]{1,10}(\.[0-9]{1,2})?$'
+    description: >
+      Precio vigente, decimal exacto con hasta dos cifras, estrictamente
+      mayor que cero. Nunca coma flotante: comparar como texto o convertir
+      con una biblioteca decimal, nunca con `parseFloat`.
+    examples:
+      - "45000.00"
+  currency:
+    type: string
+    enum: [COP]
+    description: Moneda fija en COP para todo el MVP (DEC-067).
+    examples:
+      - COP
+required:
+  - id
+  - name
+  - description
+  - durationMinutes
+  - price
+  - currency

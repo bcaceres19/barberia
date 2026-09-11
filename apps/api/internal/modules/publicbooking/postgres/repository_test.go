@@ -1,9 +1,10 @@
-// Package postgres_test (pruebas de integración, HU-090) requiere
+// Package postgres_test (pruebas de integración, HU-090/HU-091) requiere
 // PostgreSQL REAL con todas las migraciones aplicadas (incluida
 // 20260911045044_add_barbershop_public_slug.sql) y
-// database/testdata/hu090_reserva_publica.sql cargado. Conéctate como
-// barberia_app (docs/03-desarrollo/estrategia-pruebas.md §2 prohíbe mocks
-// para RLS/resolución de tenant sin contexto).
+// database/testdata/{hu090_reserva_publica.sql,hu091_catalogo_publico.sql}
+// cargados. Conéctate como barberia_app (docs/03-desarrollo/
+// estrategia-pruebas.md §2 prohíbe mocks para RLS/resolución de tenant sin
+// contexto).
 //
 //	export TEST_DATABASE_URL="postgres://barberia_app:app_test@localhost:5432/barberia_test?sslmode=disable"
 //	go test -race ./internal/modules/publicbooking/postgres/...
@@ -15,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"system-barbershop/internal/modules/publicbooking"
 	publicbookingpostgres "system-barbershop/internal/modules/publicbooking/postgres"
 	"system-barbershop/internal/platform/config"
 	"system-barbershop/internal/platform/database"
@@ -33,6 +35,17 @@ const (
 	nameDos         = "Barbería de prueba HU-090 Dos"
 	contactEmailUno = "contacto.hu090uno@ejemplo.test"
 	contactPhoneUno = "+573000000001"
+
+	// Par dedicado de hu091_catalogo_publico.sql (HU-091): slugCatalogoUno
+	// tiene un servicio activo+asignado, uno activo sin asignar y uno
+	// inactivo+asignado; slugCatalogoDos tiene un único servicio activo y
+	// asignado, usado exclusivamente para CA-091-03 (aislamiento de tenant).
+	slugCatalogoUno          = "barberia-hu091-uno"
+	slugCatalogoDos          = "barberia-hu091-dos"
+	servicioActivoAsignadoID = "00910101-0091-0091-0091-009101010101"
+	servicioActivoAsignado   = "Corte activo asignado HU-091"
+	servicioDosActivoID      = "00910201-0091-0091-0091-009102010201"
+	servicioDosActivo        = "Corte activo asignado HU-091 Dos"
 )
 
 func setupTestDB(t *testing.T) *database.DB {
@@ -185,5 +198,113 @@ func TestResolveBySlug_TenantAIsolatedFromTenantB(t *testing.T) {
 	}
 	if dos.ContactEmail != nil {
 		t.Fatalf("RN-TEN-01: resolving slugDos leaked shopUno's contactEmail: %+v", dos)
+	}
+}
+
+// TestListPublicServices_ActiveAndAssigned_ExcludesInactiveAndUnassigned
+// cubre CA-091-01: de los cuatro servicios de la barbería HU-091 Uno (dos
+// activos+asignados, uno activo sin asignar, uno inactivo+asignado), solo
+// los dos activos+asignados aparecen.
+func TestListPublicServices_ActiveAndAssigned_ExcludesInactiveAndUnassigned(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+
+	result, found, err := repo.ListPublicServices(context.Background(), slugCatalogoUno, nil, 20)
+	if err != nil {
+		t.Fatalf("ListPublicServices: %v", err)
+	}
+	if !found {
+		t.Fatal("expected slugCatalogoUno to resolve")
+	}
+	if len(result.Items) != 2 {
+		t.Fatalf("expected exactly 2 public services (active+assigned only), got %d: %+v", len(result.Items), result.Items)
+	}
+	svc := result.Items[0]
+	if svc.ID != servicioActivoAsignadoID || svc.Name != servicioActivoAsignado {
+		t.Fatalf("unexpected first service: %+v", svc)
+	}
+	if svc.DurationMinutes != 30 || svc.PriceCents != 3500000 || svc.Currency != "COP" {
+		t.Fatalf("unexpected service fields: %+v", svc)
+	}
+	if result.NextCursor != "" {
+		t.Fatalf("expected no next page for a full 20-item page with only 2 rows, got cursor %q", result.NextCursor)
+	}
+}
+
+// TestListPublicServices_UnknownOrNotPublicSlug_ReturnsNotFound cubre la
+// misma respuesta uniforme que ResolveBySlug (CA-090-02, reutilizada aquí).
+func TestListPublicServices_UnknownOrNotPublicSlug_ReturnsNotFound(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+
+	_, found, err := repo.ListPublicServices(context.Background(), "barberia-que-no-existe", nil, 20)
+	if err != nil {
+		t.Fatalf("ListPublicServices: %v", err)
+	}
+	if found {
+		t.Fatal("expected an unknown slug not to resolve")
+	}
+}
+
+// TestListPublicServices_TenantAIsolatedFromTenantB cubre CA-091-03: el
+// catálogo de una barbería nunca incluye el servicio de la otra, verificado
+// con dos tenants reales.
+func TestListPublicServices_TenantAIsolatedFromTenantB(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+
+	uno, foundUno, err := repo.ListPublicServices(context.Background(), slugCatalogoUno, nil, 20)
+	if err != nil || !foundUno {
+		t.Fatalf("ListPublicServices(slugCatalogoUno): found=%v err=%v", foundUno, err)
+	}
+	dos, foundDos, err := repo.ListPublicServices(context.Background(), slugCatalogoDos, nil, 20)
+	if err != nil || !foundDos {
+		t.Fatalf("ListPublicServices(slugCatalogoDos): found=%v err=%v", foundDos, err)
+	}
+
+	for _, svc := range uno.Items {
+		if svc.ID == servicioDosActivoID {
+			t.Fatalf("RN-TEN-01: slugCatalogoUno's catalog leaked shopDos's service: %+v", svc)
+		}
+	}
+	if len(dos.Items) != 1 || dos.Items[0].ID != servicioDosActivoID || dos.Items[0].Name != servicioDosActivo {
+		t.Fatalf("unexpected shopDos catalog: %+v", dos.Items)
+	}
+}
+
+// TestListPublicServices_LimitOne_PaginatesAcrossTwoPages cubre la
+// paginación por cursor del catálogo público: con límite 1, la barbería
+// HU-091 Uno (exactamente dos servicios públicos) entrega su primera
+// página con nextCursor, y la segunda página (pedida con ese cursor) trae
+// el segundo servicio sin repetir el primero y sin nextCursor (ya no queda
+// una tercera página).
+func TestListPublicServices_LimitOne_PaginatesAcrossTwoPages(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+
+	first, found, err := repo.ListPublicServices(context.Background(), slugCatalogoUno, nil, 1)
+	if err != nil || !found || len(first.Items) != 1 {
+		t.Fatalf("ListPublicServices (first page): found=%v items=%d err=%v", found, len(first.Items), err)
+	}
+	if first.NextCursor == "" {
+		t.Fatal("expected a nextCursor: a second public service exists")
+	}
+	if first.Items[0].ID != servicioActivoAsignadoID {
+		t.Fatalf("expected the first page to be the earliest-created service, got %+v", first.Items[0])
+	}
+
+	firstCursor, err := publicbooking.DecodeServiceCursor(first.NextCursor)
+	if err != nil {
+		t.Fatalf("DecodeServiceCursor(first.NextCursor): %v", err)
+	}
+	second, found, err := repo.ListPublicServices(context.Background(), slugCatalogoUno, &firstCursor, 1)
+	if err != nil || !found || len(second.Items) != 1 {
+		t.Fatalf("ListPublicServices (second page): found=%v items=%d err=%v", found, len(second.Items), err)
+	}
+	if second.Items[0].ID == first.Items[0].ID {
+		t.Fatalf("expected the second page not to repeat the first item, got %+v twice", second.Items[0])
+	}
+	if second.NextCursor != "" {
+		t.Fatalf("expected no nextCursor on the last page, got %q", second.NextCursor)
 	}
 }
