@@ -22,11 +22,27 @@ type fakeRepository struct {
 	found   bool
 	err     error
 	calls   []string
+
+	listResult publicbooking.PublicServiceListResult
+	listFound  bool
+	listErr    error
+	listCalls  []listCall
+}
+
+type listCall struct {
+	slug   string
+	cursor *publicbooking.ServiceCursor
+	limit  int
 }
 
 func (f *fakeRepository) ResolveBySlug(_ context.Context, slug string) (publicbooking.BarbershopProfile, bool, error) {
 	f.calls = append(f.calls, slug)
 	return f.profile, f.found, f.err
+}
+
+func (f *fakeRepository) ListPublicServices(_ context.Context, slug string, cursor *publicbooking.ServiceCursor, limit int) (publicbooking.PublicServiceListResult, bool, error) {
+	f.listCalls = append(f.listCalls, listCall{slug: slug, cursor: cursor, limit: limit})
+	return f.listResult, f.listFound, f.listErr
 }
 
 var _ publicbooking.Repository = (*fakeRepository)(nil)
@@ -129,5 +145,123 @@ func TestResolveBarbershop_ContextCancelled_ReturnsInternalWithoutCallingReposit
 	}
 	if len(repo.calls) != 0 {
 		t.Fatalf("expected zero repository calls with a cancelled context, got %v", repo.calls)
+	}
+}
+
+func TestListPublicServices_Found_ReturnsResult(t *testing.T) {
+	want := publicbooking.PublicServiceListResult{
+		Items: []publicbooking.PublicService{
+			{ID: "1", Name: "Corte", DurationMinutes: 30, PriceCents: 3500000, Currency: "COP"},
+		},
+	}
+	repo := &fakeRepository{listResult: want, listFound: true}
+	svc := publicbooking.NewService(repo)
+
+	got, err := svc.ListPublicServices(context.Background(), "barberia-ejemplo", "", 0)
+	if err != nil {
+		t.Fatalf("ListPublicServices: %v", err)
+	}
+	if len(got.Items) != 1 || got.Items[0] != want.Items[0] {
+		t.Fatalf("expected %+v, got %+v", want, got)
+	}
+	if len(repo.listCalls) != 1 || repo.listCalls[0].slug != "barberia-ejemplo" || repo.listCalls[0].limit != publicbooking.DefaultServiceListLimit {
+		t.Fatalf("expected one call with trimmed slug and default limit, got %+v", repo.listCalls)
+	}
+}
+
+func TestListPublicServices_NotFound_ReturnsNotFoundWithoutLeakingCause(t *testing.T) {
+	repo := &fakeRepository{listFound: false}
+	svc := publicbooking.NewService(repo)
+
+	_, err := svc.ListPublicServices(context.Background(), "no-existe", "", 0)
+	assertNotFound(t, err)
+}
+
+func TestListPublicServices_EmptySlug_ReturnsNotFoundWithoutCallingRepository(t *testing.T) {
+	repo := &fakeRepository{}
+	svc := publicbooking.NewService(repo)
+
+	_, err := svc.ListPublicServices(context.Background(), "   ", "", 0)
+	assertNotFound(t, err)
+	if len(repo.listCalls) != 0 {
+		t.Fatalf("expected zero repository calls for an empty slug, got %v", repo.listCalls)
+	}
+}
+
+func TestListPublicServices_SlugTooLong_ReturnsNotFoundWithoutCallingRepository(t *testing.T) {
+	repo := &fakeRepository{}
+	svc := publicbooking.NewService(repo)
+
+	tooLong := strings.Repeat("a", publicbooking.MaxSlugLength+1)
+	_, err := svc.ListPublicServices(context.Background(), tooLong, "", 0)
+	assertNotFound(t, err)
+	if len(repo.listCalls) != 0 {
+		t.Fatalf("expected zero repository calls for an overlong slug, got %v", repo.listCalls)
+	}
+}
+
+func TestListPublicServices_LimitClamping(t *testing.T) {
+	cases := []struct {
+		name  string
+		input int
+		want  int
+	}{
+		{"zero uses default", 0, publicbooking.DefaultServiceListLimit},
+		{"negative uses default", -5, publicbooking.DefaultServiceListLimit},
+		{"above maximum clamps down", publicbooking.MaxServiceListLimit + 100, publicbooking.MaxServiceListLimit},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := &fakeRepository{listFound: true}
+			svc := publicbooking.NewService(repo)
+			if _, err := svc.ListPublicServices(context.Background(), "barberia-ejemplo", "", tc.input); err != nil {
+				t.Fatalf("ListPublicServices: %v", err)
+			}
+			if len(repo.listCalls) != 1 || repo.listCalls[0].limit != tc.want {
+				t.Fatalf("expected limit %d, got %+v", tc.want, repo.listCalls)
+			}
+		})
+	}
+}
+
+func TestListPublicServices_InvalidCursor_ReturnsInvalidWithoutCallingRepository(t *testing.T) {
+	repo := &fakeRepository{}
+	svc := publicbooking.NewService(repo)
+
+	_, err := svc.ListPublicServices(context.Background(), "barberia-ejemplo", "no-es-un-cursor-valido", 0)
+	appErr, ok := apperr.As(err)
+	if !ok || appErr.Kind != apperr.KindInvalid {
+		t.Fatalf("expected apperr.KindInvalid, got %v", err)
+	}
+	if len(repo.listCalls) != 0 {
+		t.Fatalf("expected zero repository calls for an invalid cursor, got %v", repo.listCalls)
+	}
+}
+
+func TestListPublicServices_RepositoryError_ReturnsInternal(t *testing.T) {
+	repo := &fakeRepository{listErr: errors.New("boom")}
+	svc := publicbooking.NewService(repo)
+
+	_, err := svc.ListPublicServices(context.Background(), "barberia-ejemplo", "", 0)
+	appErr, ok := apperr.As(err)
+	if !ok || appErr.Kind != apperr.KindInternal {
+		t.Fatalf("expected apperr.KindInternal, got %v", err)
+	}
+}
+
+func TestListPublicServices_ContextCancelled_ReturnsInternalWithoutCallingRepository(t *testing.T) {
+	repo := &fakeRepository{}
+	svc := publicbooking.NewService(repo)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := svc.ListPublicServices(ctx, "barberia-ejemplo", "", 0)
+	appErr, ok := apperr.As(err)
+	if !ok || appErr.Kind != apperr.KindInternal {
+		t.Fatalf("expected apperr.KindInternal, got %v", err)
+	}
+	if len(repo.listCalls) != 0 {
+		t.Fatalf("expected zero repository calls with a cancelled context, got %v", repo.listCalls)
 	}
 }

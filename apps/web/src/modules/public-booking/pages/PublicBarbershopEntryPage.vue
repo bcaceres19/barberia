@@ -144,9 +144,12 @@ const unexpectedErrorMessage = computed(() => {
         </p>
       </BaseAlert>
 
-      <p class="public-entry__coming-soon">
-        Muy pronto podrás elegir servicio, barbero y horario desde aquí mismo.
-      </p>
+      <RouterLink
+        :to="{ name: 'reserva-publica-servicios', params: { slug: props.slug } }"
+        class="public-entry__cta"
+      >
+        Reservar un turno
+      </RouterLink>
     </div>
   </main>
 </template>
@@ -221,10 +224,37 @@ const unexpectedErrorMessage = computed(() => {
   margin-top: var(--space-1);
 }
 
-.public-entry__coming-soon {
-  margin: 0;
+/* Enlace de navegación con apariencia de botón primario (mismos tokens que
+   BaseButton--primary--lg): un <RouterLink> es la etiqueta semánticamente
+   correcta para navegar a otra ruta, así que este estilo se define aquí en
+   vez de anidar <button> dentro de <a> (inválido en HTML, y axe-core lo
+   marca). */
+.public-entry__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--control-height-primary-mobile);
+  padding: 0 var(--space-5);
+  font-family: var(--font-family-base);
   font-size: var(--font-size-body);
-  color: var(--color-text-secondary);
+  font-weight: 500;
+  color: var(--color-on-strong);
+  text-decoration: none;
+  background-color: var(--color-action-primary);
+  border: var(--border-width-normal) solid var(--color-action-primary);
+  border-radius: 2px;
+}
+
+.public-entry__cta:hover {
+  background-color: var(--color-action-primary-hover);
+  border-color: var(--color-action-primary-hover);
+}
+
+.public-entry__cta:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--color-canvas),
+    0 0 0 4px var(--color-focus);
 }
 
 @media (min-width: 1024px) {

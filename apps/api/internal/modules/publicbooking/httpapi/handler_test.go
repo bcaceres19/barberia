@@ -24,11 +24,20 @@ type fakeRepository struct {
 	found   bool
 	err     error
 	calls   []string
+
+	listResult publicbooking.PublicServiceListResult
+	listFound  bool
+	listErr    error
 }
 
 func (f *fakeRepository) ResolveBySlug(_ context.Context, slug string) (publicbooking.BarbershopProfile, bool, error) {
 	f.calls = append(f.calls, slug)
 	return f.profile, f.found, f.err
+}
+
+func (f *fakeRepository) ListPublicServices(_ context.Context, slug string, _ *publicbooking.ServiceCursor, _ int) (publicbooking.PublicServiceListResult, bool, error) {
+	f.calls = append(f.calls, slug)
+	return f.listResult, f.listFound, f.listErr
 }
 
 var _ publicbooking.Repository = (*fakeRepository)(nil)
@@ -144,6 +153,129 @@ func TestResolveBarbershopHandler_RepositoryError_ReturnsSafe500(t *testing.T) {
 	h := httpapi.NewResolveBarbershopHandler(publicbooking.NewService(repo))
 
 	req := requestWithSlug("barberia-ejemplo")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), "boom") {
+		t.Fatalf("CA-003-02: the internal cause must never reach the response body: %s", rec.Body.String())
+	}
+}
+
+func requestWithSlugAndQuery(slug, rawQuery string) *http.Request {
+	target := "/api/v1/public/barbershops/" + slug + "/services"
+	if rawQuery != "" {
+		target += "?" + rawQuery
+	}
+	req := httptest.NewRequest(http.MethodGet, target, nil)
+	return httpserver.RequestWithURLParam(req, "slug", slug)
+}
+
+func TestListPublicServicesHandler_Success_ReturnsItems(t *testing.T) {
+	desc := "Con lavado incluido"
+	repo := &fakeRepository{
+		listFound: true,
+		listResult: publicbooking.PublicServiceListResult{
+			Items: []publicbooking.PublicService{
+				{ID: "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4", Name: "Corte clásico", Description: &desc, DurationMinutes: 30, PriceCents: 4500000, Currency: "COP"},
+			},
+		},
+	}
+	h := httpapi.NewListPublicServicesHandler(publicbooking.NewService(repo))
+
+	req := requestWithSlugAndQuery("barberia-ejemplo", "")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var body httpapi.PublicServiceListResponse
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+	if len(body.Items) != 1 {
+		t.Fatalf("expected 1 item, got %+v", body.Items)
+	}
+	item := body.Items[0]
+	if item.Name != "Corte clásico" || item.DurationMinutes != 30 || item.Price != "45000.00" || item.Currency != "COP" {
+		t.Fatalf("unexpected item: %+v", item)
+	}
+	if item.Description == nil || *item.Description != desc {
+		t.Fatalf("expected description=%q, got %v", desc, item.Description)
+	}
+	if body.NextCursor != nil {
+		t.Fatalf("expected nextCursor=null for a single-item page, got %v", *body.NextCursor)
+	}
+}
+
+func TestListPublicServicesHandler_Empty_ReturnsEmptyArrayNotNull(t *testing.T) {
+	repo := &fakeRepository{listFound: true}
+	h := httpapi.NewListPublicServicesHandler(publicbooking.NewService(repo))
+
+	req := requestWithSlugAndQuery("barberia-ejemplo", "")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	var raw map[string]any
+	if err := json.NewDecoder(rec.Body).Decode(&raw); err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+	items, ok := raw["items"].([]any)
+	if !ok {
+		t.Fatalf("expected items to be a JSON array, got %T: %v", raw["items"], raw["items"])
+	}
+	if len(items) != 0 {
+		t.Fatalf("expected an empty array, got %v", items)
+	}
+}
+
+func TestListPublicServicesHandler_NotFound_ReturnsUniform404(t *testing.T) {
+	repo := &fakeRepository{listFound: false}
+	h := httpapi.NewListPublicServicesHandler(publicbooking.NewService(repo))
+
+	req := requestWithSlugAndQuery("no-existe", "")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestListPublicServicesHandler_InvalidLimit_Returns400(t *testing.T) {
+	repo := &fakeRepository{listFound: true}
+	h := httpapi.NewListPublicServicesHandler(publicbooking.NewService(repo))
+
+	req := requestWithSlugAndQuery("barberia-ejemplo", "limit=-1")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestListPublicServicesHandler_InvalidCursor_Returns400(t *testing.T) {
+	repo := &fakeRepository{listFound: true}
+	h := httpapi.NewListPublicServicesHandler(publicbooking.NewService(repo))
+
+	req := requestWithSlugAndQuery("barberia-ejemplo", "cursor=no-es-un-cursor-valido")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestListPublicServicesHandler_RepositoryError_ReturnsSafe500(t *testing.T) {
+	repo := &fakeRepository{listErr: errors.New("boom")}
+	h := httpapi.NewListPublicServicesHandler(publicbooking.NewService(repo))
+
+	req := requestWithSlugAndQuery("barberia-ejemplo", "")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 

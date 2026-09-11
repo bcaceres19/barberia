@@ -209,6 +209,8 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	publicBookingService := publicbooking.NewService(publicbookingpostgres.New(db))
 	resolveBarbershopHandler := publicbookinghttpapi.NewResolveBarbershopHandler(publicBookingService)
 	router.Get("/api/v1/public/barbershops/{slug}", resolveBarbershopHandler.ServeHTTP)
+	listPublicServicesHandler := publicbookinghttpapi.NewListPublicServicesHandler(publicBookingService)
+	router.Get("/api/v1/public/barbershops/{slug}/services", listPublicServicesHandler.ServeHTTP)
 
 	// HU-006: middleware de sesión (paso 8) montado UNA sola vez sobre el
 	// subrouter privado, ANTES de registrar ninguna ruta sobre él (chi

@@ -1,6 +1,6 @@
 ---
 titulo: "Plan de bloques de construcción del MVP"
-version: "1.30"
+version: "1.31"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-11"
@@ -48,7 +48,7 @@ Consecuencia deliberada: **el flujo público de reserva, que es la cara visible 
 | **B1** | Identidad de la barbería y catálogo | 4 | `HU-020` – `HU-0xx` | `HU-020`–`HU-024` integradas en `main` ([PR #84](https://github.com/bcaceres19/barberia/pull/84), issue real `#77`) |
 | **B2** | Horario laboral y bloqueos | 2 | `HU-040` – `HU-042` | `CT-008` resuelta (`DEC-070`); `HU-040` integrada en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93), issue real [#90](https://github.com/bcaceres19/barberia/issues/90) abierto por `CA-040-08` parcial); `HU-041` integrada en `main` ([PR #96](https://github.com/bcaceres19/barberia/pull/96), issue real [#95](https://github.com/bcaceres19/barberia/issues/95) abierto por `CA-041-08` parcial); `HU-042` integrada en `main` ([PR #99](https://github.com/bcaceres19/barberia/pull/99), issue real [#98](https://github.com/bcaceres19/barberia/issues/98) abierto por seguimiento de UI/E2E, issue [#100](https://github.com/bcaceres19/barberia/issues/100)) |
 | **B3** | Agenda del barbero, estados e integridad | 11 | `HU-060` – `HU-0xx` | `HU-060`–`HU-068` integradas ([PR #235](https://github.com/bcaceres19/barberia/pull/235), [#225](https://github.com/bcaceres19/barberia/issues/225); [PR #237](https://github.com/bcaceres19/barberia/pull/237), [#226](https://github.com/bcaceres19/barberia/issues/226); [PR #239](https://github.com/bcaceres19/barberia/pull/239), [#227](https://github.com/bcaceres19/barberia/issues/227)); tercer lote de B3 completo |
-| **B4** | Reserva pública y disponibilidad | 13 | `HU-090` – `HU-099` | Diez HU redactadas como propuesta; `HU-090` implementada (`DP-PUB-01` resuelta como `DEC-082`, issue [#243](https://github.com/bcaceres19/barberia/issues/243), PR abierto); resto bloqueado |
+| **B4** | Reserva pública y disponibilidad | 13 | `HU-090` – `HU-099` | `HU-090` integrada en `main` ([PR #244](https://github.com/bcaceres19/barberia/pull/244), `DEC-082`); `HU-091` implementada, issue [#245](https://github.com/bcaceres19/barberia/issues/245), rama `feat/245-hu091-catalogo-publico`; resto bloqueado o propuesto |
 | **B5** | Notificaciones y recordatorios | 3 | `HU-130` – `HU-1xx` | Pendiente de redacción |
 | **B6** | Operación, privacidad y preparación del piloto | 4 | `HU-150` – `HU-1xx` | Pendiente de redacción |
 
@@ -155,7 +155,7 @@ Los rangos se reservan por bloque para que los códigos `HU-*` no se renumeren c
 
 **Reglas que gobiernan el bloque:** `RN-DIS-01` a `RN-DIS-06`, `RN-CON-02`, `RN-CON-04` a `RN-CON-06`, `RN-CNF-01`, `RN-CNF-02`, `RN-CAN-01`, `RN-CAN-02`, `RN-DAT-01`, `RN-IDE-01`.
 
-**Secuencia redactada como propuesta:** `HU-090` entrada pública → `HU-091` servicios → `HU-092` selección de barbero → `HU-093` configuración de políticas → `HU-094` motor de disponibilidad → `HU-095` exploración de fechas/horas → `HU-096` datos de cliente/persona atendida → `HU-097` confirmación concurrente → `HU-098` acceso del cliente → `HU-099` cancelación pública. El lote documental vive en el issue [#240](https://github.com/bcaceres19/barberia/issues/240). B3 ya cerró y `DP-PUB-01` quedó resuelta como `DEC-082`, lo que autoriza abrir el issue real y ejecutar `HU-090`. `DP-PUB-02`–`DP-PUB-06`/`CT-011` permanecen abiertas y siguen bloqueando `HU-093` en adelante.
+**Secuencia redactada como propuesta:** `HU-090` entrada pública → `HU-091` servicios → `HU-092` selección de barbero → `HU-093` configuración de políticas → `HU-094` motor de disponibilidad → `HU-095` exploración de fechas/horas → `HU-096` datos de cliente/persona atendida → `HU-097` confirmación concurrente → `HU-098` acceso del cliente → `HU-099` cancelación pública. El lote documental vive en el issue [#240](https://github.com/bcaceres19/barberia/issues/240). B3 ya cerró y `DP-PUB-01` quedó resuelta como `DEC-082`, lo que autorizó `HU-090` (integrada en `main`, [PR #244](https://github.com/bcaceres19/barberia/pull/244)). `HU-091` no dependía de ninguna `DP-PUB-*` abierta (solo de `HU-090` integrada y `HU-022`–`HU-024`, ya cumplidas): issue real [#245](https://github.com/bcaceres19/barberia/issues/245), rama `feat/245-hu091-catalogo-publico`. `DP-PUB-02`–`DP-PUB-06`/`CT-011` permanecen abiertas y siguen bloqueando `HU-093` en adelante.
 
 **Criterio de salida:**
 

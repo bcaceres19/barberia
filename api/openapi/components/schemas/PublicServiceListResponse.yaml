@@ -1,0 +1,23 @@
+# Colección paginada por cursor (docs/06-api/estandar-openapi.md §6.10),
+# mismo criterio que ServiceListResponse.yaml: el catálogo público de una
+# barbería no tiene un máximo de negocio aprobado.
+type: object
+description: >
+  Página del catálogo público de servicios de la barbería resuelta (HU-091),
+  ordenada de forma estable por fecha de alta y luego por identificador.
+properties:
+  items:
+    type: array
+    description: Servicios públicos de esta página, en el orden estable del servidor.
+    items:
+      $ref: './PublicServiceResponse.yaml'
+  nextCursor:
+    type: [string, "null"]
+    description: >
+      Cursor opaco para pedir la siguiente página con el parámetro `cursor`.
+      `null` cuando esta página es la última.
+    examples:
+      - eyJjcmVhdGVkQXQiOiIyMDI2LTA5LTExVDE1OjA1OjEwWiIsImlkIjoiMWEyYjNjNGQtNWU2Zi00NzA4LTlhMGItMWMyZDNlNGY1MDYxIn0=
+required:
+  - items
+  - nextCursor

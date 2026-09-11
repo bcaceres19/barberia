@@ -1,0 +1,27 @@
+# Respuesta 200 de GET /public/barbershops/{slug}/services (HU-091,
+# CA-091-01).
+description: Página del catálogo público de servicios activos y asignados de la barbería resuelta.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/PublicServiceListResponse.yaml'
+    examples:
+      conServicios:
+        summary: Barbería con servicios públicos ofrecidos
+        value:
+          items:
+            - id: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+              name: Corte clásico
+              description: Corte con máquina y tijera, incluye lavado.
+              durationMinutes: 30
+              price: "45000.00"
+              currency: COP
+          nextCursor: null
+      sinServicios:
+        summary: Barbería sin ningún servicio activo y asignado todavía
+        value:
+          items: []
+          nextCursor: null

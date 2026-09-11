@@ -24,6 +24,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/barbershops/{slug}/services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar el catálogo público de servicios de una barbería
+         * @description Lista paginada por cursor (HU-091, CA-091-01) de los servicios ACTIVOS con al menos una asignación vigente a un barbero de la barbería resuelta por `slug`, sin sesión. Mismo `slug` y misma resolución sin contexto de tenant que `GET /public/barbershops/{slug}` (`public_resolve_barbershop_by_slug`); un `slug` mal formado, desconocido o de una barbería no publicable produce EXACTAMENTE la misma respuesta `404` uniforme (CA-090-02, RN-TEN-01). Un servicio inactivo o sin ninguna asignación vigente nunca aparece (CA-091-01, CA-091-02); desactivar un servicio lo retira de esta lista sin alterar ninguna cita existente (RN-SER-04). La proyección es mínima: nombre, descripción, duración, precio y moneda; nunca estado de ciclo de vida, auditoría ni ningún identificador de tenant (CA-091-01, RN-DAT-02).
+         */
+        get: operations["listPublicServices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/public/auth/login": {
         parameters: {
             query?: never;
@@ -1334,6 +1354,51 @@ export interface components {
              */
             contactPhone: string | null;
         };
+        /** @description Servicio ofrecido públicamente por la barbería resuelta: activo y con al menos una asignación vigente a un barbero (HU-091, CA-091-01). currency es siempre "COP" (DEC-067). */
+        PublicServiceResponse: {
+            /**
+             * Format: uuid
+             * @description Identificador del servicio, necesario para seleccionarlo al reservar.
+             * @example 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+             */
+            id: string;
+            /**
+             * @description Nombre visible del servicio.
+             * @example Corte clásico
+             */
+            name: string;
+            /**
+             * @description Descripción opcional del servicio. `null` cuando no tiene.
+             * @example Corte con máquina y tijera, incluye lavado.
+             */
+            description: string | null;
+            /**
+             * @description Duración planificada en minutos enteros.
+             * @example 30
+             */
+            durationMinutes: number;
+            /**
+             * @description Precio vigente, decimal exacto con hasta dos cifras, estrictamente mayor que cero. Nunca coma flotante: comparar como texto o convertir con una biblioteca decimal, nunca con `parseFloat`.
+             * @example 45000.00
+             */
+            price: string;
+            /**
+             * @description Moneda fija en COP para todo el MVP (DEC-067).
+             * @example COP
+             * @enum {string}
+             */
+            currency: "COP";
+        };
+        /** @description Página del catálogo público de servicios de la barbería resuelta (HU-091), ordenada de forma estable por fecha de alta y luego por identificador. */
+        PublicServiceListResponse: {
+            /** @description Servicios públicos de esta página, en el orden estable del servidor. */
+            items: components["schemas"]["PublicServiceResponse"][];
+            /**
+             * @description Cursor opaco para pedir la siguiente página con el parámetro `cursor`. `null` cuando esta página es la última.
+             * @example eyJjcmVhdGVkQXQiOiIyMDI2LTA5LTExVDE1OjA1OjEwWiIsImlkIjoiMWEyYjNjNGQtNWU2Zi00NzA4LTlhMGItMWMyZDNlNGY1MDYxIn0=
+             */
+            nextCursor: string | null;
+        };
         /** @description Solicitud de recuperación de acceso. */
         RecoveryRequestRequest: {
             /**
@@ -2619,6 +2684,16 @@ export interface components {
                 "application/json": components["schemas"]["PublicBarbershopProfile"];
             };
         };
+        /** @description Página del catálogo público de servicios activos y asignados de la barbería resuelta. */
+        PublicServiceListSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["PublicServiceListResponse"];
+            };
+        };
         /** @description La solicitud fue recibida. Si la cuenta existe y tiene el teléfono verificado, se envía un código por WhatsApp oficial y correo; en cualquier otro caso no ocurre ningún envío, sin que la respuesta lo revele. */
         RecoveryRequestAccepted: {
             headers: {
@@ -3126,6 +3201,38 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["PublicBarbershopProfileSuccess"];
+            /** @description `slug` con forma inválida, inexistente o de una barbería no publicable, sin distinguir la causa (CA-090-02, RN-TEN-01). */
+            404: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    listPublicServices: {
+        parameters: {
+            query?: {
+                /** @description Cursor opaco devuelto por una página anterior (`nextCursor`). Sin este parámetro, la respuesta empieza en la primera página. */
+                cursor?: string;
+                /** @description Máximo de servicios por página. */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description Identificador del enlace público de reservas, tal como aparece en la URL. No es un identificador interno: su forma, generación y ciclo de vida los fija DEC-082 (resuelve DP-PUB-01). */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["PublicServiceListSuccess"];
+            400: components["responses"]["InvalidRequestProblem"];
             /** @description `slug` con forma inválida, inexistente o de una barbería no publicable, sin distinguir la causa (CA-090-02, RN-TEN-01). */
             404: {
                 headers: {
