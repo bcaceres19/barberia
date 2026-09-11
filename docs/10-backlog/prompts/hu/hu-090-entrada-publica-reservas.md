@@ -2,21 +2,21 @@
 prompt_id: "PROMPT-HU-090-v1"
 version: "1.0"
 kind: "hu"
-status: "draft"
+status: "in_progress"
 target_agents: ["codex", "claude"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
 primary_hu: "HU-090"
 related_hu: ["HU-091"]
-issue: "pending"
-issue_url: null
+issue: 243
+issue_url: "https://github.com/bcaceres19/barberia/issues/243"
 suggested_issue_title: "feat(public-booking): implementar HU-090 entrada pública"
-branch: null
+branch: "feat/243-hu090-entrada-publica"
 pr: null
 pr_url: null
-depends_on: ["B3 con criterio de salida cumplido", "DP-PUB-01 resuelta mediante DEC-*", "Issue real con CA-090-01 a CA-090-05"]
+depends_on: ["B3 con criterio de salida cumplido (cerrado)", "DP-PUB-01 resuelta mediante DEC-082 (resuelta)", "Issue real #243 con CA-090-01 a CA-090-05"]
 rules: ["RN-TEN-01", "RN-DAT-01", "RN-DAT-02"]
-decisions: ["DEC-016", "DEC-019", "DEC-022", "DEC-024", "DEC-033", "DEC-034", "DEC-035", "DEC-036", "DEC-037", "DEC-038", "DEC-039", "DEC-077", "DEC-078", "DEC-079"]
+decisions: ["DEC-016", "DEC-019", "DEC-022", "DEC-024", "DEC-033", "DEC-034", "DEC-035", "DEC-036", "DEC-037", "DEC-038", "DEC-039", "DEC-077", "DEC-078", "DEC-079", "DEC-082"]
 acceptance_criteria: ["CA-090-01", "CA-090-02", "CA-090-03", "CA-090-04", "CA-090-05"]
 source_docs: ["AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "docs/00-control/registro-decisiones.md", "docs/00-control/dudas-pendientes.md", "docs/00-control/contradicciones.md", "docs/01-producto/alcance-mvp.md", "docs/01-producto/reglas-negocio.md", "docs/02-requisitos/historias-usuario.md", "docs/03-desarrollo/estandar-backend-go.md", "docs/03-desarrollo/estandar-frontend-vue.md", "docs/03-desarrollo/estandar-diseno-visual.md", "docs/03-desarrollo/estrategia-pruebas.md", "docs/05-backend/estandar-base-datos.md", "docs/05-backend/migraciones-atlas.md", "docs/06-api/estandar-openapi.md", "api/openapi/paths/public-booking.yaml", "apps/web/src/modules/public-booking"]
 created_at: "2026-09-10"
@@ -29,7 +29,7 @@ superseded_by: null
 
 ## Instrucción para el agente
 
-Implementa solo `HU-090`. Este prompt no se ejecuta mientras siga `issue: pending`, B3 no haya cerrado o `DP-PUB-01` no tenga una decisión propagada.
+Implementa solo `HU-090`. B3 cerró su criterio de salida y `DP-PUB-01` quedó resuelta como `DEC-082`; el issue real es [#243](https://github.com/bcaceres19/barberia/issues/243).
 
 ## Objetivo
 

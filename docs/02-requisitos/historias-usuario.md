@@ -1681,7 +1681,7 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 
 ## 7. Bloque B4 · Reserva pública y disponibilidad
 
-> **Lote documental, no autorización de implementación.** `HU-090`–`HU-099` derivan exclusivamente del alcance P0 vigente. B4 sigue bloqueado hasta que B3 cumpla su criterio de salida. Las decisiones abiertas `DP-PUB-01`–`DP-PUB-06` y `CT-011` deben resolverse antes de pasar el prompt afectado a `ready`.
+> **Lote documental, no autorización de implementación.** `HU-090`–`HU-099` derivan exclusivamente del alcance P0 vigente. B4 sigue bloqueado hasta que B3 cumpla su criterio de salida. `DP-PUB-01` quedó resuelta como `DEC-082`; las decisiones abiertas `DP-PUB-02`–`DP-PUB-06` y `CT-011` deben resolverse antes de pasar el prompt afectado a `ready`.
 
 Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` → `HU-095` → `HU-096` → `HU-097` → `HU-098` → `HU-099`.
 
@@ -1693,11 +1693,11 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | --- | --- |
 | Función | `F-PUB-01` |
 | Reglas | `RN-TEN-01`, `RN-DAT-01`, `RN-DAT-02` |
-| Decisiones | `DEC-016`, `DEC-019`, `DEC-022`, `DEC-024`, `DEC-033`–`DEC-039`, `DEC-077`–`DEC-079` |
+| Decisiones | `DEC-016`, `DEC-019`, `DEC-022`, `DEC-024`, `DEC-033`–`DEC-039`, `DEC-077`–`DEC-079`, `DEC-082` |
 | Actor | Visitante sin cuenta |
-| Depende de | Criterio de salida de B3; `DP-PUB-01` resuelta |
+| Depende de | Criterio de salida de B3 |
 | Bloquea | `HU-091`–`HU-099` |
-| Estado | Propuesta; prompt `PROMPT-HU-090-v1` en `draft`, `issue: pending` |
+| Estado | Propuesta; `DP-PUB-01` resuelta (`DEC-082`); prompt `PROMPT-HU-090-v1` en `draft`, `issue: pending` hasta abrir el issue real |
 | Riesgo | Un identificador público enumerable o una resolución tenant incorrecta expone barberías ajenas o abre el flujo con contexto falso. |
 
 **Historia**
@@ -1709,13 +1709,13 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 - Ruta pública que resuelve una barbería habilitada desde un identificador no confiado y muestra nombre, zona horaria y contacto público mínimo.
 - Estado de carga, enlace inválido/no disponible y recuperación sin revelar IDs internos ni la existencia de otro tenant.
 - Cascarón público responsive y accesible, separado del panel autenticado.
-- Registro formal de la generación, unicidad y ciclo de vida del identificador en `DP-PUB-01`; la historia no elige esa semántica.
+- `public_slug` generado automáticamente desde el nombre de la barbería (slugify + sufijo numérico ante colisión), único globalmente, editable desde la configuración existente de `HU-020` con ruptura sin redirección del enlace anterior (`DEC-082`).
 
 **Alcance excluido**
 
 - Listar servicios, barberos o franjas; formular datos; crear o cancelar citas.
 - Cuentas de cliente, búsqueda por teléfono/correo, portal o bot.
-- Inventar slug, longitud, rotación o conducta de desactivación antes de resolver `DP-PUB-01`.
+- Redirección de un slug anterior, historial de slugs o un tercer estado distinguible al deshabilitar (`DEC-082` ya lo descarta).
 
 **Criterios de aceptación**
 
@@ -2148,7 +2148,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | B1 | `HU-025` – | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
 | B2 | `HU-040` – `HU-042` | Integradas en `main` (PR `#93`, `#96`, `#99`); seguimientos parciales en issues `#90`, `#95`, `#98` y `#100` |
 | B3 | `HU-069` – | `HU-066`–`HU-068` ya integradas en `main`; continuar con T3 y cierre automático solo después de revisar este lote y resolver cualquier duda de semántica de snapshots/configuración |
-| B4 | `HU-100` – | `HU-090`–`HU-099` ya redactadas; continuar solo después de resolver `DP-PUB-01`–`DP-PUB-06`/`CT-011` |
+| B4 | `HU-100` – | `HU-090`–`HU-099` ya redactadas; `DP-PUB-01` resuelta (`DEC-082`), `HU-090` en curso (issue [#243](https://github.com/bcaceres19/barberia/issues/243)); continuar con el resto solo después de resolver `DP-PUB-02`–`DP-PUB-06`/`CT-011` |
 | B5 | `HU-130` – | B4 cumple su criterio de salida |
 | B6 | `HU-150` – | B5 cumple su criterio de salida |
 
