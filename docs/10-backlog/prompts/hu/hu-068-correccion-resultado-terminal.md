@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-068-v1"
 version: "1.0"
 kind: "hu"
-status: "ready"
+status: "executed"
 target_agents: ["codex", "claude"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
@@ -12,8 +12,8 @@ issue: 227
 issue_url: "https://github.com/bcaceres19/barberia/issues/227"
 suggested_issue_title: "feat(booking): implementar HU-068 corrección auditada de resultado"
 branch: "feat/227-hu068-correccion-resultado"
-pr: null
-pr_url: null
+pr: 239
+pr_url: "https://github.com/bcaceres19/barberia/pull/239"
 depends_on:
   - "HU-066 y HU-067 integradas en main con CI verde"
   - "Issue #227 con CA-068-01 a CA-068-08"
