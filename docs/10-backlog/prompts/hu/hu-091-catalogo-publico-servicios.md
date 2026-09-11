@@ -12,8 +12,8 @@ issue: 245
 issue_url: "https://github.com/bcaceres19/barberia/issues/245"
 suggested_issue_title: "feat(public-booking): implementar HU-091 catálogo público"
 branch: "feat/245-hu091-catalogo-publico"
-pr: null
-pr_url: null
+pr: 246
+pr_url: "https://github.com/bcaceres19/barberia/pull/246"
 depends_on: ["HU-090 integrada", "HU-022 a HU-024 integradas", "Issue real con CA-091-01 a CA-091-05"]
 rules: ["RN-SER-01", "RN-SER-02", "RN-SER-03", "RN-SER-04", "RN-TEN-01", "RN-DAT-02"]
 decisions: ["DEC-002", "DEC-003", "DEC-004", "DEC-016", "DEC-019", "DEC-024", "DEC-067", "DEC-068", "DEC-069", "DEC-077", "DEC-078", "DEC-079"]
