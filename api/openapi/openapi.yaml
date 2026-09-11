@@ -2,12 +2,17 @@
 # docs/06-api/estandar-openapi.md (DEC-037). No se edita el bundle generado
 # en dist/; este archivo y los que referencia son la fuente.
 #
+# HU-092 agrega la tercera operación pública de reserva: GET
+# /public/barbershops/{slug}/services/{serviceId}/barbers
+# (paths/public-booking.yaml), barberos con asignación vigente al servicio
+# activo resuelto, sin sesión (CA-092-01 a CA-092-03). El resto del flujo
+# público llega con HU-093 en adelante.
+#
 # HU-091 agrega la segunda operación pública de reserva: GET
 # /public/barbershops/{slug}/services (paths/public-booking.yaml),
 # catálogo público de servicios activos y con al menos una asignación
 # vigente, resuelto por el mismo slug sin sesión (CA-091-01). Resuelve
-# DP-PUB-02 como DEC-083. El resto del flujo público llega con HU-092 en
-# adelante.
+# DP-PUB-02 como DEC-083.
 #
 # HU-090 agrega el tag PublicBooking y la primera operación pública de
 # reserva: GET /public/barbershops/{slug} (paths/public-booking.yaml),
@@ -94,14 +99,17 @@ tags:
   - name: PublicBooking
     description: >-
       Flujo público de reserva sin sesión del barbero: entrada por el
-      enlace de una barbería (HU-090) y catálogo público de servicios
-      (HU-091). El resto del flujo (HU-092 en adelante) llega bloqueado por
-      decisiones abiertas (docs/00-control/dudas-pendientes.md).
+      enlace de una barbería (HU-090), catálogo público de servicios
+      (HU-091) y selección pública de barbero (HU-092). El resto del flujo
+      (HU-093 en adelante) llega bloqueado por decisiones abiertas
+      (docs/00-control/dudas-pendientes.md).
 paths:
   /public/barbershops/{slug}:
     $ref: './paths/public-booking.yaml#/~1public~1barbershops~1{slug}'
   /public/barbershops/{slug}/services:
     $ref: './paths/public-booking.yaml#/~1public~1barbershops~1{slug}~1services'
+  /public/barbershops/{slug}/services/{serviceId}/barbers:
+    $ref: './paths/public-booking.yaml#/~1public~1barbershops~1{slug}~1services~1{serviceId}~1barbers'
   /public/auth/login:
     $ref: './paths/public-auth.yaml#/~1public~1auth~1login'
   /public/auth/challenge:

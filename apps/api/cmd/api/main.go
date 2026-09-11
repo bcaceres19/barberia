@@ -212,6 +212,12 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	listPublicServicesHandler := publicbookinghttpapi.NewListPublicServicesHandler(publicBookingService)
 	router.Get("/api/v1/public/barbershops/{slug}/services", listPublicServicesHandler.ServeHTTP)
 
+	// HU-092: selección pública de barbero. Mismo criterio de resolución
+	// sin sesión que HU-090/HU-091; serviceId nunca se confía sin
+	// revalidar pertenencia y vigencia contra la barbería resuelta por slug.
+	listPublicBarbersHandler := publicbookinghttpapi.NewListPublicBarbersHandler(publicBookingService)
+	router.Get("/api/v1/public/barbershops/{slug}/services/{serviceId}/barbers", listPublicBarbersHandler.ServeHTTP)
+
 	// HU-006: middleware de sesión (paso 8) montado UNA sola vez sobre el
 	// subrouter privado, ANTES de registrar ninguna ruta sobre él (chi
 	// exige que Use() preceda a cualquier Get/Post en ese mismo Router).

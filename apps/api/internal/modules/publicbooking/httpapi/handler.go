@@ -19,6 +19,11 @@ import (
 // registra para /public/barbershops/{slug} (HU-090).
 const slugParam = "slug"
 
+// serviceIDParam es el nombre del parámetro de ruta que cmd/api.buildRouter
+// registra para /public/barbershops/{slug}/services/{serviceId}/barbers
+// (HU-092).
+const serviceIDParam = "serviceId"
+
 // ResolveBarbershopHandler expone GET /public/barbershops/{slug}
 // (CA-090-01 a CA-090-04): resolución pública sin sesión, sin que el
 // cliente pueda fijar barbershopId.
@@ -124,4 +129,50 @@ func newPublicServiceListResponse(result publicbooking.PublicServiceListResult) 
 		nextCursor = &result.NextCursor
 	}
 	return PublicServiceListResponse{Items: items, NextCursor: nextCursor}
+}
+
+// ListPublicBarbersHandler expone
+// GET /public/barbershops/{slug}/services/{serviceId}/barbers (HU-092,
+// CA-092-01 a CA-092-03): barberos con asignación vigente al servicio activo
+// resuelto, sin sesión.
+type ListPublicBarbersHandler struct {
+	service *publicbooking.Service
+}
+
+// NewListPublicBarbersHandler construye el handler de selección pública de
+// barbero.
+func NewListPublicBarbersHandler(service *publicbooking.Service) *ListPublicBarbersHandler {
+	return &ListPublicBarbersHandler{service: service}
+}
+
+// ServeHTTP implementa http.Handler. Igual que los otros handlers públicos,
+// no lee ningún principal de sesión: slug y serviceId (ambos de la ruta) son
+// toda la entrada.
+func (h *ListPublicBarbersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+
+	slug := httpserver.URLParam(r, slugParam)
+	serviceID := httpserver.URLParam(r, serviceIDParam)
+
+	result, err := h.service.ListPublicBarbers(r.Context(), slug, serviceID)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(newPublicBarberListResponse(result))
+}
+
+func newPublicBarberResponse(b publicbooking.PublicBarber) PublicBarberResponse {
+	return PublicBarberResponse{ID: b.ID, FullName: b.FullName}
+}
+
+func newPublicBarberListResponse(result publicbooking.PublicBarberListResult) PublicBarberListResponse {
+	items := make([]PublicBarberResponse, 0, len(result.Items))
+	for _, barber := range result.Items {
+		items = append(items, newPublicBarberResponse(barber))
+	}
+	return PublicBarberListResponse{Items: items}
 }

@@ -46,6 +46,22 @@ const (
 	servicioActivoAsignado   = "Corte activo asignado HU-091"
 	servicioDosActivoID      = "00910201-0091-0091-0091-009102010201"
 	servicioDosActivo        = "Corte activo asignado HU-091 Dos"
+
+	// Par dedicado de hu092_seleccion_barbero.sql (HU-092): slugBarberoUno
+	// tiene un servicio con exactamente un barbero (matriz "1"), uno con dos
+	// (matriz "N"), uno sin ninguno (matriz "0") y uno inactivo con un
+	// barbero asignado (CA-092-02); slugBarberoDos existe exclusivamente
+	// para el aislamiento de tenant (CA-092-02/CA-092-03).
+	slugBarberoUno         = "barberia-hu092-uno"
+	slugBarberoDos         = "barberia-hu092-dos"
+	servicioUnBarberoID    = "00920101-0092-0092-0092-009201010101"
+	servicioVariosID       = "00920102-0092-0092-0092-009201020102"
+	servicioSinBarberosID  = "00920103-0092-0092-0092-009201030103"
+	servicioInactivoID     = "00920104-0092-0092-0092-009201040104"
+	servicioDosBarberoID   = "00920201-0092-0092-0092-009202010201"
+	barberoUnBarberoID     = "00920011-0092-0092-0092-009200110011"
+	barberoUnBarberoNombre = "Barbero HU-092 Uno-1"
+	barberoVariosSegundoID = "00920012-0092-0092-0092-009200120012"
 )
 
 func setupTestDB(t *testing.T) *database.DB {
@@ -306,5 +322,149 @@ func TestListPublicServices_LimitOne_PaginatesAcrossTwoPages(t *testing.T) {
 	}
 	if second.NextCursor != "" {
 		t.Fatalf("expected no nextCursor on the last page, got %q", second.NextCursor)
+	}
+}
+
+// TestListPublicBarbers_OneBarber_ReturnsSingleItem cubre CA-092-01 (caso
+// "1" de la matriz 0/1/N): exactamente un barbero elegible.
+func TestListPublicBarbers_OneBarber_ReturnsSingleItem(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+
+	result, found, err := repo.ListPublicBarbers(context.Background(), slugBarberoUno, servicioUnBarberoID)
+	if err != nil {
+		t.Fatalf("ListPublicBarbers: %v", err)
+	}
+	if !found {
+		t.Fatal("expected slugBarberoUno to resolve")
+	}
+	if len(result.Items) != 1 || result.Items[0].ID != barberoUnBarberoID || result.Items[0].FullName != barberoUnBarberoNombre {
+		t.Fatalf("expected exactly one barber (%s), got %+v", barberoUnBarberoID, result.Items)
+	}
+}
+
+// TestListPublicBarbers_ManyBarbers_ReturnsAllInStableOrder cubre CA-092-01
+// (caso "N"): varios barberos elegibles, en orden estable
+// (created_at de la asignación, id del barbero).
+func TestListPublicBarbers_ManyBarbers_ReturnsAllInStableOrder(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+
+	result, found, err := repo.ListPublicBarbers(context.Background(), slugBarberoUno, servicioVariosID)
+	if err != nil {
+		t.Fatalf("ListPublicBarbers: %v", err)
+	}
+	if !found {
+		t.Fatal("expected slugBarberoUno to resolve")
+	}
+	if len(result.Items) != 2 {
+		t.Fatalf("expected exactly 2 barbers, got %+v", result.Items)
+	}
+	if result.Items[0].ID != barberoUnBarberoID || result.Items[1].ID != barberoVariosSegundoID {
+		t.Fatalf("expected a stable order (%s, %s), got %+v", barberoUnBarberoID, barberoVariosSegundoID, result.Items)
+	}
+}
+
+// TestListPublicBarbers_ZeroBarbers_ReturnsEmptySuccess cubre CA-092-01
+// (caso "0"): un servicio activo sin ninguna asignación es un resultado
+// exitoso vacío, nunca un error.
+func TestListPublicBarbers_ZeroBarbers_ReturnsEmptySuccess(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+
+	result, found, err := repo.ListPublicBarbers(context.Background(), slugBarberoUno, servicioSinBarberosID)
+	if err != nil {
+		t.Fatalf("ListPublicBarbers: %v", err)
+	}
+	if !found {
+		t.Fatal("expected slugBarberoUno to resolve")
+	}
+	if len(result.Items) != 0 {
+		t.Fatalf("expected zero barbers, got %+v", result.Items)
+	}
+}
+
+// TestListPublicBarbers_InactiveService_ReturnsEmpty cubre CA-092-02: un
+// servicio inactivo nunca expone sus barberos asignados, aunque la
+// asignación exista.
+func TestListPublicBarbers_InactiveService_ReturnsEmpty(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+
+	result, found, err := repo.ListPublicBarbers(context.Background(), slugBarberoUno, servicioInactivoID)
+	if err != nil {
+		t.Fatalf("ListPublicBarbers: %v", err)
+	}
+	if !found {
+		t.Fatal("expected slugBarberoUno to resolve")
+	}
+	if len(result.Items) != 0 {
+		t.Fatalf("expected zero barbers for an inactive service, got %+v", result.Items)
+	}
+}
+
+// TestListPublicBarbers_MalformedServiceID_ReturnsEmptySuccess cubre
+// CA-092-03: un serviceID sin forma de UUID nunca produce un error de tipo
+// de PostgreSQL, y la barbería sigue resolviendo.
+func TestListPublicBarbers_MalformedServiceID_ReturnsEmptySuccess(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+
+	result, found, err := repo.ListPublicBarbers(context.Background(), slugBarberoUno, "no-es-un-uuid")
+	if err != nil {
+		t.Fatalf("ListPublicBarbers: %v", err)
+	}
+	if !found {
+		t.Fatal("expected slugBarberoUno to resolve regardless of a malformed serviceID")
+	}
+	if len(result.Items) != 0 {
+		t.Fatalf("expected zero barbers for a malformed serviceID, got %+v", result.Items)
+	}
+}
+
+// TestListPublicBarbers_UnknownSlug_ReturnsNotFound cubre la misma
+// respuesta uniforme que ResolveBySlug (CA-090-02, reutilizada aquí).
+func TestListPublicBarbers_UnknownSlug_ReturnsNotFound(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+
+	_, found, err := repo.ListPublicBarbers(context.Background(), "barberia-que-no-existe", servicioUnBarberoID)
+	if err != nil {
+		t.Fatalf("ListPublicBarbers: %v", err)
+	}
+	if found {
+		t.Fatal("expected an unknown slug not to resolve")
+	}
+}
+
+// TestListPublicBarbers_TenantAIsolatedFromTenantB cubre CA-092-02/
+// CA-092-03: un serviceId de la barbería Dos nunca devuelve barberos al
+// resolverse a través del slug de la barbería Uno, y viceversa, verificado
+// con dos tenants reales y asignaciones cruzadas.
+func TestListPublicBarbers_TenantAIsolatedFromTenantB(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+
+	crossUno, foundUno, err := repo.ListPublicBarbers(context.Background(), slugBarberoUno, servicioDosBarberoID)
+	if err != nil || !foundUno {
+		t.Fatalf("ListPublicBarbers(slugBarberoUno, servicioDosBarberoID): found=%v err=%v", foundUno, err)
+	}
+	if len(crossUno.Items) != 0 {
+		t.Fatalf("RN-TEN-01: slugBarberoUno exposed barbershop Dos's service barbers: %+v", crossUno.Items)
+	}
+
+	crossDos, foundDos, err := repo.ListPublicBarbers(context.Background(), slugBarberoDos, servicioUnBarberoID)
+	if err != nil || !foundDos {
+		t.Fatalf("ListPublicBarbers(slugBarberoDos, servicioUnBarberoID): found=%v err=%v", foundDos, err)
+	}
+	if len(crossDos.Items) != 0 {
+		t.Fatalf("RN-TEN-01: slugBarberoDos exposed barbershop Uno's service barbers: %+v", crossDos.Items)
+	}
+
+	// Confirma además que cada barbería SÍ resuelve su propio servicio
+	// (el aislamiento no es un falso negativo generalizado).
+	own, foundOwn, err := repo.ListPublicBarbers(context.Background(), slugBarberoDos, servicioDosBarberoID)
+	if err != nil || !foundOwn || len(own.Items) != 1 {
+		t.Fatalf("ListPublicBarbers(slugBarberoDos, servicioDosBarberoID): found=%v items=%d err=%v", foundOwn, len(own.Items), err)
 	}
 }

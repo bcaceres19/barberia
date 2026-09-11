@@ -217,3 +217,71 @@ func (r *Repository) ListPublicServices(ctx context.Context, slug string, cursor
 	}
 	return result, true, nil
 }
+
+// ListPublicBarbers implementa publicbooking.Repository.ListPublicBarbers
+// con el mismo patrón de dos pasos que ListPublicServices: resuelve slug SIN
+// contexto de tenant mediante public_resolve_barbershop_by_slug y, si
+// resuelve, abre una transacción tenant-aware (InTenantTx) para leer los
+// barberos con asignación vigente al servicio activo serviceID (HU-092,
+// CA-092-02). serviceID sin forma de UUID se descarta ANTES de construir la
+// consulta (evita un error de tipo de PostgreSQL sobre una columna `uuid`),
+// pero SOLO después de resolver la barbería: found sigue reflejando
+// exclusivamente si la barbería existe, nunca si serviceID es válido
+// (CA-092-03: un serviceID inválido, ajeno, inexistente o de un servicio
+// inactivo produce la MISMA lista vacía que uno sin barberos asignados).
+func (r *Repository) ListPublicBarbers(ctx context.Context, slug string, serviceID string) (publicbooking.PublicBarberListResult, bool, error) {
+	barbershopID, found, err := r.db.ResolveTenant(ctx,
+		`SELECT public_resolve_barbershop_by_slug($1)`,
+		slug,
+	)
+	if err != nil {
+		return publicbooking.PublicBarberListResult{}, false, fmt.Errorf("publicbooking/postgres: resolve tenant by slug: %w", err)
+	}
+	if !found {
+		return publicbooking.PublicBarberListResult{}, false, nil
+	}
+
+	var result publicbooking.PublicBarberListResult
+	if !publicbooking.LooksLikePublicServiceID(serviceID) {
+		return result, true, nil
+	}
+
+	err = r.db.InTenantTx(ctx, barbershopID, func(ctx context.Context, q database.Queries) error {
+		rows, err := q.Query(ctx,
+			`SELECT b.id, b.full_name
+			   FROM barber b
+			   JOIN barber_service bs
+			     ON bs.barbershop_id = b.barbershop_id AND bs.barber_id = b.id
+			   JOIN service s
+			     ON s.barbershop_id = bs.barbershop_id AND s.id = bs.service_id
+			  WHERE b.barbershop_id = $1
+			    AND bs.service_id = $2
+			    AND s.is_active = true
+			  ORDER BY bs.created_at, b.id`,
+			string(barbershopID), serviceID,
+		)
+		if err != nil {
+			return fmt.Errorf("list public barbers: query: %w", err)
+		}
+		defer rows.Close()
+
+		items := make([]publicbooking.PublicBarber, 0)
+		for rows.Next() {
+			var barber publicbooking.PublicBarber
+			if err := rows.Scan(&barber.ID, &barber.FullName); err != nil {
+				return fmt.Errorf("list public barbers: scan: %w", err)
+			}
+			items = append(items, barber)
+		}
+		if err := rows.Err(); err != nil {
+			return fmt.Errorf("list public barbers: rows: %w", err)
+		}
+
+		result.Items = items
+		return nil
+	})
+	if err != nil {
+		return publicbooking.PublicBarberListResult{}, false, fmt.Errorf("publicbooking/postgres: read public barbers: %w", err)
+	}
+	return result, true, nil
+}

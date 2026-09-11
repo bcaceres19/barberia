@@ -1,0 +1,24 @@
+# Proyección pública mínima de un barbero (HU-092, CA-092-02): id,
+# fullName. Nunca foto, biografía, preferencia, barbershopId ni ningún otro
+# identificador de tenant -esos campos quedan fuera de alcance de HU-092.
+type: object
+description: >
+  Barbero de la barbería resuelta con asignación vigente al servicio activo
+  elegido (HU-092, CA-092-02).
+properties:
+  id:
+    type: string
+    format: uuid
+    description: Identificador del barbero, necesario para seleccionarlo al reservar.
+    examples:
+      - 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+  fullName:
+    type: string
+    minLength: 1
+    maxLength: 120
+    description: Nombre completo visible del barbero.
+    examples:
+      - Juan Pérez
+required:
+  - id
+  - fullName

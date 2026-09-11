@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"time"
 
 	"system-barbershop/internal/platform/apperr"
@@ -113,4 +114,44 @@ func DecodeServiceCursor(raw string) (ServiceCursor, error) {
 		return ServiceCursor{}, apperr.Invalid("el parámetro cursor tiene un formato inválido")
 	}
 	return ServiceCursor{CreatedAt: w.CreatedAt, ID: w.ID}, nil
+}
+
+// PublicBarber es la proyección pública mínima de un barbero con asignación
+// vigente al servicio activo resuelto (HU-092, CA-092-02): únicamente ID y
+// nombre completo. Nunca foto, biografía, preferencia ni ningún otro campo
+// de staff.Barber -esos quedan fuera del alcance de HU-092. El núcleo de
+// publicbooking no importa staff (CA-002-06, mismo criterio que
+// PublicService frente a catalog.Service): repite su propia proyección
+// mínima en vez de una dependencia cruzada entre módulos.
+type PublicBarber struct {
+	ID       string
+	FullName string
+}
+
+// PublicBarberListResult es la lista completa (sin paginar: HU-092 no
+// documenta un tope de negocio de barberos por servicio, y el volumen
+// esperado -barberos de una sola barbería- nunca justifica cursor) de
+// barberos elegibles, ya ordenada de forma estable (created_at de la
+// asignación, id del barbero) para que la matriz 0/1/N (CA-092-01) sea
+// determinista entre llamadas.
+type PublicBarberListResult struct {
+	Items []PublicBarber
+}
+
+// serviceIDPattern es la misma forma canónica 8-4-4-4-12 que
+// catalog.LooksLikeServiceID exige (el núcleo de publicbooking no puede
+// importar catalog, CA-002-06, así que se repite la validación aquí, mismo
+// criterio que catalog.barberIDPattern frente a staff.LooksLikeBarberID).
+var serviceIDPattern = regexp.MustCompile(
+	`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`,
+)
+
+// LooksLikePublicServiceID informa si id tiene la forma de un UUID válido.
+// Un identificador que no la tiene no puede corresponder a ninguna fila
+// real: CA-092-03 lo trata igual que un servicio ajeno, inexistente o ya no
+// asignado -lista vacía, nunca un error que distinga la causa- así que se
+// descarta ANTES de tocar la base, con el mismo tiempo de respuesta que
+// cualquier otro caso de esa misma familia.
+func LooksLikePublicServiceID(id string) bool {
+	return serviceIDPattern.MatchString(id)
 }

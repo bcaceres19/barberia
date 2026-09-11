@@ -1,0 +1,32 @@
+# Respuesta 200 de
+# GET /public/barbershops/{slug}/services/{serviceId}/barbers (HU-092,
+# CA-092-01 a CA-092-03).
+description: Barberos con asignación vigente al servicio activo resuelto.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/PublicBarberListResponse.yaml'
+    examples:
+      unBarbero:
+        summary: Exactamente un barbero elegible (preselección automática, CA-092-01)
+        value:
+          items:
+            - id: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+              fullName: Juan Pérez
+      variosBarberos:
+        summary: Varios barberos elegibles (elección explícita, CA-092-01)
+        value:
+          items:
+            - id: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+              fullName: Ana Gómez
+            - id: 1c9a7f2d-3b4e-4a5f-9c6d-7e8f9a0b1c2d
+              fullName: Luis Rojas
+      sinBarberos:
+        summary: >
+          Sin barberos elegibles: servicio sin asignación, ajeno, inexistente
+          o inactivo (CA-092-03, misma respuesta uniforme)
+        value:
+          items: []

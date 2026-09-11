@@ -30,4 +30,17 @@ type Repository interface {
 	// que ResolveBySlug, así que el núcleo de publicbooking nunca retiene ni
 	// recibe un identificador interno entre ambas operaciones.
 	ListPublicServices(ctx context.Context, slug string, cursor *ServiceCursor, limit int) (result PublicServiceListResult, barbershopFound bool, err error)
+
+	// ListPublicBarbers resuelve slug EXACTAMENTE como ResolveBySlug/
+	// ListPublicServices y, si resuelve, lee los barberos con asignación
+	// vigente a serviceID (HU-092, CA-092-02) ordenados por
+	// (created_at de la asignación, barber.id). serviceID ya llegó validado
+	// como forma de UUID por Service (LooksLikePublicServiceID); un
+	// serviceID de otra barbería, inexistente, o de un servicio inactivo
+	// produce una lista vacía -NUNCA un error distinto- porque el filtro
+	// tenant-aware ya lo excluye igual que "sin barberos asignados"
+	// (CA-092-03: misma respuesta uniforme, sin distinguir la causa).
+	// barbershopFound=false cubre exactamente el mismo universo de causas
+	// que ResolveBySlug found=false.
+	ListPublicBarbers(ctx context.Context, slug string, serviceID string) (result PublicBarberListResult, barbershopFound bool, err error)
 }

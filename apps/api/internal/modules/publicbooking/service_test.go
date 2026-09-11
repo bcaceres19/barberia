@@ -27,12 +27,22 @@ type fakeRepository struct {
 	listFound  bool
 	listErr    error
 	listCalls  []listCall
+
+	barbersResult publicbooking.PublicBarberListResult
+	barbersFound  bool
+	barbersErr    error
+	barbersCalls  []barbersCall
 }
 
 type listCall struct {
 	slug   string
 	cursor *publicbooking.ServiceCursor
 	limit  int
+}
+
+type barbersCall struct {
+	slug      string
+	serviceID string
 }
 
 func (f *fakeRepository) ResolveBySlug(_ context.Context, slug string) (publicbooking.BarbershopProfile, bool, error) {
@@ -45,7 +55,14 @@ func (f *fakeRepository) ListPublicServices(_ context.Context, slug string, curs
 	return f.listResult, f.listFound, f.listErr
 }
 
+func (f *fakeRepository) ListPublicBarbers(_ context.Context, slug string, serviceID string) (publicbooking.PublicBarberListResult, bool, error) {
+	f.barbersCalls = append(f.barbersCalls, barbersCall{slug: slug, serviceID: serviceID})
+	return f.barbersResult, f.barbersFound, f.barbersErr
+}
+
 var _ publicbooking.Repository = (*fakeRepository)(nil)
+
+const validServiceID = "11111111-1111-1111-1111-111111111111"
 
 func assertNotFound(t *testing.T, err error) {
 	t.Helper()
@@ -263,5 +280,128 @@ func TestListPublicServices_ContextCancelled_ReturnsInternalWithoutCallingReposi
 	}
 	if len(repo.listCalls) != 0 {
 		t.Fatalf("expected zero repository calls with a cancelled context, got %v", repo.listCalls)
+	}
+}
+
+func TestListPublicBarbers_Found_ReturnsResult(t *testing.T) {
+	want := publicbooking.PublicBarberListResult{
+		Items: []publicbooking.PublicBarber{{ID: "1", FullName: "Juan Pérez"}},
+	}
+	repo := &fakeRepository{barbersResult: want, barbersFound: true}
+	svc := publicbooking.NewService(repo)
+
+	got, err := svc.ListPublicBarbers(context.Background(), "barberia-ejemplo", validServiceID)
+	if err != nil {
+		t.Fatalf("ListPublicBarbers: %v", err)
+	}
+	if len(got.Items) != 1 || got.Items[0] != want.Items[0] {
+		t.Fatalf("expected %+v, got %+v", want, got)
+	}
+	if len(repo.barbersCalls) != 1 || repo.barbersCalls[0].slug != "barberia-ejemplo" || repo.barbersCalls[0].serviceID != validServiceID {
+		t.Fatalf("expected one call with the trimmed slug and serviceID, got %+v", repo.barbersCalls)
+	}
+}
+
+func TestListPublicBarbers_TrimsSurroundingWhitespaceBeforeCallingRepository(t *testing.T) {
+	repo := &fakeRepository{barbersFound: true}
+	svc := publicbooking.NewService(repo)
+
+	if _, err := svc.ListPublicBarbers(context.Background(), "  barberia-ejemplo  ", validServiceID); err != nil {
+		t.Fatalf("ListPublicBarbers: %v", err)
+	}
+	if len(repo.barbersCalls) != 1 || repo.barbersCalls[0].slug != "barberia-ejemplo" {
+		t.Fatalf("expected the repository to receive the trimmed slug, got %v", repo.barbersCalls)
+	}
+}
+
+// Cero barberos elegibles (CA-092-03, extremo "0" de la matriz 0/1/N) no es
+// un error: el repositorio ya resolvió la barbería, así que el resultado es
+// una lista vacía exitosa, indistinguible de un serviceID ajeno o inválido.
+func TestListPublicBarbers_ZeroBarbers_ReturnsEmptySuccessResult(t *testing.T) {
+	repo := &fakeRepository{barbersResult: publicbooking.PublicBarberListResult{Items: []publicbooking.PublicBarber{}}, barbersFound: true}
+	svc := publicbooking.NewService(repo)
+
+	got, err := svc.ListPublicBarbers(context.Background(), "barberia-ejemplo", validServiceID)
+	if err != nil {
+		t.Fatalf("ListPublicBarbers: %v", err)
+	}
+	if len(got.Items) != 0 {
+		t.Fatalf("expected zero items, got %+v", got.Items)
+	}
+}
+
+func TestListPublicBarbers_BarbershopNotFound_ReturnsNotFoundWithoutLeakingCause(t *testing.T) {
+	repo := &fakeRepository{barbersFound: false}
+	svc := publicbooking.NewService(repo)
+
+	_, err := svc.ListPublicBarbers(context.Background(), "no-existe", validServiceID)
+	assertNotFound(t, err)
+}
+
+func TestListPublicBarbers_EmptySlug_ReturnsNotFoundWithoutCallingRepository(t *testing.T) {
+	repo := &fakeRepository{}
+	svc := publicbooking.NewService(repo)
+
+	_, err := svc.ListPublicBarbers(context.Background(), "   ", validServiceID)
+	assertNotFound(t, err)
+	if len(repo.barbersCalls) != 0 {
+		t.Fatalf("expected zero repository calls for an empty slug, got %v", repo.barbersCalls)
+	}
+}
+
+func TestListPublicBarbers_SlugTooLong_ReturnsNotFoundWithoutCallingRepository(t *testing.T) {
+	repo := &fakeRepository{}
+	svc := publicbooking.NewService(repo)
+
+	tooLong := strings.Repeat("a", publicbooking.MaxSlugLength+1)
+	_, err := svc.ListPublicBarbers(context.Background(), tooLong, validServiceID)
+	assertNotFound(t, err)
+	if len(repo.barbersCalls) != 0 {
+		t.Fatalf("expected zero repository calls for an overlong slug, got %v", repo.barbersCalls)
+	}
+}
+
+// Un serviceID malformado SÍ llega al repositorio (que resuelve la barbería
+// primero y descarta el formato después, sin tocar la base con un valor no
+// UUID): CA-092-03 exige que esta causa sea indistinguible de "ajeno" o "ya
+// no asignado" en el nivel de Service, nunca del universo distinto de
+// "barbería desconocida".
+func TestListPublicBarbers_MalformedServiceID_StillResolvesBarbershop(t *testing.T) {
+	repo := &fakeRepository{barbersFound: true}
+	svc := publicbooking.NewService(repo)
+
+	if _, err := svc.ListPublicBarbers(context.Background(), "barberia-ejemplo", "no-es-un-uuid"); err != nil {
+		t.Fatalf("ListPublicBarbers: %v", err)
+	}
+	if len(repo.barbersCalls) != 1 || repo.barbersCalls[0].serviceID != "no-es-un-uuid" {
+		t.Fatalf("expected the repository to receive the raw serviceID, got %v", repo.barbersCalls)
+	}
+}
+
+func TestListPublicBarbers_RepositoryError_ReturnsInternal(t *testing.T) {
+	repo := &fakeRepository{barbersErr: errors.New("boom")}
+	svc := publicbooking.NewService(repo)
+
+	_, err := svc.ListPublicBarbers(context.Background(), "barberia-ejemplo", validServiceID)
+	appErr, ok := apperr.As(err)
+	if !ok || appErr.Kind != apperr.KindInternal {
+		t.Fatalf("expected apperr.KindInternal, got %v", err)
+	}
+}
+
+func TestListPublicBarbers_ContextCancelled_ReturnsInternalWithoutCallingRepository(t *testing.T) {
+	repo := &fakeRepository{}
+	svc := publicbooking.NewService(repo)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := svc.ListPublicBarbers(ctx, "barberia-ejemplo", validServiceID)
+	appErr, ok := apperr.As(err)
+	if !ok || appErr.Kind != apperr.KindInternal {
+		t.Fatalf("expected apperr.KindInternal, got %v", err)
+	}
+	if len(repo.barbersCalls) != 0 {
+		t.Fatalf("expected zero repository calls with a cancelled context, got %v", repo.barbersCalls)
 	}
 }

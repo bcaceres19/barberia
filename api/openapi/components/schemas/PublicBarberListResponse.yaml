@@ -1,0 +1,18 @@
+# Colección completa (sin paginar: HU-092 no documenta un tope de negocio
+# de barberos por servicio) de barberos elegibles para el servicio activo
+# resuelto.
+type: object
+description: >
+  Barberos con asignación vigente al servicio activo resuelto (HU-092,
+  CA-092-02), ordenados de forma estable por fecha de asignación y luego
+  por identificador. Un arreglo vacío (CA-092-03) cubre por igual un
+  servicio sin ningún barbero asignado, ajeno a esta barbería, inexistente
+  o inactivo: la causa nunca se distingue.
+properties:
+  items:
+    type: array
+    description: Barberos elegibles, en el orden estable del servidor.
+    items:
+      $ref: './PublicBarberResponse.yaml'
+required:
+  - items

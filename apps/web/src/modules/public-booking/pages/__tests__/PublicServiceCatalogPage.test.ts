@@ -17,6 +17,19 @@ vi.mock('@/shared/api/httpClient', () => ({
 
 const { default: PublicServiceCatalogPage } = await import('../PublicServiceCatalogPage.vue')
 
+// RouterLink stubbed en vez de un router real (mismo patrón que
+// PublicBarbershopEntryPage.test.ts): esta suite verifica el componente en
+// aislamiento, no el enrutamiento, y el CTA "Continuar" (HU-092) navega a
+// la ruta de selección de barbero del servicio elegido.
+const RouterLinkStub = { name: 'RouterLink', props: ['to'], template: '<a><slot /></a>' }
+
+function mountCatalogPage(props: { slug: string }) {
+  return mount(PublicServiceCatalogPage, {
+    props,
+    global: { stubs: { RouterLink: RouterLinkStub } },
+  })
+}
+
 function okResponse(): Response {
   return { ok: true, status: 200, headers: new Headers() } as Response
 }
@@ -49,7 +62,7 @@ describe('PublicServiceCatalogPage', () => {
         resolveRequest = resolve
       }),
     )
-    const wrapper = mount(PublicServiceCatalogPage, { props: { slug: 'barberia-ejemplo' } })
+    const wrapper = mountCatalogPage({ slug: 'barberia-ejemplo' })
 
     expect(wrapper.text()).toContain('Cargando servicios')
 
@@ -63,7 +76,7 @@ describe('PublicServiceCatalogPage', () => {
       error: undefined,
       response: okResponse(),
     })
-    mount(PublicServiceCatalogPage, { props: { slug: 'barberia-ejemplo' } })
+    mountCatalogPage({ slug: 'barberia-ejemplo' })
     await flushPromises()
 
     expect(getMock).toHaveBeenCalledWith(
@@ -97,7 +110,7 @@ describe('PublicServiceCatalogPage', () => {
       error: undefined,
       response: okResponse(),
     })
-    const wrapper = mount(PublicServiceCatalogPage, { props: { slug: 'barberia-ejemplo' } })
+    const wrapper = mountCatalogPage({ slug: 'barberia-ejemplo' })
     await flushPromises()
 
     expect(wrapper.text()).toContain('Corte clásico')
@@ -114,7 +127,7 @@ describe('PublicServiceCatalogPage', () => {
       error: undefined,
       response: okResponse(),
     })
-    const wrapper = mount(PublicServiceCatalogPage, { props: { slug: 'barberia-ejemplo' } })
+    const wrapper = mountCatalogPage({ slug: 'barberia-ejemplo' })
     await flushPromises()
 
     expect(wrapper.text()).toContain('todavía no tiene servicios disponibles')
@@ -127,7 +140,7 @@ describe('PublicServiceCatalogPage', () => {
       error: { status: 404 },
       response: errorResponse(404),
     })
-    const wrapper = mount(PublicServiceCatalogPage, { props: { slug: 'no-existe' } })
+    const wrapper = mountCatalogPage({ slug: 'no-existe' })
     await flushPromises()
 
     expect(wrapper.text()).toContain('No encontramos ese enlace')
@@ -135,7 +148,7 @@ describe('PublicServiceCatalogPage', () => {
 
   it('offers a retry action on a network error, re-fetching the same slug', async () => {
     getMock.mockRejectedValueOnce(new TypeError('Failed to fetch'))
-    const wrapper = mount(PublicServiceCatalogPage, { props: { slug: 'barberia-ejemplo' } })
+    const wrapper = mountCatalogPage({ slug: 'barberia-ejemplo' })
     await flushPromises()
     expect(wrapper.text()).toContain('No pudimos conectar')
 
@@ -157,7 +170,7 @@ describe('PublicServiceCatalogPage', () => {
       error: { status: 500, code: 'internal', title: 'Error interno', requestId: 'req-abc-123' },
       response: errorResponse(500),
     })
-    const wrapper = mount(PublicServiceCatalogPage, { props: { slug: 'barberia-ejemplo' } })
+    const wrapper = mountCatalogPage({ slug: 'barberia-ejemplo' })
     await flushPromises()
 
     expect(wrapper.text()).toContain('req-abc-123')
@@ -176,7 +189,7 @@ describe('PublicServiceCatalogPage', () => {
       error: undefined,
       response: okResponse(),
     })
-    const wrapper = mount(PublicServiceCatalogPage, { props: { slug: 'barberia-ejemplo' } })
+    const wrapper = mountCatalogPage({ slug: 'barberia-ejemplo' })
     await flushPromises()
 
     const options = wrapper.findAll('[role="radio"]')
@@ -202,7 +215,7 @@ describe('PublicServiceCatalogPage', () => {
       error: undefined,
       response: okResponse(),
     })
-    const wrapper = mount(PublicServiceCatalogPage, { props: { slug: 'barberia-ejemplo' } })
+    const wrapper = mountCatalogPage({ slug: 'barberia-ejemplo' })
     await flushPromises()
 
     const list = wrapper.find('[role="radiogroup"]')
@@ -215,7 +228,7 @@ describe('PublicServiceCatalogPage', () => {
 
   it('has no accessibility violations in the loading state', async () => {
     getMock.mockReturnValueOnce(new Promise(() => {}))
-    const wrapper = mount(PublicServiceCatalogPage, { props: { slug: 'barberia-ejemplo' } })
+    const wrapper = mountCatalogPage({ slug: 'barberia-ejemplo' })
     const results = await axe(wrapper.element)
     expect(results).toHaveNoViolations()
   })
@@ -229,7 +242,7 @@ describe('PublicServiceCatalogPage', () => {
       error: undefined,
       response: okResponse(),
     })
-    const wrapper = mount(PublicServiceCatalogPage, { props: { slug: 'barberia-ejemplo' } })
+    const wrapper = mountCatalogPage({ slug: 'barberia-ejemplo' })
     await flushPromises()
     const results = await axe(wrapper.element)
     expect(results).toHaveNoViolations()
@@ -241,7 +254,7 @@ describe('PublicServiceCatalogPage', () => {
       error: undefined,
       response: okResponse(),
     })
-    const wrapper = mount(PublicServiceCatalogPage, { props: { slug: 'barberia-ejemplo' } })
+    const wrapper = mountCatalogPage({ slug: 'barberia-ejemplo' })
     await flushPromises()
     const results = await axe(wrapper.element)
     expect(results).toHaveNoViolations()
@@ -253,9 +266,40 @@ describe('PublicServiceCatalogPage', () => {
       error: { status: 404 },
       response: errorResponse(404),
     })
-    const wrapper = mount(PublicServiceCatalogPage, { props: { slug: 'no-existe' } })
+    const wrapper = mountCatalogPage({ slug: 'no-existe' })
     await flushPromises()
     const results = await axe(wrapper.element)
     expect(results).toHaveNoViolations()
+  })
+
+  it('hides the "Continuar" CTA until a service is selected (HU-092)', async () => {
+    getMock.mockResolvedValueOnce({
+      data: { items: [serviceFixture({ id: 'a' })], nextCursor: null },
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mountCatalogPage({ slug: 'barberia-ejemplo' })
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Continuar')
+  })
+
+  it('shows "Continuar" navigating to the barber selection route of the selected service (HU-092)', async () => {
+    getMock.mockResolvedValueOnce({
+      data: { items: [serviceFixture({ id: 'a' })], nextCursor: null },
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mountCatalogPage({ slug: 'barberia-ejemplo' })
+    await flushPromises()
+
+    await wrapper.find('[role="radio"]').trigger('click')
+
+    const cta = wrapper.findComponent(RouterLinkStub)
+    expect(cta.text()).toContain('Continuar')
+    expect(cta.props('to')).toEqual({
+      name: 'reserva-publica-barbero',
+      params: { slug: 'barberia-ejemplo', serviceId: 'a' },
+    })
   })
 })

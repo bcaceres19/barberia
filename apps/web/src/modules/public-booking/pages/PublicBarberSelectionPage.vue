@@ -1,39 +1,46 @@
 <script setup lang="ts">
-// Página coordinadora del catálogo público de servicios (HU-091,
-// CA-091-01 a CA-091-05). Sin mockup asignado: composición libre dentro de
-// NAVA / Tailored Grid (DEC-078). Posee estado y reintento; no conoce la
-// forma RFC 9457 del contrato (eso queda dentro de
-// `api/listPublicServicesApi.ts`).
+// Página coordinadora de la selección pública de barbero (HU-092, CA-092-01
+// a CA-092-05). Sin mockup asignado: composición libre dentro de NAVA /
+// Tailored Grid (DEC-078). Posee estado y reintento; no conoce la forma
+// RFC 9457 del contrato (eso queda dentro de `api/listPublicBarbersApi.ts`).
 //
-// Selección: lista `role="radiogroup"` con roving tabindex (WAI-ARIA APG,
-// mismo patrón de teclado que BarberSelect.vue, sin el popup/colapso que
-// ese widget sí necesita). La selección se indica con `aria-checked`, un
-// borde de énfasis y un ícono de marca -nunca solo color (CA-091-04)-. Esta
-// historia no crea ninguna cita (fuera de alcance de HU-091 y HU-092); tras
-// elegir un servicio, el botón "Continuar" (HU-092) navega a la selección
-// pública de barbero de ESE servicio.
-import { computed, nextTick, onMounted, ref } from 'vue'
+// Matriz 0/1/N (CA-092-01): con un único barbero elegible se preselecciona
+// automáticamente y se informa sin exigir una interacción adicional; con
+// varios, se exige elección explícita mediante un `role="radiogroup"` con
+// roving tabindex (mismo patrón de teclado que PublicServiceCatalogPage.vue);
+// con cero, un EmptyState distinto de carga o error.
+//
+// Revalidación (CA-092-04): un cambio de `serviceId` (mismo componente
+// reutilizado por vue-router al cambiar solo el parámetro de ruta) dispara
+// una nueva carga; una respuesta tardía de una carga ya reemplazada se
+// descarta con un token monótono, y la selección previa solo se conserva si
+// el barbero sigue en la lista fresca -nunca se asume compatible sin
+// revalidarla contra la respuesta del servidor.
+import { computed, nextTick, ref, watch } from 'vue'
 import { BaseButton, EmptyState, PageState } from '@/shared/ui'
-import { listPublicServices } from '../api/listPublicServicesApi'
-import type { PublicService } from '../model/publicServiceListOutcome'
+import { listPublicBarbers } from '../api/listPublicBarbersApi'
+import type { PublicBarber } from '../model/publicBarberListOutcome'
 
 interface Props {
   /** Identificador del enlace público, tal como llega del parámetro de
-   * ruta `:slug` (app/router, `props: true`). No confiado: el servidor lo
-   * vuelve a resolver desde cero, igual que PublicBarbershopEntryPage. */
+   * ruta `:slug`. No confiado: el servidor lo vuelve a resolver desde cero. */
   slug: string
+  /** Identificador del servicio activo ya elegido, tal como llega del
+   * parámetro de ruta `:serviceId`. No confiado: el servidor revalida
+   * pertenencia, vigencia y asignación en cada lectura (CA-092-03). */
+  serviceId: string
 }
 const props = defineProps<Props>()
 
 type ScreenState =
   | { status: 'loading' }
-  | { status: 'success'; services: PublicService[] }
+  | { status: 'success'; barbers: PublicBarber[] }
   | { status: 'not-found' }
   | { status: 'network-error' }
   | { status: 'unexpected-error'; requestId?: string }
 
 const screenState = ref<ScreenState>({ status: 'loading' })
-const selectedServiceId = ref<string | null>(null)
+const selectedBarberId = ref<string | null>(null)
 const activeIndex = ref(0)
 const optionRefs = ref<HTMLElement[]>([])
 
@@ -41,14 +48,38 @@ function setOptionRef(el: Element | { $el?: Element } | null, index: number) {
   if (el instanceof HTMLElement) optionRefs.value[index] = el
 }
 
+let requestToken = 0
+
 async function load() {
+  const token = ++requestToken
   screenState.value = { status: 'loading' }
-  selectedServiceId.value = null
-  const outcome = await listPublicServices(props.slug)
+  optionRefs.value = []
+  activeIndex.value = 0
+
+  const outcome = await listPublicBarbers(props.slug, props.serviceId)
+  // Una respuesta tardía de una carga ya reemplazada (serviceId cambió de
+  // nuevo mientras esta esperaba) se descarta: nunca sobrescribe el estado
+  // de la carga vigente (CA-092-04).
+  if (token !== requestToken) return
+
   switch (outcome.kind) {
-    case 'success':
-      screenState.value = { status: 'success', services: outcome.services }
+    case 'success': {
+      const barbers = outcome.barbers
+      screenState.value = { status: 'success', barbers }
+      if (barbers.length === 1) {
+        // CA-092-01: exactamente un barbero elegible se preselecciona sin
+        // paso adicional.
+        selectedBarberId.value = barbers[0].id
+      } else if (
+        selectedBarberId.value !== null &&
+        !barbers.some((b) => b.id === selectedBarberId.value)
+      ) {
+        // CA-092-04: una selección previa incompatible con la lista fresca
+        // se limpia; una compatible se conserva tal cual, ya revalidada.
+        selectedBarberId.value = null
+      }
       return
+    }
     case 'not-found':
       screenState.value = { status: 'not-found' }
       return
@@ -60,23 +91,21 @@ async function load() {
   }
 }
 
-onMounted(load)
+watch(() => [props.slug, props.serviceId], load, { immediate: true })
 
 const retry = () => {
   void load()
 }
 
-const services = computed(() =>
-  screenState.value.status === 'success' ? screenState.value.services : [],
+const barbers = computed(() =>
+  screenState.value.status === 'success' ? screenState.value.barbers : [],
 )
 
-function formatPrice(service: PublicService): string {
-  return `${service.price} ${service.currency}`
-}
+const isSinglePreselected = computed(() => barbers.value.length === 1)
 
-function selectService(serviceId: string) {
-  selectedServiceId.value = serviceId
-  const index = services.value.findIndex((s) => s.id === serviceId)
+function selectBarber(barberId: string) {
+  selectedBarberId.value = barberId
+  const index = barbers.value.findIndex((b) => b.id === barberId)
   if (index >= 0) activeIndex.value = index
 }
 
@@ -86,7 +115,7 @@ async function focusActive() {
 }
 
 function moveActive(delta: number) {
-  const count = services.value.length
+  const count = barbers.value.length
   if (count === 0) return
   activeIndex.value = (activeIndex.value + delta + count) % count
   void focusActive()
@@ -111,14 +140,14 @@ function onListKeydown(event: KeyboardEvent) {
       break
     case 'End':
       event.preventDefault()
-      activeIndex.value = services.value.length - 1
+      activeIndex.value = barbers.value.length - 1
       void focusActive()
       break
     case ' ':
     case 'Enter': {
       event.preventDefault()
-      const service = services.value[activeIndex.value]
-      if (service) selectService(service.id)
+      const barber = barbers.value[activeIndex.value]
+      if (barber) selectBarber(barber.id)
       break
     }
   }
@@ -134,12 +163,12 @@ const unexpectedErrorMessage = computed(() => {
 </script>
 
 <template>
-  <main v-if="screenState.status !== 'success'" class="service-catalog service-catalog--state">
-    <h1 class="visually-hidden">Elegir servicio</h1>
+  <main v-if="screenState.status !== 'success'" class="barber-selection barber-selection--state">
+    <h1 class="visually-hidden">Elegir barbero</h1>
     <PageState
       v-if="screenState.status === 'loading'"
       variant="loading"
-      headline="Cargando servicios…"
+      headline="Cargando barberos…"
       role="status"
     />
     <PageState
@@ -183,76 +212,61 @@ const unexpectedErrorMessage = computed(() => {
     </PageState>
   </main>
 
-  <main v-else class="service-catalog service-catalog--list">
-    <div class="service-catalog__container">
-      <h1 class="service-catalog__title">Elige tu servicio</h1>
+  <main v-else class="barber-selection barber-selection--list">
+    <div class="barber-selection__container">
+      <h1 class="barber-selection__title">Elige tu barbero</h1>
 
       <EmptyState
-        v-if="services.length === 0"
-        message="Esta barbería todavía no tiene servicios disponibles para reservar."
+        v-if="barbers.length === 0"
+        message="Este servicio no tiene barberos disponibles en este momento."
       />
+
+      <!-- CA-092-01: un único barbero elegible se informa sin presentarse
+           como una elección pendiente (sin radiogroup, sin paso adicional). -->
+      <p v-else-if="isSinglePreselected" class="barber-selection__preselected" role="status">
+        Te atenderá <strong>{{ barbers[0]!.fullName }}</strong>
+      </p>
 
       <ul
         v-else
-        class="service-catalog__list"
+        class="barber-selection__list"
         role="radiogroup"
-        aria-label="Servicios disponibles"
+        aria-label="Barberos disponibles"
         @keydown="onListKeydown"
       >
         <li
-          v-for="(service, index) in services"
-          :key="service.id"
+          v-for="(barber, index) in barbers"
+          :key="barber.id"
           :ref="(el) => setOptionRef(el as Element | null, index)"
-          class="service-catalog__item"
-          :class="{ 'service-catalog__item--selected': service.id === selectedServiceId }"
+          class="barber-selection__item"
+          :class="{ 'barber-selection__item--selected': barber.id === selectedBarberId }"
           role="radio"
-          :aria-checked="service.id === selectedServiceId"
+          :aria-checked="barber.id === selectedBarberId"
           :tabindex="index === activeIndex ? 0 : -1"
-          @click="selectService(service.id)"
+          @click="selectBarber(barber.id)"
         >
-          <span class="service-catalog__item-check" aria-hidden="true"></span>
-          <span class="service-catalog__item-body">
-            <span class="service-catalog__item-name">{{ service.name }}</span>
-            <span v-if="service.description" class="service-catalog__item-description">{{
-              service.description
-            }}</span>
-            <span class="service-catalog__item-meta">
-              <span>{{ service.durationMinutes }} min</span>
-              <span aria-hidden="true">·</span>
-              <span>{{ formatPrice(service) }}</span>
-            </span>
-          </span>
+          <span class="barber-selection__item-check" aria-hidden="true"></span>
+          <span class="barber-selection__item-name">{{ barber.fullName }}</span>
         </li>
       </ul>
-
-      <RouterLink
-        v-if="selectedServiceId"
-        :to="{
-          name: 'reserva-publica-barbero',
-          params: { slug: props.slug, serviceId: selectedServiceId },
-        }"
-        class="service-catalog__cta"
-      >
-        Continuar
-      </RouterLink>
     </div>
   </main>
 </template>
 
 <style scoped>
-.service-catalog {
+.barber-selection {
   display: flex;
   min-height: 100dvh;
   justify-content: center;
   padding: var(--space-6) var(--space-4);
 }
 
-.service-catalog--state {
+.barber-selection--state {
   align-items: center;
   background-color: var(--color-surface-strong);
 }
 
-.service-catalog--list {
+.barber-selection--list {
   background-color: var(--color-canvas);
 }
 
@@ -268,7 +282,7 @@ const unexpectedErrorMessage = computed(() => {
   border: 0;
 }
 
-.service-catalog__container {
+.barber-selection__container {
   display: flex;
   width: 100%;
   max-width: 640px;
@@ -276,7 +290,7 @@ const unexpectedErrorMessage = computed(() => {
   gap: var(--space-5);
 }
 
-.service-catalog__title {
+.barber-selection__title {
   margin: 0;
   font-family: var(--font-display);
   font-size: 32px;
@@ -285,7 +299,16 @@ const unexpectedErrorMessage = computed(() => {
   color: var(--color-text-primary);
 }
 
-.service-catalog__list {
+.barber-selection__preselected {
+  margin: 0;
+  padding: var(--space-4);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  border: var(--border-width-normal) solid var(--color-border-subtle);
+  border-radius: 4px;
+}
+
+.barber-selection__list {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -294,9 +317,9 @@ const unexpectedErrorMessage = computed(() => {
   list-style: none;
 }
 
-.service-catalog__item {
+.barber-selection__item {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-3);
   padding: var(--space-4);
   cursor: pointer;
@@ -305,11 +328,11 @@ const unexpectedErrorMessage = computed(() => {
   border-radius: 4px;
 }
 
-.service-catalog__item:hover {
+.barber-selection__item:hover {
   border-color: var(--color-accent-brass);
 }
 
-.service-catalog__item:focus-visible {
+.barber-selection__item:focus-visible {
   outline: none;
   box-shadow:
     0 0 0 2px var(--color-canvas),
@@ -317,87 +340,33 @@ const unexpectedErrorMessage = computed(() => {
 }
 
 /* La selección se marca con el ícono de check Y el borde de énfasis, nunca
-   solo con un cambio de color (CA-091-04). */
-.service-catalog__item--selected {
+   solo con un cambio de color (CA-092-05, mismo criterio que
+   PublicServiceCatalogPage.vue/CA-091-04). */
+.barber-selection__item--selected {
   border-color: var(--color-accent-brass);
   border-width: var(--border-width-emphasis);
 }
 
-.service-catalog__item-check {
+.barber-selection__item-check {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  margin-top: 2px;
   border: var(--border-width-normal) solid var(--color-border-subtle);
   border-radius: 50%;
 }
 
-.service-catalog__item--selected .service-catalog__item-check {
+.barber-selection__item--selected .barber-selection__item-check {
   background-color: var(--color-accent-brass);
   border-color: var(--color-accent-brass);
 }
 
-.service-catalog__item-body {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
-}
-
-.service-catalog__item-name {
+.barber-selection__item-name {
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
-.service-catalog__item-description {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-body-sm);
-  overflow-wrap: break-word;
-}
-
-.service-catalog__item-meta {
-  display: flex;
-  gap: var(--space-2);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-body-sm);
-}
-
-/* Enlace de navegación con apariencia de botón primario (mismos tokens que
-   BaseButton--primary--lg y PublicBarbershopEntryPage.vue__cta): un
-   <RouterLink> es la etiqueta semánticamente correcta para navegar a otra
-   ruta. */
-.service-catalog__cta {
-  display: inline-flex;
-  align-self: flex-start;
-  align-items: center;
-  justify-content: center;
-  height: var(--control-height-primary-mobile);
-  padding: 0 var(--space-5);
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body);
-  font-weight: 500;
-  color: var(--color-on-strong);
-  text-decoration: none;
-  background-color: var(--color-action-primary);
-  border: var(--border-width-normal) solid var(--color-action-primary);
-  border-radius: 2px;
-}
-
-.service-catalog__cta:hover {
-  background-color: var(--color-action-primary-hover);
-  border-color: var(--color-action-primary-hover);
-}
-
-.service-catalog__cta:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 2px var(--color-canvas),
-    0 0 0 4px var(--color-focus);
-}
-
 @media (min-width: 1024px) {
-  .service-catalog__title {
+  .barber-selection__title {
     font-size: 40px;
     line-height: 48px;
   }

@@ -44,6 +44,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/barbershops/{slug}/services/{serviceId}/barbers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar los barberos elegibles para un servicio público
+         * @description Lista (HU-092, CA-092-02) los barberos de la barbería resuelta por `slug` con asignación vigente al servicio activo `serviceId`. Mismo `slug` y misma resolución sin contexto de tenant que `GET /public/barbershops/{slug}` (`public_resolve_barbershop_by_slug`); un `slug` mal formado, desconocido o de una barbería no publicable produce EXACTAMENTE la misma respuesta `404` uniforme (CA-090-02, RN-TEN-01). `serviceId` sin forma de UUID, ajeno a esta barbería, inexistente o de un servicio inactivo NUNCA produce un error distinto (CA-092-03): en todos esos casos la respuesta es `200` con `items: []`, exactamente igual que un servicio sin ningún barbero asignado hoy -la causa no se distingue. La proyección es mínima: id y nombre completo; nunca foto, biografía, preferencia ni ningún identificador de tenant (CA-092-02, RN-DAT-02). El cliente decide la preselección automática (exactamente un elemento) o la elección explícita (varios elementos) a partir del tamaño de `items`; el contrato no agrega un campo adicional para eso (CA-092-01).
+         */
+        get: operations["listPublicBarbers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/public/auth/login": {
         parameters: {
             query?: never;
@@ -1399,6 +1419,25 @@ export interface components {
              */
             nextCursor: string | null;
         };
+        /** @description Barbero de la barbería resuelta con asignación vigente al servicio activo elegido (HU-092, CA-092-02). */
+        PublicBarberResponse: {
+            /**
+             * Format: uuid
+             * @description Identificador del barbero, necesario para seleccionarlo al reservar.
+             * @example 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+             */
+            id: string;
+            /**
+             * @description Nombre completo visible del barbero.
+             * @example Juan Pérez
+             */
+            fullName: string;
+        };
+        /** @description Barberos con asignación vigente al servicio activo resuelto (HU-092, CA-092-02), ordenados de forma estable por fecha de asignación y luego por identificador. Un arreglo vacío (CA-092-03) cubre por igual un servicio sin ningún barbero asignado, ajeno a esta barbería, inexistente o inactivo: la causa nunca se distingue. */
+        PublicBarberListResponse: {
+            /** @description Barberos elegibles, en el orden estable del servidor. */
+            items: components["schemas"]["PublicBarberResponse"][];
+        };
         /** @description Solicitud de recuperación de acceso. */
         RecoveryRequestRequest: {
             /**
@@ -2694,6 +2733,16 @@ export interface components {
                 "application/json": components["schemas"]["PublicServiceListResponse"];
             };
         };
+        /** @description Barberos con asignación vigente al servicio activo resuelto. */
+        PublicBarberListSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["PublicBarberListResponse"];
+            };
+        };
         /** @description La solicitud fue recibida. Si la cuenta existe y tiene el teléfono verificado, se envía un código por WhatsApp oficial y correo; en cualquier otro caso no ocurre ningún envío, sin que la respuesta lo revele. */
         RecoveryRequestAccepted: {
             headers: {
@@ -3233,6 +3282,34 @@ export interface operations {
         responses: {
             200: components["responses"]["PublicServiceListSuccess"];
             400: components["responses"]["InvalidRequestProblem"];
+            /** @description `slug` con forma inválida, inexistente o de una barbería no publicable, sin distinguir la causa (CA-090-02, RN-TEN-01). */
+            404: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    listPublicBarbers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del enlace público de reservas, tal como aparece en la URL. No es un identificador interno: su forma, generación y ciclo de vida los fija DEC-082 (resuelve DP-PUB-01). */
+                slug: string;
+                /** @description Identificador del servicio activo ya elegido (HU-091). No confiado: se revalida pertenencia, vigencia y asignación contra la barbería resuelta por `slug` en cada lectura (CA-092-03). */
+                serviceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["PublicBarberListSuccess"];
             /** @description `slug` con forma inválida, inexistente o de una barbería no publicable, sin distinguir la causa (CA-090-02, RN-TEN-01). */
             404: {
                 headers: {
