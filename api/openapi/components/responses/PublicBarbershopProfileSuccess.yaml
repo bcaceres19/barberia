@@ -1,0 +1,24 @@
+# Respuesta 200 de GET /public/barbershops/{slug} (HU-090, CA-090-01).
+description: Contexto público de la barbería resuelta por su enlace de reservas.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/PublicBarbershopProfile.yaml'
+    examples:
+      conContacto:
+        summary: Barbería con contacto público configurado
+        value:
+          name: Barbería Ejemplo
+          timezone: America/Bogota
+          contactEmail: contacto@ejemplo.test
+          contactPhone: "+573001234567"
+      sinContacto:
+        summary: Barbería sin contacto público configurado
+        value:
+          name: Barbería Ejemplo
+          timezone: America/Bogota
+          contactEmail: null
+          contactPhone: null

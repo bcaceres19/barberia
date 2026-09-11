@@ -1,0 +1,710 @@
+{
+  "communities": {
+    "0": [
+      "docs_01_producto_alcance_mvp_dec_019",
+      "docs_01_producto_alcance_mvp_doc",
+      "docs_01_producto_alcance_mvp_f_cita_10",
+      "docs_01_producto_alcance_mvp_f_est_04",
+      "docs_01_producto_alcance_mvp_f_not_03",
+      "docs_01_producto_prioridades_dec_005",
+      "docs_01_producto_prioridades_dec_010",
+      "docs_01_producto_prioridades_dec_032",
+      "docs_01_producto_prioridades_doc",
+      "docs_01_producto_reglas_negocio_dec_018",
+      "docs_01_producto_reglas_negocio_dec_020",
+      "docs_01_producto_reglas_negocio_dec_027",
+      "docs_01_producto_reglas_negocio_doc",
+      "docs_01_producto_reglas_negocio_rn_blq_03",
+      "docs_01_producto_reglas_negocio_rn_can_01",
+      "docs_01_producto_reglas_negocio_rn_can_02",
+      "docs_01_producto_reglas_negocio_rn_can_03",
+      "docs_01_producto_reglas_negocio_rn_can_04",
+      "docs_01_producto_reglas_negocio_rn_cit_03",
+      "docs_01_producto_reglas_negocio_rn_cit_04",
+      "docs_01_producto_reglas_negocio_rn_cit_05",
+      "docs_01_producto_reglas_negocio_rn_con_01",
+      "docs_01_producto_reglas_negocio_rn_con_03",
+      "docs_01_producto_reglas_negocio_rn_dis_01",
+      "docs_01_producto_reglas_negocio_rn_dis_02",
+      "docs_01_producto_reglas_negocio_rn_dis_04",
+      "docs_01_producto_reglas_negocio_rn_dis_05",
+      "docs_01_producto_reglas_negocio_rn_his_01",
+      "docs_01_producto_reglas_negocio_rn_his_02",
+      "docs_01_producto_reglas_negocio_rn_ide_01",
+      "docs_01_producto_reglas_negocio_rn_rec_01",
+      "docs_01_producto_reglas_negocio_rn_rec_05",
+      "docs_01_producto_reglas_negocio_rn_rec_06",
+      "docs_01_producto_reglas_negocio_rn_ten_01",
+      "docs_02_requisitos_estados_citas_cancelled_by_barber",
+      "docs_02_requisitos_estados_citas_cancelled_by_customer",
+      "docs_02_requisitos_estados_citas_completed",
+      "docs_02_requisitos_estados_citas_confirmed",
+      "docs_02_requisitos_estados_citas_dec_017",
+      "docs_02_requisitos_estados_citas_doc",
+      "docs_02_requisitos_estados_citas_no_show",
+      "docs_02_requisitos_estados_citas_pending",
+      "docs_03_desarrollo_estandar_backend_go_dec_035",
+      "docs_03_desarrollo_estandar_backend_go_doc",
+      "docs_03_desarrollo_estandar_backend_go_module_auth",
+      "docs_03_desarrollo_estandar_backend_go_module_booking",
+      "docs_03_desarrollo_estandar_backend_go_module_notification",
+      "docs_03_desarrollo_estandar_backend_go_module_schedule",
+      "docs_03_desarrollo_estandar_diseno_visual_dec_039",
+      "docs_03_desarrollo_estandar_diseno_visual_doc",
+      "docs_03_desarrollo_estandar_frontend_vue_doc",
+      "docs_03_desarrollo_estrategia_pruebas_doc",
+      "docs_03_desarrollo_flujo_git_github_dec_038",
+      "docs_03_desarrollo_flujo_git_github_doc",
+      "docs_04_arquitectura_backend_go_dec_034",
+      "docs_04_arquitectura_backend_go_doc",
+      "docs_04_arquitectura_frontend_dec_033",
+      "docs_04_arquitectura_frontend_doc",
+      "docs_04_arquitectura_stack_despliegue_operacion_doc",
+      "docs_05_backend_base_datos_appointment_no_overlap",
+      "docs_05_backend_base_datos_appointment_table",
+      "docs_05_backend_base_datos_doc",
+      "docs_05_backend_base_datos_rls_policy",
+      "docs_05_backend_estandar_base_datos_doc"
+    ],
+    "1": [
+      "agents",
+      "apps_api_readme",
+      "apps_web_readme",
+      "contributing",
+      "docs_00_control_contradicciones",
+      "docs_00_control_contradicciones_ct_001",
+      "docs_00_control_dudas_pendientes",
+      "docs_00_control_glosario",
+      "docs_00_control_historial_cambios",
+      "docs_00_control_matriz_trazabilidad",
+      "docs_00_control_registro_decisiones",
+      "docs_00_control_registro_decisiones_dec_001",
+      "docs_00_control_registro_decisiones_dec_002",
+      "docs_00_control_registro_decisiones_dec_003",
+      "docs_00_control_registro_decisiones_dec_004",
+      "docs_00_control_registro_decisiones_dec_005",
+      "docs_00_control_registro_decisiones_dec_006",
+      "docs_00_control_registro_decisiones_dec_007",
+      "docs_00_control_registro_decisiones_dec_008",
+      "docs_00_control_registro_decisiones_dec_009",
+      "docs_00_control_registro_decisiones_dec_010",
+      "docs_00_control_registro_decisiones_dec_011",
+      "docs_00_control_registro_decisiones_dec_012",
+      "docs_00_control_registro_decisiones_dec_013",
+      "docs_00_control_registro_decisiones_dec_014",
+      "docs_00_control_registro_decisiones_dec_015",
+      "docs_00_control_registro_decisiones_dec_016",
+      "docs_00_control_registro_decisiones_dec_017",
+      "docs_00_control_registro_decisiones_dec_018",
+      "docs_00_control_registro_decisiones_dec_019",
+      "docs_00_control_registro_decisiones_dec_020",
+      "docs_00_control_registro_decisiones_dec_021",
+      "docs_00_control_registro_decisiones_dec_022",
+      "docs_00_control_registro_decisiones_dec_023",
+      "docs_00_control_registro_decisiones_dec_024",
+      "docs_00_control_registro_decisiones_dec_025",
+      "docs_00_control_registro_decisiones_dec_026",
+      "docs_00_control_registro_decisiones_dec_027",
+      "docs_00_control_registro_decisiones_dec_028",
+      "docs_00_control_registro_decisiones_dec_029",
+      "docs_00_control_registro_decisiones_dec_030",
+      "docs_00_control_registro_decisiones_dec_031",
+      "docs_00_control_registro_decisiones_dec_032",
+      "docs_00_control_registro_decisiones_dec_033",
+      "docs_00_control_registro_decisiones_dec_034",
+      "docs_00_control_registro_decisiones_dec_035",
+      "docs_00_control_registro_decisiones_dec_036",
+      "docs_00_control_registro_decisiones_dec_037",
+      "docs_00_control_registro_decisiones_dec_039",
+      "docs_00_control_supuestos",
+      "docs_readme",
+      "readme"
+    ],
+    "2": [
+      "respuesta_manuales_respuesta_dudas_pendientes",
+      "respuesta_manuales_respuesta_dudas_pendientes_ct_001",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_bd_01",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_bd_02",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_bd_03",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_be_01",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_be_02",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_be_03",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_be_04",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_com_01",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_com_02",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_com_03",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_leg_01",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_leg_02",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_leg_03",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_not_01",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_not_02",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_not_03",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_not_04",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_ops_01",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_ops_02",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_ops_03",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_pil_01",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_pil_02",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_pil_03",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_prd_01",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_prd_02",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_prd_03",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_prd_04",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_prd_05",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_prd_06",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_prd_07",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_prd_08",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_prd_09",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_prd_10",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_seg_01",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_seg_02",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_seg_03",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_ux_01",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_ux_02",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_ux_03",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_ux_04",
+      "respuesta_manuales_respuesta_dudas_pendientes_dp_ux_05"
+    ],
+    "3": [
+      "apps_api_cmd_api_main",
+      "apps_api_cmd_api_main_main",
+      "apps_api_cmd_api_main_run",
+      "apps_api_cmd_worker_main",
+      "apps_api_cmd_worker_main_main",
+      "apps_api_cmd_worker_main_run",
+      "apps_api_internal_platform_config_config",
+      "apps_api_internal_platform_config_config_getenv",
+      "apps_api_internal_platform_config_config_load",
+      "apps_api_internal_platform_httpserver_health",
+      "apps_api_internal_platform_httpserver_health_healthhandler",
+      "apps_api_internal_platform_httpserver_recover",
+      "apps_api_internal_platform_httpserver_recover_go_handler",
+      "apps_api_internal_platform_httpserver_recover_go_logger",
+      "apps_api_internal_platform_httpserver_recover_recover",
+      "apps_api_internal_platform_httpserver_requestid",
+      "apps_api_internal_platform_httpserver_requestid_go_handler",
+      "apps_api_internal_platform_httpserver_requestid_newrequestid",
+      "apps_api_internal_platform_httpserver_requestid_requestid",
+      "apps_api_internal_platform_httpserver_requestid_requestidfromcontext",
+      "apps_api_internal_platform_httpserver_server",
+      "apps_api_internal_platform_httpserver_server_chain",
+      "apps_api_internal_platform_httpserver_server_go_handler",
+      "apps_api_internal_platform_httpserver_server_new",
+      "apps_api_internal_platform_observability_logger",
+      "apps_api_internal_platform_observability_logger_go_logger",
+      "apps_api_internal_platform_observability_logger_newlogger",
+      "apps_api_internal_platform_observability_logger_parselevel",
+      "config_config",
+      "context",
+      "handlerfunc",
+      "httpserver_requestidkey",
+      "level",
+      "server"
+    ],
+    "4": [
+      "apps_web_package_devdependencies",
+      "apps_web_package_devdependencies_eslint",
+      "apps_web_package_devdependencies_eslint_plugin_vue",
+      "apps_web_package_devdependencies_jsdom",
+      "apps_web_package_devdependencies_playwright_test",
+      "apps_web_package_devdependencies_prettier",
+      "apps_web_package_devdependencies_types_node",
+      "apps_web_package_devdependencies_typescript",
+      "apps_web_package_devdependencies_vite",
+      "apps_web_package_devdependencies_vitejs_plugin_vue",
+      "apps_web_package_devdependencies_vitest",
+      "apps_web_package_devdependencies_vue_eslint_config_prettier",
+      "apps_web_package_devdependencies_vue_eslint_config_typescript",
+      "apps_web_package_devdependencies_vue_test_utils",
+      "apps_web_package_devdependencies_vue_tsc",
+      "apps_web_package_devdependencies_vue_tsconfig",
+      "eslint",
+      "eslint_plugin_vue",
+      "jsdom",
+      "playwright_test",
+      "prettier",
+      "types_node",
+      "typescript",
+      "vite",
+      "vitejs_plugin_vue",
+      "vitest",
+      "vue_eslint_config_prettier",
+      "vue_eslint_config_typescript",
+      "vue_test_utils",
+      "vue_tsc",
+      "vue_tsconfig"
+    ],
+    "5": [
+      "apps_web_tsconfig_node",
+      "apps_web_tsconfig_node_compileroptions",
+      "apps_web_tsconfig_node_compileroptions_allowimportingtsextensions",
+      "apps_web_tsconfig_node_compileroptions_erasablesyntaxonly",
+      "apps_web_tsconfig_node_compileroptions_lib",
+      "apps_web_tsconfig_node_compileroptions_module",
+      "apps_web_tsconfig_node_compileroptions_moduledetection",
+      "apps_web_tsconfig_node_compileroptions_noemit",
+      "apps_web_tsconfig_node_compileroptions_nofallthroughcasesinswitch",
+      "apps_web_tsconfig_node_compileroptions_nounusedlocals",
+      "apps_web_tsconfig_node_compileroptions_nounusedparameters",
+      "apps_web_tsconfig_node_compileroptions_skiplibcheck",
+      "apps_web_tsconfig_node_compileroptions_target",
+      "apps_web_tsconfig_node_compileroptions_tsbuildinfofile",
+      "apps_web_tsconfig_node_compileroptions_types",
+      "apps_web_tsconfig_node_compileroptions_verbatimmodulesyntax",
+      "apps_web_tsconfig_node_include",
+      "apps_web_tsconfig_node_json_ref_node",
+      "ref_es2023",
+      "ref_eslint_config_js",
+      "ref_playwright_config_ts",
+      "ref_vite_config_ts",
+      "ref_vitest_config_ts"
+    ],
+    "6": [
+      "concept_atlas_cli",
+      "concept_dec016",
+      "concept_flyway",
+      "concept_golang_migrate",
+      "concept_goose",
+      "concept_json_schema",
+      "concept_openapi_spec",
+      "concept_redocly_cli",
+      "concept_rfc9457",
+      "docs_02_requisitos_estados_citas",
+      "docs_03_desarrollo_estandar_backend_go",
+      "docs_03_desarrollo_estandar_frontend_vue",
+      "docs_03_desarrollo_estrategia_pruebas",
+      "docs_04_arquitectura_backend_go",
+      "docs_04_arquitectura_stack_despliegue_operacion",
+      "docs_05_backend_base_datos",
+      "docs_05_backend_estandar_base_datos",
+      "docs_05_backend_migraciones_atlas",
+      "docs_05_backend_migraciones_atlas_atlas_schema_revisions",
+      "docs_05_backend_migraciones_atlas_dec036",
+      "docs_06_api_estandar_openapi",
+      "docs_06_api_estandar_openapi_dec037"
+    ],
+    "7": [
+      "apps_web_package",
+      "apps_web_package_dependencies",
+      "apps_web_package_dependencies_vue",
+      "apps_web_package_dependencies_vue_router",
+      "apps_web_package_name",
+      "apps_web_package_private",
+      "apps_web_package_scripts",
+      "apps_web_package_scripts_build",
+      "apps_web_package_scripts_dev",
+      "apps_web_package_scripts_format",
+      "apps_web_package_scripts_format_write",
+      "apps_web_package_scripts_lint",
+      "apps_web_package_scripts_preview",
+      "apps_web_package_scripts_test_e2e",
+      "apps_web_package_scripts_test_unit",
+      "apps_web_package_scripts_typecheck",
+      "apps_web_package_type",
+      "apps_web_package_version",
+      "vue",
+      "vue_router"
+    ],
+    "8": [
+      "apps_web_tsconfig_app",
+      "apps_web_tsconfig_app_compileroptions",
+      "apps_web_tsconfig_app_compileroptions_allowarbitraryextensions",
+      "apps_web_tsconfig_app_compileroptions_erasablesyntaxonly",
+      "apps_web_tsconfig_app_compileroptions_nofallthroughcasesinswitch",
+      "apps_web_tsconfig_app_compileroptions_nounusedlocals",
+      "apps_web_tsconfig_app_compileroptions_nounusedparameters",
+      "apps_web_tsconfig_app_compileroptions_paths",
+      "apps_web_tsconfig_app_compileroptions_tsbuildinfofile",
+      "apps_web_tsconfig_app_compileroptions_types",
+      "apps_web_tsconfig_app_exclude",
+      "apps_web_tsconfig_app_extends",
+      "apps_web_tsconfig_app_include",
+      "apps_web_tsconfig_app_json_ref_src_spec_ts",
+      "ref_e2e",
+      "ref_src_ts",
+      "ref_src_tsx",
+      "ref_src_vue",
+      "ref_vite_client",
+      "ref_vue_tsconfig_tsconfig_dom_json"
+    ],
+    "9": [
+      "docs_01_producto_reglas_negocio",
+      "respuesta_manuales_respuesta_propuestas_oc",
+      "respuesta_manuales_respuesta_propuestas_oc_rn_blq_03",
+      "respuesta_manuales_respuesta_propuestas_oc_rn_blq_04",
+      "respuesta_manuales_respuesta_propuestas_oc_rn_can_02",
+      "respuesta_manuales_respuesta_propuestas_oc_rn_can_03",
+      "respuesta_manuales_respuesta_propuestas_oc_rn_can_04",
+      "respuesta_manuales_respuesta_propuestas_oc_rn_con_06",
+      "respuesta_manuales_respuesta_propuestas_oc_rn_dis_04",
+      "respuesta_manuales_respuesta_propuestas_oc_rn_dis_05",
+      "respuesta_manuales_respuesta_propuestas_oc_rn_dis_06",
+      "respuesta_manuales_respuesta_propuestas_oc_rn_dis_07",
+      "respuesta_manuales_respuesta_propuestas_oc_rn_his_02",
+      "respuesta_manuales_respuesta_propuestas_oc_rn_pro_03",
+      "respuesta_manuales_respuesta_propuestas_oc_rn_rec_04",
+      "respuesta_manuales_respuesta_propuestas_oc_rn_ser_03",
+      "respuesta_manuales_respuesta_propuestas_oc_rn_ser_04"
+    ],
+    "10": [
+      "package",
+      "package_description",
+      "package_devdependencies",
+      "package_devdependencies_redocly_cli",
+      "package_name",
+      "package_private",
+      "package_scripts",
+      "package_scripts_openapi_bundle",
+      "package_scripts_openapi_check_config",
+      "package_scripts_openapi_docs",
+      "package_scripts_openapi_lint",
+      "package_type",
+      "package_version",
+      "redocly_cli"
+    ],
+    "11": [
+      "api_openapi_changelog",
+      "api_openapi_openapi",
+      "database_migrations_readme",
+      "database_readme",
+      "database_seeds_readme",
+      "database_testdata_readme",
+      "database_tests_readme",
+      "docs_00_control_registro_decisiones_dec_038",
+      "github_issue_template_config",
+      "github_issue_template_defecto",
+      "github_issue_template_mejora",
+      "github_pull_request_template",
+      "redocly"
+    ],
+    "12": [
+      "api_openapi_components_headers_readme",
+      "api_openapi_components_parameters_readme",
+      "api_openapi_components_responses_readme",
+      "api_openapi_components_schemas_readme",
+      "api_openapi_components_security_schemes_readme",
+      "api_openapi_examples_readme",
+      "api_openapi_paths_catalog",
+      "api_openapi_paths_customer_appointments",
+      "api_openapi_paths_private_appointments",
+      "api_openapi_paths_public_booking",
+      "api_openapi_paths_schedules",
+      "api_openapi_paths_settings",
+      "api_openapi_readme"
+    ],
+    "13": [
+      "claude",
+      "claude_claude",
+      "claude_skills_graphify_references_add_watch",
+      "claude_skills_graphify_references_exports",
+      "claude_skills_graphify_references_extraction_spec",
+      "claude_skills_graphify_references_github_and_merge",
+      "claude_skills_graphify_references_hooks",
+      "claude_skills_graphify_references_query",
+      "claude_skills_graphify_references_transcribe",
+      "claude_skills_graphify_references_update",
+      "claude_skills_graphify_skill"
+    ],
+    "14": [
+      "apps_web_tsconfig_vitest",
+      "apps_web_tsconfig_vitest_compileroptions",
+      "apps_web_tsconfig_vitest_compileroptions_tsbuildinfofile",
+      "apps_web_tsconfig_vitest_compileroptions_types",
+      "apps_web_tsconfig_vitest_extends",
+      "apps_web_tsconfig_vitest_include",
+      "apps_web_tsconfig_vitest_json_ref_node",
+      "apps_web_tsconfig_vitest_json_ref_src_spec_ts",
+      "ref_jsdom",
+      "ref_tsconfig_app_json"
+    ],
+    "15": [
+      "apps_api_internal_platform_clock_clock",
+      "clock_clock",
+      "clock_system",
+      "clock_system_now",
+      "time"
+    ],
+    "16": [
+      "apps_web_prettierrc",
+      "apps_web_prettierrc_printwidth",
+      "apps_web_prettierrc_semi",
+      "apps_web_prettierrc_singlequote",
+      "apps_web_prettierrc_trailingcomma"
+    ],
+    "17": [
+      "apps_web_src_app_router_index",
+      "apps_web_src_app_router_index_router",
+      "apps_web_src_app_router_index_routes"
+    ],
+    "18": [
+      "apps_web_tsconfig",
+      "apps_web_tsconfig_files",
+      "apps_web_tsconfig_references"
+    ],
+    "19": [
+      "apps_web_index",
+      "apps_web_public_favicon"
+    ],
+    "20": [
+      "apps_web_src_app_bootstrap_createapp",
+      "apps_web_src_app_bootstrap_createapp_createapplication"
+    ],
+    "21": [
+      "apps_web_vite_config",
+      "apps_web_vitest_config"
+    ],
+    "22": [
+      "apps_api_internal_modules_audit_doc"
+    ],
+    "23": [
+      "apps_api_internal_modules_auth_doc"
+    ],
+    "24": [
+      "apps_api_internal_modules_booking_doc"
+    ],
+    "25": [
+      "apps_api_internal_modules_catalog_doc"
+    ],
+    "26": [
+      "apps_api_internal_modules_notification_doc"
+    ],
+    "27": [
+      "apps_api_internal_modules_schedule_doc"
+    ],
+    "28": [
+      "apps_api_internal_modules_shops_doc"
+    ],
+    "29": [
+      "apps_api_internal_modules_staff_doc"
+    ],
+    "30": [
+      "apps_api_internal_platform_database_doc"
+    ],
+    "31": [
+      "apps_web_e2e_readme"
+    ],
+    "32": [
+      "apps_web_eslint_config"
+    ],
+    "33": [
+      "apps_web_playwright_config"
+    ],
+    "34": [
+      "apps_web_src_app"
+    ],
+    "35": [
+      "apps_web_src_app_basestatusview"
+    ],
+    "36": [
+      "apps_web_src_main"
+    ],
+    "37": [
+      "apps_web_src_modules_agenda_index"
+    ],
+    "38": [
+      "apps_web_src_modules_auth_index"
+    ],
+    "39": [
+      "apps_web_src_modules_catalog_index"
+    ],
+    "40": [
+      "apps_web_src_modules_notifications_index"
+    ],
+    "41": [
+      "apps_web_src_modules_public_booking_index"
+    ],
+    "42": [
+      "apps_web_src_modules_schedules_index"
+    ],
+    "43": [
+      "apps_web_src_modules_settings_index"
+    ],
+    "44": [
+      "apps_web_src_modules_staff_index"
+    ],
+    "45": [
+      "apps_web_src_shared_api_index"
+    ],
+    "46": [
+      "apps_web_src_shared_composables_index"
+    ],
+    "47": [
+      "apps_web_src_shared_model_index"
+    ],
+    "48": [
+      "apps_web_src_shared_ui_index"
+    ],
+    "49": [
+      "apps_web_src_shared_validation_index"
+    ],
+    "50": [
+      "pkg_system_barbershop"
+    ]
+  },
+  "cohesion": {
+    "0": 0.06845238095238096,
+    "1": 0.10708898944193061,
+    "2": 0.048726467331118496,
+    "3": 0.08199643493761141,
+    "4": 0.06451612903225806,
+    "5": 0.08695652173913043,
+    "6": 0.09090909090909091,
+    "7": 0.1,
+    "8": 0.1,
+    "9": 0.22794117647058823,
+    "10": 0.14285714285714285,
+    "11": 0.16666666666666666,
+    "12": 0.15384615384615385,
+    "13": 0.18181818181818182,
+    "14": 0.2,
+    "15": 0.4,
+    "16": 0.4,
+    "17": 0.6666666666666666,
+    "18": 0.6666666666666666,
+    "19": 1.0,
+    "20": 1.0,
+    "21": 1.0,
+    "22": 1.0,
+    "23": 1.0,
+    "24": 1.0,
+    "25": 1.0,
+    "26": 1.0,
+    "27": 1.0,
+    "28": 1.0,
+    "29": 1.0,
+    "30": 1.0,
+    "31": 1.0,
+    "32": 1.0,
+    "33": 1.0,
+    "34": 1.0,
+    "35": 1.0,
+    "36": 1.0,
+    "37": 1.0,
+    "38": 1.0,
+    "39": 1.0,
+    "40": 1.0,
+    "41": 1.0,
+    "42": 1.0,
+    "43": 1.0,
+    "44": 1.0,
+    "45": 1.0,
+    "46": 1.0,
+    "47": 1.0,
+    "48": 1.0,
+    "49": 1.0,
+    "50": 1.0
+  },
+  "gods": [
+    {
+      "id": "respuesta_manuales_respuesta_dudas_pendientes",
+      "label": "Respuestas a dudas pendientes del proyecto",
+      "degree": 43
+    },
+    {
+      "id": "docs_00_control_matriz_trazabilidad",
+      "label": "Matriz de trazabilidad",
+      "degree": 42
+    },
+    {
+      "id": "docs_00_control_historial_cambios",
+      "label": "Historial de cambios documentales",
+      "degree": 40
+    },
+    {
+      "id": "docs_01_producto_reglas_negocio_doc",
+      "label": "Reglas de negocio",
+      "degree": 33
+    },
+    {
+      "id": "docs_00_control_dudas_pendientes",
+      "label": "Dudas pendientes y resoluciones",
+      "degree": 21
+    },
+    {
+      "id": "docs_02_requisitos_estados_citas_doc",
+      "label": "Estados de las citas y m\u00e1quina de transiciones",
+      "degree": 19
+    },
+    {
+      "id": "docs_03_desarrollo_estrategia_pruebas_doc",
+      "label": "Estrategia de pruebas y controles de calidad",
+      "degree": 16
+    },
+    {
+      "id": "respuesta_manuales_respuesta_propuestas_oc",
+      "label": "Respuestas a propuestas de reglas de negocio",
+      "degree": 16
+    },
+    {
+      "id": "docs_01_producto_reglas_negocio",
+      "label": "Reglas de negocio",
+      "degree": 16
+    },
+    {
+      "id": "apps_web_tsconfig_node_compileroptions",
+      "label": "compilerOptions",
+      "degree": 15
+    }
+  ],
+  "surprises": [
+    {
+      "source": "CLAUDE.md (root) \u2014 reglas graphify",
+      "target": ".claude/CLAUDE.md \u2014 trigger de graphify",
+      "source_files": [
+        "CLAUDE.md",
+        ".claude/CLAUDE.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "semantically_similar_to",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; semantically similar concepts with no structural link"
+    },
+    {
+      "source": "README.md \u2014 Sistema de agenda para barber\u00edas",
+      "target": "Mapa documental y fuentes de verdad",
+      "source_files": [
+        "README.md",
+        "docs/README.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "semantically_similar_to",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; semantically similar concepts with no structural link"
+    },
+    {
+      "source": "Reprogramaci\u00f3n o cancelaci\u00f3n r\u00e1pida por emergencia",
+      "target": "Reglas de negocio",
+      "source_files": [
+        "respuesta-manuales/respuesta-propuestas-oc.txt",
+        "docs/01-producto/reglas-negocio.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "references",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `Reprogramaci\u00f3n o cancelaci\u00f3n r\u00e1pida por emergencia` unexpectedly reaches hub `Reglas de negocio`"
+    },
+    {
+      "source": "Potestad del barbero para cancelar citas",
+      "target": "Reglas de negocio",
+      "source_files": [
+        "respuesta-manuales/respuesta-propuestas-oc.txt",
+        "docs/01-producto/reglas-negocio.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "references",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `Potestad del barbero para cancelar citas` unexpectedly reaches hub `Reglas de negocio`"
+    },
+    {
+      "source": "Optimizaci\u00f3n de horarios del barbero",
+      "target": "Reglas de negocio",
+      "source_files": [
+        "respuesta-manuales/respuesta-propuestas-oc.txt",
+        "docs/01-producto/reglas-negocio.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "references",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `Optimizaci\u00f3n de horarios del barbero` unexpectedly reaches hub `Reglas de negocio`"
+    }
+  ],
+  "tokens": {
+    "input": 311280,
+    "output": 142797
+  }
+}

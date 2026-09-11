@@ -1,0 +1,45 @@
+# Representación pública mínima de una barbería habilitada (HU-090,
+# CA-090-01, CA-090-04): nombre, zona horaria IANA y contacto público
+# opcional. Nunca un identificador interno (id, barbershopId) ni el slug
+# mismo: el visitante llega con el slug en la URL, nunca lo necesita en el
+# cuerpo de la respuesta.
+type: object
+additionalProperties: false
+description: >
+  Contexto público de la barbería resuelta por su enlace de reservas.
+  contactEmail/contactPhone viajan siempre presentes en el cuerpo, con
+  valor `null` explícito cuando la barbería no tiene ese contacto
+  configurado (nunca se omiten ni se representan como cadena vacía), misma
+  convención que BarbershopSettingsResponse.
+properties:
+  name:
+    type: string
+    description: Nombre público de la barbería, ya recortado.
+    maxLength: 120
+    examples:
+      - Barbería Ejemplo
+  timezone:
+    type: string
+    description: >
+      Zona horaria IANA de la barbería (RN-DIS-07). El cliente la usa para
+      mostrar la hora local de la barbería, nunca la del dispositivo.
+    maxLength: 64
+    examples:
+      - America/Bogota
+  contactEmail:
+    type: [string, "null"]
+    format: email
+    description: Correo de contacto público de la barbería; null cuando no está configurado.
+    maxLength: 254
+    examples:
+      - contacto@ejemplo.test
+  contactPhone:
+    type: [string, "null"]
+    description: Teléfono de contacto público de la barbería en formato E.164; null cuando no está configurado.
+    examples:
+      - "+573001234567"
+required:
+  - name
+  - timezone
+  - contactEmail
+  - contactPhone

@@ -24,6 +24,9 @@ import (
 	cataloghttpapi "system-barbershop/internal/modules/catalog/httpapi"
 	catalogpostgres "system-barbershop/internal/modules/catalog/postgres"
 	"system-barbershop/internal/modules/notification"
+	"system-barbershop/internal/modules/publicbooking"
+	publicbookinghttpapi "system-barbershop/internal/modules/publicbooking/httpapi"
+	publicbookingpostgres "system-barbershop/internal/modules/publicbooking/postgres"
 	"system-barbershop/internal/modules/schedule"
 	schedulehttpapi "system-barbershop/internal/modules/schedule/httpapi"
 	schedulepostgres "system-barbershop/internal/modules/schedule/postgres"
@@ -198,6 +201,14 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	challengeVerifyHandler := authhttpapi.NewChallengeVerifyHandler(phoneChallengeService, throttleService, trustedProxies)
 	router.Post("/api/v1/public/auth/challenge", challengeHandler.ServeHTTP)
 	router.Post("/api/v1/public/auth/challenge/verify", challengeVerifyHandler.ServeHTTP)
+
+	// HU-090: entrada pública de reservas. Resuelve el slug de la ruta a
+	// una barbería habilitada sin sesión y sin que el cliente pueda fijar
+	// barbershopId (CA-090-03); registrada sobre el router público
+	// completo, igual que login/challenge, nunca sobre `private`.
+	publicBookingService := publicbooking.NewService(publicbookingpostgres.New(db))
+	resolveBarbershopHandler := publicbookinghttpapi.NewResolveBarbershopHandler(publicBookingService)
+	router.Get("/api/v1/public/barbershops/{slug}", resolveBarbershopHandler.ServeHTTP)
 
 	// HU-006: middleware de sesión (paso 8) montado UNA sola vez sobre el
 	// subrouter privado, ANTES de registrar ninguna ruta sobre él (chi

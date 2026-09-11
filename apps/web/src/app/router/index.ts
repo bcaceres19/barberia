@@ -6,6 +6,7 @@ import {
   barberServicesPrivateShellChildRoutes,
 } from '@/modules/barberServices'
 import { catalogNavItems, catalogPrivateShellChildRoutes } from '@/modules/catalog'
+import { publicBookingRoutes } from '@/modules/public-booking'
 import { schedulesNavItems, schedulesPrivateShellChildRoutes } from '@/modules/schedules'
 import { settingsNavItems, settingsPrivateShellChildRoutes } from '@/modules/settings'
 import { staffNavItems, staffPrivateShellChildRoutes } from '@/modules/staff'
@@ -27,6 +28,9 @@ const routes: RouteRecordRaw[] = [
     redirect: { name: 'acceso' },
   },
   ...authRoutes,
+  // HU-090: entrada pública de reservas, sin sesión del barbero y aislada
+  // del cascarón privado (CA-090-03: nunca pasa por requireSession).
+  ...publicBookingRoutes,
   privateShellRoute(
     [
       ...privateShellChildRoutes,

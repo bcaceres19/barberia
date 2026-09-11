@@ -4,6 +4,23 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.19.0] - 2026-09-11
+
+### Agregado
+
+- `GET /public/barbershops/{slug}` (`operationId: resolvePublicBarbershop`,
+  `CA-090-01` a `CA-090-04`, tag `PublicBooking`): entrada pública de
+  reservas (`HU-090`). Resuelve `slug` -el identificador del enlace
+  público generado automáticamente desde el nombre de la barbería
+  (`DEC-082`, resuelve `DP-PUB-01`)- a la barbería habilitada
+  correspondiente, sin sesión y sin que el cliente pueda fijar
+  `barbershopId` (`CA-090-03`), mediante la función `SECURITY DEFINER`
+  `public_resolve_barbershop_by_slug`
+  (`20260911045044_add_barbershop_public_slug.sql`). Un `slug` mal
+  formado, desconocido o de una barbería no publicable produce
+  EXACTAMENTE la misma respuesta `404` uniforme (`CA-090-02`, `RN-TEN-01`).
+  `200`, `404`, `500`.
+
 ## [0.18.0] - 2026-09-10
 
 ### Agregado
