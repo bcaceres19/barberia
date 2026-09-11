@@ -1,9 +1,9 @@
 ---
 titulo: "Módulos futuros pendientes de checklist"
-version: "1.1"
+version: "1.2"
 estado: "Herramienta operativa, no normativa"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-27"
+ultima_actualizacion: "2026-09-11"
 documentos_relacionados:
   - "README.md"
   - "../01-producto/reglas-negocio.md"
@@ -14,10 +14,11 @@ documentos_relacionados:
 
 Al 2026-08-25, estas carpetas del código son solo el esqueleto de un módulo (`index.ts` sin páginas ni rutas en el frontend; `doc.go` sin dominio en el backend). **No existe interfaz que explorar todavía.** No se fabrica un checklist contra una pantalla que no existe: eso produciría pasos falsos que nadie puede ejecutar y confusión sobre qué está realmente probado.
 
+`apps/web/src/modules/public-booking` salió de esta tabla el 2026-09-11: `HU-090` le agrega una primera pantalla real (`/reservar/:slug`, entrada pública sin sesión). Un checklist completo de "reserva pública" sigue prematuro -concurrencia, idempotencia de creación, catálogo, selección de barbero y disponibilidad llegan con `HU-091` en adelante, todavía bloqueadas por `DP-PUB-02`–`DP-PUB-06`/`CT-011`-, así que las filas de concurrencia/idempotencia de la lista de abajo esperan a que esas capacidades existan de verdad.
+
 | Módulo | Frontend | Backend | Bloque |
 | --- | --- | --- | --- |
 | Agenda | `apps/web/src/modules/agenda/index.ts` | `apps/api/internal/modules/booking` (HU-060: núcleo persistente y primitiva transaccional interna; sin endpoint HTTP, sin pantalla) | B2/B3 |
-| Reserva pública | `apps/web/src/modules/public-booking/index.ts` | `apps/api/internal/modules/booking` (HU-060: núcleo persistente y primitiva transaccional interna; sin endpoint HTTP, sin pantalla) | B2 |
 | Horarios y bloqueos | `apps/web/src/modules/schedules/index.ts` | `apps/api/internal/modules/schedule` (solo `doc.go`) | B2 |
 | Notificaciones | `apps/web/src/modules/notifications/index.ts` | `apps/api/internal/modules/notification` (senders ya existen, sin flujo de UI ni programación de recordatorios) | B2/B3 |
 

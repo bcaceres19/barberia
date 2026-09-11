@@ -2,6 +2,12 @@
 # docs/06-api/estandar-openapi.md (DEC-037). No se edita el bundle generado
 # en dist/; este archivo y los que referencia son la fuente.
 #
+# HU-090 agrega el tag PublicBooking y la primera operación pública de
+# reserva: GET /public/barbershops/{slug} (paths/public-booking.yaml),
+# resolución sin sesión mediante public_resolve_barbershop_by_slug
+# (20260911045044_add_barbershop_public_slug.sql, DEC-082, resuelve
+# DP-PUB-01). El resto del flujo público llega con HU-091 en adelante.
+#
 # HU-042 agrega paths/time-blocks.yaml al tag Schedule: bloqueo puntual
 # (incluida la emergencia, RN-BLQ-03), definición recurrente weekly/date_list
 # con sus sub-recursos de fechas explícitas y excepciones ("esta instancia
@@ -47,7 +53,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.18.0
+  version: 0.19.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -78,7 +84,15 @@ tags:
     description: >-
       Registro de turnos: creación manual por el barbero (HU-061), con
       historial e idempotencia reutilizada de HU-004/HU-060.
+  - name: PublicBooking
+    description: >-
+      Flujo público de reserva sin sesión del barbero: entrada por el
+      enlace de una barbería (HU-090). El resto del flujo (HU-091 en
+      adelante) llega bloqueado por decisiones abiertas
+      (docs/00-control/dudas-pendientes.md).
 paths:
+  /public/barbershops/{slug}:
+    $ref: './paths/public-booking.yaml#/~1public~1barbershops~1{slug}'
   /public/auth/login:
     $ref: './paths/public-auth.yaml#/~1public~1auth~1login'
   /public/auth/challenge:

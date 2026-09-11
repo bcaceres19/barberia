@@ -5,8 +5,8 @@
     "semantic_hash": ""
   },
   "apps/api/cmd/api/main.go": {
-    "mtime": 1789090503.8334794,
-    "ast_hash": "a8efac06681b8ed5840f306580374902",
+    "mtime": 1789102598.8564188,
+    "ast_hash": "cf0acfe9bfb523531f1cf1553ab553ee",
     "semantic_hash": ""
   },
   "apps/api/cmd/worker/main.go": {
@@ -130,8 +130,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/router/index.ts": {
-    "mtime": 1788362822.9434235,
-    "ast_hash": "e1b50c2878a99a310cd5328fe0e94e61",
+    "mtime": 1789103640.8953588,
+    "ast_hash": "585ab3faa23b26d0bc9aa7e6ff0f88ec",
     "semantic_hash": ""
   },
   "apps/web/src/main.ts": {
@@ -160,9 +160,9 @@
     "semantic_hash": "3f7d711b9b9432c7376b7c9a4f494ddc"
   },
   "apps/web/src/modules/public-booking/index.ts": {
-    "mtime": 1786044921.5489497,
-    "ast_hash": "4aec2f0c46febde3e3ae203b4a311bc0",
-    "semantic_hash": "4aec2f0c46febde3e3ae203b4a311bc0"
+    "mtime": 1789103634.2031755,
+    "ast_hash": "e8c18d9b184c81615ddb7b2e3c1283ad",
+    "semantic_hash": ""
   },
   "apps/web/src/modules/schedules/index.ts": {
     "mtime": 1788450278.2358706,
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "api/openapi/CHANGELOG.md": {
-    "mtime": 1789066247.9886143,
-    "ast_hash": "64f71fd055b2c275a2e634fb7e25af40",
+    "mtime": 1789102979.9508681,
+    "ast_hash": "2f25a58c2af97b9f33c8877201d96e05",
     "semantic_hash": ""
   },
   "api/openapi/README.md": {
@@ -375,8 +375,8 @@
     "semantic_hash": "72ebdeafb399c1fc6afba7f4c79dd076"
   },
   "api/openapi/openapi.yaml": {
-    "mtime": 1789091502.7024925,
-    "ast_hash": "ab874e04faa38fbf237f73575f68c4d0",
+    "mtime": 1789102974.6065066,
+    "ast_hash": "56e0bd7d07d4eec55af16193ba905c2b",
     "semantic_hash": ""
   },
   "api/openapi/paths/catalog.yaml": {
@@ -390,14 +390,14 @@
     "semantic_hash": "a6283d03c1ef0df00098dcfe9ba5ee94"
   },
   "api/openapi/paths/private-appointments.yaml": {
-    "mtime": 1789091663.7983177,
+    "mtime": 1789101749.3283691,
     "ast_hash": "4ea504d5d4ca8e34a7a4e6f567c914b1",
     "semantic_hash": ""
   },
   "api/openapi/paths/public-booking.yaml": {
-    "mtime": 1786045301.20921,
-    "ast_hash": "17d759fa74d7b2c7f567d10cc269a9b4",
-    "semantic_hash": "17d759fa74d7b2c7f567d10cc269a9b4"
+    "mtime": 1789102943.3456516,
+    "ast_hash": "d0e3a72d7c47531966cdf79562559b97",
+    "semantic_hash": ""
   },
   "api/openapi/paths/schedules.yaml": {
     "mtime": 1787700282.2255318,
@@ -455,13 +455,13 @@
     "semantic_hash": ""
   },
   "docs/00-control/contradicciones.md": {
-    "mtime": 1788453255.3014834,
-    "ast_hash": "cbb40247078d0bb55d20ee8d5df15b60",
+    "mtime": 1789094237.7170224,
+    "ast_hash": "a368a0aa1c1bb49d818eaac449a1ca85",
     "semantic_hash": ""
   },
   "docs/00-control/dudas-pendientes.md": {
-    "mtime": 1788453255.3014834,
-    "ast_hash": "c9df03229a1ea98097dbb096c97956c8",
+    "mtime": 1789101749.6615388,
+    "ast_hash": "219bad779c055c2777b366be97357ee3",
     "semantic_hash": ""
   },
   "docs/00-control/glosario.md": {
@@ -470,18 +470,18 @@
     "semantic_hash": ""
   },
   "docs/00-control/historial-cambios.md": {
-    "mtime": 1788872439.7119102,
-    "ast_hash": "3adedae2e78d3ebbcb6f38f1b687f08c",
+    "mtime": 1789094742.4793801,
+    "ast_hash": "637907feb2a9b267805091ffe70f6baa",
     "semantic_hash": ""
   },
   "docs/00-control/matriz-trazabilidad.md": {
-    "mtime": 1789081766.6669004,
-    "ast_hash": "b85adc6380d463c8f57aa0d9b1cd07e7",
+    "mtime": 1789101749.3900301,
+    "ast_hash": "23023eb53075e8db34aca099fd6faaf1",
     "semantic_hash": ""
   },
   "docs/00-control/registro-decisiones.md": {
-    "mtime": 1788453255.3014834,
-    "ast_hash": "8890b4e838fb3bfcb66d5a8269e18e57",
+    "mtime": 1789101749.6615388,
+    "ast_hash": "b78114bf6845c34dde6ce4b9289f6215",
     "semantic_hash": ""
   },
   "docs/00-control/supuestos.md": {
@@ -595,13 +595,13 @@
     "semantic_hash": ""
   },
   "docs/02-requisitos/historias-usuario.md": {
-    "mtime": 1789090250.8594706,
-    "ast_hash": "7608ee00d4e976ae4b19c91b9a2d79e0",
+    "mtime": 1789101799.0723298,
+    "ast_hash": "a71b072a66baabd4a02f6387d85aea33",
     "semantic_hash": ""
   },
   "docs/10-backlog/plan-bloques.md": {
-    "mtime": 1789081784.9022226,
-    "ast_hash": "b3b825c062f730b2117a477ab56c9ff4",
+    "mtime": 1789101786.4151888,
+    "ast_hash": "5b9165bad530024cddc613f5c29954f6",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts-implementacion.md": {
@@ -695,7 +695,7 @@
     "semantic_hash": ""
   },
   "apps/web/src/shared/ui/BaseDialog.vue": {
-    "mtime": 1789093077.016546,
+    "mtime": 1789101749.3900301,
     "ast_hash": "536751ed0475620031042607fb86fd63",
     "semantic_hash": ""
   },
@@ -805,8 +805,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/README.md": {
-    "mtime": 1789081788.5342827,
-    "ast_hash": "c3ba1e31a4f2b0fec466311d87bffaa5",
+    "mtime": 1789101749.3941698,
+    "ast_hash": "03e3ee42c48b168383ee3d2468fc3ad8",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/TEMPLATE.md": {
@@ -1295,8 +1295,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/shared/api/generated/openapi.d.ts": {
-    "mtime": 1789091726.9092247,
-    "ast_hash": "b4eb9532136fc4bee896cc1318bc1157",
+    "mtime": 1789103452.294365,
+    "ast_hash": "c053fc133f074c1b0733783ee91ed96c",
     "semantic_hash": ""
   },
   "apps/web/src/shared/api/httpClient.ts": {
@@ -2025,8 +2025,8 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/shops/domain.go": {
-    "mtime": 1787514985.0293334,
-    "ast_hash": "47c95352bc7489c4d2b430b6c4244508",
+    "mtime": 1789102490.2427106,
+    "ast_hash": "db4ae8a022f37e6ecc1e6be466f6c334",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/shops/errors.go": {
@@ -2060,8 +2060,8 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/shops/postgres/repository.go": {
-    "mtime": 1787514985.0326154,
-    "ast_hash": "f645fe0d7079df90eb6398c1c87cec43",
+    "mtime": 1789102805.359813,
+    "ast_hash": "7a0604a03e3d6ccfec31eb46459c8dbe",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/shops/postgres/repository_test.go": {
@@ -3760,22 +3760,22 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/domain_test.go": {
-    "mtime": 1789090638.0456042,
+    "mtime": 1789101749.3315835,
     "ast_hash": "e1e00fe3eaf0f0d0535ea63ea77a2828",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/errors.go": {
-    "mtime": 1789090308.8474298,
+    "mtime": 1789101749.3315835,
     "ast_hash": "4a972dfbbbc1d1f608a58cb180da464e",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/ports.go": {
-    "mtime": 1789090317.1465068,
+    "mtime": 1789101749.3384013,
     "ast_hash": "8b434f99400e1231430243ca095d7ff6",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/postgres/repository.go": {
-    "mtime": 1789090578.2805042,
+    "mtime": 1789101749.3410513,
     "ast_hash": "ef6431ce21c6a3b8d7ba865d88f6446c",
     "semantic_hash": ""
   },
@@ -3820,17 +3820,17 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/httpapi/dto.go": {
-    "mtime": 1789090461.6527662,
+    "mtime": 1789101749.3336084,
     "ast_hash": "1989cddbb3d5946e25da90f00c2515b6",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/httpapi/handler.go": {
-    "mtime": 1789090517.4529438,
+    "mtime": 1789101749.3336084,
     "ast_hash": "6f36738c4ca34f2807b8f62ccac7dc84",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/httpapi/handler_test.go": {
-    "mtime": 1789090617.4532843,
+    "mtime": 1789101749.3336084,
     "ast_hash": "e4a92d6391af4a92668fe75c479bad23",
     "semantic_hash": ""
   },
@@ -3845,7 +3845,7 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/manual_test.go": {
-    "mtime": 1789090610.2021704,
+    "mtime": 1789101749.3336084,
     "ast_hash": "6d0aaf5e2a3ea21a5bd0e2bd303d2ed9",
     "semantic_hash": ""
   },
@@ -3875,7 +3875,7 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/api/appointmentsApi.ts": {
-    "mtime": 1789092318.6192806,
+    "mtime": 1789101749.3786228,
     "ast_hash": "2b7a30c7ba204171be03a4e30e8fab82",
     "semantic_hash": ""
   },
@@ -3885,7 +3885,7 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/model/appointmentOutcome.ts": {
-    "mtime": 1789091737.5195136,
+    "mtime": 1789101749.3786228,
     "ast_hash": "d1d88a507eda0894432a445d80a228cf",
     "semantic_hash": ""
   },
@@ -4080,12 +4080,12 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/pages/AppointmentDetailPage.vue": {
-    "mtime": 1789092318.8758762,
+    "mtime": 1789101749.3851976,
     "ast_hash": "50019a007ffca00d7ba1243071d418fa",
     "semantic_hash": ""
   },
   "apps/web/src/modules/agenda/pages/__tests__/AppointmentDetailPage.test.ts": {
-    "mtime": 1789092526.2179434,
+    "mtime": 1789101749.38677,
     "ast_hash": "fe623e6427fb97ee2d6021fa6c4de194",
     "semantic_hash": ""
   },
@@ -6530,7 +6530,7 @@
     "semantic_hash": ""
   },
   ".agents/skills/generacion-mockups-nava/SKILL.md": {
-    "mtime": 1788797507.7832897,
+    "mtime": 1789101749.7149897,
     "ast_hash": "d9b5a0974a214e9926899c2c846eac41",
     "semantic_hash": ""
   },
@@ -6620,8 +6620,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/hu/hu-068-correccion-resultado-terminal.md": {
-    "mtime": 1789090246.7977939,
-    "ast_hash": "8ffa2e1040cc41e2287e71b066bdc511",
+    "mtime": 1789101749.3941698,
+    "ast_hash": "076e4a05bb0293b500b6c341c169f20b",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/orchestration/generacion-mockups-pendientes-penpot.md": {
@@ -7935,7 +7935,7 @@
     "semantic_hash": ""
   },
   "apps/web/e2e/agenda-detalle-fidelidad-mock.spec.ts": {
-    "mtime": 1789093248.1959565,
+    "mtime": 1789101749.3426294,
     "ast_hash": "0bd491ade1735166d847d8cacbfbba04",
     "semantic_hash": ""
   },
@@ -8525,113 +8525,398 @@
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/correct.go": {
-    "mtime": 1789090517.4434133,
+    "mtime": 1789101749.3283691,
     "ast_hash": "b55ce16dfc82716b6860f9d9eea6c40d",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/correct_test.go": {
-    "mtime": 1789090810.4355912,
+    "mtime": 1789101749.3315835,
     "ast_hash": "2fd403573ca44b2c48ad5d477f5bd659",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/httpapi/correct_handler_test.go": {
-    "mtime": 1789091064.1116755,
+    "mtime": 1789101749.3336084,
     "ast_hash": "b82571642fd2560e2e20bee8766d1ed3",
     "semantic_hash": ""
   },
   "apps/api/internal/modules/booking/postgres/correct_repository_test.go": {
-    "mtime": 1789090967.0975924,
+    "mtime": 1789101749.3384013,
     "ast_hash": "0ab0ba216f19a1e57f1748c4f5ec5dc3",
     "semantic_hash": ""
   },
   "apps/web/e2e/agenda-correccion-resultado.spec.ts": {
-    "mtime": 1789092655.0621111,
+    "mtime": 1789101749.3420575,
     "ast_hash": "6b40d701c5f26a9a8cd5497b784f5ade",
     "semantic_hash": ""
   },
   "api/openapi/components/responses/AppointmentStatusCorrected.yaml": {
-    "mtime": 1789091549.4058118,
+    "mtime": 1789101749.3213353,
     "ast_hash": "e80f790ea533d188c044a1dfe5a62d0e",
     "semantic_hash": ""
   },
   "api/openapi/components/responses/CorrectAppointmentStatusValidationProblem.yaml": {
-    "mtime": 1789091571.628127,
+    "mtime": 1789101749.3213353,
     "ast_hash": "3fb5e9fad22d6c69beb2a1b9272ec4d9",
     "semantic_hash": ""
   },
   "api/openapi/components/schemas/AppointmentStatusCorrectedResponse.yaml": {
-    "mtime": 1789091540.6136646,
+    "mtime": 1789101749.326363,
     "ast_hash": "7c630621389f480a92fb1cc7afec636b",
     "semantic_hash": ""
   },
   "api/openapi/components/schemas/CorrectAppointmentStatusRequest.yaml": {
-    "mtime": 1789091518.0650668,
+    "mtime": 1789101749.326363,
     "ast_hash": "13c8b3ede2c0080c81d4f52ead97249e",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/correccion-227/desktop/confirmar-correccion.png": {
-    "mtime": 1789093551.6017437,
+    "mtime": 1789101749.3463998,
     "ast_hash": "f43d5378d2efa811d02a24c5362891a9",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/correccion-227/desktop/conflicto-version.png": {
-    "mtime": 1789093552.0373309,
+    "mtime": 1789101749.3484428,
     "ast_hash": "3a1a83d14ff2f867f4dd78479fbda9b4",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/correccion-227/desktop/cruce-agenda.png": {
-    "mtime": 1789093552.7437878,
+    "mtime": 1789101749.3544946,
     "ast_hash": "f22a6c3b86bc779be689e5f322d7dace",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/correccion-227/desktop/turno-corregido.png": {
-    "mtime": 1789093551.779454,
+    "mtime": 1789101749.3581886,
     "ast_hash": "1bf6c7e7cc1b72109e5b9f463d9e7501",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/correccion-227/mobile/confirmar-correccion.png": {
-    "mtime": 1789093552.9106777,
+    "mtime": 1789101749.358834,
     "ast_hash": "dbffcd51e71958def0281bb1d486b69b",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/correccion-227/mobile/conflicto-version.png": {
-    "mtime": 1789093554.1001744,
+    "mtime": 1789101749.358834,
     "ast_hash": "2efc26bae88607f2ecb9462c80f64904",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/correccion-227/mobile/cruce-agenda.png": {
-    "mtime": 1789093554.670798,
+    "mtime": 1789101749.358834,
     "ast_hash": "7b77f18b660f8609970ea7604d8a130f",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/correccion-227/mobile/turno-corregido.png": {
-    "mtime": 1789093553.014264,
+    "mtime": 1789101749.3683157,
     "ast_hash": "6e8d88f9ca8ef177bcc866c6810cf11f",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/correccion-227/responsive/1280-zoom200/foco-corregir.png": {
-    "mtime": 1789093555.523146,
+    "mtime": 1789101749.3683157,
     "ast_hash": "31b4aa273732d4e1dfe249787e2ab11d",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/correccion-227/responsive/1280/foco-corregir.png": {
-    "mtime": 1789093555.1491473,
+    "mtime": 1789101749.3683157,
     "ast_hash": "bed81d54f626bf09dbf00f37876401c2",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/correccion-227/responsive/320/foco-corregir.png": {
-    "mtime": 1789093553.6388113,
+    "mtime": 1789101749.3739915,
     "ast_hash": "ba79ad3694e399f1b05d4b5c6ad2b7dd",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/correccion-227/responsive/360/foco-corregir.png": {
-    "mtime": 1789093554.2123036,
+    "mtime": 1789101749.3771112,
     "ast_hash": "5e9924d45243a614861f492581729b60",
     "semantic_hash": ""
   },
   "apps/web/e2e/evidence/agenda-detalle/correccion-227/responsive/768/foco-corregir.png": {
-    "mtime": 1789093554.6264658,
+    "mtime": 1789101749.3786228,
     "ast_hash": "e67c03bba416396a23da388f0548a6a3",
+    "semantic_hash": ""
+  },
+  "apps/api/cmd/api/public_booking_integration_test.go": {
+    "mtime": 1789103231.975013,
+    "ast_hash": "3ef6e697b0904420ccd6680ca806e754",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/publicbooking/doc.go": {
+    "mtime": 1789102531.6866736,
+    "ast_hash": "39bd3e9c637df57adb95d7573de05978",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/publicbooking/domain.go": {
+    "mtime": 1789102536.3751943,
+    "ast_hash": "cf3e8defeebfd815a87724e9e534f382",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/publicbooking/httpapi/contract_test.go": {
+    "mtime": 1789103035.6853518,
+    "ast_hash": "cd0d31c02d59a1e374788a5806f58fdc",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/publicbooking/httpapi/dto.go": {
+    "mtime": 1789102576.9019103,
+    "ast_hash": "14f756f8cf9443750df0e22801ab60b7",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/publicbooking/httpapi/handler.go": {
+    "mtime": 1789102585.5765407,
+    "ast_hash": "8540b3ad69202bcea0f261b737710375",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/publicbooking/httpapi/handler_test.go": {
+    "mtime": 1789103017.155683,
+    "ast_hash": "430dbbebe4ac9a1d53fb694769d49edc",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/publicbooking/ports.go": {
+    "mtime": 1789102541.4820032,
+    "ast_hash": "7b91f3b2a36510a0a1e1d806cf49e0ed",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/publicbooking/postgres/repository.go": {
+    "mtime": 1789102572.406571,
+    "ast_hash": "760636ccaed5bbb72bc97285facf3568",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/publicbooking/postgres/repository_test.go": {
+    "mtime": 1789102890.040372,
+    "ast_hash": "1b59b3c05ed3a3f8a68405ee1a258431",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/publicbooking/service.go": {
+    "mtime": 1789102559.9594946,
+    "ast_hash": "0a2bb9ccce77a19a7578b0a9536e70aa",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/publicbooking/service_test.go": {
+    "mtime": 1789102670.9480772,
+    "ast_hash": "88e083aac285e7e5e36c7cb0da95b170",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/shops/postgres/slug_test.go": {
+    "mtime": 1789102755.585876,
+    "ast_hash": "5e43dbe9783604fb1401aa1d1d07d7a7",
+    "semantic_hash": ""
+  },
+  "apps/api/internal/modules/shops/slug_test.go": {
+    "mtime": 1789102652.8662877,
+    "ast_hash": "b82aaadd5686adb3330b7957461f20bd",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/reserva-publica-evidencia-responsiva.spec.ts": {
+    "mtime": 1789104257.7358239,
+    "ast_hash": "9381763a4152b2dcd5711f1ccbc61852",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/reserva-publica.spec.ts": {
+    "mtime": 1789103992.6355124,
+    "ast_hash": "c97126853831ddba79cd42c0a2217c76",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/public-booking/__tests__/routes.test.ts": {
+    "mtime": 1789103755.3757846,
+    "ast_hash": "dbdad6e5e157505344783a6994d17094",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/public-booking/api/resolveBarbershopApi.ts": {
+    "mtime": 1789103564.0781548,
+    "ast_hash": "2c92020034b7123924d2cebc1389543b",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/public-booking/model/barbershopProfileOutcome.ts": {
+    "mtime": 1789103556.4403703,
+    "ast_hash": "dbdb7795e607878777712b379ce74939",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/public-booking/pages/PublicBarbershopEntryPage.vue": {
+    "mtime": 1789104133.0966525,
+    "ast_hash": "337ac5ebb966e125f0f85ef5be4b4743",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/public-booking/pages/__tests__/PublicBarbershopEntryPage.test.ts": {
+    "mtime": 1789103808.5616372,
+    "ast_hash": "fa6c3e5c262b870ae1477beef82873cb",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/public-booking/routes.ts": {
+    "mtime": 1789103609.9745142,
+    "ast_hash": "62aa8d7a66e3ca675bef0c58472d9a95",
+    "semantic_hash": ""
+  },
+  "database/migrations/20260911045044_add_barbershop_public_slug.sql": {
+    "mtime": 1789102306.239491,
+    "ast_hash": "6219bcdd91ffca4ae9e6d9b44116ee77",
+    "semantic_hash": ""
+  },
+  "database/testdata/hu090_reserva_publica.sql": {
+    "mtime": 1789102849.7056317,
+    "ast_hash": "9f6ac9f9e274b5be5bb2f5eeed69175d",
+    "semantic_hash": ""
+  },
+  "api/openapi/components/responses/PublicBarbershopProfileSuccess.yaml": {
+    "mtime": 1789102928.7456121,
+    "ast_hash": "bc8374dbb5833510e4eb04d76408162b",
+    "semantic_hash": ""
+  },
+  "api/openapi/components/schemas/PublicBarbershopProfile.yaml": {
+    "mtime": 1789102924.6323159,
+    "ast_hash": "9ec97399cd808e4dd52bb8a67885a15f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/hu/hu-090-entrada-publica-reservas.md": {
+    "mtime": 1789101749.668178,
+    "ast_hash": "05b3de8782d91fc35c4aa20d257a6900",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/hu/hu-091-catalogo-publico-servicios.md": {
+    "mtime": 1789094381.0306504,
+    "ast_hash": "630137a70f472dff0b7a34d47b0bc5c7",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/hu/hu-092-seleccion-publica-barbero.md": {
+    "mtime": 1789094381.3344636,
+    "ast_hash": "ae17637ee792746f6f97f533ca620d34",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/hu/hu-093-configuracion-reserva-cancelacion.md": {
+    "mtime": 1789094381.696971,
+    "ast_hash": "594b0c24af68ae276e765175c9c56c29",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/hu/hu-094-motor-disponibilidad-publica.md": {
+    "mtime": 1789094382.038129,
+    "ast_hash": "abd2238135a493ea27017871f2fa4371",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/hu/hu-095-exploracion-fechas-horarios.md": {
+    "mtime": 1789094507.8147652,
+    "ast_hash": "5cc1b9835aeca313073396ba0f03ccc7",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/hu/hu-096-datos-cliente-persona-atendida.md": {
+    "mtime": 1789094508.1613886,
+    "ast_hash": "222bbd2ea01e631bc73449235185be80",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/hu/hu-097-confirmacion-publica-concurrente.md": {
+    "mtime": 1789094508.508763,
+    "ast_hash": "0841b554a7f4a75b91f13f1abc38c07d",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/hu/hu-098-acceso-cliente-turno.md": {
+    "mtime": 1789094508.9268944,
+    "ast_hash": "69067b33f8ab7d7ffeb1be87f2ea87f9",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/hu/hu-099-cancelacion-publica.md": {
+    "mtime": 1789094509.255964,
+    "ast_hash": "c96b086cfc74a2281121ffffe3a5419f",
+    "semantic_hash": ""
+  },
+  "docs/10-backlog/prompts/orchestration/b4-reserva-publica-disponibilidad-v1.md": {
+    "mtime": 1789094727.1649823,
+    "ast_hash": "7e9821c15cf94604f75157b30f80f18a",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/1280-zoom200/carga.png": {
+    "mtime": 1789104272.661541,
+    "ast_hash": "0399e1ea93e1b35fca53ed05c85260c3",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/1280-zoom200/error.png": {
+    "mtime": 1789104273.0481355,
+    "ast_hash": "0a6c9a3ab37069ba36ff5a228c218de6",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/1280-zoom200/foco.png": {
+    "mtime": 1789104273.3308718,
+    "ast_hash": "b7e1c15fc4fd3c98e562dbf7fa347e57",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/1280-zoom200/normal.png": {
+    "mtime": 1789104272.910648,
+    "ast_hash": "2a217f22d6900e9ac3e6d652786ccbfd",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/1280/carga.png": {
+    "mtime": 1789104272.578152,
+    "ast_hash": "2e06ae6defa86ed6bea4dd6450f8d339",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/1280/error.png": {
+    "mtime": 1789104273.104055,
+    "ast_hash": "c756c68e19755a07ec45047e4383d220",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/1280/foco.png": {
+    "mtime": 1789104273.8194225,
+    "ast_hash": "7a0bf442ace9f700dc7d2fe3787f2bc8",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/1280/normal.png": {
+    "mtime": 1789104273.295076,
+    "ast_hash": "3abde899b325269f79a366fa7d61f682",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/320/carga.png": {
+    "mtime": 1789104270.735071,
+    "ast_hash": "90a3d8ceda72de4bbc6cb869810f88ff",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/320/error.png": {
+    "mtime": 1789104270.4098983,
+    "ast_hash": "fc977516e36755eb66ffaf8c199b2abf",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/320/foco.png": {
+    "mtime": 1789104270.574016,
+    "ast_hash": "7b768fc2d9330551164e4ec95522c0ce",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/320/normal.png": {
+    "mtime": 1789104270.565097,
+    "ast_hash": "549c5505462947286ba08537250f6414",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/360/carga.png": {
+    "mtime": 1789104270.4564939,
+    "ast_hash": "65190f4e75782bf61d9f035e1bbaec80",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/360/error.png": {
+    "mtime": 1789104270.49595,
+    "ast_hash": "c2990b8e8eceab64b038f6669b4f9521",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/360/foco.png": {
+    "mtime": 1789104270.693198,
+    "ast_hash": "d8c8e0e9c47425dd238284a8b490e7b1",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/360/normal.png": {
+    "mtime": 1789104270.5470066,
+    "ast_hash": "d13ef63507b8c5c298837e4b98918744",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/768/carga.png": {
+    "mtime": 1789104270.849914,
+    "ast_hash": "0b5d3a8c6367e00c1fa9f5fa391f3a44",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/768/error.png": {
+    "mtime": 1789104271.8233461,
+    "ast_hash": "370de95024a2b765f5ee8a505bbc6035",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/768/foco.png": {
+    "mtime": 1789104272.3943439,
+    "ast_hash": "4c739dbe0ed0e5bd8f5f26d5b5cdbbc6",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica/768/normal.png": {
+    "mtime": 1789104270.9350963,
+    "ast_hash": "edbfd528f92b73ed2a6b7bc0ecc7c1d9",
     "semantic_hash": ""
   }
 }

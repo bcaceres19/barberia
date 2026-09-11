@@ -1,9 +1,9 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.38"
+version: "1.39"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-10"
+ultima_actualizacion: "2026-09-11"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/reglas-negocio.md"
@@ -1697,7 +1697,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Actor | Visitante sin cuenta |
 | Depende de | Criterio de salida de B3 |
 | Bloquea | `HU-091`–`HU-099` |
-| Estado | Propuesta; `DP-PUB-01` resuelta (`DEC-082`); prompt `PROMPT-HU-090-v1` en `draft`, `issue: pending` hasta abrir el issue real |
+| Estado | Implementada contra el issue real [#243](https://github.com/bcaceres19/barberia/issues/243); `DP-PUB-01` resuelta (`DEC-082`); prompt `PROMPT-HU-090-v1` en `in_progress`, PR abierto pendiente de CI/merge |
 | Riesgo | Un identificador público enumerable o una resolución tenant incorrecta expone barberías ajenas o abre el flujo con contexto falso. |
 
 **Historia**
@@ -2148,7 +2148,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | B1 | `HU-025` – | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
 | B2 | `HU-040` – `HU-042` | Integradas en `main` (PR `#93`, `#96`, `#99`); seguimientos parciales en issues `#90`, `#95`, `#98` y `#100` |
 | B3 | `HU-069` – | `HU-066`–`HU-068` ya integradas en `main`; continuar con T3 y cierre automático solo después de revisar este lote y resolver cualquier duda de semántica de snapshots/configuración |
-| B4 | `HU-100` – | `HU-090`–`HU-099` ya redactadas; `DP-PUB-01` resuelta (`DEC-082`), `HU-090` en curso (issue [#243](https://github.com/bcaceres19/barberia/issues/243)); continuar con el resto solo después de resolver `DP-PUB-02`–`DP-PUB-06`/`CT-011` |
+| B4 | `HU-100` – | `HU-090`–`HU-099` ya redactadas; `DP-PUB-01` resuelta (`DEC-082`), `HU-090` implementada (issue [#243](https://github.com/bcaceres19/barberia/issues/243), PR abierto); continuar con el resto solo después de resolver `DP-PUB-02`–`DP-PUB-06`/`CT-011` |
 | B5 | `HU-130` – | B4 cumple su criterio de salida |
 | B6 | `HU-150` – | B5 cumple su criterio de salida |
 

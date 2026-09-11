@@ -1,3 +1,71 @@
-# Operaciones públicas de reserva (sin sesión del barbero): consulta de
-# servicios, disponibilidad y creación de turnos. security: [] en cada
-# operación. Ver docs/06-api/estandar-openapi.md. Sin contenido todavía.
+# Operaciones públicas de reserva (sin sesión del barbero): HU-090 agrega
+# la primera, entrada pública de reservas. security: [] en cada operación,
+# según docs/06-api/estandar-openapi.md. Las siguientes capacidades del
+# flujo público (catálogo, selección de barbero, disponibilidad, creación
+# de turnos, acceso/cancelación del cliente) llegan con HU-091 en adelante,
+# bloqueadas hoy por decisiones abiertas (DP-PUB-02–DP-PUB-06, CT-011:
+# docs/00-control/dudas-pendientes.md).
+/public/barbershops/{slug}:
+  get:
+    tags: [PublicBooking]
+    summary: Abrir el contexto público de una barbería por su enlace de reservas
+    description: >
+      Resuelve `slug` -el identificador del enlace público de reservas
+      (F-PUB-01, DEC-082)- a la barbería habilitada correspondiente, sin
+      sesión (HU-090, CA-090-01). El cliente nunca fija `barbershopId`: ni
+      este parámetro de ruta ni ningún otro dato de la solicitud lo
+      declaran (CA-090-03); API, aplicación y PostgreSQL resuelven y aíslan
+      el tenant mediante `public_resolve_barbershop_by_slug`, la función
+      `SECURITY DEFINER` estrecha que agrega la migración
+      `20260911045044_add_barbershop_public_slug.sql`. Un `slug` mal
+      formado, desconocido o de una barbería no publicable (`public_slug`
+      `NULL`) produce EXACTAMENTE la misma respuesta `404` uniforme
+      (CA-090-02, RN-TEN-01): esta operación nunca distingue la causa. La
+      respuesta trae solo los datos públicos ya autorizados por HU-020
+      (nombre, zona horaria IANA, contacto opcional); nunca un
+      identificador interno, el slug mismo, ni ningún dato de configuración
+      privada (CA-090-04).
+    operationId: resolvePublicBarbershop
+    security: []
+    x-business-rules: [RN-TEN-01, RN-DAT-01, RN-DAT-02]
+    x-decisions: [DEC-016, DEC-019, DEC-022, DEC-024, DEC-033, DEC-034, DEC-035, DEC-036, DEC-037, DEC-038, DEC-039, DEC-077, DEC-078, DEC-079, DEC-082]
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        description: >
+          Identificador del enlace público de reservas, tal como aparece en
+          la URL. No es un identificador interno: su forma, generación y
+          ciclo de vida los fija DEC-082 (resuelve DP-PUB-01).
+        schema:
+          type: string
+          maxLength: 100
+        examples:
+          slug:
+            value: barberia-ejemplo
+    responses:
+      "200":
+        $ref: '../components/responses/PublicBarbershopProfileSuccess.yaml'
+      "404":
+        description: >
+          `slug` con forma inválida, inexistente o de una barbería no
+          publicable, sin distinguir la causa (CA-090-02, RN-TEN-01).
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              enlaceNoDisponible:
+                value:
+                  type: /api/v1/problems/not-found
+                  title: No encontrado
+                  status: 404
+                  detail: no existe una barbería pública con ese enlace
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: not-found
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/public/barbershops/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Abrir el contexto público de una barbería por su enlace de reservas
+         * @description Resuelve `slug` -el identificador del enlace público de reservas (F-PUB-01, DEC-082)- a la barbería habilitada correspondiente, sin sesión (HU-090, CA-090-01). El cliente nunca fija `barbershopId`: ni este parámetro de ruta ni ningún otro dato de la solicitud lo declaran (CA-090-03); API, aplicación y PostgreSQL resuelven y aíslan el tenant mediante `public_resolve_barbershop_by_slug`, la función `SECURITY DEFINER` estrecha que agrega la migración `20260911045044_add_barbershop_public_slug.sql`. Un `slug` mal formado, desconocido o de una barbería no publicable (`public_slug` `NULL`) produce EXACTAMENTE la misma respuesta `404` uniforme (CA-090-02, RN-TEN-01): esta operación nunca distingue la causa. La respuesta trae solo los datos públicos ya autorizados por HU-020 (nombre, zona horaria IANA, contacto opcional); nunca un identificador interno, el slug mismo, ni ningún dato de configuración privada (CA-090-04).
+         */
+        get: operations["resolvePublicBarbershop"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/public/auth/login": {
         parameters: {
             query?: never;
@@ -1290,6 +1310,30 @@ export interface components {
              */
             affectedAppointments: number;
         };
+        /** @description Contexto público de la barbería resuelta por su enlace de reservas. contactEmail/contactPhone viajan siempre presentes en el cuerpo, con valor `null` explícito cuando la barbería no tiene ese contacto configurado (nunca se omiten ni se representan como cadena vacía), misma convención que BarbershopSettingsResponse. */
+        PublicBarbershopProfile: {
+            /**
+             * @description Nombre público de la barbería, ya recortado.
+             * @example Barbería Ejemplo
+             */
+            name: string;
+            /**
+             * @description Zona horaria IANA de la barbería (RN-DIS-07). El cliente la usa para mostrar la hora local de la barbería, nunca la del dispositivo.
+             * @example America/Bogota
+             */
+            timezone: string;
+            /**
+             * Format: email
+             * @description Correo de contacto público de la barbería; null cuando no está configurado.
+             * @example contacto@ejemplo.test
+             */
+            contactEmail: string | null;
+            /**
+             * @description Teléfono de contacto público de la barbería en formato E.164; null cuando no está configurado.
+             * @example +573001234567
+             */
+            contactPhone: string | null;
+        };
         /** @description Solicitud de recuperación de acceso. */
         RecoveryRequestRequest: {
             /**
@@ -2565,6 +2609,16 @@ export interface components {
                 "application/json": components["schemas"]["ServiceResponse"];
             };
         };
+        /** @description Contexto público de la barbería resuelta por su enlace de reservas. */
+        PublicBarbershopProfileSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["PublicBarbershopProfile"];
+            };
+        };
         /** @description La solicitud fue recibida. Si la cuenta existe y tiene el teléfono verificado, se envía un código por WhatsApp oficial y correo; en cualquier otro caso no ocurre ningún envío, sin que la respuesta lo revele. */
         RecoveryRequestAccepted: {
             headers: {
@@ -3059,6 +3113,32 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    resolvePublicBarbershop: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del enlace público de reservas, tal como aparece en la URL. No es un identificador interno: su forma, generación y ciclo de vida los fija DEC-082 (resuelve DP-PUB-01). */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["PublicBarbershopProfileSuccess"];
+            /** @description `slug` con forma inválida, inexistente o de una barbería no publicable, sin distinguir la causa (CA-090-02, RN-TEN-01). */
+            404: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
     loginWithPassword: {
         parameters: {
             query?: never;

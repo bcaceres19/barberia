@@ -1,9 +1,9 @@
 ---
 titulo: "Plan de bloques de construcción del MVP"
-version: "1.29"
+version: "1.30"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-10"
+ultima_actualizacion: "2026-09-11"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/prioridades.md"
@@ -48,7 +48,7 @@ Consecuencia deliberada: **el flujo público de reserva, que es la cara visible 
 | **B1** | Identidad de la barbería y catálogo | 4 | `HU-020` – `HU-0xx` | `HU-020`–`HU-024` integradas en `main` ([PR #84](https://github.com/bcaceres19/barberia/pull/84), issue real `#77`) |
 | **B2** | Horario laboral y bloqueos | 2 | `HU-040` – `HU-042` | `CT-008` resuelta (`DEC-070`); `HU-040` integrada en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93), issue real [#90](https://github.com/bcaceres19/barberia/issues/90) abierto por `CA-040-08` parcial); `HU-041` integrada en `main` ([PR #96](https://github.com/bcaceres19/barberia/pull/96), issue real [#95](https://github.com/bcaceres19/barberia/issues/95) abierto por `CA-041-08` parcial); `HU-042` integrada en `main` ([PR #99](https://github.com/bcaceres19/barberia/pull/99), issue real [#98](https://github.com/bcaceres19/barberia/issues/98) abierto por seguimiento de UI/E2E, issue [#100](https://github.com/bcaceres19/barberia/issues/100)) |
 | **B3** | Agenda del barbero, estados e integridad | 11 | `HU-060` – `HU-0xx` | `HU-060`–`HU-068` integradas ([PR #235](https://github.com/bcaceres19/barberia/pull/235), [#225](https://github.com/bcaceres19/barberia/issues/225); [PR #237](https://github.com/bcaceres19/barberia/pull/237), [#226](https://github.com/bcaceres19/barberia/issues/226); [PR #239](https://github.com/bcaceres19/barberia/pull/239), [#227](https://github.com/bcaceres19/barberia/issues/227)); tercer lote de B3 completo |
-| **B4** | Reserva pública y disponibilidad | 13 | `HU-090` – `HU-099` | Diez HU redactadas como propuesta; `HU-090` desbloqueada (`DP-PUB-01` resuelta como `DEC-082`, issue [#243](https://github.com/bcaceres19/barberia/issues/243)); resto bloqueado |
+| **B4** | Reserva pública y disponibilidad | 13 | `HU-090` – `HU-099` | Diez HU redactadas como propuesta; `HU-090` implementada (`DP-PUB-01` resuelta como `DEC-082`, issue [#243](https://github.com/bcaceres19/barberia/issues/243), PR abierto); resto bloqueado |
 | **B5** | Notificaciones y recordatorios | 3 | `HU-130` – `HU-1xx` | Pendiente de redacción |
 | **B6** | Operación, privacidad y preparación del piloto | 4 | `HU-150` – `HU-1xx` | Pendiente de redacción |
 
@@ -254,7 +254,7 @@ Tabla de control: ninguna función P0 puede quedar sin bloque.
 | Historias de B0 | Redactadas en [historias-usuario.md](../02-requisitos/historias-usuario.md) |
 | Prompts de implementación de B0 | Redactados en [prompts-implementacion.md](prompts-implementacion.md) |
 | Primeras historias y prompts de B1 | `HU-020`–`HU-024` integradas en `main` ([PR #84](https://github.com/bcaceres19/barberia/pull/84), issue real `#77`) |
-| Historias restantes de B1 a B6 | B2: `HU-040`–`HU-042` integradas; B3: `HU-060`–`HU-068` integradas y bloque cerrado ([PR #235](https://github.com/bcaceres19/barberia/pull/235) #225, [PR #237](https://github.com/bcaceres19/barberia/pull/237) #226, [PR #239](https://github.com/bcaceres19/barberia/pull/239) #227); B4: `HU-090`–`HU-099` redactadas como propuesta en #240, `HU-090` desbloqueada (`DP-PUB-01` resuelta como `DEC-082`, issue real [#243](https://github.com/bcaceres19/barberia/issues/243)), resto bloqueado por `DP-PUB-02`–`DP-PUB-06`/`CT-011`; T3, cierre automático y B5–B6 pendientes |
+| Historias restantes de B1 a B6 | B2: `HU-040`–`HU-042` integradas; B3: `HU-060`–`HU-068` integradas y bloque cerrado ([PR #235](https://github.com/bcaceres19/barberia/pull/235) #225, [PR #237](https://github.com/bcaceres19/barberia/pull/237) #226, [PR #239](https://github.com/bcaceres19/barberia/pull/239) #227); B4: `HU-090`–`HU-099` redactadas como propuesta en #240, `HU-090` implementada (`DP-PUB-01` resuelta como `DEC-082`, issue real [#243](https://github.com/bcaceres19/barberia/issues/243), PR abierto), resto bloqueado por `DP-PUB-02`–`DP-PUB-06`/`CT-011`; T3, cierre automático y B5–B6 pendientes |
 | Dudas que bloqueaban B0 | `DP-SEG-04`, `DP-SEG-05`, `DP-SEG-06`, resueltas el 2026-08-11 como `DEC-050`–`DEC-052` (ver [dudas-pendientes.md](../00-control/dudas-pendientes.md)) |
 
 Redactar historias muy por anticipado está desaconsejado. El propietario solicitó el 2026-09-10 un lote explícito de diez HU; por ello `HU-091`–`HU-099` se conservan como propuesta documental y sus prompts como `draft` hasta resolver sus propias dudas y depender de la HU anterior integrada. `HU-090` queda autorizada a ejecutarse: B3 cerró su criterio de salida y `DP-PUB-01` quedó resuelta como `DEC-082`.

@@ -1,6 +1,11 @@
 package shops
 
-import "strings"
+import (
+	"fmt"
+	"regexp"
+	"strings"
+	"unicode/utf8"
+)
 
 // NameMaxLength y TimezoneMaxLength coinciden con barbershop_name_ck y
 // barbershop_timezone_ck (20260807170000_create_tenant_foundation.sql): el
@@ -53,4 +58,70 @@ func NormalizeContactEmail(raw string) *string {
 	}
 	lower := strings.ToLower(*normalized)
 	return &lower
+}
+
+// slugFoldReplacer pliega vocales acentuadas, diéresis, ñ y cedilla a su
+// equivalente ASCII antes de derivar el slug público (HU-090, DEC-082).
+// Mismo criterio que el backfill SQL de
+// 20260911045044_add_barbershop_public_slug.sql, sin depender de la
+// extensión unaccent (AGENTS.md prohíbe una dependencia nueva sin
+// justificación; translate()/strings.NewReplacer alcanzan para el alfabeto
+// español).
+var slugFoldReplacer = strings.NewReplacer(
+	"á", "a", "é", "e", "í", "i", "ó", "o", "ú", "u", "ü", "u", "ñ", "n",
+	"à", "a", "è", "e", "ì", "i", "ò", "o", "ù", "u",
+	"â", "a", "ê", "e", "î", "i", "ô", "o", "û", "u",
+	"ä", "a", "ë", "e", "ï", "i", "ö", "o",
+	"ç", "c",
+)
+
+var (
+	slugNonAlnumPattern   = regexp.MustCompile(`[^a-z0-9]+`)
+	slugTrimHyphenPattern = regexp.MustCompile(`(^-+|-+$)`)
+)
+
+const (
+	// SlugMaxLength/SlugMinLength coinciden con barbershop_public_slug_ck
+	// (^[a-z0-9]([a-z0-9-]{1,38}[a-z0-9])$): 3 a 40 caracteres.
+	SlugMaxLength = 40
+	SlugMinLength = 3
+	// slugFallback es el respaldo determinista cuando el nombre no aporta
+	// ningún carácter latino alfanumérico (caso patológico: nombre vacío
+	// tras normalizar, solo símbolos, solo un alfabeto no latino, etc.).
+	slugFallback = "barberia"
+)
+
+// SlugBase deriva la base del slug público (DEC-082, resuelve DP-PUB-01) a
+// partir de un nombre YA normalizado (NormalizeName): minúsculas, plegado
+// ASCII de acentos, cualquier carácter fuera de [a-z0-9] colapsado a un
+// solo guion, sin guion inicial/final, truncado a SlugMaxLength. Pura: no
+// toca la base de datos ni decide la unicidad global -eso lo resuelve el
+// repositorio reintentando con SlugWithSuffix ante un unique_violation real
+// sobre idx_barbershop_public_slug-.
+func SlugBase(name string) string {
+	folded := slugFoldReplacer.Replace(strings.ToLower(name))
+	base := slugNonAlnumPattern.ReplaceAllString(folded, "-")
+	base = slugTrimHyphenPattern.ReplaceAllString(base, "")
+	if utf8.RuneCountInString(base) > SlugMaxLength {
+		runes := []rune(base)
+		base = string(runes[:SlugMaxLength])
+		base = slugTrimHyphenPattern.ReplaceAllString(base, "")
+	}
+	if utf8.RuneCountInString(base) < SlugMinLength {
+		return slugFallback
+	}
+	return base
+}
+
+// SlugWithSuffix agrega el sufijo numérico determinístico que DEC-082 exige
+// ante una colisión real de unicidad global ('-2', '-3', ...), recortando
+// base lo necesario para que el resultado nunca exceda SlugMaxLength.
+func SlugWithSuffix(base string, attempt int) string {
+	suffix := fmt.Sprintf("-%d", attempt)
+	maxBase := SlugMaxLength - utf8.RuneCountInString(suffix)
+	if utf8.RuneCountInString(base) > maxBase {
+		runes := []rune(base)
+		base = string(runes[:maxBase])
+	}
+	return base + suffix
 }
