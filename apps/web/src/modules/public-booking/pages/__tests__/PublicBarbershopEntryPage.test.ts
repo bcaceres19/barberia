@@ -46,7 +46,12 @@ describe('PublicBarbershopEntryPage', () => {
 
   it('resolves the slug from props, without reading useRoute (CA-090-03)', async () => {
     getMock.mockResolvedValueOnce({
-      data: { name: 'Barbería Ejemplo', timezone: 'America/Bogota', contactEmail: null, contactPhone: null },
+      data: {
+        name: 'Barbería Ejemplo',
+        timezone: 'America/Bogota',
+        contactEmail: null,
+        contactPhone: null,
+      },
       error: undefined,
       response: okResponse(),
     })
@@ -61,7 +66,12 @@ describe('PublicBarbershopEntryPage', () => {
 
   it('renders the barbershop name and its local time on success (CA-090-01)', async () => {
     getMock.mockResolvedValueOnce({
-      data: { name: 'Barbería Ejemplo', timezone: 'America/Bogota', contactEmail: null, contactPhone: null },
+      data: {
+        name: 'Barbería Ejemplo',
+        timezone: 'America/Bogota',
+        contactEmail: null,
+        contactPhone: null,
+      },
       error: undefined,
       response: okResponse(),
     })
@@ -89,7 +99,12 @@ describe('PublicBarbershopEntryPage', () => {
     expect(withContact.text()).toContain('+573001234567')
 
     getMock.mockResolvedValueOnce({
-      data: { name: 'Barbería Ejemplo', timezone: 'America/Bogota', contactEmail: null, contactPhone: null },
+      data: {
+        name: 'Barbería Ejemplo',
+        timezone: 'America/Bogota',
+        contactEmail: null,
+        contactPhone: null,
+      },
       error: undefined,
       response: okResponse(),
     })
@@ -101,11 +116,18 @@ describe('PublicBarbershopEntryPage', () => {
 
   it('never renders an internal id, barbershopId or the slug itself in the DOM (CA-090-04)', async () => {
     getMock.mockResolvedValueOnce({
-      data: { name: 'Barbería Ejemplo', timezone: 'America/Bogota', contactEmail: null, contactPhone: null },
+      data: {
+        name: 'Barbería Ejemplo',
+        timezone: 'America/Bogota',
+        contactEmail: null,
+        contactPhone: null,
+      },
       error: undefined,
       response: okResponse(),
     })
-    const wrapper = mount(PublicBarbershopEntryPage, { props: { slug: 'barberia-secreta-interna' } })
+    const wrapper = mount(PublicBarbershopEntryPage, {
+      props: { slug: 'barberia-secreta-interna' },
+    })
     await flushPromises()
 
     expect(wrapper.html()).not.toContain('barberia-secreta-interna')
@@ -113,7 +135,11 @@ describe('PublicBarbershopEntryPage', () => {
   })
 
   it('shows the same uniform message for a 404 (malformed, unknown or non-publishable, CA-090-02)', async () => {
-    getMock.mockResolvedValueOnce({ data: undefined, error: { status: 404 }, response: errorResponse(404) })
+    getMock.mockResolvedValueOnce({
+      data: undefined,
+      error: { status: 404 },
+      response: errorResponse(404),
+    })
     const wrapper = mount(PublicBarbershopEntryPage, { props: { slug: 'no-existe' } })
     await flushPromises()
 
@@ -127,7 +153,12 @@ describe('PublicBarbershopEntryPage', () => {
     expect(wrapper.text()).toContain('No pudimos conectar')
 
     getMock.mockResolvedValueOnce({
-      data: { name: 'Barbería Ejemplo', timezone: 'America/Bogota', contactEmail: null, contactPhone: null },
+      data: {
+        name: 'Barbería Ejemplo',
+        timezone: 'America/Bogota',
+        contactEmail: null,
+        contactPhone: null,
+      },
       error: undefined,
       response: okResponse(),
     })
@@ -180,7 +211,11 @@ describe('PublicBarbershopEntryPage', () => {
   })
 
   it('has no accessibility violations on the not-found error state', async () => {
-    getMock.mockResolvedValueOnce({ data: undefined, error: { status: 404 }, response: errorResponse(404) })
+    getMock.mockResolvedValueOnce({
+      data: undefined,
+      error: { status: 404 },
+      response: errorResponse(404),
+    })
     const wrapper = mount(PublicBarbershopEntryPage, { props: { slug: 'no-existe' } })
     await flushPromises()
     const results = await axe(wrapper.element)

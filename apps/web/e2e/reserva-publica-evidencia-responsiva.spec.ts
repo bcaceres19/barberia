@@ -15,7 +15,11 @@ import { fileURLToPath } from 'node:url'
  * guardan en `e2e/evidence/` (no ignorado por git) para quedar adjuntas
  * como archivos reales del PR.
  */
-const evidenceDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'evidence', 'reserva-publica')
+const evidenceDir = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  'evidence',
+  'reserva-publica',
+)
 const axeScriptPath = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
   '..',
@@ -80,14 +84,20 @@ for (const viewport of viewports) {
       })
       await page.goto('/reservar/barberia-ejemplo')
       await expect(page.getByText('Abriendo tu barbería')).toBeVisible()
-      await page.screenshot({ path: path.join(evidenceDir, viewport.name, 'carga.png'), fullPage: true })
+      await page.screenshot({
+        path: path.join(evidenceDir, viewport.name, 'carga.png'),
+        fullPage: true,
+      })
     })
 
     test(`normal, foco y sin scroll horizontal (${viewport.name}px)`, async ({ page }) => {
       await page.route('**/api/v1/public/barbershops/**', fulfillProfile)
       await page.goto('/reservar/barberia-ejemplo')
       await expect(page.getByRole('heading', { name: 'Barbería Ejemplo' })).toBeVisible()
-      await page.screenshot({ path: path.join(evidenceDir, viewport.name, 'normal.png'), fullPage: true })
+      await page.screenshot({
+        path: path.join(evidenceDir, viewport.name, 'normal.png'),
+        fullPage: true,
+      })
 
       const hasHorizontalScroll = await page.evaluate(
         () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
@@ -117,11 +127,17 @@ for (const viewport of viewports) {
       })
       await page.goto('/reservar/enlace-que-no-existe')
       await expect(page.getByRole('alert')).toContainText('No encontramos ese enlace')
-      await page.screenshot({ path: path.join(evidenceDir, viewport.name, 'error.png'), fullPage: true })
+      await page.screenshot({
+        path: path.join(evidenceDir, viewport.name, 'error.png'),
+        fullPage: true,
+      })
 
       await page.getByRole('button', { name: 'Reintentar' }).focus()
       await expect(page.getByRole('button', { name: 'Reintentar' })).toBeFocused()
-      await page.screenshot({ path: path.join(evidenceDir, viewport.name, 'foco.png'), fullPage: true })
+      await page.screenshot({
+        path: path.join(evidenceDir, viewport.name, 'foco.png'),
+        fullPage: true,
+      })
 
       await assertNoAxeViolations(page)
     })

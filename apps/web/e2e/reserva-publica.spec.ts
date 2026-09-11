@@ -72,7 +72,9 @@ test.describe('Entrada pública de reservas (HU-090)', () => {
     expect(bodyText).not.toContain('barbershopId')
   })
 
-  test('el cuerpo de la solicitud pública nunca incluye barbershopId (CA-090-03)', async ({ page }) => {
+  test('el cuerpo de la solicitud pública nunca incluye barbershopId (CA-090-03)', async ({
+    page,
+  }) => {
     let capturedUrl = ''
     await page.route('**/api/v1/public/barbershops/**', async (route) => {
       capturedUrl = route.request().url()
@@ -91,7 +93,9 @@ test.describe('Entrada pública de reservas (HU-090)', () => {
     expect(capturedUrl).not.toContain('barbershopId')
   })
 
-  test('un fallo de red permite reintentar sin recargar la página (CA-090-05)', async ({ page }) => {
+  test('un fallo de red permite reintentar sin recargar la página (CA-090-05)', async ({
+    page,
+  }) => {
     let attempt = 0
     await page.route('**/api/v1/public/barbershops/**', async (route) => {
       attempt += 1
