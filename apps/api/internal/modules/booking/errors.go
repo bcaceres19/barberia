@@ -149,6 +149,35 @@ func errAppointmentAlreadyClosed() error {
 	return apperr.InvalidState("el turno ya tiene un resultado terminal registrado; una futura corrección (T8) permitirá cambiarlo")
 }
 
+// errAppointmentNotTerminal cubre HU-068 (T8): el turno todavía está
+// `confirmed`, así que no tiene ningún resultado terminal que corregir.
+// Distinto de errAppointmentAlreadyClosed (T4/T7, "ya tiene un resultado
+// terminal DISTINTO del que el comando intenta aplicar"): aquí el problema
+// es el opuesto, el turno nunca llegó a un terminal.
+func errAppointmentNotTerminal() error {
+	return apperr.InvalidState("el turno todavía no tiene un resultado terminal para corregir")
+}
+
+// errCorrectionDestinationInvalid cubre HU-068 (CA-068-02): el destino de
+// T8 no es ninguno de los cuatro terminales válidos (`completed`, `no_show`,
+// `cancelled_by_customer`, `cancelled_by_barber`) — incluye enviar
+// `confirmed` o cualquier valor desconocido.
+func errCorrectionDestinationInvalid() error {
+	return apperr.Validation("el estado destino debe ser completed, no_show, cancelled_by_customer o cancelled_by_barber")
+}
+
+// errCorrectionReasonRequired cubre HU-068 (CA-068-02): el motivo de T8 es
+// obligatorio y no puede quedar vacío ni en blanco tras recortar espacios.
+func errCorrectionReasonRequired() error {
+	return apperr.Validation("el motivo de la corrección es obligatorio")
+}
+
+// errCorrectionReasonTooLong cubre HU-068: el motivo excede el límite de
+// appointment_history_reason_ck (500 caracteres).
+func errCorrectionReasonTooLong() error {
+	return apperr.Validation("el motivo de la corrección excede el largo máximo")
+}
+
 // Los errores de conflicto de agenda y de cliente inexistente/ajeno viven
 // en booking/postgres (errScheduleConflict, errCustomerNotFound): solo se
 // detectan al traducir un exclusion_violation/foreign_key_violation real de

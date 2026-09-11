@@ -1,0 +1,75 @@
+# Representación de una cita ya corregida hacia otro terminal mediante POST
+# /private/appointments/{appointmentId}/correct-status (HU-068, T8).
+# Deliberadamente SIN updatedAt crudo (HU-064): versionToken es el único
+# dato de concurrencia expuesto, ya actualizado tras la corrección (o, en
+# una repetición no-op hacia el mismo estado, sin cambios adicionales,
+# CA-068-02). El motivo no aparece aquí: queda en el evento de historial
+# `appointment_status_corrected`, consultable vía
+# GET /private/appointments/{appointmentId}/history.
+type: object
+properties:
+  id:
+    type: string
+    format: uuid
+  barberId:
+    type: string
+    format: uuid
+  serviceId:
+    type: string
+    format: uuid
+  customerId:
+    type: string
+    format: uuid
+  attendeeName:
+    type: string
+  startsAt:
+    type: string
+    format: date-time
+  endsAt:
+    type: string
+    format: date-time
+  status:
+    type: string
+    enum: [confirmed, completed, cancelled_by_customer, cancelled_by_barber, no_show]
+  origin:
+    type: string
+    enum: [public, manual]
+  serviceName:
+    type: string
+  durationMinutes:
+    type: integer
+  priceAmount:
+    type: string
+    examples:
+      - "20000.00"
+  currency:
+    type: string
+    examples:
+      - COP
+  customerNote:
+    type: [string, "null"]
+  versionToken:
+    type: string
+    description: >
+      Token opaco de concurrencia ya actualizado tras esta escritura: no lo
+      decodifiques, úsalo como `If-Match` en una operación posterior.
+  createdAt:
+    type: string
+    format: date-time
+required:
+  - id
+  - barberId
+  - serviceId
+  - customerId
+  - attendeeName
+  - startsAt
+  - endsAt
+  - status
+  - origin
+  - serviceName
+  - durationMinutes
+  - priceAmount
+  - currency
+  - customerNote
+  - versionToken
+  - createdAt

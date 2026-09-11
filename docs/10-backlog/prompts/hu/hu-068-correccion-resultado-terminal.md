@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-068-v1"
 version: "1.0"
 kind: "hu"
-status: "blocked"
+status: "ready"
 target_agents: ["codex", "claude"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
@@ -11,7 +11,7 @@ related_hu: ["HU-004", "HU-060", "HU-064", "HU-066", "HU-067"]
 issue: 227
 issue_url: "https://github.com/bcaceres19/barberia/issues/227"
 suggested_issue_title: "feat(booking): implementar HU-068 corrección auditada de resultado"
-branch: null
+branch: "feat/227-hu068-correccion-resultado"
 pr: null
 pr_url: null
 depends_on:
@@ -48,7 +48,7 @@ source_docs:
   - "apps/api/internal/modules/booking"
   - "apps/web/src/modules/agenda"
 created_at: "2026-09-08"
-updated_at: "2026-09-08"
+updated_at: "2026-09-10"
 supersedes: null
 superseded_by: null
 ---
@@ -57,7 +57,7 @@ superseded_by: null
 
 ## Instrucción para el agente
 
-Implementa únicamente T8. Este prompt está `blocked` hasta que HU-066 y HU-067 estén integradas. No ejecutes mientras falte esa dependencia ni conviertas la corrección en edición/borrado del historial o reapertura a `confirmed`.
+Implementa únicamente T8. HU-066 (PR #235) y HU-067 (PR #237) ya están integradas en `main` con CI verde (verificado 2026-09-10), así que el prompt pasa a `ready`. No conviertas la corrección en edición/borrado del historial ni en reapertura a `confirmed`.
 
 ## Objetivo
 

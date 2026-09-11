@@ -953,3 +953,170 @@
         $ref: '../components/responses/AppointmentNotStartedProblem.yaml'
       "500":
         $ref: '../components/responses/InternalErrorProblem.yaml'
+
+/private/appointments/{appointmentId}/correct-status:
+  post:
+    tags: [Booking]
+    summary: Corregir un resultado terminal (T8)
+    description: >
+      Corrige una clasificación terminal errónea hacia otro terminal
+      distinto (HU-068, `T8` de `estados-citas.md`): `completed`, `no_show`,
+      `cancelled_by_customer` o `cancelled_by_barber`. `confirmed` nunca es
+      origen ni destino (CA-068-01/02) — corregir una cita que sigue
+      `confirmed` responde `409 invalid-state`; enviar `confirmed` como
+      destino responde `422 validation-error`. El estado y un único evento
+      `appointment_status_corrected` (con estado anterior, nuevo y el motivo
+      obligatorio) se escriben en la misma transacción tenant-aware
+      (CA-068-01/03); los eventos anteriores permanecen intactos, sin editar
+      ni borrar nada. Repetir la corrección hacia el MISMO estado vigente es
+      un `200` no-op exitoso, sin duplicar el evento (CA-068-02). Al
+      corregir desde un cancelado hacia `completed`/`no_show`, se revalida
+      la misma frontera temporal que T4/T7 (`422` si `startsAt` todavía no
+      pasó) y la misma restricción de exclusión de PostgreSQL que protege
+      reprogramar: un cruce con otra cita del mismo barbero responde
+      `409 conflict` sin escribir nada (CA-068-04). Al corregir desde
+      `completed`/`no_show` hacia un cancelado, la cita deja de ocupar
+      agenda en la misma confirmación (CA-068-05). Protegida con clave de
+      idempotencia (RN-IDE-01, DEC-043) y con la precondición `If-Match` (el
+      `versionToken` de una lectura anterior del detalle, HU-064). El tenant
+      y el actor se derivan exclusivamente de `SessionCookie`; el cuerpo
+      nunca acepta un estado de origen, actor, tenant ni ningún dato de la
+      cita.
+    operationId: correctAppointmentStatus
+    security:
+      - SessionCookie: []
+    x-business-rules:
+      [RN-CIT-01, RN-CIT-03, RN-CIT-04, RN-HIS-01, RN-HIS-02, RN-CON-01,
+       RN-CON-03, RN-TEN-01, RN-IDE-01]
+    x-decisions:
+      [DEC-011, DEC-012, DEC-014, DEC-016, DEC-017, DEC-024, DEC-035,
+       DEC-036, DEC-037, DEC-038, DEC-041, DEC-043, DEC-077, DEC-078,
+       DEC-079, DEC-080]
+    parameters:
+      - name: appointmentId
+        in: path
+        required: true
+        description: Identificador de la cita.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          cita:
+            value: 3f4a5b6c-7d8e-49f0-a1b2-c3d4e5f60718
+      - $ref: '../components/parameters/IdempotencyKey.yaml'
+      - $ref: '../components/parameters/IfMatch.yaml'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/CorrectAppointmentStatusRequest.yaml'
+          examples:
+            corregirANoShow:
+              summary: Corregir completed a no_show
+              value:
+                status: no_show
+                reason: "El barbero marcó completed por error; el cliente nunca llegó."
+    responses:
+      "200":
+        $ref: '../components/responses/AppointmentStatusCorrected.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        description: >
+          `appointmentId` con forma inválida, inexistente o de otra
+          barbería (RN-TEN-01), sin distinguir la causa.
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              citaAjena:
+                value:
+                  type: /api/v1/problems/not-found
+                  title: No encontrado
+                  status: 404
+                  detail: no existe una cita con ese identificador
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: not-found
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "409":
+        description: >
+          Cinco conflictos distinguibles por `code`, nunca por `detail`:
+          conflicto de idempotencia (misma clave con otro contenido u otra
+          operación, `IdempotencyConflictProblem`) u operación en curso con
+          la misma clave (`IdempotencyLockedProblem`, DEC-043); conflicto de
+          versión (`code: version-conflict`, el `If-Match` enviado ya no
+          coincide con la representación vigente); estado inválido
+          (`code: invalid-state`, el turno todavía está `confirmed`, sin
+          ningún resultado terminal que corregir, CA-068-01); o cruce de
+          agenda (`code: conflict`, corregir desde un cancelado hacia
+          `completed`/`no_show` volvería a ocupar una franja que otra cita
+          del mismo barbero ya ocupa, CA-068-04).
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              contenidoDistinto:
+                summary: Misma clave, cuerpo distinto
+                value:
+                  type: /api/v1/problems/idempotency-conflict
+                  title: Conflicto de idempotencia
+                  status: 409
+                  detail: la clave de idempotencia ya se usó con un contenido distinto; usa una clave nueva
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              operacionEnCurso:
+                summary: Otra transacción tiene el bloqueo de esta clave ahora mismo
+                value:
+                  type: /api/v1/problems/idempotency-locked
+                  title: Operación en curso
+                  status: 409
+                  detail: la operación con esta clave de idempotencia todavía está en curso; reintenta en unos segundos
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-locked
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              versionDesactualizada:
+                summary: El If-Match enviado ya no coincide con la representación vigente
+                value:
+                  type: /api/v1/problems/version-conflict
+                  title: Conflicto de versión
+                  status: 409
+                  detail: el turno cambió desde que se leyó; recarga antes de reintentar
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: version-conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              todaviaConfirmed:
+                summary: El turno todavía no tiene un resultado terminal
+                value:
+                  type: /api/v1/problems/invalid-state
+                  title: Estado inválido
+                  status: 409
+                  detail: el turno todavía no tiene un resultado terminal para corregir
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: invalid-state
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              cruceDeAgenda:
+                summary: El destino volvería a ocupar una franja ya ocupada
+                value:
+                  type: /api/v1/problems/conflict
+                  title: Conflicto
+                  status: 409
+                  detail: el barbero ya tiene una cita en ese intervalo
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "422":
+        $ref: '../components/responses/CorrectAppointmentStatusValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

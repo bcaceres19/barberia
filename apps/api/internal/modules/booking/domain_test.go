@@ -265,6 +265,12 @@ func (s *stubRepository) MarkNoShow(
 	panic("no usado")
 }
 
+func (s *stubRepository) CorrectAppointmentStatus(
+	_ context.Context, _ string, _ booking.CorrectAppointmentStatusInput, _ idempotency.Key, _ idempotency.Fingerprint,
+) (booking.CorrectAppointmentStatusResult, error) {
+	panic("no usado")
+}
+
 func (s *stubRepository) CustomerNames(
 	_ context.Context, _ string, _ []string,
 ) (map[string]string, error) {

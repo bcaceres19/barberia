@@ -1,14 +1,15 @@
 <script setup lang="ts">
 // Detalle e historial de un turno (HU-064) más reprogramación T2 (HU-065),
-// cancelación T6 (HU-066) y cierre manual T4/T7 (HU-067): persona atendida,
-// cliente que reservó con su contacto opcional y nota, servicio snapshot
-// (DEC-004), precio, estado e historial inmutable paginado, siguiendo la
-// plantilla P0 "Detalle de turno" (estandar-diseno-visual.md §10). "Volver"
-// conserva la fecha/barbero de origen (HU-063) mediante `route.query`; tras
+// cancelación T6 (HU-066), cierre manual T4/T7 (HU-067) y corrección
+// auditada T8 (HU-068): persona atendida, cliente que reservó con su
+// contacto opcional y nota, servicio snapshot (DEC-004), precio, estado e
+// historial inmutable paginado, siguiendo la plantilla P0 "Detalle de
+// turno" (estandar-diseno-visual.md §10). "Volver" conserva la
+// fecha/barbero de origen (HU-063) mediante `route.query`; tras
 // reprogramar con éxito, la fecha se actualiza a la del nuevo inicio para no
 // dejar la fecha vieja presentada como vigente. Fuera de alcance a
-// propósito: T3, T8 (corrección auditada) o cualquier cambio de estado
-// distinto de los cinco comandos ya implementados.
+// propósito: T3 o cualquier cambio de estado distinto de los seis comandos
+// ya implementados.
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, type LocationQueryRaw } from 'vue-router'
 import { BaseAlert, BaseBadge, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
@@ -17,6 +18,7 @@ import { getCivilDateInTimezone } from '@/shared/time/civilDate'
 import {
   cancelAppointmentByBarber,
   completeAppointment,
+  correctAppointmentStatus,
   fetchAppointmentDetail,
   fetchAppointmentHistory,
   fetchBarbershopTimezone,
@@ -26,7 +28,12 @@ import {
 import { newIdempotencyKey } from '../model/idempotencyKey'
 import type { AppointmentDetail, HistoryEntry } from '../model/appointmentDetail'
 import { HISTORY_EVENT_LABELS, historyFieldLabel } from '../model/appointmentDetail'
-import { APPOINTMENT_STATUS_BADGE_VARIANT, APPOINTMENT_STATUS_LABELS } from '../model/dailyAgenda'
+import {
+  APPOINTMENT_STATUS_BADGE_VARIANT,
+  APPOINTMENT_STATUS_LABELS,
+  isTerminalStatus,
+  type AppointmentStatus,
+} from '../model/dailyAgenda'
 
 type PageStatus = 'loading' | 'ready' | 'not-found' | 'error'
 type HistoryStatus = 'loading' | 'ready' | 'error'
@@ -139,6 +146,31 @@ const canCloseTurn = computed(() => {
   if (!detail.value || detail.value.status !== 'confirmed') return false
   return new Date(detail.value.startsAt).getTime() <= Date.now()
 })
+
+// Corregir resultado (HU-068, T8): CA-068-08, "la acción aparece solo en
+// estados terminales" -- a diferencia de cerrar (canCloseTurn), no depende
+// de startsAt: el servidor revalida la frontera temporal solo cuando el
+// destino elegido vuelve a ocupar agenda (CA-068-04).
+const canCorrect = computed(() => !!detail.value && isTerminalStatus(detail.value.status))
+
+// CORRECTABLE_TERMINALS son los cuatro terminales válidos como destino de
+// T8 (CA-068-01): `confirmed` nunca aparece como opción.
+const CORRECTABLE_TERMINALS: AppointmentStatus[] = [
+  'completed',
+  'no_show',
+  'cancelled_by_customer',
+  'cancelled_by_barber',
+]
+
+// correctDestinationOptions excluye siempre el estado vigente: elegirlo de
+// nuevo sería un no-op sin motivo real para el barbero (CA-068-02 lo
+// permite del lado del servidor, pero la interfaz no lo ofrece).
+const correctDestinationOptions = computed(() =>
+  CORRECTABLE_TERMINALS.filter((status) => status !== detail.value?.status).map((status) => ({
+    value: status,
+    label: APPOINTMENT_STATUS_LABELS[status],
+  })),
+)
 
 const isRescheduleOpen = ref(false)
 const rescheduleDate = ref('')
@@ -440,6 +472,116 @@ function onReloadCloseAfterConflict() {
   void loadPage()
 }
 
+// Corregir resultado (HU-068, T8): un solo diálogo con destino explícito
+// (select, CA-068-01) y motivo obligatorio (textarea, CA-068-02), mismo
+// criterio de clave de idempotencia por intento y recarga completa tras
+// confirmar que ya usan reprogramar/cancelar/cerrar -- sin mockup exacto
+// para el diálogo en sí (se diseña dentro de NAVA, igual que el de
+// cancelar/cerrar).
+type CorrectStatus =
+  | 'idle'
+  | 'saving'
+  | 'version-conflict'
+  | 'invalid-state'
+  | 'conflict'
+  | 'idempotency-conflict'
+  | 'validation-error'
+  | 'network-error'
+  | 'unexpected-error'
+
+const isCorrectOpen = ref(false)
+const correctStatus = ref<CorrectStatus>('idle')
+const correctErrorDetail = ref<string | null>(null)
+const correctDestination = ref<AppointmentStatus | ''>('')
+const correctReason = ref('')
+let correctIdempotencyKey = newIdempotencyKey()
+
+function onOpenCorrect() {
+  correctStatus.value = 'idle'
+  correctErrorDetail.value = null
+  correctDestination.value = ''
+  correctReason.value = ''
+  correctIdempotencyKey = newIdempotencyKey()
+  isCorrectOpen.value = true
+}
+
+function onCorrectDialogClosed() {
+  isCorrectOpen.value = false
+}
+
+const correctTrimmedReason = computed(() => correctReason.value.trim())
+
+// correctConsequenceLabel resume, ANTES de confirmar, el efecto sobre
+// agenda que el destino elegido tendría (CA-068-08, "resume la
+// consecuencia"): mismo criterio de cálculo del lado del cliente que
+// canCloseTurn, el servidor vuelve a verificarlo con la fila bloqueada
+// (CA-068-04/05).
+const correctConsequenceLabel = computed(() => {
+  if (!detail.value || !correctDestination.value) return ''
+  const occupies = (status: AppointmentStatus) => status === 'completed' || status === 'no_show'
+  const destOccupies = occupies(correctDestination.value)
+  const originOccupies = occupies(detail.value.status)
+  if (destOccupies && !originOccupies) return 'El turno volverá a ocupar su franja en la agenda.'
+  if (!destOccupies && originOccupies) return 'El turno dejará de ocupar su franja en la agenda.'
+  return destOccupies
+    ? 'El turno sigue ocupando la misma franja en la agenda.'
+    : 'El turno sigue sin ocupar agenda.'
+})
+
+async function onSubmitCorrect() {
+  if (!detail.value || correctStatus.value === 'saving') return
+  if (!correctDestination.value || !correctTrimmedReason.value) return
+
+  correctStatus.value = 'saving'
+
+  const outcome = await correctAppointmentStatus(
+    appointmentId.value,
+    { status: correctDestination.value, reason: correctTrimmedReason.value },
+    detail.value.versionToken,
+    correctIdempotencyKey,
+  )
+
+  switch (outcome.kind) {
+    case 'success':
+      isCorrectOpen.value = false
+      await loadPage()
+      return
+    // 'not-found' aquí solo puede significar que el turno desapareció
+    // mientras el diálogo estaba abierto, mismo criterio que
+    // onConfirmClose.
+    case 'not-found':
+      correctStatus.value = 'version-conflict'
+      return
+    case 'version-conflict':
+      correctStatus.value = 'version-conflict'
+      return
+    case 'invalid-state':
+      correctStatus.value = 'invalid-state'
+      return
+    case 'conflict':
+      correctErrorDetail.value = outcome.detail
+      correctStatus.value = 'conflict'
+      return
+    case 'validation-error':
+      correctErrorDetail.value = outcome.detail
+      correctStatus.value = 'validation-error'
+      return
+    case 'idempotency-conflict':
+      correctStatus.value = 'idempotency-conflict'
+      return
+    case 'network-error':
+      correctStatus.value = 'network-error'
+      return
+    case 'unexpected-error':
+      correctStatus.value = 'unexpected-error'
+  }
+}
+
+function onReloadCorrectAfterConflict() {
+  isCorrectOpen.value = false
+  void loadPage()
+}
+
 async function loadPage() {
   pageStatus.value = 'loading'
   const [detailOutcome, timezoneOutcome] = await Promise.all([
@@ -607,6 +749,20 @@ function occurredAtLabel(entry: HistoryEntry): string {
             @click="onOpenCancel"
           >
             Cancelar turno
+          </BaseButton>
+          <BaseButton
+            v-if="canCorrect"
+            type="button"
+            variant="secondary"
+            class="appointment-detail-page__correct"
+            @click="onOpenCorrect"
+          >
+            <span
+              class="appointment-detail-page__button-icon"
+              aria-hidden="true"
+              v-html="factIcon('note')"
+            />
+            Corregir resultado
           </BaseButton>
         </div>
       </header>
@@ -1075,6 +1231,147 @@ function occurredAtLabel(entry: HistoryEntry): string {
           </div>
         </div>
       </BaseDialog>
+
+      <BaseDialog
+        v-model="isCorrectOpen"
+        title="Corregir resultado"
+        size="md"
+        @close="onCorrectDialogClosed"
+      >
+        <form
+          class="appointment-detail-page__dialog-form"
+          novalidate
+          @submit.prevent="onSubmitCorrect"
+        >
+          <BaseAlert
+            v-if="correctStatus === 'version-conflict'"
+            variant="warning"
+            title="Este turno cambió mientras lo revisabas"
+            role="alert"
+          >
+            <template #action>
+              <BaseButton type="button" variant="secondary" @click="onReloadCorrectAfterConflict">
+                Recargar
+              </BaseButton>
+            </template>
+          </BaseAlert>
+          <BaseAlert
+            v-if="correctStatus === 'invalid-state'"
+            variant="warning"
+            title="Este turno todavía no tiene un resultado terminal"
+            role="alert"
+          >
+            Su estado cambió mientras lo revisabas.
+            <template #action>
+              <BaseButton type="button" variant="secondary" @click="onReloadCorrectAfterConflict">
+                Recargar
+              </BaseButton>
+            </template>
+          </BaseAlert>
+          <BaseAlert
+            v-if="correctStatus === 'conflict'"
+            variant="danger"
+            title="No pudimos corregir el resultado"
+            role="alert"
+          >
+            {{ correctErrorDetail }}
+          </BaseAlert>
+          <BaseAlert
+            v-if="correctStatus === 'validation-error'"
+            variant="danger"
+            title="Revisa el destino y el motivo"
+            role="alert"
+          >
+            {{ correctErrorDetail }}
+          </BaseAlert>
+          <BaseAlert
+            v-if="correctStatus === 'idempotency-conflict'"
+            variant="danger"
+            title="No pudimos completar el intento anterior"
+            role="alert"
+          >
+            Inténtalo de nuevo.
+          </BaseAlert>
+          <BaseAlert
+            v-if="correctStatus === 'network-error'"
+            variant="warning"
+            title="No pudimos conectar"
+            role="alert"
+          >
+            Revisa tu conexión e inténtalo de nuevo. No perdiste lo que elegiste.
+          </BaseAlert>
+          <BaseAlert
+            v-if="correctStatus === 'unexpected-error'"
+            variant="danger"
+            title="Ocurrió un error inesperado"
+            role="alert"
+          >
+            Inténtalo de nuevo en unos segundos. No perdiste lo que elegiste.
+          </BaseAlert>
+
+          <p class="appointment-detail-page__cancel-copy">
+            El turno de <strong>{{ detail.attendeeName }}</strong> el {{ timeRangeLabel }} está
+            registrado como <strong>{{ statusLabel }}</strong
+            >. Esta corrección agrega un evento nuevo al historial; no borra ni edita el anterior.
+          </p>
+
+          <div class="appointment-detail-page__correct-field">
+            <label class="appointment-detail-page__correct-label" for="correct-destination">
+              Nuevo resultado
+            </label>
+            <select
+              id="correct-destination"
+              v-model="correctDestination"
+              class="appointment-detail-page__correct-select"
+              required
+              :disabled="correctStatus === 'saving'"
+            >
+              <option value="" disabled>Elige un resultado</option>
+              <option
+                v-for="option in correctDestinationOptions"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+
+          <p v-if="correctConsequenceLabel" class="appointment-detail-page__correct-consequence">
+            {{ correctConsequenceLabel }}
+          </p>
+
+          <div class="appointment-detail-page__correct-field">
+            <label class="appointment-detail-page__correct-label" for="correct-reason">
+              Motivo de la corrección
+            </label>
+            <textarea
+              id="correct-reason"
+              v-model="correctReason"
+              class="appointment-detail-page__correct-textarea"
+              rows="3"
+              required
+              maxlength="500"
+              placeholder="Explica por qué el resultado registrado fue un error"
+              :disabled="correctStatus === 'saving'"
+            />
+          </div>
+
+          <div class="appointment-detail-page__dialog-actions">
+            <BaseButton type="button" variant="secondary" @click="isCorrectOpen = false">
+              Volver
+            </BaseButton>
+            <BaseButton
+              type="submit"
+              variant="primary"
+              :loading="correctStatus === 'saving'"
+              :disabled="correctStatus === 'saving' || !correctDestination || !correctTrimmedReason"
+            >
+              Confirmar corrección
+            </BaseButton>
+          </div>
+        </form>
+      </BaseDialog>
     </template>
   </section>
 </template>
@@ -1382,6 +1679,93 @@ function occurredAtLabel(entry: HistoryEntry): string {
   font-size: var(--font-size-body);
   line-height: var(--font-size-body-line);
   color: var(--color-text-primary);
+}
+
+/* Campo de corrección (HU-068, T8): mismo lenguaje visual que BaseInput
+   (rótulo reglado en versalitas de latón, campo con filete y línea base de
+   tinta) sobre elementos nativos select/textarea, que BaseInput no cubre —
+   sin mockup exacto asignado, la composición se resuelve libremente dentro
+   de NAVA/Tailored Grid (HU-068, "Pruebas obligatorias"). */
+.appointment-detail-page__correct-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.appointment-detail-page__correct-label {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent-brass);
+}
+
+.appointment-detail-page__correct-select,
+.appointment-detail-page__correct-textarea {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  line-height: var(--font-size-body-line);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  border: var(--border-width-normal) solid var(--color-border-subtle);
+  border-bottom: var(--border-width-emphasis) solid var(--color-action-primary);
+  border-radius: 2px;
+  outline: none;
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.appointment-detail-page__correct-select {
+  height: var(--control-height);
+}
+
+.appointment-detail-page__correct-textarea {
+  resize: vertical;
+  min-height: 88px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .appointment-detail-page__correct-select,
+  .appointment-detail-page__correct-textarea {
+    transition: none;
+  }
+}
+
+.appointment-detail-page__correct-select:hover:not(:disabled),
+.appointment-detail-page__correct-textarea:hover:not(:disabled) {
+  border-color: var(--color-text-secondary);
+  border-bottom-color: var(--color-action-primary);
+}
+
+.appointment-detail-page__correct-select:focus-visible,
+.appointment-detail-page__correct-textarea:focus-visible {
+  border-color: var(--color-focus);
+  box-shadow:
+    0 0 0 2px var(--color-surface),
+    0 0 0 4px var(--color-focus);
+}
+
+.appointment-detail-page__correct-select:disabled,
+.appointment-detail-page__correct-textarea:disabled {
+  background-color: var(--color-surface-muted);
+  border-color: var(--color-border-subtle);
+  border-bottom-color: var(--color-border-subtle);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+  opacity: 0.64;
+}
+
+.appointment-detail-page__correct-consequence {
+  margin: calc(var(--space-3) * -1) 0 0;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body-sm);
+  line-height: var(--font-size-body-sm-line);
+  color: var(--color-text-secondary);
 }
 
 :global(.appointment-detail-page__reschedule-dialog .base-dialog__header) {

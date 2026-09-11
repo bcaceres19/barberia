@@ -683,3 +683,91 @@ func (h *MarkAppointmentNoShowHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		httpserver.WriteProblem(w, httpserver.Translate(result.Decision.AsError(), requestID))
 	}
 }
+
+// CorrectAppointmentStatusHandler expone
+// POST /private/appointments/{appointmentId}/correct-status (HU-068, T8,
+// CA-068-01 a CA-068-08), protegido por el protocolo de idempotencia
+// reutilizable de HU-004 (RN-IDE-01, DEC-043) y por la precondición de
+// versión de HU-064 (cabecera If-Match). A diferencia de
+// CompleteAppointmentHandler/MarkAppointmentNoShowHandler, SÍ tiene cuerpo:
+// el estado terminal destino y el motivo obligatorio, mismo criterio que
+// RescheduleAppointmentHandler.
+type CorrectAppointmentStatusHandler struct {
+	service *booking.CorrectAppointmentStatusService
+}
+
+// NewCorrectAppointmentStatusHandler construye el handler de corrección.
+func NewCorrectAppointmentStatusHandler(service *booking.CorrectAppointmentStatusService) *CorrectAppointmentStatusHandler {
+	return &CorrectAppointmentStatusHandler{service: service}
+}
+
+// ServeHTTP implementa http.Handler.
+func (h *CorrectAppointmentStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+	principal, ok := principalOrInternalError(w, r, requestID)
+	if !ok {
+		return
+	}
+
+	appointmentID := httpserver.URLParam(r, appointmentIDParam)
+
+	key, err := httpserver.IdempotencyKeyFromRequest(r)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+	versionToken := r.Header.Get(ifMatchHeader)
+	if versionToken == "" {
+		httpserver.WriteProblem(w, httpserver.Translate(
+			apperr.Invalid("falta la cabecera If-Match con el token de versión del turno"), requestID))
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+			return
+		}
+		httpserver.WriteProblem(w, httpserver.Translate(apperr.Invalid("cuerpo de la solicitud ilegible"), requestID))
+		return
+	}
+
+	var req CorrectAppointmentStatusRequest
+	dec := json.NewDecoder(bytes.NewReader(body))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
+		writeUnknownFieldOrInvalidJSONProblem(w, requestID)
+		return
+	}
+	if dec.More() {
+		writeUnknownFieldOrInvalidJSONProblem(w, requestID)
+		return
+	}
+
+	fingerprint := httpserver.IdempotencyFingerprint(r, body)
+
+	result, err := h.service.CorrectAppointmentStatus(r.Context(), principal.BarbershopID, booking.CorrectAppointmentStatusRequest{
+		AppointmentID:        appointmentID,
+		DestinationStatus:    req.Status,
+		Reason:               req.Reason,
+		ExpectedVersionToken: versionToken,
+		ActorStaffUserID:     principal.StaffUserID,
+	}, key, fingerprint)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	switch result.Decision.Outcome {
+	case idempotency.OutcomeProceed, idempotency.OutcomeReplay:
+		httpserver.WriteStoredResponse(w, result.Response)
+	default:
+		// Conflicto de idempotencia (RN-IDE-01) u operación en curso
+		// (DEC-043): Translate ya sabe convertirlo en 409. Los conflictos de
+		// agenda, estado y versión ya se tradujeron arriba, antes de llegar
+		// a esta rama (nunca llegan como una Decision distinta de Proceed).
+		httpserver.WriteProblem(w, httpserver.Translate(result.Decision.AsError(), requestID))
+	}
+}

@@ -58,6 +58,23 @@ type RescheduleAppointmentRequest struct {
 	StartsAt string `json:"startsAt"`
 }
 
+// CorrectAppointmentStatusRequest es el cuerpo JSON de
+// POST /private/appointments/{appointmentId}/correct-status (HU-068, T8): a
+// diferencia de T4/T6/T7 (sin cuerpo), T8 exige el estado terminal destino
+// y el motivo de la corrección. Ningún otro campo: nunca `confirmed`, actor,
+// tenant ni ningún dato de la cita (CA-068-02).
+type CorrectAppointmentStatusRequest struct {
+	// Status es uno de los cuatro terminales válidos como destino
+	// (`completed`, `no_show`, `cancelled_by_customer`,
+	// `cancelled_by_barber`); `confirmed` o cualquier otro valor se
+	// rechazan (CA-068-02).
+	Status string `json:"status"`
+	// Reason es el motivo obligatorio de la corrección, no vacío/blanco,
+	// hasta 500 caracteres (mismo límite que
+	// appointment_history_reason_ck).
+	Reason string `json:"reason"`
+}
+
 // AppointmentRescheduledResponse es la representación de la cita ya
 // reprogramada (o, en un no-op del mismo intervalo, la representación
 // vigente sin cambios). Deliberadamente SIN updatedAt crudo (HU-064):
@@ -137,6 +154,32 @@ type AppointmentCompletedResponse struct {
 // (POST /private/appointments/{appointmentId}/no-show) no acepta ningún
 // campo, mismo criterio que AppointmentCompletedResponse.
 type AppointmentNoShowResponse struct {
+	ID              string    `json:"id"`
+	BarberID        string    `json:"barberId"`
+	ServiceID       string    `json:"serviceId"`
+	CustomerID      string    `json:"customerId"`
+	AttendeeName    string    `json:"attendeeName"`
+	StartsAt        time.Time `json:"startsAt"`
+	EndsAt          time.Time `json:"endsAt"`
+	Status          string    `json:"status"`
+	Origin          string    `json:"origin"`
+	ServiceName     string    `json:"serviceName"`
+	DurationMinutes int       `json:"durationMinutes"`
+	PriceAmount     string    `json:"priceAmount"`
+	Currency        string    `json:"currency"`
+	CustomerNote    *string   `json:"customerNote"`
+	VersionToken    string    `json:"versionToken"`
+	CreatedAt       time.Time `json:"createdAt"`
+}
+
+// AppointmentStatusCorrectedResponse es la representación de la cita ya
+// corregida hacia otro terminal (o, en una repetición no-op hacia el mismo
+// estado, la representación vigente sin cambios adicionales). El motivo de
+// la corrección no aparece aquí: queda en el evento de historial
+// (`appointment_status_corrected`), consultable vía
+// GET /private/appointments/{appointmentId}/history, mismo criterio que
+// AppointmentCompletedResponse.
+type AppointmentStatusCorrectedResponse struct {
 	ID              string    `json:"id"`
 	BarberID        string    `json:"barberId"`
 	ServiceID       string    `json:"serviceId"`

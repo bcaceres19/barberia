@@ -896,6 +896,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/private/appointments/{appointmentId}/correct-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Corregir un resultado terminal (T8)
+         * @description Corrige una clasificación terminal errónea hacia otro terminal distinto (HU-068, `T8` de `estados-citas.md`): `completed`, `no_show`, `cancelled_by_customer` o `cancelled_by_barber`. `confirmed` nunca es origen ni destino (CA-068-01/02) — corregir una cita que sigue `confirmed` responde `409 invalid-state`; enviar `confirmed` como destino responde `422 validation-error`. El estado y un único evento `appointment_status_corrected` (con estado anterior, nuevo y el motivo obligatorio) se escriben en la misma transacción tenant-aware (CA-068-01/03); los eventos anteriores permanecen intactos, sin editar ni borrar nada. Repetir la corrección hacia el MISMO estado vigente es un `200` no-op exitoso, sin duplicar el evento (CA-068-02). Al corregir desde un cancelado hacia `completed`/`no_show`, se revalida la misma frontera temporal que T4/T7 (`422` si `startsAt` todavía no pasó) y la misma restricción de exclusión de PostgreSQL que protege reprogramar: un cruce con otra cita del mismo barbero responde `409 conflict` sin escribir nada (CA-068-04). Al corregir desde `completed`/`no_show` hacia un cancelado, la cita deja de ocupar agenda en la misma confirmación (CA-068-05). Protegida con clave de idempotencia (RN-IDE-01, DEC-043) y con la precondición `If-Match` (el `versionToken` de una lectura anterior del detalle, HU-064). El tenant y el actor se derivan exclusivamente de `SessionCookie`; el cuerpo nunca acepta un estado de origen, actor, tenant ni ningún dato de la cita.
+         */
+        post: operations["correctAppointmentStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2149,6 +2169,50 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        /** @description Estado terminal destino y motivo obligatorio de una corrección T8. `status` nunca acepta `confirmed`: la corrección solo se mueve entre los otros cuatro terminales. */
+        CorrectAppointmentStatusRequest: {
+            /**
+             * @description Estado terminal destino de la corrección.
+             * @example no_show
+             * @enum {string}
+             */
+            status: "completed" | "no_show" | "cancelled_by_customer" | "cancelled_by_barber";
+            /**
+             * @description Motivo obligatorio de la corrección, no vacío ni en blanco (mismo límite que `appointment_history_reason_ck`).
+             * @example El barbero marcó completed por error; el cliente nunca llegó.
+             */
+            reason: string;
+        };
+        AppointmentStatusCorrectedResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            barberId: string;
+            /** Format: uuid */
+            serviceId: string;
+            /** Format: uuid */
+            customerId: string;
+            attendeeName: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** @enum {string} */
+            status: "confirmed" | "completed" | "cancelled_by_customer" | "cancelled_by_barber" | "no_show";
+            /** @enum {string} */
+            origin: "public" | "manual";
+            serviceName: string;
+            durationMinutes: number;
+            /** @example 20000.00 */
+            priceAmount: string;
+            /** @example COP */
+            currency: string;
+            customerNote: string | null;
+            /** @description Token opaco de concurrencia ya actualizado tras esta escritura: no lo decodifiques, úsalo como `If-Match` en una operación posterior. */
+            versionToken: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
     };
     responses: {
         /** @description Sesión cerrada. La cookie de sesión queda limpiada en Set-Cookie. */
@@ -2946,6 +3010,26 @@ export interface components {
             };
             content: {
                 "application/json": components["schemas"]["AppointmentNoShowResponse"];
+            };
+        };
+        /** @description El turno quedó con el estado terminal destino (o, si ya estaba en ese estado, la operación fue un no-op exitoso sin nueva entrada de historial, CA-068-02). */
+        AppointmentStatusCorrected: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["AppointmentStatusCorrectedResponse"];
+            };
+        };
+        /** @description El cuerpo es sintácticamente válido pero incumple una validación de campo o la frontera temporal de CA-068-04. No se persistió nada. */
+        CorrectAppointmentStatusValidationProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
             };
         };
     };
@@ -4455,6 +4539,54 @@ export interface operations {
                 };
             };
             422: components["responses"]["AppointmentNotStartedProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    correctAppointmentStatus: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Clave elegida por el cliente que identifica un intento de escritura crítica. Repetir la misma clave con el mismo contenido (método, ruta y cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo. Repetirla con contenido distinto es un conflicto: usa una clave nueva para una solicitud distinta. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                /** @description Token opaco de versión de la representación que el cliente leyó antes de esta escritura (`versionToken` de la respuesta de detalle). Si ya no coincide con la versión vigente del recurso, la operación responde `409` con `code: version-conflict`. */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                /** @description Identificador de la cita. */
+                appointmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CorrectAppointmentStatusRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["AppointmentStatusCorrected"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            /** @description `appointmentId` con forma inválida, inexistente o de otra barbería (RN-TEN-01), sin distinguir la causa. */
+            404: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Cinco conflictos distinguibles por `code`, nunca por `detail`: conflicto de idempotencia (misma clave con otro contenido u otra operación, `IdempotencyConflictProblem`) u operación en curso con la misma clave (`IdempotencyLockedProblem`, DEC-043); conflicto de versión (`code: version-conflict`, el `If-Match` enviado ya no coincide con la representación vigente); estado inválido (`code: invalid-state`, el turno todavía está `confirmed`, sin ningún resultado terminal que corregir, CA-068-01); o cruce de agenda (`code: conflict`, corregir desde un cancelado hacia `completed`/`no_show` volvería a ocupar una franja que otra cita del mismo barbero ya ocupa, CA-068-04). */
+            409: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["CorrectAppointmentStatusValidationProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

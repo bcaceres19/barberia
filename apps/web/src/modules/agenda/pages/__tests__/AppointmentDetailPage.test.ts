@@ -21,6 +21,7 @@ const rescheduleAppointmentMock = vi.hoisted(() => vi.fn())
 const cancelAppointmentByBarberMock = vi.hoisted(() => vi.fn())
 const completeAppointmentMock = vi.hoisted(() => vi.fn())
 const markAppointmentNoShowMock = vi.hoisted(() => vi.fn())
+const correctAppointmentStatusMock = vi.hoisted(() => vi.fn())
 
 vi.mock('../../api/appointmentsApi', () => ({
   fetchAppointmentDetail: fetchAppointmentDetailMock,
@@ -30,6 +31,7 @@ vi.mock('../../api/appointmentsApi', () => ({
   cancelAppointmentByBarber: cancelAppointmentByBarberMock,
   completeAppointment: completeAppointmentMock,
   markAppointmentNoShow: markAppointmentNoShowMock,
+  correctAppointmentStatus: correctAppointmentStatusMock,
 }))
 
 const { default: AppointmentDetailPage } = await import('../AppointmentDetailPage.vue')
@@ -102,6 +104,7 @@ beforeEach(() => {
   cancelAppointmentByBarberMock.mockReset()
   completeAppointmentMock.mockReset()
   markAppointmentNoShowMock.mockReset()
+  correctAppointmentStatusMock.mockReset()
   fetchBarbershopTimezoneMock.mockResolvedValue({ kind: 'success', timezone: 'America/Bogota' })
   fetchAppointmentHistoryMock.mockResolvedValue({
     kind: 'success',
@@ -188,6 +191,41 @@ async function confirmComplete(wrapper: VueWrapper) {
 async function confirmNoShow(wrapper: VueWrapper) {
   await findButtonByText(wrapper, 'Sí, marcar que no asistió').trigger('click')
   await flushPromises()
+}
+
+// --- Ayudantes para el diálogo de corrección (HU-068, T8) -----------------
+
+async function openCorrectDialog(wrapper: VueWrapper) {
+  await findButtonByText(wrapper, 'Corregir resultado').trigger('click')
+  await flushPromises()
+}
+
+function correctDestinationSelect(wrapper: VueWrapper): HTMLSelectElement {
+  return openDialogElement(wrapper).querySelector('#correct-destination') as HTMLSelectElement
+}
+
+function correctReasonTextarea(wrapper: VueWrapper): HTMLTextAreaElement {
+  return openDialogElement(wrapper).querySelector('#correct-reason') as HTMLTextAreaElement
+}
+
+function setSelectValue(select: HTMLSelectElement, value: string) {
+  select.value = value
+  select.dispatchEvent(new Event('change'))
+}
+
+function setTextareaValue(textarea: HTMLTextAreaElement, value: string) {
+  textarea.value = value
+  textarea.dispatchEvent(new Event('input'))
+}
+
+async function fillCorrectForm(wrapper: VueWrapper, destination: string, reason: string) {
+  setSelectValue(correctDestinationSelect(wrapper), destination)
+  setTextareaValue(correctReasonTextarea(wrapper), reason)
+  await flushPromises()
+}
+
+function submitCorrectDialog(wrapper: VueWrapper) {
+  openDialogForm(wrapper).dispatchEvent(new Event('submit', { cancelable: true }))
 }
 
 describe('AppointmentDetailPage', () => {
@@ -946,6 +984,302 @@ describe('AppointmentDetailPage', () => {
     fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
     const { wrapper } = await mountPage()
     await openNoShowDialog(wrapper)
+
+    const results = await axe(wrapper.element)
+    expect(results.violations).toEqual([])
+  })
+
+  // --- Corregir resultado (HU-068, T8) ------------------------------------
+
+  it('shows the "Corregir resultado" action only for a terminal appointment', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'completed' },
+    })
+    const { wrapper } = await mountPage()
+
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Corregir resultado')).toBe(true)
+  })
+
+  it('does not show "Corregir resultado" for a confirmed appointment', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Corregir resultado')).toBe(false)
+  })
+
+  // CA-068-01/CA-068-08: "confirmed" nunca aparece como opción, ni siquiera
+  // como destino de una corrección -- demuestra que una cancelada no revive
+  // a confirmed por esta vía.
+  it('offers only the other three terminals as destination, never confirmed', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'cancelled_by_barber' },
+    })
+    const { wrapper } = await mountPage()
+    await openCorrectDialog(wrapper)
+
+    const options = Array.from(correctDestinationSelect(wrapper).querySelectorAll('option'))
+      .map((o) => o.getAttribute('value'))
+      .filter((v): v is string => !!v)
+    expect(options.sort()).toEqual(['cancelled_by_customer', 'completed', 'no_show'].sort())
+    expect(options).not.toContain('confirmed')
+    expect(options).not.toContain('cancelled_by_barber')
+  })
+
+  it('disables the confirm button until both a destination and a reason are filled', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'completed' },
+    })
+    const { wrapper } = await mountPage()
+    await openCorrectDialog(wrapper)
+
+    expect(findButtonByText(wrapper, 'Confirmar corrección').attributes('disabled')).toBeDefined()
+
+    await fillCorrectForm(wrapper, 'no_show', 'El cliente nunca llegó.')
+    expect(findButtonByText(wrapper, 'Confirmar corrección').attributes('disabled')).toBeUndefined()
+  })
+
+  // Pruebas obligatorias de HU-068: "corregir completed → no_show, ver
+  // ambos eventos" -- tras el éxito, el historial recargado debe mostrar el
+  // evento original (appointment_completed) y el nuevo
+  // (appointment_status_corrected), nunca solo uno.
+  it('on success (completed to no_show), calls the API, closes the dialog, and refetches detail+history showing both events', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'completed' },
+    })
+    const { wrapper } = await mountPage()
+    await openCorrectDialog(wrapper)
+    await fillCorrectForm(wrapper, 'no_show', 'El barbero marcó completed por error.')
+
+    correctAppointmentStatusMock.mockResolvedValueOnce({ kind: 'success' })
+    fetchAppointmentDetailMock.mockResolvedValueOnce({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'no_show' },
+    })
+    fetchAppointmentHistoryMock.mockResolvedValueOnce({
+      kind: 'success',
+      items: [
+        createdEvent,
+        {
+          id: 'h-2',
+          eventType: 'appointment_completed',
+          actorType: 'staff',
+          actorLabel: 'Ana Gómez',
+          reason: null,
+          occurredAt: '2026-08-28T20:00:00Z',
+          changes: [],
+        },
+        {
+          id: 'h-3',
+          eventType: 'appointment_status_corrected',
+          actorType: 'staff',
+          actorLabel: 'Ana Gómez',
+          reason: 'El barbero marcó completed por error.',
+          occurredAt: '2026-08-28T20:05:00Z',
+          changes: [{ fieldName: 'status', previousValue: 'completed', newValue: 'no_show' }],
+        },
+      ],
+      nextCursor: null,
+    })
+    submitCorrectDialog(wrapper)
+    await flushPromises()
+
+    expect(correctAppointmentStatusMock).toHaveBeenCalledWith(
+      'a-1',
+      { status: 'no_show', reason: 'El barbero marcó completed por error.' },
+      'opaque-token',
+      expect.any(String),
+    )
+    expect(wrapper.element.querySelector('.base-dialog--open')).toBeNull()
+    expect(fetchAppointmentDetailMock).toHaveBeenCalledTimes(2)
+    expect(wrapper.text()).toContain('El barbero marcó completed por error.')
+  })
+
+  it('blocks a second confirm while the first correction attempt is still in flight (no double POST)', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'completed' },
+    })
+    const { wrapper } = await mountPage()
+    await openCorrectDialog(wrapper)
+    await fillCorrectForm(wrapper, 'no_show', 'motivo de prueba')
+
+    let resolveCorrect: (value: unknown) => void = () => {}
+    correctAppointmentStatusMock.mockReturnValueOnce(
+      new Promise((resolve) => (resolveCorrect = resolve)),
+    )
+    submitCorrectDialog(wrapper)
+    await flushPromises()
+    submitCorrectDialog(wrapper)
+    await flushPromises()
+
+    expect(correctAppointmentStatusMock).toHaveBeenCalledTimes(1)
+    resolveCorrect({ kind: 'success' })
+    await flushPromises()
+  })
+
+  it('renews the idempotency key each time the correct dialog is reopened', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'completed' },
+    })
+    const { wrapper } = await mountPage()
+
+    await openCorrectDialog(wrapper)
+    await fillCorrectForm(wrapper, 'no_show', 'motivo de prueba')
+    correctAppointmentStatusMock.mockResolvedValueOnce({ kind: 'network-error' })
+    submitCorrectDialog(wrapper)
+    await flushPromises()
+
+    await findButtonByText(wrapper, 'Volver').trigger('click')
+    await flushPromises()
+
+    await openCorrectDialog(wrapper)
+    await fillCorrectForm(wrapper, 'no_show', 'motivo de prueba')
+    correctAppointmentStatusMock.mockResolvedValueOnce({ kind: 'success' })
+    fetchAppointmentDetailMock.mockResolvedValueOnce({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'completed' },
+    })
+    submitCorrectDialog(wrapper)
+    await flushPromises()
+
+    const firstKey = correctAppointmentStatusMock.mock.calls[0]![3]
+    const secondKey = correctAppointmentStatusMock.mock.calls[1]![3]
+    expect(secondKey).not.toBe(firstKey)
+  })
+
+  // Pruebas obligatorias de HU-068: "probar conflicto de versión".
+  it('on a version conflict, offers a reload that refetches the real detail', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'completed' },
+    })
+    const { wrapper } = await mountPage()
+    await openCorrectDialog(wrapper)
+    await fillCorrectForm(wrapper, 'no_show', 'motivo de prueba')
+
+    correctAppointmentStatusMock.mockResolvedValueOnce({ kind: 'version-conflict' })
+    submitCorrectDialog(wrapper)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('cambió mientras lo revisabas')
+    const reload = wrapper.findAll('button').find((b) => b.text() === 'Recargar')
+    expect(reload).toBeTruthy()
+
+    fetchAppointmentDetailMock.mockResolvedValueOnce({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'completed', versionToken: 'fresh-token' },
+    })
+    await reload!.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.element.querySelector('.base-dialog--open')).toBeNull()
+    expect(fetchAppointmentDetailMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('on an invalid-state conflict (still confirmed), offers a reload', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'completed' },
+    })
+    const { wrapper } = await mountPage()
+    await openCorrectDialog(wrapper)
+    await fillCorrectForm(wrapper, 'no_show', 'motivo de prueba')
+
+    correctAppointmentStatusMock.mockResolvedValueOnce({ kind: 'invalid-state' })
+    submitCorrectDialog(wrapper)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('todavía no tiene un resultado terminal')
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Recargar')).toBe(true)
+  })
+
+  // CA-068-04: cruce de agenda al corregir desde un cancelado hacia un
+  // terminal que ya ocupa la franja.
+  it('on a schedule conflict, shows the server message without offering a reload', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'cancelled_by_barber' },
+    })
+    const { wrapper } = await mountPage()
+    await openCorrectDialog(wrapper)
+    await fillCorrectForm(wrapper, 'completed', 'motivo de prueba')
+
+    correctAppointmentStatusMock.mockResolvedValueOnce({
+      kind: 'conflict',
+      detail: 'el barbero ya tiene una cita en ese intervalo',
+    })
+    submitCorrectDialog(wrapper)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('el barbero ya tiene una cita en ese intervalo')
+    expect(wrapper.element.querySelector('.base-dialog--open')).toBeTruthy()
+  })
+
+  it('on a validation error, shows the server message', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'cancelled_by_barber' },
+    })
+    const { wrapper } = await mountPage()
+    await openCorrectDialog(wrapper)
+    await fillCorrectForm(wrapper, 'completed', 'motivo de prueba')
+
+    correctAppointmentStatusMock.mockResolvedValueOnce({
+      kind: 'validation-error',
+      detail: 'el turno todavía no comienza; espera hasta su hora de inicio',
+    })
+    submitCorrectDialog(wrapper)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('todavía no comienza')
+  })
+
+  it('on an idempotency conflict, keeps the dialog open with a recoverable message', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'completed' },
+    })
+    const { wrapper } = await mountPage()
+    await openCorrectDialog(wrapper)
+    await fillCorrectForm(wrapper, 'no_show', 'motivo de prueba')
+
+    correctAppointmentStatusMock.mockResolvedValueOnce({ kind: 'idempotency-conflict' })
+    submitCorrectDialog(wrapper)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('No pudimos completar el intento anterior')
+    expect(wrapper.element.querySelector('.base-dialog--open')).toBeTruthy()
+  })
+
+  it('on a network error, keeps the dialog open without losing the intent', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'completed' },
+    })
+    const { wrapper } = await mountPage()
+    await openCorrectDialog(wrapper)
+    await fillCorrectForm(wrapper, 'no_show', 'motivo de prueba')
+
+    correctAppointmentStatusMock.mockResolvedValueOnce({ kind: 'network-error' })
+    submitCorrectDialog(wrapper)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('No pudimos conectar')
+    expect(wrapper.element.querySelector('.base-dialog--open')).toBeTruthy()
+  })
+
+  it('has no obvious accessibility violations with the correct dialog open', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: { ...readyDetail, status: 'completed' },
+    })
+    const { wrapper } = await mountPage()
+    await openCorrectDialog(wrapper)
 
     const results = await axe(wrapper.element)
     expect(results.violations).toEqual([])

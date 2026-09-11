@@ -1194,6 +1194,16 @@ func errAppointmentAlreadyClosed() error {
 	return apperr.InvalidState("el turno ya tiene un resultado terminal registrado; una futura corrección (T8) permitirá cambiarlo")
 }
 
+// errAppointmentNotTerminal cubre HU-068 (T8): el turno, con la fila ya
+// bloqueada, todavía está `confirmed` — no tiene ningún resultado terminal
+// que corregir. Mismo mensaje que booking.errAppointmentNotTerminal
+// (duplicado local, mismo criterio que errAppointmentNotFound frente a
+// booking.errAppointmentNotFound: postgres no importa símbolos no
+// exportados de booking, CA-002-06).
+func errAppointmentNotTerminal() error {
+	return apperr.InvalidState("el turno todavía no tiene un resultado terminal para corregir")
+}
+
 // Reschedule implementa booking.Repository.Reschedule (HU-065, T2): Begin,
 // bloquear la fila, verificar versión/estado con la fila ya bloqueada,
 // aplicar el nuevo intervalo (o detectar el no-op del mismo intervalo),
@@ -1930,6 +1940,275 @@ func (r *Repository) MarkNoShow(
 	})
 	if err != nil {
 		return booking.MarkNoShowResult{}, err
+	}
+	return result, nil
+}
+
+// correctAppointmentStatusOperation identifica, para el protocolo de
+// idempotencia (RN-IDE-01, DEC-043), el comando T8 de HU-068 frente a
+// cualquier otra operación de booking.
+const correctAppointmentStatusOperation idempotency.Operation = "correct_appointment_status"
+
+// correctAppointmentStatusIdempotencyTTL es la vigencia de una reclamación
+// de idempotencia de T8, mismo criterio que las demás operaciones de
+// escritura de booking.
+const correctAppointmentStatusIdempotencyTTL = 10 * time.Minute
+
+// updateAppointmentStatusCorrected aplica el nuevo estado terminal sobre la
+// fila YA bloqueada por lockAppointmentForReschedule, dentro de la misma
+// transacción (T8, HU-068): a diferencia de updateAppointmentStatusCompleted/
+// NoShow/CancelledByBarber, aquí el estado destino SÍ puede pasar de "no
+// ocupa" a "ocupa" agenda (de un terminal cancelado hacia completed/
+// no_show), así que la misma restricción de exclusión GiST que protege
+// reprogramar (appointment_barber_interval_excl) puede violarse igual que
+// en updateAppointmentInterval, con la misma traducción 23P01/40P01 ->
+// errScheduleConflict (CA-068-04).
+func updateAppointmentStatusCorrected(
+	ctx context.Context,
+	q database.Queries,
+	barbershopID, appointmentID, newStatus string,
+) (time.Time, error) {
+	var updatedAt time.Time
+	err := q.QueryRow(ctx, `
+		UPDATE appointment
+		   SET status = $3, resolved_at = now()
+		 WHERE barbershop_id = $1 AND id = $2
+		RETURNING updated_at`,
+		barbershopID, appointmentID, newStatus,
+	).Scan(&updatedAt)
+	if err != nil {
+		if isConstraintViolation(err, "23P01", appointmentBarberIntervalExclConstraint) {
+			return time.Time{}, errScheduleConflict()
+		}
+		if isDeadlockDetected(err) {
+			// Mismo criterio que updateAppointmentInterval: PostgreSQL puede
+			// reportar 40P01 en vez de 23P01 para la transacción perdedora
+			// de dos escrituras concurrentes que se disputan el mismo
+			// índice GiST.
+			return time.Time{}, errScheduleConflict()
+		}
+		return time.Time{}, err
+	}
+	return updatedAt, nil
+}
+
+// insertAppointmentStatusCorrectedHistory inserta, dentro de la misma
+// transacción, el evento appointment_status_corrected y su único cambio de
+// status (anterior -> nuevo), con el motivo obligatorio en la propia fila
+// del evento (columna reason, ya protegida por
+// appointment_history_reason_ck) -- mismo patrón de dos INSERT que
+// insertAppointmentCompletedHistory, con reason añadido al primero.
+func insertAppointmentStatusCorrectedHistory(
+	ctx context.Context,
+	q database.Queries,
+	barbershopID, appointmentID string,
+	actor booking.Actor,
+	reason, previousStatus, newStatus string,
+) error {
+	var historyID string
+	err := q.QueryRow(ctx, `
+		INSERT INTO appointment_history (
+			barbershop_id, appointment_id, event_type, actor_type, actor_staff_user_id, actor_customer_id, reason
+		) VALUES ($1, $2, 'appointment_status_corrected', $3, $4, $5, $6)
+		RETURNING id`,
+		barbershopID, appointmentID, string(actor.Type), actor.StaffUserID, actor.CustomerID, reason,
+	).Scan(&historyID)
+	if err != nil {
+		return err
+	}
+
+	_, err = q.Exec(ctx, `
+		INSERT INTO appointment_history_change (barbershop_id, history_id, field_name, previous_value, new_value)
+		VALUES ($1, $2, 'status', $3, $4)`,
+		barbershopID, historyID, previousStatus, newStatus,
+	)
+	return err
+}
+
+// newCorrectedAppointment adapta la fila ya bloqueada/actualizada al shape
+// de dominio de T8, mismo criterio que newClosedAppointment.
+func newCorrectedAppointment(row currentAppointmentForReschedule) (booking.CorrectedAppointment, error) {
+	cents, err := parsePriceAmount(row.priceAmountSnapshot)
+	if err != nil {
+		return booking.CorrectedAppointment{}, fmt.Errorf("booking/postgres: price_amount_snapshot ilegible: %w", err)
+	}
+	return booking.CorrectedAppointment{
+		ID:                       row.id,
+		BarberID:                 row.barberID,
+		ServiceID:                row.serviceID,
+		CustomerID:               row.customerID,
+		AttendeeName:             row.attendeeName,
+		StartsAt:                 row.startsAt,
+		EndsAt:                   row.endsAt,
+		Status:                   booking.Status(row.status),
+		Origin:                   booking.Origin(row.origin),
+		ServiceNameSnapshot:      row.serviceNameSnapshot,
+		DurationMinutesSnapshot:  row.durationMinutesSnapshot,
+		PriceAmountCentsSnapshot: cents,
+		CurrencySnapshot:         row.currencySnapshot,
+		CustomerNote:             row.customerNote,
+		VersionToken:             booking.EncodeVersionToken(row.id, row.updatedAt),
+		CreatedAt:                row.createdAt,
+	}, nil
+}
+
+// correctedAppointmentResponseWire es la forma exacta que
+// CorrectAppointmentStatus serializa como cuerpo almacenado de idempotencia:
+// debe coincidir campo a campo con httpapi.AppointmentStatusCorrectedResponse
+// para que una repetición exacta reproduzca bytes idénticos a los de la
+// respuesta original, mismo criterio que closedAppointmentResponseWire. Sin
+// `reason`: el motivo queda en el evento de historial, no en la
+// representación vigente de la cita.
+type correctedAppointmentResponseWire struct {
+	ID              string  `json:"id"`
+	BarberID        string  `json:"barberId"`
+	ServiceID       string  `json:"serviceId"`
+	CustomerID      string  `json:"customerId"`
+	AttendeeName    string  `json:"attendeeName"`
+	StartsAt        string  `json:"startsAt"`
+	EndsAt          string  `json:"endsAt"`
+	Status          string  `json:"status"`
+	Origin          string  `json:"origin"`
+	ServiceName     string  `json:"serviceName"`
+	DurationMinutes int     `json:"durationMinutes"`
+	PriceAmount     string  `json:"priceAmount"`
+	Currency        string  `json:"currency"`
+	CustomerNote    *string `json:"customerNote"`
+	VersionToken    string  `json:"versionToken"`
+	CreatedAt       string  `json:"createdAt"`
+}
+
+func newCorrectedAppointmentResponseWire(a booking.CorrectedAppointment) correctedAppointmentResponseWire {
+	return correctedAppointmentResponseWire{
+		ID:              a.ID,
+		BarberID:        a.BarberID,
+		ServiceID:       a.ServiceID,
+		CustomerID:      a.CustomerID,
+		AttendeeName:    a.AttendeeName,
+		StartsAt:        a.StartsAt.Format(time.RFC3339),
+		EndsAt:          a.EndsAt.Format(time.RFC3339),
+		Status:          string(a.Status),
+		Origin:          string(a.Origin),
+		ServiceName:     a.ServiceNameSnapshot,
+		DurationMinutes: a.DurationMinutesSnapshot,
+		PriceAmount:     formatPriceAmount(a.PriceAmountCentsSnapshot),
+		Currency:        a.CurrencySnapshot,
+		CustomerNote:    a.CustomerNote,
+		VersionToken:    a.VersionToken,
+		CreatedAt:       a.CreatedAt.Format(time.RFC3339),
+	}
+}
+
+// CorrectAppointmentStatus implementa booking.Repository.CorrectAppointmentStatus
+// (HU-068, T8): Begin, bloquear la fila, verificar de nuevo con la fila ya
+// bloqueada (InvalidState si sigue `confirmed`, no-op si ya está en el
+// estado destino, Validation/422 vía errAppointmentNotStarted si el destino
+// ocupa agenda y starts_at todavía no pasó, VersionConflict si el token no
+// coincide en cualquier otro caso), aplicar el nuevo estado terminal +
+// insertar `appointment_status_corrected` con el motivo, y Complete, todo
+// dentro de UNA sola InTenantTx. Reutiliza lockAppointmentForReschedule
+// (HU-065/066/067): misma fila, mismas columnas, ningún motivo para
+// duplicar el SELECT ... FOR UPDATE.
+func (r *Repository) CorrectAppointmentStatus(
+	ctx context.Context,
+	barbershopID string,
+	input booking.CorrectAppointmentStatusInput,
+	key idempotency.Key,
+	fingerprint idempotency.Fingerprint,
+) (booking.CorrectAppointmentStatusResult, error) {
+	shop, err := database.ValidBarbershopID(barbershopID)
+	if err != nil {
+		return booking.CorrectAppointmentStatusResult{}, fmt.Errorf("booking/postgres: %w", err)
+	}
+
+	var result booking.CorrectAppointmentStatusResult
+
+	err = r.db.InTenantTx(ctx, shop, func(ctx context.Context, q database.Queries) error {
+		decision, err := r.coord.Begin(ctx, q, shop, key, correctAppointmentStatusOperation, fingerprint, correctAppointmentStatusIdempotencyTTL)
+		if err != nil {
+			return fmt.Errorf("idempotency begin: %w", err)
+		}
+		result.Decision = decision
+
+		if decision.Outcome != idempotency.OutcomeProceed {
+			if decision.Outcome == idempotency.OutcomeReplay {
+				result.Response = decision.Response
+			}
+			return nil
+		}
+
+		current, found, err := lockAppointmentForReschedule(ctx, q, barbershopID, input.AppointmentID)
+		if err != nil {
+			return err
+		}
+		if !found {
+			return errAppointmentNotFound()
+		}
+
+		destination := string(input.DestinationStatus)
+		previousStatus := current.status
+
+		switch {
+		case current.status == string(booking.StatusConfirmed):
+			// CA-068-01: T8 solo corrige un resultado YA terminal; un turno
+			// que sigue `confirmed` no tiene nada que corregir todavía.
+			return errAppointmentNotTerminal()
+		case current.status == destination:
+			// CA-068-02: repetir la corrección hacia el MISMO estado
+			// vigente siempre tiene éxito, sin comparar versionToken y sin
+			// duplicar el evento.
+		case !booking.Status(current.status).OccupiesSchedule() &&
+			input.DestinationStatus.OccupiesSchedule() &&
+			current.startsAt.After(input.Now):
+			// CA-068-04: de un estado cancelado hacia completed/no_show,
+			// starts_at ya debe haber pasado -- misma frontera que T4/T7.
+			return errAppointmentNotStarted()
+		default:
+			if booking.EncodeVersionToken(current.id, current.updatedAt) != input.ExpectedVersionToken {
+				return errVersionConflict()
+			}
+			updatedAt, err := updateAppointmentStatusCorrected(ctx, q, barbershopID, current.id, destination)
+			if err != nil {
+				return err
+			}
+			if err := insertAppointmentStatusCorrectedHistory(
+				ctx, q, barbershopID, current.id, input.Actor, input.Reason, previousStatus, destination,
+			); err != nil {
+				return err
+			}
+			current.status = destination
+			current.updatedAt = updatedAt
+		}
+
+		final, err := newCorrectedAppointment(current)
+		if err != nil {
+			return err
+		}
+
+		body, err := json.Marshal(newCorrectedAppointmentResponseWire(final))
+		if err != nil {
+			return fmt.Errorf("marshal corrected appointment: %w", err)
+		}
+		stored := idempotency.StoredResponse{
+			Status:      200,
+			ContentType: "application/json",
+			Body:        string(body),
+		}
+
+		ok, err := r.coord.Complete(ctx, q, shop, key, stored)
+		if err != nil {
+			return fmt.Errorf("idempotency complete: %w", err)
+		}
+		if !ok {
+			return fmt.Errorf("idempotency complete: la reclamación ya no estaba in_progress")
+		}
+
+		result.Appointment = final
+		result.Response = stored
+		return nil
+	})
+	if err != nil {
+		return booking.CorrectAppointmentStatusResult{}, err
 	}
 	return result, nil
 }
