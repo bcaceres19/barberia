@@ -1,9 +1,9 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.37"
+version: "1.38"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-08"
+ultima_actualizacion: "2026-09-10"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/reglas-negocio.md"
@@ -52,7 +52,7 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | Integradas en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), [PR #83](https://github.com/bcaceres19/barberia/pull/83), [PR #84](https://github.com/bcaceres19/barberia/pull/84)) |
 | B2 · Horario laboral y bloqueos | `HU-040` – `HU-042` | Integradas en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93), [PR #96](https://github.com/bcaceres19/barberia/pull/96), [PR #99](https://github.com/bcaceres19/barberia/pull/99)); seguimientos parciales en `#90`, `#95`, `#98` y `#100` |
 | B3 · Agenda, estados e integridad | `HU-060` – `HU-068` | `HU-060`–`HU-065` integradas; `HU-066`–`HU-068` redactadas con issues reales [#225](https://github.com/bcaceres19/barberia/issues/225)–[#227](https://github.com/bcaceres19/barberia/issues/227); `HU-066` `ready`, `HU-067`/`HU-068` bloqueadas por secuencia |
-| B4 · Reserva pública y disponibilidad | `HU-090` – | Pendientes |
+| B4 · Reserva pública y disponibilidad | `HU-090` – `HU-099` | Redactadas como propuesta en issue [#240](https://github.com/bcaceres19/barberia/issues/240); implementación bloqueada por cierre de B3 y decisiones `DP-PUB-01`–`DP-PUB-06`/`CT-011` |
 | B5 · Notificaciones y recordatorios | `HU-130` – | Pendientes |
 | B6 · Operación, privacidad y piloto | `HU-150` – | Pendientes |
 
@@ -1679,14 +1679,476 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 
 ---
 
-## 7. Historias pendientes de redacción
+## 7. Bloque B4 · Reserva pública y disponibilidad
+
+> **Lote documental, no autorización de implementación.** `HU-090`–`HU-099` derivan exclusivamente del alcance P0 vigente. B4 sigue bloqueado hasta que B3 cumpla su criterio de salida. Las decisiones abiertas `DP-PUB-01`–`DP-PUB-06` y `CT-011` deben resolverse antes de pasar el prompt afectado a `ready`.
+
+Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` → `HU-095` → `HU-096` → `HU-097` → `HU-098` → `HU-099`.
+
+---
+
+### HU-090 · Entrada pública de reservas de una barbería
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-PUB-01` |
+| Reglas | `RN-TEN-01`, `RN-DAT-01`, `RN-DAT-02` |
+| Decisiones | `DEC-016`, `DEC-019`, `DEC-022`, `DEC-024`, `DEC-033`–`DEC-039`, `DEC-077`–`DEC-079` |
+| Actor | Visitante sin cuenta |
+| Depende de | Criterio de salida de B3; `DP-PUB-01` resuelta |
+| Bloquea | `HU-091`–`HU-099` |
+| Estado | Propuesta; prompt `PROMPT-HU-090-v1` en `draft`, `issue: pending` |
+| Riesgo | Un identificador público enumerable o una resolución tenant incorrecta expone barberías ajenas o abre el flujo con contexto falso. |
+
+**Historia**
+
+> Como cliente, quiero abrir el enlace público de una barbería sin registrarme, para iniciar una reserva con el negocio correcto.
+
+**Alcance incluido**
+
+- Ruta pública que resuelve una barbería habilitada desde un identificador no confiado y muestra nombre, zona horaria y contacto público mínimo.
+- Estado de carga, enlace inválido/no disponible y recuperación sin revelar IDs internos ni la existencia de otro tenant.
+- Cascarón público responsive y accesible, separado del panel autenticado.
+- Registro formal de la generación, unicidad y ciclo de vida del identificador en `DP-PUB-01`; la historia no elige esa semántica.
+
+**Alcance excluido**
+
+- Listar servicios, barberos o franjas; formular datos; crear o cancelar citas.
+- Cuentas de cliente, búsqueda por teléfono/correo, portal o bot.
+- Inventar slug, longitud, rotación o conducta de desactivación antes de resolver `DP-PUB-01`.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-090-01` | Un enlace válido abre sin sesión el contexto público exacto de una barbería habilitada y presenta la hora en su zona. |
+| `CA-090-02` | Un identificador mal formado, desconocido o no publicable produce una respuesta pública uniforme sin IDs internos ni pistas de otro tenant. |
+| `CA-090-03` | Ningún parámetro del cliente fija `barbershopId`; API, aplicación y PostgreSQL resuelven y aíslan el tenant de forma coherente. |
+| `CA-090-04` | La pantalla solo muestra datos públicos aprobados y logs/errores no contienen contacto privado, tokens ni datos personales. |
+| `CA-090-05` | Carga, error y reintento conservan contexto; 320, 360, 768 y 1280 px, teclado, foco, zoom 200 % y axe-core quedan verificados. |
+
+**Pruebas obligatorias:** dominio/HTTP para resolución uniforme; PostgreSQL real con dos tenants; componente/router y E2E de enlace válido/inválido; evidencia responsive y accesible.
+
+**Terminado cuando** el visitante entra sin cuenta al contexto público correcto, sin poder seleccionar ni inferir otro tenant.
+
+---
+
+### HU-091 · Catálogo público de servicios disponibles
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-PUB-02` |
+| Reglas | `RN-SER-01`, `RN-SER-02`, `RN-SER-03`, `RN-SER-04`, `RN-TEN-01`, `RN-DAT-02` |
+| Decisiones | `DEC-002`–`DEC-004`, `DEC-016`, `DEC-019`, `DEC-024`, `DEC-067`–`DEC-069`, `DEC-077`–`DEC-079` |
+| Actor | Visitante en una barbería pública |
+| Depende de | `HU-090`; `HU-022`–`HU-024` integradas |
+| Bloquea | `HU-092`, `HU-094`–`HU-097` |
+| Estado | Propuesta; prompt `PROMPT-HU-091-v1` en `draft`, `issue: pending` |
+| Riesgo | Ofrecer servicios inactivos, sin barbero o con datos no vigentes conduce a reservas imposibles o engañosas. |
+
+**Historia**
+
+> Como cliente, quiero ver los servicios activos, su duración y precio vigentes, para elegir qué deseo reservar.
+
+**Alcance incluido**
+
+- Lectura pública tenant-aware de servicios activos con nombre, descripción, duración, precio y moneda COP.
+- Solo aparecen servicios con al menos una asignación vigente; un servicio inactivo desaparece sin afectar snapshots de citas existentes.
+- Selección accesible de un servicio y estados carga, vacío, error y reintento.
+
+**Alcance excluido**
+
+- Administrar catálogo o asignaciones, calcular horas, crear citas o exponer IDs de tenant.
+- Mostrar servicios inactivos, precios históricos o datos internos de auditoría.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-091-01` | La consulta pública devuelve únicamente servicios activos y asignados de la barbería resuelta, con duración positiva, precio vigente y COP. |
+| `CA-091-02` | Desactivar un servicio lo retira de nuevas lecturas; reactivarlo con asignación válida lo recupera sin alterar citas existentes. |
+| `CA-091-03` | Un servicio o asignación de otra barbería nunca aparece ni puede seleccionarse, verificado con dos tenants reales. |
+| `CA-091-04` | Vacío, carga, error y reintento son distinguibles y la selección no depende solo de color. |
+| `CA-091-05` | La lista y nombres largos reflowan en los cuatro anchos normativos, teclado/zoom 200 % y axe-core limpio. |
+
+**Pruebas obligatorias:** consulta y filtros en PostgreSQL real; contrato público; componente de selección; E2E con servicio activo/inactivo y dos tenants.
+
+**Terminado cuando** el cliente puede elegir exclusivamente un servicio realmente ofrecido por la barbería.
+
+---
+
+### HU-092 · Selección pública de barbero
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-PUB-04` (selección) |
+| Reglas | `RN-TEN-01`, `RN-CON-01`, `RN-DAT-02` |
+| Decisiones | `DEC-019`, `DEC-024`, `DEC-047`, `DEC-068`, `DEC-077`–`DEC-079` |
+| Actor | Cliente que ya eligió un servicio |
+| Depende de | `HU-091`; `HU-021`/`HU-023` integradas |
+| Bloquea | `HU-094`–`HU-097` |
+| Estado | Propuesta; prompt `PROMPT-HU-092-v1` en `draft`, `issue: pending` |
+| Riesgo | Permitir un barbero no asignado al servicio produce disponibilidad y reservas inválidas. |
+
+**Historia**
+
+> Como cliente, quiero elegir quién me atiende cuando hay varias opciones y omitir ese paso cuando solo hay una, para avanzar con la menor fricción posible.
+
+**Alcance incluido**
+
+- Lista pública de barberos pertenecientes a la barbería y asignados al servicio activo elegido.
+- Preselección automática sin paso adicional cuando existe exactamente uno; elección explícita cuando existen varios.
+- Revalidación de servicio y asignación en cada lectura posterior; cambios concurrentes no conservan una selección inválida.
+
+**Alcance excluido**
+
+- Preferencias, ranking, “cualquiera”, asignación automática, perfiles, fotos o baja de barberos.
+- Consultar disponibilidad o crear la cita.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-092-01` | Con un único barbero asignado, queda seleccionado y el flujo no agrega un paso; con varios, exige una elección explícita. |
+| `CA-092-02` | Solo se listan barberos de la barbería pública con asignación vigente al servicio activo elegido. |
+| `CA-092-03` | Un ID ajeno, inexistente o ya no asignado se rechaza de forma uniforme antes de consultar horas o crear cita. |
+| `CA-092-04` | Cambiar el servicio limpia una selección incompatible y conserva una compatible únicamente tras revalidarla. |
+| `CA-092-05` | Estados y selector funcionan con teclado, foco visible, lector, zoom 200 % y los cuatro anchos normativos. |
+
+**Pruebas obligatorias:** matriz 0/1/N barberos; PostgreSQL real con asignaciones cruzadas; contrato, componente y E2E de preselección/elección.
+
+**Terminado cuando** el flujo conserva exactamente un barbero elegible y nunca inventa asignación automática.
+
+---
+
+### HU-093 · Configuración de reserva y cancelación pública
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-DISP-04`, `F-DISP-05`, `F-CITA-07`; configuración de `RN-DIS-06` |
+| Reglas | `RN-DIS-04`, `RN-DIS-06`, `RN-CAN-01`, `RN-CAN-02`, `RN-TEN-01` |
+| Decisiones | `DEC-005`, `DEC-006`, `DEC-010`, `DEC-018`, `DEC-024`, `DEC-077`–`DEC-079` |
+| Actor | Barbero autenticado |
+| Depende de | B3; `HU-020`/`HU-012`; `DP-PUB-02` resuelta |
+| Bloquea | `HU-094`, `HU-095`, `HU-099` |
+| Estado | Propuesta; prompt `PROMPT-HU-093-v1` en `draft`, `issue: pending` |
+| Riesgo | Rangos inventados o una política ambigua pueden ocultar horarios válidos o permitir cancelaciones contrarias a la decisión del negocio. |
+
+**Historia**
+
+> Como barbero, quiero configurar anticipación, ventana, rejilla y política de cancelación pública, para ajustar la reserva autónoma a mi operación.
+
+**Alcance incluido**
+
+- Configuración tenant-aware de anticipación mínima, ventana máxima, paso de rejilla, plazo de cancelación, actor permitido fuera de plazo y motivo obligatorio.
+- Valores iniciales exactos de `DEC-018`; rangos y combinación predeterminada de política solo después de `DP-PUB-02`.
+- Lectura y actualización contract-first con precondición de versión, validación cerrada y UI accesible.
+
+**Alcance excluido**
+
+- Cambiar citas existentes, aplicar límites públicos a citas manuales o configurar notificaciones.
+- Inventar máximos, mínimos o defaults no confirmados.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-093-01` | Una barbería nueva recibe 60 minutos, 3 días, rejilla de 15 y plazo de cancelación de 20 minutos; los demás defaults coinciden con la decisión de `DP-PUB-02`. |
+| `CA-093-02` | Solo valores dentro de rangos aprobados se guardan; campos desconocidos, combinaciones incoherentes y versión obsoleta se rechazan sin cambios parciales. |
+| `CA-093-03` | La configuración de A nunca se lee ni modifica desde B y el body no acepta `barbershopId`. |
+| `CA-093-04` | Cambiar la política afecta evaluaciones futuras, no reescribe citas, historial ni cancelaciones ya realizadas. |
+| `CA-093-05` | El formulario explica unidades y consecuencias, conserva datos ante error y cumple responsive, teclado, zoom 200 % y axe-core. |
+
+**Pruebas obligatorias:** dominio de rangos/fronteras; PostgreSQL real con dos tenants; contrato y conflicto de versión; componente y E2E de persistencia.
+
+**Terminado cuando** la barbería controla todas las variables públicas confirmadas sin alterar la creación manual ni decisiones históricas.
+
+---
+
+### HU-094 · Motor de disponibilidad pública real
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-DISP-01` |
+| Reglas | `RN-DIS-01`–`RN-DIS-07`, `RN-BLQ-01`–`RN-BLQ-04`, `RN-CON-01`, `RN-CON-03`, `RN-CAN-04`, `RN-TEN-01` |
+| Decisiones | `DEC-002`, `DEC-005`–`DEC-009`, `DEC-012`, `DEC-018`–`DEC-020`, `DEC-024`, `DEC-070`, `DEC-073`, `DEC-076` |
+| Actor | Cliente con servicio y barbero válidos |
+| Depende de | `HU-091`–`HU-093`; B2/B3; `DP-PUB-03` resuelta |
+| Bloquea | `HU-095`, `HU-097`, `HU-099` |
+| Estado | Propuesta; prompt `PROMPT-HU-094-v1` en `draft`, `issue: pending` |
+| Riesgo | Restar mal un solo factor ofrece un turno imposible o esconde capacidad vendible. |
+
+**Historia**
+
+> Como cliente, quiero recibir únicamente horas donde el servicio completo cabe de verdad, para no confirmar un turno incompatible con la agenda.
+
+**Alcance incluido**
+
+- Proyección pura por fecha civil, zona de barbería, barbero y servicio vigentes.
+- Intersección de jornada recurrente, excepciones/festivos, bloqueos vigentes y citas que ocupan agenda; unión de solapes antes de restar.
+- Aplicación de duración snapshot candidata, `[inicio, fin)`, anticipación, ventana y rejilla aprobada.
+- Resultado determinista, ordenado y sin reservar temporalmente ninguna franja.
+
+**Alcance excluido**
+
+- UI de calendario, creación de cita, hold de franja, caché distribuida o predicción de demanda.
+- Elegir cómo reinicia la rejilla tras una interrupción antes de resolver `DP-PUB-03`.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-094-01` | Solo aparece un inicio si el intervalo completo cabe en jornada efectiva y no interseca cita ocupante ni bloqueo vigente. |
+| `CA-094-02` | Hueco exacto y contigüidad son válidos; un minuto insuficiente, cierre excedido o duración no múltiplo de rejilla se resuelve conforme a reglas. |
+| `CA-094-03` | Festivo, excepción, recurrencia, vacaciones, emergencia, cruce de medianoche y restricciones solapadas producen una resta única y correcta. |
+| `CA-094-04` | Anticipación y ventana se evalúan con reloj del servidor; consultar no crea filas, bloqueos, sesiones ni efectos de negocio. |
+| `CA-094-05` | Dos tenants y dos barberos simultáneos permanecen aislados; cancelación futura libera la franja si ninguna otra restricción la cubre. |
+| `CA-094-06` | La consulta tiene límite de rango/costo aprobado, plan de consulta justificado y pruebas de rendimiento reproducibles sin datos reales. |
+
+**Pruebas obligatorias:** tabla exhaustiva de dominio; PostgreSQL real con dos tenants y once factores; límites temporales/zona; contrato sin efectos y plan de consulta.
+
+**Terminado cuando** el backend produce la misma disponibilidad que las reglas, incluso en fronteras y combinaciones adversas.
+
+---
+
+### HU-095 · Exploración pública de fechas y horarios
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-PUB-03` |
+| Reglas | `RN-DIS-01`–`RN-DIS-07`, `RN-CON-04`, `RN-DAT-02` |
+| Decisiones | `DEC-005`–`DEC-007`, `DEC-018`–`DEC-020`, `DEC-077`–`DEC-079` |
+| Actor | Cliente con servicio y barbero elegidos |
+| Depende de | `HU-094` |
+| Bloquea | `HU-096`, `HU-097` |
+| Estado | Propuesta; prompt `PROMPT-HU-095-v1` en `draft`, `issue: pending` |
+| Riesgo | Una pantalla que conserva horas obsoletas o usa la zona del dispositivo induce al cliente a confirmar otra hora. |
+
+**Historia**
+
+> Como cliente, quiero explorar fechas y horas disponibles en la zona de la barbería, para escoger un turno válido con claridad.
+
+**Alcance incluido**
+
+- Navegación limitada por anticipación/ventana y consulta bajo demanda del motor `HU-094`.
+- Selección de una fecha y una franja con intervalo/duración visibles; zona de barbería explícita.
+- Carga, día sin horas, error, reintento y refresco cuando cambian servicio o barbero.
+
+**Alcance excluido**
+
+- Reservar temporalmente, mostrar “otras personas mirando”, confirmar cita o sugerir alternativas tras conflicto.
+- Calendario infinito, zona del dispositivo o horas pasadas.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-095-01` | Solo se pueden explorar fechas dentro de la ventana pública y solo se seleccionan horas devueltas por `HU-094`. |
+| `CA-095-02` | La hora, fecha, duración y zona de barbería se anuncian juntas; cambiar zona del dispositivo no cambia el turno mostrado. |
+| `CA-095-03` | Cambiar servicio o barbero invalida y vuelve a consultar la selección; una respuesta tardía no sobrescribe el contexto nuevo. |
+| `CA-095-04` | Día vacío, carga, error y reintento conservan selecciones previas válidas y no afirman que una consulta reserve la hora. |
+| `CA-095-05` | Teclado, foco, lector, objetivos de 44 px, zoom 200 %, axe-core y 320/360/768/1280 px quedan verificados. |
+
+**Pruebas obligatorias:** modelo de estado y carreras de respuestas; componente; contrato; E2E desde otro huso horario y día sin disponibilidad.
+
+**Terminado cuando** el cliente elige una franja real y comprende inequívocamente cuándo ocurrirá, sin adquirir un hold inexistente.
+
+---
+
+### HU-096 · Datos del cliente y persona atendida
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-PUB-05`, `F-PUB-06` |
+| Reglas | `RN-RES-01`–`RN-RES-03`, `RN-DAT-01`, `RN-DAT-02`, `RN-TEN-01` |
+| Decisiones | `DEC-016`, `DEC-022`, `DEC-045`, `DEC-046`, `DEC-077`–`DEC-079` |
+| Actor | Cliente con una franja elegida |
+| Depende de | `HU-095`; `DP-PUB-04` resuelta |
+| Bloquea | `HU-097` |
+| Estado | Propuesta; prompt `PROMPT-HU-096-v1` en `draft`, `issue: pending` |
+| Riesgo | Reconciliar contactos de forma ambigua puede unir personas distintas; pedir datos extra incumple minimización. |
+
+**Historia**
+
+> Como cliente, quiero indicar mis datos y si el turno es para otra persona, para que la barbería sepa a quién atender y a quién contactar.
+
+**Alcance incluido**
+
+- Nombre, teléfono y correo obligatorios; nota opcional; selector “para mí/otra persona” y segundo nombre solo cuando difiere.
+- Normalización y validación server-side; `attendeeName` siempre resuelto y notificaciones futuras dirigidas al cliente.
+- Política de reconciliación pública por teléfono/correo únicamente después de `DP-PUB-04`.
+
+**Alcance excluido**
+
+- Documento, dirección, fecha de nacimiento, datos sensibles o contacto de la persona atendida.
+- Cuenta de cliente, libreta de contactos, consentimiento jurídico no aprobado o envío de mensajes.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-096-01` | Para sí mismo, el nombre atendido se deriva del cliente sin pedirlo dos veces; para otra persona, un nombre no vacío adicional es obligatorio. |
+| `CA-096-02` | Nombre, teléfono y correo son obligatorios, nota es opcional y ningún otro dato personal aparece en UI o request. |
+| `CA-096-03` | Validaciones y normalización coinciden en contrato/backend; errores por campo conservan todo dato no sensible escrito. |
+| `CA-096-04` | Coincidencias y conflictos de teléfono/correo siguen exactamente `DP-PUB-04`, siempre dentro de la barbería. |
+| `CA-096-05` | Datos personales no aparecen en URL, logs, telemetría ni errores; pruebas usan valores ficticios. |
+| `CA-096-06` | Formulario condicional, mensajes y foco funcionan con teclado, autofill, zoom 200 %, axe-core y cuatro anchos normativos. |
+
+**Pruebas obligatorias:** dominio de identidad; contrato cerrado; PostgreSQL real con coincidencias/conflictos y dos tenants; componente y E2E para sí/tercero.
+
+**Terminado cuando** el sistema distingue cliente y persona atendida con los datos mínimos y sin fusionar identidades ambiguas.
+
+---
+
+### HU-097 · Confirmación pública concurrente e idempotente
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-PUB-04` (creación), `F-DISP-03` |
+| Reglas | `RN-RES-01`–`RN-RES-03`, `RN-DIS-03`–`RN-DIS-07`, `RN-CON-01`–`RN-CON-06`, `RN-CNF-01`, `RN-HIS-01`, `RN-IDE-01`, `RN-TEN-01` |
+| Decisiones | `DEC-005`–`DEC-008`, `DEC-012`, `DEC-013`, `DEC-016`, `DEC-019`, `DEC-020`, `DEC-022`, `DEC-024`, `DEC-041`–`DEC-046`, `DEC-073` |
+| Actor | Cliente que confirma el resumen público |
+| Depende de | `HU-090`–`HU-096`; `DP-PUB-05` y `DP-PUB-06` resueltas; `CT-011` resuelta |
+| Bloquea | `HU-098`, `HU-099`, B5 |
+| Estado | Propuesta; prompt `PROMPT-HU-097-v1` en `draft`, `issue: pending` |
+| Riesgo | Una carrera mal resuelta crea dos citas o pierde datos; una confirmación parcial deja cita sin historial o acceso del cliente. |
+
+**Historia**
+
+> Como cliente, quiero confirmar una sola vez el turno elegido y recibir alternativas si alguien se adelantó, para terminar sin duplicados ni perder mis datos.
+
+**Alcance incluido**
+
+- Comando público contract-first con `Idempotency-Key`; revalida barbería, servicio, asignación, jornada, bloqueo, límites y franja al confirmar.
+- Cliente, cita `confirmed`, snapshots, `appointment_created` y credencial de acceso se persisten con atomicidad definida por `DP-PUB-05`/`CT-011`.
+- Exclusión PostgreSQL como última defensa; exactamente un ganador bajo N solicitudes concurrentes.
+- Perdedor recibe conflicto comprensible, conserva formulario y obtiene alternativas conforme a `DP-PUB-06`.
+- Carrera reserva/bloqueo conserva la cita confirmada y registra/expone la afectación al barbero según `RN-CON-06`.
+
+**Alcance excluido**
+
+- Hold, pago, aprobación manual, lista de espera, CAPTCHA no decidido o notificaciones de B5.
+- Confiar en disponibilidad consultada, timestamps, precio, duración, estado, actor o tenant enviados por el cliente.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-097-01` | Una intención válida crea exactamente una cita `confirmed` de origen `public`, con snapshots e historial inicial en la unidad atómica aprobada. |
+| `CA-097-02` | El servidor revalida todo; recursos inactivos/ajenos, ventana vencida, bloqueo o jornada inválida no producen cita ni historial parcial. |
+| `CA-097-03` | N confirmaciones simultáneas de una franja dejan una ganadora; las demás reciben `409` controlado y alternativas aprobadas sin perder formulario. |
+| `CA-097-04` | Misma clave/contenido reproduce el resultado; misma clave/contenido distinto o clave en curso sigue `DEC-043`; doble toque no duplica efectos. |
+| `CA-097-05` | Una carrera con bloqueo nunca borra una cita confirmada y deja al barbero la afectación exigida por `RN-CON-06`. |
+| `CA-097-06` | Con dos tenants no hay relaciones cruzadas; logs, errores e idempotencia no conservan teléfono, correo, nota ni token en claro. |
+| `CA-097-07` | El resumen exige confirmación explícita, bloquea doble toque y maneja éxito/conflicto/red con foco y datos conservados en los anchos normativos y axe-core limpio. |
+
+**Pruebas obligatorias:** dominio/HTTP; PostgreSQL real con dos tenants, rollback y barreras de concurrencia sin `sleep`; idempotencia; componente; E2E ganador/perdedor y carrera con bloqueo.
+
+**Terminado cuando** cada intención pública produce cero o una cita completa y el conflicto ofrece una recuperación segura.
+
+---
+
+### HU-098 · Confirmación y acceso privado del cliente a su turno
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-PUB-07` |
+| Reglas | `RN-CNF-01`, `RN-CNF-02`, `RN-DAT-01`–`RN-DAT-03`, `RN-TEN-01` |
+| Decisiones | `DEC-016`, `DEC-022`, `DEC-024`, `DEC-025`, `DEC-049`, `DEC-077`–`DEC-079` |
+| Actor | Cliente con enlace aleatorio del turno |
+| Depende de | `HU-097`; `DP-PUB-05` y `CT-011` resueltas |
+| Bloquea | `HU-099`, B5 |
+| Estado | Propuesta; prompt `PROMPT-HU-098-v1` en `draft`, `issue: pending` |
+| Riesgo | Filtrar o registrar el token permite consultar/cancelar una cita ajena; una expiración inventada puede dejar al cliente sin acceso. |
+
+**Historia**
+
+> Como cliente, quiero ver la confirmación y consultar mi turno mediante un enlace seguro, para conservar fecha, hora y política sin crear una cuenta.
+
+**Alcance incluido**
+
+- Pantalla posterior a la creación y ruta `/customer` autenticada solo por credencial aleatoria larga.
+- Lectura mínima de la cita, barbería, persona atendida, servicio, barbero, intervalo/zona, estado y política vigente de cancelación.
+- Token almacenado solo como hash, respuesta uniforme para inválido/expirado/revocado y redacción de URL en logs.
+- Emisión, vigencia, rotación, revocación y entrega por correo según `DP-PUB-05`/`CT-011`; no se inventan.
+
+**Alcance excluido**
+
+- Portal, login, búsqueda por contacto, edición/reprogramación por cliente o historial interno.
+- Mostrar IDs, notas internas, otros turnos o datos de otros clientes.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-098-01` | Tras confirmar, el cliente ve una representación coherente de su única cita y el acceso posterior requiere la credencial aprobada. |
+| `CA-098-02` | Token inválido, vencido, revocado o de cita anonimizada produce respuesta uniforme; el valor en claro no se persiste ni registra. |
+| `CA-098-03` | La lectura expone solo datos necesarios y nunca historial técnico, contacto completo innecesario, IDs internos o recursos relacionados. |
+| `CA-098-04` | Hora y política se muestran en zona de barbería y el estado vigente nunca implica cancelación por falta de respuesta. |
+| `CA-098-05` | Dos tenants y tokens distintos no se cruzan; una credencial no autoriza consultar otra cita. |
+| `CA-098-06` | Carga, error/reintento, estado terminal y enlace inválido cumplen teclado, foco, zoom 200 %, axe-core y cuatro anchos. |
+
+**Pruebas obligatorias:** token/hash y amenazas; HTTP customer; PostgreSQL real con dos tenants; redacción de logs; componente y E2E creación→consulta.
+
+**Terminado cuando** el cliente recupera solo su turno mediante una credencial segura y revocable, sin cuenta ni exposición lateral.
+
+---
+
+### HU-099 · Cancelación pública conforme a la política
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-PUB-08`, consumo de `F-CITA-07` |
+| Reglas | `RN-CAN-01`–`RN-CAN-04`, `RN-CIT-03`, `RN-HIS-01`, `RN-HIS-02`, `RN-DIS-04`, `RN-IDE-01`, `RN-TEN-01` |
+| Decisiones | `DEC-010`–`DEC-012`, `DEC-014`, `DEC-016`–`DEC-018`, `DEC-022`, `DEC-024`, `DEC-041`, `DEC-043` |
+| Actor | Cliente con acceso válido a su turno |
+| Depende de | `HU-093`, `HU-094`, `HU-098`; `DP-PUB-02`/`DP-PUB-05` resueltas |
+| Bloquea | Criterio de salida de B4 y efectos de B5 |
+| Estado | Propuesta; prompt `PROMPT-HU-099-v1` en `draft`, `issue: pending` |
+| Riesgo | Evaluar el plazo en el navegador o aplicar mal la política cancela compromisos sin autorización o deja una franja bloqueada. |
+
+**Historia**
+
+> Como cliente, quiero cancelar mi turno desde su enlace cuando la política lo permita, para avisar a la barbería y liberar la hora.
+
+**Alcance incluido**
+
+- Comando customer explícito T5, con token válido, `Idempotency-Key`, reloj del servidor y precondición de versión.
+- Dentro del plazo se permite; exactamente en el límite y fuera de plazo se aplica la política configurada, incluido motivo cuando corresponda.
+- Estado `cancelled_by_customer`, motivo aprobado y evento del cliente en una transacción; libera la exclusión inmediatamente.
+- Repetición exacta es no-op; otro terminal, versión obsoleta o intención divergente produce conflicto seguro.
+- UI explica política, contacto con barbería cuando se rechaza y consecuencia antes de confirmar.
+
+**Alcance excluido**
+
+- Cancelación por barbero, masiva, reprogramación, reapertura, penalidades o pagos.
+- Aviso al barbero/confirmación por canales e invalidación de recordatorios hasta B5; no se simulan envíos.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-099-01` | Una cita propia `confirmed` cancelable cambia una vez a `cancelled_by_customer` y agrega un único evento con actor cliente en la misma transacción. |
+| `CA-099-02` | El reloj del servidor evalúa antes, exacto y después del límite; fuera de plazo se permite o rechaza exactamente según configuración. |
+| `CA-099-03` | Cuando la política exige motivo, vacío/blanco se rechaza; cuando no lo exige no se inventa ni solicita como obligatorio. |
+| `CA-099-04` | Al confirmar la cancelación, la franja futura vuelve a `HU-094` salvo otra cita/bloqueo; el pasado nunca se ofrece. |
+| `CA-099-05` | Repetición exacta no duplica historial; otro terminal, versión obsoleta, clave divergente o token inválido no modifica nada ni revela existencia. |
+| `CA-099-06` | UI y contrato explican rechazo y contacto seguro; confirmación, espera, error y estado cancelado cumplen responsive, teclado, foco, zoom y axe-core. |
+
+**Pruebas obligatorias:** tabla de política y fronteras temporales; HTTP/idempotencia; PostgreSQL real con dos tenants, atomicidad/liberación y carrera; componente y E2E cancelar→reconsultar franja.
+
+**Terminado cuando** el cliente cancela solo cuando está autorizado, deja rastro correcto y libera de inmediato una franja futura.
+
+---
+
+## 8. Historias pendientes de redacción
 
 | Bloque | Rango reservado | Se redacta cuando |
 | --- | --- | --- |
 | B1 | `HU-025` – | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
 | B2 | `HU-040` – `HU-042` | Integradas en `main` (PR `#93`, `#96`, `#99`); seguimientos parciales en issues `#90`, `#95`, `#98` y `#100` |
 | B3 | `HU-069` – | `HU-066`–`HU-068` ya redactadas; continuar con T3 y cierre automático solo después de revisar este lote y resolver cualquier duda de semántica de snapshots/configuración |
-| B4 | `HU-090` – | B3 cumple su criterio de salida |
+| B4 | `HU-100` – | `HU-090`–`HU-099` ya redactadas; continuar solo después de cerrar B3 y resolver `DP-PUB-01`–`DP-PUB-06`/`CT-011` |
 | B5 | `HU-130` – | B4 cumple su criterio de salida |
 | B6 | `HU-150` – | B5 cumple su criterio de salida |
 
@@ -1694,7 +2156,7 @@ Redactar por anticipado las historias de un bloque lejano produce texto que hay 
 
 ---
 
-## 8. Dudas que bloqueaban historias de B0
+## 9. Dudas que bloqueaban historias de B0
 
 | Duda | Historia antes bloqueada | Qué faltaba decidir | Resuelta como |
 | --- | --- | --- | --- |
