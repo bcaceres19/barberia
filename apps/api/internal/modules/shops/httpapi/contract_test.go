@@ -24,11 +24,30 @@ type operation struct {
 	Responses   map[string]any `yaml:"responses"`
 }
 
+type refParam struct {
+	Ref  string `yaml:"$ref"`
+	Name string `yaml:"name"`
+}
+
+type bookingPolicyOperation struct {
+	OperationID string         `yaml:"operationId"`
+	Security    []any          `yaml:"security"`
+	Parameters  []refParam     `yaml:"parameters"`
+	Responses   map[string]any `yaml:"responses"`
+}
+
 type barbershopSettingsPathFile struct {
 	BarbershopSettings struct {
 		Get   operation `yaml:"get"`
 		Patch operation `yaml:"patch"`
 	} `yaml:"/private/settings/barbershop"`
+}
+
+type bookingPolicyPathFile struct {
+	BookingPolicy struct {
+		Get bookingPolicyOperation `yaml:"get"`
+		Put bookingPolicyOperation `yaml:"put"`
+	} `yaml:"/private/settings/booking-policy"`
 }
 
 func findRepoRoot(t *testing.T) string {
@@ -173,5 +192,107 @@ func TestContract_OpenAPIYAML_RegistersBarbershopSettingsPath(t *testing.T) {
 
 	if _, ok := doc.Paths["/private/settings/barbershop"]; !ok {
 		t.Fatal("openapi.yaml no registra paths./private/settings/barbershop")
+	}
+}
+
+// TestContract_BookingPolicyResponseSchema_MatchesDTOFields verifica que
+// httpapi.BookingPolicyResponse (HU-093) coincide exactamente con las
+// propiedades y los required de BookingPolicyResponse.yaml.
+func TestContract_BookingPolicyResponseSchema_MatchesDTOFields(t *testing.T) {
+	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/BookingPolicyResponse.yaml")
+	requireProps(t, schema, []string{
+		"minAdvanceMinutes", "maxAdvanceDays", "slotGridMinutes",
+		"cancellationDeadlineMinutes", "lateCancellationClientAllowed",
+		"lateCancellationReasonRequired", "versionToken",
+	})
+}
+
+// TestContract_UpdateBookingPolicyRequestSchema_MatchesDTOFields verifica
+// httpapi.UpdateBookingPolicyRequest contra UpdateBookingPolicyRequest.yaml.
+// barbershopId y versionToken NUNCA aparecen en el cuerpo (CA-093-03: el
+// tenant se deriva de la sesión; la precondición de versión viaja en
+// If-Match, no en el cuerpo).
+func TestContract_UpdateBookingPolicyRequestSchema_MatchesDTOFields(t *testing.T) {
+	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/UpdateBookingPolicyRequest.yaml")
+	requireProps(t, schema, []string{
+		"minAdvanceMinutes", "maxAdvanceDays", "slotGridMinutes",
+		"cancellationDeadlineMinutes", "lateCancellationClientAllowed",
+		"lateCancellationReasonRequired",
+	})
+	for _, forbidden := range []string{"barbershopId", "versionToken"} {
+		if _, ok := schema.Properties[forbidden]; ok {
+			t.Fatalf("CA-093-03: el contrato de PUT nunca debe declarar %q", forbidden)
+		}
+	}
+}
+
+// TestContract_GetBookingPolicyOperation_MethodPathSecurityAndResponses
+// verifica que el path fuente declara exactamente la operación de lectura:
+// SessionCookie y los códigos que el handler realmente produce (200, 401,
+// 404 defensivo, 500), sin inventar códigos no ejercitados.
+func TestContract_GetBookingPolicyOperation_MethodPathSecurityAndResponses(t *testing.T) {
+	doc := loadYAML[bookingPolicyPathFile](t, "api/openapi/paths/settings.yaml")
+	op := doc.BookingPolicy.Get
+
+	if op.OperationID != "getBookingPolicy" {
+		t.Fatalf("expected operationId getBookingPolicy, got %q", op.OperationID)
+	}
+	if len(op.Security) != 1 {
+		t.Fatalf("expected exactly one security requirement (SessionCookie), got %v", op.Security)
+	}
+
+	wantStatuses := []string{"200", "401", "404", "500"}
+	for _, s := range wantStatuses {
+		if _, ok := op.Responses[s]; !ok {
+			t.Errorf("el contrato no documenta la respuesta %s, pero el handler la produce", s)
+		}
+	}
+	if len(op.Responses) != len(wantStatuses) {
+		t.Errorf("el contrato documenta %d respuestas, se esperaban exactamente %d (%v); revisa que no sobre ni falte una",
+			len(op.Responses), len(wantStatuses), wantStatuses)
+	}
+}
+
+// TestContract_UpdateBookingPolicyOperation_MethodPathSecurityAndResponses
+// cubre la operación de actualización: If-Match obligatorio (CA-093-02),
+// 200 éxito, 400 JSON/campo desconocido, 401, 404 defensivo, 409 conflicto
+// de versión, 422 validación de rango/coherencia, 500.
+func TestContract_UpdateBookingPolicyOperation_MethodPathSecurityAndResponses(t *testing.T) {
+	doc := loadYAML[bookingPolicyPathFile](t, "api/openapi/paths/settings.yaml")
+	op := doc.BookingPolicy.Put
+
+	if op.OperationID != "updateBookingPolicy" {
+		t.Fatalf("expected operationId updateBookingPolicy, got %q", op.OperationID)
+	}
+	if len(op.Security) != 1 {
+		t.Fatalf("expected exactly one security requirement (SessionCookie), got %v", op.Security)
+	}
+	if len(op.Parameters) != 1 || op.Parameters[0].Ref != "../components/parameters/IfMatch.yaml" {
+		t.Fatalf("expected exactly one parameter referencing IfMatch.yaml, got %+v", op.Parameters)
+	}
+
+	wantStatuses := []string{"200", "400", "401", "404", "409", "422", "500"}
+	for _, s := range wantStatuses {
+		if _, ok := op.Responses[s]; !ok {
+			t.Errorf("el contrato no documenta la respuesta %s, pero el handler la produce", s)
+		}
+	}
+	if len(op.Responses) != len(wantStatuses) {
+		t.Errorf("el contrato documenta %d respuestas, se esperaban exactamente %d (%v); revisa que no sobre ni falte una",
+			len(op.Responses), len(wantStatuses), wantStatuses)
+	}
+}
+
+// TestContract_OpenAPIYAML_RegistersBookingPolicyPath confirma que
+// openapi.yaml registra el path bajo el mismo documento raíz que las demás
+// operaciones privadas.
+func TestContract_OpenAPIYAML_RegistersBookingPolicyPath(t *testing.T) {
+	type pathsDoc struct {
+		Paths map[string]any `yaml:"paths"`
+	}
+	doc := loadYAML[pathsDoc](t, "api/openapi/openapi.yaml")
+
+	if _, ok := doc.Paths["/private/settings/booking-policy"]; !ok {
+		t.Fatal("openapi.yaml no registra paths./private/settings/booking-policy")
 	}
 }

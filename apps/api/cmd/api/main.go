@@ -248,6 +248,16 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	private.Get("/settings/barbershop", getBarbershopSettingsHandler.ServeHTTP)
 	private.Patch("/settings/barbershop", updateBarbershopSettingsHandler.ServeHTTP)
 
+	// HU-093: política pública de reserva y cancelación (anticipación,
+	// ventana, rejilla, plazo y política de cancelación tardía). Servicio
+	// propio con su propia precondición de versión (If-Match); nunca
+	// comparte shopService (HU-020 no tiene versionado).
+	bookingPolicyService := shops.NewBookingPolicyService(shopspostgres.NewBookingPolicyRepository(db))
+	getBookingPolicyHandler := shopshttpapi.NewGetBookingPolicyHandler(bookingPolicyService)
+	updateBookingPolicyHandler := shopshttpapi.NewUpdateBookingPolicyHandler(bookingPolicyService)
+	private.Get("/settings/booking-policy", getBookingPolicyHandler.ServeHTTP)
+	private.Put("/settings/booking-policy", updateBookingPolicyHandler.ServeHTTP)
+
 	// HU-021: registro y listado de barberos de la barbería activa.
 	// staffpostgres.New recibe el mismo idempotency.SQLCoordinator real que
 	// protege el alta (RN-IDE-01, DEC-043), coordinado dentro de la misma

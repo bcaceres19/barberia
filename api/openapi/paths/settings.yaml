@@ -1,10 +1,11 @@
 # Operaciones privadas de configuración de la barbería. HU-020 agrega la
 # primera capacidad real: consultar y actualizar el nombre, la zona horaria
-# IANA y el contacto opcional (correo, teléfono) de la barbería activa. No
-# mezcla con reserva, cancelación, recordatorios ni canales: esas
-# capacidades de configuración, cuando existan, se documentan en su propia
-# operación bajo este mismo path o en un archivo separado si crecen lo
-# suficiente para justificarlo, nunca dentro del schema de esta.
+# IANA y el contacto opcional (correo, teléfono) de la barbería activa.
+# HU-093 agrega la política pública de reserva y cancelación (anticipación,
+# ventana, rejilla, plazo y cancelación tardía) como una operación propia
+# bajo /private/settings/booking-policy, con su propia precondición de
+# versión (If-Match): nunca comparte el schema ni el versionado de
+# /private/settings/barbershop.
 /private/settings/barbershop:
   get:
     tags: [Settings]
@@ -83,5 +84,109 @@
         $ref: '../components/responses/NotFoundProblem.yaml'
       "422":
         $ref: '../components/responses/BarbershopSettingsValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/settings/booking-policy:
+  get:
+    tags: [Settings]
+    summary: Consultar la política pública de reserva y cancelación
+    description: >
+      Lectura autenticada (HU-093, CA-093-01) de anticipación mínima,
+      ventana máxima, rejilla, plazo de cancelación y política de
+      cancelación tardía de la barbería derivada de la sesión vigente. Una
+      barbería nueva recibe exactamente los defaults de DEC-083 (60/3/15/20
+      minutos-días, `lateCancellationClientAllowed`/
+      `lateCancellationReasonRequired` en `true`). `barbershopId` nunca es
+      un parámetro de esta operación -el tenant se deriva exclusivamente de
+      `SessionCookie`- (CA-093-03).
+    operationId: getBookingPolicy
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-DIS-04, RN-DIS-06, RN-CAN-01, RN-CAN-02, RN-TEN-01]
+    x-decisions: [DEC-005, DEC-006, DEC-010, DEC-018, DEC-024, DEC-083]
+    responses:
+      "200":
+        $ref: '../components/responses/BookingPolicySuccess.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  put:
+    tags: [Settings]
+    summary: Actualizar la política pública de reserva y cancelación
+    description: >
+      Reemplazo completo y autenticado (HU-093, CA-093-02) de los seis
+      campos de la política pública, protegido por la precondición de
+      versión `If-Match` (concurrencia optimista, mismo criterio que
+      `HU-065`): si la representación vigente ya cambió, responde `409` con
+      `code: version-conflict` en vez de aplicar un último escritor
+      silencioso. Cada campo se valida contra el rango o conjunto discreto
+      de `DEC-083`; `lateCancellationReasonRequired` no puede ser `true` si
+      `lateCancellationClientAllowed` es `false` (combinación incoherente),
+      y `minAdvanceMinutes` no puede alcanzar ni superar
+      `maxAdvanceDays * 1440`. Un campo fuera de rango o una combinación
+      incoherente responde `422` sin escribir nada, ni siquiera
+      parcialmente (`CA-093-02`). Cambiar la política nunca reescribe citas,
+      historial ni cancelaciones ya realizadas (`CA-093-04`). El cuerpo no
+      declara `barbershopId`: el tenant se deriva exclusivamente de
+      `SessionCookie` (`CA-093-03`).
+    operationId: updateBookingPolicy
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-DIS-04, RN-DIS-06, RN-CAN-01, RN-CAN-02, RN-TEN-01]
+    x-decisions: [DEC-005, DEC-006, DEC-010, DEC-018, DEC-024, DEC-083]
+    parameters:
+      - $ref: '../components/parameters/IfMatch.yaml'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/UpdateBookingPolicyRequest.yaml'
+          examples:
+            actualizacionCompleta:
+              summary: Anticipación, ventana, rejilla y cancelación tardía personalizadas
+              value:
+                minAdvanceMinutes: 90
+                maxAdvanceDays: 5
+                slotGridMinutes: 30
+                cancellationDeadlineMinutes: 60
+                lateCancellationClientAllowed: false
+                lateCancellationReasonRequired: false
+    responses:
+      "200":
+        $ref: '../components/responses/BookingPolicyUpdated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "409":
+        description: >
+          El `If-Match` enviado ya no coincide con la representación
+          vigente porque otra escritura tocó la barbería primero
+          (`code: version-conflict`).
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              versionDesactualizada:
+                value:
+                  type: /api/v1/problems/version-conflict
+                  title: Conflicto de versión
+                  status: 409
+                  detail: la política de reserva cambió desde que se leyó; recarga antes de reintentar
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: version-conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "422":
+        $ref: '../components/responses/BookingPolicyValidationProblem.yaml'
       "500":
         $ref: '../components/responses/InternalErrorProblem.yaml'

@@ -248,6 +248,30 @@ export interface paths {
         patch: operations["updateBarbershopSettings"];
         trace?: never;
     };
+    "/private/settings/booking-policy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar la política pública de reserva y cancelación
+         * @description Lectura autenticada (HU-093, CA-093-01) de anticipación mínima, ventana máxima, rejilla, plazo de cancelación y política de cancelación tardía de la barbería derivada de la sesión vigente. Una barbería nueva recibe exactamente los defaults de DEC-083 (60/3/15/20 minutos-días, `lateCancellationClientAllowed`/ `lateCancellationReasonRequired` en `true`). `barbershopId` nunca es un parámetro de esta operación -el tenant se deriva exclusivamente de `SessionCookie`- (CA-093-03).
+         */
+        get: operations["getBookingPolicy"];
+        /**
+         * Actualizar la política pública de reserva y cancelación
+         * @description Reemplazo completo y autenticado (HU-093, CA-093-02) de los seis campos de la política pública, protegido por la precondición de versión `If-Match` (concurrencia optimista, mismo criterio que `HU-065`): si la representación vigente ya cambió, responde `409` con `code: version-conflict` en vez de aplicar un último escritor silencioso. Cada campo se valida contra el rango o conjunto discreto de `DEC-083`; `lateCancellationReasonRequired` no puede ser `true` si `lateCancellationClientAllowed` es `false` (combinación incoherente), y `minAdvanceMinutes` no puede alcanzar ni superar `maxAdvanceDays * 1440`. Un campo fuera de rango o una combinación incoherente responde `422` sin escribir nada, ni siquiera parcialmente (`CA-093-02`). Cambiar la política nunca reescribe citas, historial ni cancelaciones ya realizadas (`CA-093-04`). El cuerpo no declara `barbershopId`: el tenant se deriva exclusivamente de `SessionCookie` (`CA-093-03`).
+         */
+        put: operations["updateBookingPolicy"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/private/barbers": {
         parameters: {
             query?: never;
@@ -1505,6 +1529,63 @@ export interface components {
              * @example ***-nueva-contrasena-ficticia
              */
             newPassword: string;
+        };
+        /** @description Configuración de anticipación, ventana, rejilla y cancelación tardía de la barbería activa. Los rangos y el conjunto discreto de slotGridMinutes están fijados por DEC-083. */
+        BookingPolicyResponse: {
+            /**
+             * @description Anticipación mínima en minutos para reservar públicamente (RN-DIS-04). 0 desactiva el mínimo.
+             * @example 60
+             */
+            minAdvanceMinutes: number;
+            /**
+             * @description Ventana máxima en días para reservar públicamente (RN-DIS-04).
+             * @example 3
+             */
+            maxAdvanceDays: number;
+            /**
+             * @description Paso en minutos de la rejilla de franjas ofrecidas al cliente (RN-DIS-06).
+             * @example 15
+             * @enum {integer}
+             */
+            slotGridMinutes: 5 | 10 | 15 | 20 | 30 | 60;
+            /**
+             * @description Plazo en minutos antes de la cita hasta el cual el cliente puede cancelar por su cuenta (RN-CAN-01). 0 desactiva la cancelación propia del cliente.
+             * @example 20
+             */
+            cancellationDeadlineMinutes: number;
+            /**
+             * @description Si el cliente puede cancelar vencido el plazo (RN-CAN-02).
+             * @example true
+             */
+            lateCancellationClientAllowed: boolean;
+            /**
+             * @description Si una cancelación tardía del cliente exige motivo (RN-CAN-02). No puede ser `true` si lateCancellationClientAllowed es `false`.
+             * @example true
+             */
+            lateCancellationReasonRequired: boolean;
+            /**
+             * @description Token opaco de concurrencia para la cabecera `If-Match` de la siguiente escritura. Nunca lo decodifiques: no es una codificación de ningún dato de negocio.
+             * @example 3n9Kq1x2v8pQwZbJt5Yc0Rr6Hh4Ss7Ff1Gg3Dd8Ee2Aa
+             */
+            versionToken: string;
+        };
+        /** @description Reemplazo completo de la política pública de reserva y cancelación. */
+        UpdateBookingPolicyRequest: {
+            /** @example 60 */
+            minAdvanceMinutes: number;
+            /** @example 3 */
+            maxAdvanceDays: number;
+            /**
+             * @example 15
+             * @enum {integer}
+             */
+            slotGridMinutes: 5 | 10 | 15 | 20 | 30 | 60;
+            /** @example 20 */
+            cancellationDeadlineMinutes: number;
+            /** @example true */
+            lateCancellationClientAllowed: boolean;
+            /** @example true */
+            lateCancellationReasonRequired: boolean;
         };
         /** @description Tramo recurrente de la jornada laboral de un barbero, para un único día ISO de la semana. Una jornada partida se representa con varios tramos del mismo día (CA-040-02); un tramo nocturno cruza medianoche cuando startsTime + durationMinutes supera las 24:00 (DEC-020, CA-040-03). */
         WorkingHourResponse: {
@@ -2771,6 +2852,36 @@ export interface components {
             };
             content?: never;
         };
+        /** @description Política pública de reserva y cancelación de la barbería activa. */
+        BookingPolicySuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["BookingPolicyResponse"];
+            };
+        };
+        /** @description Política pública de reserva y cancelación ya guardada. */
+        BookingPolicyUpdated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["BookingPolicyResponse"];
+            };
+        };
+        /** @description El cuerpo es JSON válido con los seis campos esperados, pero uno está fuera de rango (DEC-083) o la combinación entre lateCancellationClientAllowed y lateCancellationReasonRequired es incoherente (exigir motivo para una cancelación tardía que el cliente ni siquiera puede hacer). */
+        BookingPolicyValidationProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
         /** @description Página de tramos de horario laboral del barbero de la ruta, ordenada por día ISO de la semana y hora de inicio. */
         WorkingHourListSuccess: {
             headers: {
@@ -3503,6 +3614,55 @@ export interface operations {
             401: components["responses"]["UnauthorizedProblem"];
             404: components["responses"]["NotFoundProblem"];
             422: components["responses"]["BarbershopSettingsValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getBookingPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["BookingPolicySuccess"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    updateBookingPolicy: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Token opaco de versión de la representación que el cliente leyó antes de esta escritura (`versionToken` de la respuesta de detalle). Si ya no coincide con la versión vigente del recurso, la operación responde `409` con `code: version-conflict`. */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateBookingPolicyRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["BookingPolicyUpdated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            /** @description El `If-Match` enviado ya no coincide con la representación vigente porque otra escritura tocó la barbería primero (`code: version-conflict`). */
+            409: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["BookingPolicyValidationProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

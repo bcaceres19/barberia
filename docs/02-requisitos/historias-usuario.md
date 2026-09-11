@@ -1827,11 +1827,11 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | --- | --- |
 | Función | `F-DISP-04`, `F-DISP-05`, `F-CITA-07`; configuración de `RN-DIS-06` |
 | Reglas | `RN-DIS-04`, `RN-DIS-06`, `RN-CAN-01`, `RN-CAN-02`, `RN-TEN-01` |
-| Decisiones | `DEC-005`, `DEC-006`, `DEC-010`, `DEC-018`, `DEC-024`, `DEC-077`–`DEC-079` |
+| Decisiones | `DEC-005`, `DEC-006`, `DEC-010`, `DEC-018`, `DEC-024`, `DEC-077`–`DEC-079`, `DEC-083` |
 | Actor | Barbero autenticado |
 | Depende de | B3; `HU-020`/`HU-012`; `DP-PUB-02` resuelta |
 | Bloquea | `HU-094`, `HU-095`, `HU-099` |
-| Estado | Propuesta; prompt `PROMPT-HU-093-v1` en `draft`, `issue: pending` |
+| Estado | En desarrollo; issue real [#249](https://github.com/bcaceres19/barberia/issues/249), rama `feat/249-hu093-configuracion-reserva-cancelacion` |
 | Riesgo | Rangos inventados o una política ambigua pueden ocultar horarios válidos o permitir cancelaciones contrarias a la decisión del negocio. |
 
 **Historia**

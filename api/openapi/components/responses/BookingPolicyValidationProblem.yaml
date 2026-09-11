@@ -1,0 +1,50 @@
+# 422 de PUT /private/settings/booking-policy (HU-093, CA-093-02): un
+# cuerpo bien formado con los seis campos esperados, pero uno de ellos
+# incumple un rango de DEC-083 o la combinación entre campos es
+# incoherente. Mismo schema que ValidationProblem.yaml; solo cambian los
+# ejemplos (docs/06-api/estandar-openapi.md sección 9, regla 4). Ninguna
+# escritura ocurre cuando esto sucede, ni siquiera parcial.
+description: >
+  El cuerpo es JSON válido con los seis campos esperados, pero uno está
+  fuera de rango (DEC-083) o la combinación entre
+  lateCancellationClientAllowed y lateCancellationReasonRequired es
+  incoherente (exigir motivo para una cancelación tardía que el cliente ni
+  siquiera puede hacer).
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      fueraDeRango:
+        summary: slotGridMinutes fuera del conjunto discreto permitido
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: slotGridMinutes está fuera del rango permitido
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      politicaIncoherente:
+        summary: Motivo obligatorio sin permitir cancelación tardía del cliente
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: no se puede exigir motivo de cancelación tardía si el cliente no puede cancelar tarde
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      anticipacionSuperaVentana:
+        summary: La anticipación mínima alcanza o supera la ventana máxima
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: la anticipación mínima no puede alcanzar ni superar la ventana máxima de reserva
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

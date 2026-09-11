@@ -1,0 +1,22 @@
+# Respuesta 200 de PUT /private/settings/booking-policy (HU-093, CA-093-02):
+# la representación completa ya guardada, con un versionToken NUEVO (la
+# escritura tocó updated_at) para encadenar la siguiente actualización.
+description: Política pública de reserva y cancelación ya guardada.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/BookingPolicyResponse.yaml'
+    examples:
+      actualizada:
+        summary: Política actualizada
+        value:
+          minAdvanceMinutes: 90
+          maxAdvanceDays: 5
+          slotGridMinutes: 30
+          cancellationDeadlineMinutes: 60
+          lateCancellationClientAllowed: false
+          lateCancellationReasonRequired: false
+          versionToken: 8Aa2Ee8Dd3Gg1Ff7Ss4Hh6Rr0Yc5Zb8Pq1v2x1Kq9n3

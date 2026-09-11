@@ -240,7 +240,7 @@ Consultar la disponibilidad no bloquea ni aparta el horario. Varios clientes pue
 
 **Estado: Decisión confirmada** (`DEC-005`, `DEC-018`)
 
-No se puede reservar con menos de X minutos de anticipación ni con más de Y días de anticipación. Ambos valores son configurables por barbería. Los valores iniciales son X = 60 minutos y Y = 3 días.
+No se puede reservar con menos de X minutos de anticipación ni con más de Y días de anticipación. Ambos valores son configurables por barbería. Los valores iniciales son X = 60 minutos y Y = 3 días. Rango permitido: X entero en `[0, 1440]` minutos (0 desactiva el mínimo); Y entero en `[1, 90]` días (`DEC-083`).
 
 **Motivo:** sin anticipación mínima, un cliente puede reservar a las 10:00 para las 10:05 mientras el barbero está atendiendo y no mira el teléfono. Sin ventana máxima, aparecen reservas a ocho meses que casi nunca se cumplen.
 
@@ -517,7 +517,7 @@ El cierre automático registra al sistema como actor y usa `ends_at` como instan
 
 **Estado: Decisión confirmada** (`DEC-010`, `DEC-018`)
 
-El plazo inicial es de 20 minutos y es configurable por barbería.
+El plazo inicial es de 20 minutos y es configurable por barbería. Rango permitido: entero en `[0, 10080]` minutos (0 desactiva la cancelación propia del cliente; tope de 7 días) (`DEC-083`).
 
 **Ejemplo:** con el valor inicial, un cliente con cita a las 15:00 puede cancelar por su cuenta hasta las 14:40.
 
@@ -539,7 +539,7 @@ El plazo inicial es de 20 minutos y es configurable por barbería.
 
 **Estado: Decisión confirmada** (`DEC-010`)
 
-Vencido el plazo de `RN-CAN-01`, la configuración de la barbería determina si la cita solo puede cancelarla el barbero o si también puede hacerlo el cliente. La misma política determina si el motivo es obligatorio.
+Vencido el plazo de `RN-CAN-01`, la configuración de la barbería determina si la cita solo puede cancelarla el barbero o si también puede hacerlo el cliente (campo `permite_cliente`), y si esa cancelación exige motivo (campo `motivo_obligatorio`), ambos booleanos independientes. Default de una barbería nueva: `permite_cliente = true`, `motivo_obligatorio = true` (`DEC-083`).
 
 **Motivo:** protege al barbero de las cancelaciones de último minuto sin dejar la agenda bloqueada por una cita que ya no ocurrirá.
 

@@ -1,0 +1,71 @@
+# Representación canónica de la política pública de reserva y cancelación
+# (HU-093, CA-093-01): los seis campos de configuración más versionToken,
+# el único dato de concurrencia expuesto. Misma forma para GET y para la
+# respuesta 200 de PUT.
+type: object
+description: >
+  Configuración de anticipación, ventana, rejilla y cancelación tardía de
+  la barbería activa. Los rangos y el conjunto discreto de slotGridMinutes
+  están fijados por DEC-083.
+properties:
+  minAdvanceMinutes:
+    type: integer
+    minimum: 0
+    maximum: 1440
+    description: >
+      Anticipación mínima en minutos para reservar públicamente (RN-DIS-04).
+      0 desactiva el mínimo.
+    examples:
+      - 60
+  maxAdvanceDays:
+    type: integer
+    minimum: 1
+    maximum: 90
+    description: Ventana máxima en días para reservar públicamente (RN-DIS-04).
+    examples:
+      - 3
+  slotGridMinutes:
+    type: integer
+    enum: [5, 10, 15, 20, 30, 60]
+    description: Paso en minutos de la rejilla de franjas ofrecidas al cliente (RN-DIS-06).
+    examples:
+      - 15
+  cancellationDeadlineMinutes:
+    type: integer
+    minimum: 0
+    maximum: 10080
+    description: >
+      Plazo en minutos antes de la cita hasta el cual el cliente puede
+      cancelar por su cuenta (RN-CAN-01). 0 desactiva la cancelación propia
+      del cliente.
+    examples:
+      - 20
+  lateCancellationClientAllowed:
+    type: boolean
+    description: Si el cliente puede cancelar vencido el plazo (RN-CAN-02).
+    examples:
+      - true
+  lateCancellationReasonRequired:
+    type: boolean
+    description: >
+      Si una cancelación tardía del cliente exige motivo (RN-CAN-02). No
+      puede ser `true` si lateCancellationClientAllowed es `false`.
+    examples:
+      - true
+  versionToken:
+    type: string
+    minLength: 1
+    description: >
+      Token opaco de concurrencia para la cabecera `If-Match` de la
+      siguiente escritura. Nunca lo decodifiques: no es una codificación
+      de ningún dato de negocio.
+    examples:
+      - 3n9Kq1x2v8pQwZbJt5Yc0Rr6Hh4Ss7Ff1Gg3Dd8Ee2Aa
+required:
+  - minAdvanceMinutes
+  - maxAdvanceDays
+  - slotGridMinutes
+  - cancellationDeadlineMinutes
+  - lateCancellationClientAllowed
+  - lateCancellationReasonRequired
+  - versionToken

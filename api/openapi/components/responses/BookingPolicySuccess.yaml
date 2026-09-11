@@ -1,0 +1,20 @@
+# Respuesta 200 de GET /private/settings/booking-policy (HU-093, CA-093-01).
+description: Política pública de reserva y cancelación de la barbería activa.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/BookingPolicyResponse.yaml'
+    examples:
+      defaults:
+        summary: Barbería nueva con los defaults de DEC-083
+        value:
+          minAdvanceMinutes: 60
+          maxAdvanceDays: 3
+          slotGridMinutes: 15
+          cancellationDeadlineMinutes: 20
+          lateCancellationClientAllowed: true
+          lateCancellationReasonRequired: true
+          versionToken: 3n9Kq1x2v8pQwZbJt5Yc0Rr6Hh4Ss7Ff1Gg3Dd8Ee2Aa

@@ -1,0 +1,47 @@
+# Cuerpo de PUT /private/settings/booking-policy (HU-093, CA-093-02).
+# Contrato cerrado y completo: los seis campos son siempre obligatorios,
+# nunca una actualización parcial (PATCH). La precondición de versión viaja
+# en la cabecera If-Match, no en este cuerpo (mismo criterio que
+# RescheduleAppointmentRequest, HU-065). Nunca declara barbershopId: el
+# tenant se deriva exclusivamente de SessionCookie (CA-093-03).
+type: object
+description: Reemplazo completo de la política pública de reserva y cancelación.
+properties:
+  minAdvanceMinutes:
+    type: integer
+    minimum: 0
+    maximum: 1440
+    examples:
+      - 60
+  maxAdvanceDays:
+    type: integer
+    minimum: 1
+    maximum: 90
+    examples:
+      - 3
+  slotGridMinutes:
+    type: integer
+    enum: [5, 10, 15, 20, 30, 60]
+    examples:
+      - 15
+  cancellationDeadlineMinutes:
+    type: integer
+    minimum: 0
+    maximum: 10080
+    examples:
+      - 20
+  lateCancellationClientAllowed:
+    type: boolean
+    examples:
+      - true
+  lateCancellationReasonRequired:
+    type: boolean
+    examples:
+      - true
+required:
+  - minAdvanceMinutes
+  - maxAdvanceDays
+  - slotGridMinutes
+  - cancellationDeadlineMinutes
+  - lateCancellationClientAllowed
+  - lateCancellationReasonRequired
