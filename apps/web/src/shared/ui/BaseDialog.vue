@@ -112,7 +112,15 @@ const handleKeyDown = (event: KeyboardEvent) => {
     return
   }
 
-  if (event.key === 'Tab' && focusableElementsRef.value.length > 0) {
+  if (event.key === 'Tab') {
+    // Recalculado en cada Tab (no solo al abrir, HU-068): un campo
+    // deshabilitado al momento de abrir (p. ej. un botón "Confirmar"
+    // condicionado a que el formulario esté completo) puede habilitarse
+    // mientras el diálogo sigue abierto; una lista cacheada del primer
+    // cálculo seguiría excluyéndolo y el atrapamiento de foco envolvería
+    // antes de llegar a él.
+    updateFocusableElements()
+    if (focusableElementsRef.value.length === 0) return
     const first = focusableElementsRef.value[0]
     const last = focusableElementsRef.value[focusableElementsRef.value.length - 1]
 

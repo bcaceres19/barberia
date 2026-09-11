@@ -161,6 +161,8 @@ paths:
     $ref: './paths/private-appointments.yaml#/~1private~1appointments~1{appointmentId}~1complete'
   /private/appointments/{appointmentId}/no-show:
     $ref: './paths/private-appointments.yaml#/~1private~1appointments~1{appointmentId}~1no-show'
+  /private/appointments/{appointmentId}/correct-status:
+    $ref: './paths/private-appointments.yaml#/~1private~1appointments~1{appointmentId}~1correct-status'
 components:
   schemas:
     Problem:

@@ -1,0 +1,53 @@
+# 422 de POST /private/appointments/{appointmentId}/correct-status
+# (HU-068, T8, CA-068-02/CA-068-04): el cuerpo es sintácticamente válido pero
+# incumple una validación de campo. Tres causas distinguibles solo por
+# `detail`, todas bajo el mismo `code: validation-error` (mismo criterio que
+# el resto del contrato: el cliente decide por `code`, nunca necesita
+# distinguir más que esto para un campo de formulario) -- destino
+# desconocido o `confirmed`, motivo vacío/en blanco o demasiado largo, y
+# frontera temporal al corregir desde un cancelado hacia `completed`/
+# `no_show` antes de que `startsAt` pase (mismo criterio de frontera exacta
+# que AppointmentNotStartedProblem.yaml, T4/T7). Ninguna de las tres
+# persiste nada -- ni el estado, ni el historial, ni una reclamación de
+# idempotencia.
+description: >
+  El cuerpo es sintácticamente válido pero incumple una validación de campo
+  o la frontera temporal de CA-068-04. No se persistió nada.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      destinoInvalido:
+        summary: Destino confirmed o desconocido
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: el estado destino debe ser completed, no_show, cancelled_by_customer o cancelled_by_barber
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      motivoVacio:
+        summary: Motivo vacío o en blanco
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: el motivo de la corrección es obligatorio
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      fronteraTemporal:
+        summary: De un cancelado hacia completed/no_show antes de startsAt
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: el turno todavía no comienza; espera hasta su hora de inicio
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

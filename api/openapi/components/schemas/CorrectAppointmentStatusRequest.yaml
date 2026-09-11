@@ -1,0 +1,30 @@
+# Cuerpo de POST /private/appointments/{appointmentId}/correct-status
+# (HU-068, T8). Cerrado: el handler rechaza cualquier campo desconocido.
+# Nunca declara actor, tenant ni ningún dato de la cita: el servidor deriva
+# el actor de la sesión (SessionCookie) y verifica origen/versión con la
+# fila ya bloqueada.
+type: object
+description: >
+  Estado terminal destino y motivo obligatorio de una corrección T8. `status`
+  nunca acepta `confirmed`: la corrección solo se mueve entre los otros
+  cuatro terminales.
+properties:
+  status:
+    type: string
+    enum: [completed, no_show, cancelled_by_customer, cancelled_by_barber]
+    description: Estado terminal destino de la corrección.
+    examples:
+      - no_show
+  reason:
+    type: string
+    minLength: 1
+    maxLength: 500
+    description: >
+      Motivo obligatorio de la corrección, no vacío ni en blanco (mismo
+      límite que `appointment_history_reason_ck`).
+    examples:
+      - "El barbero marcó completed por error; el cliente nunca llegó."
+required:
+  - status
+  - reason
+additionalProperties: false

@@ -13,6 +13,7 @@ import type { AppointmentDetail, HistoryEntry } from '../model/appointmentDetail
 import type {
   CancelAppointmentOutcome,
   CloseAppointmentOutcome,
+  CorrectAppointmentStatusOutcome,
   CreateManualAppointmentOutcome,
   CreatedManualAppointment,
   FetchAppointmentDetailOutcome,
@@ -446,6 +447,61 @@ export async function markAppointmentNoShow(
     versionToken,
     idempotencyKey,
   )
+}
+
+// correctAppointmentStatus (HU-068, T8): corrige un resultado terminal
+// hacia otro terminal distinto, con motivo obligatorio. A diferencia de
+// closeAppointment (T4/T7), SÍ lleva cuerpo (status/reason); versionToken es
+// el token opaco leído del detalle (HU-064), enviado como precondición
+// `If-Match`. 'conflict' cubre exclusivamente el cruce de agenda de
+// CA-068-04 (corregir desde un cancelado hacia completed/no_show que
+// volvería a ocupar una franja ya ocupada); 'invalid-state' cubre
+// exclusivamente CA-068-01 (el turno todavía está confirmed).
+export async function correctAppointmentStatus(
+  appointmentId: string,
+  input: { status: string; reason: string },
+  versionToken: string,
+  idempotencyKey: string,
+): Promise<CorrectAppointmentStatusOutcome> {
+  try {
+    const { response, error } = await httpClient.POST(
+      '/private/appointments/{appointmentId}/correct-status',
+      {
+        params: {
+          path: { appointmentId },
+          header: { 'Idempotency-Key': idempotencyKey, 'If-Match': versionToken },
+        },
+        body: {
+          status: input.status as
+            'completed' | 'no_show' | 'cancelled_by_customer' | 'cancelled_by_barber',
+          reason: input.reason,
+        },
+      },
+    )
+    if (response.ok) {
+      return { kind: 'success' }
+    }
+    switch (response.status) {
+      case 404:
+        return { kind: 'not-found' }
+      case 409:
+        if (isProblemCode(error, 'version-conflict')) return { kind: 'version-conflict' }
+        if (isProblemCode(error, 'invalid-state')) return { kind: 'invalid-state' }
+        if (
+          isProblemCode(error, 'idempotency-conflict') ||
+          isProblemCode(error, 'idempotency-locked')
+        ) {
+          return { kind: 'idempotency-conflict' }
+        }
+        return { kind: 'conflict', detail: problemDetail(error) }
+      case 422:
+        return { kind: 'validation-error', detail: problemDetail(error) }
+      default:
+        return { kind: 'unexpected-error' }
+    }
+  } catch {
+    return { kind: 'network-error' }
+  }
 }
 
 export async function createManualAppointment(

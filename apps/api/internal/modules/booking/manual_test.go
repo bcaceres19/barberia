@@ -85,6 +85,12 @@ func (f *fakeManualRepository) MarkNoShow(
 	panic("no usado por ManualBookingService")
 }
 
+func (f *fakeManualRepository) CorrectAppointmentStatus(
+	context.Context, string, booking.CorrectAppointmentStatusInput, idempotency.Key, idempotency.Fingerprint,
+) (booking.CorrectAppointmentStatusResult, error) {
+	panic("no usado por ManualBookingService")
+}
+
 var _ booking.Repository = (*fakeManualRepository)(nil)
 
 type fakeBarberServicePort struct {

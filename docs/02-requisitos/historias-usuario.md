@@ -1630,7 +1630,7 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 | Actor | Barbero autenticado |
 | Depende de | `HU-066` y `HU-067` integradas |
 | Bloquea | Verificación completa de T8 y del criterio de salida de B3 |
-| Estado | Redactada contra el issue real [#227](https://github.com/bcaceres19/barberia/issues/227); prompt `PROMPT-HU-068-v1` `blocked` hasta integrar `HU-066` y `HU-067` |
+| Estado | Redactada contra el issue real [#227](https://github.com/bcaceres19/barberia/issues/227); prompt `PROMPT-HU-068-v1` `ready` — `HU-066` y `HU-067` ya integradas en `main` con CI verde |
 | Riesgo | Editar el evento original o reocupar una franja sin verificar la exclusión destruye la auditoría o permite dos turnos superpuestos. |
 
 **Historia**

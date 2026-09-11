@@ -169,6 +169,33 @@ type Repository interface {
 		key idempotency.Key,
 		fingerprint idempotency.Fingerprint,
 	) (MarkNoShowResult, error)
+
+	// CorrectAppointmentStatus ejecuta T8 (HU-068) dentro de UNA sola
+	// transacción tenant-aware protegida por el protocolo de idempotencia
+	// reutilizable de HU-004 (RN-IDE-01, DEC-043): Begin, bloquear la fila
+	// (`FOR UPDATE`), verificar de nuevo con la fila ya bloqueada (nunca
+	// confiar en una lectura previa), aplicar el nuevo estado terminal +
+	// insertar `appointment_status_corrected` con el motivo, y Complete.
+	// Semántica exacta de los desenlaces posibles con la fila ya bloqueada
+	// (CA-068-01/02/04):
+	//   - `confirmed` -> InvalidState (409): todavía no hay resultado
+	//     terminal que corregir.
+	//   - ya está en input.DestinationStatus -> no-op exitoso, sin comparar
+	//     versionToken, sin UPDATE ni historial nuevo (CA-068-02).
+	//   - el destino ocupa agenda y el origen no la ocupaba
+	//     (`cancelled_*` -> `completed`/`no_show`) con starts_at >
+	//     input.Now -> Validation (422), sin tocar nada (CA-068-04).
+	//   - cualquier otro terminal distinto -> compara versionToken
+	//     (mismatch = VersionConflict), luego UPDATE status/resolved_at +
+	//     INSERT historial; un cruce con otra cita en la misma franja
+	//     responde Conflict (409) sin escribir nada (CA-068-04).
+	CorrectAppointmentStatus(
+		ctx context.Context,
+		barbershopID string,
+		input CorrectAppointmentStatusInput,
+		key idempotency.Key,
+		fingerprint idempotency.Fingerprint,
+	) (CorrectAppointmentStatusResult, error)
 }
 
 // BarberNamePort resuelve el nombre visible de un barbero por id, dentro de

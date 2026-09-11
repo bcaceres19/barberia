@@ -124,3 +124,23 @@ export type CloseAppointmentOutcome =
   | { kind: 'validation-error'; detail: string }
   | { kind: 'network-error' }
   | { kind: 'unexpected-error' }
+
+// CorrectAppointmentStatusOutcome (HU-068, T8): mismo criterio que
+// CloseAppointmentOutcome, con 'conflict' añadido (CA-068-04, mismo shape
+// que RescheduleAppointmentOutcome.conflict) para el cruce de agenda al
+// corregir desde un cancelado hacia completed/no_show. 'invalid-state'
+// cubre exclusivamente CA-068-01 (el turno todavía está confirmed, sin
+// resultado terminal que corregir); 'validation-error' cubre CA-068-02
+// (destino confirmed/desconocido, motivo vacío) y CA-068-04 (frontera
+// temporal). El éxito no trae ningún dato: la pantalla recarga el detalle
+// completo tras confirmar, mismo criterio que CloseAppointmentOutcome.
+export type CorrectAppointmentStatusOutcome =
+  | { kind: 'success' }
+  | { kind: 'not-found' }
+  | { kind: 'conflict'; detail: string }
+  | { kind: 'version-conflict' }
+  | { kind: 'invalid-state' }
+  | { kind: 'idempotency-conflict' }
+  | { kind: 'validation-error'; detail: string }
+  | { kind: 'network-error' }
+  | { kind: 'unexpected-error' }

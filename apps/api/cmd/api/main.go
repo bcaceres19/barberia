@@ -441,6 +441,14 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	markAppointmentNoShowHandler := bookinghttpapi.NewMarkAppointmentNoShowHandler(markAppointmentNoShowService)
 	private.Post("/appointments/{appointmentId}/no-show", markAppointmentNoShowHandler.ServeHTTP)
 
+	// HU-068: corrección auditada de un resultado terminal (T8). Mismo
+	// criterio que CompleteAppointmentService/MarkNoShowService: solo el
+	// reloj del sistema inyectado, necesario para revalidar la frontera de
+	// starts_at cuando la corrección vuelve a ocupar agenda (CA-068-04).
+	correctAppointmentStatusService := booking.NewCorrectAppointmentStatusService(bookingRepo, clock.System{})
+	correctAppointmentStatusHandler := bookinghttpapi.NewCorrectAppointmentStatusHandler(correctAppointmentStatusService)
+	private.Post("/appointments/{appointmentId}/correct-status", correctAppointmentStatusHandler.ServeHTTP)
+
 	// HU-008 (DEC-063-066): recuperación de acceso con código de un solo
 	// uso. selectRecoverySender concentra la matriz de selección (dual /
 	// correo único local-test / marcador), ver su documentación.
