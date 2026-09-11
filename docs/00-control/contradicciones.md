@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de contradicciones"
-version: "1.10"
+version: "1.11"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-02"
+ultima_actualizacion: "2026-09-10"
 documentos_relacionados:
   - "../../AGENTS.md"
   - "registro-decisiones.md"
@@ -35,8 +35,23 @@ Estados permitidos: `Abierta`, `En análisis`, `Resuelta` y `Descartada por fals
 | `CT-008` | Modelo físico de B2 propone `ON DELETE CASCADE` frente a la prohibición de borrado en cascada de `AGENTS.md` | **Resuelta** | `DEC-070` | Cerrada el 2026-08-25 |
 | `CT-009` | Recuperación por correo y WhatsApp simultáneos frente a la solicitud intermedia de un único canal por código | **Resuelta** | `DEC-081` | Cerrada el 2026-09-03 |
 | `CT-010` | Reto de login limitado a WhatsApp frente a entrega configurable sobre contactos verificados | **Resuelta** | `DEC-081` | Cerrada el 2026-09-03 |
+| `CT-011` | B4 debe confirmar por correo con enlace, pero B5 —posterior— es dueño de notificaciones y recordatorios | **Abierta** | `F-PUB-07`, `DEC-022`, plan B4/B5 | Antes de pasar `HU-097`/`HU-098` a `ready` |
 
 ## 3. Contradicciones detalladas
+
+### CT-011 · Confirmación por correo de B4 frente a maquinaria de B5
+
+- **Detectada y registrada:** 2026-09-10, al redactar `HU-090`–`HU-099` y sus prompts (issue documental [#240](https://github.com/bcaceres19/barberia/issues/240)).
+- **Estado:** **Abierta**.
+- **Responsable de resolver:** propietario del proyecto.
+- **Documentos en conflicto:** `F-PUB-07` y `DEC-022` exigen que la confirmación envíe por correo un enlace aleatorio largo; `plan-bloques.md` ubica `F-PUB-07` en B4, pero reserva toda la maquinaria de notificaciones —transacción, intentos, reintentos y proveedores— para B5, que depende de B4.
+- **Contradicción:** B4 no puede cumplir literalmente el envío por correo sin adelantar una parte esencial de B5; si solo crea/muestra el enlace, tampoco cierra por sí solo la función confirmada.
+- **Impacto:** `HU-097`/`HU-098` no pueden fijar atomicidad, respuesta de éxito ni criterio de salida sin decidir dónde nace el trabajo de confirmación y cuándo se considera terminada la reserva.
+- **Opciones:** (1) mover la infraestructura mínima de confirmación inmediata a B4 y dejar recordatorios/reintentos avanzados en B5; (2) dividir explícitamente `F-PUB-07`, permitiendo que B4 emita y muestre el enlace y que B5 complete el correo antes del piloto; (3) reordenar B5 para que su núcleo transaccional preceda la confirmación final de B4; (4) otra secuencia aprobada que no simule un envío.
+- **Resolución:** pendiente; no se selecciona una opción en este lote documental.
+- **Evidencia:** `alcance-mvp.md` (`F-PUB-07`), `DEC-022`, `plan-bloques.md` (B4/B5), `historias-usuario.md` (`HU-097`, `HU-098`).
+
+---
 
 ### CT-001 · Recordatorios automáticos: ¿P0 o P1?
 

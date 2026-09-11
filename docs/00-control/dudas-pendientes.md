@@ -1,9 +1,9 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "2.13"
-estado: "Sin dudas abiertas"
+version: "2.14"
+estado: "Con dudas abiertas"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-02"
+ultima_actualizacion: "2026-09-10"
 documentos_relacionados:
   - "registro-decisiones.md"
   - "contradicciones.md"
@@ -16,6 +16,8 @@ documentos_relacionados:
 # Dudas pendientes y resoluciones
 
 ## 1. Estado
+
+El 10 de septiembre de 2026, al redactar `HU-090`–`HU-099` y sus prompts en el issue documental [#240](https://github.com/bcaceres19/barberia/issues/240), se detectaron seis decisiones que las fuentes vigentes no fijan. Las historias permanecen como propuesta y sus prompts como `draft`; ninguna se implementa hasta resolver las dudas que le correspondan. También se registró `CT-011` por la secuencia entre confirmación por correo de B4 y la maquinaria de notificaciones de B5.
 
 Las dos dudas sobre códigos OTP abiertas el 2 de septiembre de 2026 quedaron resueltas el 3 de septiembre mediante `DEC-081`: correo es el canal predeterminado; cada evento puede configurar correo, WhatsApp oficial o ambos; y el servidor deriva siempre los destinos desde contactos verificados, sin aceptar un destino arbitrario escrito en el reto. La adaptación funcional conserva issue propio y no forma parte del issue visual `#188`.
 
@@ -47,7 +49,12 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 
 | Código | Pregunta | Estado | Artefacto de seguimiento |
 | --- | --- | --- | --- |
-| — | No hay dudas abiertas. | — | — |
+| `DP-PUB-01` | ¿Qué formato, generación, unicidad, mutabilidad y conducta al deshabilitar gobiernan el identificador del enlace público de una barbería? | Abierta; bloquea `HU-090` y siguientes | Issue documental [#240](https://github.com/bcaceres19/barberia/issues/240) |
+| `DP-PUB-02` | ¿Cuáles son los rangos permitidos y los valores predeterminados faltantes de anticipación, ventana, rejilla, plazo y política/motivo de cancelación tardía? | Abierta; bloquea `HU-093`, `HU-094` y `HU-099` | Issue documental [#240](https://github.com/bcaceres19/barberia/issues/240) |
+| `DP-PUB-03` | Cuando una interrupción termina fuera de la rejilla original, ¿la generación reinicia desde ese instante o conserva el anclaje del tramo laboral? | Abierta; bloquea `HU-094` | `RN-DIS-06` lo conserva solo como propuesta; issue [#240](https://github.com/bcaceres19/barberia/issues/240) |
+| `DP-PUB-04` | En reserva pública, ¿cómo se reconcilia `customer` cuando teléfono y correo coinciden con filas distintas o solo uno coincide? | Abierta; bloquea `HU-096`/`HU-097` | Issue documental [#240](https://github.com/bcaceres19/barberia/issues/240) |
+| `DP-PUB-05` | ¿Qué entropía/formato, vigencia, rotación, revocación y reemisión tiene el token de acceso del turno, y qué partes nacen en la transacción de creación? | Abierta; bloquea `HU-097`–`HU-099` | Issue documental [#240](https://github.com/bcaceres19/barberia/issues/240) |
+| `DP-PUB-06` | ¿Cómo se ordenan y acotan las alternativas “cercanas” tras perder una franja, y cuándo se salta al siguiente día disponible? | Abierta; bloquea `HU-097` | `RN-CON-05`; issue [#240](https://github.com/bcaceres19/barberia/issues/240) |
 
 `DP-CIT-06` (última duda anterior del lote `HU-063`–`HU-065`) quedó resuelta el 1 de septiembre de 2026 como `DEC-076` (sección 3).
 
