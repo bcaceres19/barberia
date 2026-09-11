@@ -106,6 +106,7 @@ jobs:
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu060_citas.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu090_reserva_publica.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu091_catalogo_publico.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu092_seleccion_barbero.sql
 
       - name: go test -race
         working-directory: apps/api
