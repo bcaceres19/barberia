@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.26"
+version: "1.27"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-03"
+ultima_actualizacion: "2026-09-11"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -934,3 +934,28 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** dejar la rejilla como entero libre — descartada porque una rejilla no múltiplo de 5 complica la lectura humana de las franjas sin beneficio; default `permite_cliente = false` (solo barbero) — descartada por instrucción explícita del propietario, que prefiere no bloquear al cliente por defecto.
 - **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-PUB-02`), `docs/01-producto/reglas-negocio.md` (`RN-DIS-04`, `RN-DIS-06`, `RN-CAN-01`, `RN-CAN-02`), `docs/10-backlog/prompts/hu/hu-093-configuracion-reserva-cancelacion.md`, `docs/10-backlog/prompts/hu/hu-094-motor-disponibilidad-publica.md`, `docs/10-backlog/plan-bloques.md`; futura implementación de `HU-093` valida estos rangos en el `CHECK`/dominio de aplicación y en el formulario, con los defaults aquí fijados para barberías sin configuración explícita.
 - **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-PUB-02`; aprobación explícita del propietario el 2026-09-11 (propón rangos razonables; default de cancelación tardía: cliente también puede, motivo obligatorio).
+
+### DEC-084 · Resolución de `DP-PUB-03`: reinicio de la rejilla tras una interrupción
+
+- **Fecha:** 2026-09-11.
+- **Decisión:** cuando un bloqueo, cita o cualquier otra restricción termina en un instante que no coincide con la rejilla original del tramo laboral, la generación de franjas **reinicia el conteo desde ese instante** (no conserva el anclaje original del tramo). Esto confirma como definitiva la propuesta que `RN-DIS-06` ya dejaba anotada en sus casos límite.
+- **Ejemplo:** jornada 9:00–18:00 con rejilla de 15 min y un bloqueo que termina a las 13:47; la siguiente franja ofrecida es 13:47, y desde ahí se generan 14:02, 14:17… hasta el siguiente evento o el cierre del tramo, en vez de esperar hasta 14:00 (próximo múltiplo de la rejilla original del tramo).
+- **Alcance:** aplica a cualquier interrupción dentro de un mismo tramo laboral (bloqueo, cita, excepción parcial); no reabre `RN-DIS-04` (anticipación/ventana) ni `RN-CON-01`/`RN-CON-03` (solapes), que se siguen aplicando después de generar las franjas.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** reiniciar desde el instante real aprovecha huecos que de otro modo se perderían (p. ej. el hueco de 13 minutos entre 13:47 y 14:00 en el ejemplo), y es la única lectura de `RN-DIS-06` que ya tenía redacción previa como propuesta; conservar el anclaje original exigiría inventar una regla nueva sin base en el documento de reglas de negocio.
+- **Alternativas descartadas:** conservar el anclaje del tramo original (franjas siempre en los mismos minutos fijos del día) — descartada por desperdiciar huecos reales y por no tener respaldo en `RN-DIS-06`, que solo registraba el reinicio como propuesta.
+- **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-PUB-03`), `docs/01-producto/reglas-negocio.md` (`RN-DIS-06`, confirma el caso límite), `docs/02-requisitos/historias-usuario.md` (`HU-094`), `docs/10-backlog/prompts/hu/hu-094-motor-disponibilidad-publica.md`; futura implementación de `HU-094` reinicia el punto de generación de la rejilla en el instante exacto en que termina cada restricción dentro del tramo.
+- **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-PUB-03`; aprobación explícita del propietario el 2026-09-11 (reinicia desde el instante).
+
+### DEC-085 · Resolución de `DP-PUB-04`: reconciliación pública de `customer` por teléfono o correo
+
+- **Fecha:** 2026-09-11.
+- **Decisión:** en la reserva pública, el `customer` se reconcilia dentro de la barbería activa por **teléfono o correo, sin exigir que ambos coincidan**: una persona puede cambiar de correo conservando el teléfono, o de teléfono conservando el correo, y muy rara vez cambia ambos a la vez.
+  - Si el teléfono **o** el correo dado coincide con una fila existente (y el otro campo no coincide con ninguna fila, o coincide con la misma fila), se **reutiliza esa fila** y se actualiza el dato que cambió (el campo no coincidente se sobrescribe con el valor nuevo dado).
+  - Si teléfono y correo coinciden cada uno con una fila **distinta** (conflicto), **no se fusionan**: se **crea un `customer` nuevo** con los datos dados en vez de adivinar cuál de las dos identidades es la correcta.
+  - Todo lo anterior ocurre siempre dentro del tenant (`RN-TEN-01`); nunca se reconcilia contra un `customer` de otra barbería.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** exigir coincidencia de ambos campos perdería la reconciliación en el caso común (cambiar uno de los dos datos de contacto con el tiempo); fusionar automáticamente ante un conflicto de filas distintas arriesga mezclar identidades reales por una coincidencia parcial, algo que ninguna historia exige y que sería difícil de deshacer después.
+- **Alternativas descartadas:** teléfono como clave única de reconciliación (ignora coincidencias de solo correo) — descartada porque el propietario indicó explícitamente que cualquiera de los dos puede ser el dato estable; correo como clave única — descartada por el mismo motivo; fusión automática eligiendo un campo como desempate en el caso conflictivo — descartada por el propietario a favor de no fusionar y crear un registro nuevo.
+- **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-PUB-04`), `docs/02-requisitos/historias-usuario.md` (`HU-096`, `CA-096-04`), `docs/10-backlog/prompts/hu/hu-096-datos-cliente-persona-atendida.md`; futura implementación de `HU-096` aplica esta política exactamente en el paso de reconciliación de `customer` antes de crear la cita.
+- **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-PUB-04`; aprobación explícita del propietario el 2026-09-11 (coincidencia por cualquiera de los dos campos; conflicto entre filas distintas crea un `customer` nuevo en vez de fusionar).
