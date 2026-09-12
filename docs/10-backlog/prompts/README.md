@@ -1,6 +1,6 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.87"
+version: "1.88"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-11"
@@ -200,9 +200,9 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-HU-091-v1](hu/hu-091-catalogo-publico-servicios.md) | `hu` | `HU-091` | [245](https://github.com/bcaceres19/barberia/issues/245) | `in_progress` | `HU-090` integrada e issue real (cumplido) | Rama `feat/245-hu091-catalogo-publico` |
 | [PROMPT-HU-092-v1](hu/hu-092-seleccion-publica-barbero.md) | `hu` | `HU-092` | [247](https://github.com/bcaceres19/barberia/issues/247) | `in_progress` | `HU-091` integrada e issue real (cumplido) | Rama `feat/247-hu092-seleccion-barbero` |
 | [PROMPT-HU-093-v1](hu/hu-093-configuracion-reserva-cancelacion.md) | `hu` | `HU-093` | [249](https://github.com/bcaceres19/barberia/issues/249) | `in_progress` | Cierre de B3, `DP-PUB-02` e issue real (cumplido) | Rama `feat/249-hu093-configuracion-reserva-cancelacion` |
-| [PROMPT-HU-094-v1](hu/hu-094-motor-disponibilidad-publica.md) | `hu` | `HU-094` | `pending` | `draft` | `HU-091`–`HU-093`, `DP-PUB-03` e issue real | Sin rama/PR; creado en lote documental #240 |
+| [PROMPT-HU-094-v1](hu/hu-094-motor-disponibilidad-publica.md) | `hu` | `HU-094` | `251` | `in_progress` | `HU-091`–`HU-093` integradas (satisfecho), `DP-PUB-03` resuelta (`DEC-084`, satisfecho) | Rama `feat/251-hu094-disponibilidad-publica`; issue real [#251](https://github.com/bcaceres19/barberia/issues/251) |
 | [PROMPT-HU-095-v1](hu/hu-095-exploracion-fechas-horarios.md) | `hu` | `HU-095` | `pending` | `draft` | `HU-094` integrada e issue real | Sin rama/PR; creado en lote documental #240 |
-| [PROMPT-HU-096-v1](hu/hu-096-datos-cliente-persona-atendida.md) | `hu` | `HU-096` | `pending` | `draft` | `HU-095`, `DP-PUB-04` e issue real | Sin rama/PR; creado en lote documental #240 |
+| [PROMPT-HU-096-v1](hu/hu-096-datos-cliente-persona-atendida.md) | `hu` | `HU-096` | `pending` | `draft` | `HU-095`, `DP-PUB-04` resuelta (`DEC-085`, satisfecho) e issue real | Sin rama/PR; creado en lote documental #240 |
 | [PROMPT-HU-097-v1](hu/hu-097-confirmacion-publica-concurrente.md) | `hu` | `HU-097` | `pending` | `draft` | `HU-090`–`HU-096`, `DP-PUB-05`/`DP-PUB-06`, `CT-011` e issue real | Sin rama/PR; creado en lote documental #240 |
 | [PROMPT-HU-098-v1](hu/hu-098-acceso-cliente-turno.md) | `hu` | `HU-098` | `pending` | `draft` | `HU-097`, `DP-PUB-05`, `CT-011` e issue real | Sin rama/PR; creado en lote documental #240 |
 | [PROMPT-HU-099-v1](hu/hu-099-cancelacion-publica.md) | `hu` | `HU-099` | `pending` | `draft` | `HU-093`, `HU-094`, `HU-098`, `DP-PUB-02`/`DP-PUB-05` e issue real | Sin rama/PR; creado en lote documental #240 |

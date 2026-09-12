@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.40"
+version: "1.41"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-11"
@@ -1873,7 +1873,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Reglas | `RN-DIS-01`–`RN-DIS-07`, `RN-BLQ-01`–`RN-BLQ-04`, `RN-CON-01`, `RN-CON-03`, `RN-CAN-04`, `RN-TEN-01` |
 | Decisiones | `DEC-002`, `DEC-005`–`DEC-009`, `DEC-012`, `DEC-018`–`DEC-020`, `DEC-024`, `DEC-070`, `DEC-073`, `DEC-076` |
 | Actor | Cliente con servicio y barbero válidos |
-| Depende de | `HU-091`–`HU-093`; B2/B3; `DP-PUB-03` resuelta |
+| Depende de | `HU-091`–`HU-093`; B2/B3; `DP-PUB-03` resuelta (`DEC-084`, 2026-09-11) |
 | Bloquea | `HU-095`, `HU-097`, `HU-099` |
 | Estado | Propuesta; prompt `PROMPT-HU-094-v1` en `draft`, `issue: pending` |
 | Riesgo | Restar mal un solo factor ofrece un turno imposible o esconde capacidad vendible. |
@@ -1887,12 +1887,12 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 - Proyección pura por fecha civil, zona de barbería, barbero y servicio vigentes.
 - Intersección de jornada recurrente, excepciones/festivos, bloqueos vigentes y citas que ocupan agenda; unión de solapes antes de restar.
 - Aplicación de duración snapshot candidata, `[inicio, fin)`, anticipación, ventana y rejilla aprobada.
+- Reinicio de la rejilla desde el instante en que termina cada interrupción dentro del tramo (`DEC-084`, resuelve `DP-PUB-03`).
 - Resultado determinista, ordenado y sin reservar temporalmente ninguna franja.
 
 **Alcance excluido**
 
 - UI de calendario, creación de cita, hold de franja, caché distribuida o predicción de demanda.
-- Elegir cómo reinicia la rejilla tras una interrupción antes de resolver `DP-PUB-03`.
 
 **Criterios de aceptación**
 
@@ -1963,7 +1963,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Reglas | `RN-RES-01`–`RN-RES-03`, `RN-DAT-01`, `RN-DAT-02`, `RN-TEN-01` |
 | Decisiones | `DEC-016`, `DEC-022`, `DEC-045`, `DEC-046`, `DEC-077`–`DEC-079` |
 | Actor | Cliente con una franja elegida |
-| Depende de | `HU-095`; `DP-PUB-04` resuelta |
+| Depende de | `HU-095`; `DP-PUB-04` resuelta (`DEC-085`, 2026-09-11) |
 | Bloquea | `HU-097` |
 | Estado | Propuesta; prompt `PROMPT-HU-096-v1` en `draft`, `issue: pending` |
 | Riesgo | Reconciliar contactos de forma ambigua puede unir personas distintas; pedir datos extra incumple minimización. |
@@ -1976,7 +1976,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 
 - Nombre, teléfono y correo obligatorios; nota opcional; selector “para mí/otra persona” y segundo nombre solo cuando difiere.
 - Normalización y validación server-side; `attendeeName` siempre resuelto y notificaciones futuras dirigidas al cliente.
-- Política de reconciliación pública por teléfono/correo únicamente después de `DP-PUB-04`.
+- Política de reconciliación pública por teléfono o correo (`DEC-085`, resuelve `DP-PUB-04`): coincidencia por cualquiera de los dos campos reutiliza la fila existente actualizando el dato cambiado; un conflicto entre filas distintas crea un `customer` nuevo en vez de fusionar.
 
 **Alcance excluido**
 

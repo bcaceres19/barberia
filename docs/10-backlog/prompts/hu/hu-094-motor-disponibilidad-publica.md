@@ -2,25 +2,25 @@
 prompt_id: "PROMPT-HU-094-v1"
 version: "1.0"
 kind: "hu"
-status: "draft"
+status: "in_progress"
 target_agents: ["codex", "claude"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
 primary_hu: "HU-094"
 related_hu: ["HU-040", "HU-041", "HU-042", "HU-060", "HU-093"]
-issue: "pending"
-issue_url: null
+issue: 251
+issue_url: "https://github.com/bcaceres19/barberia/issues/251"
 suggested_issue_title: "feat(availability): implementar HU-094 disponibilidad pública real"
-branch: null
+branch: "feat/251-hu094-disponibilidad-publica"
 pr: null
 pr_url: null
-depends_on: ["HU-091 a HU-093 integradas", "DP-PUB-03 resuelta mediante DEC-*", "Issue real con CA-094-01 a CA-094-06"]
+depends_on: ["HU-091 a HU-093 integradas (satisfecho)", "DP-PUB-03 resuelta mediante DEC-084 (satisfecho, 2026-09-11)", "Issue real con CA-094-01 a CA-094-06 (satisfecho, issue #251)"]
 rules: ["RN-DIS-01", "RN-DIS-02", "RN-DIS-03", "RN-DIS-04", "RN-DIS-05", "RN-DIS-06", "RN-DIS-07", "RN-BLQ-01", "RN-BLQ-02", "RN-BLQ-03", "RN-BLQ-04", "RN-CON-01", "RN-CON-03", "RN-CAN-04", "RN-TEN-01"]
 decisions: ["DEC-002", "DEC-005", "DEC-006", "DEC-007", "DEC-008", "DEC-009", "DEC-012", "DEC-018", "DEC-019", "DEC-020", "DEC-024", "DEC-070", "DEC-073", "DEC-076"]
 acceptance_criteria: ["CA-094-01", "CA-094-02", "CA-094-03", "CA-094-04", "CA-094-05", "CA-094-06"]
 source_docs: ["AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "docs/00-control/registro-decisiones.md", "docs/00-control/dudas-pendientes.md", "docs/01-producto/alcance-mvp.md", "docs/01-producto/reglas-negocio.md", "docs/02-requisitos/historias-usuario.md", "docs/02-requisitos/estados-citas.md", "docs/03-desarrollo/estandar-backend-go.md", "docs/03-desarrollo/estrategia-pruebas.md", "docs/05-backend/estandar-base-datos.md", "docs/06-api/estandar-openapi.md", "apps/api/internal/modules/schedule", "apps/api/internal/modules/booking"]
 created_at: "2026-09-10"
-updated_at: "2026-09-10"
+updated_at: "2026-09-11"
 supersedes: null
 superseded_by: null
 ---

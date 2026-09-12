@@ -1,9 +1,9 @@
 ---
 titulo: "Reglas de negocio"
-version: "1.4"
+version: "1.5"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-03"
+ultima_actualizacion: "2026-09-11"
 documentos_relacionados:
   - "../00-control/glosario.md"
   - "../00-control/supuestos.md"
@@ -286,7 +286,7 @@ Todo intervalo de cita o de bloqueo se interpreta como `[inicio, fin)`: incluye 
 
 ### RN-DIS-06 · Paso de la rejilla de horarios
 
-**Estado: Decisión confirmada** (`DEC-006`, `DEC-018`)
+**Estado: Decisión confirmada** (`DEC-006`, `DEC-018`, `DEC-084`)
 
 Las franjas ofrecidas al cliente se generan cada N minutos desde el inicio de cada tramo laboral disponible. El valor inicial de N es 15 minutos.
 
@@ -298,7 +298,7 @@ Las franjas ofrecidas al cliente se generan cada N minutos desde el inicio de ca
 
 **Casos límite:**
 - Un servicio de 25 minutos con rejilla de 15 deja huecos residuales de 5 minutos. Es aceptable y previsible.
-- Tras un bloqueo que termina a las 13:47, se propone reiniciar la rejilla desde ese instante para no perder el hueco.
+- Tras un bloqueo, cita u otra interrupción que termina a las 13:47 (fuera de la rejilla original del tramo), la rejilla **reinicia desde ese instante** (`DEC-084`, resuelve `DP-PUB-03`): la siguiente franja ofrecida es 13:47 y desde ahí se generan 14:02, 14:17…, en vez de esperar al siguiente múltiplo de la rejilla original del tramo.
 
 **Módulos afectados:** disponibilidad, interfaz pública.
 
