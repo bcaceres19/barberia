@@ -1,0 +1,42 @@
+# Respuesta 200 de
+# GET /public/barbershops/{slug}/services/{serviceId}/barbers/{barberId}/availability
+# (HU-094, CA-094-01 a CA-094-06).
+description: Inicios públicos válidos del servicio elegido con el barbero elegido.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/AvailabilityResponse.yaml'
+    examples:
+      conDisponibilidad:
+        summary: Al menos una franja válida hoy
+        value:
+          slots:
+            - startsAt: "2026-09-15T14:00:00Z"
+            - startsAt: "2026-09-15T14:15:00Z"
+          durationMinutes: 30
+          timezone: America/Bogota
+          slotGridMinutes: 15
+      sinFranjasHoy:
+        summary: >
+          serviceId/barberId válidos y asignados, pero la ventana pública
+          vigente no tiene ningún inicio libre (jornada cubierta por
+          citas/bloqueos, o sin jornada configurada)
+        value:
+          slots: []
+          durationMinutes: 30
+          timezone: America/Bogota
+          slotGridMinutes: 15
+      serviceOBarberAjeno:
+        summary: >
+          serviceId/barberId con forma inválida, ajeno a esta barbería,
+          inexistente, inactivo o sin asignación vigente (misma respuesta
+          uniforme, la causa nunca se distingue, mismo criterio que
+          CA-092-03)
+        value:
+          slots: []
+          durationMinutes: 0
+          timezone: ""
+          slotGridMinutes: 0

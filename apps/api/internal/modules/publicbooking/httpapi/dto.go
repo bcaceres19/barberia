@@ -1,5 +1,7 @@
 package httpapi
 
+import "time"
+
 // PublicBarbershopProfileResponse es la representación pública mínima de
 // una barbería habilitada (HU-090, CA-090-01, CA-090-04), forma exacta del
 // componente OpenAPI PublicBarbershopProfile.yaml. contactEmail/
@@ -49,4 +51,23 @@ type PublicBarberResponse struct {
 // publicbooking.PublicBarberListResult.
 type PublicBarberListResponse struct {
 	Items []PublicBarberResponse `json:"items"`
+}
+
+// AvailabilitySlotResponse es un inicio público válido (HU-094, CA-094-01),
+// forma exacta del componente OpenAPI AvailabilitySlotResponse.yaml.
+type AvailabilitySlotResponse struct {
+	StartsAt time.Time `json:"startsAt"`
+}
+
+// AvailabilityResponse es la respuesta completa de HU-094: los inicios
+// válidos ya ordenados, más el contexto mínimo para interpretarlos sin
+// ambigüedad (RN-DIS-07). Un arreglo `slots` vacío cubre por igual "sin
+// disponibilidad hoy" y serviceId/barberId ajeno, inexistente, inactivo o
+// sin asignación vigente: la causa nunca se distingue (mismo criterio que
+// CA-092-03).
+type AvailabilityResponse struct {
+	Slots           []AvailabilitySlotResponse `json:"slots"`
+	DurationMinutes int                        `json:"durationMinutes"`
+	Timezone        string                     `json:"timezone"`
+	SlotGridMinutes int                        `json:"slotGridMinutes"`
 }

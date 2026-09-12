@@ -388,6 +388,34 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	private.Post("/barbers/{barberId}/time-block-series/{seriesId}/exceptions", addSeriesExceptionHandler.ServeHTTP)
 	private.Delete("/barbers/{barberId}/time-block-series/{seriesId}/exceptions/{excludedDate}", removeSeriesExceptionHandler.ServeHTTP)
 
+	// HU-094: disponibilidad pública real. AvailabilityService (publicbooking,
+	// dueño del flujo público) colabora con schedule/shops/catalog SOLO a
+	// través de los puertos pequeños que publicbooking declara
+	// (EffectiveDayPort/BusyBlocksPort/BookingPolicyPort/ServiceAssignmentPort/
+	// AvailabilityTimezonePort), satisfechos aquí por adaptadores que viven en
+	// cada módulo dueño de sus propios datos (schedule.NewAvailabilityLookup,
+	// shops.NewAvailabilityBookingPolicy, shops.NewTimezoneLookup,
+	// catalog.NewManualBookingCatalog ya construido para HU-061): publicbooking
+	// no importa ninguno de esos tres módulos, mismo criterio que
+	// ManualBookingService frente a HU-061. Se registra aquí (y no junto a
+	// HU-090/091/092 más arriba) porque scheduleService/assignmentService/
+	// bookingPolicyService todavía no existían en ese punto del archivo.
+	// AvailabilityLookup satisface a la vez EffectiveDayPort y
+	// BusyBlocksPort (ambos métodos viven en el mismo adaptador, HU-040/
+	// HU-042), por eso se pasa dos veces con el mismo valor.
+	scheduleAvailability := schedule.NewAvailabilityLookup(scheduleService)
+	publicAvailabilityService := publicbooking.NewAvailabilityService(
+		publicbookingpostgres.New(db),
+		scheduleAvailability,
+		scheduleAvailability,
+		shops.NewAvailabilityBookingPolicy(bookingPolicyService),
+		catalog.NewManualBookingCatalog(catalogService, assignmentService),
+		shops.NewTimezoneLookup(shopService),
+		clock.System{},
+	)
+	listPublicAvailabilityHandler := publicbookinghttpapi.NewListPublicAvailabilityHandler(publicAvailabilityService)
+	router.Get("/api/v1/public/barbershops/{slug}/services/{serviceId}/barbers/{barberId}/availability", listPublicAvailabilityHandler.ServeHTTP)
+
 	// HU-061: creación manual de turnos. ManualBookingService (booking, dueño
 	// de la primitiva de HU-060) colabora con catalog/schedule/shops SOLO a
 	// través de los puertos pequeños que booking declara

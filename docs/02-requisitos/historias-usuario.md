@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.41"
+version: "1.42"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-11"
@@ -1875,7 +1875,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Actor | Cliente con servicio y barbero válidos |
 | Depende de | `HU-091`–`HU-093`; B2/B3; `DP-PUB-03` resuelta (`DEC-084`, 2026-09-11) |
 | Bloquea | `HU-095`, `HU-097`, `HU-099` |
-| Estado | Propuesta; prompt `PROMPT-HU-094-v1` en `draft`, `issue: pending` |
+| Estado | Implementada contra el issue real [#251](https://github.com/bcaceres19/barberia/issues/251), rama `feat/251-hu094-disponibilidad-publica`; prompt `PROMPT-HU-094-v1` en `in_progress` |
 | Riesgo | Restar mal un solo factor ofrece un turno imposible o esconde capacidad vendible. |
 
 **Historia**
