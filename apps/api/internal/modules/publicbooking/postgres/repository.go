@@ -29,6 +29,7 @@ func New(db *database.DB) *Repository {
 }
 
 var _ publicbooking.Repository = (*Repository)(nil)
+var _ publicbooking.AvailabilityRepository = (*Repository)(nil)
 
 // ResolveBySlug implementa publicbooking.Repository.ResolveBySlug en dos
 // pasos, exactamente el patrón ya establecido por
@@ -80,6 +81,69 @@ func (r *Repository) ResolveBySlug(ctx context.Context, slug string) (publicbook
 		return publicbooking.BarbershopProfile{}, false, fmt.Errorf("publicbooking/postgres: read public profile: %w", err)
 	}
 	return profile, profileFound, nil
+}
+
+// ResolveBarbershopID implementa publicbooking.AvailabilityRepository.
+// ResolveBarbershopID reutilizando el mismo primer paso de dos que
+// ResolveBySlug (public_resolve_barbershop_by_slug vía db.ResolveTenant),
+// pero se detiene ahí: HU-094 necesita el identificador para orquestar
+// schedule/shops/catalog, no un perfil público.
+func (r *Repository) ResolveBarbershopID(ctx context.Context, slug string) (string, bool, error) {
+	barbershopID, found, err := r.db.ResolveTenant(ctx,
+		`SELECT public_resolve_barbershop_by_slug($1)`,
+		slug,
+	)
+	if err != nil {
+		return "", false, fmt.Errorf("publicbooking/postgres: resolve tenant by slug: %w", err)
+	}
+	if !found {
+		return "", false, nil
+	}
+	return string(barbershopID), true, nil
+}
+
+// ListOccupiedIntervals implementa
+// publicbooking.AvailabilityRepository.ListOccupiedIntervals: lee, dentro
+// de una transacción tenant-aware normal (InTenantTx, RLS ya acota a
+// barbershopID), los intervalos de las citas que ocupan agenda
+// (`occupies_schedule`, estados-citas.md §11 -mismo criterio derivado que
+// la restricción de exclusión `appointment_barber_interval_excl`, para que
+// esta lectura nunca pueda divergir de ella) cuyo intervalo interseca
+// [from, to). barberID se filtra explícitamente además de RLS (mismo
+// criterio que las demás consultas de este paquete).
+func (r *Repository) ListOccupiedIntervals(ctx context.Context, barbershopID, barberID string, from, to time.Time) ([]time.Time, []time.Time, error) {
+	var starts, ends []time.Time
+	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
+		rows, err := q.Query(ctx, `
+			SELECT starts_at, ends_at
+			  FROM appointment
+			 WHERE barbershop_id = $1
+			   AND barber_id = $2
+			   AND occupies_schedule
+			   AND starts_at < $4
+			   AND ends_at > $3
+			 ORDER BY starts_at`,
+			barbershopID, barberID, from, to,
+		)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var s, e time.Time
+			if err := rows.Scan(&s, &e); err != nil {
+				return err
+			}
+			starts = append(starts, s)
+			ends = append(ends, e)
+		}
+		return rows.Err()
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("publicbooking/postgres: listar ocupación de agenda: %w", err)
+	}
+	return starts, ends, nil
 }
 
 // centsFromNumeric convierte price_amount (pgtype.Numeric) a centavos

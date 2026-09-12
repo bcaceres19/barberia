@@ -24,6 +24,12 @@ const slugParam = "slug"
 // (HU-092).
 const serviceIDParam = "serviceId"
 
+// barberIDParam es el nombre del parámetro de ruta que cmd/api.buildRouter
+// registra para
+// /public/barbershops/{slug}/services/{serviceId}/barbers/{barberId}/availability
+// (HU-094).
+const barberIDParam = "barberId"
+
 // ResolveBarbershopHandler expone GET /public/barbershops/{slug}
 // (CA-090-01 a CA-090-04): resolución pública sin sesión, sin que el
 // cliente pueda fijar barbershopId.
@@ -175,4 +181,52 @@ func newPublicBarberListResponse(result publicbooking.PublicBarberListResult) Pu
 		items = append(items, newPublicBarberResponse(barber))
 	}
 	return PublicBarberListResponse{Items: items}
+}
+
+// ListPublicAvailabilityHandler expone
+// GET /public/barbershops/{slug}/services/{serviceId}/barbers/{barberId}/availability
+// (HU-094, CA-094-01 a CA-094-06): inicios públicos válidos del servicio
+// activo con el barbero elegido, sin sesión.
+type ListPublicAvailabilityHandler struct {
+	service *publicbooking.AvailabilityService
+}
+
+// NewListPublicAvailabilityHandler construye el handler de disponibilidad
+// pública.
+func NewListPublicAvailabilityHandler(service *publicbooking.AvailabilityService) *ListPublicAvailabilityHandler {
+	return &ListPublicAvailabilityHandler{service: service}
+}
+
+// ServeHTTP implementa http.Handler. Igual que los otros handlers públicos,
+// no lee ningún principal de sesión: slug, serviceId y barberId (los tres
+// de la ruta) son toda la entrada.
+func (h *ListPublicAvailabilityHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+
+	slug := httpserver.URLParam(r, slugParam)
+	serviceID := httpserver.URLParam(r, serviceIDParam)
+	barberID := httpserver.URLParam(r, barberIDParam)
+
+	result, err := h.service.ListPublicAvailability(r.Context(), slug, serviceID, barberID)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(newAvailabilityResponse(result))
+}
+
+func newAvailabilityResponse(result publicbooking.AvailabilityResult) AvailabilityResponse {
+	slots := make([]AvailabilitySlotResponse, 0, len(result.Slots))
+	for _, slot := range result.Slots {
+		slots = append(slots, AvailabilitySlotResponse{StartsAt: slot.StartsAt})
+	}
+	return AvailabilityResponse{
+		Slots:           slots,
+		DurationMinutes: result.DurationMinutes,
+		Timezone:        result.Timezone,
+		SlotGridMinutes: result.SlotGridMinutes,
+	}
 }

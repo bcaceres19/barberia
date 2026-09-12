@@ -64,6 +64,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/barbershops/{slug}/services/{serviceId}/barbers/{barberId}/availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar los inicios públicos válidos de un servicio con un barbero
+         * @description Proyecta (HU-094, CA-094-01 a CA-094-06) los instantes donde el servicio activo `serviceId` completo cabe con el barbero `barberId`, dentro de la barbería resuelta por `slug`: intersección de jornada efectiva (recurrente, excepciones, festivos, B2), bloqueos vigentes y citas que ocupan agenda (B3), aplicando la duración del servicio, la anticipación mínima, la ventana máxima y la rejilla vigentes de la barbería (HU-093). Cuando una interrupción termina fuera de la rejilla original del tramo, la generación reinicia desde ese instante (`DEC-084`, resuelve `DP-PUB-03`). Mismo `slug` y misma resolución sin contexto de tenant que `GET /public/barbershops/{slug}`; un `slug` mal formado, desconocido o de una barbería no publicable produce EXACTAMENTE la misma respuesta `404` uniforme (CA-090-02, RN-TEN-01). `serviceId`/`barberId` sin forma de UUID, ajeno a esta barbería, inexistente, inactivo o sin asignación vigente NUNCA producen un error distinto (mismo criterio que CA-092-03): la respuesta es `200` con `slots: []`, exactamente igual que "sin franjas hoy" -la causa no se distingue. Consultar esta operación no reserva ni aparta ninguna franja (RN-DIS-03): es de solo lectura y no crea filas, bloqueos ni sesiones (CA-094-04).
+         */
+        get: operations["listPublicAvailability"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/public/auth/login": {
         parameters: {
             query?: never;
@@ -1462,6 +1482,35 @@ export interface components {
             /** @description Barberos elegibles, en el orden estable del servidor. */
             items: components["schemas"]["PublicBarberResponse"][];
         };
+        /** @description Inicio válido: el intervalo [startsAt, startsAt + durationMinutes) cabe entero en la jornada efectiva del barbero y no interseca ninguna cita que ocupe agenda ni ningún bloqueo vigente (CA-094-01, CA-094-02, CA-094-03). */
+        AvailabilitySlotResponse: {
+            /**
+             * Format: date-time
+             * @description Instante absoluto de inicio, en UTC con offset explícito. El cliente lo presenta en la zona horaria de la barbería (`timezone`), nunca en la del dispositivo (RN-DIS-07).
+             * @example 2026-09-15T14:00:00Z
+             */
+            startsAt: string;
+        };
+        /** @description Inicios públicos válidos ya ordenados de forma estable (cronológica), más el contexto mínimo para interpretarlos sin ambigüedad (RN-DIS-07). Un arreglo `slots` vacío cubre por igual "sin disponibilidad en la ventana pública vigente" y `serviceId`/`barberId` ajeno, inexistente, inactivo o sin asignación vigente: la causa nunca se distingue (mismo criterio que CA-092-03). Nunca reserva ni aparta ninguna franja (RN-DIS-03): es una proyección de solo lectura. */
+        AvailabilityResponse: {
+            /** @description Inicios válidos, en el orden estable del servidor. */
+            slots: components["schemas"]["AvailabilitySlotResponse"][];
+            /**
+             * @description Duración planificada del servicio elegido (DEC-002). 0 cuando `serviceId`/`barberId` no produjo una asignación activa vigente.
+             * @example 30
+             */
+            durationMinutes: number;
+            /**
+             * @description Zona horaria IANA de la barbería (RN-DIS-07), la misma que expone `GET /public/barbershops/{slug}`. Cadena vacía cuando `serviceId`/`barberId` no produjo una asignación activa vigente.
+             * @example America/Bogota
+             */
+            timezone: string;
+            /**
+             * @description Paso de la rejilla vigente de la barbería (RN-DIS-06, DEC-083). 0 cuando `serviceId`/`barberId` no produjo una asignación activa vigente.
+             * @example 15
+             */
+            slotGridMinutes: number;
+        };
         /** @description Solicitud de recuperación de acceso. */
         RecoveryRequestRequest: {
             /**
@@ -2824,6 +2873,16 @@ export interface components {
                 "application/json": components["schemas"]["PublicBarberListResponse"];
             };
         };
+        /** @description Inicios públicos válidos del servicio elegido con el barbero elegido. */
+        AvailabilitySuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["AvailabilityResponse"];
+            };
+        };
         /** @description La solicitud fue recibida. Si la cuenta existe y tiene el teléfono verificado, se envía un código por WhatsApp oficial y correo; en cualquier otro caso no ocurre ningún envío, sin que la respuesta lo revele. */
         RecoveryRequestAccepted: {
             headers: {
@@ -3421,6 +3480,36 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["PublicBarberListSuccess"];
+            /** @description `slug` con forma inválida, inexistente o de una barbería no publicable, sin distinguir la causa (CA-090-02, RN-TEN-01). */
+            404: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    listPublicAvailability: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del enlace público de reservas, tal como aparece en la URL. No es un identificador interno: su forma, generación y ciclo de vida los fija DEC-082 (resuelve DP-PUB-01). */
+                slug: string;
+                /** @description Identificador del servicio activo ya elegido (HU-091). No confiado: se revalida pertenencia, vigencia y asignación contra la barbería resuelta por `slug` en cada lectura (mismo criterio que CA-092-03). */
+                serviceId: string;
+                /** @description Identificador del barbero ya elegido (HU-092). No confiado: se revalida que tenga asignación vigente al servicio activo `serviceId` dentro de la barbería resuelta por `slug` en cada lectura (mismo criterio que CA-092-03). */
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["AvailabilitySuccess"];
             /** @description `slug` con forma inválida, inexistente o de una barbería no publicable, sin distinguir la causa (CA-090-02, RN-TEN-01). */
             404: {
                 headers: {

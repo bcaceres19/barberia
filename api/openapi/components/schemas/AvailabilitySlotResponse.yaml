@@ -1,0 +1,19 @@
+# Un inicio público válido (HU-094, CA-094-01): el instante absoluto en que
+# puede empezar el servicio completo elegido.
+type: object
+description: >
+  Inicio válido: el intervalo [startsAt, startsAt + durationMinutes) cabe
+  entero en la jornada efectiva del barbero y no interseca ninguna cita que
+  ocupe agenda ni ningún bloqueo vigente (CA-094-01, CA-094-02, CA-094-03).
+properties:
+  startsAt:
+    type: string
+    format: date-time
+    description: >
+      Instante absoluto de inicio, en UTC con offset explícito. El cliente
+      lo presenta en la zona horaria de la barbería (`timezone`), nunca en
+      la del dispositivo (RN-DIS-07).
+    examples:
+      - "2026-09-15T14:00:00Z"
+required:
+  - startsAt

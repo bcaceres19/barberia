@@ -155,3 +155,36 @@ var serviceIDPattern = regexp.MustCompile(
 func LooksLikePublicServiceID(id string) bool {
 	return serviceIDPattern.MatchString(id)
 }
+
+// barberIDPattern es la misma forma canónica 8-4-4-4-12 que
+// staff.LooksLikeBarberID exige (el núcleo de publicbooking no puede
+// importar staff, CA-002-06: se repite la validación aquí, mismo criterio
+// que serviceIDPattern frente a catalog.LooksLikeServiceID).
+var barberIDPattern = serviceIDPattern
+
+// LooksLikePublicBarberID informa si id tiene la forma de un UUID válido
+// (HU-094). Un identificador que no la tiene no puede corresponder a ningún
+// barbero real: se trata igual que un barbero ajeno, inexistente o sin
+// asignación vigente -disponibilidad vacía, nunca un error que distinga la
+// causa (mismo criterio que CA-092-03).
+func LooksLikePublicBarberID(id string) bool {
+	return barberIDPattern.MatchString(id)
+}
+
+// AvailabilitySlot es un inicio público válido ya resuelto (HU-094,
+// CA-094-01): el instante absoluto en que puede empezar el servicio
+// completo elegido.
+type AvailabilitySlot struct {
+	StartsAt time.Time
+}
+
+// AvailabilityResult es la respuesta completa de HU-094: los inicios
+// válidos, ya ordenados de forma estable (cronológica), junto con el
+// contexto mínimo que el cliente necesita para interpretarlos sin
+// ambigüedad (RN-DIS-07: zona de la barbería, nunca la del dispositivo).
+type AvailabilityResult struct {
+	Slots           []AvailabilitySlot
+	DurationMinutes int
+	Timezone        string
+	SlotGridMinutes int
+}
