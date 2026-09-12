@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.42"
+version: "1.43"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-11"
@@ -1919,9 +1919,9 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Reglas | `RN-DIS-01`–`RN-DIS-07`, `RN-CON-04`, `RN-DAT-02` |
 | Decisiones | `DEC-005`–`DEC-007`, `DEC-018`–`DEC-020`, `DEC-077`–`DEC-079` |
 | Actor | Cliente con servicio y barbero elegidos |
-| Depende de | `HU-094` |
+| Depende de | `HU-094` integrada en `main` (satisfecho, PR #253) |
 | Bloquea | `HU-096`, `HU-097` |
-| Estado | Propuesta; prompt `PROMPT-HU-095-v1` en `draft`, `issue: pending` |
+| Estado | Implementada contra el issue real [#254](https://github.com/bcaceres19/barberia/issues/254), rama `feat/254-hu095-fechas-horarios`; prompt `PROMPT-HU-095-v1` en `in_progress` |
 | Riesgo | Una pantalla que conserva horas obsoletas o usa la zona del dispositivo induce al cliente a confirmar otra hora. |
 
 **Historia**

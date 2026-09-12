@@ -470,13 +470,13 @@
     "semantic_hash": ""
   },
   "docs/00-control/historial-cambios.md": {
-    "mtime": 1789181379.32039,
-    "ast_hash": "bb5997c2da975cb174efa84ae164cac7",
+    "mtime": 1789184813.860161,
+    "ast_hash": "9c7ce695b9137e471570db66bb3d4ed8",
     "semantic_hash": ""
   },
   "docs/00-control/matriz-trazabilidad.md": {
-    "mtime": 1789181292.2423635,
-    "ast_hash": "1e70d1076d2bb65c670ee800c42b1ce2",
+    "mtime": 1789184782.1362066,
+    "ast_hash": "7d0a98fc89afa20a9ccb11a93ed2ce7a",
     "semantic_hash": ""
   },
   "docs/00-control/registro-decisiones.md": {
@@ -595,8 +595,8 @@
     "semantic_hash": ""
   },
   "docs/02-requisitos/historias-usuario.md": {
-    "mtime": 1789181314.667772,
-    "ast_hash": "cf74ed87e7829052fde661d4957be1ad",
+    "mtime": 1789184846.419196,
+    "ast_hash": "a4cfe4a6b7bf4e68d032039519b013be",
     "semantic_hash": ""
   },
   "docs/10-backlog/plan-bloques.md": {
@@ -805,8 +805,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/README.md": {
-    "mtime": 1789178370.5763152,
-    "ast_hash": "89b28f1ee8b29641a75c6c6dc920b5b6",
+    "mtime": 1789184866.1540296,
+    "ast_hash": "67b8c714348d12ef78c6ce90cf117156",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/TEMPLATE.md": {
@@ -8710,8 +8710,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/public-booking/__tests__/routes.test.ts": {
-    "mtime": 1789146488.8638966,
-    "ast_hash": "0b020e387e986a114841b31f05f3e960",
+    "mtime": 1789183731.5393448,
+    "ast_hash": "1ac8e3f6a387b87072241178ac02fff7",
     "semantic_hash": ""
   },
   "apps/web/src/modules/public-booking/api/resolveBarbershopApi.ts": {
@@ -8735,8 +8735,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/public-booking/routes.ts": {
-    "mtime": 1789146488.8679023,
-    "ast_hash": "eb9a5eda82dbc92f6c74fc6610d310e7",
+    "mtime": 1789183544.6641152,
+    "ast_hash": "4eb49460a2a5ce48e0f3d02b0130c47e",
     "semantic_hash": ""
   },
   "database/migrations/20260911045044_add_barbershop_public_slug.sql": {
@@ -8785,8 +8785,8 @@
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/hu/hu-095-exploracion-fechas-horarios.md": {
-    "mtime": 1789094507.8147652,
-    "ast_hash": "5cc1b9835aeca313073396ba0f03ccc7",
+    "mtime": 1789183072.5348353,
+    "ast_hash": "cb89c27f3adbf89d6f5c09a19acb348b",
     "semantic_hash": ""
   },
   "docs/10-backlog/prompts/hu/hu-096-datos-cliente-persona-atendida.md": {
@@ -9140,13 +9140,13 @@
     "semantic_hash": ""
   },
   "apps/web/src/modules/public-booking/pages/PublicBarberSelectionPage.vue": {
-    "mtime": 1789146488.8658993,
-    "ast_hash": "39569d4e34e9e79d685a8caaa50f3e5d",
+    "mtime": 1789183561.5123906,
+    "ast_hash": "cb2c4187256ffe64ea422201dacd588f",
     "semantic_hash": ""
   },
   "apps/web/src/modules/public-booking/pages/__tests__/PublicBarberSelectionPage.test.ts": {
-    "mtime": 1789146488.8679023,
-    "ast_hash": "5c6e09c9a8f85c1cfcda13bce475c7b9",
+    "mtime": 1789184596.519856,
+    "ast_hash": "ff1ebfe3afa9b9b04265664ece90b403",
     "semantic_hash": ""
   },
   "database/testdata/hu092_seleccion_barbero.sql": {
@@ -9582,6 +9582,196 @@
   "api/openapi/components/schemas/AvailabilitySlotResponse.yaml": {
     "mtime": 1789180809.5911674,
     "ast_hash": "a9be962d885009f5779951443c9ad668",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/reserva-publica-horario-evidencia-responsiva.spec.ts": {
+    "mtime": 1789184596.634043,
+    "ast_hash": "279e462515441e974e94a9f824209571",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/reserva-publica-horario.spec.ts": {
+    "mtime": 1789184596.6169255,
+    "ast_hash": "e3b1c76d158867c970bb15c825cb7d71",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/public-booking/api/listPublicAvailabilityApi.ts": {
+    "mtime": 1789183416.2029684,
+    "ast_hash": "62b162b822013d6383bf07b53ba8457f",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/public-booking/model/__tests__/availabilityCalendar.test.ts": {
+    "mtime": 1789183863.2899146,
+    "ast_hash": "a5585d59b54d157cdcda02defaf5aae4",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/public-booking/model/availabilityCalendar.ts": {
+    "mtime": 1789183405.1966841,
+    "ast_hash": "27fe509e4f5a0d9d44100e0c1932d144",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/public-booking/model/publicAvailabilityOutcome.ts": {
+    "mtime": 1789183395.4754338,
+    "ast_hash": "0b3d9f95429924ccce31aaa41df28447",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/public-booking/pages/PublicAvailabilityPage.vue": {
+    "mtime": 1789184484.8708923,
+    "ast_hash": "99360b609914a987ebd57e875fd0aa41",
+    "semantic_hash": ""
+  },
+  "apps/web/src/modules/public-booking/pages/__tests__/PublicAvailabilityPage.test.ts": {
+    "mtime": 1789184596.5552711,
+    "ast_hash": "93e71da6160dd0639950b67ef8a2ae69",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/1280-zoom200/carga.png": {
+    "mtime": 1789184647.4751604,
+    "ast_hash": "4e0a088a5cdb05296039c241b5700496",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/1280-zoom200/error.png": {
+    "mtime": 1789184649.232603,
+    "ast_hash": "5c76802629599c0083726c38f618b4c0",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/1280-zoom200/foco.png": {
+    "mtime": 1789184649.3361988,
+    "ast_hash": "7e348fa73d2901199fc12feee388d573",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/1280-zoom200/normal.png": {
+    "mtime": 1789184647.8735592,
+    "ast_hash": "a7b3d897dd478fe7c95c1535a018f247",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/1280-zoom200/seleccionado.png": {
+    "mtime": 1789184648.74379,
+    "ast_hash": "b97cf621ef71a7221b5b936e72ca01b9",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/1280-zoom200/vacio.png": {
+    "mtime": 1789184649.1739366,
+    "ast_hash": "548b2c62019ad63dbb4f8f119b13315b",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/1280/carga.png": {
+    "mtime": 1789184646.229139,
+    "ast_hash": "970afc557c602d16cf01a3cefb6253ef",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/1280/error.png": {
+    "mtime": 1789184647.1212142,
+    "ast_hash": "b22ef50ea9f6506fbadbff207666becd",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/1280/foco.png": {
+    "mtime": 1789184647.3734264,
+    "ast_hash": "ba99c0e4a7ff23b5514a43137eca9a63",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/1280/normal.png": {
+    "mtime": 1789184646.4443612,
+    "ast_hash": "aab57186f12beb0a778137ba4eb47621",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/1280/seleccionado.png": {
+    "mtime": 1789184646.587496,
+    "ast_hash": "2eba94d2b5a940ca5ea14345ef9decd1",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/1280/vacio.png": {
+    "mtime": 1789184646.6376202,
+    "ast_hash": "c1fa63127f800a721869a6327744fb95",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/320/carga.png": {
+    "mtime": 1789184641.1273541,
+    "ast_hash": "876e0f58f8d0975366b03d3f2098c98b",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/320/error.png": {
+    "mtime": 1789184643.1233819,
+    "ast_hash": "b028ea12efabf07ca8a19bda10bb176c",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/320/foco.png": {
+    "mtime": 1789184643.2335236,
+    "ast_hash": "95a1cc3390de8acd99a51392a3d47cb3",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/320/normal.png": {
+    "mtime": 1789184641.0945723,
+    "ast_hash": "5d16a3059be795ea0488a655e9b2ccea",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/320/seleccionado.png": {
+    "mtime": 1789184643.0366545,
+    "ast_hash": "b11c677a6120f61c01501a14325d3ee0",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/320/vacio.png": {
+    "mtime": 1789184642.7062104,
+    "ast_hash": "4159c83b55ac9096e11a26ef8328456b",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/360/carga.png": {
+    "mtime": 1789184643.0017014,
+    "ast_hash": "bda30ee8b5a98031e1d9b342e9e241ec",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/360/error.png": {
+    "mtime": 1789184643.7734475,
+    "ast_hash": "88dbd02e0db78abeeb438f98814cd653",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/360/foco.png": {
+    "mtime": 1789184643.9149585,
+    "ast_hash": "b82429859bcf3803b14cf456fca6b55e",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/360/normal.png": {
+    "mtime": 1789184643.4128172,
+    "ast_hash": "3cd57bbed8c7acb9a6fa9ca85726070e",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/360/seleccionado.png": {
+    "mtime": 1789184643.528509,
+    "ast_hash": "0bdda48ac45e6f57b0f4e9957e01c3bd",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/360/vacio.png": {
+    "mtime": 1789184643.4368396,
+    "ast_hash": "ca9870fd934911b100d97a68e1b08dde",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/768/carga.png": {
+    "mtime": 1789184644.1637008,
+    "ast_hash": "0c45c7e7d2197fff4660c7c0fd058e0d",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/768/error.png": {
+    "mtime": 1789184646.1452825,
+    "ast_hash": "63ac4877b8013170309d1716d8feef2e",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/768/foco.png": {
+    "mtime": 1789184646.3276856,
+    "ast_hash": "4c3af4543d541dcfa153b2dec4d08f4f",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/768/normal.png": {
+    "mtime": 1789184644.8077285,
+    "ast_hash": "bac843ff6c81bcfd37f944db403e0f64",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/768/seleccionado.png": {
+    "mtime": 1789184645.6649652,
+    "ast_hash": "4795c01253840a93122fac17828267da",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/evidence/reserva-publica-horario/768/vacio.png": {
+    "mtime": 1789184646.064828,
+    "ast_hash": "a42f172b2e3260e2dc6d9adda50275b2",
     "semantic_hash": ""
   }
 }
