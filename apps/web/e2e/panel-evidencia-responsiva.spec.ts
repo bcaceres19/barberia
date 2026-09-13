@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { createRequire } from 'node:module'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -27,6 +28,8 @@ const EMAIL = process.env.E2E_EMAIL ?? 'duena.a@ejemplo.test'
 const PASSWORD = process.env.E2E_PASSWORD ?? 'ClaveDePruebaHU010!'
 
 const evidenceDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'evidence', 'panel')
+const require = createRequire(import.meta.url)
+const axePath = require.resolve('axe-core/axe.min.js')
 
 const viewports = [
   { name: '320', width: 320, height: 720 },
@@ -42,6 +45,22 @@ async function login(page: import('@playwright/test').Page) {
   await page.getByLabel('Contraseña', { exact: true }).fill(PASSWORD)
   await page.getByRole('button', { name: 'Iniciar sesión' }).click()
   await expect(page.getByRole('heading', { name: 'Agenda', exact: true })).toBeVisible()
+}
+
+async function expectNoLiveAxeViolations(page: import('@playwright/test').Page, selector: string) {
+  if (!(await page.evaluate(() => Boolean(window.axe)))) {
+    await page.addScriptTag({ path: axePath })
+  }
+  const violations = await page.evaluate(async (targetSelector) => {
+    const target = document.querySelector(targetSelector)
+    if (!target) throw new Error(`No se encontró ${targetSelector} para axe-core`)
+    const result = await window.axe.run(target)
+    return result.violations.map((violation) => ({
+      id: violation.id,
+      targets: violation.nodes.map((node) => node.target),
+    }))
+  }, selector)
+  expect(violations).toEqual([])
 }
 
 test('cascarón autenticado sin scroll horizontal ni pérdida de foco, en cada breakpoint', async ({
@@ -68,7 +87,7 @@ test('cascarón autenticado sin scroll horizontal ni pérdida de foco, en cada b
   }
 })
 
-test('el dock solo expone Agenda/Servicios/Barberos y "Más"; "Más" expone el resto y cierre de sesión, en cada breakpoint', async ({
+test('el dock móvil conserva etiquetas completas y destinos alcanzables; escritorio conserva todos sus enlaces, en cada breakpoint', async ({
   page,
 }) => {
   await login(page)
@@ -77,24 +96,80 @@ test('el dock solo expone Agenda/Servicios/Barberos y "Más"; "Más" expone el r
     await page.setViewportSize({ width: viewport.width, height: viewport.height })
 
     const dock = page.getByRole('navigation', { name: 'Navegación principal' })
-    await expect(dock.getByRole('link')).toHaveText(['Agenda', 'Servicios', 'Barberos'])
+    expect(await page.evaluate(() => window.innerWidth)).toBe(viewport.width)
 
-    await dock.getByRole('button', { name: 'Más' }).click()
+    if (viewport.width >= 1024) {
+      await expect(dock.getByRole('link')).toHaveText([
+        'Agenda',
+        'Servicios',
+        'Barberos',
+        'Horarios',
+        'Bloqueos',
+        'Configuración',
+        'Reserva pública',
+        'Servicios por barbero',
+      ])
+      continue
+    }
+
+    const mobileDock = dock.locator('.app-nav__list--mobile')
+    await expect(mobileDock.getByRole('link')).toHaveText(['Agenda', 'Servicios', 'Barberos'])
+    await expect(mobileDock.getByRole('link', { name: 'Agenda' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+
+    const labelMetrics = await mobileDock.locator('.app-nav__label').evaluateAll((labels) =>
+      labels.map((label) => ({
+        text: label.textContent?.trim(),
+        fits: label.scrollWidth <= label.clientWidth,
+      })),
+    )
+    expect(labelMetrics).toEqual([
+      { text: 'Agenda', fits: true },
+      { text: 'Servicios', fits: true },
+      { text: 'Barberos', fits: true },
+      { text: 'Más', fits: true },
+    ])
+    expect(
+      await dock.evaluate((nav) => {
+        const rect = nav.getBoundingClientRect()
+        return (
+          document.documentElement.scrollWidth <= document.documentElement.clientWidth &&
+          rect.bottom <= window.innerHeight
+        )
+      }),
+    ).toBe(true)
+    await expectNoLiveAxeViolations(page, '.app-nav')
+
+    const more = mobileDock.getByRole('button', { name: 'Más' })
+    await more.focus()
+    await page.keyboard.press('Enter')
     const dialog = page.getByRole('dialog', { name: 'Más' })
     await expect(dialog.getByRole('link', { name: 'Horarios' })).toBeVisible()
     await expect(dialog.getByRole('link', { name: 'Bloqueos' })).toBeVisible()
     await expect(dialog.getByRole('link', { name: 'Configuración' })).toBeVisible()
+    await expect(dialog.getByRole('link', { name: 'Reserva pública' })).toBeVisible()
     await expect(dialog.getByRole('link', { name: 'Servicios por barbero' })).toBeVisible()
     await expect(dialog.getByRole('button', { name: 'Cerrar sesión' })).toBeVisible()
+    await expectNoLiveAxeViolations(page, '[role="dialog"]')
     await page.screenshot({ path: path.join(evidenceDir, viewport.name, 'mas-abierto.png') })
 
+    await page.keyboard.press('Tab')
+    expect(
+      await page.evaluate(() => document.activeElement?.closest('[role="dialog"]') !== null),
+    ).toBe(true)
+    await page.keyboard.press('Shift+Tab')
+    expect(
+      await page.evaluate(() => document.activeElement?.closest('[role="dialog"]') !== null),
+    ).toBe(true)
     await page.keyboard.press('Escape')
     await expect(dialog).toBeHidden()
-    await expect(dock.getByRole('button', { name: 'Más' })).toBeFocused()
+    await expect(more).toBeFocused()
 
     // Bloqueos no tenía entrada de navegación antes de esta fase: confirma
     // que ahora es alcanzable de punta a punta y no solo por URL directa.
-    await dock.getByRole('button', { name: 'Más' }).click()
+    await more.click()
     await dialog.getByRole('link', { name: 'Bloqueos' }).click()
     await expect(page).toHaveURL(/\/panel\/bloqueos$/)
     await expect(dialog).toBeHidden()
