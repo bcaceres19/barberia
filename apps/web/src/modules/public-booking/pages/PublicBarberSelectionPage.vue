@@ -249,6 +249,17 @@ const unexpectedErrorMessage = computed(() => {
           <span class="barber-selection__item-name">{{ barber.fullName }}</span>
         </li>
       </ul>
+
+      <RouterLink
+        v-if="selectedBarberId"
+        :to="{
+          name: 'reserva-publica-horario',
+          params: { slug: props.slug, serviceId: props.serviceId, barberId: selectedBarberId },
+        }"
+        class="barber-selection__cta"
+      >
+        Continuar
+      </RouterLink>
     </div>
   </main>
 </template>
@@ -363,6 +374,35 @@ const unexpectedErrorMessage = computed(() => {
 .barber-selection__item-name {
   font-weight: 600;
   color: var(--color-text-primary);
+}
+
+.barber-selection__cta {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  justify-content: center;
+  height: var(--control-height-primary-mobile);
+  padding: 0 var(--space-5);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 500;
+  color: var(--color-on-strong);
+  text-decoration: none;
+  background-color: var(--color-action-primary);
+  border: var(--border-width-normal) solid var(--color-action-primary);
+  border-radius: 2px;
+}
+
+.barber-selection__cta:hover {
+  background-color: var(--color-action-primary-hover);
+  border-color: var(--color-action-primary-hover);
+}
+
+.barber-selection__cta:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--color-canvas),
+    0 0 0 4px var(--color-focus);
 }
 
 @media (min-width: 1024px) {

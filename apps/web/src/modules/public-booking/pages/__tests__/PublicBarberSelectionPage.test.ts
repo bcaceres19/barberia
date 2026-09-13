@@ -19,6 +19,12 @@ vi.mock('@/shared/api/httpClient', () => ({
 
 const { default: PublicBarberSelectionPage } = await import('../PublicBarberSelectionPage.vue')
 
+// RouterLink stubbed en vez de un router real (mismo patrón que
+// PublicServiceCatalogPage.test.ts): esta suite verifica el componente en
+// aislamiento, no el enrutamiento, y el CTA "Continuar" (HU-095) navega a
+// la ruta de exploración de fechas y horarios del barbero elegido.
+const RouterLinkStub = { name: 'RouterLink', props: ['to'], template: '<a><slot /></a>' }
+
 const SERVICE_A = '8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4'
 const SERVICE_B = '1a2b3c4d-5e6f-4708-9a0b-1c2d3e4f5061'
 
@@ -51,6 +57,7 @@ describe('PublicBarberSelectionPage', () => {
       }),
     )
     const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
       props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
     })
 
@@ -66,7 +73,10 @@ describe('PublicBarberSelectionPage', () => {
       error: undefined,
       response: okResponse(),
     })
-    mount(PublicBarberSelectionPage, { props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A } })
+    mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
+      props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
+    })
     await flushPromises()
 
     expect(getMock).toHaveBeenCalledWith(
@@ -84,6 +94,7 @@ describe('PublicBarberSelectionPage', () => {
       response: okResponse(),
     })
     const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
       props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
     })
     await flushPromises()
@@ -104,6 +115,7 @@ describe('PublicBarberSelectionPage', () => {
       response: okResponse(),
     })
     const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
       props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
     })
     await flushPromises()
@@ -126,6 +138,7 @@ describe('PublicBarberSelectionPage', () => {
       response: okResponse(),
     })
     const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
       props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
     })
     await flushPromises()
@@ -149,6 +162,7 @@ describe('PublicBarberSelectionPage', () => {
       response: okResponse(),
     })
     const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
       props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
     })
     await flushPromises()
@@ -168,12 +182,84 @@ describe('PublicBarberSelectionPage', () => {
       response: okResponse(),
     })
     const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
       props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
     })
     await flushPromises()
 
     expect(wrapper.text()).toContain('no tiene barberos disponibles')
     expect(wrapper.find('[role="radiogroup"]').exists()).toBe(false)
+  })
+
+  it('does not show "Continuar" without a selected barber', async () => {
+    getMock.mockResolvedValueOnce({
+      data: {
+        items: [
+          barberFixture({ id: 'a', fullName: 'Ana Gómez' }),
+          barberFixture({ id: 'b', fullName: 'Luis Rojas' }),
+        ],
+      },
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
+      props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
+    })
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Continuar')
+  })
+
+  it('shows "Continuar" navigating to the availability route of the selected barber (HU-095)', async () => {
+    getMock.mockResolvedValueOnce({
+      data: {
+        items: [
+          barberFixture({ id: 'a', fullName: 'Ana Gómez' }),
+          barberFixture({ id: 'b', fullName: 'Luis Rojas' }),
+        ],
+      },
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
+      props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
+    })
+    await flushPromises()
+
+    await wrapper.findAll('[role="radio"]')[1]!.trigger('click')
+
+    const cta = wrapper.findComponent(RouterLinkStub)
+    expect(cta.text()).toContain('Continuar')
+    expect(cta.props('to')).toEqual({
+      name: 'reserva-publica-horario',
+      params: { slug: 'barberia-ejemplo', serviceId: SERVICE_A, barberId: 'b' },
+    })
+  })
+
+  it('shows "Continuar" immediately when a single barber is auto-preselected (CA-092-01)', async () => {
+    getMock.mockResolvedValueOnce({
+      data: { items: [barberFixture()] },
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
+      props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
+    })
+    await flushPromises()
+
+    const cta = wrapper.findComponent(RouterLinkStub)
+    expect(cta.exists()).toBe(true)
+    expect(cta.props('to')).toEqual({
+      name: 'reserva-publica-horario',
+      params: {
+        slug: 'barberia-ejemplo',
+        serviceId: SERVICE_A,
+        barberId: 'a1111111-1111-1111-1111-111111111111',
+      },
+    })
   })
 
   it('shows the same uniform message for a 404 (malformed, unknown or non-publishable slug, CA-090-02)', async () => {
@@ -183,6 +269,7 @@ describe('PublicBarberSelectionPage', () => {
       response: errorResponse(404),
     })
     const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
       props: { slug: 'no-existe', serviceId: SERVICE_A },
     })
     await flushPromises()
@@ -193,6 +280,7 @@ describe('PublicBarberSelectionPage', () => {
   it('offers a retry action on a network error, re-fetching the same slug and serviceId', async () => {
     getMock.mockRejectedValueOnce(new TypeError('Failed to fetch'))
     const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
       props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
     })
     await flushPromises()
@@ -217,6 +305,7 @@ describe('PublicBarberSelectionPage', () => {
       response: errorResponse(500),
     })
     const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
       props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
     })
     await flushPromises()
@@ -237,6 +326,7 @@ describe('PublicBarberSelectionPage', () => {
       response: okResponse(),
     })
     const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
       props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
     })
     await flushPromises()
@@ -275,6 +365,7 @@ describe('PublicBarberSelectionPage', () => {
       response: okResponse(),
     })
     const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
       props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
     })
     await flushPromises()
@@ -308,6 +399,7 @@ describe('PublicBarberSelectionPage', () => {
       }),
     )
     const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
       props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
     })
 
@@ -335,6 +427,7 @@ describe('PublicBarberSelectionPage', () => {
   it('has no accessibility violations in the loading state', async () => {
     getMock.mockReturnValueOnce(new Promise(() => {}))
     const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
       props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
     })
     const results = await axe(wrapper.element)
@@ -348,6 +441,7 @@ describe('PublicBarberSelectionPage', () => {
       response: okResponse(),
     })
     const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
       props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
     })
     await flushPromises()
@@ -364,6 +458,7 @@ describe('PublicBarberSelectionPage', () => {
       response: okResponse(),
     })
     const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
       props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
     })
     await flushPromises()
@@ -378,6 +473,7 @@ describe('PublicBarberSelectionPage', () => {
       response: okResponse(),
     })
     const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
       props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
     })
     await flushPromises()
@@ -392,6 +488,7 @@ describe('PublicBarberSelectionPage', () => {
       response: errorResponse(404),
     })
     const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
       props: { slug: 'no-existe', serviceId: SERVICE_A },
     })
     await flushPromises()
