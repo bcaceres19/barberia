@@ -30,8 +30,8 @@ Estas reglas aplican a personas y agentes que modifiquen el repositorio.
 ## Skills de agentes
 
 - La fuente única de los skills del proyecto es `.agents/skills/<skill>/SKILL.md`, compartida por Codex y Claude Code. `.claude/skills/<skill>/SKILL.md` solo contiene un adaptador con la misma descripción que remite al canónico.
-- Catálogo: `task-brief` (petición ambigua o de riesgo), `ui-direction` (pantalla nueva o rediseño sin referencia exacta), `visual-qa` (UI renderizada; con mockup asignado, antes de editar y antes de declarar terminado), `change-review` (revisión independiente) y `generacion-mockups-nava` (atlas raster). Se cargan solo cuando la tarea coincide con su descripción.
-- Los skills son ayudas derivadas: no sustituyen reglas, decisiones ni estándares. No se crea un skill nuevo sin un fallo repetido y demostrable. Tras cambiar skills o instrucciones de agentes, `tools/ai/validate-agent-system.sh --strict` debe terminar sin fallos ni advertencias.
+- Catálogo: `task-brief` (petición ambigua o de riesgo), `ui-direction` (pantalla nueva o rediseño sin referencia exacta), `visual-qa` (UI renderizada; con mockup asignado, antes de editar y antes de declarar terminado), `change-review` (revisión independiente), `generacion-mockups-nava` (atlas raster) y `graphify-refresh` (decidir si actualizar el grafo local antes de consultarlo). Se cargan solo cuando la tarea coincide con su descripción.
+- Los skills son ayudas derivadas: no sustituyen reglas, decisiones ni estándares. No se crea un skill nuevo sin un fallo repetido y demostrable o una instrucción explícita del propietario registrada como decisión. Tras cambiar skills o instrucciones de agentes, `tools/ai/validate-agent-system.sh --strict` debe terminar sin fallos ni advertencias.
 
 ## Estructura obligatoria
 

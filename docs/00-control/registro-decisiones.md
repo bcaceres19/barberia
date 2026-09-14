@@ -1,6 +1,6 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.29"
+version: "1.30"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-13"
@@ -988,3 +988,17 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Verificación:** `tools/ai/validate-agent-system.sh --strict` advierte si `graphify-out/` vuelve a estar versionado o deja de estar ignorado.
 - **Documentos afectados:** `.gitignore`, `tools/ai/validate-agent-system.sh`, `docs/03-desarrollo/auditoria-infraestructura-agentes-ia.md` y `docs/00-control/historial-cambios.md`.
 - **Fuente:** instrucción explícita del propietario del 2026-09-13 ("déjalo local, no lo subas al repo, es algo que se puede generar"); issue [#261](https://github.com/bcaceres19/barberia/issues/261).
+
+### DEC-088 · Momentos de actualización del grafo local y skill `graphify-refresh`
+
+- **Fecha:** 2026-09-13.
+- **Decisión:** el grafo local de Graphify se actualiza solo cuando va a usarse, nunca por evento de git:
+  - justo antes de consultarlo, o al empezar una tarea que cruza módulos, si se integró código desde su `built_at_commit`: `graphify update .` (local, sin IA);
+  - tras un bloque documental grande desde la última reextracción semántica (por defecto 30 archivos): se **propone** `/graphify . --update` (incremental) y solo se ejecuta con confirmación del propietario, porque usa IA. La construcción completa `/graphify` queda para cuando no existe grafo;
+  - nunca después de cada commit, cambio de rama o cambio solo documental por debajo del umbral.
+- **Implementación:** `tools/ai/graphify-freshness.sh` (solo lectura) calcula la recomendación (`SKIP`, `UPDATE`, `SEMANTIC_UPDATE_SUGGESTED`, `BUILD_FIRST`) y avisa si los hooks git de Graphify reaparecen. El skill compartido `graphify-refresh` la aplica. Esta decisión amplía el catálogo de `DEC-086` por instrucción explícita del propietario.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** tras retirar los hooks (`DEC-087`), el grafo dejaría de reflejar el código si nadie lo actualiza. Actualizarlo en cada evento reintroduce el gasto eliminado. Hacerlo al consultarlo mantiene respuestas correctas con coste mínimo.
+- **Alternativas descartadas:** volver a los hooks `post-commit`/`post-checkout` o a `graphify watch` (coste continuo); tarea programada con cron (actualiza aunque nadie consulte); criterio manual sin script (no verificable).
+- **Documentos afectados:** `AGENTS.md`, `CLAUDE.md`, `.agents/skills/graphify-refresh/`, `.claude/skills/graphify-refresh/`, `tools/ai/graphify-freshness.sh` y `docs/00-control/historial-cambios.md`.
+- **Fuente:** instrucción explícita del propietario del 2026-09-13 de generar un skill que actualice Graphify en los momentos recomendados; issue [#264](https://github.com/bcaceres19/barberia/issues/264).
