@@ -1,6 +1,6 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.28"
+version: "1.29"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-13"
@@ -977,3 +977,14 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Convivencia con `DEC-080`:** la decisión de fidelidad no cambia; solo cambia la ayuda derivada que la operacionaliza.
 - **Documentos afectados:** `AGENTS.md`, `CLAUDE.md`, `.claude/{CLAUDE.md (retirado),settings.json,skills/**}`, `.agents/skills/**`, `tools/ai/validate-agent-system.sh`, `docs/03-desarrollo/auditoria-infraestructura-agentes-ia.md` y `docs/00-control/historial-cambios.md`. No modifica `apps/`, CI ni `graphify-out/`.
 - **Fuente:** auditoría de infraestructura de agentes del 2026-09-13 y solicitud explícita del propietario de implementarla; issue [#259](https://github.com/bcaceres19/barberia/issues/259).
+
+### DEC-087 · `graphify-out/` es local y regenerable; no se versiona
+
+- **Fecha:** 2026-09-13.
+- **Decisión:** el grafo de Graphify (`graphify-out/`) deja de versionarse. Se ignora completo en `.gitignore`, se retira del índice con `git rm -r --cached` sin reescribir la historia y cada persona lo regenera en local con `graphify update .` cuando quiera usarlo. Ningún prompt, estándar ni flujo puede exigir que exista en un clon.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** son 107 MB y 110 archivos derivados del código que cambian con cada `graphify update`. Los hooks locales `post-commit`/`post-checkout` de Graphify los reconstruyen en cada commit o cambio de rama, lo que dejaba el árbol de trabajo sucio y producía diffs y conflictos de merge ajenos a cada entrega. Desde `DEC-086` Graphify es opcional, así que no hay motivo para compartir su salida.
+- **Alternativas descartadas:** seguir versionándolo (ruido y conflictos permanentes); publicarlo fuera del repositorio (añade infraestructura sin un consumidor que la necesite); purgar sus blobs de la historia de Git (reescribe `main`, contrario a `DEC-038`).
+- **Verificación:** `tools/ai/validate-agent-system.sh --strict` advierte si `graphify-out/` vuelve a estar versionado o deja de estar ignorado.
+- **Documentos afectados:** `.gitignore`, `tools/ai/validate-agent-system.sh`, `docs/03-desarrollo/auditoria-infraestructura-agentes-ia.md` y `docs/00-control/historial-cambios.md`.
+- **Fuente:** instrucción explícita del propietario del 2026-09-13 ("déjalo local, no lo subas al repo, es algo que se puede generar"); issue [#261](https://github.com/bcaceres19/barberia/issues/261).

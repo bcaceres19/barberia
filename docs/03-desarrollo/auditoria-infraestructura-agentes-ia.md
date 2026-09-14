@@ -1,6 +1,6 @@
 ---
 titulo: "Auditoría y arquitectura de infraestructura de agentes (Claude Code y Codex)"
-version: "1.0"
+version: "1.1"
 estado: "Vigente; aplicada por el issue #259"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-13"
@@ -259,7 +259,7 @@ Anthropic advierte que los hooks de comandos se ejecutan con permisos completos 
 | 1 — issue y rama | Issue #259, rama `chore/259-infraestructura-agentes` en un worktree separado, sin mezclar la HU en curso. | Hecha |
 | 2 — núcleo mínimo | Cuatro skills canónicos, adaptadores Claude (incluido `generacion-mockups-nava`), `CLAUDE.md` reducido, catálogo en `AGENTS.md` y validador. | Hecha |
 | 3 — migración visual | `visual-qa` incorpora íntegros el flujo de fidelidad, las condiciones de fallo, las desviaciones permitidas, los gates A–D y la verificación de viewport. Los skills antiguos pasan a alias. `DEC-086` actualiza la ayuda de ejecución de `DEC-080`. | Hecha |
-| 4 — Graphify | Hooks `PreToolUse` retirados en un commit separado; skill `graphify` solo invocable con `/graphify`. `graphify-out/` sin cambios. | Hecha; el versionado de `graphify-out/` se decide en otro issue |
+| 4 — Graphify | Hooks `PreToolUse` retirados en un commit separado; skill `graphify` solo invocable con `/graphify`. `graphify-out/` deja de versionarse y se regenera en local (`DEC-087`, #261). | Hecha |
 | 5 — pruebas y refinamiento | Validador determinístico con casos negativos, descubrimiento real en Claude Code y Codex. Medir activaciones erróneas en 5–10 tareas reales y ajustar descripciones, sin añadir skills. | Validación inicial hecha; la medición continua queda pendiente |
 
 ## 11. Cambios implementados, descartados y pendientes
@@ -282,7 +282,7 @@ Anthropic advierte que los hooks de comandos se ejecutan con permisos completos 
 
 ### Pendientes
 
-- Decidir si `graphify-out/` (107 MB, 110 archivos) sigue versionado, se ignora o se regenera fuera del repositorio: issue [#261](https://github.com/bcaceres19/barberia/issues/261).
+- ~~Decidir el versionado de `graphify-out/`~~ Resuelto por `DEC-087` (issue [#261](https://github.com/bcaceres19/barberia/issues/261)): la carpeta se ignora y se regenera solo en local.
 - Medir durante 5–10 tareas reales las activaciones erróneas y ajustar solo las descripciones.
 - Una reinstalación o actualización de Graphify (`graphify install`) puede restaurar sus hooks, su bloque en `CLAUDE.md` o la invocación automática del skill. Tras actualizarlo, ejecutar el validador con `--strict`, que lo detecta.
 
