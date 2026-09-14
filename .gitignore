@@ -47,10 +47,9 @@ apps/web/.auth/
 # OpenAPI
 api/openapi/dist/
 
-# graphify (grafo de conocimiento del repo; graphify-out/ se versiona,
-# salvo lo siguiente, según su propia recomendación)
-graphify-out/cost.json
-graphify-out/cache/
+# graphify: grafo de conocimiento opcional y regenerable (DEC-087). Vive solo
+# en local; se reconstruye con `graphify update .` y nunca se versiona.
+graphify-out/
 
 # Salidas locales
 tmp/

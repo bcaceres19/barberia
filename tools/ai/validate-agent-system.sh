@@ -114,6 +114,14 @@ if [[ -f "$settings" ]]; then
   grep -qE '"[A-Za-z]:[\\/]|"/(home|Users)/' "$settings" && warn ".claude/settings.json contains a machine-specific absolute path"
 fi
 
+# graphify-out/ es regenerable y solo local (DEC-087); una reinstalación de Graphify puede volver a versionarlo.
+if git -C "$repo_root" rev-parse --git-dir >/dev/null 2>&1; then
+  [[ -n "$(git -C "$repo_root" ls-files -- graphify-out | head -n 1)" ]] \
+    && warn "graphify-out/ is tracked by git; it must stay local (git rm -r --cached graphify-out)"
+  git -C "$repo_root" check-ignore -q graphify-out/graph.json \
+    || warn "graphify-out/ is not ignored in .gitignore"
+fi
+
 # --- Resultado --------------------------------------------------------------
 
 printf '\n%d skill(s) canónico(s), %d failure(s), %d warning(s)\n' "${#canonical_names[@]}" "$failures" "$warnings"
