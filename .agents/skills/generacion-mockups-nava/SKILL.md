@@ -1,6 +1,6 @@
 ---
 name: generacion-mockups-nava
-description: Genera mockups y atlas visuales raster de NAVA cuando el usuario pide diseñar pantallas, rutas, estados o eventos. Entrega imágenes de diseño; no crea implementación ni generadores de código salvo petición explícita.
+description: "Genera mockups y atlas visuales raster de NAVA cuando el usuario pide diseñar pantallas, rutas, estados o eventos. Entrega imágenes de diseño; no crea implementación ni generadores de código salvo petición explícita."
 ---
 
 # Generación de mockups NAVA
@@ -27,7 +27,9 @@ forma explícita después de distinguirlo de los mockups visuales.
    exitosos que existan realmente. Estados con idéntica composición pueden
    compartir tratamiento, pero si el usuario pide “todos los eventos”, cada
    copy o resultado visible recibe su propio PNG.
-4. Usar ImageGen integrado para cada imagen. Una imagen de referencia local se
+4. Usar la generación de imágenes integrada del agente (ImageGen en Codex) para
+   cada imagen. Si el agente no dispone de generación raster, declararlo y
+   detenerse; no sustituirla por HTML, SVG ni capturas de código. Una imagen de referencia local se
    inspecciona primero y se etiqueta como referencia o como objetivo de edición.
 5. Mantener invariantes entre eventos: cascarón, navegación, retícula, escala,
    posición de controles, tipografía, paleta y datos ficticios. Cambiar solo el
