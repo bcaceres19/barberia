@@ -27,6 +27,12 @@ Estas reglas aplican a personas y agentes que modifiquen el repositorio.
 - Al crear, cambiar de estado, ejecutar, bloquear o sustituir un prompt, se actualizan su metadato y el índice de `docs/10-backlog/prompts/`. Un cambio material después de iniciar la ejecución crea una nueva versión que enlaza `supersedes`; no se reescribe silenciosamente el cuerpo usado por otro agente.
 - La respuesta final que entregue un prompt incluye un enlace al archivo guardado. Si el agente no puede escribir el repositorio, debe decir explícitamente que no quedó persistido y entregar el contenido como borrador pendiente de guardar.
 
+## Skills de agentes
+
+- La fuente única de los skills del proyecto es `.agents/skills/<skill>/SKILL.md`, compartida por Codex y Claude Code. `.claude/skills/<skill>/SKILL.md` solo contiene un adaptador con la misma descripción que remite al canónico.
+- Catálogo: `task-brief` (petición ambigua o de riesgo), `ui-direction` (pantalla nueva o rediseño sin referencia exacta), `visual-qa` (UI renderizada; con mockup asignado, antes de editar y antes de declarar terminado), `change-review` (revisión independiente) y `generacion-mockups-nava` (atlas raster). Se cargan solo cuando la tarea coincide con su descripción.
+- Los skills son ayudas derivadas: no sustituyen reglas, decisiones ni estándares. No se crea un skill nuevo sin un fallo repetido y demostrable. Tras cambiar skills o instrucciones de agentes, `tools/ai/validate-agent-system.sh` debe terminar sin fallos ni advertencias.
+
 ## Estructura obligatoria
 
 - Backend Go: `apps/api`, un módulo Go, comandos `api` y `worker`, paquetes internos por capacidad.
