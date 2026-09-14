@@ -11,7 +11,7 @@
 
 ## Graphify
 
-- Es opcional. Úsalo solo si el usuario lo pide (`/graphify`) o si un descubrimiento transversal no se resuelve con búsqueda textual y el ownership del módulo. No lo consultes ni ejecutes `graphify update` en trabajo rutinario.
+- Es opcional. Úsalo solo si el usuario lo pide (`/graphify`) o si un descubrimiento transversal no se resuelve con búsqueda textual y el ownership del módulo. No lo consultes ni ejecutes `graphify update` en trabajo rutinario. Antes de consultarlo, aplica el skill `graphify-refresh`, que decide si hace falta actualizarlo.
 
 ## Merge de pull requests
 
