@@ -282,7 +282,7 @@ Anthropic advierte que los hooks de comandos se ejecutan con permisos completos 
 
 ### Pendientes
 
-- Decidir si `graphify-out/` (107 MB) sigue versionado, se ignora o se regenera fuera del repositorio.
+- Decidir si `graphify-out/` (107 MB, 110 archivos) sigue versionado, se ignora o se regenera fuera del repositorio: issue [#261](https://github.com/bcaceres19/barberia/issues/261).
 - Medir durante 5–10 tareas reales las activaciones erróneas y ajustar solo las descripciones.
 - Una reinstalación o actualización de Graphify (`graphify install`) puede restaurar sus hooks, su bloque en `CLAUDE.md` o la invocación automática del skill. Tras actualizarlo, ejecutar el validador con `--strict`, que lo detecta.
 
