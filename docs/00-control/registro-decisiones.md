@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.27"
+version: "1.28"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-11"
+ultima_actualizacion: "2026-09-13"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -896,6 +896,8 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Documentos afectados:** `AGENTS.md`, `CLAUDE.md`, `.claude/{CLAUDE.md,settings.json,skills/{nava-mockup-fidelity,browser-viewport-verification}/}`, `docs/03-desarrollo/{estandar-diseno-visual.md,especificacion-frontend-nava.md,estrategia-pruebas.md}`, `docs/00-control/{matriz-trazabilidad.md,historial-cambios.md}` y el prompt de orquestación NAVA v3. La configuración del proyecto fija `claude-sonnet-5` con `effortLevel: high`; no modifica `apps/web`.
 - **Fuente:** instrucción explícita del propietario tras comparar el login implementado con el mockup —centrado, proporciones, color, escala tipográfica e iconos no podían quedar a interpretación— y solicitud del 2026-09-03 de actualizar prompts o skills para evitar la repetición; issue documental `#208`.
 
+**Actualización posterior:** `DEC-086` traslada la ayuda de ejecución de esta decisión al skill compartido `.agents/skills/visual-qa/` (Claude Code y Codex); `nava-mockup-fidelity` y `browser-viewport-verification` quedan como alias heredados. La decisión no cambia.
+
 ### DEC-081 · Canal configurable y destino verificado para códigos OTP de autenticación
 
 - **Fecha:** 2026-09-03.
@@ -959,3 +961,19 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** teléfono como clave única de reconciliación (ignora coincidencias de solo correo) — descartada porque el propietario indicó explícitamente que cualquiera de los dos puede ser el dato estable; correo como clave única — descartada por el mismo motivo; fusión automática eligiendo un campo como desempate en el caso conflictivo — descartada por el propietario a favor de no fusionar y crear un registro nuevo.
 - **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-PUB-04`), `docs/02-requisitos/historias-usuario.md` (`HU-096`, `CA-096-04`), `docs/10-backlog/prompts/hu/hu-096-datos-cliente-persona-atendida.md`; futura implementación de `HU-096` aplica esta política exactamente en el paso de reconciliación de `customer` antes de crear la cita.
 - **Fuente:** `docs/00-control/dudas-pendientes.md`, `DP-PUB-04`; aprobación explícita del propietario el 2026-09-11 (coincidencia por cualquiera de los dos campos; conflicto entre filas distintas crea un `customer` nuevo en vez de fusionar).
+
+### DEC-086 · Infraestructura compartida de agentes: AGENTS.md como autoridad, skills canónicos y Graphify opcional
+
+- **Fecha:** 2026-09-13.
+- **Decisión:** Claude Code y Codex comparten una sola infraestructura de agentes:
+  - `AGENTS.md` es la autoridad común. `CLAUDE.md` la importa (`@AGENTS.md`) y solo añade lo específico de Claude Code, incluida la autorización permanente de squash-merge del propietario. Se retira `.claude/CLAUDE.md`.
+  - Los skills del proyecto viven en `.agents/skills/<skill>/SKILL.md`: `task-brief`, `ui-direction`, `visual-qa`, `change-review` y `generacion-mockups-nava`. `.claude/skills/<skill>/SKILL.md` es un adaptador con descripción idéntica que ordena leer el canónico. No se crea un skill nuevo sin un fallo repetido y demostrable.
+  - `visual-qa` absorbe el contenido de `nava-mockup-fidelity` y `browser-viewport-verification`, que quedan como alias no invocables por el modelo para preservar las rutas citadas por prompts persistentes.
+  - Graphify es opcional: sin hooks `PreToolUse` y con el skill invocable solo mediante `/graphify`.
+  - `tools/ai/validate-agent-system.sh --strict` comprueba la coherencia y debe pasar tras cambiar skills o instrucciones de agentes.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** el conocimiento de NAVA, las pruebas y la trazabilidad ya existían, pero se activaban de forma desigual entre agentes. `CLAUDE.md` duplicaba reglas y los hooks de Graphify añadían latencia, contexto y permisos en cada lectura o búsqueda, además de versionar una ruta absoluta de una sola máquina.
+- **Alternativas descartadas:** instalar completos el plugin Product Design de OpenAI o el repositorio de skills de Anthropic (amplían permisos y contexto, y duplican NAVA/Playwright). Crear skills separados de prompt-architect, design-system, creative-director, design-critic, UX o revisores de arquitectura, frontend y código (añaden triggers redundantes). Adaptadores con `@import` (Claude Code no los expande dentro de `SKILL.md`) o con symlinks (frágiles en Windows). Borrar los skills visuales antiguos (rompería prompts persistentes).
+- **Convivencia con `DEC-080`:** la decisión de fidelidad no cambia; solo cambia la ayuda derivada que la operacionaliza.
+- **Documentos afectados:** `AGENTS.md`, `CLAUDE.md`, `.claude/{CLAUDE.md (retirado),settings.json,skills/**}`, `.agents/skills/**`, `tools/ai/validate-agent-system.sh`, `docs/03-desarrollo/auditoria-infraestructura-agentes-ia.md` y `docs/00-control/historial-cambios.md`. No modifica `apps/`, CI ni `graphify-out/`.
+- **Fuente:** auditoría de infraestructura de agentes del 2026-09-13 y solicitud explícita del propietario de implementarla; issue [#259](https://github.com/bcaceres19/barberia/issues/259).
