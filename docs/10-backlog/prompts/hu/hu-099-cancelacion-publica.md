@@ -14,13 +14,13 @@ suggested_issue_title: "feat(customer-access): implementar HU-099 cancelación p
 branch: null
 pr: null
 pr_url: null
-depends_on: ["HU-093, HU-094 y HU-098 integradas", "DP-PUB-02 y DP-PUB-05 resueltas", "Issue real con CA-099-01 a CA-099-06"]
+depends_on: ["HU-093, HU-094 y HU-098 integradas (satisfecho, PR #272)", "DP-PUB-02 y DP-PUB-05 resueltas mediante DEC-083/DEC-089 (satisfecho)", "Issue real con CA-099-01 a CA-099-06"]
 rules: ["RN-CAN-01", "RN-CAN-02", "RN-CAN-03", "RN-CAN-04", "RN-CIT-03", "RN-HIS-01", "RN-HIS-02", "RN-DIS-04", "RN-IDE-01", "RN-TEN-01"]
 decisions: ["DEC-010", "DEC-011", "DEC-012", "DEC-014", "DEC-016", "DEC-017", "DEC-018", "DEC-022", "DEC-024", "DEC-041", "DEC-043"]
 acceptance_criteria: ["CA-099-01", "CA-099-02", "CA-099-03", "CA-099-04", "CA-099-05", "CA-099-06"]
 source_docs: ["AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "docs/00-control/registro-decisiones.md", "docs/00-control/dudas-pendientes.md", "docs/01-producto/alcance-mvp.md", "docs/01-producto/reglas-negocio.md", "docs/02-requisitos/historias-usuario.md", "docs/02-requisitos/estados-citas.md", "docs/03-desarrollo/estandar-backend-go.md", "docs/03-desarrollo/estandar-frontend-vue.md", "docs/03-desarrollo/estandar-diseno-visual.md", "docs/03-desarrollo/estrategia-pruebas.md", "docs/05-backend/estandar-base-datos.md", "docs/06-api/estandar-openapi.md", "apps/api/internal/modules/booking", "api/openapi/paths/customer-appointments.yaml"]
 created_at: "2026-09-10"
-updated_at: "2026-09-10"
+updated_at: "2026-09-16"
 supersedes: null
 superseded_by: null
 ---

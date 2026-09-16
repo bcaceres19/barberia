@@ -2058,7 +2058,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Actor | Cliente con enlace aleatorio del turno |
 | Depende de | `HU-097` integrada; `DP-PUB-05` resuelta (`DEC-089`, 2026-09-15); `CT-011` resuelta (`DEC-091`, 2026-09-15) |
 | Bloquea | `HU-099`, B5 |
-| Estado | Implementada; prompt `PROMPT-HU-098-v1` en `executed`, issue real [#271](https://github.com/bcaceres19/barberia/issues/271), rama `feat/271-hu-098-acceso-cliente-turno`, [PR #272](https://github.com/bcaceres19/barberia/pull/272) abierto pendiente de CI/merge |
+| Estado | Implementada; prompt `PROMPT-HU-098-v1` en `executed`, issue real [#271](https://github.com/bcaceres19/barberia/issues/271), rama `feat/271-hu-098-acceso-cliente-turno`, [PR #272](https://github.com/bcaceres19/barberia/pull/272) integrado en `main` |
 | Riesgo | Filtrar o registrar el token permite consultar/cancelar una cita ajena; una expiración inventada puede dejar al cliente sin acceso. |
 
 **Historia**
@@ -2102,9 +2102,9 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Reglas | `RN-CAN-01`–`RN-CAN-04`, `RN-CIT-03`, `RN-HIS-01`, `RN-HIS-02`, `RN-DIS-04`, `RN-IDE-01`, `RN-TEN-01` |
 | Decisiones | `DEC-010`–`DEC-012`, `DEC-014`, `DEC-016`–`DEC-018`, `DEC-022`, `DEC-024`, `DEC-041`, `DEC-043`, `DEC-083`, `DEC-089` |
 | Actor | Cliente con acceso válido a su turno |
-| Depende de | `HU-093`/`HU-094` integradas (satisfecho); `HU-098` integrada; `DP-PUB-02` resuelta (`DEC-083`, satisfecho); `DP-PUB-05` resuelta (`DEC-089`, 2026-09-15) |
+| Depende de | `HU-093`/`HU-094` integradas (satisfecho); `HU-098` integrada (satisfecho, PR #272); `DP-PUB-02` resuelta (`DEC-083`, satisfecho); `DP-PUB-05` resuelta (`DEC-089`, 2026-09-15) |
 | Bloquea | Criterio de salida de B4 y efectos de B5 |
-| Estado | Propuesta; prompt `PROMPT-HU-099-v1` en `draft`, dependencias de decisión satisfechas, pendiente de `HU-098` integrada e issue real |
+| Estado | Propuesta; prompt `PROMPT-HU-099-v1` en `draft`, todas las dependencias satisfechas, pendiente de issue real |
 | Riesgo | Evaluar el plazo en el navegador o aplicar mal la política cancela compromisos sin autorización o deja una franja bloqueada. |
 
 **Historia**
