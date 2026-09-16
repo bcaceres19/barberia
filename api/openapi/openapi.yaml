@@ -74,7 +74,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.20.0
+  version: 0.21.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -109,10 +109,11 @@ tags:
     description: >-
       Flujo público de reserva sin sesión del barbero: entrada por el
       enlace de una barbería (HU-090), catálogo público de servicios
-      (HU-091), selección pública de barbero (HU-092) y disponibilidad
-      pública real (HU-094). El resto del flujo (exploración de fechas en el
-      frontend, creación de turnos, acceso/cancelación del cliente) llega
-      bloqueado por decisiones abiertas (docs/00-control/dudas-pendientes.md).
+      (HU-091), selección pública de barbero (HU-092), disponibilidad
+      pública real (HU-094) y confirmación pública concurrente e
+      idempotente (HU-097). El acceso/cancelación del cliente mediante el
+      token emitido por HU-097 (HU-098/HU-099) vive bajo /customer, todavía
+      sin contenido.
 paths:
   /public/barbershops/{slug}:
     $ref: './paths/public-booking.yaml#/~1public~1barbershops~1{slug}'
@@ -122,6 +123,8 @@ paths:
     $ref: './paths/public-booking.yaml#/~1public~1barbershops~1{slug}~1services~1{serviceId}~1barbers'
   /public/barbershops/{slug}/services/{serviceId}/barbers/{barberId}/availability:
     $ref: './paths/public-booking.yaml#/~1public~1barbershops~1{slug}~1services~1{serviceId}~1barbers~1{barberId}~1availability'
+  /public/barbershops/{slug}/services/{serviceId}/barbers/{barberId}/appointments:
+    $ref: './paths/public-booking.yaml#/~1public~1barbershops~1{slug}~1services~1{serviceId}~1barbers~1{barberId}~1appointments'
   /public/auth/login:
     $ref: './paths/public-auth.yaml#/~1public~1auth~1login'
   /public/auth/challenge:

@@ -1,0 +1,30 @@
+# 409 de POST .../appointments (HU-097, RN-CON-05, DEC-090): la franja
+# elegida ya no está disponible, revalidada por el servidor o rechazada por
+# la restricción de exclusión de PostgreSQL (RN-CON-03). Distinto de
+# IdempotencyConflictProblem/IdempotencyLockedProblem (RN-IDE-01): este
+# conflicto no depende de ninguna cabecera Idempotency-Key.
+description: >
+  La franja elegida ya no está disponible. `alternatives` trae hasta 3
+  franjas cronológicamente cercanas con el mismo barbero y servicio
+  (DEC-090); los datos del formulario nunca se pierden en el cliente.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/ScheduleConflictProblem.yaml'
+    examples:
+      franjaOcupada:
+        value:
+          type: /api/v1/problems/slot-conflict
+          title: Franja no disponible
+          status: 409
+          detail: la franja elegida ya no está disponible
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: slot-conflict
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          alternatives:
+            - startsAt: "2026-09-20T14:30:00-05:00"
+            - startsAt: "2026-09-20T15:00:00-05:00"
+            - startsAt: "2026-09-20T15:30:00-05:00"

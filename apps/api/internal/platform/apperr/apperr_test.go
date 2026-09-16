@@ -120,6 +120,24 @@ func TestConflict_CarriesSafeMessage(t *testing.T) {
 	}
 }
 
+func TestScheduleConflict_CarriesSafeMessageAndDistinctKind(t *testing.T) {
+	err := apperr.ScheduleConflict("la franja elegida ya no está disponible")
+
+	got, ok := apperr.As(err)
+	if !ok {
+		t.Fatal("expected apperr.As to recognize the error")
+	}
+	if got.Kind != apperr.KindScheduleConflict {
+		t.Fatalf("expected KindScheduleConflict, got %q", got.Kind)
+	}
+	if got.Kind == apperr.KindConflict {
+		t.Fatal("KindScheduleConflict must stay distinct from KindConflict (HU-097, RN-CON-05)")
+	}
+	if got.Message != "la franja elegida ya no está disponible" {
+		t.Fatalf("unexpected message: %q", got.Message)
+	}
+}
+
 func TestAs_ReturnsFalseForForeignError(t *testing.T) {
 	_, ok := apperr.As(fmt.Errorf("plain error"))
 	if ok {

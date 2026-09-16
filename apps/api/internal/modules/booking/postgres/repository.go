@@ -459,7 +459,7 @@ func insertAppointment(
 	appointment, err := scanAppointment(row)
 	if err != nil {
 		if isConstraintViolation(err, "23P01", appointmentBarberIntervalExclConstraint) {
-			return booking.Appointment{}, errScheduleConflict()
+			return booking.Appointment{}, scheduleConflictError(input.Origin)
 		}
 		if isDeadlockDetected(err) {
 			// PostgreSQL resuelve algunas carreras de inserción concurrente
@@ -474,7 +474,7 @@ func insertAppointment(
 			// este método, la ÚNICA fuente posible de un interbloqueo es esa
 			// contención de exclusión, así que se traduce igual que un
 			// exclusion_violation limpio.
-			return booking.Appointment{}, errScheduleConflict()
+			return booking.Appointment{}, scheduleConflictError(input.Origin)
 		}
 		if isConstraintViolation(err, "23503", appointmentCustomerFKConstraint) {
 			return booking.Appointment{}, errCustomerNotFound()
@@ -528,6 +528,20 @@ func parsePriceAmount(raw string) (int64, error) {
 
 func errScheduleConflict() error {
 	return apperr.Conflict("el barbero ya tiene una cita en ese intervalo")
+}
+
+// scheduleConflictError traduce una carrera perdida contra la restricción
+// de exclusión de PostgreSQL (RN-CON-03) según el origen de la cita: la
+// primitiva pública (HU-097) necesita un Kind distinguible
+// (apperr.KindScheduleConflict, RN-CON-05/DEC-090) para que publicbooking
+// calcule alternativas sin confundirlo con un conflicto de unicidad de
+// `customer` (apperr.KindConflict), mientras que la manual (HU-061) sigue
+// devolviendo el *apperr.Error genérico que ya traducía antes de HU-097.
+func scheduleConflictError(origin booking.Origin) error {
+	if origin == booking.OriginPublic {
+		return apperr.ScheduleConflict("la franja elegida ya no está disponible")
+	}
+	return errScheduleConflict()
 }
 
 func errCustomerNotFound() error {

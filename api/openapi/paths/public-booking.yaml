@@ -1,14 +1,12 @@
 # Operaciones públicas de reserva (sin sesión del barbero): HU-090 agrega
 # la primera, entrada pública de reservas; HU-091 agrega el catálogo
 # público de servicios; HU-092 agrega la selección pública de barbero;
-# HU-094 agrega la disponibilidad pública real (motor de franjas).
+# HU-094 agrega la disponibilidad pública real (motor de franjas); HU-097
+# agrega la confirmación pública concurrente e idempotente (T1 pública).
 # security: [] en cada operación, según docs/06-api/estandar-openapi.md.
-# Las siguientes capacidades del flujo público (exploración de fechas/
-# horarios en el frontend, creación de turnos, acceso/cancelación del
-# cliente) llegan con HU-095 en adelante, bloqueadas hoy por decisiones
-# abiertas (DP-PUB-05/DP-PUB-06/CT-011: docs/00-control/dudas-pendientes.md;
-# DP-PUB-02, DP-PUB-03 y DP-PUB-04 quedaron resueltas como DEC-083, DEC-084
-# y DEC-085).
+# El acceso/cancelación del cliente mediante el token emitido por HU-097
+# (HU-098/HU-099) vive en api/openapi/paths/customer-appointments.yaml,
+# todavía sin contenido.
 /public/barbershops/{slug}:
   get:
     tags: [PublicBooking]
@@ -332,5 +330,178 @@
                   instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
                   code: not-found
                   requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/public/barbershops/{slug}/services/{serviceId}/barbers/{barberId}/appointments:
+  post:
+    tags: [PublicBooking]
+    summary: Confirmar públicamente el turno elegido (T1 pública)
+    description: >
+      Confirma en el acto (RN-CNF-01) el turno público que el cliente armó
+      en los pasos anteriores (HU-091, HU-092, HU-094, HU-096), protegido
+      con clave de idempotencia (RN-IDE-01, DEC-043): repetir el mismo
+      `POST` con la misma `Idempotency-Key` y el mismo cuerpo devuelve la
+      misma representación creada sin crear una segunda cita ni un segundo
+      correo. El servidor revalida todo contra PostgreSQL real -barbería,
+      asignación de servicio/barbero, jornada efectiva, bloqueos vigentes,
+      política de reserva vigente y que `startsAt` siga siendo un inicio
+      válido- antes de intentar persistir (CA-097-02); la restricción de
+      exclusión de PostgreSQL (RN-CON-03) es la última defensa contra una
+      carrera entre dos confirmaciones simultáneas por la misma franja
+      (RN-CON-01, RN-CON-02). El cliente se reconcilia por teléfono y
+      correo dentro de la misma barbería (DEC-085): un `customer` existente
+      se reutiliza (sobrescribiendo el campo que no coincidió con el valor
+      nuevo dado), sin coincidencia siempre se crea uno nuevo, nunca por
+      nombre. Al confirmar, el servidor emite el token de acceso al turno
+      (`appointment_access_token`, 256 bits, hash SHA-256, vigencia 90 días
+      sin rotación, DEC-089) dentro de la misma transacción atómica, y
+      envía un único correo de confirmación síncrono con el enlace de
+      acceso reutilizando el proveedor ya integrado (Resend, DEC-091): un
+      fallo de ese envío nunca revierte la cita ya confirmada. Mismo `slug`
+      y misma resolución sin contexto de tenant que
+      `GET /public/barbershops/{slug}`; un `slug` mal formado, desconocido
+      o de una barbería no publicable, o un `serviceId`/`barberId` sin
+      forma de UUID, ajeno, inexistente, inactivo o sin asignación vigente,
+      producen el mismo `404` uniforme (CA-090-02, RN-TEN-01) -a diferencia
+      de la disponibilidad de solo lectura, esta operación de escritura no
+      tiene un "vacío" que devolver. El cuerpo nunca acepta `barbershopId`,
+      `customerId`, `status`, `origin`, precio, duración ni ningún otro
+      dato que el servidor derive o revalide.
+    operationId: confirmPublicAppointment
+    security: []
+    x-business-rules:
+      [RN-RES-01, RN-RES-02, RN-RES-03, RN-DIS-03, RN-DIS-04, RN-DIS-05,
+       RN-DIS-06, RN-DIS-07, RN-CON-01, RN-CON-02, RN-CON-03, RN-CON-04,
+       RN-CON-05, RN-CON-06, RN-CNF-01, RN-HIS-01, RN-IDE-01, RN-TEN-01]
+    x-decisions:
+      [DEC-005, DEC-006, DEC-007, DEC-008, DEC-012, DEC-013, DEC-016,
+       DEC-019, DEC-020, DEC-022, DEC-024, DEC-041, DEC-043, DEC-045,
+       DEC-046, DEC-073, DEC-085, DEC-089, DEC-090, DEC-091]
+    parameters:
+      - $ref: '../components/parameters/IdempotencyKey.yaml'
+      - name: slug
+        in: path
+        required: true
+        description: >
+          Identificador del enlace público de reservas, tal como aparece en
+          la URL. No es un identificador interno: su forma, generación y
+          ciclo de vida los fija DEC-082 (resuelve DP-PUB-01).
+        schema:
+          type: string
+          maxLength: 100
+        examples:
+          slug:
+            value: barberia-ejemplo
+      - name: serviceId
+        in: path
+        required: true
+        description: >
+          Servicio activo ya elegido (HU-091). No confiado: se revalida
+          pertenencia, vigencia y asignación contra la barbería resuelta
+          por `slug` en cada intento (mismo criterio que CA-092-03).
+        schema:
+          type: string
+          format: uuid
+        examples:
+          serviceId:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+      - name: barberId
+        in: path
+        required: true
+        description: >
+          Barbero ya elegido (HU-092). No confiado: se revalida que tenga
+          asignación vigente al servicio activo `serviceId` dentro de la
+          barbería resuelta por `slug` en cada intento.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barberId:
+            value: 1c9a7f2d-3b4e-4a5f-9c6d-7e8f9a0b1c2d
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ConfirmPublicAppointmentRequest.yaml'
+          examples:
+            turnoPublico:
+              summary: Turno público para sí mismo
+              value:
+                startsAt: "2026-09-20T14:00:00-05:00"
+                fullName: Carlos Restrepo
+                phone: "+573001234567"
+                email: carlos.restrepo@example.com
+                forSomeoneElse: false
+    responses:
+      "201":
+        $ref: '../components/responses/PublicAppointmentConfirmed.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "404":
+        description: >
+          `slug` con forma inválida, inexistente o de una barbería no
+          publicable, o `serviceId`/`barberId` ajeno, inexistente, inactivo
+          o sin asignación vigente, sin distinguir la causa (CA-090-02,
+          CA-092-03, RN-TEN-01).
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              enlaceNoDisponible:
+                value:
+                  type: /api/v1/problems/not-found
+                  title: No encontrado
+                  status: 404
+                  detail: no existe un servicio activo asignado a ese barbero en esa barbería pública
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: not-found
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "409":
+        description: >
+          Conflicto de idempotencia (misma clave con otro contenido u otra
+          operación, `IdempotencyConflictProblem`), operación en curso con
+          la misma clave (`IdempotencyLockedProblem`, DEC-043), o la franja
+          elegida ya no está disponible con alternativas cercanas
+          (RN-CON-05, DEC-090). Distinguibles por `code`
+          (`idempotency-conflict`, `idempotency-locked`, `slot-conflict`),
+          nunca por `detail`.
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/ScheduleConflictProblem.yaml'
+            examples:
+              franjaOcupada:
+                summary: La franja elegida ya no está disponible
+                value:
+                  type: /api/v1/problems/slot-conflict
+                  title: Franja no disponible
+                  status: 409
+                  detail: la franja elegida ya no está disponible
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: slot-conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  alternatives:
+                    - startsAt: "2026-09-20T14:30:00-05:00"
+                    - startsAt: "2026-09-20T15:00:00-05:00"
+              claveIdempotenciaEnConflicto:
+                summary: Misma clave, contenido distinto
+                value:
+                  type: /api/v1/problems/idempotency-conflict
+                  title: Conflicto de idempotencia
+                  status: 409
+                  detail: la clave de idempotencia ya se usó con un contenido distinto
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "422":
+        $ref: '../components/responses/ValidationProblem.yaml'
       "500":
         $ref: '../components/responses/InternalErrorProblem.yaml'

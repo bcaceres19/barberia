@@ -83,6 +83,15 @@ const (
 	// versión todavía visible para el cliente, pero el estado de negocio ya
 	// no admite la transición pedida.
 	KindInvalidState Kind = "invalid_state"
+	// KindScheduleConflict cubre HU-097 (RN-CON-05, DEC-090): la restricción
+	// de exclusión de PostgreSQL (RN-CON-03) rechazó la franja pública
+	// porque otra confirmación la ganó primero. Distinto de KindConflict
+	// (por ejemplo, unicidad de `customer`) para que el llamador pueda
+	// reconocer, por Kind y no por Message, quién debe calcular alternativas
+	// cronológicamente cercanas (DEC-090) — el código de proyecto
+	// correspondiente es "slot-conflict" (docs/06-api/estandar-openapi.md
+	// sección 5, ejemplo normativo).
+	KindScheduleConflict Kind = "schedule_conflict"
 )
 
 // Error es el error de aplicación que domain/servicios devuelven.
@@ -189,6 +198,13 @@ func VersionConflict(message string) *Error {
 // ese estado. message es el detalle seguro que puede llegar al cliente.
 func InvalidState(message string) *Error {
 	return &Error{Kind: KindInvalidState, Message: message}
+}
+
+// ScheduleConflict construye el error de una franja pública que otra
+// confirmación ya ganó (HU-097, RN-CON-05). message es el detalle seguro
+// que puede llegar al cliente.
+func ScheduleConflict(message string) *Error {
+	return &Error{Kind: KindScheduleConflict, Message: message}
 }
 
 // As extrae un *Error de la cadena de err, igual que errors.As.

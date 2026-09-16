@@ -1,0 +1,70 @@
+# Respuesta 201 de POST /public/barbershops/{slug}/services/{serviceId}/
+# barbers/{barberId}/appointments (HU-097). Proyección pública mínima:
+# nunca un identificador interno (id de la cita, del cliente, de la
+# barbería, del servicio ni del barbero, CA-090-04/RN-DAT-02) porque el
+# cliente público no consulta esta cita por id -HU-098 la resolverá por
+# `accessToken`.
+type: object
+properties:
+  attendeeName:
+    type: string
+    description: Nombre de la persona atendida (RN-RES-02/RN-RES-03).
+    examples:
+      - Carlos Restrepo
+  barbershopName:
+    type: string
+    examples:
+      - Barbería Ejemplo
+  serviceName:
+    type: string
+    description: Nombre del servicio congelado al confirmar (DEC-004).
+    examples:
+      - Corte clásico
+  durationMinutes:
+    type: integer
+    examples:
+      - 30
+  priceAmount:
+    type: string
+    description: Importe exacto en formato decimal (nunca coma flotante).
+    examples:
+      - "20000.00"
+  currency:
+    type: string
+    examples:
+      - COP
+  startsAt:
+    type: string
+    format: date-time
+  endsAt:
+    type: string
+    format: date-time
+  timezone:
+    type: string
+    description: Zona horaria IANA de la barbería (RN-DIS-07).
+    examples:
+      - America/Bogota
+  accessToken:
+    type: string
+    description: >
+      Credencial de acceso al turno EN CLARO (DEC-089): esta es la ÚNICA
+      vez que aparece en cualquier respuesta -el servidor solo conserva su
+      hash. El mismo correo de confirmación lo entrega como enlace
+      (F-PUB-07); perder este valor sin haber guardado el correo significa
+      perder el acceso directo hasta que HU-099 ofrezca una alternativa.
+    examples:
+      - 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3
+  customerNote:
+    type: [string, "null"]
+required:
+  - attendeeName
+  - barbershopName
+  - serviceName
+  - durationMinutes
+  - priceAmount
+  - currency
+  - startsAt
+  - endsAt
+  - timezone
+  - accessToken
+  - customerNote

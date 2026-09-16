@@ -1,0 +1,29 @@
+# Respuesta 201 de POST /public/barbershops/{slug}/services/{serviceId}/
+# barbers/{barberId}/appointments (HU-097, RN-IDE-01). Una repetición exacta
+# de la misma Idempotency-Key con el mismo contenido reproduce esta MISMA
+# respuesta byte a byte: no crea una segunda cita ni un segundo correo.
+description: >
+  Turno público confirmado. El correo de confirmación con el enlace de
+  acceso ya se envió (o se registró su fallo, DEC-091) para cuando esta
+  respuesta llega al cliente.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/ConfirmedPublicAppointmentResponse.yaml'
+    examples:
+      turnoPublico:
+        value:
+          attendeeName: Carlos Restrepo
+          barbershopName: Barbería Ejemplo
+          serviceName: Corte clásico
+          durationMinutes: 30
+          priceAmount: "20000.00"
+          currency: COP
+          startsAt: "2026-09-20T14:00:00-05:00"
+          endsAt: "2026-09-20T14:30:00-05:00"
+          timezone: America/Bogota
+          accessToken: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3
+          customerNote: null

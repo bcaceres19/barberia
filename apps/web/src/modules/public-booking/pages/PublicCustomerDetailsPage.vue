@@ -1,15 +1,20 @@
 <script setup lang="ts">
 // Página de captura de datos del cliente y persona atendida (HU-096,
-// CA-096-01 a CA-096-06). Sin mockup asignado: composición libre dentro de
-// NAVA / Tailored Grid (DEC-078). No llama a ningún endpoint: HU-097
-// (bloqueada hoy por DP-PUB-05/DP-PUB-06/CT-011, docs/00-control/
-// dudas-pendientes.md) es quien revalida y persiste. Esta pantalla solo
-// valida/normaliza en el cliente con las mismas reglas que el backend
-// aplicará (identity.go), conserva los datos ante un error de validación
-// (CA-096-03) y resuelve `attendeeName` sin pedirlo dos veces cuando el
-// cliente reserva para sí mismo (CA-096-01, RN-RES-02).
+// CA-096-01 a CA-096-06) y confirmación pública concurrente (HU-097,
+// CA-097-01 a CA-097-07). Sin mockup asignado: composición libre dentro de
+// NAVA / Tailored Grid (DEC-078). Valida/normaliza en el cliente con las
+// mismas reglas que el backend aplicará (identity.go), conserva los datos
+// ante un error de validación o conflicto (CA-096-03, CA-097-03) y resuelve
+// `attendeeName` sin pedirlo dos veces cuando el cliente reserva para sí
+// mismo (CA-096-01, RN-RES-02).
 import { computed, nextTick, ref } from 'vue'
 import { BaseButton, BaseInput } from '@/shared/ui'
+import { confirmPublicAppointment } from '../api/confirmPublicAppointmentApi'
+import { newIdempotencyKey } from '../model/idempotencyKey'
+import type {
+  ConfirmedPublicAppointment,
+  PublicAppointmentAlternative,
+} from '../model/confirmPublicAppointmentOutcome'
 import {
   ATTENDEE_NAME_MAX_LENGTH,
   CUSTOMER_NOTE_MAX_LENGTH,
@@ -22,23 +27,18 @@ import {
 
 interface Props {
   /** Identificador del enlace público, tal como llega del parámetro de ruta
-   * `:slug`. No se usa en esta página: no hay ninguna llamada al servidor. */
+   * `:slug`. */
   slug: string
-  /** Servicio ya elegido (HU-091). Igual que slug, viaja intacto para que
-   * HU-097 reciba el contexto completo sin pedirlo de nuevo. */
+  /** Servicio ya elegido (HU-091). */
   serviceId: string
   /** Barbero ya elegido (HU-092). */
   barberId: string
-  /** Franja ya elegida (HU-095), instante ISO absoluto. Esta página no la
-   * interpreta ni la revalida (HU-097 lo hará): solo la conserva. */
+  /** Franja ya elegida (HU-095), instante ISO absoluto. El servidor la
+   * revalida por completo al confirmar (CA-097-02); esta página solo la
+   * conserva y la envía tal cual. */
   startsAt: string
 }
-// Los cuatro campos viajan intactos en la URL (props: true) para que HU-097
-// reciba el contexto completo sin pedirlo de nuevo; esta página no los lee
-// -no hay ninguna llamada al servidor todavía- así que defineProps no se
-// asigna a una variable (documenta el contrato de la ruta sin una lectura
-// sin uso).
-defineProps<Props>()
+const props = defineProps<Props>()
 
 type AttendeeChoice = 'self' | 'other'
 
@@ -52,8 +52,23 @@ const attendeeName = ref('')
 const attempted = ref(false)
 const reviewing = ref(false)
 
+// selectedStartsAt permite reintentar con una alternativa (RN-CON-05,
+// DEC-090) sin recargar la página ni perder el resto del formulario.
+const selectedStartsAt = ref(props.startsAt)
+
+type ConfirmState = 'idle' | 'submitting' | 'confirmed' | 'schedule-conflict' | 'error'
+const confirmState = ref<ConfirmState>('idle')
+const confirmedAppointment = ref<ConfirmedPublicAppointment | null>(null)
+const alternatives = ref<PublicAppointmentAlternative[]>([])
+const errorMessage = ref('')
+// idempotencyKey se conserva mientras el reintento es la MISMA solicitud
+// (red/error inesperado, RN-IDE-01): un contenido distinto (editar, elegir
+// otra alternativa) siempre pide una clave nueva.
+const idempotencyKey = ref<string | null>(null)
+
 const formRef = ref<HTMLElement | null>(null)
 const summaryRef = ref<HTMLElement | null>(null)
+const confirmedRef = ref<HTMLElement | null>(null)
 
 const fieldErrors = computed(() => ({
   fullName: validateCustomerFullName(fullName.value),
@@ -87,8 +102,100 @@ async function handleSubmit() {
 
 async function editAgain() {
   reviewing.value = false
+  confirmState.value = 'idle'
+  alternatives.value = []
+  errorMessage.value = ''
+  idempotencyKey.value = null
   await nextTick()
   formRef.value?.querySelector<HTMLElement>('input, textarea')?.focus()
+}
+
+function formatLocalDateTime(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString('es-CO', {
+      dateStyle: 'full',
+      timeStyle: 'short',
+    })
+  } catch {
+    return iso
+  }
+}
+
+// CA-097-07: bloquea doble toque (confirmState guarda 'submitting' hasta
+// que el intento termina) y conserva los datos del formulario en
+// cualquier desenlace (nunca se limpian fuera de 'confirmed').
+async function handleConfirm() {
+  if (confirmState.value === 'submitting') return
+
+  if (!idempotencyKey.value) {
+    idempotencyKey.value = newIdempotencyKey()
+  }
+
+  confirmState.value = 'submitting'
+  errorMessage.value = ''
+
+  const outcome = await confirmPublicAppointment(
+    props.slug,
+    props.serviceId,
+    props.barberId,
+    {
+      startsAt: selectedStartsAt.value,
+      fullName: fullName.value.trim(),
+      phone: phone.value.trim(),
+      email: email.value.trim(),
+      note: note.value.trim() || null,
+      forSomeoneElse: attendeeChoice.value === 'other',
+      attendeeName: attendeeChoice.value === 'other' ? attendeeName.value.trim() : null,
+    },
+    idempotencyKey.value,
+  )
+
+  switch (outcome.kind) {
+    case 'success':
+      confirmedAppointment.value = outcome.appointment
+      confirmState.value = 'confirmed'
+      idempotencyKey.value = null
+      await nextTick()
+      confirmedRef.value?.focus()
+      return
+    case 'schedule-conflict':
+      alternatives.value = outcome.alternatives
+      confirmState.value = 'schedule-conflict'
+      idempotencyKey.value = null
+      return
+    case 'not-found':
+      errorMessage.value =
+        'Este enlace de reserva ya no está disponible. Vuelve a intentarlo desde el inicio.'
+      confirmState.value = 'error'
+      idempotencyKey.value = null
+      return
+    case 'validation-error':
+      errorMessage.value = outcome.detail
+      confirmState.value = 'error'
+      idempotencyKey.value = null
+      return
+    case 'idempotency-conflict':
+      errorMessage.value = 'Hubo un problema al procesar tu confirmación. Intenta de nuevo.'
+      confirmState.value = 'error'
+      idempotencyKey.value = null
+      return
+    case 'network-error':
+      errorMessage.value =
+        'No pudimos conectar con el servidor. Verifica tu conexión e intenta de nuevo.'
+      confirmState.value = 'error'
+      return
+    case 'unexpected-error':
+      errorMessage.value = 'Ocurrió un error inesperado. Intenta de nuevo.'
+      confirmState.value = 'error'
+      return
+  }
+}
+
+function chooseAlternative(startsAt: string) {
+  selectedStartsAt.value = startsAt
+  alternatives.value = []
+  confirmState.value = 'idle'
+  idempotencyKey.value = null
 }
 </script>
 
@@ -188,11 +295,17 @@ async function editAgain() {
         <BaseButton type="submit" variant="primary">Ver resumen</BaseButton>
       </form>
 
-      <!-- Resumen local, sin llamar al servidor (HU-097 no existe todavía):
-           permite revisar antes de que la confirmación real esté
-           disponible, sin insinuar que el turno ya quedó reservado
-           (RN-DIS-03). -->
-      <div v-else ref="summaryRef" class="customer-details__summary" role="status" tabindex="-1">
+      <!-- Resumen y confirmación real (HU-096/HU-097, CA-097-07): exige
+           confirmación explícita antes de reservar (RN-DIS-03), nunca
+           insinúa que el turno ya quedó reservado hasta que el servidor lo
+           confirme. -->
+      <div
+        v-else-if="confirmState !== 'confirmed'"
+        ref="summaryRef"
+        class="customer-details__summary"
+        role="status"
+        tabindex="-1"
+      >
         <h2 class="customer-details__summary-title">Revisa tus datos</h2>
         <dl class="customer-details__summary-list">
           <div class="customer-details__summary-row">
@@ -215,8 +328,87 @@ async function editAgain() {
             <dt>Nota</dt>
             <dd>{{ note }}</dd>
           </div>
+          <div class="customer-details__summary-row">
+            <dt>Fecha y hora</dt>
+            <dd>{{ formatLocalDateTime(selectedStartsAt) }}</dd>
+          </div>
         </dl>
-        <BaseButton type="button" variant="secondary" @click="editAgain">Editar</BaseButton>
+
+        <p
+          v-if="confirmState === 'error'"
+          class="customer-details__error customer-details__banner"
+          role="alert"
+        >
+          {{ errorMessage }}
+        </p>
+
+        <div
+          v-if="confirmState === 'schedule-conflict'"
+          class="customer-details__conflict"
+          role="alert"
+        >
+          <p>Ese horario se acaba de ocupar.</p>
+          <p v-if="alternatives.length > 0">Estas horas siguen libres:</p>
+          <ul v-if="alternatives.length > 0" class="customer-details__alternatives">
+            <li v-for="alt in alternatives" :key="alt.startsAt">
+              <BaseButton type="button" variant="soft" @click="chooseAlternative(alt.startsAt)">
+                {{ formatLocalDateTime(alt.startsAt) }}
+              </BaseButton>
+            </li>
+          </ul>
+          <p v-else>No quedan horarios cercanos disponibles. Elige otro día.</p>
+        </div>
+
+        <div class="customer-details__actions">
+          <BaseButton
+            type="button"
+            variant="secondary"
+            :disabled="confirmState === 'submitting'"
+            @click="editAgain"
+          >
+            Editar
+          </BaseButton>
+          <BaseButton
+            type="button"
+            variant="primary"
+            :loading="confirmState === 'submitting'"
+            @click="handleConfirm"
+          >
+            Confirmar turno
+          </BaseButton>
+        </div>
+      </div>
+
+      <!-- Confirmación real del servidor (CA-097-01, CA-097-07): el correo
+           con el enlace de acceso ya se envió; el token en claro solo
+           existe en esta respuesta (DEC-089), nunca se vuelve a mostrar. -->
+      <div
+        v-else
+        ref="confirmedRef"
+        class="customer-details__confirmed"
+        role="status"
+        tabindex="-1"
+      >
+        <h2 class="customer-details__summary-title">¡Tu turno quedó confirmado!</h2>
+        <dl v-if="confirmedAppointment" class="customer-details__summary-list">
+          <div class="customer-details__summary-row">
+            <dt>Barbería</dt>
+            <dd>{{ confirmedAppointment.barbershopName }}</dd>
+          </div>
+          <div class="customer-details__summary-row">
+            <dt>Servicio</dt>
+            <dd>{{ confirmedAppointment.serviceName }}</dd>
+          </div>
+          <div class="customer-details__summary-row">
+            <dt>Atiende a</dt>
+            <dd>{{ confirmedAppointment.attendeeName }}</dd>
+          </div>
+          <div class="customer-details__summary-row">
+            <dt>Fecha y hora</dt>
+            <dd>{{ formatLocalDateTime(confirmedAppointment.startsAt) }}</dd>
+          </div>
+        </dl>
+        <p>Te enviamos un correo con el enlace para consultar tu turno cuando quieras.</p>
       </div>
     </div>
   </main>
@@ -356,6 +548,48 @@ async function editAgain() {
   margin: 0;
   color: var(--color-text-primary);
   text-align: right;
+}
+
+.customer-details__banner {
+  margin: 0;
+  padding: var(--space-3);
+  background-color: var(--color-surface-muted);
+  border-radius: 4px;
+}
+
+.customer-details__conflict {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  background-color: var(--color-surface-muted);
+  border-radius: 4px;
+}
+
+.customer-details__alternatives {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.customer-details__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.customer-details__confirmed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background-color: var(--color-surface);
+  border: var(--border-width-normal) solid var(--color-border-subtle);
+  border-radius: 4px;
 }
 
 @media (min-width: 1024px) {

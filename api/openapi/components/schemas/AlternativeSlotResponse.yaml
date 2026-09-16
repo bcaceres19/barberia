@@ -1,0 +1,17 @@
+# Franja alternativa cronológicamente cercana a la que el cliente eligió y
+# perdió (HU-097, RN-CON-05, DEC-090). Misma forma que
+# AvailabilitySlotResponse.yaml: se declara aparte porque vive en un
+# contexto distinto (extensión de un Problem 409, no una lista de
+# disponibilidad 200).
+type: object
+properties:
+  startsAt:
+    type: string
+    format: date-time
+    description: >
+      Instante absoluto de un inicio todavía válido, mismo barbero y mismo
+      servicio que la franja perdida.
+    examples:
+      - "2026-09-20T14:30:00-05:00"
+required:
+  - startsAt

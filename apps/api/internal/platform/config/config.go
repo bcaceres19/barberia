@@ -208,6 +208,15 @@ type Config struct {
 	ResendFromAddress string
 	// ResendSubject es el asunto fijo del correo de recuperación.
 	ResendSubject string
+
+	// PublicWebBaseURL es el origen del frontend público (sin ruta ni barra
+	// final) que HU-097 usa para construir el enlace de acceso al turno
+	// dentro del correo de confirmación (F-PUB-07, DEC-089/DEC-091). Cadena
+	// vacía es una configuración válida (desarrollo sin frontend público
+	// desplegado todavía): el correo se envía sin enlace clicable en ese
+	// caso, nunca se bloquea el arranque ni la confirmación por su
+	// ausencia.
+	PublicWebBaseURL string
 }
 
 // Load lee la configuración desde variables de entorno y aplica valores por
@@ -374,6 +383,8 @@ func Load() (Config, error) {
 		ResendAPIKey:      getEnv("APP_RESEND_API_KEY", ""),
 		ResendFromAddress: getEnv("APP_RESEND_FROM_ADDRESS", ""),
 		ResendSubject:     getEnv("APP_RESEND_SUBJECT", "Código de recuperación de acceso"),
+
+		PublicWebBaseURL: getEnv("APP_PUBLIC_WEB_BASE_URL", ""),
 	}
 
 	if cfg.DatabaseURL == "" {
