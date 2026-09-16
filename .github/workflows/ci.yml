@@ -85,7 +85,8 @@ jobs:
                    20260827110000_create_appointment_core.sql \
                    20260911045044_add_barbershop_public_slug.sql \
                    20260911060000_add_barbershop_booking_policy.sql \
-                   20260915190000_create_appointment_access_token.sql; do
+                   20260915190000_create_appointment_access_token.sql \
+                   20260916120000_add_public_resolve_appointment_token_tenant.sql; do
             psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$f"
           done
           psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_app PASSWORD 'app_test';"
@@ -111,6 +112,7 @@ jobs:
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu092_seleccion_barbero.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu093_politica_reserva.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu094_disponibilidad.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu098_acceso_turno.sql
 
       - name: go test -race
         working-directory: apps/api

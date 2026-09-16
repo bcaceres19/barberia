@@ -1965,7 +1965,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Actor | Cliente con una franja elegida |
 | Depende de | `HU-095`; `DP-PUB-04` resuelta (`DEC-085`, 2026-09-11) |
 | Bloquea | `HU-097` |
-| Estado | Implementada; prompt `PROMPT-HU-096-v1` en `in_progress`, issue real [#266](https://github.com/bcaceres19/barberia/issues/266), rama `feat/266-hu096-datos-cliente` |
+| Estado | Implementada; prompt `PROMPT-HU-096-v1` en `executed`, issue real [#266](https://github.com/bcaceres19/barberia/issues/266), rama `feat/266-hu096-datos-cliente`, [PR #267](https://github.com/bcaceres19/barberia/pull/267) integrado en `main` |
 | Riesgo | Reconciliar contactos de forma ambigua puede unir personas distintas; pedir datos extra incumple minimización. |
 
 **Historia**
@@ -2010,7 +2010,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Actor | Cliente que confirma el resumen público |
 | Depende de | `HU-090`–`HU-096` integradas (satisfecho); `DP-PUB-05` resuelta (`DEC-089`, 2026-09-15); `DP-PUB-06` resuelta (`DEC-090`, 2026-09-15); `CT-011` resuelta (`DEC-091`, 2026-09-15) |
 | Bloquea | `HU-098`, `HU-099`, B5 |
-| Estado | Implementada; prompt `PROMPT-HU-097-v1` en `executed`, issue real [#268](https://github.com/bcaceres19/barberia/issues/268), rama `feat/268-hu-097-confirmacion-publica-concurrente`, [PR #270](https://github.com/bcaceres19/barberia/pull/270) sin integrar todavía |
+| Estado | Implementada; prompt `PROMPT-HU-097-v1` en `executed`, issue real [#268](https://github.com/bcaceres19/barberia/issues/268), rama `feat/268-hu-097-confirmacion-publica-concurrente`, [PR #270](https://github.com/bcaceres19/barberia/pull/270) integrado en `main` |
 | Riesgo | Una carrera mal resuelta crea dos citas o pierde datos; una confirmación parcial deja cita sin historial o acceso del cliente. |
 
 **Historia**
@@ -2058,7 +2058,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Actor | Cliente con enlace aleatorio del turno |
 | Depende de | `HU-097` integrada; `DP-PUB-05` resuelta (`DEC-089`, 2026-09-15); `CT-011` resuelta (`DEC-091`, 2026-09-15) |
 | Bloquea | `HU-099`, B5 |
-| Estado | Propuesta; prompt `PROMPT-HU-098-v1` en `draft`, dependencias de decisión satisfechas, pendiente de `HU-097` integrada e issue real |
+| Estado | Implementada; prompt `PROMPT-HU-098-v1` en `executed`, issue real [#271](https://github.com/bcaceres19/barberia/issues/271), rama `feat/271-hu-098-acceso-cliente-turno`, [PR #272](https://github.com/bcaceres19/barberia/pull/272) abierto pendiente de CI/merge |
 | Riesgo | Filtrar o registrar el token permite consultar/cancelar una cita ajena; una expiración inventada puede dejar al cliente sin acceso. |
 
 **Historia**

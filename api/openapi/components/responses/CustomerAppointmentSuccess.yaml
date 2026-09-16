@@ -1,0 +1,32 @@
+# Respuesta 200 de GET /customer/appointments/{token} (HU-098, CA-098-01).
+description: Lectura mínima del turno correspondiente a la credencial del enlace.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+  Cache-Control:
+    description: >
+      Siempre `no-store` (RN-DAT-02): evita que un caché compartido o del
+      navegador retenga el turno de otra persona que use el mismo equipo.
+    schema:
+      type: string
+      enum: [no-store]
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/CustomerAppointmentResponse.yaml'
+    examples:
+      turnoConfirmado:
+        summary: Turno confirmado, cancelación tardía permitida con motivo
+        value:
+          barbershopName: Barbería Ejemplo
+          timezone: America/Bogota
+          attendeeName: Cliente Ejemplo
+          serviceName: Corte clásico
+          durationMinutes: 30
+          barberName: Barbero Ejemplo
+          startsAt: "2027-03-15T15:00:00Z"
+          endsAt: "2027-03-15T15:30:00Z"
+          status: confirmed
+          cancellationDeadlineMinutes: 20
+          lateCancellationClientAllowed: true
+          lateCancellationReasonRequired: true

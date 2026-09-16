@@ -104,6 +104,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/customer/appointments/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar el turno del cliente mediante la credencial de su enlace
+         * @description Resuelve `token` -la credencial aleatoria larga que HU-097 emitió una sola vez dentro de la transacción de confirmación y envió por correo (DEC-089)- al turno correspondiente, sin sesión (HU-098, CA-098-01). El servidor nunca recibe ni compara el valor en claro directamente contra la base de datos: lo hashea con SHA-256 antes de resolver el tenant mediante `public_resolve_appointment_token_tenant`, la función `SECURITY DEFINER` estrecha que agrega la migración `20260916120000_add_public_resolve_appointment_token_tenant.sql` (mismo patrón exacto que `public_resolve_barbershop_by_slug`, HU-090). Un `token` con forma inválida, inexistente, vencido o ya revocado (al cancelar, HU-099, o al anonimizarse la cita, RN-DAT-03) produce EXACTAMENTE la misma respuesta `404` uniforme (CA-098-02, RN-TEN-01): esta operación nunca distingue la causa. La respuesta trae solo los datos mínimos ya autorizados por HU-098 (barbería, persona atendida, servicio, barbero, intervalo/zona, estado y política vigente de cancelación); nunca un identificador interno, contacto del cliente, nota, historial ni ningún otro turno (CA-098-03). `status` nunca implica que la falta de respuesta del cliente vaya a cancelar el turno (RN-CNF-02, CA-098-04).
+         */
+        get: operations["getCustomerAppointment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/public/auth/login": {
         parameters: {
             query?: never;
@@ -1621,6 +1641,70 @@ export interface components {
             /** @description Presente solo cuando `code` vale `slot-conflict`: hasta 3 franjas cronológicamente cercanas a la elegida, mismo barbero y mismo servicio (DEC-090). Vacío solo cuando la ventana pública vigente no tiene ninguna franja restante en absoluto. */
             alternatives?: components["schemas"]["AlternativeSlotResponse"][];
         };
+        /** @description Lectura mínima del turno del cliente, autenticada únicamente por la credencial del enlace (HU-098). Nunca incluye un identificador interno ni datos de contacto: el cliente ya los conoce, y exponerlos aquí no cumple ningún criterio de aceptación. */
+        CustomerAppointmentResponse: {
+            /**
+             * @description Nombre de la barbería, mismo campo que PublicBarbershopProfile.name.
+             * @example Barbería Ejemplo
+             */
+            barbershopName: string;
+            /**
+             * @description Zona horaria IANA de la barbería (RN-DIS-07). startsAt/endsAt viajan en UTC; el cliente los presenta en esta zona, nunca en la del dispositivo.
+             * @example America/Bogota
+             */
+            timezone: string;
+            /**
+             * @description Persona atendida (RN-RES-03), tal como quedó fijada al confirmar.
+             * @example Cliente Ejemplo
+             */
+            attendeeName: string;
+            /**
+             * @description Snapshot del nombre del servicio al confirmar (DEC-004), no el catálogo vigente.
+             * @example Corte clásico
+             */
+            serviceName: string;
+            /**
+             * @description Snapshot de la duración del servicio al confirmar (DEC-004).
+             * @example 30
+             */
+            durationMinutes: number;
+            /**
+             * @description Nombre del barbero asignado al turno.
+             * @example Barbero Ejemplo
+             */
+            barberName: string;
+            /**
+             * Format: date-time
+             * @description Instante absoluto de inicio del turno, en UTC.
+             */
+            startsAt: string;
+            /**
+             * Format: date-time
+             * @description Instante absoluto de fin del turno, en UTC.
+             */
+            endsAt: string;
+            /**
+             * @description Estado vigente del turno (docs/02-requisitos/estados-citas.md). `confirmed` NUNCA implica que la falta de respuesta del cliente vaya a cancelarlo (RN-CNF-02, CA-098-04).
+             * @example confirmed
+             * @enum {string}
+             */
+            status: "confirmed" | "completed" | "cancelled_by_customer" | "cancelled_by_barber" | "no_show";
+            /**
+             * @description Minutos de anticipación exigidos para cancelar sin política tardía (HU-093), medidos hacia atrás desde startsAt. Política VIGENTE de la barbería, no un valor fijado al reservar.
+             * @example 20
+             */
+            cancellationDeadlineMinutes: number;
+            /**
+             * @description Si el cliente puede cancelar después del plazo (HU-093, HU-099 la ejerce).
+             * @example true
+             */
+            lateCancellationClientAllowed: boolean;
+            /**
+             * @description Si una cancelación tardía exige motivo (HU-093, HU-099 la exige).
+             * @example true
+             */
+            lateCancellationReasonRequired: boolean;
+        };
         /** @description Solicitud de recuperación de acceso. */
         RecoveryRequestRequest: {
             /**
@@ -3003,6 +3087,18 @@ export interface components {
                 "application/json": components["schemas"]["ConfirmedPublicAppointmentResponse"];
             };
         };
+        /** @description Lectura mínima del turno correspondiente a la credencial del enlace. */
+        CustomerAppointmentSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                /** @description Siempre `no-store` (RN-DAT-02): evita que un caché compartido o del navegador retenga el turno de otra persona que use el mismo equipo. */
+                "Cache-Control"?: "no-store";
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["CustomerAppointmentResponse"];
+            };
+        };
         /** @description La solicitud fue recibida. Si la cuenta existe y tiene el teléfono verificado, se envía un código por WhatsApp oficial y correo; en cualquier otro caso no ocurre ningún envío, sin que la respuesta lo revele. */
         RecoveryRequestAccepted: {
             headers: {
@@ -3689,6 +3785,32 @@ export interface operations {
                 };
             };
             422: components["responses"]["ValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getCustomerAppointment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Credencial en claro del enlace de acceso al turno (DEC-089). No es un identificador interno: el servidor solo la usa para calcular su hash y resolver el tenant; nunca se registra ni persiste en claro (CA-098-02). */
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["CustomerAppointmentSuccess"];
+            /** @description `token` con forma inválida, inexistente, vencido o revocado, sin distinguir la causa (CA-098-02, RN-TEN-01). */
+            404: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             500: components["responses"]["InternalErrorProblem"];
         };
     };

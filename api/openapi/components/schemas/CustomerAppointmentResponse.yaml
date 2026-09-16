@@ -1,0 +1,104 @@
+# Proyección mínima del turno del cliente (HU-098, CA-098-01, CA-098-03):
+# nunca un identificador interno (id, barbershopId, appointmentId,
+# customerId), contacto del cliente, nota, historial ni ningún otro turno.
+# cancellationDeadlineMinutes/lateCancellation* son la política VIGENTE de
+# la barbería (misma forma que BookingPolicyResponse.yaml, HU-093), no un
+# valor fijado al reservar: cambia si la barbería edita su política después.
+type: object
+additionalProperties: false
+description: >
+  Lectura mínima del turno del cliente, autenticada únicamente por la
+  credencial del enlace (HU-098). Nunca incluye un identificador interno ni
+  datos de contacto: el cliente ya los conoce, y exponerlos aquí no cumple
+  ningún criterio de aceptación.
+properties:
+  barbershopName:
+    type: string
+    description: Nombre de la barbería, mismo campo que PublicBarbershopProfile.name.
+    maxLength: 120
+    examples:
+      - Barbería Ejemplo
+  timezone:
+    type: string
+    description: >
+      Zona horaria IANA de la barbería (RN-DIS-07). startsAt/endsAt viajan
+      en UTC; el cliente los presenta en esta zona, nunca en la del
+      dispositivo.
+    maxLength: 64
+    examples:
+      - America/Bogota
+  attendeeName:
+    type: string
+    description: Persona atendida (RN-RES-03), tal como quedó fijada al confirmar.
+    maxLength: 120
+    examples:
+      - Cliente Ejemplo
+  serviceName:
+    type: string
+    description: Snapshot del nombre del servicio al confirmar (DEC-004), no el catálogo vigente.
+    maxLength: 120
+    examples:
+      - Corte clásico
+  durationMinutes:
+    type: integer
+    description: Snapshot de la duración del servicio al confirmar (DEC-004).
+    minimum: 1
+    maximum: 1440
+    examples:
+      - 30
+  barberName:
+    type: string
+    description: Nombre del barbero asignado al turno.
+    maxLength: 120
+    examples:
+      - Barbero Ejemplo
+  startsAt:
+    type: string
+    format: date-time
+    description: Instante absoluto de inicio del turno, en UTC.
+  endsAt:
+    type: string
+    format: date-time
+    description: Instante absoluto de fin del turno, en UTC.
+  status:
+    type: string
+    description: >
+      Estado vigente del turno (docs/02-requisitos/estados-citas.md).
+      `confirmed` NUNCA implica que la falta de respuesta del cliente vaya a
+      cancelarlo (RN-CNF-02, CA-098-04).
+    enum: [confirmed, completed, cancelled_by_customer, cancelled_by_barber, no_show]
+    examples:
+      - confirmed
+  cancellationDeadlineMinutes:
+    type: integer
+    description: >
+      Minutos de anticipación exigidos para cancelar sin política tardía
+      (HU-093), medidos hacia atrás desde startsAt. Política VIGENTE de la
+      barbería, no un valor fijado al reservar.
+    minimum: 0
+    maximum: 10080
+    examples:
+      - 20
+  lateCancellationClientAllowed:
+    type: boolean
+    description: Si el cliente puede cancelar después del plazo (HU-093, HU-099 la ejerce).
+    examples:
+      - true
+  lateCancellationReasonRequired:
+    type: boolean
+    description: Si una cancelación tardía exige motivo (HU-093, HU-099 la exige).
+    examples:
+      - true
+required:
+  - barbershopName
+  - timezone
+  - attendeeName
+  - serviceName
+  - durationMinutes
+  - barberName
+  - startsAt
+  - endsAt
+  - status
+  - cancellationDeadlineMinutes
+  - lateCancellationClientAllowed
+  - lateCancellationReasonRequired

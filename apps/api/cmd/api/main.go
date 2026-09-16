@@ -23,6 +23,9 @@ import (
 	"system-barbershop/internal/modules/catalog"
 	cataloghttpapi "system-barbershop/internal/modules/catalog/httpapi"
 	catalogpostgres "system-barbershop/internal/modules/catalog/postgres"
+	"system-barbershop/internal/modules/customeraccess"
+	customeraccesshttpapi "system-barbershop/internal/modules/customeraccess/httpapi"
+	customeraccesspostgres "system-barbershop/internal/modules/customeraccess/postgres"
 	"system-barbershop/internal/modules/notification"
 	"system-barbershop/internal/modules/publicbooking"
 	publicbookinghttpapi "system-barbershop/internal/modules/publicbooking/httpapi"
@@ -448,6 +451,16 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	)
 	confirmPublicAppointmentHandler := publicbookinghttpapi.NewConfirmPublicAppointmentHandler(confirmationService, logger)
 	router.Post("/api/v1/public/barbershops/{slug}/services/{serviceId}/barbers/{barberId}/appointments", confirmPublicAppointmentHandler.ServeHTTP)
+
+	// HU-098: lectura del turno del cliente por el token de acceso que
+	// HU-097 ya emite. customeraccess tiene su propio adaptador postgres
+	// (no reutiliza bookingRepo ni publicBookingRepo): consulta
+	// appointment_access_token/appointment/barber/barbershop directamente,
+	// sin importar booking ni publicbooking (mismo criterio de
+	// independencia entre módulos que el resto de cmd/api).
+	customerAppointmentService := customeraccess.NewService(customeraccesspostgres.New(db))
+	getCustomerAppointmentHandler := customeraccesshttpapi.NewGetAppointmentHandler(customerAppointmentService)
+	router.Get("/api/v1/customer/appointments/{token}", getCustomerAppointmentHandler.ServeHTTP)
 
 	manualBookingService := booking.NewManualBookingService(
 		bookingRepo,
