@@ -1,9 +1,9 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.43"
+version: "1.44"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-11"
+ultima_actualizacion: "2026-09-15"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/reglas-negocio.md"
@@ -1965,7 +1965,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Actor | Cliente con una franja elegida |
 | Depende de | `HU-095`; `DP-PUB-04` resuelta (`DEC-085`, 2026-09-11) |
 | Bloquea | `HU-097` |
-| Estado | Propuesta; prompt `PROMPT-HU-096-v1` en `draft`, `issue: pending` |
+| Estado | Implementada; prompt `PROMPT-HU-096-v1` en `in_progress`, issue real [#266](https://github.com/bcaceres19/barberia/issues/266), rama `feat/266-hu096-datos-cliente` |
 | Riesgo | Reconciliar contactos de forma ambigua puede unir personas distintas; pedir datos extra incumple minimización. |
 
 **Historia**

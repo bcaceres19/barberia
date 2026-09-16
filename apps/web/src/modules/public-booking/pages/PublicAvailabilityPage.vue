@@ -331,6 +331,22 @@ const unexpectedErrorMessage = computed(() => {
         <p v-if="selectionSummary" class="availability__summary" role="status">
           Franja elegida: {{ selectionSummary }}
         </p>
+
+        <RouterLink
+          v-if="selectedSlot"
+          :to="{
+            name: 'reserva-publica-cliente',
+            params: {
+              slug: props.slug,
+              serviceId: props.serviceId,
+              barberId: props.barberId,
+              startsAt: selectedSlot.startsAt,
+            },
+          }"
+          class="availability__cta"
+        >
+          Continuar
+        </RouterLink>
       </template>
     </div>
   </main>
@@ -475,6 +491,38 @@ const unexpectedErrorMessage = computed(() => {
   background-color: var(--color-surface);
   border: var(--border-width-normal) solid var(--color-border-subtle);
   border-radius: 4px;
+}
+
+/* Mismo estilo de CTA que barber-selection__cta (PublicBarberSelectionPage,
+   HU-092): consistencia visual entre pasos consecutivos del mismo asistente
+   público, sin mockup asignado (DEC-078). */
+.availability__cta {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  justify-content: center;
+  height: var(--control-height-primary-mobile);
+  padding: 0 var(--space-5);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 500;
+  color: var(--color-on-strong);
+  text-decoration: none;
+  background-color: var(--color-action-primary);
+  border: var(--border-width-normal) solid var(--color-action-primary);
+  border-radius: 2px;
+}
+
+.availability__cta:hover {
+  background-color: var(--color-action-primary-hover);
+  border-color: var(--color-action-primary-hover);
+}
+
+.availability__cta:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--color-canvas),
+    0 0 0 4px var(--color-focus);
 }
 
 @media (min-width: 1024px) {
