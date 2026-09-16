@@ -12,8 +12,8 @@ issue: 266
 issue_url: "https://github.com/bcaceres19/barberia/issues/266"
 suggested_issue_title: "feat(public-booking): implementar HU-096 datos del cliente"
 branch: "feat/266-hu096-datos-cliente"
-pr: null
-pr_url: null
+pr: 267
+pr_url: "https://github.com/bcaceres19/barberia/pull/267"
 depends_on: ["HU-095 integrada (satisfecho, PR #255)", "DP-PUB-04 resuelta mediante DEC-085 (satisfecho)", "Issue real con CA-096-01 a CA-096-06 (satisfecho, issue #266)"]
 rules: ["RN-RES-01", "RN-RES-02", "RN-RES-03", "RN-DAT-01", "RN-DAT-02", "RN-TEN-01"]
 decisions: ["DEC-016", "DEC-022", "DEC-024", "DEC-045", "DEC-046", "DEC-077", "DEC-078", "DEC-079", "DEC-085"]
