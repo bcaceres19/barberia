@@ -2,6 +2,13 @@
 # docs/06-api/estandar-openapi.md (DEC-037). No se edita el bundle generado
 # en dist/; este archivo y los que referencia son la fuente.
 #
+# HU-098 agrega el tag CustomerAccess y su primera operación: GET
+# /customer/appointments/{token} (paths/customer-appointments.yaml), lectura
+# mínima del turno del cliente autenticada únicamente por la credencial del
+# enlace que HU-097 emitió (DEC-089), sin sesión (CA-098-01 a CA-098-06).
+# Consume public_resolve_appointment_token_tenant
+# (20260916120000_add_public_resolve_appointment_token_tenant.sql).
+#
 # HU-094 agrega la cuarta operación pública de reserva: GET
 # /public/barbershops/{slug}/services/{serviceId}/barbers/{barberId}/
 # availability (paths/public-booking.yaml), disponibilidad pública real sin
@@ -112,8 +119,14 @@ tags:
       (HU-091), selección pública de barbero (HU-092), disponibilidad
       pública real (HU-094) y confirmación pública concurrente e
       idempotente (HU-097). El acceso/cancelación del cliente mediante el
-      token emitido por HU-097 (HU-098/HU-099) vive bajo /customer, todavía
-      sin contenido.
+      token emitido por HU-097 vive en el tag CustomerAccess, bajo
+      /customer.
+  - name: CustomerAccess
+    description: >-
+      Acceso del cliente a su propio turno mediante la credencial aleatoria
+      larga del enlace que HU-097 envió por correo, sin sesión ni cuenta:
+      lectura mínima (HU-098). La cancelación por el cliente (HU-099) se
+      agrega después a este mismo tag.
 paths:
   /public/barbershops/{slug}:
     $ref: './paths/public-booking.yaml#/~1public~1barbershops~1{slug}'
@@ -125,6 +138,8 @@ paths:
     $ref: './paths/public-booking.yaml#/~1public~1barbershops~1{slug}~1services~1{serviceId}~1barbers~1{barberId}~1availability'
   /public/barbershops/{slug}/services/{serviceId}/barbers/{barberId}/appointments:
     $ref: './paths/public-booking.yaml#/~1public~1barbershops~1{slug}~1services~1{serviceId}~1barbers~1{barberId}~1appointments'
+  /customer/appointments/{token}:
+    $ref: './paths/customer-appointments.yaml#/~1customer~1appointments~1{token}'
   /public/auth/login:
     $ref: './paths/public-auth.yaml#/~1public~1auth~1login'
   /public/auth/challenge:

@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-096-v1"
 version: "1.0"
 kind: "hu"
-status: "in_progress"
+status: "executed"
 target_agents: ["codex", "claude"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
@@ -20,7 +20,7 @@ decisions: ["DEC-016", "DEC-022", "DEC-024", "DEC-045", "DEC-046", "DEC-077", "D
 acceptance_criteria: ["CA-096-01", "CA-096-02", "CA-096-03", "CA-096-04", "CA-096-05", "CA-096-06"]
 source_docs: ["AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "docs/00-control/registro-decisiones.md", "docs/00-control/dudas-pendientes.md", "docs/01-producto/alcance-mvp.md", "docs/01-producto/reglas-negocio.md", "docs/02-requisitos/historias-usuario.md", "docs/03-desarrollo/estandar-backend-go.md", "docs/03-desarrollo/estandar-frontend-vue.md", "docs/03-desarrollo/estandar-diseno-visual.md", "docs/03-desarrollo/estrategia-pruebas.md", "docs/05-backend/estandar-base-datos.md", "docs/06-api/estandar-openapi.md", "apps/api/internal/modules/publicbooking", "apps/web/src/modules/public-booking"]
 created_at: "2026-09-10"
-updated_at: "2026-09-15"
+updated_at: "2026-09-16"
 supersedes: null
 superseded_by: null
 ---

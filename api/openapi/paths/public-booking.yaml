@@ -5,8 +5,8 @@
 # agrega la confirmación pública concurrente e idempotente (T1 pública).
 # security: [] en cada operación, según docs/06-api/estandar-openapi.md.
 # El acceso/cancelación del cliente mediante el token emitido por HU-097
-# (HU-098/HU-099) vive en api/openapi/paths/customer-appointments.yaml,
-# todavía sin contenido.
+# vive en api/openapi/paths/customer-appointments.yaml (HU-098 agrega la
+# lectura; HU-099 agregará la cancelación).
 /public/barbershops/{slug}:
   get:
     tags: [PublicBooking]

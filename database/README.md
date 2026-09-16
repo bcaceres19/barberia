@@ -29,6 +29,7 @@ antes de agregar una migración.
 | `migrations/20260911045044_add_barbershop_public_slug.sql` | HU-090 · `barbershop.public_slug` (identificador del enlace público de reservas, único globalmente comparado sin distinguir mayúsculas, generado automáticamente desde el nombre) y `public_resolve_barbershop_by_slug`, función `SECURITY DEFINER` estrecha que resuelve un slug a un identificador de barbería sin RLS (`DEC-082`, resuelve `DP-PUB-01`) |
 | `migrations/20260911060000_add_barbershop_booking_policy.sql` | HU-093 · seis columnas tipadas en `barbershop` (`min_advance_minutes`, `max_advance_days`, `slot_grid_minutes`, `cancellation_deadline_minutes`, `late_cancellation_client_allowed`, `late_cancellation_reason_required`), rangos y default de `DEC-083`; sin tabla nueva ni política RLS nueva |
 | `migrations/20260915190000_create_appointment_access_token.sql` | HU-097 · `appointment_access_token` (token del enlace aleatorio largo con el que el cliente público consulta/cancela su turno; solo se persiste `SHA-256(token)`, vigencia 90 días sin rotación, `DEC-022`/`DEC-089`), copiada literal de la sección E.1 de `modelo-fisico-referencia.sql` sin la función de resolución pública por token (`public_resolve_appointment_token_tenant`, sección E.2), que queda para `HU-098`. RLS forzada; `SELECT`/`INSERT`/`UPDATE` sin `DELETE` (revocación es `UPDATE revoked_at`, RN-DAT-03) |
+| `migrations/20260916120000_add_public_resolve_appointment_token_tenant.sql` | HU-098 · `public_resolve_appointment_token_tenant(p_token_hash text) RETURNS uuid`, función `SECURITY DEFINER` estrecha que resuelve el hash del token de acceso al turno a un identificador de barbería sin RLS, mismo patrón exacto que `public_resolve_barbershop_by_slug` (HU-090); devuelve `NULL` si el hash no existe, ya expiró o ya fue revocado, sin distinguir la causa (CA-098-02) |
 | `migrations/atlas.sum` | Generado y validado con Atlas v1.3.0 |
 | `testdata/dos_barberias.sql` | Escenario de HU-001 con dos barberías |
 | `testdata/hu005_credenciales_sesiones.sql` | HU-005 · credenciales y una sesión vigente por barbería, sobre `dos_barberias.sql` |
@@ -40,6 +41,7 @@ antes de agregar una migración.
 | `testdata/hu041_excepciones.sql` | HU-041 · dos barberías DEDICADAS (`eeeeeeee.../ffffffff...`) con tres barberos, a las pruebas de `schedule/postgres` (excepciones de jornada y festivos) y `cmd/api`, separadas de `hu040_horario.sql` por el mismo motivo |
 | `testdata/hu042_bloqueos.sql` | HU-042 · dos barberías DEDICADAS (`b10c0001.../b10c0002...`, mnemónico "bloc") con tres barberos y un `staff_user` propio por barbería (exigido por `time_block.deleted_by`), a las pruebas de `schedule/postgres` (bloqueos y series) y `cmd/api`, separadas de `hu040_horario.sql`/`hu041_excepciones.sql` por el mismo motivo |
 | `testdata/hu060_citas.sql` | HU-060 · dos barberías DEDICADAS (`c17a0001.../c17a0002...`, mnemónico "cita") con tres barberos, un `staff_user` y un `service` propios por barbería, a las pruebas de `booking/postgres` y de `tests/hu060_citas.sql`, separadas de las suites anteriores por el mismo motivo (un conteo o una carrera de exclusión no debe depender de otras suites) |
+| `testdata/hu098_acceso_turno.sql` | HU-098 · dos barberías DEDICADAS (`00980001.../00980002...`) con un barbero y un servicio cada una y política de reserva/cancelación DELIBERADAMENTE distinta entre ambas, a las pruebas de `customeraccess/postgres`; la cita y el `appointment_access_token` de cada prueba se crean con `booking/postgres.Repository.CreateInternal` y SQL directo respectivamente, no aquí (mismo criterio que `insertSyntheticHistoryRow` en `booking/postgres/detail_repository_test.go`) |
 | `testdata/notification_lease_fixture.sql`, `testdata/customer_anonymization_fixture.sql`, `testdata/rls_suite_fixture.sql` | Fixtures de `modelo-fisico-referencia.sql` (issues #5, #6, #7) — no dependen de migraciones aplicadas más allá de las de arriba |
 | `tests/hu001_aislamiento_rls.sql` | CA-001-01 a CA-001-06 con el rol real |
 | `tests/hu005_aislamiento_credenciales_sesiones.sql` | HU-005 · `staff_credential`/`staff_session`/funciones `SECURITY DEFINER` con dos tenants y el rol real |
@@ -58,7 +60,7 @@ antes de agregar una migración.
 | `seeds/` | Vacío |
 | `modelo-fisico-referencia.sql` | Diseño completo de B1–B6. **No es una migración** |
 
-Están aplicadas las diecinueve migraciones listadas arriba. El resto del
+Están aplicadas las veinte migraciones listadas arriba. El resto del
 modelo —tokens de acceso público, notificaciones, anonimización— vive en
 [`modelo-fisico-referencia.sql`](modelo-fisico-referencia.sql) y se
 convierte en migración cuando se abre la historia que lo necesita. Escribirlo

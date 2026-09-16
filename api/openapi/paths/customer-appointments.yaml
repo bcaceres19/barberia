@@ -1,3 +1,77 @@
 # Operaciones de acceso del cliente mediante el token del enlace de su cita
-# (consultar y cancelar). Ver docs/06-api/estandar-openapi.md. Sin contenido
-# todavía.
+# (consultar y cancelar). Ver docs/06-api/estandar-openapi.md. HU-098 agrega
+# la primera: GET /customer/appointments/{token}, lectura mínima autenticada
+# únicamente por la credencial del enlace, sin sesión. La cancelación
+# (HU-099, T5) se agrega después en este mismo archivo.
+# security: [] en cada operación, según docs/06-api/estandar-openapi.md: la
+# audiencia customer no usa el esquema de sesión del barbero, la credencial
+# viaja en la ruta, no en una cabecera de autorización.
+/customer/appointments/{token}:
+  get:
+    tags: [CustomerAccess]
+    summary: Consultar el turno del cliente mediante la credencial de su enlace
+    description: >
+      Resuelve `token` -la credencial aleatoria larga que HU-097 emitió una
+      sola vez dentro de la transacción de confirmación y envió por correo
+      (DEC-089)- al turno correspondiente, sin sesión (HU-098, CA-098-01).
+      El servidor nunca recibe ni compara el valor en claro directamente
+      contra la base de datos: lo hashea con SHA-256 antes de resolver el
+      tenant mediante `public_resolve_appointment_token_tenant`, la función
+      `SECURITY DEFINER` estrecha que agrega la migración
+      `20260916120000_add_public_resolve_appointment_token_tenant.sql`
+      (mismo patrón exacto que `public_resolve_barbershop_by_slug`, HU-090).
+      Un `token` con forma inválida, inexistente, vencido o ya revocado
+      (al cancelar, HU-099, o al anonimizarse la cita, RN-DAT-03) produce
+      EXACTAMENTE la misma respuesta `404` uniforme (CA-098-02, RN-TEN-01):
+      esta operación nunca distingue la causa. La respuesta trae solo los
+      datos mínimos ya autorizados por HU-098 (barbería, persona atendida,
+      servicio, barbero, intervalo/zona, estado y política vigente de
+      cancelación); nunca un identificador interno, contacto del cliente,
+      nota, historial ni ningún otro turno (CA-098-03). `status` nunca
+      implica que la falta de respuesta del cliente vaya a cancelar el
+      turno (RN-CNF-02, CA-098-04).
+    operationId: getCustomerAppointment
+    security: []
+    x-business-rules: [RN-CNF-01, RN-CNF-02, RN-DAT-01, RN-DAT-02, RN-DAT-03, RN-TEN-01]
+    x-decisions: [DEC-016, DEC-022, DEC-024, DEC-025, DEC-049, DEC-077, DEC-078, DEC-079, DEC-089, DEC-091]
+    parameters:
+      - name: token
+        in: path
+        required: true
+        description: >
+          Credencial en claro del enlace de acceso al turno (DEC-089). No es
+          un identificador interno: el servidor solo la usa para calcular su
+          hash y resolver el tenant; nunca se registra ni persiste en claro
+          (CA-098-02).
+        schema:
+          type: string
+          maxLength: 256
+        examples:
+          token:
+            value: 3n9F1sQe2z8mM5wYtR7pL0oXhC4bV6dK1aE9jU2gN8i
+    responses:
+      "200":
+        $ref: '../components/responses/CustomerAppointmentSuccess.yaml'
+      "404":
+        description: >
+          `token` con forma inválida, inexistente, vencido o revocado, sin
+          distinguir la causa (CA-098-02, RN-TEN-01).
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              enlaceNoAccesible:
+                value:
+                  type: /api/v1/problems/not-found
+                  title: No encontrado
+                  status: 404
+                  detail: no existe un turno accesible con ese enlace
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: not-found
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
