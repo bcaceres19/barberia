@@ -2010,7 +2010,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Actor | Cliente que confirma el resumen público |
 | Depende de | `HU-090`–`HU-096` integradas (satisfecho); `DP-PUB-05` resuelta (`DEC-089`, 2026-09-15); `DP-PUB-06` resuelta (`DEC-090`, 2026-09-15); `CT-011` resuelta (`DEC-091`, 2026-09-15) |
 | Bloquea | `HU-098`, `HU-099`, B5 |
-| Estado | Implementada; prompt `PROMPT-HU-097-v1` en `in_progress`, issue real [#268](https://github.com/bcaceres19/barberia/issues/268), rama `feat/268-hu-097-confirmacion-publica-concurrente` |
+| Estado | Implementada; prompt `PROMPT-HU-097-v1` en `executed`, issue real [#268](https://github.com/bcaceres19/barberia/issues/268), rama `feat/268-hu-097-confirmacion-publica-concurrente`, [PR #270](https://github.com/bcaceres19/barberia/pull/270) sin integrar todavía |
 | Riesgo | Una carrera mal resuelta crea dos citas o pierde datos; una confirmación parcial deja cita sin historial o acceso del cliente. |
 
 **Historia**
