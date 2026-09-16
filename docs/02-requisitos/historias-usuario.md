@@ -2058,7 +2058,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Actor | Cliente con enlace aleatorio del turno |
 | Depende de | `HU-097` integrada; `DP-PUB-05` resuelta (`DEC-089`, 2026-09-15); `CT-011` resuelta (`DEC-091`, 2026-09-15) |
 | Bloquea | `HU-099`, B5 |
-| Estado | En progreso; prompt `PROMPT-HU-098-v1` en `in_progress`, issue real [#271](https://github.com/bcaceres19/barberia/issues/271), rama `feat/271-hu-098-acceso-cliente-turno` |
+| Estado | Implementada; prompt `PROMPT-HU-098-v1` en `executed`, issue real [#271](https://github.com/bcaceres19/barberia/issues/271), rama `feat/271-hu-098-acceso-cliente-turno`, [PR #272](https://github.com/bcaceres19/barberia/pull/272) abierto pendiente de CI/merge |
 | Riesgo | Filtrar o registrar el token permite consultar/cancelar una cita ajena; una expiración inventada puede dejar al cliente sin acceso. |
 
 **Historia**

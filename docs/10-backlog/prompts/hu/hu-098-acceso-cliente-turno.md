@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-098-v1"
 version: "1.0"
 kind: "hu"
-status: "in_progress"
+status: "executed"
 target_agents: ["codex", "claude"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
@@ -12,8 +12,8 @@ issue: 271
 issue_url: "https://github.com/bcaceres19/barberia/issues/271"
 suggested_issue_title: "feat(customer-access): implementar HU-098 acceso al turno"
 branch: "feat/271-hu-098-acceso-cliente-turno"
-pr: null
-pr_url: null
+pr: 272
+pr_url: "https://github.com/bcaceres19/barberia/pull/272"
 depends_on: ["HU-097 integrada (satisfecho, PR #270)", "DP-PUB-05 resuelta mediante DEC-089 (satisfecho)", "CT-011 resuelta mediante DEC-091 (satisfecho)", "Issue real con CA-098-01 a CA-098-06 (satisfecho, issue #271)"]
 rules: ["RN-CNF-01", "RN-CNF-02", "RN-DAT-01", "RN-DAT-02", "RN-DAT-03", "RN-TEN-01"]
 decisions: ["DEC-016", "DEC-022", "DEC-024", "DEC-025", "DEC-049", "DEC-077", "DEC-078", "DEC-079"]
