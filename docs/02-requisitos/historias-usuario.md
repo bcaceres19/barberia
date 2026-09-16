@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.44"
+version: "1.45"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-15"
@@ -2006,11 +2006,11 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | --- | --- |
 | Función | `F-PUB-04` (creación), `F-DISP-03` |
 | Reglas | `RN-RES-01`–`RN-RES-03`, `RN-DIS-03`–`RN-DIS-07`, `RN-CON-01`–`RN-CON-06`, `RN-CNF-01`, `RN-HIS-01`, `RN-IDE-01`, `RN-TEN-01` |
-| Decisiones | `DEC-005`–`DEC-008`, `DEC-012`, `DEC-013`, `DEC-016`, `DEC-019`, `DEC-020`, `DEC-022`, `DEC-024`, `DEC-041`–`DEC-046`, `DEC-073` |
+| Decisiones | `DEC-005`–`DEC-008`, `DEC-012`, `DEC-013`, `DEC-016`, `DEC-019`, `DEC-020`, `DEC-022`, `DEC-024`, `DEC-041`–`DEC-046`, `DEC-073`, `DEC-089`, `DEC-090`, `DEC-091` |
 | Actor | Cliente que confirma el resumen público |
-| Depende de | `HU-090`–`HU-096`; `DP-PUB-05` y `DP-PUB-06` resueltas; `CT-011` resuelta |
+| Depende de | `HU-090`–`HU-096` integradas (satisfecho); `DP-PUB-05` resuelta (`DEC-089`, 2026-09-15); `DP-PUB-06` resuelta (`DEC-090`, 2026-09-15); `CT-011` resuelta (`DEC-091`, 2026-09-15) |
 | Bloquea | `HU-098`, `HU-099`, B5 |
-| Estado | Propuesta; prompt `PROMPT-HU-097-v1` en `draft`, `issue: pending` |
+| Estado | Propuesta; prompt `PROMPT-HU-097-v1` en `draft`, dependencias satisfechas, pendiente de issue real |
 | Riesgo | Una carrera mal resuelta crea dos citas o pierde datos; una confirmación parcial deja cita sin historial o acceso del cliente. |
 
 **Historia**
@@ -2054,11 +2054,11 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | --- | --- |
 | Función | `F-PUB-07` |
 | Reglas | `RN-CNF-01`, `RN-CNF-02`, `RN-DAT-01`–`RN-DAT-03`, `RN-TEN-01` |
-| Decisiones | `DEC-016`, `DEC-022`, `DEC-024`, `DEC-025`, `DEC-049`, `DEC-077`–`DEC-079` |
+| Decisiones | `DEC-016`, `DEC-022`, `DEC-024`, `DEC-025`, `DEC-049`, `DEC-077`–`DEC-079`, `DEC-089`, `DEC-091` |
 | Actor | Cliente con enlace aleatorio del turno |
-| Depende de | `HU-097`; `DP-PUB-05` y `CT-011` resueltas |
+| Depende de | `HU-097` integrada; `DP-PUB-05` resuelta (`DEC-089`, 2026-09-15); `CT-011` resuelta (`DEC-091`, 2026-09-15) |
 | Bloquea | `HU-099`, B5 |
-| Estado | Propuesta; prompt `PROMPT-HU-098-v1` en `draft`, `issue: pending` |
+| Estado | Propuesta; prompt `PROMPT-HU-098-v1` en `draft`, dependencias de decisión satisfechas, pendiente de `HU-097` integrada e issue real |
 | Riesgo | Filtrar o registrar el token permite consultar/cancelar una cita ajena; una expiración inventada puede dejar al cliente sin acceso. |
 
 **Historia**
@@ -2070,7 +2070,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 - Pantalla posterior a la creación y ruta `/customer` autenticada solo por credencial aleatoria larga.
 - Lectura mínima de la cita, barbería, persona atendida, servicio, barbero, intervalo/zona, estado y política vigente de cancelación.
 - Token almacenado solo como hash, respuesta uniforme para inválido/expirado/revocado y redacción de URL en logs.
-- Emisión, vigencia, rotación, revocación y entrega por correo según `DP-PUB-05`/`CT-011`; no se inventan.
+- Emisión, vigencia, rotación, revocación y entrega por correo según `DEC-089`/`DEC-091` (resuelven `DP-PUB-05`/`CT-011`).
 
 **Alcance excluido**
 
@@ -2100,11 +2100,11 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | --- | --- |
 | Función | `F-PUB-08`, consumo de `F-CITA-07` |
 | Reglas | `RN-CAN-01`–`RN-CAN-04`, `RN-CIT-03`, `RN-HIS-01`, `RN-HIS-02`, `RN-DIS-04`, `RN-IDE-01`, `RN-TEN-01` |
-| Decisiones | `DEC-010`–`DEC-012`, `DEC-014`, `DEC-016`–`DEC-018`, `DEC-022`, `DEC-024`, `DEC-041`, `DEC-043` |
+| Decisiones | `DEC-010`–`DEC-012`, `DEC-014`, `DEC-016`–`DEC-018`, `DEC-022`, `DEC-024`, `DEC-041`, `DEC-043`, `DEC-083`, `DEC-089` |
 | Actor | Cliente con acceso válido a su turno |
-| Depende de | `HU-093`, `HU-094`, `HU-098`; `DP-PUB-02`/`DP-PUB-05` resueltas |
+| Depende de | `HU-093`/`HU-094` integradas (satisfecho); `HU-098` integrada; `DP-PUB-02` resuelta (`DEC-083`, satisfecho); `DP-PUB-05` resuelta (`DEC-089`, 2026-09-15) |
 | Bloquea | Criterio de salida de B4 y efectos de B5 |
-| Estado | Propuesta; prompt `PROMPT-HU-099-v1` en `draft`, `issue: pending` |
+| Estado | Propuesta; prompt `PROMPT-HU-099-v1` en `draft`, dependencias de decisión satisfechas, pendiente de `HU-098` integrada e issue real |
 | Riesgo | Evaluar el plazo en el navegador o aplicar mal la política cancela compromisos sin autorización o deja una franja bloqueada. |
 
 **Historia**

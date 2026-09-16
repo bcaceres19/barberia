@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.30"
+version: "1.31"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-13"
+ultima_actualizacion: "2026-09-15"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -1002,3 +1002,33 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** volver a los hooks `post-commit`/`post-checkout` o a `graphify watch` (coste continuo); tarea programada con cron (actualiza aunque nadie consulte); criterio manual sin script (no verificable).
 - **Documentos afectados:** `AGENTS.md`, `CLAUDE.md`, `.agents/skills/graphify-refresh/`, `.claude/skills/graphify-refresh/`, `tools/ai/graphify-freshness.sh` y `docs/00-control/historial-cambios.md`.
 - **Fuente:** instrucción explícita del propietario del 2026-09-13 de generar un skill que actualice Graphify en los momentos recomendados; issue [#264](https://github.com/bcaceres19/barberia/issues/264).
+
+### DEC-089 · Resolución de `DP-PUB-05`: entropía, vigencia, rotación y revocación del token de acceso al turno
+
+- **Fecha:** 2026-09-15.
+- **Decisión:** el token de acceso público al turno (`F-PUB-07`, `appointment_access_token`) se genera como 32 bytes aleatorios criptográficos (256 bits, `crypto/rand`), viaja una sola vez en la URL del enlace enviado por correo y el servidor conserva únicamente `SHA-256(token)` en `token_hash` -mismo criterio que ya fija `database/modelo-fisico-referencia.sql` sección E.1-. Vigencia: 90 días desde `issued_at`, sin rotación en cada consulta (el mismo enlace sirve para toda su vigencia; leer o cancelar el turno no emite un token nuevo). Revocación: inmediata al anonimizar la cita (ya exigido por `DEC-049`) y al cancelarla (`HU-099`). Emisión: una sola vez, dentro de la misma transacción atómica que `HU-097` usa para confirmar la cita; el MVP no ofrece reemisión ni reenvío del enlace.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** 256 bits de entropía hacen inviable la fuerza bruta sin necesitar HMAC (a diferencia del código numérico de recuperación de `DEC-064`, cuyo espacio de 10⁶ sí lo exige); 90 días cubre consultar la cita, su política de cancelación y el historial reciente sin dejar el enlace vigente indefinidamente; no rotar evita que el cliente pierda acceso si vuelve a abrir el mismo correo días después; emitir una sola vez en la transacción de confirmación evita una superficie de reemisión no aprobada por ninguna historia.
+- **Alternativas descartadas:** vigencia de 30 días (más estricta, pero corta el acceso a una política de cancelación o un historial que el cliente aún podría necesitar consultar); token de un solo uso que rota en cada acceso (más restrictivo, pero rompe "volver a ver mi turno" desde el mismo enlace guardado); reenvío del enlace por contacto verificado (amplía el alcance de `HU-098` con una operación y una superficie de abuso nuevas, sin que ninguna historia lo pida).
+- **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-PUB-05`), `docs/02-requisitos/historias-usuario.md` (`HU-097`, `HU-098`, `HU-099`), `docs/10-backlog/prompts/hu/{hu-097-confirmacion-publica-concurrente.md,hu-098-acceso-cliente-turno.md,hu-099-cancelacion-publica.md}`.
+- **Fuente:** decisión explícita del propietario del 2026-09-15 (opción recomendada, `AskUserQuestion`), issue documental [#240](https://github.com/bcaceres19/barberia/issues/240).
+
+### DEC-090 · Resolución de `DP-PUB-06`: orden y acotación de las franjas alternativas tras perder una carrera de confirmación
+
+- **Fecha:** 2026-09-15.
+- **Decisión:** al perder la carrera de confirmación de una franja (`HU-097`, `RN-CON-05`), el servidor calcula, dentro del mismo barbero y el mismo servicio, hasta 3 franjas válidas cronológicamente más cercanas a la elegida (antes o después, dentro de la ventana pública vigente). Si el día civil de la franja perdida ya no tiene ninguna franja libre restante, la búsqueda salta directo al primer inicio disponible del siguiente día con franjas, siempre con el mismo barbero -nunca ofrece otro barbero ni otro servicio.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** mantiene el contexto que el cliente ya eligió (mismo barbero, mismo servicio) en vez de forzarlo a decidir de nuevo desde cero; acotar a 3 evita una lista larga que retrase la recuperación de un conflicto que ya de por sí es una interrupción; saltar al siguiente día con franjas evita una respuesta vacía cuando el día completo se agotó.
+- **Alternativas descartadas:** incluir otros barberos elegibles del mismo servicio cuando el elegido no tiene nada cercano (más útil en el caso límite, pero introduce un cambio implícito de barbero que ninguna historia pide y complica la UI/las pruebas); no calcular alternativas y reenviar a la pantalla completa de disponibilidad de `HU-095` (más simple de construir, pero pierde el contexto de "casi lo lograste" que motiva `RN-CON-05`).
+- **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-PUB-06`), `docs/01-producto/reglas-negocio.md` (`RN-CON-05`), `docs/02-requisitos/historias-usuario.md` (`HU-097`), `docs/10-backlog/prompts/hu/hu-097-confirmacion-publica-concurrente.md`.
+- **Fuente:** decisión explícita del propietario del 2026-09-15 (opción recomendada, `AskUserQuestion`), issue documental [#240](https://github.com/bcaceres19/barberia/issues/240).
+
+### DEC-091 · Resolución de `CT-011`: secuencia entre la confirmación por correo de B4 y la maquinaria de notificaciones de B5
+
+- **Fecha:** 2026-09-15.
+- **Decisión:** `HU-097` adelanta a B4 el envío mínimo del correo de confirmación con el enlace de acceso al turno (`F-PUB-07`), usando directamente el proveedor ya integrado y verificado en producción (Resend, `PROMPT-TEST-OTP-EMAIL-RESEND-v1`) sin cola, reintentos automáticos ni selección de proveedor -un envío síncrono simple dentro (o inmediatamente después de) la transacción de confirmación-. B5 construye después, sobre esa base ya funcionando, la maquinaria completa de notificaciones (transacción propia, reintentos, múltiples proveedores y recordatorios) sin que `HU-097` deba reescribirse.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** de las cuatro opciones registradas en `contradicciones.md` (CT-011), esta es la de menor riesgo y menor alcance: reutiliza infraestructura de envío de correo ya probada con código real (OTP vía Resend) en vez de inventar una nueva, no exige adelantar todo el núcleo transaccional de B5 ni posponer el envío real a una fase futura sin fecha, y no simula un envío (el correo sale de verdad).
+- **Alternativas descartadas:** dividir `F-PUB-07` para que B4 solo muestre el enlace en pantalla y B5 complete el correo real antes del piloto (el cliente puede perder el enlace si cierra la pestaña antes de que B5 exista); adelantar el núcleo transaccional completo de B5 para que B4 lo consuma desde el inicio (amplía el alcance y el tiempo antes de poder cerrar `HU-097` sin necesidad, dado que un envío síncrono simple ya es suficiente para el piloto).
+- **Documentos afectados:** `docs/00-control/contradicciones.md` (cierra `CT-011`), `docs/00-control/dudas-pendientes.md`, `docs/01-producto/alcance-mvp.md` (`F-PUB-07`), `docs/10-backlog/plan-bloques.md` (B4/B5), `docs/02-requisitos/historias-usuario.md` (`HU-097`, `HU-098`), `docs/10-backlog/prompts/hu/{hu-097-confirmacion-publica-concurrente.md,hu-098-acceso-cliente-turno.md}`.
+- **Fuente:** decisión explícita del propietario del 2026-09-15 (opción recomendada, `AskUserQuestion`), issue documental [#240](https://github.com/bcaceres19/barberia/issues/240).
