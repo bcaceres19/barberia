@@ -30,6 +30,7 @@ func New(db *database.DB) *Repository {
 
 var _ publicbooking.Repository = (*Repository)(nil)
 var _ publicbooking.AvailabilityRepository = (*Repository)(nil)
+var _ publicbooking.CustomerRepository = (*Repository)(nil)
 
 // ResolveBySlug implementa publicbooking.Repository.ResolveBySlug en dos
 // pasos, exactamente el patrón ya establecido por
@@ -348,4 +349,57 @@ func (r *Repository) ListPublicBarbers(ctx context.Context, slug string, service
 		return publicbooking.PublicBarberListResult{}, false, fmt.Errorf("publicbooking/postgres: read public barbers: %w", err)
 	}
 	return result, true, nil
+}
+
+// FindCustomerMatches implementa publicbooking.CustomerRepository.
+// FindCustomerMatches (HU-096, DEC-085): dos lecturas independientes dentro
+// de la misma transacción tenant-aware, una por phone y otra por email,
+// ambas excluyendo un customer ya anonimizado (RN-DAT-03: una fila
+// anonimizada perdió su identidad de contacto real, así que nunca puede ser
+// la reconciliación correcta de un dato nuevo). barbershopID ya llegó
+// resuelto por el llamador (mismo criterio que ListOccupiedIntervals): este
+// puerto no resuelve slug.
+func (r *Repository) FindCustomerMatches(ctx context.Context, barbershopID, phone, email string) (*string, *string, error) {
+	var phoneMatchID, emailMatchID *string
+	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
+		// Variables separadas para cada lectura: tomar &phoneID/&emailID
+		// evita que ambas coincidencias terminen apuntando a la misma
+		// dirección de memoria si se reutilizara una sola variable.
+		var phoneID string
+		err := q.QueryRow(ctx,
+			`SELECT id FROM customer
+			  WHERE barbershop_id = $1 AND anonymized_at IS NULL AND phone = $2
+			  LIMIT 1`,
+			barbershopID, phone,
+		).Scan(&phoneID)
+		switch {
+		case err == nil:
+			phoneMatchID = &phoneID
+		case errors.Is(err, pgx.ErrNoRows):
+			// sin coincidencia por teléfono.
+		default:
+			return fmt.Errorf("find customer match by phone: %w", err)
+		}
+
+		var emailID string
+		err = q.QueryRow(ctx,
+			`SELECT id FROM customer
+			  WHERE barbershop_id = $1 AND anonymized_at IS NULL AND email = $2
+			  LIMIT 1`,
+			barbershopID, email,
+		).Scan(&emailID)
+		switch {
+		case err == nil:
+			emailMatchID = &emailID
+		case errors.Is(err, pgx.ErrNoRows):
+			// sin coincidencia por correo.
+		default:
+			return fmt.Errorf("find customer match by email: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("publicbooking/postgres: buscar coincidencias de customer: %w", err)
+	}
+	return phoneMatchID, emailMatchID, nil
 }

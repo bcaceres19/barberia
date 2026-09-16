@@ -20,6 +20,12 @@ vi.mock('@/shared/api/httpClient', () => ({
 
 const { default: PublicAvailabilityPage } = await import('../PublicAvailabilityPage.vue')
 
+// RouterLink stubbed en vez de un router real (mismo patrón que
+// PublicBarberSelectionPage.test.ts): esta suite verifica el componente en
+// aislamiento, no el enrutamiento, y el CTA "Continuar" (HU-096) navega a
+// la captura de datos del cliente con la franja ya elegida.
+const RouterLinkStub = { name: 'RouterLink', props: ['to'], template: '<a><slot /></a>' }
+
 const SERVICE_A = '8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4'
 const BARBER_A = 'a1111111-1111-1111-1111-111111111111'
 const BARBER_B = 'b2222222-2222-2222-2222-222222222222'
@@ -48,7 +54,7 @@ function availabilityFixture(overrides: Partial<Record<string, unknown>> = {}) {
 }
 
 function mountAvailabilityPage(props: { slug: string; serviceId: string; barberId: string }) {
-  return mount(PublicAvailabilityPage, { props })
+  return mount(PublicAvailabilityPage, { props, global: { stubs: { RouterLink: RouterLinkStub } } })
 }
 
 beforeEach(() => {
@@ -161,6 +167,36 @@ describe('PublicAvailabilityPage', () => {
     expect(summary).toContain('2:00 p. m.')
     expect(summary).toContain(TIMEZONE)
     expect(summary).toContain('30 min')
+  })
+
+  it('shows the "Continuar" CTA to HU-096 only after selecting a slot, carrying the full context', async () => {
+    getMock.mockResolvedValueOnce({
+      data: availabilityFixture(),
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mountAvailabilityPage({
+      slug: 'barberia-ejemplo',
+      serviceId: SERVICE_A,
+      barberId: BARBER_A,
+    })
+    await flushPromises()
+
+    expect(wrapper.findComponent(RouterLinkStub).exists()).toBe(false)
+
+    await wrapper.findAll('[role="radio"]')[0]!.trigger('click')
+
+    const cta = wrapper.findComponent(RouterLinkStub)
+    expect(cta.exists()).toBe(true)
+    expect(cta.props('to')).toEqual({
+      name: 'reserva-publica-cliente',
+      params: {
+        slug: 'barberia-ejemplo',
+        serviceId: SERVICE_A,
+        barberId: BARBER_A,
+        startsAt: '2026-09-15T19:00:00Z',
+      },
+    })
   })
 
   it('keeps a slot selected on another day when navigating away and back (CA-095-04)', async () => {

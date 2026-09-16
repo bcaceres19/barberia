@@ -78,6 +78,23 @@ type AvailabilityRepository interface {
 	ListOccupiedIntervals(ctx context.Context, barbershopID, barberID string, from, to time.Time) (starts []time.Time, ends []time.Time, err error)
 }
 
+// CustomerRepository es el puerto de identidad pública (HU-096) que
+// ReconcilePublicCustomer necesita: buscar, dentro de barbershopID, si
+// phone y/o email ya pertenecen a un customer existente (DEC-085, resuelve
+// DP-PUB-04). Deliberadamente separado de Repository/AvailabilityRepository
+// -ninguna de esas operaciones toca la tabla customer- y sin método de
+// escritura: HU-096 solo define la política; HU-097 persiste dentro de su
+// propia transacción atómica.
+type CustomerRepository interface {
+	// FindCustomerMatches busca, dentro de barbershopID, un customer no
+	// anonimizado cuyo phone coincida (phoneMatchID) y, por separado, uno
+	// cuyo email coincida (emailMatchID) -EXACTAMENTE la forma ya
+	// normalizada que el cliente dio. Cualquiera de los dos puede volver
+	// nil si no hay coincidencia; pueden apuntar al mismo id o a ids
+	// distintos (RN-TEN-01: la búsqueda nunca cruza barbershopID).
+	FindCustomerMatches(ctx context.Context, barbershopID, phone, email string) (phoneMatchID, emailMatchID *string, err error)
+}
+
 // EffectiveDaySegmentsLimit acota cuántos tramos por día puede devolver
 // EffectiveDayPort antes de que Service los descarte como una respuesta
 // inesperada: ninguna jornada real declara tantos tramos (HU-040/HU-041
