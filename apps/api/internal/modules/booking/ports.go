@@ -48,6 +48,33 @@ type Repository interface {
 		fingerprint idempotency.Fingerprint,
 	) (CreateManualResult, error)
 
+	// CreatePublic ejecuta T1 pública (HU-097) dentro de UNA sola
+	// transacción tenant-aware protegida por el protocolo de idempotencia
+	// reutilizable de HU-004 (RN-IDE-01, DEC-043): Begin, la reconciliación
+	// de cliente ya decidida por input.Customer/CustomerUpdatePhone/
+	// CustomerUpdateEmail (DEC-085, sin repetir el Find dentro de la
+	// transacción -a diferencia de CreateManual-: publicbooking ya lo hizo
+	// justo antes de llamar aquí, y repetirlo exigiría duplicar su
+	// consulta de dos coincidencias independientes por teléfono y por
+	// correo dentro de este paquete; la ventana de carrera residual solo
+	// puede duplicar una fila de `customer`, nunca una cita), el INSERT de
+	// la cita `confirmed` de origen `public`, el INSERT del evento
+	// appointment_created con actor `customer` (CustomerID resuelto aquí
+	// mismo, nunca antes) y el INSERT de appointment_access_token
+	// (DEC-089), y Complete. Un exclusion_violation/deadlock de la
+	// restricción de exclusión de PostgreSQL (RN-CON-03) se traduce a
+	// apperr.KindScheduleConflict (apperr.ScheduleConflict), distinto de
+	// apperr.KindConflict (conflicto de unicidad de `customer`): publicbooking
+	// reconoce el Kind para decidir si calcula alternativas (DEC-090), sin
+	// que este paquete necesite conocer publicbooking.
+	CreatePublic(
+		ctx context.Context,
+		barbershopID string,
+		input CreatePublicInput,
+		key idempotency.Key,
+		fingerprint idempotency.Fingerprint,
+	) (CreatePublicResult, error)
+
 	// ListDailyAgenda lee, dentro de barbershopID y del único barberID
 	// pedido (DEC-074), las citas cuyo intervalo [starts_at, ends_at)
 	// interseca [rangeStart, rangeEnd) (DEC-075: rangeStart/rangeEnd ya

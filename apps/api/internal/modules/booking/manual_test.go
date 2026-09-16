@@ -45,6 +45,10 @@ func (f *fakeManualRepository) CreateManual(ctx context.Context, barbershopID st
 	return f.createFn(ctx, barbershopID, input, key, fingerprint)
 }
 
+func (f *fakeManualRepository) CreatePublic(context.Context, string, booking.CreatePublicInput, idempotency.Key, idempotency.Fingerprint) (booking.CreatePublicResult, error) {
+	panic("no usado por ManualBookingService")
+}
+
 func (f *fakeManualRepository) ListDailyAgenda(context.Context, string, string, time.Time, time.Time) ([]booking.DailyAgendaEntry, error) {
 	panic("no usado por ManualBookingService")
 }

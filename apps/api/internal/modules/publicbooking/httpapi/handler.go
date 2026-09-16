@@ -6,13 +6,18 @@
 package httpapi
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
+	"io"
+	"log/slog"
 	"net/http"
 	"strconv"
 
 	"system-barbershop/internal/modules/publicbooking"
 	"system-barbershop/internal/platform/apperr"
 	"system-barbershop/internal/platform/httpserver"
+	"system-barbershop/internal/platform/idempotency"
 )
 
 // slugParam es el nombre del parámetro de ruta que cmd/api.buildRouter
@@ -229,4 +234,128 @@ func newAvailabilityResponse(result publicbooking.AvailabilityResult) Availabili
 		Timezone:        result.Timezone,
 		SlotGridMinutes: result.SlotGridMinutes,
 	}
+}
+
+// writeUnknownFieldOrInvalidJSONProblem cubre un cuerpo JSON malformado o
+// con un campo desconocido, mismo criterio de rechazo estricto que
+// bookinghttpapi.writeUnknownFieldOrInvalidJSONProblem (duplicado a
+// propósito: publicbooking/httpapi no importa booking/httpapi, CA-002-06).
+func writeUnknownFieldOrInvalidJSONProblem(w http.ResponseWriter, requestID string) {
+	httpserver.WriteProblem(w, httpserver.Translate(
+		apperr.Invalid("cuerpo JSON inválido o con un campo desconocido"), requestID))
+}
+
+// ConfirmPublicAppointmentHandler expone POST /public/barbershops/{slug}/
+// services/{serviceId}/barbers/{barberId}/appointments (HU-097, T1
+// pública), protegido por el protocolo de idempotencia reutilizable de
+// HU-004 (RN-IDE-01, DEC-043). Igual que los otros handlers públicos, no
+// lee ningún principal de sesión: slug/serviceId/barberId (de la ruta) y el
+// cuerpo son toda la entrada.
+type ConfirmPublicAppointmentHandler struct {
+	service *publicbooking.ConfirmationService
+	logger  *slog.Logger
+}
+
+// NewConfirmPublicAppointmentHandler construye el handler de confirmación
+// pública. logger registra únicamente un fallo de entrega del correo de
+// confirmación, sin destinatario, código ni enlace (RN-DAT-02, DEC-091),
+// mismo criterio que auth/httpapi.RecoveryRequestHandler.
+func NewConfirmPublicAppointmentHandler(service *publicbooking.ConfirmationService, logger *slog.Logger) *ConfirmPublicAppointmentHandler {
+	return &ConfirmPublicAppointmentHandler{service: service, logger: logger}
+}
+
+// ServeHTTP implementa http.Handler.
+func (h *ConfirmPublicAppointmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+
+	slug := httpserver.URLParam(r, slugParam)
+	serviceID := httpserver.URLParam(r, serviceIDParam)
+	barberID := httpserver.URLParam(r, barberIDParam)
+
+	// 1. Cabecera: obligatoria, validada antes de tocar PostgreSQL o leer el
+	//    cuerpo (mismo orden que bookinghttpapi.CreateManualAppointmentHandler).
+	key, err := httpserver.IdempotencyKeyFromRequest(r)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	// 2. Cuerpo CRUDO, leído una sola vez: la huella de idempotencia debe
+	//    calcularse sobre los bytes exactos recibidos.
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+			return
+		}
+		httpserver.WriteProblem(w, httpserver.Translate(apperr.Invalid("cuerpo de la solicitud ilegible"), requestID))
+		return
+	}
+
+	var req ConfirmPublicAppointmentRequest
+	dec := json.NewDecoder(bytes.NewReader(body))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
+		writeUnknownFieldOrInvalidJSONProblem(w, requestID)
+		return
+	}
+	if dec.More() {
+		writeUnknownFieldOrInvalidJSONProblem(w, requestID)
+		return
+	}
+
+	fingerprint := httpserver.IdempotencyFingerprint(r, body)
+
+	result, emailErr, err := h.service.ConfirmAppointment(r.Context(), publicbooking.ConfirmPublicAppointmentInput{
+		Slug:        slug,
+		ServiceID:   serviceID,
+		BarberID:    barberID,
+		StartsAtRaw: req.StartsAt,
+		Identity: publicbooking.CustomerIdentityInput{
+			FullName:       req.FullName,
+			Phone:          req.Phone,
+			Email:          req.Email,
+			Note:           req.Note,
+			ForSomeoneElse: req.ForSomeoneElse,
+			AttendeeName:   req.AttendeeName,
+		},
+	}, key, fingerprint)
+	if err != nil {
+		var conflict *publicbooking.ScheduleConflictError
+		if errors.As(err, &conflict) {
+			writeScheduleConflictProblem(w, requestID, conflict)
+			return
+		}
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+	if emailErr != nil {
+		// El resultado se descarta deliberadamente para la respuesta (la
+		// cita ya quedó confirmada, DEC-091); solo se registra sin
+		// destinatario, código ni enlace (RN-DAT-02).
+		h.logger.WarnContext(r.Context(), "publicbooking: fallo al enviar el correo de confirmación", "requestId", requestID)
+	}
+
+	switch result.Decision.Outcome {
+	case idempotency.OutcomeProceed, idempotency.OutcomeReplay:
+		httpserver.WriteStoredResponse(w, result.Response)
+	default:
+		httpserver.WriteProblem(w, httpserver.Translate(result.Decision.AsError(), requestID))
+	}
+}
+
+// writeScheduleConflictProblem escribe el 409 de RN-CON-05/DEC-090:
+// httpserver.Translate calcula la parte segura y común (type/title/code/
+// status/detail); esta función solo agrega `alternatives` (RFC 9457,
+// extensión abierta que Problem.yaml ya declara) antes de codificar.
+func writeScheduleConflictProblem(w http.ResponseWriter, requestID string, conflict *publicbooking.ScheduleConflictError) {
+	problem := httpserver.Translate(conflict, requestID)
+	alternatives := make([]AlternativeSlotResponse, 0, len(conflict.Alternatives))
+	for _, alt := range conflict.Alternatives {
+		alternatives = append(alternatives, AlternativeSlotResponse{StartsAt: alt.StartsAt})
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(problem.Status)
+	_ = json.NewEncoder(w).Encode(ScheduleConflictProblemResponse{Problem: problem, Alternatives: alternatives})
 }

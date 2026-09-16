@@ -404,8 +404,9 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	// BusyBlocksPort (ambos métodos viven en el mismo adaptador, HU-040/
 	// HU-042), por eso se pasa dos veces con el mismo valor.
 	scheduleAvailability := schedule.NewAvailabilityLookup(scheduleService)
+	publicBookingRepo := publicbookingpostgres.New(db)
 	publicAvailabilityService := publicbooking.NewAvailabilityService(
-		publicbookingpostgres.New(db),
+		publicBookingRepo,
 		scheduleAvailability,
 		scheduleAvailability,
 		shops.NewAvailabilityBookingPolicy(bookingPolicyService),
@@ -425,6 +426,29 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	// shops.NewTimezoneLookup): booking nunca importa esos tres módulos, ni
 	// viceversa (mismo criterio que catalog/schedule frente a staff, HU-023).
 	bookingRepo := bookingpostgres.New(db, idempotency.NewSQLCoordinator())
+
+	// HU-097: confirmación pública concurrente. ConfirmationService
+	// (publicbooking, dueño del flujo público) colabora con booking SOLO a
+	// través de PublicAppointmentPort (booking.NewPublicAppointmentAdapter,
+	// que reutiliza bookingRepo.CreatePublic sin duplicar SQL) y con
+	// notification SOLO a través de ConfirmationEmailPort
+	// (selectConfirmationEmailSender, mismo criterio que
+	// selectRecoverySender frente a HU-008): publicbooking nunca importa
+	// booking ni notification.
+	confirmationService := publicbooking.NewConfirmationService(
+		publicBookingRepo,
+		publicBookingRepo,
+		publicAvailabilityService,
+		catalog.NewManualBookingCatalog(catalogService, assignmentService),
+		publicBookingRepo,
+		booking.NewPublicAppointmentAdapter(bookingRepo),
+		selectConfirmationEmailSender(cfg, logger),
+		clock.System{},
+		cfg.PublicWebBaseURL,
+	)
+	confirmPublicAppointmentHandler := publicbookinghttpapi.NewConfirmPublicAppointmentHandler(confirmationService, logger)
+	router.Post("/api/v1/public/barbershops/{slug}/services/{serviceId}/barbers/{barberId}/appointments", confirmPublicAppointmentHandler.ServeHTTP)
+
 	manualBookingService := booking.NewManualBookingService(
 		bookingRepo,
 		catalog.NewManualBookingCatalog(catalogService, assignmentService),
@@ -600,6 +624,23 @@ func selectRecoverySender(cfg config.Config, logger *slog.Logger) auth.RecoveryC
 	default:
 		return auth.NewLoggingRecoveryCodeSender(logger)
 	}
+}
+
+// selectConfirmationEmailSender decide qué publicbooking.ConfirmationEmailPort
+// usa HU-097 (DEC-091): el adaptador real de Resend cuando las credenciales
+// están completas (cualquier ambiente), o un marcador de posición que solo
+// registra en el log en su ausencia (típicamente local/test, mismo
+// criterio que selectRecoverySender). A diferencia de selectRecoverySender,
+// no hay remitente dual: DEC-091 fija Resend como único proveedor para el
+// correo de confirmación.
+func selectConfirmationEmailSender(cfg config.Config, logger *slog.Logger) publicbooking.ConfirmationEmailPort {
+	if cfg.ResendAPIKey != "" && cfg.ResendFromAddress != "" {
+		return notification.NewResendConfirmationEmailSender(notification.ResendConfirmationEmailConfig{
+			APIKey:      cfg.ResendAPIKey,
+			FromAddress: cfg.ResendFromAddress,
+		}, nil)
+	}
+	return notification.NewLoggingConfirmationEmailSender(logger)
 }
 
 // selectPhoneChallengeSender decide qué [auth.PhoneCodeSender] usa HU-007.

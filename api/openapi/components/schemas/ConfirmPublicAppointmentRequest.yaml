@@ -1,0 +1,75 @@
+# Cuerpo de POST /public/barbershops/{slug}/services/{serviceId}/barbers/
+# {barberId}/appointments (HU-097, T1 pública). Cerrado: el handler rechaza
+# cualquier campo desconocido. Nunca declara barbershopId, customerId,
+# status, origin, precio, duración ni ningún otro dato que el servidor
+# derive o revalide (CA-097-02).
+type: object
+description: >
+  Confirma la reserva pública elegida en los pasos anteriores (HU-091,
+  HU-092, HU-094, HU-096). `startsAt` debe ser exactamente uno de los
+  instantes que `GET .../availability` devolvió; el servidor lo revalida de
+  nuevo contra la jornada, los bloqueos y la ventana pública vigentes antes
+  de persistir (CA-097-02), y contra la restricción de exclusión de
+  PostgreSQL como última defensa (RN-CON-03). Si la franja ya no está
+  disponible, la respuesta es `409` con alternativas cercanas (RN-CON-05,
+  DEC-090); los datos del formulario nunca se pierden en ese caso.
+properties:
+  startsAt:
+    type: string
+    format: date-time
+    description: >
+      Instante absoluto elegido, tal como lo devolvió `GET .../availability`
+      (nunca una hora civil, a diferencia de
+      `CreateManualAppointmentRequest.startsAt`).
+    examples:
+      - "2026-09-20T14:00:00-05:00"
+  fullName:
+    type: string
+    minLength: 1
+    maxLength: 120
+    description: Nombre del cliente que reserva (HU-096).
+    examples:
+      - Carlos Restrepo
+  phone:
+    type: string
+    pattern: '^\+[1-9][0-9]{7,14}$'
+    description: >
+      Teléfono del cliente en formato E.164, obligatorio en el flujo
+      público (a diferencia de la creación manual, RN-CIT-02 no aplica
+      aquí): la reserva pública siempre necesita poder contactar al
+      cliente.
+    examples:
+      - "+573001234567"
+  email:
+    type: string
+    format: email
+    description: Correo del cliente, obligatorio en el flujo público.
+    examples:
+      - carlos.restrepo@example.com
+  note:
+    type: [string, "null"]
+    maxLength: 500
+    description: Nota opcional visible solo para el equipo de la barbería.
+    examples:
+      - Prefiere máquina 2 en los laterales.
+  forSomeoneElse:
+    type: boolean
+    default: false
+    description: >
+      Si el turno es para una persona distinta de quien reserva (RN-RES-03).
+      `false` deriva `attendeeName` del propio cliente sin pedirlo dos veces
+      (CA-096-01).
+  attendeeName:
+    type: [string, "null"]
+    maxLength: 120
+    description: >
+      Nombre de la persona atendida. Obligatorio y no vacío cuando
+      `forSomeoneElse` es `true`; ignorado en caso contrario.
+    examples:
+      - Ana Gómez
+required:
+  - startsAt
+  - fullName
+  - phone
+  - email
+additionalProperties: false

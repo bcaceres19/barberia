@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-097-v1"
 version: "1.0"
 kind: "hu"
-status: "ready"
+status: "executed"
 target_agents: ["codex", "claude"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
@@ -11,9 +11,9 @@ related_hu: ["HU-004", "HU-060", "HU-061", "HU-090", "HU-091", "HU-092", "HU-093
 issue: 268
 issue_url: "https://github.com/bcaceres19/barberia/issues/268"
 suggested_issue_title: "feat(public-booking): implementar HU-097 confirmación concurrente"
-branch: null
-pr: null
-pr_url: null
+branch: "feat/268-hu-097-confirmacion-publica-concurrente"
+pr: 270
+pr_url: "https://github.com/bcaceres19/barberia/pull/270"
 depends_on: ["HU-090 a HU-096 integradas (satisfecho)", "DP-PUB-05 resuelta mediante DEC-089 (satisfecho)", "DP-PUB-06 resuelta mediante DEC-090 (satisfecho)", "CT-011 resuelta mediante DEC-091 (satisfecho)", "Issue real con CA-097-01 a CA-097-07 (satisfecho, issue #268)"]
 rules: ["RN-RES-01", "RN-RES-02", "RN-RES-03", "RN-DIS-03", "RN-DIS-04", "RN-DIS-05", "RN-DIS-06", "RN-DIS-07", "RN-CON-01", "RN-CON-02", "RN-CON-03", "RN-CON-04", "RN-CON-05", "RN-CON-06", "RN-CNF-01", "RN-HIS-01", "RN-IDE-01", "RN-TEN-01"]
 decisions: ["DEC-005", "DEC-006", "DEC-007", "DEC-008", "DEC-012", "DEC-013", "DEC-016", "DEC-019", "DEC-020", "DEC-022", "DEC-024", "DEC-041", "DEC-043", "DEC-045", "DEC-046", "DEC-073", "DEC-085", "DEC-089", "DEC-090", "DEC-091"]

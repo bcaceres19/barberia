@@ -1,6 +1,10 @@
 package httpapi
 
-import "time"
+import (
+	"time"
+
+	"system-barbershop/internal/platform/httpserver"
+)
 
 // PublicBarbershopProfileResponse es la representación pública mínima de
 // una barbería habilitada (HU-090, CA-090-01, CA-090-04), forma exacta del
@@ -57,6 +61,62 @@ type PublicBarberListResponse struct {
 // forma exacta del componente OpenAPI AvailabilitySlotResponse.yaml.
 type AvailabilitySlotResponse struct {
 	StartsAt time.Time `json:"startsAt"`
+}
+
+// ConfirmPublicAppointmentRequest es el cuerpo de POST /public/barbershops/
+// {slug}/services/{serviceId}/barbers/{barberId}/appointments (HU-097).
+// Cerrado: el handler rechaza cualquier campo desconocido. Nunca declara
+// barbershopId, customerId, status, origin, precio, duración ni ningún
+// otro dato que el servidor derive o revalide (CA-097-02); startsAt es el
+// instante absoluto ISO 8601 que el cliente eligió de entre los `slots` de
+// HU-094 (nunca una hora civil, a diferencia de CreateManualAppointmentRequest).
+type ConfirmPublicAppointmentRequest struct {
+	StartsAt       string  `json:"startsAt"`
+	FullName       string  `json:"fullName"`
+	Phone          string  `json:"phone"`
+	Email          string  `json:"email"`
+	Note           *string `json:"note"`
+	ForSomeoneElse bool    `json:"forSomeoneElse"`
+	AttendeeName   *string `json:"attendeeName"`
+}
+
+// ConfirmedPublicAppointmentResponse es la respuesta 201 de HU-097, forma
+// exacta que booking/postgres.publicAppointmentResponseWire serializa
+// dentro de la transacción atómica (idempotency_record.response_body):
+// ambas deben coincidir campo a campo (mismo criterio que
+// AppointmentResponse.yaml frente a manualAppointmentResponseWire).
+// accessToken viaja EN CLARO, la única vez que existe fuera de la
+// transacción (DEC-089); nunca vuelve a aparecer en ninguna otra respuesta.
+type ConfirmedPublicAppointmentResponse struct {
+	AttendeeName    string  `json:"attendeeName"`
+	BarbershopName  string  `json:"barbershopName"`
+	ServiceName     string  `json:"serviceName"`
+	DurationMinutes int     `json:"durationMinutes"`
+	PriceAmount     string  `json:"priceAmount"`
+	Currency        string  `json:"currency"`
+	StartsAt        string  `json:"startsAt"`
+	EndsAt          string  `json:"endsAt"`
+	Timezone        string  `json:"timezone"`
+	AccessToken     string  `json:"accessToken"`
+	CustomerNote    *string `json:"customerNote"`
+}
+
+// AlternativeSlotResponse es una franja alternativa (RN-CON-05, DEC-090),
+// misma forma que AvailabilitySlotResponse.
+type AlternativeSlotResponse struct {
+	StartsAt time.Time `json:"startsAt"`
+}
+
+// ScheduleConflictProblemResponse extiende httpserver.Problem con
+// `alternatives` (RFC 9457, extensión abierta: Problem.yaml declara
+// additionalProperties abierto exactamente para este caso). Nunca se
+// construye a mano fuera de writeScheduleConflictProblem: Translate sigue
+// siendo el único punto que decide type/title/code/status/detail seguros
+// (CA-003-02); esta forma solo agrega el dato público adicional que
+// Translate no puede conocer.
+type ScheduleConflictProblemResponse struct {
+	httpserver.Problem
+	Alternatives []AlternativeSlotResponse `json:"alternatives"`
 }
 
 // AvailabilityResponse es la respuesta completa de HU-094: los inicios

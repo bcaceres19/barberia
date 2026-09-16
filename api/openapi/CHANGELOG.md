@@ -4,6 +4,29 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.21.0] - 2026-09-15
+
+### Agregado
+
+- `POST /public/barbershops/{slug}/services/{serviceId}/barbers/{barberId}/appointments`
+  (`operationId: confirmPublicAppointment`, `CA-097-01` a `CA-097-07`, tag
+  `PublicBooking`): confirmación pública concurrente e idempotente (`HU-097`,
+  T1 pública), protegida con `Idempotency-Key` (`RN-IDE-01`, `DEC-043`).
+  Revalida barbería/servicio/asignación, jornada, bloqueos y política de
+  reserva vigentes contra PostgreSQL real antes de persistir (`CA-097-02`);
+  la restricción de exclusión de PostgreSQL (`RN-CON-03`) es la última
+  defensa contra una carrera entre confirmaciones simultáneas por la misma
+  franja (`RN-CON-01`, `RN-CON-02`). Reconcilia el cliente por teléfono y
+  correo (`DEC-085`), emite el token de acceso al turno
+  (`appointment_access_token`, 256 bits, hash SHA-256, vigencia 90 días,
+  `DEC-089`) dentro de la misma transacción atómica, y envía un único
+  correo de confirmación síncrono con el enlace de acceso (Resend,
+  `DEC-091`). `201` (`ConfirmedPublicAppointmentResponse`, con
+  `accessToken` en claro una única vez), `400`, `404` (mismo criterio
+  uniforme que `CA-090-02`/`CA-092-03`), `409` (`slot-conflict` con hasta 3
+  `alternatives` cronológicamente cercanas, `RN-CON-05`/`DEC-090`, o los
+  conflictos de idempotencia ya conocidos), `422`, `500`.
+
 ## [0.20.0] - 2026-09-11
 
 ### Agregado

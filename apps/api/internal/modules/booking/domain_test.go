@@ -223,6 +223,12 @@ func (s *stubRepository) CreateManual(
 	return booking.CreateManualResult{}, nil
 }
 
+func (s *stubRepository) CreatePublic(
+	_ context.Context, _ string, _ booking.CreatePublicInput, _ idempotency.Key, _ idempotency.Fingerprint,
+) (booking.CreatePublicResult, error) {
+	panic("no usado")
+}
+
 func (s *stubRepository) ListDailyAgenda(
 	_ context.Context, _, _ string, _, _ time.Time,
 ) ([]booking.DailyAgendaEntry, error) {

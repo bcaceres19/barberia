@@ -3,6 +3,8 @@ package publicbooking
 import (
 	"context"
 	"time"
+
+	"system-barbershop/internal/platform/idempotency"
 )
 
 // Repository es el puerto de resolución pública del módulo. El núcleo no
@@ -153,6 +155,75 @@ type ServiceAssignmentPort interface {
 	ActiveAssignedService(ctx context.Context, barbershopID, barberID, serviceID string) (
 		name string, durationMinutes int, priceAmountCents int64, currency string, found bool, err error,
 	)
+}
+
+// PublicAppointmentPort ejecuta T1 pública (HU-097) dentro de UNA sola
+// transacción atómica protegida por el protocolo de idempotencia
+// reutilizable de HU-004 (RN-IDE-01, DEC-043): reconcilia el cliente según
+// la decisión ya tomada por ConfirmationService (DEC-085), inserta la cita
+// `confirmed` de origen `public` con sus snapshots, el evento
+// appointment_created y el token de acceso (DEC-089), todo o nada. Firma
+// con tipos universales únicamente (mismo criterio que BarberServicePort/
+// ServiceAssignmentPort): el adaptador real vive en el paquete booking
+// (booking.NewPublicAppointmentAdapter), que reutiliza su propia primitiva
+// transaccional (booking.Repository.CreatePublic) sin duplicar SQL;
+// publicbooking nunca importa booking (CA-002-06).
+//
+// customerExistingID no nil reutiliza ese cliente (sobrescribiendo
+// customerUpdatePhone/customerUpdateEmail cuando no son nil, el campo que
+// no participó en la coincidencia, DEC-085); nil crea un cliente nuevo con
+// customerFullName/customerPhone/customerEmail/customerNote.
+// tokenPlain/tokenHash/tokenIssuedAt/tokenExpiresAt ya llegan calculados
+// por Service (crypto/rand + SHA-256, DEC-089): este puerto persiste solo
+// el hash, pero necesita tokenPlain para incluirlo, una única vez, en la
+// respuesta almacenada de idempotencia. Un error cuyo apperr.As expone
+// Kind == apperr.KindScheduleConflict señala que la restricción de
+// exclusión de PostgreSQL (RN-CON-03) rechazó la franja (RN-CON-05):
+// ConfirmationService lo reconoce por ese Kind (apperr es un paquete de
+// plataforma, no un módulo hermano), sin que este paquete importe booking.
+type PublicAppointmentPort interface {
+	CreatePublicAppointment(
+		ctx context.Context,
+		barbershopID, barbershopName, timezone string,
+		barberID, serviceID string,
+		startsAt, endsAt time.Time,
+		attendeeName string,
+		serviceName string,
+		durationMinutes int,
+		priceAmountCents int64,
+		currency string,
+		customerNote *string,
+		customerExistingID *string,
+		customerUpdatePhone *string,
+		customerUpdateEmail *string,
+		customerFullName, customerPhone, customerEmail string,
+		tokenPlain, tokenHash string,
+		tokenIssuedAt, tokenExpiresAt time.Time,
+		key idempotency.Key,
+		fingerprint idempotency.Fingerprint,
+	) (decision idempotency.Decision, stored idempotency.StoredResponse, err error)
+}
+
+// ConfirmationEmailPort entrega el correo de confirmación de HU-097
+// (F-PUB-07, DEC-091): envío síncrono simple, un único intento, sin cola ni
+// reintentos, reutilizando el proveedor de correo ya integrado y verificado
+// en producción (Resend). El adaptador real vive en el paquete notification
+// (notification.NewResendConfirmationEmailSender), que satisface esta
+// interfaz de forma puramente estructural (mismo criterio que
+// notification.DualChannelRecoverySender frente al puerto de auth):
+// publicbooking nunca importa notification. Un error de entrega NUNCA
+// revierte la transacción ya comprometida (DEC-091, "dentro o
+// inmediatamente después de" la transacción): ConfirmAppointment ya
+// devolvió éxito al cliente cuando este puerto se invoca; el llamador HTTP
+// solo registra el fallo en el log (mismo criterio que
+// auth.RecoveryService.Request frente a RecoveryCodeSender).
+type ConfirmationEmailPort interface {
+	SendConfirmation(
+		ctx context.Context,
+		email, barbershopName, serviceName, attendeeName string,
+		startsAtLocalFormatted string,
+		accessLink string,
+	) error
 }
 
 // AvailabilityTimezonePort resuelve la zona IANA vigente de barbershopID

@@ -100,46 +100,10 @@ func (s *AvailabilityService) ListPublicAvailability(ctx context.Context, rawSlu
 		return AvailabilityResult{}, nil
 	}
 
-	timezone, err := s.timezones.Timezone(ctx, barbershopID)
-	if err != nil {
-		return AvailabilityResult{}, apperr.Internal(fmt.Errorf("publicbooking: resolver zona horaria para disponibilidad: %w", err))
-	}
-	loc, err := time.LoadLocation(timezone)
-	if err != nil {
-		return AvailabilityResult{}, apperr.Internal(fmt.Errorf("publicbooking: zona horaria irresoluble para disponibilidad: %w", err))
-	}
-
-	minAdvanceMinutes, maxAdvanceDays, slotGridMinutes, err := s.policy.BookingPolicy(ctx, barbershopID)
-	if err != nil {
-		return AvailabilityResult{}, apperr.Internal(fmt.Errorf("publicbooking: resolver política de reserva para disponibilidad: %w", err))
-	}
-	if maxAdvanceDays <= 0 || slotGridMinutes <= 0 {
-		return AvailabilityResult{}, apperr.Internal(fmt.Errorf("publicbooking: política de reserva con valores no positivos"))
-	}
-
-	now := s.clock.Now()
-	earliestStart := now.Add(time.Duration(minAdvanceMinutes) * time.Minute)
-	latestStart := now.AddDate(0, 0, maxAdvanceDays)
-
-	fromDate := civilDateOnly(now.In(loc))
-	toDate := civilDateOnly(latestStart.In(loc))
-
-	segments, err := s.resolveSegments(ctx, barbershopID, rawBarberID, fromDate, toDate, loc)
+	starts, timezone, slotGridMinutes, err := s.computeAvailableStarts(ctx, barbershopID, rawBarberID, durationMinutes)
 	if err != nil {
 		return AvailabilityResult{}, err
 	}
-
-	busy, err := s.resolveBusyIntervals(ctx, barbershopID, rawBarberID, fromDate, toDate, timezone, now, latestStart)
-	if err != nil {
-		return AvailabilityResult{}, err
-	}
-
-	starts := availability.GenerateStarts(segments, busy, availability.Policy{
-		ServiceDuration: time.Duration(durationMinutes) * time.Minute,
-		GridStep:        time.Duration(slotGridMinutes) * time.Minute,
-		EarliestStart:   earliestStart,
-		LatestStart:     latestStart,
-	})
 
 	slots := make([]AvailabilitySlot, 0, len(starts))
 	for _, t := range starts {
@@ -152,6 +116,62 @@ func (s *AvailabilityService) ListPublicAvailability(ctx context.Context, rawSlu
 		Timezone:        timezone,
 		SlotGridMinutes: slotGridMinutes,
 	}, nil
+}
+
+// computeAvailableStarts calcula, para barberID/durationMinutes YA
+// verificados (asignación activa vigente) dentro de barbershopID, el mismo
+// conjunto de inicios públicos válidos que ListPublicAvailability expone
+// (HU-094): única fuente de verdad reutilizada tal cual por
+// ConfirmationService (HU-097) para revalidar la franja elegida al
+// confirmar (CA-097-02) y para calcular alternativas cronológicamente
+// cercanas cuando la carrera se pierde (RN-CON-05, DEC-090) — ninguna otra
+// copia de esta lógica debe existir en el paquete.
+func (s *AvailabilityService) computeAvailableStarts(
+	ctx context.Context,
+	barbershopID, barberID string,
+	durationMinutes int,
+) (starts []time.Time, timezone string, slotGridMinutes int, err error) {
+	timezone, err = s.timezones.Timezone(ctx, barbershopID)
+	if err != nil {
+		return nil, "", 0, apperr.Internal(fmt.Errorf("publicbooking: resolver zona horaria para disponibilidad: %w", err))
+	}
+	loc, err := time.LoadLocation(timezone)
+	if err != nil {
+		return nil, "", 0, apperr.Internal(fmt.Errorf("publicbooking: zona horaria irresoluble para disponibilidad: %w", err))
+	}
+
+	minAdvanceMinutes, maxAdvanceDays, slotGridMinutes, err := s.policy.BookingPolicy(ctx, barbershopID)
+	if err != nil {
+		return nil, "", 0, apperr.Internal(fmt.Errorf("publicbooking: resolver política de reserva para disponibilidad: %w", err))
+	}
+	if maxAdvanceDays <= 0 || slotGridMinutes <= 0 {
+		return nil, "", 0, apperr.Internal(fmt.Errorf("publicbooking: política de reserva con valores no positivos"))
+	}
+
+	now := s.clock.Now()
+	earliestStart := now.Add(time.Duration(minAdvanceMinutes) * time.Minute)
+	latestStart := now.AddDate(0, 0, maxAdvanceDays)
+
+	fromDate := civilDateOnly(now.In(loc))
+	toDate := civilDateOnly(latestStart.In(loc))
+
+	segments, err := s.resolveSegments(ctx, barbershopID, barberID, fromDate, toDate, loc)
+	if err != nil {
+		return nil, "", 0, err
+	}
+
+	busy, err := s.resolveBusyIntervals(ctx, barbershopID, barberID, fromDate, toDate, timezone, now, latestStart)
+	if err != nil {
+		return nil, "", 0, err
+	}
+
+	starts = availability.GenerateStarts(segments, busy, availability.Policy{
+		ServiceDuration: time.Duration(durationMinutes) * time.Minute,
+		GridStep:        time.Duration(slotGridMinutes) * time.Minute,
+		EarliestStart:   earliestStart,
+		LatestStart:     latestStart,
+	})
+	return starts, timezone, slotGridMinutes, nil
 }
 
 // civilDateOnly trunca t a medianoche civil en su propia ubicación: la

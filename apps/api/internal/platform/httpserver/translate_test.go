@@ -156,6 +156,23 @@ func TestTranslate_Conflict_MapsTo409DistinctFromIdempotencyConflict(t *testing.
 	}
 }
 
+func TestTranslate_ScheduleConflict_MapsTo409WithSlotConflictCode(t *testing.T) {
+	p := httpserver.Translate(apperr.ScheduleConflict("la franja elegida ya no está disponible"), "req-11")
+
+	if p.Status != http.StatusConflict {
+		t.Fatalf("expected 409, got %d", p.Status)
+	}
+	if p.Code != "slot-conflict" {
+		t.Fatalf("expected code slot-conflict, got %q", p.Code)
+	}
+	if p.Code == "conflict" {
+		t.Fatalf("schedule conflict must not reuse the generic conflict code (HU-097, RN-CON-05)")
+	}
+	if p.Detail != "la franja elegida ya no está disponible" {
+		t.Fatalf("expected the safe message to pass through, got %q", p.Detail)
+	}
+}
+
 func TestTranslate_MaxBytesError_MapsToPayloadTooLarge(t *testing.T) {
 	err := &http.MaxBytesError{Limit: httpserver.MaxRequestBodyBytes}
 

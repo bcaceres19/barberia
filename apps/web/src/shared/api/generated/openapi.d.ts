@@ -84,6 +84,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/barbershops/{slug}/services/{serviceId}/barbers/{barberId}/appointments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirmar públicamente el turno elegido (T1 pública)
+         * @description Confirma en el acto (RN-CNF-01) el turno público que el cliente armó en los pasos anteriores (HU-091, HU-092, HU-094, HU-096), protegido con clave de idempotencia (RN-IDE-01, DEC-043): repetir el mismo `POST` con la misma `Idempotency-Key` y el mismo cuerpo devuelve la misma representación creada sin crear una segunda cita ni un segundo correo. El servidor revalida todo contra PostgreSQL real -barbería, asignación de servicio/barbero, jornada efectiva, bloqueos vigentes, política de reserva vigente y que `startsAt` siga siendo un inicio válido- antes de intentar persistir (CA-097-02); la restricción de exclusión de PostgreSQL (RN-CON-03) es la última defensa contra una carrera entre dos confirmaciones simultáneas por la misma franja (RN-CON-01, RN-CON-02). El cliente se reconcilia por teléfono y correo dentro de la misma barbería (DEC-085): un `customer` existente se reutiliza (sobrescribiendo el campo que no coincidió con el valor nuevo dado), sin coincidencia siempre se crea uno nuevo, nunca por nombre. Al confirmar, el servidor emite el token de acceso al turno (`appointment_access_token`, 256 bits, hash SHA-256, vigencia 90 días sin rotación, DEC-089) dentro de la misma transacción atómica, y envía un único correo de confirmación síncrono con el enlace de acceso reutilizando el proveedor ya integrado (Resend, DEC-091): un fallo de ese envío nunca revierte la cita ya confirmada. Mismo `slug` y misma resolución sin contexto de tenant que `GET /public/barbershops/{slug}`; un `slug` mal formado, desconocido o de una barbería no publicable, o un `serviceId`/`barberId` sin forma de UUID, ajeno, inexistente, inactivo o sin asignación vigente, producen el mismo `404` uniforme (CA-090-02, RN-TEN-01) -a diferencia de la disponibilidad de solo lectura, esta operación de escritura no tiene un "vacío" que devolver. El cuerpo nunca acepta `barbershopId`, `customerId`, `status`, `origin`, precio, duración ni ningún otro dato que el servidor derive o revalide.
+         */
+        post: operations["confirmPublicAppointment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/public/auth/login": {
         parameters: {
             query?: never;
@@ -1511,6 +1531,96 @@ export interface components {
              */
             slotGridMinutes: number;
         };
+        /** @description Confirma la reserva pública elegida en los pasos anteriores (HU-091, HU-092, HU-094, HU-096). `startsAt` debe ser exactamente uno de los instantes que `GET .../availability` devolvió; el servidor lo revalida de nuevo contra la jornada, los bloqueos y la ventana pública vigentes antes de persistir (CA-097-02), y contra la restricción de exclusión de PostgreSQL como última defensa (RN-CON-03). Si la franja ya no está disponible, la respuesta es `409` con alternativas cercanas (RN-CON-05, DEC-090); los datos del formulario nunca se pierden en ese caso. */
+        ConfirmPublicAppointmentRequest: {
+            /**
+             * Format: date-time
+             * @description Instante absoluto elegido, tal como lo devolvió `GET .../availability` (nunca una hora civil, a diferencia de `CreateManualAppointmentRequest.startsAt`).
+             * @example 2026-09-20T14:00:00-05:00
+             */
+            startsAt: string;
+            /**
+             * @description Nombre del cliente que reserva (HU-096).
+             * @example Carlos Restrepo
+             */
+            fullName: string;
+            /**
+             * @description Teléfono del cliente en formato E.164, obligatorio en el flujo público (a diferencia de la creación manual, RN-CIT-02 no aplica aquí): la reserva pública siempre necesita poder contactar al cliente.
+             * @example +573001234567
+             */
+            phone: string;
+            /**
+             * Format: email
+             * @description Correo del cliente, obligatorio en el flujo público.
+             * @example carlos.restrepo@example.com
+             */
+            email: string;
+            /**
+             * @description Nota opcional visible solo para el equipo de la barbería.
+             * @example Prefiere máquina 2 en los laterales.
+             */
+            note?: string | null;
+            /**
+             * @description Si el turno es para una persona distinta de quien reserva (RN-RES-03). `false` deriva `attendeeName` del propio cliente sin pedirlo dos veces (CA-096-01).
+             * @default false
+             */
+            forSomeoneElse: boolean;
+            /**
+             * @description Nombre de la persona atendida. Obligatorio y no vacío cuando `forSomeoneElse` es `true`; ignorado en caso contrario.
+             * @example Ana Gómez
+             */
+            attendeeName?: string | null;
+        };
+        ConfirmedPublicAppointmentResponse: {
+            /**
+             * @description Nombre de la persona atendida (RN-RES-02/RN-RES-03).
+             * @example Carlos Restrepo
+             */
+            attendeeName: string;
+            /** @example Barbería Ejemplo */
+            barbershopName: string;
+            /**
+             * @description Nombre del servicio congelado al confirmar (DEC-004).
+             * @example Corte clásico
+             */
+            serviceName: string;
+            /** @example 30 */
+            durationMinutes: number;
+            /**
+             * @description Importe exacto en formato decimal (nunca coma flotante).
+             * @example 20000.00
+             */
+            priceAmount: string;
+            /** @example COP */
+            currency: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            /**
+             * @description Zona horaria IANA de la barbería (RN-DIS-07).
+             * @example America/Bogota
+             */
+            timezone: string;
+            /**
+             * @description Credencial de acceso al turno EN CLARO (DEC-089): esta es la ÚNICA vez que aparece en cualquier respuesta -el servidor solo conserva su hash. El mismo correo de confirmación lo entrega como enlace (F-PUB-07); perder este valor sin haber guardado el correo significa perder el acceso directo hasta que HU-099 ofrezca una alternativa.
+             * @example 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3
+             */
+            accessToken: string;
+            customerNote: string | null;
+        };
+        AlternativeSlotResponse: {
+            /**
+             * Format: date-time
+             * @description Instante absoluto de un inicio todavía válido, mismo barbero y mismo servicio que la franja perdida.
+             * @example 2026-09-20T14:30:00-05:00
+             */
+            startsAt: string;
+        };
+        ScheduleConflictProblem: components["schemas"]["Problem"] & {
+            /** @description Presente solo cuando `code` vale `slot-conflict`: hasta 3 franjas cronológicamente cercanas a la elegida, mismo barbero y mismo servicio (DEC-090). Vacío solo cuando la ventana pública vigente no tiene ninguna franja restante en absoluto. */
+            alternatives?: components["schemas"]["AlternativeSlotResponse"][];
+        };
         /** @description Solicitud de recuperación de acceso. */
         RecoveryRequestRequest: {
             /**
@@ -2883,6 +2993,16 @@ export interface components {
                 "application/json": components["schemas"]["AvailabilityResponse"];
             };
         };
+        /** @description Turno público confirmado. El correo de confirmación con el enlace de acceso ya se envió (o se registró su fallo, DEC-091) para cuando esta respuesta llega al cliente. */
+        PublicAppointmentConfirmed: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ConfirmedPublicAppointmentResponse"];
+            };
+        };
         /** @description La solicitud fue recibida. Si la cuenta existe y tiene el teléfono verificado, se envía un código por WhatsApp oficial y correo; en cualquier otro caso no ocurre ningún envío, sin que la respuesta lo revele. */
         RecoveryRequestAccepted: {
             headers: {
@@ -3520,6 +3640,55 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    confirmPublicAppointment: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Clave elegida por el cliente que identifica un intento de escritura crítica. Repetir la misma clave con el mismo contenido (método, ruta y cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo. Repetirla con contenido distinto es un conflicto: usa una clave nueva para una solicitud distinta. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Identificador del enlace público de reservas, tal como aparece en la URL. No es un identificador interno: su forma, generación y ciclo de vida los fija DEC-082 (resuelve DP-PUB-01). */
+                slug: string;
+                /** @description Servicio activo ya elegido (HU-091). No confiado: se revalida pertenencia, vigencia y asignación contra la barbería resuelta por `slug` en cada intento (mismo criterio que CA-092-03). */
+                serviceId: string;
+                /** @description Barbero ya elegido (HU-092). No confiado: se revalida que tenga asignación vigente al servicio activo `serviceId` dentro de la barbería resuelta por `slug` en cada intento. */
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmPublicAppointmentRequest"];
+            };
+        };
+        responses: {
+            201: components["responses"]["PublicAppointmentConfirmed"];
+            400: components["responses"]["InvalidRequestProblem"];
+            /** @description `slug` con forma inválida, inexistente o de una barbería no publicable, o `serviceId`/`barberId` ajeno, inexistente, inactivo o sin asignación vigente, sin distinguir la causa (CA-090-02, CA-092-03, RN-TEN-01). */
+            404: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflicto de idempotencia (misma clave con otro contenido u otra operación, `IdempotencyConflictProblem`), operación en curso con la misma clave (`IdempotencyLockedProblem`, DEC-043), o la franja elegida ya no está disponible con alternativas cercanas (RN-CON-05, DEC-090). Distinguibles por `code` (`idempotency-conflict`, `idempotency-locked`, `slot-conflict`), nunca por `detail`. */
+            409: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ScheduleConflictProblem"];
+                };
+            };
+            422: components["responses"]["ValidationProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

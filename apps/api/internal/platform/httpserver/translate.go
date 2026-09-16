@@ -135,6 +135,21 @@ var invalidStateProblem = problemSpec{
 	status:  http.StatusConflict,
 }
 
+// scheduleConflictProblem cubre apperr.KindScheduleConflict (HU-097,
+// RN-CON-05): la franja pública elegida ya no está disponible porque otra
+// confirmación la ganó primero. Código distinto de "conflict" a propósito
+// (docs/06-api/estandar-openapi.md sección 5, ejemplo normativo
+// "slot-conflict"): el cliente debe ofrecer alternativas, no reintentar el
+// mismo intervalo. publicbookinghttpapi extiende este Problem con
+// `alternatives` (RFC 9457, extensión abierta) al escribir la respuesta;
+// Translate solo calcula la parte segura y común.
+var scheduleConflictProblem = problemSpec{
+	typeURI: "/api/v1/problems/slot-conflict",
+	title:   "Franja no disponible",
+	code:    "slot-conflict",
+	status:  http.StatusConflict,
+}
+
 // Translate convierte cualquier error en un Problem seguro para el cliente.
 // Es el único punto central de traducción que exige
 // docs/04-arquitectura/backend-go.md sección 5 ("los errores de dominio se
@@ -174,6 +189,8 @@ func Translate(err error, requestID string) Problem {
 			return newProblem(versionConflictProblem, appErr.Message, requestID)
 		case apperr.KindInvalidState:
 			return newProblem(invalidStateProblem, appErr.Message, requestID)
+		case apperr.KindScheduleConflict:
+			return newProblem(scheduleConflictProblem, appErr.Message, requestID)
 		}
 	}
 

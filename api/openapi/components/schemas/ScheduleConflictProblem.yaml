@@ -1,0 +1,21 @@
+# Extensión de Problem.yaml para el 409 de POST .../appointments (HU-097):
+# Problem.yaml declara additionalProperties abierto exactamente para este
+# caso ("una historia futura... agrega un campo a este mismo esquema en vez
+# de crear uno paralelo"). Ese 409 también cubre IdempotencyConflictProblem/
+# IdempotencyLockedProblem (RN-IDE-01), que nunca traen `alternatives`: el
+# campo es opcional aquí, presente únicamente cuando `code` vale
+# `slot-conflict` (RN-CON-05/DEC-090, el ejemplo normativo de
+# docs/06-api/estandar-openapi.md sección 5).
+allOf:
+  - $ref: './Problem.yaml'
+  - type: object
+    properties:
+      alternatives:
+        type: array
+        description: >
+          Presente solo cuando `code` vale `slot-conflict`: hasta 3 franjas
+          cronológicamente cercanas a la elegida, mismo barbero y mismo
+          servicio (DEC-090). Vacío solo cuando la ventana pública vigente
+          no tiene ninguna franja restante en absoluto.
+        items:
+          $ref: './AlternativeSlotResponse.yaml'
