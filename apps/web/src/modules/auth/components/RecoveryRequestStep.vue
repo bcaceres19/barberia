@@ -123,9 +123,14 @@ async function onSubmit() {
             stroke-linejoin="round"
             aria-hidden="true"
           >
+            <!-- Globo de conversación con un auricular relleno: a 26 px el
+                 auricular de trazo fino no se leía como teléfono. -->
             <path d="M3.5 20.5l1.3-4.3A8.5 8.5 0 1 1 8 19.3l-4.5 1.2z" />
             <path
-              d="M9 8.6c.2 2.9 2.5 5.2 5.4 5.4l1.3-1.4-2.1-1-.9.7a3.6 3.6 0 0 1-1.6-1.6l.7-.9-1-2.1L9 8.6z"
+              transform="translate(6.5 6) scale(0.46)"
+              fill="currentColor"
+              stroke="none"
+              d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"
             />
           </svg>
           <svg
