@@ -20,6 +20,25 @@ export function validateRecoveryEmail(email: string): string | undefined {
   return undefined
 }
 
+// Formato E.164 que exige el contrato y `staff_user_phone_ck`.
+const PHONE_E164_PATTERN = /^\+[1-9][0-9]{7,14}$/
+// Separadores de presentación que el servidor también descarta.
+const PHONE_SEPARATORS = /[\s\-.()]/g
+
+/** Deja el número como lo espera el servidor (`+573001234567`): recorta y
+ * quita espacios, guiones, puntos y paréntesis. No valida. */
+export function normalizeRecoveryPhone(phone: string): string {
+  return phone.trim().replace(PHONE_SEPARATORS, '')
+}
+
+export function validateRecoveryPhone(phone: string): string | undefined {
+  if (!phone.trim()) return 'Escribe tu número de WhatsApp.'
+  if (!PHONE_E164_PATTERN.test(normalizeRecoveryPhone(phone))) {
+    return 'Escribe el número con el indicativo de tu país, por ejemplo +573001234567.'
+  }
+  return undefined
+}
+
 export function validateRecoveryCode(code: string): string | undefined {
   if (!code) return 'Escribe el código.'
   if (!/^[0-9]{6}$/.test(code)) return 'El código tiene 6 dígitos numéricos.'
@@ -34,7 +53,9 @@ export function validateNewPassword(password: string, email: string): string | u
   if (password.length > NEW_PASSWORD_MAX_LENGTH) {
     return `La contraseña no puede superar ${NEW_PASSWORD_MAX_LENGTH} caracteres.`
   }
-  if (password.toLowerCase() === email.trim().toLowerCase()) {
+  // Con WhatsApp el cliente no conoce el correo (email vacío): esa
+  // comparación la hace el servidor, que sí lo conoce.
+  if (email && password.toLowerCase() === email.trim().toLowerCase()) {
     return 'La contraseña no puede ser igual a tu correo.'
   }
   return undefined

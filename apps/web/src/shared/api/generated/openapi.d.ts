@@ -195,7 +195,7 @@ export interface paths {
         put?: never;
         /**
          * Solicitar recuperación de acceso
-         * @description Solicita el código de recuperación de acceso. Responde siempre 202 con el mismo cuerpo genérico, exista o no la cuenta y esté o no el teléfono verificado (CA-008-01, no enumeración, DEC-065): nunca incluye el destino, ni siquiera enmascarado. Solo se envía un código real por WhatsApp oficial y correo cuando la cuenta existe, está activa y tiene el teléfono verificado. Límite propio: cooldown de 60 segundos entre solicitudes y máximo 3 códigos por cuenta por hora (DEC-064); un reenvío aceptado invalida atómicamente el código vigente anterior (CA-008-07).
+         * @description Solicita el código de recuperación de acceso por el canal que la persona elige (DEC-092): correo, identificando la cuenta por su correo, o WhatsApp, identificándola por su número. Responde siempre 202 con el mismo cuerpo genérico, exista o no la cuenta, esté o no el teléfono verificado y sea o no el número ambiguo entre barberías (CA-008-01, CA-008-10, no enumeración, DEC-065, DEC-093): nunca incluye el destino, ni siquiera enmascarado. Solo se envía un código real, únicamente por el canal elegido y al contacto verificado almacenado (CA-008-09), cuando la cuenta existe, está activa, tiene el teléfono verificado y el número identifica exactamente una cuenta. Un canal desconocido, el campo del otro canal o un número que no está en formato internacional responden 422, una respuesta de forma que no revela nada de la cuenta. Límite propio: cooldown de 60 segundos entre solicitudes y máximo 3 códigos por cuenta por hora (DEC-064); un reenvío aceptado invalida atómicamente el código vigente anterior (CA-008-07).
          */
         post: operations["requestRecovery"];
         delete?: never;
@@ -215,7 +215,7 @@ export interface paths {
         put?: never;
         /**
          * Verificar el código de recuperación
-         * @description Verifica el código de 6 dígitos recibido por WhatsApp y correo (DEC-064). Código incorrecto, vencido, agotado o de una cuenta inexistente producen exactamente la misma respuesta 401 (CA-008-01, no enumeración). Un código correcto emite un token de reinicio de un solo uso, vigente 5 minutos, y devuelve el destino enmascarado (CA-008-06, DEC-065): llegar a esta respuesta ya exige haber recibido y transcrito el código real, así que mostrar el destino aquí no abre un oráculo nuevo.
+         * @description Verifica el código de 6 dígitos recibido por el canal elegido (DEC-064, DEC-092), identificando la cuenta con el mismo canal y valor del paso anterior (DEC-093). Código incorrecto, vencido, agotado, de una cuenta inexistente o de un número que no identifica una única cuenta producen exactamente la misma respuesta 401 (CA-008-01, no enumeración). Un código correcto emite un token de reinicio de un solo uso, vigente 5 minutos, y devuelve el destino enmascarado (CA-008-06, DEC-065): llegar a esta respuesta ya exige haber recibido y transcrito el código real, así que mostrar el destino aquí no abre un oráculo nuevo.
          */
         post: operations["verifyRecovery"];
         delete?: never;
@@ -235,7 +235,7 @@ export interface paths {
         put?: never;
         /**
          * Establecer la contraseña nueva
-         * @description Establece la contraseña nueva usando el token de reinicio emitido por una verificación exitosa (DEC-064). El token se consume una única vez incluso bajo dos solicitudes concurrentes; reutilizarlo, presentarlo vencido o con un correo distinto responde el mismo 401 uniforme que un token desconocido. La contraseña debe cumplir la política mínima de DEC-063 (10-128 caracteres, distinta del correo y de la contraseña actual); un incumplimiento responde 422 indicando exactamente qué regla falla (CA-008-08). Al tener éxito, actualiza la credencial y revoca TODAS las sesiones activas del usuario en la misma operación atómica (CA-008-05).
+         * @description Establece la contraseña nueva usando el token de reinicio emitido por una verificación exitosa (DEC-064). El token se consume una única vez incluso bajo dos solicitudes concurrentes; reutilizarlo, presentarlo vencido o con un canal y valor de otra cuenta responde el mismo 401 uniforme que un token desconocido. La cuenta se identifica con el mismo canal y valor de los pasos anteriores (DEC-092, DEC-093). La contraseña debe cumplir la política mínima de DEC-063 (10-128 caracteres, distinta del correo y de la contraseña actual); un incumplimiento responde 422 indicando exactamente qué regla falla (CA-008-08). Al tener éxito, actualiza la credencial y revoca TODAS las sesiones activas del usuario en la misma operación atómica (CA-008-05).
          */
         post: operations["resetPasswordWithRecoveryToken"];
         delete?: never;
@@ -1705,15 +1705,32 @@ export interface components {
              */
             lateCancellationReasonRequired: boolean;
         };
-        /** @description Solicitud de recuperación de acceso. */
+        /** @description Solicitud de recuperación de acceso por el canal elegido. */
         RecoveryRequestRequest: {
             /**
+             * @description Canal por el que la persona quiere recibir el código de recuperación.
+             * @example email
+             * @enum {string}
+             */
+            channel: "email" | "whatsapp";
+            /**
              * Format: email
-             * @description Correo de la cuenta cuyos medios registrados recibirán el código, si corresponde.
+             * @description Correo de la cuenta. Obligatorio cuando channel es email; no se admite con whatsapp.
              * @example barbero.ejemplo@correo.test
              */
-            email: string;
-        };
+            email?: string;
+            /**
+             * @description Número de WhatsApp de la cuenta en formato internacional (E.164, `+573001234567`); se descartan espacios, guiones, puntos y paréntesis. Obligatorio cuando channel es whatsapp; no se admite con email.
+             * @example +573001234567
+             */
+            phone?: string;
+        } & ({
+            /** @constant */
+            channel?: "email";
+        } | {
+            /** @constant */
+            channel?: "whatsapp";
+        });
         /** @description Confirmación genérica de que la solicitud fue recibida. */
         RecoveryRequestAcceptedResponse: {
             /**
@@ -1725,17 +1742,34 @@ export interface components {
         /** @description Verificación del código de recuperación. */
         RecoveryVerifyRequest: {
             /**
+             * @description Canal por el que la persona quiere recibir el código de recuperación.
+             * @example email
+             * @enum {string}
+             */
+            channel: "email" | "whatsapp";
+            /**
              * Format: email
-             * @description Correo de la cuenta que solicitó la recuperación.
+             * @description Correo de la cuenta. Obligatorio cuando channel es email; no se admite con whatsapp.
              * @example barbero.ejemplo@correo.test
              */
-            email: string;
+            email?: string;
             /**
-             * @description Código numérico de 6 dígitos recibido por WhatsApp y correo.
+             * @description Número de WhatsApp de la cuenta en formato internacional (E.164, `+573001234567`); se descartan espacios, guiones, puntos y paréntesis. Obligatorio cuando channel es whatsapp; no se admite con email.
+             * @example +573001234567
+             */
+            phone?: string;
+            /**
+             * @description Código numérico de 6 dígitos recibido por el canal elegido.
              * @example 482913
              */
             code: string;
-        };
+        } & ({
+            /** @constant */
+            channel?: "email";
+        } | {
+            /** @constant */
+            channel?: "whatsapp";
+        });
         /** @description Verificación exitosa; autoriza exactamente un cambio de contraseña. */
         RecoveryVerifyResponse: {
             /**
@@ -1757,11 +1791,22 @@ export interface components {
         /** @description Establece la contraseña nueva usando el token de reinicio emitido por la verificación. */
         RecoveryResetPasswordRequest: {
             /**
+             * @description Canal por el que la persona quiere recibir el código de recuperación.
+             * @example email
+             * @enum {string}
+             */
+            channel: "email" | "whatsapp";
+            /**
              * Format: email
-             * @description Correo de la cuenta que solicitó la recuperación.
+             * @description Correo de la cuenta. Obligatorio cuando channel es email; no se admite con whatsapp.
              * @example barbero.ejemplo@correo.test
              */
-            email: string;
+            email?: string;
+            /**
+             * @description Número de WhatsApp de la cuenta en formato internacional (E.164, `+573001234567`); se descartan espacios, guiones, puntos y paréntesis. Obligatorio cuando channel es whatsapp; no se admite con email.
+             * @example +573001234567
+             */
+            phone?: string;
             /**
              * @description Token de reinicio de un solo uso devuelto por la verificación exitosa.
              * @example 3n9F7qP2xR8mK1vL0dS5tY6wZ4bH2jN9
@@ -1772,7 +1817,13 @@ export interface components {
              * @example ***-nueva-contrasena-ficticia
              */
             newPassword: string;
-        };
+        } & ({
+            /** @constant */
+            channel?: "email";
+        } | {
+            /** @constant */
+            channel?: "whatsapp";
+        });
         /** @description Configuración de anticipación, ventana, rejilla y cancelación tardía de la barbería activa. Los rangos y el conjunto discreto de slotGridMinutes están fijados por DEC-083. */
         BookingPolicyResponse: {
             /**

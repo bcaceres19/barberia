@@ -455,3 +455,108 @@ $$;
 RESET ROLE;
 ROLLBACK;
 \echo 'CA-008-05 OK · verificación, lectura de credencial y cambio de contraseña con revocación total de sesiones'
+
+-- ---------------------------------------------------------------------------
+-- DEC-092/DEC-093 (DP-SEG-14) · auth_recovery_resolve_phone: un teléfono
+-- verificado identifica la cuenta solo si coincide con exactamente UNA cuenta
+-- activa; ninguna o varias coincidencias devuelven NULL sin distinguirse.
+-- Todo dentro de BEGIN...ROLLBACK para no dejar filas repetidas que
+-- compitan con otras suites.
+-- ---------------------------------------------------------------------------
+BEGIN;
+SET ROLE barberia_app;
+
+DO $$
+DECLARE
+  v_email text;
+BEGIN
+  -- Coincidencia única: resuelve al correo de esa cuenta (barbería A).
+  SELECT auth_recovery_resolve_phone('+573000000001') INTO v_email;
+  IF v_email IS DISTINCT FROM 'duena.a@ejemplo.test' THEN
+    RAISE EXCEPTION 'DP-SEG-14: se esperaba duena.a@ejemplo.test para un teléfono único, salió %.', v_email;
+  END IF;
+
+  -- La barbería B resuelve a su propia cuenta, nunca a la de A (RN-TEN-01).
+  SELECT auth_recovery_resolve_phone('+573000000003') INTO v_email;
+  IF v_email IS DISTINCT FROM 'dueno.b@ejemplo.test' THEN
+    RAISE EXCEPTION 'DP-SEG-14: se esperaba dueno.b@ejemplo.test para su teléfono, salió %.', v_email;
+  END IF;
+
+  -- Número sin cuenta y NULL: NULL, sin error.
+  IF auth_recovery_resolve_phone('+573009999999') IS NOT NULL THEN
+    RAISE EXCEPTION 'DP-SEG-14: un número sin cuenta debía devolver NULL.';
+  END IF;
+  IF auth_recovery_resolve_phone(NULL) IS NOT NULL THEN
+    RAISE EXCEPTION 'DP-SEG-14: un NULL debía devolver NULL.';
+  END IF;
+END
+$$;
+
+RESET ROLE;
+
+-- Ambigüedad entre barberías: la barbería B registra el mismo número
+-- verificado que la A. Con dos cuentas activas no debe resolver ninguna.
+-- Dos UPDATE a propósito: el trigger de DDL-INT-05 anula phone_verified_at
+-- cuando phone cambia, así que la verificación se marca después.
+UPDATE staff_user SET phone = '+573000000001' WHERE email = 'dueno.b@ejemplo.test';
+UPDATE staff_user SET phone_verified_at = pg_catalog.now() WHERE email = 'dueno.b@ejemplo.test';
+
+SET ROLE barberia_app;
+DO $$
+BEGIN
+  IF auth_recovery_resolve_phone('+573000000001') IS NOT NULL THEN
+    RAISE EXCEPTION 'DP-SEG-14: un teléfono repetido entre barberías debía devolver NULL, no elegir una cuenta.';
+  END IF;
+END
+$$;
+RESET ROLE;
+
+-- Con una de las dos inactiva vuelve a haber exactamente una activa.
+UPDATE staff_user SET is_active = false WHERE email = 'dueno.b@ejemplo.test';
+
+SET ROLE barberia_app;
+DO $$
+BEGIN
+  IF auth_recovery_resolve_phone('+573000000001') IS DISTINCT FROM 'duena.a@ejemplo.test' THEN
+    RAISE EXCEPTION 'DP-SEG-14: con una sola cuenta activa debía resolver a duena.a@ejemplo.test.';
+  END IF;
+END
+$$;
+RESET ROLE;
+
+-- Un teléfono sin verificar no identifica ninguna cuenta.
+UPDATE staff_user SET phone_verified_at = NULL WHERE email = 'duena.a@ejemplo.test';
+
+SET ROLE barberia_app;
+DO $$
+BEGIN
+  IF auth_recovery_resolve_phone('+573000000001') IS NOT NULL THEN
+    RAISE EXCEPTION 'DP-SEG-14: un teléfono no verificado debía devolver NULL.';
+  END IF;
+END
+$$;
+RESET ROLE;
+ROLLBACK;
+\echo 'DP-SEG-14 OK · auth_recovery_resolve_phone resuelve solo una cuenta activa con teléfono verificado'
+
+-- ---------------------------------------------------------------------------
+-- DDL-AUT-01 · la función nueva no se expone a PUBLIC y su búsqueda no
+-- depende del search_path
+-- ---------------------------------------------------------------------------
+DO $$
+DECLARE
+  v_public_exec boolean;
+  v_config      text[];
+BEGIN
+  SELECT has_function_privilege('public', 'auth_recovery_resolve_phone(text)', 'EXECUTE') INTO v_public_exec;
+  IF v_public_exec THEN
+    RAISE EXCEPTION 'DDL-AUT-01: auth_recovery_resolve_phone es ejecutable por PUBLIC.';
+  END IF;
+
+  SELECT proconfig INTO v_config FROM pg_proc WHERE proname = 'auth_recovery_resolve_phone';
+  IF v_config IS NULL OR NOT (v_config @> ARRAY['search_path=""']) THEN
+    RAISE EXCEPTION 'DDL-AUT-01: auth_recovery_resolve_phone debe fijar search_path vacío, proconfig=%.', v_config;
+  END IF;
+END
+$$;
+\echo 'DDL-AUT-01 OK · auth_recovery_resolve_phone no es ejecutable por PUBLIC y fija search_path'

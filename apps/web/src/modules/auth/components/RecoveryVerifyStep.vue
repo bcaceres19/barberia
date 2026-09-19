@@ -13,17 +13,26 @@
 import { computed, onUnmounted, ref } from 'vue'
 import { BaseAlert, BaseButton, OtpInput } from '@/shared/ui'
 import { requestRecovery, verifyRecovery } from '../api/recoveryApi'
+import type { RecoveryTarget } from '../model/recoveryTarget'
 import { validateRecoveryCode } from '../validation/recoveryValidation'
 
 const RESEND_COOLDOWN_SECONDS = 60
 
+// Mismo canal y valor del paso 1 (DEC-093, DP-SEG-15).
 const props = defineProps<{
-  email: string
+  target: RecoveryTarget
 }>()
 
 const emit = defineEmits<{
   advance: [payload: { resetToken: string; maskedPhone: string; maskedEmail: string }]
+  // Volver al paso 1 para elegir otro canal (DP-SEG-16, DEC-093). Aún no hay
+  // nada verificado que perder: es lo único que se ofrece cuando el código
+  // no llega, sin decir por qué (no enumeración, DEC-065).
+  'change-channel': []
 }>()
+
+// Solo el canal elegido en el paso 1 (DEC-092): el otro no recibe nada.
+const channelLabel = computed(() => (props.target.channel === 'whatsapp' ? 'WhatsApp' : 'correo'))
 
 const code = ref('')
 const fieldError = ref<string | undefined>(undefined)
@@ -71,7 +80,7 @@ async function onResend() {
   // Mismo trato que el paso 1: la solicitud siempre se intenta contra el
   // API real, pero el resultado no cambia el cooldown de cliente ni
   // revela nada distinto (DEC-065).
-  await requestRecovery(props.email)
+  await requestRecovery(props.target)
 }
 
 const handleCodeInput = (value: string) => {
@@ -90,7 +99,7 @@ async function onSubmit() {
   if (error) return
 
   verifyStatus.value = 'verifying'
-  const outcome = await verifyRecovery(props.email, code.value)
+  const outcome = await verifyRecovery(props.target, code.value)
 
   switch (outcome.kind) {
     case 'verified':
@@ -127,7 +136,7 @@ async function onSubmit() {
 <template>
   <form class="recovery-verify" novalidate @submit.prevent="onSubmit">
     <p class="recovery-verify__sent" role="status">
-      Si tu cuenta existe, recibirás un código de 6 dígitos por WhatsApp y correo.
+      Si tu cuenta existe, recibirás un código de 6 dígitos por {{ channelLabel }}.
     </p>
 
     <OtpInput
@@ -160,6 +169,12 @@ async function onSubmit() {
         {{ canResend ? 'Reenviar código' : `Reenviar en ${resendCooldownRemaining} s` }}
       </BaseButton>
     </div>
+
+    <p class="recovery-back">
+      <button type="button" class="recovery-back__link" @click="emit('change-channel')">
+        ¿No te llegó? Elegir otro canal
+      </button>
+    </p>
 
     <p class="recovery-back">
       <RouterLink :to="{ name: 'acceso' }">Volver al acceso</RouterLink>
@@ -221,6 +236,23 @@ async function onSubmit() {
   margin: 0;
   text-align: center;
   font-size: var(--font-size-body-sm);
+}
+
+.recovery-back__link {
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  font: inherit;
+  font-weight: 500;
+  color: var(--color-action-primary);
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.recovery-back__link:focus-visible {
+  outline: var(--border-width-emphasis) solid var(--color-focus);
+  outline-offset: 2px;
 }
 
 .recovery-back a {

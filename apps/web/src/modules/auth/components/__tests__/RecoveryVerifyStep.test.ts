@@ -13,6 +13,9 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
 import RecoveryVerifyStep from '../RecoveryVerifyStep.vue'
 
+// Mismo canal y valor del paso 1 (DEC-093, DP-SEG-15).
+const TARGET = { channel: 'email', value: 'barbero@ejemplo.test' } as const
+
 const requestRecoveryMock = vi.hoisted(() => vi.fn())
 const verifyRecoveryMock = vi.hoisted(() => vi.fn())
 vi.mock('../../api/recoveryApi', () => ({
@@ -23,7 +26,7 @@ vi.mock('../../api/recoveryApi', () => ({
 const axeOptions = { rules: { region: { enabled: false }, 'color-contrast': { enabled: false } } }
 
 function mountStep() {
-  return mount(RecoveryVerifyStep, { props: { email: 'barbero@ejemplo.test' } })
+  return mount(RecoveryVerifyStep, { props: { target: TARGET } })
 }
 
 // `OtpInput` distribuye el código completo cuando el primer slot recibe un
@@ -71,7 +74,7 @@ describe('RecoveryVerifyStep', () => {
     await wrapper.get('form').trigger('submit')
     await flushPromises()
 
-    expect(verifyRecoveryMock).toHaveBeenCalledWith('barbero@ejemplo.test', '482913')
+    expect(verifyRecoveryMock).toHaveBeenCalledWith(TARGET, '482913')
     expect(wrapper.emitted('advance')).toEqual([
       [{ resetToken: 'token-abc', maskedPhone: '+57 *** *** 12', maskedEmail: 'b***@c***.test' }],
     ])
@@ -143,7 +146,7 @@ describe('RecoveryVerifyStep', () => {
     await resendButton()?.trigger('click')
     await flushPromises()
 
-    expect(requestRecoveryMock).toHaveBeenCalledWith('barbero@ejemplo.test')
+    expect(requestRecoveryMock).toHaveBeenCalledWith(TARGET)
     expect(resendButton()?.attributes('disabled')).toBeDefined()
   })
 
@@ -151,5 +154,41 @@ describe('RecoveryVerifyStep', () => {
     const wrapper = mountStep()
     const results = await axe(wrapper.element, axeOptions)
     expect(results.violations).toEqual([])
+  })
+
+  it('verifies and resends with the WhatsApp channel and phone chosen in step 1 (DEC-092)', async () => {
+    const whatsApp = { channel: 'whatsapp', value: '+573001234567' } as const
+    verifyRecoveryMock.mockResolvedValueOnce({
+      kind: 'verified',
+      resetToken: 'token-abc',
+      maskedPhone: '+57 *** *** 67',
+      maskedEmail: 'b***@c***.test',
+    })
+    requestRecoveryMock.mockResolvedValueOnce({ kind: 'accepted' })
+    const wrapper = mount(RecoveryVerifyStep, { props: { target: whatsApp } })
+
+    await fillOtp(wrapper, '482913')
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(verifyRecoveryMock).toHaveBeenCalledWith(whatsApp, '482913')
+    expect(wrapper.text()).toContain('por WhatsApp')
+    expect(wrapper.text()).not.toContain('correo')
+  })
+
+  it('offers to go back and choose another channel without saying why the code did not arrive (DP-SEG-16)', async () => {
+    const wrapper = mountStep()
+
+    const change = wrapper.findAll('button').find((b) => b.text().includes('Elegir otro canal'))
+    await change?.trigger('click')
+
+    expect(wrapper.emitted('change-channel')).toHaveLength(1)
+    expect(wrapper.text()).not.toMatch(/no existe|inexistente|no está registrad/i)
+  })
+
+  it('names only the email channel in its message when the account was identified by email', () => {
+    const wrapper = mountStep()
+    expect(wrapper.text()).toContain('por correo')
+    expect(wrapper.text()).not.toContain('WhatsApp')
   })
 })

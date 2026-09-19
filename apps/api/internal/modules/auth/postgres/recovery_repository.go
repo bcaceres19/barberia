@@ -11,8 +11,8 @@ import (
 )
 
 // RecoveryRepository implementa auth.RecoveryRepository contra
-// auth_recovery_request/verify/current_credential/change_password (HU-008,
-// DDL-AUT-01): las cuatro funciones corren ANTES de resolver contexto de
+// auth_recovery_request/verify/current_credential/change_password y
+// auth_recovery_resolve_phone (HU-008, DDL-AUT-01): las cinco funciones corren ANTES de resolver contexto de
 // tenant (resuelven la cuenta por correo internamente), así que usan la
 // misma excepción angosta database.DB.CallSecurityDefinerRow que
 // ThrottleRepository y PhoneChallengeRepository.
@@ -49,6 +49,28 @@ func (r *RecoveryRepository) RequestRecovery(ctx context.Context, email, codeHas
 	}
 
 	return accepted, derefOrEmpty(phone), derefOrEmpty(resolvedEmail), nil
+}
+
+// ResolveAccountEmailByPhone implementa auth.RecoveryRepository con
+// auth_recovery_resolve_phone (DEC-093, DP-SEG-14): la función devuelve NULL
+// con cero o con más de una coincidencia, y aquí ambas se ven como found=false.
+func (r *RecoveryRepository) ResolveAccountEmailByPhone(ctx context.Context, phone string) (string, bool, error) {
+	var email *string
+
+	err := r.db.CallSecurityDefinerRow(ctx,
+		`SELECT auth_recovery_resolve_phone($1)`,
+		[]any{phone},
+		func(row pgx.Row) error {
+			return row.Scan(&email)
+		},
+	)
+	if err != nil {
+		return "", false, fmt.Errorf("auth/postgres: resolve recovery phone: %w", err)
+	}
+	if email == nil {
+		return "", false, nil
+	}
+	return *email, true, nil
 }
 
 // VerifyRecovery implementa auth.RecoveryRepository.

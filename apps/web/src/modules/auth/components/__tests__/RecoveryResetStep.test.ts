@@ -13,10 +13,14 @@ vi.mock('../../api/recoveryApi', () => ({ resetRecoveryPassword: resetRecoveryPa
 
 const axeOptions = { rules: { region: { enabled: false }, 'color-contrast': { enabled: false } } }
 
-function mountStep() {
+// Mismo canal y valor del paso 1 (DEC-093, DP-SEG-15).
+const TARGET = { channel: 'email', value: 'barbero@ejemplo.test' } as const
+const WHATSAPP_TARGET = { channel: 'whatsapp', value: '+573001234567' } as const
+
+function mountStep(target: typeof TARGET | typeof WHATSAPP_TARGET = TARGET) {
   return mount(RecoveryResetStep, {
     props: {
-      email: 'barbero@ejemplo.test',
+      target,
       resetToken: 'token-abc',
       maskedPhone: '+57 *** *** 12',
       maskedEmail: 'b***@c***.test',
@@ -51,6 +55,21 @@ describe('RecoveryResetStep', () => {
 
     expect(resetRecoveryPasswordMock).not.toHaveBeenCalled()
     expect(wrapper.text()).toContain('igual a tu correo')
+  })
+
+  it('does not compare the password with an email it does not know when the account was identified by WhatsApp', async () => {
+    resetRecoveryPasswordMock.mockResolvedValueOnce({ kind: 'success' })
+    const wrapper = mountStep(WHATSAPP_TARGET)
+
+    await fillAndSubmit(wrapper, 'contraseña-nueva-valida')
+    await flushPromises()
+
+    expect(resetRecoveryPasswordMock).toHaveBeenCalledWith(
+      WHATSAPP_TARGET,
+      'token-abc',
+      'contraseña-nueva-valida',
+    )
+    expect(wrapper.emitted('done')).toHaveLength(1)
   })
 
   it('rejects mismatched confirmation without calling the API', async () => {
@@ -88,7 +107,7 @@ describe('RecoveryResetStep', () => {
     await flushPromises()
 
     expect(resetRecoveryPasswordMock).toHaveBeenCalledWith(
-      'barbero@ejemplo.test',
+      TARGET,
       'token-abc',
       'contraseña-nueva-valida',
     )

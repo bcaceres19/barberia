@@ -41,6 +41,12 @@ async function fillOtp(wrapper: ReturnType<typeof mount>, code: string) {
   await wrapper.get('.otp-input__slot').setValue(code)
 }
 
+// El paso 1 no muestra campo hasta elegir el canal (DEC-092, CA-011-09).
+async function chooseChannel(wrapper: ReturnType<typeof mount>, label: 'WhatsApp' | 'Correo') {
+  const button = wrapper.findAll('button.recovery-channel').find((b) => b.text() === label)
+  await button?.trigger('click')
+}
+
 async function mountPage(options: { attachToBody?: boolean } = {}) {
   const router = buildRouter()
   await router.push({ name: 'recuperar-acceso' })
@@ -78,6 +84,7 @@ describe('RecoveryPage', () => {
     resetRecoveryPasswordMock.mockResolvedValueOnce({ kind: 'success' })
     const { wrapper, router } = await mountPage()
 
+    await chooseChannel(wrapper, 'Correo')
     await wrapper.get('input[name="email"]').setValue('barbero@ejemplo.test')
     await wrapper.get('form').trigger('submit')
     await flushPromises()
@@ -102,10 +109,69 @@ describe('RecoveryPage', () => {
     expect(router.currentRoute.value.name).toBe('acceso')
   })
 
+  it('completes the journey by WhatsApp, reusing the same channel and phone in steps 2 and 3 (DEC-092, DEC-093)', async () => {
+    requestRecoveryMock.mockResolvedValueOnce({ kind: 'accepted' })
+    verifyRecoveryMock.mockResolvedValueOnce({
+      kind: 'verified',
+      resetToken: 'token-abc',
+      maskedPhone: '+57 *** *** 67',
+      maskedEmail: 'b***@c***.test',
+    })
+    resetRecoveryPasswordMock.mockResolvedValueOnce({ kind: 'success' })
+    const { wrapper } = await mountPage()
+    const target = { channel: 'whatsapp', value: '+573001234567' }
+
+    await chooseChannel(wrapper, 'WhatsApp')
+    await wrapper.get('input[name="whatsapp"]').setValue('+57 300 123 4567')
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+    expect(requestRecoveryMock).toHaveBeenCalledWith(target)
+    expect(wrapper.text()).toContain('Paso 2 de 3')
+    expect(wrapper.text()).toContain('por WhatsApp')
+
+    await fillOtp(wrapper, '482913')
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+    expect(verifyRecoveryMock).toHaveBeenCalledWith(target, '482913')
+    expect(wrapper.text()).toContain('Paso 3 de 3')
+
+    await wrapper.get('input[name="newPassword"]').setValue('contraseña-nueva-valida')
+    await wrapper.get('input[name="confirmPassword"]').setValue('contraseña-nueva-valida')
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(resetRecoveryPasswordMock).toHaveBeenCalledWith(
+      target,
+      'token-abc',
+      'contraseña-nueva-valida',
+    )
+    expect(wrapper.text()).toContain('cerramos todas tus sesiones activas')
+  })
+
+  it('goes back from step 2 to step 1 to choose another channel, with nothing chosen yet (DP-SEG-16)', async () => {
+    requestRecoveryMock.mockResolvedValueOnce({ kind: 'accepted' })
+    const { wrapper } = await mountPage()
+
+    await chooseChannel(wrapper, 'Correo')
+    await wrapper.get('input[name="email"]').setValue('barbero@ejemplo.test')
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+    expect(wrapper.text()).toContain('Paso 2 de 3')
+
+    const change = wrapper.findAll('button').find((b) => b.text().includes('Elegir otro canal'))
+    await change?.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Paso 1 de 3')
+    expect(wrapper.findAll('button.recovery-channel')).toHaveLength(2)
+    expect(wrapper.find('input').exists()).toBe(false)
+  })
+
   it('moves focus to the step heading on each transition (CA-011-07)', async () => {
     requestRecoveryMock.mockResolvedValueOnce({ kind: 'accepted' })
     const { wrapper } = await mountPage({ attachToBody: true })
 
+    await chooseChannel(wrapper, 'Correo')
     await wrapper.get('input[name="email"]').setValue('barbero@ejemplo.test')
     await wrapper.get('form').trigger('submit')
     await flushPromises()
@@ -125,6 +191,7 @@ describe('RecoveryPage', () => {
     resetRecoveryPasswordMock.mockResolvedValueOnce({ kind: 'invalid-token' })
     const { wrapper } = await mountPage()
 
+    await chooseChannel(wrapper, 'Correo')
     await wrapper.get('input[name="email"]').setValue('barbero@ejemplo.test')
     await wrapper.get('form').trigger('submit')
     await flushPromises()

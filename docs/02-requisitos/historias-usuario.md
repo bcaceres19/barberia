@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.47"
+version: "1.48"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-19"
@@ -409,7 +409,7 @@ La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para c
 | --- | --- |
 | Función | `F-AUTH-02` |
 | Reglas | `RN-DAT-01`, `RN-DAT-02` |
-| Decisiones | `DEC-026`, `DEC-051`, `DEC-063`, `DEC-064`, `DEC-065`, `DEC-081`, `DEC-092` |
+| Decisiones | `DEC-026`, `DEC-051`, `DEC-063`, `DEC-064`, `DEC-065`, `DEC-081`, `DEC-092`, `DEC-093` |
 | Actor | Barbero |
 | Depende de | `HU-005`, `HU-007` |
 | Bloquea | `HU-011` |
@@ -419,7 +419,7 @@ La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para c
 
 > Como barbero que olvidó su contraseña, quiero recuperar el acceso con un código enviado por el canal que yo elija —WhatsApp o correo—, para volver a mi agenda el mismo día sin depender de que alguien me responda.
 
-> **Cambio del 2026-09-19 (`DEC-092`):** la persona elige el canal y escribe su valor en el paso 1; el código se envía solo por ese canal. `CA-008-01` se reescribe y nacen `CA-008-09` y `CA-008-10`. La parte de la historia que ya está integrada en `main` (solicitud por correo y envío por los canales configurados) no cambia hasta que un issue de implementación resuelva `DP-SEG-14`–`DP-SEG-16`.
+> **Cambio del 2026-09-19 (`DEC-092`):** la persona elige el canal y escribe su valor en el paso 1; el código se envía solo por ese canal. `CA-008-01` se reescribe y nacen `CA-008-09` y `CA-008-10`. `DEC-093` resolvió `DP-SEG-14`–`DP-SEG-16` y la implementación (migración `20260919200000`, contrato `0.22.0`, API y pantalla) se entrega en el issue [#276](https://github.com/bcaceres19/barberia/issues/276).
 
 > **Bloqueo resuelto:** `DEC-026` definía el mecanismo (código al teléfono verificado) sin fijar canal ni proveedor. `DP-SEG-05` quedó resuelta el 2026-08-11 como `DEC-051`: WhatsApp oficial y correo, reutilizando el proveedor ya habilitado por `DEC-027`. El 2026-08-17 se resolvieron las últimas cuatro dudas: `DP-SEG-11` (política de contraseña) como `DEC-063`, `DP-SEG-12` (formato/vigencia/intentos/token de reinicio del código) como `DEC-064`, `CT-006` (respuesta idéntica frente a destino enmascarado) como `DEC-065`, y `DP-NOT-05` (proveedor/adaptador real de WhatsApp y correo: Meta Cloud API + Resend) como `DEC-066`. `HU-008` ya no depende de ninguna decisión pendiente; solo espera que `HU-007` se integre en `main`.
 
@@ -445,7 +445,7 @@ La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para c
 | `CA-008-07` | El reenvío tiene cooldown de 60 s y máximo 3 por hora (`DEC-064`); cada reenvío invalida atómicamente el código anterior, nunca deja dos vigentes. |
 | `CA-008-08` | La contraseña nueva se rechaza si no cumple la política de `DEC-063` (10-128 caracteres, no igual al correo ni a la contraseña actual), con un mensaje que explica qué falta. |
 | `CA-008-09` | Elegir un canal nunca envía el código por el otro: ninguna entrega ocurre por un canal que la persona no eligió, ni como respaldo si el elegido no tiene contacto verificado utilizable (`DEC-092`, `DP-SEG-16`). |
-| `CA-008-10` | El valor escrito solo identifica la cuenta y nunca se usa como destino: el envío va al contacto verificado almacenado; un número sin coincidencia única produce la respuesta genérica sin envío (`DEC-065`, `DP-SEG-14`). |
+| `CA-008-10` | El valor escrito solo identifica la cuenta y nunca se usa como destino: el envío va al contacto verificado almacenado; un número sin coincidencia única —ninguna cuenta o más de una en barberías distintas— produce la respuesta genérica sin envío, y en `verify`/`reset-password` el mismo `401` uniforme (`DEC-065`, `DEC-093`). |
 
 **Pruebas obligatorias**
 
@@ -562,7 +562,7 @@ La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para c
 | --- | --- |
 | Función | `F-AUTH-02` |
 | Reglas | Criterios no funcionales de UX; `RN-DAT-01`, `RN-DAT-02` |
-| Decisiones | `DEC-026`, `DEC-078`, `DEC-092` |
+| Decisiones | `DEC-026`, `DEC-078`, `DEC-092`, `DEC-093` |
 | Actor | Barbero |
 | Depende de | `HU-008`, `HU-009`, `HU-010` |
 | Bloquea | — |
@@ -576,7 +576,7 @@ La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para c
 
 - Composición según `estandar-diseno-visual.md` sección 10: paso actual, destino enmascarado, campo del código y reenvío con estado.
 - Tres pasos: solicitar, verificar el código, establecer la contraseña nueva.
-- Paso 1 con elección de canal (`DEC-092`): dos botones, **WhatsApp** y **Correo**, sin campo ni acción de envío hasta elegir uno; al elegirlo, un mensaje que menciona solo ese canal (“Si existe, te enviaremos un código de un solo uso por <canal>”) y el campo de su valor —número de WhatsApp o correo—. Representado en el lienzo de diseño aprobado el 2026-09-19 (escritorio y móvil 390 px); la implementación queda bloqueada por `DP-SEG-14`–`DP-SEG-16`.
+- Paso 1 con elección de canal (`DEC-092`): dos botones, **WhatsApp** y **Correo**, sin campo ni acción de envío hasta elegir uno; al elegirlo, un mensaje que menciona solo ese canal (“Si existe, te enviaremos un código de un solo uso por <canal>”) y el campo de su valor —número de WhatsApp o correo—. Representado en el lienzo de diseño aprobado el 2026-09-19 (escritorio y móvil 390 px). El paso 2 nombra solo el canal elegido y ofrece «Elegir otro canal» (`DEC-093`).
 - Estados de error específicos: código incorrecto, código vencido, demasiados intentos y espera de reenvío con cuenta regresiva.
 - Confirmación explícita de que las sesiones activas se cerraron.
 
@@ -594,6 +594,7 @@ La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para c
 | `CA-011-08` | Utilizable en 320 y 360 px sin desplazamiento horizontal. |
 | `CA-011-09` | El paso 1 muestra dos botones —WhatsApp y correo— y ningún campo ni botón de envío hasta elegir uno; el elegido queda marcado con `aria-pressed` y con una señal visual distinta del color (`DEC-092`). |
 | `CA-011-10` | Al elegir un canal aparece un mensaje que menciona únicamente ese canal y pide su valor con la etiqueta, el tipo de entrada y el `autocomplete` propios (teléfono o correo); cambiar de canal sustituye mensaje y campo, se anuncia a lector de pantalla y conserva el foco en el botón pulsado. |
+| `CA-011-11` | El paso 2 menciona únicamente el canal elegido en el paso 1, reutiliza su valor para verificar y reenviar, y ofrece volver al paso 1 para elegir otro canal sin explicar por qué no llegó el código (`DEC-093`, `DP-SEG-16`). |
 
 **Pruebas obligatorias**
 

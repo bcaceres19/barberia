@@ -1,17 +1,58 @@
-# Cuerpo de POST /auth/recovery/request (HU-008, DEC-064/DEC-065). Cerrado,
-# igual que ChallengeRequest: solo el correo. La respuesta es siempre
-# idéntica exista o no la cuenta (CA-008-01, DEC-065), así que este esquema
-# no valida más que la forma mínima.
+# Cuerpo de POST /auth/recovery/request (HU-008, DEC-064/DEC-065/DEC-092).
+# Cerrado, igual que ChallengeRequest. La respuesta es siempre idéntica exista
+# o no la cuenta (CA-008-01, DEC-065), así que este esquema no valida más que
+# la forma mínima del canal elegido y su valor.
+# Destino elegido en la recuperación de acceso (DEC-092, DEC-093). Se repite
+# en los tres pasos con el mismo canal y valor (DP-SEG-15): channel=email
+# exige email; channel=whatsapp exige phone; el campo del otro canal no se
+# admite. El valor solo identifica la cuenta: el código se entrega al
+# contacto verificado almacenado, nunca a un destino escrito aquí.
 type: object
 additionalProperties: false
-description: Solicitud de recuperación de acceso.
+description: Solicitud de recuperación de acceso por el canal elegido.
 properties:
+  channel:
+    type: string
+    enum: [email, whatsapp]
+    description: Canal por el que la persona quiere recibir el código de recuperación.
+    examples:
+      - email
   email:
     type: string
     format: email
     maxLength: 254
-    description: Correo de la cuenta cuyos medios registrados recibirán el código, si corresponde.
+    description: Correo de la cuenta. Obligatorio cuando channel es email; no se admite con whatsapp.
     examples:
       - barbero.ejemplo@correo.test
+  phone:
+    type: string
+    maxLength: 32
+    description: >-
+      Número de WhatsApp de la cuenta en formato internacional (E.164,
+      `+573001234567`); se descartan espacios, guiones, puntos y paréntesis.
+      Obligatorio cuando channel es whatsapp; no se admite con email.
+    examples:
+      - "+573001234567"
 required:
-  - email
+  - channel
+oneOf:
+  - properties:
+      channel:
+        const: email
+    required:
+      - email
+    not:
+      properties:
+        phone: {}
+      required:
+        - phone
+  - properties:
+      channel:
+        const: whatsapp
+    required:
+      - phone
+    not:
+      properties:
+        email: {}
+      required:
+        - email

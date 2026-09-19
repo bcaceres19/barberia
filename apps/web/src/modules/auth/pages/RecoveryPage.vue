@@ -17,6 +17,7 @@ import AuthSplitLayout from '../components/AuthSplitLayout.vue'
 import RecoveryRequestStep from '../components/RecoveryRequestStep.vue'
 import RecoveryVerifyStep from '../components/RecoveryVerifyStep.vue'
 import RecoveryResetStep from '../components/RecoveryResetStep.vue'
+import type { RecoveryTarget } from '../model/recoveryTarget'
 
 type Step = 'request' | 'verify' | 'reset' | 'done'
 
@@ -31,7 +32,9 @@ const STEP_TITLES: Record<Step, string> = {
 const router = useRouter()
 
 const step = ref<Step>('request')
-const email = ref('')
+// Canal y valor elegidos en el paso 1; los pasos 2 y 3 los reutilizan
+// (DEC-093, DP-SEG-15).
+const target = ref<RecoveryTarget | null>(null)
 const resetToken = ref('')
 const maskedPhone = ref('')
 const maskedEmail = ref('')
@@ -46,8 +49,8 @@ watch(step, async () => {
   headingRef.value?.focus()
 })
 
-function onRequestAdvance(payload: { email: string }) {
-  email.value = payload.email
+function onRequestAdvance(payload: { target: RecoveryTarget }) {
+  target.value = payload.target
   step.value = 'verify'
 }
 
@@ -66,7 +69,15 @@ function onResetDone() {
   step.value = 'done'
 }
 
+// Desde el paso 2 (aún sin código verificado) se puede volver a elegir canal:
+// no hay progreso confirmado por el servidor que conservar.
+function onChangeChannel() {
+  target.value = null
+  step.value = 'request'
+}
+
 function onRestart() {
+  target.value = null
   resetToken.value = ''
   maskedPhone.value = ''
   maskedEmail.value = ''
@@ -83,11 +94,16 @@ function onRestart() {
 
     <RecoveryRequestStep v-if="step === 'request'" @advance="onRequestAdvance" />
 
-    <RecoveryVerifyStep v-else-if="step === 'verify'" :email="email" @advance="onVerifyAdvance" />
+    <RecoveryVerifyStep
+      v-else-if="step === 'verify' && target"
+      :target="target"
+      @advance="onVerifyAdvance"
+      @change-channel="onChangeChannel"
+    />
 
     <RecoveryResetStep
-      v-else-if="step === 'reset'"
-      :email="email"
+      v-else-if="step === 'reset' && target"
+      :target="target"
       :reset-token="resetToken"
       :masked-phone="maskedPhone"
       :masked-email="maskedEmail"

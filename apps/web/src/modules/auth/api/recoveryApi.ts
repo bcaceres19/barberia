@@ -1,10 +1,11 @@
 // Único punto del módulo `auth` que llama al cliente HTTP tipado para la
-// recuperación de acceso (HU-008, DEC-063–DEC-066), mismo patrón que
+// recuperación de acceso (HU-008, DEC-063–DEC-066, DEC-092), mismo patrón que
 // `loginApi.ts`/`challengeApi.ts`. Traduce cada respuesta real a la unión
 // discriminada correspondiente de `model/recoveryOutcome.ts`; mapea por
 // `status` (nunca por `detail`), igual que el resto del módulo.
 import { httpClient } from '@/shared/api/httpClient'
 import { isProblem } from '@/shared/api/problem'
+import { toRecoveryTargetBody, type RecoveryTarget } from '../model/recoveryTarget'
 import type {
   RecoveryRequestOutcome,
   RecoveryResetPasswordOutcome,
@@ -12,16 +13,17 @@ import type {
 } from '../model/recoveryOutcome'
 
 /**
- * Solicita el código de recuperación. Siempre `accepted` ante un 202
- * (DEC-065: no enumeración — el cuerpo genérico no revela si la cuenta
- * existe). 400/422 no deberían ocurrir con un correo ya validado en
- * cliente, así que se tratan como `unexpected-error`, igual que cualquier
- * otro estado no documentado.
+ * Solicita el código de recuperación por el canal elegido (DEC-092).
+ * Siempre `accepted` ante un 202 (DEC-065: no enumeración — el cuerpo
+ * genérico no revela si la cuenta existe ni si el número es ambiguo).
+ * 400/422 no deberían ocurrir con un valor ya validado en cliente, así que
+ * se tratan como `unexpected-error`, igual que cualquier otro estado no
+ * documentado.
  */
-export async function requestRecovery(email: string): Promise<RecoveryRequestOutcome> {
+export async function requestRecovery(target: RecoveryTarget): Promise<RecoveryRequestOutcome> {
   try {
     const { error, response } = await httpClient.POST('/public/auth/recovery/request', {
-      body: { email },
+      body: toRecoveryTargetBody(target),
     })
 
     if (response.ok) {
@@ -42,10 +44,13 @@ export async function requestRecovery(email: string): Promise<RecoveryRequestOut
  * (DEC-064/DEC-065); 400/422 es un defecto de forma que la validación de
  * cliente debería haber evitado.
  */
-export async function verifyRecovery(email: string, code: string): Promise<RecoveryVerifyOutcome> {
+export async function verifyRecovery(
+  target: RecoveryTarget,
+  code: string,
+): Promise<RecoveryVerifyOutcome> {
   try {
     const { data, error, response } = await httpClient.POST('/public/auth/recovery/verify', {
-      body: { email, code },
+      body: { ...toRecoveryTargetBody(target), code },
     })
 
     if (response.ok && data) {
@@ -83,13 +88,13 @@ export async function verifyRecovery(email: string, code: string): Promise<Recov
  * hace.
  */
 export async function resetRecoveryPassword(
-  email: string,
+  target: RecoveryTarget,
   resetToken: string,
   newPassword: string,
 ): Promise<RecoveryResetPasswordOutcome> {
   try {
     const { error, response } = await httpClient.POST('/public/auth/recovery/reset-password', {
-      body: { email, resetToken, newPassword },
+      body: { ...toRecoveryTargetBody(target), resetToken, newPassword },
     })
 
     if (response.status === 204) {

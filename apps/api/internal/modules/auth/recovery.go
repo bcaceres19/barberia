@@ -33,10 +33,12 @@ type RecoveryConfig struct {
 	ResetTokenExpiresSeconds int
 }
 
-// RecoveryCodeSender entrega el código en claro por WhatsApp oficial y
-// correo a un usuario ya resuelto por el repositorio (DEC-066). El
-// adaptador concreto (Meta WhatsApp Cloud API + Resend/SES) vive en el
-// módulo notification; el núcleo de auth no conoce ninguno de los dos
+// RecoveryCodeSender entrega el código en claro por el canal que la persona
+// eligió (DEC-092) a un usuario ya resuelto por el repositorio. Solo el
+// destino del canal elegido llega lleno: phone para WhatsApp, email para
+// correo; el otro va vacío y el adaptador NO debe usarlo como respaldo. El
+// adaptador concreto (Meta WhatsApp Cloud API + Resend/SES, DEC-066) vive en
+// el módulo notification; el núcleo de auth no conoce ninguno de los dos
 // proveedores.
 type RecoveryCodeSender interface {
 	SendCode(ctx context.Context, phone, email, code string) error
@@ -54,6 +56,13 @@ type RecoveryRepository interface {
 	// en ese caso phone/resolvedEmail quedan vacíos y NINGÚN envío debe
 	// intentarse.
 	RequestRecovery(ctx context.Context, email, codeHash string, cfg RecoveryConfig) (accepted bool, phone, resolvedEmail string, err error)
+
+	// ResolveAccountEmailByPhone traduce un número E.164 al correo de la
+	// única cuenta activa que lo tiene verificado (DEC-093, DP-SEG-14).
+	// found=false cubre, indistinguiblemente, ninguna cuenta, una cuenta
+	// inactiva, un teléfono sin verificar y un número compartido por más de
+	// una cuenta.
+	ResolveAccountEmailByPhone(ctx context.Context, phone string) (email string, found bool, err error)
 
 	// VerifyRecovery valida codeHash contra el código vigente de email y,
 	// si coincide, persiste resetTokenHash con vigencia
@@ -104,14 +113,35 @@ func NewRecoveryService(
 	return &RecoveryService{repo: repo, codes: codes, tokens: tokens, sender: sender, hasher: hasher, cfg: cfg, secret: secret}
 }
 
+// resolveEmail traduce el canal y el valor elegidos al correo de la cuenta,
+// que es como el repositorio sigue identificándola. ok=false cubre un valor
+// sin cuenta y un teléfono ambiguo; ningún llamador debe distinguirlos
+// (DEC-065, DEC-093). Un canal desconocido o un teléfono que no es E.164
+// nunca llega aquí: el handler ya lo rechazó como error de forma.
+func (s *RecoveryService) resolveEmail(ctx context.Context, target RecoveryTarget) (email string, ok bool, err error) {
+	switch target.Channel {
+	case RecoveryChannelEmail:
+		email = NormalizeEmail(target.Value)
+		return email, email != "", nil
+	case RecoveryChannelWhatsApp:
+		phone, valid := NormalizePhone(target.Value)
+		if !valid {
+			return "", false, nil
+		}
+		return s.repo.ResolveAccountEmailByPhone(ctx, phone)
+	default:
+		return "", false, nil
+	}
+}
+
 // Request genera un código nuevo y, si el repositorio acepta la solicitud
 // (cuenta activa con teléfono verificado, cooldown/límite de reenvío no
-// excedidos), lo envía por WhatsApp y correo. El resultado de esta llamada
+// excedidos), lo envía únicamente por el canal elegido (DEC-092). El resultado de esta llamada
 // NUNCA debe cambiar la respuesta HTTP: el handler responde 202 siempre,
 // sin importar qué devuelva Request (no enumeración, DEC-065). El error
 // que sí puede devolver es exclusivamente para diagnóstico interno
 // (logging), nunca para decidir el status code.
-func (s *RecoveryService) Request(ctx context.Context, rawEmail string) error {
+func (s *RecoveryService) Request(ctx context.Context, target RecoveryTarget) error {
 	if err := ctx.Err(); err != nil {
 		return apperr.Internal(fmt.Errorf("auth: contexto cancelado antes de solicitar recuperación: %w", err))
 	}
@@ -122,7 +152,14 @@ func (s *RecoveryService) Request(ctx context.Context, rawEmail string) error {
 	}
 	codeHash := HMACHex(code, s.secret)
 
-	email := NormalizeEmail(rawEmail)
+	email, ok, err := s.resolveEmail(ctx, target)
+	if err != nil {
+		return apperr.Internal(fmt.Errorf("auth: resolver cuenta de recuperación: %w", err))
+	}
+	if !ok {
+		return nil
+	}
+
 	accepted, phone, resolvedEmail, err := s.repo.RequestRecovery(ctx, email, codeHash, s.cfg)
 	if err != nil {
 		return apperr.Internal(fmt.Errorf("auth: solicitar recuperación: %w", err))
@@ -131,7 +168,16 @@ func (s *RecoveryService) Request(ctx context.Context, rawEmail string) error {
 		return nil
 	}
 
-	if err := s.sender.SendCode(ctx, phone, resolvedEmail, code); err != nil {
+	// Solo el destino del canal elegido sale hacia el remitente (DEC-092): el
+	// otro contacto de la cuenta no se usa ni como respaldo.
+	var sendPhone, sendEmail string
+	if target.Channel == RecoveryChannelWhatsApp {
+		sendPhone = phone
+	} else {
+		sendEmail = resolvedEmail
+	}
+
+	if err := s.sender.SendCode(ctx, sendPhone, sendEmail, code); err != nil {
 		// El fallo de entrega se reporta al llamador solo para que lo
 		// registre sin destinatario ni código (RN-DAT-02); la respuesta al
 		// cliente ya se decidió antes de invocar este método y no cambia
@@ -141,12 +187,13 @@ func (s *RecoveryService) Request(ctx context.Context, rawEmail string) error {
 	return nil
 }
 
-// Verify comprueba code contra el código vigente de rawEmail. Éxito emite
+// Verify comprueba code contra el código vigente de la cuenta identificada
+// por target (el mismo canal y valor del paso 1, DP-SEG-15). Éxito emite
 // un token de reinicio opaco (mismo patrón CryptoTokenGenerator+HashToken
 // que la sesión, DEC-064) y devuelve el destino enmascarado (DEC-065).
 // Cualquier fallo —código incorrecto, vencido, agotado o cuenta
 // inexistente— devuelve exactamente el mismo error uniforme.
-func (s *RecoveryService) Verify(ctx context.Context, rawEmail, code string) (resetToken, maskedPhone, maskedEmail string, err error) {
+func (s *RecoveryService) Verify(ctx context.Context, target RecoveryTarget, code string) (resetToken, maskedPhone, maskedEmail string, err error) {
 	if err := ctx.Err(); err != nil {
 		return "", "", "", apperr.Internal(fmt.Errorf("auth: contexto cancelado antes de verificar recuperación: %w", err))
 	}
@@ -157,7 +204,13 @@ func (s *RecoveryService) Verify(ctx context.Context, rawEmail, code string) (re
 	}
 	tokenHash := HashToken(rawToken)
 
-	email := NormalizeEmail(rawEmail)
+	email, found, err := s.resolveEmail(ctx, target)
+	if err != nil {
+		return "", "", "", apperr.Internal(fmt.Errorf("auth: resolver cuenta de recuperación: %w", err))
+	}
+	if !found {
+		return "", "", "", errInvalidRecoveryCode()
+	}
 	codeHash := HMACHex(code, s.secret)
 
 	ok, phone, resolvedEmail, err := s.repo.VerifyRecovery(ctx, email, codeHash, tokenHash, s.cfg.ResetTokenExpiresSeconds)
@@ -177,12 +230,18 @@ func (s *RecoveryService) Verify(ctx context.Context, rawEmail, code string) (re
 // atómica (CA-008-05). El artefacto se consume una vez incluso bajo dos
 // solicitudes concurrentes: el repositorio serializa la segunda detrás de
 // la primera.
-func (s *RecoveryService) ChangePassword(ctx context.Context, rawEmail, resetToken, newPassword string) error {
+func (s *RecoveryService) ChangePassword(ctx context.Context, target RecoveryTarget, resetToken, newPassword string) error {
 	if err := ctx.Err(); err != nil {
 		return apperr.Internal(fmt.Errorf("auth: contexto cancelado antes de cambiar contraseña: %w", err))
 	}
 
-	email := NormalizeEmail(rawEmail)
+	email, resolved, err := s.resolveEmail(ctx, target)
+	if err != nil {
+		return apperr.Internal(fmt.Errorf("auth: resolver cuenta de recuperación: %w", err))
+	}
+	if !resolved {
+		return errInvalidResetToken()
+	}
 	tokenHash := HashToken(resetToken)
 
 	found, currentHash, _, err := s.repo.CurrentCredential(ctx, email, tokenHash)
