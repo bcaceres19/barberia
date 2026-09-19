@@ -1,6 +1,6 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.33"
+version: "1.34"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-19"
@@ -1058,3 +1058,15 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** elegir una de varias cuentas con el mismo número (recupera la cuenta equivocada); exigir teléfono único por sistema (cambio de datos que ninguna historia pide y rompe barberías que comparten un número); un identificador nuevo para los pasos 2 y 3 (más superficie sin beneficio); usar el otro canal como respaldo (contradice `DEC-092`).
 - **Documentos afectados:** `docs/00-control/{dudas-pendientes.md,matriz-trazabilidad.md,historial-cambios.md}`, `docs/01-producto/reglas-negocio.md`, `docs/02-requisitos/historias-usuario.md` (`HU-008`, `HU-011`), `api/openapi/{paths/public-auth.yaml,components/schemas/Recovery*Request.yaml,CHANGELOG.md}` (0.22.0), `database/{migrations/20260919200000_add_auth_recovery_resolve_phone.sql,tests/hu008_recuperacion_acceso.sql,testdata/hu008_recuperacion_canal.sql,README.md}`, `apps/api/README.md`.
 - **Fuente:** aceptación explícita del propietario el 2026-09-19 de las tres respuestas recomendadas de `DP-SEG-14`–`DP-SEG-16` (`AskUserQuestion`), issue [#276](https://github.com/bcaceres19/barberia/issues/276).
+
+### DEC-094 · La recuperación de acceso por correo no exige teléfono verificado
+
+- **Fecha:** 2026-09-19.
+- **Decisión:** en el paso 1 de la recuperación de acceso, el requisito de contacto verificado se evalúa **solo sobre el canal elegido**. **Correo:** basta una cuenta activa con ese correo, que ya es su identificador de acceso; el código se envía a ese correo aunque la cuenta no tenga teléfono o su teléfono no esté verificado. **WhatsApp:** se mantiene `DEC-093`: el número identifica la cuenta solo si coincide con exactamente una cuenta activa con ese número verificado. Nunca se exige tener ambos contactos y el otro canal no se usa como respaldo. Un teléfono sin verificar no se devuelve como destino de envío.
+- **Alcance de la sustitución:** enmienda `DEC-092` y `DEC-093` únicamente en la frase «sobre contactos verificados» para el canal Correo, y reescribe `CA-008-01` de `HU-008` en esa parte. No cambia la respuesta idéntica de `DEC-065`, la vigencia, los intentos, el cooldown ni el límite de reenvío de `DEC-064`, ni los proveedores de `DEC-066`.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** la implementación de `DEC-093` filtraba la cuenta por teléfono verificado también con el canal Correo, de modo que una cuenta activa sin teléfono nunca recibía el código y la respuesta 202 genérica lo ocultaba. El esquema no tiene marca de correo verificado y el correo es el identificador con el que la persona ya inicia sesión, así que exigir además un teléfono no añade una prueba de posesión del correo, solo impide usarlo.
+- **Riesgo residual aceptado:** quien controle la bandeja del correo de la cuenta puede restablecer su contraseña sin poseer el teléfono. Es el modelo habitual de recuperación por correo; se mitigan con el código de un solo uso de 15 minutos, cinco intentos, cooldown y límite de reenvío de `DEC-064`, y con la revocación de sesiones al cambiar la contraseña.
+- **Alternativas descartadas:** marca `email_verified_at` con un flujo de verificación de correo (historia nueva y deja sin recuperación por correo a las cuentas actuales); mantener la exigencia de teléfono verificado (contradice la instrucción del propietario); enviar por el otro canal cuando falta el elegido (contradice `DEC-092`).
+- **Documentos afectados:** `docs/00-control/{matriz-trazabilidad.md,historial-cambios.md}`, `docs/01-producto/reglas-negocio.md`, `docs/02-requisitos/historias-usuario.md` (`HU-008`).
+- **Fuente:** instrucción explícita del propietario del 2026-09-19 («si se manda el correo se mande al correo, si se manda el número se mande al número, no que espere que tenga los dos») y su confirmación de la opción «Correo basta» (`AskUserQuestion`), issue [#278](https://github.com/bcaceres19/barberia/issues/278).

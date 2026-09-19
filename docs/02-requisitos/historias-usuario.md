@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.48"
+version: "1.49"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-19"
@@ -409,7 +409,7 @@ La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para c
 | --- | --- |
 | Función | `F-AUTH-02` |
 | Reglas | `RN-DAT-01`, `RN-DAT-02` |
-| Decisiones | `DEC-026`, `DEC-051`, `DEC-063`, `DEC-064`, `DEC-065`, `DEC-081`, `DEC-092`, `DEC-093` |
+| Decisiones | `DEC-026`, `DEC-051`, `DEC-063`, `DEC-064`, `DEC-065`, `DEC-081`, `DEC-092`, `DEC-093`, `DEC-094` |
 | Actor | Barbero |
 | Depende de | `HU-005`, `HU-007` |
 | Bloquea | `HU-011` |
@@ -420,6 +420,8 @@ La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para c
 > Como barbero que olvidó su contraseña, quiero recuperar el acceso con un código enviado por el canal que yo elija —WhatsApp o correo—, para volver a mi agenda el mismo día sin depender de que alguien me responda.
 
 > **Cambio del 2026-09-19 (`DEC-092`):** la persona elige el canal y escribe su valor en el paso 1; el código se envía solo por ese canal. `CA-008-01` se reescribe y nacen `CA-008-09` y `CA-008-10`. `DEC-093` resolvió `DP-SEG-14`–`DP-SEG-16` y la implementación (migración `20260919200000`, contrato `0.22.0`, API y pantalla) se entrega en el issue [#276](https://github.com/bcaceres19/barberia/issues/276).
+
+> **Cambio del 2026-09-19 (`DEC-094`):** con el canal correo basta una cuenta activa con ese correo; no se exige teléfono ni que esté verificado. `CA-008-01` se ajusta y nace `CA-008-11`. Se entrega en el issue [#278](https://github.com/bcaceres19/barberia/issues/278).
 
 > **Bloqueo resuelto:** `DEC-026` definía el mecanismo (código al teléfono verificado) sin fijar canal ni proveedor. `DP-SEG-05` quedó resuelta el 2026-08-11 como `DEC-051`: WhatsApp oficial y correo, reutilizando el proveedor ya habilitado por `DEC-027`. El 2026-08-17 se resolvieron las últimas cuatro dudas: `DP-SEG-11` (política de contraseña) como `DEC-063`, `DP-SEG-12` (formato/vigencia/intentos/token de reinicio del código) como `DEC-064`, `CT-006` (respuesta idéntica frente a destino enmascarado) como `DEC-065`, y `DP-NOT-05` (proveedor/adaptador real de WhatsApp y correo: Meta Cloud API + Resend) como `DEC-066`. `HU-008` ya no depende de ninguna decisión pendiente; solo espera que `HU-007` se integre en `main`.
 
@@ -436,7 +438,7 @@ La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para c
 
 | Código | Criterio |
 | --- | --- |
-| `CA-008-01` | Dado un canal elegido (WhatsApp o correo) y su valor —número o correo— de una cuenta registrada, cuando se solicita recuperación, entonces se envía el código únicamente por ese canal sobre el contacto verificado de la cuenta, y la respuesta de `POST /recovery/request` es idéntica a la de un valor no registrado, sin destino en el cuerpo (`DEC-065`, `DEC-092`). |
+| `CA-008-01` | Dado un canal elegido (WhatsApp o correo) y su valor —número o correo— de una cuenta registrada, cuando se solicita recuperación, entonces se envía el código únicamente por ese canal —al correo de la cuenta activa o, en WhatsApp, a su número verificado (`DEC-094`)—, y la respuesta de `POST /recovery/request` es idéntica a la de un valor no registrado, sin destino en el cuerpo (`DEC-065`, `DEC-092`). |
 | `CA-008-02` | El código vence en 15 minutos (`DEC-064`), se acepta una sola vez y queda inválido tras usarse. |
 | `CA-008-03` | Superados 5 intentos fallidos (`DEC-064`), el código se invalida por completo y debe solicitarse uno nuevo. |
 | `CA-008-04` | El código se almacena como `HMAC-SHA256` con secreto de despliegue (`DEC-064`); la base de datos no contiene el valor enviado ni una representación recuperable sin ese secreto. |
@@ -446,6 +448,7 @@ La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para c
 | `CA-008-08` | La contraseña nueva se rechaza si no cumple la política de `DEC-063` (10-128 caracteres, no igual al correo ni a la contraseña actual), con un mensaje que explica qué falta. |
 | `CA-008-09` | Elegir un canal nunca envía el código por el otro: ninguna entrega ocurre por un canal que la persona no eligió, ni como respaldo si el elegido no tiene contacto verificado utilizable (`DEC-092`, `DP-SEG-16`). |
 | `CA-008-10` | El valor escrito solo identifica la cuenta y nunca se usa como destino: el envío va al contacto verificado almacenado; un número sin coincidencia única —ninguna cuenta o más de una en barberías distintas— produce la respuesta genérica sin envío, y en `verify`/`reset-password` el mismo `401` uniforme (`DEC-065`, `DEC-093`). |
+| `CA-008-11` | Una cuenta activa sin teléfono, o con teléfono sin verificar, recibe el código por correo cuando elige Correo; con WhatsApp sigue exigiéndose un número verificado con coincidencia única, y en ningún caso se usa el otro canal como respaldo (`DEC-094`). |
 
 **Pruebas obligatorias**
 
