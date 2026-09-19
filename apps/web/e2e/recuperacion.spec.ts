@@ -44,14 +44,28 @@ import path from 'node:path'
  */
 const VALID_CODE_EMAIL = process.env.E2E_RECOVERY_EMAIL ?? 'dueno.b@ejemplo.test'
 const EXPIRED_CODE_EMAIL = process.env.E2E_RECOVERY_EXPIRED_EMAIL ?? 'duena.a@ejemplo.test'
+// Cuenta con teléfono único verificado (database/testdata/
+// hu008_recuperacion_canal.sql), reservada para el recorrido por WhatsApp
+// (DEC-092, DEC-093): no comparte cooldown con las dos cuentas de correo.
+const WHATSAPP_EMAIL = process.env.E2E_RECOVERY_WHATSAPP_EMAIL ?? 'dueno.o@ejemplo.test'
+const WHATSAPP_PHONE = process.env.E2E_RECOVERY_WHATSAPP_PHONE ?? '+573000000011'
 const NEW_PASSWORD = 'ClaveDeRecuperacionHU011!'
 const CAPTURE_FILE =
   process.env.APP_RECOVERY_CAPTURE_FILE ?? path.join(tmpdir(), 'hu011-e2e-capture.json')
 
-async function readCapturedCode(): Promise<string> {
+interface Capture {
+  phone: string
+  email: string
+  code: string
+}
+
+async function readCapture(): Promise<Capture> {
   const raw = await readFile(CAPTURE_FILE, 'utf-8')
-  const parsed = JSON.parse(raw) as { phone: string; email: string; code: string }
-  return parsed.code
+  return JSON.parse(raw) as Capture
+}
+
+async function readCapturedCode(): Promise<string> {
+  return (await readCapture()).code
 }
 
 async function waitForCapturedCode(): Promise<string> {
@@ -109,7 +123,17 @@ async function withIsolatedIP(page: Page): Promise<void> {
 
 async function requestRecovery(page: Page, email: string) {
   await page.goto('/recuperar-acceso')
+  // El paso 1 no muestra campo hasta elegir el canal (DEC-092, CA-011-09).
+  await page.getByRole('button', { name: 'Correo' }).click()
   await page.getByLabel('Correo', { exact: true }).fill(email)
+  await page.getByRole('button', { name: 'Enviar código' }).click()
+  await expect(page.getByText('Paso 2 de 3')).toBeVisible()
+}
+
+async function requestRecoveryByWhatsApp(page: Page, phone: string) {
+  await page.goto('/recuperar-acceso')
+  await page.getByRole('button', { name: 'WhatsApp' }).click()
+  await page.getByLabel('WhatsApp', { exact: true }).fill(phone)
   await page.getByRole('button', { name: 'Enviar código' }).click()
   await expect(page.getByText('Paso 2 de 3')).toBeVisible()
 }
@@ -138,6 +162,8 @@ test.describe('Recuperación de acceso (HU-011)', () => {
     // Destino enmascarado, nunca completo (CA-011-02/CA-008-06).
     await expect(page.getByText(VALID_CODE_EMAIL)).toHaveCount(0)
     await expect(page.getByText(/\*{2,}/)).toBeVisible()
+    // CA-008-09: elegir correo no envía nada por WhatsApp.
+    expect((await readCapture()).phone).toBe('')
 
     await page.locator('input[name="newPassword"]').fill(NEW_PASSWORD)
     await page.locator('input[name="confirmPassword"]').fill(NEW_PASSWORD)
@@ -150,6 +176,40 @@ test.describe('Recuperación de acceso (HU-011)', () => {
     await page.getByRole('button', { name: 'Ir al acceso' }).click()
     await expect(page).toHaveURL(/\/acceso$/)
     await page.getByLabel('Correo', { exact: true }).fill(VALID_CODE_EMAIL)
+    await page.getByLabel('Contraseña', { exact: true }).fill(NEW_PASSWORD)
+    await page.getByRole('button', { name: 'Iniciar sesión' }).click()
+    await expect(page).toHaveURL(/\/panel$/)
+  })
+
+  test('recorrido completo por WhatsApp: el número identifica la cuenta y el código llega solo al teléfono (CA-008-09, CA-008-10, CA-011-10)', async ({
+    page,
+  }) => {
+    await withIsolatedIP(page)
+    await requestRecoveryByWhatsApp(page, '+57 300 000 0011')
+
+    await expect(page.getByText(/por WhatsApp/)).toBeVisible()
+    const code = await waitForCapturedCode()
+    // El proveedor interceptado recibió solo el destino del canal elegido.
+    const capture = await readCapture()
+    expect(capture.phone).toBe(WHATSAPP_PHONE)
+    expect(capture.email).toBe('')
+
+    await fillOtp(page, code)
+    await page.getByRole('button', { name: 'Verificar código' }).click()
+
+    await expect(page.getByText('Paso 3 de 3')).toBeVisible()
+    // Destino enmascarado, nunca completo (CA-011-02/CA-008-06).
+    await expect(page.getByText(WHATSAPP_EMAIL)).toHaveCount(0)
+    await expect(page.getByText(/\*{2,}/)).toBeVisible()
+
+    await page.locator('input[name="newPassword"]').fill(NEW_PASSWORD)
+    await page.locator('input[name="confirmPassword"]').fill(NEW_PASSWORD)
+    await page.getByRole('button', { name: 'Guardar contraseña nueva' }).click()
+    await expect(page.getByText('cerramos todas tus sesiones activas')).toBeVisible()
+
+    // La contraseña nueva autentica contra el login real.
+    await page.getByRole('button', { name: 'Ir al acceso' }).click()
+    await page.getByLabel('Correo', { exact: true }).fill(WHATSAPP_EMAIL)
     await page.getByLabel('Contraseña', { exact: true }).fill(NEW_PASSWORD)
     await page.getByRole('button', { name: 'Iniciar sesión' }).click()
     await expect(page).toHaveURL(/\/panel$/)

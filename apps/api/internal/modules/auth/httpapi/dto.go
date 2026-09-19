@@ -52,10 +52,20 @@ type ChallengeVerifyRequest struct {
 	Code  string `json:"code"`
 }
 
+// RecoveryTargetFields es la parte común de los tres pasos de la
+// recuperación: el canal elegido y el valor de ese canal (DEC-092,
+// DP-SEG-15). channel=email exige email; channel=whatsapp exige phone; el
+// campo del otro canal debe faltar.
+type RecoveryTargetFields struct {
+	Channel string `json:"channel"`
+	Email   string `json:"email,omitempty"`
+	Phone   string `json:"phone,omitempty"`
+}
+
 // RecoveryRequestRequest es el cuerpo de
-// POST /api/v1/public/auth/recovery/request (HU-008, DEC-064).
+// POST /api/v1/public/auth/recovery/request (HU-008, DEC-064, DEC-092).
 type RecoveryRequestRequest struct {
-	Email string `json:"email"`
+	RecoveryTargetFields
 }
 
 // RecoveryRequestAcceptedResponse es el cuerpo de la respuesta 202,
@@ -65,10 +75,10 @@ type RecoveryRequestAcceptedResponse struct {
 }
 
 // RecoveryVerifyRequest es el cuerpo de
-// POST /api/v1/public/auth/recovery/verify (HU-008, DEC-064).
+// POST /api/v1/public/auth/recovery/verify (HU-008, DEC-064, DEC-092).
 type RecoveryVerifyRequest struct {
-	Email string `json:"email"`
-	Code  string `json:"code"`
+	RecoveryTargetFields
+	Code string `json:"code"`
 }
 
 // RecoveryVerifyResponse es el cuerpo de la respuesta 200 exitosa
@@ -82,7 +92,7 @@ type RecoveryVerifyResponse struct {
 // RecoveryResetPasswordRequest es el cuerpo de
 // POST /api/v1/public/auth/recovery/reset-password (HU-008, DEC-063/DEC-064).
 type RecoveryResetPasswordRequest struct {
-	Email       string `json:"email"`
+	RecoveryTargetFields
 	ResetToken  string `json:"resetToken"`
 	NewPassword string `json:"newPassword"`
 }

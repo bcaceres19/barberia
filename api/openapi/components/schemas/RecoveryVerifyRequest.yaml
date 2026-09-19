@@ -1,24 +1,65 @@
-# Cuerpo de POST /auth/recovery/verify (HU-008, DEC-064). Cerrado. code es
-# el valor de 6 dígitos recibido por WhatsApp/correo; nunca se refleja en
-# ninguna respuesta ni se registra en claro (RN-DAT-02).
+# Cuerpo de POST /auth/recovery/verify (HU-008, DEC-064, DEC-092). Cerrado.
+# code es el valor de 6 dígitos recibido por el canal elegido; nunca se
+# refleja en ninguna respuesta ni se registra en claro (RN-DAT-02).
+# Destino elegido en la recuperación de acceso (DEC-092, DEC-093). Se repite
+# en los tres pasos con el mismo canal y valor (DP-SEG-15): channel=email
+# exige email; channel=whatsapp exige phone; el campo del otro canal no se
+# admite. El valor solo identifica la cuenta: el código se entrega al
+# contacto verificado almacenado, nunca a un destino escrito aquí.
 type: object
 additionalProperties: false
 description: Verificación del código de recuperación.
 properties:
+  channel:
+    type: string
+    enum: [email, whatsapp]
+    description: Canal por el que la persona quiere recibir el código de recuperación.
+    examples:
+      - email
   email:
     type: string
     format: email
     maxLength: 254
-    description: Correo de la cuenta que solicitó la recuperación.
+    description: Correo de la cuenta. Obligatorio cuando channel es email; no se admite con whatsapp.
     examples:
       - barbero.ejemplo@correo.test
+  phone:
+    type: string
+    maxLength: 32
+    description: >-
+      Número de WhatsApp de la cuenta en formato internacional (E.164,
+      `+573001234567`); se descartan espacios, guiones, puntos y paréntesis.
+      Obligatorio cuando channel es whatsapp; no se admite con email.
+    examples:
+      - "+573001234567"
   code:
     type: string
     writeOnly: true
     pattern: '^[0-9]{6}$'
-    description: Código numérico de 6 dígitos recibido por WhatsApp y correo.
+    description: Código numérico de 6 dígitos recibido por el canal elegido.
     examples:
       - "482913"
 required:
-  - email
+  - channel
   - code
+oneOf:
+  - properties:
+      channel:
+        const: email
+    required:
+      - email
+    not:
+      properties:
+        phone: {}
+      required:
+        - phone
+  - properties:
+      channel:
+        const: whatsapp
+    required:
+      - phone
+    not:
+      properties:
+        email: {}
+      required:
+        - email

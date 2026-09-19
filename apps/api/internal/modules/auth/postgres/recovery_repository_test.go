@@ -295,3 +295,36 @@ func TestRecoveryRepository_ChangePassword_ConcurrentSameToken_OnlyOneWinner(t *
 // puede reescribir created_at directamente sin esperar. La prueba de
 // arriba (immediate resend) ya cubre el caso determinista y rápido: el
 // cooldown SÍ bloquea un reenvío inmediato.
+
+// --- Resolución por teléfono (DEC-093, DP-SEG-14) ---------------------------
+// Solo lecturas: no crean ni consumen ningún código, así que pueden repetirse
+// libremente. Requieren además database/testdata/hu008_recuperacion_canal.sql
+// (dueno.o con teléfono único; dueno.p y dueno.q con el mismo número).
+
+func TestRecoveryRepository_ResolveAccountEmailByPhone(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+	repo := authpostgres.NewRecoveryRepository(db)
+
+	for _, tc := range []struct {
+		name      string
+		phone     string
+		wantEmail string
+		wantFound bool
+	}{
+		{"teléfono único de una cuenta activa", "+573000000011", "dueno.o@ejemplo.test", true},
+		{"otra barbería resuelve a su propia cuenta", "+573000000001", "duena.a@ejemplo.test", true},
+		{"número compartido entre dos barberías es ambiguo", "+573000000012", "", false},
+		{"número sin cuenta", "+573009999999", "", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			email, found, err := repo.ResolveAccountEmailByPhone(context.Background(), tc.phone)
+			if err != nil {
+				t.Fatalf("ResolveAccountEmailByPhone: %v", err)
+			}
+			if found != tc.wantFound || email != tc.wantEmail {
+				t.Fatalf("got (%q, %v), want (%q, %v)", email, found, tc.wantEmail, tc.wantFound)
+			}
+		})
+	}
+}

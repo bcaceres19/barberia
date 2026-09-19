@@ -22,21 +22,26 @@ type recoveryPathFile struct {
 func TestContract_RecoveryRequestSchema_MatchesDTOFields(t *testing.T) {
 	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/RecoveryRequestRequest.yaml")
 
-	if _, ok := schema.Properties["email"]; !ok {
-		t.Fatal("schema no declara email")
+	// DEC-092/DEC-093: canal + valor del canal; email o phone según channel
+	// (el oneOf del esquema lo impone, aquí solo se fijan las propiedades).
+	wantProps := map[string]bool{"channel": true, "email": true, "phone": true}
+	if len(schema.Properties) != len(wantProps) {
+		t.Fatalf("expected %d properties, schema has %d: %v", len(wantProps), len(schema.Properties), schema.Properties)
 	}
-	if len(schema.Properties) != 1 {
-		t.Fatalf("expected exactly 1 property (email), got %v", schema.Properties)
+	for prop := range wantProps {
+		if _, ok := schema.Properties[prop]; !ok {
+			t.Errorf("schema no declara la propiedad %q", prop)
+		}
 	}
-	if len(schema.Required) != 1 || schema.Required[0] != "email" {
-		t.Fatalf("expected email to be required, got %v", schema.Required)
+	if len(schema.Required) != 1 || schema.Required[0] != "channel" {
+		t.Fatalf("expected only channel to be unconditionally required, got %v", schema.Required)
 	}
 }
 
 func TestContract_RecoveryVerifyRequestSchema_MatchesDTOFields(t *testing.T) {
 	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/RecoveryVerifyRequest.yaml")
 
-	wantProps := map[string]bool{"email": true, "code": true}
+	wantProps := map[string]bool{"channel": true, "email": true, "phone": true, "code": true}
 	if len(schema.Properties) != len(wantProps) {
 		t.Fatalf("expected %d properties, schema has %d: %v", len(wantProps), len(schema.Properties), schema.Properties)
 	}
@@ -64,7 +69,7 @@ func TestContract_RecoveryVerifyResponseSchema_MatchesDTOFields(t *testing.T) {
 func TestContract_RecoveryResetPasswordRequestSchema_MatchesDTOFields(t *testing.T) {
 	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/RecoveryResetPasswordRequest.yaml")
 
-	wantProps := map[string]bool{"email": true, "resetToken": true, "newPassword": true}
+	wantProps := map[string]bool{"channel": true, "email": true, "phone": true, "resetToken": true, "newPassword": true}
 	if len(schema.Properties) != len(wantProps) {
 		t.Fatalf("expected %d properties, schema has %d: %v", len(wantProps), len(schema.Properties), schema.Properties)
 	}
@@ -74,7 +79,7 @@ func TestContract_RecoveryResetPasswordRequestSchema_MatchesDTOFields(t *testing
 		}
 	}
 	if len(schema.Required) != 3 {
-		t.Fatalf("expected all 3 fields required, got %v", schema.Required)
+		t.Fatalf("expected channel, resetToken and newPassword required, got %v", schema.Required)
 	}
 }
 

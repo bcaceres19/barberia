@@ -145,19 +145,26 @@
     tags: [Auth]
     summary: Solicitar recuperación de acceso
     description: >
-      Solicita el código de recuperación de acceso. Responde siempre 202
-      con el mismo cuerpo genérico, exista o no la cuenta y esté o no el
-      teléfono verificado (CA-008-01, no enumeración, DEC-065): nunca
+      Solicita el código de recuperación de acceso por el canal que la
+      persona elige (DEC-092): correo, identificando la cuenta por su
+      correo, o WhatsApp, identificándola por su número. Responde siempre
+      202 con el mismo cuerpo genérico, exista o no la cuenta, esté o no el
+      teléfono verificado y sea o no el número ambiguo entre barberías
+      (CA-008-01, CA-008-10, no enumeración, DEC-065, DEC-093): nunca
       incluye el destino, ni siquiera enmascarado. Solo se envía un código
-      real por WhatsApp oficial y correo cuando la cuenta existe, está
-      activa y tiene el teléfono verificado. Límite propio: cooldown de 60
+      real, únicamente por el canal elegido y al contacto verificado
+      almacenado (CA-008-09), cuando la cuenta existe, está activa, tiene el
+      teléfono verificado y el número identifica exactamente una cuenta. Un
+      canal desconocido, el campo del otro canal o un número que no está en
+      formato internacional responden 422, una respuesta de forma que no
+      revela nada de la cuenta. Límite propio: cooldown de 60
       segundos entre solicitudes y máximo 3 códigos por cuenta por hora
       (DEC-064); un reenvío aceptado invalida atómicamente el código
       vigente anterior (CA-008-07).
     operationId: requestRecovery
     security: []
     x-business-rules: [RN-DAT-01, RN-DAT-02, RN-REC-04, RN-REC-05]
-    x-decisions: [DEC-026, DEC-051, DEC-064, DEC-065, DEC-066]
+    x-decisions: [DEC-026, DEC-051, DEC-064, DEC-065, DEC-066, DEC-092, DEC-093]
     requestBody:
       required: true
       content:
@@ -165,10 +172,16 @@
           schema:
             $ref: '../components/schemas/RecoveryRequestRequest.yaml'
           examples:
-            solicitud:
-              summary: Solicitar recuperación
+            porCorreo:
+              summary: Solicitar el código por correo
               value:
+                channel: email
                 email: barbero.ejemplo@correo.test
+            porWhatsApp:
+              summary: Solicitar el código por WhatsApp
+              value:
+                channel: whatsapp
+                phone: "+573001234567"
     responses:
       "202":
         $ref: '../components/responses/RecoveryRequestAccepted.yaml'
@@ -184,9 +197,11 @@
     tags: [Auth]
     summary: Verificar el código de recuperación
     description: >
-      Verifica el código de 6 dígitos recibido por WhatsApp y correo
-      (DEC-064). Código incorrecto, vencido, agotado o de una cuenta
-      inexistente producen exactamente la misma respuesta 401 (CA-008-01,
+      Verifica el código de 6 dígitos recibido por el canal elegido
+      (DEC-064, DEC-092), identificando la cuenta con el mismo canal y valor
+      del paso anterior (DEC-093). Código incorrecto, vencido, agotado, de
+      una cuenta inexistente o de un número que no identifica una única
+      cuenta producen exactamente la misma respuesta 401 (CA-008-01,
       no enumeración). Un código correcto emite un token de reinicio de un
       solo uso, vigente 5 minutos, y devuelve el destino enmascarado
       (CA-008-06, DEC-065): llegar a esta respuesta ya exige haber recibido
@@ -195,7 +210,7 @@
     operationId: verifyRecovery
     security: []
     x-business-rules: [RN-DAT-01, RN-DAT-02]
-    x-decisions: [DEC-064, DEC-065]
+    x-decisions: [DEC-064, DEC-065, DEC-092, DEC-093]
     requestBody:
       required: true
       content:
@@ -203,10 +218,17 @@
           schema:
             $ref: '../components/schemas/RecoveryVerifyRequest.yaml'
           examples:
-            verificacion:
-              summary: Verificar el código
+            porCorreo:
+              summary: Verificar el código recibido por correo
               value:
+                channel: email
                 email: barbero.ejemplo@correo.test
+                code: "482913"
+            porWhatsApp:
+              summary: Verificar el código recibido por WhatsApp
+              value:
+                channel: whatsapp
+                phone: "+573001234567"
                 code: "482913"
     responses:
       "200":
@@ -228,8 +250,9 @@
       Establece la contraseña nueva usando el token de reinicio emitido por
       una verificación exitosa (DEC-064). El token se consume una única vez
       incluso bajo dos solicitudes concurrentes; reutilizarlo, presentarlo
-      vencido o con un correo distinto responde el mismo 401 uniforme que
-      un token desconocido. La contraseña debe cumplir la política mínima
+      vencido o con un canal y valor de otra cuenta responde el mismo 401
+      uniforme que un token desconocido. La cuenta se identifica con el
+      mismo canal y valor de los pasos anteriores (DEC-092, DEC-093). La contraseña debe cumplir la política mínima
       de DEC-063 (10-128 caracteres, distinta del correo y de la
       contraseña actual); un incumplimiento responde 422 indicando
       exactamente qué regla falla (CA-008-08). Al tener éxito, actualiza la
@@ -238,7 +261,7 @@
     operationId: resetPasswordWithRecoveryToken
     security: []
     x-business-rules: [RN-DAT-01, RN-DAT-02]
-    x-decisions: [DEC-050, DEC-063, DEC-064]
+    x-decisions: [DEC-050, DEC-063, DEC-064, DEC-092, DEC-093]
     requestBody:
       required: true
       content:
@@ -246,10 +269,18 @@
           schema:
             $ref: '../components/schemas/RecoveryResetPasswordRequest.yaml'
           examples:
-            establecerContrasena:
-              summary: Establecer contraseña nueva
+            porCorreo:
+              summary: Establecer contraseña nueva tras recuperar por correo
               value:
+                channel: email
                 email: barbero.ejemplo@correo.test
+                resetToken: 3n9F7qP2xR8mK1vL0dS5tY6wZ4bH2jN9
+                newPassword: "***-nueva-contrasena-ficticia"
+            porWhatsApp:
+              summary: Establecer contraseña nueva tras recuperar por WhatsApp
+              value:
+                channel: whatsapp
+                phone: "+573001234567"
                 resetToken: 3n9F7qP2xR8mK1vL0dS5tY6wZ4bH2jN9
                 newPassword: "***-nueva-contrasena-ficticia"
     responses:

@@ -802,7 +802,8 @@ uso, verificarlo y establecer una contraseña nueva. `internal/modules/auth`
 extiende el módulo con `recovery.go` (núcleo: `RecoveryService`,
 `ValidateNewPassword`), `postgres/recovery_repository.go` (puerto contra las
 cuatro funciones `SECURITY DEFINER` de
-`20260817190000_create_staff_recovery_code.sql`) y `httpapi/recovery_handler.go`
+`20260817190000_create_staff_recovery_code.sql` y contra
+`auth_recovery_resolve_phone` de `20260919200000_add_auth_recovery_resolve_phone.sql`) y `httpapi/recovery_handler.go`
 (las tres operaciones HTTP). El nuevo módulo `internal/modules/notification`
 aporta los adaptadores reales de entrega
 (`notification/whatsapp_meta.go`, `notification/email_resend.go`,
@@ -818,6 +819,23 @@ operaciones públicas corren ANTES de resolver `app.barbershop_id`
 `database.DB.CallSecurityDefinerRow`, no `InTenantTx`. Solo
 `auth_recovery_purge_expired` está concedida a `barberia_worker`
 (`cmd/worker`, purga periódica).
+
+### Canal elegido por la persona (`DEC-092`, `DEC-093`)
+
+Los tres cuerpos son `{channel, email | phone}`, cerrados por canal:
+`channel=email` exige `email` y `channel=whatsapp` exige `phone` (E.164; se
+descartan espacios, guiones, puntos y paréntesis), y el campo del otro canal
+se rechaza con `422`, una respuesta de forma que no depende de la cuenta.
+El código se entrega ÚNICAMENTE por el canal elegido, al contacto verificado
+almacenado: `RecoveryService.Request` solo llena el destino de ese canal
+antes de llamar a `auth.RecoveryCodeSender`, y `DualChannelRecoverySender`
+nunca usa el otro como respaldo. El teléfono identifica la cuenta con
+`auth_recovery_resolve_phone`, que solo resuelve una cuenta activa con ese
+número verificado y devuelve `NULL` con cero o con más de una coincidencia
+(el número no es único entre barberías); el servicio traduce el teléfono al
+correo y reutiliza sin cambios las funciones de recuperación por correo, así
+que `verify` y `reset-password` reciben el mismo canal y valor del paso 1 y
+un teléfono ambiguo falla con el `401` uniforme de siempre.
 
 ### Código, token de reinicio y contraseña: parámetros de `DEC-064`/`DEC-063`
 

@@ -25,6 +25,47 @@ const maxNewPasswordLen = 512
 
 var recoveryCodePattern = regexp.MustCompile(`^[0-9]{6}$`)
 
+// maxPhoneLen acota el teléfono escrito antes de normalizarlo: cabe un E.164
+// de 15 dígitos con separadores de presentación, y nada más.
+const maxPhoneLen = 32
+
+// parseRecoveryTarget valida la FORMA del canal y su valor (DEC-092,
+// DP-SEG-15) y devuelve el destino ya normalizado a lo que el servicio
+// espera. Solo produce errores de forma, idénticos exista o no la cuenta
+// (DEC-065): nunca consulta la base de datos.
+func parseRecoveryTarget(fields RecoveryTargetFields) (auth.RecoveryTarget, error) {
+	switch auth.RecoveryChannel(fields.Channel) {
+	case auth.RecoveryChannelEmail:
+		switch {
+		case fields.Phone != "":
+			return auth.RecoveryTarget{}, apperr.Validation("phone no aplica cuando channel es email")
+		case fields.Email == "":
+			return auth.RecoveryTarget{}, apperr.Validation("email es obligatorio")
+		case len(fields.Email) > maxEmailLen:
+			return auth.RecoveryTarget{}, apperr.Validation("email excede el largo máximo")
+		}
+		return auth.RecoveryTarget{Channel: auth.RecoveryChannelEmail, Value: fields.Email}, nil
+	case auth.RecoveryChannelWhatsApp:
+		switch {
+		case fields.Email != "":
+			return auth.RecoveryTarget{}, apperr.Validation("email no aplica cuando channel es whatsapp")
+		case fields.Phone == "":
+			return auth.RecoveryTarget{}, apperr.Validation("phone es obligatorio")
+		case len(fields.Phone) > maxPhoneLen:
+			return auth.RecoveryTarget{}, apperr.Validation("phone excede el largo máximo")
+		}
+		phone, ok := auth.NormalizePhone(fields.Phone)
+		if !ok {
+			return auth.RecoveryTarget{}, apperr.Validation("phone debe estar en formato internacional, por ejemplo +573001234567")
+		}
+		return auth.RecoveryTarget{Channel: auth.RecoveryChannelWhatsApp, Value: phone}, nil
+	case "":
+		return auth.RecoveryTarget{}, apperr.Validation("channel es obligatorio")
+	default:
+		return auth.RecoveryTarget{}, apperr.Validation("channel debe ser email o whatsapp")
+	}
+}
+
 // RecoveryRequestHandler decodifica, valida la forma e invoca
 // auth.RecoveryService.Request. No contiene reglas de negocio.
 type RecoveryRequestHandler struct {
@@ -65,16 +106,13 @@ func (h *RecoveryRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	switch {
-	case req.Email == "":
-		httpserver.WriteProblem(w, httpserver.Translate(apperr.Validation("email es obligatorio"), requestID))
-		return
-	case len(req.Email) > maxEmailLen:
-		httpserver.WriteProblem(w, httpserver.Translate(apperr.Validation("email excede el largo máximo"), requestID))
+	target, err := parseRecoveryTarget(req.RecoveryTargetFields)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
 		return
 	}
 
-	if err := h.service.Request(r.Context(), req.Email); err != nil {
+	if err := h.service.Request(r.Context(), target); err != nil {
 		// El resultado se descarta deliberadamente para la respuesta
 		// (DEC-065); solo se registra sin destinatario, código ni detalle
 		// de proveedor (RN-DAT-02).
@@ -120,13 +158,13 @@ func (h *RecoveryVerifyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	target, err := parseRecoveryTarget(req.RecoveryTargetFields)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
 	switch {
-	case req.Email == "":
-		httpserver.WriteProblem(w, httpserver.Translate(apperr.Validation("email es obligatorio"), requestID))
-		return
-	case len(req.Email) > maxEmailLen:
-		httpserver.WriteProblem(w, httpserver.Translate(apperr.Validation("email excede el largo máximo"), requestID))
-		return
 	case req.Code == "":
 		httpserver.WriteProblem(w, httpserver.Translate(apperr.Validation("code es obligatorio"), requestID))
 		return
@@ -135,7 +173,7 @@ func (h *RecoveryVerifyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	resetToken, maskedPhone, maskedEmail, err := h.service.Verify(r.Context(), req.Email, req.Code)
+	resetToken, maskedPhone, maskedEmail, err := h.service.Verify(r.Context(), target, req.Code)
 	if err != nil {
 		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
 		return
@@ -184,13 +222,13 @@ func (h *RecoveryResetPasswordHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
+	target, err := parseRecoveryTarget(req.RecoveryTargetFields)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
 	switch {
-	case req.Email == "":
-		httpserver.WriteProblem(w, httpserver.Translate(apperr.Validation("email es obligatorio"), requestID))
-		return
-	case len(req.Email) > maxEmailLen:
-		httpserver.WriteProblem(w, httpserver.Translate(apperr.Validation("email excede el largo máximo"), requestID))
-		return
 	case req.ResetToken == "":
 		httpserver.WriteProblem(w, httpserver.Translate(apperr.Validation("resetToken es obligatorio"), requestID))
 		return
@@ -202,7 +240,7 @@ func (h *RecoveryResetPasswordHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
-	if err := h.service.ChangePassword(r.Context(), req.Email, req.ResetToken, req.NewPassword); err != nil {
+	if err := h.service.ChangePassword(r.Context(), target, req.ResetToken, req.NewPassword); err != nil {
 		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
 		return
 	}

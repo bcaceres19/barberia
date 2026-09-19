@@ -6,10 +6,12 @@
 import { computed, ref } from 'vue'
 import { BaseAlert, BaseButton, BaseInput } from '@/shared/ui'
 import { resetRecoveryPassword } from '../api/recoveryApi'
+import { recoveryEmailOf, type RecoveryTarget } from '../model/recoveryTarget'
 import { validateNewPassword } from '../validation/recoveryValidation'
 
+// Mismo canal y valor del paso 1 (DEC-093, DP-SEG-15).
 const props = defineProps<{
-  email: string
+  target: RecoveryTarget
   resetToken: string
   maskedPhone: string
   maskedEmail: string
@@ -41,7 +43,7 @@ const showSummary = computed(() => attemptedSubmit.value && errorCount.value > 1
 
 function runValidation() {
   const errors: { newPassword?: string; confirmPassword?: string } = {}
-  const passwordError = validateNewPassword(newPassword.value, props.email)
+  const passwordError = validateNewPassword(newPassword.value, recoveryEmailOf(props.target))
   if (passwordError) errors.newPassword = passwordError
   // Ambos chequeos son independientes (longitud/política de la contraseña
   // nueva y coincidencia con su confirmación): el mockup 08 los muestra a
@@ -70,7 +72,7 @@ async function onSubmit() {
   if (Object.keys(errors).length > 0) return
 
   status.value = 'submitting'
-  const outcome = await resetRecoveryPassword(props.email, props.resetToken, newPassword.value)
+  const outcome = await resetRecoveryPassword(props.target, props.resetToken, newPassword.value)
 
   switch (outcome.kind) {
     case 'success':

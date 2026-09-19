@@ -4,6 +4,23 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.22.0] - 2026-09-19
+
+### Modificado (incompatible)
+
+- `POST /public/auth/recovery/request`, `/verify` y `/reset-password`
+  (`operationId: requestRecovery`, `verifyRecovery`,
+  `resetPasswordWithRecoveryToken`, `HU-008`, `CA-008-01`, `CA-008-09`,
+  `CA-008-10`): el cuerpo pasa de `{email}` a `{channel, email | phone}`,
+  cerrado por canal (`DEC-092`, `DEC-093`). `channel` es `email` o
+  `whatsapp`; `email` es obligatorio con `email` y `phone` (E.164) con
+  `whatsapp`, y el campo del otro canal no se admite. El código se entrega
+  únicamente por el canal elegido, sin respaldo por el otro; los pasos 2 y 3
+  reutilizan el mismo canal y valor. La respuesta `202` sigue siendo idéntica
+  exista o no la cuenta y sea o no el número ambiguo entre barberías
+  (`DEC-065`). Cambio incompatible interno: la pantalla `HU-011` y la API se
+  entregan juntas, sin otros consumidores.
+
 ## [0.21.0] - 2026-09-15
 
 ### Agregado

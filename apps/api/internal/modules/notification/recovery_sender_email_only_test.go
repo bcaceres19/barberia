@@ -30,3 +30,18 @@ func TestEmailOnlyRecoverySender_ChannelFails_PropagatesError(t *testing.T) {
 		t.Fatalf("expected the channel error to propagate, got: %v", err)
 	}
 }
+
+// TestEmailOnlyRecoverySender_WhatsAppChoice_NeverFallsBackToEmail cubre
+// CA-008-09: sin proveedor de WhatsApp en el ambiente, elegir ese canal no
+// envía nada por correo.
+func TestEmailOnlyRecoverySender_WhatsAppChoice_NeverFallsBackToEmail(t *testing.T) {
+	email := &spyChannel{}
+	sender := notification.NewEmailOnlyRecoverySender(email)
+
+	if err := sender.SendCode(context.Background(), "+573001234567", "", "482913"); err == nil {
+		t.Fatal("expected an error for internal logging when whatsapp is not configured")
+	}
+	if len(email.calls) != 0 {
+		t.Fatalf("no email must be sent, got %v", email.calls)
+	}
+}

@@ -1,7 +1,7 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
-version: "2.17"
-estado: "3 dudas abiertas"
+version: "2.18"
+estado: "Sin dudas abiertas"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-19"
 documentos_relacionados:
@@ -17,7 +17,7 @@ documentos_relacionados:
 
 ## 1. Estado
 
-El 19 de septiembre de 2026 el propietario pidió que el paso 1 de la recuperación de acceso ofrezca dos botones —WhatsApp y correo— y pida el valor del canal elegido (`DEC-092`, issue documental [#274](https://github.com/bcaceres19/barberia/issues/274)). La instrucción no fija cómo se identifica la cuenta por teléfono, qué identificador usan los pasos 2 y 3 ni qué ocurre si el canal elegido no tiene contacto verificado; quedan abiertas `DP-SEG-14`, `DP-SEG-15` y `DP-SEG-16`. Ninguna implementación de contrato, API o pantalla se inicia hasta resolverlas.
+El 19 de septiembre de 2026 el propietario pidió que el paso 1 de la recuperación de acceso ofrezca dos botones —WhatsApp y correo— y pida el valor del canal elegido (`DEC-092`, issue documental [#274](https://github.com/bcaceres19/barberia/issues/274)). La instrucción no fijaba cómo se identifica la cuenta por teléfono, qué identificador usan los pasos 2 y 3 ni qué ocurre si el canal elegido no tiene contacto verificado; se registraron como `DP-SEG-14`, `DP-SEG-15` y `DP-SEG-16`. El propietario aceptó ese mismo día las tres respuestas recomendadas como `DEC-093` y la implementación se entrega en el issue [#276](https://github.com/bcaceres19/barberia/issues/276).
 
 El 10 de septiembre de 2026, al redactar `HU-090`–`HU-099` y sus prompts en el issue documental [#240](https://github.com/bcaceres19/barberia/issues/240), se detectaron seis decisiones que las fuentes vigentes no fijan. Las historias permanecen como propuesta y sus prompts como `draft`; ninguna se implementa hasta resolver las dudas que le correspondan. También se registró `CT-011` por la secuencia entre confirmación por correo de B4 y la maquinaria de notificaciones de B5.
 
@@ -58,13 +58,13 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 | `DP-PUB-04` | En reserva pública, ¿cómo se reconcilia `customer` cuando teléfono y correo coinciden con filas distintas o solo uno coincide? | Resuelta por `DEC-085` (2026-09-11) | Issue documental [#240](https://github.com/bcaceres19/barberia/issues/240) |
 | `DP-PUB-05` | ¿Qué entropía/formato, vigencia, rotación, revocación y reemisión tiene el token de acceso del turno, y qué partes nacen en la transacción de creación? | Resuelta por `DEC-089` (2026-09-15) | Issue documental [#240](https://github.com/bcaceres19/barberia/issues/240) |
 | `DP-PUB-06` | ¿Cómo se ordenan y acotan las alternativas “cercanas” tras perder una franja, y cuándo se salta al siguiente día disponible? | Resuelta por `DEC-090` (2026-09-15) | `RN-CON-05`; issue [#240](https://github.com/bcaceres19/barberia/issues/240) |
-| `DP-SEG-14` | Si la persona elige WhatsApp y escribe su número, ¿cómo se identifica la cuenta antes de resolver el tenant, dado que el teléfono no es hoy identificador de acceso y puede repetirse entre barberías? | **Abierta.** Recomendada: resolver solo si el número normalizado (E.164) coincide con exactamente una cuenta activa con ese teléfono verificado en todo el sistema; con cero o más de una coincidencia la respuesta sigue siendo la genérica y no se envía nada (`DEC-065`). | Issue documental [#274](https://github.com/bcaceres19/barberia/issues/274); `DEC-092` |
-| `DP-SEG-15` | ¿Qué identificador viajan los pasos 2 y 3 (`POST /recovery/verify` y `/recovery/reset-password`), hoy siempre el correo, cuando la cuenta se identificó por teléfono? | **Abierta.** Recomendada: el mismo par canal + valor que se usó en el paso 1, con esquemas cerrados por canal (`email` o `phone`) y sin devolver nunca el otro dato completo. | Issue documental [#274](https://github.com/bcaceres19/barberia/issues/274); `DEC-092` |
-| `DP-SEG-16` | Si el canal elegido no tiene un contacto verificado utilizable o la barbería no lo tiene habilitado, ¿qué ve y qué recibe la persona? | **Abierta.** Recomendada: ambos botones siempre visibles; la respuesta es la genérica del paso 1 y no se envía nada ni se prueba el otro canal (coherente con `DEC-081` y `DEC-065`); el paso 2 informa cómo reintentar con el otro canal sin revelar la causa. | Issue documental [#274](https://github.com/bcaceres19/barberia/issues/274); `DEC-092` |
+| `DP-SEG-14` | Si la persona elige WhatsApp y escribe su número, ¿cómo se identifica la cuenta antes de resolver el tenant, dado que el teléfono no es hoy identificador de acceso y puede repetirse entre barberías? | Resuelta por `DEC-093` (2026-09-19): el teléfono identifica la cuenta solo si coincide con exactamente una cuenta activa con ese número verificado; con cero o varias, respuesta genérica sin envío. | Issue [#276](https://github.com/bcaceres19/barberia/issues/276); `DEC-093` |
+| `DP-SEG-15` | ¿Qué identificador viajan los pasos 2 y 3 (`POST /recovery/verify` y `/recovery/reset-password`), hoy siempre el correo, cuando la cuenta se identificó por teléfono? | Resuelta por `DEC-093` (2026-09-19): los pasos 2 y 3 reutilizan el mismo canal y valor del paso 1, con esquemas cerrados por canal. | Issue [#276](https://github.com/bcaceres19/barberia/issues/276); `DEC-093` |
+| `DP-SEG-16` | Si el canal elegido no tiene un contacto verificado utilizable o la barbería no lo tiene habilitado, ¿qué ve y qué recibe la persona? | Resuelta por `DEC-093` (2026-09-19): ambos botones siempre visibles; sin contacto verificado utilizable, respuesta genérica sin envío ni respaldo por el otro canal; el paso 2 ofrece elegir otro canal. | Issue [#276](https://github.com/bcaceres19/barberia/issues/276); `DEC-093` |
 
 `DP-CIT-06` (última duda anterior del lote `HU-063`–`HU-065`) quedó resuelta el 1 de septiembre de 2026 como `DEC-076` (sección 3).
 
-`DP-PUB-01` quedó resuelta el 10 de septiembre de 2026 como `DEC-082` (sección 3), desbloqueando `HU-090`. `DP-PUB-03` y `DP-PUB-04` quedaron resueltas el 11 de septiembre de 2026 como `DEC-084`/`DEC-085` (sección 3), desbloqueando `HU-094` y `HU-096`. `DP-PUB-05` y `DP-PUB-06` quedaron resueltas el 15 de septiembre de 2026 como `DEC-089`/`DEC-090` (sección 3), y `CT-011` (`contradicciones.md`) quedó resuelta el mismo día como `DEC-091`, desbloqueando `HU-097`–`HU-099`. No queda ninguna duda abierta de este lote. Las tres dudas nuevas de la recuperación de acceso (`DP-SEG-14`–`DP-SEG-16`, `DEC-092`) siguen abiertas.
+`DP-PUB-01` quedó resuelta el 10 de septiembre de 2026 como `DEC-082` (sección 3), desbloqueando `HU-090`. `DP-PUB-03` y `DP-PUB-04` quedaron resueltas el 11 de septiembre de 2026 como `DEC-084`/`DEC-085` (sección 3), desbloqueando `HU-094` y `HU-096`. `DP-PUB-05` y `DP-PUB-06` quedaron resueltas el 15 de septiembre de 2026 como `DEC-089`/`DEC-090` (sección 3), y `CT-011` (`contradicciones.md`) quedó resuelta el mismo día como `DEC-091`, desbloqueando `HU-097`–`HU-099`. No queda ninguna duda abierta de este lote. Las tres dudas nuevas de la recuperación de acceso (`DP-SEG-14`–`DP-SEG-16`, `DEC-092`) quedaron resueltas el 19 de septiembre de 2026 como `DEC-093`. No queda ninguna duda abierta.
 
 ## 3. Resoluciones
 

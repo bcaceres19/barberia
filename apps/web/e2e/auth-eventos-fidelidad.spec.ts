@@ -253,6 +253,7 @@ for (const viewport of [
 
       test('02-solicitud-validacion', async ({ page }) => {
         await page.goto('/recuperar-acceso')
+        await page.getByRole('button', { name: 'Correo' }).click()
         await page.getByRole('button', { name: 'Enviar código' }).click()
         await expect(page.getByText('Escribe tu correo')).toBeVisible()
         await shoot(page, viewport.name, 'recuperacion', '02-solicitud-validacion.png')
@@ -260,6 +261,8 @@ for (const viewport of [
 
       test('03-solicitud-enviando', async ({ page }) => {
         await page.goto('/recuperar-acceso')
+        // Desde DEC-092 el campo aparece al elegir el canal (CA-011-09).
+        await page.getByRole('button', { name: 'Correo' }).click()
         await page.getByLabel('Correo', { exact: true }).fill(EMAIL)
         await page.route('**/api/v1/public/auth/recovery/request', async (route) => {
           await new Promise((resolve) => setTimeout(resolve, 400))
@@ -272,6 +275,8 @@ for (const viewport of [
 
       test('04-solicitud-sin-conexion', async ({ page }) => {
         await page.goto('/recuperar-acceso')
+        // Desde DEC-092 el campo aparece al elegir el canal (CA-011-09).
+        await page.getByRole('button', { name: 'Correo' }).click()
         await page.getByLabel('Correo', { exact: true }).fill(EMAIL)
         await page.route('**/api/v1/public/auth/recovery/request', async (route) => {
           await route.abort('failed')
@@ -284,6 +289,8 @@ for (const viewport of [
 
       test('05-verificacion-inicial', async ({ page }) => {
         await page.goto('/recuperar-acceso')
+        // Desde DEC-092 el campo aparece al elegir el canal (CA-011-09).
+        await page.getByRole('button', { name: 'Correo' }).click()
         await page.getByLabel('Correo', { exact: true }).fill(EMAIL)
         await page.route('**/api/v1/public/auth/recovery/request', async (route) => {
           await route.fulfill({ status: 202, contentType: 'application/json', body: '{}' })
@@ -295,6 +302,8 @@ for (const viewport of [
 
       test('06-verificacion-codigo-invalido', async ({ page }) => {
         await page.goto('/recuperar-acceso')
+        // Desde DEC-092 el campo aparece al elegir el canal (CA-011-09).
+        await page.getByRole('button', { name: 'Correo' }).click()
         await page.getByLabel('Correo', { exact: true }).fill(EMAIL)
         await page.route('**/api/v1/public/auth/recovery/request', async (route) => {
           await route.fulfill({ status: 202, contentType: 'application/json', body: '{}' })
@@ -323,6 +332,8 @@ for (const viewport of [
 
       test('07-contrasena-inicial', async ({ page }) => {
         await page.goto('/recuperar-acceso')
+        // Desde DEC-092 el campo aparece al elegir el canal (CA-011-09).
+        await page.getByRole('button', { name: 'Correo' }).click()
         await page.getByLabel('Correo', { exact: true }).fill(EMAIL)
         await page.route('**/api/v1/public/auth/recovery/request', async (route) => {
           await route.fulfill({ status: 202, contentType: 'application/json', body: '{}' })
@@ -349,6 +360,8 @@ for (const viewport of [
 
       test('08-contrasena-validacion', async ({ page }) => {
         await page.goto('/recuperar-acceso')
+        // Desde DEC-092 el campo aparece al elegir el canal (CA-011-09).
+        await page.getByRole('button', { name: 'Correo' }).click()
         await page.getByLabel('Correo', { exact: true }).fill(EMAIL)
         await page.route('**/api/v1/public/auth/recovery/request', async (route) => {
           await route.fulfill({ status: 202, contentType: 'application/json', body: '{}' })
@@ -380,6 +393,8 @@ for (const viewport of [
 
       test('09-contrasena-enviando', async ({ page }) => {
         await page.goto('/recuperar-acceso')
+        // Desde DEC-092 el campo aparece al elegir el canal (CA-011-09).
+        await page.getByRole('button', { name: 'Correo' }).click()
         await page.getByLabel('Correo', { exact: true }).fill(EMAIL)
         await page.route('**/api/v1/public/auth/recovery/request', async (route) => {
           await route.fulfill({ status: 202, contentType: 'application/json', body: '{}' })
@@ -415,6 +430,8 @@ for (const viewport of [
 
       test('10-contrasena-enlace-vencido', async ({ page }) => {
         await page.goto('/recuperar-acceso')
+        // Desde DEC-092 el campo aparece al elegir el canal (CA-011-09).
+        await page.getByRole('button', { name: 'Correo' }).click()
         await page.getByLabel('Correo', { exact: true }).fill(EMAIL)
         await page.route('**/api/v1/public/auth/recovery/request', async (route) => {
           await route.fulfill({ status: 202, contentType: 'application/json', body: '{}' })
@@ -459,6 +476,8 @@ for (const viewport of [
 
       test('11-completado', async ({ page }) => {
         await page.goto('/recuperar-acceso')
+        // Desde DEC-092 el campo aparece al elegir el canal (CA-011-09).
+        await page.getByRole('button', { name: 'Correo' }).click()
         await page.getByLabel('Correo', { exact: true }).fill(EMAIL)
         await page.route('**/api/v1/public/auth/recovery/request', async (route) => {
           await route.fulfill({ status: 202, contentType: 'application/json', body: '{}' })
