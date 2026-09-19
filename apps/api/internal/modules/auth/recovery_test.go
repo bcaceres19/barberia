@@ -160,6 +160,45 @@ func TestRecoveryService_Request_EmailChannel_SendsOnlyToEmail(t *testing.T) {
 	}
 }
 
+// TestRecoveryService_Request_EmailChannel_AccountWithoutPhone_StillSendsToEmail
+// cubre CA-008-11 (DEC-094): el repositorio devuelve el teléfono vacío cuando la
+// cuenta no lo tiene o no está verificado, y eso no debe impedir el envío por correo.
+func TestRecoveryService_Request_EmailChannel_AccountWithoutPhone_StillSendsToEmail(t *testing.T) {
+	repo := &fakeRecoveryRepository{requestAccepted: true, requestPhone: "", requestEmail: "sin.telefono@ejemplo.test"}
+	sender := &spyRecoverySender{}
+	svc := newTestRecoveryService(repo, sender, "482913", "reset-token-value")
+
+	if err := svc.Request(context.Background(), emailTarget("Sin.Telefono@Ejemplo.TEST")); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(sender.calls) != 1 {
+		t.Fatalf("expected exactly one send, got %d", len(sender.calls))
+	}
+	if call := sender.calls[0]; call.phone != "" || call.email != "sin.telefono@ejemplo.test" || call.code != "482913" {
+		t.Fatalf("expected a send to the email only, got %+v", call)
+	}
+}
+
+// TestRecoveryService_Request_WhatsAppChannel_WithoutVerifiedPhone_NeverSendsNorFallsBackToEmail
+// cubre CA-008-09 y CA-008-11 (DEC-093, DEC-094): sin teléfono verificado
+// utilizable, WhatsApp no envía nada y el correo de la cuenta no es respaldo.
+func TestRecoveryService_Request_WhatsAppChannel_WithoutVerifiedPhone_NeverSendsNorFallsBackToEmail(t *testing.T) {
+	repo := &fakeRecoveryRepository{
+		resolveEmail: "duena.a@ejemplo.test", resolveFound: true,
+		requestAccepted: true, requestPhone: "", requestEmail: "duena.a@ejemplo.test",
+	}
+	sender := &spyRecoverySender{}
+	svc := newTestRecoveryService(repo, sender, "482913", "reset-token-value")
+
+	if err := svc.Request(context.Background(), phoneTarget("+573001234567")); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(sender.calls) != 0 {
+		t.Fatalf("expected no send without a verified phone, got %+v", sender.calls)
+	}
+}
+
 func TestRecoveryService_Request_NotAccepted_NeverSends(t *testing.T) {
 	repo := &fakeRecoveryRepository{requestAccepted: false}
 	sender := &spyRecoverySender{}

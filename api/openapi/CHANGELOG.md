@@ -4,6 +4,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## [0.23.0] - 2026-09-19
+
+### Modificado (compatible)
+
+- `POST /public/auth/recovery/request` (`operationId: requestRecovery`,
+  `HU-008`, `CA-008-01`, `CA-008-11`): con el canal `email` se envía el código
+  a toda cuenta activa con ese correo, aunque no tenga teléfono o su teléfono
+  no esté verificado (`DEC-094`); con `whatsapp` se mantiene el número
+  verificado con coincidencia única (`DEC-093`). No cambian el esquema, los
+  códigos de estado ni la respuesta `202` idéntica de `DEC-065`: solo se
+  amplía el conjunto de cuentas a las que llega el código por correo.
+
 ## [0.22.0] - 2026-09-19
 
 ### Modificado (incompatible)

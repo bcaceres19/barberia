@@ -135,8 +135,9 @@ func (s *RecoveryService) resolveEmail(ctx context.Context, target RecoveryTarge
 }
 
 // Request genera un código nuevo y, si el repositorio acepta la solicitud
-// (cuenta activa con teléfono verificado, cooldown/límite de reenvío no
-// excedidos), lo envía únicamente por el canal elegido (DEC-092). El resultado de esta llamada
+// (cuenta activa, cooldown/límite de reenvío no excedidos), lo envía
+// únicamente por el canal elegido (DEC-092): por correo basta la cuenta
+// activa; por WhatsApp hace falta además un teléfono verificado (DEC-094). El resultado de esta llamada
 // NUNCA debe cambiar la respuesta HTTP: el handler responde 202 siempre,
 // sin importar qué devuelva Request (no enumeración, DEC-065). El error
 // que sí puede devolver es exclusivamente para diagnóstico interno
@@ -164,16 +165,25 @@ func (s *RecoveryService) Request(ctx context.Context, target RecoveryTarget) er
 	if err != nil {
 		return apperr.Internal(fmt.Errorf("auth: solicitar recuperación: %w", err))
 	}
-	if !accepted || phone == "" {
+	if !accepted {
 		return nil
 	}
 
 	// Solo el destino del canal elegido sale hacia el remitente (DEC-092): el
-	// otro contacto de la cuenta no se usa ni como respaldo.
+	// otro contacto de la cuenta no se usa ni como respaldo. El requisito de
+	// contacto verificado se evalúa solo sobre ese canal (DEC-094): el
+	// repositorio devuelve el teléfono únicamente si está verificado, así que
+	// un teléfono vacío bloquea WhatsApp pero nunca el correo.
 	var sendPhone, sendEmail string
 	if target.Channel == RecoveryChannelWhatsApp {
+		if phone == "" {
+			return nil
+		}
 		sendPhone = phone
 	} else {
+		if resolvedEmail == "" {
+			return nil
+		}
 		sendEmail = resolvedEmail
 	}
 
