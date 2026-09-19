@@ -91,9 +91,9 @@ ROLLBACK;
 \echo 'OK · barberia_worker sí puede purgar staff_recovery_code'
 
 -- ---------------------------------------------------------------------------
--- CA-008-01 · auth_recovery_request no enumera: cuenta inexistente,
--- teléfono no verificado y cuenta válida producen la forma de resultado
--- correcta en cada caso
+-- CA-008-01/CA-008-11 · auth_recovery_request no enumera: cuenta inexistente,
+-- teléfono no verificado (DEC-094: acepta sin devolver el teléfono) y cuenta
+-- válida producen la forma de resultado correcta en cada caso
 -- ---------------------------------------------------------------------------
 BEGIN;
 SET ROLE barberia_app;
@@ -113,11 +113,12 @@ BEGIN
   END IF;
 
   -- Teléfono no verificado (barbero.a, testdata/hu007_reto_telefonico.sql):
-  -- no acepta.
+  -- CA-008-11 (DEC-094) acepta la solicitud porque el correo basta, pero el
+  -- teléfono sin verificar NUNCA se devuelve como destino (DEC-093).
   SELECT accepted, phone, email INTO v_accepted, v_phone, v_email
   FROM auth_recovery_request('barbero.a@ejemplo.test', v_code_hash, 900, 5, 60, 3600, 3);
-  IF v_accepted OR v_phone IS NOT NULL OR v_email IS NOT NULL THEN
-    RAISE EXCEPTION 'CA-008-01: se aceptó una solicitud para un teléfono no verificado.';
+  IF NOT v_accepted OR v_phone IS NOT NULL OR v_email IS DISTINCT FROM 'barbero.a@ejemplo.test' THEN
+    RAISE EXCEPTION 'CA-008-11: una cuenta con teléfono sin verificar debe aceptarse sin devolver el teléfono (accepted=%, phone=%, email=%).', v_accepted, v_phone, v_email;
   END IF;
 
   -- Cuenta válida con teléfono verificado (duena.a): sí acepta y devuelve

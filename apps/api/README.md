@@ -803,7 +803,7 @@ extiende el módulo con `recovery.go` (núcleo: `RecoveryService`,
 `ValidateNewPassword`), `postgres/recovery_repository.go` (puerto contra las
 cuatro funciones `SECURITY DEFINER` de
 `20260817190000_create_staff_recovery_code.sql` y contra
-`auth_recovery_resolve_phone` de `20260919200000_add_auth_recovery_resolve_phone.sql`) y `httpapi/recovery_handler.go`
+`auth_recovery_resolve_phone` de `20260919200000_add_auth_recovery_resolve_phone.sql`; desde `DEC-094`, `auth_recovery_request` ya no exige teléfono verificado y devuelve el teléfono solo si lo está, así que el canal correo basta con una cuenta activa) y `httpapi/recovery_handler.go`
 (las tres operaciones HTTP). El nuevo módulo `internal/modules/notification`
 aporta los adaptadores reales de entrega
 (`notification/whatsapp_meta.go`, `notification/email_resend.go`,
@@ -857,7 +857,7 @@ parámetros.
 ### No enumeración (`DEC-065`) y destino enmascarado
 
 `POST .../request` responde SIEMPRE `202` con el mismo mensaje genérico,
-exista o no la cuenta, esté o no el teléfono verificado y sin importar el
+exista o no la cuenta, tenga o no teléfono verificado y sin importar el
 resultado interno de `RecoveryService.Request` —ese resultado se descarta
 para la respuesta y solo se registra sin destinatario ni código
 (`RN-DAT-02`)—. El teléfono/correo enmascarados (`mask.go`) solo aparecen en

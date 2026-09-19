@@ -82,21 +82,32 @@ func requestRecoveryEventually(t *testing.T, repo *authpostgres.RecoveryReposito
 }
 
 // --- Escenarios que no requieren una cuenta verificada dedicada ----------
-// (no crean ni consumen ningún código real: pueden repetirse libremente).
+// (no crean ni consumen ningún código real: pueden repetirse libremente,
+// salvo el de teléfono sin verificar, que documenta su propio cooldown).
 
-func TestRecoveryRepository_RequestRecovery_UnverifiedPhone_NotAccepted(t *testing.T) {
+// TestRecoveryRepository_RequestRecovery_UnverifiedPhone_AcceptedWithoutPhone
+// cubre CA-008-11 (DEC-094): una cuenta activa con el teléfono sin verificar
+// se acepta para el canal correo, y el teléfono sin verificar nunca vuelve
+// como destino (DEC-093). A diferencia de los escenarios de arriba, esta
+// solicitud SÍ crea un código real de barbero.a, así que usa un cooldown de
+// 1 s y un límite por ventana holgado para poder repetirse entre ejecuciones
+// sin depender del reloj de pared de los 60 s de DEC-064.
+func TestRecoveryRepository_RequestRecovery_UnverifiedPhone_AcceptedWithoutPhone(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
 	repo := authpostgres.NewRecoveryRepository(db)
 
+	cfg := testRecoveryCfg()
+	cfg.ResendCooldownSeconds = 1
+	cfg.ResendMaxPerWindow = 1000
+
 	// barbero.a (unverifiedEmailA) no tiene teléfono verificado
 	// (hu007_reto_telefonico.sql lo deja así a propósito).
-	accepted, phone, email, err := repo.RequestRecovery(context.Background(), unverifiedEmailA, testRecoveryCodeHash(t, "noverificado"), testRecoveryCfg())
-	if err != nil {
-		t.Fatalf("RequestRecovery: %v", err)
-	}
-	if accepted || phone != "" || email != "" {
-		t.Fatalf("expected accepted=false for an unverified phone, got accepted=%v phone=%q email=%q", accepted, phone, email)
+	// requestRecoveryEventually solo devuelve cuando la solicitud fue aceptada
+	// (tolera el cooldown de 1 s de una ejecución inmediatamente anterior).
+	phone, email := requestRecoveryEventually(t, repo, unverifiedEmailA, testRecoveryCodeHash(t, "noverificado"), cfg)
+	if phone != "" || email != unverifiedEmailA {
+		t.Fatalf("expected no phone and the account email, got phone=%q email=%q", phone, email)
 	}
 }
 

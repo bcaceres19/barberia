@@ -152,9 +152,11 @@
       teléfono verificado y sea o no el número ambiguo entre barberías
       (CA-008-01, CA-008-10, no enumeración, DEC-065, DEC-093): nunca
       incluye el destino, ni siquiera enmascarado. Solo se envía un código
-      real, únicamente por el canal elegido y al contacto verificado
-      almacenado (CA-008-09), cuando la cuenta existe, está activa, tiene el
-      teléfono verificado y el número identifica exactamente una cuenta. Un
+      real, únicamente por el canal elegido (CA-008-09), cuando la cuenta
+      existe y está activa: por correo basta la cuenta activa con ese
+      correo, aunque no tenga teléfono (DEC-094, CA-008-11); por WhatsApp
+      hace falta además que el número esté verificado e identifique
+      exactamente una cuenta. Un
       canal desconocido, el campo del otro canal o un número que no está en
       formato internacional responden 422, una respuesta de forma que no
       revela nada de la cuenta. Límite propio: cooldown de 60
