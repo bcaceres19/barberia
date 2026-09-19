@@ -10,6 +10,7 @@
  * contra el API vive en el E2E de HU-064/HU-065.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { resetToasts, toastState } from '@/shared/model/toastStore'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { axe } from 'vitest-axe'
@@ -97,6 +98,7 @@ async function mountPage(query: Record<string, string> = { date: '2026-08-28', b
 }
 
 beforeEach(() => {
+  resetToasts()
   fetchAppointmentDetailMock.mockReset()
   fetchAppointmentHistoryMock.mockReset()
   fetchBarbershopTimezoneMock.mockReset()
@@ -428,6 +430,7 @@ describe('AppointmentDetailPage', () => {
     // 2026-08-30T15:00:00Z en America/Bogota (UTC-5) es todavía 2026-08-30.
     const back = wrapper.findAll('a').find((a) => a.text().includes('Volver'))
     expect(back!.attributes('href')).toBe('/panel?date=2026-08-30&barberId=b-1')
+    expect(toastState.items.map((item) => item.title)).toEqual(['Turno reprogramado'])
   })
 
   it('blocks a second submit while the first is still in flight (no double POST)', async () => {
@@ -615,6 +618,7 @@ describe('AppointmentDetailPage', () => {
     )
     expect(wrapper.element.querySelector('.base-dialog--open')).toBeNull()
     expect(fetchAppointmentDetailMock).toHaveBeenCalledTimes(2)
+    expect(toastState.items.map((item) => item.title)).toEqual(['Turno cancelado'])
   })
 
   it('blocks a second confirm while the first is still in flight (no double POST)', async () => {
@@ -807,6 +811,7 @@ describe('AppointmentDetailPage', () => {
     expect(markAppointmentNoShowMock).not.toHaveBeenCalled()
     expect(wrapper.element.querySelector('.base-dialog--open')).toBeNull()
     expect(fetchAppointmentDetailMock).toHaveBeenCalledTimes(2)
+    expect(toastState.items.map((item) => item.title)).toEqual(['Turno marcado como atendido'])
   })
 
   it('on no-show success, calls the API with a fresh idempotency key, closes the dialog, and refetches the detail', async () => {
@@ -829,6 +834,7 @@ describe('AppointmentDetailPage', () => {
     expect(completeAppointmentMock).not.toHaveBeenCalled()
     expect(wrapper.element.querySelector('.base-dialog--open')).toBeNull()
     expect(fetchAppointmentDetailMock).toHaveBeenCalledTimes(2)
+    expect(toastState.items.map((item) => item.title)).toEqual(['Turno marcado como no asistido'])
   })
 
   it('blocks a second confirm while the first close attempt is still in flight (no double POST)', async () => {
@@ -1096,6 +1102,7 @@ describe('AppointmentDetailPage', () => {
     expect(wrapper.element.querySelector('.base-dialog--open')).toBeNull()
     expect(fetchAppointmentDetailMock).toHaveBeenCalledTimes(2)
     expect(wrapper.text()).toContain('El barbero marcó completed por error.')
+    expect(toastState.items.map((item) => item.title)).toEqual(['Resultado corregido'])
   })
 
   it('blocks a second confirm while the first correction attempt is still in flight (no double POST)', async () => {

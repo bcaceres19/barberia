@@ -7,13 +7,17 @@
 // discriminados: carga inicial, listo, vacío, error recuperable, guardando
 // (trabajo requerido §4.3/§4.4). Un error recuperable NUNCA borra lo que el
 // barbero ya escribió; solo un guardado exitoso confirmado por el servidor
-// cierra el diálogo.
+// cierra el diálogo. Cada guardado confirmado añade un aviso emergente
+// (DEC-095); los errores siguen dentro del diálogo, junto al formulario.
 import { onMounted, ref } from 'vue'
+import { useToast } from '@/shared/composables'
 import { BaseAlert, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
 import { createBarber, fetchBarbers, renameBarber } from '../api/staffApi'
 import { newIdempotencyKey } from '../model/idempotencyKey'
 import type { Barber } from '../model/barber'
 import { validateFullName } from '../validation/staffValidation'
+
+const toast = useToast()
 
 type LoadStatus = 'loading' | 'ready' | 'load-error'
 type SaveStatus =
@@ -138,6 +142,7 @@ async function onSubmitCreate() {
       barbers.value.unshift(outcome.barber)
       isCreateOpen.value = false
       createStatus.value = 'idle'
+      toast.success('Barbero agregado', { detail: 'Ya aparece en tu equipo.' })
       return
     case 'validation-error':
       createStatus.value = 'validation-error'
@@ -200,6 +205,7 @@ async function onSubmitRename() {
       if (index !== -1) barbers.value[index] = outcome.barber
       isRenameOpen.value = false
       renameStatus.value = 'idle'
+      toast.success('Nombre actualizado', { detail: 'Guardamos el nuevo nombre del barbero.' })
       return
     }
     case 'validation-error':

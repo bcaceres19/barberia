@@ -8,8 +8,10 @@
 // recuperable, cargando tramos del barbero elegido, guardando. Un error
 // recuperable nunca borra lo que ya se escribió en el diálogo abierto; solo
 // una respuesta exitosa del servidor cierra el diálogo o cambia una fila
-// (trabajo requerido §4.3/§4.4 de HU-021, mismo criterio aquí).
+// (trabajo requerido §4.3/§4.4 de HU-021, mismo criterio aquí). Cada cambio
+// confirmado añade un aviso emergente (DEC-095); los errores siguen en línea.
 import { computed, onMounted, ref } from 'vue'
+import { useToast } from '@/shared/composables'
 import { BaseAlert, BaseButton, BaseDialog, BaseInput, PageHeader, RecordRow } from '@/shared/ui'
 import {
   createWorkingHour,
@@ -87,6 +89,8 @@ const groupedByWeekday = computed(() => {
       .sort((a, b) => a.startsTime.localeCompare(b.startsTime)),
   }))
 })
+
+const toast = useToast()
 
 async function loadPage() {
   pageStatus.value = 'loading'
@@ -221,6 +225,7 @@ async function onSubmitCreate() {
       workingHours.value.push(outcome.workingHour)
       isCreateOpen.value = false
       createStatus.value = 'idle'
+      toast.success('Tramo agregado', { detail: 'El tramo ya forma parte de la jornada semanal.' })
       return
     case 'validation-error':
       createStatus.value = 'validation-error'
@@ -316,6 +321,7 @@ async function onSubmitEdit() {
       if (index !== -1) workingHours.value[index] = outcome.workingHour
       isEditOpen.value = false
       editStatus.value = 'idle'
+      toast.success('Tramo actualizado', { detail: 'Guardamos los cambios del tramo.' })
       return
     }
     case 'validation-error':
@@ -360,6 +366,7 @@ async function onDelete(wh: WorkingHour) {
 
   if (outcome.kind === 'success') {
     workingHours.value = workingHours.value.filter((item) => item.id !== wh.id)
+    toast.success('Tramo retirado', { detail: 'El tramo ya no forma parte de la jornada.' })
     return
   }
 
@@ -410,6 +417,11 @@ async function onToggleHolidayCalendar(event: Event) {
 
   if (outcome.kind === 'success') {
     holidayCalendarEnabled.value = outcome.enabled
+    toast.success(outcome.enabled ? 'Festivos activados' : 'Festivos desactivados', {
+      detail: outcome.enabled
+        ? 'Los festivos colombianos quedan cerrados, salvo una excepción manual.'
+        : 'Los festivos ya no agregan ningún bloqueo automático.',
+    })
     return
   }
   // La casilla vuelve a su valor real: ninguna respuesta distinta de
@@ -572,6 +584,7 @@ async function onSubmitExceptionCreate() {
       exceptions.value.push(outcome.exception)
       isExceptionCreateOpen.value = false
       createExceptionStatus.value = 'idle'
+      toast.success('Excepción agregada', { detail: 'La excepción ya está en el calendario.' })
       return
     case 'validation-error':
       createExceptionStatus.value = 'validation-error'
@@ -691,6 +704,7 @@ async function onSubmitExceptionEdit() {
       if (index !== -1) exceptions.value[index] = outcome.exception
       isExceptionEditOpen.value = false
       editExceptionStatus.value = 'idle'
+      toast.success('Excepción actualizada', { detail: 'Guardamos los cambios de la excepción.' })
       return
     }
     case 'validation-error':
@@ -733,6 +747,7 @@ async function onDeleteException(exception: ScheduleException) {
 
   if (outcome.kind === 'success') {
     exceptions.value = exceptions.value.filter((item) => item.id !== exception.id)
+    toast.success('Excepción retirada', { detail: 'La excepción ya no está en el calendario.' })
     return
   }
 

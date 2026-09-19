@@ -159,8 +159,13 @@ for (const viewport of [
           await route.abort('failed')
         })
         await page.getByRole('button', { name: 'Iniciar sesión' }).click()
+        // DEC-095: el fallo de conexión es un aviso emergente; "Reintentar" vive
+        // dentro del acordeón y aparece al abrirlo.
         await expect(page.getByText('No pudimos conectar')).toBeVisible()
+        await page.getByRole('button', { name: /No pudimos conectar/ }).click()
         await expect(page.getByRole('button', { name: 'Reintentar' })).toBeVisible()
+        // La captura espera a que termine la transición del acordeón (200 ms).
+        await page.waitForTimeout(300)
         await shoot(page, viewport.name, 'acceso', '05-sin-conexion.png')
       })
 
@@ -282,8 +287,13 @@ for (const viewport of [
           await route.abort('failed')
         })
         await page.getByRole('button', { name: 'Enviar código' }).click()
+        // DEC-095: el fallo de conexión es un aviso emergente; "Reintentar" vive
+        // dentro del acordeón y aparece al abrirlo.
         await expect(page.getByText('No pudimos conectar')).toBeVisible()
+        await page.getByRole('button', { name: /No pudimos conectar/ }).click()
         await expect(page.getByRole('button', { name: 'Reintentar' })).toBeVisible()
+        // La captura espera a que termine la transición del acordeón (200 ms).
+        await page.waitForTimeout(300)
         await shoot(page, viewport.name, 'recuperacion', '04-solicitud-sin-conexion.png')
       })
 

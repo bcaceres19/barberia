@@ -11,8 +11,10 @@
 // visual solo cambia después de la respuesta real del servidor -nunca
 // antes- y un error recuperable (incluida la última asignación activa,
 // DEC-068) revierte la casilla a su estado real sin perder la selección de
-// barbero ni el resto de casillas ya marcadas.
+// barbero ni el resto de casillas ya marcadas. Cada asignación o retiro
+// confirmado añade un aviso emergente (DEC-095); el error sigue en línea.
 import { computed, ref, onMounted } from 'vue'
+import { useToast } from '@/shared/composables'
 import { BaseAlert, BaseButton, PageHeader } from '@/shared/ui'
 import {
   assignService,
@@ -71,6 +73,8 @@ onMounted(loadPage)
 function onRetryLoad() {
   void loadPage()
 }
+
+const toast = useToast()
 
 async function selectBarber(barberId: string) {
   selectedBarberId.value = barberId
@@ -146,6 +150,11 @@ async function onToggleService(service: ServiceSummary, event: Event) {
 
   if (outcome.kind === 'success') {
     setAssigned(service.id, wantsAssigned)
+    toast.success(wantsAssigned ? 'Servicio asignado' : 'Servicio retirado', {
+      detail: wantsAssigned
+        ? `«${service.name}» quedó asignado a este barbero.`
+        : `«${service.name}» ya no está asignado a este barbero.`,
+    })
     return
   }
 

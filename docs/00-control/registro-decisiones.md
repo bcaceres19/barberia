@@ -1,6 +1,6 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.34"
+version: "1.35"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-19"
@@ -1070,3 +1070,15 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** marca `email_verified_at` con un flujo de verificación de correo (historia nueva y deja sin recuperación por correo a las cuentas actuales); mantener la exigencia de teléfono verificado (contradice la instrucción del propietario); enviar por el otro canal cuando falta el elegido (contradice `DEC-092`).
 - **Documentos afectados:** `docs/00-control/{matriz-trazabilidad.md,historial-cambios.md}`, `docs/01-producto/reglas-negocio.md`, `docs/02-requisitos/historias-usuario.md` (`HU-008`).
 - **Fuente:** instrucción explícita del propietario del 2026-09-19 («si se manda el correo se mande al correo, si se manda el número se mande al número, no que espere que tenga los dos») y su confirmación de la opción «Correo basta» (`AskUserQuestion`), issue [#278](https://github.com/bcaceres19/barberia/issues/278).
+
+### DEC-095 · Avisos emergentes tipo acordeón compartidos por todas las pantallas
+
+- **Fecha:** 2026-09-19.
+- **Decisión:** el resultado de una acción se notifica además con un aviso emergente (toast) de una cola única compartida (`shared/model/toastStore`, API `useToast`). El tiempo en pantalla depende de la variante: confirmación 5 s, información 6 s, advertencia 8 s y error 12 s. La cuenta atrás se detiene mientras el aviso está abierto, con el cursor encima o con foco de teclado. Se muestran como máximo 4 a la vez (al superarlo se descarta el más antiguo) y funcionan como acordeón: abrir uno cierra el que estuviera abierto. `role="alert"` solo para errores y `role="status"` para el resto; nunca roba el foco y Escape descarta el aviso con foco. Solo hay una región a la vez: el cascarón privado aloja la suya entre la cabecera y la navegación (`meta.toastHost: 'shell'`) y `App.vue` monta la de ventana en las pantallas sin cascarón (acceso, recuperación, reserva pública).
+- **Alcance de la sustitución:** no sustituye ninguna decisión. Conserva `estandar-diseno-visual.md` §6.3: un éxito importante permanece dentro de la tarea y el aviso solo lo acompaña; los errores de formulario o diálogo siguen en línea. Un fallo de conexión o un error inesperado que no pertenece a ningún campo se avisa como toast con la acción de reintentar y una referencia segura (`request_id`), nunca un dato personal.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** las alertas fijas dispersas ocupaban espacio, quedaban obsoletas y no distinguían un mensaje que necesita lectura (un error) de una confirmación breve. Una cola única evita que cada pantalla reimplemente tiempos, pausas y accesibilidad, y mantiene el resultado persistente como fuente de verdad.
+- **Riesgo residual aceptado:** un aviso efímero puede pasar inadvertido; por eso nunca es el único registro de un éxito ni de un error de formulario, y la pausa por foco, cursor y apertura cubre WCAG 2.2.1.
+- **Alternativas descartadas:** una dependencia de toasts de terceros (una cola de este tamaño no la justifica); mostrar todos los resultados solo en línea (no cubre fallos de conexión sin campo asociado); tiempo único para todas las variantes (un error no se alcanza a leer en 5 s).
+- **Documentos afectados:** `docs/03-desarrollo/estandar-diseno-visual.md` (§6.8), `docs/00-control/historial-cambios.md`.
+- **Fuente:** diseño e implementación de avisos emergentes del propietario, entregados en el issue [#280](https://github.com/bcaceres19/barberia/issues/280); el propietario los confirma al aprobar su PR. El número `DEC-094` que llevaba el borrador quedó ocupado por #279 y se renumeró a `DEC-095`.

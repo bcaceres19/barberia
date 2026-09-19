@@ -6,7 +6,7 @@
 // agenda ni ninguna capacidad de B1-B3: `<RouterView />` es el único punto
 // de extensión para las pantallas que las historias siguientes agreguen
 // como hijas de esta misma ruta.
-import { BaseAlert, BaseButton } from '@/shared/ui'
+import { BaseAlert, BaseButton, ToastRegion } from '@/shared/ui'
 import type { NavItem } from '@/shared/navigation/navItem'
 import { retryBootstrap, sessionState } from '../model/sessionStore'
 import AppHeader from '../components/AppHeader.vue'
@@ -27,9 +27,15 @@ function onRetry() {
   <div class="private-shell">
     <template v-if="sessionState.bootstrap.status === 'authenticated'">
       <AppHeader :barbershop-name="sessionState.bootstrap.barbershopName" />
-      <main class="private-shell__content">
-        <RouterView />
-      </main>
+      <!-- Escenario posicionado entre cabecera y navegación: ancla la región
+           de avisos (DEC-095) sin depender de la altura de ninguna de las dos
+           ni desplazarse con el contenido. -->
+      <div class="private-shell__stage">
+        <main class="private-shell__content">
+          <RouterView />
+        </main>
+        <ToastRegion placement="host" />
+      </div>
       <AppNav :extra-items="extraNavItems" />
     </template>
 
@@ -64,6 +70,14 @@ function onRetry() {
    la columna entera más allá de 100dvh y arrastra el header y el dock
    fuera de pantalla en vez de quedarse fijos mientras solo el contenido
    se desplaza (reporte en vivo, issue #189). */
+.private-shell__stage {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .private-shell__content {
   flex: 1;
   min-height: 0;

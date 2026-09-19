@@ -9,9 +9,11 @@
 // reprogramar con éxito, la fecha se actualiza a la del nuevo inicio para no
 // dejar la fecha vieja presentada como vigente. Fuera de alcance a
 // propósito: T3 o cualquier cambio de estado distinto de los seis comandos
-// ya implementados.
+// ya implementados. Cada comando confirmado añade un aviso emergente
+// (DEC-095); el resultado persistente es el estado y el historial del turno.
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, type LocationQueryRaw } from 'vue-router'
+import { useToast } from '@/shared/composables'
 import { BaseAlert, BaseBadge, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
 import { formatInstantInTimezone } from '@/shared/time/formatInstant'
 import { getCivilDateInTimezone } from '@/shared/time/civilDate'
@@ -56,6 +58,7 @@ const appointmentId = computed(() => String(route.params.appointmentId ?? ''))
 // SOLO backDate cambia después, tras reprogramar con éxito (§3.5 del
 // trabajo requerido): "Volver" siempre regresa a donde el turno vigente
 // realmente está, nunca a una fecha que dejó de mostrarlo.
+const toast = useToast()
 const backDate = ref<string | null>(typeof route.query.date === 'string' ? route.query.date : null)
 const backBarberId = ref<string | null>(
   typeof route.query.barberId === 'string' ? route.query.barberId : null,
@@ -252,6 +255,7 @@ async function onSubmitReschedule() {
   switch (outcome.kind) {
     case 'success': {
       isRescheduleOpen.value = false
+      toast.success('Turno reprogramado', { detail: 'El turno quedó en el nuevo horario.' })
       if (barbershopTimezone.value) {
         backDate.value = getCivilDateInTimezone(
           barbershopTimezone.value,
@@ -345,6 +349,7 @@ async function onConfirmCancel() {
   switch (outcome.kind) {
     case 'success':
       isCancelOpen.value = false
+      toast.success('Turno cancelado', { detail: 'El cambio quedó registrado en el historial.' })
       await loadPage()
       return
     // 'not-found' aquí solo puede significar que el turno desapareció
@@ -438,6 +443,12 @@ async function onConfirmClose() {
   switch (outcome.kind) {
     case 'success':
       isCloseOpen.value = false
+      toast.success(
+        closeMode.value === 'complete'
+          ? 'Turno marcado como atendido'
+          : 'Turno marcado como no asistido',
+        { detail: 'El cambio quedó registrado en el historial.' },
+      )
       await loadPage()
       return
     // 'not-found' aquí solo puede significar que el turno desapareció
@@ -544,6 +555,9 @@ async function onSubmitCorrect() {
   switch (outcome.kind) {
     case 'success':
       isCorrectOpen.value = false
+      toast.success('Resultado corregido', {
+        detail: 'La corrección quedó registrada en el historial.',
+      })
       await loadPage()
       return
     // 'not-found' aquí solo puede significar que el turno desapareció

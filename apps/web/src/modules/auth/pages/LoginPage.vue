@@ -10,6 +10,8 @@ import AuthSplitLayout from '../components/AuthSplitLayout.vue'
 import LoginForm, { type LoginServerErrorSummary } from '../components/LoginForm.vue'
 import PhoneChallengeForm from '../components/PhoneChallengeForm.vue'
 import { login } from '../api/loginApi'
+import { useToast } from '@/shared/composables'
+import { notifyConnectionLost, notifyUnexpectedError } from '../model/authFeedback'
 import { resetForFreshLogin } from '../model/sessionStore'
 import { isSafeInternalRedirect } from '../model/redirectTarget'
 import type { LoginOutcome } from '../model/loginOutcome'
@@ -58,32 +60,8 @@ const serverError = computed<LoginServerErrorSummary | null>(() => {
         title: 'Revisa los datos ingresados',
         message: 'El correo o la contraseña no tienen un formato válido.',
       }
-    case 'network-error':
-      return {
-        tone: 'warning',
-        title: 'No pudimos conectar',
-        message: 'Revisa tu conexión e inténtalo de nuevo.',
-        actionLabel: 'Reintentar',
-      }
-    case 'rate-limited': {
-      const seconds = state.retryAfterSeconds
-      return {
-        tone: 'warning',
-        title: 'Demasiados intentos',
-        message:
-          seconds && seconds > 0
-            ? `Espera unos ${Math.ceil(seconds / 60) || 1} minuto(s) antes de volver a intentarlo.`
-            : 'Espera un momento antes de volver a intentarlo.',
-      }
-    }
-    case 'unexpected-error':
-      return {
-        tone: 'danger',
-        title: 'Ocurrió un error inesperado',
-        message: state.requestId
-          ? `Inténtalo de nuevo. Si continúa, comparte este código con soporte: ${state.requestId}.`
-          : 'Inténtalo de nuevo en unos segundos.',
-      }
+    // Conexión perdida, demasiados intentos y error inesperado no pertenecen
+    // a ningún campo: se avisan como toast (DEC-095), no como alerta fija.
     default:
       return null
   }
@@ -129,12 +107,23 @@ async function attemptLogin() {
       return
     case 'network-error':
       screenState.value = { status: 'network-error' }
+      notifyConnectionLost(() => void attemptLogin())
       return
-    case 'rate-limited':
+    case 'rate-limited': {
       screenState.value = { status: 'rate-limited', retryAfterSeconds: outcome.retryAfterSeconds }
+      // El estado conserva `rate-limited` porque abre el reto telefónico.
+      const seconds = outcome.retryAfterSeconds
+      useToast().warning('Demasiados intentos', {
+        detail:
+          seconds && seconds > 0
+            ? `Espera unos ${Math.ceil(seconds / 60) || 1} minuto(s) antes de volver a intentarlo.`
+            : 'Espera un momento antes de volver a intentarlo.',
+      })
       return
+    }
     case 'unexpected-error':
       screenState.value = { status: 'unexpected-error', requestId: outcome.requestId }
+      notifyUnexpectedError(outcome.requestId)
   }
 }
 

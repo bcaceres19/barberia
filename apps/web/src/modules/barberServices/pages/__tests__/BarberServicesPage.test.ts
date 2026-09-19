@@ -8,6 +8,7 @@
  * en el E2E de HU-023.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { resetToasts, toastState } from '@/shared/model/toastStore'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
 
@@ -78,6 +79,7 @@ const axeOptions = { rules: { 'color-contrast': { enabled: false } } }
 
 describe('BarberServicesPage', () => {
   beforeEach(() => {
+    resetToasts()
     fetchBarberSummariesMock.mockReset()
     fetchServiceSummariesMock.mockReset()
     fetchAssignmentsMock.mockReset()
@@ -199,6 +201,7 @@ describe('BarberServicesPage', () => {
 
     expect(assignServiceMock).toHaveBeenCalledWith('b-1', 's-1')
     expect(checkbox(wrapper, 's-1').checked).toBe(true)
+    expect(toastState.items.map((item) => item.title)).toEqual(['Servicio asignado'])
   })
 
   it('unchecking a box unassigns the service on success', async () => {
@@ -212,6 +215,7 @@ describe('BarberServicesPage', () => {
 
     expect(unassignServiceMock).toHaveBeenCalledWith('b-1', 's-1')
     expect(checkbox(wrapper, 's-1').checked).toBe(false)
+    expect(toastState.items.map((item) => item.title)).toEqual(['Servicio retirado'])
   })
 
   it('rejecting the last active assignment (DEC-068) reverts the checkbox and shows a recoverable message', async () => {
@@ -226,6 +230,8 @@ describe('BarberServicesPage', () => {
     expect(wrapper.text()).toContain('es el único barbero asignado a este servicio activo')
     // El estado real (asignado) se conserva: la casilla vuelve a marcarse.
     expect(checkbox(wrapper, 's-1').checked).toBe(true)
+    // El error sigue en línea (DEC-095): no hay aviso emergente.
+    expect(toastState.items).toHaveLength(0)
   })
 
   it('a network error while toggling keeps the previous state and shows a recoverable message', async () => {

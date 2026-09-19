@@ -1,9 +1,9 @@
 ---
 titulo: "Estándar visual NAVA para rediseños y pantallas nuevas"
-version: "5.3"
+version: "5.4"
 estado: "Normativo para rediseños y pantallas nuevas"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-08"
+ultima_actualizacion: "2026-09-19"
 documentos_relacionados:
   - "../00-control/registro-decisiones.md"
   - "../01-producto/alcance-mvp.md"
@@ -229,6 +229,13 @@ Los mockups favorecen bordes finos, radios pequeños, sombras mínimas, agrupaci
 - `PageState` (issue #189, `shared/ui`): estado de página centrado — carga, error o vacío que ocupa toda el área de contenido. `variant="loading"` compone `BaseSpinner` + titular, sin divisor. Las demás variantes componen el divisor regla-rombo-regla, un rótulo de estado opcional en versalitas (mismo lenguaje que la palabra de estado de `BaseAlert`, omitido para contenido puramente informativo), titular serif y cuerpo; la acción real (`BaseButton`) es responsabilidad del consumidor vía el slot `action`. Se reserva para cuando el estado reemplaza toda la pantalla — cuando acompaña contenido que sigue visible, la pantalla sigue usando `BaseAlert` como nota al margen (issue #212).
 - `BarberAvatar` (issue #189, `shared/ui`): retrato cuadrado de radio `2px` con filete de latón, `28px` (`26px` en móvil) en un selector cerrado y `34px` (`32px` en móvil) en cada opción de una lista. Sin fotografía, muestra el monograma derivado de `fullName` (inicial única para un nombre de una palabra; primera letra del primer y del último término para varias palabras) en `--font-display` sobre tinta. Siempre decorativo (`aria-hidden`): el nombre visible adyacente es la identidad accesible, nunca aparece un retrato sin nombre junto a él. El prop `photoUrl` queda preparado para una fotografía real, pero ningún consumidor lo usa todavía — el contrato de `Barber` no declara ese campo.
 - Ficha y fila reglada (issue #189): fichas y filas de registro usan pergamino (`--color-surface-muted`, no blanco puro) sobre tinta. Un registro terminal (cancelado, completado, no-show) cambia de **material**, no de peso: pasa de superficie de papel a contorno sobre tinta, en vez de un relleno gris o una opacidad reducida que lo dejaría pesando igual o más que un registro vigente. `BaseBadge` (issue #189) gana el prop `outline`: mismo borde y texto de cada variante/estado, solo anula el relleno, para que la insignia se apoye en contorno sobre pergamino o tinta en vez de competir con esas superficies.
+
+### 6.8 Avisos emergentes
+
+- `BaseToast` y `ToastRegion` (issue #280, `shared/ui`; `DEC-095`): aviso tipo acordeón sobre superficie tinta con sello de estado. Cerrado muestra la palabra de estado y el título; abierto añade el detalle, la referencia segura para soporte y la acción. La palabra de estado es la señal además del color (WCAG 2.2 AA 1.4.1) y la barra inferior solo apoya visualmente el tiempo restante.
+- Cada módulo emite avisos con `useToast` (`shared/composables`) y nunca conoce cómo se muestran. Tiempo por variante: confirmación 5 s, información 6 s, advertencia 8 s y error 12 s; la cuenta atrás se detiene con el aviso abierto, con cursor encima o con foco. Máximo 4 simultáneos y un solo aviso abierto a la vez.
+- Una sola región por pantalla: anclada a la ventana en acceso, recuperación y reserva pública, y entre la cabecera y la navegación en el cascarón privado, sin tapar ninguna de las dos. Es una región persistente; `role="alert"` solo para errores, `role="status"` para el resto, nunca roba el foco y Escape descarta el aviso con foco.
+- Complementa §6.3: el aviso acompaña un resultado persistente, no lo sustituye, y los errores de un formulario o diálogo siguen en línea.
 
 ## 7. Zona de libertad creativa
 

@@ -6,8 +6,10 @@
 // weekly. Fechas explícitas de una serie date_list, excepciones ("esta
 // instancia no") y la edición de series (scope whole/this_and_following)
 // todavía no tienen controles propios aquí; quedan como seguimiento
-// explícito, no como huecos silenciosos.
+// explícito, no como huecos silenciosos. Cada cambio confirmado añade un aviso
+// emergente (DEC-095); los errores de un diálogo siguen dentro de él.
 import { computed, onMounted, ref } from 'vue'
+import { useToast } from '@/shared/composables'
 import { BaseAlert, BaseButton, BaseDialog, BaseInput, PageHeader, RecordRow } from '@/shared/ui'
 import { fetchBarberSummaries, fetchBarbershopTimezone } from '../api/schedulesApi'
 import {
@@ -66,6 +68,8 @@ const pendingDeleteSeriesIds = ref<Set<string>>(new Set())
 // de mostrarse aquí sin desaparecer del sistema.
 const upcomingBlocks = computed(() => blocks.value.filter((b) => !b.deletedAt))
 const activeSeries = computed(() => series.value.filter((s) => !s.deletedAt))
+
+const toast = useToast()
 
 async function loadPage() {
   pageStatus.value = 'loading'
@@ -221,6 +225,9 @@ async function onSubmitCreateBlock() {
       blocks.value.push(outcome.block)
       isCreateBlockOpen.value = false
       createBlockStatus.value = 'idle'
+      toast.success('Bloqueo agregado', {
+        detail: 'El bloqueo ya aparece en el calendario del barbero.',
+      })
       return
     case 'validation-error':
       createBlockStatus.value = 'validation-error'
@@ -250,7 +257,15 @@ async function onDeleteBlock(block: TimeBlock) {
 
   if (outcome.kind === 'success' || outcome.kind === 'not-found') {
     blocks.value = blocks.value.filter((b) => b.id !== block.id)
+    if (outcome.kind === 'success') toast.success('Bloqueo retirado')
+    return
   }
+
+  // No hay formulario donde mostrar el fallo: el aviso ofrece reintentar.
+  toast.error('No pudimos retirar el bloqueo', {
+    detail: 'Revisa tu conexión e inténtalo de nuevo.',
+    action: { label: 'Reintentar', icon: 'retry', run: () => void onDeleteBlock(block) },
+  })
 }
 
 function displayInstant(instant: string): string {
@@ -322,6 +337,7 @@ async function onSubmitCreateSeries() {
       series.value.push(outcome.series)
       isCreateSeriesOpen.value = false
       createSeriesStatus.value = 'idle'
+      toast.success('Serie agregada', { detail: 'La serie semanal ya está en el calendario.' })
       return
     case 'validation-error':
       createSeriesStatus.value = 'validation-error'
@@ -351,7 +367,14 @@ async function onDeleteSeries(item: TimeBlockSeries) {
 
   if (outcome.kind === 'success' || outcome.kind === 'not-found') {
     series.value = series.value.filter((s) => s.id !== item.id)
+    if (outcome.kind === 'success') toast.success('Serie retirada')
+    return
   }
+
+  toast.error('No pudimos retirar la serie', {
+    detail: 'Revisa tu conexión e inténtalo de nuevo.',
+    action: { label: 'Reintentar', icon: 'retry', run: () => void onDeleteSeries(item) },
+  })
 }
 </script>
 

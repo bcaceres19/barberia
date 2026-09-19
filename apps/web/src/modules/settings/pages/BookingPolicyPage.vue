@@ -9,6 +9,7 @@
 // formulario (precondición `If-Match` de la siguiente escritura, CA-093-02),
 // nunca como un campo editable.
 import { onMounted, reactive, ref } from 'vue'
+import { useToast } from '@/shared/composables'
 import { BaseAlert, BaseButton, BaseInput } from '@/shared/ui'
 import { fetchBookingPolicy, saveBookingPolicy } from '../api/bookingPolicyApi'
 import {
@@ -62,6 +63,9 @@ type FieldErrors = Partial<
 >
 const fieldErrors = ref<FieldErrors>({})
 const attemptedSubmit = ref(false)
+// La confirmación persistente sigue en la pantalla; el aviso emergente la
+// acompaña (DEC-095).
+const toast = useToast()
 
 // requestToken evita que una carga inicial obsoleta sobrescriba el
 // formulario con datos viejos (mismo criterio que SettingsPage.vue).
@@ -146,6 +150,9 @@ async function onSubmit() {
       Object.assign(form, toFormValues(outcome.policy))
       currentVersionToken = outcome.policy.versionToken
       saveStatus.value = 'saved'
+      toast.success('Política de reservas guardada', {
+        detail: 'Las nuevas reglas se aplican a las próximas reservas.',
+      })
       return
     case 'validation-error':
       saveStatus.value = 'validation-error'

@@ -8,6 +8,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
+import { toastState } from '@/shared/model/toastStore'
 import RecoveryRequestStep from '../RecoveryRequestStep.vue'
 
 const requestRecoveryMock = vi.hoisted(() => vi.fn())
@@ -182,7 +183,7 @@ describe('RecoveryRequestStep', () => {
       expect(wrapper.emitted('advance')).toEqual([[{ target }]])
     })
 
-    it('shows a real transport error and does not advance on network-error', async () => {
+    it('warns with a retry toast and does not advance on network-error (DEC-095)', async () => {
       requestRecoveryMock.mockResolvedValueOnce({ kind: 'network-error' })
       const wrapper = mount(RecoveryRequestStep)
 
@@ -190,10 +191,20 @@ describe('RecoveryRequestStep', () => {
       await flushPromises()
 
       expect(wrapper.emitted('advance')).toBeUndefined()
-      expect(wrapper.text()).toContain('No pudimos conectar')
+      expect(wrapper.text()).not.toContain('No pudimos conectar')
+      expect(toastState.items.map((item) => [item.variant, item.title])).toEqual([
+        ['warning', 'No pudimos conectar'],
+      ])
+
+      // "Reintentar" repite el envío con lo que ya estaba escrito.
+      requestRecoveryMock.mockResolvedValueOnce({ kind: 'accepted' })
+      toastState.items[0]!.action!.run()
+      await flushPromises()
+      expect(requestRecoveryMock).toHaveBeenCalledTimes(2)
+      expect(wrapper.emitted('advance')).toHaveLength(1)
     })
 
-    it('shows a safe unexpected-error message and does not advance', async () => {
+    it('raises a safe error toast with the support code and does not advance (DEC-095)', async () => {
       requestRecoveryMock.mockResolvedValueOnce({ kind: 'unexpected-error', requestId: 'req-1' })
       const wrapper = mount(RecoveryRequestStep)
 
@@ -201,7 +212,9 @@ describe('RecoveryRequestStep', () => {
       await flushPromises()
 
       expect(wrapper.emitted('advance')).toBeUndefined()
-      expect(wrapper.text()).toContain('Ocurrió un error inesperado')
+      expect(toastState.items.map((item) => [item.variant, item.title, item.reference])).toEqual([
+        ['danger', 'Ocurrió un error inesperado', 'req-1'],
+      ])
     })
 
     it('sends exactly one request on double submit while one is in flight', async () => {

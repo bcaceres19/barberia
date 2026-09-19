@@ -50,6 +50,9 @@ export function privateShellRoute(
     path: '/panel',
     component: () => import('./layouts/PrivateShell.vue'),
     beforeEnter: requireSession,
+    // DEC-095: el cascarón aloja la región de avisos emergentes entre la
+    // cabecera y la navegación; `App.vue` no monta una segunda.
+    meta: { toastHost: 'shell' },
     props: () => ({ extraNavItems }),
     children,
   }

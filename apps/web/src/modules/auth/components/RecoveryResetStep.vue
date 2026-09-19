@@ -6,6 +6,7 @@
 import { computed, ref } from 'vue'
 import { BaseAlert, BaseButton, BaseInput } from '@/shared/ui'
 import { resetRecoveryPassword } from '../api/recoveryApi'
+import { notifyConnectionLost, notifyUnexpectedError } from '../model/authFeedback'
 import { recoveryEmailOf, type RecoveryTarget } from '../model/recoveryTarget'
 import { validateNewPassword } from '../validation/recoveryValidation'
 
@@ -26,14 +27,7 @@ const newPassword = ref('')
 const confirmPassword = ref('')
 const fieldErrors = ref<{ newPassword?: string; confirmPassword?: string }>({})
 const attemptedSubmit = ref(false)
-const status = ref<
-  | 'idle'
-  | 'submitting'
-  | 'invalid-token'
-  | 'policy-violation'
-  | 'network-error'
-  | 'unexpected-error'
->('idle')
+const status = ref<'idle' | 'submitting' | 'invalid-token' | 'policy-violation'>('idle')
 
 const isSubmitting = computed(() => status.value === 'submitting')
 const errorCount = computed(() => Object.keys(fieldErrors.value).length)
@@ -86,10 +80,12 @@ async function onSubmit() {
       status.value = 'policy-violation'
       return
     case 'network-error':
-      status.value = 'network-error'
+      status.value = 'idle'
+      notifyConnectionLost(() => void onSubmit())
       return
     case 'unexpected-error':
-      status.value = 'unexpected-error'
+      status.value = 'idle'
+      notifyUnexpectedError(outcome.requestId)
   }
 }
 
@@ -190,22 +186,6 @@ const onRestart = () => emit('restart')
         role="alert"
       >
         Revisa los requisitos e inténtalo de nuevo.
-      </BaseAlert>
-      <BaseAlert
-        v-if="status === 'network-error'"
-        variant="warning"
-        title="No pudimos conectar"
-        role="alert"
-      >
-        Revisa tu conexión e inténtalo de nuevo.
-      </BaseAlert>
-      <BaseAlert
-        v-if="status === 'unexpected-error'"
-        variant="danger"
-        title="Ocurrió un error inesperado"
-        role="alert"
-      >
-        Inténtalo de nuevo en unos segundos.
       </BaseAlert>
     </template>
   </form>
