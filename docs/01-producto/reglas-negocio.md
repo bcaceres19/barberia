@@ -1,9 +1,9 @@
 ---
 titulo: "Reglas de negocio"
-version: "1.5"
+version: "1.6"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-11"
+ultima_actualizacion: "2026-09-19"
 documentos_relacionados:
   - "../00-control/glosario.md"
   - "../00-control/supuestos.md"
@@ -902,7 +902,7 @@ Cada intento de envío deja constancia con su resultado, aunque falle. La eviden
 
 El MVP soporta correo electrónico y la interfaz oficial de WhatsApp. La barbería puede activar uno o ambos y elegirlos por evento: confirmación, recordatorio, reprogramación, cancelación, retraso e inasistencia.
 
-Para los códigos OTP de recuperación y reto adicional de acceso, la configuración del evento admite correo, WhatsApp oficial o ambos; correo es el valor predeterminado (`DEC-081`). El servidor usa contactos verificados almacenados y la interfaz nunca acepta un destino arbitrario durante el reto. Una entrega por ambos canales comparte código y operación lógica, pero conserva evidencia independiente de cada intento conforme a `RN-REC-04`.
+Para los códigos OTP de recuperación y reto adicional de acceso, la configuración del evento admite correo, WhatsApp oficial o ambos; correo es el valor predeterminado (`DEC-081`). El servidor usa contactos verificados almacenados y la interfaz nunca acepta un destino arbitrario durante el reto. En la **recuperación de acceso** la persona elige WhatsApp o correo y escribe su valor, que solo identifica la cuenta; el código se envía únicamente por el canal elegido y al contacto verificado almacenado (`DEC-092`, con `DP-SEG-14`–`DP-SEG-16` abiertas). Una entrega por ambos canales comparte código y operación lógica, pero conserva evidencia independiente de cada intento conforme a `RN-REC-04`.
 
 **Excepción:** el aviso de inasistencia está desactivado por defecto. No se usan integraciones de WhatsApp no oficiales.
 

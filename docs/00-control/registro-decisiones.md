@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.31"
+version: "1.32"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-15"
+ultima_actualizacion: "2026-09-19"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -909,6 +909,8 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Documentos afectados:** `docs/00-control/{dudas-pendientes.md,contradicciones.md,matriz-trazabilidad.md}`, `docs/01-producto/reglas-negocio.md`, `docs/02-requisitos/historias-usuario.md`, `docs/03-desarrollo/{estandar-diseno-visual.md,especificacion-frontend-nava.md}` y `docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/README.md`.
 - **Fuente:** observación explícita del propietario del 2026-09-03 al revisar los mockups: correo por defecto, opción de WhatsApp o ambos según configuración del sistema, notificación unificada y un mockup separado por evento/canal.
 
+**Actualización posterior:** `DEC-092` (2026-09-19) sustituye esta decisión únicamente para el paso 1 de la recuperación de acceso: la persona elige WhatsApp o correo y escribe su valor. El reto adicional de acceso conserva `DEC-081` sin cambios.
+
 ### DEC-082 · Resolución de `DP-PUB-01`: generación, mutabilidad y conducta al deshabilitar del slug público
 
 - **Fecha:** 2026-09-10.
@@ -1032,3 +1034,16 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** dividir `F-PUB-07` para que B4 solo muestre el enlace en pantalla y B5 complete el correo real antes del piloto (el cliente puede perder el enlace si cierra la pestaña antes de que B5 exista); adelantar el núcleo transaccional completo de B5 para que B4 lo consuma desde el inicio (amplía el alcance y el tiempo antes de poder cerrar `HU-097` sin necesidad, dado que un envío síncrono simple ya es suficiente para el piloto).
 - **Documentos afectados:** `docs/00-control/contradicciones.md` (cierra `CT-011`), `docs/00-control/dudas-pendientes.md`, `docs/01-producto/alcance-mvp.md` (`F-PUB-07`), `docs/10-backlog/plan-bloques.md` (B4/B5), `docs/02-requisitos/historias-usuario.md` (`HU-097`, `HU-098`), `docs/10-backlog/prompts/hu/{hu-097-confirmacion-publica-concurrente.md,hu-098-acceso-cliente-turno.md}`.
 - **Fuente:** decisión explícita del propietario del 2026-09-15 (opción recomendada, `AskUserQuestion`), issue documental [#240](https://github.com/bcaceres19/barberia/issues/240).
+
+### DEC-092 · La persona elige WhatsApp o correo y escribe su valor en el paso 1 de recuperación de acceso
+
+- **Fecha:** 2026-09-19.
+- **Decisión:** en el paso 1 de `HU-011` la pantalla ofrece dos botones, **WhatsApp** y **Correo**. Al elegir uno aparece un mensaje que menciona únicamente ese canal y pide su valor —el número de WhatsApp o el correo de la cuenta—, con el mismo texto condicional de hoy (“Si existe, te enviaremos un código de un solo uso por <canal>”). El código se entrega solo por el canal elegido, nunca por ambos. Mientras no se elija un canal la pantalla no muestra campo ni acción de envío.
+- **Alcance de la sustitución:** solo para la **recuperación de acceso** (`HU-008`/`HU-011`, paso 1). Sustituye, para ese flujo, el envío por el canal o canales configurados por evento y la regla “la interfaz nunca acepta un destino escrito por la persona” de `DEC-081`, y el envío simultáneo por WhatsApp y correo que el código actual aplica. El reto adicional de acceso de `HU-007` conserva `DEC-081` sin cambios.
+- **Lo que se conserva:** la respuesta idéntica exista o no la cuenta (`DEC-065`), la vigencia, los intentos, el reenvío y el token de reinicio de `DEC-064`, los proveedores oficiales de `DEC-066`, el envío únicamente a contactos verificados y el destino enmascarado solo tras verificar el código (`CA-008-06`). Elegir un canal no permite escribir un destino distinto del registrado: el valor escrito solo identifica la cuenta.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** hoy la pantalla afirma que el código llega “por WhatsApp y correo”, y la persona no controla ni sabe por cuál canal le conviene recibirlo; elegirlo ella evita mensajes por un canal que no usa y hace explícito qué dato debe escribir.
+- **Alternativas descartadas:** mantener la configuración por barbería de `DEC-081` sin elección de la persona (no atiende la instrucción); enviar siempre por ambos canales (comportamiento actual, menciona canales que la persona no eligió).
+- **Dudas abiertas derivadas:** `DP-SEG-14` (identificar la cuenta por teléfono antes de resolver el tenant), `DP-SEG-15` (identificador de los pasos 2 y 3) y `DP-SEG-16` (canal elegido sin contacto verificado o no habilitado). La implementación en contrato, API y pantalla no se inicia hasta resolverlas.
+- **Documentos afectados:** `docs/00-control/{dudas-pendientes.md,matriz-trazabilidad.md,historial-cambios.md}`, `docs/01-producto/reglas-negocio.md`, `docs/02-requisitos/historias-usuario.md` (`HU-008`, `HU-011`).
+- **Fuente:** instrucción explícita del propietario del 2026-09-19 al revisar la pantalla “Solicita tu código” en el navegador (dos botones, mensaje solo del canal elegido y solicitud de su valor), issue documental [#274](https://github.com/bcaceres19/barberia/issues/274).
