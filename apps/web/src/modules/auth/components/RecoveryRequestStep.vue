@@ -12,8 +12,9 @@
 // `PhoneChallengeForm`, que ahí es correcto porque ese reto ya está detrás
 // de un intento de acceso autenticable).
 import { computed, reactive, ref } from 'vue'
-import { BaseAlert, BaseButton, BaseInput } from '@/shared/ui'
+import { BaseButton, BaseInput } from '@/shared/ui'
 import { requestRecovery } from '../api/recoveryApi'
+import { notifyConnectionLost, notifyUnexpectedError } from '../model/authFeedback'
 import type { RecoveryChannel, RecoveryTarget } from '../model/recoveryTarget'
 import {
   normalizeRecoveryPhone,
@@ -37,7 +38,7 @@ const channel = ref<RecoveryChannel | null>(null)
 const values = reactive<Record<RecoveryChannel, string>>({ whatsapp: '', email: '' })
 const fieldError = ref<string | undefined>(undefined)
 const attemptedSubmit = ref(false)
-const status = ref<'idle' | 'submitting' | 'network-error' | 'unexpected-error'>('idle')
+const status = ref<'idle' | 'submitting'>('idle')
 
 const isSubmitting = computed(() => status.value === 'submitting')
 
@@ -87,10 +88,12 @@ async function onSubmit() {
       emit('advance', { target })
       return
     case 'network-error':
-      status.value = 'network-error'
+      status.value = 'idle'
+      notifyConnectionLost(() => void onSubmit())
       return
     case 'unexpected-error':
-      status.value = 'unexpected-error'
+      status.value = 'idle'
+      notifyUnexpectedError(outcome.requestId)
   }
 }
 </script>
@@ -237,30 +240,6 @@ async function onSubmit() {
     <p class="recovery-back">
       <RouterLink :to="{ name: 'acceso' }">Volver al acceso</RouterLink>
     </p>
-
-    <!-- Ancla de alertas: después del grupo de acciones y de "Volver al
-         acceso" (trabajo requerido §3, auth-eventos/README.md). -->
-    <BaseAlert
-      v-if="status === 'network-error'"
-      variant="warning"
-      title="No pudimos conectar"
-      role="alert"
-    >
-      Revisa tu conexión e inténtalo de nuevo.
-      <template #action>
-        <BaseButton variant="secondary" size="md" type="button" @click="onSubmit">
-          Reintentar
-        </BaseButton>
-      </template>
-    </BaseAlert>
-    <BaseAlert
-      v-if="status === 'unexpected-error'"
-      variant="danger"
-      title="Ocurrió un error inesperado"
-      role="alert"
-    >
-      Inténtalo de nuevo en unos segundos.
-    </BaseAlert>
   </form>
 </template>
 

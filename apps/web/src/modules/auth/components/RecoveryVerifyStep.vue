@@ -11,8 +11,9 @@
 // `PhoneChallengeForm.vue`, pero con cuenta regresiva visible (CA-011-04
 // exige "cuánto falta", no solo un botón deshabilitado).
 import { computed, onUnmounted, ref } from 'vue'
-import { BaseAlert, BaseButton, OtpInput } from '@/shared/ui'
+import { BaseButton, OtpInput } from '@/shared/ui'
 import { requestRecovery, verifyRecovery } from '../api/recoveryApi'
+import { notifyConnectionLost, notifyUnexpectedError } from '../model/authFeedback'
 import type { RecoveryTarget } from '../model/recoveryTarget'
 import { validateRecoveryCode } from '../validation/recoveryValidation'
 
@@ -37,9 +38,7 @@ const channelLabel = computed(() => (props.target.channel === 'whatsapp' ? 'What
 const code = ref('')
 const fieldError = ref<string | undefined>(undefined)
 const attemptedSubmit = ref(false)
-const verifyStatus = ref<
-  'idle' | 'verifying' | 'invalid-code' | 'network-error' | 'unexpected-error'
->('idle')
+const verifyStatus = ref<'idle' | 'verifying' | 'invalid-code'>('idle')
 const resendCooldownRemaining = ref(0)
 let cooldownTimer: ReturnType<typeof setInterval> | undefined
 
@@ -125,10 +124,12 @@ async function onSubmit() {
       verifyStatus.value = 'invalid-code'
       return
     case 'network-error':
-      verifyStatus.value = 'network-error'
+      verifyStatus.value = 'idle'
+      notifyConnectionLost(() => void onSubmit())
       return
     case 'unexpected-error':
-      verifyStatus.value = 'unexpected-error'
+      verifyStatus.value = 'idle'
+      notifyUnexpectedError(outcome.requestId)
   }
 }
 </script>
@@ -179,30 +180,6 @@ async function onSubmit() {
     <p class="recovery-back">
       <RouterLink :to="{ name: 'acceso' }">Volver al acceso</RouterLink>
     </p>
-
-    <!-- Ancla de alertas: después del grupo de acciones y de "Volver al
-         acceso" (trabajo requerido §3, auth-eventos/README.md). -->
-    <BaseAlert
-      v-if="verifyStatus === 'network-error'"
-      variant="warning"
-      title="No pudimos conectar"
-      role="alert"
-    >
-      Revisa tu conexión e inténtalo de nuevo.
-      <template #action>
-        <BaseButton variant="secondary" size="md" type="button" @click="onSubmit">
-          Reintentar
-        </BaseButton>
-      </template>
-    </BaseAlert>
-    <BaseAlert
-      v-if="verifyStatus === 'unexpected-error'"
-      variant="danger"
-      title="Ocurrió un error inesperado"
-      role="alert"
-    >
-      Inténtalo de nuevo en unos segundos.
-    </BaseAlert>
   </form>
 </template>
 

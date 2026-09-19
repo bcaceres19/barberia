@@ -7,7 +7,15 @@
 // esa versión): su registro automático por efecto secundario no funciona.
 // Se registra el matcher a mano contra el mismo expect que importan las
 // pruebas, que es exactamente lo que ese archivo debería hacer.
-import { expect } from 'vitest'
+import { afterEach, expect } from 'vitest'
+import { resetToasts } from '@/shared/model/toastStore'
 import { toHaveNoViolations } from 'vitest-axe/matchers'
 
 expect.extend({ toHaveNoViolations })
+
+// La cola de avisos emergentes es un singleton (DEC-095): sin este reinicio,
+// un aviso emitido por una prueba llegaría a la siguiente y sus temporizadores
+// seguirían vivos.
+afterEach(() => {
+  resetToasts()
+})

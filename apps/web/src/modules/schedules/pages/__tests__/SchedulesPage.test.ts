@@ -8,6 +8,7 @@
  * el E2E de HU-040.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { resetToasts, toastState } from '@/shared/model/toastStore'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
 
@@ -113,6 +114,7 @@ const axeOptions = { rules: { 'color-contrast': { enabled: false } } }
 
 describe('SchedulesPage', () => {
   beforeEach(() => {
+    resetToasts()
     fetchBarberSummariesMock.mockReset()
     fetchWorkingHoursMock.mockReset()
     createWorkingHourMock.mockReset()
@@ -230,6 +232,7 @@ describe('SchedulesPage', () => {
 
     expect(createWorkingHourMock).toHaveBeenCalledWith('b-1', 1, '08:00', 60, expect.any(String))
     expect(wrapper.text()).toContain('08:00')
+    expect(toastState.items.map((item) => item.title)).toEqual(['Tramo agregado'])
   })
 
   it('an overlapping tramo (CA-040-04) shows a recoverable message without closing the dialog', async () => {
@@ -275,6 +278,7 @@ describe('SchedulesPage', () => {
     expect(updateWorkingHourMock).toHaveBeenCalledWith('b-1', 'wh-1', 1, '09:00', 240)
     expect(wrapper.text()).toContain('09:00')
     expect(wrapper.text()).not.toContain('08:00')
+    expect(toastState.items.map((item) => item.title)).toEqual(['Tramo actualizado'])
   })
 
   it('deleting a tramo removes it from the list on success', async () => {
@@ -287,6 +291,7 @@ describe('SchedulesPage', () => {
 
     expect(deleteWorkingHourMock).toHaveBeenCalledWith('b-1', 'wh-1')
     expect(wrapper.text()).not.toContain('08:00')
+    expect(toastState.items.map((item) => item.title)).toEqual(['Tramo retirado'])
   })
 
   it('a 404 while deleting treats the tramo as already gone, without an error message', async () => {
@@ -311,6 +316,8 @@ describe('SchedulesPage', () => {
 
     expect(wrapper.text()).toContain('No pudimos conectar')
     expect(wrapper.text()).toContain('08:00')
+    // Con la fila visible el error sigue en línea (DEC-095).
+    expect(toastState.items).toHaveLength(0)
   })
 
   it('disables the retire button while its own request is in flight (no double submit)', async () => {
@@ -400,6 +407,7 @@ describe('SchedulesPage · HU-041', () => {
 
     expect(updateHolidayCalendarMock).toHaveBeenCalledWith('b-1', true)
     expect(checkbox.checked).toBe(true)
+    expect(toastState.items.map((item) => item.title)).toEqual(['Festivos activados'])
   })
 
   it('a failed toggle shows a recoverable message', async () => {
@@ -412,6 +420,7 @@ describe('SchedulesPage · HU-041', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('No pudimos conectar')
+    expect(toastState.items).toHaveLength(0)
   })
 
   it('lists the exceptions of the selected barber (CA-041-04)', async () => {
@@ -446,6 +455,7 @@ describe('SchedulesPage · HU-041', () => {
       expect.any(String),
     )
     expect(wrapper.text()).toContain('2026-12-08')
+    expect(toastState.items.map((item) => item.title)).toEqual(['Excepción agregada'])
   })
 
   it('a duplicate date (CA-041-05) shows a recoverable message without closing the dialog', async () => {
@@ -484,6 +494,7 @@ describe('SchedulesPage · HU-041', () => {
 
     expect(deleteScheduleExceptionMock).toHaveBeenCalledWith('b-1', 'exc-1')
     expect(wrapper.text()).not.toContain('2026-12-08')
+    expect(toastState.items.map((item) => item.title)).toEqual(['Excepción retirada'])
   })
 
   it('shows upcoming Colombian holidays and prefills the create dialog from one (RN-BLQ-02)', async () => {

@@ -7,6 +7,7 @@
  * recorrido real contra el API vive en el E2E de HU-061.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { resetToasts, toastState } from '@/shared/model/toastStore'
 import { mount, flushPromises } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
 
@@ -81,6 +82,7 @@ const axeOptions = { rules: { 'color-contrast': { enabled: false } } }
 
 describe('NewAppointmentPage', () => {
   beforeEach(() => {
+    resetToasts()
     fetchBarberSummariesMock.mockReset()
     fetchAssignedServicesMock.mockReset()
     fetchBarbershopTimezoneMock.mockReset()
@@ -188,6 +190,7 @@ describe('NewAppointmentPage', () => {
     expect(wrapper.text()).toContain('Turno registrado')
     expect(wrapper.text()).toContain('Corte clásico')
     expect(wrapper.find('a').exists()).toBe(false)
+    expect(toastState.items.map((item) => item.title)).toEqual(['Turno registrado'])
   })
 
   it('shows the server conflict detail on a schedule/block conflict (DEC-073)', async () => {

@@ -10,6 +10,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { axe } from 'vitest-axe'
+import { toastState } from '@/shared/model/toastStore'
 import type { LoginOutcome } from '../../model/loginOutcome'
 
 const loginMock = vi.hoisted(() => vi.fn())
@@ -185,7 +186,7 @@ describe('LoginPage', () => {
     expect(wrapper.text()).toContain('Revisa tu correo y contraseña')
   })
 
-  it('offers Reintentar and preserves both fields on a network error (CA-010-03)', async () => {
+  it('offers a Reintentar toast and preserves both fields on a network error (CA-010-03)', async () => {
     loginMock.mockResolvedValueOnce({ kind: 'network-error' } satisfies LoginOutcome)
     const { wrapper } = await mountPage()
 
@@ -198,10 +199,12 @@ describe('LoginPage', () => {
     expect((wrapper.get('input[name="password"]').element as HTMLInputElement).value).toBe(
       'clave-cualquiera',
     )
-    expect(wrapper.text()).toContain('Reintentar')
+    expect(toastState.items.map((item) => [item.variant, item.title, item.action?.label])).toEqual([
+      ['warning', 'No pudimos conectar', 'Reintentar'],
+    ])
   })
 
-  it('retries without reloading when Reintentar is pressed', async () => {
+  it('retries without reloading when the Reintentar toast action runs', async () => {
     loginMock.mockResolvedValueOnce({ kind: 'network-error' } satisfies LoginOutcome)
     const { wrapper } = await mountPage()
     await fillAndSubmit(wrapper, 'barbero@ejemplo.test', 'clave-cualquiera')
@@ -211,9 +214,7 @@ describe('LoginPage', () => {
       kind: 'success',
       expiresAt: new Date(Date.now() + 60_000).toISOString(),
     } satisfies LoginOutcome)
-    const retryButton = wrapper.findAll('button').find((button) => button.text() === 'Reintentar')
-    expect(retryButton).toBeDefined()
-    await retryButton?.trigger('click')
+    toastState.items[0]!.action!.run()
     await flushPromises()
 
     expect(loginMock).toHaveBeenCalledTimes(2)
@@ -229,7 +230,10 @@ describe('LoginPage', () => {
     await fillAndSubmit(wrapper)
     await flushPromises()
 
-    expect(wrapper.text()).toContain('Demasiados intentos')
+    expect(toastState.items.map((item) => [item.variant, item.title])).toEqual([
+      ['warning', 'Demasiados intentos'],
+    ])
+    expect(toastState.items[0]!.detail).toContain('2 minuto(s)')
     expect(wrapper.text()).toContain('Verifica tu teléfono')
   })
 
@@ -284,7 +288,7 @@ describe('LoginPage', () => {
     expect(router.currentRoute.value.name).toBe('panel')
   })
 
-  it('shows a safe unexpected-error message and surfaces requestId when present', async () => {
+  it('raises a safe error toast and surfaces requestId when present', async () => {
     loginMock.mockResolvedValueOnce({
       kind: 'unexpected-error',
       requestId: 'req-999',
@@ -294,7 +298,9 @@ describe('LoginPage', () => {
     await fillAndSubmit(wrapper)
     await flushPromises()
 
-    expect(wrapper.text()).toContain('req-999')
+    expect(toastState.items.map((item) => [item.variant, item.reference])).toEqual([
+      ['danger', 'req-999'],
+    ])
   })
 
   it('sends exactly one request when submit fires twice while one is in flight (CA-010-04)', async () => {

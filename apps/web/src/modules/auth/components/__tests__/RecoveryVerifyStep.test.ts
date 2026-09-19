@@ -11,6 +11,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
+import { toastState } from '@/shared/model/toastStore'
 import RecoveryVerifyStep from '../RecoveryVerifyStep.vue'
 
 // Mismo canal y valor del paso 1 (DEC-093, DP-SEG-15).
@@ -96,7 +97,7 @@ describe('RecoveryVerifyStep', () => {
     expect(readOtp(wrapper)).toBe('000000')
   })
 
-  it('shows a real transport error after the actions group, without clearing the code', async () => {
+  it('warns with a toast on a transport error, without clearing the code (DEC-095)', async () => {
     verifyRecoveryMock.mockResolvedValueOnce({ kind: 'network-error' })
     const wrapper = mountStep()
 
@@ -104,7 +105,13 @@ describe('RecoveryVerifyStep', () => {
     await wrapper.get('form').trigger('submit')
     await flushPromises()
 
-    expect(wrapper.text()).toContain('No pudimos conectar')
+    // El fallo de conexión es un aviso emergente con "Reintentar", no una
+    // alerta fija bajo el formulario.
+    expect(wrapper.text()).not.toContain('No pudimos conectar')
+    expect(toastState.items.map((item) => [item.variant, item.title])).toEqual([
+      ['warning', 'No pudimos conectar'],
+    ])
+    expect(toastState.items[0]!.action?.label).toBe('Reintentar')
     expect(readOtp(wrapper)).toBe('482913')
   })
 

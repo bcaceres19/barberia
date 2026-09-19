@@ -6,6 +6,7 @@
 // barbero ya escribió (CA-020-08); solo un guardado exitoso confirmado por
 // el servidor reemplaza los valores del formulario.
 import { onMounted, reactive, ref } from 'vue'
+import { useToast } from '@/shared/composables'
 import { BaseAlert, BaseButton, BaseInput } from '@/shared/ui'
 import { updateBarbershopName } from '@/modules/auth'
 import { fetchBarbershopSettings, saveBarbershopSettings } from '../api/settingsApi'
@@ -34,6 +35,9 @@ const form = reactive<BarbershopSettingsFormValues>({
 type FieldErrors = Partial<Record<keyof BarbershopSettingsFormValues, string>>
 const fieldErrors = ref<FieldErrors>({})
 const attemptedSubmit = ref(false)
+// La confirmación persistente sigue en la pantalla; el aviso emergente la
+// acompaña (DEC-095).
+const toast = useToast()
 
 // requestToken evita que una carga inicial obsoleta (el barbero recargó la
 // sección antes de que la primera respuesta llegara) sobrescriba el
@@ -100,6 +104,9 @@ async function onSubmit() {
       // de este punto.
       updateBarbershopName(outcome.settings.name)
       saveStatus.value = 'saved'
+      toast.success('Configuración guardada', {
+        detail: 'Los datos de la barbería quedaron actualizados.',
+      })
       return
     case 'validation-error':
       // La zona no reconocida (CA-020-03) es el caso típico que llega

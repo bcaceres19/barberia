@@ -7,6 +7,7 @@
  * HU-093.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { resetToasts, toastState } from '@/shared/model/toastStore'
 import { mount, flushPromises } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
 
@@ -39,6 +40,7 @@ async function mountReady() {
 
 describe('BookingPolicyPage', () => {
   beforeEach(() => {
+    resetToasts()
     fetchMock.mockReset()
     saveMock.mockReset()
   })
@@ -154,6 +156,11 @@ describe('BookingPolicyPage', () => {
     await wrapper.get('form').trigger('submit')
     await flushPromises()
     expect(saveMock.mock.calls[1]![1]).toBe('tok-2')
+    // Este recorrido guarda dos veces: cada confirmación es su propio aviso.
+    expect(toastState.items.map((item) => item.title)).toEqual([
+      'Política de reservas guardada',
+      'Política de reservas guardada',
+    ])
   })
 
   it('on a version conflict, shows a distinct message with a reload action and keeps the typed values', async () => {

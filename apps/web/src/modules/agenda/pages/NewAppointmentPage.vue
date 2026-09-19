@@ -12,7 +12,10 @@
 // que citan un evento del atlas (docs/10-backlog/evidence/
 // ui-mockups-nava-tailored-grid-2026-09-03/nuevo-turno-eventos/README.md)
 // documentan a qué panel responde cada bloque.
+// El resumen de éxito es el resultado persistente; el aviso emergente lo
+// acompaña (DEC-095).
 import { computed, nextTick, ref, watch } from 'vue'
+import { useToast } from '@/shared/composables'
 import { BaseAlert, BaseButton, BaseInput, BarberAvatar, PageState } from '@/shared/ui'
 import { formatCivilDateFull, isCivilDateString } from '@/shared/time/civilDate'
 import {
@@ -87,6 +90,7 @@ watch(customerNote, () => {
 
 const fieldErrors = ref<Record<string, string | undefined>>({})
 const attempted = ref(false)
+const toast = useToast()
 const saveStatus = ref<SaveStatus>('idle')
 const saveErrorDetail = ref<string | undefined>(undefined)
 const created = ref<CreatedManualAppointment | null>(null)
@@ -225,6 +229,7 @@ async function onSubmit() {
     case 'success':
       created.value = outcome.appointment
       saveStatus.value = 'idle'
+      toast.success('Turno registrado', { detail: 'El turno ya está en la agenda.' })
       return
     case 'conflict':
       saveErrorDetail.value = outcome.detail

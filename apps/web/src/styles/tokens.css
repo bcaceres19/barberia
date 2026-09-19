@@ -71,6 +71,12 @@
   --color-danger-on-strong: #e3928d;
   --color-warning-on-strong: #dfb063;
   --color-success-on-strong: #9dc2a9;
+  /* Información sobre tinta (avisos emergentes, DEC-095): el azul de
+     --color-info-border aclarado hasta pasar AA sobre --color-surface-strong. */
+  --color-info-on-strong: #9db7cf;
+  /* Cuerpo de lectura sobre tinta: más claro que --color-on-strong-muted
+     para el texto explicativo de un aviso, sin llegar al marfil del título. */
+  --color-on-strong-soft: #cbd0d8;
 
   /* Color: estados de turno */
   --color-status-confirmed-surface: var(--color-info-surface);

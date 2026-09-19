@@ -6,6 +6,7 @@
  * prueba; el recorrido real contra el API vive en el E2E de HU-020.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { resetToasts, toastState } from '@/shared/model/toastStore'
 import { mount, flushPromises } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
 
@@ -37,6 +38,7 @@ async function mountReady() {
 
 describe('SettingsPage', () => {
   beforeEach(() => {
+    resetToasts()
     fetchMock.mockReset()
     saveMock.mockReset()
     updateBarbershopNameMock.mockReset()
@@ -118,6 +120,8 @@ describe('SettingsPage', () => {
     expect((wrapper.find('input[name="name"]').element as HTMLInputElement).value).toBe(
       'Barbería Renombrada',
     )
+    // La confirmación persistente sigue en pantalla y el aviso la acompaña (DEC-095).
+    expect(toastState.items.map((item) => item.title)).toEqual(['Configuración guardada'])
   })
 
   it('on a recoverable network error, keeps the typed values and never updates the header (CA-020-08)', async () => {

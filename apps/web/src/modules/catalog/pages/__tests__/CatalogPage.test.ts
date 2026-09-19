@@ -7,9 +7,10 @@
  * catalogApi se sustituye por un doble de prueba; el recorrido real contra
  * el API vive en el E2E de HU-022.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
+import { resetToasts, toastState } from '@/shared/model/toastStore'
 
 const fetchMock = vi.hoisted(() => vi.fn())
 const createMock = vi.hoisted(() => vi.fn())
@@ -123,6 +124,11 @@ describe('CatalogPage', () => {
     previewDeactivationMock.mockReset()
     deactivateMock.mockReset()
     reactivateMock.mockReset()
+    resetToasts()
+  })
+
+  afterEach(() => {
+    resetToasts()
   })
 
   it('shows a non-blank loading state, then the loaded catalog', async () => {
@@ -251,6 +257,12 @@ describe('CatalogPage', () => {
     expect(createMock).toHaveBeenCalledTimes(1)
     expect(wrapper.findAll('li').length).toBe(2)
     expect(wrapper.text()).toContain('Nuevo Servicio')
+    // DEC-095: la confirmación es un aviso emergente; la lista sigue siendo
+    // el resultado persistente.
+    expect(toastState.items.map((item) => [item.variant, item.title])).toEqual([
+      ['success', 'Servicio creado'],
+    ])
+    expect(toastState.items[0].detail).toContain('Nuevo Servicio')
   })
 
   it('sends the same idempotency key across a submit and a network-error retry of the same logical attempt', async () => {
@@ -295,6 +307,21 @@ describe('CatalogPage', () => {
     expect(createMock).toHaveBeenCalledTimes(1)
     resolveCreate({ kind: 'success', service: service('s-x', 'Doble Envío') })
     await flushPromises()
+  })
+
+  it('never raises a toast for a failed save: the error stays inline in the dialog (DEC-095)', async () => {
+    const wrapper = await mountReady()
+    await findButtonByText(wrapper, 'Agregar servicio').trigger('click')
+    await flushPromises()
+    fillCreateForm(wrapper, 'Nuevo Servicio')
+    await flushPromises()
+
+    createMock.mockResolvedValueOnce({ kind: 'network-error' })
+    submitOpenDialog(wrapper)
+    await flushPromises()
+
+    expect(toastState.items).toHaveLength(0)
+    expect(openDialogElement(wrapper).textContent).toContain('Revisa tu conexión')
   })
 
   it('on name-conflict, shows a recoverable message and keeps the typed value (DEC-067)', async () => {
@@ -373,6 +400,7 @@ describe('CatalogPage', () => {
     )
     expect(wrapper.findAll('li').length).toBe(1)
     expect(wrapper.text()).toContain('50000.00 COP')
+    expect(toastState.items.map((item) => item.title)).toEqual(['Servicio actualizado'])
   })
 
   it('replaces the item by id without duplicating or reordering unstably', async () => {
@@ -462,6 +490,7 @@ describe('CatalogPage', () => {
     // El diálogo se cierra y la lista refleja el nuevo estado.
     expect(wrapper.find('.base-dialog--open').exists()).toBe(false)
     expect(wrapper.text()).toContain('Inactivo')
+    expect(toastState.items.map((item) => item.title)).toEqual(['Servicio desactivado'])
   })
 
   it('cancelling the deactivate dialog never calls deactivateService', async () => {
@@ -523,6 +552,7 @@ describe('CatalogPage', () => {
     expect(reactivateMock).toHaveBeenCalledWith('s-1', expect.any(String))
     expect(wrapper.find('.base-dialog--open').exists()).toBe(false)
     expect(wrapper.text()).toContain('Activo')
+    expect(toastState.items.map((item) => item.title)).toEqual(['Servicio reactivado'])
   })
 
   // --- Accesibilidad ------------------------------------------------------

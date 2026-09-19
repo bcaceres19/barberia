@@ -7,6 +7,7 @@
  * el API vive en el E2E de HU-021.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { resetToasts, toastState } from '@/shared/model/toastStore'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
 
@@ -99,6 +100,7 @@ function findButtonByText(wrapper: VueWrapper, text: string) {
 
 describe('StaffPage', () => {
   beforeEach(() => {
+    resetToasts()
     fetchMock.mockReset()
     createMock.mockReset()
     renameMock.mockReset()
@@ -212,6 +214,7 @@ describe('StaffPage', () => {
     expect(createMock).toHaveBeenCalledTimes(1)
     expect(wrapper.findAll('li').length).toBe(2)
     expect(wrapper.text()).toContain('Nuevo Barbero')
+    expect(toastState.items.map((item) => item.title)).toEqual(['Barbero agregado'])
   })
 
   it('sends the same idempotency key across a submit and a network-error retry of the same logical attempt', async () => {
@@ -311,6 +314,7 @@ describe('StaffPage', () => {
     expect(renameMock).toHaveBeenCalledWith('b-1', 'Carlos A. Ramírez')
     expect(wrapper.findAll('li').length).toBe(1)
     expect(wrapper.text()).toContain('Carlos A. Ramírez')
+    expect(toastState.items.map((item) => item.title)).toEqual(['Nombre actualizado'])
   })
 
   it('replaces the item by id without duplicating or reordering unstably', async () => {

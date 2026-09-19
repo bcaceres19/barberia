@@ -6,8 +6,12 @@
 // error recuperable NUNCA borra lo que el barbero ya escribió; solo un
 // guardado exitoso confirmado por el servidor cierra el diálogo. Nunca
 // muestra asignaciones a barberos (HU-023), disponibilidad ni citas: fuera
-// de alcance de esta historia.
+// de alcance de esta historia. Cada cambio confirmado por el servidor añade un
+// aviso emergente de confirmación (DEC-095); el resultado persistente sigue
+// siendo la propia lista, y los errores siguen dentro del diálogo, junto al
+// formulario que conservan.
 import { onMounted, ref } from 'vue'
+import { useToast } from '@/shared/composables'
 import { BaseAlert, BaseBadge, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
 import {
   createService,
@@ -26,6 +30,8 @@ import {
   validateName,
   validatePrice,
 } from '../validation/catalogValidation'
+
+const toast = useToast()
 
 type LoadStatus = 'loading' | 'ready' | 'load-error'
 type SaveStatus =
@@ -193,6 +199,9 @@ async function onSubmitCreate() {
       services.value.unshift(outcome.service)
       isCreateOpen.value = false
       createStatus.value = 'idle'
+      toast.success('Servicio creado', {
+        detail: `«${outcome.service.name}» ya aparece en tu catálogo.`,
+      })
       return
     case 'validation-error':
       createStatus.value = 'validation-error'
@@ -298,6 +307,9 @@ async function onSubmitEdit() {
       if (index !== -1) services.value[index] = outcome.service
       isEditOpen.value = false
       editStatus.value = 'idle'
+      toast.success('Servicio actualizado', {
+        detail: `Guardamos los cambios de «${outcome.service.name}».`,
+      })
       return
     }
     case 'validation-error':
@@ -401,6 +413,7 @@ async function onConfirmDeactivate() {
       replaceServiceInList(outcome.service)
       isLifecycleOpen.value = false
       lifecycleStatus.value = 'idle'
+      toast.success('Servicio desactivado', { detail: `«${outcome.service.name}» quedó inactivo.` })
       return
     case 'not-found':
       lifecycleStatus.value = 'not-found'
@@ -434,6 +447,9 @@ async function onConfirmReactivate() {
       replaceServiceInList(outcome.service)
       isLifecycleOpen.value = false
       lifecycleStatus.value = 'idle'
+      toast.success('Servicio reactivado', {
+        detail: `«${outcome.service.name}» volvió a estar activo.`,
+      })
       return
     case 'not-found':
       lifecycleStatus.value = 'not-found'
