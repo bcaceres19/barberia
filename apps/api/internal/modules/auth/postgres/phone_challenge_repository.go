@@ -68,3 +68,22 @@ func (r *PhoneChallengeRepository) VerifyChallenge(ctx context.Context, email, i
 	}
 	return ok, nil
 }
+
+// ChallengePhone implements auth.PhoneChallengeRepository. The SQL function
+// returns a destination only for an active challenge bound to the same email
+// and IP; it is never exposed by an HTTP handler.
+func (r *PhoneChallengeRepository) ChallengePhone(ctx context.Context, email, ipHash string) (string, bool, error) {
+	var phone *string
+	err := r.db.CallSecurityDefinerRow(ctx,
+		`SELECT auth_phone_challenge_destination($1, $2)`,
+		[]any{email, ipHash},
+		func(row pgx.Row) error { return row.Scan(&phone) },
+	)
+	if err != nil {
+		return "", false, fmt.Errorf("auth/postgres: resolve phone challenge destination: %w", err)
+	}
+	if phone == nil {
+		return "", false, nil
+	}
+	return *phone, true, nil
+}

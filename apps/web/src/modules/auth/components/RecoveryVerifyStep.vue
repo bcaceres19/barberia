@@ -33,7 +33,7 @@ const emit = defineEmits<{
 }>()
 
 // Solo el canal elegido en el paso 1 (DEC-092): el otro no recibe nada.
-const channelLabel = computed(() => (props.target.channel === 'whatsapp' ? 'WhatsApp' : 'correo'))
+const channelLabel = computed(() => (props.target.channel === 'whatsapp' ? 'teléfono' : 'correo'))
 
 const code = ref('')
 const fieldError = ref<string | undefined>(undefined)

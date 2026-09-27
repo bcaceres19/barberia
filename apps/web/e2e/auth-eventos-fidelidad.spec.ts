@@ -198,8 +198,8 @@ for (const viewport of [
         await page.route('**/api/v1/public/auth/challenge', async (route) => {
           await route.fulfill({ status: 202, contentType: 'application/json', body: '{}' })
         })
-        await page.getByRole('button', { name: 'Enviar código por WhatsApp' }).click()
-        await expect(page.getByText('WhatsApp oficial')).toBeVisible()
+        await page.getByRole('button', { name: 'Enviar código al teléfono' }).click()
+        await expect(page.getByText('Teléfono verificado', { exact: true })).toBeVisible()
         await shoot(page, viewport.name, 'acceso', '08-reto-envio-whatsapp.png')
       })
 
@@ -226,8 +226,8 @@ for (const viewport of [
         await page.route('**/api/v1/public/auth/challenge', async (route) => {
           await route.fulfill({ status: 202, contentType: 'application/json', body: '{}' })
         })
-        await page.getByRole('button', { name: 'Enviar código por WhatsApp' }).click()
-        await expect(page.getByText('WhatsApp oficial')).toBeVisible()
+        await page.getByRole('button', { name: 'Enviar código al teléfono' }).click()
+        await expect(page.getByText('Teléfono verificado', { exact: true })).toBeVisible()
 
         await page.route('**/api/v1/public/auth/challenge/verify', async (route) => {
           await route.fulfill({

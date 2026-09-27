@@ -94,8 +94,8 @@ describe('PhoneChallengeForm', () => {
       expect(wrapper.find('input').exists()).toBe(true)
       expect(wrapper.text()).not.toContain('Verifica tu teléfono')
       expect(wrapper.text()).toContain('Si tu cuenta existe')
-      // Canal real vigente (DEC-081: el backend solo resuelve WhatsApp hoy).
-      expect(wrapper.text()).toContain('WhatsApp')
+      // La interfaz no expone el proveedor de entrega configurado.
+      expect(wrapper.text()).toContain('Teléfono verificado')
     })
 
     it('renders exactly six OTP slots for the code', async () => {

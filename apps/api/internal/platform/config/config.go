@@ -200,6 +200,25 @@ type Config struct {
 	// (p. ej. "es" o "es_CO").
 	MetaWhatsAppLanguageCode string
 
+	// OTPProvider selecciona el proveedor de OTP WhatsApp sin cambiar los
+	// casos de uso: "meta", "twilio" o "twilio_sandbox". El último está
+	// limitado a local/test y existe únicamente para desarrollo.
+	OTPProvider string
+	// TwilioVerify* son obligatorias exclusivamente cuando OTP_PROVIDER es
+	// "twilio"; nunca se registran ni se requieren para Meta.
+	TwilioAccountSID       string
+	TwilioAuthToken        string
+	TwilioAPIKeySID        string
+	TwilioAPIKeySecret     string
+	TwilioVerifyServiceSID string
+	// TwilioVerifyChannel selecciona el canal del mismo Verify Service.
+	// "sms" evita requisitos de WhatsApp/Meta; "whatsapp" permite volver
+	// al canal original cuando exista un sender propio habilitado.
+	TwilioVerifyChannel string
+	// TwilioWhatsAppSandboxFrom es el número emisor que muestra el entorno
+	// Sandbox de Twilio. Solo se exige con OTP_PROVIDER=twilio_sandbox.
+	TwilioWhatsAppSandboxFrom string
+
 	// ResendAPIKey autentica contra la API de Resend (DEC-066). Secreto:
 	// nunca se registra ni se comitea.
 	ResendAPIKey string
@@ -229,6 +248,7 @@ func Load() (Config, error) {
 	if environment == "" {
 		return Config{}, fmt.Errorf("config: APP_ENVIRONMENT no puede quedar vacío")
 	}
+	otpProvider := getEnv("OTP_PROVIDER", "meta")
 
 	maxConns, err := getEnvInt("APP_DATABASE_MAX_CONNS", 20)
 	if err != nil {
@@ -308,7 +328,14 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 
-	recoveryCodeExpires, err := getEnvInt("APP_RECOVERY_CODE_EXPIRES_SECONDS", 900)
+	// Twilio Verify expires a verification after ten minutes. Keep the
+	// application record within that boundary so its persisted state never
+	// claims a provider-managed OTP can remain usable after Verify rejects it.
+	recoveryCodeDefault := 900
+	if otpProvider == "twilio" {
+		recoveryCodeDefault = 600
+	}
+	recoveryCodeExpires, err := getEnvInt("APP_RECOVERY_CODE_EXPIRES_SECONDS", recoveryCodeDefault)
 	if err != nil {
 		return Config{}, err
 	}
@@ -380,6 +407,15 @@ func Load() (Config, error) {
 		MetaWhatsAppTemplateName:  getEnv("APP_META_WHATSAPP_TEMPLATE_NAME", ""),
 		MetaWhatsAppLanguageCode:  getEnv("APP_META_WHATSAPP_LANGUAGE_CODE", "es"),
 
+		OTPProvider:               otpProvider,
+		TwilioAccountSID:          getEnv("TWILIO_ACCOUNT_SID", ""),
+		TwilioAuthToken:           getEnv("TWILIO_AUTH_TOKEN", ""),
+		TwilioAPIKeySID:           getEnv("TWILIO_API_KEY_SID", ""),
+		TwilioAPIKeySecret:        getEnv("TWILIO_API_KEY_SECRET", ""),
+		TwilioVerifyServiceSID:    getEnv("TWILIO_VERIFY_SERVICE_SID", ""),
+		TwilioVerifyChannel:       getEnv("TWILIO_VERIFY_CHANNEL", "sms"),
+		TwilioWhatsAppSandboxFrom: getEnv("TWILIO_WHATSAPP_SANDBOX_FROM", ""),
+
 		ResendAPIKey:      getEnv("APP_RESEND_API_KEY", ""),
 		ResendFromAddress: getEnv("APP_RESEND_FROM_ADDRESS", ""),
 		ResendSubject:     getEnv("APP_RESEND_SUBJECT", "Código de recuperación de acceso"),
@@ -445,6 +481,32 @@ func Load() (Config, error) {
 			metaConfiguredValues++
 		}
 	}
+	if cfg.OTPProvider != "meta" && cfg.OTPProvider != "twilio" && cfg.OTPProvider != "twilio_sandbox" {
+		return Config{}, fmt.Errorf("config: OTP_PROVIDER debe ser meta, twilio o twilio_sandbox")
+	}
+	twilioCredentialsComplete := cfg.TwilioAuthToken != "" || (cfg.TwilioAPIKeySID != "" && cfg.TwilioAPIKeySecret != "")
+	if cfg.OTPProvider == "twilio" && (cfg.TwilioAccountSID == "" || !twilioCredentialsComplete || cfg.TwilioVerifyServiceSID == "") {
+		return Config{}, fmt.Errorf("config: TWILIO_ACCOUNT_SID, TWILIO_VERIFY_SERVICE_SID y TWILIO_AUTH_TOKEN o TWILIO_API_KEY_SID/TWILIO_API_KEY_SECRET son obligatorias cuando OTP_PROVIDER=twilio")
+	}
+	if cfg.OTPProvider == "twilio" && cfg.TwilioVerifyChannel != "sms" && cfg.TwilioVerifyChannel != "whatsapp" {
+		return Config{}, fmt.Errorf("config: TWILIO_VERIFY_CHANNEL debe ser sms o whatsapp cuando OTP_PROVIDER=twilio")
+	}
+	if cfg.OTPProvider == "twilio" && (cfg.PhoneChallengeExpiresSeconds > 600 || cfg.RecoveryCodeExpiresSeconds > 600) {
+		return Config{}, fmt.Errorf(
+			"config: APP_PHONE_CHALLENGE_EXPIRES_SECONDS y APP_RECOVERY_CODE_EXPIRES_SECONDS no pueden superar 600 cuando OTP_PROVIDER=twilio (límite de Twilio Verify)",
+		)
+	}
+	if cfg.OTPProvider == "twilio_sandbox" {
+		if cfg.Environment != "local" && cfg.Environment != "test" {
+			return Config{}, fmt.Errorf("config: OTP_PROVIDER=twilio_sandbox solo puede usarse en local/test")
+		}
+		if cfg.TwilioAccountSID == "" || !twilioCredentialsComplete || cfg.TwilioWhatsAppSandboxFrom == "" {
+			return Config{}, fmt.Errorf("config: TWILIO_ACCOUNT_SID, TWILIO_WHATSAPP_SANDBOX_FROM y TWILIO_AUTH_TOKEN o TWILIO_API_KEY_SID/TWILIO_API_KEY_SECRET son obligatorias cuando OTP_PROVIDER=twilio_sandbox")
+		}
+		if !strings.HasPrefix(cfg.TwilioWhatsAppSandboxFrom, "+") {
+			return Config{}, fmt.Errorf("config: TWILIO_WHATSAPP_SANDBOX_FROM debe estar en formato E.164")
+		}
+	}
 	if metaConfiguredValues > 0 && metaConfiguredValues < 3 {
 		return Config{}, fmt.Errorf(
 			"config: APP_META_WHATSAPP_PHONE_NUMBER_ID/APP_META_WHATSAPP_ACCESS_TOKEN/" +
@@ -478,7 +540,7 @@ func Load() (Config, error) {
 		// entrega (Meta WhatsApp Cloud API + Resend), no el marcador de
 		// posición que solo registra en el log. Faltar cualquiera de estos
 		// valores debe impedir el arranque, igual que un DSN sin TLS.
-		if cfg.MetaWhatsAppPhoneNumberID == "" || cfg.MetaWhatsAppAccessToken == "" || cfg.MetaWhatsAppTemplateName == "" {
+		if cfg.OTPProvider == "meta" && (cfg.MetaWhatsAppPhoneNumberID == "" || cfg.MetaWhatsAppAccessToken == "" || cfg.MetaWhatsAppTemplateName == "") {
 			return Config{}, fmt.Errorf(
 				"config: APP_META_WHATSAPP_PHONE_NUMBER_ID/APP_META_WHATSAPP_ACCESS_TOKEN/" +
 					"APP_META_WHATSAPP_TEMPLATE_NAME son obligatorios fuera de local/test (DEC-066)",

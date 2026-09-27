@@ -25,6 +25,16 @@ type fakePhoneChallengeRepository struct {
 	verifyCall struct{ email, ipHash, codeHash string }
 }
 
+func (f *fakePhoneChallengeRepository) ChallengePhone(_ context.Context, _ string, _ string) (string, bool, error) {
+	if f.verifyErr != nil {
+		return "", false, f.verifyErr
+	}
+	if f.requestPhone == "" && f.verifyOK {
+		return "+573001234567", true, nil
+	}
+	return f.requestPhone, f.requestPhone != "", nil
+}
+
 func (f *fakePhoneChallengeRepository) RequestChallenge(_ context.Context, email, ipHash, codeHash string, cfg auth.PhoneChallengeConfig) (bool, string, error) {
 	f.requestCalls = append(f.requestCalls, requestChallengeCall{email, ipHash, codeHash, cfg})
 	return f.requestAccepted, f.requestPhone, f.requestErr

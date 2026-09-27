@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -79,16 +80,19 @@ type PhoneChallengeRepository interface {
 	// atado a ipHash. ok=true ya limpió el escalamiento de esa IP en
 	// login_throttle, en la misma transacción.
 	VerifyChallenge(ctx context.Context, email, ipHash, codeHash string) (ok bool, err error)
+
+	// ChallengePhone returns the verified destination only for an active
+	// challenge bound to the same email and IP. It is an internal lookup used
+	// before an external provider validates the user-entered code.
+	ChallengePhone(ctx context.Context, email, ipHash string) (phone string, found bool, err error)
 }
 
 // PhoneChallengeService implementa el reto telefónico de HU-007 (DEC-062).
 // No conoce Chi, net/http ni PostgreSQL.
 type PhoneChallengeService struct {
-	repo   PhoneChallengeRepository
-	codes  PhoneCodeGenerator
-	sender PhoneCodeSender
-	cfg    PhoneChallengeConfig
-	secret []byte
+	repo     PhoneChallengeRepository
+	provider WhatsAppOTPProvider
+	cfg      PhoneChallengeConfig
 }
 
 // NewPhoneChallengeService construye el servicio. secret firma el HMAC del
@@ -102,7 +106,17 @@ func NewPhoneChallengeService(
 	cfg PhoneChallengeConfig,
 	secret []byte,
 ) *PhoneChallengeService {
-	return &PhoneChallengeService{repo: repo, codes: codes, sender: sender, cfg: cfg, secret: secret}
+	return NewPhoneChallengeServiceWithOTPProvider(repo, NewLocalWhatsAppOTPProvider(codes, sender, secret), cfg)
+}
+
+// NewPhoneChallengeServiceWithOTPProvider constructs the service with the
+// provider selected by the composition root.
+func NewPhoneChallengeServiceWithOTPProvider(
+	repo PhoneChallengeRepository,
+	provider WhatsAppOTPProvider,
+	cfg PhoneChallengeConfig,
+) *PhoneChallengeService {
+	return &PhoneChallengeService{repo: repo, provider: provider, cfg: cfg}
 }
 
 // Request genera un código nuevo y, si el repositorio acepta la solicitud
@@ -117,14 +131,13 @@ func (s *PhoneChallengeService) Request(ctx context.Context, rawEmail, ipHash st
 		return apperr.Internal(fmt.Errorf("auth: contexto cancelado antes de solicitar el reto: %w", err))
 	}
 
-	code, err := s.codes.New()
+	prepared, err := s.provider.Prepare(ctx)
 	if err != nil {
 		return apperr.Internal(err)
 	}
-	codeHash := HMACHex(code, s.secret)
 
 	email := NormalizeEmail(rawEmail)
-	accepted, phone, err := s.repo.RequestChallenge(ctx, email, ipHash, codeHash, s.cfg)
+	accepted, phone, err := s.repo.RequestChallenge(ctx, email, ipHash, prepared.PersistenceDigest(), s.cfg)
 	if err != nil {
 		return apperr.Internal(fmt.Errorf("auth: solicitar reto telefónico: %w", err))
 	}
@@ -132,7 +145,7 @@ func (s *PhoneChallengeService) Request(ctx context.Context, rawEmail, ipHash st
 		return nil
 	}
 
-	if err := s.sender.SendCode(ctx, phone, code); err != nil {
+	if err := s.provider.Deliver(ctx, phone, prepared); err != nil {
 		// El fallo de entrega se reporta al llamador solo para que lo
 		// registre sin destinatario ni código (RN-DAT-02); la respuesta al
 		// cliente ya se decidió antes de invocar este método y no cambia.
@@ -152,7 +165,25 @@ func (s *PhoneChallengeService) Verify(ctx context.Context, rawEmail, ipHash, co
 	}
 
 	email := NormalizeEmail(rawEmail)
-	codeHash := HMACHex(code, s.secret)
+	phone, found, err := s.repo.ChallengePhone(ctx, email, ipHash)
+	if err != nil {
+		return apperr.Internal(fmt.Errorf("auth: resolver teléfono del reto: %w", err))
+	}
+	if !found {
+		return errInvalidChallenge()
+	}
+	codeHash, err := s.provider.VerificationDigest(ctx, phone, code)
+	if err != nil {
+		if errors.Is(err, ErrWhatsAppOTPRejected) {
+			// Registrar el intento fallido localmente conserva max_attempts
+			// aunque el proveedor sea la autoridad del código.
+			if _, repoErr := s.repo.VerifyChallenge(ctx, email, ipHash, rejectedOTPDigest); repoErr != nil {
+				return apperr.Internal(fmt.Errorf("auth: registrar intento fallido del reto: %w", repoErr))
+			}
+			return errInvalidChallenge()
+		}
+		return apperr.Internal(fmt.Errorf("auth: validar OTP del reto telefónico: %w", err))
+	}
 
 	ok, err := s.repo.VerifyChallenge(ctx, email, ipHash, codeHash)
 	if err != nil {

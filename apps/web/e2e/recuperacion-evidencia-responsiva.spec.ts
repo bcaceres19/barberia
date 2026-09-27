@@ -50,7 +50,7 @@ for (const viewport of viewports) {
       await expect(page.getByRole('heading', { name: 'Solicita tu código' })).toBeVisible()
 
       // Sin elegir: dos botones y ni campo ni acción de envío (CA-011-09).
-      await expect(page.getByRole('button', { name: 'WhatsApp' })).toHaveAttribute(
+      await expect(page.getByRole('button', { name: 'Teléfono' })).toHaveAttribute(
         'aria-pressed',
         'false',
       )
@@ -62,13 +62,13 @@ for (const viewport of viewports) {
       await expectNoHorizontalScroll(page)
 
       // WhatsApp elegido: mensaje solo de ese canal y su campo (CA-011-10).
-      await page.getByRole('button', { name: 'WhatsApp' }).click()
-      await expect(page.getByRole('button', { name: 'WhatsApp' })).toHaveAttribute(
+      await page.getByRole('button', { name: 'Teléfono' }).click()
+      await expect(page.getByRole('button', { name: 'Teléfono' })).toHaveAttribute(
         'aria-pressed',
         'true',
       )
-      await expect(page.getByText('Escribe el número de WhatsApp de tu cuenta')).toBeVisible()
-      await expect(page.getByLabel('WhatsApp', { exact: true })).toBeVisible()
+      await expect(page.getByText('Escribe el número de teléfono de tu cuenta')).toBeVisible()
+      await expect(page.getByLabel('Teléfono', { exact: true })).toBeVisible()
       await page.screenshot({
         path: path.join(evidenceDir, viewport.name, 'whatsapp.png'),
         fullPage: true,
@@ -78,7 +78,7 @@ for (const viewport of viewports) {
       // Correo elegido: el mensaje y el campo de WhatsApp desaparecen.
       await page.getByRole('button', { name: 'Correo' }).click()
       await expect(page.getByText('Escribe el correo de tu cuenta')).toBeVisible()
-      await expect(page.getByText('Escribe el número de WhatsApp de tu cuenta')).toHaveCount(0)
+      await expect(page.getByText('Escribe el número de teléfono de tu cuenta')).toHaveCount(0)
       await expect(page.getByLabel('Correo', { exact: true })).toBeVisible()
       await page.screenshot({
         path: path.join(evidenceDir, viewport.name, 'correo.png'),
@@ -86,7 +86,7 @@ for (const viewport of viewports) {
       })
       await expectNoHorizontalScroll(page)
 
-      await page.getByRole('button', { name: 'WhatsApp' }).focus()
+      await page.getByRole('button', { name: 'Teléfono' }).focus()
       await page.screenshot({ path: path.join(evidenceDir, viewport.name, 'foco.png') })
     })
 
@@ -104,8 +104,8 @@ for (const viewport of viewports) {
 
     test(`error de validación de WhatsApp (${viewport.name}px)`, async ({ page }) => {
       await page.goto('/recuperar-acceso')
-      await page.getByRole('button', { name: 'WhatsApp' }).click()
-      await page.getByLabel('WhatsApp', { exact: true }).fill('3001234567')
+      await page.getByRole('button', { name: 'Teléfono' }).click()
+      await page.getByLabel('Teléfono', { exact: true }).fill('3001234567')
       await page.getByRole('button', { name: 'Enviar código' }).click()
       await expect(page.getByText(/indicativo de tu país/i)).toBeVisible()
       await page.screenshot({

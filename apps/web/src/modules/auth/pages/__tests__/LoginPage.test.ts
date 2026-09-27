@@ -269,7 +269,7 @@ describe('LoginPage', () => {
 
     const requestCodeButton = wrapper
       .findAll('button')
-      .find((button) => button.text().includes('Enviar código por WhatsApp'))
+      .find((button) => button.text().includes('Enviar código al teléfono'))
     expect(requestCodeButton).toBeDefined()
     await requestCodeButton!.trigger('click')
     await flushPromises()

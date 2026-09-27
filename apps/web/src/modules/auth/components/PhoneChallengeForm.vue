@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Reto telefónico de HU-007 (DEC-062): se muestra cuando el acceso responde
-// 429 (umbral superado). Pide el código de 6 dígitos enviado por WhatsApp y,
+// 429 (umbral superado). Pide el código de 6 dígitos enviado al teléfono y,
 // al verificarlo, avisa a `LoginPage` para que reintente el acceso — el
 // servidor ya limpió el escalamiento de esa IP en la misma verificación, así
 // que no hace falta ningún dato adicional para ese reintento.
@@ -14,14 +14,14 @@ import { requestChallenge, verifyChallenge } from '../api/challengeApi'
 
 const RESEND_COOLDOWN_SECONDS = 60
 
-// DEC-081: el backend vigente solo resuelve un canal (WhatsApp). El
+// DEC-081: el backend vigente solo resuelve un canal telefónico. El
 // mockup asignado (auth-eventos/README.md, eventos 07-12) representa tres
 // variantes de canal; renderizar correo/ambos exigiría configuración,
 // contrato o preferencia persistida que no existen hoy, así que esta
 // pantalla solo compone la variante real (issue #213, trabajo requerido
 // §4). Las variantes restantes quedan registradas como pendientes del
 // issue funcional de DEC-081, no implementadas aquí.
-const CHANNEL_CHIP = 'WhatsApp oficial'
+const CHANNEL_CHIP = 'Teléfono verificado'
 
 const props = defineProps<{
   email: string
@@ -116,8 +116,7 @@ async function onVerifyCode() {
          asignados (trabajo requerido §4), conserva su composición actual. -->
     <template v-if="requestPhase === 'idle' || requestPhase === 'error'">
       <BaseAlert variant="info" title="Verifica tu teléfono">
-        Para continuar, confirma tu identidad con el código que enviamos por WhatsApp a tu teléfono
-        verificado.
+        Para continuar, confirma tu identidad con el código que enviamos a tu teléfono verificado.
       </BaseAlert>
 
       <BaseButton
@@ -127,7 +126,7 @@ async function onVerifyCode() {
         :disabled="!canRequest"
         @click="onRequestCode"
       >
-        Enviar código por WhatsApp
+        Enviar código al teléfono
       </BaseButton>
     </template>
 
@@ -140,7 +139,7 @@ async function onVerifyCode() {
       <div class="phone-challenge__channel">
         <p class="phone-challenge__channel-chip">{{ CHANNEL_CHIP }}</p>
         <p class="phone-challenge__channel-note" role="status">
-          Si tu cuenta existe y tu teléfono está verificado, recibirás un código por WhatsApp.
+          Si tu cuenta existe y tu teléfono está verificado, recibirás un código.
         </p>
       </div>
 

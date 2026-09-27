@@ -155,7 +155,7 @@ test.describe('Defensa escalonada contra abuso del acceso (HU-007)', () => {
     }
     await expect(page.getByText('Verifica tu teléfono')).toBeVisible()
 
-    await page.getByRole('button', { name: 'Enviar código por WhatsApp' }).click()
+    await page.getByRole('button', { name: 'Enviar código al teléfono' }).click()
     await expect(page.getByText('Si tu cuenta existe')).toBeVisible()
 
     // Terceros interceptados (cabecera de este archivo): el código real se
@@ -193,7 +193,7 @@ test.describe('Defensa escalonada contra abuso del acceso (HU-007)', () => {
     }
     await expect(page.getByText('Verifica tu teléfono')).toBeVisible()
 
-    await page.getByRole('button', { name: 'Enviar código por WhatsApp' }).click()
+    await page.getByRole('button', { name: 'Enviar código al teléfono' }).click()
     await expect(page.getByText('Si tu cuenta existe')).toBeVisible()
 
     await fillOtp(page, '000000')
