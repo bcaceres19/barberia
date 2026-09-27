@@ -70,7 +70,9 @@ Un barbero con usuario vinculado conecta su propia cuenta de Google, consulta el
 ## Alcance incluido
 
 - OpenAPI primero: estado, inicio de conexión (URL de autorización), callback y desconexión, con errores del estándar.
-- Migración Atlas y RLS de `google_calendar_connection` (y del estado OAuth de un solo uso), en 3FN, con estados `connected`, `reauth_required`, `error`, `disconnected` y una sola conexión activa por barbero.
+- Migración Atlas y RLS de `google_calendar_connection` (y del estado OAuth de un solo uso), en 3FN, con estados `connected`, `reauth_required`, `error`, `disconnected`, una sola conexión activa por barbero y `reminder_minutes` (entero de 0 a 40320, nulo = recordatorios predeterminados de Google).
+- Lectura y cambio de `reminder_minutes` en el contrato de la conexión; el cambio encola la actualización de los eventos futuros (la publicación vive en `PROMPT-FEAT-GCAL-03-v1`).
+- Consumidor del aviso de «vínculo cambiado o quitado» de `PROMPT-FEAT-GCAL-01-v1`: desconecta la conexión del barbero anterior, revocando y borrando sus credenciales.
 - Módulo dueño `apps/api/internal/modules/googlecalendar` con puertos: cliente Google (adaptador aislado), almacén de credenciales, cifrado AES-256-GCM con `key_id`.
 - PKCE, `state` de un solo uso ligado a barbería, barbero y sesión; refresh del access token bajo demanda; revocación y borrado de credenciales al desconectar.
 - Configuración `GOOGLE_CALENDAR_CLIENT_ID`, `GOOGLE_CALENDAR_CLIENT_SECRET`, `GOOGLE_CALENDAR_REDIRECT_URI` y `GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY`; integración desactivada cuando falta alguna, sin fallar el arranque del API.
@@ -100,6 +102,7 @@ Un barbero con usuario vinculado conecta su propia cuenta de Google, consulta el
 - Cifrado: ida y vuelta, clave incorrecta, rotación por `key_id`; nada en claro en la base de datos.
 - OAuth con un servidor Google falso: éxito, `state` reutilizado o expirado, usuario sin barbero vinculado, permisos denegados, token revocado (`reauth_required`).
 - Aislamiento: el barbero de la barbería A no lee ni desconecta la conexión de B.
+- Cambiar o quitar el vínculo del usuario desconecta la conexión del barbero anterior; `reminder_minutes` fuera de rango se rechaza.
 - Refresh automático de un access token expirado.
 
 ## Documentación y trazabilidad

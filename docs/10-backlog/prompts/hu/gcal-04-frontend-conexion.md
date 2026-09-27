@@ -69,8 +69,9 @@ El barbero autenticado puede conectar, ver el estado, sincronizar ahora y descon
 ## Alcance incluido
 
 - Sección del área del barbero con los estados No conectado, Conectando, Conectado (cuenta, calendario y última sincronización), Sincronizando, Requiere reconexión y Error de sincronización, y las acciones Conectar, Sincronizar ahora y Desconectar.
+- Campo de configuración de la anticipación del recordatorio en minutos (por ejemplo 30), con la opción de usar los recordatorios predeterminados de Google, validado de 0 a 40320.
 - Cliente tipado del contrato; el componente no conoce la forma interna del API ni maneja tokens.
-- Texto que deje claro que la publicación es de NAVA hacia Google y que los cambios hechos en Google no modifican la agenda de NAVA.
+- Texto que deje claro que la publicación es de NAVA hacia Google y que los cambios hechos en Google no modifican la agenda de NAVA; si un evento se borra allí por error, NAVA lo restaura y solo se deja de publicar cancelando la cita desde la app.
 
 ## Fuera de alcance
 
@@ -91,7 +92,7 @@ El barbero autenticado puede conectar, ver el estado, sincronizar ahora y descon
 
 ## Pruebas y evidencia
 
-- Componente: cada estado, acciones deshabilitadas mientras sincroniza, error recuperable.
+- Componente: cada estado, acciones deshabilitadas mientras sincroniza, error recuperable, guardado y validación del recordatorio.
 - E2E: conectar (redirección simulada), sincronizar y desconectar.
 - Evidencia y verificación accesible a 320, 360, 768 y 1280 px.
 

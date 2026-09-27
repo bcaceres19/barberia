@@ -17,7 +17,6 @@ pr: null
 pr_url: null
 depends_on:
   - "PR del issue #284 integrado (DEC-099 a DEC-102)"
-  - "DP-INT-01 resuelta (quién asigna el vínculo)"
 rules:
   - "RN-TEN-01"
 decisions:
@@ -58,7 +57,7 @@ Implementa únicamente la preocupación descrita en este archivo. Trabaja de for
 
 ## Objetivo
 
-Existe una asignación explícita, opcional y única de `barber.staff_user_id` que permite resolver qué barbero es el usuario autenticado, con aislamiento por barbería.
+El usuario autenticado selecciona cuál barbero es él mediante una asignación explícita, opcional y única de `barber.staff_user_id`, con aislamiento por barbería (`DEC-100`).
 
 ## Preflight obligatorio
 
@@ -73,14 +72,15 @@ Existe una asignación explícita, opcional y única de `barber.staff_user_id` q
 ## Alcance incluido
 
 - Migración Atlas: `barber.staff_user_id` nullable, FK compuesta `(barbershop_id, staff_user_id)` a `staff_user`, unicidad parcial cuando no es nulo.
-- Caso de uso y repositorio para asignar/desasignar el vínculo y para resolver «barbero del usuario autenticado» mediante un puerto consumible por otros módulos.
+- Caso de uso y repositorio para que el usuario autenticado seleccione, cambie o quite su propio vínculo (la solicitud nunca lleva un `staff_user_id`; un barbero ya vinculado a otro usuario responde conflicto) y para resolver «barbero del usuario autenticado» mediante un puerto consumible por otros módulos.
+- Puerto de aviso de «vínculo cambiado o quitado» para que otros módulos reaccionen, sin consumidores en esta entrega.
 - Contrato OpenAPI (contract-first), cliente tipado y UI mínima de asignación en la pantalla de barberos.
 
 ## Fuera de alcance
 
 - Cualquier uso de Google Calendar.
 - Inferir el vínculo por nombre, correo o teléfono; borrado o desactivación de barberos (siguen fuera por `DEC-047`).
-- Roles o permisos nuevos más allá de lo que resuelva `DP-INT-01`.
+- Roles o permisos nuevos: cada usuario solo gestiona su propio vínculo.
 
 ## Estado existente que debe conservarse
 
@@ -90,7 +90,7 @@ Existe una asignación explícita, opcional y única de `barber.staff_user_id` q
 
 ## Trabajo requerido
 
-1. Redacta la historia con su número real y los `CA-*`; si `DP-INT-01` sigue abierta, detente y regístralo.
+1. Redacta la historia con su número real y los `CA-*`; respeta la resolución de `DP-INT-01` en `DEC-100`.
 2. Actualiza OpenAPI primero; genera lint y cliente.
 3. Crea la migración con Atlas, con `COMMENT` de la columna y privilegios coherentes con el estándar.
 4. Implementa dominio, servicio, repositorio y handler sin dependencias cruzadas entre módulos (puerto en el consumidor).
@@ -99,7 +99,7 @@ Existe una asignación explícita, opcional y única de `barber.staff_user_id` q
 ## Pruebas y evidencia
 
 - Constraint: un mismo `staff_user` no puede vincularse a dos barberos; un `staff_user` de otra barbería no puede vincularse (FK compuesta), con dos tenants en PostgreSQL real.
-- Servicio: asignar, reasignar, desasignar; usuario sin barbero devuelve el error de dominio esperado.
+- Servicio: seleccionar, cambiar y quitar el vínculo propio; tomar un barbero ya vinculado a otro usuario responde conflicto; un usuario sin barbero devuelve el error de dominio esperado; ningún usuario puede modificar el vínculo de otro.
 - Componente Vue interactivo y evidencia responsive/accesible a los anchos de la guía visual.
 
 ## Documentación y trazabilidad

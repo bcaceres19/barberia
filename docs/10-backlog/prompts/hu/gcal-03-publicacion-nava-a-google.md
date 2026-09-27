@@ -73,13 +73,15 @@ Toda cita confirmada, reprogramada o cancelada y todo bloqueo compatible del bar
 - Migración Atlas y RLS de `google_calendar_event_link` (`resource_type` `appointment`/`time_block`, id del evento, `etag`) y de `google_calendar_sync_job` con claim con lease y CAS por `claim_token`.
 - Puertos definidos por `booking` y `schedule` (sin importar Google) que encolan el trabajo en la misma transacción del cambio; cubrir reserva pública y creación manual.
 - Worker: reclamo, ejecución fuera de transacción, backoff exponencial con tope y máximo de intentos; un error permanente cambia el estado de la conexión.
-- Crear, actualizar el mismo evento y eliminar por cancelación; `completed` y `no_show` conservan el evento; título, descripción, propiedades extendidas privadas, `reminders.useDefault = true` y zona de la barbería según `DEC-101`.
-- Evento eliminado en Google: una actualización lo recrea y una cancelación trata `404`/`410` como éxito; evento modificado en Google: la siguiente actualización de NAVA lo restablece.
+- Crear, actualizar el mismo evento y eliminar por cancelación; `completed` y `no_show` conservan el evento; título, descripción, propiedades extendidas privadas, recordatorio según `reminder_minutes` (un `override` emergente, o `useDefault = true` si es nulo) y zona de la barbería según `DEC-101`.
+- Trabajo periódico del worker (cadencia de pocos minutos, a fijar y documentar) que lista solo los eventos publicados por NAVA (propiedad extendida privada `navaConnectionId`, sin `syncToken`) y recrea los que falten de citas confirmadas futuras y bloqueos vigentes futuros; nunca restaura citas canceladas, terminales ni pasadas, y nunca modifica el dominio de NAVA.
+- Cancelación desde la app: elimina el evento, cierra el vínculo para que no se recree y trata `404`/`410` como éxito; un evento modificado en Google se restablece en la siguiente actualización de NAVA.
+- Actualización de los eventos futuros cuando el barbero cambia `reminder_minutes`.
 - Publicación inicial de las citas y bloqueos futuros dentro de la ventana de 6 meses al conectar, y acción «Sincronizar ahora» que solo procesa la cola pendiente de esa conexión, segura ante varios clics.
 
 ## Fuera de alcance
 
-- Leer cambios de Google, webhook, `watch`, `syncToken`, eventos externos como bloqueos o reprogramar/cancelar citas desde Google (`DEC-099`).
+- Importar cambios de Google, webhook, `watch`, `syncToken`, eventos externos como bloqueos o reprogramar/cancelar citas desde Google (`DEC-099`).
 - UI.
 - Series de bloqueo de NAVA (`DP-INT-02`, fuera de la primera fase).
 
@@ -102,6 +104,8 @@ Toda cita confirmada, reprogramada o cancelada y todo bloqueo compatible del bar
 - Google 503/429/timeout: la cita existe, el trabajo reintenta con backoff y no hay bucle infinito; token revocado: `reauth_required`; token expirado: refresh automático.
 - Concurrencia y varios workers con `SKIP LOCKED`; PostgreSQL real y dos tenants.
 - Un cambio o borrado hecho en Google no modifica ninguna cita ni bloqueo de NAVA.
+- Evento borrado en Google: se recrea en el siguiente ciclo, una sola vez por ciclo y sin duplicados; una cita cancelada en la app no se recrea; una cita pasada o terminal no se recrea.
+- `reminder_minutes`: con valor, el evento lleva ese único recordatorio; nulo, `useDefault`; cambiarlo actualiza los eventos futuros.
 
 ## Documentación y trazabilidad
 
