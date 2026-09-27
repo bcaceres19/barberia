@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -89,13 +90,14 @@ type RecoveryRepository interface {
 // verificar y establecer una contraseña nueva. No conoce Chi, net/http,
 // JSON ni PostgreSQL.
 type RecoveryService struct {
-	repo   RecoveryRepository
-	codes  PhoneCodeGenerator // mismo generador de 6 dígitos que HU-007 (DEC-064: mismo patrón criptográfico)
-	tokens TokenGenerator     // mismo generador opaco que la sesión (DEC-064)
-	sender RecoveryCodeSender
-	hasher PasswordHasher
-	cfg    RecoveryConfig
-	secret []byte
+	repo             RecoveryRepository
+	codes            PhoneCodeGenerator // mismo generador de 6 dígitos que HU-007 (DEC-064: mismo patrón criptográfico)
+	tokens           TokenGenerator     // mismo generador opaco que la sesión (DEC-064)
+	sender           RecoveryCodeSender
+	whatsappProvider WhatsAppOTPProvider
+	hasher           PasswordHasher
+	cfg              RecoveryConfig
+	secret           []byte
 }
 
 // NewRecoveryService construye el servicio. secret firma el HMAC del
@@ -110,7 +112,28 @@ func NewRecoveryService(
 	cfg RecoveryConfig,
 	secret []byte,
 ) *RecoveryService {
-	return &RecoveryService{repo: repo, codes: codes, tokens: tokens, sender: sender, hasher: hasher, cfg: cfg, secret: secret}
+	return NewRecoveryServiceWithWhatsAppOTPProvider(repo, codes, tokens, sender, NewLocalWhatsAppOTPProvider(codes, recoveryPhoneCodeSender{sender: sender}, secret), hasher, cfg, secret)
+}
+
+// NewRecoveryServiceWithWhatsAppOTPProvider keeps recovery's email sender
+// independent while selecting the WhatsApp OTP authority at composition.
+func NewRecoveryServiceWithWhatsAppOTPProvider(
+	repo RecoveryRepository,
+	codes PhoneCodeGenerator,
+	tokens TokenGenerator,
+	sender RecoveryCodeSender,
+	whatsappProvider WhatsAppOTPProvider,
+	hasher PasswordHasher,
+	cfg RecoveryConfig,
+	secret []byte,
+) *RecoveryService {
+	return &RecoveryService{repo: repo, codes: codes, tokens: tokens, sender: sender, whatsappProvider: whatsappProvider, hasher: hasher, cfg: cfg, secret: secret}
+}
+
+type recoveryPhoneCodeSender struct{ sender RecoveryCodeSender }
+
+func (s recoveryPhoneCodeSender) SendCode(ctx context.Context, phone, code string) error {
+	return s.sender.SendCode(ctx, phone, "", code)
 }
 
 // resolveEmail traduce el canal y el valor elegidos al correo de la cuenta,
@@ -147,18 +170,28 @@ func (s *RecoveryService) Request(ctx context.Context, target RecoveryTarget) er
 		return apperr.Internal(fmt.Errorf("auth: contexto cancelado antes de solicitar recuperación: %w", err))
 	}
 
-	code, err := s.codes.New()
-	if err != nil {
-		return apperr.Internal(err)
-	}
-	codeHash := HMACHex(code, s.secret)
-
 	email, ok, err := s.resolveEmail(ctx, target)
 	if err != nil {
 		return apperr.Internal(fmt.Errorf("auth: resolver cuenta de recuperación: %w", err))
 	}
 	if !ok {
 		return nil
+	}
+
+	var code, codeHash string
+	var prepared PreparedWhatsAppOTP
+	if target.Channel == RecoveryChannelWhatsApp {
+		prepared, err = s.whatsappProvider.Prepare(ctx)
+		if err != nil {
+			return apperr.Internal(err)
+		}
+		codeHash = prepared.PersistenceDigest()
+	} else {
+		code, err = s.codes.New()
+		if err != nil {
+			return apperr.Internal(err)
+		}
+		codeHash = HMACHex(code, s.secret)
 	}
 
 	accepted, phone, resolvedEmail, err := s.repo.RequestRecovery(ctx, email, codeHash, s.cfg)
@@ -187,7 +220,12 @@ func (s *RecoveryService) Request(ctx context.Context, target RecoveryTarget) er
 		sendEmail = resolvedEmail
 	}
 
-	if err := s.sender.SendCode(ctx, sendPhone, sendEmail, code); err != nil {
+	if target.Channel == RecoveryChannelWhatsApp {
+		err = s.whatsappProvider.Deliver(ctx, sendPhone, prepared)
+	} else {
+		err = s.sender.SendCode(ctx, "", sendEmail, code)
+	}
+	if err != nil {
 		// El fallo de entrega se reporta al llamador solo para que lo
 		// registre sin destinatario ni código (RN-DAT-02); la respuesta al
 		// cliente ya se decidió antes de invocar este método y no cambia
@@ -221,7 +259,27 @@ func (s *RecoveryService) Verify(ctx context.Context, target RecoveryTarget, cod
 	if !found {
 		return "", "", "", errInvalidRecoveryCode()
 	}
-	codeHash := HMACHex(code, s.secret)
+	var codeHash string
+	if target.Channel == RecoveryChannelWhatsApp {
+		phone, valid := NormalizePhone(target.Value)
+		if !valid {
+			return "", "", "", errInvalidRecoveryCode()
+		}
+		codeHash, err = s.whatsappProvider.VerificationDigest(ctx, phone, code)
+		if err != nil {
+			if errors.Is(err, ErrWhatsAppOTPRejected) {
+				// Igual que el reto telefónico: el intento fallido se cuenta
+				// localmente para que max_attempts invalide el código.
+				if _, _, _, repoErr := s.repo.VerifyRecovery(ctx, email, rejectedOTPDigest, tokenHash, s.cfg.ResetTokenExpiresSeconds); repoErr != nil {
+					return "", "", "", apperr.Internal(fmt.Errorf("auth: registrar intento fallido de recuperación: %w", repoErr))
+				}
+				return "", "", "", errInvalidRecoveryCode()
+			}
+			return "", "", "", apperr.Internal(fmt.Errorf("auth: validar OTP de recuperación: %w", err))
+		}
+	} else {
+		codeHash = HMACHex(code, s.secret)
+	}
 
 	ok, phone, resolvedEmail, err := s.repo.VerifyRecovery(ctx, email, codeHash, tokenHash, s.cfg.ResetTokenExpiresSeconds)
 	if err != nil {

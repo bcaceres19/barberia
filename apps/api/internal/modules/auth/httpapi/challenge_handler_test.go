@@ -28,6 +28,10 @@ func (s stubPhoneChallengeRepository) VerifyChallenge(context.Context, string, s
 	return s.verifyOK, nil
 }
 
+func (s stubPhoneChallengeRepository) ChallengePhone(context.Context, string, string) (string, bool, error) {
+	return s.requestPhone, s.requestPhone != "", nil
+}
+
 type stubCodeGenerator struct{}
 
 func (stubCodeGenerator) New() (string, error) { return "123456", nil }
@@ -131,7 +135,7 @@ func TestChallengeHandler_UnknownField_Returns400(t *testing.T) {
 
 func newVerifyHandler(t *testing.T, verifyOK bool) *httpapi.ChallengeVerifyHandler {
 	t.Helper()
-	svc := auth.NewPhoneChallengeService(stubPhoneChallengeRepository{verifyOK: verifyOK}, stubCodeGenerator{}, &stubSender{}, testChallengeCfg(), []byte("secreto-de-prueba-suficientemente-largo"))
+	svc := auth.NewPhoneChallengeService(stubPhoneChallengeRepository{verifyOK: verifyOK, requestPhone: "+573001234567"}, stubCodeGenerator{}, &stubSender{}, testChallengeCfg(), []byte("secreto-de-prueba-suficientemente-largo"))
 	return httpapi.NewChallengeVerifyHandler(svc, testThrottleServiceForHandler(), clientip.TrustedProxies{})
 }
 

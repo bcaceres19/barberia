@@ -208,6 +208,123 @@ func TestLoad_LocalEnvironment_MissingProviderCredentials_StillLoads(t *testing.
 	})
 }
 
+func TestLoad_TwilioRequiresOnlyTwilioConfiguration(t *testing.T) {
+	env := baseLocalEnv()
+	env["OTP_PROVIDER"] = "twilio"
+	env["TWILIO_ACCOUNT_SID"] = "ACtest"
+	env["TWILIO_AUTH_TOKEN"] = "token-de-prueba"
+	env["TWILIO_VERIFY_SERVICE_SID"] = "VAtest"
+	withEnv(t, env, func() {
+		cfg, err := config.Load()
+		if err != nil || cfg.OTPProvider != "twilio" || cfg.TwilioVerifyChannel != "sms" {
+			t.Fatalf("expected Twilio config to load, cfg=%+v err=%v", cfg, err)
+		}
+	})
+}
+
+func TestLoad_TwilioRejectsUnsupportedVerifyChannel(t *testing.T) {
+	env := baseLocalEnv()
+	env["OTP_PROVIDER"] = "twilio"
+	env["TWILIO_ACCOUNT_SID"] = "ACtest"
+	env["TWILIO_AUTH_TOKEN"] = "token-de-prueba"
+	env["TWILIO_VERIFY_SERVICE_SID"] = "VAtest"
+	env["TWILIO_VERIFY_CHANNEL"] = "email"
+	withEnv(t, env, func() {
+		if _, err := config.Load(); err == nil {
+			t.Fatal("expected unsupported Twilio Verify channel to be rejected")
+		}
+	})
+}
+
+func TestLoad_TwilioSandboxAllowsAPIKeyCredentials(t *testing.T) {
+	env := baseLocalEnv()
+	env["OTP_PROVIDER"] = "twilio_sandbox"
+	env["TWILIO_ACCOUNT_SID"] = "ACtest"
+	env["TWILIO_API_KEY_SID"] = "SKtest"
+	env["TWILIO_API_KEY_SECRET"] = "api-key-secret-de-prueba"
+	env["TWILIO_WHATSAPP_SANDBOX_FROM"] = "+14155238886"
+	withEnv(t, env, func() {
+		if _, err := config.Load(); err != nil {
+			t.Fatalf("expected API Key credentials to load: %v", err)
+		}
+	})
+}
+
+func TestLoad_TwilioMissingConfigurationRejected(t *testing.T) {
+	env := baseLocalEnv()
+	env["OTP_PROVIDER"] = "twilio"
+	withEnv(t, env, func() {
+		if _, err := config.Load(); err == nil {
+			t.Fatal("expected missing Twilio configuration to be rejected")
+		}
+	})
+}
+
+func TestLoad_TwilioOTPExpiryCannotExceedVerifyLifetime(t *testing.T) {
+	env := baseLocalEnv()
+	env["OTP_PROVIDER"] = "twilio"
+	env["TWILIO_ACCOUNT_SID"] = "ACtest"
+	env["TWILIO_AUTH_TOKEN"] = "token-de-prueba"
+	env["TWILIO_VERIFY_SERVICE_SID"] = "VAtest"
+	env["APP_RECOVERY_CODE_EXPIRES_SECONDS"] = "601"
+	withEnv(t, env, func() {
+		if _, err := config.Load(); err == nil {
+			t.Fatal("expected Twilio OTP lifetime above Verify limit to be rejected")
+		}
+	})
+}
+
+func TestLoad_TwilioSandboxRequiresDevelopmentConfiguration(t *testing.T) {
+	env := baseLocalEnv()
+	env["OTP_PROVIDER"] = "twilio_sandbox"
+	env["TWILIO_ACCOUNT_SID"] = "ACtest"
+	env["TWILIO_AUTH_TOKEN"] = "token-de-prueba"
+	env["TWILIO_WHATSAPP_SANDBOX_FROM"] = "+14155238886"
+	withEnv(t, env, func() {
+		cfg, err := config.Load()
+		if err != nil || cfg.OTPProvider != "twilio_sandbox" {
+			t.Fatalf("expected Sandbox config to load, cfg=%+v err=%v", cfg, err)
+		}
+	})
+}
+
+func TestLoad_TwilioSandboxRejectsMissingOrNonLocalConfiguration(t *testing.T) {
+	t.Run("missing sender", func(t *testing.T) {
+		env := baseLocalEnv()
+		env["OTP_PROVIDER"] = "twilio_sandbox"
+		env["TWILIO_ACCOUNT_SID"] = "ACtest"
+		env["TWILIO_AUTH_TOKEN"] = "token-de-prueba"
+		withEnv(t, env, func() {
+			if _, err := config.Load(); err == nil {
+				t.Fatal("expected missing Sandbox sender to be rejected")
+			}
+		})
+	})
+	t.Run("production", func(t *testing.T) {
+		env := baseLocalEnv()
+		env["APP_ENVIRONMENT"] = "production"
+		env["OTP_PROVIDER"] = "twilio_sandbox"
+		env["TWILIO_ACCOUNT_SID"] = "ACtest"
+		env["TWILIO_AUTH_TOKEN"] = "token-de-prueba"
+		env["TWILIO_WHATSAPP_SANDBOX_FROM"] = "+14155238886"
+		withEnv(t, env, func() {
+			if _, err := config.Load(); err == nil {
+				t.Fatal("expected Sandbox in production to be rejected")
+			}
+		})
+	})
+}
+
+func TestLoad_MetaDoesNotRequireTwilioConfiguration(t *testing.T) {
+	env := baseLocalEnv()
+	env["OTP_PROVIDER"] = "meta"
+	withEnv(t, env, func() {
+		if _, err := config.Load(); err != nil {
+			t.Fatalf("meta must not require Twilio configuration: %v", err)
+		}
+	})
+}
+
 func TestLoad_MetaWhatsAppPartialConfigurationRejectedInEveryEnvironment(t *testing.T) {
 	for _, environment := range []string{"local", "test", "pilot", "production"} {
 		for _, partial := range []map[string]string{

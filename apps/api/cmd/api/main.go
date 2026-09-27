@@ -174,9 +174,9 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	router.Post("/api/v1/public/auth/login", loginHandler.ServeHTTP)
 
 	// HU-007: reto telefónico que desbloquea el login tras el escalamiento.
-	// Usa Meta al estar completamente configurado y el marcador seguro solo
+	// Usa el proveedor WhatsApp seleccionado y el marcador local seguro solo
 	// para local/test sin configuración Meta.
-	phoneSender := selectPhoneChallengeSender(cfg, logger)
+	whatsAppOTPProvider := selectWhatsAppOTPProvider(cfg, logger, hmacSecret)
 	if capturePath := os.Getenv("APP_PHONE_CHALLENGE_CAPTURE_FILE"); capturePath != "" {
 		// Doble candado de entorno (aquí y en el propio nombre de la
 		// variable): la captura de código en claro en un archivo NUNCA
@@ -186,19 +186,17 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 			return nil, errors.New(
 				"auth: APP_PHONE_CHALLENGE_CAPTURE_FILE solo puede usarse en local/test (uso exclusivo de e2e)")
 		}
-		phoneSender = auth.NewCapturingPhoneCodeSender(phoneSender, capturePath)
+		whatsAppOTPProvider = auth.NewCapturingWhatsAppOTPProvider(whatsAppOTPProvider, capturePath)
 	}
-	phoneChallengeService := auth.NewPhoneChallengeService(
+	phoneChallengeService := auth.NewPhoneChallengeServiceWithOTPProvider(
 		authpostgres.NewPhoneChallengeRepository(db),
-		auth.NewCryptoPhoneCodeGenerator(),
-		phoneSender,
+		whatsAppOTPProvider,
 		auth.PhoneChallengeConfig{
 			ExpiresSeconds:        cfg.PhoneChallengeExpiresSeconds,
 			RateWindowSeconds:     cfg.PhoneChallengeRateWindowSeconds,
 			RateMaxActive:         cfg.PhoneChallengeRateMaxActive,
 			ResendCooldownSeconds: cfg.PhoneChallengeResendCooldownSeconds,
 		},
-		hmacSecret,
 	)
 	challengeHandler := authhttpapi.NewChallengeHandler(phoneChallengeService, throttleService, trustedProxies)
 	challengeVerifyHandler := authhttpapi.NewChallengeVerifyHandler(phoneChallengeService, throttleService, trustedProxies)
@@ -557,12 +555,14 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 				"auth: APP_RECOVERY_CAPTURE_FILE solo puede usarse en local/test (uso exclusivo de pruebas de sistema)")
 		}
 		recoverySender = auth.NewCapturingRecoveryCodeSender(recoverySender, capturePath)
+		whatsAppOTPProvider = auth.NewCapturingWhatsAppOTPProvider(whatsAppOTPProvider, capturePath)
 	}
-	recoveryService := auth.NewRecoveryService(
+	recoveryService := auth.NewRecoveryServiceWithWhatsAppOTPProvider(
 		authpostgres.NewRecoveryRepository(db),
 		auth.NewCryptoPhoneCodeGenerator(),
 		auth.NewCryptoTokenGenerator(),
 		recoverySender,
+		whatsAppOTPProvider,
 		auth.NewArgon2Hasher(),
 		auth.RecoveryConfig{
 			CodeExpiresSeconds:       cfg.RecoveryCodeExpiresSeconds,
@@ -584,26 +584,9 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	return router, nil
 }
 
-// selectRecoverySender decide qué [auth.RecoveryCodeSender] usa HU-008
-// (DEC-051/DEC-063-066):
-//
-//   - Meta WhatsApp completo + Resend completo → remitente dual, en
-//     cualquier ambiente (comportamiento sin cambios).
-//   - Solo Resend completo, sin Meta, en APP_ENVIRONMENT=local o test →
-//     remitente exclusivo por correo (excepción de
-//     docs/10-backlog/prompts/test/issue-86-otp-correo-resend.md, issue
-//     #86), para poder probar el recorrido de recuperación con un correo
-//     real sin depender de credenciales de Meta.
-//   - Cualquier otro caso (sin credenciales, o solo Resend fuera de
-//     local/test) → marcador de posición que solo registra en el log.
-//
-// La comprobación de ambiente vive AQUÍ, no solo en config.Load: aunque
-// alguien construya un config.Config a mano fuera de Load (p. ej. en una
-// prueba), esta función nunca elige correo único en pilot/production. Fuera
-// de local/test, config.Load ya exige Meta y Resend completos para arrancar
-// (DEC-066), así que el caso "solo Resend, ambiente endurecido" solo ocurre
-// si alguien evita Load(); aun así, aquí cae al marcador de posición, nunca
-// al correo único.
+// selectRecoverySender selects the email-only delivery path. WhatsApp OTP
+// delivery belongs exclusively to WhatsAppOTPProvider, so this function never
+// constructs a second Meta client for the same request.
 func selectRecoverySender(cfg config.Config, logger *slog.Logger) auth.RecoveryCodeSender {
 	metaComplete := cfg.MetaWhatsAppPhoneNumberID != "" && cfg.MetaWhatsAppAccessToken != "" &&
 		cfg.MetaWhatsAppTemplateName != ""
@@ -611,22 +594,7 @@ func selectRecoverySender(cfg config.Config, logger *slog.Logger) auth.RecoveryC
 	emailOnlyAllowed := cfg.Environment == "local" || cfg.Environment == "test"
 
 	switch {
-	case metaComplete && resendComplete:
-		return notification.NewDualChannelRecoverySender(
-			notification.NewMetaWhatsAppSender(notification.MetaWhatsAppConfig{
-				APIVersion:    cfg.MetaWhatsAppAPIVersion,
-				PhoneNumberID: cfg.MetaWhatsAppPhoneNumberID,
-				AccessToken:   cfg.MetaWhatsAppAccessToken,
-				TemplateName:  cfg.MetaWhatsAppTemplateName,
-				LanguageCode:  cfg.MetaWhatsAppLanguageCode,
-			}, nil),
-			notification.NewResendEmailSender(notification.ResendEmailConfig{
-				APIKey:      cfg.ResendAPIKey,
-				FromAddress: cfg.ResendFromAddress,
-				Subject:     cfg.ResendSubject,
-			}, nil),
-		)
-	case resendComplete && emailOnlyAllowed:
+	case resendComplete && (emailOnlyAllowed || cfg.OTPProvider == "twilio" || metaComplete):
 		return notification.NewEmailOnlyRecoverySender(
 			notification.NewResendEmailSender(notification.ResendEmailConfig{
 				APIKey:      cfg.ResendAPIKey,
@@ -656,24 +624,41 @@ func selectConfirmationEmailSender(cfg config.Config, logger *slog.Logger) publi
 	return notification.NewLoggingConfirmationEmailSender(logger)
 }
 
-// selectPhoneChallengeSender decide qué [auth.PhoneCodeSender] usa HU-007.
-// Meta completo usa el mismo adaptador oficial en cualquier ambiente; su
-// ausencia total conserva el marcador únicamente en local/test. config.Load
-// rechaza Meta parcial y toda ausencia fuera de local/test antes de llegar
-// aquí, de modo que este fallback nunca oculta una configuración inválida.
-func selectPhoneChallengeSender(cfg config.Config, logger *slog.Logger) auth.PhoneCodeSender {
-	metaComplete := cfg.MetaWhatsAppPhoneNumberID != "" && cfg.MetaWhatsAppAccessToken != "" &&
-		cfg.MetaWhatsAppTemplateName != ""
-	if metaComplete {
-		return notification.NewPhoneChallengeSender(
-			notification.NewMetaWhatsAppSender(notification.MetaWhatsAppConfig{
-				APIVersion:    cfg.MetaWhatsAppAPIVersion,
-				PhoneNumberID: cfg.MetaWhatsAppPhoneNumberID,
-				AccessToken:   cfg.MetaWhatsAppAccessToken,
-				TemplateName:  cfg.MetaWhatsAppTemplateName,
-				LanguageCode:  cfg.MetaWhatsAppLanguageCode,
-			}, nil),
+// selectWhatsAppOTPProvider is the sole provider switch. Auth and HTTP only
+// receive its port, so moving between Meta and Twilio needs an environment
+// change and restart, never a controller or use-case change.
+func selectWhatsAppOTPProvider(cfg config.Config, logger *slog.Logger, secret []byte) auth.WhatsAppOTPProvider {
+	if cfg.OTPProvider == "twilio" {
+		return notification.NewTwilioVerifyOTPProvider(
+			notification.TwilioVerifyConfig{
+				AccountSID:       cfg.TwilioAccountSID,
+				AuthToken:        cfg.TwilioAuthToken,
+				APIKeySID:        cfg.TwilioAPIKeySID,
+				APIKeySecret:     cfg.TwilioAPIKeySecret,
+				VerifyServiceSID: cfg.TwilioVerifyServiceSID,
+				Channel:          cfg.TwilioVerifyChannel,
+			},
+			auth.HMACHex("twilio-verify-provider-managed", secret), nil,
 		)
 	}
-	return auth.NewLoggingPhoneCodeSender(logger)
+	if cfg.OTPProvider == "twilio_sandbox" {
+		return notification.NewTwilioSandboxWhatsAppOTPProvider(
+			notification.TwilioSandboxConfig{
+				AccountSID:   cfg.TwilioAccountSID,
+				AuthToken:    cfg.TwilioAuthToken,
+				APIKeySID:    cfg.TwilioAPIKeySID,
+				APIKeySecret: cfg.TwilioAPIKeySecret,
+				FromE164:     cfg.TwilioWhatsAppSandboxFrom,
+			},
+			auth.NewCryptoPhoneCodeGenerator(), secret, nil,
+		)
+	}
+	if cfg.MetaWhatsAppPhoneNumberID != "" && cfg.MetaWhatsAppAccessToken != "" && cfg.MetaWhatsAppTemplateName != "" {
+		return notification.NewMetaWhatsAppOTPProvider(notification.NewMetaWhatsAppSender(notification.MetaWhatsAppConfig{
+			APIVersion: cfg.MetaWhatsAppAPIVersion, PhoneNumberID: cfg.MetaWhatsAppPhoneNumberID,
+			AccessToken: cfg.MetaWhatsAppAccessToken, TemplateName: cfg.MetaWhatsAppTemplateName,
+			LanguageCode: cfg.MetaWhatsAppLanguageCode,
+		}, nil), auth.NewCryptoPhoneCodeGenerator(), secret)
+	}
+	return auth.NewLocalWhatsAppOTPProvider(auth.NewCryptoPhoneCodeGenerator(), auth.NewLoggingPhoneCodeSender(logger), secret)
 }

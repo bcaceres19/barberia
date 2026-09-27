@@ -163,7 +163,7 @@ describe('RecoveryVerifyStep', () => {
     expect(results.violations).toEqual([])
   })
 
-  it('verifies and resends with the WhatsApp channel and phone chosen in step 1 (DEC-092)', async () => {
+  it('verifies and resends with the phone channel chosen in step 1 (DEC-092)', async () => {
     const whatsApp = { channel: 'whatsapp', value: '+573001234567' } as const
     verifyRecoveryMock.mockResolvedValueOnce({
       kind: 'verified',
@@ -179,7 +179,7 @@ describe('RecoveryVerifyStep', () => {
     await flushPromises()
 
     expect(verifyRecoveryMock).toHaveBeenCalledWith(whatsApp, '482913')
-    expect(wrapper.text()).toContain('por WhatsApp')
+    expect(wrapper.text()).toContain('por teléfono')
     expect(wrapper.text()).not.toContain('correo')
   })
 
@@ -196,6 +196,6 @@ describe('RecoveryVerifyStep', () => {
   it('names only the email channel in its message when the account was identified by email', () => {
     const wrapper = mountStep()
     expect(wrapper.text()).toContain('por correo')
-    expect(wrapper.text()).not.toContain('WhatsApp')
+    expect(wrapper.text()).not.toContain('teléfono')
   })
 })

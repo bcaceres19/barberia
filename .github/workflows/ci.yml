@@ -88,7 +88,8 @@ jobs:
                    20260915190000_create_appointment_access_token.sql \
                    20260916120000_add_public_resolve_appointment_token_tenant.sql \
                    20260919200000_add_auth_recovery_resolve_phone.sql \
-                   20260919210000_relax_auth_recovery_request_phone_requirement.sql; do
+                   20260919210000_relax_auth_recovery_request_phone_requirement.sql \
+                   20260919220000_add_auth_phone_challenge_destination.sql; do
             psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$f"
           done
           psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_app PASSWORD 'app_test';"

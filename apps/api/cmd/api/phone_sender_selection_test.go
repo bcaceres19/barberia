@@ -9,29 +9,19 @@ import (
 	"system-barbershop/internal/platform/config"
 )
 
-func phoneSenderType(cfg config.Config) string {
+func TestSelectWhatsAppOTPProvider_SelectsConfiguredProvider(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
-	return fmt.Sprintf("%T", selectPhoneChallengeSender(cfg, logger))
-}
-
-func TestSelectPhoneChallengeSender_MetaComplete_UsesRealSender(t *testing.T) {
-	for _, env := range []string{"local", "test", "pilot", "production"} {
-		cfg := config.Config{
-			Environment:               env,
-			MetaWhatsAppPhoneNumberID: fakeMetaPhoneNumberID,
-			MetaWhatsAppAccessToken:   fakeMetaAccessToken,
-			MetaWhatsAppTemplateName:  fakeMetaTemplateName,
-		}
-		if got := phoneSenderType(cfg); got != "notification.PhoneChallengeSender" {
-			t.Fatalf("env=%s: expected PhoneChallengeSender, got %s", env, got)
-		}
+	secret := []byte("secreto-de-prueba-suficientemente-largo-0123456789")
+	meta := selectWhatsAppOTPProvider(config.Config{OTPProvider: "meta", MetaWhatsAppPhoneNumberID: fakeMetaPhoneNumberID, MetaWhatsAppAccessToken: fakeMetaAccessToken, MetaWhatsAppTemplateName: fakeMetaTemplateName}, logger, secret)
+	if got := fmt.Sprintf("%T", meta); got != "notification.MetaWhatsAppOTPProvider" {
+		t.Fatalf("expected Meta provider, got %s", got)
 	}
-}
-
-func TestSelectPhoneChallengeSender_NoMeta_LocalOrTest_UsesLoggingPlaceholder(t *testing.T) {
-	for _, env := range []string{"local", "test"} {
-		if got := phoneSenderType(config.Config{Environment: env}); got != "auth.LoggingPhoneCodeSender" {
-			t.Fatalf("env=%s: expected LoggingPhoneCodeSender, got %s", env, got)
-		}
+	twilio := selectWhatsAppOTPProvider(config.Config{OTPProvider: "twilio", TwilioAccountSID: "ACfake", TwilioAuthToken: "fake", TwilioVerifyServiceSID: "VAfake"}, logger, secret)
+	if got := fmt.Sprintf("%T", twilio); got != "notification.TwilioVerifyOTPProvider" {
+		t.Fatalf("expected Twilio provider, got %s", got)
+	}
+	sandbox := selectWhatsAppOTPProvider(config.Config{OTPProvider: "twilio_sandbox", TwilioAccountSID: "ACfake", TwilioAuthToken: "fake", TwilioWhatsAppSandboxFrom: "+14155238886"}, logger, secret)
+	if got := fmt.Sprintf("%T", sandbox); got != "notification.TwilioSandboxWhatsAppOTPProvider" {
+		t.Fatalf("expected Twilio Sandbox provider, got %s", got)
 	}
 }

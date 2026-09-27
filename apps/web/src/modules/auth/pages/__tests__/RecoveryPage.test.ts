@@ -42,7 +42,7 @@ async function fillOtp(wrapper: ReturnType<typeof mount>, code: string) {
 }
 
 // El paso 1 no muestra campo hasta elegir el canal (DEC-092, CA-011-09).
-async function chooseChannel(wrapper: ReturnType<typeof mount>, label: 'WhatsApp' | 'Correo') {
+async function chooseChannel(wrapper: ReturnType<typeof mount>, label: 'Teléfono' | 'Correo') {
   const button = wrapper.findAll('button.recovery-channel').find((b) => b.text() === label)
   await button?.trigger('click')
 }
@@ -109,7 +109,7 @@ describe('RecoveryPage', () => {
     expect(router.currentRoute.value.name).toBe('acceso')
   })
 
-  it('completes the journey by WhatsApp, reusing the same channel and phone in steps 2 and 3 (DEC-092, DEC-093)', async () => {
+  it('completes the journey by phone, reusing the same channel and number in steps 2 and 3 (DEC-092, DEC-093)', async () => {
     requestRecoveryMock.mockResolvedValueOnce({ kind: 'accepted' })
     verifyRecoveryMock.mockResolvedValueOnce({
       kind: 'verified',
@@ -121,13 +121,13 @@ describe('RecoveryPage', () => {
     const { wrapper } = await mountPage()
     const target = { channel: 'whatsapp', value: '+573001234567' }
 
-    await chooseChannel(wrapper, 'WhatsApp')
+    await chooseChannel(wrapper, 'Teléfono')
     await wrapper.get('input[name="whatsapp"]').setValue('+57 300 123 4567')
     await wrapper.get('form').trigger('submit')
     await flushPromises()
     expect(requestRecoveryMock).toHaveBeenCalledWith(target)
     expect(wrapper.text()).toContain('Paso 2 de 3')
-    expect(wrapper.text()).toContain('por WhatsApp')
+    expect(wrapper.text()).toContain('por teléfono')
 
     await fillOtp(wrapper, '482913')
     await wrapper.get('form').trigger('submit')

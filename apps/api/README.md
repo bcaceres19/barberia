@@ -683,27 +683,33 @@ resuelve tenant ni llama `PasswordHasher.Verify` en esa rama). Responde
   (`auth_phone_challenge_request`, misma función que resuelve las tres
   condiciones y devuelve el teléfono solo en el camino aceptado).
 - `POST /api/v1/public/auth/challenge/verify { email, code }` → código de
-  6 dígitos (HMAC-SHA256 con el mismo secreto, nunca `SHA-256` simple:
-  10⁶ combinaciones son triviales de recuperar offline sin un secreto),
-  vigente 5 min, máximo 5 intentos, atado a la IP concreta que lo pidió.
+  6 dígitos, vigente 5 min, máximo 5 intentos, atado a la IP concreta que lo
+  pidió. Con `OTP_PROVIDER=meta`, se conserva el HMAC-SHA256 del código
+  (nunca `SHA-256` simple: 10⁶ combinaciones son triviales de recuperar
+  offline sin un secreto). Con `OTP_PROVIDER=twilio`, Twilio Verify es la
+  autoridad de validación y PostgreSQL solo conserva un marcador opaco para
+  los límites y el flujo de negocio.
   Éxito: `204`, limpia `escalated_until`/`attempt_count` de esa IP en la
   misma transacción (`auth_phone_challenge_verify`); el barbero reintenta
   el login normalmente, sin token adicional.
-- `cmd/api.selectPhoneChallengeSender` reutiliza `MetaWhatsAppSender` mediante
-  `notification.PhoneChallengeSender` cuando `APP_META_WHATSAPP_PHONE_NUMBER_ID`,
-  `APP_META_WHATSAPP_ACCESS_TOKEN` y `APP_META_WHATSAPP_TEMPLATE_NAME` están
-  completos. La misma plantilla Authentication aprobada se usa para HU-007 y
-  recuperación; no hay un segundo cliente Meta ni un destino configurable.
-- Si las tres variables están totalmente ausentes en `local` o `test`, usa
-  `auth.LoggingPhoneCodeSender` para conservar las E2E sin terceros. Una
-  configuración parcial falla al arrancar en cualquier ambiente; fuera de
-  `local`/`test`, la ausencia total también falla en `config.Load`.
+- `cmd/api.selectWhatsAppOTPProvider` es el único selector de proveedor.
+  `meta` usa la misma plantilla Authentication aprobada para HU-007 y
+  recuperación; `twilio` usa Twilio Verify con el canal configurado
+  (`sms` por defecto; `whatsapp` cuando se habilite su sender). Los handlers
+  y servicios de autenticación dependen únicamente de
+  `auth.WhatsAppOTPProvider`.
+- Si `meta` no está configurado en `local` o `test`, el proveedor local solo
+  registra el resultado para conservar las E2E sin terceros. Una configuración
+  Meta parcial falla al arrancar; fuera de `local`/`test`, `meta` exige sus
+  credenciales y `twilio` exige exclusivamente sus tres variables.
 
-| Meta completa | Ambiente | Remitente HU-007 |
+| `OTP_PROVIDER` | Configuración | Remitente HU-007 |
 | --- | --- | --- |
-| sí | cualquiera | `notification.PhoneChallengeSender` sobre `MetaWhatsAppSender` |
-| no | `local`/`test` | `auth.LoggingPhoneCodeSender` |
-| no | `pilot`/`production` | arranque rechazado por configuración |
+| `meta` | Meta completa | `notification.MetaWhatsAppOTPProvider` |
+| `meta` | Meta ausente, `local`/`test` | proveedor local de registro |
+| `meta` | Meta ausente, `pilot`/`production` | arranque rechazado por configuración |
+| `twilio` | credenciales, Verify Service y canal Twilio | `notification.TwilioVerifyOTPProvider` |
+| `twilio_sandbox` | `local`/`test` y credenciales Sandbox | `notification.TwilioSandboxWhatsAppOTPProvider` |
 
 ### Activación local de Meta para el reto
 
@@ -876,29 +882,30 @@ viva, ni viceversa.
 
 ### Proveedores reales: Meta WhatsApp Cloud API + Resend (`DEC-066`)
 
-`DualChannelRecoverySender` intenta SIEMPRE los dos canales, sin importar si
-uno falla (tolerancia a fallo parcial, sin cambiar la respuesta genérica de
-`DEC-065`); cada adaptador aplica un timeout de 5 s sin reintento síncrono
-dentro de la solicitud HTTP. `cmd/api.selectRecoverySender` decide qué
-remitente concreto construye `buildRouter`:
+El canal telefónico siempre lo entrega y verifica `WhatsAppOTPProvider`;
+`cmd/api.selectRecoverySender` conserva exclusivamente Resend para correo.
+Así no se construye un segundo cliente Meta para el mismo código y la selección
+del proveedor WhatsApp queda centralizada. Cada adaptador aplica un timeout de
+5 s sin reintento síncrono dentro de la solicitud HTTP:
 
 | Meta completo | Resend completo | Ambiente | Remitente |
 | --- | --- | --- | --- |
-| sí | sí | cualquiera | `notification.DualChannelRecoverySender` (WhatsApp + correo) |
+| sí | sí | cualquiera, `OTP_PROVIDER=meta` | `notification.EmailOnlyRecoverySender` (correo; WhatsApp va por Meta OTP) |
+| — | sí | cualquiera, `OTP_PROVIDER=twilio` | `notification.EmailOnlyRecoverySender` (correo; teléfono va por Verify) |
 | no | sí | `local`/`test` | `notification.EmailOnlyRecoverySender` (solo correo, issue #86) |
 | no | sí | `pilot`/`production` | `auth.LoggingRecoveryCodeSender` (nunca correo único fuera de local/test) |
 | — | no | cualquiera | `auth.LoggingRecoveryCodeSender` |
 
 `auth.LoggingRecoveryCodeSender` es el marcador de posición que solo
 registra que "habría" enviado, sin teléfono/correo/código — mismo patrón que
-el reto telefónico de HU-007. Fuera de local/test, `config.Load` ya exige
-Meta y Resend completos para arrancar (`DEC-066`); la fila de correo único
-en la tabla es una segunda llave dentro de `selectRecoverySender` por si
-algo construye un `config.Config` sin pasar por `Load`.
+el reto telefónico de HU-007. Fuera de local/test, `config.Load` exige Resend
+y, solo con `OTP_PROVIDER=meta`, Meta completos para arrancar; la fila de
+correo único en la tabla es una segunda llave dentro de `selectRecoverySender`
+por si algo construye un `config.Config` sin pasar por `Load`.
 
 | Variable | Por defecto | Uso |
 | --- | --- | --- |
-| `APP_RECOVERY_CODE_EXPIRES_SECONDS` | `900` | Vigencia del código. |
+| `APP_RECOVERY_CODE_EXPIRES_SECONDS` | `900` (`meta`), `600` (`twilio`) | Vigencia del código. Con Twilio no puede superar 600 s, su límite de Verify. |
 | `APP_RECOVERY_CODE_MAX_ATTEMPTS` | `5` | Intentos antes de invalidar. |
 | `APP_RECOVERY_RESEND_COOLDOWN_SECONDS` | `60` | Mínimo entre reenvíos. |
 | `APP_RECOVERY_RESEND_WINDOW_SECONDS` | `3600` | Ventana del límite de reenvío. |
@@ -910,9 +917,37 @@ algo construye un `config.Config` sin pasar por `Load`.
 | `APP_META_WHATSAPP_ACCESS_TOKEN` | (vacía) | Secreto: autenticación contra Meta Graph API. |
 | `APP_META_WHATSAPP_TEMPLATE_NAME` | (vacía) | Plantilla "Authentication" pre-aprobada. |
 | `APP_META_WHATSAPP_LANGUAGE_CODE` | `es` | Idioma de esa plantilla. |
+| `OTP_PROVIDER` | `meta` | Proveedor OTP telefónico: `meta`, `twilio` o `twilio_sandbox`. Cambiarlo requiere reiniciar el API. |
+| `TWILIO_ACCOUNT_SID` | (vacía) | Obligatoria con `OTP_PROVIDER=twilio` o `twilio_sandbox`; credencial de cuenta Twilio. |
+| `TWILIO_AUTH_TOKEN` | (vacía) | Credencial opcional: junto con Account SID, alternativa a API Key. |
+| `TWILIO_API_KEY_SID` | (vacía) | Credencial opcional para `twilio` o `twilio_sandbox`; se usa junto al secreto de API Key. |
+| `TWILIO_API_KEY_SECRET` | (vacía) | Secreto opcional para `twilio` o `twilio_sandbox`; se usa junto al SID de API Key. |
+| `TWILIO_VERIFY_SERVICE_SID` | (vacía) | Obligatoria solo con `OTP_PROVIDER=twilio`; Verify Service existente. |
+| `TWILIO_VERIFY_CHANNEL` | `sms` | Canal de Twilio Verify: `sms` para el uso temporal actual o `whatsapp` cuando Meta/WABA esté habilitado. |
+| `TWILIO_WHATSAPP_SANDBOX_FROM` | (vacía) | Obligatoria solo con `OTP_PROVIDER=twilio_sandbox`; número Sandbox en E.164, sin prefijo `whatsapp:`. |
 | `APP_RESEND_API_KEY` | (vacía) | Secreto: autenticación contra Resend. |
 | `APP_RESEND_FROM_ADDRESS` | (vacía) | Remitente verificado del correo. |
 | `APP_RESEND_SUBJECT` | `Código de recuperación de acceso` | Asunto fijo del correo. |
+
+### WhatsApp Sandbox de Twilio: solo desarrollo
+
+`OTP_PROVIDER=twilio_sandbox` usa Twilio Programmable Messaging, no Twilio
+Verify. Está rechazado fuera de `APP_ENVIRONMENT=local`/`test`; la aplicación
+genera y verifica el OTP localmente, igual que Meta, mientras Twilio solo
+entrega el mensaje. No sirve para producción ni para usuarios que no se hayan
+unido al Sandbox.
+
+El Sandbox permite texto libre únicamente mientras esté abierta la ventana de
+servicio de 24 horas iniciada por `join`; fuera de ella requiere una plantilla
+preaprobada. No se crea ni se usa una plantilla propia en el Sandbox.
+
+Twilio solo permite activar y configurar Sandbox desde la consola web: en
+**Messaging → Try out WhatsApp** (cuentas Trial) o la página **Try WhatsApp**
+de Legacy Console, aceptar términos y escanear el QR o enviar el mensaje
+`join <código>` mostrado. Configure el valor E.164 que muestra Twilio como
+`TWILIO_WHATSAPP_SANDBOX_FROM`. Ese `join` abre una ventana de 24 horas para
+mensajes de texto libre y la sesión expira a los tres días; cada número de
+prueba debe unirse de nuevo. Nunca use este proveedor en pilot/production.
 
 ### Prueba local completa: capturar el código sin un proveedor real
 

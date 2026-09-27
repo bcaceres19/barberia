@@ -1,6 +1,6 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.35"
+version: "1.38"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-19"
@@ -1082,3 +1082,29 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** una dependencia de toasts de terceros (una cola de este tamaño no la justifica); mostrar todos los resultados solo en línea (no cubre fallos de conexión sin campo asociado); tiempo único para todas las variantes (un error no se alcanza a leer en 5 s).
 - **Documentos afectados:** `docs/03-desarrollo/estandar-diseno-visual.md` (§6.8), `docs/00-control/historial-cambios.md`.
 - **Fuente:** diseño e implementación de avisos emergentes del propietario, entregados en el issue [#280](https://github.com/bcaceres19/barberia/issues/280); el propietario los confirma al aprobar su PR. El número `DEC-094` que llevaba el borrador quedó ocupado por #279 y se renumeró a `DEC-095`.
+
+### DEC-096 · Proveedor OTP WhatsApp reversible durante la indisponibilidad de Meta
+
+- **Fecha:** 2026-09-19.
+- **Decisión:** Meta WhatsApp Cloud API se conserva como proveedor `meta`. Mientras su verificación esté indisponible, el despliegue puede seleccionar `OTP_PROVIDER=twilio` para usar Twilio Verify mediante un canal configurado; volver a `OTP_PROVIDER=meta` solo requiere reiniciar con esa configuración. Los controladores, contratos HTTP y casos de uso no conocen el proveedor.
+- **Persistencia y seguridad:** con Meta la aplicación mantiene el HMAC del código generado localmente. Con Twilio, Verify es la autoridad del OTP: la aplicación persiste solo una marca opaca para conservar cooldown, límite, expiración y el paso posterior del dominio, nunca el código ni su hash. El estado `approved` es el único que autoriza consumir el reto local. La vigencia local no puede superar los 600 s de Verify cuando se selecciona Twilio. Los errores del proveedor se traducen detrás del puerto OTP y no exponen payloads, secretos ni destinos completos.
+- **Alcance:** aplica al reto de acceso de `HU-007` y al canal WhatsApp de recuperación de `HU-008`; correo, rutas existentes, OpenAPI y Meta no se sustituyen. La configuración Twilio solo es obligatoria cuando se selecciona ese proveedor.
+- **Infraestructura separada:** este cambio de código no crea recursos. Twilio Verify WhatsApp requiere un Verify Service y un sender propio asociado a WABA/Messaging Service; las políticas y verificación de Meta siguen siendo requisitos operativos para producción.
+- **Documentos afectados:** `apps/api`, `database/migrations`, `database/modelo-fisico-referencia.sql`, `apps/api/README.md`; issue [#282](https://github.com/bcaceres19/barberia/issues/282).
+- **Fuente:** instrucción explícita del propietario el 2026-09-19 para habilitar Twilio temporalmente, de forma reversible, sin acoplar autenticación a un proveedor.
+
+### DEC-097 · Sandbox de Twilio aislado para desarrollo de OTP WhatsApp
+
+- **Fecha:** 2026-09-19.
+- **Decisión:** se habilita `OTP_PROVIDER=twilio_sandbox` exclusivamente en `local` y `test`, como adaptación de Twilio Programmable Messaging para probar entrega WhatsApp mientras Meta/WABA no está disponible. No sustituye `OTP_PROVIDER=twilio`, que conserva Twilio Verify para un sender productivo, ni altera `meta`.
+- **Seguridad y límites:** Sandbox vuelve al modelo local de generación y HMAC del OTP; Twilio solo transmite el mensaje y nunca es autoridad de verificación. Requiere `TWILIO_ACCOUNT_SID`, credenciales Twilio y el sender E.164 `TWILIO_WHATSAPP_SANDBOX_FROM`; la configuración falla fuera de local/test. Solo puede enviar texto libre durante la ventana de servicio de 24 horas que inicia `join`; fuera de ella el Sandbox exige una plantilla preaprobada y no admite plantillas propias. La activación, unión de destinatarios y renovación de sesión son manuales en la consola Twilio; no se automatizan ni se usan para producción.
+- **Alcance:** conserva los mismos handlers, contratos, límites y puertos de HU-007/HU-008. No crea migraciones, recursos productivos, endpoints ni dependencias.
+- **Fuente:** petición explícita del propietario tras confirmar que Meta Business permanece rechazado; issue [#282](https://github.com/bcaceres19/barberia/issues/282).
+
+### DEC-098 · SMS de Twilio Verify como contingencia temporal de OTP
+
+- **Fecha:** 2026-09-19.
+- **Decisión:** `OTP_PROVIDER=twilio` usa `TWILIO_VERIFY_CHANNEL=sms` por defecto mientras Meta/WABA no está disponible. El mismo Verify Service crea y valida los códigos; no se genera ni persiste un OTP de aplicación. `TWILIO_VERIFY_CHANNEL=whatsapp` conserva el retorno reversible cuando exista el sender propio requerido por Meta.
+- **Compatibilidad:** handlers, rutas, cuerpos JSON y el literal `channel: "whatsapp"` del contrato de recuperación no cambian. La interfaz presenta el destino como teléfono, sin exponer el proveedor o canal de infraestructura, para no prometer WhatsApp cuando se configura SMS.
+- **Seguridad y alcance:** aplica únicamente a HU-007 y HU-008 dentro de DEC-096. Conserva vigencia máxima de 600 s, límites existentes y la validación explícita de `approved`; no modifica notificaciones de citas ni crea recursos externos.
+- **Fuente:** instrucción explícita del propietario el 2026-09-19 para usar SMS temporalmente mientras evalúa WhatsApp; issue [#282](https://github.com/bcaceres19/barberia/issues/282).

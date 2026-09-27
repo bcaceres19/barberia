@@ -258,3 +258,109 @@ $$;
 RESET ROLE;
 ROLLBACK;
 \echo 'DEC-062 OK · verificar limpia el escalamiento; el código está atado a su IP'
+
+-- ---------------------------------------------------------------------------
+-- Issue #282 · auth_phone_challenge_destination solo entrega el teléfono del
+-- reto activo ligado al mismo correo e IP, y nunca cruza barberías
+-- ---------------------------------------------------------------------------
+BEGIN;
+SET ROLE barberia_app;
+
+DO $$
+DECLARE
+  v_ip_a      text := encode(sha256('hu007-sql-test-destination-ip-a'::bytea), 'hex');
+  v_ip_b      text := encode(sha256('hu007-sql-test-destination-ip-b'::bytea), 'hex');
+  v_ip_other  text := encode(sha256('hu007-sql-test-destination-ip-other'::bytea), 'hex');
+  v_code_hash text := encode(sha256('hu007-sql-test-destination-code'::bytea), 'hex');
+  v_accepted  boolean;
+  v_phone     text;
+BEGIN
+  FOR i IN 1..6 LOOP
+    PERFORM login_throttle_register_attempt(v_ip_a, 900, 86400, 5, 172800);
+    PERFORM login_throttle_register_attempt(v_ip_b, 900, 86400, 5, 172800);
+  END LOOP;
+
+  -- Sin reto activo no hay destino, aunque el teléfono esté verificado.
+  IF auth_phone_challenge_destination('duena.a@ejemplo.test', v_ip_a) IS NOT NULL THEN
+    RAISE EXCEPTION 'Issue #282: se devolvió un destino sin reto activo.';
+  END IF;
+
+  SELECT accepted INTO v_accepted
+  FROM auth_phone_challenge_request('duena.a@ejemplo.test', v_ip_a, v_code_hash, 300, 900, 3, 60);
+  IF NOT v_accepted THEN
+    RAISE EXCEPTION 'Issue #282: preparación falló, reto de la barbería A no aceptado.';
+  END IF;
+  SELECT accepted INTO v_accepted
+  FROM auth_phone_challenge_request('dueno.b@ejemplo.test', v_ip_b, v_code_hash, 300, 900, 3, 60);
+  IF NOT v_accepted THEN
+    RAISE EXCEPTION 'Issue #282: preparación falló, reto de la barbería B no aceptado.';
+  END IF;
+
+  -- Cada barbería recibe únicamente su propio teléfono.
+  IF auth_phone_challenge_destination('duena.a@ejemplo.test', v_ip_a) IS DISTINCT FROM '+573000000001' THEN
+    RAISE EXCEPTION 'Issue #282: la barbería A no recibió su propio destino.';
+  END IF;
+  IF auth_phone_challenge_destination('dueno.b@ejemplo.test', v_ip_b) IS DISTINCT FROM '+573000000003' THEN
+    RAISE EXCEPTION 'Issue #282: la barbería B no recibió su propio destino.';
+  END IF;
+
+  -- Otra IP, la IP de otra barbería, una cuenta inexistente y un teléfono no
+  -- verificado no resuelven nada y no se distinguen entre sí (NULL).
+  v_phone := auth_phone_challenge_destination('duena.a@ejemplo.test', v_ip_other);
+  IF v_phone IS NOT NULL THEN
+    RAISE EXCEPTION 'Issue #282: el reto se resolvió desde una IP distinta.';
+  END IF;
+  v_phone := auth_phone_challenge_destination('duena.a@ejemplo.test', v_ip_b);
+  IF v_phone IS NOT NULL THEN
+    RAISE EXCEPTION 'Issue #282: el reto de A se resolvió con la IP del reto de B.';
+  END IF;
+  v_phone := auth_phone_challenge_destination('no-existe@ejemplo.test', v_ip_a);
+  IF v_phone IS NOT NULL THEN
+    RAISE EXCEPTION 'Issue #282: una cuenta inexistente resolvió un destino.';
+  END IF;
+  v_phone := auth_phone_challenge_destination('barbero.a@ejemplo.test', v_ip_a);
+  IF v_phone IS NOT NULL THEN
+    RAISE EXCEPTION 'Issue #282: un teléfono no verificado resolvió un destino.';
+  END IF;
+
+  -- Un reto consumido deja de resolver.
+  IF NOT auth_phone_challenge_verify('duena.a@ejemplo.test', v_ip_a, v_code_hash) THEN
+    RAISE EXCEPTION 'Issue #282: el reto de A debía verificarse.';
+  END IF;
+  IF auth_phone_challenge_destination('duena.a@ejemplo.test', v_ip_a) IS NOT NULL THEN
+    RAISE EXCEPTION 'Issue #282: un reto consumido siguió resolviendo su destino.';
+  END IF;
+
+  -- La función exige ip_hash de 64 caracteres, igual que sus hermanas.
+  BEGIN
+    PERFORM auth_phone_challenge_destination('duena.a@ejemplo.test', 'corto');
+    RAISE EXCEPTION 'Issue #282: se aceptó un ip_hash de longitud inválida.';
+  EXCEPTION
+    WHEN raise_exception THEN
+      IF SQLERRM LIKE 'Issue #282%' THEN RAISE; END IF;
+  END;
+END
+$$;
+
+RESET ROLE;
+ROLLBACK;
+\echo 'Issue #282 OK · auth_phone_challenge_destination solo resuelve el reto activo del mismo correo e IP'
+
+-- Solo barberia_app ejecuta la función; PUBLIC no.
+BEGIN;
+CREATE ROLE hu007_destination_probe NOLOGIN;
+SET ROLE hu007_destination_probe;
+DO $$
+BEGIN
+  BEGIN
+    PERFORM auth_phone_challenge_destination('duena.a@ejemplo.test', repeat('a', 64));
+    RAISE EXCEPTION 'Issue #282: un rol sin grant ejecutó auth_phone_challenge_destination.';
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      NULL; -- Esperado.
+  END;
+END
+$$;
+RESET ROLE;
+ROLLBACK;
+\echo 'Issue #282 OK · auth_phone_challenge_destination no es ejecutable por PUBLIC'

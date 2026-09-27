@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Paso 1/3 de HU-011: solicitar el código de recuperación eligiendo el
-// canal (DEC-092). Dos botones —WhatsApp y Correo—; hasta elegir uno no hay
+// canal (DEC-092). Dos botones —Teléfono y Correo—; hasta elegir uno no hay
 // campo ni envío. Al elegir, un mensaje menciona únicamente ese canal y se
 // pide su valor (número o correo), que solo identifica la cuenta: el código
 // llega al contacto verificado que el servidor ya tiene (DEC-093).
@@ -27,7 +27,9 @@ const emit = defineEmits<{
 }>()
 
 const CHANNELS: { value: RecoveryChannel; label: string }[] = [
-  { value: 'whatsapp', label: 'WhatsApp' },
+  // El literal "whatsapp" pertenece al contrato API vigente; la interfaz se
+  // mantiene agnóstica al proveedor y lo presenta como teléfono.
+  { value: 'whatsapp', label: 'Teléfono' },
   { value: 'email', label: 'Correo' },
 ]
 
@@ -126,15 +128,8 @@ async function onSubmit() {
             stroke-linejoin="round"
             aria-hidden="true"
           >
-            <!-- Globo de conversación con un auricular relleno: a 26 px el
-                 auricular de trazo fino no se leía como teléfono. -->
-            <path d="M3.5 20.5l1.3-4.3A8.5 8.5 0 1 1 8 19.3l-4.5 1.2z" />
-            <path
-              transform="translate(6.5 6) scale(0.46)"
-              fill="currentColor"
-              stroke="none"
-              d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"
-            />
+            <rect x="7" y="2.5" width="10" height="19" rx="2" />
+            <path d="M10.5 18.5h3" />
           </svg>
           <svg
             v-else
@@ -175,15 +170,14 @@ async function onSubmit() {
     </div>
 
     <!-- Región `aria-live`: al elegir un canal el mensaje nuevo sustituye al
-         anterior y se anuncia sin mover el foco (CA-011-10). Menciona solo
-         el canal elegido (DEC-092). -->
+         anterior y se anuncia sin mover el foco (CA-011-10). -->
     <div class="recovery-request__message" aria-live="polite">
       <p v-if="channel === null" class="recovery-request__hint">
         Elige por dónde quieres recibir tu código de un solo uso.
       </p>
       <p v-else-if="channel === 'whatsapp'" class="recovery-request__hint">
-        Escribe el número de WhatsApp de tu cuenta. Si existe, te enviaremos un código de un solo
-        uso por <strong>WhatsApp</strong>.
+        Escribe el número de teléfono de tu cuenta. Si existe, te enviaremos un código de un solo
+        uso a tu <strong>teléfono</strong>.
       </p>
       <p v-else class="recovery-request__hint">
         Escribe el correo de tu cuenta. Si existe, te enviaremos un código de un solo uso por
@@ -200,7 +194,7 @@ async function onSubmit() {
         :model-value="values.whatsapp"
         type="tel"
         name="whatsapp"
-        label="WhatsApp"
+        label="Teléfono"
         autocomplete="tel"
         placeholder="+573001234567"
         required
@@ -341,7 +335,7 @@ async function onSubmit() {
 }
 
 /* Por debajo de 480 px el rótulo, el icono y el check no caben en una fila
-   sin recortar «WhatsApp» (320 px): el icono pasa sobre el rótulo y el check
+   sin recortar «Teléfono» (320 px): el icono pasa sobre el rótulo y el check
    sale del flujo a la esquina, así el botón conserva un área táctil amplia y
    el texto completo. */
 @media (max-width: 479px) {

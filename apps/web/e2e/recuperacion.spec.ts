@@ -132,8 +132,8 @@ async function requestRecovery(page: Page, email: string) {
 
 async function requestRecoveryByWhatsApp(page: Page, phone: string) {
   await page.goto('/recuperar-acceso')
-  await page.getByRole('button', { name: 'WhatsApp' }).click()
-  await page.getByLabel('WhatsApp', { exact: true }).fill(phone)
+  await page.getByRole('button', { name: 'Teléfono' }).click()
+  await page.getByLabel('Teléfono', { exact: true }).fill(phone)
   await page.getByRole('button', { name: 'Enviar código' }).click()
   await expect(page.getByText('Paso 2 de 3')).toBeVisible()
 }
@@ -187,7 +187,7 @@ test.describe('Recuperación de acceso (HU-011)', () => {
     await withIsolatedIP(page)
     await requestRecoveryByWhatsApp(page, '+57 300 000 0011')
 
-    await expect(page.getByText(/por WhatsApp/)).toBeVisible()
+    await expect(page.getByText(/por teléfono/)).toBeVisible()
     const code = await waitForCapturedCode()
     // El proveedor interceptado recibió solo el destino del canal elegido.
     const capture = await readCapture()

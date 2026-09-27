@@ -27,7 +27,7 @@ func recoverySenderType(cfg config.Config) string {
 	return fmt.Sprintf("%T", selectRecoverySender(cfg, logger))
 }
 
-func TestSelectRecoverySender_MetaAndResendComplete_UsesDualChannel(t *testing.T) {
+func TestSelectRecoverySender_MetaAndResendComplete_UsesEmailOnly(t *testing.T) {
 	for _, env := range []string{"local", "test", "pilot", "production"} {
 		cfg := config.Config{
 			Environment:               env,
@@ -38,8 +38,8 @@ func TestSelectRecoverySender_MetaAndResendComplete_UsesDualChannel(t *testing.T
 			ResendFromAddress:         fakeResendFromAddress,
 		}
 		got := recoverySenderType(cfg)
-		if got != "notification.DualChannelRecoverySender" {
-			t.Fatalf("env=%s: expected DualChannelRecoverySender, got %s", env, got)
+		if got != "notification.EmailOnlyRecoverySender" {
+			t.Fatalf("env=%s: expected EmailOnlyRecoverySender, got %s", env, got)
 		}
 	}
 }
