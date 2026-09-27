@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.38"
+version: "1.39"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-19"
+ultima_actualizacion: "2026-09-26"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -1108,3 +1108,62 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Compatibilidad:** handlers, rutas, cuerpos JSON y el literal `channel: "whatsapp"` del contrato de recuperación no cambian. La interfaz presenta el destino como teléfono, sin exponer el proveedor o canal de infraestructura, para no prometer WhatsApp cuando se configura SMS.
 - **Seguridad y alcance:** aplica únicamente a HU-007 y HU-008 dentro de DEC-096. Conserva vigencia máxima de 600 s, límites existentes y la validación explícita de `approved`; no modifica notificaciones de citas ni crea recursos externos.
 - **Fuente:** instrucción explícita del propietario el 2026-09-19 para usar SMS temporalmente mientras evalúa WhatsApp; issue [#282](https://github.com/bcaceres19/barberia/issues/282).
+
+### DEC-099 · Excepción acotada: integración con Google Calendar por barbero
+
+- **Fecha:** 2026-09-26.
+- **Decisión:** se reabre de forma parcial la exclusión «integración bidireccional completa con calendarios externos» de `alcance-mvp.md`. En una primera fase se admite **únicamente** una integración bidireccional con Google Calendar cuyo dueño es un barbero: cada barbero conecta su propia cuenta y su propio calendario; la conexión pertenece a `(barbería, barbero)`. Quedan fuera calendarios de clientes, de administradores, un calendario global de la barbería, calendarios de recursos o sucursales y cualquier otro proveedor.
+- **Principio de autoridad:** NAVA sigue siendo la autoridad de las citas y de sus reglas (`RN-CON-03`, `DEC-073`, `DEC-076`, máquina de estados). Google Calendar es una vista e integración de la agenda personal del barbero. Un evento de Google nunca crea una cita, un cliente ni un servicio; las citas nacen solo en la reserva pública o la creación manual.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** el barbero ya vive en su calendario personal; sin la integración ese calendario ofrece disponibilidad falsa a la reserva pública o duplica la agenda que el barbero debería mirar.
+- **Alternativas descartadas:** un calendario único para toda la barbería, porque mezcla agendas personales y viola el aislamiento por barbero de `DEC-019`; solo NAVA → Google, porque deja sin efecto los eventos personales sobre la disponibilidad.
+- **Documentos afectados:** `01-producto/alcance-mvp.md`, `historial-cambios.md`, `dudas-pendientes.md`, catálogo de prompts. Cada capacidad se entrega en su propio issue y PR según [PROMPT-ORCH-GCAL-BARBERO-v1](../10-backlog/prompts/orchestration/google-calendar-barbero.md); las `HU-*` correspondientes se redactan en la primera entrega de cada capacidad, sin reservar números aquí.
+- **Fuente:** instrucción explícita del propietario el 2026-09-26; issue documental [#284](https://github.com/bcaceres19/barberia/issues/284).
+
+### DEC-100 · Vínculo explícito y opcional entre `barber` y `staff_user`
+
+- **Fecha:** 2026-09-26.
+- **Decisión:** se aprueba la excepción que `DEC-047` dejaba a «una historia futura»: `barber.staff_user_id` nullable, clave foránea compuesta `(barbershop_id, staff_user_id)` hacia `staff_user`, y unicidad parcial por `(barbershop_id, staff_user_id)` cuando no es nulo. El vínculo es siempre una asignación explícita; nunca se infiere por nombre, correo ni teléfono, y `staff_user.id` nunca se asume igual a `barber.id`. Un usuario autenticado sin barbero vinculado no puede conectar Google Calendar.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** sin este vínculo el sistema no puede saber qué barbero corresponde a la persona autenticada, y la conexión OAuth debe pertenecer al barbero, no a un usuario arbitrario.
+- **Alternativas descartadas:** tabla de vínculo aparte, porque hoy nada justifica varias cuentas por barbero; que quien administra conecte el Google de cada barbero, porque contradice «cada barbero conecta su cuenta».
+- **Documentos afectados:** `database/modelo-fisico-referencia.sql`, diccionario y diagrama de datos, OpenAPI de barberos. Se entrega como prerrequisito propio ([PROMPT-FEAT-GCAL-01-v1](../10-backlog/prompts/hu/gcal-01-vinculo-barbero-usuario.md)); quién puede asignar el vínculo queda en `DP-INT-01`.
+- **Fuente:** aprobación explícita del propietario el 2026-09-26; issue [#284](https://github.com/bcaceres19/barberia/issues/284).
+
+### DEC-101 · Semántica de la sincronización con Google Calendar
+
+- **Fecha:** 2026-09-26.
+- **Decisión:**
+  1. **Tipos de evento.** Un evento de Google se clasifica por el vínculo persistido en NAVA (`google_calendar_event_link`, con `resource_type` `appointment` o `time_block`) y, de forma redundante, por propiedades extendidas privadas (`navaResourceType`, `navaResourceId`, `navaConnectionId`, solo identificadores opacos). Un evento sin vínculo es externo y nunca se fusiona por título ni por hora.
+  2. **Externo → bloqueo.** Un evento externo se materializa como `time_block` del barbero con `block_type = 'unavailable'` y `source = 'google_calendar'` (valor nuevo del `CHECK` de `time_block_source_ck`). Modificarlo en Google actualiza ese mismo bloque; eliminarlo lo retira lógicamente (`deleted_at`, sin borrado físico).
+  3. **Cita vinculada, Google → NAVA.** Mover el evento solicita una reprogramación y eliminarlo solicita la cancelación por el barbero (`cancelled_by_barber`), ambas a través de los servicios de `booking` y nunca por `UPDATE` directo. Si las reglas de NAVA la rechazan (cruce, bloqueo, `DEC-073`, estado terminal, versión desactualizada), no se aplica, se registra el conflicto y el evento se restablece al estado canónico de NAVA. Un evento de una cita terminal (`completed`, `no_show`, canceladas) no reabre la cita.
+  4. **Actor.** Los cambios originados en Google se registran con `actor_type = 'system'` y un origen «sincronización Google Calendar» visible en el historial; no se finge un `staff_user_id`. `booking` incorpora un caso de uso de integración en vez de reutilizar el actor `staff`.
+  5. **NAVA → Google.** Al confirmarse una cita se crea un evento; reprogramar actualiza el mismo evento; `cancelled_by_customer` y `cancelled_by_barber` **eliminan** el evento; `completed` y `no_show` lo conservan. Del lado de bloqueos se sincronizan los puntuales de origen `manual` de tipo `break`, `lunch`, `unavailable`, `day_off`, `vacation` y `emergency`; `holiday` (calendario automático) y los de origen `google_calendar` no se reflejan de vuelta. Las series de bloqueo de NAVA quedan en `DP-INT-02`.
+  6. **Privacidad.** El título del evento de una cita es `Nombre del cliente — Servicio`; la descripción contiene solo el servicio y el estado. Nunca incluye teléfono, correo, notas privadas, tokens ni identificadores internos fuera de las propiedades extendidas privadas.
+  7. **Zona horaria e intervalos.** Todo se convierte con la zona de `barbershop` (`shops.Timezone`), nunca una zona fija. Un evento de día completo cubre `[00:00, 00:00 del día siguiente)` en esa zona civil.
+  8. **Ventana.** La sincronización inicial y la materialización cubren desde el instante actual hasta 6 meses hacia adelante; no se importa historial pasado. Una recurrencia de Google se sincroniza por ocurrencias materializadas dentro de la ventana, cada una con su propio vínculo; no se modela como serie de NAVA. La entrega correspondiente verifica contra la documentación vigente de Google cómo combinar `singleEvents` con `syncToken`.
+  9. **Sin heurísticas de fusión.** En la sincronización inicial, un evento sin vínculo conocido se trata como externo aunque coincida en título y hora con una cita.
+  10. **Idempotencia y eco.** Procesar la misma notificación o el mismo cambio repetido no crea otro bloque, otra reprogramación ni otro historial. El vínculo guarda `etag`, `updated` de Google y una huella del estado canónico escrito por NAVA; un cambio cuyo estado equivale al que NAVA escribió es un eco y no muta el dominio.
+  11. **Estados de la conexión.** `connected`, `reauth_required`, `error` y `disconnected`. Un error permanente (token revocado, permiso denegado, calendario eliminado) cambia el estado y nunca detiene ni deshace las citas de NAVA.
+  12. **Desconexión.** Detiene el canal `watch`, revoca el token, elimina las credenciales almacenadas y retira lógicamente los `time_block` de origen `google_calendar` de esa conexión. No borra citas ni elimina los eventos que ya existan en Google (`DP-INT-03`).
+- **Responsable:** propietario del proyecto.
+- **Motivo:** conserva la autoridad de `booking` y `schedule`, evita citas ficticias y da una única regla para cada dirección y cada estado.
+- **Alternativas descartadas:** marcar el evento como cancelado en Google en vez de eliminarlo, por dejar ruido en el calendario del barbero; heurísticas por título/hora, por poder asociar un cliente equivocado; `source = 'manual'` para bloques de Google, por ocultar el origen.
+- **Documentos afectados:** `database/modelo-fisico-referencia.sql`, migración Atlas de `time_block_source_ck`, contrato OpenAPI, historial de citas (origen de integración), diccionario de datos y `estados-citas.md` si el origen se expone.
+- **Fuente:** instrucciones del propietario del 2026-09-26 (semántica funcional y respuestas sobre título, cancelación, ventana y desconexión); issue [#284](https://github.com/bcaceres19/barberia/issues/284).
+
+### DEC-102 · Cola propia, protección de tokens y webhook de Google Calendar
+
+- **Fecha:** 2026-09-26.
+- **Decisión:**
+  1. **Outbox propio.** Como la maquinaria de notificaciones de B5 no existe, el módulo de integración tendrá su tabla `google_calendar_sync_job`, escrita en la misma transacción que el cambio de negocio mediante un puerto que definen `booking` y `schedule` (que no importan Google). La reclamación usa `UPDATE … SET status='processing', claim_token, lease_expires_at … RETURNING`, envío fuera de transacción y finalización por CAS sobre `claim_token`, según `DDL-CON-01`. El worker (`barberia_worker`, sin contexto de tenant, solo funciones de claim/finalización) la consume. Los errores temporales (`429`, `5xx`, tiempo de espera) usan backoff exponencial con tope y número máximo de intentos. Ninguna llamada a Google ocurre dentro de una transacción de PostgreSQL de negocio; una caída de Google nunca impide crear una cita.
+  2. **Tokens.** El refresh token se persiste cifrado con AES-256-GCM en la aplicación, con clave de 32 bytes desde el secreto `GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY` e identificador de clave en la fila para rotación. El access token no se persiste. Ningún token, secreto ni código OAuth aparece en logs, respuestas HTTP, frontend ni Git.
+  3. **OAuth.** Flujo de código de autorización con PKCE, `access_type=offline` y `prompt=consent`. El `state` es de un solo uso, de vigencia corta y queda ligado a barbería, barbero y sesión. Alcances mínimos: `https://www.googleapis.com/auth/calendar.events` más `openid email` para mostrar la cuenta conectada. `calendar.events` es un alcance sensible: la verificación de Google para producción se documenta en la entrega.
+  4. **Webhook.** Ruta pública sin sesión autenticada por `X-Goog-Channel-Id` y un secreto por canal (`X-Goog-Channel-Token`) comparado en tiempo constante, del que solo se guarda el hash. El tenant se resuelve con una función `SECURITY DEFINER` acotada, como en los flujos previos al contexto de tenant. Responde `200` de inmediato, deduplica por `X-Goog-Message-Number` y encola una sincronización incremental con `syncToken`; nunca sondea de forma continua. El worker renueva los canales antes de que expiren.
+  5. **Dependencias y configuración.** Se admite una dependencia oficial de Google (`golang.org/x/oauth2` y `google.golang.org/api/calendar/v3`), aislada en el módulo, con justificación y `govulncheck` en la entrega. Las variables son `GOOGLE_CALENDAR_CLIENT_ID`, `GOOGLE_CALENDAR_CLIENT_SECRET`, `GOOGLE_CALENDAR_REDIRECT_URI`, `GOOGLE_CALENDAR_WEBHOOK_URL` y `GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY`; sin ellas la integración queda desactivada y el resto del producto funciona.
+  6. **Ambientes.** El webhook exige HTTPS público; en local se usa el túnel que documente la entrega y, sin él, «Sincronizar ahora» cubre la dirección Google → NAVA.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** el estándar no fija cifrado de credenciales de terceros ni cola de trabajos, y la integración los necesita antes de escribir código. El cifrado en aplicación con clave externa es la propuesta mínima; el propietario la aprueba al integrar este PR.
+- **Alternativas descartadas:** esperar a B5 y compartir su cola, por bloquear la funcionalidad; llamar a Google dentro de la transacción de negocio, por acoplar la reserva al servicio externo; polling continuo, por existir notificaciones push oficiales.
+- **Documentos afectados:** `05-backend/estandar-base-datos.md` (referencia), `04-arquitectura/stack-despliegue-operacion.md`, README de `apps/api`, migraciones y contrato en cada entrega.
+- **Fuente:** instrucciones del propietario del 2026-09-26 (secciones de outbox, tokens, webhook y worker) y aprobación de esta propuesta; issue [#284](https://github.com/bcaceres19/barberia/issues/284).

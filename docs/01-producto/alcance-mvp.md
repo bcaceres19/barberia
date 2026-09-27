@@ -239,7 +239,7 @@ Múltiples sedes con administración compleja · roles administrativos altamente
 
 ### De integraciones
 
-Integraciones contables · integraciones avanzadas con redes sociales · integración bidireccional completa con calendarios externos.
+Integraciones contables · integraciones avanzadas con redes sociales · integración bidireccional completa con calendarios externos *(excepción acotada de `DEC-099`: solo Google Calendar por barbero; siguen fuera los calendarios de clientes, administradores, globales o de recursos y otros proveedores)*.
 
 ### De arquitectura
 
