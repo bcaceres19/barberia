@@ -13,8 +13,8 @@ issue: "284"
 issue_url: "https://github.com/bcaceres19/barberia/issues/284"
 suggested_issue_title: "docs(integraciones): registrar decisiones de Google Calendar por barbero"
 branch: "docs/284-google-calendar-decisiones"
-pr: null
-pr_url: null
+pr: 285
+pr_url: "https://github.com/bcaceres19/barberia/pull/285"
 depends_on:
   - "DEC-099"
   - "DEC-100"
