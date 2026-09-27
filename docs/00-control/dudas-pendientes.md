@@ -1,7 +1,7 @@
 ---
 titulo: "Dudas pendientes y resoluciones"
 version: "2.19"
-estado: "Tres dudas abiertas (DP-INT-01 a DP-INT-03)"
+estado: "Una duda abierta (DP-INT-01)"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-09-26"
 documentos_relacionados:
@@ -17,7 +17,7 @@ documentos_relacionados:
 
 ## 1. Estado
 
-El 26 de septiembre de 2026 el propietario aprobó la integración con Google Calendar por barbero (`DEC-099`–`DEC-102`, issue documental [#284](https://github.com/bcaceres19/barberia/issues/284)). Quedan abiertas `DP-INT-01`–`DP-INT-03`; solo `DP-INT-01` bloquea una ejecución (`PROMPT-FEAT-GCAL-01-v1`) y ninguna impide registrar las decisiones.
+El 26 de septiembre de 2026 el propietario aprobó la integración con Google Calendar por barbero (`DEC-099`–`DEC-102`, issue documental [#284](https://github.com/bcaceres19/barberia/issues/284)). El mismo día lo limitó a publicar de NAVA hacia Google, sin leer cambios de vuelta, y resolvió `DP-INT-02` y `DP-INT-03`. Queda abierta `DP-INT-01`, que bloquea `PROMPT-FEAT-GCAL-01-v1`.
 
 El 19 de septiembre de 2026 el propietario pidió que el paso 1 de la recuperación de acceso ofrezca dos botones —WhatsApp y correo— y pida el valor del canal elegido (`DEC-092`, issue documental [#274](https://github.com/bcaceres19/barberia/issues/274)). La instrucción no fijaba cómo se identifica la cuenta por teléfono, qué identificador usan los pasos 2 y 3 ni qué ocurre si el canal elegido no tiene contacto verificado; se registraron como `DP-SEG-14`, `DP-SEG-15` y `DP-SEG-16`. El propietario aceptó ese mismo día las tres respuestas recomendadas como `DEC-093` y la implementación se entrega en el issue [#276](https://github.com/bcaceres19/barberia/issues/276).
 
@@ -63,9 +63,9 @@ Cuando la respuesta dio un rango o delegó una decisión, se escogió una config
 | `DP-SEG-14` | Si la persona elige WhatsApp y escribe su número, ¿cómo se identifica la cuenta antes de resolver el tenant, dado que el teléfono no es hoy identificador de acceso y puede repetirse entre barberías? | Resuelta por `DEC-093` (2026-09-19): el teléfono identifica la cuenta solo si coincide con exactamente una cuenta activa con ese número verificado; con cero o varias, respuesta genérica sin envío. | Issue [#276](https://github.com/bcaceres19/barberia/issues/276); `DEC-093` |
 | `DP-SEG-15` | ¿Qué identificador viajan los pasos 2 y 3 (`POST /recovery/verify` y `/recovery/reset-password`), hoy siempre el correo, cuando la cuenta se identificó por teléfono? | Resuelta por `DEC-093` (2026-09-19): los pasos 2 y 3 reutilizan el mismo canal y valor del paso 1, con esquemas cerrados por canal. | Issue [#276](https://github.com/bcaceres19/barberia/issues/276); `DEC-093` |
 | `DP-SEG-16` | Si el canal elegido no tiene un contacto verificado utilizable o la barbería no lo tiene habilitado, ¿qué ve y qué recibe la persona? | Resuelta por `DEC-093` (2026-09-19): ambos botones siempre visibles; sin contacto verificado utilizable, respuesta genérica sin envío ni respaldo por el otro canal; el paso 2 ofrece elegir otro canal. | Issue [#276](https://github.com/bcaceres19/barberia/issues/276); `DEC-093` |
-| `DP-INT-01` | ¿Quién puede asignar o cambiar el vínculo `barber.staff_user_id` (`DEC-100`): cualquier usuario autenticado de la barbería, el propio barbero o solo un rol propietario, dado que hoy no existen roles? | Abierta (2026-09-26); bloquea la ejecución de `PROMPT-FEAT-GCAL-01-v1`, no las demás decisiones | Issue documental [#284](https://github.com/bcaceres19/barberia/issues/284) |
-| `DP-INT-02` | ¿Las series de bloqueo propias de NAVA (`time_block_series`) se reflejan en Google Calendar como ocurrencias individuales dentro de la ventana de 6 meses o quedan fuera de la primera fase? | Abierta (2026-09-26); en la primera fase solo se sincronizan bloques puntuales (`DEC-101`) | Issue documental [#284](https://github.com/bcaceres19/barberia/issues/284) |
-| `DP-INT-03` | Al desconectar, ¿los eventos que NAVA ya creó en Google Calendar permanecen o se eliminan? | Abierta (2026-09-26); por defecto permanecen y las citas de NAVA se conservan (`DEC-101`) | Issue documental [#284](https://github.com/bcaceres19/barberia/issues/284) |
+| `DP-INT-01` | ¿Quién puede asignar o cambiar el vínculo `barber.staff_user_id` (`DEC-100`): cualquier usuario autenticado de la barbería, el propio barbero o solo un rol propietario, dado que hoy no existen roles? | Abierta (2026-09-26): el propietario respondió limitando la integración a NAVA → Google (`DEC-099`) pero no indicó quién asigna el vínculo; bloquea `PROMPT-FEAT-GCAL-01-v1` | Issue documental [#284](https://github.com/bcaceres19/barberia/issues/284) |
+| `DP-INT-02` | ¿Las series de bloqueo propias de NAVA (`time_block_series`) se reflejan en Google Calendar como ocurrencias individuales dentro de la ventana de 6 meses o quedan fuera de la primera fase? | Resuelta por `DEC-101` (2026-09-26): las series quedan fuera de la primera fase; solo se publican bloqueos puntuales | Issue documental [#284](https://github.com/bcaceres19/barberia/issues/284) |
+| `DP-INT-03` | Al desconectar, ¿los eventos que NAVA ya creó en Google Calendar permanecen o se eliminan? | Resuelta por `DEC-101` (2026-09-26): los eventos permanecen en Google y las citas de NAVA se conservan | Issue documental [#284](https://github.com/bcaceres19/barberia/issues/284) |
 
 `DP-CIT-06` (última duda anterior del lote `HU-063`–`HU-065`) quedó resuelta el 1 de septiembre de 2026 como `DEC-076` (sección 3).
 

@@ -1,5 +1,5 @@
 ---
-prompt_id: "PROMPT-FEAT-GCAL-03-BOOKING-ACCION-INTEGRACION-v1"
+prompt_id: "PROMPT-FEAT-GCAL-04-FRONTEND-CONEXION-v1"
 version: "1.0"
 kind: "hu"
 status: "draft"
@@ -11,18 +11,15 @@ primary_hu: null
 related_hu: []
 issue: "pending"
 issue_url: null
-suggested_issue_title: "feat(citas): reprogramar y cancelar citas por una integración con actor sistema"
+suggested_issue_title: "feat(web): conectar, sincronizar y desconectar Google Calendar desde el área del barbero"
 branch: null
 pr: null
 pr_url: null
 depends_on:
-  - "PR del issue #284 integrado (DEC-099 a DEC-102)"
-rules:
-  - "RN-CON-03"
-  - "RN-HIS-01"
+  - "PROMPT-FEAT-GCAL-02-v1 integrado"
+  - "PROMPT-FEAT-GCAL-03-v1 integrado"
+rules: []
 decisions:
-  - "DEC-073"
-  - "DEC-076"
   - "DEC-099"
   - "DEC-101"
 acceptance_criteria: []
@@ -38,16 +35,18 @@ source_docs:
   - "docs/05-backend/estandar-base-datos.md"
   - "docs/05-backend/migraciones-atlas.md"
   - "docs/06-api/estandar-openapi.md"
-  - "docs/02-requisitos/historias-usuario.md (HU-062, HU-066)"
-  - "docs/02-requisitos/estados-citas.md"
-  - "apps/api/internal/modules/booking"
+  - "apps/web/src/modules"
+  - "docs/03-desarrollo/especificacion-frontend-nava.md"
+  - "docs/03-desarrollo/estandar-frontend-vue.md"
+  - "docs/03-desarrollo/estandar-diseno-visual.md"
+  - ".agents/skills/visual-qa/SKILL.md"
 created_at: "2026-09-26"
 updated_at: "2026-09-26"
 supersedes: null
 superseded_by: null
 ---
 
-# Casos de uso de `booking` para cambios originados por una integración
+# Interfaz de Google Calendar para el barbero
 
 ## Instrucción para el agente
 
@@ -55,7 +54,7 @@ Implementa únicamente la preocupación descrita en este archivo. Trabaja de for
 
 ## Objetivo
 
-`booking` ofrece reprogramación y cancelación por el barbero solicitadas por una integración, con actor `system` y origen visible en el historial, reutilizando exactamente las mismas invariantes que el flujo del barbero.
+El barbero autenticado puede conectar, ver el estado, sincronizar ahora y desconectar Google Calendar con la identidad NAVA / Tailored Grid.
 
 ## Preflight obligatorio
 
@@ -69,47 +68,44 @@ Implementa únicamente la preocupación descrita en este archivo. Trabaja de for
 
 ## Alcance incluido
 
-- Análisis de `RescheduleService` y `CancelAppointmentByBarberService`: extraer el núcleo común y añadir un caso de uso de integración en lugar de aceptar un `ActorStaffUserID` falso.
-- Origen «sincronización Google Calendar» en `appointment_history` (columna o dato de la entrada, según el estándar; sin `jsonb` sin justificación) y su exposición en el detalle/historial de OpenAPI.
-- Comportamiento definido ante estado terminal, versión desactualizada, cruce con cita, bloqueo (`DEC-073`, `DEC-076`) y fuera de jornada: error de dominio tipificado que la integración pueda distinguir del error interno.
+- Sección del área del barbero con los estados No conectado, Conectando, Conectado (cuenta, calendario y última sincronización), Sincronizando, Requiere reconexión y Error de sincronización, y las acciones Conectar, Sincronizar ahora y Desconectar.
+- Cliente tipado del contrato; el componente no conoce la forma interna del API ni maneja tokens.
+- Texto que deje claro que la publicación es de NAVA hacia Google y que los cambios hechos en Google no modifican la agenda de NAVA.
 
 ## Fuera de alcance
 
-- Cualquier código de Google o de la integración.
-- Cambiar la semántica de los estados o de `appointment`.
-- UI del historial (la etiqueta visible va en `PROMPT-FEAT-GCAL-07-v1`).
+- Cualquier cambio de backend o contrato.
+- Mostrar bloqueos u origen de Google en la agenda (no existen, `DEC-099`).
 
 ## Estado existente que debe conservarse
 
-- `DEC-076` (reprogramación voluntaria bloquea si cruza), `RN-HIS-01` e idempotencia vigentes.
-- El actor `system` ya existe en `appointment_history_actor_shape_ck`; no se debilita la auditoría.
-- `booking` no importa `google.golang.org/api` ni el módulo de integración.
+- Sistema visual NAVA / Tailored Grid; sin mockup asignado, la creación visual es libre dentro de esa identidad (modo guiado por identidad de `visual-qa`).
+- Avisos emergentes tipo acordeón (`DEC-095`) para éxito y error.
 
 ## Trabajo requerido
 
-1. Escribe primero las pruebas de las reglas con actor de integración.
-2. Refactoriza el núcleo común sin cambiar el comportamiento de los flujos existentes (las pruebas actuales siguen verdes).
-3. Añade los casos de uso y el origen en el historial (migración Atlas si hace falta).
-4. Actualiza OpenAPI, handler y cliente solo donde el origen se expone.
+1. Ejecuta `visual-qa` antes de editar y antes de declarar terminado.
+2. Implementa los estados sobre el cliente tipado, con accesibilidad de teclado y lector de pantalla y acciones seguras ante doble clic.
+3. Añade pruebas de componente y el recorrido E2E con el API simulado.
+4. Captura evidencia responsive.
 
 ## Pruebas y evidencia
 
-- Unitarias: reprogramación válida, cruce, bloqueo, estado terminal, versión, idempotencia; cancelación válida y sobre estado terminal.
-- PostgreSQL real con dos tenants: exclusión de cruces bajo concurrencia y `FOR UPDATE`.
-- Historial con `actor_type = system` y un solo registro ante repetición.
+- Componente: cada estado, acciones deshabilitadas mientras sincroniza, error recuperable.
+- E2E: conectar (redirección simulada), sincronizar y desconectar.
+- Evidencia y verificación accesible a 320, 360, 768 y 1280 px.
 
 ## Documentación y trazabilidad
 
 - Actualiza matriz de trazabilidad, historial, contrato OpenAPI, diccionario y diagrama de datos que realmente resulten afectados.
-- Actualiza `estados-citas.md` o el diccionario si el origen se expone.
+- Registra la evidencia visual en `docs/10-backlog/evidence/` según la convención vigente.
 - Actualiza los metadatos y el índice de este catálogo con issue, rama, PR y estado reales.
 
 ## Verificación final
 
 ```text
-cd apps/api && go vet ./... && go test ./... && go test -race ./... && govulncheck ./...
-pnpm run openapi:lint (y el bundle/cliente tipado definidos por el repositorio)
-atlas migrate validate y pruebas contra PostgreSQL real con al menos dos tenants
+cd apps/web && pnpm typecheck && pnpm lint && pnpm test:unit && pnpm build
+Playwright E2E aplicable
 tools/ai/validate-agent-system.sh --strict
 ```
 

@@ -90,9 +90,9 @@ Existe una asignación explícita, opcional y única de `barber.staff_user_id` q
 
 ## Trabajo requerido
 
-1. Redacta la historia con su número real y los `CA-*`; registra en `DP-INT-01` la respuesta del propietario si aún está abierta y detente si no lo está.
+1. Redacta la historia con su número real y los `CA-*`; si `DP-INT-01` sigue abierta, detente y regístralo.
 2. Actualiza OpenAPI primero; genera lint y cliente.
-3. Crea la migración con Atlas, con `COMMENT` de la columna y política de privilegios coherente con el estándar.
+3. Crea la migración con Atlas, con `COMMENT` de la columna y privilegios coherentes con el estándar.
 4. Implementa dominio, servicio, repositorio y handler sin dependencias cruzadas entre módulos (puerto en el consumidor).
 5. Implementa la UI mínima con estados de carga, error y vacío.
 

@@ -1,5 +1,5 @@
 ---
-prompt_id: "PROMPT-FEAT-GCAL-05-NAVA-A-GOOGLE-v1"
+prompt_id: "PROMPT-FEAT-GCAL-02-CONEXION-OAUTH-v1"
 version: "1.0"
 kind: "hu"
 status: "draft"
@@ -11,17 +11,18 @@ primary_hu: null
 related_hu: []
 issue: "pending"
 issue_url: null
-suggested_issue_title: "feat(integraciones): sincronizar citas y bloqueos de NAVA hacia Google Calendar"
+suggested_issue_title: "feat(integraciones): conectar y desconectar Google Calendar por barbero"
 branch: null
 pr: null
 pr_url: null
 depends_on:
-  - "PROMPT-FEAT-GCAL-04-v1 integrado (conexión OAuth)"
+  - "PROMPT-FEAT-GCAL-01-v1 integrado (vínculo barbero–usuario)"
+  - "PR del issue #284 integrado (DEC-102)"
 rules:
-  - "RN-CON-03"
   - "RN-TEN-01"
 decisions:
   - "DEC-099"
+  - "DEC-100"
   - "DEC-101"
   - "DEC-102"
 acceptance_criteria: []
@@ -37,18 +38,16 @@ source_docs:
   - "docs/05-backend/estandar-base-datos.md"
   - "docs/05-backend/migraciones-atlas.md"
   - "docs/06-api/estandar-openapi.md"
-  - "apps/api/internal/modules/booking"
-  - "apps/api/internal/modules/publicbooking"
-  - "apps/api/internal/modules/schedule"
-  - "apps/api/cmd/worker"
-  - "apps/api/internal/platform/idempotency"
+  - "docs/04-arquitectura/backend-go.md"
+  - "docs/04-arquitectura/stack-despliegue-operacion.md"
+  - "apps/api/internal/platform/config"
 created_at: "2026-09-26"
 updated_at: "2026-09-26"
 supersedes: null
 superseded_by: null
 ---
 
-# Sincronización NAVA → Google Calendar con cola propia
+# Conexión OAuth de Google Calendar por barbero
 
 ## Instrucción para el agente
 
@@ -56,7 +55,7 @@ Implementa únicamente la preocupación descrita en este archivo. Trabaja de for
 
 ## Objetivo
 
-Toda cita confirmada, reprogramada o cancelada y todo bloqueo compatible del barbero conectado se refleja en su Google Calendar mediante una cola confiable; una caída de Google nunca impide crear la cita.
+Un barbero con usuario vinculado conecta su propia cuenta de Google, consulta el estado y la desconecta; el refresh token queda cifrado y nunca sale del backend.
 
 ## Preflight obligatorio
 
@@ -70,47 +69,50 @@ Toda cita confirmada, reprogramada o cancelada y todo bloqueo compatible del bar
 
 ## Alcance incluido
 
-- Migración Atlas y RLS de `google_calendar_event_link` (`resource_type` `appointment`/`time_block`, ids de Google, `etag`, `updated`, huella del estado escrito) y de `google_calendar_sync_job` con claim con lease y CAS por `claim_token`.
-- Puertos definidos por `booking` y `schedule` (sin importar Google) que encolan el trabajo en la misma transacción del cambio; cubrir reserva pública y creación manual.
-- Worker: reclamo, ejecución fuera de transacción, backoff exponencial con tope y máximo de intentos; error permanente cambia el estado de la conexión.
-- Crear, actualizar el mismo evento y eliminar por cancelación; `completed` y `no_show` conservan el evento; título y descripción según `DEC-101`; propiedades extendidas privadas; zona de la barbería.
-- Empuje inicial de las citas y bloqueos futuros dentro de la ventana de 6 meses al conectar, sin vincular por heurística.
+- OpenAPI primero: estado, inicio de conexión (URL de autorización), callback y desconexión, con errores del estándar.
+- Migración Atlas y RLS de `google_calendar_connection` (y del estado OAuth de un solo uso), en 3FN, con estados `connected`, `reauth_required`, `error`, `disconnected` y una sola conexión activa por barbero.
+- Módulo dueño `apps/api/internal/modules/googlecalendar` con puertos: cliente Google (adaptador aislado), almacén de credenciales, cifrado AES-256-GCM con `key_id`.
+- PKCE, `state` de un solo uso ligado a barbería, barbero y sesión; refresh del access token bajo demanda; revocación y borrado de credenciales al desconectar.
+- Configuración `GOOGLE_CALENDAR_CLIENT_ID`, `GOOGLE_CALENDAR_CLIENT_SECRET`, `GOOGLE_CALENDAR_REDIRECT_URI` y `GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY`; integración desactivada cuando falta alguna, sin fallar el arranque del API.
+- Guía paso a paso de Google Cloud (proyecto, API, pantalla de consentimiento, cliente OAuth, redirect URI por ambiente, alcances mínimos, usuarios de prueba, verificación para producción).
 
 ## Fuera de alcance
 
-- Webhook, `watch`, `syncToken` y Google → NAVA (`PROMPT-FEAT-GCAL-06-v1`).
-- UI.
-- Series de bloqueo de NAVA (`DP-INT-02`).
+- Crear, actualizar o eliminar eventos, trabajos y worker (`PROMPT-FEAT-GCAL-03-v1`).
+- Leer cambios de Google, webhook, `watch` o `syncToken` (descartados por `DEC-099`).
+- UI (`PROMPT-FEAT-GCAL-04-v1`) y cuentas de clientes o administradores.
 
 ## Estado existente que debe conservarse
 
-- Las transacciones de reserva no esperan a ningún servicio externo.
-- Idempotencia de la reserva y de la reprogramación existentes.
-- Retención y datos personales: nada de teléfono, correo, notas ni tokens en el evento, los logs o el trabajo.
+- Los servicios de dominio siguen independientes de Chi y pgx; el SDK de Google vive solo en el adaptador.
+- Roles `barberia_app` y `barberia_worker` separados (`DEC-040`); ningún DDL al arrancar.
 
 ## Trabajo requerido
 
-1. Diseña y documenta el mecanismo de encolado transaccional elegido (puerto en el consumidor).
-2. Escribe las pruebas 1 a 5, 13, 15, 16, 17 y 20 de la orquestación antes de implementar.
-3. Implementa migraciones, adaptador Google de eventos, encolado y ejecución.
-4. Registra los eventos de log `google_calendar.event.*` con conexión, recurso y operación, sin secretos.
+1. Justifica la dependencia oficial de Google en el PR y ejecuta `govulncheck`.
+2. Actualiza OpenAPI, ejecuta lint y genera el cliente.
+3. Crea la migración y las pruebas de RLS con dos tenants.
+4. Implementa el módulo, los handlers y la configuración.
+5. Verifica que ninguna respuesta, log ni error contiene tokens, `client_secret`, `state` ni el código OAuth.
 
 ## Pruebas y evidencia
 
-- Servidor Google falso: creación única (1 cita, 1 evento, 1 vínculo), reprogramación sobre el mismo `googleEventId`, cancelaciones eliminan, terminales conservan.
-- Google 503/429/timeout: la cita existe, el trabajo reintenta con backoff y no hay bucle infinito; token revocado: `reauth_required`.
-- Concurrencia y varios workers con `SKIP LOCKED`; PostgreSQL real y dos tenants.
+- Cifrado: ida y vuelta, clave incorrecta, rotación por `key_id`; nada en claro en la base de datos.
+- OAuth con un servidor Google falso: éxito, `state` reutilizado o expirado, usuario sin barbero vinculado, permisos denegados, token revocado (`reauth_required`).
+- Aislamiento: el barbero de la barbería A no lee ni desconecta la conexión de B.
+- Refresh automático de un access token expirado.
 
 ## Documentación y trazabilidad
 
 - Actualiza matriz de trazabilidad, historial, contrato OpenAPI, diccionario y diagrama de datos que realmente resulten afectados.
-- Actualiza diccionario y diagrama de datos y el documento de operación del worker.
+- Documenta las variables de entorno en `apps/api/README.md` y en el documento de despliegue; guía de Google Cloud en `docs/`.
 - Actualiza los metadatos y el índice de este catálogo con issue, rama, PR y estado reales.
 
 ## Verificación final
 
 ```text
 cd apps/api && go vet ./... && go test ./... && go test -race ./... && govulncheck ./...
+pnpm run openapi:lint (y el bundle/cliente tipado definidos por el repositorio)
 atlas migrate validate y pruebas contra PostgreSQL real con al menos dos tenants
 tools/ai/validate-agent-system.sh --strict
 ```
