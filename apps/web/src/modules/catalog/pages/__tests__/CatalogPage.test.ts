@@ -323,8 +323,7 @@ describe('CatalogPage', () => {
     scroller.style.overflowY = 'auto'
     Object.defineProperty(scroller, 'clientHeight', { value: 600 })
     document.body.appendChild(scroller)
-    const rect = (top: number, height: number) =>
-      ({ top, bottom: top + height, height }) as DOMRect
+    const rect = (top: number, height: number) => ({ top, bottom: top + height, height }) as DOMRect
     const rectSpy = vi
       .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
       .mockImplementation(function (this: HTMLElement) {

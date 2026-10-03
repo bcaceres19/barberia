@@ -90,7 +90,9 @@ describe('AppNav', () => {
     await router.push('/panel')
     await router.isReady()
     const wrapper = mount(AppNav, {
-      props: { extraItems: [{ to: { name: 'schedules-horarios' }, label: 'Horarios', primary: true }] },
+      props: {
+        extraItems: [{ to: { name: 'schedules-horarios' }, label: 'Horarios', primary: true }],
+      },
       global: { plugins: [router] },
     })
 

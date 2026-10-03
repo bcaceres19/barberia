@@ -23,7 +23,9 @@ export interface FetchServicesParams {
   search?: string
 }
 
-export async function fetchServices(params: FetchServicesParams = {}): Promise<FetchServicesOutcome> {
+export async function fetchServices(
+  params: FetchServicesParams = {},
+): Promise<FetchServicesOutcome> {
   try {
     const query: { page?: number; pageSize?: number; search?: string } = {}
     if (params.page !== undefined) query.page = params.page
