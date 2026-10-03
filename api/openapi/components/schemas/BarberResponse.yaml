@@ -1,7 +1,8 @@
 # Representación canónica de un barbero (HU-021, CA-021-01/02/07):
-# exactamente id, fullName, createdAt, updatedAt. Nunca active, deletedAt,
-# sortOrder, staffUserId, servicios ni horarios (DEC-047): esos campos
-# pertenecen a una historia futura que los apruebe explícitamente.
+# exactamente id, fullName, createdAt, updatedAt y, por DEC-104,
+# photoUpdatedAt. Nunca active, deletedAt, sortOrder, staffUserId, servicios
+# ni horarios (DEC-047): esos campos pertenecen a una historia futura que los
+# apruebe explícitamente.
 # barbershopId NUNCA aparece, mismo criterio que BarbershopSettingsResponse:
 # el tenant se deriva exclusivamente de SessionCookie.
 type: object
@@ -36,8 +37,23 @@ properties:
     description: Instante de la última modificación (alta o renombrado), con offset.
     examples:
       - "2026-08-23T15:04:05Z"
+  photoUpdatedAt:
+    type:
+      - string
+      - "null"
+    format: date-time
+    description: >
+      Instante de la última fotografía del barbero (DEC-104), con offset, o
+      `null` si no tiene ninguna (el cliente muestra su monograma). Es la
+      versión de la imagen: el cliente la añade a la URL de
+      `GET /private/barbers/{barberId}/photo` para no reutilizar una copia
+      vieja al cambiarla.
+    examples:
+      - "2026-09-30T12:00:00Z"
+      - null
 required:
   - id
   - fullName
   - createdAt
   - updatedAt
+  - photoUpdatedAt

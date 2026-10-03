@@ -7,11 +7,19 @@ import (
 )
 
 // ListResult es una página de servicios ya ordenada de forma estable
-// (created_at, id). NextCursor es "" cuando esta página es la última
-// (CA-022-01).
+// (created_at, id). Page y PageSize reflejan lo que el servidor
+// efectivamente usó (ya clamped por CatalogService.List, no lo crudo que
+// pidió el cliente); Total es el conteo real de servicios que matchean el
+// filtro de búsqueda vigente (o de toda la barbería, sin filtro);
+// TotalPages se deriva de Total/PageSize con un piso de 1, para que
+// "página 1 de 1" sea siempre representable aunque Total sea 0 (CA-022-01,
+// DEC-103).
 type ListResult struct {
 	Items      []Service
-	NextCursor string
+	Page       int
+	PageSize   int
+	Total      int
+	TotalPages int
 }
 
 // CreateInput es la entrada ya normalizada y validada de un alta de
@@ -121,10 +129,14 @@ type LifecycleResult struct {
 // "Patrón obligatorio: idempotencia reutilizable").
 type Repository interface {
 	// List lee una página de servicios de barbershopID, ordenada por
-	// (created_at, id). cursor es nil para la primera página; limit ya
-	// llegó clamped al rango [MinListLimit, MaxListLimit] por Service. Cada
-	// consulta filtra explícitamente por barbershopID además de RLS.
-	List(ctx context.Context, barbershopID string, cursor *Cursor, limit int) (ListResult, error)
+	// (created_at, id). page y pageSize ya llegaron clamped por
+	// CatalogService.List ([1, +∞) y [MinPageSize, MaxPageSize]
+	// respectivamente); search ya llegó recortado y acotado a
+	// MaxSearchLength. search == "" significa "sin filtro"; en otro caso
+	// filtra por coincidencia parcial insensible a mayúsculas en `name`
+	// (DEC-103). Cada consulta filtra explícitamente por barbershopID
+	// además de RLS.
+	List(ctx context.Context, barbershopID string, page, pageSize int, search string) (ListResult, error)
 
 	// Get lee un servicio por id dentro del tenant vigente. found=false
 	// cubre tanto "no existe" como "es de otra barbería" (CA-022-06): la

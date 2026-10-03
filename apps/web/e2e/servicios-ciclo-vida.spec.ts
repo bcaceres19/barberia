@@ -63,21 +63,24 @@ test.describe('Ciclo de vida de servicios (HU-024)', () => {
 
     // CA-024-01: la advertencia consulta el impacto real (siempre 0 en B1,
     // DEC-069), nunca un valor por defecto sin consultar.
-    await row.getByRole('button', { name: `Desactivar ${name}` }).click()
-    const deactivateDialog = page.getByRole('dialog', { name: 'Desactivar servicio' })
+    await row.getByRole('button', { name: `Cambiar estado de ${name}` }).click()
+    const deactivateDialog = page.getByRole('dialog', { name: 'Estado del servicio' })
     await expect(deactivateDialog.getByText('No hay citas futuras')).toBeVisible()
 
-    // Cancelar no muta nada.
-    await deactivateDialog.getByRole('button', { name: 'Cancelar' }).click()
+    // Salir no muta nada.
+    await deactivateDialog.getByRole('button', { name: 'Salir', exact: true }).click()
     await expect(deactivateDialog).toBeHidden()
     await expect(row.getByText('Activo')).toBeVisible()
 
     // Confirmar desactiva de verdad (CA-024-02).
-    await row.getByRole('button', { name: `Desactivar ${name}` }).click()
+    await row.getByRole('button', { name: `Cambiar estado de ${name}` }).click()
     await expect(deactivateDialog.getByText('No hay citas futuras')).toBeVisible()
-    await deactivateDialog.getByRole('button', { name: 'Desactivar', exact: true }).click()
-    await expect(deactivateDialog).toBeHidden()
+    await deactivateDialog.getByRole('switch').click()
+    // El diálogo sigue abierto con el estado nuevo hasta pulsar "Salir".
+    await expect(deactivateDialog.getByRole('switch')).toHaveAttribute('aria-checked', 'false')
     await expect(row.getByText('Inactivo')).toBeVisible()
+    await deactivateDialog.getByRole('button', { name: 'Salir', exact: true }).click()
+    await expect(deactivateDialog).toBeHidden()
 
     // Persistencia real, verificada tras recargar (nunca se borra la fila,
     // RN-SER-03): sigue apareciendo en el listado, ahora inactiva.
@@ -97,9 +100,11 @@ test.describe('Ciclo de vida de servicios (HU-024)', () => {
 
     // CA-024-05: reactivar vuelve a activo sin crear otra fila ni cambiar
     // duración/precio.
-    await row.getByRole('button', { name: `Reactivar ${name}` }).click()
-    const reactivateDialog = page.getByRole('dialog', { name: 'Reactivar servicio' })
-    await reactivateDialog.getByRole('button', { name: 'Reactivar', exact: true }).click()
+    await row.getByRole('button', { name: `Cambiar estado de ${name}` }).click()
+    const reactivateDialog = page.getByRole('dialog', { name: 'Estado del servicio' })
+    await reactivateDialog.getByRole('switch').click()
+    await expect(reactivateDialog.getByRole('switch')).toHaveAttribute('aria-checked', 'true')
+    await reactivateDialog.getByRole('button', { name: 'Salir', exact: true }).click()
     await expect(reactivateDialog).toBeHidden()
     await expect(row.getByText('Activo')).toBeVisible()
     await expect(row.getByText('30 min')).toBeVisible()

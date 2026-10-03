@@ -104,10 +104,13 @@ const updateFocusableElements = () => {
 }
 
 const handleKeyDown = (event: KeyboardEvent) => {
-  if (!isOpen.value || !isTopmost()) return
+  if (event.defaultPrevented || !isOpen.value || !isTopmost()) return
 
   if (event.key === 'Escape' && props.closeOnEscape) {
+    // Un mismo Escape no debe alcanzar al diálogo inferior cuando Vue
+    // actualiza la pila entre listeners nativos (bloqueos, issue #286).
     event.preventDefault()
+    event.stopPropagation()
     close()
     return
   }
@@ -274,7 +277,17 @@ onUnmounted(() => {
                aria-labelledby; este contenedor no necesita ser landmark. -->
           <div v-if="title || showClose || $slots.header" class="base-dialog__header">
             <slot name="header">
-              <h2 v-if="title" :id="titleId" class="base-dialog__title">{{ title }}</h2>
+              <!-- #icon es opcional y vacío por defecto (ningún consumidor
+                   actual lo usa): un diálogo que quiera una ficha/monograma
+                   junto al título -por ejemplo el alta de un registro- la
+                   pasa aquí sin tocar este componente compartido. El título
+                   conserva su :id de siempre, así aria-labelledby nunca
+                   apunta a un elemento que el slot personalizado no
+                   renderizó. -->
+              <div class="base-dialog__heading">
+                <slot name="icon" />
+                <h2 v-if="title" :id="titleId" class="base-dialog__title">{{ title }}</h2>
+              </div>
               <button
                 v-if="showClose"
                 ref="closeButtonRef"
@@ -435,6 +448,16 @@ onUnmounted(() => {
   padding: var(--space-4) var(--space-5);
   border-bottom: var(--border-width-normal) solid var(--color-border-subtle);
   flex-shrink: 0;
+}
+
+/* Envuelve #icon (opcional) + título para que ambos se alineen en fila
+   sin afectar el layout cuando ningún consumidor pasa #icon (el div queda
+   con un único hijo, igual que antes de este slot). */
+.base-dialog__heading {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: var(--space-3);
 }
 
 .base-dialog__title {

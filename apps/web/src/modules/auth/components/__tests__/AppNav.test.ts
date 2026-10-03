@@ -64,6 +64,46 @@ describe('AppNav', () => {
     expect(link.attributes('aria-current')).toBe('page')
   })
 
+  // Regresión: "Agenda" es la hija `path: ''` de `/panel` (agenda/routes.ts,
+  // HU-062), así que su ruta resuelve al mismo path que el cascarón padre.
+  // Con `active-class` (matching NO exacto de vue-router), esa coincidencia
+  // dejaba a "Agenda" marcada como activa en cualquier hija hermana del
+  // panel, sin importar el destino elegido (issue reportado por el
+  // propietario 2026-09-28). Esta prueba monta el árbol de rutas real
+  // (padre `/panel` + hija vacía 'panel') en vez del router plano de
+  // `mountNav`, para que la coincidencia no exacta pueda reproducirse.
+  it('does not keep "Agenda" marked active after navigating to a sibling destination', async () => {
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        {
+          path: '/panel',
+          component: { template: '<router-view />' },
+          children: [
+            { path: '', name: 'panel', component: { template: '<div />' } },
+            { path: 'horarios', name: 'schedules-horarios', component: { template: '<div />' } },
+          ],
+        },
+        { path: '/acceso', name: 'acceso', component: { template: '<div />' } },
+      ],
+    })
+    await router.push('/panel')
+    await router.isReady()
+    const wrapper = mount(AppNav, {
+      props: { extraItems: [{ to: { name: 'schedules-horarios' }, label: 'Horarios', primary: true }] },
+      global: { plugins: [router] },
+    })
+
+    await router.push('/panel/horarios')
+    await flushPromises()
+
+    const links = wrapper.get('.app-nav__list--desktop').findAll('a')
+    const agendaLink = links.find((l) => l.text() === 'Agenda')
+    const horariosLink = links.find((l) => l.text() === 'Horarios')
+    expect(agendaLink?.classes()).not.toContain('app-nav__link--active')
+    expect(horariosLink?.classes()).toContain('app-nav__link--active')
+  })
+
   it('renders a decorative icon (aria-hidden) alongside each label', async () => {
     const { wrapper } = await mountNav()
     const icon = wrapper.get('.app-nav__icon')

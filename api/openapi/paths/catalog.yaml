@@ -8,28 +8,35 @@
     tags: [Catalog]
     summary: Listar los servicios del catálogo de la barbería activa
     description: >
-      Lista paginada por cursor (HU-022, CA-022-01) de los servicios de la
-      barbería derivada de la sesión vigente. Orden estable por fecha de
-      alta y luego por identificador; sin paginación por offset porque la
-      colección no tiene un máximo de negocio aprobado.
+      Lista paginada por número de página (HU-022, CA-022-01, DEC-103) de
+      los servicios de la barbería derivada de la sesión vigente. Orden
+      estable por fecha de alta y luego por identificador. Excepción
+      explícita del propietario a la regla general de paginación por cursor
+      (docs/06-api/estandar-openapi.md §6.10): solo este endpoint pagina por
+      página/offset con conteo total, para que el panel privado ofrezca un
+      paginador numerado; el resto de listas del contrato conserva cursor.
+      `search` filtra por coincidencia parcial insensible a mayúsculas en
+      `name` únicamente (no busca en `description`).
     operationId: listServices
     security:
       - SessionCookie: []
     x-business-rules: [RN-TEN-01, RN-DAT-02]
-    x-decisions: [DEC-024, DEC-067]
+    x-decisions: [DEC-024, DEC-067, DEC-103]
     parameters:
-      - name: cursor
+      - name: page
         in: query
         required: false
         description: >
-          Cursor opaco devuelto por una página anterior (`nextCursor`). Sin
-          este parámetro, la respuesta empieza en la primera página.
+          Número de página, empezando en 1. Sin este parámetro, la
+          respuesta empieza en la primera página.
         schema:
-          type: string
+          type: integer
+          minimum: 1
+          default: 1
         examples:
-          continuacion:
-            value: eyJjcmVhdGVkQXQiOiIyMDI2LTA4LTI0VDE1OjA1OjEwWiIsImlkIjoiMWEyYjNjNGQtNWU2Zi00NzA4LTlhMGItMWMyZDNlNGY1MDYxIn0=
-      - name: limit
+          primeraPagina:
+            value: 1
+      - name: pageSize
         in: query
         required: false
         description: Máximo de servicios por página.
@@ -41,6 +48,20 @@
         examples:
           porDefecto:
             value: 20
+      - name: search
+        in: query
+        required: false
+        description: >
+          Filtro opcional por nombre: coincidencia parcial, insensible a
+          mayúsculas. Sin este parámetro, la lista no se filtra. Un valor
+          más largo que el nombre máximo de un servicio responde `400`
+          (nunca podría igualar a ningún nombre real).
+        schema:
+          type: string
+          maxLength: 120
+        examples:
+          filtroPorNombre:
+            value: corte
     responses:
       "200":
         $ref: '../components/responses/ServiceListSuccess.yaml'

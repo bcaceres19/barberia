@@ -39,31 +39,46 @@ const serviceBody = {
   updatedAt: '2026-08-24T15:04:05Z',
 }
 
+function listBody(items: unknown[], overrides: Partial<Record<string, unknown>> = {}) {
+  return { items, page: 1, pageSize: 20, total: items.length, totalPages: 1, ...overrides }
+}
+
 describe('catalogApi.fetchServices', () => {
   beforeEach(() => getMock.mockReset())
 
-  it('maps a 200 success body to a success outcome with items and nextCursor', async () => {
-    getMock.mockResolvedValueOnce(ok({ items: [serviceBody], nextCursor: null }))
+  it('maps a 200 success body to a success outcome with items and page metadata', async () => {
+    getMock.mockResolvedValueOnce(ok(listBody([serviceBody])))
 
     const outcome = await fetchServices()
 
-    expect(outcome).toEqual({ kind: 'success', page: { items: [serviceBody], nextCursor: null } })
-  })
-
-  it('forwards the cursor as a query parameter when provided', async () => {
-    getMock.mockResolvedValueOnce(ok({ items: [], nextCursor: null }))
-
-    await fetchServices('opaque-cursor')
-
-    expect(getMock).toHaveBeenCalledWith('/private/services', {
-      params: { query: { cursor: 'opaque-cursor' } },
+    expect(outcome).toEqual({
+      kind: 'success',
+      page: { items: [serviceBody], page: 1, pageSize: 20, total: 1, totalPages: 1 },
     })
   })
 
-  it('sends no cursor query parameter for the first page', async () => {
-    getMock.mockResolvedValueOnce(ok({ items: [], nextCursor: null }))
+  it('forwards page/pageSize/search as query parameters when provided', async () => {
+    getMock.mockResolvedValueOnce(ok(listBody([])))
+
+    await fetchServices({ page: 2, pageSize: 10, search: 'corte' })
+
+    expect(getMock).toHaveBeenCalledWith('/private/services', {
+      params: { query: { page: 2, pageSize: 10, search: 'corte' } },
+    })
+  })
+
+  it('sends no query parameters for the default first page without a search', async () => {
+    getMock.mockResolvedValueOnce(ok(listBody([])))
 
     await fetchServices()
+
+    expect(getMock).toHaveBeenCalledWith('/private/services', { params: { query: {} } })
+  })
+
+  it('omits an empty search string instead of sending an empty query parameter', async () => {
+    getMock.mockResolvedValueOnce(ok(listBody([])))
+
+    await fetchServices({ search: '' })
 
     expect(getMock).toHaveBeenCalledWith('/private/services', { params: { query: {} } })
   })

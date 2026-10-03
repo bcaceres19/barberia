@@ -35,14 +35,41 @@ const (
 const CurrencyCOP = "COP"
 
 // DefaultListLimit, MinListLimit y MaxListLimit acotan `limit` en la lista
-// paginada (CA-022-01), mismo criterio técnico que staff.DefaultListLimit
-// (docs/06-api/estandar-openapi.md §6.10): la colección no tiene un máximo
-// de negocio de servicios por barbería.
+// por cursor de asignaciones barbero-servicio (HU-023, AssignmentService.List
+// / AssignmentRepository.List), mismo criterio técnico que
+// staff.DefaultListLimit (docs/06-api/estandar-openapi.md §6.10). El
+// catálogo de servicios en sí (CatalogService.List, más abajo) dejó de
+// paginar por cursor (DEC-103): usa DefaultPageSize/MinPageSize/MaxPageSize,
+// deliberadamente NO estas constantes, para no acoplar dos endpoints con
+// paradigmas de paginación distintos a un solo nombre compartido.
 const (
 	DefaultListLimit = 20
 	MinListLimit     = 1
 	MaxListLimit     = 50
 )
+
+// DefaultPageSize, MinPageSize y MaxPageSize acotan `pageSize` en el listado
+// paginado por número de página del catálogo de servicios (CA-022-01,
+// GET /private/services). Mismos valores que DefaultListLimit/MinListLimit/
+// MaxListLimit (20/1/50): no cambia el volumen de datos que el servidor
+// mueve por solicitud, solo cómo el cliente pide una posición dentro de la
+// colección (DEC-103: excepción explícita del propietario a la paginación
+// por cursor de docs/06-api/estandar-openapi.md §6.10, para que el panel de
+// Servicios ofrezca un paginador numerado con total exacto — algo que un
+// cursor opaco no puede representar sin una consulta COUNT aparte de todos
+// modos).
+const (
+	DefaultPageSize = 20
+	MinPageSize     = 1
+	MaxPageSize     = 50
+)
+
+// MaxSearchLength acota el filtro de búsqueda por nombre del listado
+// paginado (DEC-103): coincide con NameMaxLength porque ningún name real
+// puede ser más largo, así que un término de búsqueda más largo nunca podría
+// producir una coincidencia — se rechaza en vez de aceptarlo en silencio y
+// devolver una lista vacía que parecería un error del buscador.
+const MaxSearchLength = NameMaxLength
 
 // Service es un servicio del catálogo de la barbería activa. PriceCents
 // representa el precio en centavos (entero exacto, nunca coma flotante,

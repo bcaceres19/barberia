@@ -1,6 +1,7 @@
 package staff_test
 
 import (
+	"bytes"
 	"context"
 	"strings"
 	"testing"
@@ -16,10 +17,14 @@ import (
 // tocar el repositorio, traducción de resultados a apperr), nunca SQL ni
 // RLS (eso vive en postgres/repository_test.go contra PostgreSQL real).
 type fakeRepository struct {
-	listFn   func(ctx context.Context, barbershopID string, cursor *staff.Cursor, limit int) (staff.ListResult, error)
-	getFn    func(ctx context.Context, barbershopID, barberID string) (staff.Barber, bool, error)
-	createFn func(ctx context.Context, barbershopID, fullName string, key idempotency.Key, fingerprint idempotency.Fingerprint) (staff.CreateResult, error)
-	renameFn func(ctx context.Context, barbershopID, barberID, fullName string) (staff.RenameResult, error)
+	listPageFn    func(context.Context, string, int, int) (staff.PageResult, error)
+	listFn        func(ctx context.Context, barbershopID string, cursor *staff.Cursor, limit int) (staff.ListResult, error)
+	getFn         func(ctx context.Context, barbershopID, barberID string) (staff.Barber, bool, error)
+	createFn      func(ctx context.Context, barbershopID, fullName string, key idempotency.Key, fingerprint idempotency.Fingerprint) (staff.CreateResult, error)
+	renameFn      func(ctx context.Context, barbershopID, barberID, fullName string) (staff.RenameResult, error)
+	putPhotoFn    func(ctx context.Context, barbershopID, barberID string, photo staff.Photo) (staff.PhotoResult, error)
+	getPhotoFn    func(ctx context.Context, barbershopID, barberID string) (staff.StoredPhoto, bool, error)
+	deletePhotoFn func(ctx context.Context, barbershopID, barberID string) (bool, error)
 
 	createCalls int
 }
@@ -39,6 +44,18 @@ func (f *fakeRepository) Create(ctx context.Context, barbershopID, fullName stri
 
 func (f *fakeRepository) Rename(ctx context.Context, barbershopID, barberID, fullName string) (staff.RenameResult, error) {
 	return f.renameFn(ctx, barbershopID, barberID, fullName)
+}
+
+func (f *fakeRepository) PutPhoto(ctx context.Context, barbershopID, barberID string, photo staff.Photo) (staff.PhotoResult, error) {
+	return f.putPhotoFn(ctx, barbershopID, barberID, photo)
+}
+
+func (f *fakeRepository) GetPhoto(ctx context.Context, barbershopID, barberID string) (staff.StoredPhoto, bool, error) {
+	return f.getPhotoFn(ctx, barbershopID, barberID)
+}
+
+func (f *fakeRepository) DeletePhoto(ctx context.Context, barbershopID, barberID string) (bool, error) {
+	return f.deletePhotoFn(ctx, barbershopID, barberID)
 }
 
 var _ staff.Repository = (*fakeRepository)(nil)
@@ -347,5 +364,124 @@ func TestList_InvalidCursor_RejectedWithoutTouchingRepository(t *testing.T) {
 	appErr, ok := apperr.As(err)
 	if !ok || appErr.Kind != apperr.KindInvalid {
 		t.Fatalf("expected apperr.KindInvalid, got %v", err)
+	}
+}
+
+// --- Fotografía (DEC-104) -------------------------------------------------
+
+const validBarberID = "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4"
+
+func TestSetPhoto_InvalidImage_RejectedWithoutTouchingRepository(t *testing.T) {
+	repo := &fakeRepository{putPhotoFn: func(context.Context, string, string, staff.Photo) (staff.PhotoResult, error) {
+		t.Fatal("repository must not be called for an invalid image")
+		return staff.PhotoResult{}, nil
+	}}
+	svc := staff.NewService(repo)
+
+	_, err := svc.SetPhoto(context.Background(), "shop-1", validBarberID, staff.PhotoContentTypeJPEG, []byte("no es una imagen"))
+	mustBeValidation(t, err)
+}
+
+func TestSetPhoto_MalformedBarberID_NotFoundWithoutTouchingRepository(t *testing.T) {
+	repo := &fakeRepository{putPhotoFn: func(context.Context, string, string, staff.Photo) (staff.PhotoResult, error) {
+		t.Fatal("repository must not be called for a malformed id")
+		return staff.PhotoResult{}, nil
+	}}
+	svc := staff.NewService(repo)
+
+	_, err := svc.SetPhoto(context.Background(), "shop-1", "no-uuid", staff.PhotoContentTypePNG, solidImage(t, "png", 128, 128))
+	mustBeNotFound(t, err)
+}
+
+func TestSetPhoto_BarberMissing_NotFound(t *testing.T) {
+	repo := &fakeRepository{putPhotoFn: func(context.Context, string, string, staff.Photo) (staff.PhotoResult, error) {
+		return staff.PhotoResult{Found: false}, nil
+	}}
+	svc := staff.NewService(repo)
+
+	_, err := svc.SetPhoto(context.Background(), "shop-1", validBarberID, staff.PhotoContentTypePNG, solidImage(t, "png", 128, 128))
+	mustBeNotFound(t, err)
+}
+
+func TestSetPhoto_Success_ForwardsValidatedPhotoAndReturnsBarber(t *testing.T) {
+	data := solidImage(t, "jpeg", 256, 256)
+	now := time.Now().UTC()
+	var got staff.Photo
+	repo := &fakeRepository{putPhotoFn: func(_ context.Context, shop, id string, photo staff.Photo) (staff.PhotoResult, error) {
+		got = photo
+		if shop != "shop-1" || id != validBarberID {
+			t.Fatalf("unexpected scope: %s %s", shop, id)
+		}
+		return staff.PhotoResult{Found: true, Barber: staff.Barber{ID: id, FullName: "Carlos", PhotoUpdatedAt: &now}}, nil
+	}}
+	svc := staff.NewService(repo)
+
+	barber, err := svc.SetPhoto(context.Background(), "shop-1", validBarberID, staff.PhotoContentTypeJPEG, data)
+	if err != nil {
+		t.Fatalf("SetPhoto: %v", err)
+	}
+	if got.ContentType != staff.PhotoContentTypeJPEG || !bytes.Equal(got.Data, data) {
+		t.Fatalf("the validated photo was not forwarded: %s", got.ContentType)
+	}
+	if barber.PhotoUpdatedAt == nil {
+		t.Fatal("expected photoUpdatedAt on the returned barber")
+	}
+}
+
+func TestPhoto_NotFound_CoversMissingBarberAndMissingPhotoAlike(t *testing.T) {
+	repo := &fakeRepository{getPhotoFn: func(context.Context, string, string) (staff.StoredPhoto, bool, error) {
+		return staff.StoredPhoto{}, false, nil
+	}}
+	svc := staff.NewService(repo)
+
+	_, err := svc.Photo(context.Background(), "shop-1", validBarberID)
+	mustBeNotFound(t, err)
+	_, err = svc.Photo(context.Background(), "shop-1", "no-uuid")
+	mustBeNotFound(t, err)
+}
+
+func TestRemovePhoto_MissingBarber_NotFound_ButMissingPhotoIsSuccess(t *testing.T) {
+	found := false
+	repo := &fakeRepository{deletePhotoFn: func(context.Context, string, string) (bool, error) { return found, nil }}
+	svc := staff.NewService(repo)
+
+	mustBeNotFound(t, svc.RemovePhoto(context.Background(), "shop-1", validBarberID))
+
+	found = true
+	if err := svc.RemovePhoto(context.Background(), "shop-1", validBarberID); err != nil {
+		t.Fatalf("removing when the barber exists must succeed, got %v", err)
+	}
+}
+
+func (f *fakeRepository) ListPage(ctx context.Context, shop string, page, size int) (staff.PageResult, error) {
+	if f.listPageFn != nil {
+		return f.listPageFn(ctx, shop, page, size)
+	}
+	return staff.PageResult{}, nil
+}
+
+func TestListPage_DefaultsBoundsAndCanceledContext(t *testing.T) {
+	for _, tc := range []struct{ page, size, wantPage, wantSize int }{{0, 0, 1, 20}, {2, 999, 2, 50}, {4, 1, 4, 1}} {
+		called := false
+		repo := &fakeRepository{listPageFn: func(_ context.Context, shop string, page, size int) (staff.PageResult, error) {
+			called = true
+			if shop != "shop-1" || page != tc.wantPage || size != tc.wantSize {
+				t.Fatal("wrong normalized parameters")
+			}
+			return staff.PageResult{}, nil
+		}}
+		svc := staff.NewService(repo)
+		if _, err := svc.ListPage(context.Background(), "shop-1", tc.page, tc.size); err != nil {
+			t.Fatal(err)
+		}
+		if !called {
+			t.Fatal("repository not called")
+		}
+		called = false
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		if _, err := svc.ListPage(ctx, "shop-1", tc.page, tc.size); err == nil || called {
+			t.Fatal("canceled context reached repository")
+		}
 	}
 }

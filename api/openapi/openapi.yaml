@@ -71,7 +71,8 @@
 # (DEC-060), que rehidrata la cookie HttpOnly al abrir o recargar la
 # aplicación. HU-021 agrega el tag Staff y las cuatro operaciones de
 # paths/staff.yaml: listar, registrar (con Idempotency-Key, RN-IDE-01),
-# consultar y renombrar barberos. HU-022 agrega el tag Catalog y las cuatro
+# consultar y renombrar barberos; DEC-104 les suma la fotografía opcional
+# (PUT/GET/DELETE /private/barbers/{barberId}/photo, cuerpo binario). HU-022 agrega el tag Catalog y las cuatro
 # operaciones de paths/catalog.yaml: listar, crear (con Idempotency-Key,
 # RN-IDE-01, y conflicto de nombre entre servicios activos, DEC-067),
 # consultar y editar servicios del catálogo básico. Los componentes de
@@ -81,7 +82,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.23.0
+  version: 0.26.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -164,6 +165,8 @@ paths:
     $ref: './paths/staff.yaml#/~1private~1barbers'
   /private/barbers/{barberId}:
     $ref: './paths/staff.yaml#/~1private~1barbers~1{barberId}'
+  /private/barbers/{barberId}/photo:
+    $ref: './paths/staff.yaml#/~1private~1barbers~1{barberId}~1photo'
   /private/services:
     $ref: './paths/catalog.yaml#/~1private~1services'
   /private/services/{serviceId}:
@@ -332,6 +335,16 @@ components:
       $ref: './components/responses/BarberUpdated.yaml'
     BarberValidationProblem:
       $ref: './components/responses/BarberValidationProblem.yaml'
+    BarberPhotoUpdated:
+      $ref: './components/responses/BarberPhotoUpdated.yaml'
+    BarberPhotoSuccess:
+      $ref: './components/responses/BarberPhotoSuccess.yaml'
+    BarberPhotoNotModified:
+      $ref: './components/responses/BarberPhotoNotModified.yaml'
+    BarberPhotoDeleted:
+      $ref: './components/responses/BarberPhotoDeleted.yaml'
+    BarberPhotoValidationProblem:
+      $ref: './components/responses/BarberPhotoValidationProblem.yaml'
     ServiceListSuccess:
       $ref: './components/responses/ServiceListSuccess.yaml'
     ServiceSuccess:

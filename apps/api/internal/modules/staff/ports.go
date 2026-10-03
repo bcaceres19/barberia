@@ -39,6 +39,14 @@ type RenameResult struct {
 	Found  bool
 }
 
+// PhotoResult es el desenlace de subir la fotografía de un barbero. Found en
+// false cubre un barbero inexistente o de otra barbería (CA-021-05), igual que
+// RenameResult.
+type PhotoResult struct {
+	Barber Barber
+	Found  bool
+}
+
 // Repository es el puerto de persistencia del módulo staff. El núcleo no
 // importa internal/platform/database ni pgx (CA-002-06): postgres/ traduce
 // entre este contrato y database.DB, exactamente igual que shops.Repository.
@@ -50,6 +58,7 @@ type RenameResult struct {
 // que esa orquestación vive en el adaptador postgres (que ya importa
 // database.DB), no en Service.
 type Repository interface {
+	ListPage(ctx context.Context, barbershopID string, page, pageSize int) (PageResult, error)
 	// List lee una página de barberos de barbershopID, ordenada por
 	// (created_at, id). cursor es nil para la primera página; limit ya
 	// llegó clamped al rango [MinListLimit, MaxListLimit] por Service. Cada
@@ -80,4 +89,26 @@ type Repository interface {
 	// duplica una fila (CA-021-04), y nunca renombra la de otra barbería
 	// (CA-021-05).
 	Rename(ctx context.Context, barbershopID, barberID, fullName string) (RenameResult, error)
+
+	// PutPhoto crea o reemplaza la fotografía del barbero (DEC-104) y devuelve
+	// al barbero ya con `PhotoUpdatedAt`. Reemplazar es idempotente por
+	// naturaleza: nunca duplica la fila. photo ya llegó validada por
+	// ValidatePhoto.
+	PutPhoto(ctx context.Context, barbershopID, barberID string, photo Photo) (PhotoResult, error)
+
+	// GetPhoto lee la fotografía. found=false cubre tanto "el barbero no existe
+	// o es de otra barbería" como "no tiene fotografía": para servir la imagen
+	// ambos casos son el mismo 404 (CA-021-05).
+	GetPhoto(ctx context.Context, barbershopID, barberID string) (photo StoredPhoto, found bool, err error)
+
+	// DeletePhoto borra la fotografía del barbero. found=false solo cuando el
+	// barbero no existe o es de otra barbería; quitar una fotografía que no
+	// existe es un éxito (idempotente).
+	DeletePhoto(ctx context.Context, barbershopID, barberID string) (found bool, err error)
+}
+
+// PageResult es el modo numerado de la tabla (DEC-107); cursor conserva ListResult.
+type PageResult struct {
+	Items                             []Barber
+	Page, PageSize, Total, TotalPages int
 }

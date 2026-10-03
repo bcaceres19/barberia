@@ -29,6 +29,13 @@ func errPriceMustBePositive() error {
 	return apperr.Validation("el precio debe ser mayor que cero")
 }
 
+// errSearchTooLong cubre DEC-103: el parámetro `search` del listado paginado
+// excede MaxSearchLength (= NameMaxLength), así que no podría igualar a
+// ningún name real.
+func errSearchTooLong() error {
+	return apperr.Invalid("el parámetro search excede el largo máximo")
+}
+
 // errServiceNotFound cubre tanto un servicio inexistente como uno de otra
 // barbería: el mismo Kind para ambos casos es lo que impide que la capa
 // HTTP los distinga (CA-022-06, RN-TEN-01), igual que el resto del backend.

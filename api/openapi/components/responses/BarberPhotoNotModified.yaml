@@ -1,0 +1,12 @@
+# Respuesta 304 de GET /private/barbers/{barberId}/photo (DEC-104): el
+# `If-None-Match` coincide con la versión vigente de la imagen. Sin cuerpo.
+description: La fotografía no cambió desde la versión que el cliente ya tiene.
+headers:
+  ETag:
+    description: Validador vigente de la imagen.
+    schema:
+      type: string
+  Cache-Control:
+    description: Misma política que la respuesta 200.
+    schema:
+      type: string

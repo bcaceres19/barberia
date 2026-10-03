@@ -23,10 +23,15 @@ import (
 // PostgreSQL real (esa cobertura vive en
 // internal/modules/staff/postgres/repository_test.go).
 type fakeRepository struct {
-	listFn   func(barbershopID string, cursor *staff.Cursor, limit int) (staff.ListResult, error)
-	getFn    func(barbershopID, barberID string) (staff.Barber, bool, error)
-	createFn func(barbershopID, fullName string, key idempotency.Key, fp idempotency.Fingerprint) (staff.CreateResult, error)
-	renameFn func(barbershopID, barberID, fullName string) (staff.RenameResult, error)
+	listPageFn func(context.Context, string, int, int) (staff.PageResult, error)
+	listFn     func(barbershopID string, cursor *staff.Cursor, limit int) (staff.ListResult, error)
+	getFn      func(barbershopID, barberID string) (staff.Barber, bool, error)
+	createFn   func(barbershopID, fullName string, key idempotency.Key, fp idempotency.Fingerprint) (staff.CreateResult, error)
+	renameFn   func(barbershopID, barberID, fullName string) (staff.RenameResult, error)
+
+	putPhotoFn    func(barbershopID, barberID string, photo staff.Photo) (staff.PhotoResult, error)
+	getPhotoFn    func(barbershopID, barberID string) (staff.StoredPhoto, bool, error)
+	deletePhotoFn func(barbershopID, barberID string) (bool, error)
 }
 
 func (f *fakeRepository) List(_ context.Context, barbershopID string, cursor *staff.Cursor, limit int) (staff.ListResult, error) {
@@ -43,6 +48,18 @@ func (f *fakeRepository) Create(_ context.Context, barbershopID, fullName string
 
 func (f *fakeRepository) Rename(_ context.Context, barbershopID, barberID, fullName string) (staff.RenameResult, error) {
 	return f.renameFn(barbershopID, barberID, fullName)
+}
+
+func (f *fakeRepository) PutPhoto(_ context.Context, barbershopID, barberID string, photo staff.Photo) (staff.PhotoResult, error) {
+	return f.putPhotoFn(barbershopID, barberID, photo)
+}
+
+func (f *fakeRepository) GetPhoto(_ context.Context, barbershopID, barberID string) (staff.StoredPhoto, bool, error) {
+	return f.getPhotoFn(barbershopID, barberID)
+}
+
+func (f *fakeRepository) DeletePhoto(_ context.Context, barbershopID, barberID string) (bool, error) {
+	return f.deletePhotoFn(barbershopID, barberID)
 }
 
 var _ staff.Repository = (*fakeRepository)(nil)
@@ -540,4 +557,11 @@ func TestHandlers_MissingPrincipal_Returns500Safely(t *testing.T) {
 	if rec.Code != http.StatusInternalServerError {
 		t.Fatalf("expected 500, got %d: %s", rec.Code, rec.Body.String())
 	}
+}
+
+func (f *fakeRepository) ListPage(ctx context.Context, shop string, page, size int) (staff.PageResult, error) {
+	if f.listPageFn != nil {
+		return f.listPageFn(ctx, shop, page, size)
+	}
+	return staff.PageResult{}, nil
 }

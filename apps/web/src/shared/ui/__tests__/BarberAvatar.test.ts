@@ -4,6 +4,7 @@
  * word ignored), sizes, photo branch, decorative aria-hidden.
  */
 import { describe, it, expect } from 'vitest'
+import { nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
 import BarberAvatar from '../BarberAvatar.vue'
@@ -26,7 +27,7 @@ describe('BarberAvatar', () => {
     expect(wrapper.get('.barber-avatar__monogram').text()).toBe('JR')
   })
 
-  it.each(['closed', 'option'] as const)('applies the %s size class', (size) => {
+  it.each(['closed', 'option', 'row', 'hero'] as const)('applies the %s size class', (size) => {
     const wrapper = mount(BarberAvatar, { props: { fullName: 'Julián Rodríguez', size } })
     expect(wrapper.classes()).toContain(`barber-avatar--${size}`)
   })
@@ -39,6 +40,19 @@ describe('BarberAvatar', () => {
     expect(img.attributes('src')).toBe('https://example.test/andres.jpg')
     expect(img.attributes('alt')).toBe('')
     expect(wrapper.find('.barber-avatar__monogram').exists()).toBe(false)
+  })
+
+  it('falls back to the monogram when the photo fails to load, and retries with a new version', async () => {
+    const wrapper = mount(BarberAvatar, {
+      props: { fullName: 'Andrés Beltrán', photoUrl: '/photo?v=1' },
+    })
+    await wrapper.get('.barber-avatar__photo').trigger('error')
+    await nextTick()
+    expect(wrapper.find('.barber-avatar__photo').exists()).toBe(false)
+    expect(wrapper.get('.barber-avatar__monogram').text()).toBe('AB')
+
+    await wrapper.setProps({ photoUrl: '/photo?v=2' })
+    expect(wrapper.get('.barber-avatar__photo').attributes('src')).toBe('/photo?v=2')
   })
 
   it('is always decorative: the adjacent visible name carries the accessible name', () => {

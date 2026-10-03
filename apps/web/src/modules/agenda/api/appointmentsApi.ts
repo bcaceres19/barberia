@@ -8,6 +8,7 @@
 // cliente HTTP compartido (nunca a schedulesApi.ts/settingsApi.ts,
 // privados de sus propios módulos): mismo criterio que
 // schedulesApi.fetchBarberSummaries frente a staffApi.
+import { barberPhotoUrl } from '@/shared/api/barberPhotoUrl'
 import { httpClient } from '@/shared/api/httpClient'
 import type { AppointmentDetail, HistoryEntry } from '../model/appointmentDetail'
 import type {
@@ -34,7 +35,14 @@ export async function fetchBarberSummaries(): Promise<FetchBarberSummariesOutcom
       params: { query: { limit: PICKER_LIMIT } },
     })
     if (response.ok && data) {
-      return { kind: 'success', items: data.items.map((b) => ({ id: b.id, fullName: b.fullName })) }
+      return {
+        kind: 'success',
+        items: data.items.map((b) => ({
+          id: b.id,
+          fullName: b.fullName,
+          photoUrl: barberPhotoUrl(b),
+        })),
+      }
     }
     return { kind: 'unexpected-error' }
   } catch {
@@ -81,8 +89,10 @@ async function fetchServiceNames(serviceIds: string[]): Promise<Map<string, stri
   const byId = new Map<string, string>()
   if (serviceIds.length === 0) return byId
   try {
+    // /private/services pagina por página, no por cursor (DEC-103): mismo
+    // límite de 50, ahora bajo el nombre pageSize en vez de limit.
     const { data, response } = await httpClient.GET('/private/services', {
-      params: { query: { limit: PICKER_LIMIT } },
+      params: { query: { pageSize: PICKER_LIMIT } },
     })
     if (response.ok && data) {
       for (const s of data.items) {

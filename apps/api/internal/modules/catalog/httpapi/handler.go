@@ -48,7 +48,8 @@ func writeUnknownFieldOrInvalidJSONProblem(w http.ResponseWriter, requestID stri
 		apperr.Invalid("cuerpo JSON inválido o con un campo desconocido"), requestID))
 }
 
-// ListServicesHandler expone GET /private/services (CA-022-01).
+// ListServicesHandler expone GET /private/services (CA-022-01), paginado
+// por número de página con búsqueda opcional por nombre (DEC-103).
 type ListServicesHandler struct {
 	service *catalog.CatalogService
 }
@@ -67,20 +68,31 @@ func (h *ListServicesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	query := r.URL.Query()
-	cursor := query.Get("cursor")
+	search := query.Get("search")
 
-	limit := 0
-	if raw := query.Get("limit"); raw != "" {
+	page := 0
+	if raw := query.Get("page"); raw != "" {
+		parsed, err := strconv.Atoi(raw)
+		if err != nil || parsed < 1 {
+			httpserver.WriteProblem(w, httpserver.Translate(
+				apperr.Invalid("el parámetro page debe ser un entero mayor o igual a 1"), requestID))
+			return
+		}
+		page = parsed
+	}
+
+	pageSize := 0
+	if raw := query.Get("pageSize"); raw != "" {
 		parsed, err := strconv.Atoi(raw)
 		if err != nil || parsed < 0 {
 			httpserver.WriteProblem(w, httpserver.Translate(
-				apperr.Invalid("el parámetro limit debe ser un entero positivo"), requestID))
+				apperr.Invalid("el parámetro pageSize debe ser un entero positivo"), requestID))
 			return
 		}
-		limit = parsed
+		pageSize = parsed
 	}
 
-	result, err := h.service.List(r.Context(), principal.BarbershopID, cursor, limit)
+	result, err := h.service.List(r.Context(), principal.BarbershopID, page, pageSize, search)
 	if err != nil {
 		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
 		return
@@ -450,10 +462,11 @@ func newServiceListResponse(result catalog.ListResult) ServiceListResponse {
 	for _, svc := range result.Items {
 		items = append(items, newServiceResponse(svc))
 	}
-	var next *string
-	if result.NextCursor != "" {
-		v := result.NextCursor
-		next = &v
+	return ServiceListResponse{
+		Items:      items,
+		Page:       result.Page,
+		PageSize:   result.PageSize,
+		Total:      result.Total,
+		TotalPages: result.TotalPages,
 	}
-	return ServiceListResponse{Items: items, NextCursor: next}
 }

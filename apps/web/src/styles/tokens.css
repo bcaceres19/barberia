@@ -71,12 +71,26 @@
   --color-danger-on-strong: #e3928d;
   --color-warning-on-strong: #dfb063;
   --color-success-on-strong: #9dc2a9;
+  /* Pendiente sobre tinta (agenda): amarillo suave, distinto del latón de
+     marca (#b8955a, más pardo) para no confundirse con los filetes. */
+  --color-pending-on-strong: #e6cf6e;
+  /* No se presentó sobre tinta (agenda): lila apagado, separado del amarillo
+     de pendiente, el verde de completado y el rosa de cancelado. */
+  --color-no-show-on-strong: #b7a6de;
   /* Información sobre tinta (avisos emergentes, DEC-095): el azul de
      --color-info-border aclarado hasta pasar AA sobre --color-surface-strong. */
   --color-info-on-strong: #9db7cf;
   /* Cuerpo de lectura sobre tinta: más claro que --color-on-strong-muted
      para el texto explicativo de un aviso, sin llegar al marfil del título. */
   --color-on-strong-soft: #cbd0d8;
+  /* Campos hundidos sobre tinta (select de barbero, selector de fecha): más
+     oscuros que --color-surface-strong, así leen como un hueco en la página y
+     no como un velo claro sobre el azul (el 5 % de marfil que usaban antes se
+     veía azul grisáceo). Los desplegables se levantan con #16243a. */
+  --color-field-strong: #0b1420;
+  --color-field-strong-border: rgb(244 240 231 / 12%);
+  /* Fila o día bajo el cursor dentro de un panel --color-field-strong. */
+  --color-field-strong-raised: #16243a;
 
   /* Color: estados de turno */
   --color-status-confirmed-surface: var(--color-info-surface);

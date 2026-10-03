@@ -9,8 +9,9 @@ import (
 	"system-barbershop/internal/platform/idempotency"
 )
 
-// Service implementa los cuatro casos de uso de HU-021: listar, consultar,
-// registrar y renombrar barberos de la barbería activa.
+// Service implementa los casos de uso de HU-021: listar, consultar,
+// registrar y renombrar barberos de la barbería activa; y, por DEC-104, subir,
+// leer y quitar su fotografía opcional.
 type Service struct {
 	repo Repository
 }
@@ -139,6 +140,74 @@ func (s *Service) Rename(ctx context.Context, barbershopID, barberID, fullNameRa
 	return result.Barber, nil
 }
 
+// SetPhoto sube o reemplaza la fotografía de un barbero (DEC-104). declaredType
+// es el Content-Type ya normalizado del cliente y data el cuerpo crudo: la
+// validación (formato real, tamaño, dimensiones) ocurre ANTES de tocar el
+// repositorio, así que una imagen inválida nunca llega a la base. Un barbero
+// inexistente o de otra barbería produce el mismo apperr.NotFound que Get.
+func (s *Service) SetPhoto(ctx context.Context, barbershopID, barberID, declaredType string, data []byte) (Barber, error) {
+	if err := ctx.Err(); err != nil {
+		return Barber{}, apperr.Internal(fmt.Errorf("staff: contexto cancelado antes de guardar la fotografía: %w", err))
+	}
+	if !LooksLikeBarberID(barberID) {
+		return Barber{}, errBarberNotFound()
+	}
+
+	photo, err := ValidatePhoto(declaredType, data)
+	if err != nil {
+		return Barber{}, err
+	}
+
+	result, err := s.repo.PutPhoto(ctx, barbershopID, barberID, photo)
+	if err != nil {
+		return Barber{}, apperr.Internal(fmt.Errorf("staff: guardar fotografía: %w", err))
+	}
+	if !result.Found {
+		return Barber{}, errBarberNotFound()
+	}
+	return result.Barber, nil
+}
+
+// Photo lee la fotografía de un barbero. Un barbero inexistente, de otra
+// barbería o sin fotografía produce el mismo apperr.NotFound (CA-021-05).
+func (s *Service) Photo(ctx context.Context, barbershopID, barberID string) (StoredPhoto, error) {
+	if err := ctx.Err(); err != nil {
+		return StoredPhoto{}, apperr.Internal(fmt.Errorf("staff: contexto cancelado antes de leer la fotografía: %w", err))
+	}
+	if !LooksLikeBarberID(barberID) {
+		return StoredPhoto{}, errBarberNotFound()
+	}
+
+	photo, found, err := s.repo.GetPhoto(ctx, barbershopID, barberID)
+	if err != nil {
+		return StoredPhoto{}, apperr.Internal(fmt.Errorf("staff: leer fotografía: %w", err))
+	}
+	if !found {
+		return StoredPhoto{}, errBarberNotFound()
+	}
+	return photo, nil
+}
+
+// RemovePhoto quita la fotografía de un barbero. Es idempotente: quitar una
+// fotografía inexistente no es un error mientras el barbero exista.
+func (s *Service) RemovePhoto(ctx context.Context, barbershopID, barberID string) error {
+	if err := ctx.Err(); err != nil {
+		return apperr.Internal(fmt.Errorf("staff: contexto cancelado antes de quitar la fotografía: %w", err))
+	}
+	if !LooksLikeBarberID(barberID) {
+		return errBarberNotFound()
+	}
+
+	found, err := s.repo.DeletePhoto(ctx, barbershopID, barberID)
+	if err != nil {
+		return apperr.Internal(fmt.Errorf("staff: quitar fotografía: %w", err))
+	}
+	if !found {
+		return errBarberNotFound()
+	}
+	return nil
+}
+
 // validateFullName recorta y valida fullNameRaw contra CA-021-03: vacío,
 // solo espacios o mayor de FullNameMaxLength caracteres se rechaza sin
 // tocar el repositorio. utf8.RuneCountInString cuenta caracteres Unicode,
@@ -153,4 +222,25 @@ func validateFullName(raw string) (string, error) {
 		return "", errFullNameTooLong()
 	}
 	return fullName, nil
+}
+
+// ListPage permite saltar a una página de la tabla sin descargar todo el equipo.
+func (s *Service) ListPage(ctx context.Context, shop string, page, size int) (PageResult, error) {
+	if err := ctx.Err(); err != nil {
+		return PageResult{}, apperr.Internal(err)
+	}
+	if page < 1 {
+		page = 1
+	}
+	if size <= 0 {
+		size = DefaultListLimit
+	}
+	if size > MaxListLimit {
+		size = MaxListLimit
+	}
+	result, err := s.repo.ListPage(ctx, shop, page, size)
+	if err != nil {
+		return PageResult{}, apperr.Internal(fmt.Errorf("staff: listar página: %w", err))
+	}
+	return result, nil
 }

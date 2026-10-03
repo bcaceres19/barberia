@@ -1,0 +1,9 @@
+# Respuesta 204 de DELETE /private/barbers/{barberId}/photo (DEC-104). Sin
+# cuerpo (docs/06-api/estandar-openapi.md sección 11).
+description: >
+  El barbero ya no tiene fotografía y vuelve a mostrarse con su monograma.
+  Quitar una fotografía que no existe también responde `204`: la operación es
+  idempotente. No afecta al nombre ni a ningún otro dato del barbero.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'

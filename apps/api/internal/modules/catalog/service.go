@@ -3,6 +3,7 @@ package catalog
 import (
 	"context"
 	"fmt"
+	"strings"
 	"unicode/utf8"
 
 	"system-barbershop/internal/platform/apperr"
@@ -23,36 +24,40 @@ func NewService(repo Repository) *CatalogService {
 	return &CatalogService{repo: repo}
 }
 
-// List lee una página de servicios de barbershopID. cursorToken es el valor
-// opaco que el cliente envió (vacío para la primera página); limit llega
-// crudo del parámetro de consulta y se clamped aquí a
-// [MinListLimit, MaxListLimit], con DefaultListLimit cuando el cliente no
-// lo especifica (limit <= 0). barbershopID llega siempre de un
+// List lee una página de servicios de barbershopID (CA-022-01, DEC-103).
+// page llega crudo del parámetro de consulta; page < 1 (el cliente no lo
+// especificó, o especificó algo inválido que la capa HTTP no rechazó ya)
+// se normaliza a la primera página. pageSize llega crudo y se clamped a
+// [MinPageSize, MaxPageSize], con DefaultPageSize cuando el cliente no lo
+// especifica (pageSize <= 0). searchRaw es el filtro de nombre tal como
+// llegó, sin recortar: se recorta aquí y se rechaza si excede
+// MaxSearchLength, porque ningún name real podría igualarlo (CA-022-04) y
+// aceptarlo en silencio devolvería una lista vacía indistinguible de un
+// error del propio buscador. barbershopID llega siempre de un
 // auth.Principal ya autenticado (RN-TEN-01).
-func (s *CatalogService) List(ctx context.Context, barbershopID string, cursorToken string, limit int) (ListResult, error) {
+func (s *CatalogService) List(ctx context.Context, barbershopID string, page, pageSize int, searchRaw string) (ListResult, error) {
 	if err := ctx.Err(); err != nil {
 		return ListResult{}, apperr.Internal(fmt.Errorf("catalog: contexto cancelado antes de listar servicios: %w", err))
 	}
 
+	if page < 1 {
+		page = 1
+	}
 	switch {
-	case limit <= 0:
-		limit = DefaultListLimit
-	case limit < MinListLimit:
-		limit = MinListLimit
-	case limit > MaxListLimit:
-		limit = MaxListLimit
+	case pageSize <= 0:
+		pageSize = DefaultPageSize
+	case pageSize < MinPageSize:
+		pageSize = MinPageSize
+	case pageSize > MaxPageSize:
+		pageSize = MaxPageSize
 	}
 
-	var cursor *Cursor
-	if cursorToken != "" {
-		decoded, err := DecodeCursor(cursorToken)
-		if err != nil {
-			return ListResult{}, err
-		}
-		cursor = &decoded
+	search := strings.TrimSpace(searchRaw)
+	if utf8.RuneCountInString(search) > MaxSearchLength {
+		return ListResult{}, errSearchTooLong()
 	}
 
-	result, err := s.repo.List(ctx, barbershopID, cursor, limit)
+	result, err := s.repo.List(ctx, barbershopID, page, pageSize, search)
 	if err != nil {
 		return ListResult{}, apperr.Internal(fmt.Errorf("catalog: listar servicios: %w", err))
 	}

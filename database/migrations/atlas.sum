@@ -1,4 +1,4 @@
-h1:EdYGvqgWIi9PlInwU/VcL/Fz4h/9qo3Ak1zsxA406xM=
+h1:ilUIlVSLVZVtGCa/2WzQoTeUgxGqTfZdFnyvcjOAdcE=
 20260807170000_create_tenant_foundation.sql h1:9KyewD/Xqtm6MjQ7MkTora3f47kjPOobGVfE2q66AUI=
 20260807170100_create_idempotency_record.sql h1:he0jfwTn3otdzgu/qHhFo7Z4ra9+1AL/mT2db82DOrU=
 20260811145252_harden_roles_and_definer_functions.sql h1:KhiZKVpFfL81T+f/73nMkVD0ndVWsCdM4ShqMHZfZ/g=
@@ -22,3 +22,4 @@ h1:EdYGvqgWIi9PlInwU/VcL/Fz4h/9qo3Ak1zsxA406xM=
 20260919200000_add_auth_recovery_resolve_phone.sql h1:XFVQYGYPQKHFa4sHb8TirWHRAmAHqApFe81eMyHX058=
 20260919210000_relax_auth_recovery_request_phone_requirement.sql h1:rNQv/IWNyy4crGRnf1KkXzrdTZOXLjtJ/4+CqlCdfpI=
 20260919220000_add_auth_phone_challenge_destination.sql h1:yXbzd6jTzLlL4867T6T+l+oG7P18TCTtfNH730MyeJI=
+20260930120000_create_barber_photo.sql h1:Fcv6osatxpU+ZcSE48jX26aQy+E0qqccljXxLhJ5nr0=

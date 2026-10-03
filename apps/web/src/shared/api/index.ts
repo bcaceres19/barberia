@@ -5,3 +5,4 @@
 // `httpClient.ts` para el comando reproducible de generación).
 export { httpClient } from './httpClient'
 export { isProblem, type Problem } from './problem'
+export { barberPhotoUrl } from './barberPhotoUrl'

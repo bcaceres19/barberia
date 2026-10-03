@@ -1,23 +1,50 @@
 <script setup lang="ts">
-// Pantalla "Barberos" (HU-021): consultar y listar el equipo de la
-// barbería activa, agregar un barbero y renombrarlo. Una barbería
-// unipersonal y una de cuatro personas usan exactamente el mismo
-// componente y el mismo estado de datos (CA-021-01/02): la lista con 1
-// elemento y la lista con 4 no tienen ninguna rama especial. Estados
-// discriminados: carga inicial, listo, vacío, error recuperable, guardando
-// (trabajo requerido §4.3/§4.4). Un error recuperable NUNCA borra lo que el
-// barbero ya escribió; solo un guardado exitoso confirmado por el servidor
-// cierra el diálogo. Cada guardado confirmado añade un aviso emergente
-// (DEC-095); los errores siguen dentro del diálogo, junto al formulario.
-import { onMounted, ref } from 'vue'
-import { useToast } from '@/shared/composables'
-import { BaseAlert, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
-import { createBarber, fetchBarbers, renameBarber } from '../api/staffApi'
+// Pantalla "Barberos" (HU-021, DEC-104): consultar y listar el equipo de la
+// barbería activa, agregar un barbero, renombrarlo y ponerle (o quitarle) una
+// fotografía. Una barbería unipersonal y una de cuatro personas usan
+// exactamente el mismo componente y el mismo estado de datos (CA-021-01/02): la
+// lista con 1 elemento y la lista con 4 no tienen ninguna rama especial.
+// Estados discriminados: carga inicial, listo, vacío, error recuperable,
+// guardando (trabajo requerido §4.3/§4.4). Un error recuperable NUNCA borra lo
+// que el barbero ya escribió ni la foto que ya eligió; solo un guardado exitoso
+// confirmado por el servidor cierra el diálogo. Cada guardado confirmado añade
+// un aviso emergente (DEC-095); los errores siguen dentro del diálogo, junto al
+// formulario. Mismo lenguaje visual que Servicios (tinta, latón, tabla hundida,
+// entrada escalonada, carga con el rombo) con el retrato del barbero como
+// protagonista.
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { PAGE_MIN_HOLD_MS, useMinHoldLoading, useToast } from '@/shared/composables'
+import {
+  BarberAvatar,
+  BaseAlert,
+  BaseButton,
+  BaseDialog,
+  BaseInput,
+  DiamondLoader,
+} from '@/shared/ui'
+import {
+  barberPhotoUrl,
+  createBarber,
+  fetchBarberPage,
+  removeBarberPhoto,
+  renameBarber,
+  uploadBarberPhoto,
+} from '../api/staffApi'
+import BarberPhotoField from '../components/BarberPhotoField.vue'
 import { newIdempotencyKey } from '../model/idempotencyKey'
 import type { Barber } from '../model/barber'
+import { NO_PHOTO_CHANGE, type PhotoDraft } from '../model/photoDraft'
 import { validateFullName } from '../validation/staffValidation'
 
 const toast = useToast()
+
+// Frases decorativas del rombo de carga: las de la casa, con voz de equipo.
+const LOADING_PHRASES = [
+  'Reuniendo al equipo',
+  'Afilando la navaja',
+  'Alineando los turnos',
+  'Todo a su hora',
+] as const
 
 type LoadStatus = 'loading' | 'ready' | 'load-error'
 type SaveStatus =
@@ -26,69 +53,271 @@ type SaveStatus =
   | 'validation-error'
   | 'idempotency-conflict'
   | 'not-found'
+  | 'photo-error'
   | 'network-error'
   | 'unexpected-error'
 
 const loadStatus = ref<LoadStatus>('loading')
 const barbers = ref<Barber[]>([])
-const nextCursor = ref<string | null>(null)
-const loadingMore = ref(false)
-
-// requestToken evita que una carga inicial obsoleta sobreescriba la lista
-// con datos viejos si el barbero recarga la sección antes de que la
-// primera respuesta llegue (mismo patrón que SettingsPage.vue).
+const currentPage = ref(1)
+const pageSize = ref(20)
+const totalItems = ref(0)
+const totalPages = ref(1)
+const pageLoading = ref(false)
+const pageFailed = ref(false)
+const justAddedId = ref<string | null>(null)
+const listRef = ref<HTMLElement | null>(null)
+const footerRef = ref<HTMLElement | null>(null)
+const pageRef = ref<HTMLElement | null>(null)
+const fitPending = ref(true)
+const viewportWidth = ref(window.innerWidth)
+const { start: startLoadingHold, hold: holdLoadingReveal } = useMinHoldLoading()
+const { start: startPageHold, hold: holdPageReveal } = useMinHoldLoading(PAGE_MIN_HOLD_MS)
 let requestToken = 0
+let lastRequestedPage = 1
+let pendingPaginationFocus = false
+let resizeTimer: ReturnType<typeof setTimeout> | undefined
+let observer: ResizeObserver | undefined
 
-async function load() {
+async function load(page = 1, initial = false) {
+  if (initial) pendingPaginationFocus = false
+  else if (
+    document.activeElement instanceof HTMLElement &&
+    document.activeElement.closest('.staff-page__pagination-nav')
+  )
+    pendingPaginationFocus = true
   const token = ++requestToken
-  loadStatus.value = 'loading'
-  const outcome = await fetchBarbers()
+  lastRequestedPage = page
+  if (initial) {
+    loadStatus.value = 'loading'
+    startLoadingHold()
+  } else {
+    pageLoading.value = true
+    pageFailed.value = false
+    startPageHold()
+  }
+  const outcome = await fetchBarberPage(page, pageSize.value)
   if (token !== requestToken) return
+  const reveal = () => {
+    if (token !== requestToken) return
+    pageLoading.value = false
+    if (outcome.kind === 'success') {
+      barbers.value = outcome.page.items
+      currentPage.value = outcome.page.page
+      pageSize.value = outcome.page.pageSize
+      totalItems.value = outcome.page.total
+      totalPages.value = outcome.page.totalPages
+      loadStatus.value = 'ready'
+      if (barbers.value.length === 0) fitPending.value = false
+    } else if (initial) loadStatus.value = 'load-error'
+    else pageFailed.value = true
+    if (pendingPaginationFocus) {
+      void nextTick(() => {
+        if (token !== requestToken) return
+        const active = document.activeElement
+        if (
+          active === document.body ||
+          (active instanceof HTMLElement && active.closest('.staff-page__pagination-nav'))
+        ) {
+          footerRef.value?.querySelector<HTMLButtonElement>('[aria-current="page"]')?.focus()
+        }
+        pendingPaginationFocus = false
+      })
+    }
+  }
+  if (initial) holdLoadingReveal(reveal)
+  else holdPageReveal(reveal)
+}
 
-  if (outcome.kind === 'success') {
-    barbers.value = outcome.page.items
-    nextCursor.value = outcome.page.nextCursor
-    loadStatus.value = 'ready'
+function scrollParent(el: HTMLElement): HTMLElement | null {
+  let node = el.parentElement
+  while (node) {
+    if (['auto', 'scroll'].includes(getComputedStyle(node).overflowY)) return node
+    node = node.parentElement
+  }
+  return null
+}
+
+// DEC-107: mide el visor real, las filas y el pie; no oculta overflow para
+// aparentar que caben filas. El padding cambia en móvil y también se mide.
+async function fitPage() {
+  await nextTick()
+  const list = listRef.value,
+    footer = footerRef.value,
+    page = pageRef.value
+  if (!list || !footer || !page) {
+    fitPending.value = false
     return
   }
-  loadStatus.value = 'load-error'
-}
-
-onMounted(load)
-
-function onRetryLoad() {
-  void load()
-}
-
-// Monograma accesible (especificacion-frontend-nava.md §4.4/§6): "Avatares
-// reales solo si el producto incorpora una fuente y política para fotos.
-// Hasta entonces se usa monograma accesible o ninguna imagen." Toma la
-// primera letra del primer y del último término del nombre completo (o
-// solo la primera si es un único término); decorativo, el nombre visible
-// de la fila ya da el nombre accesible.
-function initials(fullName: string): string {
-  const parts = fullName.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return ''
-  if (parts.length === 1) return parts[0]!.charAt(0).toUpperCase()
-  return (parts[0]!.charAt(0) + parts[parts.length - 1]!.charAt(0)).toUpperCase()
-}
-
-async function onLoadMore() {
-  if (loadingMore.value || !nextCursor.value) return
-  loadingMore.value = true
-  const outcome = await fetchBarbers(nextCursor.value)
-  loadingMore.value = false
-
-  if (outcome.kind === 'success') {
-    // Concatena sin duplicar: el cursor de una página nunca repite un id
-    // ya visto (backend, CA-021-02); esto solo evita un doble clic muy
-    // rápido en "Cargar más" desde volver a insertar la misma página.
-    const knownIDs = new Set(barbers.value.map((b) => b.id))
-    for (const item of outcome.page.items) {
-      if (!knownIDs.has(item.id)) barbers.value.push(item)
-    }
-    nextCursor.value = outcome.page.nextCursor
+  const parent = scrollParent(list)
+  if (!parent) {
+    fitPending.value = false
+    return
   }
+  const row = list.querySelector<HTMLElement>('.staff-page__row, .staff-page__skeleton-row')
+  const height = row?.getBoundingClientRect().height
+  if (!height) {
+    fitPending.value = false
+    return
+  }
+  const listRect = list.getBoundingClientRect(),
+    footerRect = footer.getBoundingClientRect()
+  const gap = Math.max(0, footerRect.top - listRect.bottom)
+  const bottomPadding = parseFloat(getComputedStyle(page).paddingBottom)
+  const available =
+    parent.clientHeight -
+    (listRect.top - parent.getBoundingClientRect().top + parent.scrollTop) -
+    gap -
+    footerRect.height -
+    bottomPadding -
+    2
+  const fitting = Math.max(1, Math.min(50, Math.floor(available / height)))
+  if (fitting !== pageSize.value) {
+    const firstIndex = (currentPage.value - 1) * pageSize.value
+    pageSize.value = fitting
+    const targetPage = Math.floor(firstIndex / fitting) + 1
+    // Recortar la primera carga evita un segundo lote grande en pantalla.
+    if (currentPage.value === 1 && !pageLoading.value && fitting <= barbers.value.length) {
+      barbers.value = barbers.value.slice(0, fitting)
+      totalPages.value = Math.max(1, Math.ceil(totalItems.value / fitting))
+    } else {
+      await load(targetPage)
+    }
+  }
+  parent.scrollTop = 0
+  fitPending.value = false
+}
+
+function scheduleFit() {
+  viewportWidth.value = window.innerWidth
+  if (resizeTimer !== undefined) clearTimeout(resizeTimer)
+  resizeTimer = setTimeout(() => {
+    void fitPage()
+  }, 120)
+}
+watch(
+  listRef,
+  async (el) => {
+    if (!el) return
+    await fitPage()
+    if (typeof ResizeObserver !== 'undefined') {
+      observer?.disconnect()
+      observer = new ResizeObserver(scheduleFit)
+      const parent = scrollParent(el)
+      if (parent) observer.observe(parent)
+      const header = pageRef.value?.querySelector('.staff-page__header')
+      if (header) observer.observe(header)
+    }
+  },
+  { flush: 'post' },
+)
+onMounted(() => {
+  void load(1, true)
+  window.addEventListener('resize', scheduleFit)
+})
+onUnmounted(() => {
+  ++requestToken
+  observer?.disconnect()
+  window.removeEventListener('resize', scheduleFit)
+  if (resizeTimer !== undefined) clearTimeout(resizeTimer)
+})
+function onRetryLoad() {
+  void load(1, true)
+}
+function rowIndex(index: number): number {
+  return index
+}
+function goToPage(page: number) {
+  if (page < 1 || page > totalPages.value || page === currentPage.value || pageLoading.value) return
+  void load(page)
+}
+const countLabel = computed(
+  () => `${totalItems.value} ${totalItems.value === 1 ? 'barbero' : 'barberos'}`,
+)
+const pageTokens = computed(() => {
+  const total = totalPages.value,
+    current = currentPage.value
+  if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1)
+  const pages = new Set(
+    viewportWidth.value <= 640
+      ? [1, total, current]
+      : [1, total, current, Math.max(1, current - 1), Math.min(total, current + 1)],
+  )
+  const tokens: (number | 'ellipsis')[] = []
+  for (const p of [...pages].sort((a, b) => a - b)) {
+    const last = tokens[tokens.length - 1]
+    if (typeof last === 'number' && p - last > 1) tokens.push('ellipsis')
+    tokens.push(p)
+  }
+  return tokens
+})
+
+// Fotografía (DEC-104): la URL solo existe cuando el barbero tiene una.
+function photoOf(barber: Barber): string | null {
+  return barberPhotoUrl(barber)
+}
+
+function hasPhoto(barber: Barber): boolean {
+  return barber.photoUpdatedAt !== null
+}
+
+// Monograma de la ficha del encabezado de un diálogo: la primera letra del
+// nombre, la misma inicial que abre el retrato sin foto de la fila.
+function firstInitial(fullName: string): string {
+  return fullName.trim().charAt(0).toUpperCase()
+}
+
+// Ritmo propio del rombo de estado, igual técnica que Servicios/Agenda: hash
+// estable del id para que la duración y el desfase del parpadeo no cambien al
+// volver a pintar la lista y las filas no latan sincronizadas.
+function diamondStyle(barber: Barber): Record<string, string> {
+  let hash = 0
+  for (const char of barber.id) hash = (hash * 31 + char.charCodeAt(0)) >>> 0
+  const spread = (hash % 1000) / 1000
+  const phase = ((hash >>> 10) % 1000) / 1000
+  const duration = 6 + spread * 5
+  return {
+    '--diamond-duration': `${duration.toFixed(1)}s`,
+    '--diamond-delay': `-${(phase * duration).toFixed(1)}s`,
+  }
+}
+
+// Fecha de alta. Zona fija de la moneda del contrato (COP, DEC-067), igual que
+// Servicios, para que la fecha no dependa del huso del equipo.
+function formatDate(iso: string | null | undefined): string {
+  if (!iso) return ''
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ''
+  return new Intl.DateTimeFormat('es-CO', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    timeZone: 'America/Bogota',
+  }).format(date)
+}
+
+function replaceInList(barber: Barber) {
+  const index = barbers.value.findIndex((b) => b.id === barber.id)
+  if (index !== -1) barbers.value[index] = barber
+}
+
+// --- Detalle --------------------------------------------------------------
+
+// detailTarget no se borra al cerrar: el diálogo sigue visible mientras dura su
+// animación de salida y vaciarlo aquí lo dejaría en blanco a media salida.
+const isDetailOpen = ref(false)
+const detailTarget = ref<Barber | null>(null)
+
+function openDetailDialog(barber: Barber) {
+  detailTarget.value = barber
+  isDetailOpen.value = true
+}
+
+function onDetailEdit() {
+  const barber = detailTarget.value
+  if (!barber) return
+  isDetailOpen.value = false
+  openRenameDialog(barber)
 }
 
 // --- Alta -----------------------------------------------------------------
@@ -98,6 +327,7 @@ const createFullName = ref('')
 const createFieldError = ref<string | undefined>(undefined)
 const createStatus = ref<SaveStatus>('idle')
 const createAttempted = ref(false)
+const createPhotoDraft = ref<PhotoDraft>(NO_PHOTO_CHANGE)
 // Clave de idempotencia del intento lógico vigente (RN-IDE-01): se genera
 // al abrir el diálogo y se REUTILIZA en cada reintento del mismo intento;
 // solo un envío exitoso o cerrar y reabrir el diálogo la renueva (mismo
@@ -109,6 +339,7 @@ function openCreateDialog() {
   createFieldError.value = undefined
   createStatus.value = 'idle'
   createAttempted.value = false
+  createPhotoDraft.value = NO_PHOTO_CHANGE
   createIdempotencyKey = newIdempotencyKey()
   isCreateOpen.value = true
 }
@@ -139,10 +370,7 @@ async function onSubmitCreate() {
 
   switch (outcome.kind) {
     case 'success':
-      barbers.value.unshift(outcome.barber)
-      isCreateOpen.value = false
-      createStatus.value = 'idle'
-      toast.success('Barbero agregado', { detail: 'Ya aparece en tu equipo.' })
+      await onBarberCreated(outcome.barber)
       return
     case 'validation-error':
       createStatus.value = 'validation-error'
@@ -158,7 +386,39 @@ async function onSubmitCreate() {
   }
 }
 
-// --- Renombrado -------------------------------------------------------
+// El barbero ya existe en el servidor: aunque la foto falle, el alta está
+// hecha. Por eso el diálogo se cierra igual y el fallo de la foto se avisa
+// aparte, con la salida (Editar) a la vista, en vez de dejar al barbero
+// atrapado en un formulario que ya no puede repetir el alta.
+async function onBarberCreated(created: Barber) {
+  let barber = created
+  const draft = createPhotoDraft.value
+  let photoFailed = false
+
+  if (draft.kind === 'new') {
+    const photo = await uploadBarberPhoto(created.id, draft.blob)
+    if (photo.kind === 'success') barber = photo.barber
+    else photoFailed = true
+  }
+
+  totalItems.value += 1
+  totalPages.value = Math.max(1, Math.ceil(totalItems.value / pageSize.value))
+  await load(totalPages.value)
+  justAddedId.value = barber.id
+  isCreateOpen.value = false
+  createStatus.value = 'idle'
+  createPhotoDraft.value = NO_PHOTO_CHANGE
+
+  if (photoFailed) {
+    toast.warning('Barbero agregado, pero no pudimos guardar la foto', {
+      detail: 'Ábrelo con «Editar» para intentarlo de nuevo.',
+    })
+    return
+  }
+  toast.success('Barbero agregado', { detail: 'Ya aparece en tu equipo.' })
+}
+
+// --- Edición (nombre y foto) ------------------------------------------------
 
 const isRenameOpen = ref(false)
 const renameTarget = ref<Barber | null>(null)
@@ -166,6 +426,7 @@ const renameFullName = ref('')
 const renameFieldError = ref<string | undefined>(undefined)
 const renameStatus = ref<SaveStatus>('idle')
 const renameAttempted = ref(false)
+const renamePhotoDraft = ref<PhotoDraft>(NO_PHOTO_CHANGE)
 
 function openRenameDialog(barber: Barber) {
   renameTarget.value = barber
@@ -173,6 +434,7 @@ function openRenameDialog(barber: Barber) {
   renameFieldError.value = undefined
   renameStatus.value = 'idle'
   renameAttempted.value = false
+  renamePhotoDraft.value = NO_PHOTO_CHANGE
   isRenameOpen.value = true
 }
 
@@ -185,161 +447,370 @@ function onRenameFullNameInput(value: string | number) {
   if (renameAttempted.value) renameFieldError.value = validateFullName(renameFullName.value)
 }
 
+type StepFailure = 'validation-error' | 'not-found' | 'network-error' | 'unexpected-error'
+
+// Un fallo de la foto (formato, tamaño) no es un error de campo del nombre: se
+// muestra con su propio mensaje. Los demás se traducen igual que el nombre.
+function failureStatus(kind: StepFailure, isPhoto: boolean): SaveStatus {
+  if (kind === 'validation-error') return isPhoto ? 'photo-error' : 'validation-error'
+  return kind
+}
+
+// Guardar aplica en orden lo que cambió: primero el nombre y luego la foto. Cada
+// paso confirmado actualiza al barbero de la lista y el objetivo del diálogo,
+// así un reintento tras un fallo a medias (el nombre ya quedó, la foto no)
+// nunca repite lo que ya se guardó. Sin cambios no envía nada.
 async function onSubmitRename() {
-  if (renameStatus.value === 'saving' || !renameTarget.value) return
+  const target = renameTarget.value
+  if (renameStatus.value === 'saving' || !target) return
 
   renameAttempted.value = true
   const error = validateFullName(renameFullName.value)
   renameFieldError.value = error
   if (error) return
 
-  renameStatus.value = 'saving'
-  const outcome = await renameBarber(renameTarget.value.id, renameFullName.value.trim())
+  const fullName = renameFullName.value.trim()
+  const nameChanged = fullName !== target.fullName
+  const draft = renamePhotoDraft.value
+  if (!nameChanged && draft.kind === 'none') {
+    isRenameOpen.value = false
+    return
+  }
 
-  switch (outcome.kind) {
-    case 'success': {
-      // Reemplaza por id sin duplicar ni reordenar de forma inestable
-      // (trabajo requerido §4.5): solo cambia fullName/updatedAt del
-      // elemento existente, en su misma posición.
-      const index = barbers.value.findIndex((b) => b.id === outcome.barber.id)
-      if (index !== -1) barbers.value[index] = outcome.barber
-      isRenameOpen.value = false
-      renameStatus.value = 'idle'
-      toast.success('Nombre actualizado', { detail: 'Guardamos el nuevo nombre del barbero.' })
+  renameStatus.value = 'saving'
+  let current = target
+
+  if (nameChanged) {
+    const renamed = await renameBarber(current.id, fullName)
+    if (renamed.kind !== 'success') {
+      renameStatus.value = failureStatus(renamed.kind, false)
       return
     }
-    case 'validation-error':
-      renameStatus.value = 'validation-error'
+    current = renamed.barber
+    renameTarget.value = current
+    replaceInList(current)
+  }
+
+  if (draft.kind === 'new') {
+    const uploaded = await uploadBarberPhoto(current.id, draft.blob)
+    if (uploaded.kind !== 'success') {
+      renameStatus.value = failureStatus(uploaded.kind, true)
       return
-    case 'not-found':
-      renameStatus.value = 'not-found'
+    }
+    current = uploaded.barber
+    renameTarget.value = current
+    replaceInList(current)
+  } else if (draft.kind === 'remove') {
+    const removed = await removeBarberPhoto(current.id)
+    if (removed.kind !== 'success') {
+      renameStatus.value = failureStatus(removed.kind, true)
       return
-    case 'network-error':
-      renameStatus.value = 'network-error'
-      return
-    case 'unexpected-error':
-      renameStatus.value = 'unexpected-error'
+    }
+    current = { ...current, photoUpdatedAt: null }
+    renameTarget.value = current
+    replaceInList(current)
+  }
+
+  isRenameOpen.value = false
+  renameStatus.value = 'idle'
+  renamePhotoDraft.value = NO_PHOTO_CHANGE
+
+  if (nameChanged && draft.kind === 'none') {
+    toast.success('Nombre actualizado', { detail: 'Guardamos el nuevo nombre del barbero.' })
+  } else if (!nameChanged && draft.kind === 'new') {
+    toast.success('Foto actualizada', { detail: 'El nuevo retrato ya aparece en tu equipo.' })
+  } else if (!nameChanged && draft.kind === 'remove') {
+    toast.success('Foto quitada', { detail: 'El barbero vuelve a mostrarse con su monograma.' })
+  } else {
+    toast.success('Barbero actualizado', { detail: 'Guardamos los cambios del barbero.' })
   }
 }
 </script>
 
 <template>
-  <section class="staff-page" aria-labelledby="staff-page-title">
+  <section ref="pageRef" class="staff-page" aria-labelledby="staff-page-title">
     <header class="staff-page__header">
-      <h1 id="staff-page-title" class="staff-page__title">Barberos</h1>
+      <div>
+        <h1 id="staff-page-title" class="staff-page__title">Barberos</h1>
+        <p class="staff-page__subtitle">Tu equipo en NAVA.</p>
+      </div>
+      <!-- Una acción principal por región: con el equipo vacío, el CTA vive en el
+           propio estado vacío y no se repite en la cabecera. -->
       <BaseButton
-        v-if="loadStatus === 'ready'"
+        v-if="loadStatus === 'ready' && barbers.length > 0"
         type="button"
         variant="primary"
-        class="staff-page__create-button"
+        class="staff-page__create"
         @click="openCreateDialog"
       >
-        <svg class="staff-page__button-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-        <span class="staff-page__create-label">Agregar barbero</span>
+        Agregar barbero
       </BaseButton>
     </header>
 
-    <div v-if="loadStatus === 'loading'" class="staff-page__state" role="status" aria-live="polite">
-      <p>Cargando el equipo…</p>
-    </div>
-
-    <BaseAlert
-      v-else-if="loadStatus === 'load-error'"
-      variant="warning"
-      title="No pudimos cargar el equipo"
-      role="alert"
-    >
-      Revisa tu conexión e inténtalo de nuevo.
-      <template #action>
-        <BaseButton variant="secondary" type="button" @click="onRetryLoad">Reintentar</BaseButton>
-      </template>
-    </BaseAlert>
-
-    <template v-else>
-      <div v-if="barbers.length === 0" class="staff-page__empty">
-        <span class="staff-page__empty-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
-            <circle cx="12" cy="8" r="4" />
-            <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
-          </svg>
-        </span>
-        <p>Aún no tienes <span>barberos registrados.</span></p>
-        <BaseButton type="button" variant="primary" @click="openCreateDialog">
-          <svg class="staff-page__button-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          Agregar barbero
-        </BaseButton>
-      </div>
-
-      <div v-else class="staff-page__records">
-        <div class="staff-page__column-labels" aria-hidden="true">
-          <span>NOMBRE</span>
-          <span>ACCIÓN</span>
-        </div>
-        <ul class="staff-page__list" aria-label="Barberos de la barbería">
-          <li v-for="barber in barbers" :key="barber.id" class="staff-page__item">
-            <span class="staff-page__item-avatar" aria-hidden="true">{{
-              initials(barber.fullName)
-            }}</span>
-            <span class="staff-page__item-name">{{ barber.fullName }}</span>
-            <button
-              type="button"
-              class="staff-page__edit-button"
-              :aria-label="`Editar ${barber.fullName}`"
-              @click="openRenameDialog(barber)"
-            >
-              <svg
-                class="staff-page__edit-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                aria-hidden="true"
-              >
-                <path d="m4 20 4.1-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z" />
-                <path d="m13.8 7.2 3 3" />
-              </svg>
-              <span class="staff-page__edit-label">Editar</span>
-              <svg
-                class="staff-page__chevron"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                aria-hidden="true"
-              >
-                <path d="m9 5 7 7-7 7" />
-              </svg>
-            </button>
+    <!-- Un solo fundido entre carga/error/listo (mismo criterio que Servicios):
+         sin esto el paso del rombo a la lista real sería un corte seco.
+         mode="out-in" espera a que lo anterior termine de desvanecerse. -->
+    <Transition name="staff-content" mode="out-in">
+      <div
+        v-if="loadStatus === 'loading'"
+        class="staff-page__state staff-page__loading"
+        role="status"
+        aria-live="polite"
+      >
+        <DiamondLoader label="Cargando el equipo…" layout="inline" :phrases="LOADING_PHRASES" />
+        <ul class="staff-page__list" aria-hidden="true">
+          <li v-for="n in 3" :key="n" class="staff-page__skeleton-row">
+            <span class="staff-page__skeleton-portrait" />
+            <span class="staff-page__skeleton-text">
+              <span class="staff-page__skeleton-bar staff-page__skeleton-bar--name" />
+              <span class="staff-page__skeleton-bar staff-page__skeleton-bar--meta" />
+            </span>
+            <span class="staff-page__skeleton-bar staff-page__skeleton-bar--button" />
           </li>
         </ul>
       </div>
 
-      <div v-if="nextCursor" class="staff-page__load-more">
-        <BaseButton
-          type="button"
-          variant="secondary"
-          :loading="loadingMore"
-          :disabled="loadingMore"
-          @click="onLoadMore"
-        >
-          Cargar más
-        </BaseButton>
+      <BaseAlert
+        v-else-if="loadStatus === 'load-error'"
+        variant="warning"
+        title="No pudimos cargar el equipo"
+        role="alert"
+      >
+        Revisa tu conexión e inténtalo de nuevo.
+        <template #action>
+          <BaseButton variant="secondary" type="button" @click="onRetryLoad">Reintentar</BaseButton>
+        </template>
+      </BaseAlert>
+
+      <div
+        v-else
+        class="staff-page__ready"
+        :class="{ 'staff-page__ready--fitting': fitPending }"
+        :aria-busy="pageLoading"
+      >
+        <div v-if="barbers.length === 0" class="staff-page__empty">
+          <span class="staff-page__empty-frame" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+              <circle cx="12" cy="8.5" r="3.6" />
+              <path d="M4.5 20.5c.6-3.9 3.6-6.2 7.5-6.2s6.9 2.3 7.5 6.2" />
+            </svg>
+          </span>
+          <p>Aún no tienes <span>barberos registrados.</span></p>
+          <p class="staff-page__empty-hint">
+            Agrega al primero de tu equipo: con su nombre y, si quieres, su foto.
+          </p>
+          <BaseButton type="button" variant="primary" @click="openCreateDialog">
+            Agregar barbero
+          </BaseButton>
+        </div>
+
+        <div v-else class="staff-page__table">
+          <div class="staff-page__columns" aria-hidden="true">
+            <span>Barbero</span><span>En NAVA desde</span><span>Foto</span><span>Acción</span>
+          </div>
+          <ul ref="listRef" class="staff-page__list" aria-label="Barberos de la barbería">
+            <li
+              v-for="(barber, index) in pageLoading ? [] : barbers"
+              :key="barber.id"
+              class="staff-page__row"
+              :class="{
+                'staff-page__row--new': barber.id === justAddedId,
+              }"
+              :style="{ '--row-index': rowIndex(index) }"
+            >
+              <div class="staff-page__item-heading">
+                <BarberAvatar
+                  class="staff-page__portrait"
+                  size="row"
+                  :full-name="barber.fullName"
+                  :photo-url="photoOf(barber)"
+                />
+                <div class="staff-page__item-text">
+                  <!-- El nombre es el disparador real del detalle: un <button>
+                       nativo para teclado y lector de pantalla; su ::after cubre
+                       TODA la fila, así clic o toque en cualquier parte la abren,
+                       y la acción (z-index superior) sigue siendo un botón
+                       independiente. -->
+                  <button
+                    type="button"
+                    class="staff-page__item-trigger"
+                    aria-haspopup="dialog"
+                    @click="openDetailDialog(barber)"
+                  >
+                    <span class="staff-page__item-name" :title="barber.fullName">{{
+                      barber.fullName
+                    }}</span>
+                    <span class="staff-page__item-chevron" aria-hidden="true">›</span>
+                  </button>
+                  <span class="staff-page__item-since-inline">
+                    Desde {{ formatDate(barber.createdAt) }}
+                  </span>
+                </div>
+              </div>
+              <span class="staff-page__item-meta staff-page__item-since">
+                {{ formatDate(barber.createdAt) }}
+              </span>
+              <span
+                class="staff-page__photo-state"
+                :class="{ 'staff-page__photo-state--has': hasPhoto(barber) }"
+                :style="diamondStyle(barber)"
+              >
+                {{ hasPhoto(barber) ? 'Con foto' : 'Sin foto' }}
+              </span>
+              <div class="staff-page__item-actions">
+                <slot name="barber-actions" :barber="barber" />
+                <BaseButton
+                  type="button"
+                  variant="secondary"
+                  :aria-label="`Editar ${barber.fullName}`"
+                  @click="openRenameDialog(barber)"
+                >
+                  Editar
+                </BaseButton>
+              </div>
+            </li>
+            <!-- Mientras llega la siguiente página, esqueletos con la forma de
+                 una fila en el lugar donde van a entrar. -->
+            <template v-if="pageLoading">
+              <li
+                v-for="n in Math.min(pageSize, Math.max(1, barbers.length))"
+                :key="`skeleton-${n}`"
+                class="staff-page__skeleton-row staff-page__skeleton-row--page"
+                aria-hidden="true"
+              >
+                <span class="staff-page__skeleton-portrait" />
+                <span class="staff-page__skeleton-text">
+                  <span class="staff-page__skeleton-bar staff-page__skeleton-bar--name" />
+                  <span class="staff-page__skeleton-bar staff-page__skeleton-bar--meta" />
+                </span>
+                <span class="staff-page__skeleton-bar staff-page__skeleton-bar--button" />
+              </li>
+            </template>
+          </ul>
+        </div>
+
+        <div v-if="barbers.length > 0" ref="footerRef" class="staff-page__footer">
+          <BaseAlert
+            v-if="pageFailed"
+            variant="warning"
+            title="No pudimos cargar esta página"
+            role="alert"
+          >
+            Revisa tu conexión e inténtalo de nuevo.
+          </BaseAlert>
+          <div class="staff-page__footer-bar">
+            <span class="staff-page__count" role="status">{{ countLabel }}</span>
+            <nav class="staff-page__pagination-nav" aria-label="Paginación de barberos">
+              <BaseButton
+                type="button"
+                variant="secondary"
+                aria-label="Página anterior"
+                :disabled="currentPage === 1 || pageLoading"
+                @click="goToPage(currentPage - 1)"
+                >‹</BaseButton
+              >
+              <template v-for="(token, index) in pageTokens" :key="`${token}-${index}`">
+                <span
+                  v-if="token === 'ellipsis'"
+                  class="staff-page__pagination-ellipsis"
+                  aria-hidden="true"
+                  >…</span
+                >
+                <BaseButton
+                  v-else
+                  type="button"
+                  :variant="token === currentPage ? 'primary' : 'secondary'"
+                  :aria-label="`Página ${token}`"
+                  :aria-current="token === currentPage ? 'page' : undefined"
+                  :disabled="pageLoading"
+                  @click="goToPage(token)"
+                  >{{ token }}</BaseButton
+                >
+              </template>
+              <BaseButton
+                type="button"
+                variant="secondary"
+                aria-label="Página siguiente"
+                :disabled="currentPage === totalPages || pageLoading"
+                @click="goToPage(currentPage + 1)"
+                >›</BaseButton
+              >
+            </nav>
+            <BaseButton
+              v-if="pageFailed"
+              type="button"
+              variant="secondary"
+              @click="load(lastRequestedPage)"
+              >Reintentar página</BaseButton
+            >
+          </div>
+        </div>
       </div>
-    </template>
+    </Transition>
+
+    <!-- Detalle: ficha del barbero con su retrato grande. Va ANTES de los demás
+         diálogos a propósito: al pulsar "Editar" se cierra este y se abre el de
+         edición en el mismo ciclo, y BaseDialog guarda como "foco previo" el
+         elemento activo al abrirse; con este orden el foco ya volvió a la fila
+         cuando el de edición lo lee. -->
+    <BaseDialog
+      v-model="isDetailOpen"
+      :title="detailTarget?.fullName"
+      size="sm"
+      content-class="staff-page__dialog staff-page__detail-dialog"
+    >
+      <div v-if="detailTarget" class="staff-page__ink staff-page__detail">
+        <div class="staff-page__detail-hero" :style="{ '--row-index': 0 }">
+          <span class="staff-page__detail-frame">
+            <BarberAvatar
+              size="hero"
+              :full-name="detailTarget.fullName"
+              :photo-url="photoOf(detailTarget)"
+            />
+          </span>
+          <p class="staff-page__detail-role">Barbero</p>
+        </div>
+
+        <dl class="staff-page__facts">
+          <div :style="{ '--row-index': 1 }">
+            <dt>En NAVA desde</dt>
+            <dd>{{ formatDate(detailTarget.createdAt) }}</dd>
+          </div>
+          <div :style="{ '--row-index': 2 }">
+            <dt>Foto</dt>
+            <dd>{{ hasPhoto(detailTarget) ? 'Con foto' : 'Sin foto' }}</dd>
+          </div>
+        </dl>
+      </div>
+      <!-- Pie fuera del área con scroll: "Cerrar"/"Editar" nunca quedan fuera de
+           la pantalla. -->
+      <template #footer>
+        <div class="staff-page__ink staff-page__detail-footer">
+          <BaseButton type="button" variant="secondary" @click="isDetailOpen = false">
+            Cerrar
+          </BaseButton>
+          <BaseButton type="button" variant="primary" @click="onDetailEdit">Editar</BaseButton>
+        </div>
+      </template>
+    </BaseDialog>
 
     <!-- Alta -->
     <BaseDialog
       v-model="isCreateOpen"
       title="Agregar barbero"
-      size="sm"
-      content-class="staff-page__dialog"
+      description="Aparece en tu equipo en cuanto lo guardes."
+      size="md"
+      content-class="staff-page__dialog staff-page__create-dialog"
       @close="onCreateDialogClosed"
     >
-      <form class="staff-page__create-form" novalidate @submit.prevent="onSubmitCreate">
+      <template #icon>
+        <span class="staff-page__dialog-chip" aria-hidden="true">+</span>
+      </template>
+      <form
+        class="staff-page__ink staff-page__form staff-page__create-form"
+        novalidate
+        @submit.prevent="onSubmitCreate"
+      >
         <BaseAlert
           v-if="createStatus === 'idempotency-conflict'"
           variant="danger"
@@ -365,6 +836,13 @@ async function onSubmitRename() {
           Inténtalo de nuevo en unos segundos. No perdiste lo que escribiste.
         </BaseAlert>
 
+        <BarberPhotoField
+          v-model:draft="createPhotoDraft"
+          :full-name="createFullName || 'Nuevo barbero'"
+          :current-url="null"
+          :disabled="createStatus === 'saving'"
+        />
+
         <BaseInput
           :model-value="createFullName"
           name="fullName"
@@ -373,6 +851,7 @@ async function onSubmitRename() {
           :maxlength="120"
           :disabled="createStatus === 'saving'"
           :error="createFieldError"
+          :class="{ 'staff-page__input--filled': !!createFullName }"
           @update:model-value="onCreateFullNameInput"
         />
 
@@ -396,11 +875,20 @@ async function onSubmitRename() {
     <BaseDialog
       v-model="isRenameOpen"
       title="Editar barbero"
-      size="sm"
-      content-class="staff-page__dialog"
+      size="md"
+      content-class="staff-page__dialog staff-page__edit-dialog"
       @close="onRenameDialogClosed"
     >
-      <form class="staff-page__rename-form" novalidate @submit.prevent="onSubmitRename">
+      <template #icon>
+        <span class="staff-page__dialog-chip" aria-hidden="true">{{
+          renameTarget ? firstInitial(renameTarget.fullName) : ''
+        }}</span>
+      </template>
+      <form
+        class="staff-page__ink staff-page__form staff-page__rename-form"
+        novalidate
+        @submit.prevent="onSubmitRename"
+      >
         <BaseAlert
           v-if="renameStatus === 'not-found'"
           variant="warning"
@@ -408,6 +896,14 @@ async function onSubmitRename() {
           role="alert"
         >
           Cierra este diálogo y recarga la lista.
+        </BaseAlert>
+        <BaseAlert
+          v-if="renameStatus === 'photo-error'"
+          variant="warning"
+          title="No pudimos guardar la foto"
+          role="alert"
+        >
+          Prueba con otra imagen o inténtalo de nuevo. Lo que escribiste sigue aquí.
         </BaseAlert>
         <BaseAlert
           v-if="renameStatus === 'network-error'"
@@ -426,6 +922,13 @@ async function onSubmitRename() {
           Inténtalo de nuevo en unos segundos. No perdiste lo que escribiste.
         </BaseAlert>
 
+        <BarberPhotoField
+          v-model:draft="renamePhotoDraft"
+          :full-name="renameFullName || renameTarget?.fullName || ''"
+          :current-url="renameTarget ? photoOf(renameTarget) : null"
+          :disabled="renameStatus === 'saving'"
+        />
+
         <BaseInput
           :model-value="renameFullName"
           name="fullName"
@@ -434,6 +937,7 @@ async function onSubmitRename() {
           :maxlength="120"
           :disabled="renameStatus === 'saving'"
           :error="renameFieldError"
+          :class="{ 'staff-page__input--filled': !!renameFullName }"
           @update:model-value="onRenameFullNameInput"
         />
 
@@ -456,69 +960,535 @@ async function onSubmitRename() {
 </template>
 
 <style scoped>
+.staff-page__ready--fitting {
+  visibility: hidden;
+}
+.staff-page__pagination-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.staff-page__pagination-ellipsis {
+  padding-inline: 4px;
+  color: var(--color-on-strong-muted);
+}
+
+/* Botones del paginador: mismo par dorado-sólido (página vigente)/tinta-
+   fantasma (el resto) que ya usa el CTA "Agregar servicio" y las acciones
+   de fila — no los valores por defecto de BaseButton, calibrados para
+   flotar sobre superficie clara. Cuadrados y compactos (34px, sin relleno
+   horizontal de sobra): un paginador numerado vive de la repetición, no
+   necesita el mismo padding que un botón de acción con texto largo. */
+.staff-page__pagination-nav :deep(.base-button) {
+  height: 34px;
+  min-width: 34px;
+  padding-inline: 10px;
+  font-size: var(--font-size-caption);
+  --btn-focus-ring: 0 0 0 2px var(--color-surface-strong), 0 0 0 4px var(--color-focus);
+}
+
+.staff-page__pagination-nav :deep(.base-button--primary) {
+  background-color: var(--color-brand-accent-surface);
+  color: var(--color-brand-accent-text);
+  border-color: var(--color-brand-accent-surface);
+}
+
+.staff-page__pagination-nav
+  :deep(.base-button--primary:hover:not(:disabled):not(.base-button--loading)) {
+  filter: brightness(92%);
+}
+
+.staff-page__pagination-nav :deep(.base-button--secondary) {
+  background-color: transparent;
+  color: var(--color-brand-accent-surface);
+  border-color: rgb(184 149 90 / 50%);
+  border-bottom-color: var(--color-brand-accent-surface);
+}
+
+.staff-page__pagination-nav
+  :deep(.base-button--secondary:hover:not(:disabled):not(.base-button--loading)) {
+  background-color: rgb(184 149 90 / 12%);
+  border-color: rgb(184 149 90 / 50%);
+}
+
+.staff-page__pagination-nav :deep(.base-button:disabled) {
+  opacity: 0.4;
+}
+
+/* Fundido entre carga/error/listo: --motion-duration-base, el mismo token que
+   el resto de transiciones de estado (estandar-diseno-visual.md §12). */
+.staff-content-enter-active,
+.staff-content-leave-active {
+  transition: opacity var(--motion-duration-base) var(--motion-easing-standard);
+}
+
+.staff-content-enter-from,
+.staff-content-leave-to {
+  opacity: 0;
+}
+
+/* Superficie tinta de punta a punta (estandar-diseno-visual.md §3), el mismo
+   canvas que Agenda y Servicios; columna de lectura de 820px centrada. */
 .staff-page {
+  --staff-width: 820px;
+  --staff-row-height: 84px;
+
   display: flex;
   flex-direction: column;
-  align-items: center;
-  width: 100%;
-  gap: var(--space-6);
-  max-width: none;
+  gap: 16px;
   min-height: 100%;
-  padding: 42px 48px 56px;
-  background-color: var(--color-surface);
+  padding: 34px 32px 48px;
+  color: var(--color-on-strong);
+  background: var(--color-surface-strong);
   box-sizing: border-box;
+}
+
+.staff-page__header,
+.staff-page__state,
+.staff-page__ready,
+.staff-page > :deep(.base-alert) {
+  width: min(100%, var(--staff-width));
+  margin-inline: auto;
+}
+
+.staff-page__ready {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .staff-page__header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  width: min(100%, 520px);
   gap: var(--space-4);
+  padding-bottom: 16px;
+  border-bottom: var(--border-width-normal) solid var(--color-field-strong-border);
 }
 
 .staff-page__title {
   margin: 0;
-  color: var(--color-text-primary);
   font-family: var(--font-display);
-  font-size: 32px;
-  font-weight: 400;
-  line-height: 38px;
+  font-size: var(--font-size-h1);
+  line-height: var(--font-size-h1-line);
+  font-weight: var(--font-weight-h1);
 }
 
-.staff-page__create-button {
-  min-width: 166px;
+@media (min-width: 1024px) {
+  .staff-page__title {
+    font-size: 40px;
+    line-height: 46px;
+  }
 }
 
-.staff-page__button-icon {
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
+.staff-page__subtitle {
+  margin: 4px 0 0;
+  font-size: var(--font-size-body-sm);
+  line-height: var(--font-size-body-sm-line);
+  color: var(--color-on-strong-muted);
+}
+
+/* CTA "Agregar barbero": el relleno tinta de BaseButton--primary es el MISMO
+   color que el fondo de la página, así que se levanta con el dorado de marca
+   (mismo criterio que "Agregar servicio"). */
+.staff-page__create.base-button {
+  height: 34px;
+  padding-inline: 14px;
+  font-size: 11px;
+}
+
+.staff-page__create :deep(.base-button__content)::before {
+  content: '+';
+  margin-right: 6px;
+}
+
+.staff-page__create.base-button--primary,
+.staff-page__empty :deep(.base-button--primary) {
+  background-color: var(--color-brand-accent-surface);
+  color: var(--color-brand-accent-text);
+  border-color: var(--color-brand-accent-surface);
+}
+
+.staff-page__create.base-button--primary:hover:not(:disabled):not(.base-button--loading),
+.staff-page__empty :deep(.base-button--primary:hover:not(:disabled):not(.base-button--loading)) {
+  filter: brightness(92%);
+}
+
+.staff-page__create.base-button--primary:active:not(:disabled):not(.base-button--loading),
+.staff-page__empty :deep(.base-button--primary:active:not(:disabled):not(.base-button--loading)) {
+  filter: brightness(84%);
 }
 
 .staff-page__state {
   padding: var(--space-4);
-  color: var(--color-text-secondary);
+  color: var(--color-on-strong-muted);
 }
 
+.staff-page__loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: 0;
+}
+
+/* Esqueletos: la forma de una fila real (retrato cuadrado, dos líneas de texto,
+   un botón) con el pulso de Servicios/Agenda. */
+.staff-page__skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: var(--staff-row-height);
+  padding: 16px;
+  overflow: hidden;
+  border-top: var(--border-width-normal) solid var(--color-field-strong-border);
+}
+
+.staff-page__skeleton-text {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.staff-page__skeleton-portrait,
+.staff-page__skeleton-bar {
+  display: block;
+  flex: 0 0 auto;
+  background-color: rgb(244 240 231 / 16%);
+  border-radius: 2px;
+  animation: staff-skeleton-pulse 1400ms ease-in-out infinite;
+}
+
+.staff-page__skeleton-portrait {
+  width: 52px;
+  height: 52px;
+}
+
+.staff-page__skeleton-bar--name {
+  width: 55%;
+  max-width: 180px;
+  height: 16px;
+}
+
+.staff-page__skeleton-bar--meta {
+  width: 96px;
+  height: 12px;
+  background-color: rgb(244 240 231 / 10%);
+}
+
+.staff-page__skeleton-bar--button {
+  width: 72px;
+  height: 34px;
+}
+
+.staff-page__skeleton-row--page {
+  animation: staff-row-enter 280ms var(--motion-easing-standard) both;
+}
+
+@keyframes staff-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Panel hundido sobre tinta (--color-field-strong): el mismo hueco en la página
+   que los campos de Agenda y la tabla de Servicios. */
+.staff-page__list {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  background-color: var(--color-field-strong);
+  border: var(--border-width-normal) solid var(--color-field-strong-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.staff-page__columns,
+.staff-page__row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 128px 96px 192px;
+  align-items: center;
+  gap: 12px;
+}
+
+.staff-page__columns {
+  min-height: 44px;
+  padding: 0 16px;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  color: var(--color-on-strong-muted);
+}
+
+.staff-page__columns span:last-child {
+  text-align: right;
+}
+
+.staff-page__row {
+  position: relative;
+  height: var(--staff-row-height);
+  padding: 16px;
+  overflow: hidden;
+  border-top: var(--border-width-normal) solid var(--color-field-strong-border);
+  transition: background-color var(--motion-duration-fast) var(--motion-easing-standard);
+  /* Entrada escalonada: cada fila arranca --row-index pasos después de la
+     anterior (tope de 8). `both` la mantiene oculta durante su retraso. */
+  animation: staff-row-enter 320ms var(--motion-easing-standard) both;
+  animation-delay: calc(min(var(--row-index, 0), 8) * 45ms);
+}
+
+@keyframes staff-row-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Barbero recién agregado: un velo de latón que se apaga, detrás del contenido. */
+.staff-page__row--new::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgb(184 149 90 / 34%), rgb(184 149 90 / 0%) 70%);
+  animation: staff-row-flash 1800ms var(--motion-easing-standard) 200ms both;
+}
+
+@keyframes staff-row-flash {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+.staff-page__item-heading {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 14px;
+}
+
+.staff-page__portrait {
+  transition: transform var(--motion-duration-base) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.staff-page__item-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.staff-page__item-name {
+  overflow: hidden;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body-lg);
+  font-weight: 500;
+  color: var(--color-on-strong);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: color var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+/* Disparador del detalle: botón sin cromo que hereda la tipografía del nombre.
+   Su ::after se estira sobre toda la fila (.staff-page__row es position:
+   relative), de modo que cualquier clic o toque la abre; la acción sube por
+   z-index y conserva su propio clic. */
+.staff-page__item-trigger {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  gap: 6px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.staff-page__item-trigger::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.staff-page__item-trigger:focus-visible {
+  outline: none;
+}
+
+.staff-page__item-trigger:focus-visible::after {
+  box-shadow: inset 0 0 0 2px var(--color-focus);
+}
+
+.staff-page__item-chevron {
+  flex: 0 0 auto;
+  color: var(--color-brand-accent-surface);
+  font-size: var(--font-size-body-lg);
+  line-height: 1;
+  opacity: 0.55;
+  transition:
+    opacity var(--motion-duration-fast) var(--motion-easing-standard),
+    transform var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+/* Solo con puntero real: en táctil :hover se queda pegado tras el toque. */
+@media (hover: hover) {
+  .staff-page__row:hover {
+    background-color: rgb(244 240 231 / 4%);
+  }
+
+  .staff-page__row:hover .staff-page__item-name {
+    color: var(--color-brand-accent-surface);
+  }
+
+  .staff-page__row:hover .staff-page__item-chevron {
+    opacity: 1;
+    transform: translateX(3px);
+  }
+
+  .staff-page__row:hover .staff-page__portrait {
+    transform: scale(1.06);
+  }
+}
+
+.staff-page__item-since-inline {
+  display: none;
+  color: var(--color-on-strong-muted);
+  font-size: var(--font-size-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.staff-page__item-meta {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  color: var(--color-on-strong-muted);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Estado de la foto como rombo con rótulo (mismo lenguaje que Activo/Inactivo
+   de Servicios y los estados de la agenda): sin caja, versalitas espaciadas y
+   un rombo que late con el ritmo propio de la fila. */
+.staff-page__photo-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-on-strong-muted);
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+  line-height: var(--font-size-caption-line);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.staff-page__photo-state::before {
+  content: '';
+  flex-shrink: 0;
+  width: 5px;
+  height: 5px;
+  transform: rotate(45deg);
+  background-color: currentColor;
+  animation: staff-diamond-blink var(--diamond-duration, 7s) ease-in-out var(--diamond-delay, 0s)
+    infinite;
+}
+
+.staff-page__photo-state--has {
+  color: var(--color-success-on-strong);
+}
+
+@keyframes staff-diamond-blink {
+  0%,
+  62%,
+  100% {
+    opacity: 1;
+    transform: rotate(45deg) scale(1);
+  }
+
+  80% {
+    opacity: 0.55;
+    transform: rotate(45deg) scale(0.85);
+  }
+}
+
+.staff-page__item-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* "Editar" usa BaseButton--secondary, calibrado para relleno blanco sobre
+   superficie clara: sobre tinta se quita el relleno y se sube el latón claro,
+   igual que las acciones de fila de Servicios. */
+.staff-page__item-actions :deep(.base-button) {
+  height: 34px;
+  padding-inline: 12px;
+  font-size: var(--font-size-caption);
+}
+
+.staff-page__item-actions :deep(.base-button--secondary) {
+  background-color: transparent;
+  color: var(--color-brand-accent-surface);
+  border-color: rgb(184 149 90 / 50%);
+  border-bottom-color: var(--color-brand-accent-surface);
+}
+
+.staff-page__item-actions
+  :deep(.base-button--secondary:hover:not(:disabled):not(.base-button--loading)) {
+  background-color: rgb(184 149 90 / 12%);
+  border-color: rgb(184 149 90 / 50%);
+}
+
+.staff-page__item-actions
+  :deep(.base-button--secondary:active:not(:disabled):not(.base-button--loading)) {
+  background-color: rgb(184 149 90 / 20%);
+}
+
+/* Vacío: marco de retrato vacío (esquinas de latón, borde punteado) sobre un
+   panel hundido, con el titular en la voz serif de la casa. */
 .staff-page__empty {
   display: flex;
-  min-height: 300px;
+  min-height: 320px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-5);
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  background: var(--color-surface);
-  color: var(--color-text-primary);
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-4);
+  background-color: var(--color-field-strong);
+  border: var(--border-width-normal) solid var(--color-field-strong-border);
+  border-radius: 3px;
   text-align: center;
+  animation: staff-row-enter 360ms var(--motion-easing-standard) both;
 }
 
 .staff-page__empty p {
   margin: 0;
+  color: var(--color-on-strong);
   font-family: var(--font-display);
   font-size: var(--font-size-h2);
   line-height: var(--font-size-h2-line);
@@ -528,231 +1498,562 @@ async function onSubmitRename() {
   display: block;
 }
 
-.staff-page__empty-icon {
+.staff-page__empty .staff-page__empty-hint {
+  max-width: 34ch;
+  color: var(--color-on-strong-muted);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-body-sm);
+  line-height: var(--font-size-body-sm-line);
+}
+
+.staff-page__empty-frame {
+  position: relative;
   display: grid;
-  width: 64px;
-  height: 64px;
+  width: 88px;
+  height: 88px;
   place-items: center;
-  border-radius: 50%;
-  background: var(--color-canvas);
+  color: var(--color-brand-accent-surface);
+  background-color: var(--color-surface-strong);
+  border: var(--border-width-normal) dashed rgb(184 149 90 / 45%);
+  border-radius: 2px;
 }
 
-.staff-page__empty-icon svg {
-  width: 32px;
-  height: 32px;
+.staff-page__empty-frame::before,
+.staff-page__empty-frame::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: var(--border-width-emphasis) solid var(--color-brand-accent-surface);
 }
 
-.staff-page__records {
-  width: min(100%, 520px);
+.staff-page__empty-frame::before {
+  top: -4px;
+  left: -4px;
+  border-right: 0;
+  border-bottom: 0;
 }
 
-.staff-page__column-labels {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  padding: 0 var(--space-2) var(--space-2);
-  color: var(--color-text-secondary);
-  font-family: var(--font-family-base);
-  font-size: 11px;
-  line-height: 16px;
+.staff-page__empty-frame::after {
+  right: -4px;
+  bottom: -4px;
+  border-top: 0;
+  border-left: 0;
 }
 
-.staff-page__list {
+.staff-page__empty-frame svg {
+  width: 44px;
+  height: 44px;
+  animation: staff-empty-breathe 3.2s ease-in-out infinite;
+}
+
+@keyframes staff-empty-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translateY(0);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+/* Pie de la tabla: conteo a la izquierda, "Cargar más" a la derecha. */
+.staff-page__footer {
   display: flex;
   flex-direction: column;
-  padding: 0;
-  margin: 0;
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  background: var(--color-surface);
-  list-style: none;
+  gap: var(--space-3);
 }
 
-.staff-page__item {
+.staff-page__footer-bar {
   display: flex;
-  min-height: 92px;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-4) var(--space-5);
-  border-bottom: var(--border-width-normal) solid var(--color-border-subtle);
+  justify-content: space-between;
+  gap: var(--space-3);
 }
 
-.staff-page__item:last-child {
-  border-bottom: none;
-}
-
-/* Avatar operativo 40px (estandar-diseno-visual.md §6.2): monograma
-   accesible, nunca un retrato ficticio. */
-.staff-page__item-avatar {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background-color: var(--color-canvas);
-  color: var(--color-text-primary);
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 400;
-}
-
-.staff-page__item-name {
-  flex: 1;
-  min-width: 0;
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 400;
-  color: var(--color-text-primary);
-  overflow-wrap: anywhere;
-}
-
-.staff-page__edit-button {
-  display: inline-flex;
-  min-width: var(--control-height);
-  min-height: var(--control-height);
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  padding: 0 var(--space-2);
-  border: 0;
-  background: transparent;
-  color: var(--color-text-primary);
-  font-family: var(--font-family-base);
+.staff-page__count {
   font-size: var(--font-size-body-sm);
-  cursor: pointer;
+  color: var(--color-on-strong-muted);
 }
 
-.staff-page__edit-button:hover {
-  color: var(--color-action-primary-hover);
-  background: var(--color-canvas);
+.staff-page__load-more.base-button {
+  height: 34px;
+  padding-inline: 14px;
+  font-size: var(--font-size-caption);
+  --btn-focus-ring: 0 0 0 2px var(--color-surface-strong), 0 0 0 4px var(--color-focus);
 }
 
-.staff-page__edit-button:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 2px var(--color-surface),
-    0 0 0 4px var(--color-focus);
+.staff-page__load-more.base-button--secondary {
+  background-color: transparent;
+  color: var(--color-brand-accent-surface);
+  border-color: rgb(184 149 90 / 50%);
+  border-bottom-color: var(--color-brand-accent-surface);
 }
 
-.staff-page__edit-icon {
-  width: 18px;
-  height: 18px;
+.staff-page__load-more.base-button--secondary:hover:not(:disabled):not(.base-button--loading) {
+  background-color: rgb(184 149 90 / 12%);
 }
 
-.staff-page__chevron {
-  display: none;
-  width: 18px;
-  height: 18px;
-}
-
-.staff-page__load-more {
+/* Diálogos (alta, edición, detalle): mismo tinte, filete de latón y campos
+   reglados que los de Servicios. Solo aplica dentro de .staff-page__ink (el
+   contenido que esta plantilla pone en el diálogo); el fondo, el encabezado y
+   el botón de cerrar —que BaseDialog renderiza en <Teleport to="body">— se
+   sobrescriben en el bloque sin "scoped" del final. */
+.staff-page__dialog-chip {
+  position: relative;
   display: flex;
-  width: min(100%, 520px);
+  flex: 0 0 auto;
+  align-items: center;
   justify-content: center;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  background-color: var(--color-brand-accent-surface);
+  color: var(--color-brand-accent-text);
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 1;
+  animation: staff-chip-pop var(--motion-duration-base) cubic-bezier(0.34, 1.56, 0.64, 1) 60ms both;
+}
+
+/* Un solo barrido de destello cuando la ficha termina de asentarse. */
+.staff-page__dialog-chip::after {
+  content: '';
+  position: absolute;
+  inset: -40% -60%;
+  background: linear-gradient(75deg, transparent 40%, rgb(244 240 231 / 50%) 50%, transparent 60%);
+  transform: translateX(-100%);
+  animation: staff-chip-glint 480ms cubic-bezier(0.5, 0, 0.3, 1) 260ms both;
+}
+
+@keyframes staff-chip-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.5) rotate(-20deg);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes staff-chip-glint {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.staff-page__ink {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  color: var(--color-on-strong);
+}
+
+.staff-page__ink :deep(.base-input) {
+  --input-bg: rgb(244 240 231 / 4%);
+  --input-border-color: rgb(244 240 231 / 12%);
+  --input-border-base-color: rgb(244 240 231 / 30%);
+  --input-focus-ring: 0 0 0 2px var(--color-surface-strong), 0 0 0 4px var(--color-focus);
+
+  color: var(--color-on-strong);
+}
+
+.staff-page__ink :deep(.base-input__label),
+.staff-page__ink :deep(.base-input__required) {
+  color: var(--color-brand-accent-surface);
+}
+
+.staff-page__ink :deep(.base-input__required) {
+  margin-left: 2px;
+}
+
+.staff-page__ink :deep(.base-input__hint) {
+  color: var(--color-on-strong-muted);
+}
+
+.staff-page__ink :deep(.base-input:hover:not(:disabled):not(.base-input--invalid)) {
+  border-color: rgb(244 240 231 / 26%);
+}
+
+/* El filete dorado inferior marca el campo YA RESUELTO (mismo criterio que
+   Agenda y Servicios). */
+.staff-page__ink :deep(.staff-page__input--filled .base-input) {
+  background-color: rgb(244 240 231 / 6%);
+  border-bottom-color: var(--color-brand-accent-surface);
+}
+
+.staff-page__ink :deep(.base-input:disabled),
+.staff-page__ink :deep(.base-input--disabled) {
+  background-color: var(--input-bg);
+  border-color: var(--input-border-color);
+  border-bottom-color: rgb(244 240 231 / 20%);
+  color: var(--color-on-strong-muted);
+  opacity: 0.45;
+}
+
+.staff-page__ink :deep(.base-input--invalid) {
+  background-color: rgb(227 146 141 / 7%);
+  border-color: var(--input-border-color);
+  border-bottom-color: var(--color-danger-on-strong);
+}
+
+.staff-page__ink :deep(.base-input__error) {
+  color: var(--color-danger-on-strong);
+}
+
+/* Botones del pie: par latón-sólido / tinta-fantasma calibrado para este fondo
+   (BaseButton está pensado para flotar sobre superficie clara). */
+.staff-page__ink :deep(.base-button) {
+  --btn-focus-ring: 0 0 0 2px var(--color-surface-strong), 0 0 0 4px var(--color-focus);
+}
+
+.staff-page__ink :deep(.base-button--primary) {
+  background-color: var(--color-brand-accent-surface);
+  color: var(--color-brand-accent-text);
+  border-color: var(--color-brand-accent-surface);
+}
+
+.staff-page__ink :deep(.base-button--primary:hover:not(:disabled):not(.base-button--loading)) {
+  filter: brightness(92%);
+}
+
+.staff-page__ink :deep(.base-button--primary:active:not(:disabled):not(.base-button--loading)) {
+  filter: brightness(84%);
+}
+
+.staff-page__ink :deep(.base-button--secondary) {
+  background-color: transparent;
+  color: var(--color-brand-accent-surface);
+  border-color: rgb(184 149 90 / 50%);
+  border-bottom-color: var(--color-brand-accent-surface);
+}
+
+.staff-page__ink :deep(.base-button--secondary:hover:not(:disabled):not(.base-button--loading)) {
+  background-color: rgb(184 149 90 / 12%);
+  border-color: rgb(184 149 90 / 50%);
+}
+
+.staff-page__ink :deep(.base-button--secondary:active:not(:disabled):not(.base-button--loading)) {
+  background-color: rgb(184 149 90 / 20%);
 }
 
 .staff-page__dialog-actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--space-3);
-  margin-top: var(--space-5);
+  margin-top: var(--space-2);
   flex-wrap: wrap;
 }
 
-.staff-page :deep(.staff-page__dialog .base-dialog__header) {
-  padding: 22px 24px;
+/* Detalle: retrato grande en un marco de esquinas de latón, el nombre ya está en
+   el encabezado del diálogo. Todo entra escalonado con --row-index un instante
+   después de la tarjeta, para que la ficha se arme en vez de aparecer de golpe. */
+.staff-page__detail-hero,
+.staff-page__facts > div {
+  animation: staff-detail-enter 380ms var(--motion-easing-standard) both;
+  animation-delay: calc(120ms + var(--row-index, 0) * 70ms);
 }
 
-.staff-page :deep(.staff-page__dialog .base-dialog__title) {
+.staff-page__detail-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) 0 var(--space-2);
+}
+
+.staff-page__detail-frame {
+  position: relative;
+  display: inline-flex;
+  padding: 10px;
+  background-color: var(--color-field-strong);
+  border: var(--border-width-normal) solid var(--color-field-strong-border);
+  border-radius: 2px;
+}
+
+.staff-page__detail-frame::before,
+.staff-page__detail-frame::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: var(--border-width-emphasis) solid var(--color-brand-accent-surface);
+}
+
+.staff-page__detail-frame::before {
+  top: -5px;
+  left: -5px;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.staff-page__detail-frame::after {
+  right: -5px;
+  bottom: -5px;
+  border-top: 0;
+  border-left: 0;
+}
+
+.staff-page__detail-role {
+  margin: 0;
+  color: var(--color-brand-accent-surface);
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.staff-page__facts {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.staff-page__facts > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  background-color: var(--color-field-strong);
+  border: var(--border-width-normal) solid var(--color-field-strong-border);
+  border-radius: var(--radius-sm);
+}
+
+.staff-page__facts dt {
+  color: var(--color-on-strong-muted);
+  font-size: var(--font-size-caption);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.staff-page__facts dd {
+  margin: 0;
   font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 400;
+  font-size: var(--font-size-h3);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
-@media (max-width: 1023px) {
-  .staff-page {
-    padding: 28px 24px 32px;
+.staff-page__detail-footer {
+  flex: 1;
+  flex-flow: row wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+@keyframes staff-detail-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@media (max-width: 480px) {
+/* Zona media 641–960px: las columnas fijas ya no caben junto al mínimo de la
+   de nombre; se acortan (sin apilar: el alto de fila es fijo). */
+@media (max-width: 960px) and (min-width: 641px) {
+  .staff-page__columns,
+  .staff-page__row {
+    grid-template-columns: minmax(120px, 1fr) 100px 84px 176px;
+    gap: 8px;
+  }
+
+  .staff-page__item-meta {
+    font-size: var(--font-size-body-sm);
+  }
+}
+
+@media (max-width: 640px) {
   .staff-page {
-    gap: var(--space-5);
-    align-items: stretch;
-    padding: 16px 0 28px;
+    --staff-row-height: 104px;
+    gap: 12px;
+    padding: 16px 16px 28px;
   }
 
   .staff-page__header {
-    padding: 0 var(--space-4);
+    padding-bottom: 10px;
   }
 
-  .staff-page__title {
-    font-size: 18px;
-    line-height: 28px;
-  }
-
-  .staff-page__create-button {
-    width: var(--control-height);
-    min-width: var(--control-height);
+  /* CTA compacto: un "+" en un círculo (el nombre accesible sigue siendo el
+     texto del botón). */
+  .staff-page__create.base-button {
+    width: 32px;
+    height: 32px;
     padding: 0;
-    border-radius: 50%;
+    overflow: hidden;
+    font-size: 0;
   }
 
-  .staff-page__create-label,
-  .staff-page__column-labels,
-  .staff-page__edit-label,
-  .staff-page__edit-icon {
+  .staff-page__create :deep(.base-button__content) {
+    font-size: 0;
+  }
+
+  .staff-page__create :deep(.base-button__content)::before {
+    margin: 0;
+    font-size: 21px;
+  }
+
+  .staff-page__columns,
+  .staff-page__photo-state,
+  .staff-page__item-since {
     display: none;
   }
 
-  .staff-page__records {
-    border-top: var(--border-width-normal) solid var(--color-border-subtle);
-  }
-
-  .staff-page__list {
-    border-width: 0 0 var(--border-width-normal);
-  }
-
-  .staff-page__item {
-    min-height: 64px;
-    gap: var(--space-3);
-    padding: 8px var(--space-4);
-  }
-
-  .staff-page__item-avatar {
-    width: 36px;
-    height: 36px;
-    font-size: 12px;
-  }
-
-  .staff-page__item-name {
-    font-family: var(--font-family-base);
-    font-size: 13px;
-    line-height: 18px;
-  }
-
-  .staff-page__edit-button {
-    width: var(--control-height);
-    padding: 0;
-    color: var(--color-text-secondary);
-  }
-
-  .staff-page__chevron {
+  /* En móvil el alta va bajo el nombre y el estado de la foto se ve en el detalle. */
+  .staff-page__item-since-inline {
     display: block;
   }
 
-  .staff-page__empty {
-    min-height: 320px;
-    border-left: 0;
-    border-right: 0;
+  .staff-page__row {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 44px 30px;
+    gap: var(--space-2);
+    height: var(--staff-row-height);
+    padding: 10px 12px;
   }
 
-  .staff-page__dialog-actions {
-    flex-wrap: nowrap;
+  .staff-page__skeleton-row {
+    height: var(--staff-row-height);
+    gap: 12px;
+    padding: 10px 12px;
+  }
+
+  .staff-page__skeleton-portrait {
+    width: 44px;
+    height: 44px;
+  }
+
+  .staff-page__item-heading {
+    gap: 12px;
+  }
+
+  .staff-page__item-name {
+    font-size: 15px;
+  }
+
+  .staff-page__item-actions :deep(.base-button) {
+    height: 30px;
+    padding-inline: 10px;
+  }
+
+  .staff-page__footer-bar {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .staff-page__facts {
+    grid-auto-flow: row;
   }
 
   .staff-page__dialog-actions :deep(.base-button) {
     flex: 1;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .staff-content-enter-active,
+  .staff-content-leave-active,
+  .staff-page__portrait,
+  .staff-page__item-name,
+  .staff-page__item-chevron {
+    transition: none;
+  }
+
+  .staff-page__row,
+  .staff-page__empty,
+  .staff-page__row--new::before,
+  .staff-page__skeleton-row--page,
+  .staff-page__photo-state::before,
+  .staff-page__empty-frame svg,
+  .staff-page__dialog-chip,
+  .staff-page__dialog-chip::after,
+  .staff-page__detail-hero,
+  .staff-page__facts > div {
+    animation: none;
+  }
+
+  .staff-page__skeleton-portrait,
+  .staff-page__skeleton-bar {
+    animation: none;
+    opacity: 0.8;
+  }
+}
+</style>
+
+<style>
+/* SIN "scoped" a propósito, por el mismo motivo que en Servicios: BaseDialog.vue
+   renderiza su tarjeta, encabezado, título, descripción y botón de cerrar en
+   <Teleport to="body">, así que dejan de ser descendientes de .staff-page en el
+   DOM real y un :deep() con alcance de componente nunca los alcanza. Estas
+   reglas seleccionan por el nombre de clase real (.staff-page__dialog es
+   exclusivo de esta pantalla). El !important es necesario porque la regla
+   propia de BaseDialog tiene la misma especificidad y el orden de inserción de
+   los <style> no está garantizado. Contenido a esta única pantalla. */
+.staff-page__dialog.base-dialog {
+  background-color: var(--color-surface-strong) !important;
+  border: var(--border-width-normal) solid var(--color-field-strong-border) !important;
+}
+
+/* Mismo rebote de apertura que ya usan los diálogos de Servicios y
+   BarberSelect: un elemento que llega y se asienta. */
+.staff-page__dialog.base-dialog--open {
+  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .staff-page__dialog.base-dialog--open {
+    transition-timing-function: var(--motion-easing-standard) !important;
+  }
+}
+
+.staff-page__dialog .base-dialog__header {
+  border-bottom-width: var(--border-width-emphasis) !important;
+  border-bottom-color: var(--color-brand-accent-surface) !important;
+}
+
+.staff-page__dialog .base-dialog__title {
+  color: var(--color-on-strong) !important;
+  overflow-wrap: anywhere;
+}
+
+.staff-page__dialog .base-dialog__description {
+  color: var(--color-on-strong-muted) !important;
+}
+
+.staff-page__detail-dialog .base-dialog__footer {
+  border-top-color: var(--color-field-strong-border) !important;
+}
+
+.staff-page__dialog .base-dialog__close {
+  color: var(--color-on-strong-muted) !important;
+}
+
+.staff-page__dialog .base-dialog__close:hover {
+  background-color: rgb(244 240 231 / 8%) !important;
+  color: var(--color-on-strong) !important;
+}
+
+.staff-page__dialog .base-dialog__close:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--color-surface-strong),
+    0 0 0 4px var(--color-focus) !important;
 }
 </style>

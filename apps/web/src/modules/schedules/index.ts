@@ -3,14 +3,18 @@
 // docs/03-desarrollo/estandar-frontend-vue.md: las rutas hijas privadas
 // (cargadas de forma diferida) y las entradas de navegación que las
 // representan. `schedules-bloqueos` ya existía en el router pero no tenía
-// entrada de navegación (Fase 2 del rediseño NAVA, issue #187): sin ella la
-// ruta solo era alcanzable escribiendo la URL a mano. Formulario,
+// entrada de navegación. DEC-105 integra los bloqueos en Barberos; la
+// ruta antigua se mantiene mediante redirección. Formulario,
 // validación y cliente API internos permanecen privados.
+import { defineAsyncComponent } from 'vue'
 import type { NavItem } from '@/shared/navigation/navItem'
 
 export { schedulesPrivateShellChildRoutes } from './routes'
 
 export const schedulesNavItems: NavItem[] = [
   { to: { name: 'schedules-horarios' }, label: 'Horarios' },
-  { to: { name: 'schedules-bloqueos' }, label: 'Bloqueos' },
 ]
+
+export const BarberBlocksPanel = defineAsyncComponent(
+  () => import('./components/BarberBlocksPanel.vue'),
+)

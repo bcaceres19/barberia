@@ -268,10 +268,16 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	getBarberHandler := staffhttpapi.NewGetBarberHandler(staffService)
 	createBarberHandler := staffhttpapi.NewCreateBarberHandler(staffService)
 	renameBarberHandler := staffhttpapi.NewRenameBarberHandler(staffService)
+	putBarberPhotoHandler := staffhttpapi.NewPutBarberPhotoHandler(staffService)
+	getBarberPhotoHandler := staffhttpapi.NewGetBarberPhotoHandler(staffService)
+	deleteBarberPhotoHandler := staffhttpapi.NewDeleteBarberPhotoHandler(staffService)
 	private.Get("/barbers", listBarbersHandler.ServeHTTP)
 	private.Post("/barbers", createBarberHandler.ServeHTTP)
 	private.Get("/barbers/{barberId}", getBarberHandler.ServeHTTP)
 	private.Patch("/barbers/{barberId}", renameBarberHandler.ServeHTTP)
+	private.Put("/barbers/{barberId}/photo", putBarberPhotoHandler.ServeHTTP)
+	private.Get("/barbers/{barberId}/photo", getBarberPhotoHandler.ServeHTTP)
+	private.Delete("/barbers/{barberId}/photo", deleteBarberPhotoHandler.ServeHTTP)
 
 	// HU-022: catálogo básico de servicios de la barbería activa.
 	// catalogpostgres.New recibe el mismo idempotency.SQLCoordinator real

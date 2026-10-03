@@ -44,6 +44,21 @@
         examples:
           porDefecto:
             value: 20
+      - name: page
+        in: query
+        description: Modo numerado (DEC-107). No combinar con cursor/limit; fuera de rango se ajusta a la última página.
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: pageSize
+        in: query
+        description: Filas del modo numerado. No combinar con cursor/limit.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
     responses:
       "200":
         $ref: '../components/responses/BarberListSuccess.yaml'
@@ -213,5 +228,144 @@
         $ref: '../components/responses/NotFoundProblem.yaml'
       "422":
         $ref: '../components/responses/BarberValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/barbers/{barberId}/photo:
+  put:
+    tags: [Staff]
+    summary: Subir o reemplazar la fotografía de un barbero
+    description: >
+      Guarda la fotografía del barbero (DEC-104), el retrato que la lista del
+      equipo y los selectores de barbero muestran en lugar del monograma. El
+      cuerpo es la imagen binaria (`image/jpeg` o `image/png`), no JSON ni
+      base64: el cliente la recorta a un cuadrado y la reduce a 512 px antes de
+      enviarla, y el servidor la valida (formato real por sus bytes, no por el
+      `Content-Type`; máximo 512 KiB; entre 64 y 1024 px por lado). Es un `PUT`:
+      repetir la misma imagen deja el mismo estado y reemplazar una fotografía
+      existente nunca crea una segunda, por eso no lleva `Idempotency-Key`.
+      Responde el barbero completo con el nuevo `photoUpdatedAt`. Un
+      identificador inexistente o de otra barbería responde el mismo `404`
+      que `GET /private/barbers/{barberId}` (`CA-021-05`).
+    operationId: putBarberPhoto
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01]
+    x-decisions: [DEC-019, DEC-024, DEC-047, DEC-104]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+    requestBody:
+      required: true
+      description: >
+        Imagen ya recortada y reducida por el cliente. Se descartan
+        metadatos: el servidor solo conserva los bytes validados y su tipo.
+      content:
+        image/jpeg:
+          schema:
+            type: string
+            format: binary
+        image/png:
+          schema:
+            type: string
+            format: binary
+    responses:
+      "200":
+        $ref: '../components/responses/BarberPhotoUpdated.yaml'
+      "400":
+        $ref: '../components/responses/PayloadTooLargeProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "422":
+        $ref: '../components/responses/BarberPhotoValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  get:
+    tags: [Staff]
+    summary: Leer la fotografía de un barbero
+    description: >
+      Sirve los bytes de la fotografía del barbero (DEC-104). Se usa como
+      `src` de una imagen: la cookie de sesión viaja sola y el tenant se
+      deriva de ella. Lleva `ETag` (derivado de `photoUpdatedAt`) y responde
+      `304` a una solicitud condicional con `If-None-Match`; el cliente añade
+      `photoUpdatedAt` como parámetro de consulta de la URL solo para
+      invalidar su propia caché, el servidor lo ignora. Un barbero sin
+      fotografía, inexistente o de otra barbería responde exactamente el mismo
+      `404`: la lista ya dice cuáles tienen fotografía con `photoUpdatedAt`.
+    operationId: getBarberPhoto
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01]
+    x-decisions: [DEC-019, DEC-024, DEC-047, DEC-104]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+      - name: If-None-Match
+        in: header
+        required: false
+        description: Validador `ETag` de la copia que el cliente ya tiene.
+        schema:
+          type: string
+    responses:
+      "200":
+        $ref: '../components/responses/BarberPhotoSuccess.yaml'
+      "304":
+        $ref: '../components/responses/BarberPhotoNotModified.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  delete:
+    tags: [Staff]
+    summary: Quitar la fotografía de un barbero
+    description: >
+      Borra la fotografía del barbero (DEC-104): la imagen se elimina, no se
+      oculta, y el barbero vuelve a mostrarse con su monograma. Es idempotente:
+      quitar una fotografía que no existe también responde `204`. No modifica
+      el nombre ni ningún otro dato. Un identificador inexistente o de otra
+      barbería responde el mismo `404` que el resto de operaciones del
+      barbero (`CA-021-05`).
+    operationId: deleteBarberPhoto
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01]
+    x-decisions: [DEC-019, DEC-024, DEC-047, DEC-104]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+    responses:
+      "204":
+        $ref: '../components/responses/BarberPhotoDeleted.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
       "500":
         $ref: '../components/responses/InternalErrorProblem.yaml'

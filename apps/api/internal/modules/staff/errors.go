@@ -20,3 +20,21 @@ func errFullNameTooLong() error {
 func errBarberNotFound() error {
 	return apperr.NotFound("no existe un barbero con ese identificador")
 }
+
+// Mensajes de la fotografía (DEC-104): describen la imagen, nunca el valor
+// recibido ni detalles del decodificador, seguros para el cliente (CA-003-02).
+func errPhotoRequired() error {
+	return apperr.Validation("la fotografía es obligatoria")
+}
+
+func errPhotoTooLarge() error {
+	return apperr.Validation("la fotografía excede el tamaño máximo de 512 KiB")
+}
+
+func errPhotoFormat() error {
+	return apperr.Validation("la fotografía debe ser una imagen JPEG o PNG válida")
+}
+
+func errPhotoDimensions() error {
+	return apperr.Validation("la fotografía debe medir entre 64 y 1024 píxeles por lado")
+}

@@ -1,4 +1,6 @@
 import { test, expect, type Page } from '@playwright/test'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 /**
  * Recorrido E2E de HU-021 (registro y listado de barberos). Corre contra
@@ -24,7 +26,7 @@ async function login(page: Page, email: string, password: string) {
   await page.getByLabel('Correo', { exact: true }).fill(email)
   await page.getByLabel('Contraseña', { exact: true }).fill(password)
   await page.getByRole('button', { name: 'Iniciar sesión' }).click()
-  await expect(page).toHaveURL(/\/panel$/)
+  await expect(page).toHaveURL(/\/panel(\?.*)?$/)
 }
 
 async function openBarberos(page: Page) {
@@ -123,6 +125,78 @@ test.describe('Registro y listado de barberos (HU-021)', () => {
 
     expect(renamed?.fullName).toBe(newName)
     await expect(page.getByText(originalName, { exact: true })).toHaveCount(0)
+  })
+
+  test('la fotografía se sube, se ve en la lista, persiste al recargar y se quita (DEC-104)', async ({
+    page,
+  }) => {
+    await login(page, EMAIL, PASSWORD)
+    await openBarberos(page)
+
+    const name = `Retrato E2E ${Date.now()}`
+    await page.getByRole('button', { name: 'Agregar barbero' }).click()
+    const createDialog = page.getByRole('dialog', { name: 'Agregar barbero' })
+    await createDialog.getByLabel('Nombre').fill(name)
+    // Una imagen sintética (sin personas reales) que el navegador recorta y
+    // reduce antes de enviarla.
+    await createDialog
+      .locator('[data-testid="barber-photo-input"]')
+      .setInputFiles(
+        path.join(
+          path.dirname(fileURLToPath(import.meta.url)),
+          'fixtures',
+          'retrato-sintetico.jpg',
+        ),
+      )
+    await expect(createDialog.getByText('Foto lista.')).toBeVisible()
+    await createDialog.getByRole('button', { name: 'Guardar' }).click()
+    await expect(createDialog).toBeHidden()
+
+    const row = page.locator('li', { hasText: name })
+    // La imagen se sirve de verdad desde el API (no un icono de imagen rota).
+    const photo = row.locator('img.barber-avatar__photo')
+    await expect(photo).toBeVisible()
+    await expect
+      .poll(() => photo.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth))
+      .toBeGreaterThan(0)
+
+    // El servidor guarda la fotografía y la sirve con su tipo real. (Sin
+    // recargar: esta barbería acumula barberos de corridas anteriores y el
+    // recién creado puede quedar fuera de la primera página, ver renombrar.)
+    const served = async (fullName: string) =>
+      page.evaluate(async (target) => {
+        const res = await fetch('/api/v1/private/barbers?limit=50', { credentials: 'include' })
+        const body = (await res.json()) as {
+          items: { id: string; fullName: string; photoUpdatedAt: string | null }[]
+        }
+        const barber = body.items.find((b) => b.fullName === target)
+        if (!barber) return null
+        const photoRes = await fetch(`/api/v1/private/barbers/${barber.id}/photo`, {
+          credentials: 'include',
+        })
+        return {
+          hasVersion: barber.photoUpdatedAt !== null,
+          status: photoRes.status,
+          type: photoRes.headers.get('content-type'),
+        }
+      }, fullName)
+    expect(await served(name)).toEqual({ hasVersion: true, status: 200, type: 'image/jpeg' })
+
+    // Quitarla devuelve el monograma.
+    const editButton = page
+      .locator('li', { hasText: name })
+      .getByRole('button', { name: `Editar ${name}` })
+    await editButton.click()
+    const editDialog = page.getByRole('dialog', { name: 'Editar barbero' })
+    await editDialog.getByRole('button', { name: 'Quitar foto' }).click()
+    await editDialog.getByRole('button', { name: 'Guardar' }).click()
+    await expect(editDialog).toBeHidden()
+    await expect(page.locator('li', { hasText: name }).locator('img')).toHaveCount(0)
+    expect(await served(name)).toEqual({
+      hasVersion: false,
+      status: 404,
+      type: 'application/problem+json',
+    })
   })
 
   test('un nombre vacío se rechaza sin persistir, y el diálogo conserva la interacción (CA-021-03)', async ({

@@ -339,25 +339,25 @@ Los estados pendientes no se implementan hasta tener historia, contrato e issue.
 | Pantalla | Prioridad | Composición | Acción principal |
 | --- | --- | --- | --- |
 | Configuración de barbería | `P0 existente` | Nombre, zona horaria y campos autorizados agrupados; una sección guarda por separado. | Guardar cambios |
-| Lista de barberos | `P0 existente` | Filas sobrias con nombre, estado y servicios/horario como enlaces contextuales. | Añadir barbero |
-| Alta de barbero | `P0 existente` | Formulario corto; identidad operativa, sin foto obligatoria. | Guardar barbero |
-| Renombrar/editar barbero | `P0 existente` | Mismo patrón del alta; impacto visible si el contrato lo exige. | Guardar cambios |
+| Lista de barberos | `P0 existente` | Tabla hundida sobre tinta (mismo lenguaje que Servicios): retrato cuadrado (o monograma), nombre, fecha de alta y rombo «Con foto»/«Sin foto». Clic o toque en la fila abre la ficha con el retrato grande; «Editar» conserva su propio clic. «Bloquear» abre una ventana modal amplia del profesional con sus bloqueos puntuales y series existentes (`DEC-105`); no hay un destino de navegación «Bloqueos» aparte. «Cargar más» con conteo y esqueletos; carga con el rombo NAVA, entrada escalonada y sin movimiento con `prefers-reduced-motion`. El barbero recién agregado se ilumina un instante. | Añadir barbero |
+| Alta de barbero | `P0 existente` | Formulario corto: espacio para la foto (elegir o soltar un archivo, recorte cuadrado desde el centro, vista previa) y nombre. La foto es opcional (`DEC-104`); si el alta se guarda pero la foto falla, el barbero queda creado y un aviso ofrece reintentar desde «Editar». | Guardar barbero |
+| Renombrar/editar barbero | `P0 existente` | Mismo patrón del alta: foto (cambiar, quitar, deshacer) y nombre. «Guardar» aplica en orden lo que cambió (nombre y luego foto); sin cambios no envía nada; un fallo a medias conserva lo ya guardado y lo escrito. | Guardar cambios |
 | Desactivar barbero | `P0 pendiente` | No se diseña como delete; requiere HU sobre impacto y retención. | Según decisión futura |
 
-La lista no muestra tarjetas con retratos ficticios. Puede usar filas, tarjetas o una composición equivalente; las acciones deben conservar nombre accesible y contexto. Servicios y horario abren su módulo correspondiente con barbero preseleccionado, sin duplicar formularios.
+La lista no muestra retratos ficticios: solo la fotografía que la persona subió o, sin ella, el monograma. Puede usar filas, tarjetas o una composición equivalente; las acciones deben conservar nombre accesible y contexto. Servicios y horario abren su módulo correspondiente con barbero preseleccionado, sin duplicar formularios.
 
 ### 7.7 Servicios y asignaciones
 
 | Pantalla / estado | Prioridad | Reglas NAVA |
 | --- | --- | --- |
 | Catálogo de servicios | `P0 existente` | Lista o tabla responsiva con nombre, duración, precio y estado; filtro activo/inactivo; acción “Nuevo servicio”. |
+| Detalle del servicio | `P0 existente` | La fila no muestra la descripción (puede ser larga); clic o toque en cualquier parte de la fila —el nombre es el disparador accesible— abre un diálogo con estado, duración, precio, descripción completa y fechas de registro/desactivación. «Cerrar» y «Editar» quedan fijos al pie y solo la descripción se desplaza. Entrada animada y escalonada; sin movimiento con `prefers-reduced-motion`. Las acciones de la fila conservan su propio clic. |
 | Crear servicio | `P0 existente` | Formulario corto; nombre, duración planificada y precio según contrato. |
 | Editar servicio | `P0 existente` | Muestra impacto de duración/precio según reglas; no promete cambiar turnos existentes. |
-| Desactivar servicio | `P0 existente` | Previsualiza cantidad real de turnos afectados; consecuencia y confirmación explícitas. |
-| Reactivar servicio | `P0 existente` | Confirmación ligera; resultado visible en la fila. |
+| Estado del servicio | `P0 existente` | Un solo botón «Cambiar estado» por fila abre un único diálogo que desactiva o reactiva según el estado actual. El interruptor del diálogo es la acción (no hay botón de confirmar aparte) y queda deshabilitado mientras se consulta o se guarda. Un cambio confirmado no cierra el diálogo: sigue abierto con el estado nuevo (y permite revertirlo) hasta pulsar «Salir». Al desactivar, el diálogo muestra antes la cantidad real de turnos afectados y el efecto; reactivar es ligero. El resultado es visible en la fila. |
 | Servicios por barbero | `P0 existente` | Selector de barbero + lista de servicios con asignación; rechazo claro al intentar retirar la última asignación activa. |
 
-No se usa un interruptor silencioso para desactivar. El precio conserva formato local, pero el almacenamiento y cálculo dependen del contrato. Una fila inactiva sigue legible y lleva la etiqueta “Inactivo”.
+No se usa un interruptor silencioso para desactivar: el interruptor solo vive dentro del diálogo «Estado del servicio», con el impacto y la consecuencia a la vista antes de poder tocarlo, nunca directamente en la fila. El precio conserva formato local, pero el almacenamiento y cálculo dependen del contrato. Una fila inactiva sigue legible y lleva la etiqueta “Inactivo”.
 
 ### 7.8 Horarios, excepciones y bloqueos
 
@@ -365,12 +365,12 @@ No se usa un interruptor silencioso para desactivar. El precio conserva formato 
 | --- | --- | --- |
 | Horario semanal | `P0 existente` | Selector de barbero, siete días en orden local, segmentos por día, cerrado explícito y resumen de zona horaria. |
 | Excepciones y festivos | `P0 existente` | Próximas excepciones por fecha, tipo y segmentos; crear/editar en formulario dedicado o panel. |
-| Lista de bloqueos | `P0 existente` | Próximos y pasados diferenciados; fecha, intervalo, tipo, recurrencia y estado. |
-| Crear bloqueo | `P0 existente` | Barbero, tipo, intervalo, recurrencia autorizada y resumen previo. |
+| Bloqueos en Barberos | `P0 existente` | Panel contextual «Tiempo fuera de agenda»: tipo, fecha, intervalo, motivo, origen, recurrencia y vigencia. Los intervalos pasados se distinguen con texto y contorno. Carga, vacío, error y paginación independientes para puntuales y series. |
+| Crear bloqueo | `P0 existente` | Desde «Bloquear» en la fila del barbero. Identidad del profesional en la ventana contextual; el formulario puntual conserva esa identidad en su nombre accesible y evita repetir la ficha. Tipo, intervalo o serie semanal, zona horaria de la barbería y resumen previo. Selectores desplegables con el lenguaje de la agenda, selección marcada y navegación por teclado; campos sobre tinta con borde discreto y línea base de latón. Fechas con el calendario personalizado compartido de la agenda y «Hoy» en la zona de la barbería. Horas con dos columnas simultáneas de hora y minutos: escritura numérica directa y ajuste con flechas del teclado, sin listas de números, formato de 24 horas y precisión de 00 a 59, borrador cancelable y confirmación explícita. Los paneles flotan fuera del scroll del modal, caben en el viewport y devuelven el foco al campo al cerrar. Pie fijo para cancelar/guardar, datos conservados ante error, cierre bloqueado durante guardado y movimiento reducido. |
 | Editar serie/ocurrencia | `P0 existente` | Selector explícito de alcance solo donde el backend/UI lo soporte; la UI actual puede tener seguimiento parcial y no se simulan controles pendientes. |
 | Turnos afectados por bloqueo | `P0 pendiente` | Primero confirma el bloqueo; luego lista cada turno y permite decisiones individuales. |
 
-En móvil, la semana no se presenta de una forma que vuelva ilegibles sus controles; puede usar secciones, lista u otra composición equivalente. No se usa drag para mover segmentos. Crear un bloqueo no cancela ni reprograma turnos existentes en silencio.
+En móvil, la semana no se presenta de una forma que vuelva ilegibles sus controles; puede usar secciones, lista u otra composición equivalente. No se usa drag para mover segmentos. Crear un bloqueo no cancela ni reprograma turnos existentes en silencio. `/panel/bloqueos` redirige a `/panel/barberos` (`DEC-105`, issue #286). La ventana conserva el foco, lo devuelve a «Bloquear» al cerrar y permite recorrer sus listas con scroll interno; en móvil las columnas se apilan. Los formularios se abren sobre ella y Escape cierra únicamente el diálogo superior. La composición ocurre en `app`: `staff` expone las filas y `schedules` conserva el cliente, validaciones y panel; no se duplican reglas ni formularios.
 
 ### 7.9 Configuración operativa futura del MVP
 
@@ -628,7 +628,6 @@ Esta especificación no decide:
 
 - el registro jurídico o dominio de la marca NAVA;
 - un logotipo gráfico adicional al wordmark tipográfico;
-- carga de fotos de barberos;
 - vista consolidada de varios barberos;
 - fórmula o catálogo de métricas;
 - personalización visual por tenant;

@@ -1,24 +1,52 @@
-# Colección paginada por cursor (docs/06-api/estandar-openapi.md §6.10): la
-# colección de servicios de una barbería no tiene un máximo de negocio
-# aprobado, así que no se pagina por offset ni se inventa un tope de
-# servicios por barbería (CA-022-01), mismo criterio que BarberListResponse.
+# Colección paginada por número de página (DEC-103): excepción explícita del
+# propietario a docs/06-api/estandar-openapi.md §6.10 ("listas potencialmente
+# crecientes usan paginación por cursor"), solo para este endpoint, porque el
+# panel privado necesita un paginador numerado con total exacto. El resto de
+# listas del contrato (BarberListResponse, AssignmentListResponse, etc.)
+# conserva paginación por cursor sin cambios.
 type: object
 description: >
   Página de servicios del catálogo de la barbería activa, ordenada de forma
-  estable por fecha de alta y luego por identificador.
+  estable por fecha de alta y luego por identificador, con conteo total y
+  filtro opcional de búsqueda por nombre.
 properties:
   items:
     type: array
     description: Servicios de esta página, en el orden estable del servidor.
     items:
       $ref: './ServiceResponse.yaml'
-  nextCursor:
-    type: [string, "null"]
-    description: >
-      Cursor opaco para pedir la siguiente página con el parámetro `cursor`.
-      `null` cuando esta página es la última.
+  page:
+    type: integer
+    minimum: 1
+    description: Número de página efectivamente usado (ya acotado por el servidor).
     examples:
-      - eyJjcmVhdGVkQXQiOiIyMDI2LTA4LTI0VDE1OjA1OjEwWiIsImlkIjoiMWEyYjNjNGQtNWU2Zi00NzA4LTlhMGItMWMyZDNlNGY1MDYxIn0=
+      - 1
+  pageSize:
+    type: integer
+    minimum: 1
+    maximum: 50
+    description: Tamaño de página efectivamente usado (ya acotado por el servidor).
+    examples:
+      - 20
+  total:
+    type: integer
+    minimum: 0
+    description: >
+      Cantidad total de servicios que coinciden con el filtro de búsqueda
+      vigente (o de toda la barbería, sin filtro), sin paginar.
+    examples:
+      - 2
+  totalPages:
+    type: integer
+    minimum: 1
+    description: >
+      Cantidad total de páginas para `total`/`pageSize`, con un piso de 1:
+      "página 1 de 1" es representable incluso cuando `total` es 0.
+    examples:
+      - 1
 required:
   - items
-  - nextCursor
+  - page
+  - pageSize
+  - total
+  - totalPages

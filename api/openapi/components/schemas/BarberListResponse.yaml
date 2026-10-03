@@ -1,12 +1,8 @@
-# Colección paginada por cursor (docs/06-api/estandar-openapi.md §6.10): la
-# colección de barberos de una barbería no tiene un máximo de negocio
-# aprobado (una barbería de cuatro personas y una futura de veinte usan
-# exactamente el mismo contrato, CA-021-02), así que no se pagina por offset
-# ni se inventa un tope de barberos por barbería.
 type: object
 description: >
   Página de barberos de la barbería activa, ordenada de forma estable por
-  fecha de alta y luego por identificador.
+  fecha de alta y luego por identificador. Conserva cursor por defecto y admite
+  modo numerado con page/pageSize (DEC-107); nextCursor es null en modo numerado.
 properties:
   items:
     type: array
@@ -20,6 +16,23 @@ properties:
       `null` cuando esta página es la última.
     examples:
       - eyJjcmVhdGVkQXQiOiIyMDI2LTA4LTIzVDE1OjA0OjA1WiIsImlkIjoiOGYzYWMyYjEtZTRkNS00NmY2LWE3YzgtZDllMGYxYTJiM2M0In0=
+  page:
+    type: integer
+    minimum: 1
+    description: Página efectiva, presente únicamente en modo numerado.
+  pageSize:
+    type: integer
+    minimum: 1
+    maximum: 50
+    description: Tamaño efectivo, presente únicamente en modo numerado.
+  total:
+    type: integer
+    minimum: 0
+    description: Total del tenant, presente únicamente en modo numerado.
+  totalPages:
+    type: integer
+    minimum: 1
+    description: Total de páginas, presente únicamente en modo numerado.
 required:
   - items
   - nextCursor

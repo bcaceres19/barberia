@@ -1,0 +1,35 @@
+# 422 de PUT /private/barbers/{barberId}/photo (DEC-104): la imagen no cumple
+# el formato, el tamaño o las dimensiones admitidos. Distinto del 400 de un
+# cuerpo ilegible o por encima del límite general de 1 MiB.
+description: >
+  El cuerpo no es una fotografía admisible: vacío, mayor de 512 KiB, no es una
+  imagen JPEG o PNG real, su formato no coincide con el `Content-Type` o mide
+  menos de 64 o más de 1024 píxeles por lado. No se persistió ningún cambio.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      formatoNoAdmitido:
+        summary: No es una imagen JPEG o PNG válida
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: la fotografía debe ser una imagen JPEG o PNG válida
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      demasiadoPesada:
+        summary: Mayor de 512 KiB
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: la fotografía excede el tamaño máximo de 512 KiB
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

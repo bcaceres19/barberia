@@ -34,7 +34,10 @@ type serviceBody struct {
 
 type serviceListBody struct {
 	Items      []serviceBody `json:"items"`
-	NextCursor *string       `json:"nextCursor"`
+	Page       int           `json:"page"`
+	PageSize   int           `json:"pageSize"`
+	Total      int           `json:"total"`
+	TotalPages int           `json:"totalPages"`
 }
 
 func doListServicesRequest(router http.Handler, rawToken, query string) *httptest.ResponseRecorder {
@@ -128,7 +131,7 @@ func TestCatalog_HTTP_CreateGetListUpdateReload_FullJourney(t *testing.T) {
 	}
 
 	// Aparece en el listado.
-	listRec := doListServicesRequest(router, raw, "limit=50")
+	listRec := doListServicesRequest(router, raw, "pageSize=50")
 	var page serviceListBody
 	if err := json.Unmarshal(listRec.Body.Bytes(), &page); err != nil {
 		t.Fatalf("decode list response: %v", err)
@@ -233,7 +236,7 @@ func TestCatalog_HTTP_TwoTenants_CrossAccessAlwaysReturns404WithoutLeaking(t *te
 		t.Fatalf("CA-022-06: shopB's service name changed via shopA's failed edit attempt, got %q", confirmB.Name)
 	}
 
-	listFromA := doListServicesRequest(router, rawA, "limit=50")
+	listFromA := doListServicesRequest(router, rawA, "pageSize=50")
 	var pageA serviceListBody
 	if err := json.Unmarshal(listFromA.Body.Bytes(), &pageA); err != nil {
 		t.Fatalf("decode list: %v", err)

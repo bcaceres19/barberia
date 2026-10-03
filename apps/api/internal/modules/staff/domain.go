@@ -33,6 +33,9 @@ type Barber struct {
 	FullName  string
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	// PhotoUpdatedAt es nil mientras el barbero no tiene fotografía (DEC-104):
+	// el cliente usa el monograma. Cuando existe, es la versión de la imagen.
+	PhotoUpdatedAt *time.Time
 }
 
 // barberIDPattern es la misma forma canónica 8-4-4-4-12 que

@@ -1,13 +1,14 @@
-// Espejo tipado del cuerpo real del contrato (CA-021-01/02/07): exactamente
-// id, fullName, createdAt, updatedAt. La pantalla administra únicamente
-// nombres (trabajo requerido §4.6): createdAt/updatedAt no se muestran,
-// pero viajan en el modelo por si un consumidor futuro los necesita, sin
-// inventar un campo que el contrato no declare.
+// Espejo tipado del cuerpo real del contrato (CA-021-01/02/07, DEC-104):
+// id, fullName, createdAt, updatedAt y photoUpdatedAt. `photoUpdatedAt` es
+// null mientras el barbero no tiene fotografía (la pantalla muestra su
+// monograma) y, cuando existe, la versión de la imagen: se añade a la URL para
+// que un cambio de fotografía nunca se sirva desde una caché vieja.
 export interface Barber {
   id: string
   fullName: string
   createdAt: string
   updatedAt: string
+  photoUpdatedAt: string | null
 }
 
 /** Página paginada por cursor (CA-021-02): mismo `items`/`nextCursor` que
@@ -15,4 +16,12 @@ export interface Barber {
 export interface BarberPage {
   items: Barber[]
   nextCursor: string | null
+}
+
+export interface NumberedBarberPage {
+  items: Barber[]
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
 }

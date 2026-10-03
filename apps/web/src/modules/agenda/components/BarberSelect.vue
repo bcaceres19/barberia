@@ -39,12 +39,15 @@ interface Props {
   /** Texto visible mientras no hay barbero elegido. El código de cada
    * pantalla lo escribe; este componente no lo redacta. */
   placeholder?: string
+  /** Campo hundido y de 40 px para una barra de controles (agenda diaria). */
+  compact?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   triggerId: 'daily-agenda-barber-select',
   placeholder: 'Selecciona un barbero',
+  compact: false,
 })
 
 const emit = defineEmits<{
@@ -157,7 +160,7 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
 </script>
 
 <template>
-  <div ref="rootRef" class="barber-select">
+  <div ref="rootRef" class="barber-select" :class="{ 'barber-select--compact': compact }">
     <button
       :id="triggerId"
       ref="triggerRef"
@@ -170,7 +173,12 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
       @click="toggle"
       @keydown="onTriggerKeydown"
     >
-      <BarberAvatar v-if="selectedBarber" :full-name="selectedBarber.fullName" size="closed" />
+      <BarberAvatar
+        v-if="selectedBarber"
+        :full-name="selectedBarber.fullName"
+        :photo-url="selectedBarber.photoUrl"
+        size="closed"
+      />
       <span v-else class="barber-select__trigger-icon" aria-hidden="true" />
       <span
         class="barber-select__trigger-label"
@@ -181,29 +189,32 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
       <span class="barber-select__chevron" aria-hidden="true" />
     </button>
 
-    <ul
-      v-show="open"
-      :id="listboxId"
-      class="barber-select__list"
-      role="listbox"
-      aria-label="Barbero"
-      @keydown="onListKeydown"
-    >
-      <li
-        v-for="(barber, index) in barbers"
-        :key="barber.id"
-        :ref="(el) => setOptionRef(el, index)"
-        class="barber-select__option"
-        :class="{ 'barber-select__option--selected': barber.id === modelValue }"
-        role="option"
-        :aria-selected="barber.id === modelValue"
-        tabindex="-1"
-        @click="selectBarber(barber.id)"
+    <Transition name="barber-select-pop">
+      <ul
+        v-show="open"
+        :id="listboxId"
+        class="barber-select__list"
+        role="listbox"
+        aria-label="Barbero"
+        @keydown="onListKeydown"
       >
-        <BarberAvatar :full-name="barber.fullName" size="option" />
-        <span class="barber-select__option-name">{{ barber.fullName }}</span>
-      </li>
-    </ul>
+        <li
+          v-for="(barber, index) in barbers"
+          :key="barber.id"
+          :ref="(el) => setOptionRef(el, index)"
+          class="barber-select__option"
+          :class="{ 'barber-select__option--selected': barber.id === modelValue }"
+          role="option"
+          :aria-selected="barber.id === modelValue"
+          tabindex="-1"
+          @click="selectBarber(barber.id)"
+        >
+          <BarberAvatar :full-name="barber.fullName" :photo-url="barber.photoUrl" size="option" />
+          <span class="barber-select__option-name">{{ barber.fullName }}</span>
+          <span class="barber-select__option-mark" aria-hidden="true" />
+        </li>
+      </ul>
+    </Transition>
   </div>
 </template>
 
@@ -234,6 +245,24 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
 
 .barber-select__trigger[aria-expanded='true'] {
   border-bottom-color: var(--color-accent-brass);
+}
+
+/* Variante compacta de la agenda diaria: campo hundido (más oscuro que la
+   página, --color-field-strong) de 40 px, con la misma altura y filete que el
+   selector de fecha de al lado. Los formularios (Nuevo turno) conservan el
+   velo claro y los 44 px de sus campos vecinos. */
+.barber-select--compact .barber-select__trigger {
+  min-height: 40px;
+  padding-block: 0;
+  background-color: var(--color-field-strong);
+  border-color: var(--color-field-strong-border);
+  border-bottom-color: var(--color-accent-brass);
+}
+
+.barber-select--compact .barber-select__trigger:hover:not(:disabled),
+.barber-select--compact .barber-select__trigger[aria-expanded='true'] {
+  border-color: rgb(184 149 90 / 55%);
+  border-bottom-color: var(--color-brand-accent-surface);
 }
 
 .barber-select__trigger:disabled {
@@ -278,6 +307,11 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
   border-right: var(--border-width-normal) solid var(--color-accent-brass);
   border-bottom: var(--border-width-normal) solid var(--color-accent-brass);
   transform: rotate(45deg) translateY(-2px);
+  transition: transform 0.18s ease;
+}
+
+.barber-select__trigger[aria-expanded='true'] .barber-select__chevron {
+  transform: rotate(225deg) translate(-1px, -1px);
 }
 
 .barber-select__list {
@@ -289,7 +323,7 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
   padding: 0;
   margin: 0;
   list-style: none;
-  background-color: #16243a;
+  background-color: var(--color-field-strong);
   border: var(--border-width-normal) solid rgb(244 240 231 / 16%);
   border-top: var(--border-width-emphasis) solid var(--color-accent-brass);
   border-radius: 2px;
@@ -297,6 +331,7 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
 }
 
 .barber-select__option {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -306,6 +341,9 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
   font-size: var(--font-size-body);
   color: var(--color-on-strong);
   cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    padding-left 0.15s ease;
 }
 
 /* Filete tenue entre opciones, no un borde perimetral por fila. */
@@ -313,14 +351,37 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
   border-top: var(--border-width-normal) solid rgb(244 240 231 / 8%);
 }
 
+/* Al pasar el cursor la fila se levanta un tono de tinta sobre el fondo del
+   panel (sin grises: latón al 15 % sobre azul se ve apagado). La elegida no
+   lleva relleno: barra y rombo de latón, y texto en negrita. Barra de latón a la izquierda: crece desde el centro al pasar el cursor o
+   enfocar con teclado, el mismo latón que el día elegido del calendario. */
+.barber-select__option::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  content: '';
+  background-color: var(--color-brand-accent-surface);
+  transform: scaleY(0);
+  transition: transform 0.18s ease;
+}
+
 .barber-select__option:hover,
 .barber-select__option:focus-visible {
   outline: none;
-  background-color: var(--color-overlay-hover);
+  padding-left: calc(var(--space-3) + 3px);
+  background-color: var(--color-field-strong-raised);
 }
 
-.barber-select__option--selected {
-  background-color: rgb(184 149 90 / 12%);
+.barber-select__option:hover::before,
+.barber-select__option:focus-visible::before,
+.barber-select__option--selected::before {
+  transform: scaleY(1);
+}
+
+.barber-select__option:active {
+  background-color: var(--color-surface-strong);
 }
 
 .barber-select__option--selected .barber-select__option-name {
@@ -332,5 +393,49 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Rombo de la marca en la opción elegida: aparece con un pequeño giro al
+   seleccionar y se encoge al quitar la selección. */
+.barber-select__option-mark {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-brand-accent-surface);
+  opacity: 0;
+  transform: rotate(0deg) scale(0);
+  transition:
+    opacity 0.18s ease,
+    transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.barber-select__option--selected .barber-select__option-mark {
+  opacity: 1;
+  transform: rotate(45deg) scale(1);
+}
+
+/* El desplegable baja y se desvanece al abrir, y sube al cerrar. */
+.barber-select-pop-enter-active,
+.barber-select-pop-leave-active {
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.barber-select-pop-enter-from,
+.barber-select-pop-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barber-select__chevron,
+  .barber-select__option,
+  .barber-select__option::before,
+  .barber-select__option-mark,
+  .barber-select-pop-enter-active,
+  .barber-select-pop-leave-active {
+    transition: none;
+  }
 }
 </style>

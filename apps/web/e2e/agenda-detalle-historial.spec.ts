@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { pickAgendaDate } from './agenda-fecha'
 
 /**
  * Recorrido E2E de HU-064 (detalle e historial de un turno). Corre contra
@@ -127,7 +128,7 @@ test.describe('Detalle e historial de un turno (HU-064)', () => {
 
     await goToAgenda(page)
     await page.getByLabel('Barbero').selectOption({ label: barberName })
-    await page.getByLabel('Fecha').fill(date)
+    await pickAgendaDate(page, date)
     await expect(page).toHaveURL(new RegExp(`date=${date}`))
     await expect(page.getByText(attendeeName)).toBeVisible()
 

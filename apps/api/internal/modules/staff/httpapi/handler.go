@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"mime"
 	"net/http"
 	"strconv"
 
@@ -67,6 +68,41 @@ func (h *ListBarbersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := r.URL.Query()
+	if query.Has("page") || query.Has("pageSize") {
+		if query.Has("cursor") || query.Has("limit") {
+			httpserver.WriteProblem(w, httpserver.Translate(apperr.Invalid("no se pueden combinar los modos de paginación"), requestID))
+			return
+		}
+		page, size := 1, staff.DefaultListLimit
+		for _, parameter := range []struct {
+			name   string
+			target *int
+		}{{"page", &page}, {"pageSize", &size}} {
+			if query.Has(parameter.name) {
+				value, err := strconv.Atoi(query.Get(parameter.name))
+				if err != nil || value < 1 || (parameter.name == "pageSize" && value > staff.MaxListLimit) {
+					httpserver.WriteProblem(w, httpserver.Translate(apperr.Invalid("parámetro de paginación inválido"), requestID))
+					return
+				}
+				*parameter.target = value
+			}
+		}
+		result, err := h.service.ListPage(r.Context(), principal.BarbershopID, page, size)
+		if err != nil {
+			httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+			return
+		}
+		response := newBarberListResponse(staff.ListResult{Items: result.Items})
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(struct {
+			BarberListResponse
+			Page       int `json:"page"`
+			PageSize   int `json:"pageSize"`
+			Total      int `json:"total"`
+			TotalPages int `json:"totalPages"`
+		}{response, result.Page, result.PageSize, result.Total, result.TotalPages})
+		return
+	}
 	cursor := query.Get("cursor")
 
 	limit := 0
@@ -255,10 +291,11 @@ func (h *RenameBarberHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 func newBarberResponse(b staff.Barber) BarberResponse {
 	return BarberResponse{
-		ID:        b.ID,
-		FullName:  b.FullName,
-		CreatedAt: b.CreatedAt,
-		UpdatedAt: b.UpdatedAt,
+		ID:             b.ID,
+		FullName:       b.FullName,
+		CreatedAt:      b.CreatedAt,
+		UpdatedAt:      b.UpdatedAt,
+		PhotoUpdatedAt: b.PhotoUpdatedAt,
 	}
 }
 
@@ -273,4 +310,132 @@ func newBarberListResponse(result staff.ListResult) BarberListResponse {
 		next = &v
 	}
 	return BarberListResponse{Items: items, NextCursor: next}
+}
+
+// PutBarberPhotoHandler expone PUT /private/barbers/{barberId}/photo (DEC-104):
+// reemplaza la fotografía del barbero con el cuerpo binario de la solicitud.
+// PUT es idempotente por naturaleza (repetir el mismo cuerpo deja el mismo
+// estado), así que no lleva Idempotency-Key.
+type PutBarberPhotoHandler struct {
+	service *staff.Service
+}
+
+// NewPutBarberPhotoHandler construye el handler de subida de fotografía.
+func NewPutBarberPhotoHandler(service *staff.Service) *PutBarberPhotoHandler {
+	return &PutBarberPhotoHandler{service: service}
+}
+
+// ServeHTTP implementa http.Handler.
+func (h *PutBarberPhotoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+	principal, ok := principalOrInternalError(w, r, requestID)
+	if !ok {
+		return
+	}
+
+	// La cabecera solo declara la intención: el servicio decide el formato por
+	// los bytes y exige que coincidan (staff.ValidatePhoto). Un tipo ausente o
+	// distinto de JPEG/PNG se rechaza antes de leer el cuerpo.
+	mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	if err != nil || (mediaType != staff.PhotoContentTypeJPEG && mediaType != staff.PhotoContentTypePNG) {
+		httpserver.WriteProblem(w, httpserver.Translate(
+			apperr.Validation("la fotografía debe enviarse como image/jpeg o image/png"), requestID))
+		return
+	}
+
+	// httpserver.BodyLimit ya acota el cuerpo a 1 MiB; el servicio aplica el
+	// tope propio de la fotografía (512 KiB) con su mensaje específico.
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+			return
+		}
+		httpserver.WriteProblem(w, httpserver.Translate(apperr.Invalid("cuerpo de la solicitud ilegible"), requestID))
+		return
+	}
+
+	barber, err := h.service.SetPhoto(r.Context(), principal.BarbershopID,
+		httpserver.URLParam(r, barberIDParam), mediaType, data)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(newBarberResponse(barber))
+}
+
+// GetBarberPhotoHandler expone GET /private/barbers/{barberId}/photo (DEC-104):
+// sirve los bytes de la fotografía con validador ETag para que el navegador
+// revalide barato. El cliente versiona la URL con `photoUpdatedAt`, así que una
+// fotografía nueva nunca se sirve desde una caché vieja.
+type GetBarberPhotoHandler struct {
+	service *staff.Service
+}
+
+// NewGetBarberPhotoHandler construye el handler de lectura de fotografía.
+func NewGetBarberPhotoHandler(service *staff.Service) *GetBarberPhotoHandler {
+	return &GetBarberPhotoHandler{service: service}
+}
+
+// ServeHTTP implementa http.Handler.
+func (h *GetBarberPhotoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+	principal, ok := principalOrInternalError(w, r, requestID)
+	if !ok {
+		return
+	}
+
+	photo, err := h.service.Photo(r.Context(), principal.BarbershopID, httpserver.URLParam(r, barberIDParam))
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	etag := `"` + strconv.FormatInt(photo.UpdatedAt.UnixMicro(), 10) + `"`
+	header := w.Header()
+	header.Set("ETag", etag)
+	// private: es un retrato de una persona, nunca cacheable por un
+	// intermediario compartido.
+	header.Set("Cache-Control", "private, max-age=3600")
+
+	if r.Header.Get("If-None-Match") == etag {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+
+	header.Set("Content-Type", photo.ContentType)
+	header.Set("Content-Length", strconv.Itoa(len(photo.Data)))
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(photo.Data)
+}
+
+// DeleteBarberPhotoHandler expone DELETE /private/barbers/{barberId}/photo
+// (DEC-104): quita la fotografía; el barbero vuelve al monograma. Idempotente:
+// quitar una fotografía inexistente también responde 204.
+type DeleteBarberPhotoHandler struct {
+	service *staff.Service
+}
+
+// NewDeleteBarberPhotoHandler construye el handler de borrado de fotografía.
+func NewDeleteBarberPhotoHandler(service *staff.Service) *DeleteBarberPhotoHandler {
+	return &DeleteBarberPhotoHandler{service: service}
+}
+
+// ServeHTTP implementa http.Handler.
+func (h *DeleteBarberPhotoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+	principal, ok := principalOrInternalError(w, r, requestID)
+	if !ok {
+		return
+	}
+
+	if err := h.service.RemovePhoto(r.Context(), principal.BarbershopID, httpserver.URLParam(r, barberIDParam)); err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }

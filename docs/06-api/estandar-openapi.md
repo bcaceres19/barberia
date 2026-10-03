@@ -129,7 +129,7 @@ El usuario ve “turno”; los identificadores técnicos conservan `appointment`
 7. `PUT` reemplaza una representación completa; `PATCH` aplica una modificación parcial con campos permitidos explícitos.
 8. `DELETE` no implica borrado físico cuando las reglas exigen historial; la descripción explica el efecto observable.
 9. Filtros y orden se documentan mediante parámetros definidos, no mediante una cadena libre.
-10. Listas potencialmente crecientes usan paginación por cursor; `limit` tiene mínimo, máximo y valor inicial.
+10. Listas potencialmente crecientes usan paginación por cursor; `limit` tiene mínimo, máximo y valor inicial. Excepciones puntuales: Servicios usa modo numerado con búsqueda (DEC-103); Barberos añade modo numerado optativo (DEC-107) y conserva cursor para sus selectores. En Barberos no se mezclan modos, pageSize admite 1–50, total y filas comparten snapshot y una página fuera de rango se ajusta a la última (vacío: página 1).
 
 ## 7. Contenido obligatorio de cada operación
 
@@ -211,7 +211,7 @@ Los instantes se transportan con offset. Una fecha u hora mostrada al cliente si
 - No incluir `barbershopId`, permisos, estado derivado o actor como entrada confiable cuando el servidor puede derivarlo.
 - Requests de creación crítica declaran `Idempotency-Key` como header requerido.
 - La misma clave con el mismo contenido devuelve el mismo resultado lógico; con contenido distinto produce conflicto documentado.
-- Archivos o contenido binario solo se agregan cuando exista un caso aprobado; no usar base64 dentro de JSON por conveniencia.
+- Archivos o contenido binario solo se agregan cuando exista un caso aprobado (hasta hoy, la fotografía del barbero, `DEC-104`); no usar base64 dentro de JSON por conveniencia.
 
 ## 11. Responses y códigos HTTP
 

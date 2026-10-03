@@ -2,8 +2,9 @@
  * Pruebas de CatalogPage (HU-022): carga (uno, varios, vacío), error
  * recuperable, alta (éxito, validación, conflicto de nombre, conflicto de
  * idempotencia, error de red, doble envío bloqueado), edición (éxito, no
- * encontrado, conflicto de nombre), paginación ("Cargar más"), foco y
- * ausencia de campos fuera de alcance (asignaciones, activación, citas).
+ * encontrado, conflicto de nombre), paginador numerado con total (DEC-103)
+ * y buscador con debounce, foco y ausencia de campos fuera de alcance
+ * (asignaciones, activación, citas).
  * catalogApi se sustituye por un doble de prueba; el recorrido real contra
  * el API vive en el E2E de HU-022.
  */
@@ -11,6 +12,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
 import { resetToasts, toastState } from '@/shared/model/toastStore'
+import { DEFAULT_MIN_HOLD_MS, PAGE_MIN_HOLD_MS } from '@/shared/composables'
 
 const fetchMock = vi.hoisted(() => vi.fn())
 const createMock = vi.hoisted(() => vi.fn())
@@ -56,13 +58,52 @@ const fourServices = [
 
 // stubs.teleport hace que Vue Test Utils renderice el contenido de
 // <Teleport to="body"> EN EL LUGAR (mismo criterio que StaffPage.test.ts).
+// stubs.transition: jsdom no tiene motor CSS real (nunca dispara
+// transitionend); el stub integrado de VTU sustituye el <Transition
+// mode="out-in"> que envuelve carga/error/listo (issue 2026-09-28) por uno
+// que cambia de hijo al instante, sin animación ni espera.
 function mountPage() {
-  return mount(CatalogPage, { global: { stubs: { teleport: true } } })
+  return mount(CatalogPage, { global: { stubs: { teleport: true, transition: true } } })
 }
 
-async function mountReady(items = oneService, nextCursor: string | null = null) {
-  fetchMock.mockResolvedValueOnce({ kind: 'success', page: { items: [...items], nextCursor } })
+// useMinHoldLoading (mismo issue) mantiene el rombo/esqueleto al menos
+// DEFAULT_MIN_HOLD_MS con un setTimeout REAL antes de dejar pasar el
+// contenido: flushPromises() (solo microtareas) no alcanza a esperarlo.
+// Con margen sobre el valor exacto para no quedar al borde por jitter del
+// entorno de pruebas.
+function waitOutInitialLoadHold() {
+  return new Promise((resolve) => setTimeout(resolve, DEFAULT_MIN_HOLD_MS + 50))
+}
+
+// Buscar o cambiar de página (issue 2026-09-29) mantiene los esqueletos al
+// menos PAGE_MIN_HOLD_MS antes de mostrar el resultado.
+function waitOutPageLoadHold() {
+  return new Promise((resolve) => setTimeout(resolve, PAGE_MIN_HOLD_MS + 50))
+}
+
+// listPage arma la forma real de ServicePage (CA-022-01, DEC-103): page/
+// pageSize/total/totalPages, ya no nextCursor. total/totalPages por
+// defecto asumen que items es la única página (el caso común de estas
+// pruebas); las pruebas de paginación los sobrescriben explícitamente.
+function listPage(items: unknown[], overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    items: [...items],
+    page: 1,
+    pageSize: 20,
+    total: items.length,
+    totalPages: 1,
+    ...overrides,
+  }
+}
+
+async function mountReady(
+  items = oneService,
+  pageOverrides: Partial<Record<string, unknown>> = {},
+) {
+  fetchMock.mockResolvedValueOnce({ kind: 'success', page: listPage(items, pageOverrides) })
   const wrapper = mountPage()
+  await flushPromises()
+  await waitOutInitialLoadHold()
   await flushPromises()
   return wrapper
 }
@@ -104,10 +145,16 @@ function findButtonByText(wrapper: VueWrapper, text: string) {
   return button
 }
 
-// clickDialogButton apunta al botón DENTRO del diálogo abierto: el mismo
-// texto ("Desactivar"/"Reactivar") también nombra el botón de la lista que
-// ABRE el diálogo, así que findButtonByText (que toma el primer match del
-// documento) no sirve para el botón de confirmación.
+// El interruptor del diálogo de estado es la acción (no hay botón de
+// confirmar): tocarlo desactiva o reactiva.
+function clickDialogSwitch(wrapper: VueWrapper) {
+  const control = openDialogElement(wrapper).querySelector<HTMLButtonElement>('[role="switch"]')
+  if (!control) throw new Error('dialog switch not found')
+  control.click()
+}
+
+// clickDialogButton apunta al botón DENTRO del diálogo abierto (confirmar
+// "Cancelar"/"Salir"), no a los de la lista.
 function clickDialogButton(wrapper: VueWrapper, text: string) {
   const button = Array.from(openDialogElement(wrapper).querySelectorAll('button')).find(
     (b) => b.textContent?.trim() === text,
@@ -131,15 +178,32 @@ describe('CatalogPage', () => {
     resetToasts()
   })
 
-  it('shows a non-blank loading state, then the loaded catalog', async () => {
-    let resolveFetch: (value: unknown) => void = () => {}
-    fetchMock.mockReturnValueOnce(new Promise((resolve) => (resolveFetch = resolve)))
+  it('shows a non-blank loading state from the very first instant', () => {
+    fetchMock.mockReturnValueOnce(new Promise(() => {})) // nunca resuelve en esta prueba
     const wrapper = mountPage()
 
     expect(wrapper.text()).toContain('Cargando')
+  })
 
-    resolveFetch({ kind: 'success', page: { items: [...oneService], nextCursor: null } })
+  // useMinHoldLoading (issue reportado 2026-09-28, "se ve como se genera
+  // el objeto... quiero el tema de la carga para tapar ese evento"): el
+  // rombo/esqueleto no cede el paso al contenido real antes de
+  // DEFAULT_MIN_HOLD_MS, aunque la respuesta ya haya llegado — así una
+  // carga instantánea nunca deja ver la tabla "armándose" bajo el rombo.
+  it('holds the loading state for a minimum duration even when the response is instant', async () => {
+    vi.useFakeTimers()
+    fetchMock.mockResolvedValueOnce({ kind: 'success', page: listPage(oneService) })
+    const wrapper = mountPage()
+
     await flushPromises()
+    expect(wrapper.text()).toContain('Cargando')
+    expect(wrapper.text()).not.toContain('Corte clásico')
+
+    await vi.advanceTimersByTimeAsync(DEFAULT_MIN_HOLD_MS - 50)
+    expect(wrapper.text()).not.toContain('Corte clásico')
+
+    await vi.advanceTimersByTimeAsync(100)
+    vi.useRealTimers()
 
     expect(wrapper.text()).toContain('Corte clásico')
   })
@@ -179,35 +243,174 @@ describe('CatalogPage', () => {
     fetchMock.mockResolvedValueOnce({ kind: 'network-error' })
     const wrapper = mountPage()
     await flushPromises()
+    await waitOutInitialLoadHold()
+    await flushPromises()
 
     expect(wrapper.text()).toContain('No pudimos cargar el catálogo')
     expect(fetchMock).toHaveBeenCalledTimes(1)
 
-    fetchMock.mockResolvedValueOnce({
-      kind: 'success',
-      page: { items: [...oneService], nextCursor: null },
-    })
+    fetchMock.mockResolvedValueOnce({ kind: 'success', page: listPage(oneService) })
     await wrapper.get('button').trigger('click')
+    await flushPromises()
+    await waitOutInitialLoadHold()
     await flushPromises()
 
     expect(fetchMock).toHaveBeenCalledTimes(2)
     expect(wrapper.text()).toContain('Corte clásico')
   })
 
-  it('shows a "Cargar más" button when there is a next page, and appends items without duplicating', async () => {
-    const wrapper = await mountReady(oneService, 'opaque-cursor')
-    expect(wrapper.text()).toContain('Cargar más')
+  // --- Paginador (issue 2026-09-28, "colócalos en una tabla con paginador
+  //     y con su buscador... con scroll infinito está feo") -------------
+
+  it('shows the total count but no page-number controls when there is only one page', async () => {
+    const wrapper = await mountReady(oneService, { total: 1, totalPages: 1 })
+
+    expect(wrapper.text()).toContain('1 servicio')
+    expect(wrapper.find('nav[aria-label="Paginación de servicios"]').exists()).toBe(false)
+  })
+
+  it('shows numbered page controls and fetches the requested page on click (DEC-103)', async () => {
+    const wrapper = await mountReady(oneService, { total: 34, totalPages: 2 })
+    expect(wrapper.text()).toContain('34 servicios')
 
     fetchMock.mockResolvedValueOnce({
       kind: 'success',
-      page: { items: [service('s-2', 'Corte + barba')], nextCursor: null },
+      page: listPage([service('s-2', 'Corte + barba')], { page: 2, total: 34, totalPages: 2 }),
     })
-    await findButtonByText(wrapper, 'Cargar más').trigger('click')
+    await findButtonByText(wrapper, '2').trigger('click')
+    await flushPromises()
+    await waitOutPageLoadHold()
     await flushPromises()
 
-    expect(wrapper.findAll('li').length).toBe(2)
+    expect(fetchMock).toHaveBeenLastCalledWith({ page: 2, pageSize: 20, search: undefined })
+    expect(wrapper.findAll('li').length).toBe(1)
     expect(wrapper.text()).toContain('Corte + barba')
-    expect(wrapper.text()).not.toContain('Cargar más')
+    expect(wrapper.text()).not.toContain('Corte clásico')
+  })
+
+  it('a page-fetch failure keeps the current rows visible and offers Reintentar', async () => {
+    const wrapper = await mountReady(oneService, { total: 34, totalPages: 2 })
+
+    fetchMock.mockResolvedValueOnce({ kind: 'network-error' })
+    await findButtonByText(wrapper, '2').trigger('click')
+    await flushPromises()
+    await waitOutPageLoadHold()
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('No pudimos cargar esta página')
+    // Las filas de la página anterior NUNCA desaparecen por un fallo de
+    // página (issue 2026-09-28: cambiar de página o buscar no debe
+    // "parpadear" toda la pantalla, a diferencia de la carga inicial).
+    expect(wrapper.text()).toContain('Corte clásico')
+
+    fetchMock.mockResolvedValueOnce({
+      kind: 'success',
+      page: listPage([service('s-2', 'Corte + barba')], { page: 2, total: 34, totalPages: 2 }),
+    })
+    await findButtonByText(wrapper, 'Reintentar').trigger('click')
+    await flushPromises()
+    await waitOutPageLoadHold()
+    await flushPromises()
+
+    expect(fetchMock).toHaveBeenLastCalledWith({ page: 2, pageSize: 20, search: undefined })
+    expect(wrapper.text()).toContain('Corte + barba')
+  })
+
+  it('fits the first page to the viewport without refetching or showing the oversized table', async () => {
+    // jsdom no tiene layout: se simula un visor con scroll propio de 600px, la
+    // lista a 200px del borde y un paginador de 60px -> caben 3 filas de 80px.
+    const scroller = document.createElement('div')
+    scroller.style.overflowY = 'auto'
+    Object.defineProperty(scroller, 'clientHeight', { value: 600 })
+    document.body.appendChild(scroller)
+    const rect = (top: number, height: number) =>
+      ({ top, bottom: top + height, height }) as DOMRect
+    const rectSpy = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: HTMLElement) {
+        if (this === scroller) return rect(0, 600)
+        if (this.classList.contains('catalog-page__list')) return rect(200, 320)
+        if (this.classList.contains('catalog-page__pagination')) return rect(536, 60)
+        return rect(0, 0)
+      })
+
+    try {
+      fetchMock.mockResolvedValueOnce({
+        kind: 'success',
+        page: listPage(fourServices, { total: 34, totalPages: 2 }),
+      })
+      const wrapper = mount(CatalogPage, {
+        attachTo: scroller,
+        global: { stubs: { teleport: true, transition: true } },
+      })
+      await flushPromises()
+      await waitOutInitialLoadHold()
+      await flushPromises()
+
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      expect(wrapper.findAll('li').length).toBe(3)
+      expect(wrapper.text()).toContain('34 servicios')
+      // 34 servicios a 3 por página = 12 páginas.
+      expect(findButtonByText(wrapper, '12').exists()).toBe(true)
+      expect(wrapper.find('.catalog-page__ready--fitting').exists()).toBe(false)
+      wrapper.unmount()
+    } finally {
+      rectSpy.mockRestore()
+      scroller.remove()
+    }
+  })
+
+  // --- Buscador -----------------------------------------------------------
+
+  it('searches after a debounce, resets to page 1, and sends the trimmed term', async () => {
+    const wrapper = await mountReady(oneService, { total: 34, totalPages: 2 })
+
+    fetchMock.mockResolvedValueOnce({
+      kind: 'success',
+      page: listPage([service('s-2', 'Corte + barba')], { total: 1, totalPages: 1 }),
+    })
+    const search = wrapper.get('input[name="serviceSearch"]')
+    setInputValue(search.element as HTMLInputElement, '  barba  ')
+    await flushPromises()
+    // Antes del debounce, ninguna solicitud nueva.
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    await new Promise((resolve) => setTimeout(resolve, 350))
+    await flushPromises()
+
+    // Issue 2026-09-29: el resultado no aparece de golpe. Con la respuesta
+    // ya recibida, la tabla muestra esqueletos (sin las filas viejas ni las
+    // nuevas) hasta cumplir PAGE_MIN_HOLD_MS, y solo entonces entran las filas.
+    expect(wrapper.findAll('.catalog-page__skeleton-row--table').length).toBeGreaterThan(0)
+    expect(wrapper.text()).not.toContain('Corte clásico')
+    expect(wrapper.text()).not.toContain('Corte + barba')
+
+    await waitOutPageLoadHold()
+    await flushPromises()
+
+    expect(wrapper.find('.catalog-page__skeleton-row--table').exists()).toBe(false)
+    expect(fetchMock).toHaveBeenLastCalledWith({ page: 1, pageSize: 20, search: 'barba' })
+    expect(wrapper.text()).toContain('Corte + barba')
+    expect(wrapper.text()).not.toContain('Corte clásico')
+    expect(wrapper.text()).toContain('1 resultado')
+  })
+
+  it('shows a search-specific empty state distinct from a genuinely empty catalog', async () => {
+    const wrapper = await mountReady(oneService, { total: 34, totalPages: 2 })
+
+    fetchMock.mockResolvedValueOnce({
+      kind: 'success',
+      page: listPage([], { total: 0, totalPages: 1 }),
+    })
+    const search = wrapper.get('input[name="serviceSearch"]')
+    setInputValue(search.element as HTMLInputElement, 'zzz-sin-coincidencias')
+    await new Promise((resolve) => setTimeout(resolve, 350))
+    await flushPromises()
+    await waitOutPageLoadHold()
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('No encontramos servicios que coincidan con')
+    expect(wrapper.text()).not.toContain('Aún no tienes servicios registrados')
   })
 
   // --- Alta -----------------------------------------------------------
@@ -366,6 +569,110 @@ describe('CatalogPage', () => {
     }
   })
 
+  // --- Detalle ----------------------------------------------------------
+
+  const longDescription = 'Corte a tijera con lavado, masaje capilar y perfilado. '.repeat(8).trim()
+
+  it('keeps the description out of the list rows', async () => {
+    const wrapper = await mountReady([
+      service('s-1', 'Corte clásico', { description: longDescription }),
+    ])
+
+    expect(wrapper.find('.catalog-page__list').text()).not.toContain('Corte a tijera')
+  })
+
+  it('opens a detail dialog with the full description, duration, price and status when the name is pressed', async () => {
+    const wrapper = await mountReady([
+      service('s-1', 'Corte clásico', { description: longDescription, durationMinutes: 45 }),
+    ])
+    expect(wrapper.find('.base-dialog--open').exists()).toBe(false)
+
+    await wrapper.find('.catalog-page__item-trigger').trigger('click')
+    await flushPromises()
+
+    const dialog = openDialogElement(wrapper)
+    expect(dialog.classList.contains('catalog-page__detail-dialog')).toBe(true)
+    expect(dialog.textContent).toContain('Corte clásico')
+    expect(dialog.textContent).toContain(longDescription)
+    expect(dialog.textContent).toContain('45')
+    expect(dialog.textContent).toContain('45000.00')
+    expect(dialog.textContent).toContain('Activo')
+    expect(dialog.textContent).toContain('24/08/2026')
+  })
+
+  it('says so when the service has no description', async () => {
+    const wrapper = await mountReady()
+    await wrapper.find('.catalog-page__item-trigger').trigger('click')
+    await flushPromises()
+
+    expect(openDialogElement(wrapper).textContent).toContain('no tiene descripción')
+  })
+
+  it('shows since when an inactive service was deactivated', async () => {
+    const wrapper = await mountReady([
+      service('s-1', 'Corte clásico', {
+        isActive: false,
+        deactivatedAt: '2026-09-01T15:00:00Z',
+      }),
+    ])
+    await wrapper.find('.catalog-page__item-trigger').trigger('click')
+    await flushPromises()
+
+    const dialog = openDialogElement(wrapper)
+    expect(dialog.textContent).toContain('Inactivo')
+    expect(dialog.textContent).toContain('01/09/2026')
+  })
+
+  it('closes the detail dialog with Cerrar without calling the API', async () => {
+    const wrapper = await mountReady()
+    await wrapper.find('.catalog-page__item-trigger').trigger('click')
+    await flushPromises()
+
+    clickDialogButton(wrapper, 'Cerrar')
+    await flushPromises()
+
+    expect(wrapper.find('.base-dialog--open').exists()).toBe(false)
+    expect(updateMock).not.toHaveBeenCalled()
+  })
+
+  it('goes from the detail to the edit dialog prefilled with the same service', async () => {
+    const wrapper = await mountReady([
+      service('s-1', 'Corte clásico', { description: 'Con lavado' }),
+    ])
+    await wrapper.find('.catalog-page__item-trigger').trigger('click')
+    await flushPromises()
+
+    clickDialogButton(wrapper, 'Editar')
+    await flushPromises()
+
+    const open = wrapper.element.querySelectorAll('.base-dialog--open')
+    expect(open.length).toBe(1)
+    expect(open[0].classList.contains('catalog-page__edit-dialog')).toBe(true)
+    expect(openDialogInput(wrapper, 'name').value).toBe('Corte clásico')
+    expect(openDialogInput(wrapper, 'description').value).toBe('Con lavado')
+  })
+
+  it('does not open the detail when a row action is pressed', async () => {
+    const wrapper = await mountReady()
+    await findButtonByText(wrapper, 'Editar').trigger('click')
+    await flushPromises()
+
+    const open = wrapper.element.querySelectorAll('.base-dialog--open')
+    expect(open.length).toBe(1)
+    expect(open[0].classList.contains('catalog-page__detail-dialog')).toBe(false)
+  })
+
+  it('has no axe violations with the detail dialog open', async () => {
+    const wrapper = await mountReady([
+      service('s-1', 'Corte clásico', { description: longDescription }),
+    ])
+    await wrapper.find('.catalog-page__item-trigger').trigger('click')
+    await flushPromises()
+
+    const results = await axe(wrapper.element, axeOptions)
+    expect(results).toHaveNoViolations()
+  })
+
   // --- Edición ----------------------------------------------------------
 
   it('opens the edit dialog prefilled with the service fields and edits on success', async () => {
@@ -457,19 +764,32 @@ describe('CatalogPage', () => {
 
     expect(wrapper.text()).toContain('Activo')
     expect(wrapper.text()).toContain('Inactivo')
-    expect(() => findButtonByText(wrapper, 'Desactivar')).not.toThrow()
-    expect(() => findButtonByText(wrapper, 'Reactivar')).not.toThrow()
+    // Un único botón "Cambiar estado" por fila, para ambos sentidos.
+    expect(wrapper.findAll('button').filter((b) => b.text() === 'Cambiar estado')).toHaveLength(2)
+    expect(wrapper.find('button[aria-label^="Desactivar"]').exists()).toBe(false)
+    expect(wrapper.find('button[aria-label^="Reactivar"]').exists()).toBe(false)
   })
 
   it('opens the deactivate dialog, queries the real impact, and confirms with a fresh idempotency key (CA-024-01/02/04)', async () => {
     const wrapper = await mountReady()
     previewDeactivationMock.mockResolvedValueOnce({ kind: 'success', affectedAppointments: 0 })
 
-    await findButtonByText(wrapper, 'Desactivar').trigger('click')
+    await findButtonByText(wrapper, 'Cambiar estado').trigger('click')
     await flushPromises()
 
     expect(previewDeactivationMock).toHaveBeenCalledWith('s-1')
     expect(wrapper.text()).toContain('No hay citas futuras')
+    // Mismo diálogo "Estado del servicio", con el interruptor hacia Inactivo.
+    const dialog = openDialogElement(wrapper)
+    expect(dialog.textContent).toContain('Estado del servicio')
+    // El interruptor arranca en "activo" (estado actual) y no hay botón
+    // aparte de confirmar.
+    expect(dialog.querySelector('[role="switch"]')?.getAttribute('aria-checked')).toBe('true')
+    expect(
+      Array.from(dialog.querySelectorAll('button')).some(
+        (b) => b.textContent?.trim() === 'Desactivar',
+      ),
+    ).toBe(false)
 
     deactivateMock.mockResolvedValueOnce({
       kind: 'success',
@@ -479,7 +799,7 @@ describe('CatalogPage', () => {
       }),
       affectedAppointments: 0,
     })
-    clickDialogButton(wrapper, 'Desactivar')
+    clickDialogSwitch(wrapper)
     await flushPromises()
 
     expect(deactivateMock).toHaveBeenCalledTimes(1)
@@ -487,19 +807,62 @@ describe('CatalogPage', () => {
     expect(serviceId).toBe('s-1')
     expect(typeof key).toBe('string')
     expect(key.length).toBeGreaterThan(0)
-    // El diálogo se cierra y la lista refleja el nuevo estado.
-    expect(wrapper.find('.base-dialog--open').exists()).toBe(false)
+    // El diálogo NO se cierra: muestra el estado nuevo (interruptor en
+    // "inactivo") hasta que se pulsa "Salir"; la lista ya refleja el cambio.
+    expect(wrapper.find('.base-dialog--open').exists()).toBe(true)
+    expect(
+      openDialogElement(wrapper).querySelector('[role="switch"]')?.getAttribute('aria-checked'),
+    ).toBe('false')
     expect(wrapper.text()).toContain('Inactivo')
     expect(toastState.items.map((item) => item.title)).toEqual(['Servicio desactivado'])
+
+    clickDialogButton(wrapper, 'Salir')
+    await flushPromises()
+    expect(wrapper.find('.base-dialog--open').exists()).toBe(false)
+  })
+
+  it('lets the same open dialog revert the change with the switch, with a fresh idempotency key', async () => {
+    const wrapper = await mountReady()
+    previewDeactivationMock.mockResolvedValue({ kind: 'success', affectedAppointments: 0 })
+    await findButtonByText(wrapper, 'Cambiar estado').trigger('click')
+    await flushPromises()
+
+    deactivateMock.mockResolvedValueOnce({
+      kind: 'success',
+      service: service('s-1', 'Corte clásico', {
+        isActive: false,
+        deactivatedAt: '2026-08-25T12:00:00Z',
+      }),
+      affectedAppointments: 0,
+    })
+    clickDialogSwitch(wrapper)
+    await flushPromises()
+
+    reactivateMock.mockResolvedValueOnce({
+      kind: 'success',
+      service: service('s-1', 'Corte clásico', { isActive: true, deactivatedAt: null }),
+    })
+    clickDialogSwitch(wrapper)
+    await flushPromises()
+
+    const deactivateKey = (deactivateMock.mock.calls[0] as [string, string])[1]
+    const reactivateKey = (reactivateMock.mock.calls[0] as [string, string])[1]
+    expect(reactivateKey).not.toBe(deactivateKey)
+    // Sigue abierto y otra vez en "activo", con el impacto consultado de nuevo.
+    expect(wrapper.find('.base-dialog--open').exists()).toBe(true)
+    expect(
+      openDialogElement(wrapper).querySelector('[role="switch"]')?.getAttribute('aria-checked'),
+    ).toBe('true')
+    expect(previewDeactivationMock).toHaveBeenCalledTimes(2)
   })
 
   it('cancelling the deactivate dialog never calls deactivateService', async () => {
     const wrapper = await mountReady()
     previewDeactivationMock.mockResolvedValueOnce({ kind: 'success', affectedAppointments: 0 })
 
-    await findButtonByText(wrapper, 'Desactivar').trigger('click')
+    await findButtonByText(wrapper, 'Cambiar estado').trigger('click')
     await flushPromises()
-    clickDialogButton(wrapper, 'Cancelar')
+    clickDialogButton(wrapper, 'Salir')
     await flushPromises()
 
     expect(deactivateMock).not.toHaveBeenCalled()
@@ -509,23 +872,20 @@ describe('CatalogPage', () => {
   it('on a transition-conflict, reloads the real state instead of assuming success', async () => {
     const wrapper = await mountReady()
     previewDeactivationMock.mockResolvedValueOnce({ kind: 'success', affectedAppointments: 0 })
-    await findButtonByText(wrapper, 'Desactivar').trigger('click')
+    await findButtonByText(wrapper, 'Cambiar estado').trigger('click')
     await flushPromises()
 
     deactivateMock.mockResolvedValueOnce({ kind: 'transition-conflict' })
     fetchMock.mockResolvedValueOnce({
       kind: 'success',
-      page: {
-        items: [
-          service('s-1', 'Corte clásico', {
-            isActive: false,
-            deactivatedAt: '2026-08-25T12:00:00Z',
-          }),
-        ],
-        nextCursor: null,
-      },
+      page: listPage([
+        service('s-1', 'Corte clásico', {
+          isActive: false,
+          deactivatedAt: '2026-08-25T12:00:00Z',
+        }),
+      ]),
     })
-    clickDialogButton(wrapper, 'Desactivar')
+    clickDialogSwitch(wrapper)
     await flushPromises()
 
     expect(wrapper.text()).toContain('El estado de este servicio cambió')
@@ -533,24 +893,48 @@ describe('CatalogPage', () => {
     expect(wrapper.text()).toContain('Inactivo')
   })
 
+  it('previews the reactivated service (duration, price, inactive since) and what is kept', async () => {
+    const wrapper = await mountReady([
+      service('s-1', 'Corte clásico', {
+        isActive: false,
+        deactivatedAt: '2026-08-25T15:00:00Z',
+        durationMinutes: 45,
+        price: '22000.00',
+      }),
+    ])
+
+    await findButtonByText(wrapper, 'Cambiar estado').trigger('click')
+    await flushPromises()
+
+    const dialog = openDialogElement(wrapper)
+    expect(dialog.querySelector('[role="switch"]')?.getAttribute('aria-checked')).toBe('false')
+    const facts = dialog.querySelector('dl')?.textContent ?? ''
+    expect(facts).toContain('45')
+    expect(facts).toContain('22000.00')
+    expect(facts).toContain('25/08/2026')
+    expect(dialog.querySelectorAll('ul li').length).toBe(3)
+  })
+
   it('reactivates a service without a duration/price/name field in the confirmation (CA-024-05)', async () => {
     const wrapper = await mountReady([
       service('s-1', 'Corte clásico', { isActive: false, deactivatedAt: '2026-08-25T10:00:00Z' }),
     ])
 
-    await findButtonByText(wrapper, 'Reactivar').trigger('click')
+    await findButtonByText(wrapper, 'Cambiar estado').trigger('click')
     await flushPromises()
     expect(openDialogElement(wrapper).querySelector('input')).toBeNull()
 
+    previewDeactivationMock.mockResolvedValueOnce({ kind: 'success', affectedAppointments: 0 })
     reactivateMock.mockResolvedValueOnce({
       kind: 'success',
       service: service('s-1', 'Corte clásico', { isActive: true, deactivatedAt: null }),
     })
-    clickDialogButton(wrapper, 'Reactivar')
+    clickDialogSwitch(wrapper)
     await flushPromises()
 
     expect(reactivateMock).toHaveBeenCalledWith('s-1', expect.any(String))
-    expect(wrapper.find('.base-dialog--open').exists()).toBe(false)
+    // Tampoco se cierra al reactivar: queda listo para volver a desactivar.
+    expect(wrapper.find('.base-dialog--open').exists()).toBe(true)
     expect(wrapper.text()).toContain('Activo')
     expect(toastState.items.map((item) => item.title)).toEqual(['Servicio reactivado'])
   })
@@ -575,7 +959,7 @@ describe('CatalogPage', () => {
   it('has no axe violations with the deactivate dialog open', async () => {
     const wrapper = await mountReady()
     previewDeactivationMock.mockResolvedValueOnce({ kind: 'success', affectedAppointments: 0 })
-    await findButtonByText(wrapper, 'Desactivar').trigger('click')
+    await findButtonByText(wrapper, 'Cambiar estado').trigger('click')
     await flushPromises()
 
     const results = await axe(wrapper.element, axeOptions)
@@ -591,6 +975,8 @@ describe('CatalogPage', () => {
   it('has no axe violations in the load-error state', async () => {
     fetchMock.mockResolvedValueOnce({ kind: 'network-error' })
     const wrapper = mountPage()
+    await flushPromises()
+    await waitOutInitialLoadHold()
     await flushPromises()
 
     const results = await axe(wrapper.element, {

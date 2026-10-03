@@ -2005,3 +2005,7 @@ atlas migrate apply --env local
 ```
 
 `atlas.sum` se versiona. NO se ejecutan al arrancar la aplicación (CA-001-07).
+
+### Listado numerado de Barberos (DEC-107, #288)
+
+`GET /private/barbers` conserva cursor/limit y añade modo optativo page/pageSize (1–50 filas, por defecto 20). No admite mezclar modos; parámetros inválidos responden 400. Una sola sentencia tenant-aware obtiene total, página efectiva y filas en orden (created_at,id), sin leer bytes de fotos; fuera de rango se ajusta a la última página. No requiere migraciones.
