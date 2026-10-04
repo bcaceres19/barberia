@@ -174,6 +174,14 @@ test.describe('tamaño de texto', () => {
         })
         await expectNoHorizontalScroll(page)
 
+        // El `zoom` del texto no debe dejar el documento más alto que la ventana: si lo
+        // hace, el scroll general destapa una franja marfil bajo el dock (#298).
+        expect(
+          await page.evaluate(
+            () => document.scrollingElement!.scrollHeight > document.scrollingElement!.clientHeight,
+          ),
+        ).toBe(false)
+
         // El escalado compensa 100dvh: el dock queda dentro de la ventana, no
         // empujado fuera por el zoom.
         const dock = await page.locator('.app-nav').boundingBox()
