@@ -47,10 +47,10 @@ const { loggingOut, logout: onLogout } = useLogout()
   justify-content: space-between;
   min-height: 75px;
   padding: 20px 40px;
-  background-color: var(--color-surface-strong);
+  background-color: var(--color-chrome-surface);
   /* Filete inferior del atlas panel-agenda-eventos (issue #189):
      rgba(184,149,90,.45), el mismo latón de marca a baja opacidad. */
-  border-bottom: 1px solid rgb(184 149 90 / 45%);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-brand-accent-surface) 45%, transparent);
 }
 
 .app-header__identity {

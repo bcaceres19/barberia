@@ -60,3 +60,17 @@ a {
     scroll-behavior: auto !important;
   }
 }
+
+/*
+ * Animaciones reducidas elegidas en Configuración (DEC-110). Se suman a
+ * `prefers-reduced-motion`: la persona puede pedir menos movimiento aunque su
+ * sistema no lo pida, nunca más del que su sistema permite.
+ */
+:root[data-motion='reduced'] *,
+:root[data-motion='reduced'] *::before,
+:root[data-motion='reduced'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}

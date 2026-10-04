@@ -1,22 +1,41 @@
 /**
- * Pruebas de SettingsPage (HU-020): carga, edición, guardado exitoso
- * (actualiza la cabecera vía updateBarbershopName), error de validación y
- * error de red conservando lo escrito (CA-020-08), doble envío bloqueado.
- * settingsApi y auth.updateBarbershopName se sustituyen por dobles de
- * prueba; el recorrido real contra el API vive en el E2E de HU-020.
+ * Pruebas de SettingsPage (HU-020, DEC-110): carga de los dos recursos (datos
+ * básicos y marca), borrador con detección de cambios, guardado por grupos,
+ * error de validación y de red conservando lo escrito (CA-020-08), doble envío
+ * bloqueado, vista previa y descarte del acento, presets y concordancia del
+ * vocabulario, y las preferencias de ESTE dispositivo (modo, tamaño de texto,
+ * animaciones). settingsApi, brandApi y auth.updateBarbershopName se sustituyen
+ * por dobles de prueba; el recorrido real contra el API vive en el E2E.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { resetToasts, toastState } from '@/shared/model/toastStore'
-import { mount, flushPromises } from '@vue/test-utils'
+import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
+import { PAGE_MIN_HOLD_MS } from '@/shared/composables'
+import {
+  appearance,
+  brandState,
+  DEFAULT_BRAND,
+  effectiveAccent,
+  resetAppearance,
+  resetBrand,
+  setAccentPreview,
+  setBrand,
+} from '@/shared/model'
+import { resetToasts, toastState } from '@/shared/model/toastStore'
 
 const fetchMock = vi.hoisted(() => vi.fn())
 const saveMock = vi.hoisted(() => vi.fn())
+const fetchBrandMock = vi.hoisted(() => vi.fn())
+const saveBrandMock = vi.hoisted(() => vi.fn())
 const updateBarbershopNameMock = vi.hoisted(() => vi.fn())
 
 vi.mock('../../api/settingsApi', () => ({
   fetchBarbershopSettings: fetchMock,
   saveBarbershopSettings: saveMock,
+}))
+vi.mock('../../api/brandApi', () => ({
+  fetchBrand: fetchBrandMock,
+  saveBrand: saveBrandMock,
 }))
 vi.mock('@/modules/auth', () => ({ updateBarbershopName: updateBarbershopNameMock }))
 
@@ -29,178 +48,462 @@ const loadedSettings = {
   contactPhone: '+573001234567',
 }
 
-async function mountReady() {
-  fetchMock.mockResolvedValueOnce({ kind: 'success', settings: loadedSettings })
-  const wrapper = mount(SettingsPage)
+const mountOptions = {
+  global: {
+    stubs: {
+      RouterLink: { props: ['to'], template: '<a class="stub-link"><slot /></a>' },
+    },
+  },
+}
+
+// El rombo de carga se sostiene PAGE_MIN_HOLD_MS aunque la respuesta ya haya
+// llegado: se espera ese retraso real antes de mirar la pantalla cargada.
+async function settle() {
   await flushPromises()
+  await new Promise((resolve) => setTimeout(resolve, PAGE_MIN_HOLD_MS + 50))
+  await flushPromises()
+}
+
+async function mountReady(brand = DEFAULT_BRAND) {
+  fetchMock.mockResolvedValueOnce({ kind: 'success', settings: loadedSettings })
+  fetchBrandMock.mockResolvedValueOnce({ kind: 'success', brand })
+  const wrapper = mount(SettingsPage, mountOptions)
+  await settle()
   return wrapper
+}
+
+const input = (wrapper: VueWrapper, name: string) =>
+  wrapper.get(`input[name="${name}"]`).element as HTMLInputElement
+
+async function submit(wrapper: VueWrapper) {
+  await wrapper.get('form').trigger('submit')
+  await flushPromises()
 }
 
 describe('SettingsPage', () => {
   beforeEach(() => {
     resetToasts()
+    resetAppearance()
+    resetBrand()
+    window.localStorage.clear()
     fetchMock.mockReset()
     saveMock.mockReset()
+    fetchBrandMock.mockReset()
+    saveBrandMock.mockReset()
     updateBarbershopNameMock.mockReset()
   })
 
-  it('shows a non-blank loading state, then the loaded values', async () => {
-    let resolveFetch: (value: unknown) => void = () => {}
-    fetchMock.mockReturnValueOnce(new Promise((resolve) => (resolveFetch = resolve)))
-    const wrapper = mount(SettingsPage)
+  describe('carga', () => {
+    it('shows a non-blank loading state, then the loaded values of both resources', async () => {
+      let resolveFetch: (value: unknown) => void = () => {}
+      fetchMock.mockReturnValueOnce(new Promise((resolve) => (resolveFetch = resolve)))
+      fetchBrandMock.mockResolvedValueOnce({ kind: 'success', brand: DEFAULT_BRAND })
+      const wrapper = mount(SettingsPage, mountOptions)
 
-    expect(wrapper.text()).toContain('Cargando')
+      expect(wrapper.text()).toContain('Cargando')
 
-    resolveFetch({ kind: 'success', settings: loadedSettings })
-    await flushPromises()
+      resolveFetch({ kind: 'success', settings: loadedSettings })
+      await settle()
 
-    expect((wrapper.find('input[name="name"]').element as HTMLInputElement).value).toBe(
-      'Barbería Ejemplo',
-    )
-    expect((wrapper.find('input[name="timezone"]').element as HTMLInputElement).value).toBe(
-      'America/Bogota',
-    )
-    expect((wrapper.find('input[name="contactEmail"]').element as HTMLInputElement).value).toBe(
-      'contacto@ejemplo.test',
-    )
-  })
-
-  it('shows a recoverable error with Reintentar when the initial load fails', async () => {
-    fetchMock.mockResolvedValueOnce({ kind: 'network-error' })
-    const wrapper = mount(SettingsPage)
-    await flushPromises()
-
-    expect(wrapper.text()).toContain('No pudimos cargar la configuración')
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-
-    fetchMock.mockResolvedValueOnce({ kind: 'success', settings: loadedSettings })
-    await wrapper.get('button').trigger('click')
-    await flushPromises()
-
-    expect(fetchMock).toHaveBeenCalledTimes(2)
-    expect(wrapper.find('input[name="name"]').exists()).toBe(true)
-  })
-
-  it('renders empty contact fields (not "null") when the barbershop has none configured', async () => {
-    fetchMock.mockResolvedValueOnce({
-      kind: 'success',
-      settings: { ...loadedSettings, contactEmail: null, contactPhone: null },
-    })
-    const wrapper = mount(SettingsPage)
-    await flushPromises()
-
-    expect((wrapper.find('input[name="contactEmail"]').element as HTMLInputElement).value).toBe('')
-    expect((wrapper.find('input[name="contactPhone"]').element as HTMLInputElement).value).toBe('')
-  })
-
-  it('blocks submission and shows a field error for an empty name (client-side validation)', async () => {
-    const wrapper = await mountReady()
-
-    await wrapper.get('input[name="name"]').setValue('   ')
-    await wrapper.get('form').trigger('submit')
-    await flushPromises()
-
-    expect(saveMock).not.toHaveBeenCalled()
-    expect(wrapper.text()).toContain('Escribe el nombre de la barbería.')
-  })
-
-  it('on success, updates the header via updateBarbershopName and shows a saved confirmation', async () => {
-    const wrapper = await mountReady()
-    saveMock.mockResolvedValueOnce({
-      kind: 'success',
-      settings: { ...loadedSettings, name: 'Barbería Renombrada' },
+      expect(input(wrapper, 'name').value).toBe('Barbería Ejemplo')
+      expect(input(wrapper, 'contactEmail').value).toBe('contacto@ejemplo.test')
+      expect(input(wrapper, 'businessTerm').value).toBe('barbería')
+      expect(input(wrapper, 'professionalTerm').value).toBe('barbero')
+      expect(input(wrapper, 'professionalTermPlural').value).toBe('barberos')
+      // La zona vive en el combobox del selector de zonas.
+      expect((wrapper.get('[role="combobox"]').element as HTMLInputElement).value).toBe(
+        'America/Bogota',
+      )
     })
 
-    await wrapper.get('form').trigger('submit')
-    await flushPromises()
+    it.each([
+      ['datos básicos', () => fetchMock.mockResolvedValueOnce({ kind: 'network-error' })],
+      ['marca', () => fetchBrandMock.mockResolvedValueOnce({ kind: 'unexpected-error' })],
+    ])(
+      'shows a recoverable error with Reintentar when the %s fail to load',
+      async (_name, fail) => {
+        fetchMock.mockResolvedValue({ kind: 'success', settings: loadedSettings })
+        fetchBrandMock.mockResolvedValue({ kind: 'success', brand: DEFAULT_BRAND })
+        fail()
+        const wrapper = mount(SettingsPage, mountOptions)
+        await settle()
 
-    expect(saveMock).toHaveBeenCalledTimes(1)
-    expect(updateBarbershopNameMock).toHaveBeenCalledWith('Barbería Renombrada')
-    expect(wrapper.text()).toContain('Guardado')
-    expect((wrapper.find('input[name="name"]').element as HTMLInputElement).value).toBe(
-      'Barbería Renombrada',
+        expect(wrapper.text()).toContain('No pudimos cargar la configuración')
+        expect(wrapper.find('input[name="name"]').exists()).toBe(false)
+
+        await wrapper.get('button').trigger('click')
+        await settle()
+
+        expect(fetchMock).toHaveBeenCalledTimes(2)
+        expect(wrapper.find('input[name="name"]').exists()).toBe(true)
+      },
     )
-    // La confirmación persistente sigue en pantalla y el aviso la acompaña (DEC-095).
-    expect(toastState.items.map((item) => item.title)).toEqual(['Configuración guardada'])
+
+    it('renders empty contact fields (not "null") when the barbershop has none configured', async () => {
+      fetchMock.mockResolvedValueOnce({
+        kind: 'success',
+        settings: { ...loadedSettings, contactEmail: null, contactPhone: null },
+      })
+      fetchBrandMock.mockResolvedValueOnce({ kind: 'success', brand: DEFAULT_BRAND })
+      const wrapper = mount(SettingsPage, mountOptions)
+      await settle()
+
+      expect(input(wrapper, 'contactEmail').value).toBe('')
+      expect(input(wrapper, 'contactPhone').value).toBe('')
+    })
   })
 
-  it('on a recoverable network error, keeps the typed values and never updates the header (CA-020-08)', async () => {
-    const wrapper = await mountReady()
-    await wrapper.get('input[name="name"]').setValue('Nombre editado sin guardar')
-    saveMock.mockResolvedValueOnce({ kind: 'network-error' })
+  describe('borrador y guardado', () => {
+    it('shows no save bar until something changes, and hides it when the change is undone', async () => {
+      const wrapper = await mountReady()
+      expect(wrapper.find('.save-bar').exists()).toBe(false)
 
-    await wrapper.get('form').trigger('submit')
-    await flushPromises()
+      await wrapper.get('input[name="name"]').setValue('Otro nombre')
+      expect(wrapper.find('.save-bar').exists()).toBe(true)
+      expect(wrapper.get('.save-bar').text()).toContain('Datos básicos')
 
-    expect(wrapper.text()).toContain('No pudimos conectar')
-    expect(updateBarbershopNameMock).not.toHaveBeenCalled()
-    expect((wrapper.find('input[name="name"]').element as HTMLInputElement).value).toBe(
-      'Nombre editado sin guardar',
-    )
+      await wrapper.get('input[name="name"]').setValue('Barbería Ejemplo')
+      expect(wrapper.find('.save-bar').exists()).toBe(false)
+    })
+
+    it('blocks submission and shows a field error for an empty name (client-side validation)', async () => {
+      const wrapper = await mountReady()
+
+      await wrapper.get('input[name="name"]').setValue('   ')
+      await submit(wrapper)
+
+      expect(saveMock).not.toHaveBeenCalled()
+      expect(wrapper.text()).toContain('Escribe el nombre de la barbería.')
+    })
+
+    it.each([
+      ['con dígitos', 'salón 24', 'Usa solo letras, espacios, guion o apóstrofo.'],
+      ['de una letra', 's', 'Usa al menos 2 letras.'],
+      ['vacío', '   ', 'Escribe una palabra.'],
+    ])('blocks a business word %s and shows why', async (_name, value, message) => {
+      const wrapper = await mountReady()
+
+      await wrapper.get('input[name="businessTerm"]').setValue(value)
+      await submit(wrapper)
+
+      expect(saveBrandMock).not.toHaveBeenCalled()
+      expect(wrapper.text()).toContain(message)
+    })
+
+    it('saves only the basic data when only they changed, updates the header and announces it', async () => {
+      const wrapper = await mountReady()
+      saveMock.mockResolvedValueOnce({
+        kind: 'success',
+        settings: { ...loadedSettings, name: 'Barbería Renombrada' },
+      })
+
+      await wrapper.get('input[name="name"]').setValue('Barbería Renombrada')
+      await submit(wrapper)
+
+      expect(saveMock).toHaveBeenCalledTimes(1)
+      expect(saveBrandMock).not.toHaveBeenCalled()
+      expect(updateBarbershopNameMock).toHaveBeenCalledWith('Barbería Renombrada')
+      expect(wrapper.find('.save-bar').exists()).toBe(false)
+      expect(toastState.items.map((item) => item.title)).toEqual(['Configuración guardada'])
+    })
+
+    it('saves only the brand when only it changed, normalized, and publishes it to the whole app', async () => {
+      const wrapper = await mountReady()
+      saveBrandMock.mockImplementationOnce(async (brand) => ({ kind: 'success', brand }))
+
+      await wrapper.get('input[name="businessTerm"]').setValue('  Salón   de Belleza ')
+      await submit(wrapper)
+
+      expect(saveMock).not.toHaveBeenCalled()
+      expect(saveBrandMock).toHaveBeenCalledTimes(1)
+      expect(saveBrandMock.mock.calls[0]![0]).toMatchObject({ businessTerm: 'salón de belleza' })
+      // La marca confirmada llega al estado compartido que lee toda la app.
+      expect(brandState.brand.businessTerm).toBe('salón de belleza')
+      expect(wrapper.find('.save-bar').exists()).toBe(false)
+    })
+
+    it('saves both resources when both changed', async () => {
+      const wrapper = await mountReady()
+      saveMock.mockResolvedValueOnce({
+        kind: 'success',
+        settings: { ...loadedSettings, name: 'Nuevo' },
+      })
+      saveBrandMock.mockImplementationOnce(async (brand) => ({ kind: 'success', brand }))
+
+      await wrapper.get('input[name="name"]').setValue('Nuevo')
+      await wrapper.get('input[name="businessTerm"]').setValue('estudio')
+      await submit(wrapper)
+
+      expect(saveMock).toHaveBeenCalledTimes(1)
+      expect(saveBrandMock).toHaveBeenCalledTimes(1)
+      expect(wrapper.find('.save-bar').exists()).toBe(false)
+    })
+
+    it('keeps the unsaved resource pending when only the other one fails to save', async () => {
+      const wrapper = await mountReady()
+      saveMock.mockResolvedValueOnce({
+        kind: 'success',
+        settings: { ...loadedSettings, name: 'Nuevo' },
+      })
+      saveBrandMock.mockResolvedValueOnce({ kind: 'network-error' })
+
+      await wrapper.get('input[name="name"]').setValue('Nuevo')
+      await wrapper.get('input[name="businessTerm"]').setValue('estudio')
+      await submit(wrapper)
+
+      // Lo guardado no se vuelve a enviar, lo fallido sigue pendiente y escrito.
+      expect(updateBarbershopNameMock).toHaveBeenCalledWith('Nuevo')
+      expect(wrapper.text()).toContain('No pudimos conectar')
+      expect(wrapper.get('.save-bar').text()).toContain('Marca y vocabulario')
+      expect(wrapper.get('.save-bar').text()).not.toContain('Datos básicos')
+      expect(input(wrapper, 'businessTerm').value).toBe('estudio')
+    })
+
+    it('on a recoverable network error, keeps the typed values and never updates the header (CA-020-08)', async () => {
+      const wrapper = await mountReady()
+      await wrapper.get('input[name="name"]').setValue('Nombre editado sin guardar')
+      saveMock.mockResolvedValueOnce({ kind: 'network-error' })
+
+      await submit(wrapper)
+
+      expect(wrapper.text()).toContain('No pudimos conectar')
+      expect(updateBarbershopNameMock).not.toHaveBeenCalled()
+      expect(input(wrapper, 'name').value).toBe('Nombre editado sin guardar')
+      expect(wrapper.find('.save-bar').exists()).toBe(true)
+    })
+
+    it('on a validation-error for the basic data, keeps the typed values and never updates the header', async () => {
+      const wrapper = await mountReady()
+      const zone = wrapper.get('[role="combobox"]')
+      await zone.setValue('COT')
+      // El selector solo acepta una zona de su lista; el servidor sigue siendo
+      // la autoridad, así que se fuerza el cambio por el nombre del negocio.
+      await wrapper.get('input[name="name"]').setValue('Nombre nuevo')
+      saveMock.mockResolvedValueOnce({ kind: 'validation-error' })
+
+      await submit(wrapper)
+
+      expect(wrapper.text()).toContain('No pudimos guardar los datos básicos')
+      expect(updateBarbershopNameMock).not.toHaveBeenCalled()
+      expect(input(wrapper, 'name').value).toBe('Nombre nuevo')
+    })
+
+    it('on a validation-error for the brand, explains the words rule and keeps what was typed', async () => {
+      const wrapper = await mountReady()
+      await wrapper.get('input[name="businessTerm"]').setValue('estudio')
+      saveBrandMock.mockResolvedValueOnce({ kind: 'validation-error' })
+
+      await submit(wrapper)
+
+      expect(wrapper.text()).toContain('No pudimos guardar la marca ni el vocabulario')
+      expect(input(wrapper, 'businessTerm').value).toBe('estudio')
+    })
+
+    it('blocks a second submit while the first is still in flight (no double PATCH)', async () => {
+      const wrapper = await mountReady()
+      let resolveSave: (value: unknown) => void = () => {}
+      saveMock.mockReturnValueOnce(new Promise((resolve) => (resolveSave = resolve)))
+
+      await wrapper.get('input[name="name"]').setValue('Nuevo')
+      await wrapper.get('form').trigger('submit')
+      await wrapper.get('form').trigger('submit')
+      await flushPromises()
+
+      expect(saveMock).toHaveBeenCalledTimes(1)
+      resolveSave({ kind: 'success', settings: { ...loadedSettings, name: 'Nuevo' } })
+      await flushPromises()
+    })
+
+    it('discards every pending change and restores the confirmed values', async () => {
+      const wrapper = await mountReady()
+      await wrapper.get('input[name="name"]').setValue('Descartar esto')
+      await wrapper.get('input[name="businessTerm"]').setValue('estudio')
+
+      const discard = wrapper.findAll('.save-bar button').find((b) => b.text() === 'Descartar')!
+      await discard.trigger('click')
+
+      expect(input(wrapper, 'name').value).toBe('Barbería Ejemplo')
+      expect(input(wrapper, 'businessTerm').value).toBe('barbería')
+      expect(wrapper.find('.save-bar').exists()).toBe(false)
+      expect(saveMock).not.toHaveBeenCalled()
+    })
   })
 
-  it('on a validation-error (e.g. unrecognized timezone), keeps the typed values and never updates the header', async () => {
-    const wrapper = await mountReady()
-    await wrapper.get('input[name="timezone"]').setValue('COT')
-    saveMock.mockResolvedValueOnce({ kind: 'validation-error' })
+  describe('acento de la marca', () => {
+    it('previews the chosen accent on the whole app before saving and drops it on discard', async () => {
+      const wrapper = await mountReady()
+      expect(effectiveAccent.value).toBe('brass')
 
-    await wrapper.get('form').trigger('submit')
-    await flushPromises()
+      await wrapper.get('input[type="radio"][value="emerald"]').setValue(true)
 
-    expect(wrapper.text()).toContain('No pudimos guardar los cambios')
-    expect(updateBarbershopNameMock).not.toHaveBeenCalled()
-    expect((wrapper.find('input[name="timezone"]').element as HTMLInputElement).value).toBe('COT')
+      expect(effectiveAccent.value).toBe('emerald')
+      // Todavía no se confirmó: la marca guardada no cambió.
+      expect(brandState.brand.accent).toBe('brass')
+      expect(wrapper.get('.save-bar').text()).toContain('Marca y vocabulario')
+
+      const discard = wrapper.findAll('.save-bar button').find((b) => b.text() === 'Descartar')!
+      await discard.trigger('click')
+      expect(effectiveAccent.value).toBe('brass')
+    })
+
+    it('stops previewing the accent when the screen is left without saving', async () => {
+      const wrapper = await mountReady()
+      await wrapper.get('input[type="radio"][value="ruby"]').setValue(true)
+      expect(effectiveAccent.value).toBe('ruby')
+
+      wrapper.unmount()
+
+      expect(effectiveAccent.value).toBe('brass')
+      setAccentPreview(null)
+    })
+
+    it('saves the accent and keeps it as the confirmed one', async () => {
+      const wrapper = await mountReady()
+      saveBrandMock.mockImplementationOnce(async (brand) => ({ kind: 'success', brand }))
+
+      await wrapper.get('input[type="radio"][value="sapphire"]').setValue(true)
+      await submit(wrapper)
+
+      expect(saveBrandMock.mock.calls[0]![0]).toMatchObject({ accent: 'sapphire' })
+      expect(brandState.brand.accent).toBe('sapphire')
+      expect(effectiveAccent.value).toBe('sapphire')
+    })
   })
 
-  it('blocks a second submit while the first is still in flight (no double POST)', async () => {
-    const wrapper = await mountReady()
-    let resolveSave: (value: unknown) => void = () => {}
-    saveMock.mockReturnValueOnce(new Promise((resolve) => (resolveSave = resolve)))
+  describe('vocabulario', () => {
+    it('fills the word, its plural and its gender from a preset', async () => {
+      const wrapper = await mountReady()
 
-    await wrapper.get('form').trigger('submit')
-    await wrapper.get('form').trigger('submit')
-    await flushPromises()
+      const preset = wrapper.findAll('.preset-chip').find((b) => b.text() === 'estilista')!
+      await preset.trigger('click')
 
-    expect(saveMock).toHaveBeenCalledTimes(1)
-    resolveSave({ kind: 'success', settings: loadedSettings })
-    await flushPromises()
+      expect(input(wrapper, 'professionalTerm').value).toBe('estilista')
+      expect(input(wrapper, 'professionalTermPlural').value).toBe('estilistas')
+      expect(
+        (
+          wrapper.get('input[name^="option-group"][value="feminine"]:checked')
+            .element as HTMLInputElement
+        ).value,
+      ).toBe('feminine')
+    })
+
+    it('suggests the plural while the singular is typed, until it is edited by hand', async () => {
+      const wrapper = await mountReady()
+
+      await wrapper.get('input[name="professionalTerm"]').setValue('colorista')
+      expect(input(wrapper, 'professionalTermPlural').value).toBe('coloristas')
+
+      await wrapper.get('input[name="professionalTermPlural"]').setValue('coloristas expertas')
+      await wrapper.get('input[name="professionalTerm"]').setValue('maestro')
+      expect(input(wrapper, 'professionalTermPlural').value).toBe('coloristas expertas')
+    })
+
+    it('previews the sentences with the draft vocabulary and its grammatical agreement', async () => {
+      const wrapper = await mountReady()
+
+      const preset = wrapper.findAll('.preset-chip').find((b) => b.text() === 'estilista')!
+      await preset.trigger('click')
+
+      const preview = wrapper.get('[aria-label="Vista previa del vocabulario"]').text()
+      expect(preview).toContain('Estilistas')
+      expect(preview).toContain('+ Agregar estilista')
+      expect(preview).toContain('Aún no tienes estilistas registradas en la barbería.')
+      expect(preview).toContain('Elige a la estilista y el servicio.')
+    })
+
+    it('writes the scope of each section with the confirmed barbershop word', async () => {
+      // La marca confirmada llega al estado compartido al iniciar la sesión.
+      const salon = {
+        ...DEFAULT_BRAND,
+        businessTerm: 'salón',
+        businessTermGender: 'masculine' as const,
+      }
+      setBrand(salon)
+      const wrapper = await mountReady(salon)
+
+      expect(wrapper.text()).toContain('Para el salón')
+      expect(wrapper.text()).toContain('cómo se llama el salón')
+    })
   })
 
-  it('has no axe violations once loaded', async () => {
-    const wrapper = await mountReady()
-    const results = await axe(wrapper.element)
-    expect(results).toHaveNoViolations()
+  describe('preferencias de este dispositivo', () => {
+    it('applies the mode at once, persists it and needs no saving', async () => {
+      const wrapper = await mountReady()
+
+      await wrapper.get('input[type="radio"][value="ivory"]').setValue(true)
+
+      expect(appearance.theme).toBe('ivory')
+      expect(JSON.parse(window.localStorage.getItem('nava.appearance.v1')!)).toMatchObject({
+        theme: 'ivory',
+      })
+      expect(wrapper.find('.save-bar').exists()).toBe(false)
+      expect(saveMock).not.toHaveBeenCalled()
+    })
+
+    it('changes the text size', async () => {
+      const wrapper = await mountReady()
+
+      await wrapper.get('input[type="radio"][value="xlarge"]').setValue(true)
+
+      expect(appearance.textScale).toBe('xlarge')
+    })
+
+    it('toggles reduced animations with an announced switch', async () => {
+      const wrapper = await mountReady()
+      const toggle = wrapper.get('[role="switch"]')
+      expect(toggle.attributes('aria-checked')).toBe('false')
+
+      await toggle.trigger('click')
+
+      expect(toggle.attributes('aria-checked')).toBe('true')
+      expect(appearance.motion).toBe('reduced')
+    })
+
+    it('restores the screen preferences, and the button is disabled when nothing differs', async () => {
+      const wrapper = await mountReady()
+      const reset = () =>
+        wrapper.findAll('button').find((b) => b.text() === 'Restablecer pantalla')!
+      expect(reset().attributes('disabled')).toBeDefined()
+
+      await wrapper.get('input[type="radio"][value="ivory"]').setValue(true)
+      expect(reset().attributes('disabled')).toBeUndefined()
+
+      await reset().trigger('click')
+      expect(appearance.theme).toBe('ink')
+    })
   })
 
-  // heading-order: BaseAlert.vue (HU-009) fija el título de una alerta como
-  // `<h4>` porque es la etiqueta de un widget transitorio (`role="alert"`/
-  // `role="status"`), no un encabezado del esquema del documento; junto al
-  // único `<h1>` real de esta página, axe interpreta ese salto como un
-  // esquema de encabezados roto. Mismo criterio documentado en
-  // LoginPage.test.ts: no es un defecto de esta pantalla ni de BaseAlert,
-  // así que no se inserta un h2/h3 vacío solo para complacer la regla.
-  const axeOptionsWithAlert = { rules: { 'heading-order': { enabled: false } } }
+  describe('accesibilidad', () => {
+    it('has no axe violations once loaded', async () => {
+      const wrapper = await mountReady()
+      const results = await axe(wrapper.element)
+      expect(results).toHaveNoViolations()
+    })
 
-  it('has no axe violations with the validation-error alert visible', async () => {
-    const wrapper = await mountReady()
-    await wrapper.get('input[name="timezone"]').setValue('COT')
-    saveMock.mockResolvedValueOnce({ kind: 'validation-error' })
+    // heading-order: BaseAlert.vue (HU-009) fija el título de una alerta como
+    // `<h4>` porque es la etiqueta de un widget transitorio, no un encabezado
+    // del esquema del documento. Mismo criterio documentado en
+    // LoginPage.test.ts: no es un defecto de esta pantalla ni de BaseAlert.
+    const axeOptionsWithAlert = { rules: { 'heading-order': { enabled: false } } }
 
-    await wrapper.get('form').trigger('submit')
-    await flushPromises()
+    it('has no axe violations with the validation-error alert and the save bar visible', async () => {
+      const wrapper = await mountReady()
+      await wrapper.get('input[name="name"]').setValue('Nombre nuevo')
+      saveMock.mockResolvedValueOnce({ kind: 'validation-error' })
 
-    const results = await axe(wrapper.element, axeOptionsWithAlert)
-    expect(results).toHaveNoViolations()
-  })
+      await submit(wrapper)
 
-  it('has no axe violations with the saved confirmation visible', async () => {
-    const wrapper = await mountReady()
-    saveMock.mockResolvedValueOnce({ kind: 'success', settings: loadedSettings })
+      const results = await axe(wrapper.element, axeOptionsWithAlert)
+      expect(results).toHaveNoViolations()
+    })
 
-    await wrapper.get('form').trigger('submit')
-    await flushPromises()
+    it('has no axe violations with a field error visible', async () => {
+      const wrapper = await mountReady()
+      await wrapper.get('input[name="businessTerm"]').setValue('salón 24')
+      await submit(wrapper)
 
-    const results = await axe(wrapper.element, axeOptionsWithAlert)
-    expect(results).toHaveNoViolations()
+      const results = await axe(wrapper.element, axeOptionsWithAlert)
+      expect(results).toHaveNoViolations()
+    })
   })
 })

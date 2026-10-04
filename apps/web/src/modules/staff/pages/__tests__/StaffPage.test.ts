@@ -12,6 +12,7 @@ import { resetToasts, toastState } from '@/shared/model/toastStore'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
 import { DEFAULT_MIN_HOLD_MS, PAGE_MIN_HOLD_MS } from '@/shared/composables'
+import { DEFAULT_BRAND, resetBrand, setBrand } from '@/shared/model'
 
 const fetchMock = vi.hoisted(() => vi.fn())
 const createMock = vi.hoisted(() => vi.fn())
@@ -173,6 +174,7 @@ function dialogButton(wrapper: VueWrapper, text: string) {
 describe('StaffPage', () => {
   beforeEach(() => {
     resetToasts()
+    resetBrand()
     fetchMock.mockReset()
     fetchMock.mockImplementation(async () => {
       const created = await createMock.mock.results.at(-1)?.value
@@ -211,6 +213,23 @@ describe('StaffPage', () => {
 
     expect(wrapper.text()).not.toContain('Cargando')
     expect(wrapper.text()).toContain('Carlos Ramírez')
+  })
+
+  it('speaks with the words the barbershop chose, in agreement (DEC-110)', async () => {
+    setBrand({
+      ...DEFAULT_BRAND,
+      professionalTerm: 'estilista',
+      professionalTermPlural: 'estilistas',
+      professionalTermGender: 'feminine',
+    })
+    const wrapper = mountPage()
+    await waitOutInitialLoadHold()
+    await flushPromises()
+
+    expect(wrapper.get('h1').text()).toBe('Estilistas')
+    expect(wrapper.text()).toContain('Agregar estilista')
+    expect(wrapper.text()).toContain('1 estilista')
+    expect(wrapper.text()).not.toContain('barbero')
   })
 
   it('a one-person shop and a four-person shop use the same list component (CA-021-01/02)', async () => {

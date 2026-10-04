@@ -89,7 +89,7 @@ const BANDS: readonly (readonly number[])[] = [[2], [2, 2], [2], [1]]
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  border: 2px solid rgb(184 149 90 / 22%);
+  border: 2px solid color-mix(in srgb, var(--color-brand-accent-surface) 22%, transparent);
   border-top-color: var(--color-brand-accent-surface);
   border-right-color: var(--color-brand-accent-surface);
   border-radius: 50%;
@@ -105,9 +105,10 @@ const BANDS: readonly (readonly number[])[] = [[2], [2, 2], [2], [1]]
 /* Misma hoja que el formulario real: una sola superficie translúcida con
    filete de latón a la izquierda, no cuatro tarjetas. */
 .nt-skeleton__sheet {
-  background-color: rgb(244 240 231 / 3.5%);
-  border: var(--border-width-normal) solid rgb(244 240 231 / 10%);
-  border-left: 3px solid rgb(184 149 90 / 55%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 3.5%, transparent);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 10%, transparent);
+  border-left: 3px solid color-mix(in srgb, var(--color-brand-accent-surface) 55%, transparent);
   border-radius: 2px;
 }
 
@@ -119,7 +120,8 @@ const BANDS: readonly (readonly number[])[] = [[2], [2, 2], [2], [1]]
 }
 
 .nt-skeleton__band + .nt-skeleton__band {
-  border-top: var(--border-width-normal) solid rgb(244 240 231 / 10%);
+  border-top: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 10%, transparent);
 }
 
 .nt-skeleton__head {
@@ -156,7 +158,7 @@ const BANDS: readonly (readonly number[])[] = [[2], [2, 2], [2], [1]]
 
 .nt-skeleton__bar {
   display: block;
-  background-color: rgb(244 240 231 / 14%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 14%, transparent);
   border-radius: 2px;
   animation: nt-skeleton-pulse 1400ms ease-in-out infinite;
 }
@@ -176,7 +178,7 @@ const BANDS: readonly (readonly number[])[] = [[2], [2, 2], [2], [1]]
   width: 170px;
   height: 10px;
   margin-top: 8px;
-  background-color: rgb(244 240 231 / 9%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 9%, transparent);
 }
 
 .nt-skeleton__bar--label {
@@ -189,8 +191,9 @@ const BANDS: readonly (readonly number[])[] = [[2], [2, 2], [2], [1]]
 .nt-skeleton__bar--control {
   width: 100%;
   height: 46px;
-  background-color: rgb(244 240 231 / 7%);
-  border-bottom: var(--border-width-emphasis) solid rgb(184 149 90 / 45%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 7%, transparent);
+  border-bottom: var(--border-width-emphasis) solid
+    color-mix(in srgb, var(--color-brand-accent-surface) 45%, transparent);
 }
 
 .nt-skeleton__actions {
@@ -201,7 +204,7 @@ const BANDS: readonly (readonly number[])[] = [[2], [2, 2], [2], [1]]
 .nt-skeleton__bar--cta {
   width: 100%;
   height: 48px;
-  background-color: rgb(184 149 90 / 35%);
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 35%, transparent);
 }
 
 @keyframes nt-skeleton-pulse {

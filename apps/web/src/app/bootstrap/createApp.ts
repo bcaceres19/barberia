@@ -1,7 +1,9 @@
-import { createApp as createVueApp, type App as VueApp } from 'vue'
+import { createApp as createVueApp, watch, type App as VueApp } from 'vue'
 import App from '@/App.vue'
 import { router } from '@/app/router'
-import { installSessionHandling } from '@/modules/auth'
+import { installSessionHandling, sessionStatus } from '@/modules/auth'
+import { loadWorkspaceBrand } from '@/modules/settings'
+import { resetBrand } from '@/shared/model'
 
 /**
  * Construye la instancia de Vue con sus proveedores globales (router, y los
@@ -15,5 +17,16 @@ export function createApplication(): VueApp {
   // (no dentro de `modules/auth`) porque es el único punto que posee la
   // instancia real del router.
   installSessionHandling(router)
+  // DEC-110: la marca y el vocabulario de la barbería viajan con la sesión. Se
+  // piden al autenticarse y se descartan al salir, para que la siguiente
+  // barbería nunca herede el acento ni las palabras de la anterior.
+  watch(
+    sessionStatus,
+    (status) => {
+      if (status === 'authenticated') void loadWorkspaceBrand()
+      else if (status === 'unauthenticated') resetBrand()
+    },
+    { immediate: true },
+  )
   return app
 }

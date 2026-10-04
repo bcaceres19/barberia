@@ -20,10 +20,17 @@
 // depender del ancho de AppHeader.
 import { computed, ref } from 'vue'
 import type { NavItem } from '@/shared/navigation/navItem'
+import { useVocabulary } from '@/shared/composables'
 import { BaseDialog, RecordRow } from '@/shared/ui'
 import { useLogout } from '../model/logout'
 
 const props = defineProps<{ extraItems?: NavItem[] }>()
+const vocabulary = useVocabulary()
+
+/** Rótulo visible de una entrada, con el vocabulario de la barbería (DEC-110). */
+function labelOf(item: NavItem): string {
+  return item.labelFor ? item.labelFor(vocabulary.value) : item.label
+}
 
 const baseItems: NavItem[] = [{ to: { name: 'panel' }, label: 'Agenda', primary: true }]
 const items = computed<NavItem[]>(() => [...baseItems, ...(props.extraItems ?? [])])
@@ -79,7 +86,7 @@ async function onLogoutFromMore() {
       <li v-for="item in items" :key="item.label" class="app-nav__item">
         <RouterLink :to="item.to" class="app-nav__link" exact-active-class="app-nav__link--active">
           <span class="app-nav__icon" aria-hidden="true" v-html="iconFor(item.to.name)" />
-          <span class="app-nav__label">{{ item.label }}</span>
+          <span class="app-nav__label">{{ labelOf(item) }}</span>
         </RouterLink>
       </li>
     </ul>
@@ -87,7 +94,7 @@ async function onLogoutFromMore() {
       <li v-for="item in primaryItems" :key="item.label" class="app-nav__item">
         <RouterLink :to="item.to" class="app-nav__link" exact-active-class="app-nav__link--active">
           <span class="app-nav__icon" aria-hidden="true" v-html="iconFor(item.to.name)" />
-          <span class="app-nav__label">{{ item.label }}</span>
+          <span class="app-nav__label">{{ labelOf(item) }}</span>
         </RouterLink>
       </li>
       <li v-if="secondaryItems.length" class="app-nav__item">
@@ -114,7 +121,7 @@ async function onLogoutFromMore() {
             @click="closeMore"
           >
             <span class="app-nav__icon" aria-hidden="true" v-html="iconFor(item.to.name)" />
-            {{ item.label }}
+            {{ labelOf(item) }}
           </RouterLink>
         </RecordRow>
         <RecordRow>
@@ -140,8 +147,9 @@ async function onLogoutFromMore() {
      operativa (estandar-diseno-visual.md §3), no un formulario. Filete
      superior del atlas (issue #189): rgba(244,240,231,.14), no una sombra
      alzada — el dock no "flota" sobre el contenido. */
-  background-color: var(--color-surface-strong);
-  border-top: var(--border-width-normal) solid rgb(244 240 231 / 14%);
+  background-color: var(--color-chrome-surface);
+  border-top: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 14%, transparent);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 

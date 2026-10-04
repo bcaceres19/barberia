@@ -7,7 +7,7 @@
 // desde un módulo cumple lo mismo con menos superficie. Si en el futuro
 // aparece más estado global real, esta es la pieza que se migraría a Pinia,
 // no un patrón nuevo.
-import { reactive, readonly, type DeepReadonly } from 'vue'
+import { computed, reactive, readonly, type DeepReadonly } from 'vue'
 import type { SessionContext } from './sessionContext'
 import { fetchSessionContext } from '../api/sessionContextApi'
 
@@ -30,6 +30,12 @@ const state = reactive<{ bootstrap: BootstrapState }>({ bootstrap: { status: 'ch
 /** Vista de solo lectura para componentes/guards; solo las funciones de
  * este módulo pueden mutar el estado. */
 export const sessionState: DeepReadonly<{ bootstrap: BootstrapState }> = readonly(state)
+
+/** Estado de la sesión sin su contexto: lo único que `app` necesita para
+ * coordinar proveedores globales (por ejemplo la marca de la barbería) con el
+ * inicio y el fin de la sesión, sin importar el nombre ni los datos del
+ * principal. */
+export const sessionStatus = computed(() => state.bootstrap.status)
 
 function setChecking(): void {
   state.bootstrap = { status: 'checking' }

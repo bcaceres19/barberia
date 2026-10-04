@@ -512,7 +512,7 @@ const triggerLabelledBy = computed(() =>
 
 .agenda-date-picker__trigger:hover:not(:disabled),
 .agenda-date-picker__trigger[aria-expanded='true'] {
-  border-color: rgb(184 149 90 / 55%);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 55%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
 }
 
@@ -543,7 +543,7 @@ const triggerLabelledBy = computed(() =>
 .agenda-date-picker__dialog {
   position: fixed;
   z-index: var(--layer-dialog);
-  max-height: calc(100dvh - 16px);
+  max-height: calc(var(--viewport-height) - 16px);
   overflow-y: auto;
   overscroll-behavior: contain;
   --color-accent-brass: var(--color-brand-accent-surface);
@@ -554,7 +554,8 @@ const triggerLabelledBy = computed(() =>
      esto el navegador los toma como desplazamiento y cancela el puntero. */
   touch-action: none;
   background-color: var(--color-field-strong);
-  border: var(--border-width-normal) solid rgb(244 240 231 / 16%);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 16%, transparent);
   border-top: var(--border-width-emphasis) solid var(--color-accent-brass);
   border-radius: 2px;
   box-shadow: var(--shadow-dialog);
@@ -594,7 +595,7 @@ const triggerLabelledBy = computed(() =>
 
 .agenda-date-picker__nav:hover {
   background-color: var(--color-field-strong-raised);
-  border-color: rgb(184 149 90 / 55%);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 55%, transparent);
 }
 
 .agenda-date-picker__nav:focus-visible,
@@ -634,7 +635,8 @@ const triggerLabelledBy = computed(() =>
   letter-spacing: 0.12em;
   color: var(--color-brand-accent-surface);
   text-align: center;
-  border-bottom: var(--border-width-normal) solid rgb(244 240 231 / 10%);
+  border-bottom: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 10%, transparent);
 }
 
 .agenda-date-picker__grid td {
@@ -660,7 +662,7 @@ const triggerLabelledBy = computed(() =>
 
 .agenda-date-picker__day:hover {
   background-color: var(--color-field-strong-raised);
-  border-color: rgb(184 149 90 / 55%);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 55%, transparent);
 }
 
 .agenda-date-picker__day--outside {
@@ -697,7 +699,8 @@ const triggerLabelledBy = computed(() =>
   justify-content: center;
   margin-top: var(--space-2);
   padding-top: var(--space-2);
-  border-top: var(--border-width-normal) solid rgb(244 240 231 / 10%);
+  border-top: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 10%, transparent);
 }
 
 .agenda-date-picker__today {
@@ -708,14 +711,15 @@ const triggerLabelledBy = computed(() =>
   font-weight: 500;
   color: var(--color-brand-accent-surface);
   background: transparent;
-  border: var(--border-width-normal) solid rgb(184 149 90 / 50%);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
   border-radius: 2px;
   cursor: pointer;
 }
 
 .agenda-date-picker__today:hover {
-  background-color: rgb(184 149 90 / 12%);
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
 }
 
 .agenda-date-picker__sr-only {

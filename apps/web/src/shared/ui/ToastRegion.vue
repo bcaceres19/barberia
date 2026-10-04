@@ -125,7 +125,8 @@ function onAction(id: number, run: (() => void) | undefined) {
   height: 36px;
   padding: 0 var(--space-3);
   background-color: var(--color-surface-strong);
-  border: var(--border-width-normal) solid rgb(184 149 90 / 45%);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-brand-accent-surface) 45%, transparent);
   border-radius: 2px;
   box-shadow: 0 8px 20px -8px rgb(16 27 43 / 50%);
   color: var(--color-on-strong);
@@ -153,7 +154,7 @@ function onAction(id: number, run: (() => void) | undefined) {
 
 .toast-region__clear:hover {
   background-color: var(--color-action-primary-hover);
-  border-color: rgb(244 240 231 / 32%);
+  border-color: color-mix(in srgb, var(--color-on-strong) 32%, transparent);
 }
 
 .toast-region__clear svg {
@@ -168,7 +169,8 @@ function onAction(id: number, run: (() => void) | undefined) {
 
 .toast-region__count {
   padding-left: var(--space-2);
-  border-left: var(--border-width-normal) solid rgb(244 240 231 / 20%);
+  border-left: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 20%, transparent);
   color: var(--color-brand-accent-surface);
 }
 

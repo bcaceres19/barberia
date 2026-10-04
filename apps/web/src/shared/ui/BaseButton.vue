@@ -158,7 +158,7 @@ const handleClick = (event: MouseEvent) => {
 /* Variant: primary */
 .base-button--primary {
   background-color: var(--color-action-primary);
-  color: var(--color-on-strong);
+  color: var(--color-on-ink);
   border-color: var(--color-action-primary);
 }
 
@@ -227,7 +227,7 @@ const handleClick = (event: MouseEvent) => {
 /* Variant: danger */
 .base-button--danger {
   background-color: var(--color-danger-action);
-  color: var(--color-on-strong);
+  color: var(--color-on-ink);
   border-color: var(--color-danger-action);
 }
 

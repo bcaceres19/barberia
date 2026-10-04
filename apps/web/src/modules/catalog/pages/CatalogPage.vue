@@ -11,7 +11,7 @@
 // siendo la propia lista, y los errores siguen dentro del diálogo, junto al
 // formulario que conservan.
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { PAGE_MIN_HOLD_MS, useMinHoldLoading, useToast } from '@/shared/composables'
+import { PAGE_MIN_HOLD_MS, useMinHoldLoading, useToast, useVocabulary } from '@/shared/composables'
 import { BaseAlert, BaseBadge, BaseButton, BaseDialog, BaseInput, DiamondLoader } from '@/shared/ui'
 import {
   createService,
@@ -32,6 +32,8 @@ import {
 } from '../validation/catalogValidation'
 
 const toast = useToast()
+// Palabras de la barbería (DEC-110): con los valores iniciales, el texto de siempre.
+const v = useVocabulary()
 
 type LoadStatus = 'loading' | 'ready' | 'load-error'
 type SaveStatus =
@@ -1079,7 +1081,11 @@ async function reloadAfterConflict(serviceId: string) {
              el resultado las filas montan de nuevo y entran escalonadas
              (--row-index, ver .catalog-page__row). El mismo <ul> conserva
              tableListRef para el cálculo de filas que caben. -->
-          <ul ref="tableListRef" class="catalog-page__list" aria-label="Servicios de la barbería">
+          <ul
+            ref="tableListRef"
+            class="catalog-page__list"
+            :aria-label="`Servicios ${v.ofTheBusiness}`"
+          >
             <template v-if="pageStatus === 'loading'">
               <li
                 v-for="n in skeletonRowCount"
@@ -1968,7 +1974,7 @@ async function reloadAfterConflict(serviceId: string) {
 .catalog-page__skeleton-bar {
   display: block;
   flex: 0 0 auto;
-  background-color: rgb(244 240 231 / 16%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 16%, transparent);
   border-radius: var(--radius-sm);
   animation: catalog-skeleton-pulse 1400ms ease-in-out infinite;
 }
@@ -1987,7 +1993,7 @@ async function reloadAfterConflict(serviceId: string) {
 .catalog-page__skeleton-bar--meta {
   width: 96px;
   height: 12px;
-  background-color: rgb(244 240 231 / 10%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 10%, transparent);
 }
 
 .catalog-page__skeleton-bar--badge {
@@ -2218,7 +2224,7 @@ async function reloadAfterConflict(serviceId: string) {
 /* Solo con puntero real: en táctil :hover se queda pegado tras el toque. */
 @media (hover: hover) {
   .catalog-page__row:hover {
-    background-color: rgb(244 240 231 / 4%);
+    background-color: color-mix(in srgb, var(--color-on-strong) 4%, transparent);
   }
 
   .catalog-page__row:hover .catalog-page__item-name {
@@ -2259,19 +2265,19 @@ async function reloadAfterConflict(serviceId: string) {
 .catalog-page__item-actions :deep(.base-button--secondary) {
   background-color: transparent;
   color: var(--color-brand-accent-surface);
-  border-color: rgb(184 149 90 / 50%);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
 }
 
 .catalog-page__item-actions
   :deep(.base-button--secondary:hover:not(:disabled):not(.base-button--loading)) {
-  background-color: rgb(184 149 90 / 12%);
-  border-color: rgb(184 149 90 / 50%);
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
 }
 
 .catalog-page__item-actions
   :deep(.base-button--secondary:active:not(:disabled):not(.base-button--loading)) {
-  background-color: rgb(184 149 90 / 20%);
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 20%, transparent);
 }
 
 /* "Cambiar estado" (issue 2026-09-29, "colócale un color distinto a ese
@@ -2282,7 +2288,7 @@ async function reloadAfterConflict(serviceId: string) {
    confirmación destructiva. */
 .catalog-page__item-actions :deep(.catalog-page__state-action.base-button--secondary) {
   color: var(--color-success-on-strong);
-  border-color: rgb(157 194 169 / 50%);
+  border-color: color-mix(in srgb, var(--color-success-on-strong) 50%, transparent);
   border-bottom-color: var(--color-success-on-strong);
 }
 
@@ -2292,8 +2298,8 @@ async function reloadAfterConflict(serviceId: string) {
         .base-button--loading
       )
   ) {
-  background-color: rgb(157 194 169 / 12%);
-  border-color: rgb(157 194 169 / 50%);
+  background-color: color-mix(in srgb, var(--color-success-on-strong) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-success-on-strong) 50%, transparent);
 }
 
 .catalog-page__item-actions
@@ -2302,7 +2308,7 @@ async function reloadAfterConflict(serviceId: string) {
         .base-button--loading
       )
   ) {
-  background-color: rgb(157 194 169 / 20%);
+  background-color: color-mix(in srgb, var(--color-success-on-strong) 20%, transparent);
 }
 
 /* Insignia "Activo"/"Inactivo" como rombo (issue reportado 2026-09-28,
@@ -2412,9 +2418,9 @@ async function reloadAfterConflict(serviceId: string) {
 }
 
 .catalog-page__search :deep(.base-input) {
-  --input-bg: rgb(244 240 231 / 4%);
-  --input-border-color: rgb(244 240 231 / 12%);
-  --input-border-base-color: rgb(244 240 231 / 30%);
+  --input-bg: color-mix(in srgb, var(--color-on-strong) 4%, transparent);
+  --input-border-color: color-mix(in srgb, var(--color-on-strong) 12%, transparent);
+  --input-border-base-color: color-mix(in srgb, var(--color-on-strong) 30%, transparent);
   --input-focus-ring: 0 0 0 2px var(--color-surface-strong), 0 0 0 4px var(--color-focus);
 
   color: var(--color-on-strong);
@@ -2430,7 +2436,7 @@ async function reloadAfterConflict(serviceId: string) {
 }
 
 .catalog-page__search :deep(.base-input:hover:not(:disabled)) {
-  border-color: rgb(244 240 231 / 26%);
+  border-color: color-mix(in srgb, var(--color-on-strong) 26%, transparent);
 }
 
 /* Buscar o cambiar de página (issue 2026-09-29, "que al buscar un servicio
@@ -2540,14 +2546,14 @@ async function reloadAfterConflict(serviceId: string) {
 .catalog-page__pagination-nav :deep(.base-button--secondary) {
   background-color: transparent;
   color: var(--color-brand-accent-surface);
-  border-color: rgb(184 149 90 / 50%);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
 }
 
 .catalog-page__pagination-nav
   :deep(.base-button--secondary:hover:not(:disabled):not(.base-button--loading)) {
-  background-color: rgb(184 149 90 / 12%);
-  border-color: rgb(184 149 90 / 50%);
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
 }
 
 .catalog-page__pagination-nav :deep(.base-button:disabled) {
@@ -2636,7 +2642,7 @@ async function reloadAfterConflict(serviceId: string) {
    sobre un fondo transparente; aquí la ficha YA es dorada (o roja), así
    que el barrido usa el mismo triplete RGB de --color-on-strong que
    tokens.css ya reutiliza para sus propios veladores translúcidos
-   (--color-field-strong-border es "rgb(244 240 231 / 12%)") en vez de más
+   (--color-field-strong-border es "color-mix(in srgb, var(--color-on-strong) 12%, transparent)") en vez de más
    color sobre color, que no se vería. UNA sola pasada, no en bucle: es el
    remate de abrir el diálogo, no un indicador de carga. */
 .catalog-page__create-icon::after,
@@ -2646,7 +2652,12 @@ async function reloadAfterConflict(serviceId: string) {
   content: '';
   position: absolute;
   inset: -40% -60%;
-  background: linear-gradient(75deg, transparent 40%, rgb(244 240 231 / 50%) 50%, transparent 60%);
+  background: linear-gradient(
+    75deg,
+    transparent 40%,
+    color-mix(in srgb, var(--color-on-strong) 50%, transparent) 50%,
+    transparent 60%
+  );
   transform: translateX(-100%);
   animation: catalog-dialog-icon-glint 480ms cubic-bezier(0.5, 0, 0.3, 1) 260ms both;
 }
@@ -2721,9 +2732,9 @@ async function reloadAfterConflict(serviceId: string) {
    en su propio ámbito, no en BaseInput.vue). */
 .catalog-page__create-form :deep(.base-input),
 .catalog-page__edit-form :deep(.base-input) {
-  --input-bg: rgb(244 240 231 / 4%);
-  --input-border-color: rgb(244 240 231 / 12%);
-  --input-border-base-color: rgb(244 240 231 / 30%);
+  --input-bg: color-mix(in srgb, var(--color-on-strong) 4%, transparent);
+  --input-border-color: color-mix(in srgb, var(--color-on-strong) 12%, transparent);
+  --input-border-base-color: color-mix(in srgb, var(--color-on-strong) 30%, transparent);
   --input-focus-ring: 0 0 0 2px var(--color-surface-strong), 0 0 0 4px var(--color-focus);
 
   color: var(--color-on-strong);
@@ -2759,7 +2770,7 @@ async function reloadAfterConflict(serviceId: string) {
 
 .catalog-page__create-form :deep(.base-input:hover:not(:disabled):not(.base-input--invalid)),
 .catalog-page__edit-form :deep(.base-input:hover:not(:disabled):not(.base-input--invalid)) {
-  border-color: rgb(244 240 231 / 26%);
+  border-color: color-mix(in srgb, var(--color-on-strong) 26%, transparent);
 }
 
 /* El dorado del filete inferior marca el campo YA RESUELTO (mismo criterio
@@ -2769,7 +2780,7 @@ async function reloadAfterConflict(serviceId: string) {
    edición usan cada una su propia clase --filled (no comparten estado). */
 .catalog-page__create-form :deep(.catalog-page__create-input--filled .base-input),
 .catalog-page__edit-form :deep(.catalog-page__edit-input--filled .base-input) {
-  background-color: rgb(244 240 231 / 6%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 6%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
 }
 
@@ -2779,14 +2790,14 @@ async function reloadAfterConflict(serviceId: string) {
 .catalog-page__edit-form :deep(.base-input--disabled) {
   background-color: var(--input-bg);
   border-color: var(--input-border-color);
-  border-bottom-color: rgb(244 240 231 / 20%);
+  border-bottom-color: color-mix(in srgb, var(--color-on-strong) 20%, transparent);
   color: var(--color-on-strong-muted);
   opacity: 0.45;
 }
 
 .catalog-page__create-form :deep(.base-input--invalid),
 .catalog-page__edit-form :deep(.base-input--invalid) {
-  background-color: rgb(227 146 141 / 7%);
+  background-color: color-mix(in srgb, var(--color-danger-on-strong) 7%, transparent);
   border-color: var(--input-border-color);
   border-bottom-color: var(--color-danger-on-strong);
 }
@@ -2843,7 +2854,7 @@ async function reloadAfterConflict(serviceId: string) {
 .catalog-page__lifecycle :deep(.base-button--secondary) {
   background-color: transparent;
   color: var(--color-brand-accent-surface);
-  border-color: rgb(184 149 90 / 50%);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
 }
 
@@ -2853,8 +2864,8 @@ async function reloadAfterConflict(serviceId: string) {
   :deep(.base-button--secondary:hover:not(:disabled):not(.base-button--loading)),
 .catalog-page__lifecycle
   :deep(.base-button--secondary:hover:not(:disabled):not(.base-button--loading)) {
-  background-color: rgb(184 149 90 / 12%);
-  border-color: rgb(184 149 90 / 50%);
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
 }
 
 .catalog-page__create-form
@@ -2863,7 +2874,7 @@ async function reloadAfterConflict(serviceId: string) {
   :deep(.base-button--secondary:active:not(:disabled):not(.base-button--loading)),
 .catalog-page__lifecycle
   :deep(.base-button--secondary:active:not(:disabled):not(.base-button--loading)) {
-  background-color: rgb(184 149 90 / 20%);
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 20%, transparent);
 }
 
 /* "Desactivar" (variant="danger"): ghost rojo, mismo tratamiento que ya usa
@@ -2874,20 +2885,20 @@ async function reloadAfterConflict(serviceId: string) {
 .catalog-page__lifecycle :deep(.base-button--danger) {
   background-color: transparent;
   color: var(--color-danger-on-strong);
-  border-color: rgb(227 146 141 / 50%);
+  border-color: color-mix(in srgb, var(--color-danger-on-strong) 50%, transparent);
   border-bottom-color: var(--color-danger-on-strong);
 }
 
 .catalog-page__lifecycle
   :deep(.base-button--danger:hover:not(:disabled):not(.base-button--loading)) {
-  background-color: rgb(227 146 141 / 12%);
-  border-color: rgb(227 146 141 / 50%);
+  background-color: color-mix(in srgb, var(--color-danger-on-strong) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-danger-on-strong) 50%, transparent);
   filter: none;
 }
 
 .catalog-page__lifecycle
   :deep(.base-button--danger:active:not(:disabled):not(.base-button--loading)) {
-  background-color: rgb(227 146 141 / 20%);
+  background-color: color-mix(in srgb, var(--color-danger-on-strong) 20%, transparent);
   filter: none;
 }
 
@@ -2940,7 +2951,7 @@ async function reloadAfterConflict(serviceId: string) {
   justify-content: center;
   width: 28px;
   height: 28px;
-  background-color: rgb(244 240 231 / 8%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 8%, transparent);
   border-radius: 50%;
   color: var(--color-on-strong-muted);
   font-family: var(--font-display);
@@ -2955,11 +2966,11 @@ async function reloadAfterConflict(serviceId: string) {
    filete, botón), así el único dato realmente accionable destaca sin
    añadir un color nuevo. */
 .catalog-page__lifecycle-impact--warning {
-  border-color: rgb(227 146 141 / 40%);
+  border-color: color-mix(in srgb, var(--color-danger-on-strong) 40%, transparent);
 }
 
 .catalog-page__lifecycle-impact--warning .catalog-page__lifecycle-impact-icon {
-  background-color: rgb(227 146 141 / 16%);
+  background-color: color-mix(in srgb, var(--color-danger-on-strong) 16%, transparent);
   color: var(--color-danger-on-strong);
 }
 
@@ -3032,7 +3043,7 @@ async function reloadAfterConflict(serviceId: string) {
   flex: 0 0 auto;
   width: 64px;
   height: 32px;
-  background-color: rgb(244 240 231 / 10%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 10%, transparent);
   border: var(--border-width-normal) solid var(--color-field-strong-border);
   border-radius: var(--radius-pill);
   transition: background-color var(--motion-duration-base) var(--motion-easing-standard);
@@ -3052,7 +3063,7 @@ async function reloadAfterConflict(serviceId: string) {
 }
 
 .catalog-page__lifecycle-switch--on .catalog-page__lifecycle-track {
-  background-color: rgb(157 194 169 / 22%);
+  background-color: color-mix(in srgb, var(--color-success-on-strong) 22%, transparent);
 }
 
 .catalog-page__lifecycle-switch--on .catalog-page__lifecycle-thumb {
@@ -3134,7 +3145,7 @@ async function reloadAfterConflict(serviceId: string) {
   justify-content: center;
   width: 18px;
   height: 18px;
-  background-color: rgb(157 194 169 / 16%);
+  background-color: color-mix(in srgb, var(--color-success-on-strong) 16%, transparent);
   border-radius: 50%;
   color: var(--color-success-on-strong);
   font-size: 11px;
@@ -3537,7 +3548,7 @@ async function reloadAfterConflict(serviceId: string) {
 .catalog-page__edit-dialog .base-dialog__close:hover,
 .catalog-page__detail-dialog .base-dialog__close:hover,
 .catalog-page__lifecycle-dialog .base-dialog__close:hover {
-  background-color: rgb(244 240 231 / 8%) !important;
+  background-color: color-mix(in srgb, var(--color-on-strong) 8%, transparent) !important;
   color: var(--color-on-strong) !important;
 }
 

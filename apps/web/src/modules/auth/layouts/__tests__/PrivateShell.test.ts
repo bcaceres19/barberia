@@ -95,4 +95,26 @@ describe('PrivateShell', () => {
     const results = await axe(wrapper.element, { rules: { region: { enabled: false } } })
     expect(results).toHaveNoViolations()
   })
+
+  describe('preferencias de pantalla y marca (DEC-110)', () => {
+    const authenticated = () => {
+      mockState.bootstrap = {
+        status: 'authenticated',
+        barbershopId: 'shop-1',
+        barbershopName: 'Barbería El Corte',
+        expiresAt: new Date().toISOString(),
+      }
+    }
+
+    it('paints the theme on <html> while the shell is mounted and removes it on leaving', async () => {
+      authenticated()
+      const wrapper = await mountShell()
+
+      expect(document.documentElement.dataset.appTheme).toBe('ink')
+
+      wrapper.unmount()
+      // El acceso y la reserva pública nunca heredan el tema del panel.
+      expect(document.documentElement.dataset.appTheme).toBeUndefined()
+    })
+  })
 })

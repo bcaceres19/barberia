@@ -82,8 +82,9 @@ const classes = computed(() => ['barber-avatar', `barber-avatar--${props.size}`]
   /* Tinta ligeramente más clara que el fondo de página (atlas: --ink-2,
      #16243a) para que el retrato se distinga incluso antes de leer el
      monograma o el filete. */
-  background-color: #16243a;
-  border: var(--border-width-normal) solid rgb(184 149 90 / 55%);
+  background-color: var(--color-field-strong-raised);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-brand-accent-surface) 55%, transparent);
   border-radius: 2px;
 }
 
