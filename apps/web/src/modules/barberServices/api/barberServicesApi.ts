@@ -44,8 +44,10 @@ export async function fetchBarberSummaries(): Promise<FetchBarberSummariesOutcom
 
 export async function fetchServiceSummaries(): Promise<FetchServiceSummariesOutcome> {
   try {
+    // /private/services pagina por página, no por cursor (DEC-103): mismo
+    // límite de 50, ahora bajo el nombre pageSize en vez de limit.
     const { data, response } = await httpClient.GET('/private/services', {
-      params: { query: { limit: PICKER_LIMIT } },
+      params: { query: { pageSize: PICKER_LIMIT } },
     })
 
     if (response.ok && data) {

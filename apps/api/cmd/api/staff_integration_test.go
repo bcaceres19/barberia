@@ -12,6 +12,9 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"image"
+	"image/color"
+	"image/jpeg"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -20,10 +23,11 @@ import (
 )
 
 type barberBody struct {
-	ID        string `json:"id"`
-	FullName  string `json:"fullName"`
-	CreatedAt string `json:"createdAt"`
-	UpdatedAt string `json:"updatedAt"`
+	ID             string  `json:"id"`
+	FullName       string  `json:"fullName"`
+	CreatedAt      string  `json:"createdAt"`
+	UpdatedAt      string  `json:"updatedAt"`
+	PhotoUpdatedAt *string `json:"photoUpdatedAt"`
 }
 
 type barberListBody struct {
@@ -406,5 +410,171 @@ func TestStaff_HTTP_ThroughFullRouter_NeverLogsFullNameOrCookie(t *testing.T) {
 		if strings.Contains(logLine, forbidden) {
 			t.Fatalf("RN-DAT-02: sensitive data leaked into the log: %s", logLine)
 		}
+	}
+}
+
+// --- Fotografía de barbero (DEC-104) ---------------------------------------
+
+func jpegForPhotoTest(t *testing.T, side int) []byte {
+	t.Helper()
+	img := image.NewRGBA(image.Rect(0, 0, side, side))
+	for x := 0; x < side; x++ {
+		for y := 0; y < side; y++ {
+			img.Set(x, y, color.RGBA{R: 184, G: 149, B: 90, A: 255})
+		}
+	}
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 80}); err != nil {
+		t.Fatalf("encode jpeg: %v", err)
+	}
+	return buf.Bytes()
+}
+
+func doPhotoRequest(router http.Handler, method, rawToken, barberID, contentType, ifNoneMatch string, body []byte) *httptest.ResponseRecorder {
+	req := httptest.NewRequest(method, "/api/v1/private/barbers/"+barberID+"/photo", bytes.NewReader(body))
+	if contentType != "" {
+		req.Header.Set("Content-Type", contentType)
+	}
+	if ifNoneMatch != "" {
+		req.Header.Set("If-None-Match", ifNoneMatch)
+	}
+	if rawToken != "" {
+		req.AddCookie(&http.Cookie{Name: cookieName, Value: rawToken})
+	}
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	return rec
+}
+
+// TestStaff_HTTP_Photo_UploadServeReplaceRemove recorre el ciclo completo de
+// la fotografía por el router real: subir, ver el barbero y el listado con su
+// versión, servir los bytes con ETag, revalidar con 304, reemplazar (nueva
+// versión) y quitar (vuelve a "sin fotografía"), incluyendo el rechazo de lo
+// que no es una imagen y la idempotencia del borrado.
+func TestStaff_HTTP_Photo_UploadServeReplaceRemove(t *testing.T) {
+	db := setupTestDB(t)
+	router, err := buildRouter(db, discardLogger(), testRouterConfig())
+	if err != nil {
+		t.Fatalf("buildRouter: %v", err)
+	}
+	raw := createSessionCookie(t, db, shopA, staffUserActiveA, "staff-photo-a")
+
+	createRec := doCreateBarberRequest(router, raw, uniqueToken(t, "photo-key"), `{"fullName":"Con Foto `+uniqueToken(t, "n")+`"}`)
+	if createRec.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d: %s", createRec.Code, createRec.Body.String())
+	}
+	var barber barberBody
+	if err := json.Unmarshal(createRec.Body.Bytes(), &barber); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if barber.PhotoUpdatedAt != nil {
+		t.Fatalf("a new barber has no photo, got %v", *barber.PhotoUpdatedAt)
+	}
+
+	// Sin fotografía: 404 uniforme al servirla.
+	if rec := doPhotoRequest(router, http.MethodGet, raw, barber.ID, "", "", nil); rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 before any upload, got %d", rec.Code)
+	}
+
+	// Lo que no es una imagen se rechaza aunque diga serlo.
+	if rec := doPhotoRequest(router, http.MethodPut, raw, barber.ID, "image/jpeg", "", []byte("<html></html>")); rec.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422 for a body that is not an image, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if rec := doPhotoRequest(router, http.MethodPut, raw, barber.ID, "application/json", "", jpegForPhotoTest(t, 128)); rec.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422 for a wrong content type, got %d", rec.Code)
+	}
+
+	first := jpegForPhotoTest(t, 128)
+	putRec := doPhotoRequest(router, http.MethodPut, raw, barber.ID, "image/jpeg", "", first)
+	if putRec.Code != http.StatusOK {
+		t.Fatalf("expected 200 uploading, got %d: %s", putRec.Code, putRec.Body.String())
+	}
+	var withPhoto barberBody
+	if err := json.Unmarshal(putRec.Body.Bytes(), &withPhoto); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if withPhoto.PhotoUpdatedAt == nil || withPhoto.FullName != barber.FullName {
+		t.Fatalf("expected the same barber with a photoUpdatedAt, got %+v", withPhoto)
+	}
+
+	getRec := doPhotoRequest(router, http.MethodGet, raw, barber.ID, "", "", nil)
+	if getRec.Code != http.StatusOK || !bytes.Equal(getRec.Body.Bytes(), first) {
+		t.Fatalf("expected the stored bytes back, got %d (%d bytes)", getRec.Code, getRec.Body.Len())
+	}
+	if ct := getRec.Header().Get("Content-Type"); ct != "image/jpeg" {
+		t.Fatalf("expected image/jpeg, got %q", ct)
+	}
+	etag := getRec.Header().Get("ETag")
+	if etag == "" {
+		t.Fatal("expected an ETag")
+	}
+	if rec := doPhotoRequest(router, http.MethodGet, raw, barber.ID, "", etag, nil); rec.Code != http.StatusNotModified {
+		t.Fatalf("expected 304 revalidating with the same ETag, got %d", rec.Code)
+	}
+
+	// GET del barbero y listado ya exponen la versión.
+	var got barberBody
+	if err := json.Unmarshal(doGetBarberRequest(router, raw, barber.ID).Body.Bytes(), &got); err != nil || got.PhotoUpdatedAt == nil {
+		t.Fatalf("GET barber must expose photoUpdatedAt (err=%v, %+v)", err, got)
+	}
+
+	// Reemplazar cambia la versión y, con ella, el ETag.
+	second := jpegForPhotoTest(t, 200)
+	if rec := doPhotoRequest(router, http.MethodPut, raw, barber.ID, "image/jpeg", "", second); rec.Code != http.StatusOK {
+		t.Fatalf("expected 200 replacing, got %d", rec.Code)
+	}
+	replaced := doPhotoRequest(router, http.MethodGet, raw, barber.ID, "", etag, nil)
+	if replaced.Code != http.StatusOK || !bytes.Equal(replaced.Body.Bytes(), second) || replaced.Header().Get("ETag") == etag {
+		t.Fatalf("an old ETag must not revalidate a replaced photo (status %d)", replaced.Code)
+	}
+
+	// Quitar es idempotente y devuelve al barbero a "sin fotografía".
+	for i := 0; i < 2; i++ {
+		if rec := doPhotoRequest(router, http.MethodDelete, raw, barber.ID, "", "", nil); rec.Code != http.StatusNoContent {
+			t.Fatalf("delete #%d: expected 204, got %d", i+1, rec.Code)
+		}
+	}
+	if rec := doPhotoRequest(router, http.MethodGet, raw, barber.ID, "", "", nil); rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 after removing, got %d", rec.Code)
+	}
+	var after barberBody
+	if err := json.Unmarshal(doGetBarberRequest(router, raw, barber.ID).Body.Bytes(), &after); err != nil || after.PhotoUpdatedAt != nil {
+		t.Fatalf("expected no photoUpdatedAt after removing (err=%v, %+v)", err, after)
+	}
+}
+
+// TestStaff_HTTP_Photo_TwoTenants_CrossAccessAlwaysReturns404 confirma
+// RN-TEN-01 para la fotografía: una barbería nunca lee, reemplaza ni borra la
+// de otra, y recibe el mismo 404 que ante un identificador inexistente.
+func TestStaff_HTTP_Photo_TwoTenants_CrossAccessAlwaysReturns404(t *testing.T) {
+	db := setupTestDB(t)
+	router, err := buildRouter(db, discardLogger(), testRouterConfig())
+	if err != nil {
+		t.Fatalf("buildRouter: %v", err)
+	}
+	rawA := createSessionCookie(t, db, shopA, staffUserActiveA, "staff-photo-cross-a")
+	rawB := createSessionCookie(t, db, shopB, staffUserActiveB, "staff-photo-cross-b")
+
+	createRec := doCreateBarberRequest(router, rawB, uniqueToken(t, "photo-cross-key"), `{"fullName":"Foto De B `+uniqueToken(t, "n")+`"}`)
+	var barberB barberBody
+	if err := json.Unmarshal(createRec.Body.Bytes(), &barberB); err != nil || barberB.ID == "" {
+		t.Fatalf("create in shopB: %d %s", createRec.Code, createRec.Body.String())
+	}
+	original := jpegForPhotoTest(t, 128)
+	if rec := doPhotoRequest(router, http.MethodPut, rawB, barberB.ID, "image/jpeg", "", original); rec.Code != http.StatusOK {
+		t.Fatalf("expected 200 in shopB, got %d", rec.Code)
+	}
+
+	for _, method := range []string{http.MethodPut, http.MethodGet, http.MethodDelete} {
+		rec := doPhotoRequest(router, method, rawA, barberB.ID, "image/jpeg", "", jpegForPhotoTest(t, 300))
+		if rec.Code != http.StatusNotFound {
+			t.Fatalf("RN-TEN-01: %s from shopA on shopB's barber must be 404, got %d", method, rec.Code)
+		}
+	}
+
+	// La fotografía de B sigue intacta.
+	rec := doPhotoRequest(router, http.MethodGet, rawB, barberB.ID, "", "", nil)
+	if rec.Code != http.StatusOK || !bytes.Equal(rec.Body.Bytes(), original) {
+		t.Fatalf("shopB's photo must be untouched, got %d", rec.Code)
 	}
 }

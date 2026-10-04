@@ -1,6 +1,7 @@
-# Respuesta 200 de GET /private/services (HU-022, CA-022-01).
+# Respuesta 200 de GET /private/services (HU-022, CA-022-01, DEC-103).
 description: >
-  Página de servicios del catálogo de la barbería activa.
+  Página de servicios del catálogo de la barbería activa, paginada por
+  número de página con conteo total y búsqueda opcional por nombre.
 headers:
   X-Request-Id:
     $ref: '../headers/XRequestId.yaml'
@@ -10,7 +11,7 @@ content:
       $ref: '../schemas/ServiceListResponse.yaml'
     examples:
       catalogoConDosServicios:
-        summary: Catálogo con dos servicios, primera y única página
+        summary: Catálogo con dos servicios, única página
         value:
           items:
             - id: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
@@ -33,9 +34,15 @@ content:
               deactivatedAt: "2026-08-24T18:00:00Z"
               createdAt: "2026-08-24T15:05:10Z"
               updatedAt: "2026-08-24T18:00:00Z"
-          nextCursor: null
+          page: 1
+          pageSize: 20
+          total: 2
+          totalPages: 1
       catalogoVacio:
-        summary: Barbería sin servicios todavía
+        summary: Barbería sin servicios todavía, o búsqueda sin coincidencias
         value:
           items: []
-          nextCursor: null
+          page: 1
+          pageSize: 20
+          total: 0
+          totalPages: 1

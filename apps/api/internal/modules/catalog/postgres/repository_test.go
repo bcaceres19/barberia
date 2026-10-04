@@ -99,9 +99,10 @@ func createService(t *testing.T, repo *catalogpostgres.Repository, shop database
 	return result.Service
 }
 
-// --- List: orden estable, paginación contigua sin duplicados/omisiones --
+// --- List: orden estable, paginación por página sin duplicados/omisiones,
+//     conteo total y búsqueda por nombre (DEC-103) ------------------------
 
-func TestList_TraversingUntilExhausted_TerminatesWithoutNextCursor(t *testing.T) {
+func TestList_TraversingByPage_UntilLastPage_VisitsEveryItemOnce(t *testing.T) {
 	db := setupTestDB(t)
 	repo := newRepository(db)
 	suffix := uniqueSuffix(t)
@@ -109,31 +110,25 @@ func TestList_TraversingUntilExhausted_TerminatesWithoutNextCursor(t *testing.T)
 	marker := createService(t, repo, shopF, "Marcador de recorrido "+suffix)
 
 	seen := map[string]bool{}
-	var cursor *catalog.Cursor
-	pages := 0
+	page := 1
 	for {
-		pages++
-		if pages > 100000 {
-			t.Fatal("too many pages; possible infinite loop (NextCursor never became empty)")
+		if page > 100000 {
+			t.Fatal("too many pages; possible infinite loop (page never exceeded TotalPages)")
 		}
-		page, err := repo.List(context.Background(), string(shopF), cursor, 1)
+		result, err := repo.List(context.Background(), string(shopF), page, 1, "")
 		if err != nil {
 			t.Fatalf("List: %v", err)
 		}
-		for _, item := range page.Items {
+		for _, item := range result.Items {
 			if seen[item.ID] {
 				t.Fatalf("item %s seen twice while paging", item.ID)
 			}
 			seen[item.ID] = true
 		}
-		if page.NextCursor == "" {
+		if page >= result.TotalPages {
 			break
 		}
-		decoded, err := catalog.DecodeCursor(page.NextCursor)
-		if err != nil {
-			t.Fatalf("DecodeCursor: %v", err)
-		}
-		cursor = &decoded
+		page++
 	}
 
 	if !seen[marker.ID] {
@@ -159,19 +154,17 @@ func TestList_FourServicesInACatalog_ReturnedAsFourDistinctResources(t *testing.
 	}
 
 	seen := map[string]bool{}
-	var cursor *catalog.Cursor
 	var lastCreatedAt time.Time
-	pages := 0
+	page := 1
 	for {
-		pages++
-		if pages > 10000 {
+		if page > 10000 {
 			t.Fatal("too many pages; possible infinite loop")
 		}
-		page, err := repo.List(context.Background(), string(shopE), cursor, 1)
+		result, err := repo.List(context.Background(), string(shopE), page, 1, "")
 		if err != nil {
 			t.Fatalf("List: %v", err)
 		}
-		for _, item := range page.Items {
+		for _, item := range result.Items {
 			if seen[item.ID] {
 				t.Fatalf("CA-022-01: item %s seen twice while paging", item.ID)
 			}
@@ -181,14 +174,10 @@ func TestList_FourServicesInACatalog_ReturnedAsFourDistinctResources(t *testing.
 			}
 			lastCreatedAt = item.CreatedAt
 		}
-		if page.NextCursor == "" {
+		if page >= result.TotalPages {
 			break
 		}
-		decoded, err := catalog.DecodeCursor(page.NextCursor)
-		if err != nil {
-			t.Fatalf("DecodeCursor: %v", err)
-		}
-		cursor = &decoded
+		page++
 	}
 
 	for id := range created {
@@ -198,7 +187,7 @@ func TestList_FourServicesInACatalog_ReturnedAsFourDistinctResources(t *testing.
 	}
 }
 
-func TestList_FirstPage_NeverReturnsMoreThanLimit(t *testing.T) {
+func TestList_FirstPage_NeverReturnsMoreThanPageSize(t *testing.T) {
 	db := setupTestDB(t)
 	repo := newRepository(db)
 	suffix := uniqueSuffix(t)
@@ -207,15 +196,77 @@ func TestList_FirstPage_NeverReturnsMoreThanLimit(t *testing.T) {
 	createService(t, repo, shopE, "Límite Dos "+suffix)
 	createService(t, repo, shopE, "Límite Tres "+suffix)
 
-	page, err := repo.List(context.Background(), string(shopE), nil, 2)
+	result, err := repo.List(context.Background(), string(shopE), 1, 2, "")
 	if err != nil {
 		t.Fatalf("List: %v", err)
 	}
-	if len(page.Items) != 2 {
-		t.Fatalf("expected exactly 2 items for limit=2, got %d", len(page.Items))
+	if len(result.Items) != 2 {
+		t.Fatalf("expected exactly 2 items for pageSize=2, got %d", len(result.Items))
 	}
-	if page.NextCursor == "" {
-		t.Fatal("expected a next cursor: there are at least 3 known items and limit was 2")
+	if result.Total < 3 {
+		t.Fatalf("expected a total of at least 3 known items, got %d", result.Total)
+	}
+	if result.TotalPages < 2 {
+		t.Fatalf("expected at least 2 total pages for 3+ items at pageSize=2, got %d", result.TotalPages)
+	}
+}
+
+func TestList_Search_MatchesPartialNameCaseInsensitively(t *testing.T) {
+	db := setupTestDB(t)
+	repo := newRepository(db)
+	suffix := uniqueSuffix(t)
+
+	target := createService(t, repo, shopE, "Corte Fade Búsqueda "+suffix)
+	createService(t, repo, shopE, "Otro Servicio Sin Relación "+suffix)
+
+	result, err := repo.List(context.Background(), string(shopE), 1, catalog.MaxPageSize, "fade búsqueda "+suffix)
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if result.Total != 1 {
+		t.Fatalf("expected exactly 1 match, got %d (%+v)", result.Total, result.Items)
+	}
+	if len(result.Items) != 1 || result.Items[0].ID != target.ID {
+		t.Fatalf("expected the matching service, got %+v", result.Items)
+	}
+}
+
+func TestList_Search_NoMatches_ReturnsEmptyWithTotalZero(t *testing.T) {
+	db := setupTestDB(t)
+	repo := newRepository(db)
+	suffix := uniqueSuffix(t)
+
+	createService(t, repo, shopE, "Servicio Cualquiera "+suffix)
+
+	result, err := repo.List(context.Background(), string(shopE), 1, catalog.MaxPageSize, "cadena-que-nunca-existe-"+suffix)
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if result.Total != 0 || len(result.Items) != 0 {
+		t.Fatalf("expected no matches, got total=%d items=%+v", result.Total, result.Items)
+	}
+	if result.TotalPages != 1 {
+		t.Fatalf("expected TotalPages=1 (floor) even with zero results, got %d", result.TotalPages)
+	}
+}
+
+func TestList_Search_LiteralPercentAndUnderscore_NotTreatedAsWildcards(t *testing.T) {
+	db := setupTestDB(t)
+	repo := newRepository(db)
+	suffix := uniqueSuffix(t)
+
+	// Un nombre con "%" y "_" literales: si likePattern no los escapara,
+	// buscar por ellos se comportaría como comodín LIKE en vez de buscar el
+	// carácter real (RN-SER-01 no prohíbe estos caracteres en el nombre).
+	literal := createService(t, repo, shopE, "Combo 50%_especial "+suffix)
+	createService(t, repo, shopE, "Servicio Sin Signos "+suffix)
+
+	result, err := repo.List(context.Background(), string(shopE), 1, catalog.MaxPageSize, "50%_especial "+suffix)
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if result.Total != 1 || len(result.Items) != 1 || result.Items[0].ID != literal.ID {
+		t.Fatalf("expected exactly the literal match, got total=%d items=%+v", result.Total, result.Items)
 	}
 }
 

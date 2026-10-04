@@ -39,7 +39,15 @@ const routes: RouteRecordRaw[] = [
     [
       ...privateShellChildRoutes,
       ...settingsPrivateShellChildRoutes,
-      ...staffPrivateShellChildRoutes,
+      ...staffPrivateShellChildRoutes.map((route) =>
+        route.name === 'staff-barberos'
+          ? {
+              path: route.path,
+              name: route.name,
+              component: () => import('../pages/StaffWorkspacePage.vue'),
+            }
+          : route,
+      ),
       ...catalogPrivateShellChildRoutes,
       ...barberServicesPrivateShellChildRoutes,
       ...schedulesPrivateShellChildRoutes,

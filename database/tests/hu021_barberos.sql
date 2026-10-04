@@ -417,6 +417,121 @@ ROLLBACK;
 \echo 'trigger OK · barber_set_updated_at avanza updated_at en cada UPDATE'
 
 -- ---------------------------------------------------------------------------
+-- DEC-104 · barber_photo: aislamiento por tenant, FK compuesta, CHECK y DELETE
+-- (usa los dos barberos confirmados arriba: 9999... es de A y 8888... es de B)
+-- ---------------------------------------------------------------------------
+BEGIN;
+SET ROLE barberia_app;
+SET LOCAL app.barbershop_id = '11111111-1111-1111-1111-111111111111';
+
+DO $$
+DECLARE
+  v_count integer;
+BEGIN
+  -- Insertar la fotografía de un barbero propio funciona.
+  INSERT INTO barber_photo (barbershop_id, barber_id, content_type, image)
+  VALUES ('11111111-1111-1111-1111-111111111111', '99999999-9999-9999-9999-999999999999',
+          'image/jpeg', '\x00010203'::bytea);
+
+  -- Asociar la fotografía al barbero de OTRA barbería falla: la FK compuesta
+  -- (barbershop_id, barber_id) no existe, aun con SQL directo (RN-TEN-01).
+  BEGIN
+    INSERT INTO barber_photo (barbershop_id, barber_id, content_type, image)
+    VALUES ('11111111-1111-1111-1111-111111111111', '88888888-8888-8888-8888-888888888888',
+            'image/jpeg', '\x00010203'::bytea);
+    RAISE EXCEPTION 'barber_photo aceptó una fotografía para el barbero de otra barbería.';
+  EXCEPTION WHEN foreign_key_violation THEN
+    NULL;
+  END;
+
+  -- Suplantar el tenant en el INSERT también falla (RLS WITH CHECK).
+  BEGIN
+    INSERT INTO barber_photo (barbershop_id, barber_id, content_type, image)
+    VALUES ('22222222-2222-2222-2222-222222222222', '88888888-8888-8888-8888-888888888888',
+            'image/jpeg', '\x00010203'::bytea);
+    RAISE EXCEPTION 'barber_photo aceptó una fila de otro tenant.';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+
+  -- Tipo de contenido fuera de JPEG/PNG: CHECK.
+  BEGIN
+    UPDATE barber_photo SET content_type = 'image/gif'
+     WHERE barber_id = '99999999-9999-9999-9999-999999999999';
+    RAISE EXCEPTION 'barber_photo_content_type_ck no rechazó image/gif.';
+  EXCEPTION WHEN check_violation THEN
+    NULL;
+  END;
+
+  -- Imagen vacía o mayor de 512 KiB: CHECK.
+  BEGIN
+    UPDATE barber_photo SET image = '\x'::bytea
+     WHERE barber_id = '99999999-9999-9999-9999-999999999999';
+    RAISE EXCEPTION 'barber_photo_image_size_ck no rechazó una imagen vacía.';
+  EXCEPTION WHEN check_violation THEN
+    NULL;
+  END;
+  BEGIN
+    UPDATE barber_photo SET image = decode(repeat('00', 524289), 'hex')
+     WHERE barber_id = '99999999-9999-9999-9999-999999999999';
+    RAISE EXCEPTION 'barber_photo_image_size_ck no rechazó una imagen de 512 KiB + 1 byte.';
+  EXCEPTION WHEN check_violation THEN
+    NULL;
+  END;
+
+  -- Una segunda fotografía para el mismo barbero viola la PK: una por barbero.
+  BEGIN
+    INSERT INTO barber_photo (barbershop_id, barber_id, content_type, image)
+    VALUES ('11111111-1111-1111-1111-111111111111', '99999999-9999-9999-9999-999999999999',
+            'image/png', '\x00010203'::bytea);
+    RAISE EXCEPTION 'barber_photo aceptó una segunda fotografía del mismo barbero.';
+  EXCEPTION WHEN unique_violation THEN
+    NULL;
+  END;
+
+  SELECT count(*) INTO v_count FROM barber_photo;
+  IF v_count <> 1 THEN
+    RAISE EXCEPTION 'con el contexto de A se esperaba 1 fotografía visible, hay %.', v_count;
+  END IF;
+END
+$$;
+
+-- Con el contexto de B la fotografía de A es invisible y no se puede borrar.
+SET LOCAL app.barbershop_id = '22222222-2222-2222-2222-222222222222';
+DO $$
+DECLARE
+  v_deleted integer;
+BEGIN
+  IF EXISTS (SELECT 1 FROM barber_photo) THEN
+    RAISE EXCEPTION 'RN-TEN-01: B ve la fotografía de un barbero de A.';
+  END IF;
+  DELETE FROM barber_photo WHERE barber_id = '99999999-9999-9999-9999-999999999999';
+  GET DIAGNOSTICS v_deleted = ROW_COUNT;
+  IF v_deleted <> 0 THEN
+    RAISE EXCEPTION 'RN-TEN-01: B borró % fotografías de A.', v_deleted;
+  END IF;
+END
+$$;
+
+-- El dueño sí puede quitar su propia fotografía (DELETE con política tenant).
+SET LOCAL app.barbershop_id = '11111111-1111-1111-1111-111111111111';
+DO $$
+DECLARE
+  v_deleted integer;
+BEGIN
+  DELETE FROM barber_photo WHERE barber_id = '99999999-9999-9999-9999-999999999999';
+  GET DIAGNOSTICS v_deleted = ROW_COUNT;
+  IF v_deleted <> 1 THEN
+    RAISE EXCEPTION 'A no pudo quitar su propia fotografía (borró %).', v_deleted;
+  END IF;
+END
+$$;
+
+RESET ROLE;
+ROLLBACK;
+\echo 'DEC-104 OK · barber_photo aísla por tenant, exige FK compuesta, acota tipo/tamaño y permite quitarla'
+
+-- ---------------------------------------------------------------------------
 -- Limpieza de las dos filas que se confirmaron con COMMIT más arriba (el
 -- barbero de B usado para CA-021-05 y el barbero fijo usado para el trigger
 -- de updated_at): con el rol de sesión sin RLS forzada, para dejar la base

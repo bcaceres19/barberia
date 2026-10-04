@@ -33,6 +33,11 @@ type staffPathsFile struct {
 		Get   operation `yaml:"get"`
 		Patch operation `yaml:"patch"`
 	} `yaml:"/private/barbers/{barberId}"`
+	Photo struct {
+		Put    operation `yaml:"put"`
+		Get    operation `yaml:"get"`
+		Delete operation `yaml:"delete"`
+	} `yaml:"/private/barbers/{barberId}/photo"`
 }
 
 func findRepoRoot(t *testing.T) string {
@@ -112,12 +117,13 @@ func requireResponses(t *testing.T, op operation, wantOperationID string, wantSt
 // --- Schemas -------------------------------------------------------------
 
 // TestContract_BarberResponseSchema_MatchesDTOFields verifica que
-// httpapi.BarberResponse (id, fullName, createdAt, updatedAt) coincide
-// exactamente con BarberResponse.yaml (CA-021-07: nunca active, deletedAt,
-// sortOrder, staffUserId, servicios ni horarios).
+// httpapi.BarberResponse (id, fullName, createdAt, updatedAt, photoUpdatedAt)
+// coincide exactamente con BarberResponse.yaml (CA-021-07: nunca active,
+// deletedAt, sortOrder, staffUserId, servicios ni horarios; DEC-104 añade
+// photoUpdatedAt).
 func TestContract_BarberResponseSchema_MatchesDTOFields(t *testing.T) {
 	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/BarberResponse.yaml")
-	requireProps(t, schema, []string{"id", "fullName", "createdAt", "updatedAt"})
+	requireProps(t, schema, []string{"id", "fullName", "createdAt", "updatedAt", "photoUpdatedAt"})
 }
 
 func TestContract_CreateBarberRequestSchema_MatchesDTOFields(t *testing.T) {
@@ -140,7 +146,14 @@ func TestContract_UpdateBarberRequestSchema_MatchesDTOFields(t *testing.T) {
 
 func TestContract_BarberListResponseSchema_HasItemsAndNextCursor(t *testing.T) {
 	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/BarberListResponse.yaml")
-	requireProps(t, schema, []string{"items", "nextCursor"})
+	if len(schema.Properties) != 6 {
+		t.Fatalf("expected cursor fields and four optional page fields")
+	}
+	for _, name := range []string{"items", "nextCursor", "page", "pageSize", "total", "totalPages"} {
+		if _, ok := schema.Properties[name]; !ok {
+			t.Fatalf("missing %s", name)
+		}
+	}
 }
 
 // --- Operaciones -----------------------------------------------------------
@@ -165,6 +178,23 @@ func TestContract_RenameBarberOperation_MethodPathSecurityAndResponses(t *testin
 	requireResponses(t, doc.Item.Patch, "renameBarber", []string{"200", "400", "401", "404", "422", "500"})
 }
 
+// DEC-104: la fotografía es contenido binario, sin Idempotency-Key (el PUT
+// reemplaza y es idempotente por naturaleza).
+func TestContract_PutBarberPhotoOperation_MethodPathSecurityAndResponses(t *testing.T) {
+	doc := loadYAML[staffPathsFile](t, "api/openapi/paths/staff.yaml")
+	requireResponses(t, doc.Photo.Put, "putBarberPhoto", []string{"200", "400", "401", "404", "422", "500"})
+}
+
+func TestContract_GetBarberPhotoOperation_MethodPathSecurityAndResponses(t *testing.T) {
+	doc := loadYAML[staffPathsFile](t, "api/openapi/paths/staff.yaml")
+	requireResponses(t, doc.Photo.Get, "getBarberPhoto", []string{"200", "304", "401", "404", "500"})
+}
+
+func TestContract_DeleteBarberPhotoOperation_MethodPathSecurityAndResponses(t *testing.T) {
+	doc := loadYAML[staffPathsFile](t, "api/openapi/paths/staff.yaml")
+	requireResponses(t, doc.Photo.Delete, "deleteBarberPhoto", []string{"204", "401", "404", "500"})
+}
+
 // TestContract_OpenAPIYAML_RegistersStaffPaths confirma que openapi.yaml
 // registra ambos paths bajo el mismo documento raíz que las demás
 // operaciones privadas, con la misma técnica de referencia JSON pointer.
@@ -179,5 +209,8 @@ func TestContract_OpenAPIYAML_RegistersStaffPaths(t *testing.T) {
 	}
 	if _, ok := doc.Paths["/private/barbers/{barberId}"]; !ok {
 		t.Fatal("openapi.yaml no registra paths./private/barbers/{barberId}")
+	}
+	if _, ok := doc.Paths["/private/barbers/{barberId}/photo"]; !ok {
+		t.Fatal("openapi.yaml no registra paths./private/barbers/{barberId}/photo")
 	}
 }

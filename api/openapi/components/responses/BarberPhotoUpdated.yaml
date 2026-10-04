@@ -1,0 +1,19 @@
+# Respuesta 200 de PUT /private/barbers/{barberId}/photo (DEC-104):
+# representación completa del barbero ya con la fotografía guardada. Solo
+# cambia `photoUpdatedAt`; nombre y `updatedAt` del barbero no se tocan.
+description: Barbero con la fotografía ya guardada.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/BarberResponse.yaml'
+    examples:
+      barbero:
+        value:
+          id: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+          fullName: Carlos Ramírez
+          createdAt: "2026-08-23T15:04:05Z"
+          updatedAt: "2026-08-23T15:04:05Z"
+          photoUpdatedAt: "2026-09-30T12:00:00Z"

@@ -3,8 +3,10 @@ package httpapi
 import "time"
 
 // BarberResponse es la representación canónica de un barbero (CA-021-01,
-// CA-021-07): exactamente id, fullName, createdAt, updatedAt. Nunca active,
-// deletedAt, sortOrder, staffUserId, servicios ni horarios (DEC-047).
+// CA-021-07): exactamente id, fullName, createdAt, updatedAt y, por DEC-104,
+// photoUpdatedAt (null mientras no hay fotografía; cuando existe, es la
+// versión de la imagen). Nunca active, deletedAt, sortOrder, staffUserId,
+// servicios ni horarios (DEC-047).
 //
 // ADVERTENCIA: postgres.barberResponseWire (staff/postgres/repository.go)
 // declara EXACTAMENTE la misma forma (mismos nombres de campo JSON, mismo
@@ -13,10 +15,11 @@ import "time"
 // commit; ver TestCreate_StoredResponseBody_MatchesHTTPAPIWireShape en
 // postgres/repository_test.go.
 type BarberResponse struct {
-	ID        string    `json:"id"`
-	FullName  string    `json:"fullName"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ID             string     `json:"id"`
+	FullName       string     `json:"fullName"`
+	CreatedAt      time.Time  `json:"createdAt"`
+	UpdatedAt      time.Time  `json:"updatedAt"`
+	PhotoUpdatedAt *time.Time `json:"photoUpdatedAt"`
 }
 
 // BarberListResponse es la página paginada por cursor de GET /private/barbers

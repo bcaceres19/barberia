@@ -1174,3 +1174,7 @@ pnpm generate:api   # regenera shared/api/generated/openapi.d.ts desde el bundle
 por defecto, configurable con `API_PROXY_TARGET`) para que `shared/api` use
 rutas relativas de mismo origen, igual que en despliegue real. Pinia se
 agrega solo si aparece estado compartido real entre rutas, según `DEC-033`.
+
+### Paginación de Barberos (DEC-107, #288)
+
+Barberos muestra páginas numeradas con total real. El tamaño se mide contra el cascarón, incluyendo filas, pie y padding responsive; al redimensionar conserva el primer registro dentro de la página nueva. El alta refresca la última página para mostrar el registro con orden estable. Los errores conservan la lista anterior y reintentan la página solicitada. Los selectores conservan el cliente por cursor.

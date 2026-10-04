@@ -6,22 +6,23 @@
  * fotografía. Siempre decorativo (aria-hidden): el nombre adyacente visible
  * es la identidad accesible, nunca falta junto a un retrato.
  *
- * `photoUrl` queda preparado para la variante con fotografía real (evento 12
- * del atlas la representa), pero ningún consumidor de /panel la usa hoy:
- * `Barber` (modules/staff/model/barber.ts) no declara ese campo — ver tabla
- * de desviaciones del PR.
+ * Con `photoUrl` muestra la fotografía real del barbero (DEC-104, evento 12
+ * del atlas); si la imagen no carga (borrada en otro dispositivo, red caída)
+ * vuelve sola al monograma, nunca deja un icono de imagen rota.
  *
  * Algoritmo de iniciales idéntico a `StaffPage.vue` (issue #189 lo duplica
  * deliberadamente en vez de extraerlo: StaffPage queda fuera de alcance de
  * esta entrega y migra a este componente en un issue propio).
  */
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 interface Props {
   fullName: string
   /** closed: 28px (26px móvil) — selector cerrado. option: 34px (32px
-   * móvil) — cada opción de la lista desplegada. */
-  size?: 'closed' | 'option'
+   * móvil) — cada opción de la lista desplegada. row: 52px (44px móvil) —
+   * fila de la lista de equipo. hero: 120px (104px móvil) — detalle y
+   * edición del barbero. */
+  size?: 'closed' | 'option' | 'row' | 'hero'
   photoUrl?: string | null
 }
 
@@ -39,12 +40,30 @@ function initials(fullName: string): string {
 
 const monogram = computed(() => initials(props.fullName))
 
+// Una fotografía que falla al cargar cae al monograma; una URL nueva (otra
+// versión de la imagen) vuelve a intentarlo.
+const photoFailed = ref(false)
+watch(
+  () => props.photoUrl,
+  () => {
+    photoFailed.value = false
+  },
+)
+const showPhoto = computed(() => !!props.photoUrl && !photoFailed.value)
+
 const classes = computed(() => ['barber-avatar', `barber-avatar--${props.size}`])
 </script>
 
 <template>
   <span :class="classes" aria-hidden="true">
-    <img v-if="photoUrl" class="barber-avatar__photo" :src="photoUrl" alt="" />
+    <img
+      v-if="showPhoto"
+      class="barber-avatar__photo"
+      :src="photoUrl ?? undefined"
+      alt=""
+      decoding="async"
+      @error="photoFailed = true"
+    />
     <span v-else class="barber-avatar__monogram">{{ monogram }}</span>
   </span>
 </template>
@@ -72,6 +91,14 @@ const classes = computed(() => ['barber-avatar', `barber-avatar--${props.size}`]
   --avatar-size: 34px;
 }
 
+.barber-avatar--row {
+  --avatar-size: 52px;
+}
+
+.barber-avatar--hero {
+  --avatar-size: 120px;
+}
+
 @media (max-width: 767px) {
   .barber-avatar--closed {
     --avatar-size: 26px;
@@ -79,6 +106,14 @@ const classes = computed(() => ['barber-avatar', `barber-avatar--${props.size}`]
 
   .barber-avatar--option {
     --avatar-size: 32px;
+  }
+
+  .barber-avatar--row {
+    --avatar-size: 44px;
+  }
+
+  .barber-avatar--hero {
+    --avatar-size: 104px;
   }
 }
 

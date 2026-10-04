@@ -335,6 +335,24 @@ describe('BaseDialog', () => {
       expect(new Set(ids).size).toBe(2)
     })
 
+    it('consume Escape desde un control del diálogo superior sin cerrar el inferior', async () => {
+      const wrapper = mount(TwoDialogsHost)
+      await nextTick()
+      const dialogs = wrapper.findAllComponents(BaseDialog)
+      const top = document.querySelectorAll('.base-dialog__close')[1]
+      const event = new KeyboardEvent('keydown', {
+        key: 'Escape',
+        bubbles: true,
+        cancelable: true,
+      })
+      top.dispatchEvent(event)
+      await nextTick()
+      expect(event.defaultPrevented).toBe(true)
+      expect(dialogs[1].props('modelValue')).toBe(false)
+      expect(dialogs[0].props('modelValue')).toBe(true)
+      wrapper.unmount()
+    })
+
     it('Escape solo cierra el diálogo visualmente más alto cuando hay dos abiertos', async () => {
       const host = mount(TwoDialogsHost)
       await vi.runAllTimersAsync()

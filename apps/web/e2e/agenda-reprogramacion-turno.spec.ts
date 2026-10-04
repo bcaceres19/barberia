@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { pickAgendaDate } from './agenda-fecha'
 
 /**
  * Recorrido E2E de HU-065 (reprogramación auditada de un turno, T2). Corre
@@ -126,7 +127,7 @@ test.describe('Reprogramación de un turno (HU-065, T2)', () => {
 
     await goToAgenda(page)
     await page.getByLabel('Barbero').selectOption({ label: barberName })
-    await page.getByLabel('Fecha').fill(originalDate)
+    await pickAgendaDate(page, originalDate)
     await expect(page.getByText(attendeeName)).toBeVisible()
     const barberId = await barberIdFromUrl(page)
 
@@ -158,7 +159,7 @@ test.describe('Reprogramación de un turno (HU-065, T2)', () => {
     await expect(page.getByLabel('Barbero')).toHaveValue(barberId)
     await expect(page.getByText(attendeeName)).toBeVisible()
 
-    await page.getByLabel('Fecha').fill(originalDate)
+    await pickAgendaDate(page, originalDate)
     await expect(page.getByText(attendeeName)).not.toBeVisible()
   })
 

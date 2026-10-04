@@ -46,13 +46,19 @@ type ServiceDeactivationResponse struct {
 	AffectedAppointments int             `json:"affectedAppointments"`
 }
 
-// ServiceListResponse es la página paginada por cursor de
-// GET /private/services (CA-022-01). NextCursor es un puntero para que "sin
-// página siguiente" serialice como `null` explícito, nunca como una cadena
-// vacía.
+// ServiceListResponse es la página paginada por número de página de
+// GET /private/services (CA-022-01, DEC-103: excepción documentada a la
+// paginación por cursor de docs/06-api/estandar-openapi.md §6.10, para
+// ofrecer un paginador numerado con total exacto en el panel). Page y
+// PageSize reflejan lo que el servidor efectivamente usó (ya clamped, no lo
+// crudo que pidió el cliente); TotalPages tiene un piso de 1 para que
+// "página 1 de 1" sea representable incluso sin resultados.
 type ServiceListResponse struct {
 	Items      []ServiceResponse `json:"items"`
-	NextCursor *string           `json:"nextCursor"`
+	Page       int               `json:"page"`
+	PageSize   int               `json:"pageSize"`
+	Total      int               `json:"total"`
+	TotalPages int               `json:"totalPages"`
 }
 
 // CreateServiceRequest es el cuerpo de POST /private/services (CA-022-02,

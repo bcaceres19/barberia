@@ -616,7 +616,7 @@ func TestCreate_DifferentKeysSameName_CreatesTwoDistinctBarbers(t *testing.T) {
 // TestCreate_StoredResponseBody_MatchesHTTPAPIWireShape confirma que el
 // JSON que Repository.Create persiste para una repetición exacta usa
 // EXACTAMENTE las mismas claves que httpapi.BarberResponse (id, fullName,
-// createdAt, updatedAt): la advertencia de mantenimiento manual que ambos
+// createdAt, updatedAt, photoUpdatedAt): la advertencia de mantenimiento manual que ambos
 // archivos declaran en su comentario.
 func TestCreate_StoredResponseBody_MatchesHTTPAPIWireShape(t *testing.T) {
 	db := setupTestDB(t)
@@ -635,7 +635,7 @@ func TestCreate_StoredResponseBody_MatchesHTTPAPIWireShape(t *testing.T) {
 	if err := json.Unmarshal([]byte(result.Response.Body), &generic); err != nil {
 		t.Fatalf("unmarshal stored body: %v", err)
 	}
-	wantKeys := []string{"id", "fullName", "createdAt", "updatedAt"}
+	wantKeys := []string{"id", "fullName", "createdAt", "updatedAt", "photoUpdatedAt"}
 	if len(generic) != len(wantKeys) {
 		t.Fatalf("expected exactly %v, got keys %v", wantKeys, generic)
 	}
@@ -643,5 +643,9 @@ func TestCreate_StoredResponseBody_MatchesHTTPAPIWireShape(t *testing.T) {
 		if _, ok := generic[k]; !ok {
 			t.Fatalf("expected key %q in the stored response body, got %v", k, generic)
 		}
+	}
+	// Un barbero recién creado no tiene fotografía: null explícito, no ausente.
+	if generic["photoUpdatedAt"] != nil {
+		t.Fatalf("a new barber has no photo, got photoUpdatedAt=%v", generic["photoUpdatedAt"])
 	}
 }

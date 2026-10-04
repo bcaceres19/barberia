@@ -24,14 +24,16 @@ import type {
   FetchTimeBlocksOutcome,
 } from '../model/blockOutcome'
 
-// LIST_LIMIT cubre en una sola página cualquier configuración real de un
-// barbero (mismo criterio que WORKING_HOURS_LIMIT).
+// Cada página conserva el máximo del contrato; la vista ofrece cargar las siguientes.
 const LIST_LIMIT = 50
 
-export async function fetchTimeBlocks(barberId: string): Promise<FetchTimeBlocksOutcome> {
+export async function fetchTimeBlocks(
+  barberId: string,
+  cursor?: string,
+): Promise<FetchTimeBlocksOutcome> {
   try {
     const { data, response } = await httpClient.GET('/private/barbers/{barberId}/time-blocks', {
-      params: { path: { barberId }, query: { limit: LIST_LIMIT } },
+      params: { path: { barberId }, query: { limit: LIST_LIMIT, ...(cursor ? { cursor } : {}) } },
     })
     if (response.ok && data) {
       return { kind: 'success', page: toTimeBlockPage(data) }
@@ -103,12 +105,15 @@ export async function deleteTimeBlock(
   }
 }
 
-export async function fetchTimeBlockSeries(barberId: string): Promise<FetchTimeBlockSeriesOutcome> {
+export async function fetchTimeBlockSeries(
+  barberId: string,
+  cursor?: string,
+): Promise<FetchTimeBlockSeriesOutcome> {
   try {
     const { data, response } = await httpClient.GET(
       '/private/barbers/{barberId}/time-block-series',
       {
-        params: { path: { barberId }, query: { limit: LIST_LIMIT } },
+        params: { path: { barberId }, query: { limit: LIST_LIMIT, ...(cursor ? { cursor } : {}) } },
       },
     )
     if (response.ok && data) {

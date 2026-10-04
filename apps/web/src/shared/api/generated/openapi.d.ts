@@ -195,7 +195,7 @@ export interface paths {
         put?: never;
         /**
          * Solicitar recuperación de acceso
-         * @description Solicita el código de recuperación de acceso por el canal que la persona elige (DEC-092): correo, identificando la cuenta por su correo, o WhatsApp, identificándola por su número. Responde siempre 202 con el mismo cuerpo genérico, exista o no la cuenta, esté o no el teléfono verificado y sea o no el número ambiguo entre barberías (CA-008-01, CA-008-10, no enumeración, DEC-065, DEC-093): nunca incluye el destino, ni siquiera enmascarado. Solo se envía un código real, únicamente por el canal elegido y al contacto verificado almacenado (CA-008-09), cuando la cuenta existe, está activa, tiene el teléfono verificado y el número identifica exactamente una cuenta. Un canal desconocido, el campo del otro canal o un número que no está en formato internacional responden 422, una respuesta de forma que no revela nada de la cuenta. Límite propio: cooldown de 60 segundos entre solicitudes y máximo 3 códigos por cuenta por hora (DEC-064); un reenvío aceptado invalida atómicamente el código vigente anterior (CA-008-07).
+         * @description Solicita el código de recuperación de acceso por el canal que la persona elige (DEC-092): correo, identificando la cuenta por su correo, o WhatsApp, identificándola por su número. Responde siempre 202 con el mismo cuerpo genérico, exista o no la cuenta, esté o no el teléfono verificado y sea o no el número ambiguo entre barberías (CA-008-01, CA-008-10, no enumeración, DEC-065, DEC-093): nunca incluye el destino, ni siquiera enmascarado. Solo se envía un código real, únicamente por el canal elegido (CA-008-09), cuando la cuenta existe y está activa: por correo basta la cuenta activa con ese correo, aunque no tenga teléfono (DEC-094, CA-008-11); por WhatsApp hace falta además que el número esté verificado e identifique exactamente una cuenta. Un canal desconocido, el campo del otro canal o un número que no está en formato internacional responden 422, una respuesta de forma que no revela nada de la cuenta. Límite propio: cooldown de 60 segundos entre solicitudes y máximo 3 códigos por cuenta por hora (DEC-064); un reenvío aceptado invalida atómicamente el código vigente anterior (CA-008-07).
          */
         post: operations["requestRecovery"];
         delete?: never;
@@ -380,6 +380,34 @@ export interface paths {
         patch: operations["renameBarber"];
         trace?: never;
     };
+    "/private/barbers/{barberId}/photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Leer la fotografía de un barbero
+         * @description Sirve los bytes de la fotografía del barbero (DEC-104). Se usa como `src` de una imagen: la cookie de sesión viaja sola y el tenant se deriva de ella. Lleva `ETag` (derivado de `photoUpdatedAt`) y responde `304` a una solicitud condicional con `If-None-Match`; el cliente añade `photoUpdatedAt` como parámetro de consulta de la URL solo para invalidar su propia caché, el servidor lo ignora. Un barbero sin fotografía, inexistente o de otra barbería responde exactamente el mismo `404`: la lista ya dice cuáles tienen fotografía con `photoUpdatedAt`.
+         */
+        get: operations["getBarberPhoto"];
+        /**
+         * Subir o reemplazar la fotografía de un barbero
+         * @description Guarda la fotografía del barbero (DEC-104), el retrato que la lista del equipo y los selectores de barbero muestran en lugar del monograma. El cuerpo es la imagen binaria (`image/jpeg` o `image/png`), no JSON ni base64: el cliente la recorta a un cuadrado y la reduce a 512 px antes de enviarla, y el servidor la valida (formato real por sus bytes, no por el `Content-Type`; máximo 512 KiB; entre 64 y 1024 px por lado). Es un `PUT`: repetir la misma imagen deja el mismo estado y reemplazar una fotografía existente nunca crea una segunda, por eso no lleva `Idempotency-Key`. Responde el barbero completo con el nuevo `photoUpdatedAt`. Un identificador inexistente o de otra barbería responde el mismo `404` que `GET /private/barbers/{barberId}` (`CA-021-05`).
+         */
+        put: operations["putBarberPhoto"];
+        post?: never;
+        /**
+         * Quitar la fotografía de un barbero
+         * @description Borra la fotografía del barbero (DEC-104): la imagen se elimina, no se oculta, y el barbero vuelve a mostrarse con su monograma. Es idempotente: quitar una fotografía que no existe también responde `204`. No modifica el nombre ni ningún otro dato. Un identificador inexistente o de otra barbería responde el mismo `404` que el resto de operaciones del barbero (`CA-021-05`).
+         */
+        delete: operations["deleteBarberPhoto"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/private/services": {
         parameters: {
             query?: never;
@@ -389,7 +417,7 @@ export interface paths {
         };
         /**
          * Listar los servicios del catálogo de la barbería activa
-         * @description Lista paginada por cursor (HU-022, CA-022-01) de los servicios de la barbería derivada de la sesión vigente. Orden estable por fecha de alta y luego por identificador; sin paginación por offset porque la colección no tiene un máximo de negocio aprobado.
+         * @description Lista paginada por número de página (HU-022, CA-022-01, DEC-103) de los servicios de la barbería derivada de la sesión vigente. Orden estable por fecha de alta y luego por identificador. Excepción explícita del propietario a la regla general de paginación por cursor (docs/06-api/estandar-openapi.md §6.10): solo este endpoint pagina por página/offset con conteo total, para que el panel privado ofrezca un paginador numerado; el resto de listas del contrato conserva cursor. `search` filtra por coincidencia parcial insensible a mayúsculas en `name` únicamente (no busca en `description`).
          */
         get: operations["listServices"];
         put?: never;
@@ -1245,8 +1273,15 @@ export interface components {
              * @example 2026-08-23T15:04:05Z
              */
             updatedAt: string;
+            /**
+             * Format: date-time
+             * @description Instante de la última fotografía del barbero (DEC-104), con offset, o `null` si no tiene ninguna (el cliente muestra su monograma). Es la versión de la imagen: el cliente la añade a la URL de `GET /private/barbers/{barberId}/photo` para no reutilizar una copia vieja al cambiarla.
+             * @example 2026-09-30T12:00:00Z
+             * @example null
+             */
+            photoUpdatedAt: string | null;
         };
-        /** @description Página de barberos de la barbería activa, ordenada de forma estable por fecha de alta y luego por identificador. */
+        /** @description Página de barberos de la barbería activa, ordenada de forma estable por fecha de alta y luego por identificador. Conserva cursor por defecto y admite modo numerado con page/pageSize (DEC-107); nextCursor es null en modo numerado. */
         BarberListResponse: {
             /** @description Barberos de esta página, en el orden estable del servidor. */
             items: components["schemas"]["BarberResponse"][];
@@ -1255,6 +1290,14 @@ export interface components {
              * @example eyJjcmVhdGVkQXQiOiIyMDI2LTA4LTIzVDE1OjA0OjA1WiIsImlkIjoiOGYzYWMyYjEtZTRkNS00NmY2LWE3YzgtZDllMGYxYTJiM2M0In0=
              */
             nextCursor: string | null;
+            /** @description Página efectiva, presente únicamente en modo numerado. */
+            page?: number;
+            /** @description Tamaño efectivo, presente únicamente en modo numerado. */
+            pageSize?: number;
+            /** @description Total del tenant, presente únicamente en modo numerado. */
+            total?: number;
+            /** @description Total de páginas, presente únicamente en modo numerado. */
+            totalPages?: number;
         };
         /** @description Alta de un barbero de la barbería activa. La clave de idempotencia no convierte el nombre en único: dos claves distintas pueden crear dos barberos con el mismo `fullName` (fuera de alcance de HU-021 inventar esa restricción). */
         CreateBarberRequest: {
@@ -1330,15 +1373,30 @@ export interface components {
              */
             updatedAt: string;
         };
-        /** @description Página de servicios del catálogo de la barbería activa, ordenada de forma estable por fecha de alta y luego por identificador. */
+        /** @description Página de servicios del catálogo de la barbería activa, ordenada de forma estable por fecha de alta y luego por identificador, con conteo total y filtro opcional de búsqueda por nombre. */
         ServiceListResponse: {
             /** @description Servicios de esta página, en el orden estable del servidor. */
             items: components["schemas"]["ServiceResponse"][];
             /**
-             * @description Cursor opaco para pedir la siguiente página con el parámetro `cursor`. `null` cuando esta página es la última.
-             * @example eyJjcmVhdGVkQXQiOiIyMDI2LTA4LTI0VDE1OjA1OjEwWiIsImlkIjoiMWEyYjNjNGQtNWU2Zi00NzA4LTlhMGItMWMyZDNlNGY1MDYxIn0=
+             * @description Número de página efectivamente usado (ya acotado por el servidor).
+             * @example 1
              */
-            nextCursor: string | null;
+            page: number;
+            /**
+             * @description Tamaño de página efectivamente usado (ya acotado por el servidor).
+             * @example 20
+             */
+            pageSize: number;
+            /**
+             * @description Cantidad total de servicios que coinciden con el filtro de búsqueda vigente (o de toda la barbería, sin filtro), sin paginar.
+             * @example 2
+             */
+            total: number;
+            /**
+             * @description Cantidad total de páginas para `total`/`pageSize`, con un piso de 1: "página 1 de 1" es representable incluso cuando `total` es 0.
+             * @example 1
+             */
+            totalPages: number;
         };
         /** @description Alta de un servicio del catálogo de la barbería activa, protegida con clave de idempotencia (RN-IDE-01). El nombre debe ser único entre los servicios ACTIVOS de la misma barbería (DEC-067): un nombre igual al de un servicio ya desactivado sí se acepta. */
         CreateServiceRequest: {
@@ -2958,7 +3016,61 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
-        /** @description Página de servicios del catálogo de la barbería activa. */
+        /** @description Barbero con la fotografía ya guardada. */
+        BarberPhotoUpdated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["BarberResponse"];
+            };
+        };
+        /** @description Fotografía del barbero (JPEG o PNG). */
+        BarberPhotoSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                /** @description Validador de la versión de la imagen, derivado de `photoUpdatedAt`. El navegador lo devuelve en `If-None-Match` y recibe `304` mientras no cambie. */
+                ETag?: string;
+                /** @description `private, max-age=3600`: es el retrato de una persona, nunca almacenable por una caché compartida. El cliente versiona la URL con `photoUpdatedAt`, así que una fotografía nueva no se sirve de una copia vieja. */
+                "Cache-Control"?: string;
+                [name: string]: unknown;
+            };
+            content: {
+                "image/jpeg": string;
+                "image/png": string;
+            };
+        };
+        /** @description La fotografía no cambió desde la versión que el cliente ya tiene. */
+        BarberPhotoNotModified: {
+            headers: {
+                /** @description Validador vigente de la imagen. */
+                ETag?: string;
+                /** @description Misma política que la respuesta 200. */
+                "Cache-Control"?: string;
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
+        /** @description El barbero ya no tiene fotografía y vuelve a mostrarse con su monograma. Quitar una fotografía que no existe también responde `204`: la operación es idempotente. No afecta al nombre ni a ningún otro dato del barbero. */
+        BarberPhotoDeleted: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
+        /** @description El cuerpo no es una fotografía admisible: vacío, mayor de 512 KiB, no es una imagen JPEG o PNG real, su formato no coincide con el `Content-Type` o mide menos de 64 o más de 1024 píxeles por lado. No se persistió ningún cambio. */
+        BarberPhotoValidationProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description Página de servicios del catálogo de la barbería activa, paginada por número de página con conteo total y búsqueda opcional por nombre. */
         ServiceListSuccess: {
             headers: {
                 "X-Request-Id": components["headers"]["XRequestId"];
@@ -4104,6 +4216,10 @@ export interface operations {
                 cursor?: string;
                 /** @description Máximo de barberos por página. */
                 limit?: number;
+                /** @description Modo numerado (DEC-107). No combinar con cursor/limit; fuera de rango se ajusta a la última página. */
+                page?: number;
+                /** @description Filas del modo numerado. No combinar con cursor/limit. */
+                pageSize?: number;
             };
             header?: never;
             path?: never;
@@ -4192,13 +4308,81 @@ export interface operations {
             500: components["responses"]["InternalErrorProblem"];
         };
     };
+    getBarberPhoto: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Validador `ETag` de la copia que el cliente ya tiene. */
+                "If-None-Match"?: string;
+            };
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["BarberPhotoSuccess"];
+            304: components["responses"]["BarberPhotoNotModified"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    putBarberPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        /** @description Imagen ya recortada y reducida por el cliente. Se descartan metadatos: el servidor solo conserva los bytes validados y su tipo. */
+        requestBody: {
+            content: {
+                "image/jpeg": string;
+                "image/png": string;
+            };
+        };
+        responses: {
+            200: components["responses"]["BarberPhotoUpdated"];
+            400: components["responses"]["PayloadTooLargeProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            422: components["responses"]["BarberPhotoValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    deleteBarberPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: components["responses"]["BarberPhotoDeleted"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
     listServices: {
         parameters: {
             query?: {
-                /** @description Cursor opaco devuelto por una página anterior (`nextCursor`). Sin este parámetro, la respuesta empieza en la primera página. */
-                cursor?: string;
+                /** @description Número de página, empezando en 1. Sin este parámetro, la respuesta empieza en la primera página. */
+                page?: number;
                 /** @description Máximo de servicios por página. */
-                limit?: number;
+                pageSize?: number;
+                /** @description Filtro opcional por nombre: coincidencia parcial, insensible a mayúsculas. Sin este parámetro, la lista no se filtra. Un valor más largo que el nombre máximo de un servicio responde `400` (nunca podría igualar a ningún nombre real). */
+                search?: string;
             };
             header?: never;
             path?: never;

@@ -1,0 +1,35 @@
+# Respuesta 200 de GET /private/barbers/{barberId}/photo (DEC-104): los bytes
+# de la fotografía, con validador ETag para que el navegador revalide con una
+# solicitud condicional (304) en lugar de descargarla otra vez.
+description: Fotografía del barbero (JPEG o PNG).
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+  ETag:
+    description: >
+      Validador de la versión de la imagen, derivado de `photoUpdatedAt`. El
+      navegador lo devuelve en `If-None-Match` y recibe `304` mientras no
+      cambie.
+    schema:
+      type: string
+      examples:
+        - '"1790769600000000"'
+  Cache-Control:
+    description: >
+      `private, max-age=3600`: es el retrato de una persona, nunca
+      almacenable por una caché compartida. El cliente versiona la URL con
+      `photoUpdatedAt`, así que una fotografía nueva no se sirve de una copia
+      vieja.
+    schema:
+      type: string
+      examples:
+        - private, max-age=3600
+content:
+  image/jpeg:
+    schema:
+      type: string
+      format: binary
+  image/png:
+    schema:
+      type: string
+      format: binary

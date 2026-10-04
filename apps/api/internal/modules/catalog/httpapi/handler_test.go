@@ -23,7 +23,7 @@ import (
 // PostgreSQL real (esa cobertura vive en
 // internal/modules/catalog/postgres/repository_test.go).
 type fakeRepository struct {
-	listFn       func(barbershopID string, cursor *catalog.Cursor, limit int) (catalog.ListResult, error)
+	listFn       func(barbershopID string, page, pageSize int, search string) (catalog.ListResult, error)
 	getFn        func(barbershopID, serviceID string) (catalog.Service, bool, error)
 	createFn     func(barbershopID string, input catalog.CreateInput, key idempotency.Key, fp idempotency.Fingerprint) (catalog.CreateResult, error)
 	updateFn     func(barbershopID, serviceID string, fields catalog.UpdateFields) (catalog.UpdateResult, error)
@@ -31,8 +31,8 @@ type fakeRepository struct {
 	reactivateFn func(barbershopID, serviceID string, key idempotency.Key, fp idempotency.Fingerprint) (catalog.LifecycleResult, error)
 }
 
-func (f *fakeRepository) List(_ context.Context, barbershopID string, cursor *catalog.Cursor, limit int) (catalog.ListResult, error) {
-	return f.listFn(barbershopID, cursor, limit)
+func (f *fakeRepository) List(_ context.Context, barbershopID string, page, pageSize int, search string) (catalog.ListResult, error) {
+	return f.listFn(barbershopID, page, pageSize, search)
 }
 
 func (f *fakeRepository) Get(_ context.Context, barbershopID, serviceID string) (catalog.Service, bool, error) {
@@ -86,23 +86,29 @@ func decodeProblem(t *testing.T, rec *httptest.ResponseRecorder) map[string]any 
 
 // --- List -------------------------------------------------------------
 
-func TestListServicesHandler_Success_ReturnsItemsAndCursor(t *testing.T) {
+func TestListServicesHandler_Success_ReturnsItemsAndPageMetadata(t *testing.T) {
 	now := time.Now().UTC()
-	repo := &fakeRepository{listFn: func(barbershopID string, cursor *catalog.Cursor, limit int) (catalog.ListResult, error) {
+	repo := &fakeRepository{listFn: func(barbershopID string, page, pageSize int, search string) (catalog.ListResult, error) {
 		if barbershopID != testShopID {
 			t.Fatalf("expected shop %q, got %q", testShopID, barbershopID)
 		}
-		if limit != catalog.DefaultListLimit {
-			t.Fatalf("expected default limit, got %d", limit)
+		if page != 1 {
+			t.Fatalf("expected default first page, got %d", page)
 		}
-		if cursor != nil {
-			t.Fatalf("expected nil cursor, got %+v", cursor)
+		if pageSize != catalog.DefaultPageSize {
+			t.Fatalf("expected default pageSize, got %d", pageSize)
+		}
+		if search != "" {
+			t.Fatalf("expected empty search, got %q", search)
 		}
 		return catalog.ListResult{
 			Items: []catalog.Service{
 				{ID: "s-1", Name: "Corte", DurationMinutes: 30, PriceCents: 4500000, Currency: "COP", CreatedAt: now, UpdatedAt: now},
 			},
-			NextCursor: "opaque-cursor",
+			Page:       1,
+			PageSize:   catalog.DefaultPageSize,
+			Total:      1,
+			TotalPages: 1,
 		}, nil
 	}}
 	h := httpapi.NewListServicesHandler(catalog.NewService(repo))
@@ -124,14 +130,14 @@ func TestListServicesHandler_Success_ReturnsItemsAndCursor(t *testing.T) {
 	if body.Items[0].Price != "45000.00" {
 		t.Fatalf("expected price formatted as decimal string, got %q", body.Items[0].Price)
 	}
-	if body.NextCursor == nil || *body.NextCursor != "opaque-cursor" {
-		t.Fatalf("expected nextCursor to round-trip, got %v", body.NextCursor)
+	if body.Page != 1 || body.PageSize != catalog.DefaultPageSize || body.Total != 1 || body.TotalPages != 1 {
+		t.Fatalf("expected page metadata to round-trip, got %+v", body)
 	}
 }
 
-func TestListServicesHandler_NoNextPage_ReturnsExplicitNull(t *testing.T) {
-	repo := &fakeRepository{listFn: func(string, *catalog.Cursor, int) (catalog.ListResult, error) {
-		return catalog.ListResult{Items: []catalog.Service{}, NextCursor: ""}, nil
+func TestListServicesHandler_NoResults_ReturnsExplicitEmptyItemsAndTotalZero(t *testing.T) {
+	repo := &fakeRepository{listFn: func(string, int, int, string) (catalog.ListResult, error) {
+		return catalog.ListResult{Items: []catalog.Service{}, Page: 1, PageSize: catalog.DefaultPageSize, Total: 0, TotalPages: 1}, nil
 	}}
 	h := httpapi.NewListServicesHandler(catalog.NewService(repo))
 
@@ -139,27 +145,63 @@ func TestListServicesHandler_NoNextPage_ReturnsExplicitNull(t *testing.T) {
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 
-	if !strings.Contains(rec.Body.String(), `"nextCursor":null`) {
-		t.Fatalf("expected explicit null nextCursor in body, got %s", rec.Body.String())
-	}
 	if !strings.Contains(rec.Body.String(), `"items":[]`) {
 		t.Fatalf("expected an explicit empty array for items, got %s", rec.Body.String())
 	}
+	if !strings.Contains(rec.Body.String(), `"total":0`) {
+		t.Fatalf("expected explicit total 0 in body, got %s", rec.Body.String())
+	}
 }
 
-func TestListServicesHandler_InvalidLimit_Returns400(t *testing.T) {
-	repo := &fakeRepository{listFn: func(string, *catalog.Cursor, int) (catalog.ListResult, error) {
-		t.Fatal("repository must not be called for an invalid limit")
+func TestListServicesHandler_InvalidPage_Returns400(t *testing.T) {
+	repo := &fakeRepository{listFn: func(string, int, int, string) (catalog.ListResult, error) {
+		t.Fatal("repository must not be called for an invalid page")
 		return catalog.ListResult{}, nil
 	}}
 	h := httpapi.NewListServicesHandler(catalog.NewService(repo))
 
-	req := requestWithPrincipal(http.MethodGet, "/api/v1/private/services?limit=not-a-number", nil)
+	for _, raw := range []string{"not-a-number", "0", "-1"} {
+		req := requestWithPrincipal(http.MethodGet, "/api/v1/private/services?page="+raw, nil)
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Fatalf("page=%q: expected 400, got %d: %s", raw, rec.Code, rec.Body.String())
+		}
+	}
+}
+
+func TestListServicesHandler_InvalidPageSize_Returns400(t *testing.T) {
+	repo := &fakeRepository{listFn: func(string, int, int, string) (catalog.ListResult, error) {
+		t.Fatal("repository must not be called for an invalid pageSize")
+		return catalog.ListResult{}, nil
+	}}
+	h := httpapi.NewListServicesHandler(catalog.NewService(repo))
+
+	req := requestWithPrincipal(http.MethodGet, "/api/v1/private/services?pageSize=not-a-number", nil)
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestListServicesHandler_SearchQueryParam_PassedThrough(t *testing.T) {
+	repo := &fakeRepository{listFn: func(_ string, _, _ int, search string) (catalog.ListResult, error) {
+		if search != "corte" {
+			t.Fatalf("expected search %q, got %q", "corte", search)
+		}
+		return catalog.ListResult{Items: []catalog.Service{}, Page: 1, PageSize: catalog.DefaultPageSize, TotalPages: 1}, nil
+	}}
+	h := httpapi.NewListServicesHandler(catalog.NewService(repo))
+
+	req := requestWithPrincipal(http.MethodGet, "/api/v1/private/services?search=corte", nil)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
 }
 

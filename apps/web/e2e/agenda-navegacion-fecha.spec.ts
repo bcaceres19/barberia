@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { pickAgendaDate } from './agenda-fecha'
 
 /**
  * Recorrido E2E de HU-063 (navegación de la agenda por fecha). Corre
@@ -147,7 +148,7 @@ test.describe('Navegación de la agenda por fecha (HU-063)', () => {
 
     // Selector de fecha: salta directo a una fecha lejana.
     const farDate = civilDateAt(10)
-    await page.getByLabel('Fecha').fill(farDate)
+    await pickAgendaDate(page, farDate)
     await expect(page).toHaveURL(new RegExp(`date=${farDate}`))
 
     // Recarga: conserva la fecha y el barbero de la URL.

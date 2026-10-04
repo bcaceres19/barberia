@@ -58,20 +58,32 @@ var _ staff.Repository = (*Repository)(nil)
 // commit (ver TestCreate_StoredResponseBody_MatchesHTTPAPIWireShape en
 // repository_test.go).
 type barberResponseWire struct {
-	ID        string    `json:"id"`
-	FullName  string    `json:"fullName"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ID             string     `json:"id"`
+	FullName       string     `json:"fullName"`
+	CreatedAt      time.Time  `json:"createdAt"`
+	UpdatedAt      time.Time  `json:"updatedAt"`
+	PhotoUpdatedAt *time.Time `json:"photoUpdatedAt"`
 }
 
 func marshalBarberResponse(b staff.Barber) ([]byte, error) {
 	return json.Marshal(barberResponseWire{
-		ID:        b.ID,
-		FullName:  b.FullName,
-		CreatedAt: b.CreatedAt,
-		UpdatedAt: b.UpdatedAt,
+		ID:             b.ID,
+		FullName:       b.FullName,
+		CreatedAt:      b.CreatedAt,
+		UpdatedAt:      b.UpdatedAt,
+		PhotoUpdatedAt: b.PhotoUpdatedAt,
 	})
 }
+
+// barberColumns/barberPhotoJoin componen la lectura de un barbero con la
+// versión de su fotografía (DEC-104). LEFT JOIN a barber_photo por la PK
+// compuesta (barbershop_id, barber_id): nunca lee los bytes de `image`, solo
+// `updated_at`, así que el listado del equipo no arrastra imágenes.
+const (
+	barberColumns   = `b.id, b.full_name, b.created_at, b.updated_at, p.updated_at`
+	barberPhotoJoin = `LEFT JOIN barber_photo p
+	                     ON p.barbershop_id = b.barbershop_id AND p.barber_id = b.id`
+)
 
 // List implementa staff.Repository.List: orden estable (created_at, id)
 // dentro del tenant vigente, cursor opaco decodificado por el núcleo
@@ -90,20 +102,20 @@ func (r *Repository) List(ctx context.Context, barbershopID string, cursor *staf
 
 		if cursor == nil {
 			rows, err = q.Query(ctx,
-				`SELECT id, full_name, created_at, updated_at
-				   FROM barber
-				  WHERE barbershop_id = $1
-				  ORDER BY created_at, id
+				`SELECT `+barberColumns+`
+				   FROM barber b `+barberPhotoJoin+`
+				  WHERE b.barbershop_id = $1
+				  ORDER BY b.created_at, b.id
 				  LIMIT $2`,
 				barbershopID, fetchLimit,
 			)
 		} else {
 			rows, err = q.Query(ctx,
-				`SELECT id, full_name, created_at, updated_at
-				   FROM barber
-				  WHERE barbershop_id = $1
-				    AND (created_at, id) > ($2, $3)
-				  ORDER BY created_at, id
+				`SELECT `+barberColumns+`
+				   FROM barber b `+barberPhotoJoin+`
+				  WHERE b.barbershop_id = $1
+				    AND (b.created_at, b.id) > ($2, $3)
+				  ORDER BY b.created_at, b.id
 				  LIMIT $4`,
 				barbershopID, cursor.CreatedAt, cursor.ID, fetchLimit,
 			)
@@ -116,7 +128,7 @@ func (r *Repository) List(ctx context.Context, barbershopID string, cursor *staf
 		items := make([]staff.Barber, 0, fetchLimit)
 		for rows.Next() {
 			var b staff.Barber
-			if err := rows.Scan(&b.ID, &b.FullName, &b.CreatedAt, &b.UpdatedAt); err != nil {
+			if err := rows.Scan(&b.ID, &b.FullName, &b.CreatedAt, &b.UpdatedAt, &b.PhotoUpdatedAt); err != nil {
 				return fmt.Errorf("list barbers: scan: %w", err)
 			}
 			items = append(items, b)
@@ -152,13 +164,8 @@ func (r *Repository) Get(ctx context.Context, barbershopID, barberID string) (st
 	found := false
 
 	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
-		b.ID = barberID
-		err := q.QueryRow(ctx,
-			`SELECT full_name, created_at, updated_at
-			   FROM barber
-			  WHERE id = $1 AND barbershop_id = $2`,
-			barberID, barbershopID,
-		).Scan(&b.FullName, &b.CreatedAt, &b.UpdatedAt)
+		err := selectBarber(ctx, q, barbershopID, barberID).
+			Scan(&b.ID, &b.FullName, &b.CreatedAt, &b.UpdatedAt, &b.PhotoUpdatedAt)
 		switch {
 		case err == nil:
 			found = true
@@ -263,14 +270,17 @@ func (r *Repository) Rename(ctx context.Context, barbershopID, barberID, fullNam
 
 	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
 		var b staff.Barber
-		b.ID = barberID
 		err := q.QueryRow(ctx,
-			`UPDATE barber
-			    SET full_name = $3
-			  WHERE id = $1 AND barbershop_id = $2
-			RETURNING full_name, created_at, updated_at`,
+			`WITH renamed AS (
+			    UPDATE barber
+			       SET full_name = $3
+			     WHERE id = $1 AND barbershop_id = $2
+			 RETURNING id, barbershop_id, full_name, created_at, updated_at
+			 )
+			 SELECT b.id, b.full_name, b.created_at, b.updated_at, p.updated_at
+			   FROM renamed b `+barberPhotoJoin,
 			barberID, barbershopID, fullName,
-		).Scan(&b.FullName, &b.CreatedAt, &b.UpdatedAt)
+		).Scan(&b.ID, &b.FullName, &b.CreatedAt, &b.UpdatedAt, &b.PhotoUpdatedAt)
 		switch {
 		case err == nil:
 			result.Found = true
@@ -286,4 +296,158 @@ func (r *Repository) Rename(ctx context.Context, barbershopID, barberID, fullNam
 		return staff.RenameResult{}, fmt.Errorf("staff/postgres: rename barber: %w", err)
 	}
 	return result, nil
+}
+
+// selectBarber lee un barbero con la versión de su fotografía dentro de la
+// transacción del llamador. Filtra por id Y barbershop_id (defensa en
+// profundidad sobre barber_select_tenant_policy).
+func selectBarber(ctx context.Context, q database.Queries, barbershopID, barberID string) pgx.Row {
+	return q.QueryRow(ctx,
+		`SELECT `+barberColumns+`
+		   FROM barber b `+barberPhotoJoin+`
+		  WHERE b.id = $1 AND b.barbershop_id = $2`,
+		barberID, barbershopID,
+	)
+}
+
+// PutPhoto implementa staff.Repository.PutPhoto: upsert de la fila de
+// barber_photo SOLO si el barbero existe en el tenant vigente (el INSERT ...
+// SELECT no produce fila para uno inexistente o de otra barbería, CA-021-05) y
+// lectura del barbero ya con la nueva versión, todo en la misma transacción.
+// ON CONFLICT reemplaza la imagen sin duplicar la fila; el trigger
+// barber_photo_set_updated_at renueva updated_at, que es la versión pública.
+func (r *Repository) PutPhoto(ctx context.Context, barbershopID, barberID string, photo staff.Photo) (staff.PhotoResult, error) {
+	var result staff.PhotoResult
+
+	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
+		tag, err := q.Exec(ctx,
+			`INSERT INTO barber_photo (barbershop_id, barber_id, content_type, image)
+			 SELECT b.barbershop_id, b.id, $3, $4
+			   FROM barber b
+			  WHERE b.id = $1 AND b.barbershop_id = $2
+			 ON CONFLICT (barbershop_id, barber_id)
+			 DO UPDATE SET content_type = EXCLUDED.content_type, image = EXCLUDED.image`,
+			barberID, barbershopID, photo.ContentType, photo.Data,
+		)
+		if err != nil {
+			return fmt.Errorf("upsert barber photo: %w", err)
+		}
+		if tag.RowsAffected() == 0 {
+			return nil // result.Found queda false: barbero inexistente o de otra barbería.
+		}
+
+		var b staff.Barber
+		if err := selectBarber(ctx, q, barbershopID, barberID).
+			Scan(&b.ID, &b.FullName, &b.CreatedAt, &b.UpdatedAt, &b.PhotoUpdatedAt); err != nil {
+			return fmt.Errorf("select barber after photo upsert: %w", err)
+		}
+		result.Found = true
+		result.Barber = b
+		return nil
+	})
+	if err != nil {
+		return staff.PhotoResult{}, fmt.Errorf("staff/postgres: put barber photo: %w", err)
+	}
+	return result, nil
+}
+
+// GetPhoto implementa staff.Repository.GetPhoto.
+func (r *Repository) GetPhoto(ctx context.Context, barbershopID, barberID string) (staff.StoredPhoto, bool, error) {
+	var photo staff.StoredPhoto
+	found := false
+
+	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
+		err := q.QueryRow(ctx,
+			`SELECT content_type, image, updated_at
+			   FROM barber_photo
+			  WHERE barbershop_id = $1 AND barber_id = $2`,
+			barbershopID, barberID,
+		).Scan(&photo.ContentType, &photo.Data, &photo.UpdatedAt)
+		switch {
+		case err == nil:
+			found = true
+		case errors.Is(err, pgx.ErrNoRows):
+			// found queda false: sin fotografía o barbero de otra barbería.
+		default:
+			return fmt.Errorf("select barber photo: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return staff.StoredPhoto{}, false, fmt.Errorf("staff/postgres: get barber photo: %w", err)
+	}
+	if !found {
+		return staff.StoredPhoto{}, false, nil
+	}
+	return photo, true, nil
+}
+
+// DeletePhoto implementa staff.Repository.DeletePhoto. Primero comprueba que
+// el barbero exista en el tenant: así "sin fotografía" (éxito idempotente) y
+// "barbero inexistente" (404) se distinguen sin depender de cuántas filas
+// borró el DELETE.
+func (r *Repository) DeletePhoto(ctx context.Context, barbershopID, barberID string) (bool, error) {
+	found := false
+
+	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
+		var exists bool
+		if err := q.QueryRow(ctx,
+			`SELECT EXISTS (SELECT 1 FROM barber WHERE id = $1 AND barbershop_id = $2)`,
+			barberID, barbershopID,
+		).Scan(&exists); err != nil {
+			return fmt.Errorf("check barber exists: %w", err)
+		}
+		if !exists {
+			return nil
+		}
+		found = true
+
+		if _, err := q.Exec(ctx,
+			`DELETE FROM barber_photo WHERE barbershop_id = $1 AND barber_id = $2`,
+			barbershopID, barberID,
+		); err != nil {
+			return fmt.Errorf("delete barber photo: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return false, fmt.Errorf("staff/postgres: delete barber photo: %w", err)
+	}
+	return found, nil
+}
+
+// ListPage obtiene total, límite y filas en un mismo snapshot, incluso para un
+// tenant vacío. El total nunca cuenta otras barberías (DEC-107, RN-TEN-01).
+func (r *Repository) ListPage(ctx context.Context, shop string, page, size int) (staff.PageResult, error) {
+	result := staff.PageResult{Items: []staff.Barber{}, PageSize: size}
+	err := r.db.InTenantTx(ctx, database.BarbershopID(shop), func(ctx context.Context, q database.Queries) error {
+		rows, err := q.Query(ctx, `WITH counted AS (
+   SELECT count(*) AS total FROM barber WHERE barbershop_id = $1
+  ), bounds AS (
+   SELECT total, GREATEST(1, (total + $2 - 1) / $2) AS pages FROM counted
+  ), selected AS (
+   SELECT b.id, b.full_name, b.created_at, b.updated_at, p.updated_at AS photo_updated_at FROM barber b `+barberPhotoJoin+`
+   WHERE b.barbershop_id = $1 ORDER BY b.created_at, b.id
+   LIMIT $2 OFFSET (SELECT (LEAST($3, pages) - 1) * $2 FROM bounds)
+  )
+  SELECT total, pages, LEAST($3, pages), s.id, s.full_name,
+         s.created_at, s.updated_at, s.photo_updated_at
+  FROM bounds LEFT JOIN selected s ON true`, shop, size, page)
+		if err != nil {
+			return fmt.Errorf("list barber page: %w", err)
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var id, name *string
+			var created, updated, photo *time.Time
+			if err := rows.Scan(&result.Total, &result.TotalPages, &result.Page, &id, &name, &created, &updated, &photo); err != nil {
+				return err
+			}
+			if id != nil {
+				result.Items = append(result.Items, staff.Barber{ID: *id, FullName: *name, CreatedAt: *created, UpdatedAt: *updated, PhotoUpdatedAt: photo})
+			}
+		}
+		return rows.Err()
+	})
+	return result, err
 }

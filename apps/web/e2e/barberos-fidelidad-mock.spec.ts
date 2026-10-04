@@ -139,7 +139,7 @@ test('fidelidad #192: vacío, reflow, teclado y foco en los viewports obligatori
       }),
       `${viewport.name}: no hay desborde horizontal`,
     ).toBe(false)
-    const action = page.locator('.staff-page__create-button')
+    const action = page.getByRole('button', { name: 'Agregar barbero' })
     await action.focus()
     await expect(action).toBeFocused()
     await page.screenshot({

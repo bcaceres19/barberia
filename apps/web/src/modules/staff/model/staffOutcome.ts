@@ -28,3 +28,20 @@ export type RenameBarberOutcome =
   | { kind: 'not-found' }
   | { kind: 'network-error' }
   | { kind: 'unexpected-error' }
+
+// Fotografía (DEC-104). `validation-error` cubre un 422 del servidor (formato,
+// tamaño o dimensiones); la página ya prepara la imagen antes de enviarla, así
+// que solo lo ve un cliente que se salte esa preparación o una regla que
+// cambie en el servidor.
+export type UploadBarberPhotoOutcome =
+  | { kind: 'success'; barber: Barber }
+  | { kind: 'validation-error' }
+  | { kind: 'not-found' }
+  | { kind: 'network-error' }
+  | { kind: 'unexpected-error' }
+
+export type RemoveBarberPhotoOutcome =
+  | { kind: 'success' }
+  | { kind: 'not-found' }
+  | { kind: 'network-error' }
+  | { kind: 'unexpected-error' }

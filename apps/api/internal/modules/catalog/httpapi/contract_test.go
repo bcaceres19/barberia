@@ -168,9 +168,11 @@ func TestContract_UpdateServiceRequestSchema_MatchesDTOFields(t *testing.T) {
 	}
 }
 
-func TestContract_ServiceListResponseSchema_HasItemsAndNextCursor(t *testing.T) {
+func TestContract_ServiceListResponseSchema_HasItemsAndPageMetadata(t *testing.T) {
 	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/ServiceListResponse.yaml")
-	requireExactProps(t, schema, []string{"items", "nextCursor"}, []string{"items", "nextCursor"})
+	requireExactProps(t, schema,
+		[]string{"items", "page", "pageSize", "total", "totalPages"},
+		[]string{"items", "page", "pageSize", "total", "totalPages"})
 }
 
 // --- Operaciones -----------------------------------------------------------

@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -193,29 +194,51 @@ func scanServiceWithID(row rowScanner) (catalog.Service, error) {
 }
 
 // List implementa catalog.Repository.List: orden estable (created_at, id)
-// dentro del tenant vigente, cursor opaco decodificado por el núcleo
-// (catalog.Cursor), paginación "pedir uno de más" para saber si hay página
-// siguiente sin una segunda consulta COUNT (mismo patrón que
-// staff/postgres.Repository.List).
-func (r *Repository) List(ctx context.Context, barbershopID string, cursor *catalog.Cursor, limit int) (catalog.ListResult, error) {
-	var result catalog.ListResult
+// dentro del tenant vigente, paginación por página/offset con conteo total
+// (DEC-103: excepción documentada a la paginación por cursor de
+// docs/06-api/estandar-openapi.md §6.10 — decisión explícita del
+// propietario para que el panel de Servicios ofrezca un paginador numerado
+// con total exacto, cosa que un cursor opaco no puede representar sin una
+// consulta COUNT aparte de todos modos). search == "" es "sin filtro";
+// en otro caso filtra por coincidencia parcial insensible a mayúsculas en
+// `name` vía ILIKE, con los comodines propios de LIKE escapados por
+// likePattern.
+func (r *Repository) List(ctx context.Context, barbershopID string, page, pageSize int, search string) (catalog.ListResult, error) {
+	result := catalog.ListResult{Page: page, PageSize: pageSize}
+	offset := (page - 1) * pageSize
 
 	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
+		var total int
+		if search == "" {
+			if err := q.QueryRow(ctx,
+				`SELECT count(*) FROM service WHERE barbershop_id = $1`,
+				barbershopID,
+			).Scan(&total); err != nil {
+				return fmt.Errorf("list services: count: %w", err)
+			}
+		} else {
+			if err := q.QueryRow(ctx,
+				`SELECT count(*) FROM service WHERE barbershop_id = $1 AND name ILIKE $2 ESCAPE '\'`,
+				barbershopID, likePattern(search),
+			).Scan(&total); err != nil {
+				return fmt.Errorf("list services: count: %w", err)
+			}
+		}
+		result.Total = total
+
 		var (
 			rows pgx.Rows
 			err  error
 		)
-		fetchLimit := limit + 1
-
-		if cursor == nil {
+		if search == "" {
 			rows, err = q.Query(ctx,
 				`SELECT id, name, description, duration_minutes, price_amount, price_currency,
 				        is_active, deactivated_at, created_at, updated_at
 				   FROM service
 				  WHERE barbershop_id = $1
 				  ORDER BY created_at, id
-				  LIMIT $2`,
-				barbershopID, fetchLimit,
+				  LIMIT $2 OFFSET $3`,
+				barbershopID, pageSize, offset,
 			)
 		} else {
 			rows, err = q.Query(ctx,
@@ -223,10 +246,10 @@ func (r *Repository) List(ctx context.Context, barbershopID string, cursor *cata
 				        is_active, deactivated_at, created_at, updated_at
 				   FROM service
 				  WHERE barbershop_id = $1
-				    AND (created_at, id) > ($2, $3)
+				    AND name ILIKE $2 ESCAPE '\'
 				  ORDER BY created_at, id
-				  LIMIT $4`,
-				barbershopID, cursor.CreatedAt, cursor.ID, fetchLimit,
+				  LIMIT $3 OFFSET $4`,
+				barbershopID, likePattern(search), pageSize, offset,
 			)
 		}
 		if err != nil {
@@ -234,7 +257,7 @@ func (r *Repository) List(ctx context.Context, barbershopID string, cursor *cata
 		}
 		defer rows.Close()
 
-		items := make([]catalog.Service, 0, fetchLimit)
+		items := make([]catalog.Service, 0, pageSize)
 		for rows.Next() {
 			svc, err := scanServiceWithID(rows)
 			if err != nil {
@@ -246,22 +269,40 @@ func (r *Repository) List(ctx context.Context, barbershopID string, cursor *cata
 			return fmt.Errorf("list services: rows: %w", err)
 		}
 
-		hasMore := len(items) > limit
-		if hasMore {
-			items = items[:limit]
-		}
-
 		result.Items = items
-		if hasMore {
-			last := items[len(items)-1]
-			result.NextCursor = catalog.EncodeCursor(catalog.Cursor{CreatedAt: last.CreatedAt, ID: last.ID})
-		}
 		return nil
 	})
 	if err != nil {
 		return catalog.ListResult{}, fmt.Errorf("catalog/postgres: list services: %w", err)
 	}
+
+	result.TotalPages = totalPages(result.Total, pageSize)
 	return result, nil
+}
+
+// likePattern escapa los comodines de LIKE/ILIKE (%, _, la propia barra de
+// escape) en term antes de envolverlo entre '%...%': sin esto, un nombre
+// real que contenga alguno de esos caracteres (poco común pero posible,
+// service_name_ck no los prohíbe) cambiaría el significado del patrón de
+// búsqueda en vez de buscarse de forma literal.
+func likePattern(term string) string {
+	escaped := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(term)
+	return "%" + escaped + "%"
+}
+
+// totalPages deriva el total de páginas de total/pageSize con un piso de 1
+// (DEC-103): "página 1 de 1" es siempre representable, incluso sin
+// resultados, en vez de "página 1 de 0", que un paginador numerado no sabe
+// dibujar con sentido.
+func totalPages(total, pageSize int) int {
+	if pageSize <= 0 {
+		return 1
+	}
+	pages := (total + pageSize - 1) / pageSize
+	if pages < 1 {
+		return 1
+	}
+	return pages
 }
 
 // Get implementa catalog.Repository.Get. RLS (service_select_tenant_policy)

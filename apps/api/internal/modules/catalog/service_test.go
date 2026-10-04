@@ -17,7 +17,7 @@ import (
 // apperr), nunca SQL, RLS ni el unique_violation real (eso vive en
 // postgres/repository_test.go contra PostgreSQL real).
 type fakeRepository struct {
-	listFn       func(ctx context.Context, barbershopID string, cursor *catalog.Cursor, limit int) (catalog.ListResult, error)
+	listFn       func(ctx context.Context, barbershopID string, page, pageSize int, search string) (catalog.ListResult, error)
 	getFn        func(ctx context.Context, barbershopID, serviceID string) (catalog.Service, bool, error)
 	createFn     func(ctx context.Context, barbershopID string, input catalog.CreateInput, key idempotency.Key, fingerprint idempotency.Fingerprint) (catalog.CreateResult, error)
 	updateFn     func(ctx context.Context, barbershopID, serviceID string, fields catalog.UpdateFields) (catalog.UpdateResult, error)
@@ -30,8 +30,8 @@ type fakeRepository struct {
 	reactivateCalls int
 }
 
-func (f *fakeRepository) List(ctx context.Context, barbershopID string, cursor *catalog.Cursor, limit int) (catalog.ListResult, error) {
-	return f.listFn(ctx, barbershopID, cursor, limit)
+func (f *fakeRepository) List(ctx context.Context, barbershopID string, page, pageSize int, search string) (catalog.ListResult, error) {
+	return f.listFn(ctx, barbershopID, page, pageSize, search)
 }
 
 func (f *fakeRepository) Get(ctx context.Context, barbershopID, serviceID string) (catalog.Service, bool, error) {
@@ -466,75 +466,90 @@ func TestGet_Found_ReturnsService(t *testing.T) {
 	}
 }
 
-// --- List: clamping de limit y decodificación de cursor -------------------
+// --- List: clamping de page/pageSize y normalización de search (DEC-103) --
 
-func TestList_ZeroLimit_UsesDefault(t *testing.T) {
-	repo := &fakeRepository{listFn: func(_ context.Context, _ string, _ *catalog.Cursor, limit int) (catalog.ListResult, error) {
-		if limit != catalog.DefaultListLimit {
-			t.Fatalf("expected default limit %d, got %d", catalog.DefaultListLimit, limit)
+func TestList_ZeroPageSize_UsesDefault(t *testing.T) {
+	repo := &fakeRepository{listFn: func(_ context.Context, _ string, _, pageSize int, _ string) (catalog.ListResult, error) {
+		if pageSize != catalog.DefaultPageSize {
+			t.Fatalf("expected default pageSize %d, got %d", catalog.DefaultPageSize, pageSize)
 		}
 		return catalog.ListResult{}, nil
 	}}
 	svc := catalog.NewService(repo)
 
-	if _, err := svc.List(context.Background(), "shop-1", "", 0); err != nil {
+	if _, err := svc.List(context.Background(), "shop-1", 1, 0, ""); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
-func TestList_LimitAboveMax_Clamped(t *testing.T) {
-	repo := &fakeRepository{listFn: func(_ context.Context, _ string, _ *catalog.Cursor, limit int) (catalog.ListResult, error) {
-		if limit != catalog.MaxListLimit {
-			t.Fatalf("expected clamped limit %d, got %d", catalog.MaxListLimit, limit)
+func TestList_PageSizeAboveMax_Clamped(t *testing.T) {
+	repo := &fakeRepository{listFn: func(_ context.Context, _ string, _, pageSize int, _ string) (catalog.ListResult, error) {
+		if pageSize != catalog.MaxPageSize {
+			t.Fatalf("expected clamped pageSize %d, got %d", catalog.MaxPageSize, pageSize)
 		}
 		return catalog.ListResult{}, nil
 	}}
 	svc := catalog.NewService(repo)
 
-	if _, err := svc.List(context.Background(), "shop-1", "", 999999); err != nil {
+	if _, err := svc.List(context.Background(), "shop-1", 1, 999999, ""); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
-func TestList_EmptyCursor_PassesNilCursor(t *testing.T) {
-	repo := &fakeRepository{listFn: func(_ context.Context, _ string, cursor *catalog.Cursor, _ int) (catalog.ListResult, error) {
-		if cursor != nil {
-			t.Fatalf("expected nil cursor for the first page, got %+v", cursor)
+func TestList_ZeroOrNegativePage_DefaultsToFirstPage(t *testing.T) {
+	repo := &fakeRepository{listFn: func(_ context.Context, _ string, page, _ int, _ string) (catalog.ListResult, error) {
+		if page != 1 {
+			t.Fatalf("expected page normalized to 1, got %d", page)
 		}
 		return catalog.ListResult{}, nil
 	}}
 	svc := catalog.NewService(repo)
 
-	if _, err := svc.List(context.Background(), "shop-1", "", 10); err != nil {
+	if _, err := svc.List(context.Background(), "shop-1", 0, 10, ""); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if _, err := svc.List(context.Background(), "shop-1", -3, 10, ""); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
-func TestList_ValidCursor_DecodedAndPassedThrough(t *testing.T) {
-	original := catalog.Cursor{CreatedAt: time.Now().UTC(), ID: "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4"}
-	token := catalog.EncodeCursor(original)
-
-	repo := &fakeRepository{listFn: func(_ context.Context, _ string, cursor *catalog.Cursor, _ int) (catalog.ListResult, error) {
-		if cursor == nil || cursor.ID != original.ID {
-			t.Fatalf("expected decoded cursor with id %q, got %+v", original.ID, cursor)
+func TestList_PositivePage_PassedThrough(t *testing.T) {
+	repo := &fakeRepository{listFn: func(_ context.Context, _ string, page, _ int, _ string) (catalog.ListResult, error) {
+		if page != 3 {
+			t.Fatalf("expected page 3 passed through, got %d", page)
 		}
 		return catalog.ListResult{}, nil
 	}}
 	svc := catalog.NewService(repo)
 
-	if _, err := svc.List(context.Background(), "shop-1", token, 10); err != nil {
+	if _, err := svc.List(context.Background(), "shop-1", 3, 10, ""); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
-func TestList_InvalidCursor_RejectedWithoutTouchingRepository(t *testing.T) {
-	repo := &fakeRepository{listFn: func(context.Context, string, *catalog.Cursor, int) (catalog.ListResult, error) {
-		t.Fatal("repository must not be called for an invalid cursor")
+func TestList_SearchTrimmed_PassedThrough(t *testing.T) {
+	repo := &fakeRepository{listFn: func(_ context.Context, _ string, _, _ int, search string) (catalog.ListResult, error) {
+		if search != "corte" {
+			t.Fatalf("expected trimmed search %q, got %q", "corte", search)
+		}
 		return catalog.ListResult{}, nil
 	}}
 	svc := catalog.NewService(repo)
 
-	_, err := svc.List(context.Background(), "shop-1", "not-a-valid-cursor!!!", 10)
+	if _, err := svc.List(context.Background(), "shop-1", 1, 10, "  corte  "); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestList_SearchTooLong_RejectedWithoutTouchingRepository(t *testing.T) {
+	repo := &fakeRepository{listFn: func(context.Context, string, int, int, string) (catalog.ListResult, error) {
+		t.Fatal("repository must not be called for a search term over MaxSearchLength")
+		return catalog.ListResult{}, nil
+	}}
+	svc := catalog.NewService(repo)
+
+	tooLong := strings.Repeat("a", catalog.MaxSearchLength+1)
+	_, err := svc.List(context.Background(), "shop-1", 1, 10, tooLong)
 	appErr, ok := apperr.As(err)
 	if !ok || appErr.Kind != apperr.KindInvalid {
 		t.Fatalf("expected apperr.KindInvalid, got %v", err)

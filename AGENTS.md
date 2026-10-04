@@ -15,7 +15,7 @@ Estas reglas aplican a personas y agentes que modifiquen el repositorio.
 - Los commits y el título del PR siguen Conventional Commits; no mezclar preocupaciones ni incluir secretos o datos personales.
 - No hacer push directo, force push ni reescribir `main`. Integrar únicamente por pull request y squash.
 - Antes del merge deben pasar los checks aplicables y resolverse todas las conversaciones. Con colaboradores se exige al menos una aprobación ajena al último cambio.
-- Eliminar la rama después del merge y desplegar el SHA o tag aprobado, nunca una rama de ambiente divergente.
+- Eliminar la rama después del merge y desplegar el SHA o tag aprobado, nunca una rama de ambiente divergente. Si el trabajo se hizo en un `git worktree` aparte, eliminarlo también (`git worktree remove` + `git worktree prune`) como parte del mismo cierre; no debe quedar más de un checkout de este repositorio en `Proyectos/`.
 
 ## Prompts persistentes y relevo entre agentes
 
@@ -30,7 +30,7 @@ Estas reglas aplican a personas y agentes que modifiquen el repositorio.
 ## Skills de agentes
 
 - La fuente única de los skills del proyecto es `.agents/skills/<skill>/SKILL.md`, compartida por Codex y Claude Code. `.claude/skills/<skill>/SKILL.md` solo contiene un adaptador con la misma descripción que remite al canónico.
-- Catálogo: `task-brief` (petición ambigua o de riesgo), `ui-direction` (pantalla nueva o rediseño sin referencia exacta), `visual-qa` (UI renderizada; con mockup asignado, antes de editar y antes de declarar terminado), `change-review` (revisión independiente), `generacion-mockups-nava` (atlas raster) y `graphify-refresh` (decidir si actualizar el grafo local antes de consultarlo). Se cargan solo cuando la tarea coincide con su descripción.
+- Catálogo: `task-brief` (petición ambigua o de riesgo), `ui-direction` (pantalla nueva o rediseño sin referencia exacta), `visual-qa` (UI renderizada; con mockup asignado, antes de editar y antes de declarar terminado), `change-review` (revisión independiente), `generacion-mockups-nava` (atlas raster) y `graphify-refresh` (decidir si actualizar el grafo local antes de consultarlo). Incluye además `local-app-startup` (arranque local de Docker/BD, Atlas, API, frontend y Playwright, con comprobación de agenda). Se cargan solo cuando la tarea coincide con su descripción.
 - Los skills son ayudas derivadas: no sustituyen reglas, decisiones ni estándares. No se crea un skill nuevo sin un fallo repetido y demostrable o una instrucción explícita del propietario registrada como decisión. Tras cambiar skills o instrucciones de agentes, `tools/ai/validate-agent-system.sh --strict` debe terminar sin fallos ni advertencias.
 
 ## Estructura obligatoria

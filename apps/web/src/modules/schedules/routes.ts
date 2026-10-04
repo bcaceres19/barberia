@@ -14,6 +14,6 @@ export const schedulesPrivateShellChildRoutes: RouteRecordRaw[] = [
   {
     path: 'bloqueos',
     name: 'schedules-bloqueos',
-    component: () => import('./pages/BlocksPage.vue'),
+    redirect: { name: 'staff-barberos' },
   },
 ]

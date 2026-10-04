@@ -1,0 +1,30 @@
+-- Datos sintéticos dedicados a #288; aplicar solo en BD local de pruebas.
+-- Contraseña ficticia compartida con la fixture #286: PruebaBloqueos286!
+BEGIN;
+INSERT INTO barbershop (id,name,timezone) VALUES ('288a0001-0000-4000-8000-000000000001','Equipo de prueba paginación 1','America/Bogota') ON CONFLICT(id) DO NOTHING;
+INSERT INTO staff_user (id,barbershop_id,email,full_name,is_active) VALUES ('288a0001-0000-4000-8000-000000000002','288a0001-0000-4000-8000-000000000001','paginacion.288.1@ejemplo.test','Operador sintético 1',true) ON CONFLICT(id) DO NOTHING;
+INSERT INTO staff_credential(staff_user_id,barbershop_id,password_hash,password_algorithm) VALUES ('288a0001-0000-4000-8000-000000000002','288a0001-0000-4000-8000-000000000001','$argon2id$v=19$m=19456,t=2,p=1$Zml4dHVyZTI4NnNhbHQxNg$056gU87nsT2DvgY8THBcSZ7mMnfsLXrOXQZc0bKDjDY','argon2id') ON CONFLICT(staff_user_id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0001-0000-4000-8000-000000000001','288a0001-0000-4000-8000-000000000001','Barbero de prueba 01','2026-10-01T12:01:00Z') ON CONFLICT(id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0001-0000-4000-8000-000000000002','288a0001-0000-4000-8000-000000000001','Barbero de prueba 02','2026-10-01T12:02:00Z') ON CONFLICT(id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0001-0000-4000-8000-000000000003','288a0001-0000-4000-8000-000000000001','Barbero de prueba 03','2026-10-01T12:03:00Z') ON CONFLICT(id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0001-0000-4000-8000-000000000004','288a0001-0000-4000-8000-000000000001','Barbero de prueba 04','2026-10-01T12:04:00Z') ON CONFLICT(id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0001-0000-4000-8000-000000000005','288a0001-0000-4000-8000-000000000001','Barbero de prueba 05','2026-10-01T12:05:00Z') ON CONFLICT(id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0001-0000-4000-8000-000000000006','288a0001-0000-4000-8000-000000000001','Barbero de prueba 06','2026-10-01T12:06:00Z') ON CONFLICT(id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0001-0000-4000-8000-000000000007','288a0001-0000-4000-8000-000000000001','Barbero de prueba 07','2026-10-01T12:07:00Z') ON CONFLICT(id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0001-0000-4000-8000-000000000008','288a0001-0000-4000-8000-000000000001','Barbero de prueba 08','2026-10-01T12:08:00Z') ON CONFLICT(id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0001-0000-4000-8000-000000000009','288a0001-0000-4000-8000-000000000001','Barbero de prueba 09','2026-10-01T12:09:00Z') ON CONFLICT(id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0001-0000-4000-8000-000000000010','288a0001-0000-4000-8000-000000000001','Barbero de prueba 10','2026-10-01T12:10:00Z') ON CONFLICT(id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0001-0000-4000-8000-000000000011','288a0001-0000-4000-8000-000000000001','Barbero de prueba 11','2026-10-01T12:11:00Z') ON CONFLICT(id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0001-0000-4000-8000-000000000012','288a0001-0000-4000-8000-000000000001','Barbero de prueba 12','2026-10-01T12:12:00Z') ON CONFLICT(id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0001-0000-4000-8000-000000000013','288a0001-0000-4000-8000-000000000001','Barbero de prueba 13','2026-10-01T12:13:00Z') ON CONFLICT(id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0001-0000-4000-8000-000000000014','288a0001-0000-4000-8000-000000000001','Barbero de prueba 14','2026-10-01T12:14:00Z') ON CONFLICT(id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0001-0000-4000-8000-000000000015','288a0001-0000-4000-8000-000000000001','Barbero de prueba 15','2026-10-01T12:15:00Z') ON CONFLICT(id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0001-0000-4000-8000-000000000016','288a0001-0000-4000-8000-000000000001','Barbero de prueba 16','2026-10-01T12:16:00Z') ON CONFLICT(id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0001-0000-4000-8000-000000000017','288a0001-0000-4000-8000-000000000001','Barbero de prueba 17','2026-10-01T12:17:00Z') ON CONFLICT(id) DO NOTHING;
+INSERT INTO barbershop (id,name,timezone) VALUES ('288a0002-0000-4000-8000-000000000001','Equipo de prueba paginación 2','America/Bogota') ON CONFLICT(id) DO NOTHING;
+INSERT INTO staff_user (id,barbershop_id,email,full_name,is_active) VALUES ('288a0002-0000-4000-8000-000000000002','288a0002-0000-4000-8000-000000000001','paginacion.288.2@ejemplo.test','Operador sintético 2',true) ON CONFLICT(id) DO NOTHING;
+INSERT INTO staff_credential(staff_user_id,barbershop_id,password_hash,password_algorithm) VALUES ('288a0002-0000-4000-8000-000000000002','288a0002-0000-4000-8000-000000000001','$argon2id$v=19$m=19456,t=2,p=1$Zml4dHVyZTI4NnNhbHQxNg$056gU87nsT2DvgY8THBcSZ7mMnfsLXrOXQZc0bKDjDY','argon2id') ON CONFLICT(staff_user_id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0002-0000-4000-8000-000000000001','288a0002-0000-4000-8000-000000000001','Otra barbería 01','2026-10-01T12:01:00Z') ON CONFLICT(id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0002-0000-4000-8000-000000000002','288a0002-0000-4000-8000-000000000001','Otra barbería 02','2026-10-01T12:02:00Z') ON CONFLICT(id) DO NOTHING;
+INSERT INTO barber (id,barbershop_id,full_name,created_at) VALUES ('288b0002-0000-4000-8000-000000000003','288a0002-0000-4000-8000-000000000001','Otra barbería 03','2026-10-01T12:03:00Z') ON CONFLICT(id) DO NOTHING;
+COMMIT;

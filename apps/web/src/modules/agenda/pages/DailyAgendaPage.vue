@@ -15,9 +15,10 @@
 // (docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/
 // panel-agenda-eventos/README.md) documentan a qué panel responde cada
 // bloque.
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router'
-import { BaseAlert, BaseBadge, BaseButton, BaseInput, PageState } from '@/shared/ui'
+import { useMinHoldLoading } from '@/shared/composables'
+import { BaseAlert, BaseBadge, BaseButton, DiamondLoader, PageState } from '@/shared/ui'
 import {
   formatCivilDateFull,
   getCivilDateInTimezone,
@@ -38,6 +39,7 @@ import {
   type DailyAgendaEntry,
 } from '../model/dailyAgenda'
 import AgendaSkeleton from '../components/AgendaSkeleton.vue'
+import BaseDatePicker from '@/shared/ui/BaseDatePicker.vue'
 import BarberSelect from '../components/BarberSelect.vue'
 
 type PageStatus = 'loading' | 'ready' | 'load-error'
@@ -65,6 +67,13 @@ const barbershopTimezone = ref<string | null>(null)
 const selectedBarberId = ref<string | null>(null)
 const selectedDate = ref<string | null>(null)
 
+// agendaDate es la fecha a la que pertenecen `entries`: se fija en el mismo
+// instante que ellas, al llegar la respuesta. Todo lo que se deriva de los
+// turnos (eje, fichas, "Ahora", "En proceso") usa esta fecha y no
+// selectedDate: si usara la seleccionada, al cambiar de día la agenda anterior
+// se recalcularía contra la fecha nueva y saltaría antes de que llegue la
+// siguiente.
+const agendaDate = ref<string | null>(null)
 const agendaStatus = ref<AgendaStatus>('idle')
 const entries = ref<DailyAgendaEntry[]>([])
 const hasLoadedEntriesOnce = ref(false)
@@ -79,18 +88,27 @@ const selectedDateLabel = computed(() =>
   selectedDate.value ? formatCivilDateFull(selectedDate.value) : null,
 )
 
+const agendaDateLabel = computed(() =>
+  agendaDate.value ? formatCivilDateFull(agendaDate.value) : null,
+)
+
 const canNavigateDates = computed(() => barbershopTimezone.value !== null)
+
+// Día civil vigente en la barbería: el calendario lo marca y ofrece «Hoy».
+const todayCivilDate = computed(() =>
+  barbershopTimezone.value ? getCivilDateInTimezone(barbershopTimezone.value) : null,
+)
 
 // isViewingToday decide el texto del estado vacío ("hoy" vs. una fecha
 // explícita): sin zona conocida se asume "hoy" (mismo criterio degradado
 // que HU-062, que nunca navegaba y siempre mostraba "hoy").
 const isViewingToday = computed(() => {
-  if (!selectedDate.value || !barbershopTimezone.value) return true
-  return selectedDate.value === getCivilDateInTimezone(barbershopTimezone.value)
+  if (!agendaDate.value || !barbershopTimezone.value) return true
+  return agendaDate.value === getCivilDateInTimezone(barbershopTimezone.value)
 })
 
 const emptyStateDateText = computed(() =>
-  isViewingToday.value ? 'hoy' : `el ${selectedDateLabel.value}`,
+  isViewingToday.value ? 'hoy' : `el ${agendaDateLabel.value}`,
 )
 
 function requestedBarberIdFromRoute(): string | null {
@@ -114,8 +132,18 @@ function withQuery(overrides: Record<string, string | undefined>): LocationQuery
   return merged
 }
 
+// useMinHoldLoading (issue reportado 2026-09-28: "al entrar a Agenda o
+// Servicios se ve como se genera el objeto... quiero el tema de la carga
+// para tapar ese evento"): el rombo del evento 02 se muestra de inmediato
+// (sigue siendo `pageStatus.value = 'loading'` lo primero que pasa), pero
+// no cede el paso a "ready"/"load-error" hasta que pase un mínimo, para que
+// una respuesta rápida no lo retire a medio parpadeo dejando ver la
+// construcción cruda de los controles/el eje por debajo.
+const { start: startPageHold, hold: holdPageReveal } = useMinHoldLoading()
+
 async function loadPage() {
   pageStatus.value = 'loading'
+  startPageHold()
   const [barbersOutcome, timezoneOutcome] = await Promise.all([
     fetchBarberSummaries(),
     fetchBarbershopTimezone(),
@@ -124,12 +152,19 @@ async function loadPage() {
   barbershopTimezone.value = timezoneOutcome.kind === 'success' ? timezoneOutcome.timezone : null
 
   if (barbersOutcome.kind !== 'success') {
-    pageStatus.value = 'load-error'
+    holdPageReveal(() => {
+      pageStatus.value = 'load-error'
+    })
     return
   }
 
   barbers.value = barbersOutcome.items
-  pageStatus.value = 'ready'
+  holdPageReveal(() => {
+    pageStatus.value = 'ready'
+    // El esqueleto empieza a verse justo ahora: su retención mínima cuenta
+    // desde este instante, no desde que se pidió la agenda (ver loadAgenda).
+    if (agendaStatus.value === 'loading') startAgendaHold()
+  })
 
   if (barbers.value.length > 0) await syncFromRoute()
 }
@@ -191,9 +226,24 @@ watch(
   () => void syncFromRoute(),
 )
 
+// Mismo criterio que startPageHold/holdPageReveal (issue 2026-09-28), pero
+// solo para la PRIMERA carga ('loading', AgendaSkeleton): 'updating' ya
+// tiene su propio transition-delay (.daily-agenda-page--updating, más
+// abajo) para el caso "cambio de fecha/barbero con contenido previo", que
+// no es el problema reportado y no se toca.
+const { start: startAgendaHold, hold: holdAgendaReveal } = useMinHoldLoading()
+
 async function loadAgenda(barberId: string, date: string | null) {
   const requestId = ++agendaRequestSeq
-  agendaStatus.value = hasLoadedEntriesOnce.value ? 'updating' : 'loading'
+  const isFirstLoad = !hasLoadedEntriesOnce.value
+  agendaStatus.value = isFirstLoad ? 'loading' : 'updating'
+  // Mientras el spinner de página siga visible (pageStatus 'loading') el
+  // esqueleto aún no se ve: su retención arranca al revelarse la página. Sin
+  // esto, ambos temporizadores vencían con ~10 ms de diferencia y el
+  // esqueleto parpadeaba un solo fotograma entre el spinner y la agenda
+  // (issue reportado 2026-09-30: "al acceder a la pantalla de agenda, hay
+  // un espasmo").
+  if (isFirstLoad && pageStatus.value === 'ready') startAgendaHold()
 
   const outcome = await fetchDailyAgenda(barberId, date ?? undefined)
 
@@ -203,18 +253,24 @@ async function loadAgenda(barberId: string, date: string | null) {
   // con una respuesta obsoleta).
   if (requestId !== agendaRequestSeq) return
 
-  switch (outcome.kind) {
-    case 'success':
-      entries.value = [...outcome.items].sort((a, b) => a.startsAt.localeCompare(b.startsAt))
-      agendaStatus.value = 'ready'
-      hasLoadedEntriesOnce.value = true
-      return
-    case 'not-found':
-      agendaStatus.value = 'not-found'
-      return
-    default:
-      agendaStatus.value = 'error'
+  function apply() {
+    switch (outcome.kind) {
+      case 'success':
+        entries.value = [...outcome.items].sort((a, b) => a.startsAt.localeCompare(b.startsAt))
+        agendaDate.value = date
+        agendaStatus.value = 'ready'
+        hasLoadedEntriesOnce.value = true
+        return
+      case 'not-found':
+        agendaStatus.value = 'not-found'
+        return
+      default:
+        agendaStatus.value = 'error'
+    }
   }
+
+  if (isFirstLoad && pageStatus.value === 'ready') holdAgendaReveal(apply)
+  else apply()
 }
 
 function onBarberSelect(barberId: string) {
@@ -237,16 +293,30 @@ function goToNextDay() {
   if (selectedDate.value) goToDate(shiftCivilDate(selectedDate.value, 1))
 }
 
-function onDateInputChange(event: Event) {
-  const value = (event.target as HTMLInputElement).value
-  if (isCivilDateString(value)) goToDate(value)
-}
-
 function goToNewAppointment() {
   void router.push({ name: 'agenda-nuevo-turno' })
 }
 
+// Ritmo propio del rombo de cada turno: duración y desfase derivados del id
+// (hash estable), así los rombos no laten a la vez y el orden no cambia al
+// volver a pintar la lista. El turno en proceso late algo más rápido.
+function diamondStyle(entry: DailyAgendaEntry): Record<string, string> {
+  let hash = 0
+  for (const char of entry.id) hash = (hash * 31 + char.charCodeAt(0)) >>> 0
+  const spread = (hash % 1000) / 1000
+  const phase = ((hash >>> 10) % 1000) / 1000
+  const [min, range] = isEntryInProgress(entry) ? [4, 2] : [6, 5]
+  const duration = min + spread * range
+  return {
+    '--diamond-duration': `${duration.toFixed(1)}s`,
+    '--diamond-delay': `-${(phase * duration).toFixed(1)}s`,
+  }
+}
+
+// El turno en curso se muestra como "En proceso" aunque su estado siga siendo
+// `confirmed`: es solo presentación de la agenda, no cambia el dato.
 function statusLabel(entry: DailyAgendaEntry): string {
+  if (isEntryInProgress(entry)) return 'En proceso'
   return APPOINTMENT_STATUS_LABELS[entry.status]
 }
 
@@ -316,9 +386,9 @@ const timelineZoomLabel = computed(() => {
 })
 
 const timelineBounds = computed(() => {
-  if (!barbershopTimezone.value || !selectedDate.value) return null
+  if (!barbershopTimezone.value || !agendaDate.value) return null
   const tz = barbershopTimezone.value
-  const date = selectedDate.value
+  const date = agendaDate.value
 
   // Pedido explícito del propietario (2026-09-04): el carril siempre
   // cubre el día completo (00:00–24:00), no una ventana recortada
@@ -385,24 +455,65 @@ function timelinePercent(minute: number): string {
 
 function timelineSlipWidthPercent(entry: DailyAgendaEntry): number {
   const bounds = timelineBounds.value
-  if (!bounds || !selectedDate.value || !barbershopTimezone.value) return 0
-  const start = minutesIntoCivilDate(entry.startsAt, selectedDate.value, barbershopTimezone.value)
+  if (!bounds || !agendaDate.value || !barbershopTimezone.value) return 0
+  const start = minutesIntoCivilDate(entry.startsAt, agendaDate.value, barbershopTimezone.value)
   // Fin sin recortar, igual que en timelineBounds: la ficha ocupa su
   // duración real aunque cruce medianoche.
-  const end = minutesSinceCivilMidnight(entry.endsAt, selectedDate.value, barbershopTimezone.value)
+  const end = minutesSinceCivilMidnight(entry.endsAt, agendaDate.value, barbershopTimezone.value)
   const span = bounds.end - bounds.start
   // Ancho mínimo visual del 4%: una ficha muy corta sigue siendo legible en
   // la línea de tiempo sin que eso cambie su duración real.
   return Math.max(((end - start) / span) * 100, 4)
 }
 
-function timelineSlipStyle(entry: DailyAgendaEntry): { left: string; width: string } {
+// Ficha ensanchada al pasar el cursor o tocarla: crece hacia la derecha, salvo
+// las que arrancan cerca del final del carril, que se anclan por su borde
+// derecho y crecen hacia la izquierda para no salirse del contenedor. El
+// umbral (~18 % del carril a zoom 1) equivale a unos 200 px, el ancho al que
+// se ensancha una ficha (--expandido en CSS); con zoom el carril es más ancho,
+// así que el mismo ancho en px es un porcentaje menor.
+function timelineSlipStyle(entry: DailyAgendaEntry): {
+  left?: string
+  right?: string
+  width: string
+} {
   const bounds = timelineBounds.value
-  if (!bounds || !selectedDate.value || !barbershopTimezone.value)
-    return { left: '0%', width: '0%' }
-  const start = minutesIntoCivilDate(entry.startsAt, selectedDate.value, barbershopTimezone.value)
-  return { left: timelinePercent(start), width: `${timelineSlipWidthPercent(entry)}%` }
+  if (!bounds || !agendaDate.value || !barbershopTimezone.value) return { left: '0%', width: '0%' }
+  const start = minutesIntoCivilDate(entry.startsAt, agendaDate.value, barbershopTimezone.value)
+  const width = timelineSlipWidthPercent(entry)
+  const leftPercent = ((start - bounds.start) / (bounds.end - bounds.start)) * 100
+  if (leftPercent > 100 - 18 / timelineZoom.value) {
+    return { right: `${Math.max(0, 100 - leftPercent - width)}%`, width: `${width}%` }
+  }
+  return { left: timelinePercent(start), width: `${width}%` }
 }
+
+// Ficha «seleccionada» con el dedo: en táctil no hay cursor, así que el primer
+// toque la ensancha (nombre completo, horario y servicio) y el segundo abre el
+// detalle. Con ratón el clic navega directo; el ensanche lo da :hover.
+const expandedSlipId = ref<string | null>(null)
+let lastPointerType = 'mouse'
+
+function onSlipPointerDown(event: PointerEvent) {
+  lastPointerType = event.pointerType
+}
+
+function onSlipClick(event: MouseEvent, entryId: string) {
+  if (lastPointerType === 'mouse' || expandedSlipId.value === entryId) return
+  event.preventDefault()
+  expandedSlipId.value = entryId
+}
+
+function onDocumentPointerDown(event: PointerEvent) {
+  if (!expandedSlipId.value) return
+  const target = event.target
+  if (!(target instanceof Element) || !target.closest('.daily-agenda-page__timeline-slip')) {
+    expandedSlipId.value = null
+  }
+}
+
+onMounted(() => document.addEventListener('pointerdown', onDocumentPointerDown))
+onUnmounted(() => document.removeEventListener('pointerdown', onDocumentPointerDown))
 
 // La ficha muestra rango horario, persona y servicio cuando la duración le
 // da ancho; con poco ancho conserva solo la hora de inicio y la persona,
@@ -419,18 +530,37 @@ function timelineSlipDetail(entry: DailyAgendaEntry): 'full' | 'compact' {
   return timelineSlipWidthPercent(entry) * timelineZoom.value >= 8.5 ? 'full' : 'compact'
 }
 
+function isEntryCancelled(entry: (typeof entries.value)[number]): boolean {
+  return entry.status === 'cancelled_by_customer' || entry.status === 'cancelled_by_barber'
+}
+
+// Pendiente: confirmado que aún no está en curso (por atender, o ya pasado de
+// hora y sin resolver). Es el caso "por hacer" de la agenda.
+function isEntryPending(entry: (typeof entries.value)[number]): boolean {
+  return entry.status === 'confirmed' && !isEntryInProgress(entry)
+}
+
+// Turno en curso: confirmado y con `ahora` dentro de [inicio, fin). Es solo
+// presentación (no cambia `confirmed`) y, como el marcador "Ahora", se evalúa
+// al pintar la agenda, sin reloj en vivo. Solo aplica al día en curso.
+function isEntryInProgress(entry: (typeof entries.value)[number]): boolean {
+  if (entry.status !== 'confirmed' || !isViewingToday.value) return false
+  const nowMs = Date.now()
+  return nowMs >= new Date(entry.startsAt).getTime() && nowMs < new Date(entry.endsAt).getTime()
+}
+
 // "Ahora" (estandar-diseno-visual.md §7.2, §9.3): decorativo respecto al
 // estado del turno, nunca cambia `confirmed`. Solo se calcula al montar/
 // recargar la agenda (sin reloj en vivo): un dato de referencia visual, no
 // una fuente de disponibilidad que necesite exactitud al segundo.
 const nowMarkerPercent = computed(() => {
   const bounds = timelineBounds.value
-  if (!bounds || !selectedDate.value || !barbershopTimezone.value || !isViewingToday.value) {
+  if (!bounds || !agendaDate.value || !barbershopTimezone.value || !isViewingToday.value) {
     return null
   }
   const nowMinute = minutesIntoCivilDate(
     new Date().toISOString(),
-    selectedDate.value,
+    agendaDate.value,
     barbershopTimezone.value,
   )
   if (nowMinute < bounds.start || nowMinute > bounds.end) return null
@@ -449,7 +579,12 @@ const dayChangeMarkerPercent = computed(() => {
 </script>
 
 <template>
-  <section class="daily-agenda-page" aria-labelledby="daily-agenda-page-title">
+  <section
+    class="daily-agenda-page"
+    :class="{ 'daily-agenda-page--updating': agendaStatus === 'updating' }"
+    :aria-busy="agendaStatus === 'updating'"
+    aria-labelledby="daily-agenda-page-title"
+  >
     <header class="daily-agenda-page__header">
       <div>
         <h1 id="daily-agenda-page-title" class="daily-agenda-page__title">Agenda</h1>
@@ -471,12 +606,9 @@ const dayChangeMarkerPercent = computed(() => {
 
     <!-- Evento 02 del atlas: sin barbero/zona resueltos, nada que anticipar
          todavía — estado de página centrado con spinner, sin divisor. -->
-    <PageState
-      v-if="pageStatus === 'loading'"
-      variant="loading"
-      headline="Cargando barberos…"
-      role="status"
-    />
+    <div v-if="pageStatus === 'loading'" class="daily-agenda-page__loading" role="status">
+      <DiamondLoader label="Cargando barberos…" />
+    </div>
 
     <!-- Evento 03: fallo al cargar el contexto inicial. -->
     <PageState
@@ -512,6 +644,7 @@ const dayChangeMarkerPercent = computed(() => {
           <div class="daily-agenda-page__picker">
             <label for="daily-agenda-barber-select" class="daily-agenda-page__label">Barbero</label>
             <BarberSelect
+              compact
               :model-value="selectedBarberId"
               :barbers="barbers"
               @update:model-value="onBarberSelect"
@@ -529,27 +662,20 @@ const dayChangeMarkerPercent = computed(() => {
               Anterior
             </BaseButton>
             <div class="daily-agenda-page__date-input-wrap">
-              <BaseInput
-                type="date"
-                label="Fecha"
-                class="daily-agenda-page__date-input"
-                :model-value="selectedDate ?? ''"
-                :disabled="!canNavigateDates"
-                @change="onDateInputChange"
-              />
-              <!-- El valor de un input[type=date] siempre es ISO (YYYY-MM-DD)
-                   aunque el navegador lo pinte con el formato del locale del
-                   SO (issue #189: el atlas muestra "2026-09-03" literal). Esta
-                   capa superpuesta —no interactiva— reemplaza visualmente ese
-                   render nativo por el mismo valor ya en ISO, sin tocar la
-                   interacción real (el campo de abajo sigue enfocable,
-                   editable por teclado y con el picker nativo). -->
-              <span
-                v-if="selectedDate"
-                class="daily-agenda-page__date-display"
-                aria-hidden="true"
-                >{{ selectedDate }}</span
+              <label
+                id="daily-agenda-date-label"
+                for="daily-agenda-date-picker"
+                class="daily-agenda-page__label"
+                >Fecha</label
               >
+              <BaseDatePicker
+                trigger-id="daily-agenda-date-picker"
+                :model-value="selectedDate"
+                :today="todayCivilDate"
+                :disabled="!canNavigateDates"
+                label-id="daily-agenda-date-label"
+                @update:model-value="goToDate"
+              />
             </div>
             <BaseButton
               type="button"
@@ -690,13 +816,10 @@ const dayChangeMarkerPercent = computed(() => {
                       v-for="tick in timelineTicks"
                       :key="tick.minute"
                       class="daily-agenda-page__timeline-tick-wrap"
+                      :class="`daily-agenda-page__timeline-tick-wrap--${tick.align}`"
                       :style="{ left: timelinePercent(tick.minute) }"
                     >
-                      <span
-                        class="daily-agenda-page__timeline-tick-label"
-                        :class="`daily-agenda-page__timeline-tick-label--${tick.align}`"
-                        >{{ tick.label }}</span
-                      >
+                      <span class="daily-agenda-page__timeline-tick-label">{{ tick.label }}</span>
                     </span>
                   </div>
 
@@ -749,6 +872,14 @@ const dayChangeMarkerPercent = computed(() => {
                       class="daily-agenda-page__timeline-slip"
                       :class="{
                         'daily-agenda-page__timeline-slip--terminal': entry.status !== 'confirmed',
+                        'daily-agenda-page__timeline-slip--current': isEntryInProgress(entry),
+                        'daily-agenda-page__timeline-slip--pending': isEntryPending(entry),
+                        'daily-agenda-page__timeline-slip--completed': entry.status === 'completed',
+                        'daily-agenda-page__timeline-slip--no-show': entry.status === 'no_show',
+                        'daily-agenda-page__timeline-slip--cancelled': isEntryCancelled(entry),
+                        'daily-agenda-page__timeline-slip--expanded': expandedSlipId === entry.id,
+                        'daily-agenda-page__timeline-slip--end':
+                          timelineSlipStyle(entry).right !== undefined,
                       }"
                       :style="timelineSlipStyle(entry)"
                       :to="{
@@ -756,9 +887,11 @@ const dayChangeMarkerPercent = computed(() => {
                         params: { appointmentId: entry.id },
                         query: withQuery({}),
                       }"
+                      @pointerdown="onSlipPointerDown"
+                      @click.capture="onSlipClick($event, entry.id)"
                     >
                       <span class="daily-agenda-page__timeline-slip-time">{{
-                        timelineSlipDetail(entry) === 'full'
+                        timelineSlipDetail(entry) === 'full' || expandedSlipId === entry.id
                           ? entryTimeRange(entry)
                           : entryTime(entry)
                       }}</span>
@@ -766,7 +899,7 @@ const dayChangeMarkerPercent = computed(() => {
                         entry.attendeeName
                       }}</span>
                       <span
-                        v-if="timelineSlipDetail(entry) === 'full'"
+                        v-if="timelineSlipDetail(entry) === 'full' || expandedSlipId === entry.id"
                         class="daily-agenda-page__timeline-slip-service"
                         >{{ entry.serviceName }}</span
                       >
@@ -800,7 +933,14 @@ const dayChangeMarkerPercent = computed(() => {
                 v-for="entry in entries"
                 :key="entry.id"
                 class="daily-agenda-page__item"
-                :class="{ 'daily-agenda-page__item--terminal': entry.status !== 'confirmed' }"
+                :class="{
+                  'daily-agenda-page__item--terminal': entry.status !== 'confirmed',
+                  'daily-agenda-page__item--current': isEntryInProgress(entry),
+                  'daily-agenda-page__item--pending': isEntryPending(entry),
+                  'daily-agenda-page__item--completed': entry.status === 'completed',
+                  'daily-agenda-page__item--no-show': entry.status === 'no_show',
+                  'daily-agenda-page__item--cancelled': isEntryCancelled(entry),
+                }"
               >
                 <RouterLink
                   class="daily-agenda-page__item-main"
@@ -820,6 +960,7 @@ const dayChangeMarkerPercent = computed(() => {
                   :variant="statusBadgeVariant(entry)"
                   size="sm"
                   :label="statusLabel(entry)"
+                  :style="diamondStyle(entry)"
                 >
                   {{ statusLabel(entry) }}
                 </BaseBadge>
@@ -886,14 +1027,65 @@ const dayChangeMarkerPercent = computed(() => {
 
 .daily-agenda-page__cta {
   flex-shrink: 0;
+  /* Sobre tinta, el blanco puro de la variante secundaria deslumbra: el CTA
+     usa el mismo latón sobre fondo transparente que Anterior/Siguiente (ver
+     `.daily-agenda-page__date-nav`), para que todos los botones de la
+     pantalla sean de una sola familia. */
+  background-color: transparent;
+  color: var(--color-brand-accent-surface);
+  border-color: rgb(184 149 90 / 50%);
+  border-bottom-color: var(--color-brand-accent-surface);
 }
 
+.daily-agenda-page__cta:hover:not(:disabled) {
+  background-color: rgb(184 149 90 / 12%);
+  border-color: rgb(184 149 90 / 50%);
+  border-bottom-color: var(--color-brand-accent-surface);
+}
+
+/* Aviso solo para lector de pantalla: fuera del flujo para que empezar una
+   carga no empuje la agenda hacia abajo y la devuelva al llegar la
+   respuesta (el "espasmo" al cambiar de fecha o barbero). El aviso visual es
+   el atenuado de la agenda anterior, de abajo. */
 .daily-agenda-page__updating {
-  margin: 0;
-  padding: var(--space-2) 0;
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body-sm);
-  color: var(--color-on-strong-muted);
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* La agenda anterior se atenúa solo si la respuesta tarda: con la transición
+   demorada, una carga rápida (decenas de ms) no parpadea. Al volver a
+   'ready' la clase sale y el regreso a opacidad plena es inmediato. */
+.daily-agenda-page__timeline-wrapper,
+.daily-agenda-page__list,
+.daily-agenda-page__empty-state {
+  transition: opacity 0.15s ease;
+}
+
+.daily-agenda-page--updating .daily-agenda-page__timeline-wrapper,
+.daily-agenda-page--updating .daily-agenda-page__list,
+.daily-agenda-page--updating .daily-agenda-page__empty-state {
+  opacity: 0.55;
+  transition-delay: 0.25s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .daily-agenda-page__timeline-wrapper,
+  .daily-agenda-page__list,
+  .daily-agenda-page__empty-state {
+    transition: none;
+  }
+}
+
+.daily-agenda-page__loading {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
 }
 
 .daily-agenda-page__controls {
@@ -939,8 +1131,10 @@ const dayChangeMarkerPercent = computed(() => {
 }
 
 .daily-agenda-page__date-input-wrap {
-  position: relative;
+  display: flex;
   flex: 1 1 180px;
+  flex-direction: column;
+  gap: var(--space-2);
   min-width: 160px;
 }
 
@@ -953,6 +1147,7 @@ const dayChangeMarkerPercent = computed(() => {
    componentes compartidos, porque el resto de sus usos (auth-eventos)
    sí está sobre superficie clara y necesita el latón oscuro. */
 .daily-agenda-page__date-nav :deep(.base-button--ghost) {
+  --btn-height: 40px;
   color: var(--color-brand-accent-surface);
   border-color: rgb(184 149 90 / 50%);
   border-bottom-color: var(--color-brand-accent-surface);
@@ -961,64 +1156,6 @@ const dayChangeMarkerPercent = computed(() => {
 .daily-agenda-page__date-nav
   :deep(.base-button--ghost:hover:not(:disabled):not(.base-button--loading)) {
   background-color: rgb(184 149 90 / 12%);
-}
-
-.daily-agenda-page__date-input :deep(.base-input__label) {
-  color: var(--color-brand-accent-surface);
-}
-
-.daily-agenda-page__date-input :deep(.base-input) {
-  --input-bg: rgb(244 240 231 / 5%);
-  --input-border-color: rgb(244 240 231 / 16%);
-  --input-border-base-color: var(--color-brand-accent-surface);
-  color: var(--color-on-strong);
-}
-
-/* El control del atlas (.control en tools/mockups/panel-agenda-eventos/
-   render.mjs) es solo texto, sin icono: el calendario propio del navegador
-   se oculta. El campo entero — no solo el icono — sigue abriendo el
-   selector nativo al hacer clic en Chromium, así que la interacción no se
-   pierde. El texto propio del navegador (formato del locale del SO, no el
-   ISO literal del atlas) también se vuelve transparente: la capa
-   `.daily-agenda-page__date-display` de abajo lo reemplaza visualmente sin
-   tocar el valor real ni la edición por teclado. */
-.daily-agenda-page__date-input :deep(.base-input::-webkit-calendar-picker-indicator) {
-  display: none;
-}
-
-.daily-agenda-page__date-input :deep(.base-input::-webkit-datetime-edit) {
-  color: transparent;
-}
-
-.daily-agenda-page__date-input :deep(.base-input:disabled),
-.daily-agenda-page__date-input :deep(.base-input--disabled) {
-  background-color: var(--input-bg);
-  border-color: var(--input-border-color);
-  border-bottom-color: rgb(244 240 231 / 28%);
-  color: var(--color-on-strong-muted);
-  opacity: 0.42;
-}
-
-.daily-agenda-page__date-display {
-  position: absolute;
-  right: var(--space-4);
-  bottom: 0;
-  left: var(--space-4);
-  display: flex;
-  align-items: center;
-  height: var(--control-height);
-  overflow: hidden;
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body);
-  color: var(--color-on-strong);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-.daily-agenda-page__date-input:has(:disabled) ~ .daily-agenda-page__date-display {
-  color: var(--color-on-strong-muted);
-  opacity: 0.42;
 }
 
 @media (min-width: 1024px) {
@@ -1104,8 +1241,8 @@ const dayChangeMarkerPercent = computed(() => {
   min-height: 64px;
   min-height: 64px;
   padding: 13px 18px;
-  background-color: var(--color-surface-muted);
-  border: var(--border-width-normal) solid var(--color-border-subtle);
+  background-color: transparent;
+  border: var(--border-width-normal) solid rgb(184 149 90 / 55%);
   /* 3px literal, no --border-width-emphasis (2px): igual que
      .daily-agenda-page__timeline-slip, calcado del filete de .row en el
      atlas (border-left:3px solid var(--brass-deep)). */
@@ -1121,8 +1258,71 @@ const dayChangeMarkerPercent = computed(() => {
   background-color: transparent;
   /* Más visible que el 24% original del atlas (issue #189, reporte en
      vivo: "las tarjetas transparentes... ni se notan"). */
-  border-color: rgb(244 240 231 / 45%);
-  border-left-color: rgb(244 240 231 / 55%);
+  border-color: rgb(184 149 90 / 45%);
+  border-left-color: var(--color-brand-accent-surface);
+}
+
+/* Estados de la ficha, todos con la misma receta: velo tenue + contorno y
+   filete del color del estado, sobre el azul general. Van después de
+   --terminal para ganarle el contorno.
+   - Pendiente (confirmado por atender): amarillo, el "por hacer".
+   - Completado: verde apagado de la familia de éxito, el "ya hecho".
+   - Cancelado: rosa apagado de la familia de peligro.
+   - No se presentó: lila apagado, distinto de los otros tres y del latón. */
+.daily-agenda-page__item--pending {
+  background-color: rgb(230 207 110 / 8%);
+  border-color: rgb(230 207 110 / 50%);
+  border-left-color: var(--color-pending-on-strong);
+}
+
+.daily-agenda-page__item--pending :deep(.base-badge) {
+  color: var(--color-pending-on-strong);
+}
+
+.daily-agenda-page__item--completed {
+  background-color: rgb(157 194 169 / 7%);
+  border-color: rgb(157 194 169 / 40%);
+  border-left-color: var(--color-success-on-strong);
+}
+
+.daily-agenda-page__item.daily-agenda-page__item--completed :deep(.base-badge) {
+  color: var(--color-success-on-strong);
+}
+
+.daily-agenda-page__item--no-show {
+  background-color: rgb(183 166 222 / 8%);
+  border-color: rgb(183 166 222 / 45%);
+  border-left-color: var(--color-no-show-on-strong);
+}
+
+.daily-agenda-page__item.daily-agenda-page__item--no-show :deep(.base-badge) {
+  color: var(--color-no-show-on-strong);
+}
+
+/* Turno cancelado (por el cliente o por el barbero): rosa apagado de la
+   familia de peligro, con un velo tenue, para separarlo a simple vista de los
+   completados sin gritar como una alerta. Va después de --terminal para
+   ganarle el color de contorno. */
+.daily-agenda-page__item--cancelled {
+  background-color: rgb(227 146 141 / 7%);
+  border-color: rgb(227 146 141 / 45%);
+  border-left-color: var(--color-danger-on-strong);
+}
+
+.daily-agenda-page__item.daily-agenda-page__item--cancelled :deep(.base-badge) {
+  color: var(--color-danger-on-strong);
+}
+
+/* Turno en curso ("En proceso"): el azul general de la agenda (tinta), sin
+   velo, con contorno y filete en azul claro — el azul es su color de estado. */
+.daily-agenda-page__item--current {
+  background-color: var(--color-surface-strong);
+  border-color: rgb(157 183 207 / 55%);
+  border-left-color: var(--color-info-on-strong);
+}
+
+.daily-agenda-page__item.daily-agenda-page__item--current :deep(.base-badge) {
+  color: var(--color-info-on-strong);
 }
 
 /* El nombre conserva color pleno incluso en un turno terminal — sigue
@@ -1170,7 +1370,7 @@ const dayChangeMarkerPercent = computed(() => {
   font-weight: 400;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
-  color: var(--color-text-secondary);
+  color: var(--color-on-strong-soft);
 }
 
 .daily-agenda-page__item-details {
@@ -1186,7 +1386,7 @@ const dayChangeMarkerPercent = computed(() => {
   font-family: var(--font-family-base);
   font-size: 17px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--color-on-strong);
 }
 
 .daily-agenda-page__item-service {
@@ -1194,7 +1394,7 @@ const dayChangeMarkerPercent = computed(() => {
   margin-top: 2px;
   font-size: 14px;
   line-height: 16px;
-  color: var(--color-text-secondary);
+  color: var(--color-on-strong-soft);
 }
 
 @media (max-width: 1023px) {
@@ -1204,6 +1404,7 @@ const dayChangeMarkerPercent = computed(() => {
 
   .daily-agenda-page__date-nav {
     display: grid;
+    align-items: end;
     width: 100%;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.65fr) minmax(0, 1.05fr);
   }
@@ -1229,7 +1430,7 @@ const dayChangeMarkerPercent = computed(() => {
   .daily-agenda-page__item-time {
     flex-basis: auto;
     font-size: 13px;
-    color: var(--color-text-secondary);
+    color: var(--color-on-strong-soft);
   }
 
   .daily-agenda-page__item-name {
@@ -1346,15 +1547,18 @@ const dayChangeMarkerPercent = computed(() => {
   /* Una marca interior se centra sobre su línea; en los dos extremos del
      eje centrar saca la mitad de la etiqueta fuera del carril, así que ahí
      se ancla hacia adentro en su lugar (issue #189: esto era la causa real
-     del scroll horizontal — no un carril genuinamente más ancho que la
-     pantalla, solo una etiqueta de borde sangrando unos px). translateX en
-     vez de left/right: el wrap ya lleva su posición por `:style`, y un
-     estilo en línea siempre gana sobre cualquier `left`/`right` de clase. */
-  .daily-agenda-page__timeline-tick-label--center {
+     del scroll horizontal). translateX en vez de left/right: el wrap ya
+     lleva su posición por `:style`, y un estilo en línea siempre gana sobre
+     cualquier `left`/`right` de clase. */
+  .daily-agenda-page__timeline-tick-wrap--center {
     transform: translateX(-50%);
   }
 
-  .daily-agenda-page__timeline-tick-label--end {
+  /* El desplazamiento va en el wrap, no en la etiqueta: el wrap es el que
+     define el área desplazable del carril, y con `left: 100%` su caja (aún
+     sin desplazar) sobresalía ~31 px del borde derecho y daba un scroll
+     horizontal de más incluso a zoom 1. */
+  .daily-agenda-page__timeline-tick-wrap--end {
     transform: translateX(-100%);
   }
 
@@ -1458,12 +1662,20 @@ const dayChangeMarkerPercent = computed(() => {
     gap: 2px;
     overflow: hidden;
     padding: 0 12px;
-    background-color: var(--color-surface-muted);
+    /* Tinte del estado; la ficha ensanchada lo apoya sobre tinta opaca. */
+    --slip-tint: transparent;
+    background-color: var(--slip-tint);
     border: 0;
     border-left: 3px solid var(--color-accent-brass);
     border-radius: 2px;
-    color: var(--color-action-primary);
+    color: var(--color-on-strong);
     text-decoration: none;
+  }
+
+  .daily-agenda-page__timeline-slip--current {
+    background-color: var(--color-surface-strong);
+    border: var(--border-width-normal) solid rgb(157 183 207 / 55%);
+    border-left: 3px solid var(--color-info-on-strong);
   }
 
   /* Mismo criterio de material que la ficha de lista: contorno sobre tinta,
@@ -1479,9 +1691,41 @@ const dayChangeMarkerPercent = computed(() => {
        contorno visible, solo con el filete izquierdo. Más visible que el
        24% original del atlas ("las tarjetas transparentes... ni se
        notan"). */
-    border: var(--border-width-normal) solid rgb(244 240 231 / 45%);
-    border-left: 3px solid rgb(244 240 231 / 55%);
+    border: var(--border-width-normal) solid rgb(184 149 90 / 45%);
+    border-left: 3px solid var(--color-brand-accent-surface);
     color: var(--color-on-strong);
+  }
+
+  /* Pendiente (amarillo) y completado (verde): misma receta que la ficha de
+     lista; el carril fija `border: 0` en la base, por eso llevan su contorno
+     completo. Después de --terminal para ganarle el color. */
+  .daily-agenda-page__timeline-slip--pending {
+    --slip-tint: rgb(230 207 110 / 8%);
+    background-color: var(--slip-tint);
+    border: var(--border-width-normal) solid rgb(230 207 110 / 50%);
+    border-left: 3px solid var(--color-pending-on-strong);
+  }
+
+  .daily-agenda-page__timeline-slip--completed {
+    --slip-tint: rgb(157 194 169 / 7%);
+    background-color: var(--slip-tint);
+    border-color: rgb(157 194 169 / 40%);
+    border-left-color: var(--color-success-on-strong);
+  }
+
+  .daily-agenda-page__timeline-slip--no-show {
+    --slip-tint: rgb(183 166 222 / 8%);
+    background-color: var(--slip-tint);
+    border-color: rgb(183 166 222 / 45%);
+    border-left-color: var(--color-no-show-on-strong);
+  }
+
+  /* Cancelado: rosa apagado; después de --terminal para ganarle el contorno. */
+  .daily-agenda-page__timeline-slip--cancelled {
+    --slip-tint: rgb(227 146 141 / 7%);
+    background-color: var(--slip-tint);
+    border-color: rgb(227 146 141 / 45%);
+    border-left-color: var(--color-danger-on-strong);
   }
 
   /* Igual que la fila de lista: la hora se atenúa, la persona conserva
@@ -1496,19 +1740,53 @@ const dayChangeMarkerPercent = computed(() => {
     font-weight: 500;
   }
 
+  /* Ficha ensanchada (cursor encima o tocada): nunca menos ancha que su
+     contenido, así el nombre se lee entero; sobre tinta opaca y por encima de
+     las vecinas para que no se transparente el texto de otra ficha. El hover
+     solo cuenta con puntero fino: en táctil queda «pegado» tras el toque y la
+     selección la da --expanded. */
+  .daily-agenda-page__timeline-slip--expanded {
+    z-index: 3;
+    min-width: max-content;
+    overflow: visible;
+    background: linear-gradient(var(--slip-tint), var(--slip-tint)), var(--color-surface-strong);
+    box-shadow: var(--shadow-dialog);
+  }
+
+  @media (hover: hover) {
+    .daily-agenda-page__timeline-slip:hover {
+      z-index: 3;
+      min-width: max-content;
+      overflow: visible;
+      background: linear-gradient(var(--slip-tint), var(--slip-tint)), var(--color-surface-strong);
+      box-shadow: var(--shadow-dialog);
+    }
+
+    .daily-agenda-page__timeline-slip:hover .daily-agenda-page__timeline-slip-name {
+      overflow: visible;
+      text-overflow: clip;
+    }
+  }
+
+  .daily-agenda-page__timeline-slip--expanded .daily-agenda-page__timeline-slip-name,
+  .daily-agenda-page__timeline-slip--expanded .daily-agenda-page__timeline-slip-service {
+    overflow: visible;
+    text-overflow: clip;
+  }
+
   .daily-agenda-page__timeline-slip-time {
     font-size: 11px;
     font-weight: 400;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.03em;
-    color: var(--color-text-secondary);
+    color: var(--color-on-strong-soft);
   }
 
   .daily-agenda-page__timeline-slip-name {
     overflow: hidden;
     font-size: 13px;
     font-weight: 600;
-    color: var(--color-text-primary);
+    color: var(--color-on-strong);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -1516,7 +1794,7 @@ const dayChangeMarkerPercent = computed(() => {
   .daily-agenda-page__timeline-slip-service {
     overflow: hidden;
     font-size: 12px;
-    color: var(--color-text-secondary);
+    color: var(--color-on-strong-soft);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -1549,14 +1827,45 @@ const dayChangeMarkerPercent = computed(() => {
 :deep(.base-badge)::before {
   content: '';
   flex-shrink: 0;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+  width: 5px;
+  height: 5px;
+  /* Rombo (cuadrado girado 45°) en vez de círculo: el marcador de estado de
+     esta pantalla, igual que el rombo de la marca. */
+  transform: rotate(45deg);
   /* currentColor, no --badge-dot-color: el punto sigue el mismo color de
      texto que ya resuelve la variante (y su atenuado terminal de abajo),
      sin depender de la mecánica de padding negativo del prop `dot`
      original de BaseBadge (pensada para su badge con caja). */
   background-color: currentColor;
+}
+
+/* Parpadeo suave y esporádico del rombo: casi todo el ciclo queda quieto y
+   solo un tramo corto baja la opacidad y la escala, sin movimiento lateral.
+   Duración y desfase salen de `--diamond-duration`/`--diamond-delay` (uno
+   propio por turno, ver diamondStyle) para que no se sincronicen. */
+@keyframes agenda-diamond-blink {
+  0%,
+  62%,
+  100% {
+    opacity: 1;
+    transform: rotate(45deg) scale(1);
+  }
+
+  80% {
+    opacity: 0.55;
+    transform: rotate(45deg) scale(0.85);
+  }
+}
+
+:deep(.base-badge)::before {
+  animation: agenda-diamond-blink var(--diamond-duration, 7s) ease-in-out var(--diamond-delay, 0s)
+    infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :deep(.base-badge)::before {
+    animation: none;
+  }
 }
 
 /* Terminal (atlas .row--terminal .badge: pierde su color de estado

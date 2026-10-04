@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { pickAgendaDate } from './agenda-fecha'
 
 /**
  * Recorrido E2E de HU-066 (cancelación de un turno por el barbero, T6).
@@ -119,7 +120,7 @@ test.describe('Cancelación de un turno por el barbero (HU-066, T6)', () => {
 
     await goToAgenda(page)
     await page.getByLabel('Barbero').selectOption({ label: barberName })
-    await page.getByLabel('Fecha').fill(date)
+    await pickAgendaDate(page, date)
     await expect(page.getByText(attendeeName)).toBeVisible()
 
     await page.getByText(attendeeName).click()
@@ -162,7 +163,7 @@ test.describe('Cancelación de un turno por el barbero (HU-066, T6)', () => {
 
     await goToAgenda(page)
     await page.getByLabel('Barbero').selectOption({ label: barberName })
-    await page.getByLabel('Fecha').fill(date)
+    await pickAgendaDate(page, date)
     await expect(page.getByText(newAttendeeName)).toBeVisible()
   })
 

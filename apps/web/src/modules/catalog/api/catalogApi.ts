@@ -14,10 +14,26 @@ import type {
   UpdateServiceOutcome,
 } from '../model/catalogOutcome'
 
-export async function fetchServices(cursor?: string): Promise<FetchServicesOutcome> {
+/** Parámetros de GET /private/services (CA-022-01, DEC-103): page/pageSize
+ * ausentes dejan que el servidor aplique sus propios valores por defecto
+ * (1 / DefaultPageSize); search ausente o vacío no filtra. */
+export interface FetchServicesParams {
+  page?: number
+  pageSize?: number
+  search?: string
+}
+
+export async function fetchServices(
+  params: FetchServicesParams = {},
+): Promise<FetchServicesOutcome> {
   try {
+    const query: { page?: number; pageSize?: number; search?: string } = {}
+    if (params.page !== undefined) query.page = params.page
+    if (params.pageSize !== undefined) query.pageSize = params.pageSize
+    if (params.search) query.search = params.search
+
     const { data, response } = await httpClient.GET('/private/services', {
-      params: { query: cursor ? { cursor } : {} },
+      params: { query },
     })
 
     if (response.ok && data) {
@@ -25,8 +41,9 @@ export async function fetchServices(cursor?: string): Promise<FetchServicesOutco
     }
 
     // 401 lo intercepta la coordinación única de installSessionHandling
-    // (redirige a acceso); cualquier otro estado no-2xx se trata aquí como
-    // un error genérico recuperable.
+    // (redirige a acceso); cualquier otro estado no-2xx (incluido un 400 de
+    // `page`/`pageSize`/`search` inválidos, que la propia página nunca
+    // debería producir) se trata aquí como un error genérico recuperable.
     return { kind: 'unexpected-error' }
   } catch {
     // `fetch` en sí lanzó (red caída, DNS, CORS bloqueado): no hubo
@@ -160,9 +177,18 @@ function toPage(data: {
     createdAt: string
     updatedAt: string
   }[]
-  nextCursor: string | null
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
 }): ServicePage {
-  return { items: data.items.map(toService), nextCursor: data.nextCursor }
+  return {
+    items: data.items.map(toService),
+    page: data.page,
+    pageSize: data.pageSize,
+    total: data.total,
+    totalPages: data.totalPages,
+  }
 }
 
 // --- HU-024: ciclo de vida --------------------------------------------------

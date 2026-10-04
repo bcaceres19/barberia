@@ -20,9 +20,14 @@ export interface Service {
   updatedAt: string
 }
 
-/** Página paginada por cursor (CA-022-01): mismo `items`/`nextCursor` que
- * ServiceListResponse. */
+/** Página paginada por número de página (CA-022-01, DEC-103): mismos
+ * `items`/`page`/`pageSize`/`total`/`totalPages` que ServiceListResponse.
+ * page/pageSize reflejan lo que el servidor efectivamente usó (ya
+ * acotado); totalPages tiene un piso de 1. */
 export interface ServicePage {
   items: Service[]
-  nextCursor: string | null
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
 }

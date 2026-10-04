@@ -6,6 +6,7 @@
 // de pasarlas a `auth.privateShellRoute`; este módulo no monta su propio
 // cascarón ni importa internos de otro módulo. Formulario, validación y
 // cliente API internos permanecen privados.
+import { defineAsyncComponent } from 'vue'
 import type { NavItem } from '@/shared/navigation/navItem'
 
 export { staffPrivateShellChildRoutes } from './routes'
@@ -13,3 +14,5 @@ export { staffPrivateShellChildRoutes } from './routes'
 export const staffNavItems: NavItem[] = [
   { to: { name: 'staff-barberos' }, label: 'Barberos', primary: true },
 ]
+
+export const StaffPage = defineAsyncComponent(() => import('./pages/StaffPage.vue'))

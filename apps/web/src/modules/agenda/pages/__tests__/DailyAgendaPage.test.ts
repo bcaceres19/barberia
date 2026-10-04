@@ -11,6 +11,18 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { axe } from 'vitest-axe'
 import { shiftCivilDate } from '@/shared/time/civilDate'
+import { DEFAULT_MIN_HOLD_MS } from '@/shared/composables'
+
+// useMinHoldLoading (issue 2026-09-28, "se ve como se genera el objeto")
+// mantiene pageStatus/agendaStatus en su primera carga con un setTimeout
+// REAL de al menos DEFAULT_MIN_HOLD_MS antes de pasar a listo/error;
+// flushPromises() (solo microtareas) no alcanza a esperarlo. Con margen
+// sobre el valor exacto para no quedar al borde por jitter del entorno de
+// pruebas. No aplica a la actualización por cambio de fecha/barbero (usa
+// 'updating', sin retraso propio, sin tocar).
+function waitOutInitialLoadHold() {
+  return new Promise((resolve) => setTimeout(resolve, DEFAULT_MIN_HOLD_MS + 50))
+}
 
 const fetchBarberSummariesMock = vi.hoisted(() => vi.fn())
 const fetchBarbershopTimezoneMock = vi.hoisted(() => vi.fn())
@@ -117,7 +129,9 @@ async function mountPage() {
   const router = buildRouter()
   await router.push({ name: 'panel' })
   await router.isReady()
-  const wrapper = mount(DailyAgendaPage, { global: { plugins: [router] } })
+  const wrapper = mount(DailyAgendaPage, {
+    global: { plugins: [router], stubs: { teleport: true } },
+  })
   return { wrapper, router }
 }
 
@@ -128,6 +142,8 @@ async function mountReady(barbers = twoBarbers) {
     timezone: 'America/Bogota',
   })
   const { wrapper, router } = await mountPage()
+  await flushPromises()
+  await waitOutInitialLoadHold()
   await flushPromises()
   return { wrapper, router }
 }
@@ -156,6 +172,8 @@ describe('DailyAgendaPage', () => {
 
     resolveBarbers({ kind: 'success', items: twoBarbers })
     await flushPromises()
+    await waitOutInitialLoadHold()
+    await flushPromises()
     expect(wrapper.find('#daily-agenda-barber-select').exists()).toBe(true)
   })
 
@@ -163,6 +181,8 @@ describe('DailyAgendaPage', () => {
     fetchBarberSummariesMock.mockResolvedValueOnce({ kind: 'success', items: [] })
     fetchBarbershopTimezoneMock.mockResolvedValueOnce({ kind: 'unavailable' })
     const { wrapper } = await mountPage()
+    await flushPromises()
+    await waitOutInitialLoadHold()
     await flushPromises()
 
     expect(wrapper.text()).toContain('Aún no tienes barberos registrados')
@@ -175,6 +195,8 @@ describe('DailyAgendaPage', () => {
     fetchBarbershopTimezoneMock.mockResolvedValueOnce({ kind: 'unavailable' })
     const { wrapper } = await mountPage()
     await flushPromises()
+    await waitOutInitialLoadHold()
+    await flushPromises()
 
     expect(wrapper.text()).toContain('No pudimos cargar esta sección')
 
@@ -185,6 +207,8 @@ describe('DailyAgendaPage', () => {
     })
     fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: [] })
     await wrapper.get('button[type="button"]').trigger('click')
+    await flushPromises()
+    await waitOutInitialLoadHold()
     await flushPromises()
 
     expect(wrapper.find('#daily-agenda-barber-select').exists()).toBe(true)
@@ -222,6 +246,12 @@ describe('DailyAgendaPage', () => {
     fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: oneEntry })
     await selectBarber(wrapper, 'Ana Gómez')
     await flushPromises()
+    // La de b-1 nunca resolvió (sigue pendiente): hasLoadedEntriesOnce
+    // sigue en false, así que esta también cuenta como "primera carga" y
+    // vuelve a mantenerse el mínimo (correcto: sin agenda previa que
+    // conservar, no hay nada que "actualizar").
+    await waitOutInitialLoadHold()
+    await flushPromises()
 
     // La respuesta lenta del primer barbero (b-1) llega tarde: no debe
     // pisar la agenda ya cargada de b-2.
@@ -242,6 +272,10 @@ describe('DailyAgendaPage', () => {
     fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: oneEntry })
     const retryButtons = wrapper.findAll('button').filter((b) => b.text() === 'Reintentar')
     await retryButtons[0]!.trigger('click')
+    await flushPromises()
+    // El intento anterior falló, no tuvo éxito: hasLoadedEntriesOnce sigue
+    // en false, así que el reintento también es "primera carga".
+    await waitOutInitialLoadHold()
     await flushPromises()
 
     expect(wrapper.text()).toContain('Juan Pérez')
@@ -371,8 +405,20 @@ describe('DailyAgendaPage', () => {
       const { wrapper, router } = await mountReady()
 
       fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: [] })
-      const dateInput = wrapper.get<HTMLInputElement>('input[type="date"]')
-      await dateInput.setValue('2026-01-15')
+      await wrapper.get('#daily-agenda-date-picker').trigger('click')
+      // El calendario se abre en el mes de la fecha vigente: se navega hasta
+      // enero de 2026 y se elige el 15 (mismo resultado que escribirla).
+      const currentTitle = wrapper.get('.agenda-date-picker__title').text()
+      expect(currentTitle).not.toContain('Enero de 2026')
+      for (let i = 0; i < 40 && !wrapper.find('[data-date="2026-01-15"]').exists(); i++) {
+        const backwards = router.currentRoute.value.query.date
+          ? String(router.currentRoute.value.query.date) > '2026-01-15'
+          : true
+        await wrapper
+          .get(`button[aria-label="${backwards ? 'Mes anterior' : 'Mes siguiente'}"]`)
+          .trigger('click')
+      }
+      await wrapper.get('[data-date="2026-01-15"]').trigger('click')
       await flushPromises()
 
       expect(router.currentRoute.value.query.date).toBe('2026-01-15')
@@ -390,7 +436,11 @@ describe('DailyAgendaPage', () => {
       const router = buildRouter()
       await router.push({ name: 'panel', query: { date: '2026-01-15', barberId: 'b-2' } })
       await router.isReady()
-      const wrapper = mount(DailyAgendaPage, { global: { plugins: [router] } })
+      const wrapper = mount(DailyAgendaPage, {
+        global: { plugins: [router], stubs: { teleport: true } },
+      })
+      await flushPromises()
+      await waitOutInitialLoadHold()
       await flushPromises()
 
       expect(fetchDailyAgendaMock).toHaveBeenCalledTimes(1)
@@ -477,6 +527,8 @@ describe('DailyAgendaPage', () => {
       fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: [] })
       const { wrapper } = await mountPage()
       await flushPromises()
+      await waitOutInitialLoadHold()
+      await flushPromises()
 
       // Sin zona conocida, el modelo no puede calcular "hoy" en la
       // barbería (nunca la sustituye por la del dispositivo): la agenda
@@ -485,7 +537,9 @@ describe('DailyAgendaPage', () => {
       expect(fetchDailyAgendaMock).toHaveBeenCalledWith('b-1', undefined)
       expect(anteriorButton(wrapper).attributes('disabled')).toBeDefined()
       expect(siguienteButton(wrapper).attributes('disabled')).toBeDefined()
-      expect(wrapper.get<HTMLInputElement>('input[type="date"]').element.disabled).toBe(true)
+      expect(wrapper.get<HTMLButtonElement>('#daily-agenda-date-picker').element.disabled).toBe(
+        true,
+      )
     })
   })
 
@@ -504,7 +558,11 @@ describe('DailyAgendaPage', () => {
       // (no debe aparecer).
       await router.push({ name: 'panel', query: { date: '2026-08-28', barberId: 'b-1' } })
       await router.isReady()
-      const wrapper = mount(DailyAgendaPage, { global: { plugins: [router] } })
+      const wrapper = mount(DailyAgendaPage, {
+        global: { plugins: [router], stubs: { teleport: true } },
+      })
+      await flushPromises()
+      await waitOutInitialLoadHold()
       await flushPromises()
       return { wrapper, router }
     }
@@ -546,6 +604,40 @@ describe('DailyAgendaPage', () => {
       const style = slip.attributes('style') ?? ''
       expect(style).toContain('left: 60.416666666666664%')
       expect(style).toContain('width: 4%')
+    })
+
+    it('con el dedo, el primer toque ensancha la ficha con horario y servicio y el segundo abre el detalle', async () => {
+      const { wrapper, router } = await mountWithFixedDate()
+      const slip = wrapper.get('.daily-agenda-page__timeline-slip')
+
+      await slip.trigger('pointerdown', { pointerType: 'touch' })
+      await slip.trigger('click')
+      await flushPromises()
+      expect(slip.classes()).toContain('daily-agenda-page__timeline-slip--expanded')
+      expect(slip.text()).toContain('Corte clásico')
+      expect(router.currentRoute.value.name).toBe('panel')
+
+      await slip.trigger('pointerdown', { pointerType: 'touch' })
+      await slip.trigger('click')
+      await flushPromises()
+      expect(router.currentRoute.value.name).toBe('agenda-detalle-turno')
+    })
+
+    it('un toque fuera de la ficha la contrae, y con ratón el clic abre el detalle directo', async () => {
+      const { wrapper, router } = await mountWithFixedDate()
+      const slip = wrapper.get('.daily-agenda-page__timeline-slip')
+
+      await slip.trigger('pointerdown', { pointerType: 'touch' })
+      await slip.trigger('click')
+      expect(slip.classes()).toContain('daily-agenda-page__timeline-slip--expanded')
+      document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+      await flushPromises()
+      expect(slip.classes()).not.toContain('daily-agenda-page__timeline-slip--expanded')
+
+      await slip.trigger('pointerdown', { pointerType: 'mouse' })
+      await slip.trigger('click')
+      await flushPromises()
+      expect(router.currentRoute.value.name).toBe('agenda-detalle-turno')
     })
 
     it('shows "Cambio de día" exactly at midnight when a shift ends the next civil day (evento 11)', async () => {

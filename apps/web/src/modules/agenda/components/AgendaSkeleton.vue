@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { DiamondLoader } from '@/shared/ui'
+
 /**
  * AgendaSkeleton - Espera con la geometría del contenido por llegar (issue
  * #189, atlas panel-agenda-eventos evento 05): se usa cuando barbero y fecha
@@ -10,8 +12,9 @@
  * esta pantalla — no se promueve a shared/ui.
  *
  * El texto de espera nunca desaparece: sigue anunciándose vía
- * role="status"/aria-live="polite" aunque la representación visual sea
- * geometría, no un spinner. `prefers-reduced-motion: reduce` deja los
+ * role="status"/aria-live="polite" (lo aporta DiamondLoader como texto
+ * accesible) aunque la representación visual sea el rombo y la geometría, no
+ * un spinner. `prefers-reduced-motion: reduce` deja los
  * bloques en opacidad fija, sin pulso.
  */
 interface Props {
@@ -29,17 +32,33 @@ withDefaults(defineProps<Props>(), {
 
 <template>
   <div class="agenda-skeleton" role="status" aria-live="polite">
-    <p class="agenda-skeleton__label">
-      <span class="agenda-skeleton__spinner" aria-hidden="true" />{{ label }}
-    </p>
+    <DiamondLoader :label="label" layout="inline" />
 
-    <div class="agenda-skeleton__timeline" aria-hidden="true">
-      <span
-        v-for="n in entryCount"
-        :key="n"
-        class="agenda-skeleton__slip"
-        :style="{ left: `${(n - 1) * (90 / entryCount) + 2}%`, width: `${60 / entryCount}%` }"
-      />
+    <!-- Envuelve cabecera+carril en un único hijo flex (issue reportado
+         2026-09-30: "al accedera la pantalla de agenda, hay un espasmo"):
+         `.agenda-skeleton` reparte `gap` entre TODOS sus hijos directos, así
+         que un `<div>` de cabecera aparte sumaría un gap de más que
+         `.daily-agenda-page__timeline-wrapper` no tiene (su zoom, eje y
+         marcas se apilan sin separación propia). Agrupados aquí, el único
+         gap que cuenta es el que ya existía antes de este carril. -->
+    <div class="agenda-skeleton__timeline-wrapper" aria-hidden="true">
+      <!-- Reserva la altura del control de zoom + eje/marcas que el carril
+           real dibuja antes del track: sin este espaciador el esqueleto
+           medía ~72px menos que el contenido real en escritorio y la
+           llegada de la agenda empujaba la lista de golpe hacia abajo.
+           Alturas calcadas de DailyAgendaPage.vue: .timeline-zoom (24px +
+           margin-bottom 8px) + .timeline-axis (18px) + .timeline-marks
+           (22px). -->
+      <div class="agenda-skeleton__timeline-header" />
+
+      <div class="agenda-skeleton__timeline">
+        <span
+          v-for="n in entryCount"
+          :key="n"
+          class="agenda-skeleton__slip"
+          :style="{ left: `${(n - 1) * (90 / entryCount) + 2}%`, width: `${60 / entryCount}%` }"
+        />
+      </div>
     </div>
 
     <ul class="agenda-skeleton__list" aria-hidden="true">
@@ -62,39 +81,28 @@ withDefaults(defineProps<Props>(), {
   gap: var(--space-4);
 }
 
-.agenda-skeleton__label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0;
-  font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-accent-brass);
+.agenda-skeleton__timeline-wrapper {
+  display: none;
 }
 
-.agenda-skeleton__spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgb(184 149 90 / 22%);
-  border-top-color: var(--color-accent-brass);
-  border-right-color: var(--color-accent-brass);
-  border-radius: 50%;
-  transform: rotate(-38deg);
+.agenda-skeleton__timeline-header {
+  display: none;
 }
 
 .agenda-skeleton__timeline {
   position: relative;
-  display: none;
   height: 96px;
   border-top: var(--border-width-normal) solid rgb(244 240 231 / 14%);
 }
 
 @media (min-width: 1024px) {
-  .agenda-skeleton__timeline {
+  .agenda-skeleton__timeline-wrapper {
     display: block;
+  }
+
+  .agenda-skeleton__timeline-header {
+    display: block;
+    height: 72px;
   }
 }
 
@@ -184,16 +192,6 @@ withDefaults(defineProps<Props>(), {
 @media (max-width: 1023px) {
   .agenda-skeleton {
     gap: 16px;
-  }
-
-  .agenda-skeleton__label {
-    gap: 10px;
-    font-size: 11px;
-  }
-
-  .agenda-skeleton__spinner {
-    width: 16px;
-    height: 16px;
   }
 
   .agenda-skeleton__item {

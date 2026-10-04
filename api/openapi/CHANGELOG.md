@@ -4,6 +4,53 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.26.0 · 2026-10-02
+
+- DEC-107 / #288: `GET /private/barbers` añade modo optativo `page`/`pageSize` y metadatos `page`, `pageSize`, `total`, `totalPages`; conserva el modo cursor existente. Mezclar modos o parámetros numerados inválidos produce 400.
+
+## [0.25.0] - 2026-09-30
+
+### Agregado
+
+- `PUT`, `GET` y `DELETE /private/barbers/{barberId}/photo`
+  (`operationId: putBarberPhoto`, `getBarberPhoto`, `deleteBarberPhoto`,
+  tag `Staff`, `DEC-104`): fotografía opcional de cada barbero. El `PUT` recibe
+  la imagen binaria (`image/jpeg` o `image/png`, máximo 512 KiB, entre 64 y
+  1024 px por lado; el formato se decide por los bytes, no por la cabecera) y
+  responde el barbero con su nuevo `photoUpdatedAt`; el `GET` sirve los bytes
+  con `ETag` y responde `304` a `If-None-Match`; el `DELETE` elimina la imagen
+  y es idempotente (`204` también sin fotografía). Sin `Idempotency-Key`: el
+  `PUT` reemplaza y es idempotente por naturaleza. Primer contenido binario
+  del contrato: caso aprobado por el propietario el 2026-09-30 (excepción
+  documentada en `DEC-104` a "archivos o contenido binario solo cuando exista
+  un caso aprobado", `docs/06-api/estandar-openapi.md` §10).
+
+### Modificado (compatible)
+
+- `BarberResponse` gana `photoUpdatedAt` (`date-time` o `null`, obligatorio):
+  `null` mientras el barbero no tiene fotografía, y su versión cuando existe.
+  Lo devuelven `GET`/`POST`/`PATCH` de `/private/barbers` y el listado. Un
+  cliente que lo ignora sigue funcionando: el resto de campos no cambia.
+
+## [0.24.0] - 2026-09-28
+
+### Modificado (incompatible)
+
+- `GET /private/services` (`operationId: listServices`, `HU-022`,
+  `CA-022-01`, `DEC-103`): pasa de paginación por cursor a paginación por
+  número de página. Los parámetros `cursor`/`limit` se reemplazan por
+  `page`/`pageSize`; se agrega `search` (filtro opcional por nombre,
+  coincidencia parcial insensible a mayúsculas). La respuesta reemplaza
+  `nextCursor` por `page`, `pageSize`, `total` y `totalPages`. Excepción
+  explícita del propietario a `docs/06-api/estandar-openapi.md` §6.10
+  ("listas potencialmente crecientes usan paginación por cursor"), acotada
+  a este único endpoint: el panel privado necesita un paginador numerado
+  con total exacto para su tabla de servicios, algo que un cursor opaco no
+  puede representar sin una consulta `COUNT` aparte de todos modos. Ningún
+  otro endpoint de listado del contrato cambia (`BarberListResponse`,
+  `AssignmentListResponse`, etc. conservan cursor sin cambios). Consumidor
+  único: `apps/web` (módulo `catalog`), migrado en el mismo cambio.
+
 ## [0.23.0] - 2026-09-19
 
 ### Modificado (compatible)

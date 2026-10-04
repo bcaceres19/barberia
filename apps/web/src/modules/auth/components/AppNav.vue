@@ -65,9 +65,19 @@ async function onLogoutFromMore() {
 
 <template>
   <nav class="app-nav" aria-label="Navegación principal">
+    <!-- `exact-active-class` (no `active-class`): "Agenda" es la hija de
+         `/panel` con `path: ''` (agenda/routes.ts, HU-062), así que su ruta
+         resuelve al MISMO path que el cascarón padre. El matching NO exacto
+         de vue-router (`useLink`, activeRecordIndex) trata eso como "sigo
+         dentro de /panel" y marca "Agenda" activa en cualquier hija
+         (Servicios, Barberos...), dejando el filete/color de latón pegado
+         ahí sin importar el destino elegido. Exacto evita ese falso
+         positivo; ningún destino del dock necesita quedar "activo" mientras
+         se navega a un descendiente propio (todos son hijas planas de
+         `/panel`, no anidan más pantallas del dock debajo). -->
     <ul class="app-nav__list app-nav__list--desktop">
       <li v-for="item in items" :key="item.label" class="app-nav__item">
-        <RouterLink :to="item.to" class="app-nav__link" active-class="app-nav__link--active">
+        <RouterLink :to="item.to" class="app-nav__link" exact-active-class="app-nav__link--active">
           <span class="app-nav__icon" aria-hidden="true" v-html="iconFor(item.to.name)" />
           <span class="app-nav__label">{{ item.label }}</span>
         </RouterLink>
@@ -75,7 +85,7 @@ async function onLogoutFromMore() {
     </ul>
     <ul class="app-nav__list app-nav__list--mobile">
       <li v-for="item in primaryItems" :key="item.label" class="app-nav__item">
-        <RouterLink :to="item.to" class="app-nav__link" active-class="app-nav__link--active">
+        <RouterLink :to="item.to" class="app-nav__link" exact-active-class="app-nav__link--active">
           <span class="app-nav__icon" aria-hidden="true" v-html="iconFor(item.to.name)" />
           <span class="app-nav__label">{{ item.label }}</span>
         </RouterLink>
