@@ -1,0 +1,11 @@
+# Un término del vocabulario de la barbería (issue #292, DEC-110).
+type: string
+minLength: 2
+maxLength: 30
+description: >
+  Palabra o expresión corta de 2 a 30 caracteres: empieza con una letra y usa
+  solo letras, espacios, guion o apóstrofo, sin dígitos ni signos. El servidor
+  la recorta, colapsa los espacios repetidos y la pasa a minúsculas antes de
+  guardarla.
+examples:
+  - estilista

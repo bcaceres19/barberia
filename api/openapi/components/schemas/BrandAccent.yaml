@@ -1,0 +1,11 @@
+# Clave del color de acento (issue #292, DEC-110). Nunca un valor de color:
+# el cliente la traduce a una paleta cerrada con contraste AA comprobado en
+# los modos Tinta y Marfil. Añadir una clave exige una migración
+# (barbershop_brand_accent_ck) y la misma clave en la paleta del cliente.
+type: string
+enum: [brass, emerald, sapphire, ruby, amethyst, copper]
+description: >
+  Color de acento del panel: `brass` (el latón NAVA, valor inicial),
+  `emerald`, `sapphire`, `ruby`, `amethyst` o `copper`.
+examples:
+  - brass

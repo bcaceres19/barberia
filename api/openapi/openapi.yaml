@@ -82,7 +82,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.26.0
+  version: 0.27.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -161,6 +161,8 @@ paths:
     $ref: './paths/settings.yaml#/~1private~1settings~1barbershop'
   /private/settings/booking-policy:
     $ref: './paths/settings.yaml#/~1private~1settings~1booking-policy'
+  /private/settings/brand:
+    $ref: './paths/settings.yaml#/~1private~1settings~1brand'
   /private/barbers:
     $ref: './paths/staff.yaml#/~1private~1barbers'
   /private/barbers/{barberId}:
@@ -249,6 +251,16 @@ components:
       $ref: './components/schemas/BarbershopSettingsResponse.yaml'
     UpdateBarbershopSettingsRequest:
       $ref: './components/schemas/UpdateBarbershopSettingsRequest.yaml'
+    BrandResponse:
+      $ref: './components/schemas/BrandResponse.yaml'
+    UpdateBrandRequest:
+      $ref: './components/schemas/UpdateBrandRequest.yaml'
+    BrandAccent:
+      $ref: './components/schemas/BrandAccent.yaml'
+    BrandTerm:
+      $ref: './components/schemas/BrandTerm.yaml'
+    BrandTermGender:
+      $ref: './components/schemas/BrandTermGender.yaml'
     BarberResponse:
       $ref: './components/schemas/BarberResponse.yaml'
     BarberListResponse:
@@ -323,6 +335,12 @@ components:
       $ref: './components/responses/BarbershopSettingsSuccess.yaml'
     BarbershopSettingsUpdated:
       $ref: './components/responses/BarbershopSettingsUpdated.yaml'
+    BrandSuccess:
+      $ref: './components/responses/BrandSuccess.yaml'
+    BrandUpdated:
+      $ref: './components/responses/BrandUpdated.yaml'
+    BrandValidationProblem:
+      $ref: './components/responses/BrandValidationProblem.yaml'
     BarbershopSettingsValidationProblem:
       $ref: './components/responses/BarbershopSettingsValidationProblem.yaml'
     BarberListSuccess:

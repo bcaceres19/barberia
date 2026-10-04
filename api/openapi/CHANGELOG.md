@@ -4,6 +4,23 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.27.0 · 2026-10-03
+
+### Agregado
+
+- `GET` y `PATCH /private/settings/brand` (`operationId: getBrand`,
+  `updateBrand`, tag `Settings`, `DEC-110`, issue #292): marca y vocabulario
+  de la barbería. Seis campos siempre presentes: `accent` (lista cerrada
+  `brass`, `emerald`, `sapphire`, `ruby`, `amethyst`, `copper`, nunca un
+  color libre), `businessTerm`, `professionalTerm` y `professionalTermPlural`
+  (2 a 30 caracteres, solo letras, espacios, guion o apóstrofo; el servidor
+  los recorta, colapsa y pasa a minúsculas) y los géneros gramaticales
+  `businessTermGender` y `professionalTermGender` (`masculine` o
+  `feminine`). Un valor inválido responde `422` sin escribir. Recurso propio:
+  `BarbershopSettingsResponse` conserva sus cuatro campos (`CA-020-07`). Sin
+  `If-Match`: la última escritura gana. Una barbería que nunca lo cambió lee
+  los valores iniciales, idénticos a la interfaz anterior.
+
 ## 0.26.0 · 2026-10-02
 
 - DEC-107 / #288: `GET /private/barbers` añade modo optativo `page`/`pageSize` y metadatos `page`, `pageSize`, `total`, `totalPages`; conserva el modo cursor existente. Mezclar modos o parámetros numerados inválidos produce 400.

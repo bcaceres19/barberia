@@ -298,6 +298,11 @@ jobs:
           PGPASSWORD: postgres
         run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/hu020_configuracion_barberia.sql
 
+      - name: Suite de marca y vocabulario de la barbería (DEC-110)
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/brand_marca_vocabulario.sql
+
       - name: Suite de registro y listado de barberos HU-021
         env:
           PGPASSWORD: postgres

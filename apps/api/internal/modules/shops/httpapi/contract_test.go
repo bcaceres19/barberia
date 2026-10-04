@@ -11,6 +11,8 @@ import (
 	"testing"
 
 	"gopkg.in/yaml.v3"
+
+	"system-barbershop/internal/modules/shops"
 )
 
 type schemaDoc struct {
@@ -294,5 +296,115 @@ func TestContract_OpenAPIYAML_RegistersBookingPolicyPath(t *testing.T) {
 
 	if _, ok := doc.Paths["/private/settings/booking-policy"]; !ok {
 		t.Fatal("openapi.yaml no registra paths./private/settings/booking-policy")
+	}
+}
+
+// --- Marca y vocabulario (issue #292, DEC-110) ------------------------------
+
+type brandPathFile struct {
+	Brand struct {
+		Get   operation `yaml:"get"`
+		Patch operation `yaml:"patch"`
+	} `yaml:"/private/settings/brand"`
+}
+
+type enumSchemaDoc struct {
+	Enum []string `yaml:"enum"`
+}
+
+var brandFields = []string{
+	"accent", "businessTerm", "businessTermGender",
+	"professionalTerm", "professionalTermPlural", "professionalTermGender",
+}
+
+// TestContract_BrandSchemas_MatchDTOFields verifica que BrandResponse y
+// UpdateBrandRequest declaran exactamente los seis campos de los DTO y que
+// ninguno declara barbershopId (el tenant sale solo de la sesión).
+func TestContract_BrandSchemas_MatchDTOFields(t *testing.T) {
+	for _, file := range []string{"BrandResponse", "UpdateBrandRequest"} {
+		schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/"+file+".yaml")
+		requireProps(t, schema, brandFields)
+		if _, ok := schema.Properties["barbershopId"]; ok {
+			t.Fatalf("%s nunca debe declarar barbershopId", file)
+		}
+	}
+}
+
+// TestContract_BrandAccentEnum_MatchesShopsAllowedAccents ata el contrato a la
+// lista cerrada del dominio (y esta, a barbershop_brand_accent_ck): si una de
+// las tres cambia sin las otras, esta prueba falla.
+func TestContract_BrandAccentEnum_MatchesShopsAllowedAccents(t *testing.T) {
+	doc := loadYAML[enumSchemaDoc](t, "api/openapi/components/schemas/BrandAccent.yaml")
+	if len(doc.Enum) != len(shops.AllowedAccents) {
+		t.Fatalf("el enum documenta %d acentos y el dominio permite %d", len(doc.Enum), len(shops.AllowedAccents))
+	}
+	for _, key := range doc.Enum {
+		if !shops.IsAllowedAccent(key) {
+			t.Errorf("el contrato documenta %q pero shops.AllowedAccents no lo permite", key)
+		}
+	}
+}
+
+func TestContract_BrandGenderEnum_MatchesShopsGenders(t *testing.T) {
+	doc := loadYAML[enumSchemaDoc](t, "api/openapi/components/schemas/BrandTermGender.yaml")
+	if len(doc.Enum) != 2 {
+		t.Fatalf("se esperaban 2 géneros, el contrato documenta %v", doc.Enum)
+	}
+	for _, g := range doc.Enum {
+		if !shops.Gender(g).IsValid() {
+			t.Errorf("el contrato documenta %q pero el dominio no lo reconoce", g)
+		}
+	}
+}
+
+func TestContract_BrandTermLimits_MatchShopsTermLength(t *testing.T) {
+	type termDoc struct {
+		MinLength int `yaml:"minLength"`
+		MaxLength int `yaml:"maxLength"`
+	}
+	doc := loadYAML[termDoc](t, "api/openapi/components/schemas/BrandTerm.yaml")
+	if doc.MinLength != shops.TermMinLength || doc.MaxLength != shops.TermMaxLength {
+		t.Fatalf("el contrato declara %d-%d y el dominio %d-%d",
+			doc.MinLength, doc.MaxLength, shops.TermMinLength, shops.TermMaxLength)
+	}
+}
+
+func TestContract_BrandOperations_SecurityAndResponses(t *testing.T) {
+	doc := loadYAML[brandPathFile](t, "api/openapi/paths/settings.yaml")
+
+	cases := []struct {
+		op       operation
+		id       string
+		statuses []string
+	}{
+		{doc.Brand.Get, "getBrand", []string{"200", "401", "404", "500"}},
+		{doc.Brand.Patch, "updateBrand", []string{"200", "400", "401", "404", "422", "500"}},
+	}
+	for _, c := range cases {
+		if c.op.OperationID != c.id {
+			t.Fatalf("expected operationId %s, got %q", c.id, c.op.OperationID)
+		}
+		if len(c.op.Security) != 1 {
+			t.Fatalf("%s: expected exactly one security requirement, got %v", c.id, c.op.Security)
+		}
+		for _, s := range c.statuses {
+			if _, ok := c.op.Responses[s]; !ok {
+				t.Errorf("%s: el contrato no documenta la respuesta %s, pero el handler la produce", c.id, s)
+			}
+		}
+		if len(c.op.Responses) != len(c.statuses) {
+			t.Errorf("%s: el contrato documenta %d respuestas, se esperaban %d (%v)", c.id, len(c.op.Responses), len(c.statuses), c.statuses)
+		}
+	}
+}
+
+func TestContract_OpenAPIYAML_RegistersBrandPath(t *testing.T) {
+	type pathsDoc struct {
+		Paths map[string]any `yaml:"paths"`
+	}
+	doc := loadYAML[pathsDoc](t, "api/openapi/openapi.yaml")
+
+	if _, ok := doc.Paths["/private/settings/brand"]; !ok {
+		t.Fatal("openapi.yaml no registra paths./private/settings/brand")
 	}
 }
