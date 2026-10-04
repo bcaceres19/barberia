@@ -1,0 +1,31 @@
+# Representación canónica de la marca y el vocabulario de la barbería
+# (issue #292, DEC-110): la misma forma para GET y para la respuesta 200 de
+# PATCH. Recurso propio de /private/settings/brand: el contrato de
+# BarbershopSettingsResponse (HU-020, CA-020-07) conserva sus cuatro campos.
+type: object
+additionalProperties: false
+description: >
+  Marca y vocabulario de la barbería activa: color de acento de una lista
+  cerrada, la palabra con la que llama a su negocio y a su profesional (con
+  plural y género gramatical, para que la interfaz concuerde). Los términos
+  viajan recortados y en minúsculas; la interfaz capitaliza donde corresponde.
+properties:
+  accent:
+    $ref: './BrandAccent.yaml'
+  businessTerm:
+    $ref: './BrandTerm.yaml'
+  businessTermGender:
+    $ref: './BrandTermGender.yaml'
+  professionalTerm:
+    $ref: './BrandTerm.yaml'
+  professionalTermPlural:
+    $ref: './BrandTerm.yaml'
+  professionalTermGender:
+    $ref: './BrandTermGender.yaml'
+required:
+  - accent
+  - businessTerm
+  - businessTermGender
+  - professionalTerm
+  - professionalTermPlural
+  - professionalTermGender

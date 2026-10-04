@@ -24,6 +24,7 @@ import {
   useId,
   type ComponentPublicInstance,
 } from 'vue'
+import { useVocabulary } from '@/shared/composables'
 import BarberAvatar from '@/shared/ui/BarberAvatar.vue'
 import type { BarberSummary } from '../model/appointment'
 
@@ -46,13 +47,16 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   triggerId: 'daily-agenda-barber-select',
-  placeholder: 'Selecciona un barbero',
   compact: false,
 })
 
 const emit = defineEmits<{
   'update:modelValue': [barberId: string]
 }>()
+
+// Palabras de la barbería (DEC-110): sin `placeholder` de la pantalla, "Selecciona un barbero".
+const v = useVocabulary()
+const placeholderText = computed(() => props.placeholder ?? `Selecciona ${v.value.aProfessional}`)
 
 const listboxId = useId()
 const rootRef = ref<HTMLElement | null>(null)
@@ -184,7 +188,7 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
         class="barber-select__trigger-label"
         :class="{ 'barber-select__trigger-label--placeholder': !selectedBarber }"
       >
-        {{ selectedBarber?.fullName ?? placeholder }}
+        {{ selectedBarber?.fullName ?? placeholderText }}
       </span>
       <span class="barber-select__chevron" aria-hidden="true" />
     </button>
@@ -195,7 +199,7 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
         :id="listboxId"
         class="barber-select__list"
         role="listbox"
-        aria-label="Barbero"
+        :aria-label="v.Professional"
         @keydown="onListKeydown"
       >
         <li
@@ -236,8 +240,9 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
   font-size: var(--font-size-body);
   color: var(--color-on-strong);
   text-align: left;
-  background-color: rgb(244 240 231 / 5%);
-  border: var(--border-width-normal) solid rgb(244 240 231 / 16%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 5%, transparent);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 16%, transparent);
   border-bottom: var(--border-width-emphasis) solid var(--color-accent-brass);
   border-radius: 2px;
   cursor: pointer;
@@ -261,14 +266,14 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
 
 .barber-select--compact .barber-select__trigger:hover:not(:disabled),
 .barber-select--compact .barber-select__trigger[aria-expanded='true'] {
-  border-color: rgb(184 149 90 / 55%);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 55%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
 }
 
 .barber-select__trigger:disabled {
   cursor: not-allowed;
   opacity: 0.42;
-  border-bottom-color: rgb(244 240 231 / 28%);
+  border-bottom-color: color-mix(in srgb, var(--color-on-strong) 28%, transparent);
 }
 
 .barber-select__trigger:focus-visible {
@@ -282,8 +287,9 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
   width: 28px;
   height: 28px;
   flex-shrink: 0;
-  background-color: #16243a;
-  border: var(--border-width-normal) solid rgb(184 149 90 / 55%);
+  background-color: var(--color-field-strong-raised);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-brand-accent-surface) 55%, transparent);
   border-radius: 2px;
 }
 
@@ -324,7 +330,8 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
   margin: 0;
   list-style: none;
   background-color: var(--color-field-strong);
-  border: var(--border-width-normal) solid rgb(244 240 231 / 16%);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 16%, transparent);
   border-top: var(--border-width-emphasis) solid var(--color-accent-brass);
   border-radius: 2px;
   box-shadow: var(--shadow-dialog);
@@ -348,7 +355,8 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
 
 /* Filete tenue entre opciones, no un borde perimetral por fila. */
 .barber-select__option + .barber-select__option {
-  border-top: var(--border-width-normal) solid rgb(244 240 231 / 8%);
+  border-top: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 8%, transparent);
 }
 
 /* Al pasar el cursor la fila se levanta un tono de tinta sobre el fondo del

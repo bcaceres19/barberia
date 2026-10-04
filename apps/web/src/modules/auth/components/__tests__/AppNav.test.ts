@@ -10,6 +10,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { axe } from 'vitest-axe'
 import type { NavItem } from '@/shared/navigation/navItem'
+import { DEFAULT_BRAND, resetBrand, setBrand } from '@/shared/model'
 
 const postMock = vi.hoisted(() => vi.fn())
 vi.mock('@/shared/api/httpClient', () => ({
@@ -39,6 +40,7 @@ describe('AppNav', () => {
   beforeEach(() => {
     postMock.mockReset()
     resetForFreshLogin()
+    resetBrand()
   })
 
   // El "Más" de AppNav usa BaseDialog, que hace Teleport a document.body:
@@ -202,6 +204,56 @@ describe('AppNav', () => {
       // El diálogo vive en document.body (Teleport), fuera de wrapper.element.
       const results = await axe(document.body, { rules: { region: { enabled: false } } })
       expect(results).toHaveNoViolations()
+    })
+  })
+
+  describe('vocabulario de la barbería (DEC-110)', () => {
+    const items: NavItem[] = [
+      {
+        to: { name: 'panel' },
+        label: 'Barberos',
+        labelFor: (v) => v.Professionals,
+        primary: true,
+      },
+      {
+        to: { name: 'schedules-horarios' },
+        label: 'Servicios por barbero',
+        labelFor: (v) => `Servicios por ${v.professional}`,
+      },
+    ]
+
+    it('shows the default label while the barbershop keeps the initial vocabulary', async () => {
+      const { wrapper } = await mountNav('/panel', items)
+
+      const labels = wrapper.findAll('.app-nav__list--desktop .app-nav__label').map((l) => l.text())
+      expect(labels).toContain('Barberos')
+      expect(labels).toContain('Servicios por barbero')
+    })
+
+    it('renames the entries with the words the barbershop chose', async () => {
+      setBrand({
+        ...DEFAULT_BRAND,
+        professionalTerm: 'estilista',
+        professionalTermPlural: 'estilistas',
+        professionalTermGender: 'feminine',
+      })
+      const { wrapper } = await mountNav('/panel', items)
+
+      const labels = wrapper.findAll('.app-nav__list--desktop .app-nav__label').map((l) => l.text())
+      expect(labels).toContain('Estilistas')
+      expect(labels).toContain('Servicios por estilista')
+      expect(labels).not.toContain('Barberos')
+    })
+
+    it('keeps a plain entry (no labelFor) exactly as declared', async () => {
+      setBrand({
+        ...DEFAULT_BRAND,
+        professionalTerm: 'estilista',
+        professionalTermPlural: 'estilistas',
+      })
+      const { wrapper } = await mountNav('/panel')
+
+      expect(wrapper.get('a').text()).toBe('Agenda')
     })
   })
 })

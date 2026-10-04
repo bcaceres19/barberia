@@ -163,7 +163,11 @@ onBeforeUnmount(() => {
 .diamond-loader__halo {
   position: absolute;
   inset: 12%;
-  background: radial-gradient(circle, rgb(184 149 90 / 34%) 0%, rgb(184 149 90 / 0%) 70%);
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--color-brand-accent-surface) 34%, transparent) 0%,
+    color-mix(in srgb, var(--color-brand-accent-surface) 0%, transparent) 70%
+  );
   border-radius: 50%;
   animation: diamond-halo 3.2s ease-in-out infinite;
 }
@@ -193,8 +197,8 @@ onBeforeUnmount(() => {
 }
 
 .diamond-loader__inner {
-  fill: rgb(184 149 90 / 26%);
-  stroke: rgb(184 149 90 / 70%);
+  fill: color-mix(in srgb, var(--color-brand-accent-surface) 26%, transparent);
+  stroke: color-mix(in srgb, var(--color-brand-accent-surface) 70%, transparent);
   stroke-width: 1;
   opacity: 0;
   transform-box: fill-box;
@@ -297,13 +301,17 @@ onBeforeUnmount(() => {
   display: block;
   width: 220px;
   height: 2px;
-  background-color: rgb(244 240 231 / 14%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 14%, transparent);
 }
 
 .diamond-loader__rule-trail {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgb(184 149 90 / 0%), var(--gem-brass));
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-brand-accent-surface) 0%, transparent),
+    var(--gem-brass)
+  );
   transform-origin: left center;
   animation: diamond-trail 2.6s cubic-bezier(0.6, 0, 0.3, 1) infinite;
 }
@@ -316,7 +324,7 @@ onBeforeUnmount(() => {
   height: 9px;
   margin: -4.5px 0 0 -4.5px;
   background-color: var(--gem-brass);
-  box-shadow: 0 0 10px rgb(184 149 90 / 70%);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--color-brand-accent-surface) 70%, transparent);
   transform: rotate(45deg);
   animation: diamond-travel 2.6s cubic-bezier(0.6, 0, 0.3, 1) infinite;
 }

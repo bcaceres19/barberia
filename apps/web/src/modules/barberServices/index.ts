@@ -23,5 +23,9 @@ import type { NavItem } from '@/shared/navigation/navItem'
 export { barberServicesPrivateShellChildRoutes } from './routes'
 
 export const barberServicesNavItems: NavItem[] = [
-  { to: { name: 'barber-services' }, label: 'Servicios por barbero' },
+  {
+    to: { name: 'barber-services' },
+    label: 'Servicios por barbero',
+    labelFor: (v) => `Servicios por ${v.professional}`,
+  },
 ]

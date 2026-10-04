@@ -115,7 +115,7 @@ La guía [estandar-diseno-visual.md](estandar-diseno-visual.md) fija la firma cr
 
 ### 4.1 Color
 
-La interfaz usa como anclajes tinta `#101B2B`, marfil `#F4F0E7`, blanco `#FFFFFF`, grafito `#2A2D32`/`#5E625F`, piedra `#E8E2D8`/`#C9C0B2`, salvia `#748477` y latón `#B8955A`/`#765C2F`. Se permiten tintes y derivados accesibles; un color ajeno requiere una necesidad semántica o de legibilidad documentada y no puede sustituir la identidad. Los colores de éxito, advertencia/conflicto, peligro, información e inactivo siguen la tabla del estándar y se distinguen también por texto, forma o iconografía.
+La interfaz usa como anclajes tinta `#101B2B`, marfil `#F4F0E7`, blanco `#FFFFFF`, grafito `#2A2D32`/`#5E625F`, piedra `#E8E2D8`/`#C9C0B2`, salvia `#748477` y latón `#B8955A`/`#765C2F`. Se permiten tintes y derivados accesibles; el panel privado admite además el modo Marfil y un acento de paleta cerrada (`DEC-110`, `estandar-diseno-visual.md` §6.9); un color ajeno requiere una necesidad semántica o de legibilidad documentada y no puede sustituir la identidad. Los colores de éxito, advertencia/conflicto, peligro, información e inactivo siguen la tabla del estándar y se distinguen también por texto, forma o iconografía.
 
 ### 4.2 Tipografía
 
@@ -338,7 +338,7 @@ Los estados pendientes no se implementan hasta tener historia, contrato e issue.
 
 | Pantalla | Prioridad | Composición | Acción principal |
 | --- | --- | --- | --- |
-| Configuración de barbería | `P0 existente` | Nombre, zona horaria y campos autorizados agrupados; una sección guarda por separado. | Guardar cambios |
+| Configuración | `P0 existente` | Centro de ajustes sobre tinta con índice de seis secciones numeradas (`DEC-110`): Pantalla (modo Tinta/Marfil/Automático, tamaño de texto, animaciones; solo este dispositivo, al instante), Marca (nombre y color de acento), Vocabulario (palabra del negocio y del profesional, con género y plural, y vista previa), Hora (zona con buscador y reloj en vivo), Contacto y enlace a Reglas de reserva pública (`HU-093`, su propia pantalla). Los datos de la barbería se editan en un borrador; una barra flotante «Cambios sin guardar» aparece solo con cambios y envía solo los recursos que cambiaron. | Guardar cambios |
 | Lista de barberos | `P0 existente` | Tabla hundida sobre tinta (mismo lenguaje que Servicios): retrato cuadrado (o monograma), nombre, fecha de alta y rombo «Con foto»/«Sin foto». Clic o toque en la fila abre la ficha con el retrato grande; «Editar» conserva su propio clic. «Bloquear» abre una ventana modal amplia del profesional con sus bloqueos puntuales y series existentes (`DEC-105`); no hay un destino de navegación «Bloqueos» aparte. «Cargar más» con conteo y esqueletos; carga con el rombo NAVA, entrada escalonada y sin movimiento con `prefers-reduced-motion`. El barbero recién agregado se ilumina un instante. | Añadir barbero |
 | Alta de barbero | `P0 existente` | Formulario corto: espacio para la foto (elegir o soltar un archivo, recorte cuadrado desde el centro, vista previa) y nombre. La foto es opcional (`DEC-104`); si el alta se guarda pero la foto falla, el barbero queda creado y un aviso ofrece reintentar desde «Editar». | Guardar barbero |
 | Renombrar/editar barbero | `P0 existente` | Mismo patrón del alta: foto (cambiar, quitar, deshacer) y nombre. «Guardar» aplica en orden lo que cambió (nombre y luego foto); sin cambios no envía nada; un fallo a medias conserva lo ya guardado y lo escrito. | Guardar cambios |
@@ -522,7 +522,7 @@ Cada página y región que consulta datos define:
 ### 9.4 Movimiento
 
 - El movimiento solo se usa cuando ayuda a comprender continuidad, selección o entrada de una capa.
-- `prefers-reduced-motion` reduce o elimina el movimiento no esencial.
+- `prefers-reduced-motion` reduce o elimina el movimiento no esencial. Además, «Reducir animaciones» (Configuración, `DEC-110`) lo pide por dispositivo aunque el sistema no lo pida.
 - No se retrasa la tarea con parallax, rebotes, conteos animados o introducciones obligatorias.
 
 ## 10. Contenido y vocabulario
@@ -530,6 +530,8 @@ Cada página y región que consulta datos define:
 ### 10.1 Término canónico
 
 La interfaz siempre usa **turno**. API, TypeScript generado y backend usan `appointment`. No se introducen “cita”, “booking” o “reserva” para nombrar el objeto ya creado. “Reserva” puede describir el proceso público: “Reserva tu turno”.
+
+Las palabras «barbería» y «barbero» son los valores iniciales del vocabulario de cada barbería (`DEC-110`): el panel privado las sustituye por las que la barbería configure, concordadas en género y número. `turno` y los estados autorizados no se configuran.
 
 ### 10.2 Voz
 

@@ -82,3 +82,20 @@ func errBookingPolicyIncoherentCancellationPolicy() error {
 func errBookingPolicyAdvanceExceedsWindow() error {
 	return apperr.Validation("la anticipación mínima no puede alcanzar ni superar la ventana máxima de reserva")
 }
+
+// Errores de campo de la marca y el vocabulario (issue #292, DEC-110). Cada
+// mensaje nombra un único campo y nunca devuelve el valor crudo enviado
+// (CA-003-02), igual que los de HU-020 y HU-093.
+func errBrandAccentInvalid() error {
+	return apperr.Validation("accent no es uno de los colores permitidos")
+}
+
+func errBrandTermInvalid(field string) error {
+	return apperr.Validation(fmt.Sprintf(
+		"%s debe tener entre %d y %d caracteres y usar solo letras, espacios, guion o apóstrofo",
+		field, TermMinLength, TermMaxLength))
+}
+
+func errBrandGenderInvalid(field string) error {
+	return apperr.Validation(fmt.Sprintf("%s debe ser masculine o feminine", field))
+}

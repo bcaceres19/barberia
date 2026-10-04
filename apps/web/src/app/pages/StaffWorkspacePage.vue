@@ -5,8 +5,11 @@ import { ref } from 'vue'
 import { StaffPage } from '@/modules/staff'
 import { BarberBlocksPanel } from '@/modules/schedules'
 import { barberPhotoUrl } from '@/shared/api'
+import { useVocabulary } from '@/shared/composables'
 import { BaseButton, BaseDialog } from '@/shared/ui'
 
+// Palabras de la barbería (DEC-110).
+const v = useVocabulary()
 const isBlocksOpen = ref(false)
 const selectedBarber = ref<{ id: string; name: string; photoUrl: string | null }>()
 
@@ -43,7 +46,7 @@ function openBlocks(id: string, name: string, photoUrl: string | null) {
   </StaffPage>
   <BaseDialog
     v-model="isBlocksOpen"
-    :title="`Bloqueos de ${selectedBarber?.name ?? 'barbero'}`"
+    :title="`Bloqueos de ${selectedBarber?.name ?? v.professional}`"
     size="xl"
     content-class="blocks-workspace-dialog"
     :close-on-backdrop="false"

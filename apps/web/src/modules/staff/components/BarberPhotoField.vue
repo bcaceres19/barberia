@@ -260,11 +260,11 @@ onBeforeUnmount(() => {
 
 .barber-photo-field__frame--empty {
   border-style: dashed;
-  border-color: rgb(184 149 90 / 45%);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 45%, transparent);
 }
 
 .barber-photo-field__frame--dragging {
-  background-color: rgb(184 149 90 / 12%);
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
   border-style: solid;
   border-color: var(--color-brand-accent-surface);
 }
@@ -373,25 +373,25 @@ onBeforeUnmount(() => {
 .barber-photo-field__actions :deep(.base-button--secondary) {
   background-color: transparent;
   color: var(--color-brand-accent-surface);
-  border-color: rgb(184 149 90 / 50%);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
 }
 
 .barber-photo-field__actions
   :deep(.base-button--secondary:hover:not(:disabled):not(.base-button--loading)) {
-  background-color: rgb(184 149 90 / 12%);
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
 }
 
 .barber-photo-field__actions :deep(.base-button--danger) {
   background-color: transparent;
   color: var(--color-danger-on-strong);
-  border-color: rgb(227 146 141 / 50%);
+  border-color: color-mix(in srgb, var(--color-danger-on-strong) 50%, transparent);
   border-bottom-color: var(--color-danger-on-strong);
 }
 
 .barber-photo-field__actions
   :deep(.base-button--danger:hover:not(:disabled):not(.base-button--loading)) {
-  background-color: rgb(227 146 141 / 12%);
+  background-color: color-mix(in srgb, var(--color-danger-on-strong) 12%, transparent);
   filter: none;
 }
 
@@ -403,7 +403,7 @@ onBeforeUnmount(() => {
 
 .barber-photo-field__actions
   :deep(.base-button--ghost:hover:not(:disabled):not(.base-button--loading)) {
-  background-color: rgb(244 240 231 / 8%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 8%, transparent);
   color: var(--color-on-strong);
 }
 

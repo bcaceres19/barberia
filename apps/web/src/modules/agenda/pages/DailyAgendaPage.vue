@@ -17,7 +17,8 @@
 // bloque.
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router'
-import { useMinHoldLoading } from '@/shared/composables'
+import { useMinHoldLoading, useVocabulary } from '@/shared/composables'
+import { capitalize } from '@/shared/model'
 import { BaseAlert, BaseBadge, BaseButton, DiamondLoader, PageState } from '@/shared/ui'
 import {
   formatCivilDateFull,
@@ -139,6 +140,9 @@ function withQuery(overrides: Record<string, string | undefined>): LocationQuery
 // no cede el paso a "ready"/"load-error" hasta que pase un mínimo, para que
 // una respuesta rápida no lo retire a medio parpadeo dejando ver la
 // construcción cruda de los controles/el eje por debajo.
+// Palabras de la barbería (DEC-110): con los valores iniciales, el texto de siempre.
+const v = useVocabulary()
+
 const { start: startPageHold, hold: holdPageReveal } = useMinHoldLoading()
 
 async function loadPage() {
@@ -607,7 +611,7 @@ const dayChangeMarkerPercent = computed(() => {
     <!-- Evento 02 del atlas: sin barbero/zona resueltos, nada que anticipar
          todavía — estado de página centrado con spinner, sin divisor. -->
     <div v-if="pageStatus === 'loading'" class="daily-agenda-page__loading" role="status">
-      <DiamondLoader label="Cargando barberos…" />
+      <DiamondLoader :label="`Cargando ${v.professionals}…`" />
     </div>
 
     <!-- Evento 03: fallo al cargar el contexto inicial. -->
@@ -629,12 +633,12 @@ const dayChangeMarkerPercent = computed(() => {
       <PageState
         v-if="barbers.length === 0"
         variant="info"
-        headline="Aún no tienes barberos registrados."
+        :headline="`Aún no tienes ${v.professionalsRegistered}.`"
         role="status"
       >
-        Agrega uno en la sección
+        Agrega {{ v.oneProfessional }} en la sección
         <RouterLink class="page-state__link" :to="{ name: 'staff-barberos' }"
-          >«Barberos»</RouterLink
+          >«{{ v.Professionals }}»</RouterLink
         >
         para ver su agenda.
       </PageState>
@@ -642,7 +646,9 @@ const dayChangeMarkerPercent = computed(() => {
       <template v-else>
         <div class="daily-agenda-page__controls">
           <div class="daily-agenda-page__picker">
-            <label for="daily-agenda-barber-select" class="daily-agenda-page__label">Barbero</label>
+            <label for="daily-agenda-barber-select" class="daily-agenda-page__label">{{
+              v.Professional
+            }}</label>
             <BarberSelect
               compact
               :model-value="selectedBarberId"
@@ -731,10 +737,10 @@ const dayChangeMarkerPercent = computed(() => {
             v-if="agendaStatus === 'not-found'"
             variant="warning"
             status-label="Atención"
-            headline="Este barbero ya no está disponible"
+            :headline="`${capitalize(v.thisProfessional)} ya no está disponible`"
             role="alert"
           >
-            Elige otro barbero en la lista.
+            Elige {{ v.anotherProfessional }} {{ v.professional }} en la lista.
           </PageState>
 
           <!-- Evento 07: error recuperable de la agenda, barbero/fecha
@@ -743,7 +749,7 @@ const dayChangeMarkerPercent = computed(() => {
             v-else-if="agendaStatus === 'error'"
             variant="warning"
             status-label="Atención"
-            headline="No pudimos cargar la agenda de este barbero"
+            :headline="`No pudimos cargar la agenda ${v.ofThisProfessional}`"
             role="alert"
           >
             Revisa tu conexión e inténtalo de nuevo.
@@ -1033,13 +1039,13 @@ const dayChangeMarkerPercent = computed(() => {
      pantalla sean de una sola familia. */
   background-color: transparent;
   color: var(--color-brand-accent-surface);
-  border-color: rgb(184 149 90 / 50%);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
 }
 
 .daily-agenda-page__cta:hover:not(:disabled) {
-  background-color: rgb(184 149 90 / 12%);
-  border-color: rgb(184 149 90 / 50%);
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
 }
 
@@ -1149,13 +1155,13 @@ const dayChangeMarkerPercent = computed(() => {
 .daily-agenda-page__date-nav :deep(.base-button--ghost) {
   --btn-height: 40px;
   color: var(--color-brand-accent-surface);
-  border-color: rgb(184 149 90 / 50%);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
 }
 
 .daily-agenda-page__date-nav
   :deep(.base-button--ghost:hover:not(:disabled):not(.base-button--loading)) {
-  background-color: rgb(184 149 90 / 12%);
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
 }
 
 @media (min-width: 1024px) {
@@ -1242,7 +1248,8 @@ const dayChangeMarkerPercent = computed(() => {
   min-height: 64px;
   padding: 13px 18px;
   background-color: transparent;
-  border: var(--border-width-normal) solid rgb(184 149 90 / 55%);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-brand-accent-surface) 55%, transparent);
   /* 3px literal, no --border-width-emphasis (2px): igual que
      .daily-agenda-page__timeline-slip, calcado del filete de .row en el
      atlas (border-left:3px solid var(--brass-deep)). */
@@ -1258,7 +1265,7 @@ const dayChangeMarkerPercent = computed(() => {
   background-color: transparent;
   /* Más visible que el 24% original del atlas (issue #189, reporte en
      vivo: "las tarjetas transparentes... ni se notan"). */
-  border-color: rgb(184 149 90 / 45%);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 45%, transparent);
   border-left-color: var(--color-brand-accent-surface);
 }
 
@@ -1270,8 +1277,8 @@ const dayChangeMarkerPercent = computed(() => {
    - Cancelado: rosa apagado de la familia de peligro.
    - No se presentó: lila apagado, distinto de los otros tres y del latón. */
 .daily-agenda-page__item--pending {
-  background-color: rgb(230 207 110 / 8%);
-  border-color: rgb(230 207 110 / 50%);
+  background-color: color-mix(in srgb, var(--color-pending-on-strong) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-pending-on-strong) 50%, transparent);
   border-left-color: var(--color-pending-on-strong);
 }
 
@@ -1280,8 +1287,8 @@ const dayChangeMarkerPercent = computed(() => {
 }
 
 .daily-agenda-page__item--completed {
-  background-color: rgb(157 194 169 / 7%);
-  border-color: rgb(157 194 169 / 40%);
+  background-color: color-mix(in srgb, var(--color-success-on-strong) 7%, transparent);
+  border-color: color-mix(in srgb, var(--color-success-on-strong) 40%, transparent);
   border-left-color: var(--color-success-on-strong);
 }
 
@@ -1290,8 +1297,8 @@ const dayChangeMarkerPercent = computed(() => {
 }
 
 .daily-agenda-page__item--no-show {
-  background-color: rgb(183 166 222 / 8%);
-  border-color: rgb(183 166 222 / 45%);
+  background-color: color-mix(in srgb, var(--color-no-show-on-strong) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-no-show-on-strong) 45%, transparent);
   border-left-color: var(--color-no-show-on-strong);
 }
 
@@ -1304,8 +1311,8 @@ const dayChangeMarkerPercent = computed(() => {
    completados sin gritar como una alerta. Va después de --terminal para
    ganarle el color de contorno. */
 .daily-agenda-page__item--cancelled {
-  background-color: rgb(227 146 141 / 7%);
-  border-color: rgb(227 146 141 / 45%);
+  background-color: color-mix(in srgb, var(--color-danger-on-strong) 7%, transparent);
+  border-color: color-mix(in srgb, var(--color-danger-on-strong) 45%, transparent);
   border-left-color: var(--color-danger-on-strong);
 }
 
@@ -1317,7 +1324,7 @@ const dayChangeMarkerPercent = computed(() => {
    velo, con contorno y filete en azul claro — el azul es su color de estado. */
 .daily-agenda-page__item--current {
   background-color: var(--color-surface-strong);
-  border-color: rgb(157 183 207 / 55%);
+  border-color: color-mix(in srgb, var(--color-info-on-strong) 55%, transparent);
   border-left-color: var(--color-info-on-strong);
 }
 
@@ -1476,7 +1483,7 @@ const dayChangeMarkerPercent = computed(() => {
     padding: 0;
     background-color: transparent;
     color: var(--color-brand-accent-surface);
-    border: 1px solid rgb(184 149 90 / 50%);
+    border: 1px solid color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
     border-radius: 2px;
     font-size: 14px;
     line-height: 1;
@@ -1484,7 +1491,7 @@ const dayChangeMarkerPercent = computed(() => {
   }
 
   .daily-agenda-page__timeline-zoom-btn:hover:not(:disabled) {
-    background-color: rgb(184 149 90 / 12%);
+    background-color: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
   }
 
   .daily-agenda-page__timeline-zoom-btn:disabled {
@@ -1625,7 +1632,8 @@ const dayChangeMarkerPercent = computed(() => {
     /* Sin margen: en el atlas .axis/.marks/.track se apilan sin espacio
        (issue #189, reporte en vivo: "está muy separado ahora"). */
     padding: 0;
-    border: var(--border-width-normal) solid rgb(244 240 231 / 16%);
+    border: var(--border-width-normal) solid
+      color-mix(in srgb, var(--color-on-strong) 16%, transparent);
     border-radius: 2px;
   }
 
@@ -1633,14 +1641,16 @@ const dayChangeMarkerPercent = computed(() => {
     position: absolute;
     top: 0;
     bottom: 0;
-    border-left: var(--border-width-normal) dashed rgb(244 240 231 / 10%);
+    border-left: var(--border-width-normal) dashed
+      color-mix(in srgb, var(--color-on-strong) 10%, transparent);
   }
 
   .daily-agenda-page__timeline-tick {
     position: absolute;
     top: 0;
     bottom: 0;
-    border-left: var(--border-width-normal) dashed rgb(244 240 231 / 24%);
+    border-left: var(--border-width-normal) dashed
+      color-mix(in srgb, var(--color-on-strong) 24%, transparent);
   }
 
   .daily-agenda-page__timeline-mark {
@@ -1674,7 +1684,8 @@ const dayChangeMarkerPercent = computed(() => {
 
   .daily-agenda-page__timeline-slip--current {
     background-color: var(--color-surface-strong);
-    border: var(--border-width-normal) solid rgb(157 183 207 / 55%);
+    border: var(--border-width-normal) solid
+      color-mix(in srgb, var(--color-info-on-strong) 55%, transparent);
     border-left: 3px solid var(--color-info-on-strong);
   }
 
@@ -1691,7 +1702,8 @@ const dayChangeMarkerPercent = computed(() => {
        contorno visible, solo con el filete izquierdo. Más visible que el
        24% original del atlas ("las tarjetas transparentes... ni se
        notan"). */
-    border: var(--border-width-normal) solid rgb(184 149 90 / 45%);
+    border: var(--border-width-normal) solid
+      color-mix(in srgb, var(--color-brand-accent-surface) 45%, transparent);
     border-left: 3px solid var(--color-brand-accent-surface);
     color: var(--color-on-strong);
   }
@@ -1700,31 +1712,32 @@ const dayChangeMarkerPercent = computed(() => {
      lista; el carril fija `border: 0` en la base, por eso llevan su contorno
      completo. Después de --terminal para ganarle el color. */
   .daily-agenda-page__timeline-slip--pending {
-    --slip-tint: rgb(230 207 110 / 8%);
+    --slip-tint: color-mix(in srgb, var(--color-pending-on-strong) 8%, transparent);
     background-color: var(--slip-tint);
-    border: var(--border-width-normal) solid rgb(230 207 110 / 50%);
+    border: var(--border-width-normal) solid
+      color-mix(in srgb, var(--color-pending-on-strong) 50%, transparent);
     border-left: 3px solid var(--color-pending-on-strong);
   }
 
   .daily-agenda-page__timeline-slip--completed {
-    --slip-tint: rgb(157 194 169 / 7%);
+    --slip-tint: color-mix(in srgb, var(--color-success-on-strong) 7%, transparent);
     background-color: var(--slip-tint);
-    border-color: rgb(157 194 169 / 40%);
+    border-color: color-mix(in srgb, var(--color-success-on-strong) 40%, transparent);
     border-left-color: var(--color-success-on-strong);
   }
 
   .daily-agenda-page__timeline-slip--no-show {
-    --slip-tint: rgb(183 166 222 / 8%);
+    --slip-tint: color-mix(in srgb, var(--color-no-show-on-strong) 8%, transparent);
     background-color: var(--slip-tint);
-    border-color: rgb(183 166 222 / 45%);
+    border-color: color-mix(in srgb, var(--color-no-show-on-strong) 45%, transparent);
     border-left-color: var(--color-no-show-on-strong);
   }
 
   /* Cancelado: rosa apagado; después de --terminal para ganarle el contorno. */
   .daily-agenda-page__timeline-slip--cancelled {
-    --slip-tint: rgb(227 146 141 / 7%);
+    --slip-tint: color-mix(in srgb, var(--color-danger-on-strong) 7%, transparent);
     background-color: var(--slip-tint);
-    border-color: rgb(227 146 141 / 45%);
+    border-color: color-mix(in srgb, var(--color-danger-on-strong) 45%, transparent);
     border-left-color: var(--color-danger-on-strong);
   }
 

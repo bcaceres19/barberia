@@ -1,0 +1,21 @@
+# Respuesta 200 de PATCH /private/settings/brand (issue #292, DEC-110).
+# Misma forma que BrandSuccess (GET): la representación canónica recién
+# guardada, con los términos ya normalizados por el servidor.
+description: Marca y vocabulario ya guardados, en su representación canónica completa.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/BrandResponse.yaml'
+    examples:
+      actualizacionConfirmada:
+        summary: Marca guardada
+        value:
+          accent: sapphire
+          businessTerm: estudio
+          businessTermGender: masculine
+          professionalTerm: peluquero
+          professionalTermPlural: peluqueros
+          professionalTermGender: masculine

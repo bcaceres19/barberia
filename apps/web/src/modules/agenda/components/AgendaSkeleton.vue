@@ -92,7 +92,8 @@ withDefaults(defineProps<Props>(), {
 .agenda-skeleton__timeline {
   position: relative;
   height: 96px;
-  border-top: var(--border-width-normal) solid rgb(244 240 231 / 14%);
+  border-top: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 14%, transparent);
 }
 
 @media (min-width: 1024px) {
@@ -110,8 +111,8 @@ withDefaults(defineProps<Props>(), {
   position: absolute;
   top: 10px;
   height: 76px;
-  background-color: rgb(244 240 231 / 12%);
-  border-left: 3px solid rgb(184 149 90 / 35%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 12%, transparent);
+  border-left: 3px solid color-mix(in srgb, var(--color-brand-accent-surface) 35%, transparent);
   border-radius: 2px;
   animation: agenda-skeleton-pulse 1400ms ease-in-out infinite;
 }
@@ -132,16 +133,17 @@ withDefaults(defineProps<Props>(), {
   height: 64px;
   gap: 20px;
   padding: 13px 18px;
-  background-color: rgb(244 240 231 / 6%);
-  border: var(--border-width-normal) solid rgb(244 240 231 / 10%);
-  border-left: 3px solid rgb(184 149 90 / 35%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 6%, transparent);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 10%, transparent);
+  border-left: 3px solid color-mix(in srgb, var(--color-brand-accent-surface) 35%, transparent);
   border-radius: 2px;
 }
 
 .agenda-skeleton__bar {
   display: block;
   height: 12px;
-  background-color: rgb(244 240 231 / 16%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 16%, transparent);
   border-radius: var(--radius-sm);
   animation: agenda-skeleton-pulse 1400ms ease-in-out infinite;
 }
@@ -164,7 +166,7 @@ withDefaults(defineProps<Props>(), {
 .agenda-skeleton__bar--service {
   width: 110px;
   height: 10px;
-  background-color: rgb(244 240 231 / 9%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 9%, transparent);
 }
 
 .agenda-skeleton__bar--badge {

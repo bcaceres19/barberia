@@ -1,0 +1,28 @@
+# Respuesta 200 de GET /private/settings/brand (issue #292, DEC-110).
+description: Marca y vocabulario de la barbería activa.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/BrandResponse.yaml'
+    examples:
+      valoresIniciales:
+        summary: Barbería que nunca cambió su marca
+        value:
+          accent: brass
+          businessTerm: barbería
+          businessTermGender: feminine
+          professionalTerm: barbero
+          professionalTermPlural: barberos
+          professionalTermGender: masculine
+      salonDeBelleza:
+        summary: Salón con estilistas y acento esmeralda
+        value:
+          accent: emerald
+          businessTerm: salón de belleza
+          businessTermGender: masculine
+          professionalTerm: estilista
+          professionalTermPlural: estilistas
+          professionalTermGender: feminine

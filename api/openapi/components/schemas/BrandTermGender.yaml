@@ -1,0 +1,7 @@
+# Género gramatical de un término del vocabulario (issue #292, DEC-110): solo
+# sirve para que los artículos de la interfaz concuerden.
+type: string
+enum: [masculine, feminine]
+description: Género gramatical del término (`masculine` o `feminine`).
+examples:
+  - feminine

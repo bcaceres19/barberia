@@ -14,7 +14,8 @@
 // barbero ni el resto de casillas ya marcadas. Cada asignación o retiro
 // confirmado añade un aviso emergente (DEC-095); el error sigue en línea.
 import { computed, ref, onMounted } from 'vue'
-import { useToast } from '@/shared/composables'
+import { useToast, useVocabulary } from '@/shared/composables'
+import { capitalize } from '@/shared/model'
 import { BaseAlert, BaseButton, PageHeader } from '@/shared/ui'
 import {
   assignService,
@@ -75,6 +76,8 @@ function onRetryLoad() {
 }
 
 const toast = useToast()
+// Palabras de la barbería (DEC-110): con los valores iniciales, el texto de siempre.
+const v = useVocabulary()
 
 async function selectBarber(barberId: string) {
   selectedBarberId.value = barberId
@@ -152,8 +155,8 @@ async function onToggleService(service: ServiceSummary, event: Event) {
     setAssigned(service.id, wantsAssigned)
     toast.success(wantsAssigned ? 'Servicio asignado' : 'Servicio retirado', {
       detail: wantsAssigned
-        ? `«${service.name}» quedó asignado a este barbero.`
-        : `«${service.name}» ya no está asignado a este barbero.`,
+        ? `«${service.name}» quedó asignado a ${v.value.thisProfessional}.`
+        : `«${service.name}» ya no está asignado a ${v.value.thisProfessional}.`,
     })
     return
   }
@@ -172,10 +175,10 @@ async function onToggleService(service: ServiceSummary, event: Event) {
 
   switch (outcome.kind) {
     case 'last-active-conflict':
-      toggleError.value = `No puedes retirar "${service.name}": es el único barbero asignado a este servicio activo. Asigna otro barbero antes de retirar este.`
+      toggleError.value = `No puedes retirar "${service.name}": es ${v.value.theOnlyProfessional} asignad${v.value.professionalEnding} a este servicio activo. Asigna ${v.value.anotherProfessional} ${v.value.professional} antes de retirar este.`
       break
     case 'not-found':
-      toggleError.value = 'Este barbero o servicio ya no está disponible. Recarga la página.'
+      toggleError.value = `${capitalize(v.value.thisProfessional)} o servicio ya no está disponible. Recarga la página.`
       break
     case 'network-error':
       toggleError.value = 'No pudimos conectar. Revisa tu conexión e inténtalo de nuevo.'
@@ -191,8 +194,8 @@ async function onToggleService(service: ServiceSummary, event: Event) {
   <section class="barber-services-page" aria-labelledby="barber-services-page-title">
     <PageHeader
       title-id="barber-services-page-title"
-      title="Servicios por barbero"
-      subtitle="Gestiona los servicios que presta cada barbero."
+      :title="`Servicios por ${v.professional}`"
+      :subtitle="`Gestiona los servicios que presta cada ${v.professional}.`"
     />
 
     <div
@@ -201,7 +204,7 @@ async function onToggleService(service: ServiceSummary, event: Event) {
       role="status"
       aria-live="polite"
     >
-      <p>Cargando barberos y servicios…</p>
+      <p>Cargando {{ v.professionals }} y servicios…</p>
     </div>
 
     <BaseAlert
@@ -218,18 +221,18 @@ async function onToggleService(service: ServiceSummary, event: Event) {
 
     <template v-else>
       <p v-if="barbers.length === 0" class="barber-services-page__empty">
-        Aún no tienes barberos registrados. Agrega uno en la sección “Barberos” antes de asignarle
-        servicios.
+        Aún no tienes {{ v.professionalsRegistered }}. Agrega {{ v.oneProfessional }} en la sección
+        “{{ v.Professionals }}” antes de asignarle servicios.
       </p>
       <p v-else-if="services.length === 0" class="barber-services-page__empty">
         Aún no tienes servicios en el catálogo. Agrega uno en la sección “Servicios” antes de
-        asignarlo a un barbero.
+        asignarlo a {{ v.aProfessional }}.
       </p>
 
       <template v-else>
         <div class="barber-services-page__picker">
           <label for="barber-services-barber-select" class="barber-services-page__label">
-            Barbero
+            {{ v.Professional }}
           </label>
           <select
             id="barber-services-barber-select"
@@ -255,7 +258,7 @@ async function onToggleService(service: ServiceSummary, event: Event) {
         <BaseAlert
           v-else-if="assignmentsStatus === 'error'"
           variant="warning"
-          title="No pudimos cargar los servicios de este barbero"
+          :title="`No pudimos cargar los servicios ${v.ofThisProfessional}`"
           role="alert"
         >
           Revisa tu conexión e inténtalo de nuevo.

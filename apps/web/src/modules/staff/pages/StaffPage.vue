@@ -13,7 +13,7 @@
 // entrada escalonada, carga con el rombo) con el retrato del barbero como
 // protagonista.
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { PAGE_MIN_HOLD_MS, useMinHoldLoading, useToast } from '@/shared/composables'
+import { PAGE_MIN_HOLD_MS, useMinHoldLoading, useToast, useVocabulary } from '@/shared/composables'
 import {
   BarberAvatar,
   BaseAlert,
@@ -34,9 +34,12 @@ import BarberPhotoField from '../components/BarberPhotoField.vue'
 import { newIdempotencyKey } from '../model/idempotencyKey'
 import type { Barber } from '../model/barber'
 import { NO_PHOTO_CHANGE, type PhotoDraft } from '../model/photoDraft'
+import { capitalize } from '@/shared/model'
 import { validateFullName } from '../validation/staffValidation'
 
 const toast = useToast()
+// Palabras de la barbería (DEC-110): con los valores iniciales, el mismo texto de siempre.
+const v = useVocabulary()
 
 // Frases decorativas del rombo de carga: las de la casa, con voz de equipo.
 const LOADING_PHRASES = [
@@ -232,7 +235,8 @@ function goToPage(page: number) {
   void load(page)
 }
 const countLabel = computed(
-  () => `${totalItems.value} ${totalItems.value === 1 ? 'barbero' : 'barberos'}`,
+  () =>
+    `${totalItems.value} ${totalItems.value === 1 ? v.value.professional : v.value.professionals}`,
 )
 const pageTokens = computed(() => {
   const total = totalPages.value,
@@ -410,12 +414,17 @@ async function onBarberCreated(created: Barber) {
   createPhotoDraft.value = NO_PHOTO_CHANGE
 
   if (photoFailed) {
-    toast.warning('Barbero agregado, pero no pudimos guardar la foto', {
-      detail: 'Ábrelo con «Editar» para intentarlo de nuevo.',
-    })
+    toast.warning(
+      `${v.value.Professional} agregad${v.value.professionalEnding}, pero no pudimos guardar la foto`,
+      {
+        detail: 'Ábrelo con «Editar» para intentarlo de nuevo.',
+      },
+    )
     return
   }
-  toast.success('Barbero agregado', { detail: 'Ya aparece en tu equipo.' })
+  toast.success(`${v.value.Professional} agregad${v.value.professionalEnding}`, {
+    detail: 'Ya aparece en tu equipo.',
+  })
 }
 
 // --- Edición (nombre y foto) ------------------------------------------------
@@ -516,13 +525,19 @@ async function onSubmitRename() {
   renamePhotoDraft.value = NO_PHOTO_CHANGE
 
   if (nameChanged && draft.kind === 'none') {
-    toast.success('Nombre actualizado', { detail: 'Guardamos el nuevo nombre del barbero.' })
+    toast.success('Nombre actualizado', {
+      detail: `Guardamos el nuevo nombre ${v.value.ofTheProfessional}.`,
+    })
   } else if (!nameChanged && draft.kind === 'new') {
     toast.success('Foto actualizada', { detail: 'El nuevo retrato ya aparece en tu equipo.' })
   } else if (!nameChanged && draft.kind === 'remove') {
-    toast.success('Foto quitada', { detail: 'El barbero vuelve a mostrarse con su monograma.' })
+    toast.success('Foto quitada', {
+      detail: `${capitalize(v.value.theProfessional)} vuelve a mostrarse con su monograma.`,
+    })
   } else {
-    toast.success('Barbero actualizado', { detail: 'Guardamos los cambios del barbero.' })
+    toast.success(`${v.value.Professional} actualizad${v.value.professionalEnding}`, {
+      detail: `Guardamos los cambios ${v.value.ofTheProfessional}.`,
+    })
   }
 }
 </script>
@@ -531,7 +546,7 @@ async function onSubmitRename() {
   <section ref="pageRef" class="staff-page" aria-labelledby="staff-page-title">
     <header class="staff-page__header">
       <div>
-        <h1 id="staff-page-title" class="staff-page__title">Barberos</h1>
+        <h1 id="staff-page-title" class="staff-page__title">{{ v.Professionals }}</h1>
         <p class="staff-page__subtitle">Tu equipo en NAVA.</p>
       </div>
       <!-- Una acción principal por región: con el equipo vacío, el CTA vive en el
@@ -543,7 +558,7 @@ async function onSubmitRename() {
         class="staff-page__create"
         @click="openCreateDialog"
       >
-        Agregar barbero
+        Agregar {{ v.professional }}
       </BaseButton>
     </header>
 
@@ -595,20 +610,27 @@ async function onSubmitRename() {
               <path d="M4.5 20.5c.6-3.9 3.6-6.2 7.5-6.2s6.9 2.3 7.5 6.2" />
             </svg>
           </span>
-          <p>Aún no tienes <span>barberos registrados.</span></p>
+          <p>
+            Aún no tienes <span>{{ v.professionalsRegistered }}.</span>
+          </p>
           <p class="staff-page__empty-hint">
             Agrega al primero de tu equipo: con su nombre y, si quieres, su foto.
           </p>
           <BaseButton type="button" variant="primary" @click="openCreateDialog">
-            Agregar barbero
+            Agregar {{ v.professional }}
           </BaseButton>
         </div>
 
         <div v-else class="staff-page__table">
           <div class="staff-page__columns" aria-hidden="true">
-            <span>Barbero</span><span>En NAVA desde</span><span>Foto</span><span>Acción</span>
+            <span>{{ v.Professional }}</span
+            ><span>En NAVA desde</span><span>Foto</span><span>Acción</span>
           </div>
-          <ul ref="listRef" class="staff-page__list" aria-label="Barberos de la barbería">
+          <ul
+            ref="listRef"
+            class="staff-page__list"
+            :aria-label="`${v.Professionals} ${v.ofTheBusiness}`"
+          >
             <li
               v-for="(barber, index) in pageLoading ? [] : barbers"
               :key="barber.id"
@@ -700,7 +722,10 @@ async function onSubmitRename() {
           </BaseAlert>
           <div class="staff-page__footer-bar">
             <span class="staff-page__count" role="status">{{ countLabel }}</span>
-            <nav class="staff-page__pagination-nav" aria-label="Paginación de barberos">
+            <nav
+              class="staff-page__pagination-nav"
+              :aria-label="`Paginación de ${v.professionals}`"
+            >
               <BaseButton
                 type="button"
                 variant="secondary"
@@ -768,7 +793,7 @@ async function onSubmitRename() {
               :photo-url="photoOf(detailTarget)"
             />
           </span>
-          <p class="staff-page__detail-role">Barbero</p>
+          <p class="staff-page__detail-role">{{ v.Professional }}</p>
         </div>
 
         <dl class="staff-page__facts">
@@ -797,7 +822,7 @@ async function onSubmitRename() {
     <!-- Alta -->
     <BaseDialog
       v-model="isCreateOpen"
-      title="Agregar barbero"
+      :title="`Agregar ${v.professional}`"
       description="Aparece en tu equipo en cuanto lo guardes."
       size="md"
       content-class="staff-page__dialog staff-page__create-dialog"
@@ -838,7 +863,7 @@ async function onSubmitRename() {
 
         <BarberPhotoField
           v-model:draft="createPhotoDraft"
-          :full-name="createFullName || 'Nuevo barbero'"
+          :full-name="createFullName || `Nuev${v.professionalEnding} ${v.professional}`"
           :current-url="null"
           :disabled="createStatus === 'saving'"
         />
@@ -874,7 +899,7 @@ async function onSubmitRename() {
     <!-- Edición -->
     <BaseDialog
       v-model="isRenameOpen"
-      title="Editar barbero"
+      :title="`Editar ${v.professional}`"
       size="md"
       content-class="staff-page__dialog staff-page__edit-dialog"
       @close="onRenameDialogClosed"
@@ -892,7 +917,7 @@ async function onSubmitRename() {
         <BaseAlert
           v-if="renameStatus === 'not-found'"
           variant="warning"
-          title="Este barbero ya no está disponible"
+          :title="`${capitalize(v.thisProfessional)} ya no está disponible`"
           role="alert"
         >
           Cierra este diálogo y recarga la lista.
@@ -1002,14 +1027,14 @@ async function onSubmitRename() {
 .staff-page__pagination-nav :deep(.base-button--secondary) {
   background-color: transparent;
   color: var(--color-brand-accent-surface);
-  border-color: rgb(184 149 90 / 50%);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
 }
 
 .staff-page__pagination-nav
   :deep(.base-button--secondary:hover:not(:disabled):not(.base-button--loading)) {
-  background-color: rgb(184 149 90 / 12%);
-  border-color: rgb(184 149 90 / 50%);
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
 }
 
 .staff-page__pagination-nav :deep(.base-button:disabled) {
@@ -1156,7 +1181,7 @@ async function onSubmitRename() {
 .staff-page__skeleton-bar {
   display: block;
   flex: 0 0 auto;
-  background-color: rgb(244 240 231 / 16%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 16%, transparent);
   border-radius: 2px;
   animation: staff-skeleton-pulse 1400ms ease-in-out infinite;
 }
@@ -1175,7 +1200,7 @@ async function onSubmitRename() {
 .staff-page__skeleton-bar--meta {
   width: 96px;
   height: 12px;
-  background-color: rgb(244 240 231 / 10%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 10%, transparent);
 }
 
 .staff-page__skeleton-bar--button {
@@ -1264,7 +1289,11 @@ async function onSubmitRename() {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(90deg, rgb(184 149 90 / 34%), rgb(184 149 90 / 0%) 70%);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-brand-accent-surface) 34%, transparent),
+    color-mix(in srgb, var(--color-brand-accent-surface) 0%, transparent) 70%
+  );
   animation: staff-row-flash 1800ms var(--motion-easing-standard) 200ms both;
 }
 
@@ -1354,7 +1383,7 @@ async function onSubmitRename() {
 /* Solo con puntero real: en táctil :hover se queda pegado tras el toque. */
 @media (hover: hover) {
   .staff-page__row:hover {
-    background-color: rgb(244 240 231 / 4%);
+    background-color: color-mix(in srgb, var(--color-on-strong) 4%, transparent);
   }
 
   .staff-page__row:hover .staff-page__item-name {
@@ -1454,19 +1483,19 @@ async function onSubmitRename() {
 .staff-page__item-actions :deep(.base-button--secondary) {
   background-color: transparent;
   color: var(--color-brand-accent-surface);
-  border-color: rgb(184 149 90 / 50%);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
 }
 
 .staff-page__item-actions
   :deep(.base-button--secondary:hover:not(:disabled):not(.base-button--loading)) {
-  background-color: rgb(184 149 90 / 12%);
-  border-color: rgb(184 149 90 / 50%);
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
 }
 
 .staff-page__item-actions
   :deep(.base-button--secondary:active:not(:disabled):not(.base-button--loading)) {
-  background-color: rgb(184 149 90 / 20%);
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 20%, transparent);
 }
 
 /* Vacío: marco de retrato vacío (esquinas de latón, borde punteado) sobre un
@@ -1514,7 +1543,8 @@ async function onSubmitRename() {
   place-items: center;
   color: var(--color-brand-accent-surface);
   background-color: var(--color-surface-strong);
-  border: var(--border-width-normal) dashed rgb(184 149 90 / 45%);
+  border: var(--border-width-normal) dashed
+    color-mix(in srgb, var(--color-brand-accent-surface) 45%, transparent);
   border-radius: 2px;
 }
 
@@ -1590,12 +1620,12 @@ async function onSubmitRename() {
 .staff-page__load-more.base-button--secondary {
   background-color: transparent;
   color: var(--color-brand-accent-surface);
-  border-color: rgb(184 149 90 / 50%);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
 }
 
 .staff-page__load-more.base-button--secondary:hover:not(:disabled):not(.base-button--loading) {
-  background-color: rgb(184 149 90 / 12%);
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
 }
 
 /* Diálogos (alta, edición, detalle): mismo tinte, filete de latón y campos
@@ -1626,7 +1656,12 @@ async function onSubmitRename() {
   content: '';
   position: absolute;
   inset: -40% -60%;
-  background: linear-gradient(75deg, transparent 40%, rgb(244 240 231 / 50%) 50%, transparent 60%);
+  background: linear-gradient(
+    75deg,
+    transparent 40%,
+    color-mix(in srgb, var(--color-on-strong) 50%, transparent) 50%,
+    transparent 60%
+  );
   transform: translateX(-100%);
   animation: staff-chip-glint 480ms cubic-bezier(0.5, 0, 0.3, 1) 260ms both;
 }
@@ -1661,9 +1696,9 @@ async function onSubmitRename() {
 }
 
 .staff-page__ink :deep(.base-input) {
-  --input-bg: rgb(244 240 231 / 4%);
-  --input-border-color: rgb(244 240 231 / 12%);
-  --input-border-base-color: rgb(244 240 231 / 30%);
+  --input-bg: color-mix(in srgb, var(--color-on-strong) 4%, transparent);
+  --input-border-color: color-mix(in srgb, var(--color-on-strong) 12%, transparent);
+  --input-border-base-color: color-mix(in srgb, var(--color-on-strong) 30%, transparent);
   --input-focus-ring: 0 0 0 2px var(--color-surface-strong), 0 0 0 4px var(--color-focus);
 
   color: var(--color-on-strong);
@@ -1683,13 +1718,13 @@ async function onSubmitRename() {
 }
 
 .staff-page__ink :deep(.base-input:hover:not(:disabled):not(.base-input--invalid)) {
-  border-color: rgb(244 240 231 / 26%);
+  border-color: color-mix(in srgb, var(--color-on-strong) 26%, transparent);
 }
 
 /* El filete dorado inferior marca el campo YA RESUELTO (mismo criterio que
    Agenda y Servicios). */
 .staff-page__ink :deep(.staff-page__input--filled .base-input) {
-  background-color: rgb(244 240 231 / 6%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 6%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
 }
 
@@ -1697,13 +1732,13 @@ async function onSubmitRename() {
 .staff-page__ink :deep(.base-input--disabled) {
   background-color: var(--input-bg);
   border-color: var(--input-border-color);
-  border-bottom-color: rgb(244 240 231 / 20%);
+  border-bottom-color: color-mix(in srgb, var(--color-on-strong) 20%, transparent);
   color: var(--color-on-strong-muted);
   opacity: 0.45;
 }
 
 .staff-page__ink :deep(.base-input--invalid) {
-  background-color: rgb(227 146 141 / 7%);
+  background-color: color-mix(in srgb, var(--color-danger-on-strong) 7%, transparent);
   border-color: var(--input-border-color);
   border-bottom-color: var(--color-danger-on-strong);
 }
@@ -1735,17 +1770,17 @@ async function onSubmitRename() {
 .staff-page__ink :deep(.base-button--secondary) {
   background-color: transparent;
   color: var(--color-brand-accent-surface);
-  border-color: rgb(184 149 90 / 50%);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
 }
 
 .staff-page__ink :deep(.base-button--secondary:hover:not(:disabled):not(.base-button--loading)) {
-  background-color: rgb(184 149 90 / 12%);
-  border-color: rgb(184 149 90 / 50%);
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
 }
 
 .staff-page__ink :deep(.base-button--secondary:active:not(:disabled):not(.base-button--loading)) {
-  background-color: rgb(184 149 90 / 20%);
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 20%, transparent);
 }
 
 .staff-page__dialog-actions {
@@ -2047,7 +2082,7 @@ async function onSubmitRename() {
 }
 
 .staff-page__dialog .base-dialog__close:hover {
-  background-color: rgb(244 240 231 / 8%) !important;
+  background-color: color-mix(in srgb, var(--color-on-strong) 8%, transparent) !important;
   color: var(--color-on-strong) !important;
 }
 

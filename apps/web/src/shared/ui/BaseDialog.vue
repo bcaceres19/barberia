@@ -368,7 +368,7 @@ onUnmounted(() => {
 .base-dialog {
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - var(--space-4) * 2);
+  max-height: calc(100vh / var(--ui-zoom, 1) - var(--space-4) * 2);
   background-color: var(--color-surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-dialog);
@@ -418,15 +418,15 @@ onUnmounted(() => {
 .base-dialog--full .base-dialog__container {
   width: 100%;
   max-width: 100%;
-  max-height: 100vh;
+  max-height: calc(100vh / var(--ui-zoom, 1));
   border-radius: 0;
-  height: 100vh;
+  height: calc(100vh / var(--ui-zoom, 1));
 }
 
 @media (min-width: 768px) {
   .base-dialog--full .base-dialog__container {
     max-width: 720px;
-    max-height: calc(100vh - var(--space-4) * 2);
+    max-height: calc(100vh / var(--ui-zoom, 1) - var(--space-4) * 2);
     border-radius: var(--radius-lg);
     height: auto;
   }

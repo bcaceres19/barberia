@@ -259,6 +259,17 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	private.Get("/settings/booking-policy", getBookingPolicyHandler.ServeHTTP)
 	private.Put("/settings/booking-policy", updateBookingPolicyHandler.ServeHTTP)
 
+	// Issue #292 (DEC-110): marca y vocabulario de la barbería (color de
+	// acento de una lista cerrada, palabra del negocio y del profesional).
+	// Servicio propio: el contrato de HU-020 declara exactamente cuatro
+	// campos (CA-020-07) y no se amplía; sin versionado, la última
+	// escritura gana porque son preferencias de presentación.
+	brandService := shops.NewBrandService(shopspostgres.NewBrandRepository(db))
+	getBrandHandler := shopshttpapi.NewGetBrandHandler(brandService)
+	updateBrandHandler := shopshttpapi.NewUpdateBrandHandler(brandService)
+	private.Get("/settings/brand", getBrandHandler.ServeHTTP)
+	private.Patch("/settings/brand", updateBrandHandler.ServeHTTP)
+
 	// HU-021: registro y listado de barberos de la barbería activa.
 	// staffpostgres.New recibe el mismo idempotency.SQLCoordinator real que
 	// protege el alta (RN-IDE-01, DEC-043), coordinado dentro de la misma

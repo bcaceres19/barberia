@@ -313,7 +313,7 @@ watch(
   z-index: var(--layer-dialog);
   box-sizing: border-box;
   width: min(clamp(192px, var(--picker-trigger-width, 212px), 240px), calc(100vw - 16px));
-  max-height: calc(100dvh - 16px);
+  max-height: calc(var(--viewport-height) - 16px);
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 10px;

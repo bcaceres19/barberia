@@ -213,16 +213,17 @@ function onFocusOut(event: FocusEvent) {
 .base-toast {
   --toast-accent: var(--color-success-on-strong);
   --toast-radius: 3px;
-  --toast-hairline: rgb(244 240 231 / 20%);
+  --toast-hairline: color-mix(in srgb, var(--color-on-strong) 20%, transparent);
 
   position: relative;
   overflow: hidden;
   background-color: var(--color-surface-strong);
   color: var(--color-on-strong);
-  border: var(--border-width-normal) solid rgb(184 149 90 / 45%);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-brand-accent-surface) 45%, transparent);
   border-radius: var(--toast-radius);
   box-shadow:
-    inset 0 1px 0 rgb(244 240 231 / 8%),
+    inset 0 1px 0 color-mix(in srgb, var(--color-on-strong) 8%, transparent),
     0 2px 6px rgb(16 27 43 / 20%),
     0 22px 44px -14px rgb(16 27 43 / 58%);
   font-family: var(--font-sans);
@@ -268,7 +269,7 @@ function onFocusOut(event: FocusEvent) {
 }
 
 .base-toast__head:hover {
-  background-color: rgb(244 240 231 / 5%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 5%, transparent);
 }
 
 .base-toast__mark {
@@ -279,7 +280,7 @@ function onFocusOut(event: FocusEvent) {
   width: 32px;
   height: 32px;
   color: var(--toast-accent);
-  background-color: rgb(244 240 231 / 5%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 5%, transparent);
   border: var(--border-width-normal) solid var(--toast-accent);
   border-radius: 2px;
 }
@@ -420,7 +421,7 @@ function onFocusOut(event: FocusEvent) {
 .base-toast__action {
   gap: var(--space-2);
   padding: 0 14px 0 var(--space-3);
-  background-color: rgb(244 240 231 / 6%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 6%, transparent);
   border: var(--border-width-normal) solid var(--toast-accent);
   color: var(--color-on-strong);
   font-size: var(--font-size-body-sm);
@@ -433,12 +434,12 @@ function onFocusOut(event: FocusEvent) {
 }
 
 .base-toast__action:hover {
-  background-color: rgb(244 240 231 / 14%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 14%, transparent);
   border-color: var(--color-on-strong);
 }
 
 .base-toast__action:active {
-  background-color: rgb(244 240 231 / 20%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 20%, transparent);
 }
 
 .base-toast__dismiss {
@@ -455,7 +456,7 @@ function onFocusOut(event: FocusEvent) {
 }
 
 .base-toast__dismiss:hover {
-  background-color: rgb(244 240 231 / 8%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 8%, transparent);
   color: var(--color-on-strong);
 }
 
@@ -475,7 +476,7 @@ function onFocusOut(event: FocusEvent) {
   bottom: 0;
   left: 0;
   height: 2px;
-  background-color: rgb(244 240 231 / 10%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 10%, transparent);
 }
 
 .base-toast__fill {

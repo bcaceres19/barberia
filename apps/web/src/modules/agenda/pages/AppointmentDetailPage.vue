@@ -13,7 +13,7 @@
 // (DEC-095); el resultado persistente es el estado y el historial del turno.
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, type LocationQueryRaw } from 'vue-router'
-import { useToast } from '@/shared/composables'
+import { useToast, useVocabulary } from '@/shared/composables'
 import { BaseAlert, BaseBadge, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
 import { formatInstantInTimezone } from '@/shared/time/formatInstant'
 import { getCivilDateInTimezone } from '@/shared/time/civilDate'
@@ -59,6 +59,8 @@ const appointmentId = computed(() => String(route.params.appointmentId ?? ''))
 // trabajo requerido): "Volver" siempre regresa a donde el turno vigente
 // realmente está, nunca a una fecha que dejó de mostrarlo.
 const toast = useToast()
+// Palabras de la barbería (DEC-110).
+const v = useVocabulary()
 const backDate = ref<string | null>(typeof route.query.date === 'string' ? route.query.date : null)
 const backBarberId = ref<string | null>(
   typeof route.query.barberId === 'string' ? route.query.barberId : null,
@@ -822,7 +824,7 @@ function occurredAtLabel(entry: HistoryEntry): string {
               aria-hidden="true"
               v-html="factIcon('barber')"
             />
-            <dt>Barbero</dt>
+            <dt>{{ v.Professional }}</dt>
             <dd>{{ detail.barberFullName }}</dd>
           </div>
           <div class="appointment-detail-page__fact">
@@ -1920,7 +1922,7 @@ function occurredAtLabel(entry: HistoryEntry): string {
   }
 
   :global(.appointment-detail-page__reschedule-dialog .base-dialog__container) {
-    max-height: calc(100vh - 20px);
+    max-height: calc(100vh / var(--ui-zoom, 1) - 20px);
   }
 }
 

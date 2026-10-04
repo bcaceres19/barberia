@@ -1,0 +1,38 @@
+# 422 de PATCH /private/settings/brand (issue #292, DEC-110): un cuerpo bien
+# formado que incumple una validación de campo. Distinto de
+# InvalidRequestProblem (JSON o forma inválida, un campo desconocido responde
+# 400, no 422). Mismo schema que ValidationProblem.yaml; solo cambian los
+# ejemplos (docs/06-api/estandar-openapi.md sección 9, regla 4).
+description: >
+  El cuerpo es JSON válido con los campos esperados, pero uno de ellos
+  incumple una validación: `accent` fuera de la lista cerrada, un término de
+  menos de 2 o más de 30 caracteres o con dígitos o signos, o un género que no
+  es `masculine` ni `feminine`. Ninguna escritura ocurre cuando esto sucede.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      acentoFueraDeLista:
+        summary: Color que no pertenece a la paleta cerrada
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: accent no es uno de los colores permitidos
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      terminoInvalido:
+        summary: Término con dígitos, signos o largo fuera de rango
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: businessTerm debe tener entre 2 y 30 caracteres y usar solo letras, espacios, guion o apóstrofo
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

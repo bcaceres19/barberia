@@ -190,3 +190,89 @@
         $ref: '../components/responses/BookingPolicyValidationProblem.yaml'
       "500":
         $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/settings/brand:
+  get:
+    tags: [Settings]
+    summary: Consultar la marca y el vocabulario de la barbería activa
+    description: >
+      Lectura autenticada (issue #292, DEC-110) del color de acento y del
+      vocabulario (palabra del negocio y del profesional, con plural y
+      género gramatical) de la barbería derivada de la sesión vigente. Una
+      barbería que nunca los cambió recibe los valores iniciales (`brass`,
+      `barbería`, `barbero`), exactamente la interfaz anterior. Recurso
+      propio, separado de `/private/settings/barbershop` para no ampliar el
+      contrato cerrado de `HU-020` (`CA-020-07`). `barbershopId` nunca es un
+      parámetro: el tenant se deriva exclusivamente de `SessionCookie`.
+    operationId: getBrand
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-024, DEC-110]
+    responses:
+      "200":
+        $ref: '../components/responses/BrandSuccess.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  patch:
+    tags: [Settings]
+    summary: Actualizar la marca y el vocabulario de la barbería activa
+    description: >
+      Actualización autenticada (issue #292, DEC-110) de los seis campos de
+      marca y vocabulario, que viajan siempre presentes; cualquier otro
+      campo -en particular un identificador de barbería- se rechaza como
+      forma inválida. `accent` pertenece a una lista cerrada (nunca un color
+      libre) y cada término se recorta, se colapsa y se pasa a minúsculas
+      antes de validarlo y guardarlo. Un valor inválido responde `422` sin
+      escribir nada. Son preferencias de presentación: no hay precondición de
+      versión y la última escritura gana. Escribir toca `updated_at` de la
+      fila, así que invalida el token `If-Match` de una política de reserva
+      leída antes (`HU-093`), igual que una escritura de `HU-020`. La
+      respuesta devuelve la representación canónica ya guardada, la misma
+      forma que `GET`.
+    operationId: updateBrand
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-024, DEC-110]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/UpdateBrandRequest.yaml'
+          examples:
+            salonConEstilistas:
+              summary: Salón de belleza con estilistas y acento esmeralda
+              value:
+                accent: emerald
+                businessTerm: salón de belleza
+                businessTermGender: masculine
+                professionalTerm: estilista
+                professionalTermPlural: estilistas
+                professionalTermGender: feminine
+            valoresIniciales:
+              summary: Volver a los valores iniciales
+              value:
+                accent: brass
+                businessTerm: barbería
+                businessTermGender: feminine
+                professionalTerm: barbero
+                professionalTermPlural: barberos
+                professionalTermGender: masculine
+    responses:
+      "200":
+        $ref: '../components/responses/BrandUpdated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "422":
+        $ref: '../components/responses/BrandValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

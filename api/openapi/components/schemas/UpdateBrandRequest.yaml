@@ -1,0 +1,27 @@
+# Cuerpo de PATCH /private/settings/brand (issue #292, DEC-110). Cerrado: el
+# handler rechaza cualquier campo desconocido, en particular un identificador
+# de barbería (el contrato ni siquiera lo declara). Los seis campos viajan
+# siempre presentes.
+type: object
+additionalProperties: false
+description: Marca y vocabulario a guardar. Los seis campos viajan siempre presentes.
+properties:
+  accent:
+    $ref: './BrandAccent.yaml'
+  businessTerm:
+    $ref: './BrandTerm.yaml'
+  businessTermGender:
+    $ref: './BrandTermGender.yaml'
+  professionalTerm:
+    $ref: './BrandTerm.yaml'
+  professionalTermPlural:
+    $ref: './BrandTerm.yaml'
+  professionalTermGender:
+    $ref: './BrandTermGender.yaml'
+required:
+  - accent
+  - businessTerm
+  - businessTermGender
+  - professionalTerm
+  - professionalTermPlural
+  - professionalTermGender

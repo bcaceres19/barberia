@@ -6,6 +6,8 @@
 // agenda ni ninguna capacidad de B1-B3: `<RouterView />` es el único punto
 // de extensión para las pantallas que las historias siguientes agreguen
 // como hijas de esta misma ruta.
+import { onBeforeUnmount } from 'vue'
+import { attachWorkspaceTheme } from '@/shared/model'
 import { BaseAlert, BaseButton, ToastRegion } from '@/shared/ui'
 import type { NavItem } from '@/shared/navigation/navItem'
 import { retryBootstrap, sessionState } from '../model/sessionStore'
@@ -17,6 +19,12 @@ import AppNav from '../components/AppNav.vue'
 // una pantalla privada, sin que este componente ni `auth` importen esos
 // módulos.
 defineProps<{ extraNavItems?: NavItem[] }>()
+
+// Modo, tamaño de texto, animaciones y acento de la barbería (DEC-110) se
+// pintan en <html> solo mientras el cascarón está montado; al salir se retiran,
+// así el acceso y la reserva pública nunca heredan el tema del panel.
+const detachWorkspaceTheme = attachWorkspaceTheme()
+onBeforeUnmount(detachWorkspaceTheme)
 
 function onRetry() {
   void retryBootstrap()
@@ -61,8 +69,8 @@ function onRetry() {
 .private-shell {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
-  background-color: var(--color-surface-strong);
+  height: var(--viewport-height);
+  background-color: var(--color-chrome-surface);
 }
 
 /* min-height: 0 es necesario para que este hijo flex pueda encogerse por
@@ -85,7 +93,8 @@ function onRetry() {
   /* Barra de scroll propia (latón sobre tinta), no la gris genérica del
      navegador — mismo acento que el resto del cascarón. */
   scrollbar-width: thin;
-  scrollbar-color: rgb(184 149 90 / 45%) transparent;
+  scrollbar-color: color-mix(in srgb, var(--color-brand-accent-surface) 45%, transparent)
+    transparent;
 }
 
 .private-shell__content::-webkit-scrollbar {
@@ -97,13 +106,13 @@ function onRetry() {
 }
 
 .private-shell__content::-webkit-scrollbar-thumb {
-  background-color: rgb(184 149 90 / 45%);
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 45%, transparent);
   border: 2px solid var(--color-surface-strong);
   border-radius: var(--radius-pill);
 }
 
 .private-shell__content::-webkit-scrollbar-thumb:hover {
-  background-color: rgb(184 149 90 / 70%);
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 70%, transparent);
 }
 
 .private-shell__state {
@@ -112,7 +121,7 @@ function onRetry() {
   align-items: center;
   justify-content: center;
   flex: 1;
-  min-height: 100dvh;
+  min-height: var(--viewport-height);
   padding: var(--space-6) var(--space-4);
   gap: var(--space-4);
 }

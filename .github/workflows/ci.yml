@@ -90,7 +90,8 @@ jobs:
                    20260919200000_add_auth_recovery_resolve_phone.sql \
                    20260919210000_relax_auth_recovery_request_phone_requirement.sql \
                    20260919220000_add_auth_phone_challenge_destination.sql \
-                   20260930120000_create_barber_photo.sql; do
+                   20260930120000_create_barber_photo.sql \
+                   20261003120000_add_barbershop_brand.sql; do
             psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$f"
           done
           psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_app PASSWORD 'app_test';"
@@ -297,6 +298,11 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/hu020_configuracion_barberia.sql
+
+      - name: Suite de marca y vocabulario de la barbería (DEC-110)
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/brand_marca_vocabulario.sql
 
       - name: Suite de registro y listado de barberos HU-021
         env:

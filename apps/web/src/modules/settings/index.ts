@@ -9,6 +9,7 @@
 import type { NavItem } from '@/shared/navigation/navItem'
 
 export { settingsPrivateShellChildRoutes } from './routes'
+export { loadWorkspaceBrand } from './model/workspaceBrand'
 
 // El rótulo del dock es "Configuración" (destino P0 de
 // especificacion-frontend-nava.md §5.1, que agrupa barbería, reglas de

@@ -332,6 +332,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/private/settings/brand": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar la marca y el vocabulario de la barbería activa
+         * @description Lectura autenticada (issue #292, DEC-110) del color de acento y del vocabulario (palabra del negocio y del profesional, con plural y género gramatical) de la barbería derivada de la sesión vigente. Una barbería que nunca los cambió recibe los valores iniciales (`brass`, `barbería`, `barbero`), exactamente la interfaz anterior. Recurso propio, separado de `/private/settings/barbershop` para no ampliar el contrato cerrado de `HU-020` (`CA-020-07`). `barbershopId` nunca es un parámetro: el tenant se deriva exclusivamente de `SessionCookie`.
+         */
+        get: operations["getBrand"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Actualizar la marca y el vocabulario de la barbería activa
+         * @description Actualización autenticada (issue #292, DEC-110) de los seis campos de marca y vocabulario, que viajan siempre presentes; cualquier otro campo -en particular un identificador de barbería- se rechaza como forma inválida. `accent` pertenece a una lista cerrada (nunca un color libre) y cada término se recorta, se colapsa y se pasa a minúsculas antes de validarlo y guardarlo. Un valor inválido responde `422` sin escribir nada. Son preferencias de presentación: no hay precondición de versión y la última escritura gana. Escribir toca `updated_at` de la fila, así que invalida el token `If-Match` de una política de reserva leída antes (`HU-093`), igual que una escritura de `HU-020`. La respuesta devuelve la representación canónica ya guardada, la misma forma que `GET`.
+         */
+        patch: operations["updateBrand"];
+        trace?: never;
+    };
     "/private/barbers": {
         parameters: {
             query?: never;
@@ -1248,6 +1272,41 @@ export interface components {
              */
             contactPhone: string;
         };
+        /** @description Marca y vocabulario de la barbería activa: color de acento de una lista cerrada, la palabra con la que llama a su negocio y a su profesional (con plural y género gramatical, para que la interfaz concuerde). Los términos viajan recortados y en minúsculas; la interfaz capitaliza donde corresponde. */
+        BrandResponse: {
+            accent: components["schemas"]["BrandAccent"];
+            businessTerm: components["schemas"]["BrandTerm"];
+            businessTermGender: components["schemas"]["BrandTermGender"];
+            professionalTerm: components["schemas"]["BrandTerm"];
+            professionalTermPlural: components["schemas"]["BrandTerm"];
+            professionalTermGender: components["schemas"]["BrandTermGender"];
+        };
+        /** @description Marca y vocabulario a guardar. Los seis campos viajan siempre presentes. */
+        UpdateBrandRequest: {
+            accent: components["schemas"]["BrandAccent"];
+            businessTerm: components["schemas"]["BrandTerm"];
+            businessTermGender: components["schemas"]["BrandTermGender"];
+            professionalTerm: components["schemas"]["BrandTerm"];
+            professionalTermPlural: components["schemas"]["BrandTerm"];
+            professionalTermGender: components["schemas"]["BrandTermGender"];
+        };
+        /**
+         * @description Color de acento del panel: `brass` (el latón NAVA, valor inicial), `emerald`, `sapphire`, `ruby`, `amethyst` o `copper`.
+         * @example brass
+         * @enum {string}
+         */
+        BrandAccent: "brass" | "emerald" | "sapphire" | "ruby" | "amethyst" | "copper";
+        /**
+         * @description Palabra o expresión corta de 2 a 30 caracteres: empieza con una letra y usa solo letras, espacios, guion o apóstrofo, sin dígitos ni signos. El servidor la recorta, colapsa los espacios repetidos y la pasa a minúsculas antes de guardarla.
+         * @example estilista
+         */
+        BrandTerm: string;
+        /**
+         * @description Género gramatical del término (`masculine` o `feminine`).
+         * @example feminine
+         * @enum {string}
+         */
+        BrandTermGender: "masculine" | "feminine";
         /** @description Barbero de la barbería activa. La misma forma representa tanto a la única persona de una barbería unipersonal como a cualquiera de los varios barberos de un equipo (CA-021-01): no existe una forma especial para "barbero único". */
         BarberResponse: {
             /**
@@ -2955,6 +3014,36 @@ export interface components {
                 "application/json": components["schemas"]["BarbershopSettingsResponse"];
             };
         };
+        /** @description Marca y vocabulario de la barbería activa. */
+        BrandSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["BrandResponse"];
+            };
+        };
+        /** @description Marca y vocabulario ya guardados, en su representación canónica completa. */
+        BrandUpdated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["BrandResponse"];
+            };
+        };
+        /** @description El cuerpo es JSON válido con los campos esperados, pero uno de ellos incumple una validación: `accent` fuera de la lista cerrada, un término de menos de 2 o más de 30 caracteres o con dígitos o signos, o un género que no es `masculine` ni `feminine`. Ninguna escritura ocurre cuando esto sucede. */
+        BrandValidationProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
         /** @description El cuerpo es JSON válido con los campos esperados, pero uno de ellos incumple una validación de campo o de negocio: name vacío o demasiado largo, timezone vacía, demasiado larga o no reconocida por el catálogo IANA del servidor, o contactEmail/contactPhone con una forma inválida. Ninguna escritura ocurre cuando esto sucede, ni siquiera parcial (CA-020-03). */
         BarbershopSettingsValidationProblem: {
             headers: {
@@ -4206,6 +4295,42 @@ export interface operations {
                 };
             };
             422: components["responses"]["BookingPolicyValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getBrand: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["BrandSuccess"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    updateBrand: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateBrandRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["BrandUpdated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            422: components["responses"]["BrandValidationProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

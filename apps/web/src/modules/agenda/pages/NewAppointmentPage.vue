@@ -15,7 +15,7 @@
 // El resumen de éxito es el resultado persistente; el aviso emergente lo
 // acompaña (DEC-095).
 import { computed, nextTick, ref, watch } from 'vue'
-import { useToast } from '@/shared/composables'
+import { useToast, useVocabulary } from '@/shared/composables'
 import { BaseAlert, BaseButton, BaseInput, BarberAvatar, PageState } from '@/shared/ui'
 import { formatCivilDateFull, isCivilDateString } from '@/shared/time/civilDate'
 import {
@@ -91,6 +91,8 @@ watch(customerNote, () => {
 const fieldErrors = ref<Record<string, string | undefined>>({})
 const attempted = ref(false)
 const toast = useToast()
+// Palabras de la barbería (DEC-110): con los valores iniciales, el texto de siempre.
+const v = useVocabulary()
 const saveStatus = ref<SaveStatus>('idle')
 const saveErrorDetail = ref<string | undefined>(undefined)
 const created = ref<CreatedManualAppointment | null>(null)
@@ -172,7 +174,7 @@ const isServiceDisabled = computed(
 // servicios activos (o cuya carga falló) mostraba "Elige un servicio" como
 // única opción, prometiendo una lista que no existe.
 const serviceSelectPlaceholder = computed(() => {
-  if (!selectedBarberId.value) return 'Elige primero un barbero'
+  if (!selectedBarberId.value) return `Elige primero ${v.value.aProfessional}`
   if (servicesStatus.value === 'loading') return 'Cargando servicios…'
   if (servicesStatus.value === 'error') return 'No pudimos cargar los servicios'
   if (services.value.length === 0) return 'Sin servicios activos asignados'
@@ -188,7 +190,7 @@ const hasRail = computed(() => hasGlobalAlert.value || hasSummaryContent.value)
 
 function validateAll(): boolean {
   const errors: Record<string, string | undefined> = {
-    barberId: selectedBarberId.value ? undefined : 'Elige un barbero.',
+    barberId: selectedBarberId.value ? undefined : `Elige ${v.value.aProfessional}.`,
     serviceId: selectedServiceId.value ? undefined : 'Elige un servicio.',
     attendeeName: validateAttendeeName(attendeeName.value),
     customerFullName: validateCustomerFullName(customerFullName.value),
@@ -295,7 +297,10 @@ function onBarberSelect(barberId: string) {
     <!-- Evento 01: sin barberos ni zona resueltos, la espera conserva la
          geometría del formulario por llegar (esqueleto, no un indicador
          suelto sobre una pantalla vacía). -->
-    <NewAppointmentSkeleton v-if="pageStatus === 'loading'" label="Cargando barberos…" />
+    <NewAppointmentSkeleton
+      v-if="pageStatus === 'loading'"
+      :label="`Cargando ${v.professionals}…`"
+    />
 
     <!-- Evento 02: fallo al cargar el contexto inicial. -->
     <div
@@ -320,9 +325,14 @@ function onBarberSelect(barberId: string) {
            destino nombrado en el mensaje se resalta en latón, sin convertirse
            en un enlace que el copy real no promete. -->
       <div v-if="barbers.length === 0" class="new-appointment-page__state">
-        <PageState variant="info" headline="Aún no tienes barberos registrados." role="status">
-          Agrega uno en la sección
-          <span class="new-appointment-page__dest">"Barberos"</span> antes de registrar turnos.
+        <PageState
+          variant="info"
+          :headline="`Aún no tienes ${v.professionalsRegistered}.`"
+          role="status"
+        >
+          Agrega {{ v.oneProfessional }} en la sección
+          <span class="new-appointment-page__dest">"{{ v.Professionals }}"</span> antes de registrar
+          turnos.
         </PageState>
       </div>
 
@@ -381,7 +391,9 @@ function onBarberSelect(barberId: string) {
                 <span class="new-appointment-page__section-number" aria-hidden="true">1</span>
                 <div class="new-appointment-page__section-stack">
                   <h2 class="new-appointment-page__section-title">Selecciona</h2>
-                  <p class="new-appointment-page__section-hint">Elige al barbero y el servicio.</p>
+                  <p class="new-appointment-page__section-hint">
+                    Elige {{ v.toTheProfessional }} y el servicio.
+                  </p>
                 </div>
               </div>
 
@@ -395,14 +407,14 @@ function onBarberSelect(barberId: string) {
                     }"
                   >
                     <label for="new-appointment-barber" class="new-appointment-page__label">
-                      Barbero
+                      {{ v.Professional }}
                       <span class="new-appointment-page__required" aria-hidden="true">*</span>
                     </label>
                     <BarberSelect
                       :model-value="selectedBarberId || null"
                       :barbers="barbers"
                       trigger-id="new-appointment-barber"
-                      placeholder="Elige un barbero"
+                      :placeholder="`Elige ${v.aProfessional}`"
                       @update:model-value="onBarberSelect"
                     />
                     <p
@@ -670,7 +682,7 @@ function onBarberSelect(barberId: string) {
             </h2>
             <dl class="new-appointment-page__resumen-list">
               <div v-if="selectedBarberName" class="new-appointment-page__resumen-item">
-                <dt class="new-appointment-page__resumen-label">Barbero</dt>
+                <dt class="new-appointment-page__resumen-label">{{ v.Professional }}</dt>
                 <dd class="new-appointment-page__resumen-value">
                   <BarberAvatar :full-name="selectedBarberName" size="closed" />
                   <span>{{ selectedBarberName }}</span>
@@ -800,9 +812,10 @@ function onBarberSelect(barberId: string) {
    tarjetas apiladas: con borde propio cada una, el formulario se leía como una
    pila rayada de objetos sueltos en vez de un documento. */
 .new-appointment-page__sheet {
-  background-color: rgb(244 240 231 / 3.5%);
-  border: var(--border-width-normal) solid rgb(244 240 231 / 10%);
-  border-left: 3px solid rgb(184 149 90 / 55%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 3.5%, transparent);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 10%, transparent);
+  border-left: 3px solid color-mix(in srgb, var(--color-brand-accent-surface) 55%, transparent);
   border-radius: 2px;
 }
 
@@ -814,7 +827,8 @@ function onBarberSelect(barberId: string) {
 }
 
 .new-appointment-page__section + .new-appointment-page__section {
-  border-top: var(--border-width-normal) solid rgb(244 240 231 / 10%);
+  border-top: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 10%, transparent);
 }
 
 .new-appointment-page__section-head {
@@ -832,7 +846,8 @@ function onBarberSelect(barberId: string) {
   justify-content: center;
   width: 26px;
   height: 26px;
-  border: var(--border-width-normal) solid rgb(184 149 90 / 60%);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-brand-accent-surface) 60%, transparent);
   border-radius: 2px;
   font-family: var(--font-display);
   font-size: 14px;
@@ -914,9 +929,9 @@ function onBarberSelect(barberId: string) {
   --input-padding-x: 13px;
   --input-font-size: 15px;
   --input-line-height: 1.3;
-  --input-bg: rgb(244 240 231 / 4%);
-  --input-border-color: rgb(244 240 231 / 12%);
-  --input-border-base-color: rgb(244 240 231 / 30%);
+  --input-bg: color-mix(in srgb, var(--color-on-strong) 4%, transparent);
+  --input-border-color: color-mix(in srgb, var(--color-on-strong) 12%, transparent);
+  --input-border-base-color: color-mix(in srgb, var(--color-on-strong) 30%, transparent);
   --input-focus-ring: 0 0 0 2px var(--color-surface-strong), 0 0 0 4px var(--color-focus);
 
   color: var(--color-on-strong);
@@ -949,7 +964,7 @@ function onBarberSelect(barberId: string) {
 }
 
 .new-appointment-page :deep(.base-input:hover:not(:disabled):not(.base-input--invalid)) {
-  border-color: rgb(244 240 231 / 26%);
+  border-color: color-mix(in srgb, var(--color-on-strong) 26%, transparent);
 }
 
 /* El latón del filete inferior marca el campo YA RESUELTO; uno vacío lleva
@@ -957,7 +972,7 @@ function onBarberSelect(barberId: string) {
    un muestrario de oro y ya no distinguían lo hecho de lo pendiente (compara
    los eventos 04, 05 y 08 del atlas). */
 .new-appointment-page :deep(.new-appointment-page__input--filled .base-input) {
-  background-color: rgb(244 240 231 / 6%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 6%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
 }
 
@@ -965,13 +980,13 @@ function onBarberSelect(barberId: string) {
 .new-appointment-page :deep(.base-input--disabled) {
   background-color: var(--input-bg);
   border-color: var(--input-border-color);
-  border-bottom-color: rgb(244 240 231 / 20%);
+  border-bottom-color: color-mix(in srgb, var(--color-on-strong) 20%, transparent);
   color: var(--color-on-strong-muted);
   opacity: 0.45;
 }
 
 .new-appointment-page :deep(.base-input--invalid) {
-  background-color: rgb(227 146 141 / 7%);
+  background-color: color-mix(in srgb, var(--color-danger-on-strong) 7%, transparent);
   border-color: var(--input-border-color);
   border-bottom-color: var(--color-danger-on-strong);
 }
@@ -1006,9 +1021,11 @@ function onBarberSelect(barberId: string) {
   font-size: 15px;
   line-height: 1.3;
   color: var(--color-on-strong);
-  background-color: rgb(244 240 231 / 4%);
-  border: var(--border-width-normal) solid rgb(244 240 231 / 12%);
-  border-bottom: var(--border-width-emphasis) solid rgb(244 240 231 / 30%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 4%, transparent);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 12%, transparent);
+  border-bottom: var(--border-width-emphasis) solid
+    color-mix(in srgb, var(--color-on-strong) 30%, transparent);
   border-radius: 2px;
   outline: none;
   appearance: none;
@@ -1045,7 +1062,7 @@ function onBarberSelect(barberId: string) {
 }
 
 .new-appointment-page__field--filled .new-appointment-page__select {
-  background-color: rgb(244 240 231 / 6%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 6%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
 }
 
@@ -1057,12 +1074,12 @@ function onBarberSelect(barberId: string) {
 }
 
 .new-appointment-page__field--off .new-appointment-page__select {
-  border-bottom-color: rgb(244 240 231 / 20%);
+  border-bottom-color: color-mix(in srgb, var(--color-on-strong) 20%, transparent);
 }
 
 .new-appointment-page__field--error .new-appointment-page__select,
 .new-appointment-page__field--error .new-appointment-page__textarea {
-  background-color: rgb(227 146 141 / 7%);
+  background-color: color-mix(in srgb, var(--color-danger-on-strong) 7%, transparent);
   border-bottom-color: var(--color-danger-on-strong);
 }
 
@@ -1075,18 +1092,18 @@ function onBarberSelect(barberId: string) {
   padding: 0 13px;
   gap: 10px;
   font-size: 15px;
-  background-color: rgb(244 240 231 / 4%);
-  border-color: rgb(244 240 231 / 12%);
-  border-bottom-color: rgb(244 240 231 / 30%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 4%, transparent);
+  border-color: color-mix(in srgb, var(--color-on-strong) 12%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--color-on-strong) 30%, transparent);
 }
 
 .new-appointment-page__field--filled :deep(.barber-select__trigger) {
-  background-color: rgb(244 240 231 / 6%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 6%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
 }
 
 .new-appointment-page__field--error :deep(.barber-select__trigger) {
-  background-color: rgb(227 146 141 / 7%);
+  background-color: color-mix(in srgb, var(--color-danger-on-strong) 7%, transparent);
   border-bottom-color: var(--color-danger-on-strong);
 }
 
@@ -1108,9 +1125,11 @@ function onBarberSelect(barberId: string) {
   font-size: 15px;
   line-height: 1.3;
   color: var(--color-on-strong);
-  background-color: rgb(244 240 231 / 4%);
-  border: var(--border-width-normal) solid rgb(244 240 231 / 12%);
-  border-bottom: var(--border-width-emphasis) solid rgb(244 240 231 / 30%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 4%, transparent);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 12%, transparent);
+  border-bottom: var(--border-width-emphasis) solid
+    color-mix(in srgb, var(--color-on-strong) 30%, transparent);
   border-radius: 2px;
   outline: none;
   overflow-y: hidden;
@@ -1125,7 +1144,7 @@ function onBarberSelect(barberId: string) {
 }
 
 .new-appointment-page__field--filled .new-appointment-page__textarea {
-  background-color: rgb(244 240 231 / 6%);
+  background-color: color-mix(in srgb, var(--color-on-strong) 6%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
 }
 
@@ -1182,7 +1201,7 @@ function onBarberSelect(barberId: string) {
   width: 13px;
   height: 13px;
   flex-shrink: 0;
-  border: 1.5px solid rgb(184 149 90 / 22%);
+  border: 1.5px solid color-mix(in srgb, var(--color-brand-accent-surface) 22%, transparent);
   border-top-color: var(--color-brand-accent-surface);
   border-right-color: var(--color-brand-accent-surface);
   border-radius: 50%;
@@ -1193,8 +1212,9 @@ function onBarberSelect(barberId: string) {
 
 .new-appointment-page__resumen {
   padding: 16px;
-  background-color: #16243a;
-  border: var(--border-width-normal) solid rgb(244 240 231 / 12%);
+  background-color: var(--color-field-strong-raised);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 12%, transparent);
   border-top: var(--border-width-emphasis) solid var(--color-brand-accent-surface);
   border-radius: 2px;
 }
@@ -1232,7 +1252,8 @@ function onBarberSelect(barberId: string) {
 }
 
 .new-appointment-page__resumen-item + .new-appointment-page__resumen-item {
-  border-top: var(--border-width-normal) solid rgb(244 240 231 / 10%);
+  border-top: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 10%, transparent);
 }
 
 .new-appointment-page__resumen-label {

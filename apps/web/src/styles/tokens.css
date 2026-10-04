@@ -56,6 +56,10 @@
   --color-inactive-text: #56514a;
   --color-inactive-border: #c9c0b2;
   --color-on-strong: #f4f0e7;
+  /* Texto o icono sobre un relleno tinta o rojo FIJO (botón primario, de
+     peligro): no se invierte con el modo, a diferencia de --color-on-strong,
+     que es el texto sobre la superficie del tema. */
+  --color-on-ink: #f4f0e7;
   /* Texto secundario sobre tinta (issue #189, atlas panel-agenda-eventos):
      azul-gris apagado, no marfil con opacidad reducida — la fecha/zona, las
      etiquetas del eje, el texto de un turno terminal y el cuerpo de un
@@ -91,6 +95,10 @@
   --color-field-strong-border: rgb(244 240 231 / 12%);
   /* Fila o día bajo el cursor dentro de un panel --color-field-strong. */
   --color-field-strong-raised: #16243a;
+  /* Cabecera, dock y marco del panel privado. En Tinta es la propia
+     superficie tinta; en Marfil se asienta un tono más oscuro que el lienzo
+     para que el marco siga leyéndose como orientación y no como contenido. */
+  --color-chrome-surface: var(--color-surface-strong);
 
   /* Color: estados de turno */
   --color-status-confirmed-surface: var(--color-info-surface);
@@ -216,6 +224,13 @@
   --motion-duration-fast: 120ms;
   --motion-duration-base: 200ms;
   --motion-easing-standard: ease;
+
+  /* Alto de la ventana que ven los componentes del panel. El tamaño de texto
+     (Configuración, DEC-110) escala la interfaz con `zoom` sobre <html>, y
+     `100dvh` dentro de un ancestro con zoom crece con ese factor: dividir por
+     --ui-zoom devuelve la altura real de la ventana para que el dock y los
+     diálogos no se salgan de ella. */
+  --viewport-height: calc(100dvh / var(--ui-zoom, 1));
 }
 
 @media (min-width: 1024px) {
@@ -223,4 +238,30 @@
     --font-size-display: 48px;
     --font-size-display-line: 52px;
   }
+}
+
+/*
+ * Tema Marfil (DEC-110): el modo claro del panel privado. Solo se activa con
+ * `data-app-theme="ivory"` en <html>, que el cascarón privado pone mientras
+ * está montado; el acceso, la recuperación y la reserva pública nunca lo ven.
+ * Redefine únicamente los tokens de superficie sobre tinta: cada pantalla ya
+ * los consume, así que no hay una hoja de estilos paralela. Todos los pares
+ * texto/fondo cumplen WCAG 2.2 AA sobre #f4f0e7 (medidos, ver
+ * shared/model/__tests__/brandPalette.test.ts).
+ */
+:root[data-app-theme='ivory'] {
+  --color-surface-strong: #f4f0e7;
+  --color-chrome-surface: #ebe5d9;
+  --color-on-strong: #101b2b;
+  --color-on-strong-muted: #565a57;
+  --color-on-strong-soft: #3b424c;
+  --color-field-strong: #ffffff;
+  --color-field-strong-border: rgb(16 27 43 / 16%);
+  --color-field-strong-raised: #e8e2d8;
+  --color-danger-on-strong: #8a2c2c;
+  --color-warning-on-strong: #775019;
+  --color-success-on-strong: #325d43;
+  --color-pending-on-strong: #6f5a0c;
+  --color-no-show-on-strong: #5a4a8a;
+  --color-info-on-strong: #23405b;
 }

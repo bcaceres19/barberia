@@ -12,7 +12,12 @@ import type { NavItem } from '@/shared/navigation/navItem'
 export { staffPrivateShellChildRoutes } from './routes'
 
 export const staffNavItems: NavItem[] = [
-  { to: { name: 'staff-barberos' }, label: 'Barberos', primary: true },
+  {
+    to: { name: 'staff-barberos' },
+    label: 'Barberos',
+    labelFor: (v) => v.Professionals,
+    primary: true,
+  },
 ]
 
 export const StaffPage = defineAsyncComponent(() => import('./pages/StaffPage.vue'))
