@@ -10,7 +10,14 @@
 // singleton reactivo de solo lectura hacia fuera.
 import { computed, reactive, readonly, type DeepReadonly } from 'vue'
 import { isBrandAccentKey, type BrandAccentKey } from './brandPalette'
-import { buildVocabulary, DEFAULT_BRAND, type BrandSettings, type Gender } from './vocabulary'
+import {
+  buildVocabulary,
+  DEFAULT_BRAND,
+  isPanelProfile,
+  type BrandSettings,
+  type Gender,
+  type PanelProfile,
+} from './vocabulary'
 
 const STORAGE_KEY = 'nava.brand.v1'
 
@@ -42,6 +49,9 @@ function readStored(): BrandSettings {
         professionalTerm: c.professionalTerm,
         professionalTermPlural: c.professionalTermPlural,
         professionalTermGender: c.professionalTermGender,
+        // Una copia guardada antes de DEC-115 no trae perfil: se lee como `shop`
+        // (el panel de siempre) en vez de descartar el resto de la marca.
+        panelProfile: isPanelProfile(c.panelProfile) ? c.panelProfile : 'shop',
       }
     }
   } catch {
@@ -72,6 +82,12 @@ export const brandState: DeepReadonly<{
 export const effectiveAccent = computed<BrandAccentKey>(
   () => state.accentPreview ?? state.brand.accent,
 )
+
+/** Perfil del panel confirmado por el servidor (DEC-115). */
+export const panelProfile = computed<PanelProfile>(() => state.brand.panelProfile)
+
+/** `true` en el panel de barbero individual (perfil `solo`). */
+export const isSoloProfile = computed(() => state.brand.panelProfile === 'solo')
 
 /** Vocabulario ya concordado de la marca confirmada por el servidor. */
 export const vocabulary = computed(() => buildVocabulary(state.brand))

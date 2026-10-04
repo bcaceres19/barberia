@@ -12,6 +12,7 @@
 // confirmado añade un aviso emergente (DEC-095); los errores siguen en línea.
 import { computed, onMounted, ref } from 'vue'
 import { useToast } from '@/shared/composables'
+import { isSoloProfile } from '@/shared/model'
 import { BaseAlert, BaseButton, BaseDialog, BaseInput, PageHeader, RecordRow } from '@/shared/ui'
 import {
   createWorkingHour,
@@ -73,6 +74,9 @@ const barbershopTimezone = ref<string | null>(null)
 const workingHoursStatus = ref<WorkingHoursStatus>('idle')
 const workingHours = ref<WorkingHour[]>([])
 const pendingDeleteIds = ref<Set<string>>(new Set())
+
+// Perfil de barbero individual (DEC-115): con un solo barbero no hay selector.
+const hideBarberPicker = computed(() => isSoloProfile.value && barbers.value.length === 1)
 
 const selectedBarber = computed(
   () => barbers.value.find((b) => b.id === selectedBarberId.value) ?? null,
@@ -808,12 +812,17 @@ onMounted(loadColombianHolidays)
 
     <template v-else>
       <p v-if="barbers.length === 0" class="schedules-page__empty">
-        Aún no tienes barberos registrados. Agrega uno en la sección "Barberos" antes de configurar
-        su horario.
+        <template v-if="isSoloProfile">
+          Aún no tienes tu perfil. Créalo en la sección "Mi perfil" antes de configurar tu horario.
+        </template>
+        <template v-else>
+          Aún no tienes barberos registrados. Agrega uno en la sección "Barberos" antes de
+          configurar su horario.
+        </template>
       </p>
 
       <template v-else>
-        <div class="schedules-page__picker">
+        <div v-if="!hideBarberPicker" class="schedules-page__picker">
           <label for="schedules-barber-select" class="schedules-page__label">Barbero</label>
           <select
             id="schedules-barber-select"

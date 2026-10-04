@@ -20,6 +20,7 @@ export function sameBarbershop(
 export function sameBrand(a: BrandSettings, b: BrandSettings): boolean {
   return (
     a.accent === b.accent &&
+    a.panelProfile === b.panelProfile &&
     a.businessTermGender === b.businessTermGender &&
     a.professionalTermGender === b.professionalTermGender &&
     normalizeTerm(a.businessTerm) === normalizeTerm(b.businessTerm) &&

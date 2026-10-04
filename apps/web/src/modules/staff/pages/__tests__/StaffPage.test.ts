@@ -877,4 +877,68 @@ describe('StaffPage', () => {
     const results = await axe(wrapper.element, axeOptions)
     expect(results).toHaveNoViolations()
   })
+  describe('perfil de barbero individual (DEC-115)', () => {
+    const solo = { ...DEFAULT_BRAND, panelProfile: 'solo' as const }
+
+    it('is the card of the only barber: "Mi perfil", no team controls', async () => {
+      setBrand(solo)
+      const wrapper = await mountReady()
+
+      expect(wrapper.get('h1').text()).toBe('Mi perfil')
+      expect(wrapper.text()).toContain('Carlos Ramírez')
+      // Sin «Agregar», encabezados de tabla ni paginador: solo tienen sentido con un equipo.
+      expect(wrapper.find('.staff-page__create').exists()).toBe(false)
+      expect(wrapper.find('.staff-page__columns').exists()).toBe(false)
+      expect(wrapper.find('.staff-page__footer').exists()).toBe(false)
+      expect(wrapper.text()).toContain('Desde ')
+      // Lo propio de la persona sigue ahí: editar y la acción de «Bloquear» del slot.
+      expect(wrapper.find('button[aria-label="Editar Carlos Ramírez"]').exists()).toBe(true)
+    })
+
+    it('still lets the one barber be edited from the card', async () => {
+      setBrand(solo)
+      const wrapper = await mountReady()
+
+      await wrapper.get('button[aria-label="Editar Carlos Ramírez"]').trigger('click')
+      await flushPromises()
+
+      expect(openDialogInput(wrapper).value).toBe('Carlos Ramírez')
+    })
+
+    it('asks to create the profile when there is nobody yet', async () => {
+      setBrand(solo)
+      const wrapper = await mountReady([])
+
+      expect(wrapper.get('h1').text()).toBe('Mi perfil')
+      expect(wrapper.text()).toContain('Aún no tienes tu perfil')
+      const create = wrapper.findAll('button').find((b) => b.text() === 'Crear mi perfil')
+      expect(create).toBeDefined()
+      // El diálogo de alta vive siempre en el DOM; lo que importa es el estado vacío visible.
+      expect(wrapper.get('.staff-page__empty').text()).not.toContain('Agregar')
+    })
+
+    it('goes back to the team screen when there are several barbers', async () => {
+      setBrand(solo)
+      const wrapper = await mountReady(fourBarbers)
+
+      expect(wrapper.get('h1').text()).toBe('Barberos')
+      expect(wrapper.find('.staff-page__create').exists()).toBe(true)
+      expect(wrapper.find('.staff-page__footer').exists()).toBe(true)
+    })
+
+    it('keeps the full panel untouched with one barber', async () => {
+      const wrapper = await mountReady()
+
+      expect(wrapper.get('h1').text()).toBe('Barberos')
+      expect(wrapper.find('.staff-page__create').exists()).toBe(true)
+      expect(wrapper.find('.staff-page__columns').exists()).toBe(true)
+    })
+
+    it('has no axe violations on the card', async () => {
+      setBrand(solo)
+      const wrapper = await mountReady()
+
+      expect(await axe(wrapper.element.outerHTML, axeOptions)).toHaveNoViolations()
+    })
+  })
 })

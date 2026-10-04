@@ -1,0 +1,13 @@
+# Perfil del panel de la barbería (issue #294, DEC-115). Presentación pura: no
+# limita cuántos barberos existen ni cambia reglas de agenda. Añadir un valor
+# exige una migración (barbershop_panel_profile_ck) y la misma clave en la
+# navegación del cliente.
+type: string
+enum: [shop, solo]
+description: >
+  Perfil del panel: `shop` (barbería con equipo, el panel completo; valor
+  inicial) o `solo` (barbero individual: sin gestión de equipo ni selector de
+  barbero). Un barbero independiente sigue siendo una barbería con un solo
+  barbero (`DEC-019`); el perfil solo cambia lo que el panel muestra.
+examples:
+  - solo

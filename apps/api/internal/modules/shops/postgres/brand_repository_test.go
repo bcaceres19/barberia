@@ -20,7 +20,7 @@ func restoreBrand(t *testing.T, db *database.DB, shop string) {
 				`UPDATE barbershop
 				    SET brand_accent = 'brass', business_term = 'barbería', business_term_gender = 'feminine',
 				        professional_term = 'barbero', professional_term_plural = 'barberos',
-				        professional_term_gender = 'masculine'
+				        professional_term_gender = 'masculine', panel_profile = 'shop'
 				  WHERE id = $1`, shop)
 			return err
 		})
@@ -30,11 +30,21 @@ func restoreBrand(t *testing.T, db *database.DB, shop string) {
 	})
 }
 
+// salonBrand no declara perfil: vacío conserva el guardado (DEC-115), de modo
+// que las pruebas de marca no dependen del perfil de la fila compartida.
 func salonBrand() shops.Brand {
 	return shops.Brand{
 		Accent: "ruby", BusinessTerm: "salón de belleza", BusinessTermGender: shops.GenderMasculine,
 		ProfessionalTerm: "estilista", ProfessionalTermPlural: "estilistas", ProfessionalTermGender: shops.GenderFeminine,
 	}
+}
+
+// salonBrandStored es lo que se lee tras guardar salonBrand sobre una fila con
+// el perfil inicial.
+func salonBrandStored() shops.Brand {
+	b := salonBrand()
+	b.PanelProfile = shops.PanelProfileShop
+	return b
 }
 
 // TestBrandGet_ReturnsTheInitialValuesForAnUntouchedBarbershop: una barbería
@@ -62,13 +72,13 @@ func TestBrandUpdate_PersistsAndRoundTrips(t *testing.T) {
 	if err != nil || !result.Found {
 		t.Fatalf("Update: found=%v err=%v", result.Found, err)
 	}
-	if result.Brand != salonBrand() {
+	if result.Brand != salonBrandStored() {
 		t.Fatalf("RETURNING must echo what was stored, got %+v", result.Brand)
 	}
 
 	// Lectura independiente: descarta que RETURNING mienta sobre lo persistido.
 	got, found, err := repo.Get(context.Background(), shopA)
-	if err != nil || !found || got != salonBrand() {
+	if err != nil || !found || got != salonBrandStored() {
 		t.Fatalf("expected the persisted row to match, got %+v (found=%v err=%v)", got, found, err)
 	}
 }
@@ -177,6 +187,82 @@ func TestBrandUpdate_DatabaseCheckIsTheLastLineOfDefense(t *testing.T) {
 		if _, err := repo.Update(context.Background(), shopA, b); err == nil {
 			t.Fatalf("%s: la base debía rechazar el valor", name)
 		}
+	}
+
+	got, _, err := repo.Get(context.Background(), shopA)
+	if err != nil || got != shops.DefaultBrand {
+		t.Fatalf("a rejected write must leave the row untouched, got %+v err=%v", got, err)
+	}
+}
+
+// TestBrandUpdate_PanelProfile cubre el perfil del panel (DEC-115): se guarda,
+// vuelve a `shop` sin pérdida y, cuando la entrada no lo declara, no se
+// reinicia.
+func TestBrandUpdate_PanelProfile(t *testing.T) {
+	db := setupTestDB(t)
+	repo := shopspostgres.NewBrandRepository(db)
+	restoreBrand(t, db, shopA)
+
+	solo := salonBrand()
+	solo.PanelProfile = shops.PanelProfileSolo
+	result, err := repo.Update(context.Background(), shopA, solo)
+	if err != nil || !result.Found || result.Brand.PanelProfile != shops.PanelProfileSolo {
+		t.Fatalf("Update solo: %+v err=%v", result, err)
+	}
+
+	// Una entrada sin perfil (cliente que no lo conoce) conserva `solo`.
+	omitted, err := repo.Update(context.Background(), shopA, salonBrand())
+	if err != nil || omitted.Brand.PanelProfile != shops.PanelProfileSolo {
+		t.Fatalf("an omitted profile must keep solo, got %+v err=%v", omitted.Brand, err)
+	}
+
+	back := salonBrand()
+	back.PanelProfile = shops.PanelProfileShop
+	if res, err := repo.Update(context.Background(), shopA, back); err != nil || res.Brand.PanelProfile != shops.PanelProfileShop {
+		t.Fatalf("Update back to shop: %+v err=%v", res, err)
+	}
+
+	got, _, err := repo.Get(context.Background(), shopA)
+	if err != nil || got != salonBrandStored() {
+		t.Fatalf("the round trip must keep the brand intact, got %+v err=%v", got, err)
+	}
+}
+
+// TestBrandUpdate_PanelProfile_TwoTenants_NeverCrossesBarbershops: poner a una
+// barbería en `solo` no cambia a la otra.
+func TestBrandUpdate_PanelProfile_TwoTenants_NeverCrossesBarbershops(t *testing.T) {
+	db := setupTestDB(t)
+	repo := shopspostgres.NewBrandRepository(db)
+	restoreBrand(t, db, shopA)
+	restoreBrand(t, db, shopB)
+
+	solo := salonBrand()
+	solo.PanelProfile = shops.PanelProfileSolo
+	if _, err := repo.Update(context.Background(), shopA, solo); err != nil {
+		t.Fatalf("Update shopA: %v", err)
+	}
+
+	gotB, found, err := repo.Get(context.Background(), shopB)
+	if err != nil || !found {
+		t.Fatalf("Get shopB: found=%v err=%v", found, err)
+	}
+	if gotB.PanelProfile != shops.PanelProfileShop {
+		t.Fatalf("setting shopA to solo changed shopB: %+v", gotB)
+	}
+}
+
+// TestBrandUpdate_PanelProfile_DatabaseCheckIsTheLastLineOfDefense: aunque el
+// servicio validara mal, la base rechaza un perfil fuera de la lista y no deja
+// una escritura parcial.
+func TestBrandUpdate_PanelProfile_DatabaseCheckIsTheLastLineOfDefense(t *testing.T) {
+	db := setupTestDB(t)
+	repo := shopspostgres.NewBrandRepository(db)
+	restoreBrand(t, db, shopA)
+
+	b := salonBrand()
+	b.PanelProfile = "individual"
+	if _, err := repo.Update(context.Background(), shopA, b); err == nil {
+		t.Fatal("la base debía rechazar un perfil fuera de la lista cerrada")
 	}
 
 	got, _, err := repo.Get(context.Background(), shopA)

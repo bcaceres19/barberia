@@ -11,6 +11,7 @@ import { publicBookingRoutes } from '@/modules/public-booking'
 import { schedulesNavItems, schedulesPrivateShellChildRoutes } from '@/modules/schedules'
 import { settingsNavItems, settingsPrivateShellChildRoutes } from '@/modules/settings'
 import { staffNavItems, staffPrivateShellChildRoutes } from '@/modules/staff'
+import { installProfileRedirect } from './profileGuard'
 
 // Cada ruta se carga de forma diferida (docs/04-arquitectura/frontend.md):
 // un módulo futuro no aumenta el bundle inicial sin necesidad. `app/router`
@@ -48,7 +49,15 @@ const routes: RouteRecordRaw[] = [
             }
           : route,
       ),
-      ...catalogPrivateShellChildRoutes,
+      ...catalogPrivateShellChildRoutes.map((route) =>
+        route.name === 'catalog-servicios'
+          ? {
+              path: route.path,
+              name: route.name,
+              component: () => import('../pages/CatalogWorkspacePage.vue'),
+            }
+          : route,
+      ),
       ...barberServicesPrivateShellChildRoutes,
       ...schedulesPrivateShellChildRoutes,
       ...agendaPrivateShellChildRoutes,
@@ -76,3 +85,7 @@ export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 })
+
+// Perfil de barbero individual (DEC-115): las rutas que ese perfil retira se desvían a
+// un destino válido (ver profileGuard.ts).
+installProfileRedirect(router)

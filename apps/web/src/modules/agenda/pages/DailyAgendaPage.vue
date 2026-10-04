@@ -18,7 +18,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router'
 import { useMinHoldLoading, useVocabulary } from '@/shared/composables'
-import { capitalize } from '@/shared/model'
+import { capitalize, isSoloProfile } from '@/shared/model'
 import { BaseAlert, BaseBadge, BaseButton, DiamondLoader, PageState } from '@/shared/ui'
 import {
   formatCivilDateFull,
@@ -34,6 +34,7 @@ import {
   fetchDailyAgenda,
 } from '../api/appointmentsApi'
 import type { BarberSummary } from '../model/appointment'
+import { summarizeDay } from '../model/daySummary'
 import {
   APPOINTMENT_STATUS_BADGE_VARIANT,
   APPOINTMENT_STATUS_LABELS,
@@ -328,6 +329,30 @@ function statusBadgeVariant(entry: DailyAgendaEntry) {
   return APPOINTMENT_STATUS_BADGE_VARIANT[entry.status]
 }
 
+// Perfil de barbero individual (DEC-115): con un solo barbero no hay nada que
+// elegir, así que el selector se oculta. La selección sigue viviendo en
+// `route.query.barberId` (DEC-074): solo desaparece el control.
+const hideBarberPicker = computed(() => isSoloProfile.value && barbers.value.length === 1)
+
+// «Mi día» (DEC-115): una frase con lo que queda de hoy, derivada de los turnos ya
+// cargados. Solo para el día en curso: en otra fecha «siguiente» no significaría nada.
+// Un día sin turnos ya tiene su propio estado vacío, así que no repite el mensaje.
+const soloDaySummary = computed<string | null>(() => {
+  if (!isSoloProfile.value || !isViewingToday.value) return null
+  if (agendaStatus.value !== 'ready' || !barbershopTimezone.value) return null
+  const summary = summarizeDay(entries.value, Date.now())
+  if (summary.total === 0) return null
+  if (summary.remaining === 0) return 'No te quedan turnos por atender hoy.'
+  const count = `${summary.remaining} ${summary.remaining === 1 ? 'turno por atender' : 'turnos por atender'}`
+  if (summary.inProgress) {
+    return `${count} · En curso hasta las ${formatAgendaTime(summary.inProgress.endsAt)}`
+  }
+  if (summary.next) {
+    return `${count} · Siguiente a las ${formatAgendaTime(summary.next.startsAt)} · ${summary.next.serviceName}`
+  }
+  return count
+})
+
 function formatAgendaTime(instant: string): string {
   if (!barbershopTimezone.value) return ''
   return new Intl.DateTimeFormat('es-CO', {
@@ -596,6 +621,7 @@ const dayChangeMarkerPercent = computed(() => {
           {{ selectedDateLabel
           }}<template v-if="barbershopTimezone"> · Zona {{ barbershopTimezone }}</template>
         </p>
+        <p v-if="soloDaySummary" class="daily-agenda-page__summary">{{ soloDaySummary }}</p>
       </div>
       <BaseButton
         v-if="pageStatus === 'ready' && barbers.length > 0"
@@ -636,16 +662,25 @@ const dayChangeMarkerPercent = computed(() => {
         :headline="`Aún no tienes ${v.professionalsRegistered}.`"
         role="status"
       >
-        Agrega {{ v.oneProfessional }} en la sección
-        <RouterLink class="page-state__link" :to="{ name: 'staff-barberos' }"
-          >«{{ v.Professionals }}»</RouterLink
-        >
-        para ver su agenda.
+        <template v-if="isSoloProfile">
+          Crea tu perfil en
+          <RouterLink class="page-state__link" :to="{ name: 'staff-barberos' }"
+            >«Mi perfil»</RouterLink
+          >
+          para ver tu agenda.
+        </template>
+        <template v-else>
+          Agrega {{ v.oneProfessional }} en la sección
+          <RouterLink class="page-state__link" :to="{ name: 'staff-barberos' }"
+            >«{{ v.Professionals }}»</RouterLink
+          >
+          para ver su agenda.
+        </template>
       </PageState>
 
       <template v-else>
         <div class="daily-agenda-page__controls">
-          <div class="daily-agenda-page__picker">
+          <div v-if="!hideBarberPicker" class="daily-agenda-page__picker">
             <label for="daily-agenda-barber-select" class="daily-agenda-page__label">{{
               v.Professional
             }}</label>
@@ -1029,6 +1064,16 @@ const dayChangeMarkerPercent = computed(() => {
   font-family: var(--font-family-base);
   font-size: var(--font-size-body-sm);
   color: var(--color-on-strong-muted);
+}
+
+/* «Mi día» del barbero individual: la única línea de latón del encabezado, para
+   que lo que sigue en la jornada se lea antes que la fecha. */
+.daily-agenda-page__summary {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 500;
+  color: var(--color-brand-accent-surface);
 }
 
 .daily-agenda-page__cta {

@@ -48,6 +48,7 @@ describe('sameBrand', () => {
     ['professionalTerm', { professionalTerm: 'estilista' }],
     ['professionalTermPlural', { professionalTermPlural: 'estilistas' }],
     ['professionalTermGender', { professionalTermGender: 'feminine' as const }],
+    ['panelProfile', { panelProfile: 'solo' as const }],
   ])('detects a change in %s', (_field, change) => {
     expect(sameBrand({ ...DEFAULT_BRAND, ...change }, DEFAULT_BRAND)).toBe(false)
   })

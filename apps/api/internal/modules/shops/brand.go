@@ -22,6 +22,25 @@ func (g Gender) IsValid() bool {
 	return g == GenderMasculine || g == GenderFeminine
 }
 
+// PanelProfile es el perfil del panel de la barbería (issue #294, DEC-115):
+// `shop` es el panel completo de una barbería con equipo y `solo` el de un
+// barbero individual, sin gestión de equipo ni selector de barbero. Es
+// presentación pura: no limita cuántos barberos existen ni cambia ninguna
+// regla de agenda, porque un independiente sigue siendo una barbería con un
+// solo barbero (DEC-019).
+type PanelProfile string
+
+const (
+	PanelProfileShop PanelProfile = "shop"
+	PanelProfileSolo PanelProfile = "solo"
+)
+
+// IsValid informa si p es uno de los dos valores que
+// barbershop_panel_profile_ck admite en la base.
+func (p PanelProfile) IsValid() bool {
+	return p == PanelProfileShop || p == PanelProfileSolo
+}
+
 // Brand es la marca y el vocabulario que una barbería elige para su panel
 // (issue #292, DEC-110). Es un recurso propio de /private/settings/brand,
 // separado de Barbershop a propósito: el contrato de HU-020 declara
@@ -31,6 +50,11 @@ func (g Gender) IsValid() bool {
 // traduce a una paleta con contraste AA comprobado en cada modo. Los
 // términos se guardan recortados y en minúsculas; la interfaz capitaliza
 // donde corresponde.
+//
+// PanelProfile viaja con la marca por ser otra preferencia de presentación de
+// la barbería (DEC-115). En la entrada de BrandRepository.Update, vacío
+// significa «conservar el perfil guardado»: así una solicitud que no lo
+// declara nunca lo reinicia.
 type Brand struct {
 	Accent                 string
 	BusinessTerm           string
@@ -38,6 +62,7 @@ type Brand struct {
 	ProfessionalTerm       string
 	ProfessionalTermPlural string
 	ProfessionalTermGender Gender
+	PanelProfile           PanelProfile
 }
 
 // Largos de un término, iguales a barbershop_business_term_ck,
@@ -63,6 +88,7 @@ var DefaultBrand = Brand{
 	ProfessionalTerm:       "barbero",
 	ProfessionalTermPlural: "barberos",
 	ProfessionalTermGender: GenderMasculine,
+	PanelProfile:           PanelProfileShop,
 }
 
 // IsAllowedAccent informa si key pertenece a la lista cerrada de acentos.

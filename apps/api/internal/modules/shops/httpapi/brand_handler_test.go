@@ -43,7 +43,7 @@ var _ shops.BrandRepository = (*fakeBrandRepository)(nil)
 
 const validBrandBody = `{"accent":"emerald","businessTerm":"Salón","businessTermGender":"masculine","professionalTerm":"Estilista","professionalTermPlural":"estilistas","professionalTermGender":"feminine"}`
 
-func TestGetBrandHandler_Success_ReturnsTheSixFields(t *testing.T) {
+func TestGetBrandHandler_Success_ReturnsTheSevenFields(t *testing.T) {
 	repo := &fakeBrandRepository{getFound: true, getBrand: shops.DefaultBrand}
 	h := httpapi.NewGetBrandHandler(shops.NewBrandService(repo))
 
@@ -60,6 +60,7 @@ func TestGetBrandHandler_Success_ReturnsTheSixFields(t *testing.T) {
 	want := map[string]string{
 		"accent": "brass", "businessTerm": "barbería", "businessTermGender": "feminine",
 		"professionalTerm": "barbero", "professionalTermPlural": "barberos", "professionalTermGender": "masculine",
+		"panelProfile": "shop",
 	}
 	if len(body) != len(want) {
 		t.Fatalf("expected exactly %d fields, got %v", len(want), body)
@@ -206,5 +207,83 @@ func TestUpdateBrandHandler_MissingPrincipal_ReturnsSafe500(t *testing.T) {
 	}
 	if len(repo.updateCalls) != 0 {
 		t.Fatal("no principal must never write")
+	}
+}
+
+func TestUpdateBrandHandler_PanelProfile(t *testing.T) {
+	const prefix = `{"accent":"brass","businessTerm":"barbería","businessTermGender":"feminine","professionalTerm":"barbero","professionalTermPlural":"barberos","professionalTermGender":"masculine"`
+
+	t.Run("solo se guarda y se devuelve", func(t *testing.T) {
+		saved := shops.DefaultBrand
+		saved.PanelProfile = shops.PanelProfileSolo
+		repo := &fakeBrandRepository{updateResult: shops.BrandUpdateResult{Brand: saved, Found: true}}
+		h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(repo))
+
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, requestWithPrincipal(http.MethodPatch, "/api/v1/private/settings/brand", []byte(prefix+`,"panelProfile":"solo"}`)))
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+		}
+		if got := repo.updateCalls[0].brand.PanelProfile; got != shops.PanelProfileSolo {
+			t.Fatalf("expected solo to reach the repository, got %q", got)
+		}
+		var body httpapi.BrandResponse
+		if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+			t.Fatalf("decode: %v", err)
+		}
+		if body.PanelProfile != "solo" {
+			t.Fatalf("expected panelProfile solo in the response, got %q", body.PanelProfile)
+		}
+	})
+
+	t.Run("omitido conserva el guardado", func(t *testing.T) {
+		repo := &fakeBrandRepository{updateResult: shops.BrandUpdateResult{Brand: shops.DefaultBrand, Found: true}}
+		h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(repo))
+
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, requestWithPrincipal(http.MethodPatch, "/api/v1/private/settings/brand", []byte(prefix+`}`)))
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200 for a client that does not know the profile, got %d: %s", rec.Code, rec.Body.String())
+		}
+		if got := repo.updateCalls[0].brand.PanelProfile; got != "" {
+			t.Fatalf("an omitted profile must reach the repository empty, got %q", got)
+		}
+	})
+
+	for name, value := range map[string]string{
+		"valor desconocido": `"individual"`,
+		"vacío explícito":   `""`,
+		"nulo":              `null`,
+		"número":            `1`,
+	} {
+		t.Run("rechaza "+name, func(t *testing.T) {
+			repo := &fakeBrandRepository{}
+			h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(repo))
+
+			rec := httptest.NewRecorder()
+			h.ServeHTTP(rec, requestWithPrincipal(http.MethodPatch, "/api/v1/private/settings/brand", []byte(prefix+`,"panelProfile":`+value+`}`)))
+
+			// Un número no es un texto: 400 del decodificador; el resto, 422 del servicio.
+			// `null` decodifica como puntero nulo, es decir, «omitido»: 200 sin cambiar nada.
+			switch name {
+			case "número":
+				if rec.Code != http.StatusBadRequest {
+					t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+				}
+			case "nulo":
+				if rec.Code != http.StatusOK && rec.Code != http.StatusNotFound {
+					t.Fatalf("expected null to behave as omitted, got %d: %s", rec.Code, rec.Body.String())
+				}
+			default:
+				if rec.Code != http.StatusUnprocessableEntity {
+					t.Fatalf("expected 422, got %d: %s", rec.Code, rec.Body.String())
+				}
+				if len(repo.updateCalls) != 0 {
+					t.Fatal("a rejected profile must never be written")
+				}
+			}
+		})
 	}
 }

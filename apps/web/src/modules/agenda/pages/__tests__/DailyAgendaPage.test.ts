@@ -12,6 +12,7 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import { axe } from 'vitest-axe'
 import { shiftCivilDate } from '@/shared/time/civilDate'
 import { DEFAULT_MIN_HOLD_MS } from '@/shared/composables'
+import { DEFAULT_BRAND, resetBrand, setBrand } from '@/shared/model'
 
 // useMinHoldLoading (issue 2026-09-28, "se ve como se genera el objeto")
 // mantiene pageStatus/agendaStatus en su primera carga con un setTimeout
@@ -156,6 +157,7 @@ describe('DailyAgendaPage', () => {
     fetchBarberSummariesMock.mockReset()
     fetchBarbershopTimezoneMock.mockReset()
     fetchDailyAgendaMock.mockReset()
+    resetBrand()
   })
 
   it('shows a non-blank loading state, then the barber picker (DEC-074: selector obligatorio)', async () => {
@@ -740,6 +742,110 @@ describe('DailyAgendaPage', () => {
 
         expect(wrapper.get('.daily-agenda-page__timeline-slip').text()).toContain('Corte clásico')
       })
+    })
+  })
+  describe('perfil de barbero individual (DEC-115)', () => {
+    const oneBarber = [{ id: 'b-1', fullName: 'Mateo Rojas' }]
+    const hhmm = (instant: string) =>
+      new Intl.DateTimeFormat('es-CO', {
+        timeZone: 'America/Bogota',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      }).format(new Date(instant))
+
+    // Turnos de hoy en la zona de la barbería, relativos al reloj real: la página
+    // evalúa «ahora» con Date.now(), igual que su marcador «Ahora».
+    function todayEntry(id: string, fromNowMin: number, durationMin: number, serviceName: string) {
+      const startsAt = new Date(Date.now() + fromNowMin * 60_000).toISOString()
+      const endsAt = new Date(Date.now() + (fromNowMin + durationMin) * 60_000).toISOString()
+      return {
+        ...oneEntry[0]!,
+        id,
+        serviceName,
+        startsAt,
+        endsAt,
+      }
+    }
+
+    it('hides the barber picker when there is one barber, and still loads that agenda', async () => {
+      setBrand({ ...DEFAULT_BRAND, panelProfile: 'solo' })
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: oneEntry })
+      const { wrapper, router } = await mountReady(oneBarber)
+
+      expect(wrapper.find('#daily-agenda-barber-select').exists()).toBe(false)
+      expect(fetchDailyAgendaMock).toHaveBeenCalledWith('b-1', civilDateMatcher)
+      // La selección sigue en la URL (DEC-074): solo desaparece el control.
+      expect(router.currentRoute.value.query.barberId).toBe('b-1')
+      expect(wrapper.text()).toContain('Juan Pérez')
+    })
+
+    it('keeps the picker in the solo profile if the barbershop actually has several barbers', async () => {
+      setBrand({ ...DEFAULT_BRAND, panelProfile: 'solo' })
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: [] })
+      const { wrapper } = await mountReady(twoBarbers)
+
+      expect(wrapper.find('#daily-agenda-barber-select').exists()).toBe(true)
+    })
+
+    it('keeps the picker in the full panel even with one barber', async () => {
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: [] })
+      const { wrapper } = await mountReady(oneBarber)
+
+      expect(wrapper.find('#daily-agenda-barber-select').exists()).toBe(true)
+      expect(wrapper.find('.daily-agenda-page__summary').exists()).toBe(false)
+    })
+
+    it('says what is left today: the count and the next appointment', async () => {
+      setBrand({ ...DEFAULT_BRAND, panelProfile: 'solo' })
+      const next = todayEntry('a-next', 60, 30, 'Barba perfilada')
+      fetchDailyAgendaMock.mockResolvedValueOnce({
+        kind: 'success',
+        items: [todayEntry('a-later', 180, 30, 'Corte clásico'), next],
+      })
+      const { wrapper } = await mountReady(oneBarber)
+
+      expect(wrapper.get('.daily-agenda-page__summary').text()).toBe(
+        `2 turnos por atender · Siguiente a las ${hhmm(next.startsAt)} · Barba perfilada`,
+      )
+    })
+
+    it('says when the appointment in progress ends', async () => {
+      setBrand({ ...DEFAULT_BRAND, panelProfile: 'solo' })
+      const current = todayEntry('a-now', -10, 40, 'Corte clásico')
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: [current] })
+      const { wrapper } = await mountReady(oneBarber)
+
+      expect(wrapper.get('.daily-agenda-page__summary').text()).toBe(
+        `1 turno por atender · En curso hasta las ${hhmm(current.endsAt)}`,
+      )
+    })
+
+    it('says so when nothing is left today, and stays silent on an empty day', async () => {
+      setBrand({ ...DEFAULT_BRAND, panelProfile: 'solo' })
+      fetchDailyAgendaMock.mockResolvedValueOnce({
+        kind: 'success',
+        items: [{ ...todayEntry('a-done', -120, 30, 'Barba'), status: 'completed' }],
+      })
+      const done = await mountReady(oneBarber)
+      expect(done.wrapper.get('.daily-agenda-page__summary').text()).toBe(
+        'No te quedan turnos por atender hoy.',
+      )
+
+      fetchDailyAgendaMock.mockResolvedValueOnce({ kind: 'success', items: [] })
+      const empty = await mountReady(oneBarber)
+      expect(empty.wrapper.find('.daily-agenda-page__summary').exists()).toBe(false)
+    })
+
+    it('has no axe violations with the summary and no picker', async () => {
+      setBrand({ ...DEFAULT_BRAND, panelProfile: 'solo' })
+      fetchDailyAgendaMock.mockResolvedValueOnce({
+        kind: 'success',
+        items: [todayEntry('a-next', 60, 30, 'Barba perfilada')],
+      })
+      const { wrapper } = await mountReady(oneBarber)
+
+      expect(await axe(wrapper.element.outerHTML, axeOptions)).toHaveNoViolations()
     })
   })
 })

@@ -199,7 +199,8 @@
       vocabulario (palabra del negocio y del profesional, con plural y
       género gramatical) de la barbería derivada de la sesión vigente. Una
       barbería que nunca los cambió recibe los valores iniciales (`brass`,
-      `barbería`, `barbero`), exactamente la interfaz anterior. Recurso
+      `barbería`, `barbero`) y el perfil `shop` (`DEC-115`), exactamente la
+      interfaz anterior. Recurso
       propio, separado de `/private/settings/barbershop` para no ampliar el
       contrato cerrado de `HU-020` (`CA-020-07`). `barbershopId` nunca es un
       parámetro: el tenant se deriva exclusivamente de `SessionCookie`.
@@ -207,7 +208,7 @@
     security:
       - SessionCookie: []
     x-business-rules: [RN-TEN-01, RN-DAT-02]
-    x-decisions: [DEC-024, DEC-110]
+    x-decisions: [DEC-024, DEC-110, DEC-115]
     responses:
       "200":
         $ref: '../components/responses/BrandSuccess.yaml'
@@ -221,10 +222,13 @@
     tags: [Settings]
     summary: Actualizar la marca y el vocabulario de la barbería activa
     description: >
-      Actualización autenticada (issue #292, DEC-110) de los seis campos de
+      Actualización autenticada (issue #292, DEC-110; perfil del panel,
+      issue #294, DEC-115) de los seis campos de
       marca y vocabulario, que viajan siempre presentes; cualquier otro
       campo -en particular un identificador de barbería- se rechaza como
-      forma inválida. `accent` pertenece a una lista cerrada (nunca un color
+      forma inválida. `panelProfile` (`shop` o `solo`) es optativo: si se
+      omite, el perfil guardado no cambia; fuera de la lista responde `422`.
+      `accent` pertenece a una lista cerrada (nunca un color
       libre) y cada término se recorta, se colapsa y se pasa a minúsculas
       antes de validarlo y guardarlo. Un valor inválido responde `422` sin
       escribir nada. Son preferencias de presentación: no hay precondición de
@@ -237,7 +241,7 @@
     security:
       - SessionCookie: []
     x-business-rules: [RN-TEN-01, RN-DAT-02]
-    x-decisions: [DEC-024, DEC-110]
+    x-decisions: [DEC-024, DEC-110, DEC-115]
     requestBody:
       required: true
       content:
@@ -254,6 +258,16 @@
                 professionalTerm: estilista
                 professionalTermPlural: estilistas
                 professionalTermGender: feminine
+            barberoIndividual:
+              summary: Activar el panel de barbero individual
+              value:
+                accent: brass
+                businessTerm: barbería
+                businessTermGender: feminine
+                professionalTerm: barbero
+                professionalTermPlural: barberos
+                professionalTermGender: masculine
+                panelProfile: solo
             valoresIniciales:
               summary: Volver a los valores iniciales
               value:

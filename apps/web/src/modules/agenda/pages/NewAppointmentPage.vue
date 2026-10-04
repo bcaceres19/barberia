@@ -16,6 +16,7 @@
 // acompaña (DEC-095).
 import { computed, nextTick, ref, watch } from 'vue'
 import { useToast, useVocabulary } from '@/shared/composables'
+import { isSoloProfile } from '@/shared/model'
 import { BaseAlert, BaseButton, BaseInput, BarberAvatar, PageState } from '@/shared/ui'
 import { formatCivilDateFull, isCivilDateString } from '@/shared/time/civilDate'
 import {
@@ -93,6 +94,7 @@ const attempted = ref(false)
 const toast = useToast()
 // Palabras de la barbería (DEC-110): con los valores iniciales, el texto de siempre.
 const v = useVocabulary()
+const hideBarberField = computed(() => isSoloProfile.value && barbers.value.length === 1)
 const saveStatus = ref<SaveStatus>('idle')
 const saveErrorDetail = ref<string | undefined>(undefined)
 const created = ref<CreatedManualAppointment | null>(null)
@@ -110,6 +112,9 @@ async function loadPage() {
     return
   }
   barbers.value = barbersOutcome.items
+  // Perfil de barbero individual (DEC-115): con un solo barbero no hay nada que
+  // elegir, así que queda seleccionado y el campo se oculta.
+  if (hideBarberField.value) selectedBarberId.value = barbers.value[0]!.id
   pageStatus.value = 'ready'
 }
 
@@ -392,7 +397,11 @@ function onBarberSelect(barberId: string) {
                 <div class="new-appointment-page__section-stack">
                   <h2 class="new-appointment-page__section-title">Selecciona</h2>
                   <p class="new-appointment-page__section-hint">
-                    Elige {{ v.toTheProfessional }} y el servicio.
+                    {{
+                      hideBarberField
+                        ? 'Elige el servicio.'
+                        : `Elige ${v.toTheProfessional} y el servicio.`
+                    }}
                   </p>
                 </div>
               </div>
@@ -400,6 +409,7 @@ function onBarberSelect(barberId: string) {
               <div class="new-appointment-page__section-body">
                 <div class="new-appointment-page__row">
                   <div
+                    v-if="!hideBarberField"
                     class="new-appointment-page__field"
                     :class="{
                       'new-appointment-page__field--filled': !!selectedBarberId,

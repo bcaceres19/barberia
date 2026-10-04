@@ -27,6 +27,7 @@ const brand = {
   professionalTerm: 'estilista',
   professionalTermPlural: 'estilistas',
   professionalTermGender: 'feminine' as const,
+  panelProfile: 'shop' as const,
 }
 
 describe('brandApi.fetchBrand', () => {
@@ -45,6 +46,21 @@ describe('brandApi.fetchBrand', () => {
     expect(await fetchBrand()).toEqual({ kind: 'unexpected-error' })
   })
 
+  it('reads the panel profile the server confirmed', async () => {
+    getMock.mockResolvedValueOnce(ok({ ...brand, panelProfile: 'solo' }))
+
+    expect(await fetchBrand()).toEqual({
+      kind: 'success',
+      brand: { ...brand, panelProfile: 'solo' },
+    })
+  })
+
+  it('falls back to the full panel when the profile is one this client does not know', async () => {
+    getMock.mockResolvedValueOnce(ok({ ...brand, panelProfile: 'team' }))
+
+    expect(await fetchBrand()).toEqual({ kind: 'success', brand })
+  })
+
   it.each([401, 404, 500])('maps a %s to unexpected-error (401 is handled globally)', async (s) => {
     getMock.mockResolvedValueOnce(problem(s))
 
@@ -61,7 +77,7 @@ describe('brandApi.fetchBrand', () => {
 describe('brandApi.saveBrand', () => {
   beforeEach(() => patchMock.mockReset())
 
-  it('sends exactly the six fields and returns what the server confirmed', async () => {
+  it('sends exactly the seven fields and returns what the server confirmed', async () => {
     patchMock.mockResolvedValueOnce(ok({ ...brand, businessTerm: 'salón de belleza' }))
 
     const outcome = await saveBrand(brand)
@@ -75,6 +91,7 @@ describe('brandApi.saveBrand', () => {
         'professionalTerm',
         'professionalTermGender',
         'professionalTermPlural',
+        'panelProfile',
       ].sort(),
     )
     expect(outcome).toEqual({

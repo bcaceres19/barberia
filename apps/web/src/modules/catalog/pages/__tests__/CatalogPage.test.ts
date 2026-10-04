@@ -983,4 +983,86 @@ describe('CatalogPage', () => {
     })
     expect(results).toHaveNoViolations()
   })
+  describe('columna opcional «Lo ofrezco» (DEC-115)', () => {
+    function mountWithOffer(offerSlot: string | undefined) {
+      return mount(CatalogPage, {
+        global: { stubs: { teleport: true, transition: true } },
+        slots: offerSlot ? { 'service-offer': offerSlot } : {},
+      })
+    }
+
+    async function ready(wrapper: VueWrapper) {
+      await flushPromises()
+      await waitOutInitialLoadHold()
+      await flushPromises()
+      return wrapper
+    }
+
+    it('keeps the table exactly as it was when nobody provides the slot', async () => {
+      const wrapper = await mountReady(fourServices)
+
+      expect(wrapper.find('.catalog-page__table--offer').exists()).toBe(false)
+      expect(wrapper.find('.catalog-page--offer').exists()).toBe(false)
+      expect(wrapper.find('.catalog-page__item-offer').exists()).toBe(false)
+      expect(wrapper.get('.catalog-page__columns').text()).not.toContain('Lo ofrezco')
+    })
+
+    it('adds a column with its header and one cell per active service', async () => {
+      fetchMock.mockResolvedValueOnce({
+        kind: 'success',
+        page: listPage([
+          service('s-1', 'Corte clásico'),
+          service('s-2', 'Barba', { isActive: false, deactivatedAt: '2026-08-25T00:00:00Z' }),
+        ]),
+      })
+      const wrapper = await ready(
+        mountWithOffer(
+          '<template #service-offer="{ service }"><i class="probe">{{ service.name }}</i></template>',
+        ),
+      )
+
+      expect(wrapper.find('.catalog-page__table--offer').exists()).toBe(true)
+      expect(wrapper.find('.catalog-page--offer').exists()).toBe(true)
+      expect(wrapper.get('.catalog-page__columns').text()).toContain('Lo ofrezco')
+      // Una celda por fila, para que la cuadrícula no se corra; el contenido solo en servicios activos.
+      expect(wrapper.findAll('.catalog-page__item-offer').length).toBe(2)
+      expect(wrapper.findAll('.probe').map((p) => p.text())).toEqual(['Corte clásico'])
+    })
+
+    it('announces a created service so app can act on it, and only then', async () => {
+      fetchMock.mockResolvedValueOnce({ kind: 'success', page: listPage(oneService) })
+      const wrapper = await ready(mountWithOffer(undefined))
+      await findButtonByText(wrapper, 'Agregar servicio').trigger('click')
+      await flushPromises()
+      fillCreateForm(wrapper, 'Nuevo Servicio')
+      await flushPromises()
+      expect(wrapper.emitted('service-created')).toBeUndefined()
+
+      createMock.mockResolvedValueOnce({
+        kind: 'success',
+        service: service('s-new', 'Nuevo Servicio'),
+      })
+      submitOpenDialog(wrapper)
+      await flushPromises()
+
+      const emitted = wrapper.emitted('service-created')!
+      expect(emitted).toHaveLength(1)
+      expect(emitted[0]![0]).toMatchObject({ id: 's-new', name: 'Nuevo Servicio' })
+    })
+
+    it('does not announce a service that failed to be created', async () => {
+      fetchMock.mockResolvedValueOnce({ kind: 'success', page: listPage(oneService) })
+      const wrapper = await ready(mountWithOffer(undefined))
+      await findButtonByText(wrapper, 'Agregar servicio').trigger('click')
+      await flushPromises()
+      fillCreateForm(wrapper, 'Repetido')
+      await flushPromises()
+
+      createMock.mockResolvedValueOnce({ kind: 'name-conflict' })
+      submitOpenDialog(wrapper)
+      await flushPromises()
+
+      expect(wrapper.emitted('service-created')).toBeUndefined()
+    })
+  })
 })

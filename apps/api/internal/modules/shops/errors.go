@@ -96,6 +96,10 @@ func errBrandTermInvalid(field string) error {
 		field, TermMinLength, TermMaxLength))
 }
 
+func errBrandPanelProfileInvalid() error {
+	return apperr.Validation("panelProfile debe ser shop o solo")
+}
+
 func errBrandGenderInvalid(field string) error {
 	return apperr.Validation(fmt.Sprintf("%s debe ser masculine o feminine", field))
 }

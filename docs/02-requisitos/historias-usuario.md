@@ -1,9 +1,9 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.50"
+version: "1.51"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-10-03"
+ultima_actualizacion: "2026-10-04"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/reglas-negocio.md"
@@ -953,9 +953,9 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | --- | --- |
 | Función | `F-CONF-01` (extensión de la configuración de la barbería) |
 | Reglas | `RN-TEN-01`, `RN-DAT-02`, `RN-DIS-07` |
-| Decisiones | `DEC-024`, `DEC-039` (ampliada), `DEC-077`, `DEC-095`, `DEC-110` |
+| Decisiones | `DEC-024`, `DEC-039` (ampliada), `DEC-077`, `DEC-095`, `DEC-110`, `DEC-115` (perfil del panel) |
 | Actor | Barbero autenticado |
-| Depende de | `HU-012`, `HU-020`, `HU-093` (se conserva sin cambios) |
+| Depende de | `HU-012`, `HU-020`, `HU-093` (se conserva sin cambios); `HU-021`, `HU-023` para el perfil del panel |
 | Bloquea | Ninguna |
 | Riesgo | Un acento sin contraste suficiente vuelve ilegible el panel; un vocabulario mal concordado rompe la voz del producto; guardar la marca de una barbería en otra mezcla identidades; una preferencia de pantalla que se filtra al acceso o a la reserva pública cambia pantallas que no le pertenecen. |
 
@@ -970,6 +970,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 - Recurso `GET`/`PATCH /private/settings/brand` y seis columnas con `CHECK` en `barbershop`; el contrato de `HU-020` no se amplía.
 - Pantalla de Configuración rediseñada sobre tinta: índice de secciones, selector de zona horaria con buscador y reloj en vivo, vista previa del vocabulario, barra de cambios sin guardar y animaciones con movimiento reducido.
 - Aplicación del vocabulario a navegación, Barberos, Agenda, Nuevo turno, Detalle del turno, Servicios, Servicios por barbero y Configuración.
+- Perfil del panel (`DEC-115`): `shop` (con equipo, valor inicial) o `solo` (barbero individual), guardado con la marca en `barbershop.panel_profile` y editable en una sección de Configuración. Con `solo`: dock sin «Servicios por barbero» y con «Mi perfil», Agenda/Nuevo turno/Horarios sin selector cuando hay un único barbero, «mi día» en la Agenda e interruptor «Lo ofrezco» por servicio. Es presentación: no cambia datos ni permisos.
 
 **Alcance excluido**
 
@@ -977,6 +978,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 - Idioma distinto de español, formato 12/24 h global y preferencias sincronizadas por usuario entre dispositivos.
 - Vocabulario en Horarios y en las pantallas públicas (conservan el inicial hasta su propio cambio).
 - Renombrar `barber`, los contratos de la API o los términos `turno` y estados.
+- Del perfil del panel: roles o permisos por usuario, el vínculo `barber`–`staff_user` (`DEC-100`), el enlace público de reserva en el panel y cualquier función de negocio nueva.
 
 **Criterios de aceptación**
 
@@ -991,6 +993,11 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | `CA-025-07` | Los contratos, las pruebas y el comportamiento de `HU-020` y `HU-093` siguen vigentes. |
 | `CA-025-08` | Carga, error recuperable, guardando, éxito y error de campo son accesibles; el teclado alcanza todo; axe no reporta violaciones en ningún modo; un error recuperable conserva lo escrito. |
 | `CA-025-09` | OpenAPI, cliente tipado, migración, decisión, matriz e historial coinciden. |
+| `CA-025-10` | `panelProfile` vale `shop` o `solo` y es `shop` en una barbería que nunca lo cambió; omitirlo en el `PATCH` conserva el guardado; un valor fuera de la lista responde `422` sin escribir; otra barbería no ve el cambio (RLS con dos tenants). |
+| `CA-025-11` | Con `solo`, el dock muestra Agenda, Servicios, Mi perfil, Horarios, Configuración y Reserva pública; «Servicios por barbero» y la gestión de equipo no son destinos, y su ruta lleva a Servicios aunque el perfil llegue después de entrar. |
+| `CA-025-12` | Con `solo` y exactamente un barbero, Agenda, Nuevo turno y Horarios no piden elegirlo (la selección sigue en la URL, `DEC-074`) y «Mi perfil» es su ficha sin controles de equipo; con varios barberos, o en `shop`, los controles de elección y de alta se conservan. |
+| `CA-025-13` | Con `solo`, «Lo ofrezco» refleja y cambia la asignación real del único barbero solo cuando el servidor confirma; un servicio nuevo queda ofrecido y, si esa asignación falla, el servicio existe y se avisa. |
+| `CA-025-14` | Volver a `shop` devuelve las pantallas de equipo sin cambiar ningún dato; el perfil, «Lo ofrezco» y «mi día» son accesibles y se componen sin desbordar a 320, 360, 768 y 1280 px en Tinta y Marfil. |
 
 **Pruebas obligatorias**
 
@@ -999,6 +1006,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 - PostgreSQL real con dos barberías: valores iniciales, `CHECK`, RLS y que escribir la marca no toque las columnas de `HU-020` ni de `HU-093`.
 - Prueba de contraste de la paleta y del tema Marfil; pruebas de componente de cada control interactivo con axe.
 - E2E contra el API real (guardar, recargar, aislamiento entre dos barberías, preferencias del dispositivo) y evidencia responsiva en ambos modos y los cuatro tamaños de texto.
+- Del perfil del panel: servicio, repositorio y contrato Go con dos tenants (incluido omitir el campo); `database/tests/panel_perfil_barbero_individual.sql`; pruebas de componente de la navegación, la Agenda, Nuevo turno, Horarios, Mi perfil, Servicios y Configuración; E2E `perfil-barbero-individual.spec.ts` contra el API real y evidencia `perfil-barbero-individual-evidencia-responsiva.spec.ts` con axe real.
 
 **Terminado cuando** una barbería cambia su acento y su vocabulario, el panel entero los refleja tras recargar sin afectar a otra barbería, y el modo y el tamaño de texto se ajustan en el dispositivo sin tocar las pantallas públicas.
 

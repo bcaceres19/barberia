@@ -42,7 +42,12 @@ func (s *BrandService) Get(ctx context.Context, barbershopID string) (Brand, err
 // campo, delega en el repositorio la escritura. Los campos se evalúan en el
 // orden fijo del contrato; el primer error es el que se devuelve, sin
 // ejecutar ninguna escritura (mismo criterio que Service.Update).
-func (s *BrandService) Update(ctx context.Context, barbershopID string, input Brand) (Brand, error) {
+//
+// panelProfile es opcional (DEC-115): nil conserva el perfil guardado, de modo
+// que un cliente que aún no lo conoce no lo reinicia; un valor presente debe
+// ser válido, y un texto vacío explícito también se rechaza. input.PanelProfile
+// se ignora: el perfil solo entra por este argumento.
+func (s *BrandService) Update(ctx context.Context, barbershopID string, input Brand, panelProfile *PanelProfile) (Brand, error) {
 	if err := ctx.Err(); err != nil {
 		return Brand{}, apperr.Internal(fmt.Errorf("shops: contexto cancelado antes de actualizar la marca: %w", err))
 	}
@@ -58,6 +63,13 @@ func (s *BrandService) Update(ctx context.Context, barbershopID string, input Br
 		ProfessionalTerm:       NormalizeTerm(input.ProfessionalTerm),
 		ProfessionalTermPlural: NormalizeTerm(input.ProfessionalTermPlural),
 		ProfessionalTermGender: input.ProfessionalTermGender,
+	}
+
+	if panelProfile != nil {
+		if !panelProfile.IsValid() {
+			return Brand{}, errBrandPanelProfileInvalid()
+		}
+		brand.PanelProfile = *panelProfile
 	}
 
 	switch {

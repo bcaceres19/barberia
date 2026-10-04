@@ -29,6 +29,8 @@ export type { BrandAccent, BrandAccentKey } from './brandPalette'
 export {
   brandState,
   effectiveAccent,
+  isSoloProfile,
+  panelProfile,
   resetBrand,
   setAccentPreview,
   setBrand,
@@ -38,12 +40,14 @@ export {
   buildVocabulary,
   capitalize,
   DEFAULT_BRAND,
+  isPanelProfile,
   normalizeTerm,
+  PANEL_PROFILES,
   TERM_MAX_LENGTH,
   TERM_MIN_LENGTH,
   validateTerm,
 } from './vocabulary'
-export type { BrandSettings, Gender, Vocabulary } from './vocabulary'
+export type { BrandSettings, Gender, PanelProfile, Vocabulary } from './vocabulary'
 export {
   attachWorkspaceTheme,
   effectiveZoom,

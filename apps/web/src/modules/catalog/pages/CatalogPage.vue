@@ -10,7 +10,7 @@
 // aviso emergente de confirmación (DEC-095); el resultado persistente sigue
 // siendo la propia lista, y los errores siguen dentro del diálogo, junto al
 // formulario que conservan.
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, useSlots, watch } from 'vue'
 import { PAGE_MIN_HOLD_MS, useMinHoldLoading, useToast, useVocabulary } from '@/shared/composables'
 import { BaseAlert, BaseBadge, BaseButton, BaseDialog, BaseInput, DiamondLoader } from '@/shared/ui'
 import {
@@ -32,6 +32,19 @@ import {
 } from '../validation/catalogValidation'
 
 const toast = useToast()
+
+// Columna opcional «Lo ofrezco» (DEC-115): `app` la aporta con el slot
+// `service-offer` solo en el perfil de barbero individual. Sin el slot la tabla
+// conserva exactamente su geometría de siempre. Este módulo no sabe qué hay
+// dentro ni importa `barberServices`: solo le reserva el hueco.
+// Se lee en cada render y NO en un `computed`: los slots no son reactivos, y el
+// interruptor puede llegar después de montar (cuando termina de cargar qué ofrece).
+const slots = useSlots()
+const hasOfferColumn = () => !!slots['service-offer']
+
+// Un servicio recién creado se anuncia hacia afuera para que `app` pueda,
+// por ejemplo, ofrecérselo al único barbero sin que este módulo lo sepa.
+const emit = defineEmits<{ 'service-created': [service: Service] }>()
 // Palabras de la barbería (DEC-110): con los valores iniciales, el texto de siempre.
 const v = useVocabulary()
 
@@ -604,6 +617,7 @@ async function onSubmitCreate() {
       services.value.unshift(outcome.service)
       isCreateOpen.value = false
       createStatus.value = 'idle'
+      emit('service-created', outcome.service)
       toast.success('Servicio creado', {
         detail: `«${outcome.service.name}» ya aparece en tu catálogo.`,
       })
@@ -953,7 +967,11 @@ async function reloadAfterConflict(serviceId: string) {
 </script>
 
 <template>
-  <section class="catalog-page" aria-labelledby="catalog-page-title">
+  <section
+    class="catalog-page"
+    :class="{ 'catalog-page--offer': hasOfferColumn() }"
+    aria-labelledby="catalog-page-title"
+  >
     <header class="catalog-page__header">
       <div>
         <h1 id="catalog-page-title" class="catalog-page__title">Servicios</h1>
@@ -1070,11 +1088,15 @@ async function reloadAfterConflict(serviceId: string) {
         <div
           v-else
           class="catalog-page__table"
-          :class="{ 'catalog-page__table--loading': pageStatus === 'loading' }"
+          :class="{
+            'catalog-page__table--loading': pageStatus === 'loading',
+            'catalog-page__table--offer': hasOfferColumn(),
+          }"
           :aria-busy="pageStatus === 'loading'"
         >
           <div class="catalog-page__columns" aria-hidden="true">
             <span>Servicio</span><span>Duración</span><span>Precio (COP)</span><span>Estado</span>
+            <span v-if="hasOfferColumn()">Lo ofrezco</span>
           </div>
           <!-- Mientras carga una búsqueda/página, esqueletos con la altura de
              una fila real (ver .catalog-page__skeleton-row--table); al llegar
@@ -1152,6 +1174,9 @@ async function reloadAfterConflict(serviceId: string) {
                 >
                   {{ service.isActive ? 'Activo' : 'Inactivo' }}
                 </BaseBadge>
+                <div v-if="hasOfferColumn()" class="catalog-page__item-offer">
+                  <slot v-if="service.isActive" name="service-offer" :service="service" />
+                </div>
                 <div class="catalog-page__item-actions">
                   <BaseButton
                     type="button"
@@ -1814,6 +1839,12 @@ async function reloadAfterConflict(serviceId: string) {
   background: var(--color-surface-strong);
 }
 
+/* Con la columna «Lo ofrezco» (DEC-115) la tabla gana 120px para que el nombre del
+   servicio no se recorte; sin ella conserva su ancho de siempre. */
+.catalog-page--offer {
+  --catalog-width: 940px;
+}
+
 .catalog-page__header,
 .catalog-page__toolbar,
 .catalog-page__table,
@@ -2239,6 +2270,24 @@ async function reloadAfterConflict(serviceId: string) {
 
 .catalog-page__item-name {
   transition: color var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+/* Columna «Lo ofrezco» (DEC-115): una pista de 46px sin texto; el encabezado y el
+   nombre accesible del interruptor dicen qué es. */
+.catalog-page__table--offer .catalog-page__columns,
+.catalog-page__table--offer .catalog-page__row {
+  grid-template-columns: minmax(200px, 1fr) 80px 116px 100px 88px 204px;
+}
+
+.catalog-page__table--offer .catalog-page__columns > :nth-child(5) {
+  white-space: nowrap;
+}
+
+.catalog-page__item-offer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
 }
 
 .catalog-page__item-actions {
@@ -3320,6 +3369,11 @@ async function reloadAfterConflict(serviceId: string) {
     gap: 8px;
   }
 
+  .catalog-page__table--offer .catalog-page__columns,
+  .catalog-page__table--offer .catalog-page__row {
+    grid-template-columns: minmax(80px, 1fr) 56px 82px 70px 64px 140px;
+  }
+
   .catalog-page__item-actions {
     gap: 4px;
   }
@@ -3435,6 +3489,27 @@ async function reloadAfterConflict(serviceId: string) {
     grid-column: 2;
     grid-row: 2;
     flex-direction: column;
+  }
+
+  /* La regla de seis columnas de «Lo ofrezco» pesa más que la de móvil de arriba: se
+     devuelve aquí la cuadrícula de dos columnas de siempre. */
+  .catalog-page__table--offer .catalog-page__row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  /* «Lo ofrezco» (DEC-115): junto a la duración, en la fila de abajo, alineado a
+     la derecha de su celda para no pisar la duración. */
+  .catalog-page__item-offer {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  /* El interruptor ocupa su celda de forma explícita, así que la duración (que se
+     colocaba sola en esa celda) pasaría a una fila implícita y se recortaría: se le
+     da la misma fila. */
+  .catalog-page__table--offer .catalog-page__item-duration {
+    grid-row: 2;
   }
 
   .catalog-page__item-actions :deep(.base-button) {

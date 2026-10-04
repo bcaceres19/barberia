@@ -1,7 +1,8 @@
 // Pruebas de integración de marca y vocabulario (issue #292, DEC-110) contra
 // el router REAL de producción (buildRouter) y PostgreSQL real, mismo patrón
 // que settings_integration_test.go. Requieren la migración
-// 20261003120000_add_barbershop_brand.sql aplicada y
+// 20261003120000_add_barbershop_brand.sql y
+// 20261004120000_add_barbershop_panel_profile.sql aplicadas y
 // database/testdata/dos_barberias.sql + testdata/hu005_credenciales_sesiones.sql
 // cargados.
 package main
@@ -24,11 +25,15 @@ type brandBody struct {
 	ProfessionalTerm       string `json:"professionalTerm"`
 	ProfessionalTermPlural string `json:"professionalTermPlural"`
 	ProfessionalTermGender string `json:"professionalTermGender"`
+	// omitempty: un PATCH sin perfil lo conserva (DEC-115); la respuesta
+	// siempre lo trae.
+	PanelProfile string `json:"panelProfile,omitempty"`
 }
 
 var initialBrand = brandBody{
 	Accent: "brass", BusinessTerm: "barbería", BusinessTermGender: "feminine",
 	ProfessionalTerm: "barbero", ProfessionalTermPlural: "barberos", ProfessionalTermGender: "masculine",
+	PanelProfile: "shop",
 }
 
 func doBrandRequest(handler http.Handler, method, rawToken string, body any) *httptest.ResponseRecorder {
@@ -62,7 +67,7 @@ func restoreBrandRow(t *testing.T, db *database.DB, shop string) {
 				`UPDATE barbershop
 				    SET brand_accent = 'brass', business_term = 'barbería', business_term_gender = 'feminine',
 				        professional_term = 'barbero', professional_term_plural = 'barberos',
-				        professional_term_gender = 'masculine'
+				        professional_term_gender = 'masculine', panel_profile = 'shop'
 				  WHERE id = $1`, shop)
 			return err
 		})
@@ -125,6 +130,7 @@ func TestBrand_HTTP_PatchThenGet_NormalizesPersistsAndRoundTrips(t *testing.T) {
 	want := brandBody{
 		Accent: "emerald", BusinessTerm: "salón de belleza", BusinessTermGender: "masculine",
 		ProfessionalTerm: "estilista", ProfessionalTermPlural: "estilistas", ProfessionalTermGender: "feminine",
+		PanelProfile: "shop",
 	}
 	if got := decodeBrand(t, patch); got != want {
 		t.Fatalf("PATCH must answer the normalized brand %+v, got %+v", want, got)
@@ -196,5 +202,58 @@ func TestBrand_HTTP_NoCookie_Returns401Uniform(t *testing.T) {
 	}
 	if rec := doBrandRequest(router, http.MethodPatch, "", initialBrand); rec.Code != http.StatusUnauthorized {
 		t.Fatalf("expected 401 for PATCH without cookie, got %d", rec.Code)
+	}
+}
+
+// TestBrand_HTTP_PanelProfile: el perfil del panel (DEC-115) se guarda, un
+// PATCH que no lo declara lo conserva, un valor fuera de la lista responde
+// 422 sin escribir y el perfil de A nunca cambia el de B.
+func TestBrand_HTTP_PanelProfile_PersistsKeepsWhenOmittedAndNeverCrossesTenants(t *testing.T) {
+	db := setupTestDB(t)
+	t.Cleanup(func() { db.Close() })
+	router, err := buildRouter(db, discardLogger(), testRouterConfig())
+	if err != nil {
+		t.Fatalf("buildRouter: %v", err)
+	}
+	restoreBrandRow(t, db, shopA)
+	restoreBrandRow(t, db, shopB)
+
+	rawA := createSessionCookie(t, db, shopA, staffUserActiveA, "brand-profile-a")
+	rawB := createSessionCookie(t, db, shopB, staffUserActiveB, "brand-profile-b")
+
+	solo := initialBrand
+	solo.PanelProfile = "solo"
+	if rec := doBrandRequest(router, http.MethodPatch, rawA, solo); rec.Code != http.StatusOK || decodeBrand(t, rec).PanelProfile != "solo" {
+		t.Fatalf("expected 200 with solo, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	// Un cliente que no conoce el perfil guarda solo el acento: `solo` sigue.
+	recolor := initialBrand
+	recolor.PanelProfile = ""
+	recolor.Accent = "sapphire"
+	if rec := doBrandRequest(router, http.MethodPatch, rawA, recolor); rec.Code != http.StatusOK {
+		t.Fatalf("expected 200 omitting the profile, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeBrand(t, doBrandRequest(router, http.MethodGet, rawA, nil)); got.PanelProfile != "solo" || got.Accent != "sapphire" {
+		t.Fatalf("an omitted profile must keep solo while the accent changes, got %+v", got)
+	}
+
+	bad := initialBrand
+	bad.PanelProfile = "individual"
+	if rec := doBrandRequest(router, http.MethodPatch, rawA, bad); rec.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422 for an unknown profile, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeBrand(t, doBrandRequest(router, http.MethodGet, rawA, nil)); got.PanelProfile != "solo" {
+		t.Fatalf("a rejected PATCH must keep solo, got %+v", got)
+	}
+
+	if got := decodeBrand(t, doBrandRequest(router, http.MethodGet, rawB, nil)); got.PanelProfile != "shop" {
+		t.Fatalf("setting shopA to solo changed shopB: %+v", got)
+	}
+
+	back := initialBrand
+	back.PanelProfile = "shop"
+	if rec := doBrandRequest(router, http.MethodPatch, rawA, back); rec.Code != http.StatusOK || decodeBrand(t, rec).PanelProfile != "shop" {
+		t.Fatalf("expected to return to shop, got %d: %s", rec.Code, rec.Body.String())
 	}
 }

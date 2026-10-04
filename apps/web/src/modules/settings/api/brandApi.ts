@@ -2,7 +2,7 @@
 // criterio que `settingsApi.ts`: traduce la respuesta real a un outcome
 // discriminado y mapea por `status`, nunca por el texto del error.
 import { httpClient } from '@/shared/api/httpClient'
-import { isBrandAccentKey, type BrandSettings } from '@/shared/model'
+import { isBrandAccentKey, isPanelProfile, type BrandSettings } from '@/shared/model'
 import type { FetchBrandOutcome, SaveBrandOutcome } from '../model/brandOutcome'
 
 export async function fetchBrand(): Promise<FetchBrandOutcome> {
@@ -47,5 +47,7 @@ function toBrand(data: BrandSettings): BrandSettings | null {
     professionalTerm: data.professionalTerm,
     professionalTermPlural: data.professionalTermPlural,
     professionalTermGender: data.professionalTermGender,
+    // Un perfil que esta versión no conoce cae al panel completo, nunca a uno recortado.
+    panelProfile: isPanelProfile(data.panelProfile) ? data.panelProfile : 'shop',
   }
 }
