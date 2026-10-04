@@ -34,7 +34,7 @@ func errDurationInvalid() error {
 // errOverlapConflict cubre CA-040-04: el intervalo solicitado se solapa con
 // otro tramo existente del mismo barbero y día, o repite exactamente su
 // hora de inicio. Conflicto de negocio ajeno a idempotencia
-// (apperr.KindConflict, mismo criterio que catalog.errLastActiveAssignment):
+// (apperr.KindConflict, mismo criterio que catalog.errNameConflict):
 // no depende de la forma del cuerpo, depende del estado ya persistido de
 // otras filas.
 func errOverlapConflict() error {

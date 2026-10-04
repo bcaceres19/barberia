@@ -17,6 +17,7 @@ import { PAGE_MIN_HOLD_MS, useMinHoldLoading, useToast, useVocabulary } from '@/
 import {
   BarberAvatar,
   BaseAlert,
+  EmptyScene,
   BaseButton,
   BaseDialog,
   BaseInput,
@@ -618,34 +619,23 @@ async function onSubmitRename() {
         :class="{ 'staff-page__ready--fitting': fitPending }"
         :aria-busy="pageLoading"
       >
-        <div v-if="barbers.length === 0" class="staff-page__empty">
-          <span class="staff-page__empty-frame" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-              <circle cx="12" cy="8.5" r="3.6" />
-              <path d="M4.5 20.5c.6-3.9 3.6-6.2 7.5-6.2s6.9 2.3 7.5 6.2" />
-            </svg>
-          </span>
-          <template v-if="soloView">
-            <p>Aún no tienes <span>tu perfil.</span></p>
-            <p class="staff-page__empty-hint">
-              Créalo con tu nombre y, si quieres, tu foto: tu agenda y tus horarios cuelgan de él.
-            </p>
+        <EmptyScene v-if="barbers.length === 0" scene="team" class="staff-page__empty">
+          <template #title>{{
+            soloView ? 'Aún no tienes tu perfil.' : `Aún no tienes ${v.professionalsRegistered}.`
+          }}</template>
+          <template #hint>
+            {{
+              soloView
+                ? 'Créalo con tu nombre y, si quieres, tu foto: tu agenda y tus horarios cuelgan de él.'
+                : 'Agrega al primero de tu equipo: con su nombre y, si quieres, su foto.'
+            }}
+          </template>
+          <template #action>
             <BaseButton type="button" variant="primary" @click="openCreateDialog">
-              Crear mi perfil
+              {{ soloView ? 'Crear mi perfil' : `Agregar ${v.professional}` }}
             </BaseButton>
           </template>
-          <template v-else>
-            <p>
-              Aún no tienes <span>{{ v.professionalsRegistered }}.</span>
-            </p>
-            <p class="staff-page__empty-hint">
-              Agrega al primero de tu equipo: con su nombre y, si quieres, su foto.
-            </p>
-            <BaseButton type="button" variant="primary" @click="openCreateDialog">
-              Agregar {{ v.professional }}
-            </BaseButton>
-          </template>
-        </div>
+        </EmptyScene>
 
         <div v-else class="staff-page__table">
           <div v-if="!soloCard" class="staff-page__columns" aria-hidden="true">
@@ -1032,10 +1022,10 @@ async function onSubmitRename() {
    horizontal de sobra): un paginador numerado vive de la repetición, no
    necesita el mismo padding que un botón de acción con texto largo. */
 .staff-page__pagination-nav :deep(.base-button) {
-  height: 34px;
-  min-width: 34px;
+  height: 38px;
+  min-width: 38px;
   padding-inline: 10px;
-  font-size: var(--font-size-caption);
+  font-size: var(--font-size-body-sm);
   --btn-focus-ring: 0 0 0 2px var(--color-surface-strong), 0 0 0 4px var(--color-focus);
 }
 
@@ -1082,7 +1072,7 @@ async function onSubmitRename() {
 /* Superficie tinta de punta a punta (estandar-diseno-visual.md §3), el mismo
    canvas que Agenda y Servicios; columna de lectura de 820px centrada. */
 .staff-page {
-  --staff-width: 820px;
+  --staff-width: 920px;
   --staff-row-height: 84px;
 
   display: flex;
@@ -1091,7 +1081,8 @@ async function onSubmitRename() {
   min-height: 100%;
   padding: 34px 32px 48px;
   color: var(--color-on-strong);
-  background: var(--color-surface-strong);
+  /* Transparente: la tinta y el fondo animado los pone el cascarón. */
+  background: transparent;
   box-sizing: border-box;
 }
 
@@ -1128,7 +1119,7 @@ async function onSubmitRename() {
 
 @media (min-width: 1024px) {
   .staff-page__title {
-    font-size: 40px;
+    font-size: var(--font-size-title-page);
     line-height: 46px;
   }
 }
@@ -1144,9 +1135,10 @@ async function onSubmitRename() {
    color que el fondo de la página, así que se levanta con el dorado de marca
    (mismo criterio que "Agregar servicio"). */
 .staff-page__create.base-button {
-  height: 34px;
-  padding-inline: 14px;
-  font-size: 11px;
+  height: 40px;
+  padding-inline: 18px;
+  font-size: var(--font-size-body-sm);
+  font-weight: 600;
 }
 
 .staff-page__create :deep(.base-button__content)::before {
@@ -1154,20 +1146,17 @@ async function onSubmitRename() {
   margin-right: 6px;
 }
 
-.staff-page__create.base-button--primary,
-.staff-page__empty :deep(.base-button--primary) {
+.staff-page__create.base-button--primary {
   background-color: var(--color-brand-accent-surface);
   color: var(--color-brand-accent-text);
   border-color: var(--color-brand-accent-surface);
 }
 
-.staff-page__create.base-button--primary:hover:not(:disabled):not(.base-button--loading),
-.staff-page__empty :deep(.base-button--primary:hover:not(:disabled):not(.base-button--loading)) {
+.staff-page__create.base-button--primary:hover:not(:disabled):not(.base-button--loading) {
   filter: brightness(92%);
 }
 
-.staff-page__create.base-button--primary:active:not(:disabled):not(.base-button--loading),
-.staff-page__empty :deep(.base-button--primary:active:not(:disabled):not(.base-button--loading)) {
+.staff-page__create.base-button--primary:active:not(:disabled):not(.base-button--loading) {
   filter: brightness(84%);
 }
 
@@ -1266,7 +1255,7 @@ async function onSubmitRename() {
 .staff-page__columns,
 .staff-page__row {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) 128px 96px 192px;
+  grid-template-columns: minmax(180px, 1fr) 128px 108px 212px;
   align-items: center;
   gap: 12px;
 }
@@ -1275,9 +1264,13 @@ async function onSubmitRename() {
   min-height: 44px;
   padding: 0 16px;
   font-family: var(--font-sans);
-  font-size: var(--font-size-body);
+  /* Encabezado reglado: versalitas espaciadas de latón, igual que el de
+     Servicios y los rótulos de campo del panel. */
+  font-size: var(--font-size-caption);
   font-weight: 600;
-  color: var(--color-on-strong-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-brand-accent-surface);
 }
 
 .staff-page__columns span:last-child {
@@ -1501,9 +1494,9 @@ async function onSubmitRename() {
    superficie clara: sobre tinta se quita el relleno y se sube el latón claro,
    igual que las acciones de fila de Servicios. */
 .staff-page__item-actions :deep(.base-button) {
-  height: 34px;
-  padding-inline: 12px;
-  font-size: var(--font-size-caption);
+  height: 36px;
+  padding-inline: 14px;
+  font-size: var(--font-size-body-sm);
 }
 
 .staff-page__item-actions :deep(.base-button--secondary) {
@@ -1522,98 +1515,6 @@ async function onSubmitRename() {
 .staff-page__item-actions
   :deep(.base-button--secondary:active:not(:disabled):not(.base-button--loading)) {
   background-color: color-mix(in srgb, var(--color-brand-accent-surface) 20%, transparent);
-}
-
-/* Vacío: marco de retrato vacío (esquinas de latón, borde punteado) sobre un
-   panel hundido, con el titular en la voz serif de la casa. */
-.staff-page__empty {
-  display: flex;
-  min-height: 320px;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-4);
-  padding: var(--space-8) var(--space-4);
-  background-color: var(--color-field-strong);
-  border: var(--border-width-normal) solid var(--color-field-strong-border);
-  border-radius: 3px;
-  text-align: center;
-  animation: staff-row-enter 360ms var(--motion-easing-standard) both;
-}
-
-.staff-page__empty p {
-  margin: 0;
-  color: var(--color-on-strong);
-  font-family: var(--font-display);
-  font-size: var(--font-size-h2);
-  line-height: var(--font-size-h2-line);
-}
-
-.staff-page__empty p span {
-  display: block;
-}
-
-.staff-page__empty .staff-page__empty-hint {
-  max-width: 34ch;
-  color: var(--color-on-strong-muted);
-  font-family: var(--font-sans);
-  font-size: var(--font-size-body-sm);
-  line-height: var(--font-size-body-sm-line);
-}
-
-.staff-page__empty-frame {
-  position: relative;
-  display: grid;
-  width: 88px;
-  height: 88px;
-  place-items: center;
-  color: var(--color-brand-accent-surface);
-  background-color: var(--color-surface-strong);
-  border: var(--border-width-normal) dashed
-    color-mix(in srgb, var(--color-brand-accent-surface) 45%, transparent);
-  border-radius: 2px;
-}
-
-.staff-page__empty-frame::before,
-.staff-page__empty-frame::after {
-  content: '';
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  border: var(--border-width-emphasis) solid var(--color-brand-accent-surface);
-}
-
-.staff-page__empty-frame::before {
-  top: -4px;
-  left: -4px;
-  border-right: 0;
-  border-bottom: 0;
-}
-
-.staff-page__empty-frame::after {
-  right: -4px;
-  bottom: -4px;
-  border-top: 0;
-  border-left: 0;
-}
-
-.staff-page__empty-frame svg {
-  width: 44px;
-  height: 44px;
-  animation: staff-empty-breathe 3.2s ease-in-out infinite;
-}
-
-@keyframes staff-empty-breathe {
-  0%,
-  100% {
-    opacity: 0.55;
-    transform: translateY(0);
-  }
-
-  50% {
-    opacity: 1;
-    transform: translateY(-2px);
-  }
 }
 
 /* Pie de la tabla: conteo a la izquierda, "Cargar más" a la derecha. */
@@ -1672,7 +1573,7 @@ async function onSubmitRename() {
   color: var(--color-brand-accent-text);
   border-radius: var(--radius-md);
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: var(--font-size-title-item);
   line-height: 1;
   animation: staff-chip-pop var(--motion-duration-base) cubic-bezier(0.34, 1.56, 0.64, 1) 60ms both;
 }
@@ -1933,7 +1834,7 @@ async function onSubmitRename() {
 @media (max-width: 960px) and (min-width: 641px) {
   .staff-page__columns,
   .staff-page__row {
-    grid-template-columns: minmax(120px, 1fr) 100px 84px 176px;
+    grid-template-columns: minmax(120px, 1fr) 100px 96px 196px;
     gap: 8px;
   }
 
@@ -1969,7 +1870,7 @@ async function onSubmitRename() {
 
   .staff-page__create :deep(.base-button__content)::before {
     margin: 0;
-    font-size: 21px;
+    font-size: var(--font-size-title-item);
   }
 
   .staff-page__columns,
@@ -2007,7 +1908,7 @@ async function onSubmitRename() {
   }
 
   .staff-page__item-name {
-    font-size: 15px;
+    font-size: var(--font-size-body);
   }
 
   .staff-page__item-actions :deep(.base-button) {
@@ -2039,11 +1940,9 @@ async function onSubmitRename() {
   }
 
   .staff-page__row,
-  .staff-page__empty,
   .staff-page__row--new::before,
   .staff-page__skeleton-row--page,
   .staff-page__photo-state::before,
-  .staff-page__empty-frame svg,
   .staff-page__dialog-chip,
   .staff-page__dialog-chip::after,
   .staff-page__detail-hero,

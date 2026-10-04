@@ -82,7 +82,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.28.0
+  version: 0.29.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -381,8 +381,6 @@ components:
       $ref: './components/responses/AssignmentAssigned.yaml'
     AssignmentUnassigned:
       $ref: './components/responses/AssignmentUnassigned.yaml'
-    LastActiveAssignmentConflictProblem:
-      $ref: './components/responses/LastActiveAssignmentConflictProblem.yaml'
     ServiceDeactivationImpact:
       $ref: './components/responses/ServiceDeactivationImpact.yaml'
     ServiceDeactivated:

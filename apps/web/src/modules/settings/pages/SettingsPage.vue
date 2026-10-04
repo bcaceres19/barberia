@@ -992,7 +992,8 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
   min-height: 100%;
   padding: 34px 32px 48px;
   color: var(--color-on-strong);
-  background: var(--color-surface-strong);
+  /* Transparente: la tinta y el fondo animado los pone el cascarón. */
+  background: transparent;
   box-sizing: border-box;
 }
 
@@ -1015,7 +1016,7 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
 
 @media (min-width: 1024px) {
   .settings-page__title {
-    font-size: 40px;
+    font-size: var(--font-size-title-page);
     line-height: 46px;
   }
 }
@@ -1113,7 +1114,7 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
 
 .settings-field__label {
   color: var(--color-brand-accent-surface);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   letter-spacing: 0.08em;
   line-height: 14px;
@@ -1127,7 +1128,7 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
 .settings-field__hint {
   margin: 0;
   max-width: 60ch;
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   line-height: 18px;
   color: var(--color-on-strong-muted);
 }
@@ -1265,7 +1266,7 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: var(--font-size-body-sm);
   font-weight: 600;
   line-height: 18px;
   color: var(--color-on-strong);
@@ -1277,7 +1278,7 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
 }
 
 .theme-tile__hint {
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   line-height: 15px;
   color: var(--color-on-strong-muted);
 }
@@ -1332,23 +1333,23 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
 }
 
 .size-step__glyph--small {
-  font-size: 16px;
+  font-size: var(--font-size-body);
 }
 
 .size-step__glyph--normal {
-  font-size: 20px;
+  font-size: var(--font-size-title-item);
 }
 
 .size-step__glyph--large {
-  font-size: 25px;
+  font-size: var(--font-size-h2);
 }
 
 .size-step__glyph--xlarge {
-  font-size: 31px;
+  font-size: var(--font-size-title-section);
 }
 
 .size-step__label {
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   line-height: 14px;
   color: var(--color-on-strong-muted);
@@ -1419,7 +1420,7 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
 }
 
 .accent-swatch__label {
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   line-height: 16px;
   color: var(--color-on-strong-muted);
@@ -1536,7 +1537,7 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
   padding: 0 18px;
   color: var(--color-on-strong-muted);
   border: var(--border-width-normal) solid var(--color-field-strong-border);
-  font-size: 13px;
+  font-size: var(--font-size-body-sm);
   font-weight: 600;
   transition:
     background-color var(--motion-duration-base) var(--motion-easing-standard),
@@ -1584,7 +1585,7 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
     color-mix(in srgb, var(--color-on-strong) 28%, transparent);
   border-radius: 999px;
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   cursor: pointer;
   transition:
     color var(--motion-duration-base) var(--motion-easing-standard),
@@ -1634,7 +1635,7 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
 .settings-page__preview-kicker {
   margin: 0 0 12px;
   color: var(--color-brand-accent-surface);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   letter-spacing: 0.08em;
   line-height: 14px;
@@ -1648,7 +1649,7 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 13px;
+  font-size: var(--font-size-body-sm);
   line-height: 20px;
 }
 
@@ -1662,7 +1663,7 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
 .settings-page__preview-tag {
   flex: 0 0 56px;
   color: var(--color-on-strong-muted);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -1679,7 +1680,7 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
   background: var(--color-brand-accent-surface);
   color: var(--color-brand-accent-text);
   border-radius: 3px;
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
 }
 
@@ -1720,20 +1721,20 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
 }
 
 .settings-link__title {
-  font-size: 14px;
+  font-size: var(--font-size-body-sm);
   font-weight: 600;
   line-height: 20px;
 }
 
 .settings-link__detail {
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   line-height: 18px;
   color: var(--color-on-strong-muted);
 }
 
 .settings-link__arrow {
   flex: 0 0 auto;
-  font-size: 20px;
+  font-size: var(--font-size-title-item);
   color: var(--color-brand-accent-surface);
   transition: transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }

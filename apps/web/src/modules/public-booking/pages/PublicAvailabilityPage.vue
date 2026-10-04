@@ -1,7 +1,8 @@
 <script setup lang="ts">
 // Página coordinadora de la exploración pública de fechas y horarios
 // (HU-095, CA-095-01 a CA-095-05). Sin mockup asignado: composición libre
-// dentro de NAVA / Tailored Grid (DEC-078). Consume el motor de
+// dentro de NAVA / Tailored Grid (DEC-078), alojada en el cascarón de la
+// reserva pública (DEC-111). Consume el motor de
 // disponibilidad de HU-094 en una sola consulta por contexto (slug +
 // serviceId + barberId): el contrato no admite una fecha como parámetro,
 // devuelve todos los inicios válidos de la ventana pública vigente en una
@@ -15,11 +16,15 @@
 // reemplazada se descarta con un token monótono, mismo patrón que
 // PublicBarberSelectionPage.vue.
 import { computed, nextTick, ref, watch } from 'vue'
-import { BaseButton, EmptyState, PageState } from '@/shared/ui'
 import { formatCivilDateFull } from '@/shared/time/civilDate'
 import { formatTimeInTimezone } from '@/shared/time/formatInstant'
+import BookingStateScreen from '../components/BookingStateScreen.vue'
 import { listPublicAvailability } from '../api/listPublicAvailabilityApi'
-import { groupSlotsByCivilDate, type AvailabilityDay } from '../model/availabilityCalendar'
+import {
+  civilDateChip,
+  groupSlotsByCivilDate,
+  type AvailabilityDay,
+} from '../model/availabilityCalendar'
 import type { PublicAvailabilitySlot } from '../model/publicAvailabilityOutcome'
 
 interface Props {
@@ -54,9 +59,15 @@ const activeSlotIndex = ref(0)
 // ventana completa se vuelve a resolver desde cero.
 const selectedSlot = ref<PublicAvailabilitySlot | null>(null)
 const slotRefs = ref<HTMLElement[]>([])
+const dayRefs = ref<HTMLElement[]>([])
+const ticketRef = ref<HTMLElement | null>(null)
 
 function setSlotRef(el: Element | { $el?: Element } | null, index: number) {
   if (el instanceof HTMLElement) slotRefs.value[index] = el
+}
+
+function setDayRef(el: Element | { $el?: Element } | null, index: number) {
+  if (el instanceof HTMLElement) dayRefs.value[index] = el
 }
 
 let requestToken = 0
@@ -68,6 +79,7 @@ async function load() {
   activeSlotIndex.value = 0
   selectedSlot.value = null
   slotRefs.value = []
+  dayRefs.value = []
 
   const outcome = await listPublicAvailability(props.slug, props.serviceId, props.barberId)
   // Una respuesta tardía de una carga ya reemplazada (contexto cambió de
@@ -119,12 +131,24 @@ const durationMinutes = computed(() =>
 // Al cambiar de día, el índice con roving tabindex apunta a la franja ya
 // elegida si pertenece a este día; si no, vuelve al primer elemento. La
 // selección en sí (`selectedSlot`) nunca se toca aquí.
-watch(activeDayIndex, () => {
+watch(activeDayIndex, async () => {
   slotRefs.value = []
   const day = activeDay.value
   const preserved = day?.slots.findIndex((s) => s.startsAt === selectedSlot.value?.startsAt) ?? -1
   activeSlotIndex.value = preserved >= 0 ? preserved : 0
+  // La tira de fechas sigue al día activo (también cuando se cambia con
+  // Anterior/Siguiente); `scrollIntoView` solo desplaza la tira, no la página.
+  await nextTick()
+  dayRefs.value[activeDayIndex.value]?.scrollIntoView?.({
+    inline: 'center',
+    block: 'nearest',
+    behavior: 'smooth',
+  })
 })
+
+function chooseDay(index: number) {
+  activeDayIndex.value = index
+}
 
 function goToPreviousDay() {
   if (activeDayIndex.value > 0) activeDayIndex.value -= 1
@@ -138,6 +162,15 @@ function selectSlot(slot: PublicAvailabilitySlot) {
   selectedSlot.value = slot
   const index = activeDay.value?.slots.findIndex((s) => s.startsAt === slot.startsAt) ?? -1
   if (index >= 0) activeSlotIndex.value = index
+  void revealTicket()
+}
+
+// La barra de acción fija al pie puede tapar la ficha recién aparecida en una
+// ventana baja: se trae a la vista (el `scroll-margin-bottom` de la ficha
+// reserva el alto de la barra) sin mover el foco.
+async function revealTicket() {
+  await nextTick()
+  ticketRef.value?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' })
 }
 
 async function focusActiveSlot() {
@@ -203,332 +236,168 @@ const selectionSummary = computed(() => {
   return `${date}, ${time} · zona horaria de la barbería: ${timezone.value} · dura ${durationMinutes.value} min`
 })
 
-const unexpectedErrorMessage = computed(() => {
-  const state = screenState.value
-  if (state.status !== 'unexpected-error') return ''
-  return state.requestId
-    ? `Inténtalo de nuevo. Si continúa, comparte este código con soporte: ${state.requestId}.`
-    : 'Inténtalo de nuevo en unos segundos.'
+// Piezas de la ficha visual de la franja elegida. La oración completa
+// (`selectionSummary`) sigue siendo lo que anuncia la tecnología de apoyo;
+// la ficha repite lo mismo por partes y se oculta para ella.
+const selectedDateLabel = computed(() => {
+  const slot = selectedSlot.value
+  if (!slot) return ''
+  const day = days.value.find((d) => d.slots.some((s) => s.startsAt === slot.startsAt))
+  return day ? formatCivilDateFull(day.civilDate) : ''
 })
+
+const selectedTimeLabel = computed(() =>
+  selectedSlot.value ? slotTimeLabel(selectedSlot.value) : '',
+)
+
+const selectedShortLabel = computed(() => {
+  const slot = selectedSlot.value
+  if (!slot) return ''
+  const day = days.value.find((d) => d.slots.some((s) => s.startsAt === slot.startsAt))
+  if (!day) return ''
+  const chip = civilDateChip(day.civilDate)
+  return `${selectedTimeLabel.value} · ${chip.weekday} ${chip.day} ${chip.month}`
+})
+
+const failedRequestId = computed(() =>
+  screenState.value.status === 'unexpected-error' ? screenState.value.requestId : undefined,
+)
 </script>
 
 <template>
-  <main v-if="screenState.status !== 'success'" class="availability availability--state">
-    <h1 class="visually-hidden">Elegir fecha y hora</h1>
-    <PageState
-      v-if="screenState.status === 'loading'"
-      variant="loading"
-      headline="Cargando disponibilidad…"
-      role="status"
-    />
-    <PageState
-      v-else-if="screenState.status === 'not-found'"
-      variant="danger"
-      status-label="Error"
-      headline="No encontramos ese enlace"
-      role="alert"
-    >
-      <template #default
-        >Revisa que copiaste la dirección completa, o pídele al barbero que te la vuelva a
-        compartir.</template
-      >
-      <template #action>
-        <BaseButton variant="secondary" @click="retry">Reintentar</BaseButton>
-      </template>
-    </PageState>
-    <PageState
-      v-else-if="screenState.status === 'network-error'"
-      variant="warning"
-      status-label="Atención"
-      headline="No pudimos conectar"
-      role="alert"
-    >
-      <template #default>Revisa tu conexión e inténtalo de nuevo.</template>
-      <template #action>
-        <BaseButton variant="primary" @click="retry">Reintentar</BaseButton>
-      </template>
-    </PageState>
-    <PageState
-      v-else
-      variant="danger"
-      status-label="Error"
-      headline="Ocurrió un error inesperado"
-      role="alert"
-    >
-      <template #default>{{ unexpectedErrorMessage }}</template>
-      <template #action>
-        <BaseButton variant="primary" @click="retry">Reintentar</BaseButton>
-      </template>
-    </PageState>
-  </main>
+  <BookingStateScreen
+    v-if="screenState.status !== 'success'"
+    :status="screenState.status"
+    :request-id="failedRequestId"
+    title="Elegir fecha y hora"
+    loading-headline="Cargando disponibilidad…"
+    @retry="retry"
+  />
 
-  <main v-else class="availability availability--list">
-    <div class="availability__container">
-      <h1 class="availability__title">Elige fecha y hora</h1>
+  <main v-else class="pb-page pb-page--bar">
+    <p class="pb-eyebrow">Fecha y hora</p>
+    <h1 class="pb-title">Elige fecha y hora</h1>
+    <div class="pb-rule" aria-hidden="true"></div>
 
-      <!-- CA-095-04: ninguna franja en toda la ventana pública vigente
-           (festivo total, servicio/barbero sin agenda compatible, etc.) es
-           un vacío genuino, distinto de carga o error. -->
-      <EmptyState
-        v-if="days.length === 0"
-        message="No hay franjas disponibles en la ventana de reserva vigente. Vuelve a intentarlo más adelante."
-      />
-
-      <template v-else>
-        <p class="availability__timezone">
-          Horas en la zona horaria de la barbería: {{ timezone }}
-        </p>
-
-        <div class="availability__day-nav">
-          <BaseButton
-            type="button"
-            variant="secondary"
-            :disabled="activeDayIndex === 0"
-            aria-label="Ver el día anterior con disponibilidad"
-            @click="goToPreviousDay"
-          >
-            ‹ Anterior
-          </BaseButton>
-          <p class="availability__day-label" role="status" aria-live="polite">
-            {{ activeDay ? formatCivilDateFull(activeDay.civilDate) : '' }}
-          </p>
-          <BaseButton
-            type="button"
-            variant="secondary"
-            :disabled="activeDayIndex >= days.length - 1"
-            aria-label="Ver el día siguiente con disponibilidad"
-            @click="goToNextDay"
-          >
-            Siguiente ›
-          </BaseButton>
-        </div>
-
-        <ul
-          class="availability__slots"
-          role="radiogroup"
-          aria-label="Horas disponibles"
-          @keydown="onSlotsKeydown"
-        >
-          <li
-            v-for="(slot, index) in activeDay?.slots ?? []"
-            :key="slot.startsAt"
-            :ref="(el) => setSlotRef(el as Element | null, index)"
-            class="availability__slot"
-            :class="{ 'availability__slot--selected': selectedSlot?.startsAt === slot.startsAt }"
-            role="radio"
-            :aria-checked="selectedSlot?.startsAt === slot.startsAt"
-            :tabindex="index === activeSlotIndex ? 0 : -1"
-            @click="selectSlot(slot)"
-          >
-            <span class="availability__slot-check" aria-hidden="true"></span>
-            <span class="availability__slot-time">{{ slotTimeLabel(slot) }}</span>
-          </li>
-        </ul>
-
-        <!-- Nunca insinúa que consultar o elegir una hora aquí reserva el
-             turno (RN-DIS-03, fuera de alcance de HU-095): "elegida", no
-             "reservada" ni "confirmada". -->
-        <p v-if="selectionSummary" class="availability__summary" role="status">
-          Franja elegida: {{ selectionSummary }}
-        </p>
-
-        <RouterLink
-          v-if="selectedSlot"
-          :to="{
-            name: 'reserva-publica-cliente',
-            params: {
-              slug: props.slug,
-              serviceId: props.serviceId,
-              barberId: props.barberId,
-              startsAt: selectedSlot.startsAt,
-            },
-          }"
-          class="availability__cta"
-        >
-          Continuar
-        </RouterLink>
-      </template>
+    <!-- CA-095-04: ninguna franja en toda la ventana pública vigente
+         (festivo total, servicio/barbero sin agenda compatible, etc.) es
+         un vacío genuino, distinto de carga o error. -->
+    <div v-if="days.length === 0" class="pb-empty">
+      <span class="pb-empty__mark" aria-hidden="true"></span>
+      <p class="pb-empty__message">
+        No hay franjas disponibles en la ventana de reserva vigente. Vuelve a intentarlo más
+        adelante.
+      </p>
     </div>
+
+    <template v-else>
+      <p class="pb-zone">Horas en la zona horaria de la barbería: {{ timezone }}</p>
+
+      <div class="pb-days" role="group" aria-label="Días con disponibilidad">
+        <button
+          v-for="(day, index) in days"
+          :key="day.civilDate"
+          :ref="(el) => setDayRef(el as Element | null, index)"
+          type="button"
+          class="pb-day"
+          :style="{ '--pb-i': index }"
+          :aria-current="index === activeDayIndex ? 'date' : undefined"
+          @click="chooseDay(index)"
+        >
+          <span class="pb-day__dow">{{ civilDateChip(day.civilDate).weekday }}</span>
+          <span class="pb-day__num">{{ civilDateChip(day.civilDate).day }}</span>
+          <span class="pb-day__month">{{ civilDateChip(day.civilDate).month }}</span>
+        </button>
+      </div>
+
+      <div class="pb-daybar">
+        <button
+          type="button"
+          class="pb-step-btn"
+          :disabled="activeDayIndex === 0"
+          aria-label="Ver el día anterior con disponibilidad"
+          @click="goToPreviousDay"
+        >
+          ‹ Anterior
+        </button>
+        <p class="pb-daybar__label" role="status" aria-live="polite">
+          {{ activeDay ? formatCivilDateFull(activeDay.civilDate) : '' }}
+        </p>
+        <button
+          type="button"
+          class="pb-step-btn"
+          :disabled="activeDayIndex >= days.length - 1"
+          aria-label="Ver el día siguiente con disponibilidad"
+          @click="goToNextDay"
+        >
+          Siguiente ›
+        </button>
+      </div>
+
+      <ul
+        class="pb-slots"
+        role="radiogroup"
+        aria-label="Horas disponibles"
+        @keydown="onSlotsKeydown"
+      >
+        <li
+          v-for="(slot, index) in activeDay?.slots ?? []"
+          :key="slot.startsAt"
+          :ref="(el) => setSlotRef(el as Element | null, index)"
+          class="pb-slot"
+          :class="{ 'pb-slot--selected': selectedSlot?.startsAt === slot.startsAt }"
+          :style="{ '--pb-i': index }"
+          role="radio"
+          :aria-checked="selectedSlot?.startsAt === slot.startsAt"
+          :tabindex="index === activeSlotIndex ? 0 : -1"
+          @click="selectSlot(slot)"
+        >
+          {{ slotTimeLabel(slot) }}
+        </li>
+      </ul>
+
+      <!-- Nunca insinúa que consultar o elegir una hora aquí reserva el
+           turno (RN-DIS-03, fuera de alcance de HU-095): "elegida", no
+           "reservada" ni "confirmada". La oración completa la anuncia la
+           tecnología de apoyo; la ficha visual la repite por partes. -->
+      <p v-if="selectionSummary" class="pb-sr-only" role="status">
+        Franja elegida: {{ selectionSummary }}
+      </p>
+      <div
+        v-if="selectionSummary"
+        :key="selectedSlot?.startsAt"
+        class="pb-ticket"
+        aria-hidden="true"
+      >
+        <span class="pb-ticket__kicker">Franja elegida</span>
+        <span class="pb-ticket__date">{{ selectedDateLabel }}</span>
+        <span class="pb-ticket__time">{{ selectedTimeLabel }}</span>
+        <span class="pb-ticket__foot">Dura {{ durationMinutes }} min · {{ timezone }}</span>
+      </div>
+
+      <Transition name="pb-bar">
+        <div v-if="selectedSlot" class="pb-actionbar">
+          <p class="pb-actionbar__summary">
+            <span class="pb-actionbar__label">Tu horario</span>
+            <span class="pb-actionbar__value">{{ selectedShortLabel }}</span>
+          </p>
+          <RouterLink
+            :to="{
+              name: 'reserva-publica-cliente',
+              params: {
+                slug: props.slug,
+                serviceId: props.serviceId,
+                barberId: props.barberId,
+                startsAt: selectedSlot.startsAt,
+              },
+            }"
+            class="pb-cta"
+          >
+            <span>Continuar</span>
+            <span class="pb-cta__arrow" aria-hidden="true">→</span>
+          </RouterLink>
+        </div>
+      </Transition>
+    </template>
   </main>
 </template>
-
-<style scoped>
-.availability {
-  display: flex;
-  min-height: 100dvh;
-  justify-content: center;
-  padding: var(--space-6) var(--space-4);
-}
-
-.availability--state {
-  align-items: center;
-  background-color: var(--color-surface-strong);
-}
-
-.availability--list {
-  background-color: var(--color-canvas);
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.availability__container {
-  display: flex;
-  width: 100%;
-  max-width: 640px;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-
-.availability__title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 32px;
-  line-height: 40px;
-  letter-spacing: -0.015em;
-  color: var(--color-text-primary);
-}
-
-.availability__timezone {
-  margin: 0;
-  color: var(--color-text-secondary);
-}
-
-.availability__day-nav {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2) var(--space-3);
-}
-
-/* `order: -1` + `flex-basis: 100%` deja la fecha siempre en su propia línea
-   encima de los botones: una fecha larga ("miércoles, 16 de septiembre de
-   2026") nunca compite por ancho con "‹ Anterior"/"Siguiente ›" en 320 px,
-   sin scroll horizontal (evidencia responsiva). */
-.availability__day-label {
-  order: -1;
-  flex-basis: 100%;
-  margin: 0;
-  text-align: center;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.availability__slots {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.availability__slot {
-  display: flex;
-  min-width: 44px;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  cursor: pointer;
-  background-color: var(--color-surface);
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: 4px;
-}
-
-.availability__slot:hover {
-  border-color: var(--color-accent-brass);
-}
-
-.availability__slot:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 2px var(--color-canvas),
-    0 0 0 4px var(--color-focus);
-}
-
-/* La selección se marca con el ícono de check Y el borde de énfasis, nunca
-   solo con un cambio de color (CA-095-05, mismo criterio que
-   PublicBarberSelectionPage.vue/CA-092-05). */
-.availability__slot--selected {
-  border-color: var(--color-accent-brass);
-  border-width: var(--border-width-emphasis);
-}
-
-.availability__slot-check {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: 50%;
-}
-
-.availability__slot--selected .availability__slot-check {
-  background-color: var(--color-accent-brass);
-  border-color: var(--color-accent-brass);
-}
-
-.availability__slot-time {
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.availability__summary {
-  margin: 0;
-  padding: var(--space-4);
-  color: var(--color-text-primary);
-  background-color: var(--color-surface);
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: 4px;
-}
-
-/* Mismo estilo de CTA que barber-selection__cta (PublicBarberSelectionPage,
-   HU-092): consistencia visual entre pasos consecutivos del mismo asistente
-   público, sin mockup asignado (DEC-078). */
-.availability__cta {
-  display: inline-flex;
-  align-self: flex-start;
-  align-items: center;
-  justify-content: center;
-  height: var(--control-height-primary-mobile);
-  padding: 0 var(--space-5);
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body);
-  font-weight: 500;
-  color: var(--color-on-strong);
-  text-decoration: none;
-  background-color: var(--color-action-primary);
-  border: var(--border-width-normal) solid var(--color-action-primary);
-  border-radius: 2px;
-}
-
-.availability__cta:hover {
-  background-color: var(--color-action-primary-hover);
-  border-color: var(--color-action-primary-hover);
-}
-
-.availability__cta:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 2px var(--color-canvas),
-    0 0 0 4px var(--color-focus);
-}
-
-@media (min-width: 1024px) {
-  .availability__title {
-    font-size: 40px;
-    line-height: 48px;
-  }
-}
-</style>

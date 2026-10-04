@@ -10,8 +10,10 @@
  * (publicbooking/confirm_test.go, booking/postgres/public_repository_test.go).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { ref } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
+import { bookingChromeKey } from '../../model/bookingChrome'
 
 const confirmPublicAppointmentMock = vi.hoisted(() => vi.fn())
 vi.mock('../../api/confirmPublicAppointmentApi', () => ({
@@ -137,6 +139,53 @@ describe('PublicCustomerDetailsPage', () => {
     await wrapper.find('form').trigger('submit')
     const results = await axe(wrapper.element)
     expect(results).toHaveNoViolations()
+  })
+
+  it('tells the shell the booking is complete only once the server confirms it (DEC-111)', async () => {
+    const completed = ref(false)
+    confirmPublicAppointmentMock.mockResolvedValueOnce({
+      kind: 'success',
+      appointment: CONFIRMED_APPOINTMENT,
+    })
+    const wrapper = mount(PublicCustomerDetailsPage, {
+      props: BASE_PROPS,
+      global: { provide: { [bookingChromeKey as symbol]: { completed } } },
+    })
+    await fillValidForm(wrapper)
+    await wrapper.find('form').trigger('submit')
+    // Revisar el resumen todavía no es una reserva: el progreso sigue en el paso.
+    expect(completed.value).toBe(false)
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('Confirmar turno'))!
+      .trigger('click')
+    await flushPromises()
+
+    expect(completed.value).toBe(true)
+    expect(wrapper.find('h1').text()).toBe('Todo listo')
+  })
+
+  it('does not complete the shell on a schedule conflict (DEC-111)', async () => {
+    const completed = ref(false)
+    confirmPublicAppointmentMock.mockResolvedValueOnce({
+      kind: 'schedule-conflict',
+      alternatives: [{ startsAt: '2026-09-20T15:00:00Z' }],
+    })
+    const wrapper = mount(PublicCustomerDetailsPage, {
+      props: BASE_PROPS,
+      global: { provide: { [bookingChromeKey as symbol]: { completed } } },
+    })
+    await fillValidForm(wrapper)
+    await wrapper.find('form').trigger('submit')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('Confirmar turno'))!
+      .trigger('click')
+    await flushPromises()
+
+    expect(completed.value).toBe(false)
+    expect(wrapper.find('h1').text()).toBe('Tus datos')
   })
 
   it('has no accessibility violations on the summary', async () => {

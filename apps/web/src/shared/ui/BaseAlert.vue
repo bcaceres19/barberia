@@ -285,7 +285,7 @@ const style = computed(() => ({
 .base-alert__status {
   margin: 0 0 var(--space-1) 0;
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -306,7 +306,7 @@ const style = computed(() => ({
    de repetirse además como titular en negrita. */
 .base-alert__title--plain {
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -341,7 +341,7 @@ const style = computed(() => ({
   border: none;
   border-radius: var(--radius-sm);
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;

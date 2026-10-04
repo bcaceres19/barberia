@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { openAsidePanel, pickDate, pickTime, selectBarber } from './horarios-controles'
 
 /**
  * Recorrido E2E de HU-041 (excepciones de jornada y festivos colombianos).
@@ -37,13 +38,17 @@ async function openSchedules(page: Page) {
   await expect(page.getByRole('heading', { name: 'Horarios' })).toBeVisible()
 }
 
+// El diálogo cerrado conserva su contenido en el DOM (la fecha elegida sigue
+// escrita en su selector): los textos de la lista se buscan dentro de ella.
+const exceptionList = (page: Page) => page.getByRole('list', { name: 'Excepciones de jornada' })
+
 async function addException(
   page: Page,
   { effectiveDate, closed }: { effectiveDate: string; closed: boolean },
 ) {
   await page.getByRole('button', { name: 'Agregar excepción' }).click()
   const dialog = page.getByRole('dialog', { name: 'Agregar excepción' })
-  await dialog.getByLabel('Fecha').fill(effectiveDate)
+  await pickDate(page, 'schedules-create-date', effectiveDate)
   if (!closed) {
     await dialog.getByLabel('Abierto con tramos especiales').check()
   }
@@ -65,8 +70,10 @@ test.describe('Excepciones de jornada y festivos (HU-041)', () => {
     await addBarber(page, barberName)
 
     await openSchedules(page)
-    await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
+    await selectBarber(page, barberName)
 
+    // Los festivos viven en un apartado del acordeón lateral: hay que abrirlo.
+    await openAsidePanel(page, 'Calendario de festivos colombianos')
     const toggle = page.getByLabel(
       'Cerrar automáticamente los festivos colombianos de este barbero',
     )
@@ -75,7 +82,8 @@ test.describe('Excepciones de jornada y festivos (HU-041)', () => {
     await expect(toggle).toBeChecked()
 
     await page.reload()
-    await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
+    await selectBarber(page, barberName)
+    await openAsidePanel(page, 'Calendario de festivos colombianos')
     await expect(toggle).toBeChecked()
   })
 
@@ -87,17 +95,17 @@ test.describe('Excepciones de jornada y festivos (HU-041)', () => {
     await addBarber(page, barberName)
 
     await openSchedules(page)
-    await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
+    await selectBarber(page, barberName)
 
     const dialog = await addException(page, { effectiveDate: '2027-12-08', closed: true })
     await dialog.getByRole('button', { name: 'Guardar' }).click()
     await expect(dialog).toBeHidden()
-    await expect(page.getByText('2027-12-08')).toBeVisible()
-    await expect(page.getByText('Cerrado')).toBeVisible()
+    await expect(exceptionList(page).getByText('2027-12-08')).toBeVisible()
+    await expect(exceptionList(page).getByText('Cerrado')).toBeVisible()
 
     await page.reload()
-    await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
-    await expect(page.getByText('2027-12-08')).toBeVisible()
+    await selectBarber(page, barberName)
+    await expect(exceptionList(page).getByText('2027-12-08')).toBeVisible()
   })
 
   test('agregar una excepción abierta con un tramo especial persiste (CA-041-04)', async ({
@@ -110,14 +118,14 @@ test.describe('Excepciones de jornada y festivos (HU-041)', () => {
     await addBarber(page, barberName)
 
     await openSchedules(page)
-    await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
+    await selectBarber(page, barberName)
 
     const dialog = await addException(page, { effectiveDate: '2027-07-20', closed: false })
-    await dialog.getByLabel('Hora de inicio').fill('09:00')
+    await pickTime(dialog, page, 'Hora de inicio', '09:00')
     await dialog.getByLabel('Duración (minutos)').fill('180')
     await dialog.getByRole('button', { name: 'Guardar' }).click()
     await expect(dialog).toBeHidden()
-    await expect(page.getByText('09:00 (180 min)')).toBeVisible()
+    await expect(exceptionList(page).getByText('09:00 (180 min)')).toBeVisible()
   })
 
   test('una fecha duplicada se rechaza sin cerrar el diálogo (CA-041-05)', async ({ page }) => {
@@ -128,7 +136,7 @@ test.describe('Excepciones de jornada y festivos (HU-041)', () => {
     await addBarber(page, barberName)
 
     await openSchedules(page)
-    await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
+    await selectBarber(page, barberName)
 
     const first = await addException(page, { effectiveDate: '2027-12-25', closed: true })
     await first.getByRole('button', { name: 'Guardar' }).click()
@@ -152,27 +160,27 @@ test.describe('Excepciones de jornada y festivos (HU-041)', () => {
     await addBarber(page, barberName)
 
     await openSchedules(page)
-    await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
+    await selectBarber(page, barberName)
 
     const dialog = await addException(page, { effectiveDate: '2027-05-01', closed: true })
     await dialog.getByRole('button', { name: 'Guardar' }).click()
     await expect(dialog).toBeHidden()
-    await expect(page.getByText('2027-05-01')).toBeVisible()
+    await expect(exceptionList(page).getByText('2027-05-01')).toBeVisible()
 
     await page.getByRole('button', { name: /Editar excepción del 2027-05-01/ }).click()
     const editDialog = page.getByRole('dialog', { name: 'Editar excepción' })
-    await editDialog.getByLabel('Fecha').fill('2027-05-02')
+    await pickDate(page, 'schedules-edit-date', '2027-05-02')
     await editDialog.getByRole('button', { name: 'Guardar' }).click()
     await expect(editDialog).toBeHidden()
-    await expect(page.getByText('2027-05-02')).toBeVisible()
-    await expect(page.getByText('2027-05-01')).not.toBeVisible()
+    await expect(exceptionList(page).getByText('2027-05-02')).toBeVisible()
+    await expect(exceptionList(page).getByText('2027-05-01')).not.toBeVisible()
 
     await page.getByRole('button', { name: /Retirar excepción del 2027-05-02/ }).click()
-    await expect(page.getByText('2027-05-02')).not.toBeVisible()
+    await expect(exceptionList(page).getByText('2027-05-02')).not.toBeVisible()
 
     await page.reload()
-    await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
-    await expect(page.getByText('2027-05-02')).not.toBeVisible()
+    await selectBarber(page, barberName)
+    await expect(exceptionList(page).getByText('2027-05-02')).not.toBeVisible()
   })
 
   test('un identificador real de otra barbería responde 404 al consultar el calendario de festivos (RN-TEN-01)', async ({

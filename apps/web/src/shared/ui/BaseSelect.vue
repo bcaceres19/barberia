@@ -146,7 +146,7 @@ onUnmounted(() => document.removeEventListener('mousedown', onOutside))
   gap: 8px;
 }
 .base-select__label {
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   line-height: 14px;
   letter-spacing: 0.08em;

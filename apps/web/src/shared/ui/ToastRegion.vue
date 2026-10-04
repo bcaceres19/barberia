@@ -131,7 +131,7 @@ function onAction(id: number, run: (() => void) | undefined) {
   box-shadow: 0 8px 20px -8px rgb(16 27 43 / 50%);
   color: var(--color-on-strong);
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;

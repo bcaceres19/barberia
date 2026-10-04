@@ -14,7 +14,7 @@ import (
 // AssignmentRepository implementa catalog.AssignmentRepository sobre
 // database.DB. Separado de Repository (repository.go, dueño de `service`)
 // porque opera sobre una tabla distinta (`barber_service`) con su propia
-// disciplina transaccional (DEC-068); comparte el mismo *database.DB, sin
+// disciplina transaccional; comparte el mismo *database.DB, sin
 // necesitar el coordinador de idempotencia (asignar/desasignar usan
 // semántica HTTP naturalmente repetible -PUT/DELETE-, no el protocolo de
 // Idempotency-Key de RN-IDE-01).
@@ -179,71 +179,18 @@ func (r *AssignmentRepository) Assign(ctx context.Context, barbershopID, barberI
 	return result, nil
 }
 
-// Unassign implementa catalog.AssignmentRepository.Unassign dentro de UNA
-// sola InTenantTx (DEC-068):
-//
-//  1. `SELECT is_active FROM service ... FOR UPDATE` bloquea la fila de
-//     `service` hasta el fin de esta transacción: dos desasignaciones
-//     concurrentes del mismo service_id se SERIALIZAN aquí, sin importar
-//     qué barber_id retiren cada una. Sin fila -> UnassignOutcomeNotFound.
-//  2. Confirma que la asociación (barbershop_id, barber_id, service_id)
-//     exista -> UnassignOutcomeNotFound si no.
-//  3. Cuenta cuántas filas activas quedan para ese service_id (incluida la
-//     que se retiraría). Si el servicio está activo y esa cuenta es <= 1,
-//     esta sería la última: UnassignOutcomeLastActiveConflict, sin borrar
-//     nada.
-//  4. En cualquier otro caso, DELETE y UnassignOutcomeDeleted.
-//
-// Porque el paso 1 mantiene el lock hasta el COMMIT/ROLLBACK de esta
-// transacción, una segunda transacción concurrente que intente retirar la
-// penúltima fila del MISMO servicio espera aquí; cuando se reanuda, ve la
-// cuenta YA actualizada (una menos) y rechaza correctamente si le toca ser
-// la última, sin ninguna ventana de carrera.
+// Unassign implementa catalog.AssignmentRepository.Unassign con un único
+// DELETE acotado por tenant. Retirar a un barbero de un servicio es siempre
+// válido, incluso si era el último: un servicio activo sin barberos deja de
+// ofrecerse al público (la consulta del catálogo público exige al menos una
+// asignación) pero conserva su registro y puede volver a asignarse
+// (DEC-114, que sustituye a DEC-068). Sin fila afectada, la asociación nunca
+// existió (o el barbero/servicio es ajeno o inexistente) ->
+// UnassignOutcomeNotFound, el mismo 404 uniforme de CA-023-04.
 func (r *AssignmentRepository) Unassign(ctx context.Context, barbershopID, barberID, serviceID string) (catalog.UnassignResult, error) {
 	var result catalog.UnassignResult
 
 	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
-		var isActive bool
-		err := q.QueryRow(ctx,
-			`SELECT is_active FROM service WHERE id = $1 AND barbershop_id = $2 FOR UPDATE`,
-			serviceID, barbershopID,
-		).Scan(&isActive)
-		switch {
-		case errors.Is(err, pgx.ErrNoRows):
-			result.Outcome = catalog.UnassignOutcomeNotFound
-			return nil
-		case err != nil:
-			return fmt.Errorf("lock service: %w", err)
-		}
-
-		var targetExists bool
-		if err := q.QueryRow(ctx,
-			`SELECT EXISTS(
-			   SELECT 1 FROM barber_service
-			    WHERE barbershop_id = $1 AND barber_id = $2 AND service_id = $3
-			 )`,
-			barbershopID, barberID, serviceID,
-		).Scan(&targetExists); err != nil {
-			return fmt.Errorf("check target assignment: %w", err)
-		}
-		if !targetExists {
-			result.Outcome = catalog.UnassignOutcomeNotFound
-			return nil
-		}
-
-		var activeCount int
-		if err := q.QueryRow(ctx,
-			`SELECT count(*) FROM barber_service WHERE barbershop_id = $1 AND service_id = $2`,
-			barbershopID, serviceID,
-		).Scan(&activeCount); err != nil {
-			return fmt.Errorf("count assignments: %w", err)
-		}
-
-		if isActive && activeCount <= 1 {
-			result.Outcome = catalog.UnassignOutcomeLastActiveConflict
-			return nil
-		}
-
 		tag, err := q.Exec(ctx,
 			`DELETE FROM barber_service WHERE barbershop_id = $1 AND barber_id = $2 AND service_id = $3`,
 			barbershopID, barberID, serviceID,
@@ -252,13 +199,8 @@ func (r *AssignmentRepository) Unassign(ctx context.Context, barbershopID, barbe
 			return fmt.Errorf("delete barber_service: %w", err)
 		}
 		if tag.RowsAffected() == 0 {
-			// No debería ocurrir: targetExists ya confirmó la fila dentro
-			// de esta misma transacción, y ninguna otra transacción puede
-			// haberla borrado mientras el lock FOR UPDATE de service sigue
-			// vigente en esta conexión (DEC-068 solo protege ESE service_id,
-			// pero esta fila concreta solo puede desaparecer a través de
-			// esta misma operación).
-			return fmt.Errorf("delete barber_service: no rows affected despite existing target")
+			result.Outcome = catalog.UnassignOutcomeNotFound
+			return nil
 		}
 		result.Outcome = catalog.UnassignOutcomeDeleted
 		return nil

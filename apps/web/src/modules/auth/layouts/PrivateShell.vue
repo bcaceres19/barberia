@@ -39,6 +39,16 @@ function onRetry() {
            de avisos (DEC-095) sin depender de la altura de ninguna de las dos
            ni desplazarse con el contenido. -->
       <div class="private-shell__stage">
+        <!-- Fondo vivo del panel: dos luces suaves que derivan despacio y una
+             cuadrícula de patronaje que avanza una casilla por ciclo. Es una
+             capa decorativa detrás del contenido (sin eventos ni lectura de
+             pantalla); las pantallas son transparentes y la tinta la pone el
+             escenario. -->
+        <div class="shell-ambient" aria-hidden="true">
+          <i class="shell-ambient__glow shell-ambient__glow--brass" />
+          <i class="shell-ambient__glow shell-ambient__glow--sage" />
+          <i class="shell-ambient__grid" />
+        </div>
         <main class="private-shell__content">
           <RouterView />
         </main>
@@ -80,6 +90,7 @@ function onRetry() {
    se desplaza (reporte en vivo, issue #189). */
 .private-shell__stage {
   position: relative;
+  background-color: var(--color-surface-strong);
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -87,6 +98,8 @@ function onRetry() {
 }
 
 .private-shell__content {
+  position: relative;
+  z-index: 1;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -113,6 +126,114 @@ function onRetry() {
 
 .private-shell__content::-webkit-scrollbar-thumb:hover {
   background-color: color-mix(in srgb, var(--color-brand-accent-surface) 70%, transparent);
+}
+
+.shell-ambient {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Luces: manchas radiales muy tenues de latón y salvia. Solo se trasladan,
+   en ciclos de casi un minuto, y lo hacen POR PASOS (`steps`): el fondo se
+   mueve menos de un píxel por paso, imperceptible, pero se recompone ~5
+   veces por segundo en vez de 60. Medido en Firefox: de ~10-20 % de un
+   núcleo a ~3 % con la página quieta. */
+.shell-ambient__glow {
+  position: absolute;
+  width: max(70vmax, 520px);
+  height: max(70vmax, 520px);
+  border-radius: 50%;
+  will-change: transform;
+}
+
+.shell-ambient__glow--brass {
+  top: -34vmax;
+  left: -22vmax;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent),
+    transparent
+  );
+  animation: shell-drift-a 52s steps(260, end) infinite alternate;
+}
+
+.shell-ambient__glow--sage {
+  right: -26vmax;
+  bottom: -38vmax;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--color-brand-sage) 14%, transparent),
+    transparent
+  );
+  animation: shell-drift-b 64s steps(320, end) infinite alternate;
+}
+
+/* Cuadrícula de patronaje: líneas casi invisibles que se desvanecen hacia los
+   bordes y se desplazan una casilla por ciclo (el bucle es continuo porque
+   el desplazamiento iguala el tamaño de la celda). */
+.shell-ambient__grid {
+  position: absolute;
+  inset: -56px;
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--color-on-strong) 4%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--color-on-strong) 4%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 20%, transparent 100%);
+  animation: shell-grid 70s steps(56, end) infinite;
+  will-change: transform;
+}
+
+@keyframes shell-drift-a {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  to {
+    transform: translate3d(14vmax, 10vmax, 0) scale(1.15);
+  }
+}
+
+@keyframes shell-drift-b {
+  from {
+    transform: translate3d(0, 0, 0) scale(1.1);
+  }
+
+  to {
+    transform: translate3d(-12vmax, -8vmax, 0) scale(0.95);
+  }
+}
+
+@keyframes shell-grid {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(56px, 56px, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell-ambient__glow,
+  .shell-ambient__grid {
+    animation: none;
+  }
+}
+
+:root[data-motion='reduced'] .shell-ambient__glow,
+:root[data-motion='reduced'] .shell-ambient__grid {
+  animation: none;
 }
 
 .private-shell__state {

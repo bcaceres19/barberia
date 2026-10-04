@@ -58,7 +58,7 @@ const id = useId()
 
 .switch-field__label {
   display: block;
-  font-size: 14px;
+  font-size: var(--font-size-body-sm);
   font-weight: 600;
   line-height: 20px;
   color: var(--color-on-strong);
@@ -66,7 +66,7 @@ const id = useId()
 
 .switch-field__hint {
   margin: 2px 0 0;
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   line-height: 18px;
   color: var(--color-on-strong-muted);
 }
@@ -94,7 +94,7 @@ const id = useId()
 .switch-field__state {
   min-width: 76px;
   text-align: right;
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;

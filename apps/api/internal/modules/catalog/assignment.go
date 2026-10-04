@@ -67,8 +67,8 @@ type AssignResult struct {
 type UnassignOutcome int
 
 const (
-	// UnassignOutcomeDeleted: la fila existía, DEC-068 lo permitía, y se
-	// borró.
+	// UnassignOutcomeDeleted: la fila existía y se borró. Retirar la última
+	// asignación de un servicio activo también es válido (DEC-114).
 	UnassignOutcomeDeleted UnassignOutcome = iota
 	// UnassignOutcomeNotFound: no existe tal asignación (barbero
 	// inexistente/ajeno, servicio inexistente/ajeno, o la asociación
@@ -76,10 +76,6 @@ const (
 	// producen el mismo 404 uniforme (CA-023-04), sin distinguirse en el
 	// resultado.
 	UnassignOutcomeNotFound
-	// UnassignOutcomeLastActiveConflict: la fila existe, el servicio está
-	// activo, y es la última asignación activa de ese servicio (DEC-068,
-	// CA-023-05/CA-023-06): se rechaza sin borrar nada.
-	UnassignOutcomeLastActiveConflict
 )
 
 // UnassignResult es el desenlace completo de Repository.Unassign.

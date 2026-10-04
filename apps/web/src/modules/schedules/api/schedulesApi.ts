@@ -8,6 +8,7 @@
 // fetchBarberSummaries llama DIRECTAMENTE al cliente HTTP compartido (nunca
 // a staffApi.ts, privado de su propio módulo): mismo criterio que
 // barberServicesApi.fetchBarberSummaries.
+import { barberPhotoUrl } from '@/shared/api/barberPhotoUrl'
 import { httpClient } from '@/shared/api/httpClient'
 import type { BarberSummary, WorkingHour, WorkingHourPage } from '../model/workingHour'
 import type {
@@ -37,7 +38,14 @@ export async function fetchBarberSummaries(): Promise<FetchBarberSummariesOutcom
     })
 
     if (response.ok && data) {
-      return { kind: 'success', items: data.items.map((b) => ({ id: b.id, fullName: b.fullName })) }
+      return {
+        kind: 'success',
+        items: data.items.map((b) => ({
+          id: b.id,
+          fullName: b.fullName,
+          photoUrl: barberPhotoUrl(b),
+        })),
+      }
     }
     return { kind: 'unexpected-error' }
   } catch {

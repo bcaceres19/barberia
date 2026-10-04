@@ -7,6 +7,15 @@ import { describe, it, expect } from 'vitest'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { publicBookingRoutes } from '../index'
 
+// Las cinco pantallas son hijas de un único cascarón (`PublicBookingLayout`):
+// la ruta raíz del registro es la del cascarón y cada pantalla conserva su
+// ruta absoluta. Los `paths` registrados son los del cascarón más los de sus
+// hijas.
+const registeredPaths = [
+  ...publicBookingRoutes.map((route) => route.path),
+  ...publicBookingRoutes.flatMap((route) => (route.children ?? []).map((child) => child.path)),
+]
+
 function buildRouter() {
   return createRouter({
     history: createMemoryHistory(),
@@ -15,8 +24,27 @@ function buildRouter() {
 }
 
 describe('publicBookingRoutes', () => {
+  it('hosts every screen under one shared shell, with the step in the route meta', async () => {
+    expect(publicBookingRoutes).toHaveLength(1)
+    const router = buildRouter()
+    const expected: Array<[string, number | undefined]> = [
+      ['/reservar/a', undefined],
+      ['/reservar/a/servicios', 1],
+      ['/reservar/a/servicios/s/barbero', 2],
+      ['/reservar/a/servicios/s/barbero/b/horario', 3],
+      ['/reservar/a/servicios/s/barbero/b/horario/2026-09-15T19:00:00Z/cliente', 4],
+    ]
+    for (const [path, step] of expected) {
+      await router.push(path)
+      const current = router.currentRoute.value
+      // Cascarón + pantalla: dos registros coincidentes en cada ruta.
+      expect(current.matched).toHaveLength(2)
+      expect(current.meta.bookingStep).toBe(step)
+    }
+  })
+
   it('registers /reservar/:slug', () => {
-    const paths = publicBookingRoutes.map((route) => route.path)
+    const paths = registeredPaths
     expect(paths).toContain('/reservar/:slug')
   })
 
@@ -36,7 +64,7 @@ describe('publicBookingRoutes', () => {
   })
 
   it('registers /reservar/:slug/servicios/:serviceId/barbero (HU-092)', () => {
-    const paths = publicBookingRoutes.map((route) => route.path)
+    const paths = registeredPaths
     expect(paths).toContain('/reservar/:slug/servicios/:serviceId/barbero')
   })
 
@@ -53,7 +81,7 @@ describe('publicBookingRoutes', () => {
   })
 
   it('registers /reservar/:slug/servicios/:serviceId/barbero/:barberId/horario (HU-095)', () => {
-    const paths = publicBookingRoutes.map((route) => route.path)
+    const paths = registeredPaths
     expect(paths).toContain('/reservar/:slug/servicios/:serviceId/barbero/:barberId/horario')
   })
 
@@ -71,7 +99,7 @@ describe('publicBookingRoutes', () => {
   })
 
   it('registers /reservar/:slug/servicios/:serviceId/barbero/:barberId/horario/:startsAt/cliente (HU-096)', () => {
-    const paths = publicBookingRoutes.map((route) => route.path)
+    const paths = registeredPaths
     expect(paths).toContain(
       '/reservar/:slug/servicios/:serviceId/barbero/:barberId/horario/:startsAt/cliente',
     )

@@ -2,14 +2,17 @@
 // Página de captura de datos del cliente y persona atendida (HU-096,
 // CA-096-01 a CA-096-06) y confirmación pública concurrente (HU-097,
 // CA-097-01 a CA-097-07). Sin mockup asignado: composición libre dentro de
-// NAVA / Tailored Grid (DEC-078). Valida/normaliza en el cliente con las
+// NAVA / Tailored Grid (DEC-078), alojada en el cascarón de la reserva
+// pública (DEC-111): lo que se rellena vive en una hoja de papel marfil
+// sobre el lienzo de tinta. Valida/normaliza en el cliente con las
 // mismas reglas que el backend aplicará (identity.go), conserva los datos
 // ante un error de validación o conflicto (CA-096-03, CA-097-03) y resuelve
 // `attendeeName` sin pedirlo dos veces cuando el cliente reserva para sí
 // mismo (CA-096-01, RN-RES-02).
 import { computed, nextTick, ref } from 'vue'
-import { BaseButton, BaseInput } from '@/shared/ui'
+import { BaseAlert, BaseButton, BaseInput } from '@/shared/ui'
 import { confirmPublicAppointment } from '../api/confirmPublicAppointmentApi'
+import { useBookingChrome } from '../model/bookingChrome'
 import { newIdempotencyKey } from '../model/idempotencyKey'
 import type {
   ConfirmedPublicAppointment,
@@ -39,6 +42,9 @@ interface Props {
   startsAt: string
 }
 const props = defineProps<Props>()
+
+// El cascarón dibuja el progreso: al confirmar, se completa.
+const chrome = useBookingChrome()
 
 type AttendeeChoice = 'self' | 'other'
 
@@ -154,6 +160,7 @@ async function handleConfirm() {
     case 'success':
       confirmedAppointment.value = outcome.appointment
       confirmState.value = 'confirmed'
+      chrome.completed.value = true
       idempotencyKey.value = null
       await nextTick()
       confirmedRef.value?.focus()
@@ -200,11 +207,27 @@ function chooseAlternative(startsAt: string) {
 </script>
 
 <template>
-  <main class="customer-details">
-    <div class="customer-details__container">
-      <h1 class="customer-details__title">Tus datos</h1>
+  <main class="pb-page pb-page--center">
+    <p class="pb-eyebrow">
+      {{
+        confirmState === 'confirmed'
+          ? 'Reserva completa'
+          : reviewing
+            ? 'Última revisión'
+            : 'Casi listo'
+      }}
+    </p>
+    <h1 class="pb-title">{{ confirmState === 'confirmed' ? 'Todo listo' : 'Tus datos' }}</h1>
+    <div class="pb-rule" aria-hidden="true"></div>
 
-      <form v-if="!reviewing" ref="formRef" novalidate @submit.prevent="handleSubmit">
+    <section class="pb-sheet customer-details">
+      <form
+        v-if="!reviewing"
+        ref="formRef"
+        class="pb-sheet__form customer-details__rise"
+        novalidate
+        @submit.prevent="handleSubmit"
+      >
         <fieldset class="customer-details__fieldset">
           <legend class="customer-details__legend">¿Para quién es el turno?</legend>
           <div
@@ -214,11 +237,11 @@ function chooseAlternative(startsAt: string) {
           >
             <label class="customer-details__radio">
               <input v-model="attendeeChoice" type="radio" name="attendee-choice" value="self" />
-              Para mí
+              <span>Para mí</span>
             </label>
             <label class="customer-details__radio">
               <input v-model="attendeeChoice" type="radio" name="attendee-choice" value="other" />
-              Para otra persona
+              <span>Para otra persona</span>
             </label>
           </div>
         </fieldset>
@@ -235,6 +258,7 @@ function chooseAlternative(startsAt: string) {
         <BaseInput
           v-if="attendeeChoice === 'other'"
           v-model="attendeeName"
+          class="customer-details__rise"
           type="text"
           label="Nombre de la persona atendida"
           autocomplete="off"
@@ -292,7 +316,9 @@ function chooseAlternative(startsAt: string) {
           </div>
         </div>
 
-        <BaseButton type="submit" variant="primary">Ver resumen</BaseButton>
+        <BaseButton type="submit" variant="primary" size="lg" class="customer-details__submit"
+          >Ver resumen</BaseButton
+        >
       </form>
 
       <!-- Resumen y confirmación real (HU-096/HU-097, CA-097-07): exige
@@ -302,11 +328,11 @@ function chooseAlternative(startsAt: string) {
       <div
         v-else-if="confirmState !== 'confirmed'"
         ref="summaryRef"
-        class="customer-details__summary"
+        class="customer-details__summary customer-details__rise"
         role="status"
         tabindex="-1"
       >
-        <h2 class="customer-details__summary-title">Revisa tus datos</h2>
+        <h2 class="pb-sheet__heading">Revisa tus datos</h2>
         <dl class="customer-details__summary-list">
           <div class="customer-details__summary-row">
             <dt>Cliente</dt>
@@ -334,21 +360,15 @@ function chooseAlternative(startsAt: string) {
           </div>
         </dl>
 
-        <p
-          v-if="confirmState === 'error'"
-          class="customer-details__error customer-details__banner"
-          role="alert"
-        >
+        <BaseAlert v-if="confirmState === 'error'" variant="danger" role="alert">
           {{ errorMessage }}
-        </p>
+        </BaseAlert>
 
-        <div
-          v-if="confirmState === 'schedule-conflict'"
-          class="customer-details__conflict"
-          role="alert"
-        >
-          <p>Ese horario se acaba de ocupar.</p>
-          <p v-if="alternatives.length > 0">Estas horas siguen libres:</p>
+        <BaseAlert v-if="confirmState === 'schedule-conflict'" variant="warning" role="alert">
+          <p class="customer-details__conflict-line">Ese horario se acaba de ocupar.</p>
+          <p v-if="alternatives.length > 0" class="customer-details__conflict-line">
+            Estas horas siguen libres:
+          </p>
           <ul v-if="alternatives.length > 0" class="customer-details__alternatives">
             <li v-for="alt in alternatives" :key="alt.startsAt">
               <BaseButton type="button" variant="soft" @click="chooseAlternative(alt.startsAt)">
@@ -356,13 +376,16 @@ function chooseAlternative(startsAt: string) {
               </BaseButton>
             </li>
           </ul>
-          <p v-else>No quedan horarios cercanos disponibles. Elige otro día.</p>
-        </div>
+          <p v-else class="customer-details__conflict-line">
+            No quedan horarios cercanos disponibles. Elige otro día.
+          </p>
+        </BaseAlert>
 
         <div class="customer-details__actions">
           <BaseButton
             type="button"
             variant="secondary"
+            size="lg"
             :disabled="confirmState === 'submitting'"
             @click="editAgain"
           >
@@ -371,6 +394,7 @@ function chooseAlternative(startsAt: string) {
           <BaseButton
             type="button"
             variant="primary"
+            size="lg"
             :loading="confirmState === 'submitting'"
             @click="handleConfirm"
           >
@@ -385,11 +409,33 @@ function chooseAlternative(startsAt: string) {
       <div
         v-else
         ref="confirmedRef"
-        class="customer-details__confirmed"
+        class="customer-details__confirmed customer-details__rise"
         role="status"
         tabindex="-1"
       >
-        <h2 class="customer-details__summary-title">¡Tu turno quedó confirmado!</h2>
+        <span class="customer-details__seal" aria-hidden="true">
+          <svg viewBox="0 0 96 96" focusable="false">
+            <rect
+              class="customer-details__seal-diamond"
+              pathLength="1"
+              x="22"
+              y="22"
+              width="52"
+              height="52"
+            />
+            <path class="customer-details__seal-check" pathLength="1" d="M33 49l11 11 21-23" />
+          </svg>
+          <i
+            v-for="spark in 8"
+            :key="spark"
+            class="customer-details__spark"
+            :style="{
+              '--spark-angle': `${(spark - 1) * 45}deg`,
+              '--spark-delay': `${0.7 + (spark % 3) * 0.06}s`,
+            }"
+          ></i>
+        </span>
+        <h2 class="pb-sheet__heading">¡Tu turno quedó confirmado!</h2>
         <dl v-if="confirmedAppointment" class="customer-details__summary-list">
           <div class="customer-details__summary-row">
             <dt>Barbería</dt>
@@ -408,194 +454,563 @@ function chooseAlternative(startsAt: string) {
             <dd>{{ formatLocalDateTime(confirmedAppointment.startsAt) }}</dd>
           </div>
         </dl>
-        <p>Te enviamos un correo con el enlace para consultar tu turno cuando quieras.</p>
+        <p class="customer-details__note">
+          Te enviamos un correo con el enlace para consultar tu turno cuando quieras.
+        </p>
       </div>
-    </div>
+    </section>
   </main>
 </template>
 
 <style scoped>
-.customer-details {
-  display: flex;
-  min-height: 100dvh;
-  justify-content: center;
-  padding: var(--space-6) var(--space-4);
-  background-color: var(--color-canvas);
+/* Todo lo que sigue vive sobre el panel de tinta levantada (`.pb-sheet`), el
+   mismo lienzo de las demás pantallas de la reserva: los campos, el resumen
+   y la confirmación se recomponen con los tokens de tinta y latón. `BaseInput`
+   y `BaseButton` se pensaron para superficies claras, así que aquí se les
+   ajustan sus variables y colores sin tocar el componente compartido. */
+.customer-details__rise {
+  animation: pb-rise 0.55s var(--pb-ease, ease) 0.1s backwards;
 }
 
-.customer-details__container {
-  display: flex;
-  width: 100%;
-  max-width: 640px;
-  flex-direction: column;
-  gap: var(--space-5);
+/* Los campos del formulario entran escalonados, uno tras otro. */
+.pb-sheet__form > * {
+  animation: pb-rise 0.6s var(--pb-ease, ease) calc(0.35s + var(--i, 0) * 0.07s) backwards;
 }
 
-.customer-details__title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 32px;
-  line-height: 40px;
-  letter-spacing: -0.015em;
-  color: var(--color-text-primary);
+.pb-sheet__form > :nth-child(2) {
+  --i: 1;
 }
 
-.customer-details__container form,
-.customer-details__summary {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+.pb-sheet__form > :nth-child(3) {
+  --i: 2;
+}
+
+.pb-sheet__form > :nth-child(4) {
+  --i: 3;
+}
+
+.pb-sheet__form > :nth-child(5) {
+  --i: 4;
+}
+
+.pb-sheet__form > :nth-child(6) {
+  --i: 5;
+}
+
+.pb-sheet__form > :nth-child(7) {
+  --i: 6;
 }
 
 .customer-details__fieldset {
+  min-width: 0;
   padding: 0;
   margin: 0;
   border: none;
 }
 
-.customer-details__legend {
+/* Rótulo reglado: versalitas de latón, el mismo de BaseInput. */
+.customer-details__legend,
+.customer-details__label {
   padding: 0;
-  margin: 0 0 var(--space-2);
+  font-family: var(--font-sans);
+  font-size: 11px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  line-height: 14px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pb-brass);
 }
 
+.customer-details__legend {
+  margin: 0 0 var(--space-2);
+}
+
+/* ── Campos de BaseInput sobre tinta ───────────────────────────────────── */
+
+.customer-details :deep(.base-input) {
+  --input-bg: color-mix(in srgb, #000 46%, var(--color-surface-strong));
+  --input-border-color: var(--pb-line-strong);
+  --input-border-base-color: color-mix(in srgb, var(--pb-brass) 75%, transparent);
+  --input-focus-ring:
+    0 0 0 2px var(--color-surface-strong), 0 0 0 4px var(--pb-brass),
+    0 0 22px color-mix(in srgb, var(--pb-brass) 35%, transparent);
+
+  color: var(--pb-text);
+}
+
+.customer-details :deep(.base-input::placeholder) {
+  color: var(--pb-muted);
+  opacity: 1;
+}
+
+.customer-details :deep(.base-input:hover:not(:disabled):not(.base-input--invalid)) {
+  background-color: color-mix(in srgb, #000 38%, var(--color-surface-strong));
+  border-color: color-mix(in srgb, var(--pb-brass) 60%, transparent);
+  border-bottom-color: var(--pb-brass);
+}
+
+.customer-details :deep(.base-input:focus-visible) {
+  background-color: color-mix(in srgb, #000 52%, var(--color-surface-strong));
+  border-color: var(--pb-brass);
+  border-bottom-color: var(--pb-brass);
+}
+
+.customer-details :deep(.base-input:-webkit-autofill),
+.customer-details :deep(.base-input:-webkit-autofill:hover),
+.customer-details :deep(.base-input:-webkit-autofill:focus) {
+  -webkit-text-fill-color: var(--pb-text);
+  caret-color: var(--pb-text);
+}
+
+.customer-details :deep(.base-input__label) {
+  letter-spacing: 0.12em;
+  color: var(--pb-brass);
+}
+
+.customer-details :deep(.base-input__required) {
+  color: var(--color-danger-on-strong);
+}
+
+.customer-details :deep(.base-input--invalid),
+.customer-details :deep(.base-input--invalid:hover) {
+  border-color: var(--color-danger-on-strong);
+  border-bottom-color: var(--color-danger-on-strong);
+}
+
+.customer-details :deep(.base-input--invalid:focus-visible) {
+  box-shadow:
+    0 0 0 2px var(--color-surface-strong),
+    0 0 0 4px var(--color-danger-on-strong);
+}
+
+.customer-details :deep(.base-input__hint) {
+  color: var(--pb-muted);
+}
+
+.customer-details :deep(.base-input__error),
+.customer-details__error {
+  color: var(--color-danger-on-strong);
+}
+
+/* «Para mí / Para otra persona» como control segmentado. El `<input>` nativo
+   sigue siendo el control (foco, flechas, formulario); solo se oculta su
+   caja y la etiqueta hace de segmento. */
 .customer-details__radio-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: var(--space-2);
 }
 
 .customer-details__radio {
+  position: relative;
   display: flex;
-  min-height: 44px;
+  min-height: var(--control-height);
+  cursor: pointer;
+}
+
+.customer-details__radio input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.customer-details__radio span {
+  display: flex;
+  flex: 1;
   align-items: center;
-  gap: var(--space-2);
-  color: var(--color-text-primary);
+  justify-content: center;
+  padding: 0 var(--space-4);
+  font-size: var(--font-size-body);
+  font-weight: 500;
+  color: var(--pb-text);
+  text-align: center;
+  background-color: transparent;
+  border: var(--border-width-normal) solid var(--pb-line-strong);
+  border-bottom: var(--border-width-emphasis) solid var(--pb-line-strong);
+  border-radius: 2px;
+  transition:
+    background-color var(--motion-duration-base) var(--motion-easing-standard),
+    border-color var(--motion-duration-base) var(--motion-easing-standard),
+    color var(--motion-duration-base) var(--motion-easing-standard),
+    transform var(--motion-duration-base) var(--pb-ease, ease);
+}
+
+.customer-details__radio:hover input:not(:checked) + span {
+  background-color: var(--pb-wash);
+  border-color: var(--pb-brass);
+  transform: translateY(-1px);
+}
+
+.customer-details__radio input:checked + span {
+  font-weight: 600;
+  color: var(--pb-on-brass);
+  background-color: var(--pb-brass);
+  border-color: var(--pb-brass);
+  border-bottom-color: color-mix(in srgb, var(--pb-brass) 70%, #000);
+}
+
+/* El segmento elegido también lleva un rombo: no depende solo del relleno. */
+.customer-details__radio input:checked + span::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  margin-right: var(--space-2);
+  background-color: var(--pb-on-brass);
+  transform: rotate(45deg);
+  animation: pb-pop 0.4s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
+.customer-details__radio input:focus-visible + span {
+  box-shadow:
+    0 0 0 2px var(--color-surface-strong),
+    0 0 0 4px var(--pb-brass);
 }
 
 .customer-details__field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
-.customer-details__label {
-  font-weight: 500;
-  color: var(--color-text-primary);
-}
-
+/* Área de nota: el mismo campo reglado que BaseInput (recuesto oscuro, filete
+   perimetral y línea base de latón de 2px). */
 .customer-details__textarea {
-  padding: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   font-family: var(--font-family-base);
   font-size: var(--font-size-body);
-  color: var(--color-text-primary);
-  background-color: var(--color-surface);
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: 4px;
+  line-height: var(--font-size-body-line);
+  color: var(--pb-text);
   resize: vertical;
+  background-color: color-mix(in srgb, #000 46%, var(--color-surface-strong));
+  border: var(--border-width-normal) solid var(--pb-line-strong);
+  border-bottom: var(--border-width-emphasis) solid
+    color-mix(in srgb, var(--pb-brass) 75%, transparent);
+  border-radius: 2px;
+  outline: none;
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-easing-standard),
+    background-color var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.customer-details__textarea:hover {
+  background-color: color-mix(in srgb, #000 38%, var(--color-surface-strong));
+  border-color: color-mix(in srgb, var(--pb-brass) 60%, transparent);
+  border-bottom-color: var(--pb-brass);
+}
+
+.customer-details__textarea:focus-visible {
+  background-color: color-mix(in srgb, #000 52%, var(--color-surface-strong));
+  border-color: var(--pb-brass);
+  box-shadow:
+    0 0 0 2px var(--color-surface-strong),
+    0 0 0 4px var(--pb-brass),
+    0 0 22px color-mix(in srgb, var(--pb-brass) 35%, transparent);
+}
+
+.customer-details__textarea[aria-invalid='true'] {
+  border-color: var(--color-danger-on-strong);
+  border-bottom-color: var(--color-danger-on-strong);
 }
 
 .customer-details__field-foot {
   display: flex;
-  justify-content: space-between;
   gap: var(--space-2);
-}
-
-.customer-details__error {
-  color: var(--color-danger);
+  justify-content: space-between;
+  font-size: var(--font-size-body-sm);
+  line-height: var(--font-size-body-sm-line);
 }
 
 .customer-details__counter {
-  color: var(--color-text-secondary);
+  color: var(--pb-muted);
 }
 
-.customer-details__summary {
-  padding: var(--space-4);
-  background-color: var(--color-surface);
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: 4px;
+/* ── Botones de BaseButton en latón sobre tinta ────────────────────────── */
+
+.customer-details :deep(.base-button) {
+  font-weight: 600;
 }
 
-.customer-details__summary-title {
-  margin: 0;
-  font-size: 20px;
-  color: var(--color-text-primary);
+.customer-details :deep(.base-button--primary) {
+  color: var(--pb-on-brass);
+  background-color: var(--pb-brass);
+  border-color: var(--pb-brass);
+  border-bottom-width: var(--border-width-emphasis);
+  border-bottom-color: color-mix(in srgb, var(--pb-brass) 70%, #000);
+}
+
+.customer-details :deep(.base-button--primary:hover:not(:disabled):not(.base-button--loading)) {
+  background-color: color-mix(in srgb, var(--pb-brass) 86%, #fff);
+  border-color: color-mix(in srgb, var(--pb-brass) 86%, #fff);
+  border-bottom-color: color-mix(in srgb, var(--pb-brass) 70%, #000);
+  box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--pb-brass) 70%, transparent);
+}
+
+.customer-details :deep(.base-button--primary:active:not(:disabled):not(.base-button--loading)) {
+  background-color: color-mix(in srgb, var(--pb-brass) 88%, #000);
+  border-color: color-mix(in srgb, var(--pb-brass) 88%, #000);
+}
+
+.customer-details :deep(.base-button--secondary),
+.customer-details :deep(.base-button--soft) {
+  color: var(--pb-brass);
+  background-color: transparent;
+  border-color: var(--pb-brass);
+  border-bottom-width: var(--border-width-emphasis);
+}
+
+.customer-details :deep(.base-button--secondary:hover:not(:disabled):not(.base-button--loading)),
+.customer-details :deep(.base-button--soft:hover:not(:disabled):not(.base-button--loading)) {
+  background-color: var(--pb-wash-strong);
+  border-color: var(--pb-brass);
+}
+
+.customer-details :deep(.base-button--secondary:active:not(:disabled):not(.base-button--loading)),
+.customer-details :deep(.base-button--soft:active:not(:disabled):not(.base-button--loading)) {
+  background-color: var(--pb-wash-strong);
+}
+
+.customer-details :deep(.base-button:focus-visible) {
+  box-shadow:
+    0 0 0 2px var(--color-surface-strong),
+    0 0 0 4px var(--color-on-strong);
+}
+
+.customer-details__submit {
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
+.customer-details__summary,
+.customer-details__confirmed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  outline: none;
+}
+
+.customer-details__confirmed .pb-sheet__heading {
+  text-align: center;
 }
 
 .customer-details__summary-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
   margin: 0;
+  border-top: 1px solid var(--pb-line-strong);
 }
 
 .customer-details__summary-row {
   display: flex;
   flex-wrap: wrap;
+  gap: var(--space-1) var(--space-6);
   justify-content: space-between;
-  gap: var(--space-2);
-  border-bottom: var(--border-width-normal) solid var(--color-border-subtle);
-  padding-bottom: var(--space-2);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--pb-line);
+  animation: pb-rise 0.5s var(--pb-ease, ease) backwards;
+}
+
+.customer-details__summary-row:nth-child(2) {
+  animation-delay: 0.08s;
+}
+
+.customer-details__summary-row:nth-child(3) {
+  animation-delay: 0.16s;
+}
+
+.customer-details__summary-row:nth-child(4) {
+  animation-delay: 0.24s;
+}
+
+.customer-details__summary-row:nth-child(5) {
+  animation-delay: 0.32s;
+}
+
+.customer-details__summary-row:nth-child(n + 6) {
+  animation-delay: 0.4s;
 }
 
 .customer-details__summary-row dt {
+  font-family: var(--font-sans);
+  font-size: 11px;
   font-weight: 600;
-  color: var(--color-text-secondary);
+  line-height: 24px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pb-brass);
 }
 
 .customer-details__summary-row dd {
+  min-width: 0;
   margin: 0;
-  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+  color: var(--pb-text);
   text-align: right;
 }
 
-.customer-details__banner {
-  margin: 0;
-  padding: var(--space-3);
-  background-color: var(--color-surface-muted);
-  border-radius: 4px;
+/* Avisos (error y conflicto) sobre tinta: baño tenue del color de estado y
+   filete lateral levantado al lienzo oscuro. */
+.customer-details :deep(.base-alert) {
+  color: var(--pb-text);
+  background-color: color-mix(
+    in srgb,
+    var(--color-danger-on-strong) 12%,
+    var(--color-surface-strong)
+  );
+  border-left-color: var(--color-danger-on-strong);
 }
 
-.customer-details__conflict {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+.customer-details :deep(.base-alert--warning) {
+  background-color: color-mix(
+    in srgb,
+    var(--color-warning-on-strong) 12%,
+    var(--color-surface-strong)
+  );
+  border-left-color: var(--color-warning-on-strong);
+}
+
+.customer-details :deep(.base-alert__title),
+.customer-details :deep(.base-alert__text) {
+  color: var(--pb-text);
+}
+
+.customer-details :deep(.base-alert__status) {
+  color: var(--pb-brass);
+}
+
+.customer-details__conflict-line {
   margin: 0;
-  padding: var(--space-3);
-  background-color: var(--color-surface-muted);
-  border-radius: 4px;
+}
+
+.customer-details__conflict-line + .customer-details__conflict-line,
+.customer-details__alternatives {
+  margin-top: var(--space-2);
 }
 
 .customer-details__alternatives {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-  margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .customer-details__actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: var(--space-3);
 }
 
-.customer-details__confirmed {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-4);
-  background-color: var(--color-surface);
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: 4px;
+.customer-details__actions :deep(.base-button) {
+  width: 100%;
 }
 
-@media (min-width: 1024px) {
-  .customer-details__title {
-    font-size: 40px;
-    line-height: 48px;
+@media (min-width: 480px) {
+  .customer-details__actions {
+    grid-template-columns: 1fr 1.6fr;
+  }
+}
+
+.customer-details__note {
+  margin: 0;
+  color: var(--pb-soft);
+  text-align: center;
+}
+
+/* Sello de confirmación: el rombo se traza, el check se dibuja y ocho
+   chispas de latón salen disparadas. Después queda quieto. */
+.customer-details__seal {
+  position: relative;
+  display: block;
+  align-self: center;
+  width: 104px;
+  height: 104px;
+}
+
+.customer-details__seal svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: var(--pb-brass);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.customer-details__seal-diamond {
+  transform: rotate(45deg);
+  transform-origin: 48px 48px;
+  stroke-dasharray: 1;
+  animation: seal-draw 0.9s cubic-bezier(0.55, 0, 0.2, 1) 0.15s backwards;
+}
+
+.customer-details__seal-check {
+  stroke: var(--color-success-on-strong);
+  stroke-width: 3;
+  stroke-dasharray: 1;
+  animation: seal-draw 0.55s cubic-bezier(0.55, 0, 0.2, 1) 0.8s backwards;
+}
+
+.customer-details__spark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  background-color: var(--pb-brass);
+  opacity: 0;
+  transform: rotate(var(--spark-angle)) translateY(0) rotate(45deg);
+  animation: seal-spark 1s cubic-bezier(0.2, 0.7, 0.2, 1) var(--spark-delay, 0.8s) backwards;
+}
+
+@keyframes seal-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes seal-spark {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--spark-angle)) translateY(0) rotate(45deg) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--spark-angle)) translateY(-74px) rotate(45deg) scale(0.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .customer-details__rise,
+  .pb-sheet__form > *,
+  .customer-details__summary-row,
+  .customer-details__seal-diamond,
+  .customer-details__seal-check,
+  .customer-details__radio input:checked + span::before {
+    animation: none;
+  }
+
+  .customer-details__spark {
+    display: none;
+  }
+
+  .customer-details__radio span,
+  .customer-details__textarea {
+    transition: none;
+  }
+
+  .customer-details__radio:hover input:not(:checked) + span {
+    transform: none;
   }
 }
 </style>

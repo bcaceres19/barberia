@@ -34,8 +34,5 @@ export type AssignServiceOutcome =
 export type UnassignServiceOutcome =
   | { kind: 'success' }
   | { kind: 'not-found' }
-  // DEC-068/CA-023-05: retirar la última asignación activa de un servicio
-  // activo se rechaza; el estado del checkbox no cambia.
-  | { kind: 'last-active-conflict' }
   | { kind: 'network-error' }
   | { kind: 'unexpected-error' }

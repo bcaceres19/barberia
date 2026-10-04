@@ -196,7 +196,7 @@ async function onLogoutFromMore() {
   padding: var(--space-1);
   background: transparent;
   border: none;
-  border-bottom: var(--border-width-emphasis) solid transparent;
+  position: relative;
   color: var(--color-on-strong-muted);
   font-family: var(--font-family-base);
   font-size: var(--font-size-caption);
@@ -206,15 +206,49 @@ async function onLogoutFromMore() {
   cursor: pointer;
   transition:
     color var(--motion-duration-fast) var(--motion-easing-standard),
-    border-color var(--motion-duration-fast) var(--motion-easing-standard);
+    background-color var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
 .app-nav__link--button {
-  font: inherit;
+  font-family: inherit;
+  font-size: var(--font-size-caption);
+  font-weight: 500;
+  line-height: inherit;
+}
+
+/* Filete de latón que se dibuja desde el centro bajo el destino activo (y,
+   a medias, bajo el que recibe el cursor): reemplaza el borde estático para
+   que cambiar de pantalla se sienta como un gesto, no un salto. */
+.app-nav__link::after {
+  content: '';
+  position: absolute;
+  right: 14%;
+  bottom: 0;
+  left: 14%;
+  height: var(--border-width-emphasis);
+  background-color: var(--color-brand-accent-surface);
+  transform: scaleX(0);
+  transition: transform var(--motion-duration-base) var(--motion-ease-out);
+}
+
+.app-nav__link:hover::after {
+  transform: scaleX(0.35);
+}
+
+.app-nav__icon {
+  display: inline-flex;
+  transition: transform var(--motion-duration-base) var(--motion-ease-spring);
+}
+
+.app-nav__link--active .app-nav__icon,
+.app-nav__link:hover .app-nav__icon {
+  transform: translateY(-2px);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-nav__link {
+  .app-nav__link,
+  .app-nav__link::after,
+  .app-nav__icon {
     transition: none;
   }
 }
@@ -243,8 +277,12 @@ async function onLogoutFromMore() {
 
 .app-nav__link--active,
 .app-nav__link[aria-expanded='true'] {
-  border-bottom-color: var(--color-brand-accent-surface);
   color: var(--color-brand-accent-surface);
+}
+
+.app-nav__link--active::after,
+.app-nav__link[aria-expanded='true']::after {
+  transform: scaleX(1);
 }
 
 @media (min-width: 1024px) {
@@ -267,7 +305,7 @@ async function onLogoutFromMore() {
     flex-direction: row;
     gap: 10px;
     padding: 0 8px;
-    font-size: 14px;
+    font-size: var(--font-size-body-sm);
   }
 
   .app-nav__icon :deep(svg) {

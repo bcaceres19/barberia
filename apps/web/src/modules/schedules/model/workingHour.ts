@@ -36,7 +36,7 @@ export function weekdayLabel(isoWeekday: number): string {
 }
 
 // BarberSummary es un subconjunto deliberadamente mínimo del recurso real
-// de `staff` (solo id + el nombre visible necesario para el selector),
+// de `staff` (id, el nombre visible y la URL de su retrato para el selector),
 // obtenido por este módulo directamente del cliente HTTP compartido -nunca
 // importando staffApi.ts, privado de su propio módulo
 // (docs/03-desarrollo/estandar-frontend-vue.md §3), mismo criterio que
@@ -44,4 +44,6 @@ export function weekdayLabel(isoWeekday: number): string {
 export interface BarberSummary {
   id: string
   fullName: string
+  /** Retrato del barbero, o null cuando no tiene (se muestra su monograma). */
+  photoUrl: string | null
 }

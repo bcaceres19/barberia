@@ -4,6 +4,19 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.29.0 · 2026-10-04
+
+### Cambiado
+
+- `DELETE /private/barbers/{barberId}/services/{serviceId}` deja de responder
+  `409` cuando la asignación es la última de un servicio activo (`DEC-114`,
+  que sustituye a `DEC-068`): se puede retirar a cualquier barbero y el
+  servicio queda sin asignaciones, sin ofrecerse al público hasta que se
+  asigne otro. Se elimina la response `LastActiveAssignmentConflictProblem`.
+  Consumidor afectado: la pantalla «Servicios por barbero», que ya no trata
+  ese `409`. El resto de respuestas (`204`, `401`, `404`, `500`) no cambia y
+  repetir la operación sigue respondiendo `404`.
+
 ## 0.28.0 · 2026-10-04
 
 ### Agregado

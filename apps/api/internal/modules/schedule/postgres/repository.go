@@ -106,8 +106,8 @@ func isWeekdayStartConflict(err error) bool {
 // tramos" ambas, no ver nada que bloquear con un SELECT ... FOR UPDATE
 // sobre working_hour, e insertar dos tramos que se solapan entre sí (el
 // clásico "phantom read" de una transacción a nivel READ COMMITTED). Mismo
-// criterio que DEC-068 bloqueando la fila de service para resistir la
-// carrera de dos desasignaciones concurrentes. No falla si el barbero no
+// criterio que lockServiceForTransition bloqueando la fila de service para
+// resistir dos transiciones concurrentes. No falla si el barbero no
 // existe (cero filas): el llamador ya lo verificó mediante BarberPort antes
 // de esta transacción; si de todas formas no existe, la verificación de
 // solape no encuentra nada y el INSERT/UPDATE final falla por su cuenta

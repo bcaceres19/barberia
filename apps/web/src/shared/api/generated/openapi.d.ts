@@ -516,7 +516,7 @@ export interface paths {
         post?: never;
         /**
          * Retirar la asignación de un servicio a un barbero de la barbería activa
-         * @description Retira la asociación entre `barberId` y `serviceId` (HU-023, CA-023-05, CA-023-06). Un `barberId`/`serviceId` inexistente o de otra barbería, o una asociación que nunca existió (o que ya se había retirado), responden el mismo `404` uniforme (CA-023-04). Retirar la última asignación ACTIVA de un servicio ACTIVO se rechaza con `409` (DEC-068): esta operación nunca borra al barbero, al servicio ni una cita, y el rechazo es seguro ante repetición (reintentarla produce el mismo `409`, nunca un borrado accidental).
+         * @description Retira la asociación entre `barberId` y `serviceId` (HU-023, CA-023-05). Un `barberId`/`serviceId` inexistente o de otra barbería, o una asociación que nunca existió (o que ya se había retirado), responden el mismo `404` uniforme (CA-023-04), de modo que repetir la operación es seguro. Se puede retirar a cualquier barbero, también al último de un servicio activo (DEC-114, que sustituye a DEC-068): ese servicio deja de ofrecerse al público hasta que se asigne otro barbero. Esta operación nunca borra al barbero, al servicio ni una cita.
          */
         delete: operations["unassignServiceFromBarber"];
         options?: never;
@@ -3257,16 +3257,6 @@ export interface components {
             };
             content?: never;
         };
-        /** @description Esta es la última asignación activa del servicio: retirarla lo dejaría sin ningún barbero mientras sigue activo (DEC-068). Asigna otro barbero antes de retirar este, o desactiva el servicio (HU-024) si ya no se ofrece. */
-        LastActiveAssignmentConflictProblem: {
-            headers: {
-                "X-Request-Id": components["headers"]["XRequestId"];
-                [name: string]: unknown;
-            };
-            content: {
-                "application/problem+json": components["schemas"]["Problem"];
-            };
-        };
         /** @description Impacto real de desactivar el servicio, calculado en el momento de esta solicitud. */
         ServiceDeactivationImpact: {
             headers: {
@@ -4667,7 +4657,6 @@ export interface operations {
             204: components["responses"]["AssignmentUnassigned"];
             401: components["responses"]["UnauthorizedProblem"];
             404: components["responses"]["NotFoundProblem"];
-            409: components["responses"]["LastActiveAssignmentConflictProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

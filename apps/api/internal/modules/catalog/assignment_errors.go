@@ -17,12 +17,3 @@ func errAssignmentBarberNotFound() error {
 func errAssignmentNotFound() error {
 	return apperr.NotFound("no existe esa asignación de servicio para ese barbero")
 }
-
-// errLastActiveAssignment cubre DEC-068: retirar la última asignación
-// activa de un servicio activo se rechaza con un conflicto de negocio ajeno
-// a idempotencia (apperr.KindConflict, igual que errNameConflict), no una
-// validación de campo: no depende de la forma del cuerpo, depende del
-// estado ya persistido de otras filas.
-func errLastActiveAssignment() error {
-	return apperr.Conflict("el servicio quedaría sin ningún barbero asignado; asigna otro barbero antes de retirar este")
-}

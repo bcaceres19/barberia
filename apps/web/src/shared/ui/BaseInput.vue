@@ -249,7 +249,7 @@ const handleFocus = (event: FocusEvent) => {
    para que siga siendo legible como encabezado del campo, no como ayuda. */
 .base-input__label {
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   line-height: 14px;
   letter-spacing: 0.08em;
@@ -408,7 +408,7 @@ const handleFocus = (event: FocusEvent) => {
   border: none;
   border-radius: var(--input-radius);
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;

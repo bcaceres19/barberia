@@ -118,7 +118,7 @@ test.describe('Asignación de servicios a barberos (HU-023)', () => {
     await expect(page.getByRole('checkbox', { name: serviceName })).toBeChecked()
   })
 
-  test('retirar la última asignación activa de un servicio se rechaza y conserva la casilla marcada (DEC-068, CA-023-05/06)', async ({
+  test('retirar la última asignación de un servicio se permite y la casilla queda desmarcada (DEC-114, CA-023-05)', async ({
     page,
   }) => {
     const stamp = Date.now()
@@ -136,26 +136,15 @@ test.describe('Asignación de servicios a barberos (HU-023)', () => {
     await checkbox.check()
     await expect(checkbox).toBeChecked()
 
-    // Único barbero asignado a este servicio recién creado: retirarlo lo
-    // dejaría en cero, así que la interfaz debe rechazarlo (409) y NO
-    // desmarcar la casilla.
+    // Único barbero asignado a este servicio recién creado: retirarlo es
+    // válido, sin mensaje de error, y el cambio persiste al recargar.
     await checkbox.uncheck()
-    await expect(
-      page.getByText('es el único barbero asignado a este servicio activo'),
-    ).toBeVisible()
-    await expect(checkbox).toBeChecked()
+    await expect(checkbox).not.toBeChecked()
+    await expect(page.getByRole('alert')).toHaveCount(0)
 
-    // Verificación real contra el servidor: el servicio sigue teniendo
-    // exactamente una asignación activa.
-    const remaining = await page.evaluate(async (name) => {
-      const servicesRes = await fetch('/api/v1/private/services?limit=50', {
-        credentials: 'include',
-      })
-      const services = (await servicesRes.json()) as { items: { id: string; name: string }[] }
-      const service = services.items.find((s) => s.name === name)
-      return service ?? null
-    }, serviceName)
-    expect(remaining).toBeTruthy()
+    await page.reload()
+    await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
+    await expect(page.getByRole('checkbox', { name: serviceName })).not.toBeChecked()
   })
 
   test('un identificador real de otra barbería responde 404 al consultar sus asignaciones (CA-023-04)', async ({

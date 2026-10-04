@@ -1,11 +1,13 @@
 <script setup lang="ts">
 // Página coordinadora de la entrada pública de reservas (HU-090, CA-090-01
 // a CA-090-05). Sin mockup asignado: composición libre dentro de NAVA /
-// Tailored Grid (DEC-078). Posee estado y reintento; no conoce la forma
-// RFC 9457 del contrato (eso queda dentro de `api/resolveBarbershopApi.ts`).
-import { computed, onMounted, ref } from 'vue'
-import { BaseAlert, BaseButton, NavaWordmark, PageState } from '@/shared/ui'
+// Tailored Grid (DEC-078), alojada en el cascarón de la reserva pública
+// (`layouts/PublicBookingLayout.vue`, DEC-111). Posee estado y reintento; no
+// conoce la forma RFC 9457 del contrato (eso queda dentro de
+// `api/resolveBarbershopApi.ts`).
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { formatInstantInTimezone } from '@/shared/time/formatInstant'
+import BookingStateScreen from '../components/BookingStateScreen.vue'
 import { resolveBarbershop } from '../api/resolveBarbershopApi'
 import type { PublicBarbershopProfile } from '../model/barbershopProfileOutcome'
 
@@ -44,7 +46,18 @@ async function load() {
   }
 }
 
-onMounted(load)
+// El reloj avanza solo: la hora de la barbería es lo que la persona compara
+// con su propia hora antes de elegir, y una hora congelada engaña.
+const now = ref(new Date())
+let clockTimer: ReturnType<typeof setInterval> | undefined
+
+onMounted(() => {
+  void load()
+  clockTimer = setInterval(() => {
+    now.value = new Date()
+  }, 15_000)
+})
+onBeforeUnmount(() => clearInterval(clockTimer))
 
 const retry = () => {
   void load()
@@ -56,211 +69,51 @@ const retry = () => {
 // (mismo criterio que formatFullDateInTimezone, HU-062).
 const currentTimeLabel = computed(() => {
   if (screenState.value.status !== 'success') return ''
-  return formatInstantInTimezone(new Date().toISOString(), screenState.value.profile.timezone)
+  return formatInstantInTimezone(now.value.toISOString(), screenState.value.profile.timezone)
 })
 
-const unexpectedErrorMessage = computed(() => {
-  const state = screenState.value
-  if (state.status !== 'unexpected-error') return ''
-  return state.requestId
-    ? `Inténtalo de nuevo. Si continúa, comparte este código con soporte: ${state.requestId}.`
-    : 'Inténtalo de nuevo en unos segundos.'
-})
+const failedRequestId = computed(() =>
+  screenState.value.status === 'unexpected-error' ? screenState.value.requestId : undefined,
+)
 </script>
 
 <template>
-  <main v-if="screenState.status !== 'success'" class="public-entry public-entry--state">
-    <!-- Encabezado de página accesible pero visualmente oculto: PageState
-         solo aporta un <h2> (subordinado a un <h1> que su consumidor
-         habitual ya tiene en otra parte del panel privado); esta pantalla
-         pública NO tiene ningún otro <h1>, así que lo provee aquí para que
-         la página siempre tenga uno (page-has-heading-one, axe-core). -->
-    <h1 class="visually-hidden">Entrada pública de reservas</h1>
-    <PageState
-      v-if="screenState.status === 'loading'"
-      variant="loading"
-      headline="Abriendo tu barbería…"
-      role="status"
-    />
-    <PageState
-      v-else-if="screenState.status === 'not-found'"
-      variant="danger"
-      status-label="Error"
-      headline="No encontramos ese enlace"
-      role="alert"
-    >
-      <template #default
-        >Revisa que copiaste la dirección completa, o pídele al barbero que te la vuelva a
-        compartir.</template
-      >
-      <template #action>
-        <BaseButton variant="secondary" @click="retry">Reintentar</BaseButton>
-      </template>
-    </PageState>
-    <PageState
-      v-else-if="screenState.status === 'network-error'"
-      variant="warning"
-      status-label="Atención"
-      headline="No pudimos conectar"
-      role="alert"
-    >
-      <template #default>Revisa tu conexión e inténtalo de nuevo.</template>
-      <template #action>
-        <BaseButton variant="primary" @click="retry">Reintentar</BaseButton>
-      </template>
-    </PageState>
-    <PageState
-      v-else
-      variant="danger"
-      status-label="Error"
-      headline="Ocurrió un error inesperado"
-      role="alert"
-    >
-      <template #default>{{ unexpectedErrorMessage }}</template>
-      <template #action>
-        <BaseButton variant="primary" @click="retry">Reintentar</BaseButton>
-      </template>
-    </PageState>
-  </main>
+  <BookingStateScreen
+    v-if="screenState.status !== 'success'"
+    :status="screenState.status"
+    :request-id="failedRequestId"
+    title="Entrada pública de reservas"
+    loading-headline="Abriendo tu barbería…"
+    @retry="retry"
+  />
 
-  <main v-else class="public-entry public-entry--profile">
-    <div class="public-entry__card">
-      <NavaWordmark variant="ink" size="lg" />
-      <div class="public-entry__header">
-        <h1 class="public-entry__name">{{ screenState.profile.name }}</h1>
-        <p class="public-entry__time">Hora local de la barbería: {{ currentTimeLabel }}</p>
+  <main v-else class="pb-page pb-hero">
+    <p class="pb-eyebrow">Reserva en línea</p>
+    <h1 class="pb-hero__name">{{ screenState.profile.name }}</h1>
+    <div class="pb-rule" aria-hidden="true"></div>
+
+    <p class="pb-clock">Hora local de la barbería: {{ currentTimeLabel }}</p>
+
+    <dl
+      v-if="screenState.profile.contactEmail || screenState.profile.contactPhone"
+      class="pb-contact"
+    >
+      <div v-if="screenState.profile.contactPhone" class="pb-contact__row">
+        <dt>Teléfono</dt>
+        <dd>{{ screenState.profile.contactPhone }}</dd>
       </div>
+      <div v-if="screenState.profile.contactEmail" class="pb-contact__row">
+        <dt>Correo</dt>
+        <dd>{{ screenState.profile.contactEmail }}</dd>
+      </div>
+    </dl>
 
-      <BaseAlert
-        v-if="screenState.profile.contactEmail || screenState.profile.contactPhone"
-        variant="plain"
-        role="status"
-      >
-        <p v-if="screenState.profile.contactPhone" class="public-entry__contact-line">
-          Teléfono: {{ screenState.profile.contactPhone }}
-        </p>
-        <p v-if="screenState.profile.contactEmail" class="public-entry__contact-line">
-          Correo: {{ screenState.profile.contactEmail }}
-        </p>
-      </BaseAlert>
-
-      <RouterLink
-        :to="{ name: 'reserva-publica-servicios', params: { slug: props.slug } }"
-        class="public-entry__cta"
-      >
-        Reservar un turno
-      </RouterLink>
-    </div>
+    <RouterLink
+      :to="{ name: 'reserva-publica-servicios', params: { slug: props.slug } }"
+      class="pb-cta pb-cta--wide"
+    >
+      <span>Reservar un turno</span>
+      <span class="pb-cta__arrow" aria-hidden="true">→</span>
+    </RouterLink>
   </main>
 </template>
-
-<style scoped>
-.public-entry {
-  display: flex;
-  min-height: 100dvh;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-6) var(--space-4);
-}
-
-.public-entry--state {
-  background-color: var(--color-surface-strong);
-}
-
-.public-entry--profile {
-  background-color: var(--color-canvas);
-}
-
-/* Técnica estándar "sr-only": presente para tecnología de asistencia,
-   invisible y sin ocupar espacio para el resto de personas usuarias. */
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.public-entry__card {
-  display: flex;
-  width: 100%;
-  max-width: 480px;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-5);
-  text-align: center;
-}
-
-.public-entry__header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.public-entry__name {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 40px;
-  line-height: 48px;
-  letter-spacing: -0.015em;
-  color: var(--color-text-primary);
-}
-
-.public-entry__time {
-  margin: 0;
-  font-size: var(--font-size-body);
-  color: var(--color-text-secondary);
-}
-
-.public-entry__contact-line {
-  margin: 0;
-}
-
-.public-entry__contact-line + .public-entry__contact-line {
-  margin-top: var(--space-1);
-}
-
-/* Enlace de navegación con apariencia de botón primario (mismos tokens que
-   BaseButton--primary--lg): un <RouterLink> es la etiqueta semánticamente
-   correcta para navegar a otra ruta, así que este estilo se define aquí en
-   vez de anidar <button> dentro de <a> (inválido en HTML, y axe-core lo
-   marca). */
-.public-entry__cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: var(--control-height-primary-mobile);
-  padding: 0 var(--space-5);
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body);
-  font-weight: 500;
-  color: var(--color-on-strong);
-  text-decoration: none;
-  background-color: var(--color-action-primary);
-  border: var(--border-width-normal) solid var(--color-action-primary);
-  border-radius: 2px;
-}
-
-.public-entry__cta:hover {
-  background-color: var(--color-action-primary-hover);
-  border-color: var(--color-action-primary-hover);
-}
-
-.public-entry__cta:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 2px var(--color-canvas),
-    0 0 0 4px var(--color-focus);
-}
-
-@media (min-width: 1024px) {
-  .public-entry__name {
-    font-size: 48px;
-    line-height: 56px;
-  }
-}
-</style>

@@ -31,6 +31,12 @@ const loadedPolicy = {
   versionToken: 'tok-1',
 }
 
+// Los dos interruptores de «Cancelación fuera de plazo», en el orden de la
+// pantalla: primero si puede cancelar, después si debe indicar un motivo.
+type Mounted = Awaited<ReturnType<typeof mountReady>>
+const lateCancellationSwitch = (wrapper: Mounted) => wrapper.findAll('button[role="switch"]')[0]!
+const reasonRequiredSwitch = (wrapper: Mounted) => wrapper.findAll('button[role="switch"]')[1]!
+
 async function mountReady() {
   fetchMock.mockResolvedValueOnce({ kind: 'success', policy: loadedPolicy })
   const wrapper = mount(BookingPolicyPage)
@@ -62,19 +68,13 @@ describe('BookingPolicyPage', () => {
       '3',
     )
     expect(
-      (wrapper.find('select[name="slotGridMinutes"]').element as HTMLSelectElement).value,
-    ).toBe('15')
+      (wrapper.get('input[type="radio"][value="15"]').element as HTMLInputElement).checked,
+    ).toBe(true)
     expect(
       (wrapper.find('input[name="cancellationDeadlineMinutes"]').element as HTMLInputElement).value,
     ).toBe('20')
-    expect(
-      (wrapper.find('input[name="lateCancellationClientAllowed"]').element as HTMLInputElement)
-        .checked,
-    ).toBe(true)
-    expect(
-      (wrapper.find('input[name="lateCancellationReasonRequired"]').element as HTMLInputElement)
-        .checked,
-    ).toBe(true)
+    expect(lateCancellationSwitch(wrapper).attributes('aria-checked')).toBe('true')
+    expect(reasonRequiredSwitch(wrapper).attributes('aria-checked')).toBe('true')
   })
 
   it('shows a recoverable error with Reintentar when the initial load fails', async () => {
@@ -107,7 +107,7 @@ describe('BookingPolicyPage', () => {
   it('blocks submission for an incoherent cancellation policy (client-side validation)', async () => {
     const wrapper = await mountReady()
 
-    await wrapper.get('input[name="lateCancellationClientAllowed"]').setValue(false)
+    await lateCancellationSwitch(wrapper).trigger('click')
     await wrapper.get('form').trigger('submit')
     await flushPromises()
 
@@ -226,6 +226,79 @@ describe('BookingPolicyPage', () => {
     expect(saveMock).toHaveBeenCalledTimes(1)
     resolveSave({ kind: 'success', policy: loadedPolicy })
     await flushPromises()
+  })
+
+  it('shows the unsaved-changes bar only while something differs from the saved values', async () => {
+    const wrapper = await mountReady()
+    expect(wrapper.text()).not.toContain('Cambios sin guardar')
+
+    await wrapper.get('input[name="minAdvanceMinutes"]').setValue('90')
+    expect(wrapper.text()).toContain('Cambios sin guardar')
+    expect(wrapper.text()).toContain('Ventana de reserva')
+
+    await wrapper.get('input[name="minAdvanceMinutes"]').setValue('60')
+    expect(wrapper.text()).not.toContain('Cambios sin guardar')
+  })
+
+  it('Descartar restores the last saved values and clears local errors', async () => {
+    const wrapper = await mountReady()
+    await wrapper.get('input[name="minAdvanceMinutes"]').setValue('9999')
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+    expect(wrapper.text()).toContain('Escribe un número entero entre 0 y 1440 minutos.')
+
+    const discard = wrapper.findAll('button').find((button) => button.text() === 'Descartar')!
+    await discard.trigger('click')
+    await flushPromises()
+
+    expect(
+      (wrapper.find('input[name="minAdvanceMinutes"]').element as HTMLInputElement).value,
+    ).toBe('60')
+    expect(wrapper.text()).not.toContain('Escribe un número entero')
+    expect(wrapper.text()).not.toContain('Cambios sin guardar')
+  })
+
+  it('stops claiming «Guardado» as soon as new unsaved changes appear', async () => {
+    const wrapper = await mountReady()
+    saveMock.mockResolvedValueOnce({
+      kind: 'success',
+      policy: { ...loadedPolicy, minAdvanceMinutes: 90, versionToken: 'tok-2' },
+    })
+    await wrapper.get('input[name="minAdvanceMinutes"]').setValue('90')
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+    expect(wrapper.text()).toContain('Guardado')
+
+    await wrapper.get('input[name="minAdvanceMinutes"]').setValue('120')
+    expect(wrapper.text()).not.toContain('Los cambios se guardaron correctamente.')
+  })
+
+  it('changes the slot grid with the radio group and mirrors it in the live preview', async () => {
+    const wrapper = await mountReady()
+    expect(wrapper.get('.policy-preview').text()).toContain('una cada 15 min')
+
+    await wrapper.get('input[type="radio"][value="30"]').setValue(true)
+
+    expect(wrapper.get('.policy-preview').text()).toContain('una cada 30 min')
+    expect(wrapper.get('.policy-preview').text()).toContain('10:30')
+    saveMock.mockResolvedValueOnce({
+      kind: 'success',
+      policy: { ...loadedPolicy, slotGridMinutes: 30, versionToken: 'tok-2' },
+    })
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+    expect(saveMock.mock.calls[0]![0]).toMatchObject({ slotGridMinutes: 30 })
+  })
+
+  it('describes the cancellation rule in the preview', async () => {
+    const wrapper = await mountReady()
+    expect(wrapper.get('.policy-preview').text()).toContain('puede cancelar, indicando un motivo')
+
+    await reasonRequiredSwitch(wrapper).trigger('click')
+    expect(wrapper.get('.policy-preview').text()).toContain('puede cancelar sin motivo')
+
+    await wrapper.get('input[name="cancellationDeadlineMinutes"]').setValue('0')
+    expect(wrapper.get('.policy-preview').text()).toContain('no puede cancelar por su cuenta')
   })
 
   it('has no axe violations once loaded', async () => {

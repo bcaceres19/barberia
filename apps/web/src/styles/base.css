@@ -14,6 +14,17 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* El fondo del documento es lo que se ve en el rebote del scroll general y
+     al sobre-desplazar. Sin esto heredaba el marfil de `body` y asomaba una
+     franja clara detrás de las pantallas de tinta (panel privado y reserva
+     pública). Sigue a --color-surface-strong, así también respeta el modo
+     Marfil del panel. */
+  background: var(--color-surface-strong);
+}
+
+/* El acceso y la recuperación son marfil de lado a lado: su rebote debe serlo. */
+html:has(.auth-split) {
+  background: var(--color-canvas);
 }
 
 body {

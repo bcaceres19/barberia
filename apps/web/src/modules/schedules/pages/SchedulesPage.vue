@@ -10,10 +10,28 @@
 // una respuesta exitosa del servidor cierra el diálogo o cambia una fila
 // (trabajo requerido §4.3/§4.4 de HU-021, mismo criterio aquí). Cada cambio
 // confirmado añade un aviso emergente (DEC-095); los errores siguen en línea.
-import { computed, onMounted, ref } from 'vue'
+// La semana se dibuja como un tablero (WeeklyBoard): barras de latón sobre una
+// regla horaria común, con la lista real de tramos debajo de cada día.
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useToast } from '@/shared/composables'
 import { isSoloProfile } from '@/shared/model'
-import { BaseAlert, BaseButton, BaseDialog, BaseInput, PageHeader, RecordRow } from '@/shared/ui'
+import { getCivilDateInTimezone } from '@/shared/time/civilDate'
+import {
+  BarberAvatar,
+  BaseAlert,
+  BaseButton,
+  BaseDatePicker,
+  BaseDialog,
+  BaseInput,
+  BaseSelect,
+  BaseTimePicker,
+  DiamondLoader,
+  EmptyScene,
+} from '@/shared/ui'
+import AccordionItem from '../components/AccordionItem.vue'
+import DayTrack from '../components/DayTrack.vue'
+import WeekdayPicker from '../components/WeekdayPicker.vue'
+import WeeklyBoard from '../components/WeeklyBoard.vue'
 import {
   createWorkingHour,
   deleteWorkingHour,
@@ -33,6 +51,14 @@ import {
   type ScheduleExceptionSegmentInput,
 } from '../api/scheduleExceptionsApi'
 import { newIdempotencyKey } from '../model/idempotencyKey'
+import {
+  civilDateTile as dateTile,
+  computeScale,
+  endLabel,
+  formatHours,
+  nowInTimezone,
+  type BoardNow,
+} from '../model/weekBoard'
 import type { ColombianHoliday, ScheduleException } from '../model/scheduleException'
 import {
   ISO_WEEKDAYS,
@@ -144,8 +170,8 @@ async function selectBarber(barberId: string) {
   void loadExceptions(barberId)
 }
 
-function onBarberSelectChange(event: Event) {
-  const barberId = (event.target as HTMLSelectElement).value
+function onBarberChange(barberId: string) {
+  if (barberId === selectedBarberId.value) return
   void selectBarber(barberId)
 }
 
@@ -169,8 +195,8 @@ const createAttempted = ref(false)
 // (mismo criterio que staff/pages/StaffPage.vue).
 let createIdempotencyKey = newIdempotencyKey()
 
-function openCreateDialog() {
-  createISOWeekday.value = 1
+function openCreateDialog(isoWeekday?: number) {
+  createISOWeekday.value = isoWeekday ?? 1
   createStartsTime.value = ''
   createDurationMinutes.value = 60
   createWeekdayError.value = undefined
@@ -191,6 +217,11 @@ function revalidateCreate() {
   createWeekdayError.value = validateISOWeekday(createISOWeekday.value)
   createStartsTimeError.value = validateStartsTime(createStartsTime.value)
   createDurationError.value = validateDurationMinutes(createDurationMinutes.value)
+}
+
+function onCreateWeekdayInput(value: number) {
+  createISOWeekday.value = value
+  revalidateCreate()
 }
 
 function onCreateStartsTimeInput(value: string | number) {
@@ -286,6 +317,11 @@ function revalidateEdit() {
   editWeekdayError.value = validateISOWeekday(editISOWeekday.value)
   editStartsTimeError.value = validateStartsTime(editStartsTime.value)
   editDurationError.value = validateDurationMinutes(editDurationMinutes.value)
+}
+
+function onEditWeekdayInput(value: number) {
+  editISOWeekday.value = value
+  revalidateEdit()
 }
 
 function onEditStartsTimeInput(value: string | number) {
@@ -539,6 +575,11 @@ function onCreateIsClosedChange(isClosed: boolean) {
   revalidateExceptionCreate()
 }
 
+function onCreateEffectiveDateInput(value: string) {
+  createEffectiveDate.value = value
+  revalidateExceptionCreate()
+}
+
 function addCreateSegment() {
   createSegments.value = [...createSegments.value, newSegmentRow()]
 }
@@ -650,6 +691,11 @@ function onEditIsClosedChange(isClosed: boolean) {
   if (!isClosed && editSegments.value.length === 0) {
     editSegments.value = [newSegmentRow()]
   }
+  revalidateExceptionEdit()
+}
+
+function onEditEffectiveDateInput(value: string) {
+  editEffectiveDate.value = value
   revalidateExceptionEdit()
 }
 
@@ -769,306 +815,530 @@ async function onDeleteException(exception: ScheduleException) {
 }
 
 onMounted(loadColombianHolidays)
+
+// --- Tablero semanal, cifras y reloj de la barbería -------------------------
+
+const LOADING_PHRASES = [
+  'Revisando la semana',
+  'Afilando la navaja',
+  'Alineando los turnos',
+  'Todo a su hora',
+] as const
+
+// Duraciones que un barbero escribe una y otra vez: atajos, no una regla.
+const DURATION_PRESETS = [
+  { minutes: 30, label: '30 min' },
+  { minutes: 45, label: '45 min' },
+  { minutes: 60, label: '1 h' },
+  { minutes: 120, label: '2 h' },
+  { minutes: 240, label: '4 h' },
+  { minutes: 480, label: '8 h' },
+] as const
+
+// Panel lateral en acordeón: un solo apartado abierto a la vez para que la
+// pantalla quepa sin desplazarse. Las excepciones abren primero: son lo que
+// más se edita; el estado de los festivos se lee en la insignia del apartado.
+type AsidePanel = 'holidays' | 'exceptions' | 'upcoming'
+const openPanel = ref<AsidePanel | null>('exceptions')
+
+function togglePanel(panel: AsidePanel) {
+  openPanel.value = openPanel.value === panel ? null : panel
+}
+
+const barberOptions = computed(() =>
+  barbers.value.map((barber) => ({ value: barber.id, label: barber.fullName })),
+)
+
+const boardScale = computed(() => computeScale(workingHours.value))
+const weekMinutes = computed(() =>
+  workingHours.value.reduce((sum, wh) => sum + wh.durationMinutes, 0),
+)
+const activeDays = computed(() => new Set(workingHours.value.map((wh) => wh.isoWeekday)).size)
+
+// "Hoy" y "ahora" se leen en la zona de la barbería, nunca en la del
+// dispositivo (CA-040-06). Sin zona conocida no se marca ninguno.
+const clock = ref<BoardNow | null>(null)
+
+function refreshClock() {
+  if (!barbershopTimezone.value) {
+    clock.value = null
+    return
+  }
+  try {
+    clock.value = nowInTimezone(barbershopTimezone.value)
+  } catch {
+    clock.value = null
+  }
+}
+
+watch(barbershopTimezone, refreshClock, { immediate: true })
+
+let clockTimer: ReturnType<typeof setInterval> | undefined
+onMounted(() => {
+  clockTimer = setInterval(refreshClock, 30_000)
+})
+onUnmounted(() => {
+  if (clockTimer !== undefined) clearInterval(clockTimer)
+})
+
+const todayIsoWeekday = computed(() => clock.value?.isoWeekday ?? null)
+const nowMinute = computed(() => clock.value?.minute ?? null)
+const todayCivilDate = computed(() =>
+  barbershopTimezone.value && clock.value ? getCivilDateInTimezone(barbershopTimezone.value) : null,
+)
+
+const exceptionDates = computed(() => new Set(exceptions.value.map((e) => e.effectiveDate)))
+
+function weekdayInitial(isoWeekday: number): string {
+  return weekdayLabel(isoWeekday).charAt(0)
+}
+
+// buildPreview dibuja el tramo que se está escribiendo sobre la pista de su
+// día, junto a los que ese día ya tiene (atenuados): así un solape se ve antes
+// de guardar. El servidor sigue siendo quien decide (CA-040-04).
+function buildPreview(
+  isoWeekday: number,
+  startsTime: string,
+  durationMinutes: number,
+  excludeId: string | null,
+) {
+  const context = workingHours.value
+    .filter((wh) => wh.isoWeekday === isoWeekday && wh.id !== excludeId)
+    .map((wh) => ({
+      id: wh.id,
+      startsTime: wh.startsTime,
+      durationMinutes: wh.durationMinutes,
+      muted: true,
+    }))
+  const valid =
+    /^\d{2}:\d{2}$/.test(startsTime) &&
+    Number.isInteger(durationMinutes) &&
+    durationMinutes >= 1 &&
+    durationMinutes <= 1440
+  const draft = { id: 'draft', startsTime, durationMinutes, muted: false }
+  return {
+    segments: valid ? [...context, draft] : context,
+    scale: computeScale(valid ? [...context, draft] : context),
+    text: valid
+      ? `${weekdayLabel(isoWeekday)} · ${startsTime} – ${endLabel(startsTime, durationMinutes)} · ${formatHours(durationMinutes)}`
+      : 'Elige la hora y la duración para ver cómo queda.',
+  }
+}
+
+const createPreview = computed(() =>
+  buildPreview(createISOWeekday.value, createStartsTime.value, createDurationMinutes.value, null),
+)
+const editPreview = computed(() =>
+  buildPreview(
+    editISOWeekday.value,
+    editStartsTime.value,
+    editDurationMinutes.value,
+    editTarget.value?.id ?? null,
+  ),
+)
 </script>
 
 <template>
   <section class="schedules-page" aria-labelledby="schedules-page-title">
-    <PageHeader
-      title-id="schedules-page-title"
-      title="Horarios"
-      subtitle="Jornada semanal, festivos y excepciones."
-    >
-      <template v-if="pageStatus === 'ready' && barbers.length > 0" #actions>
-        <BaseButton type="button" variant="primary" @click="openCreateDialog">
-          Agregar tramo
-        </BaseButton>
-      </template>
-    </PageHeader>
-
-    <p v-if="barbershopTimezone" class="schedules-page__timezone">
-      Horas en la zona horaria de la barbería: {{ barbershopTimezone }}
-    </p>
-
-    <div
-      v-if="pageStatus === 'loading'"
-      class="schedules-page__state"
-      role="status"
-      aria-live="polite"
-    >
-      <p>Cargando barberos…</p>
-    </div>
-
-    <BaseAlert
-      v-else-if="pageStatus === 'load-error'"
-      variant="warning"
-      title="No pudimos cargar esta sección"
-      role="alert"
-    >
-      Revisa tu conexión e inténtalo de nuevo.
-      <template #action>
-        <BaseButton type="button" variant="secondary" @click="onRetryLoad">Reintentar</BaseButton>
-      </template>
-    </BaseAlert>
-
-    <template v-else>
-      <p v-if="barbers.length === 0" class="schedules-page__empty">
-        <template v-if="isSoloProfile">
-          Aún no tienes tu perfil. Créalo en la sección "Mi perfil" antes de configurar tu horario.
-        </template>
-        <template v-else>
-          Aún no tienes barberos registrados. Agrega uno en la sección "Barberos" antes de
-          configurar su horario.
-        </template>
-      </p>
-
-      <template v-else>
-        <div v-if="!hideBarberPicker" class="schedules-page__picker">
-          <label for="schedules-barber-select" class="schedules-page__label">Barbero</label>
-          <select
+    <header class="schedules-page__header">
+      <div class="schedules-page__heading">
+        <h1 id="schedules-page-title" class="schedules-page__title">Horarios</h1>
+        <p class="schedules-page__subtitle">Jornada semanal, festivos y excepciones.</p>
+      </div>
+      <!-- Controles de la jornada junto al título: sin barberos no hay jornada
+           que armar, así que la acción principal tampoco aparece. -->
+      <div v-if="pageStatus === 'ready' && barbers.length > 0" class="schedules-page__controls">
+        <div class="schedules-page__who">
+          <BarberAvatar
+            class="schedules-page__portrait"
+            size="row"
+            :full-name="selectedBarber?.fullName ?? ''"
+            :photo-url="selectedBarber?.photoUrl ?? null"
+          />
+          <BaseSelect
+            v-if="!hideBarberPicker"
             id="schedules-barber-select"
             class="schedules-page__select"
-            :value="selectedBarberId ?? ''"
-            @change="onBarberSelectChange"
-          >
-            <option v-for="barber in barbers" :key="barber.id" :value="barber.id">
-              {{ barber.fullName }}
-            </option>
-          </select>
+            label="Barbero"
+            :model-value="selectedBarberId ?? ''"
+            :options="barberOptions"
+            @update:model-value="onBarberChange"
+          />
+          <!-- Perfil de barbero individual (DEC-115): con un solo barbero no hay nada que elegir. -->
+          <span v-else class="schedules-page__who-name">{{ selectedBarber?.fullName }}</span>
         </div>
 
-        <div
-          v-if="workingHoursStatus === 'loading'"
-          class="schedules-page__state"
-          role="status"
-          aria-live="polite"
-        >
-          <p>Cargando el horario de {{ selectedBarber?.fullName }}…</p>
-        </div>
+        <dl v-if="workingHoursStatus === 'ready'" class="schedules-page__stats">
+          <div>
+            <dt>Horas por semana</dt>
+            <dd>
+              <Transition name="schedules-stat" mode="out-in">
+                <span :key="weekMinutes">{{ formatHours(weekMinutes) }}</span>
+              </Transition>
+            </dd>
+          </div>
+          <div>
+            <dt>Días con jornada</dt>
+            <dd>
+              <Transition name="schedules-stat" mode="out-in">
+                <span :key="activeDays"
+                  >{{ activeDays }}<small class="schedules-page__stat-total">/7</small></span
+                >
+              </Transition>
+            </dd>
+          </div>
+        </dl>
 
-        <BaseAlert
-          v-else-if="workingHoursStatus === 'error'"
-          variant="warning"
-          title="No pudimos cargar el horario de este barbero"
-          role="alert"
+        <BaseButton
+          type="button"
+          variant="primary"
+          class="schedules-page__create"
+          @click="openCreateDialog()"
         >
-          Revisa tu conexión e inténtalo de nuevo.
-          <template #action>
-            <BaseButton type="button" variant="secondary" @click="onRetryWorkingHours">
-              Reintentar
-            </BaseButton>
+          Agregar tramo
+        </BaseButton>
+      </div>
+    </header>
+
+    <!-- Un solo fundido entre carga/error/listo (mismo criterio que Barberos). -->
+    <Transition name="schedules-content" mode="out-in">
+      <div
+        v-if="pageStatus === 'loading'"
+        class="schedules-page__state"
+        role="status"
+        aria-live="polite"
+      >
+        <DiamondLoader label="Cargando barberos…" layout="inline" :phrases="LOADING_PHRASES" />
+        <div class="schedules-page__skeleton" aria-hidden="true">
+          <span v-for="n in 4" :key="n" class="schedules-page__skeleton-row">
+            <span class="schedules-page__skeleton-bar schedules-page__skeleton-bar--day" />
+            <span class="schedules-page__skeleton-bar schedules-page__skeleton-bar--track" />
+          </span>
+        </div>
+      </div>
+
+      <BaseAlert
+        v-else-if="pageStatus === 'load-error'"
+        variant="warning"
+        title="No pudimos cargar esta sección"
+        role="alert"
+      >
+        Revisa tu conexión e inténtalo de nuevo.
+        <template #action>
+          <BaseButton type="button" variant="secondary" @click="onRetryLoad">Reintentar</BaseButton>
+        </template>
+      </BaseAlert>
+
+      <div v-else class="schedules-page__ready">
+        <EmptyScene v-if="barbers.length === 0" scene="agenda" class="schedules-page__empty">
+          <template #title>{{
+            isSoloProfile ? 'Aún no tienes tu perfil.' : 'Aún no tienes barberos registrados.'
+          }}</template>
+          <template #hint>
+            <template v-if="isSoloProfile">
+              Créalo en la sección
+              <RouterLink :to="{ name: 'staff-barberos' }">“Mi perfil”</RouterLink>
+              antes de configurar tu horario.
+            </template>
+            <template v-else>
+              Agrega uno en la sección
+              <RouterLink :to="{ name: 'staff-barberos' }">“Barberos”</RouterLink>
+              antes de configurar su horario.
+            </template>
           </template>
-        </BaseAlert>
+        </EmptyScene>
 
-        <template v-else-if="workingHoursStatus === 'ready'">
-          <BaseAlert
-            v-if="deleteError"
-            variant="danger"
-            role="alert"
-            class="schedules-page__delete-error"
-          >
-            {{ deleteError }}
-          </BaseAlert>
-
-          <div class="schedules-page__days">
-            <section
-              v-for="day in groupedByWeekday"
-              :key="day.value"
-              class="schedules-page__day"
-              :aria-labelledby="`schedules-day-${day.value}-title`"
+        <div v-else class="schedules-page__workspace">
+          <div class="schedules-page__main">
+            <div
+              v-if="workingHoursStatus === 'loading'"
+              class="schedules-page__state"
+              role="status"
+              aria-live="polite"
             >
-              <header class="schedules-page__day-header">
-                <h2 :id="`schedules-day-${day.value}-title`" class="schedules-page__day-title">
-                  {{ day.label }}
-                </h2>
-                <span class="schedules-page__day-count">
-                  {{ day.items.length === 1 ? '1 tramo' : `${day.items.length} tramos` }}
+              <DiamondLoader
+                :label="`Cargando el horario de ${selectedBarber?.fullName}…`"
+                layout="inline"
+                :phrases="LOADING_PHRASES"
+              />
+              <div class="schedules-page__skeleton" aria-hidden="true">
+                <span v-for="n in 7" :key="n" class="schedules-page__skeleton-row">
+                  <span class="schedules-page__skeleton-bar schedules-page__skeleton-bar--day" />
+                  <span class="schedules-page__skeleton-bar schedules-page__skeleton-bar--track" />
                 </span>
-              </header>
+              </div>
+            </div>
 
-              <p v-if="day.items.length === 0" class="schedules-page__day-empty">Sin tramos.</p>
+            <BaseAlert
+              v-else-if="workingHoursStatus === 'error'"
+              variant="warning"
+              title="No pudimos cargar el horario de este barbero"
+              role="alert"
+            >
+              Revisa tu conexión e inténtalo de nuevo.
+              <template #action>
+                <BaseButton type="button" variant="secondary" @click="onRetryWorkingHours">
+                  Reintentar
+                </BaseButton>
+              </template>
+            </BaseAlert>
 
-              <ul v-else class="schedules-page__list" :aria-label="`Tramos del ${day.label}`">
-                <RecordRow v-for="wh in day.items" :key="wh.id">
-                  <span class="schedules-page__item-time">
-                    {{ wh.startsTime }} · {{ wh.durationMinutes }} min
-                  </span>
-                  <template #trailing>
-                    <div class="schedules-page__item-actions">
+            <template v-else-if="workingHoursStatus === 'ready'">
+              <BaseAlert
+                v-if="deleteError"
+                variant="danger"
+                role="alert"
+                class="schedules-page__delete-error"
+              >
+                {{ deleteError }}
+              </BaseAlert>
+
+              <WeeklyBoard
+                :days="groupedByWeekday"
+                :scale="boardScale"
+                :today-iso-weekday="todayIsoWeekday"
+                :now-minute="nowMinute"
+                :pending-delete-ids="pendingDeleteIds"
+                @add="openCreateDialog"
+                @edit="openEditDialog"
+                @remove="onDelete"
+              />
+            </template>
+
+            <p v-if="barbershopTimezone" class="schedules-page__timezone">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2">
+                <circle cx="8" cy="8" r="6" />
+                <path d="M8 4.5V8l2.4 1.6" />
+              </svg>
+              <span
+                >Horas en la zona horaria de la barbería:
+                <strong>{{ barbershopTimezone }}</strong></span
+              >
+            </p>
+          </div>
+
+          <!-- Ajustes del barbero en acordeón: festivos (HU-041), excepciones de
+               jornada (HU-041) y festivos de referencia. -->
+          <aside
+            class="schedules-page__aside"
+            :style="{ '--accordion-count': colombianHolidays.length > 0 ? 3 : 2 }"
+            aria-label="Festivos y excepciones"
+          >
+            <AccordionItem
+              id="schedules-holidays"
+              title="Calendario de festivos colombianos"
+              :open="openPanel === 'holidays'"
+              :badge="
+                holidayCalendarStatus === 'ready'
+                  ? holidayCalendarEnabled
+                    ? 'Activo'
+                    : 'Inactivo'
+                  : undefined
+              "
+              :badge-tone="holidayCalendarEnabled ? 'on' : 'off'"
+              @toggle="togglePanel('holidays')"
+            >
+              <label
+                class="schedules-switch"
+                :class="{ 'schedules-switch--on': holidayCalendarEnabled }"
+              >
+                <input
+                  type="checkbox"
+                  class="schedules-switch__input"
+                  :checked="holidayCalendarEnabled"
+                  :disabled="holidayCalendarStatus !== 'ready' || holidayCalendarSaving"
+                  @change="onToggleHolidayCalendar"
+                />
+                <span class="schedules-switch__track" aria-hidden="true">
+                  <span class="schedules-switch__thumb" />
+                </span>
+                <span class="schedules-switch__text"
+                  >Cerrar automáticamente los festivos colombianos de este barbero</span
+                >
+              </label>
+              <BaseAlert v-if="holidayCalendarError" variant="warning" role="alert">
+                {{ holidayCalendarError }}
+              </BaseAlert>
+              <p class="schedules-card__hint">
+                <template v-if="holidayCalendarEnabled">
+                  Activado: un festivo se cierra por defecto, salvo que exista una excepción manual
+                  para esa fecha.
+                </template>
+                <template v-else>
+                  Desactivado: los festivos no agregan ningún bloqueo automático.
+                </template>
+              </p>
+            </AccordionItem>
+
+            <AccordionItem
+              id="schedules-exceptions"
+              title="Excepciones de jornada"
+              :open="openPanel === 'exceptions'"
+              :badge="exceptionsStatus === 'ready' ? String(sortedExceptions.length) : undefined"
+              @toggle="togglePanel('exceptions')"
+            >
+              <BaseButton
+                type="button"
+                variant="secondary"
+                class="schedules-page__aside-action"
+                @click="openExceptionCreateDialog()"
+              >
+                Agregar excepción
+              </BaseButton>
+
+              <div
+                v-if="exceptionsStatus === 'loading'"
+                class="schedules-page__state schedules-page__state--card"
+                role="status"
+                aria-live="polite"
+              >
+                <p>Cargando excepciones…</p>
+              </div>
+
+              <BaseAlert v-else-if="exceptionsStatus === 'error'" variant="warning" role="alert">
+                No pudimos cargar las excepciones de este barbero. Revisa tu conexión e inténtalo de
+                nuevo.
+                <template #action>
+                  <BaseButton type="button" variant="secondary" @click="onRetryExceptions">
+                    Reintentar
+                  </BaseButton>
+                </template>
+              </BaseAlert>
+
+              <template v-else-if="exceptionsStatus === 'ready'">
+                <BaseAlert
+                  v-if="exceptionDeleteError"
+                  variant="danger"
+                  role="alert"
+                  class="schedules-page__delete-error"
+                >
+                  {{ exceptionDeleteError }}
+                </BaseAlert>
+
+                <p v-if="sortedExceptions.length === 0" class="schedules-card__empty">
+                  Sin excepciones registradas.
+                </p>
+
+                <TransitionGroup
+                  v-else
+                  name="schedules-row"
+                  tag="ul"
+                  class="schedules-card__list"
+                  aria-label="Excepciones de jornada"
+                >
+                  <li
+                    v-for="exception in sortedExceptions"
+                    :key="exception.id"
+                    class="schedules-row"
+                  >
+                    <span class="schedules-tile" aria-hidden="true">
+                      <b>{{ dateTile(exception.effectiveDate).day }}</b>
+                      <i>{{ dateTile(exception.effectiveDate).month }}</i>
+                    </span>
+                    <div class="schedules-row__main">
+                      <p class="schedules-row__title">
+                        <span v-if="exception.isClosed" class="schedules-row__state">Cerrado</span>
+                        <template v-else>
+                          <span class="schedules-row__state schedules-row__state--open"
+                            >Abierto</span
+                          >
+                          <span class="schedules-row__segments">{{
+                            exception.segments
+                              .map((s) => `${s.startsTime} (${s.durationMinutes} min)`)
+                              .join(', ')
+                          }}</span>
+                        </template>
+                      </p>
+                      <p class="schedules-row__meta">
+                        <span class="schedules-row__date">{{ exception.effectiveDate }}</span>
+                        <span v-if="exception.reason"> · {{ exception.reason }}</span>
+                      </p>
+                    </div>
+                    <div class="schedules-row__actions">
                       <BaseButton
                         type="button"
                         variant="secondary"
-                        :aria-label="`Editar tramo de ${weekdayLabel(wh.isoWeekday)} a las ${wh.startsTime}`"
-                        @click="openEditDialog(wh)"
+                        :aria-label="`Editar excepción del ${exception.effectiveDate}`"
+                        @click="openExceptionEditDialog(exception)"
                       >
                         Editar
                       </BaseButton>
                       <BaseButton
                         type="button"
                         variant="secondary"
-                        :loading="isDeletePending(wh.id)"
-                        :disabled="isDeletePending(wh.id)"
-                        :aria-label="`Retirar tramo de ${weekdayLabel(wh.isoWeekday)} a las ${wh.startsTime}`"
-                        @click="onDelete(wh)"
+                        class="schedules-row__remove"
+                        :loading="isExceptionDeletePending(exception.id)"
+                        :disabled="isExceptionDeletePending(exception.id)"
+                        :aria-label="`Retirar excepción del ${exception.effectiveDate}`"
+                        @click="onDeleteException(exception)"
                       >
                         Retirar
                       </BaseButton>
                     </div>
-                  </template>
-                </RecordRow>
-              </ul>
-            </section>
-          </div>
-        </template>
+                  </li>
+                </TransitionGroup>
+              </template>
+            </AccordionItem>
 
-        <!-- HU-041: calendario de festivos colombianos -->
-        <section class="schedules-page__holiday-calendar" aria-labelledby="holiday-calendar-title">
-          <h2 id="holiday-calendar-title" class="schedules-page__day-title">
-            Calendario de festivos colombianos
-          </h2>
-          <BaseAlert v-if="holidayCalendarError" variant="warning" role="alert">
-            {{ holidayCalendarError }}
-          </BaseAlert>
-          <label class="schedules-page__checkbox-label">
-            <input
-              type="checkbox"
-              :checked="holidayCalendarEnabled"
-              :disabled="holidayCalendarStatus !== 'ready' || holidayCalendarSaving"
-              @change="onToggleHolidayCalendar"
-            />
-            Cerrar automáticamente los festivos colombianos de este barbero
-          </label>
-          <p class="schedules-page__day-empty">
-            Desactivado: los festivos no agregan ningún bloqueo automático. Activado: un festivo
-            queda cerrado por defecto, salvo que exista una excepción manual para esa fecha.
-          </p>
-        </section>
-
-        <!-- HU-041: excepciones de jornada -->
-        <section class="schedules-page__exceptions" aria-labelledby="exceptions-title">
-          <header class="schedules-page__exceptions-header">
-            <h2 id="exceptions-title" class="schedules-page__day-title">Excepciones de jornada</h2>
-            <BaseButton type="button" variant="secondary" @click="openExceptionCreateDialog()">
-              Agregar excepción
-            </BaseButton>
-          </header>
-
-          <div
-            v-if="exceptionsStatus === 'loading'"
-            class="schedules-page__state"
-            role="status"
-            aria-live="polite"
-          >
-            <p>Cargando excepciones…</p>
-          </div>
-
-          <BaseAlert v-else-if="exceptionsStatus === 'error'" variant="warning" role="alert">
-            No pudimos cargar las excepciones de este barbero. Revisa tu conexión e inténtalo de
-            nuevo.
-            <template #action>
-              <BaseButton type="button" variant="secondary" @click="onRetryExceptions">
-                Reintentar
-              </BaseButton>
-            </template>
-          </BaseAlert>
-
-          <template v-else-if="exceptionsStatus === 'ready'">
-            <BaseAlert
-              v-if="exceptionDeleteError"
-              variant="danger"
-              role="alert"
-              class="schedules-page__delete-error"
+            <AccordionItem
+              v-if="colombianHolidays.length > 0"
+              id="schedules-upcoming"
+              title="Próximos festivos colombianos"
+              :open="openPanel === 'upcoming'"
+              :badge="String(colombianHolidays.length)"
+              @toggle="togglePanel('upcoming')"
             >
-              {{ exceptionDeleteError }}
-            </BaseAlert>
-
-            <p v-if="sortedExceptions.length === 0" class="schedules-page__day-empty">
-              Sin excepciones registradas.
-            </p>
-
-            <ul v-else class="schedules-page__list" aria-label="Excepciones de jornada">
-              <li
-                v-for="exception in sortedExceptions"
-                :key="exception.id"
-                class="schedules-page__item"
-              >
-                <div>
-                  <span class="schedules-page__item-time">{{ exception.effectiveDate }}</span>
-                  <span v-if="exception.isClosed"> · Cerrado</span>
-                  <span v-else>
-                    ·
-                    {{
-                      exception.segments
-                        .map((s) => `${s.startsTime} (${s.durationMinutes} min)`)
-                        .join(', ')
-                    }}
+              <ul class="schedules-card__list">
+                <li
+                  v-for="holiday in colombianHolidays"
+                  :key="holiday.date"
+                  class="schedules-row schedules-row--static"
+                >
+                  <span class="schedules-tile" aria-hidden="true">
+                    <b>{{ dateTile(holiday.date).day }}</b>
+                    <i>{{ dateTile(holiday.date).month }}</i>
                   </span>
-                  <span v-if="exception.reason"> · {{ exception.reason }}</span>
-                </div>
-                <div class="schedules-page__item-actions">
+                  <div class="schedules-row__main">
+                    <p class="schedules-row__title">{{ holiday.name }}</p>
+                    <p class="schedules-row__meta">
+                      <span class="schedules-row__date">{{ holiday.date }}</span>
+                    </p>
+                  </div>
+                  <span v-if="exceptionDates.has(holiday.date)" class="schedules-row__tag">
+                    Con excepción
+                  </span>
                   <BaseButton
+                    v-else
                     type="button"
                     variant="secondary"
-                    :aria-label="`Editar excepción del ${exception.effectiveDate}`"
-                    @click="openExceptionEditDialog(exception)"
+                    :aria-label="`Registrar una excepción para el ${holiday.date}, ${holiday.name}`"
+                    @click="openExceptionCreateDialog(holiday.date)"
                   >
-                    Editar
+                    Registrar excepción
                   </BaseButton>
-                  <BaseButton
-                    type="button"
-                    variant="secondary"
-                    :loading="isExceptionDeletePending(exception.id)"
-                    :disabled="isExceptionDeletePending(exception.id)"
-                    :aria-label="`Retirar excepción del ${exception.effectiveDate}`"
-                    @click="onDeleteException(exception)"
-                  >
-                    Retirar
-                  </BaseButton>
-                </div>
-              </li>
-            </ul>
-          </template>
-        </section>
+                </li>
+              </ul>
+            </AccordionItem>
+          </aside>
+        </div>
+      </div>
+    </Transition>
 
-        <!-- HU-041: festivos colombianos de referencia -->
-        <section
-          v-if="colombianHolidays.length > 0"
-          class="schedules-page__holidays-reference"
-          aria-labelledby="holidays-reference-title"
-        >
-          <h2 id="holidays-reference-title" class="schedules-page__day-title">
-            Próximos festivos colombianos
-          </h2>
-          <ul class="schedules-page__list" aria-label="Próximos festivos colombianos">
-            <li
-              v-for="holiday in colombianHolidays"
-              :key="holiday.date"
-              class="schedules-page__item"
-            >
-              <span class="schedules-page__item-time">{{ holiday.date }} · {{ holiday.name }}</span>
-              <BaseButton
-                type="button"
-                variant="secondary"
-                :aria-label="`Registrar una excepción para el ${holiday.date}, ${holiday.name}`"
-                @click="openExceptionCreateDialog(holiday.date)"
-              >
-                Registrar excepción
-              </BaseButton>
-            </li>
-          </ul>
-        </section>
-      </template>
-    </template>
-
-    <!-- Alta -->
+    <!-- Alta de tramo -->
     <BaseDialog
       v-model="isCreateOpen"
       title="Agregar tramo"
-      size="sm"
+      :description="`Define cuándo trabaja ${selectedBarber?.fullName ?? 'el barbero'} ese día.`"
+      size="md"
+      content-class="schedules-page__dialog"
       @close="onCreateDialogClosed"
     >
+      <template #icon>
+        <span class="schedules-page__dialog-chip" aria-hidden="true">+</span>
+      </template>
       <form
         name="createWorkingHour"
-        class="schedules-page__form"
+        class="schedules-page__ink schedules-page__form"
         novalidate
         @submit.prevent="onSubmitCreate"
       >
@@ -1113,50 +1383,66 @@ onMounted(loadColombianHolidays)
           Inténtalo de nuevo en unos segundos. No perdiste lo que escribiste.
         </BaseAlert>
 
-        <div class="schedules-page__field">
-          <label for="schedules-create-weekday" class="schedules-page__label">
-            Día
-            <span class="schedules-page__required" aria-hidden="true">*</span>
-          </label>
-          <select
-            id="schedules-create-weekday"
-            v-model.number="createISOWeekday"
-            class="schedules-page__select"
-            :disabled="createStatus === 'saving'"
-            @change="revalidateCreate"
-          >
-            <option v-for="day in ISO_WEEKDAYS" :key="day.value" :value="day.value">
-              {{ day.label }}
-            </option>
-          </select>
-          <div v-if="createWeekdayError" class="schedules-page__field-error" role="alert">
-            {{ createWeekdayError }}
+        <WeekdayPicker
+          :model-value="createISOWeekday"
+          label="Día"
+          :disabled="createStatus === 'saving'"
+          :error="createWeekdayError"
+          @update:model-value="onCreateWeekdayInput"
+        />
+
+        <div class="schedules-page__pair">
+          <div class="schedules-page__field">
+            <BaseTimePicker
+              :model-value="createStartsTime"
+              label="Hora de inicio"
+              required
+              :disabled="createStatus === 'saving'"
+              @update:model-value="onCreateStartsTimeInput"
+            />
+            <div v-if="createStartsTimeError" class="schedules-page__field-error" role="alert">
+              {{ createStartsTimeError }}
+            </div>
           </div>
+          <BaseInput
+            :model-value="createDurationMinutes"
+            type="number"
+            name="durationMinutes"
+            label="Duración (minutos)"
+            required
+            :min="1"
+            :max="1440"
+            :disabled="createStatus === 'saving'"
+            :error="createDurationError"
+            :class="{ 'schedules-page__input--filled': !!createDurationMinutes }"
+            @update:model-value="onCreateDurationInput"
+          />
         </div>
 
-        <BaseInput
-          :model-value="createStartsTime"
-          type="time"
-          name="startsTime"
-          label="Hora de inicio"
-          required
-          :disabled="createStatus === 'saving'"
-          :error="createStartsTimeError"
-          @update:model-value="onCreateStartsTimeInput"
-        />
+        <div class="schedules-page__presets" role="group" aria-label="Duraciones habituales">
+          <button
+            v-for="preset in DURATION_PRESETS"
+            :key="preset.minutes"
+            type="button"
+            class="schedules-page__preset"
+            :aria-pressed="createDurationMinutes === preset.minutes"
+            :disabled="createStatus === 'saving'"
+            @click="onCreateDurationInput(preset.minutes)"
+          >
+            {{ preset.label }}
+          </button>
+        </div>
 
-        <BaseInput
-          :model-value="createDurationMinutes"
-          type="number"
-          name="durationMinutes"
-          label="Duración (minutos)"
-          required
-          :min="1"
-          :max="1440"
-          :disabled="createStatus === 'saving'"
-          :error="createDurationError"
-          @update:model-value="onCreateDurationInput"
-        />
+        <div class="schedules-page__preview" aria-live="polite">
+          <span class="schedules-page__eyebrow">Así queda</span>
+          <DayTrack
+            :segments="createPreview.segments"
+            :scale="createPreview.scale"
+            :order="0"
+            preview
+          />
+          <p>{{ createPreview.text }}</p>
+        </div>
 
         <div class="schedules-page__dialog-actions">
           <BaseButton type="button" variant="secondary" @click="isCreateOpen = false">
@@ -1174,11 +1460,23 @@ onMounted(loadColombianHolidays)
       </form>
     </BaseDialog>
 
-    <!-- Edición -->
-    <BaseDialog v-model="isEditOpen" title="Editar tramo" size="sm" @close="onEditDialogClosed">
+    <!-- Edición de tramo -->
+    <BaseDialog
+      v-model="isEditOpen"
+      title="Editar tramo"
+      :description="`Ajusta el horario de ${editTarget ? weekdayLabel(editTarget.isoWeekday) : 'ese día'}.`"
+      size="md"
+      content-class="schedules-page__dialog"
+      @close="onEditDialogClosed"
+    >
+      <template #icon>
+        <span class="schedules-page__dialog-chip" aria-hidden="true">{{
+          weekdayInitial(editISOWeekday)
+        }}</span>
+      </template>
       <form
         name="updateWorkingHour"
-        class="schedules-page__form"
+        class="schedules-page__ink schedules-page__form"
         novalidate
         @submit.prevent="onSubmitEdit"
       >
@@ -1215,50 +1513,66 @@ onMounted(loadColombianHolidays)
           Inténtalo de nuevo en unos segundos. No perdiste lo que escribiste.
         </BaseAlert>
 
-        <div class="schedules-page__field">
-          <label for="schedules-edit-weekday" class="schedules-page__label">
-            Día
-            <span class="schedules-page__required" aria-hidden="true">*</span>
-          </label>
-          <select
-            id="schedules-edit-weekday"
-            v-model.number="editISOWeekday"
-            class="schedules-page__select"
-            :disabled="editStatus === 'saving'"
-            @change="revalidateEdit"
-          >
-            <option v-for="day in ISO_WEEKDAYS" :key="day.value" :value="day.value">
-              {{ day.label }}
-            </option>
-          </select>
-          <div v-if="editWeekdayError" class="schedules-page__field-error" role="alert">
-            {{ editWeekdayError }}
+        <WeekdayPicker
+          :model-value="editISOWeekday"
+          label="Día"
+          :disabled="editStatus === 'saving'"
+          :error="editWeekdayError"
+          @update:model-value="onEditWeekdayInput"
+        />
+
+        <div class="schedules-page__pair">
+          <div class="schedules-page__field">
+            <BaseTimePicker
+              :model-value="editStartsTime"
+              label="Hora de inicio"
+              required
+              :disabled="editStatus === 'saving'"
+              @update:model-value="onEditStartsTimeInput"
+            />
+            <div v-if="editStartsTimeError" class="schedules-page__field-error" role="alert">
+              {{ editStartsTimeError }}
+            </div>
           </div>
+          <BaseInput
+            :model-value="editDurationMinutes"
+            type="number"
+            name="durationMinutes"
+            label="Duración (minutos)"
+            required
+            :min="1"
+            :max="1440"
+            :disabled="editStatus === 'saving'"
+            :error="editDurationError"
+            :class="{ 'schedules-page__input--filled': !!editDurationMinutes }"
+            @update:model-value="onEditDurationInput"
+          />
         </div>
 
-        <BaseInput
-          :model-value="editStartsTime"
-          type="time"
-          name="startsTime"
-          label="Hora de inicio"
-          required
-          :disabled="editStatus === 'saving'"
-          :error="editStartsTimeError"
-          @update:model-value="onEditStartsTimeInput"
-        />
+        <div class="schedules-page__presets" role="group" aria-label="Duraciones habituales">
+          <button
+            v-for="preset in DURATION_PRESETS"
+            :key="preset.minutes"
+            type="button"
+            class="schedules-page__preset"
+            :aria-pressed="editDurationMinutes === preset.minutes"
+            :disabled="editStatus === 'saving'"
+            @click="onEditDurationInput(preset.minutes)"
+          >
+            {{ preset.label }}
+          </button>
+        </div>
 
-        <BaseInput
-          :model-value="editDurationMinutes"
-          type="number"
-          name="durationMinutes"
-          label="Duración (minutos)"
-          required
-          :min="1"
-          :max="1440"
-          :disabled="editStatus === 'saving'"
-          :error="editDurationError"
-          @update:model-value="onEditDurationInput"
-        />
+        <div class="schedules-page__preview" aria-live="polite">
+          <span class="schedules-page__eyebrow">Así queda</span>
+          <DayTrack
+            :segments="editPreview.segments"
+            :scale="editPreview.scale"
+            :order="0"
+            preview
+          />
+          <p>{{ editPreview.text }}</p>
+        </div>
 
         <div class="schedules-page__dialog-actions">
           <BaseButton type="button" variant="secondary" @click="isEditOpen = false">
@@ -1280,12 +1594,17 @@ onMounted(loadColombianHolidays)
     <BaseDialog
       v-model="isExceptionCreateOpen"
       title="Agregar excepción"
-      size="sm"
+      description="Un día que se sale de la jornada habitual."
+      size="md"
+      content-class="schedules-page__dialog"
       @close="onExceptionCreateDialogClosed"
     >
+      <template #icon>
+        <span class="schedules-page__dialog-chip" aria-hidden="true">+</span>
+      </template>
       <form
         name="createScheduleException"
-        class="schedules-page__form"
+        class="schedules-page__ink schedules-page__form"
         novalidate
         @submit.prevent="onSubmitExceptionCreate"
       >
@@ -1330,26 +1649,31 @@ onMounted(loadColombianHolidays)
           Inténtalo de nuevo en unos segundos. No perdiste lo que escribiste.
         </BaseAlert>
 
-        <BaseInput
-          :model-value="createEffectiveDate"
-          type="date"
-          name="effectiveDate"
-          label="Fecha"
-          required
-          :disabled="createExceptionStatus === 'saving'"
-          :error="createEffectiveDateError"
-          @update:model-value="
-            (v) => {
-              createEffectiveDate = String(v)
-              revalidateExceptionCreate()
-            }
-          "
-        />
+        <div class="schedules-page__field">
+          <label
+            id="schedules-create-date-label"
+            class="schedules-page__label"
+            for="schedules-create-date"
+            >Fecha <span aria-hidden="true">*</span></label
+          >
+          <BaseDatePicker
+            :model-value="createEffectiveDate"
+            trigger-id="schedules-create-date"
+            label-id="schedules-create-date-label"
+            :today="todayCivilDate"
+            required
+            :disabled="createExceptionStatus === 'saving'"
+            @update:model-value="onCreateEffectiveDateInput"
+          />
+          <div v-if="createEffectiveDateError" class="schedules-page__field-error" role="alert">
+            {{ createEffectiveDateError }}
+          </div>
+        </div>
 
         <div class="schedules-page__field">
-          <span class="schedules-page__label">Estado del día</span>
-          <div class="schedules-page__radio-group" role="radiogroup" aria-label="Estado del día">
-            <label class="schedules-page__checkbox-label">
+          <span class="schedules-page__label" aria-hidden="true">Estado del día</span>
+          <div class="schedules-page__choice" role="radiogroup" aria-label="Estado del día">
+            <label class="schedules-page__choice-option">
               <input
                 type="radio"
                 name="createExceptionShape"
@@ -1357,9 +1681,9 @@ onMounted(loadColombianHolidays)
                 :disabled="createExceptionStatus === 'saving'"
                 @change="onCreateIsClosedChange(true)"
               />
-              Cerrado
+              <span>Cerrado</span>
             </label>
-            <label class="schedules-page__checkbox-label">
+            <label class="schedules-page__choice-option">
               <input
                 type="radio"
                 name="createExceptionShape"
@@ -1367,7 +1691,7 @@ onMounted(loadColombianHolidays)
                 :disabled="createExceptionStatus === 'saving'"
                 @change="onCreateIsClosedChange(false)"
               />
-              Abierto con tramos especiales
+              <span>Abierto con tramos especiales</span>
             </label>
           </div>
         </div>
@@ -1376,18 +1700,16 @@ onMounted(loadColombianHolidays)
           <div
             v-for="(segment, index) in createSegments"
             :key="index"
-            class="schedules-page__segment-row"
+            class="schedules-page__segment"
           >
-            <BaseInput
+            <BaseTimePicker
               :model-value="segment.startsTime"
-              type="time"
-              :name="`createSegmentStart${index}`"
               label="Hora de inicio"
               required
               :disabled="createExceptionStatus === 'saving'"
               @update:model-value="
                 (v) => {
-                  segment.startsTime = String(v)
+                  segment.startsTime = v
                   revalidateExceptionCreate()
                 }
               "
@@ -1421,6 +1743,7 @@ onMounted(loadColombianHolidays)
           <BaseButton
             type="button"
             variant="secondary"
+            class="schedules-page__segment-add"
             :disabled="createExceptionStatus === 'saving'"
             @click="addCreateSegment"
           >
@@ -1439,6 +1762,7 @@ onMounted(loadColombianHolidays)
           :maxlength="200"
           :disabled="createExceptionStatus === 'saving'"
           :error="createReasonError"
+          :class="{ 'schedules-page__input--filled': !!createReason }"
           @update:model-value="
             (v) => {
               createReason = String(v)
@@ -1467,12 +1791,19 @@ onMounted(loadColombianHolidays)
     <BaseDialog
       v-model="isExceptionEditOpen"
       title="Editar excepción"
-      size="sm"
+      description="Ajusta la fecha, el estado o los tramos de ese día."
+      size="md"
+      content-class="schedules-page__dialog"
       @close="onExceptionEditDialogClosed"
     >
+      <template #icon>
+        <span class="schedules-page__dialog-chip" aria-hidden="true">{{
+          editEffectiveDate ? dateTile(editEffectiveDate).day : ''
+        }}</span>
+      </template>
       <form
         name="updateScheduleException"
-        class="schedules-page__form"
+        class="schedules-page__ink schedules-page__form"
         novalidate
         @submit.prevent="onSubmitExceptionEdit"
       >
@@ -1509,26 +1840,31 @@ onMounted(loadColombianHolidays)
           Inténtalo de nuevo en unos segundos. No perdiste lo que escribiste.
         </BaseAlert>
 
-        <BaseInput
-          :model-value="editEffectiveDate"
-          type="date"
-          name="effectiveDate"
-          label="Fecha"
-          required
-          :disabled="editExceptionStatus === 'saving'"
-          :error="editEffectiveDateError"
-          @update:model-value="
-            (v) => {
-              editEffectiveDate = String(v)
-              revalidateExceptionEdit()
-            }
-          "
-        />
+        <div class="schedules-page__field">
+          <label
+            id="schedules-edit-date-label"
+            class="schedules-page__label"
+            for="schedules-edit-date"
+            >Fecha <span aria-hidden="true">*</span></label
+          >
+          <BaseDatePicker
+            :model-value="editEffectiveDate"
+            trigger-id="schedules-edit-date"
+            label-id="schedules-edit-date-label"
+            :today="todayCivilDate"
+            required
+            :disabled="editExceptionStatus === 'saving'"
+            @update:model-value="onEditEffectiveDateInput"
+          />
+          <div v-if="editEffectiveDateError" class="schedules-page__field-error" role="alert">
+            {{ editEffectiveDateError }}
+          </div>
+        </div>
 
         <div class="schedules-page__field">
-          <span class="schedules-page__label">Estado del día</span>
-          <div class="schedules-page__radio-group" role="radiogroup" aria-label="Estado del día">
-            <label class="schedules-page__checkbox-label">
+          <span class="schedules-page__label" aria-hidden="true">Estado del día</span>
+          <div class="schedules-page__choice" role="radiogroup" aria-label="Estado del día">
+            <label class="schedules-page__choice-option">
               <input
                 type="radio"
                 name="editExceptionShape"
@@ -1536,9 +1872,9 @@ onMounted(loadColombianHolidays)
                 :disabled="editExceptionStatus === 'saving'"
                 @change="onEditIsClosedChange(true)"
               />
-              Cerrado
+              <span>Cerrado</span>
             </label>
-            <label class="schedules-page__checkbox-label">
+            <label class="schedules-page__choice-option">
               <input
                 type="radio"
                 name="editExceptionShape"
@@ -1546,7 +1882,7 @@ onMounted(loadColombianHolidays)
                 :disabled="editExceptionStatus === 'saving'"
                 @change="onEditIsClosedChange(false)"
               />
-              Abierto con tramos especiales
+              <span>Abierto con tramos especiales</span>
             </label>
           </div>
         </div>
@@ -1555,18 +1891,16 @@ onMounted(loadColombianHolidays)
           <div
             v-for="(segment, index) in editSegments"
             :key="index"
-            class="schedules-page__segment-row"
+            class="schedules-page__segment"
           >
-            <BaseInput
+            <BaseTimePicker
               :model-value="segment.startsTime"
-              type="time"
-              :name="`editSegmentStart${index}`"
               label="Hora de inicio"
               required
               :disabled="editExceptionStatus === 'saving'"
               @update:model-value="
                 (v) => {
-                  segment.startsTime = String(v)
+                  segment.startsTime = v
                   revalidateExceptionEdit()
                 }
               "
@@ -1600,6 +1934,7 @@ onMounted(loadColombianHolidays)
           <BaseButton
             type="button"
             variant="secondary"
+            class="schedules-page__segment-add"
             :disabled="editExceptionStatus === 'saving'"
             @click="addEditSegment"
           >
@@ -1618,6 +1953,7 @@ onMounted(loadColombianHolidays)
           :maxlength="200"
           :disabled="editExceptionStatus === 'saving'"
           :error="editReasonError"
+          :class="{ 'schedules-page__input--filled': !!editReason }"
           @update:model-value="
             (v) => {
               editReason = String(v)
@@ -1645,127 +1981,1118 @@ onMounted(loadColombianHolidays)
 </template>
 
 <style scoped>
+/* Superficie tinta de punta a punta (estandar-diseno-visual.md §3), el mismo
+   canvas que Agenda, Servicios y Barberos; columna de lectura de 980px. */
 .schedules-page {
+  --schedules-width: 980px;
+
+  /* Los controles compartidos (BaseSelect) se pintan con tokens de superficie
+     clara: aquí se reasignan a la tinta, igual que en el panel de bloqueos. */
+  --color-text-primary: var(--color-on-strong);
+  --color-text-secondary: var(--color-on-strong-muted);
+  --color-accent-brass: var(--color-brand-accent-surface);
+  --color-border-control: var(--color-field-strong-border);
+  --color-surface: var(--color-field-strong);
+
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
-  max-width: 720px;
-  padding: var(--space-4);
-  margin: 0 auto;
+  gap: 16px;
+  min-height: 100%;
+  padding: 34px 32px 48px;
+  color: var(--color-on-strong);
+  /* Transparente: la tinta y el fondo animado los pone el cascarón. */
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.schedules-page__header,
+.schedules-page__state,
+.schedules-page__ready,
+.schedules-page > :deep(.base-alert) {
+  width: min(100%, var(--schedules-width));
+  margin-inline: auto;
+}
+
+.schedules-page__ready {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Cabecera: título a la izquierda y, en escritorio, los controles de la
+   jornada (barbero, cifras y acción principal) en la misma franja. */
+.schedules-page__header {
+  /* Por encima del tablero: la lista del selector de barbero se abre sobre él. */
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px var(--space-4);
+  padding-bottom: 14px;
+  border-bottom: var(--border-width-normal) solid var(--color-field-strong-border);
+}
+
+.schedules-page__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--font-size-h1);
+  line-height: var(--font-size-h1-line);
+  font-weight: var(--font-weight-h1);
+}
+
+@media (min-width: 1024px) {
+  .schedules-page__title {
+    font-size: var(--font-size-title-page);
+    line-height: 46px;
+  }
+}
+
+.schedules-page__subtitle {
+  margin: 4px 0 0;
+  font-size: var(--font-size-body-sm);
+  line-height: var(--font-size-body-sm-line);
+  color: var(--color-on-strong-muted);
+}
+
+/* Angosto: los controles se reparten en la cabecera (acción principal junto al
+   título, luego el selector y las cifras); en escritorio forman una franja. */
+.schedules-page__controls {
+  display: contents;
+}
+
+.schedules-page__heading {
+  flex: 1 1 auto;
+}
+
+/* CTA "Agregar tramo": el relleno tinta de BaseButton--primary es el mismo
+   color que la página, así que se levanta con el dorado de marca. */
+.schedules-page__create.base-button {
+  height: 40px;
+  padding-inline: 18px;
+  margin-left: auto;
+  order: 1;
+  font-size: var(--font-size-body-sm);
+  font-weight: 600;
+}
+
+.schedules-page__create :deep(.base-button__content)::before {
+  content: '+';
+  margin-right: 6px;
+}
+
+.schedules-page__create.base-button--primary {
+  background-color: var(--color-brand-accent-surface);
+  color: var(--color-brand-accent-text);
+  border-color: var(--color-brand-accent-surface);
+}
+
+.schedules-page__create.base-button--primary:hover:not(:disabled):not(.base-button--loading) {
+  filter: brightness(92%);
+}
+
+.schedules-page__create.base-button--primary:active:not(:disabled):not(.base-button--loading) {
+  filter: brightness(84%);
+}
+
+/* Fundido entre carga/error/listo: --motion-duration-base, el mismo token que
+   el resto de transiciones de estado (estandar-diseno-visual.md §12). */
+.schedules-content-enter-active,
+.schedules-content-leave-active {
+  transition: opacity var(--motion-duration-base) var(--motion-easing-standard);
+}
+
+.schedules-content-enter-from,
+.schedules-content-leave-to {
+  opacity: 0;
 }
 
 .schedules-page__state {
-  padding: var(--space-4);
-  color: var(--color-text-secondary);
-}
-
-.schedules-page__timezone {
-  margin: 0;
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body-sm);
-  color: var(--color-text-secondary);
-}
-
-.schedules-page__empty {
-  padding: var(--space-4);
-  color: var(--color-text-secondary);
-}
-
-.schedules-page__picker {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-4);
+  color: var(--color-on-strong-muted);
 }
 
-.schedules-page__label {
+.schedules-page__state--card {
+  width: auto;
+  padding: var(--space-3) 0;
+  margin: 0;
+}
+
+.schedules-page__state--card p {
+  margin: 0;
+}
+
+/* Esqueleto de la semana: una fila por día con su pista, con el pulso de
+   Barberos/Servicios/Agenda. */
+.schedules-page__skeleton {
+  overflow: hidden;
+  background-color: var(--color-field-strong);
+  border: var(--border-width-normal) solid var(--color-field-strong-border);
+  border-radius: 3px;
+}
+
+.schedules-page__skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  height: 64px;
+  padding: 0 18px;
+  border-top: var(--border-width-normal) solid var(--color-field-strong-border);
+}
+
+.schedules-page__skeleton-row:first-child {
+  border-top: none;
+}
+
+.schedules-page__skeleton-bar {
+  display: block;
+  background-color: color-mix(in srgb, var(--color-on-strong) 14%, transparent);
+  border-radius: 2px;
+  animation: schedules-skeleton-pulse 1400ms ease-in-out infinite;
+}
+
+.schedules-page__skeleton-bar--day {
+  flex: 0 0 110px;
+  height: 18px;
+}
+
+.schedules-page__skeleton-bar--track {
+  flex: 1;
+  height: 20px;
+  background-color: color-mix(in srgb, var(--color-on-strong) 8%, transparent);
+}
+
+@keyframes schedules-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Controles: quién (retrato + selector) y cuánto (cifras de la semana). */
+.schedules-page__who {
+  display: flex;
+  order: 2;
+  flex: 1 1 300px;
+  align-items: flex-end;
+  gap: 14px;
+  min-width: 0;
+  animation: schedules-rise 360ms var(--motion-easing-standard) both;
+}
+
+/* Perfil de barbero individual (DEC-115): sin selector, el nombre acompaña al retrato. */
+.schedules-page__who-name {
+  align-self: center;
+  min-width: 0;
+  overflow: hidden;
   font-family: var(--font-family-base);
-  font-size: var(--font-size-body-sm);
+  font-size: var(--font-size-body-lg);
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--color-on-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.schedules-page__required {
-  color: var(--color-danger-action);
+.schedules-page__portrait {
+  flex: 0 0 auto;
+  transition: transform var(--motion-duration-base) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (hover: hover) {
+  .schedules-page__who:hover .schedules-page__portrait {
+    transform: scale(1.05);
+  }
 }
 
 .schedules-page__select {
-  min-height: 44px;
-  padding: var(--space-2) var(--space-3);
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body);
-  color: var(--color-text-primary);
-  background-color: var(--color-surface);
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
+  flex: 1;
+  max-width: 340px;
+  --color-focus: var(--color-brand-accent-surface);
 }
 
-.schedules-page__days {
+.schedules-page__select :deep(.base-select__trigger) {
+  background-color: color-mix(in srgb, var(--color-on-strong) 5%, transparent);
+  border-color: color-mix(in srgb, var(--color-on-strong) 16%, transparent);
+  border-bottom-color: var(--color-brand-accent-surface);
+}
+
+.schedules-page__select :deep(.base-select__trigger:hover:not(:disabled)),
+.schedules-page__select :deep(.base-select__trigger[aria-expanded='true']) {
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 55%, transparent);
+}
+
+.schedules-page__select :deep(.base-select__option:hover),
+.schedules-page__select :deep(.base-select__option:focus-visible) {
+  background-color: var(--color-field-strong-raised);
+}
+
+.schedules-page__select :deep(.base-select__option) {
+  border-left-color: transparent;
+}
+
+.schedules-page__stats {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
+  order: 3;
+  flex: 0 0 auto;
+  gap: 8px;
+  margin: 0;
+  animation: schedules-rise 360ms var(--motion-easing-standard) 60ms both;
 }
 
-.schedules-page__day {
+.schedules-page__stats > div {
   display: flex;
+  min-width: 112px;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 0;
+  padding: 6px 12px;
+  background-color: color-mix(in srgb, var(--color-on-strong) 4%, transparent);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 10%, transparent);
+  border-left: var(--border-width-emphasis) solid var(--color-brand-accent-surface);
+  border-radius: 2px;
 }
 
-.schedules-page__day-title {
-  margin: 0;
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body);
-  font-weight: 600;
-  color: var(--color-text-primary);
+.schedules-page__stats dt {
+  color: var(--color-on-strong-muted);
+  font-size: var(--font-size-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.schedules-page__day-empty {
+.schedules-page__stats dd {
   margin: 0;
-  font-family: var(--font-family-base);
+  font-family: var(--font-display);
+  font-size: var(--font-size-title-item);
+  line-height: 26px;
+  font-variant-numeric: tabular-nums;
+}
+
+.schedules-page__stat-total {
+  margin-left: 2px;
+  color: var(--color-on-strong-muted);
   font-size: var(--font-size-body-sm);
-  color: var(--color-text-secondary);
 }
 
-.schedules-page__list {
+.schedules-stat-enter-active,
+.schedules-stat-leave-active {
+  display: inline-block;
+  transition:
+    opacity var(--motion-duration-fast) var(--motion-easing-standard),
+    transform var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.schedules-stat-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.schedules-stat-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.schedules-page__timezone {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--color-on-strong-muted);
+  font-size: var(--font-size-caption);
+  line-height: var(--font-size-caption-line);
+}
+
+.schedules-page__timezone svg {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  color: var(--color-brand-accent-surface);
+}
+
+.schedules-page__timezone strong {
+  color: var(--color-on-strong);
+  font-weight: 600;
+}
+
+.schedules-page__delete-error {
+  margin: 0;
+}
+
+/* Espacio de trabajo: el tablero y, aparte, el panel de ajustes en acordeón
+   (festivos, excepciones, referencia). En pantallas angostas se apilan. */
+.schedules-page__workspace {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 16px;
+}
+
+.schedules-page__main {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.schedules-page__aside {
+  --accordion-count: 3;
+
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-self: start;
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--color-field-strong);
+  border: var(--border-width-normal) solid var(--color-field-strong-border);
+  border-top: var(--border-width-emphasis) solid
+    color-mix(in srgb, var(--color-brand-accent-surface) 70%, transparent);
+  border-radius: 3px;
+  container: aside / inline-size;
+  animation: schedules-rise 400ms var(--motion-easing-standard) 180ms both;
+}
+
+.schedules-page__aside-action {
+  align-self: flex-start;
+}
+
+/* Escritorio: todo cabe en la pantalla. El tablero y el panel comparten la
+   altura que deja la cabecera; la lista del apartado abierto se desplaza
+   dentro de su propio cuerpo si no cabe, nunca la página. */
+@media (min-width: 1100px) {
+  .schedules-page {
+    --schedules-width: 1240px;
+
+    height: 100%;
+    min-height: 620px;
+    padding: 16px 32px;
+    gap: 12px;
+  }
+
+  .schedules-page__header {
+    flex-wrap: nowrap;
+    align-items: center;
+    padding-bottom: 12px;
+  }
+
+  .schedules-page__title {
+    font-size: var(--font-size-title-page);
+    line-height: 40px;
+  }
+
+  .schedules-page__controls {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+  }
+
+  .schedules-page__heading {
+    flex: 0 0 auto;
+  }
+
+  .schedules-page__who {
+    flex: 0 1 auto;
+    align-items: center;
+  }
+
+  .schedules-page__select {
+    width: 260px;
+    flex: 0 1 260px;
+  }
+
+  .schedules-page__who {
+    order: 1;
+  }
+
+  .schedules-page__stats {
+    order: 2;
+  }
+
+  .schedules-page__create.base-button {
+    order: 3;
+    margin-left: 0;
+  }
+
+  .schedules-page__ready {
+    flex: 1 1 0;
+    min-height: 0;
+  }
+
+  .schedules-page__workspace {
+    display: grid;
+    flex: 1 1 0;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) clamp(320px, 29vw, 380px);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .schedules-page__main > :deep(.week-board) {
+    flex: 1 1 0;
+    overflow-y: auto;
+  }
+
+  .schedules-page__aside {
+    --accordion-body-max: max(140px, calc(100cqh - var(--accordion-count) * 56px - 4px));
+
+    align-self: stretch;
+    container-type: size;
+  }
+}
+
+.schedules-card__hint,
+.schedules-card__empty {
+  margin: 0;
+  color: var(--color-on-strong-muted);
+  font-size: var(--font-size-body-sm);
+  line-height: var(--font-size-body-sm-line);
+}
+
+.schedules-card__empty {
+  padding: 18px 12px;
+  text-align: center;
+  border: var(--border-width-normal) dashed
+    color-mix(in srgb, var(--color-on-strong) 16%, transparent);
+  border-radius: 2px;
+}
+
+.schedules-card__list {
+  display: flex;
+  flex-direction: column;
   padding: 0;
   margin: 0;
   list-style: none;
 }
 
-.schedules-page__holiday-calendar,
-.schedules-page__exceptions,
-.schedules-page__holidays-reference {
+/* Acciones del panel y de fila: botón fantasma de latón, igual que en Barberos. */
+.schedules-page__aside-action.base-button,
+.schedules-row :deep(.base-button) {
+  --btn-focus-ring: 0 0 0 2px var(--color-field-strong), 0 0 0 4px var(--color-focus);
+
+  height: 34px;
+  padding-inline: 14px;
+  font-size: var(--font-size-body-sm);
+}
+
+.schedules-page__aside-action.base-button--secondary,
+.schedules-row :deep(.base-button--secondary) {
+  background-color: transparent;
+  color: var(--color-brand-accent-surface);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 45%, transparent);
+  border-bottom-color: var(--color-brand-accent-surface);
+}
+
+.schedules-page__aside-action.base-button--secondary:hover:not(:disabled):not(
+    .base-button--loading
+  ),
+.schedules-row :deep(.base-button--secondary:hover:not(:disabled):not(.base-button--loading)) {
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 14%, transparent);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 55%, transparent);
+}
+
+.schedules-row :deep(.base-button--secondary:active:not(:disabled):not(.base-button--loading)) {
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 22%, transparent);
+}
+
+.schedules-row
+  :deep(
+    .schedules-row__remove.base-button--secondary:hover:not(:disabled):not(.base-button--loading)
+  ) {
+  color: var(--color-danger-on-strong);
+  background-color: color-mix(in srgb, var(--color-danger-on-strong) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-danger-on-strong) 55%, transparent);
+}
+
+/* Interruptor de festivos: un carril con una pieza que se desliza y se ilumina. */
+.schedules-switch {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.schedules-switch__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  opacity: 0;
+}
+
+.schedules-switch__track {
+  position: relative;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 24px;
+  background-color: color-mix(in srgb, var(--color-on-strong) 6%, transparent);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 26%, transparent);
+  border-radius: 2px;
+  transition:
+    background-color var(--motion-duration-base) var(--motion-easing-standard),
+    border-color var(--motion-duration-base) var(--motion-easing-standard);
+}
+
+.schedules-switch__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  background-color: var(--color-on-strong-muted);
+  transform: rotate(45deg) scale(0.78);
+  transition:
+    left var(--motion-duration-base) cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color var(--motion-duration-base) var(--motion-easing-standard),
+    transform var(--motion-duration-base) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.schedules-switch--on .schedules-switch__track {
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 22%, transparent);
+  border-color: var(--color-brand-accent-surface);
+}
+
+.schedules-switch--on .schedules-switch__thumb {
+  left: 25px;
+  background-color: var(--color-brand-accent-surface);
+  transform: rotate(45deg) scale(0.9);
+}
+
+.schedules-switch__input:focus-visible + .schedules-switch__track {
+  box-shadow:
+    0 0 0 2px var(--color-field-strong),
+    0 0 0 4px var(--color-brand-accent-surface);
+}
+
+.schedules-switch__input:disabled ~ * {
+  opacity: 0.5;
+}
+
+.schedules-switch__input:disabled ~ .schedules-switch__text {
+  cursor: not-allowed;
+}
+
+.schedules-switch__text {
+  color: var(--color-on-strong);
+  font-size: var(--font-size-body-sm);
+  line-height: var(--font-size-body-sm-line);
+}
+
+/* Filas de excepciones y festivos: ficha de fecha, dato principal y acciones. */
+.schedules-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 10px 4px;
+  border-top: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 9%, transparent);
+  transition: background-color var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.schedules-row:first-child {
+  border-top: none;
+}
+
+.schedules-row--static {
+  animation: schedules-rise 320ms var(--motion-easing-standard) both;
+  animation-delay: calc(min(var(--row-index, 0), 8) * 45ms + 360ms);
+}
+
+@media (hover: hover) {
+  .schedules-row:hover {
+    background-color: color-mix(in srgb, var(--color-on-strong) 4%, transparent);
+  }
+
+  .schedules-row:hover .schedules-tile {
+    border-color: var(--color-brand-accent-surface);
+    transform: translateY(-2px);
+  }
+}
+
+.schedules-tile {
+  display: flex;
+  width: 44px;
+  height: 48px;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  background-color: var(--color-surface-strong);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-brand-accent-surface) 45%, transparent);
+  border-top: var(--border-width-emphasis) solid var(--color-brand-accent-surface);
+  border-radius: 2px;
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    transform var(--motion-duration-base) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.schedules-tile b {
+  color: var(--color-on-strong);
+  font-family: var(--font-display);
+  font-size: var(--font-size-title-item);
+  font-weight: 400;
+  line-height: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.schedules-tile i {
+  color: var(--color-brand-accent-surface);
+  font-size: var(--font-size-caption);
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.schedules-row__main {
+  min-width: 0;
+}
+
+.schedules-row__title,
+.schedules-row__meta {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.schedules-row__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  color: var(--color-on-strong);
+  font-size: var(--font-size-body);
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.schedules-row__state {
+  color: var(--color-danger-on-strong);
+  font-size: var(--font-size-caption);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.schedules-row__state::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 6px;
+  vertical-align: 1px;
+  background-color: currentColor;
+  transform: rotate(45deg);
+}
+
+.schedules-row__state--open {
+  color: var(--color-success-on-strong);
+}
+
+.schedules-row__segments {
+  font-size: var(--font-size-body-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.schedules-row__meta {
+  color: var(--color-on-strong-muted);
+  font-size: var(--font-size-caption);
+  line-height: 18px;
+}
+
+.schedules-row__date {
+  font-variant-numeric: tabular-nums;
+}
+
+.schedules-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.schedules-row__tag {
+  color: var(--color-success-on-strong);
+  font-size: var(--font-size-caption);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Alta y retiro de una excepción: la fila entra desde abajo y sale hacia un
+   lado; las demás se reacomodan con suavidad. */
+.schedules-row-enter-active,
+.schedules-row-leave-active,
+.schedules-row-move {
+  transition:
+    opacity 260ms var(--motion-easing-standard),
+    transform 260ms var(--motion-easing-standard);
+}
+
+.schedules-row-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.schedules-row-leave-to {
+  opacity: 0;
+  transform: translateX(16px);
+}
+
+.schedules-row-leave-active {
+  position: absolute;
+  right: 0;
+  left: 0;
+}
+
+/* Diálogos: mismo tinte, filete de latón y campos reglados que los de Barberos.
+   Solo aplica dentro de .schedules-page__ink (el contenido que esta plantilla
+   pone en el diálogo); el fondo y el encabezado, que BaseDialog renderiza en
+   <Teleport to="body">, se sobrescriben en el bloque sin "scoped" del final. */
+.schedules-page__dialog-chip {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  background-color: var(--color-brand-accent-surface);
+  color: var(--color-brand-accent-text);
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-size: var(--font-size-title-item);
+  line-height: 1;
+  animation: schedules-chip-pop var(--motion-duration-base) cubic-bezier(0.34, 1.56, 0.64, 1) 60ms
+    both;
+}
+
+.schedules-page__dialog-chip::after {
+  content: '';
+  position: absolute;
+  inset: -40% -60%;
+  background: linear-gradient(
+    75deg,
+    transparent 40%,
+    color-mix(in srgb, var(--color-on-strong) 50%, transparent) 50%,
+    transparent 60%
+  );
+  transform: translateX(-100%);
+  animation: schedules-chip-glint 480ms cubic-bezier(0.5, 0, 0.3, 1) 260ms both;
+}
+
+@keyframes schedules-chip-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.5) rotate(-20deg);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes schedules-chip-glint {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.schedules-page__ink {
+  --color-text-primary: var(--color-on-strong);
+  --color-text-secondary: var(--color-on-strong-muted);
+  --color-accent-brass: var(--color-brand-accent-surface);
+  --color-border-control: var(--color-field-strong-border);
+  --color-surface: var(--color-field-strong);
+
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding-top: var(--space-4);
-  border-top: var(--border-width-normal) solid var(--color-border-subtle);
-}
-
-.schedules-page__exceptions-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
-
-.schedules-page__checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body);
-  color: var(--color-text-primary);
-}
-
-.schedules-page__radio-group {
-  display: flex;
   gap: var(--space-4);
+  color: var(--color-on-strong);
+}
+
+.schedules-page__ink :deep(.base-input) {
+  --input-bg: color-mix(in srgb, var(--color-on-strong) 4%, transparent);
+  --input-border-color: color-mix(in srgb, var(--color-on-strong) 12%, transparent);
+  --input-border-base-color: color-mix(in srgb, var(--color-on-strong) 30%, transparent);
+  --input-focus-ring: 0 0 0 2px var(--color-surface-strong), 0 0 0 4px var(--color-focus);
+
+  color: var(--color-on-strong);
+}
+
+.schedules-page__ink :deep(.base-input__label),
+.schedules-page__ink :deep(.base-input__required) {
+  color: var(--color-brand-accent-surface);
+}
+
+.schedules-page__ink :deep(.base-input__required) {
+  margin-left: 2px;
+}
+
+.schedules-page__ink :deep(.base-input__hint) {
+  color: var(--color-on-strong-muted);
+}
+
+.schedules-page__ink :deep(.base-input:hover:not(:disabled):not(.base-input--invalid)) {
+  border-color: color-mix(in srgb, var(--color-on-strong) 26%, transparent);
+}
+
+/* El filete dorado inferior marca el campo YA RESUELTO (mismo criterio que
+   Agenda, Servicios y Barberos). */
+.schedules-page__ink :deep(.schedules-page__input--filled .base-input) {
+  background-color: color-mix(in srgb, var(--color-on-strong) 6%, transparent);
+  border-bottom-color: var(--color-brand-accent-surface);
+}
+
+.schedules-page__ink :deep(.base-input:disabled),
+.schedules-page__ink :deep(.base-input--disabled) {
+  background-color: var(--input-bg);
+  border-color: var(--input-border-color);
+  border-bottom-color: color-mix(in srgb, var(--color-on-strong) 20%, transparent);
+  color: var(--color-on-strong-muted);
+  opacity: 0.45;
+}
+
+.schedules-page__ink :deep(.base-input--invalid) {
+  background-color: color-mix(in srgb, var(--color-danger-on-strong) 7%, transparent);
+  border-color: var(--input-border-color);
+  border-bottom-color: var(--color-danger-on-strong);
+}
+
+.schedules-page__ink :deep(.base-input__error) {
+  color: var(--color-danger-on-strong);
+}
+
+.schedules-page__ink :deep(.base-button) {
+  --btn-focus-ring: 0 0 0 2px var(--color-surface-strong), 0 0 0 4px var(--color-focus);
+}
+
+.schedules-page__ink :deep(.base-button--primary) {
+  background-color: var(--color-brand-accent-surface);
+  color: var(--color-brand-accent-text);
+  border-color: var(--color-brand-accent-surface);
+}
+
+.schedules-page__ink :deep(.base-button--primary:hover:not(:disabled):not(.base-button--loading)) {
+  filter: brightness(92%);
+}
+
+.schedules-page__ink :deep(.base-button--primary:active:not(:disabled):not(.base-button--loading)) {
+  filter: brightness(84%);
+}
+
+.schedules-page__ink :deep(.base-button--secondary) {
+  background-color: transparent;
+  color: var(--color-brand-accent-surface);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
+  border-bottom-color: var(--color-brand-accent-surface);
+}
+
+.schedules-page__ink
+  :deep(.base-button--secondary:hover:not(:disabled):not(.base-button--loading)) {
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
+}
+
+.schedules-page__ink
+  :deep(.base-button--secondary:active:not(:disabled):not(.base-button--loading)) {
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 20%, transparent);
+}
+
+.schedules-page__form {
+  gap: var(--space-5);
+}
+
+.schedules-page__field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.schedules-page__label {
+  color: var(--color-brand-accent-surface);
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+  line-height: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.schedules-page__label span {
+  color: var(--color-danger-on-strong);
+}
+
+.schedules-page__field-error {
+  color: var(--color-danger-on-strong);
+  font-size: var(--font-size-body-sm);
+}
+
+.schedules-page__pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-4);
+}
+
+/* Duraciones habituales: fichas que se encienden de latón al elegirlas. */
+.schedules-page__presets {
+  display: flex;
   flex-wrap: wrap;
+  gap: 6px;
+  margin-top: calc(var(--space-2) * -1);
+}
+
+.schedules-page__preset {
+  min-height: 32px;
+  padding: 0 12px;
+  color: var(--color-brand-accent-surface);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-caption);
+  font-variant-numeric: tabular-nums;
+  background: transparent;
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-brand-accent-surface) 40%, transparent);
+  border-radius: 2px;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-easing-standard),
+    color var(--motion-duration-fast) var(--motion-easing-standard),
+    transform var(--motion-duration-base) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (hover: hover) {
+  .schedules-page__preset:hover:not(:disabled):not([aria-pressed='true']) {
+    background-color: color-mix(in srgb, var(--color-brand-accent-surface) 14%, transparent);
+    transform: translateY(-2px);
+  }
+}
+
+.schedules-page__preset[aria-pressed='true'] {
+  color: var(--color-brand-accent-text);
+  background-color: var(--color-brand-accent-surface);
+  border-color: var(--color-brand-accent-surface);
+}
+
+.schedules-page__preset:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--color-surface-strong),
+    0 0 0 4px var(--color-focus);
+}
+
+.schedules-page__preset:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* "Así queda": la pista del día con la propuesta en latón y lo ya existente
+   atenuado, para ver el solape antes de guardar. */
+.schedules-page__preview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--color-field-strong);
+  border-left: var(--border-width-emphasis) solid var(--color-brand-accent-surface);
+}
+
+.schedules-page__eyebrow {
+  color: var(--color-brand-accent-surface);
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.schedules-page__preview p {
+  margin: 0;
+  color: var(--color-on-strong);
+  font-size: var(--font-size-body-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Estado del día: dos opciones como fichas; la elegida se enciende de latón. */
+.schedules-page__choice {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.schedules-page__choice-option {
+  position: relative;
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  color: var(--color-on-strong);
+  font-size: var(--font-size-body-sm);
+  text-align: center;
+  background-color: color-mix(in srgb, var(--color-on-strong) 4%, transparent);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 14%, transparent);
+  border-bottom: var(--border-width-emphasis) solid
+    color-mix(in srgb, var(--color-brand-accent-surface) 45%, transparent);
+  border-radius: 2px;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-easing-standard),
+    border-color var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.schedules-page__choice-option input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.schedules-page__choice-option:has(input:checked) {
+  color: var(--color-brand-accent-text);
+  font-weight: 600;
+  background-color: var(--color-brand-accent-surface);
+  border-color: var(--color-brand-accent-surface);
+}
+
+.schedules-page__choice-option:has(input:focus-visible) {
+  box-shadow:
+    0 0 0 2px var(--color-surface-strong),
+    0 0 0 4px var(--color-focus);
+}
+
+.schedules-page__choice-option:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+@media (hover: hover) {
+  .schedules-page__choice-option:hover:not(:has(input:checked)):not(:has(input:disabled)) {
+    background-color: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
+    border-color: color-mix(in srgb, var(--color-brand-accent-surface) 55%, transparent);
+  }
 }
 
 .schedules-page__segments {
@@ -1774,363 +3101,196 @@ onMounted(loadColombianHolidays)
   gap: var(--space-3);
 }
 
-.schedules-page__segment-row {
-  display: flex;
-  align-items: flex-end;
+.schedules-page__segment {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
   gap: var(--space-3);
-  flex-wrap: wrap;
+  padding: 12px;
+  background-color: color-mix(in srgb, var(--color-on-strong) 3%, transparent);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-on-strong) 10%, transparent);
+  border-radius: 2px;
+  animation: schedules-rise 260ms var(--motion-easing-standard) both;
 }
 
-.schedules-page__item-time {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  /* Cifras tabulares: hora/fecha, el dato principal de la fila (§5.2). */
-  font-variant-numeric: tabular-nums;
+.schedules-page__segment :deep(.base-button) {
+  height: 44px;
 }
 
-.schedules-page__item-actions {
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.schedules-page__delete-error {
-  margin: 0;
-}
-
-.schedules-page__form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.schedules-page__field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.schedules-page__field-error {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body-sm);
-  color: var(--color-danger-action);
+.schedules-page__segment-add {
+  align-self: flex-start;
 }
 
 .schedules-page__dialog-actions {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-3);
-  margin-top: var(--space-5);
+  margin-top: var(--space-2);
   flex-wrap: wrap;
 }
-</style>
 
-<style scoped>
-.schedules-page {
-  --schedules-width: 1058px;
-  gap: 12px;
-  min-height: 100%;
-  max-width: none;
-  padding: 26px 32px 48px;
-  color: var(--color-text-primary);
-  background: var(--color-surface);
-}
+/* Filas del panel lateral: si el panel es angosto (columna de escritorio o
+   móvil) las acciones bajan bajo el dato en lugar de apretarlo. */
+@container aside (max-width: 520px) {
+  .schedules-row {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding-inline: 4px;
+  }
 
-.schedules-page > :deep(.page-header),
-.schedules-page__timezone,
-.schedules-page__state,
-.schedules-page__empty,
-.schedules-page > :deep(.base-alert),
-.schedules-page__picker,
-.schedules-page__days,
-.schedules-page__holiday-calendar,
-.schedules-page__exceptions,
-.schedules-page__holidays-reference {
-  width: min(100%, var(--schedules-width));
-  margin-inline: auto;
-}
-
-.schedules-page > :deep(.page-header) {
-  padding-bottom: 12px;
-  margin-bottom: 0;
-}
-
-.schedules-page :deep(.page-header__title) {
-  font-size: 28px;
-  line-height: 1.14;
-}
-
-.schedules-page :deep(.page-header__subtitle),
-.schedules-page__timezone {
-  font-size: 11px;
-  line-height: 16px;
-}
-
-.schedules-page :deep(.page-header__actions .base-button) {
-  min-height: 32px;
-  padding-inline: 14px;
-  font-size: 11px;
-}
-
-.schedules-page :deep(.page-header__actions .base-button__content)::before {
-  content: '+';
-  margin-right: 6px;
-}
-
-.schedules-page__timezone {
-  margin-top: -6px;
-  text-align: right;
-}
-
-.schedules-page__picker {
-  display: grid;
-  grid-template-columns: 82px 226px;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: 3px;
-}
-
-.schedules-page__label,
-.schedules-page__picker .schedules-page__label {
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.schedules-page__select {
-  min-height: 32px;
-  padding: 6px 10px;
-  font-size: 11px;
-  border-radius: 4px;
-}
-
-.schedules-page__days {
-  gap: 0;
-  overflow: hidden;
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: 3px;
-}
-
-.schedules-page__day {
-  display: grid;
-  grid-template-columns: 142px minmax(0, 1fr);
-  align-items: center;
-  gap: 16px;
-  min-height: 64px;
-  padding: 10px 18px;
-  border-bottom: var(--border-width-normal) solid var(--color-border-subtle);
-}
-
-.schedules-page__day:last-child {
-  border-bottom: none;
-}
-
-.schedules-page__day-header {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.schedules-page__day-title {
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 400;
-}
-
-.schedules-page__day-count,
-.schedules-page__day-empty {
-  font-size: 10px;
-}
-
-.schedules-page__day-empty {
-  grid-column: 2;
-  padding: 7px 10px;
-  border: var(--border-width-normal) dashed var(--color-border-subtle);
-}
-
-.schedules-page__list {
-  gap: 0;
-}
-
-.schedules-page__day .schedules-page__list {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-}
-
-.schedules-page__day .schedules-page__list :deep(.record-row) {
-  flex: 1 1 360px;
-  min-height: 38px;
-  padding: 0;
-  border: none;
-}
-
-.schedules-page__day .schedules-page__list :deep(.record-row__main) {
-  flex: 0 1 auto;
-}
-
-.schedules-page__day .schedules-page__list :deep(.record-row__trailing) {
-  margin-left: auto;
-}
-
-.schedules-page__item-time {
-  min-height: 28px;
-  padding: 6px 10px;
-  font-size: 11px;
-  font-weight: 500;
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: 3px;
-  background: var(--color-surface-muted);
-}
-
-.schedules-page__item-actions {
-  gap: 6px;
-}
-
-.schedules-page__item-actions :deep(.base-button) {
-  min-height: 28px;
-  padding-inline: 10px;
-  font-size: 10px;
-}
-
-.schedules-page__holiday-calendar,
-.schedules-page__exceptions,
-.schedules-page__holidays-reference {
-  padding: 14px;
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: 3px;
-}
-
-.schedules-page__holiday-calendar,
-.schedules-page__exceptions,
-.schedules-page__holidays-reference {
-  width: min(100%, calc(var(--schedules-width) / 3 - 12px));
-}
-
-.schedules-page__holiday-calendar {
-  grid-column: 1;
-}
-
-.schedules-page__exceptions {
-  grid-column: 2;
-}
-
-.schedules-page__holidays-reference {
-  grid-column: 3;
-}
-
-.schedules-page__holiday-calendar,
-.schedules-page__exceptions,
-.schedules-page__holidays-reference {
-  margin: 0;
-}
-
-.schedules-page:has(.schedules-page__holiday-calendar) {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-content: start;
-}
-
-.schedules-page > :deep(.page-header),
-.schedules-page__timezone,
-.schedules-page__state,
-.schedules-page__empty,
-.schedules-page > :deep(.base-alert),
-.schedules-page__picker,
-.schedules-page__days {
-  grid-column: 1 / -1;
+  .schedules-row__actions,
+  .schedules-row > :deep(.base-button),
+  .schedules-row__tag {
+    grid-column: 2;
+    justify-self: start;
+  }
 }
 
 @media (max-width: 760px) {
   .schedules-page {
-    display: flex;
     gap: 12px;
     padding: 16px 16px 28px;
   }
 
-  .schedules-page > :deep(.page-header) {
-    padding-bottom: 8px;
+  .schedules-page__header {
+    padding-bottom: 10px;
   }
 
-  .schedules-page :deep(.page-header__title) {
-    font-size: 22px;
-  }
-
-  .schedules-page :deep(.page-header__actions) {
-    width: 100%;
-  }
-
-  .schedules-page :deep(.page-header__actions .base-button) {
-    width: 100%;
-  }
-
-  .schedules-page__timezone {
-    margin-top: -8px;
-    text-align: left;
-  }
-
-  .schedules-page__picker {
-    grid-template-columns: 1fr;
-    gap: 5px;
+  /* CTA compacto: un "+" en un círculo (el nombre accesible sigue siendo el
+     texto del botón). */
+  .schedules-page__create.base-button {
+    width: var(--control-height-icon);
+    height: var(--control-height-icon);
     padding: 0;
-    border: none;
+    overflow: hidden;
+    font-size: 0;
   }
 
-  .schedules-page__day {
-    display: block;
-    min-height: 0;
-    padding: 10px;
+  .schedules-page__create :deep(.base-button__content) {
+    font-size: 0;
   }
 
-  .schedules-page__day-header {
-    flex-direction: row;
-    align-items: baseline;
-    justify-content: space-between;
+  .schedules-page__create :deep(.base-button__content)::before {
+    margin: 0;
+    font-size: var(--font-size-title-item);
   }
 
-  .schedules-page__day-title {
-    font-size: 14px;
+  .schedules-page__select {
+    max-width: none;
   }
 
-  .schedules-page__day .schedules-page__list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-top: 8px;
+  .schedules-page__stats {
+    flex: 1 1 100%;
   }
 
-  .schedules-page__day .schedules-page__list :deep(.record-row) {
-    flex: none;
-    width: 100%;
+  .schedules-page__stats > div {
+    flex: 1;
+    min-width: 0;
   }
 
-  .schedules-page__day .schedules-page__list :deep(.record-row__main) {
+  .schedules-page__skeleton-row {
+    padding: 0 12px;
+  }
+
+  .schedules-page__pair,
+  .schedules-page__choice {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .schedules-page__segment {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .schedules-page__dialog-actions :deep(.base-button) {
     flex: 1;
   }
+}
 
-  .schedules-page__item-time {
-    font-size: 10px;
+@media (prefers-reduced-motion: reduce) {
+  .schedules-content-enter-active,
+  .schedules-content-leave-active,
+  .schedules-stat-enter-active,
+  .schedules-stat-leave-active,
+  .schedules-row-enter-active,
+  .schedules-row-leave-active,
+  .schedules-row-move,
+  .schedules-page__portrait,
+  .schedules-tile,
+  .schedules-row,
+  .schedules-switch__track,
+  .schedules-switch__thumb,
+  .schedules-page__preset,
+  .schedules-page__choice-option {
+    transition: none;
   }
 
-  .schedules-page__item-actions :deep(.base-button) {
-    min-height: 26px;
-    padding-inline: 7px;
-    font-size: 9px;
+  .schedules-page__who,
+  .schedules-page__stats,
+  .schedules-page__aside,
+  .schedules-row--static,
+  .schedules-page__segment,
+  .schedules-page__dialog-chip,
+  .schedules-page__dialog-chip::after {
+    animation: none;
   }
 
-  .schedules-page__day-empty {
-    margin-top: 8px;
+  .schedules-page__skeleton-bar {
+    animation: none;
+    opacity: 0.8;
   }
+}
+</style>
 
-  .schedules-page__holiday-calendar,
-  .schedules-page__exceptions,
-  .schedules-page__holidays-reference {
-    width: 100%;
-    margin: 0;
+<style>
+/* SIN "scoped" a propósito, por el mismo motivo que en Barberos: BaseDialog.vue
+   renderiza su tarjeta, encabezado, título, descripción y botón de cerrar en
+   <Teleport to="body">, así que dejan de ser descendientes de .schedules-page
+   en el DOM real y un :deep() con alcance de componente nunca los alcanza.
+   .schedules-page__dialog es exclusivo de esta pantalla. El !important es
+   necesario porque la regla propia de BaseDialog tiene la misma
+   especificidad y el orden de inserción de los <style> no está garantizado. */
+.schedules-page__dialog.base-dialog {
+  background-color: var(--color-surface-strong) !important;
+  border: var(--border-width-normal) solid var(--color-field-strong-border) !important;
+}
+
+/* Mismo rebote de apertura que los diálogos de Servicios y Barberos. */
+.schedules-page__dialog.base-dialog--open {
+  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .schedules-page__dialog.base-dialog--open {
+    transition-timing-function: var(--motion-easing-standard) !important;
   }
+}
+
+.schedules-page__dialog .base-dialog__header {
+  border-bottom-width: var(--border-width-emphasis) !important;
+  border-bottom-color: var(--color-brand-accent-surface) !important;
+}
+
+.schedules-page__dialog .base-dialog__title {
+  color: var(--color-on-strong) !important;
+  overflow-wrap: anywhere;
+}
+
+.schedules-page__dialog .base-dialog__description {
+  color: var(--color-on-strong-muted) !important;
+}
+
+.schedules-page__dialog .base-dialog__close {
+  color: var(--color-on-strong-muted) !important;
+}
+
+.schedules-page__dialog .base-dialog__close:hover {
+  background-color: color-mix(in srgb, var(--color-on-strong) 8%, transparent) !important;
+  color: var(--color-on-strong) !important;
+}
+
+.schedules-page__dialog .base-dialog__close:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--color-surface-strong),
+    0 0 0 4px var(--color-focus) !important;
 }
 </style>

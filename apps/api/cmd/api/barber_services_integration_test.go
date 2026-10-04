@@ -172,10 +172,10 @@ func TestBarberServices_HTTP_AssignRepeatListUnassign_FullJourney(t *testing.T) 
 	}
 }
 
-// TestBarberServices_HTTP_LastActiveAssignment_Returns409 cubre DEC-068 a
-// través del router real: retirar la última asignación activa de un
-// servicio recién creado se rechaza con 409, sin borrar nada.
-func TestBarberServices_HTTP_LastActiveAssignment_Returns409(t *testing.T) {
+// TestBarberServices_HTTP_LastAssignment_CanBeRemoved cubre DEC-114 (que
+// sustituye a DEC-068) a través del router real: retirar al único barbero de
+// un servicio activo responde 204 y la asignación desaparece del listado.
+func TestBarberServices_HTTP_LastAssignment_CanBeRemoved(t *testing.T) {
 	db := setupTestDB(t)
 	router, err := buildRouter(db, discardLogger(), testRouterConfig())
 	if err != nil {
@@ -191,31 +191,19 @@ func TestBarberServices_HTTP_LastActiveAssignment_Returns409(t *testing.T) {
 	}
 
 	rec := doUnassignServiceRequest(router, raw, barber.ID, service.ID)
-	if rec.Code != http.StatusConflict {
-		t.Fatalf("DEC-068: expected 409 unassigning the last active assignment, got %d: %s", rec.Code, rec.Body.String())
-	}
-	var problem map[string]any
-	if err := json.Unmarshal(rec.Body.Bytes(), &problem); err != nil {
-		t.Fatalf("decode conflict problem: %v", err)
-	}
-	if problem["code"] != "conflict" {
-		t.Fatalf("expected code=conflict, got %v", problem["code"])
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("DEC-114: expected 204 unassigning the last assignment, got %d: %s", rec.Code, rec.Body.String())
 	}
 
-	// Nada se borró: sigue apareciendo en el listado.
 	listRec := doListAssignmentsRequest(router, raw, barber.ID, "")
 	var page assignmentListBody
 	if err := json.Unmarshal(listRec.Body.Bytes(), &page); err != nil {
 		t.Fatalf("decode list: %v", err)
 	}
-	found := false
 	for _, item := range page.Items {
 		if item.ServiceID == service.ID {
-			found = true
+			t.Fatal("expected the removed assignment to be gone from the list")
 		}
-	}
-	if !found {
-		t.Fatal("CA-023-06: the rejected unassign must NOT have deleted the row")
 	}
 }
 

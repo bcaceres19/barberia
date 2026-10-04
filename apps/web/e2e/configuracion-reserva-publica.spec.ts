@@ -43,10 +43,10 @@ test.describe('Configuración pública de reserva y cancelación (HU-093)', () =
 
     await page.getByLabel('Anticipación mínima (minutos)').fill('90')
     await page.getByLabel('Ventana máxima (días)').fill('5')
-    await page.getByLabel('Rejilla de horarios (minutos)').selectOption('30')
+    await page.getByRole('radio', { name: '30 min' }).check()
     await page.getByLabel('Plazo de cancelación del cliente (minutos)').fill('60')
-    await page.getByLabel('El cliente puede cancelar vencido el plazo').uncheck()
-    await page.getByLabel('Esa cancelación exige un motivo').uncheck()
+    await page.getByRole('switch', { name: 'El cliente puede cancelar vencido el plazo' }).click()
+    await page.getByRole('switch', { name: 'Esa cancelación exige un motivo' }).click()
 
     await page.getByRole('button', { name: 'Guardar cambios' }).click()
     await expect(page.getByText('Guardado')).toBeVisible()
@@ -56,9 +56,11 @@ test.describe('Configuración pública de reserva y cancelación (HU-093)', () =
     await page.reload()
     await expect(page.getByLabel('Anticipación mínima (minutos)')).toHaveValue('90')
     await expect(page.getByLabel('Ventana máxima (días)')).toHaveValue('5')
-    await expect(page.getByLabel('Rejilla de horarios (minutos)')).toHaveValue('30')
+    await expect(page.getByRole('radio', { name: '30 min' })).toBeChecked()
     await expect(page.getByLabel('Plazo de cancelación del cliente (minutos)')).toHaveValue('60')
-    await expect(page.getByLabel('El cliente puede cancelar vencido el plazo')).not.toBeChecked()
+    await expect(
+      page.getByRole('switch', { name: 'El cliente puede cancelar vencido el plazo' }),
+    ).toHaveAttribute('aria-checked', 'false')
 
     // Un segundo guardado inmediato (sin recargar de por medio) confirma
     // que la página renovó su propio versionToken tras la primera
@@ -73,10 +75,10 @@ test.describe('Configuración pública de reserva y cancelación (HU-093)', () =
     // ejecuciones de esta suite.
     await page.getByLabel('Anticipación mínima (minutos)').fill('60')
     await page.getByLabel('Ventana máxima (días)').fill('3')
-    await page.getByLabel('Rejilla de horarios (minutos)').selectOption('15')
+    await page.getByRole('radio', { name: '15 min' }).check()
     await page.getByLabel('Plazo de cancelación del cliente (minutos)').fill('20')
-    await page.getByLabel('El cliente puede cancelar vencido el plazo').check()
-    await page.getByLabel('Esa cancelación exige un motivo').check()
+    await page.getByRole('switch', { name: 'El cliente puede cancelar vencido el plazo' }).click()
+    await page.getByRole('switch', { name: 'Esa cancelación exige un motivo' }).click()
     await page.getByRole('button', { name: 'Guardar cambios' }).click()
     await expect(page.getByText('Guardado')).toBeVisible()
   })
@@ -88,7 +90,7 @@ test.describe('Configuración pública de reserva y cancelación (HU-093)', () =
     await page.getByRole('link', { name: 'Reserva pública' }).click()
     await expect(page).toHaveURL(/\/panel\/reserva-publica$/)
 
-    await page.getByLabel('El cliente puede cancelar vencido el plazo').uncheck()
+    await page.getByRole('switch', { name: 'El cliente puede cancelar vencido el plazo' }).click()
     // "Esa cancelación exige un motivo" sigue marcado desde el default: la
     // combinación (cliente no puede cancelar tarde, pero se exige motivo)
     // es incoherente.
@@ -99,7 +101,9 @@ test.describe('Configuración pública de reserva y cancelación (HU-093)', () =
     ).toBeVisible()
     // No se guardó nada: el checkbox marcado por el usuario sigue
     // desmarcado (CA-093-02, sin cambios ante un error de validación).
-    await expect(page.getByLabel('El cliente puede cancelar vencido el plazo')).not.toBeChecked()
+    await expect(
+      page.getByRole('switch', { name: 'El cliente puede cancelar vencido el plazo' }),
+    ).toHaveAttribute('aria-checked', 'false')
   })
 
   test('un conflicto real de versión permite recargar la representación vigente (CA-093-02)', async ({

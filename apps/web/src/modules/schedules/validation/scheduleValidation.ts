@@ -2,8 +2,8 @@
 // §7.6): ayuda a corregir antes de enviar, nunca sustituye al backend
 // (CA-040-04 real vive en el servicio Go). No valida solape: esa
 // comprobación depende del estado ya persistido de otros tramos y solo el
-// servidor lo conoce con certeza (mismo criterio que DEC-067/DEC-068 en
-// otros módulos).
+// servidor lo conoce con certeza (mismo criterio que DEC-067 en otros
+// módulos).
 export const MIN_DURATION_MINUTES = 1
 export const MAX_DURATION_MINUTES = 1440
 

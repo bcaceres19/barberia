@@ -47,7 +47,7 @@ Dimensiones: **Estado inicial** (activo con 1 barbero asignado / activo con vari
 
 | # | Estado inicial | Acción | Concurrencia | Ancho | Resultado esperado |
 | --- | --- | --- | --- | --- | --- |
-| 1 | activo, 1 barbero | desasignar esa única asignación | una | 768 | Rechazado (`DEC-068`, última asignación de servicio activo) con mensaje claro |
+| 1 | activo, 1 barbero | desasignar esa única asignación | una | 768 | Se retira sin error (`DEC-114`, que sustituye a `DEC-068`); el servicio deja de ofrecerse al público |
 | 2 | activo, 1 barbero | desactivar servicio, luego desasignar | una | 768 | Tras desactivar, ¿la regla de "última asignación" se sigue aplicando a un servicio ya inactivo? Documentar comportamiento real |
 | 3 | activo, varios barberos | desasignar uno cualquiera (no el último) | dos pestañas, la misma asignación | 320 | Una tiene éxito, la otra recibe conflicto controlado — nunca doble desasignación silenciosa |
 | 4 | activo, varios barberos | desactivar servicio (doble clic) | una | 1280 | Una sola desactivación real; segundo clic con `idempotency-conflict` bien comunicado |

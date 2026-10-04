@@ -1,9 +1,9 @@
 ---
 titulo: "Estándar visual NAVA para rediseños y pantallas nuevas"
-version: "5.4"
+version: "5.7"
 estado: "Normativo para rediseños y pantallas nuevas"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-19"
+ultima_actualizacion: "2026-10-04"
 documentos_relacionados:
   - "../00-control/registro-decisiones.md"
   - "../01-producto/alcance-mvp.md"
@@ -40,22 +40,23 @@ Si un mockup contradice una regla de negocio, el alcance, una HU, un contrato, l
 
 Las siguientes láminas forman la referencia canónica para el lenguaje visual de las familias que representan:
 
-| Referencia                                                                                                                            | Familia cubierta                                                                                                                                                                                                                                                              |
-| ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Referencia maestra Tailored Grid](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-02/00-referencia-tailored-grid.png)   | Composición editorial, carriles temporales, densidad ordenada y relación entre escritorio operativo y flujo móvil. Sus módulos fuera de alcance no se copian.                                                                                                                 |
-| [Autenticación móvil](../10-backlog/evidence/ui-redesign-nava-2026-09-02/01-autenticacion-movil.png)                                  | Acceso, validación y recuperación.                                                                                                                                                                                                                                            |
-| [Acceso y recuperación por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/README.md) | Referencia exacta de `/acceso` y `/recuperar-acceso`: un PNG por pantalla o evento, con pares equivalentes en escritorio y móvil. Sustituye la lámina compuesta como objetivo de implementación.                                                                              |
-| [Agenda diaria por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/README.md) | Referencia exacta de `/panel`: agenda, carga inicial, actualización, vacío, errores, barbero ausente, zona no disponible y turno nocturno (issue #189). Sustituye `ui-mockups-nava-tailored-grid-2026-09-02/01-agenda-diaria-responsive.png` como objetivo de implementación. |
-| [Barberos por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/README.md) | Referencia exacta de `/panel/barberos`: listado, paginación, carga, vacío, errores y recorridos completos de alta y cambio de nombre, con pares equivalentes en escritorio y móvil (issue #192). |
-| [Configuración de barbería por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/README.md) | Referencia exacta de `/panel/barberia`: carga, error, datos parciales, edición, validación, guardado y confirmación (issue #193). |
-| [Servicios por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/README.md) | Referencia exacta de `/panel/servicios`: catálogo, alta, edición, desactivación y reactivación (issue #194). |
-| [Servicios por barbero por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/README.md) | Referencia exacta de `/panel/servicios-por-barbero`: selección, asignación, retiro y conflictos (issue #195). |
-| [Horarios por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/README.md) | Referencia exacta de `/panel/horarios`: tramos recurrentes, excepciones, festivos, validación y errores (issue #196). |
-| [Bloqueos por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/README.md) | Referencia exacta de `/panel/bloqueos`: bloqueos puntuales, series, validación, conflictos y retiro (issue #197). |
-| [Detalle de turno por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/README.md) | Referencia exacta de `/panel/turnos/:appointmentId`: detalle, historial, terminales y reprogramación (issue #191). |
-| [Nuevo turno responsive](../10-backlog/evidence/ui-redesign-nava-2026-09-02/02-nuevo-turno-responsive.png)                            | Formularios extensos, secciones, reflow y conflictos.                                                                                                                                                                                                                         |
-| [Componentes, formularios y alertas](../10-backlog/evidence/ui-redesign-nava-2026-09-02/03-componentes-formularios-alertas.png)       | Botones, campos, foco, estados, alertas y diálogo.                                                                                                                                                                                                                            |
-| [Servicios, configuración y navegación](../10-backlog/evidence/ui-redesign-nava-2026-09-02/04-servicios-configuracion-navegacion.png) | Shell, navegación responsive, listas operativas, modal y éxito persistente.                                                                                                                                                                                                   |
+| Referencia                                                                                                                                             | Familia cubierta                                                                                                                                                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Referencia maestra Tailored Grid](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-02/00-referencia-tailored-grid.png)                    | Composición editorial, carriles temporales, densidad ordenada y relación entre escritorio operativo y flujo móvil. Sus módulos fuera de alcance no se copian.                                                                                                                 |
+| [Autenticación móvil](../10-backlog/evidence/ui-redesign-nava-2026-09-02/01-autenticacion-movil.png)                                                   | Acceso, validación y recuperación.                                                                                                                                                                                                                                            |
+| [Acceso y recuperación por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/README.md)                  | Referencia exacta de `/acceso` y `/recuperar-acceso`: un PNG por pantalla o evento, con pares equivalentes en escritorio y móvil. Sustituye la lámina compuesta como objetivo de implementación.                                                                              |
+| [Agenda diaria por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/panel-agenda-eventos/README.md)                  | Referencia exacta de `/panel`: agenda, carga inicial, actualización, vacío, errores, barbero ausente, zona no disponible y turno nocturno (issue #189). Sustituye `ui-mockups-nava-tailored-grid-2026-09-02/01-agenda-diaria-responsive.png` como objetivo de implementación. |
+| [Barberos por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberos-eventos/README.md)                           | Referencia exacta de `/panel/barberos`: listado, paginación, carga, vacío, errores y recorridos completos de alta y cambio de nombre, con pares equivalentes en escritorio y móvil (issue #192).                                                                              |
+| [Configuración de barbería por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/barberia-eventos/README.md)          | Referencia exacta de `/panel/barberia`: carga, error, datos parciales, edición, validación, guardado y confirmación (issue #193).                                                                                                                                             |
+| [Servicios por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-eventos/README.md)                         | Referencia exacta de `/panel/servicios`: catálogo, alta, edición, desactivación y reactivación (issue #194).                                                                                                                                                                  |
+| [Servicios por barbero por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/servicios-por-barbero-eventos/README.md) | Referencia exacta de `/panel/servicios-por-barbero`: selección, asignación, retiro y conflictos (issue #195).                                                                                                                                                                 |
+| [Horarios por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/horarios-eventos/README.md)                           | Antecedente de `/panel/horarios` (issue #196): tramos recurrentes, excepciones, festivos, validación y errores. Ya no es referencia exacta: `DEC-109` la sustituye por el tablero semanal sobre tinta del panel, de composición libre dentro de NAVA / Tailored Grid.         |
+| [Bloqueos por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/README.md)                           | Referencia exacta de `/panel/bloqueos`: bloqueos puntuales, series, validación, conflictos y retiro (issue #197).                                                                                                                                                             |
+| [Detalle de turno por viewport y evento](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/detalle-turno-eventos/README.md)              | Referencia exacta de `/panel/turnos/:appointmentId`: detalle, historial, terminales y reprogramación (issue #191).                                                                                                                                                            |
+| [Reserva pública, recorrido completo](../../apps/web/e2e/evidence/reserva-publica/rediseno/)                                                           | Sin referencia exacta (identidad guiada, `DEC-111`): `/reservar/:slug` y sus cuatro pasos sobre el lienzo de tinta del panel, con cascarón persistente, panel de tinta levantada para lo que se rellena y capturas en 320, 360, 768, 1280, 1440 y zoom 200 %.                 |
+| [Nuevo turno responsive](../10-backlog/evidence/ui-redesign-nava-2026-09-02/02-nuevo-turno-responsive.png)                                             | Formularios extensos, secciones, reflow y conflictos.                                                                                                                                                                                                                         |
+| [Componentes, formularios y alertas](../10-backlog/evidence/ui-redesign-nava-2026-09-02/03-componentes-formularios-alertas.png)                        | Botones, campos, foco, estados, alertas y diálogo.                                                                                                                                                                                                                            |
+| [Servicios, configuración y navegación](../10-backlog/evidence/ui-redesign-nava-2026-09-02/04-servicios-configuracion-navegacion.png)                  | Shell, navegación responsive, listas operativas, modal y éxito persistente.                                                                                                                                                                                                   |
 
 El [atlas integral de mockups](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-02/README.md) amplía estas referencias a las once rutas implementadas, sus estados transversales y conceptos P0 pendientes. Las láminas rotuladas como no implementadas reservan intención visual, pero no crean alcance, contrato ni autorización de desarrollo.
 
@@ -174,6 +175,22 @@ Los mockups favorecen bordes finos, radios pequeños, sombras mínimas, agrupaci
 - El espacio puede ser compacto u holgado según la tarea, pero mantiene alineación y relaciones visibles entre label, control, ayuda y error.
 - Iconos funcionales viven dentro de controles con nombre accesible. Los iconos decorativos no reemplazan texto ni crean clichés de marca.
 
+### 5.3 Escala tipográfica del panel (`DEC-112`)
+
+Las pantallas del panel no escriben un `font-size` suelto: consumen los tokens de `styles/tokens.css`.
+
+| Rol                        | Token                       | Tamaño | Uso                                                          |
+| -------------------------- | --------------------------- | ------ | ------------------------------------------------------------ |
+| Rótulo y dato auxiliar     | `--font-size-caption`       | 12 px  | Versalitas espaciadas, estados, encabezados de tabla (piso). |
+| Texto secundario           | `--font-size-body-sm`       | 14 px  | Metadatos, ayudas, texto de botones de fila.                 |
+| Texto corrido              | `--font-size-body`          | 16 px  | Datos de fila, campos.                                       |
+| Nombre de registro         | `--font-size-body-lg`       | 18 px  | Persona o servicio como dato principal de una fila.          |
+| Título de elemento (serif) | `--font-size-title-item`    | 21 px  | Títulos de panel, leyendas, cifras.                          |
+| Título de sección (serif)  | `--font-size-title-section` | 28 px  | Cabeceras de sección.                                        |
+| Título de página (serif)   | `--font-size-title-page`    | 36 px  | `h1` de escritorio (tope; en móvil `--font-size-h1`).        |
+
+Ningún texto visible baja de 12 px; el monograma decorativo de un retrato pequeño (`aria-hidden`) es la única excepción. Las acciones de fila miden 36 px de alto con texto de 14 px.
+
 ## 6. Patrones cubiertos por los mockups
 
 ### 6.1 Botones y acciones
@@ -244,6 +261,33 @@ Los mockups favorecen bordes finos, radios pequeños, sombras mínimas, agrupaci
 - **Tamaño de texto:** Pequeño, Normal, Grande y Muy grande (90 %–125 %), por `zoom`; el ancho efectivo no baja de 320 px y `--viewport-height` compensa `100dvh`/`100vh`. **Animaciones reducidas:** `data-motion="reduced"` colapsa duraciones además de `prefers-reduced-motion`.
 - **Vocabulario:** una pantalla del panel dice `v.professionals`, no `'barberos'` (`useVocabulary`, `shared/model/vocabulary.ts`), con artículos y participios concordados por género; con los valores iniciales el texto es idéntico al anterior. Un texto nuevo del panel que nombre al negocio o al profesional usa el vocabulario.
 - La pantalla de Configuración declara en cada sección si el cambio vale para «este dispositivo» (al instante) o para la barbería (se guarda). Evidencia: `apps/web/e2e/evidence/configuracion/rediseno/`.
+
+### 6.10 Reserva pública
+
+`DEC-111`. Identidad guiada: no hay un mockup exacto; el lenguaje es el del panel y el acceso.
+
+- **Cascarón:** `PublicBookingLayout` (`modules/public-booking/layouts`) aloja los cinco pasos como rutas hijas. Persisten entre pasos el fondo animado, la cabecera, el enlace de retorno, el progreso y la firma al pie «Reservas con NAVA»; cada paso conserva su `<main>`, su estado y su `<h1>`. La confirmación del servidor llega al cascarón por `provide`/`inject` acotado (`model/bookingChrome.ts`), nunca por estado global.
+- **Lienzo:** tinta fija (`--color-surface-strong`), sin `data-app-theme` ni acento por barbería. Lo que se rellena (datos, resumen, confirmación) y la ficha de la franja elegida son papel marfil (`--color-canvas`) sobre la tinta, con la cinta métrica de latón en el borde superior; así `BaseInput` y `BaseButton` conservan su construcción reglada sin variante oscura.
+- **Progreso:** `BookingProgress`, una regla de latón con un rombo por paso. El actual lleva `aria-current="step"` y halo; los completados van rellenos y se anuncian «(completado)»; los pendientes son contorno. El tramo recorrido se dibuja con `transform` al cambiar de paso.
+- **Opciones:** filas de divisor fino (servicio, barbero) y fichas de contorno (franjas, días). Seleccionada: rombo relleno con el check dibujado, filete lateral de latón y un destello único; nunca solo color (WCAG 1.4.1). Una barra de acción fija al pie reúne la selección y «Continuar» (latón lleno con filete inferior acentuado).
+- **Movimiento:** entradas escalonadas, trazos que se dibujan, marcas que se rellenan y una transición de paso (adelante desde la derecha, atrás desde la izquierda; la salida solo desvanece para no mover elementos `sticky`). Es CSS sobre `transform`, `opacity` y `stroke-dashoffset`; el único JavaScript de movimiento es el foco de latón que sigue al cursor, que se traslada con `transform` por fotograma y solo con puntero fino. `prefers-reduced-motion` deja cada elemento en su estado final y apaga el foco.
+- **Color sobre tinta:** el latón (`--color-brand-accent-surface`) es texto, filete y relleno; los estados de página usan los tintes levantados `--color-*-on-strong`, no el rojo/ámbar de las superficies claras. La evidencia de axe-core se corre con `color-contrast` activo y movimiento reducido.
+
+### 6.11 Movimiento compartido del panel
+
+`DEC-112`. `styles/motion.css` expone el repertorio común: `nv-rise` (sube y aparece), `nv-fade`, `nv-slide`, `nv-pop`, `nv-wipe` (regla que se dibuja) y `nv-lift` (desplazamiento de 3 px al señalar una fila). Una lista se escalona con `--i` por elemento (tope de 12 pasos de 55 ms). Los keyframes `nava-*` (`grow-x`, `glint`, `ring`, `shimmer`) sirven a componentes locales. Todo se resuelve con `transform`, `opacity` y `clip-path`; `prefers-reduced-motion` y `data-motion="reduced"` dejan cada elemento en su estado final. El dock dibuja un filete de latón bajo el destino activo y el cascarón desvanece la pantalla saliente (120 ms); cada pantalla entrante trae su propia coreografía.
+
+### 6.12 Estados vacíos del panel
+
+`DEC-113`. Una colección sin registros (turnos del día, servicios, barberos) o una búsqueda sin resultado se presentan con `EmptyScene` (`shared/ui`), no con un párrafo: ilustración de línea de latón que se dibuja, titular serif, ayuda de una o dos líneas y, cuando existe, la acción que crea el primer registro (slot `action`). La escena se elige por tema (`agenda`, `services`, `team`, `assignments`, `search`); el titular conserva el texto de la pantalla y un enlace a otra sección va dentro de la ayuda. Cuando el estado reemplaza toda la pantalla por un fallo de carga sigue usándose `PageState`/`BaseAlert` (§6.7), no una escena.
+
+### 6.13 Fondo vivo del panel
+
+`DEC-113`. El escenario del cascarón privado (`PrivateShell`) pinta una capa decorativa detrás de todas las pantallas: dos luces radiales muy tenues (latón y salvia, ≤ 14 %) que derivan en ciclos de ~1 minuto y una cuadrícula de patronaje (4 % de `--color-on-strong`) que avanza una casilla por ciclo. Solo `transform`; sin eventos ni lectura de pantalla; se adapta a Tinta y Marfil porque usa `color-mix` sobre tokens. Las pantallas del panel declaran `background: transparent` en su raíz: la tinta la pone el escenario. `prefers-reduced-motion` y `data-motion="reduced"` dejan las luces quietas.
+
+### 6.14 Política de reserva pública del panel
+
+`/panel/reserva-publica` (`HU-093`) usa el lenguaje de Configuración (§6.9, `DEC-110`): dos `SettingsPanel` numerados sobre tinta («Ventana de reserva», «Cancelación del cliente»), la rejilla de horarios como `OptionGroup` de fichas con el valor en serif, los dos permisos de cancelación tardía como `SwitchField` y `SaveBar` solo mientras hay cambios sin guardar (con «Descartar»). A la derecha, desde 1100 px, `BookingPolicyPreview` traduce el borrador a lo que verá la persona que reserva —regla de ventana con el tramo rayado de la anticipación mínima y franjas de ejemplo desde las 10:00—; es solo lectura y deriva de los valores del formulario, sin crear funciones. Por debajo de 1100 px la vista previa pasa tras los paneles. Los rangos, la validación y el `versionToken` no cambian.
 
 ## 7. Zona de libertad creativa
 
@@ -337,6 +381,7 @@ No se rechaza una solución por usar CSS local, Tailwind u otra herramienta. En 
 - `DEC-078`: libertad de composición, componentes y herramientas.
 - `DEC-079`: mockups y firma cromática obligatorios para rediseños y pantallas nuevas.
 - `DEC-110`: marca, vocabulario y apariencia configurables (modo Tinta/Marfil, tamaño de texto, acento de paleta cerrada).
+- `DEC-111`: reserva pública sobre el lienzo de tinta del panel, con cascarón persistente y movimiento.
 - `DEC-080`: dos modos de conformidad y fidelidad medible cuando existe un mockup exacto asignado.
 - [Handoff de mockups NAVA](../10-backlog/evidence/ui-redesign-nava-2026-09-02/README.md).
 - [Atlas integral NAVA / Tailored Grid](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-02/README.md).

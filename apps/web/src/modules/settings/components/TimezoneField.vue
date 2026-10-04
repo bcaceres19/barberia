@@ -284,7 +284,7 @@ defineExpose({ focus: () => inputRef.value?.focus() })
 
 .tz-field__label {
   color: var(--color-brand-accent-surface);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   letter-spacing: 0.08em;
   line-height: 14px;
@@ -306,7 +306,7 @@ defineExpose({ focus: () => inputRef.value?.focus() })
   border-bottom: var(--border-width-normal) solid var(--color-brand-accent-surface);
   border-radius: 3px;
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: var(--font-size-body-sm);
   transition:
     border-color var(--motion-duration-base) var(--motion-easing-standard),
     background-color var(--motion-duration-base) var(--motion-easing-standard),
@@ -411,7 +411,7 @@ defineExpose({ focus: () => inputRef.value?.focus() })
 .tz-field__city {
   grid-area: city;
   overflow: hidden;
-  font-size: 14px;
+  font-size: var(--font-size-body-sm);
   line-height: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -421,7 +421,7 @@ defineExpose({ focus: () => inputRef.value?.focus() })
   grid-area: zone;
   overflow: hidden;
   color: var(--color-on-strong-muted);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   line-height: 15px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -430,7 +430,7 @@ defineExpose({ focus: () => inputRef.value?.focus() })
 .tz-field__offset {
   grid-area: offset;
   color: var(--color-brand-accent-surface);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   letter-spacing: 0.06em;
   white-space: nowrap;
@@ -440,14 +440,14 @@ defineExpose({ focus: () => inputRef.value?.focus() })
 .tz-field__more {
   padding: 10px 14px;
   color: var(--color-on-strong-muted);
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   line-height: 18px;
 }
 
 .tz-field__error {
   margin: 0;
   color: var(--color-danger-on-strong);
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   line-height: 16px;
 }
 
@@ -466,7 +466,7 @@ defineExpose({ focus: () => inputRef.value?.focus() })
   display: inline-flex;
   align-items: baseline;
   font-family: var(--font-display);
-  font-size: 38px;
+  font-size: var(--font-size-title-page);
   line-height: 1;
   color: var(--color-on-strong);
   font-variant-numeric: tabular-nums;
@@ -485,7 +485,7 @@ defineExpose({ focus: () => inputRef.value?.focus() })
 }
 
 .tz-field__clock-title {
-  font-size: 13px;
+  font-size: var(--font-size-body-sm);
   font-weight: 600;
   line-height: 18px;
   color: var(--color-on-strong);
@@ -497,7 +497,7 @@ defineExpose({ focus: () => inputRef.value?.focus() })
 }
 
 .tz-field__clock-day {
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   line-height: 17px;
   color: var(--color-on-strong-muted);
 }
@@ -515,7 +515,7 @@ defineExpose({ focus: () => inputRef.value?.focus() })
   border: 0;
   border-radius: 3px;
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   text-align: left;
   text-decoration: underline;

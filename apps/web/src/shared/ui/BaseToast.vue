@@ -294,7 +294,7 @@ function onFocusOut(event: FocusEvent) {
 }
 
 .base-toast__status {
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   line-height: 12px;
   letter-spacing: 0.1em;
@@ -449,7 +449,7 @@ function onFocusOut(event: FocusEvent) {
   background: transparent;
   border: 0;
   color: var(--color-on-strong-muted);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;

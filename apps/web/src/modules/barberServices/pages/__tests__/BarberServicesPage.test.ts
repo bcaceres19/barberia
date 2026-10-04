@@ -126,6 +126,47 @@ describe('BarberServicesPage', () => {
     expect(label!.textContent).toContain('Corte clásico')
   })
 
+  it('lays the catalog out as a table with column headers and a count footer', async () => {
+    const wrapper = await mountReady(oneBarber, twoServices, ['s-1'])
+
+    expect(wrapper.find('.barber-services-page__columns').text()).toContain('Servicio')
+    expect(wrapper.find('.barber-services-page__columns').text()).toContain('Asignación')
+    expect(wrapper.find('.barber-services-page__count').text()).toBe('2 servicios')
+    expect(wrapper.findAll('.barber-services-page__row')).toHaveLength(2)
+  })
+
+  it('paginates a long catalog on the client and keeps toggles working on later pages', async () => {
+    const manyServices = Array.from({ length: 25 }, (_, i) => ({
+      id: `s-${i + 1}`,
+      name: `Servicio ${i + 1}`,
+    }))
+    assignServiceMock.mockResolvedValueOnce({
+      kind: 'success',
+      assignment: { barberId: 'b-1', serviceId: 's-25', createdAt: '2026-08-24T15:04:05Z' },
+    })
+    const wrapper = await mountReady(oneBarber, manyServices, [])
+
+    // jsdom no mide alturas: aplica el tamaño de página de reserva (20).
+    expect(wrapper.findAll('.barber-services-page__row')).toHaveLength(20)
+    expect(wrapper.find('.barber-services-page__count').text()).toBe('25 servicios')
+    expect(checkbox(wrapper, 's-25')).toBeNull()
+
+    await wrapper.find('button[aria-label="Página siguiente"]').trigger('click')
+
+    expect(wrapper.findAll('.barber-services-page__row')).toHaveLength(5)
+    expect(wrapper.find('[aria-current="page"]').text()).toBe('2')
+    expect(
+      wrapper.find('button[aria-label="Página siguiente"]').attributes('disabled'),
+    ).toBeDefined()
+
+    checkbox(wrapper, 's-25').checked = true
+    await checkbox(wrapper, 's-25').dispatchEvent(new Event('change'))
+    await flushPromises()
+
+    expect(assignServiceMock).toHaveBeenCalledWith('b-1', 's-25')
+    expect(checkbox(wrapper, 's-25').checked).toBe(true)
+  })
+
   it('shows an empty state when there are no barbers, without an interactive picker', async () => {
     fetchBarberSummariesMock.mockResolvedValueOnce({ kind: 'success', items: [] })
     fetchServiceSummariesMock.mockResolvedValueOnce({ kind: 'success', items: twoServices })
@@ -218,20 +259,19 @@ describe('BarberServicesPage', () => {
     expect(toastState.items.map((item) => item.title)).toEqual(['Servicio retirado'])
   })
 
-  it('rejecting the last active assignment (DEC-068) reverts the checkbox and shows a recoverable message', async () => {
+  it('removing the only barber of a service is allowed and confirmed like any other removal (DEC-114)', async () => {
     const wrapper = await mountReady(oneBarber, twoServices, ['s-1'])
-    unassignServiceMock.mockResolvedValueOnce({ kind: 'last-active-conflict' })
+    unassignServiceMock.mockResolvedValueOnce({ kind: 'success' })
 
     const box = checkbox(wrapper, 's-1')
     box.checked = false
     await box.dispatchEvent(new Event('change'))
     await flushPromises()
 
-    expect(wrapper.text()).toContain('es el único barbero asignado a este servicio activo')
-    // El estado real (asignado) se conserva: la casilla vuelve a marcarse.
-    expect(checkbox(wrapper, 's-1').checked).toBe(true)
-    // El error sigue en línea (DEC-095): no hay aviso emergente.
-    expect(toastState.items).toHaveLength(0)
+    expect(unassignServiceMock).toHaveBeenCalledWith('b-1', 's-1')
+    expect(checkbox(wrapper, 's-1').checked).toBe(false)
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+    expect(toastState.items.map((item) => item.title)).toEqual(['Servicio retirado'])
   })
 
   it('a network error while toggling keeps the previous state and shows a recoverable message', async () => {
@@ -301,9 +341,9 @@ describe('BarberServicesPage', () => {
     rules: { 'color-contrast': { enabled: false }, 'heading-order': { enabled: false } },
   }
 
-  it('has no axe violations with the last-active-conflict alert visible', async () => {
+  it('has no axe violations with the save-error alert visible', async () => {
     const wrapper = await mountReady(oneBarber, twoServices, ['s-1'])
-    unassignServiceMock.mockResolvedValueOnce({ kind: 'last-active-conflict' })
+    unassignServiceMock.mockResolvedValueOnce({ kind: 'network-error' })
 
     const box = checkbox(wrapper, 's-1')
     box.checked = false

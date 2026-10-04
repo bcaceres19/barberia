@@ -31,8 +31,8 @@ por servicio del catálogo; el mismo componente funciona con un barbero que
 presta todo el catálogo y con un equipo de especialidades distintas. Cada
 casilla se deshabilita mientras su propia solicitud está en curso (evita
 doble envío) y solo cambia de estado tras la respuesta real del servidor;
-retirar la última asignación activa de un servicio activo se rechaza
-(`DEC-068`) y la casilla vuelve a marcarse, y el **ciclo de vida de
+se puede retirar a cualquier barbero, también al último de un servicio activo
+(`DEC-114`; ese servicio deja de ofrecerse al público hasta asignar otro), y el **ciclo de vida de
 servicios (HU-024)**: en la misma pantalla "Servicios", desactivar/reactivar
 con un `BaseDialog` que consulta el impacto real de citas futuras antes de
 confirmar (siempre 0 en B1, `DEC-069`) y recarga el estado real si el
@@ -503,7 +503,7 @@ patrón de ruta hija diferida + `NavItem` que `staff`/`catalog`;
 `BarberServicesPage.vue` no usa `v-model` sobre cada casilla: usa
 `:checked="isAssigned(service.id)"` + `@change`, y en el handler
 `onToggleService` guarda una referencia directa al `<input>` que disparó el
-evento. Si el servidor rechaza el cambio (`404`, `409` de DEC-068, error de
+evento. Si el servidor rechaza el cambio (`404`, error de
 red), el código fija `checkbox.checked = isAssigned(service.id)`
 DIRECTAMENTE sobre ese elemento del DOM, sin depender de que Vue vuelva a
 sincronizar la propiedad `checked` por sí solo: cuando el valor reactivo
@@ -514,21 +514,21 @@ casilla visualmente al hacer clic-. Cada casilla se deshabilita mientras su
 propia solicitud está en curso (`pendingServiceIds`), lo que además evita
 estructuralmente el doble envío (un `<input disabled>` no dispara `change`).
 
-### Última asignación activa: mensaje recuperable, sin perder el resto de casillas (DEC-068)
+### Retirar al último barbero de un servicio (DEC-114)
 
-Cuando `unassignService` responde `last-active-conflict`, la pantalla
-muestra una alerta explicando que ese barbero es el único asignado al
-servicio y revierte solo ESA casilla; las demás conservan su estado
-(asignado/pendiente) sin verse afectadas. La selección de barbero tampoco
-se pierde: el error es local a la casilla, no a toda la pantalla.
+Retirar a cualquier barbero es válido, también al último de un servicio
+activo: el API responde `204` y la casilla se desmarca como en cualquier otro
+retiro. Ese servicio queda sin asignaciones y el catálogo público deja de
+ofrecerlo hasta que se asigne otro barbero. `DEC-114` sustituye a `DEC-068`,
+que lo rechazaba con `409`; el cliente ya no distingue ese caso.
 
 ### Pruebas
 
 Componente (`src/modules/barberServices/pages/__tests__/
 BarberServicesPage.test.ts`: un barbero y cuatro, servicio compartido,
 vacío sin barberos/sin servicios, error recuperable, cambio de barbero,
-asignar/desasignar, último activo rechazado -DEC-068- con reversión de la
-casilla, error de red, doble envío bloqueado, ausencia de horario/
+asignar/desasignar, retirar al último barbero de un servicio -DEC-114-, error
+de red con reversión de la casilla, doble envío bloqueado, ausencia de horario/
 disponibilidad/citas/precio por barbero, axe-core), cliente tipado
 (`src/modules/barberServices/api/__tests__/barberServicesApi.test.ts`:
 mapeo por `status`/`code`, nunca `detail`) y E2E contra el API real en

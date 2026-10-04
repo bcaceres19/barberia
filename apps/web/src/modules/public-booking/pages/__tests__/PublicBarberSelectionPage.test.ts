@@ -434,6 +434,23 @@ describe('PublicBarberSelectionPage', () => {
     expect(results).toHaveNoViolations()
   })
 
+  it('names the only barber once, without repeating the name in the action bar (DEC-111)', async () => {
+    getMock.mockResolvedValueOnce({
+      data: { items: [barberFixture({ fullName: 'Ana Gómez' })] },
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
+      props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
+    })
+    await flushPromises()
+
+    expect(wrapper.text().match(/Ana Gómez/g)).toHaveLength(1)
+    // La acción sigue disponible: la preselección no exige un paso adicional.
+    expect(wrapper.find('.pb-actionbar a').text()).toContain('Continuar')
+  })
+
   it('has no accessibility violations with a single preselected barber', async () => {
     getMock.mockResolvedValueOnce({
       data: { items: [barberFixture()] },

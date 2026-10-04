@@ -118,7 +118,7 @@ export async function unassignService(
   serviceId: string,
 ): Promise<UnassignServiceOutcome> {
   try {
-    const { response, error } = await httpClient.DELETE(
+    const { response } = await httpClient.DELETE(
       '/private/barbers/{barberId}/services/{serviceId}',
       {
         params: { path: { barberId, serviceId } },
@@ -132,25 +132,12 @@ export async function unassignService(
     switch (response.status) {
       case 404:
         return { kind: 'not-found' }
-      case 409:
-        // DEC-068 (code: "conflict") es el único 409 posible de esta
-        // operación (no hay Idempotency-Key ni protocolo de idempotencia
-        // en este DELETE): el cliente todavía decide por `code`, nunca por
-        // `detail` (docs/06-api/estandar-openapi.md §5), por si una versión
-        // futura agregara otro problem type sobre este mismo status.
-        return isProblemCode(error, 'conflict')
-          ? { kind: 'last-active-conflict' }
-          : { kind: 'unexpected-error' }
       default:
         return { kind: 'unexpected-error' }
     }
   } catch {
     return { kind: 'network-error' }
   }
-}
-
-function isProblemCode(error: unknown, code: string): boolean {
-  return !!error && typeof error === 'object' && (error as { code?: string }).code === code
 }
 
 function toAssignment(data: {

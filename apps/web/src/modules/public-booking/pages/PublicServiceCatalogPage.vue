@@ -1,19 +1,20 @@
 <script setup lang="ts">
 // Página coordinadora del catálogo público de servicios (HU-091,
 // CA-091-01 a CA-091-05). Sin mockup asignado: composición libre dentro de
-// NAVA / Tailored Grid (DEC-078). Posee estado y reintento; no conoce la
-// forma RFC 9457 del contrato (eso queda dentro de
-// `api/listPublicServicesApi.ts`).
+// NAVA / Tailored Grid (DEC-078), alojada en el cascarón de la reserva
+// pública (DEC-111). Posee estado y reintento; no conoce la forma RFC 9457
+// del contrato (eso queda dentro de `api/listPublicServicesApi.ts`).
 //
 // Selección: lista `role="radiogroup"` con roving tabindex (WAI-ARIA APG,
 // mismo patrón de teclado que BarberSelect.vue, sin el popup/colapso que
 // ese widget sí necesita). La selección se indica con `aria-checked`, un
-// borde de énfasis y un ícono de marca -nunca solo color (CA-091-04)-. Esta
+// filete lateral, el rombo relleno con su check -nunca solo color (CA-091-04)-. Esta
 // historia no crea ninguna cita (fuera de alcance de HU-091 y HU-092); tras
 // elegir un servicio, el botón "Continuar" (HU-092) navega a la selección
 // pública de barbero de ESE servicio.
 import { computed, nextTick, onMounted, ref } from 'vue'
-import { BaseButton, EmptyState, PageState } from '@/shared/ui'
+import BookingStateScreen from '../components/BookingStateScreen.vue'
+import ChoiceMark from '../components/ChoiceMark.vue'
 import { listPublicServices } from '../api/listPublicServicesApi'
 import type { PublicService } from '../model/publicServiceListOutcome'
 
@@ -124,282 +125,87 @@ function onListKeydown(event: KeyboardEvent) {
   }
 }
 
-const unexpectedErrorMessage = computed(() => {
-  const state = screenState.value
-  if (state.status !== 'unexpected-error') return ''
-  return state.requestId
-    ? `Inténtalo de nuevo. Si continúa, comparte este código con soporte: ${state.requestId}.`
-    : 'Inténtalo de nuevo en unos segundos.'
-})
+const failedRequestId = computed(() =>
+  screenState.value.status === 'unexpected-error' ? screenState.value.requestId : undefined,
+)
+
+const selectedService = computed(() => services.value.find((s) => s.id === selectedServiceId.value))
 </script>
 
 <template>
-  <main v-if="screenState.status !== 'success'" class="service-catalog service-catalog--state">
-    <h1 class="visually-hidden">Elegir servicio</h1>
-    <PageState
-      v-if="screenState.status === 'loading'"
-      variant="loading"
-      headline="Cargando servicios…"
-      role="status"
-    />
-    <PageState
-      v-else-if="screenState.status === 'not-found'"
-      variant="danger"
-      status-label="Error"
-      headline="No encontramos ese enlace"
-      role="alert"
-    >
-      <template #default
-        >Revisa que copiaste la dirección completa, o pídele al barbero que te la vuelva a
-        compartir.</template
-      >
-      <template #action>
-        <BaseButton variant="secondary" @click="retry">Reintentar</BaseButton>
-      </template>
-    </PageState>
-    <PageState
-      v-else-if="screenState.status === 'network-error'"
-      variant="warning"
-      status-label="Atención"
-      headline="No pudimos conectar"
-      role="alert"
-    >
-      <template #default>Revisa tu conexión e inténtalo de nuevo.</template>
-      <template #action>
-        <BaseButton variant="primary" @click="retry">Reintentar</BaseButton>
-      </template>
-    </PageState>
-    <PageState
-      v-else
-      variant="danger"
-      status-label="Error"
-      headline="Ocurrió un error inesperado"
-      role="alert"
-    >
-      <template #default>{{ unexpectedErrorMessage }}</template>
-      <template #action>
-        <BaseButton variant="primary" @click="retry">Reintentar</BaseButton>
-      </template>
-    </PageState>
-  </main>
+  <BookingStateScreen
+    v-if="screenState.status !== 'success'"
+    :status="screenState.status"
+    :request-id="failedRequestId"
+    title="Elegir servicio"
+    loading-headline="Cargando servicios…"
+    @retry="retry"
+  />
 
-  <main v-else class="service-catalog service-catalog--list">
-    <div class="service-catalog__container">
-      <h1 class="service-catalog__title">Elige tu servicio</h1>
+  <main v-else class="pb-page pb-page--bar">
+    <p class="pb-eyebrow">Servicios</p>
+    <h1 class="pb-title">Elige tu servicio</h1>
+    <div class="pb-rule" aria-hidden="true"></div>
 
-      <EmptyState
-        v-if="services.length === 0"
-        message="Esta barbería todavía no tiene servicios disponibles para reservar."
-      />
-
-      <ul
-        v-else
-        class="service-catalog__list"
-        role="radiogroup"
-        aria-label="Servicios disponibles"
-        @keydown="onListKeydown"
-      >
-        <li
-          v-for="(service, index) in services"
-          :key="service.id"
-          :ref="(el) => setOptionRef(el as Element | null, index)"
-          class="service-catalog__item"
-          :class="{ 'service-catalog__item--selected': service.id === selectedServiceId }"
-          role="radio"
-          :aria-checked="service.id === selectedServiceId"
-          :tabindex="index === activeIndex ? 0 : -1"
-          @click="selectService(service.id)"
-        >
-          <span class="service-catalog__item-check" aria-hidden="true"></span>
-          <span class="service-catalog__item-body">
-            <span class="service-catalog__item-name">{{ service.name }}</span>
-            <span v-if="service.description" class="service-catalog__item-description">{{
-              service.description
-            }}</span>
-            <span class="service-catalog__item-meta">
-              <span>{{ service.durationMinutes }} min</span>
-              <span aria-hidden="true">·</span>
-              <span>{{ formatPrice(service) }}</span>
-            </span>
-          </span>
-        </li>
-      </ul>
-
-      <RouterLink
-        v-if="selectedServiceId"
-        :to="{
-          name: 'reserva-publica-barbero',
-          params: { slug: props.slug, serviceId: selectedServiceId },
-        }"
-        class="service-catalog__cta"
-      >
-        Continuar
-      </RouterLink>
+    <div v-if="services.length === 0" class="pb-empty">
+      <span class="pb-empty__mark" aria-hidden="true"></span>
+      <p class="pb-empty__message">
+        Esta barbería todavía no tiene servicios disponibles para reservar.
+      </p>
     </div>
+
+    <ul
+      v-else
+      class="pb-choices"
+      role="radiogroup"
+      aria-label="Servicios disponibles"
+      @keydown="onListKeydown"
+    >
+      <li
+        v-for="(service, index) in services"
+        :key="service.id"
+        :ref="(el) => setOptionRef(el as Element | null, index)"
+        class="pb-choice"
+        :class="{ 'pb-choice--selected': service.id === selectedServiceId }"
+        :style="{ '--pb-i': index }"
+        role="radio"
+        :aria-checked="service.id === selectedServiceId"
+        :tabindex="index === activeIndex ? 0 : -1"
+        @click="selectService(service.id)"
+      >
+        <ChoiceMark />
+        <span class="pb-choice__body">
+          <span class="pb-choice__name">{{ service.name }}</span>
+          <span v-if="service.description" class="pb-choice__description">{{
+            service.description
+          }}</span>
+          <span class="pb-choice__meta">
+            <span>{{ service.durationMinutes }} min</span>
+          </span>
+        </span>
+        <span class="pb-choice__aside">
+          <span class="pb-choice__price">{{ formatPrice(service) }}</span>
+        </span>
+      </li>
+    </ul>
+
+    <Transition name="pb-bar">
+      <div v-if="selectedService" class="pb-actionbar">
+        <p class="pb-actionbar__summary">
+          <span class="pb-actionbar__label">Tu selección</span>
+          <span class="pb-actionbar__value">{{ selectedService.name }}</span>
+        </p>
+        <RouterLink
+          :to="{
+            name: 'reserva-publica-barbero',
+            params: { slug: props.slug, serviceId: selectedService.id },
+          }"
+          class="pb-cta"
+        >
+          <span>Continuar</span>
+          <span class="pb-cta__arrow" aria-hidden="true">→</span>
+        </RouterLink>
+      </div>
+    </Transition>
   </main>
 </template>
-
-<style scoped>
-.service-catalog {
-  display: flex;
-  min-height: 100dvh;
-  justify-content: center;
-  padding: var(--space-6) var(--space-4);
-}
-
-.service-catalog--state {
-  align-items: center;
-  background-color: var(--color-surface-strong);
-}
-
-.service-catalog--list {
-  background-color: var(--color-canvas);
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.service-catalog__container {
-  display: flex;
-  width: 100%;
-  max-width: 640px;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-
-.service-catalog__title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 32px;
-  line-height: 40px;
-  letter-spacing: -0.015em;
-  color: var(--color-text-primary);
-}
-
-.service-catalog__list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.service-catalog__item {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  cursor: pointer;
-  background-color: var(--color-surface);
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: 4px;
-}
-
-.service-catalog__item:hover {
-  border-color: var(--color-accent-brass);
-}
-
-.service-catalog__item:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 2px var(--color-canvas),
-    0 0 0 4px var(--color-focus);
-}
-
-/* La selección se marca con el ícono de check Y el borde de énfasis, nunca
-   solo con un cambio de color (CA-091-04). */
-.service-catalog__item--selected {
-  border-color: var(--color-accent-brass);
-  border-width: var(--border-width-emphasis);
-}
-
-.service-catalog__item-check {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  margin-top: 2px;
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: 50%;
-}
-
-.service-catalog__item--selected .service-catalog__item-check {
-  background-color: var(--color-accent-brass);
-  border-color: var(--color-accent-brass);
-}
-
-.service-catalog__item-body {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
-}
-
-.service-catalog__item-name {
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.service-catalog__item-description {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-body-sm);
-  overflow-wrap: break-word;
-}
-
-.service-catalog__item-meta {
-  display: flex;
-  gap: var(--space-2);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-body-sm);
-}
-
-/* Enlace de navegación con apariencia de botón primario (mismos tokens que
-   BaseButton--primary--lg y PublicBarbershopEntryPage.vue__cta): un
-   <RouterLink> es la etiqueta semánticamente correcta para navegar a otra
-   ruta. */
-.service-catalog__cta {
-  display: inline-flex;
-  align-self: flex-start;
-  align-items: center;
-  justify-content: center;
-  height: var(--control-height-primary-mobile);
-  padding: 0 var(--space-5);
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body);
-  font-weight: 500;
-  color: var(--color-on-strong);
-  text-decoration: none;
-  background-color: var(--color-action-primary);
-  border: var(--border-width-normal) solid var(--color-action-primary);
-  border-radius: 2px;
-}
-
-.service-catalog__cta:hover {
-  background-color: var(--color-action-primary-hover);
-  border-color: var(--color-action-primary-hover);
-}
-
-.service-catalog__cta:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 2px var(--color-canvas),
-    0 0 0 4px var(--color-focus);
-}
-
-@media (min-width: 1024px) {
-  .service-catalog__title {
-    font-size: 40px;
-    line-height: 48px;
-  }
-}
-</style>
