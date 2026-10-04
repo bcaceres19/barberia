@@ -111,7 +111,7 @@ Se evitan como lenguaje dominante los clichés de barbería —tijeras, navajas,
 - El wordmark se escribe `NAVA`, en mayúsculas, sin agregar “App”, “Studio” o “Barber”.
 - En el panel privado, NAVA identifica la plataforma y el nombre de la barbería identifica el tenant activo.
 - En la reserva pública, el nombre de la barbería conserva la jerarquía principal y NAVA aparece como firma secundaria.
-- No se inventan logotipos de barberías ni personalización por tenant.
+- No se inventan logotipos de barberías. La única personalización por barbería es la de `DEC-110`: un color de acento de una paleta cerrada y el vocabulario con el que nombra a su negocio y a su profesional (§6.9); nada más cambia por tenant.
 
 ## 4. Firma cromática obligatoria
 
@@ -152,7 +152,7 @@ El color nunca es la única señal: un estado incluye texto y, cuando ayude a re
 - Una pantalla puede crear tintes, transparencias o combinaciones propias a partir de la paleta.
 - Un color adicional exige una función semántica o de legibilidad que la paleta no cubra, contraste comprobado y justificación en el issue o PR. No puede convertirse en una segunda identidad de marca.
 - Los estados de un turno pueden derivar de la paleta semántica, pero siempre conservan su texto canónico y una señal adicional al color.
-- No se ofrece personalización de color por barbería salvo decisión de producto posterior.
+- No se ofrece color libre por barbería. `DEC-110` admite solo una paleta cerrada de seis acentos, con contraste AA medido en modo Tinta y Marfil (§6.9); los colores semánticos de estado no cambian nunca.
 
 ## 5. Tipografía, forma y profundidad
 
@@ -236,6 +236,14 @@ Los mockups favorecen bordes finos, radios pequeños, sombras mínimas, agrupaci
 - Cada módulo emite avisos con `useToast` (`shared/composables`) y nunca conoce cómo se muestran. Tiempo por variante: confirmación 5 s, información 6 s, advertencia 8 s y error 12 s; la cuenta atrás se detiene con el aviso abierto, con cursor encima o con foco. Máximo 4 simultáneos y un solo aviso abierto a la vez.
 - Una sola región por pantalla: anclada a la ventana en acceso, recuperación y reserva pública, y entre la cabecera y la navegación en el cascarón privado, sin tapar ninguna de las dos. Es una región persistente; `role="alert"` solo para errores, `role="status"` para el resto, nunca roba el foco y Escape descarta el aviso con foco.
 - Complementa §6.3: el aviso acompaña un resultado persistente, no lo sustituye, y los errores de un formulario o diálogo siguen en línea. Excepción (`DEC-108`): el rechazo de credenciales del servidor en `/acceso` es un aviso de error, no una alerta fija; los errores locales de campo siguen bajo su campo.
+
+### 6.9 Preferencias de pantalla, acento y vocabulario
+
+- `DEC-110` añade dos modos al panel privado: **Tinta** (el oscuro de siempre, valor inicial) y **Marfil** (claro), más **Automático** que sigue al sistema. Se activan con `data-app-theme` en `<html>` mientras el cascarón privado está montado; el acceso, la recuperación y la reserva pública nunca los heredan. Marfil redefine solo los tokens de superficie sobre tinta (`--color-surface-strong`, `--color-on-strong*`, `--color-field-strong*`, los `*-on-strong` de estado y `--color-chrome-surface` para cabecera y dock), así que ninguna pantalla mantiene una hoja de estilos paralela. Un color nuevo en una pantalla sobre tinta se escribe con `color-mix(in srgb, var(--token) N%, transparent)`, nunca con un `rgb()` literal, o no cambiaría de modo. `--color-on-ink` es el texto sobre un relleno tinta o rojo fijo (botón primario).
+- **Acento:** seis claves cerradas (`brass`, `emerald`, `sapphire`, `ruby`, `amethyst`, `copper`) con un valor por modo en `shared/model/brandPalette.ts`; la prueba `brandPalette.test.ts` exige ≥ 4,5:1 como texto y como relleno de botón en ambos modos. Se pinta con `--color-brand-accent-surface`, `--color-brand-accent-text` y `--color-focus`. El latón sobre Tinta no se sobrescribe.
+- **Tamaño de texto:** Pequeño, Normal, Grande y Muy grande (90 %–125 %), por `zoom`; el ancho efectivo no baja de 320 px y `--viewport-height` compensa `100dvh`/`100vh`. **Animaciones reducidas:** `data-motion="reduced"` colapsa duraciones además de `prefers-reduced-motion`.
+- **Vocabulario:** una pantalla del panel dice `v.professionals`, no `'barberos'` (`useVocabulary`, `shared/model/vocabulary.ts`), con artículos y participios concordados por género; con los valores iniciales el texto es idéntico al anterior. Un texto nuevo del panel que nombre al negocio o al profesional usa el vocabulario.
+- La pantalla de Configuración declara en cada sección si el cambio vale para «este dispositivo» (al instante) o para la barbería (se guarda). Evidencia: `apps/web/e2e/evidence/configuracion/rediseno/`.
 
 ## 7. Zona de libertad creativa
 
@@ -328,6 +336,7 @@ No se rechaza una solución por usar CSS local, Tailwind u otra herramienta. En 
 - `DEC-077`: identidad NAVA y dirección Tailored Grid.
 - `DEC-078`: libertad de composición, componentes y herramientas.
 - `DEC-079`: mockups y firma cromática obligatorios para rediseños y pantallas nuevas.
+- `DEC-110`: marca, vocabulario y apariencia configurables (modo Tinta/Marfil, tamaño de texto, acento de paleta cerrada).
 - `DEC-080`: dos modos de conformidad y fidelidad medible cuando existe un mockup exacto asignado.
 - [Handoff de mockups NAVA](../10-backlog/evidence/ui-redesign-nava-2026-09-02/README.md).
 - [Atlas integral NAVA / Tailored Grid](../10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-02/README.md).

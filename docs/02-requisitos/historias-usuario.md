@@ -1,9 +1,9 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.49"
+version: "1.50"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-19"
+ultima_actualizacion: "2026-10-03"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/reglas-negocio.md"
@@ -49,7 +49,7 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | Bloque | Historias | Estado |
 | --- | --- | --- |
 | B0 · Cimientos, seguridad y primeras pantallas | `HU-001` – `HU-012` | Redactadas en este documento |
-| B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-024` | Integradas en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), [PR #83](https://github.com/bcaceres19/barberia/pull/83), [PR #84](https://github.com/bcaceres19/barberia/pull/84)) |
+| B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-025` | `HU-020`–`HU-024` integradas en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), [PR #83](https://github.com/bcaceres19/barberia/pull/83), [PR #84](https://github.com/bcaceres19/barberia/pull/84)); `HU-025` implementada contra el issue [#292](https://github.com/bcaceres19/barberia/issues/292) (`DEC-110`) |
 | B2 · Horario laboral y bloqueos | `HU-040` – `HU-042` | Integradas en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93), [PR #96](https://github.com/bcaceres19/barberia/pull/96), [PR #99](https://github.com/bcaceres19/barberia/pull/99)); seguimientos parciales en `#90`, `#95`, `#98` y `#100` |
 | B3 · Agenda, estados e integridad | `HU-060` – `HU-068` | `HU-060`–`HU-068` integradas en `main`, issues reales [#225](https://github.com/bcaceres19/barberia/issues/225)–[#227](https://github.com/bcaceres19/barberia/issues/227); tercer lote de B3 completo, T3/cierre automático pendientes |
 | B4 · Reserva pública y disponibilidad | `HU-090` – `HU-099` | Redactadas como propuesta en issue [#240](https://github.com/bcaceres19/barberia/issues/240); implementación bloqueada por decisiones `DP-PUB-01`–`DP-PUB-06`/`CT-011` |
@@ -695,7 +695,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 - Enlace público o `public_slug`, que pertenece a `F-PUB-01` en B4.
 - Políticas de cancelación, límites de reserva, recordatorios, canales y proveedores.
 - Conversión o reescritura masiva de instantes existentes al cambiar la zona: un instante almacenado nunca se modifica por una preferencia de presentación.
-- Personalización funcional de colores, tipografías o tema por barbería: no forma parte de esta HU y requiere una decisión de producto; la composición interna de la pantalla sí es libre dentro de NAVA / Tailored Grid.
+- Personalización funcional de colores, tipografías o tema por barbería: no forma parte de esta HU. La marca, el vocabulario y la apariencia los cubre `HU-025` (`DEC-110`); la composición interna de la pantalla es libre dentro de NAVA / Tailored Grid.
 
 **Criterios de aceptación**
 
@@ -944,6 +944,63 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 - Componente/E2E para advertencia, confirmación, cancelación del diálogo, reintento y reactivación, sin simular citas fuera del contrato aprobado.
 
 **Terminado cuando** el servicio cambia de estado sin borrado ni efectos automáticos y la división B1/B3 de `DEC-069` está probada, no asumida.
+
+---
+
+### HU-025 · Marca, vocabulario y apariencia de la barbería
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-CONF-01` (extensión de la configuración de la barbería) |
+| Reglas | `RN-TEN-01`, `RN-DAT-02`, `RN-DIS-07` |
+| Decisiones | `DEC-024`, `DEC-039` (ampliada), `DEC-077`, `DEC-095`, `DEC-110` |
+| Actor | Barbero autenticado |
+| Depende de | `HU-012`, `HU-020`, `HU-093` (se conserva sin cambios) |
+| Bloquea | Ninguna |
+| Riesgo | Un acento sin contraste suficiente vuelve ilegible el panel; un vocabulario mal concordado rompe la voz del producto; guardar la marca de una barbería en otra mezcla identidades; una preferencia de pantalla que se filtra al acceso o a la reserva pública cambia pantallas que no le pertenecen. |
+
+**Historia**
+
+> Como barbero, quiero ajustar cómo se ve el panel en mi dispositivo y cómo se llama mi negocio, mi equipo y su color, para que NAVA hable como mi barbería y sea cómoda de leer en mi mostrador.
+
+**Alcance incluido**
+
+- Preferencias de este dispositivo, guardadas en el navegador y aplicadas al instante: modo (Tinta, Marfil, Automático), tamaño de texto (cuatro pasos) y animaciones reducidas.
+- Marca y vocabulario de la barbería, guardados en el servidor: color de acento de una lista cerrada de seis, palabra del negocio y palabra del profesional (singular, plural y género gramatical).
+- Recurso `GET`/`PATCH /private/settings/brand` y seis columnas con `CHECK` en `barbershop`; el contrato de `HU-020` no se amplía.
+- Pantalla de Configuración rediseñada sobre tinta: índice de secciones, selector de zona horaria con buscador y reloj en vivo, vista previa del vocabulario, barra de cambios sin guardar y animaciones con movimiento reducido.
+- Aplicación del vocabulario a navegación, Barberos, Agenda, Nuevo turno, Detalle del turno, Servicios, Servicios por barbero y Configuración.
+
+**Alcance excluido**
+
+- Color libre, logotipo, personalización de la reserva pública, de los correos o de los colores de estado.
+- Idioma distinto de español, formato 12/24 h global y preferencias sincronizadas por usuario entre dispositivos.
+- Vocabulario en Horarios y en las pantallas públicas (conservan el inicial hasta su propio cambio).
+- Renombrar `barber`, los contratos de la API o los términos `turno` y estados.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-025-01` | Elegir Marfil, Tinta o Automático cambia todo el panel privado al instante y persiste en el dispositivo; el acceso, la recuperación y la reserva pública no cambian. |
+| `CA-025-02` | Cada paso de tamaño de texto escala la interfaz sin desbordar a 320, 360, 768 y 1280 px, y el dock y los diálogos siguen dentro de la ventana. |
+| `CA-025-03` | Cada acento cumple WCAG 2.2 AA como texto y como relleno de botón en modo Tinta y Marfil; una prueba lo mide. |
+| `CA-025-04` | Guardar la marca persiste por barbería con RLS; un acento fuera de la lista, un término inválido o un género inválido responde `422` sin escribir; otra barbería no ve el cambio. |
+| `CA-025-05` | El vocabulario guardado aparece en las pantallas cubiertas con concordancia de género y número; con los valores iniciales el texto es idéntico al anterior. |
+| `CA-025-06` | La zona horaria se elige con buscador, muestra la hora actual de esa zona y nunca toma la del dispositivo por sí sola; el servidor sigue rechazando zonas inválidas (`CA-020-03`). |
+| `CA-025-07` | Los contratos, las pruebas y el comportamiento de `HU-020` y `HU-093` siguen vigentes. |
+| `CA-025-08` | Carga, error recuperable, guardando, éxito y error de campo son accesibles; el teclado alcanza todo; axe no reporta violaciones en ningún modo; un error recuperable conserva lo escrito. |
+| `CA-025-09` | OpenAPI, cliente tipado, migración, decisión, matriz e historial coinciden. |
+
+**Pruebas obligatorias**
+
+- Unitarias del servicio (normalización y validación), del reloj de zona, del plural sugerido y de la concordancia del vocabulario con los valores iniciales.
+- HTTP y contrato para lectura, actualización, `400`, `401`, `404`, `422` y aislamiento entre tenants; enum del contrato igual al del dominio y al `CHECK`.
+- PostgreSQL real con dos barberías: valores iniciales, `CHECK`, RLS y que escribir la marca no toque las columnas de `HU-020` ni de `HU-093`.
+- Prueba de contraste de la paleta y del tema Marfil; pruebas de componente de cada control interactivo con axe.
+- E2E contra el API real (guardar, recargar, aislamiento entre dos barberías, preferencias del dispositivo) y evidencia responsiva en ambos modos y los cuatro tamaños de texto.
+
+**Terminado cuando** una barbería cambia su acento y su vocabulario, el panel entero los refleja tras recargar sin afectar a otra barbería, y el modo y el tamaño de texto se ajustan en el dispositivo sin tocar las pantallas públicas.
 
 ---
 
