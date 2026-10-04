@@ -9,6 +9,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { resetToasts, toastState } from '@/shared/model/toastStore'
+import { DEFAULT_BRAND, resetBrand, setBrand } from '@/shared/model'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
 
@@ -115,6 +116,7 @@ const axeOptions = { rules: { 'color-contrast': { enabled: false } } }
 describe('SchedulesPage', () => {
   beforeEach(() => {
     resetToasts()
+    resetBrand()
     fetchBarberSummariesMock.mockReset()
     fetchWorkingHoursMock.mockReset()
     createWorkingHourMock.mockReset()
@@ -513,5 +515,40 @@ describe('SchedulesPage · HU-041', () => {
     const dateInput = exceptionCreateForm(wrapper).get('input[name="effectiveDate"]')
       .element as HTMLInputElement
     expect(dateInput.value).toBe('2026-12-25')
+  })
+  describe('perfil de barbero individual (DEC-115)', () => {
+    it('hides the barber picker with one barber and still loads that schedule', async () => {
+      setBrand({ ...DEFAULT_BRAND, panelProfile: 'solo' })
+      const wrapper = await mountReady(oneBarber, [mondayMorning])
+
+      expect(barberSelect(wrapper)).toBeNull()
+      expect(fetchWorkingHoursMock).toHaveBeenCalledWith('b-1')
+      expect(wrapper.text()).toContain('08:00')
+    })
+
+    it('keeps the picker in the solo profile with several barbers, and in the full panel', async () => {
+      setBrand({ ...DEFAULT_BRAND, panelProfile: 'solo' })
+      expect(barberSelect(await mountReady(fourBarbers))).not.toBeNull()
+
+      resetBrand()
+      expect(barberSelect(await mountReady(oneBarber))).not.toBeNull()
+    })
+
+    it('points the empty state at "Mi perfil" instead of "Barberos"', async () => {
+      setBrand({ ...DEFAULT_BRAND, panelProfile: 'solo' })
+      fetchBarberSummariesMock.mockResolvedValueOnce({ kind: 'success', items: [] })
+      const wrapper = mountPage()
+      await flushPromises()
+
+      expect(wrapper.text()).toContain('Mi perfil')
+      expect(wrapper.text()).not.toContain('Barberos')
+    })
+
+    it('has no axe violations without the picker', async () => {
+      setBrand({ ...DEFAULT_BRAND, panelProfile: 'solo' })
+      const wrapper = await mountReady(oneBarber, [mondayMorning])
+
+      expect(await axe(wrapper.element.outerHTML, axeOptions)).toHaveNoViolations()
+    })
   })
 })

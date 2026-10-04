@@ -76,7 +76,7 @@ func TestBrandService_Update_NormalizesTermsBeforeWriting(t *testing.T) {
 	repo := &fakeBrandRepository{updateResult: shops.BrandUpdateResult{Found: true}}
 	svc := shops.NewBrandService(repo)
 
-	if _, err := svc.Update(context.Background(), shopID, validBrand()); err != nil {
+	if _, err := svc.Update(context.Background(), shopID, validBrand(), nil); err != nil {
 		t.Fatalf("Update: %v", err)
 	}
 	if len(repo.updateCalls) != 1 {
@@ -99,7 +99,7 @@ func TestBrandService_Update_CollapsesInnerWhitespace(t *testing.T) {
 
 	in := validBrand()
 	in.BusinessTerm = "salón   de \t belleza"
-	if _, err := svc.Update(context.Background(), shopID, in); err != nil {
+	if _, err := svc.Update(context.Background(), shopID, in, nil); err != nil {
 		t.Fatalf("Update: %v", err)
 	}
 	if repo.updateCalls[0].brand.BusinessTerm != "salón de belleza" {
@@ -112,7 +112,7 @@ func TestBrandService_Update_AcceptsEveryAllowedAccent(t *testing.T) {
 		repo := &fakeBrandRepository{updateResult: shops.BrandUpdateResult{Found: true}}
 		in := validBrand()
 		in.Accent = accent
-		if _, err := shops.NewBrandService(repo).Update(context.Background(), shopID, in); err != nil {
+		if _, err := shops.NewBrandService(repo).Update(context.Background(), shopID, in, nil); err != nil {
 			t.Fatalf("accent %q should be accepted: %v", accent, err)
 		}
 	}
@@ -141,7 +141,7 @@ func TestBrandService_Update_InvalidField_ReturnsValidationAndNeverWrites(t *tes
 			in := validBrand()
 			mutate(&in)
 
-			_, err := shops.NewBrandService(repo).Update(context.Background(), shopID, in)
+			_, err := shops.NewBrandService(repo).Update(context.Background(), shopID, in, nil)
 			assertValidation(t, err)
 			if len(repo.updateCalls) != 0 {
 				t.Fatalf("a rejected field must never reach the repository, got %d writes", len(repo.updateCalls))
@@ -155,7 +155,7 @@ func TestBrandService_Update_AcceptsAccentsApostropheAndHyphen(t *testing.T) {
 		repo := &fakeBrandRepository{updateResult: shops.BrandUpdateResult{Found: true}}
 		in := validBrand()
 		in.BusinessTerm = term
-		if _, err := shops.NewBrandService(repo).Update(context.Background(), shopID, in); err != nil {
+		if _, err := shops.NewBrandService(repo).Update(context.Background(), shopID, in, nil); err != nil {
 			t.Fatalf("term %q should be accepted: %v", term, err)
 		}
 	}
@@ -164,7 +164,7 @@ func TestBrandService_Update_AcceptsAccentsApostropheAndHyphen(t *testing.T) {
 func TestBrandService_Update_NotFound_ReturnsNotFound(t *testing.T) {
 	repo := &fakeBrandRepository{updateResult: shops.BrandUpdateResult{Found: false}}
 
-	_, err := shops.NewBrandService(repo).Update(context.Background(), shopID, validBrand())
+	_, err := shops.NewBrandService(repo).Update(context.Background(), shopID, validBrand(), nil)
 	if err == nil {
 		t.Fatal("expected not found when the barbershop is not visible")
 	}
@@ -175,7 +175,7 @@ func TestBrandService_Update_CanceledContext_NeverWrites(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	if _, err := shops.NewBrandService(repo).Update(ctx, shopID, validBrand()); err == nil {
+	if _, err := shops.NewBrandService(repo).Update(ctx, shopID, validBrand(), nil); err == nil {
 		t.Fatal("expected an error for a canceled context")
 	}
 	if len(repo.updateCalls) != 0 {
@@ -187,13 +187,62 @@ func TestDefaultBrand_IsValidAndMatchesTheMigrationDefaults(t *testing.T) {
 	b := shops.DefaultBrand
 	if !shops.IsAllowedAccent(b.Accent) || !shops.IsValidTerm(b.BusinessTerm) ||
 		!shops.IsValidTerm(b.ProfessionalTerm) || !shops.IsValidTerm(b.ProfessionalTermPlural) ||
-		!b.BusinessTermGender.IsValid() || !b.ProfessionalTermGender.IsValid() {
+		!b.BusinessTermGender.IsValid() || !b.ProfessionalTermGender.IsValid() ||
+		!b.PanelProfile.IsValid() {
 		t.Fatalf("DefaultBrand must satisfy its own validation: %+v", b)
 	}
 	// Los literales de la migración 20261003120000_add_barbershop_brand.sql.
 	if b.Accent != "brass" || b.BusinessTerm != "barbería" || b.ProfessionalTerm != "barbero" ||
 		b.ProfessionalTermPlural != "barberos" || b.BusinessTermGender != shops.GenderFeminine ||
-		b.ProfessionalTermGender != shops.GenderMasculine {
+		b.ProfessionalTermGender != shops.GenderMasculine || b.PanelProfile != shops.PanelProfileShop {
 		t.Fatalf("DefaultBrand drifted from the migration defaults: %+v", b)
+	}
+}
+
+func TestBrandService_Update_PanelProfile(t *testing.T) {
+	solo := shops.PanelProfileSolo
+	shop := shops.PanelProfileShop
+	empty := shops.PanelProfile("")
+	invalid := map[string]shops.PanelProfile{
+		"vacío explícito":     empty,
+		"otra capitalización": "Solo",
+		"valor desconocido":   "individual",
+		"con espacios":        " solo",
+	}
+
+	t.Run("ausente conserva el guardado: nunca llega un valor al repositorio", func(t *testing.T) {
+		repo := &fakeBrandRepository{updateResult: shops.BrandUpdateResult{Found: true}}
+		// input.PanelProfile se ignora: el perfil solo entra por el argumento.
+		in := validBrand()
+		in.PanelProfile = shops.PanelProfileSolo
+		if _, err := shops.NewBrandService(repo).Update(context.Background(), shopID, in, nil); err != nil {
+			t.Fatalf("Update: %v", err)
+		}
+		if got := repo.updateCalls[0].brand.PanelProfile; got != "" {
+			t.Fatalf("an omitted profile must reach the repository empty (keep stored), got %q", got)
+		}
+	})
+
+	for name, profile := range map[string]shops.PanelProfile{"solo": solo, "shop": shop} {
+		t.Run("válido "+name, func(t *testing.T) {
+			repo := &fakeBrandRepository{updateResult: shops.BrandUpdateResult{Found: true}}
+			if _, err := shops.NewBrandService(repo).Update(context.Background(), shopID, validBrand(), &profile); err != nil {
+				t.Fatalf("Update: %v", err)
+			}
+			if got := repo.updateCalls[0].brand.PanelProfile; got != profile {
+				t.Fatalf("expected %q to reach the repository, got %q", profile, got)
+			}
+		})
+	}
+
+	for name, profile := range invalid {
+		t.Run("inválido "+name, func(t *testing.T) {
+			repo := &fakeBrandRepository{updateResult: shops.BrandUpdateResult{Found: true}}
+			_, err := shops.NewBrandService(repo).Update(context.Background(), shopID, validBrand(), &profile)
+			assertValidation(t, err)
+			if len(repo.updateCalls) != 0 {
+				t.Fatalf("a rejected profile must never reach the repository, got %d writes", len(repo.updateCalls))
+			}
+		})
 	}
 }

@@ -1,9 +1,9 @@
 ---
 titulo: "Especificación integral de experiencia y pantallas NAVA"
-version: "1.4"
+version: "1.5"
 estado: "Dirección de producto y alcance; composición visual orientativa"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-03"
+ultima_actualizacion: "2026-10-04"
 documentos_relacionados:
   - "../00-control/registro-decisiones.md"
   - "../01-producto/alcance-mvp.md"
@@ -140,6 +140,8 @@ La navegación principal P0 se agrupa así:
 3. **Barberos**: listado y configuración del equipo.
 4. **Horarios**: jornada base, excepciones, festivos y bloqueos.
 5. **Configuración**: barbería, reglas de reserva, cancelación, recordatorios y canales conforme existan sus HU.
+
+**Perfil del panel (`DEC-115`).** La barbería puede elegir el perfil `solo` (barbero individual). Es la misma navegación sin lo que solo tiene sentido con un equipo: «Barberos» pasa a ser «Mi perfil» (la ficha del único barbero), desaparece «Servicios por barbero» y, con exactamente un barbero, Agenda, Nuevo turno y Horarios no piden elegirlo. No se crea un destino nuevo ni cambia ningún dato: con `shop`, o con más de un barbero, todo vuelve a ser como arriba.
 
 “Nuevo turno” es una acción primaria global, no un módulo de navegación. “Bloqueos” puede aparecer como subvista visible de Horarios. No se crean destinos P0 para Clientes, Caja, Reportes, Inventario, Finanzas ni Ajustes genéricos sin una capacidad aprobada.
 

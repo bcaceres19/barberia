@@ -34,7 +34,7 @@ import BarberPhotoField from '../components/BarberPhotoField.vue'
 import { newIdempotencyKey } from '../model/idempotencyKey'
 import type { Barber } from '../model/barber'
 import { NO_PHOTO_CHANGE, type PhotoDraft } from '../model/photoDraft'
-import { capitalize } from '@/shared/model'
+import { capitalize, isSoloProfile } from '@/shared/model'
 import { validateFullName } from '../validation/staffValidation'
 
 const toast = useToast()
@@ -234,6 +234,17 @@ function goToPage(page: number) {
   if (page < 1 || page > totalPages.value || page === currentPage.value || pageLoading.value) return
   void load(page)
 }
+// Perfil de barbero individual (DEC-115): esta pantalla es la ficha de quien trabaja
+// solo. `soloView` cambia los textos; `soloCard` (un único barbero ya cargado) además
+// quita lo que solo tiene sentido con un equipo: «Agregar», encabezados de tabla y
+// paginador. Con más de un barbero la pantalla vuelve a ser la de siempre.
+const soloView = computed(
+  () => isSoloProfile.value && !(loadStatus.value === 'ready' && totalItems.value > 1),
+)
+const soloCard = computed(
+  () => soloView.value && loadStatus.value === 'ready' && totalItems.value === 1,
+)
+
 const countLabel = computed(
   () =>
     `${totalItems.value} ${totalItems.value === 1 ? v.value.professional : v.value.professionals}`,
@@ -546,13 +557,17 @@ async function onSubmitRename() {
   <section ref="pageRef" class="staff-page" aria-labelledby="staff-page-title">
     <header class="staff-page__header">
       <div>
-        <h1 id="staff-page-title" class="staff-page__title">{{ v.Professionals }}</h1>
-        <p class="staff-page__subtitle">Tu equipo en NAVA.</p>
+        <h1 id="staff-page-title" class="staff-page__title">
+          {{ soloView ? 'Mi perfil' : v.Professionals }}
+        </h1>
+        <p class="staff-page__subtitle">
+          {{ soloView ? 'Tu ficha en NAVA: nombre, foto y bloqueos.' : 'Tu equipo en NAVA.' }}
+        </p>
       </div>
       <!-- Una acción principal por región: con el equipo vacío, el CTA vive en el
            propio estado vacío y no se repite en la cabecera. -->
       <BaseButton
-        v-if="loadStatus === 'ready' && barbers.length > 0"
+        v-if="loadStatus === 'ready' && barbers.length > 0 && !soloCard"
         type="button"
         variant="primary"
         class="staff-page__create"
@@ -610,19 +625,30 @@ async function onSubmitRename() {
               <path d="M4.5 20.5c.6-3.9 3.6-6.2 7.5-6.2s6.9 2.3 7.5 6.2" />
             </svg>
           </span>
-          <p>
-            Aún no tienes <span>{{ v.professionalsRegistered }}.</span>
-          </p>
-          <p class="staff-page__empty-hint">
-            Agrega al primero de tu equipo: con su nombre y, si quieres, su foto.
-          </p>
-          <BaseButton type="button" variant="primary" @click="openCreateDialog">
-            Agregar {{ v.professional }}
-          </BaseButton>
+          <template v-if="soloView">
+            <p>Aún no tienes <span>tu perfil.</span></p>
+            <p class="staff-page__empty-hint">
+              Créalo con tu nombre y, si quieres, tu foto: tu agenda y tus horarios cuelgan de él.
+            </p>
+            <BaseButton type="button" variant="primary" @click="openCreateDialog">
+              Crear mi perfil
+            </BaseButton>
+          </template>
+          <template v-else>
+            <p>
+              Aún no tienes <span>{{ v.professionalsRegistered }}.</span>
+            </p>
+            <p class="staff-page__empty-hint">
+              Agrega al primero de tu equipo: con su nombre y, si quieres, su foto.
+            </p>
+            <BaseButton type="button" variant="primary" @click="openCreateDialog">
+              Agregar {{ v.professional }}
+            </BaseButton>
+          </template>
         </div>
 
         <div v-else class="staff-page__table">
-          <div class="staff-page__columns" aria-hidden="true">
+          <div v-if="!soloCard" class="staff-page__columns" aria-hidden="true">
             <span>{{ v.Professional }}</span
             ><span>En NAVA desde</span><span>Foto</span><span>Acción</span>
           </div>
@@ -670,7 +696,7 @@ async function onSubmitRename() {
                 </div>
               </div>
               <span class="staff-page__item-meta staff-page__item-since">
-                {{ formatDate(barber.createdAt) }}
+                {{ soloCard ? 'Desde ' : '' }}{{ formatDate(barber.createdAt) }}
               </span>
               <span
                 class="staff-page__photo-state"
@@ -711,7 +737,7 @@ async function onSubmitRename() {
           </ul>
         </div>
 
-        <div v-if="barbers.length > 0" ref="footerRef" class="staff-page__footer">
+        <div v-if="barbers.length > 0 && !soloCard" ref="footerRef" class="staff-page__footer">
           <BaseAlert
             v-if="pageFailed"
             variant="warning"

@@ -13,6 +13,17 @@ import type { BrandAccentKey } from './brandPalette'
 
 export type Gender = 'masculine' | 'feminine'
 
+/** Perfil del panel (DEC-115): `shop` es el panel completo de una barbería con equipo
+ * y `solo` el de un barbero individual, sin gestión de equipo ni selector de barbero.
+ * Es presentación pura: no limita cuántos barberos existen. */
+export type PanelProfile = 'shop' | 'solo'
+
+export const PANEL_PROFILES: readonly PanelProfile[] = ['shop', 'solo']
+
+export function isPanelProfile(value: unknown): value is PanelProfile {
+  return value === 'shop' || value === 'solo'
+}
+
 export interface BrandSettings {
   accent: BrandAccentKey
   businessTerm: string
@@ -20,6 +31,7 @@ export interface BrandSettings {
   professionalTerm: string
   professionalTermPlural: string
   professionalTermGender: Gender
+  panelProfile: PanelProfile
 }
 
 export const DEFAULT_BRAND: BrandSettings = {
@@ -29,6 +41,7 @@ export const DEFAULT_BRAND: BrandSettings = {
   professionalTerm: 'barbero',
   professionalTermPlural: 'barberos',
   professionalTermGender: 'masculine',
+  panelProfile: 'shop',
 }
 
 /** Largo permitido de un término; igual que el contrato y la base. */

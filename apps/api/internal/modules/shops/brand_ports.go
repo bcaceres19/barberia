@@ -21,7 +21,8 @@ type BrandRepository interface {
 
 	// Update reemplaza los seis campos de la marca en UNA sola sentencia
 	// filtrada por barbershopID (defensa en profundidad sobre RLS) y
-	// devuelve la fila guardada con RETURNING. BrandService ya normalizó y
+	// devuelve la fila guardada con RETURNING. Un PanelProfile vacío en brand
+	// conserva el perfil guardado (DEC-115). BrandService ya normalizó y
 	// validó la entrada: las restricciones CHECK de la migración son la
 	// última línea de defensa, no la primera.
 	Update(ctx context.Context, barbershopID string, brand Brand) (BrandUpdateResult, error)

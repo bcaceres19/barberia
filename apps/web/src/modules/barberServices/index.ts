@@ -22,10 +22,18 @@ import type { NavItem } from '@/shared/navigation/navItem'
 
 export { barberServicesPrivateShellChildRoutes } from './routes'
 
+// «Lo ofrezco» (DEC-115): la asignación de HU-023 vista desde cada servicio, para que
+// `app` la componga dentro de «Servicios» sin que `catalog` importe este módulo.
+export { useBarberOffering } from './model/barberOffering'
+export type { BarberOffering } from './model/barberOffering'
+export { default as OfferServiceSwitch } from './components/OfferServiceSwitch.vue'
+
 export const barberServicesNavItems: NavItem[] = [
   {
     to: { name: 'barber-services' },
     label: 'Servicios por barbero',
     labelFor: (v) => `Servicios por ${v.professional}`,
+    // Con un solo barbero la matriz no tiene sentido: «Servicios» ofrece cada servicio (DEC-115).
+    profiles: { solo: { hidden: true } },
   },
 ]

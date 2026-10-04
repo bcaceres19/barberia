@@ -8,6 +8,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { resetToasts, toastState } from '@/shared/model/toastStore'
+import { DEFAULT_BRAND, resetBrand, setBrand } from '@/shared/model'
 import { mount, flushPromises } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
 
@@ -83,6 +84,7 @@ const axeOptions = { rules: { 'color-contrast': { enabled: false } } }
 describe('NewAppointmentPage', () => {
   beforeEach(() => {
     resetToasts()
+    resetBrand()
     fetchBarberSummariesMock.mockReset()
     fetchAssignedServicesMock.mockReset()
     fetchBarbershopTimezoneMock.mockReset()
@@ -342,5 +344,66 @@ describe('NewAppointmentPage', () => {
 
     const results = await axe(wrapper.element, axeOptions)
     expect(results.violations).toEqual([])
+  })
+  describe('perfil de barbero individual (DEC-115)', () => {
+    it('preselects the only barber, hides the field and loads that barber services', async () => {
+      setBrand({ ...DEFAULT_BRAND, panelProfile: 'solo' })
+      fetchAssignedServicesMock.mockResolvedValueOnce({ kind: 'success', items: twoServices })
+      const wrapper = await mountReady()
+      await flushPromises()
+
+      expect(wrapper.find('#new-appointment-barber').exists()).toBe(false)
+      expect(fetchAssignedServicesMock).toHaveBeenCalledWith('b-1')
+      expect(wrapper.text()).toContain('Elige el servicio.')
+      expect(wrapper.text()).not.toContain('Elige al barbero')
+      expect(wrapper.get('#new-appointment-service').findAll('option').length).toBeGreaterThan(2)
+    })
+
+    it('books for the only barber without asking who it is', async () => {
+      setBrand({ ...DEFAULT_BRAND, panelProfile: 'solo' })
+      fetchAssignedServicesMock.mockResolvedValueOnce({ kind: 'success', items: twoServices })
+      const wrapper = await mountReady()
+      await flushPromises()
+
+      await wrapper.get<HTMLSelectElement>('#new-appointment-service').setValue('s-1')
+      const inputs = wrapper.findAll('input')
+      const byLabel = (text: string) =>
+        inputs.find((i) => i.element.labels?.[0]?.textContent?.includes(text))!
+      await byLabel('Persona atendida').setValue('Juan Pérez')
+      await byLabel('Nombre del cliente').setValue('Juan Pérez')
+      await byLabel('Fecha del turno').setValue('2026-09-03')
+      await byLabel('Hora del turno').setValue('14:30')
+      createManualAppointmentMock.mockResolvedValueOnce({ kind: 'conflict', detail: 'ocupado' })
+
+      await wrapper.get('form').trigger('submit.prevent')
+      await flushPromises()
+
+      expect(createManualAppointmentMock).toHaveBeenCalledWith(
+        expect.objectContaining({ barberId: 'b-1', serviceId: 's-1' }),
+        expect.anything(),
+      )
+    })
+
+    it('keeps the field in the solo profile when there are several barbers, and in the full panel', async () => {
+      setBrand({ ...DEFAULT_BRAND, panelProfile: 'solo' })
+      const several = await mountReady([
+        { id: 'b-1', fullName: 'Carlos Ramírez' },
+        { id: 'b-2', fullName: 'Ana Gómez' },
+      ])
+      expect(several.find('#new-appointment-barber').exists()).toBe(true)
+
+      resetBrand()
+      const full = await mountReady()
+      expect(full.find('#new-appointment-barber').exists()).toBe(true)
+    })
+
+    it('has no axe violations without the barber field', async () => {
+      setBrand({ ...DEFAULT_BRAND, panelProfile: 'solo' })
+      fetchAssignedServicesMock.mockResolvedValueOnce({ kind: 'success', items: twoServices })
+      const wrapper = await mountReady()
+      await flushPromises()
+
+      expect(await axe(wrapper.element.outerHTML, axeOptions)).toHaveNoViolations()
+    })
   })
 })

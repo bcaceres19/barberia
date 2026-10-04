@@ -4,6 +4,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.28.0 · 2026-10-04
+
+### Agregado
+
+- `panelProfile` (`shop` | `solo`, `DEC-115`, issue #294) en `BrandResponse`
+  (siempre presente) y en `UpdateBrandRequest` (optativo): perfil del panel de
+  la barbería. `solo` es el panel de un barbero individual, sin gestión de
+  equipo ni selector de barbero; `shop`, el valor inicial, es el panel de
+  siempre. Es presentación pura: no limita cuántos barberos existen. Cambio
+  compatible: si `PATCH /private/settings/brand` omite el campo, el perfil
+  guardado no cambia; un valor fuera de la lista responde `422` sin escribir.
+
 ## 0.27.0 · 2026-10-03
 
 ### Agregado

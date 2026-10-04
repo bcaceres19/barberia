@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.39"
+version: "1.40"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-26"
+ultima_actualizacion: "2026-10-04"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -105,6 +105,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-106` | 2026-10-02 | Skill compartido para arranque local con esquema y agenda comprobados | Operación local de agentes; issue #287 | Confirmada |
 | `DEC-107` | 2026-10-02 | Barberos admite modo numerado para tabla adaptada al viewport y conserva cursor para selectores | HU-021; issue #288 | Confirmada |
 | `DEC-108` | 2026-10-03 | El rechazo de credenciales en `/acceso` se avisa como aviso emergente, acotando DEC-095 | Acceso; `docs/03-desarrollo/estandar-diseno-visual.md` §6.8 | Confirmada |
+| `DEC-115` | 2026-10-04 | Perfil del panel por barbería: `shop` (con equipo) o `solo` (barbero individual), solo presentación | `HU-025`; issue #294; amplía `DEC-110` | Confirmada (elección del ajuste); composición del panel sujeta a revisión |
 
 ## 3. Decisiones detalladas
 
@@ -1250,3 +1251,24 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** color libre por barbería (rompe el contraste comprobado y la identidad); guardar las preferencias de pantalla en el servidor por usuario (no hay HU de preferencias por usuario y el tamaño de letra es del aparato); ampliar `GET`/`PATCH /private/settings/barbershop` con los campos nuevos (viola `CA-020-07`); renombrar `barber` o los contratos para reflejar el vocabulario (innecesario y rompería clientes); derivar el plural y el género de la palabra (el español no es regular).
 - **Documentos afectados:** `docs/03-desarrollo/estandar-diseno-visual.md` (§3.2, §4.3, §6.9), `docs/03-desarrollo/especificacion-frontend-nava.md` (§4.1, §7.6, §9.4, §10.1), `docs/02-requisitos/historias-usuario.md` (`HU-020`, `HU-025`), `api/openapi/` (0.27.0), `database/README.md`, `database/tests/brand_marca_vocabulario.sql`, `docs/00-control/{matriz-trazabilidad,historial-cambios}.md`.
 - **Fuente:** instrucción explícita del propietario del 2026-10-03 y issue [#292](https://github.com/bcaceres19/barberia/issues/292).
+
+### DEC-115 · Perfil del panel: barbero individual
+
+- **Fecha:** 2026-10-04.
+- **Decisión:** cada barbería elige uno de dos perfiles de panel, guardado en `barbershop.panel_profile` y expuesto como `panelProfile` en `GET`/`PATCH /private/settings/brand` (el recurso de `DEC-110`): `shop` (valor inicial, el panel completo de siempre) o `solo` (barbero individual). Es **presentación pura**: no limita cuántos barberos existen, no cambia reglas de agenda ni autorización, y un barbero independiente sigue siendo una barbería con un solo barbero (`DEC-019`, glosario): no se crea un caso especial en el modelo. En el `PATCH` el campo es optativo; si falta, el perfil guardado no cambia, de modo que un cliente que no lo conoce no lo reinicia.
+- **Qué cambia en `solo`:**
+  1. **Navegación.** El dock queda en Agenda, Servicios, Mi perfil, Horarios, Configuración y Reserva pública. «Mi perfil» es la pantalla de Barberos vista como ficha del único barbero (nombre, foto, bloqueos), sin «Agregar», encabezados de tabla ni paginador. «Servicios por barbero» deja de ser un destino y su ruta redirige a Servicios, también cuando el perfil llega después de entrar. En el dock móvil suben Servicios, Mi perfil y Horarios; Configuración y Reserva pública quedan en «Más».
+  2. **Sin selector de barbero** en Agenda, Nuevo turno y Horarios cuando hay exactamente un barbero (`DEC-074` sigue vigente: la selección vive en `barberId`; solo desaparece el control). La Agenda suma una línea de «mi día» derivada de los turnos ya cargados (cuántos quedan, el que está en curso o el siguiente); no consulta nada nuevo.
+  3. **Servicios.** Cada servicio activo gana el interruptor «Lo ofrezco», que es la asignación de `HU-023` al único barbero vista desde el servicio; solo cambia cuando el servidor confirma, y un servicio nuevo queda ofrecido al crearlo (si esa asignación falla, el servicio existe y se avisa).
+  4. **Configuración.** Una sección «Perfil del panel» cambia el perfil en ambos sentidos y se guarda con el resto de la marca.
+  Con más de un barbero (o ninguno) las pantallas recuperan sus controles de elección y de alta, aunque el perfil sea `solo`.
+- **Quién lo decidió:** el propietario, el 2026-10-04, al elegir entre tres formas de definir el perfil (ajuste de la barbería, derivado de los datos, rol por usuario).
+- **Propuestas de implementación sujetas a su revisión:** la composición exacta del dock, el rótulo «Mi perfil», la línea de «mi día» y que el panel individual siga mostrando la elección donde haya más de un barbero.
+- **Dependencia:** apagar «Lo ofrezco» en el único barbero retira la última asignación de un servicio activo. `DEC-068` lo rechazaba y `DEC-114` lo permite; mientras `DEC-114` no esté integrada en `main`, el API responde `409`, la pantalla conserva el estado y lo avisa, y el interruptor solo puede encenderse.
+- **Contrato y datos:** columna `panel_profile text NOT NULL DEFAULT 'shop'` con `CHECK (panel_profile IN ('shop', 'solo'))` (migración `20261004120000_add_barbershop_panel_profile.sql`, sin tabla, política RLS ni `GRANT` nuevos); `panelProfile` siempre presente en la respuesta y optativo en la solicitud (OpenAPI 0.28.0, cambio compatible). Sin versión de concurrencia: es una preferencia y la última escritura gana.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** un independiente carga hoy con gestión de equipo, selector de barbero y una matriz «Servicios por barbero» que no necesita; el propietario pidió una zona para barberos individuales con solo lo necesario.
+- **Alternativas descartadas:** derivar el perfil de cuántos barberos hay (implícito, y oculta la gestión de equipo justo cuando hace falta añadir un segundo barbero); un rol por usuario dentro de una barbería con varios barberos (exige implementar `DEC-100`, autorización y RLS: un cambio crítico mucho mayor); un caso especial en el modelo de datos (contradice `DEC-019`); un destino aparte para barberos individuales en lugar de un ajuste.
+- **Límites:** no concede ni retira permisos, no cambia la reserva pública ni agrega funciones de negocio (reportes, ingresos, clientes). El enlace público de reserva no se muestra en el panel porque ningún endpoint privado lo expone; hacerlo exige su propia decisión.
+- **Documentos afectados:** `docs/02-requisitos/historias-usuario.md` (`HU-025`, `CA-025-10`–`CA-025-14`), `docs/03-desarrollo/especificacion-frontend-nava.md` (§5.1), `docs/00-control/{matriz-trazabilidad,historial-cambios}.md`, `api/openapi/` (0.28.0), `database/{README.md,tests/panel_perfil_barbero_individual.sql,testdata/ui_barbero_individual_294.sql}`, `.github/workflows/ci.yml`.
+- **Fuente:** elección explícita del propietario del 2026-10-04 y issue [#294](https://github.com/bcaceres19/barberia/issues/294).

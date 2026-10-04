@@ -17,6 +17,7 @@ content:
           professionalTerm: barbero
           professionalTermPlural: barberos
           professionalTermGender: masculine
+          panelProfile: shop
       salonDeBelleza:
         summary: Salón con estilistas y acento esmeralda
         value:
@@ -26,3 +27,14 @@ content:
           professionalTerm: estilista
           professionalTermPlural: estilistas
           professionalTermGender: feminine
+          panelProfile: shop
+      barberoIndividual:
+        summary: Barbero individual con el panel simplificado
+        value:
+          accent: brass
+          businessTerm: barbería
+          businessTermGender: feminine
+          professionalTerm: barbero
+          professionalTermPlural: barberos
+          professionalTermGender: masculine
+          panelProfile: solo

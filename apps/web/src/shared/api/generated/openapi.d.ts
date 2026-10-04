@@ -341,7 +341,7 @@ export interface paths {
         };
         /**
          * Consultar la marca y el vocabulario de la barbería activa
-         * @description Lectura autenticada (issue #292, DEC-110) del color de acento y del vocabulario (palabra del negocio y del profesional, con plural y género gramatical) de la barbería derivada de la sesión vigente. Una barbería que nunca los cambió recibe los valores iniciales (`brass`, `barbería`, `barbero`), exactamente la interfaz anterior. Recurso propio, separado de `/private/settings/barbershop` para no ampliar el contrato cerrado de `HU-020` (`CA-020-07`). `barbershopId` nunca es un parámetro: el tenant se deriva exclusivamente de `SessionCookie`.
+         * @description Lectura autenticada (issue #292, DEC-110) del color de acento y del vocabulario (palabra del negocio y del profesional, con plural y género gramatical) de la barbería derivada de la sesión vigente. Una barbería que nunca los cambió recibe los valores iniciales (`brass`, `barbería`, `barbero`) y el perfil `shop` (`DEC-115`), exactamente la interfaz anterior. Recurso propio, separado de `/private/settings/barbershop` para no ampliar el contrato cerrado de `HU-020` (`CA-020-07`). `barbershopId` nunca es un parámetro: el tenant se deriva exclusivamente de `SessionCookie`.
          */
         get: operations["getBrand"];
         put?: never;
@@ -351,7 +351,7 @@ export interface paths {
         head?: never;
         /**
          * Actualizar la marca y el vocabulario de la barbería activa
-         * @description Actualización autenticada (issue #292, DEC-110) de los seis campos de marca y vocabulario, que viajan siempre presentes; cualquier otro campo -en particular un identificador de barbería- se rechaza como forma inválida. `accent` pertenece a una lista cerrada (nunca un color libre) y cada término se recorta, se colapsa y se pasa a minúsculas antes de validarlo y guardarlo. Un valor inválido responde `422` sin escribir nada. Son preferencias de presentación: no hay precondición de versión y la última escritura gana. Escribir toca `updated_at` de la fila, así que invalida el token `If-Match` de una política de reserva leída antes (`HU-093`), igual que una escritura de `HU-020`. La respuesta devuelve la representación canónica ya guardada, la misma forma que `GET`.
+         * @description Actualización autenticada (issue #292, DEC-110; perfil del panel, issue #294, DEC-115) de los seis campos de marca y vocabulario, que viajan siempre presentes; cualquier otro campo -en particular un identificador de barbería- se rechaza como forma inválida. `panelProfile` (`shop` o `solo`) es optativo: si se omite, el perfil guardado no cambia; fuera de la lista responde `422`. `accent` pertenece a una lista cerrada (nunca un color libre) y cada término se recorta, se colapsa y se pasa a minúsculas antes de validarlo y guardarlo. Un valor inválido responde `422` sin escribir nada. Son preferencias de presentación: no hay precondición de versión y la última escritura gana. Escribir toca `updated_at` de la fila, así que invalida el token `If-Match` de una política de reserva leída antes (`HU-093`), igual que una escritura de `HU-020`. La respuesta devuelve la representación canónica ya guardada, la misma forma que `GET`.
          */
         patch: operations["updateBrand"];
         trace?: never;
@@ -1272,7 +1272,7 @@ export interface components {
              */
             contactPhone: string;
         };
-        /** @description Marca y vocabulario de la barbería activa: color de acento de una lista cerrada, la palabra con la que llama a su negocio y a su profesional (con plural y género gramatical, para que la interfaz concuerde). Los términos viajan recortados y en minúsculas; la interfaz capitaliza donde corresponde. */
+        /** @description Marca y vocabulario de la barbería activa: color de acento de una lista cerrada, la palabra con la que llama a su negocio y a su profesional (con plural y género gramatical, para que la interfaz concuerde). Los términos viajan recortados y en minúsculas; la interfaz capitaliza donde corresponde. Incluye el perfil del panel (`panelProfile`, `DEC-115`), otra preferencia de presentación de la barbería. */
         BrandResponse: {
             accent: components["schemas"]["BrandAccent"];
             businessTerm: components["schemas"]["BrandTerm"];
@@ -1280,8 +1280,9 @@ export interface components {
             professionalTerm: components["schemas"]["BrandTerm"];
             professionalTermPlural: components["schemas"]["BrandTerm"];
             professionalTermGender: components["schemas"]["BrandTermGender"];
+            panelProfile: components["schemas"]["PanelProfile"];
         };
-        /** @description Marca y vocabulario a guardar. Los seis campos viajan siempre presentes. */
+        /** @description Marca y vocabulario a guardar. Los seis campos de la marca viajan siempre presentes; `panelProfile` es optativo y, si se omite, conserva el perfil guardado. */
         UpdateBrandRequest: {
             accent: components["schemas"]["BrandAccent"];
             businessTerm: components["schemas"]["BrandTerm"];
@@ -1289,6 +1290,7 @@ export interface components {
             professionalTerm: components["schemas"]["BrandTerm"];
             professionalTermPlural: components["schemas"]["BrandTerm"];
             professionalTermGender: components["schemas"]["BrandTermGender"];
+            panelProfile?: components["schemas"]["PanelProfile"];
         };
         /**
          * @description Color de acento del panel: `brass` (el latón NAVA, valor inicial), `emerald`, `sapphire`, `ruby`, `amethyst` o `copper`.
@@ -1998,6 +2000,12 @@ export interface components {
             /** @example true */
             lateCancellationReasonRequired: boolean;
         };
+        /**
+         * @description Perfil del panel: `shop` (barbería con equipo, el panel completo; valor inicial) o `solo` (barbero individual: sin gestión de equipo ni selector de barbero). Un barbero independiente sigue siendo una barbería con un solo barbero (`DEC-019`); el perfil solo cambia lo que el panel muestra.
+         * @example solo
+         * @enum {string}
+         */
+        PanelProfile: "shop" | "solo";
         /** @description Tramo recurrente de la jornada laboral de un barbero, para un único día ISO de la semana. Una jornada partida se representa con varios tramos del mismo día (CA-040-02); un tramo nocturno cruza medianoche cuando startsTime + durationMinutes supera las 24:00 (DEC-020, CA-040-03). */
         WorkingHourResponse: {
             /**

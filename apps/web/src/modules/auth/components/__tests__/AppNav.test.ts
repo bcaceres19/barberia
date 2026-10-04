@@ -256,4 +256,73 @@ describe('AppNav', () => {
       expect(wrapper.get('a').text()).toBe('Agenda')
     })
   })
+  describe('perfil del panel (DEC-115)', () => {
+    const items: NavItem[] = [
+      {
+        to: { name: 'panel' },
+        label: 'Barberos',
+        labelFor: (v) => v.Professionals,
+        primary: true,
+        profiles: { solo: { label: 'Mi perfil' } },
+      },
+      {
+        to: { name: 'schedules-horarios' },
+        label: 'Horarios',
+        profiles: { solo: { primary: true } },
+      },
+      {
+        to: { name: 'acceso' },
+        label: 'Servicios por barbero',
+        profiles: { solo: { hidden: true } },
+      },
+    ]
+
+    const desktopLabels = (wrapper: Awaited<ReturnType<typeof mountNav>>['wrapper']) =>
+      wrapper.findAll('.app-nav__list--desktop .app-nav__label').map((l) => l.text())
+    const dockLabels = (wrapper: Awaited<ReturnType<typeof mountNav>>['wrapper']) =>
+      wrapper.findAll('.app-nav__list--mobile .app-nav__label').map((l) => l.text())
+
+    it('keeps the full panel for the default profile', async () => {
+      const { wrapper } = await mountNav('/panel', items)
+
+      expect(desktopLabels(wrapper)).toEqual([
+        'Agenda',
+        'Barberos',
+        'Horarios',
+        'Servicios por barbero',
+      ])
+      // Horarios solo sube al dock en el perfil solo.
+      expect(dockLabels(wrapper)).toEqual(['Agenda', 'Barberos', 'Más'])
+    })
+
+    it('hides, renames and promotes entries for the solo profile', async () => {
+      setBrand({ ...DEFAULT_BRAND, panelProfile: 'solo' })
+      const { wrapper } = await mountNav('/panel', items)
+
+      expect(desktopLabels(wrapper)).toEqual(['Agenda', 'Mi perfil', 'Horarios'])
+      expect(dockLabels(wrapper)).toEqual(['Agenda', 'Mi perfil', 'Horarios'])
+    })
+
+    it('lets the profile label win over the barbershop vocabulary', async () => {
+      setBrand({
+        ...DEFAULT_BRAND,
+        panelProfile: 'solo',
+        professionalTerm: 'estilista',
+        professionalTermPlural: 'estilistas',
+        professionalTermGender: 'feminine',
+      })
+      const { wrapper } = await mountNav('/panel', items)
+
+      expect(desktopLabels(wrapper)).toContain('Mi perfil')
+      expect(desktopLabels(wrapper)).not.toContain('Estilistas')
+    })
+
+    it('has no axe violations in the solo dock', async () => {
+      setBrand({ ...DEFAULT_BRAND, panelProfile: 'solo' })
+      const { wrapper } = await mountNav('/panel', items)
+
+      const results = await axe(wrapper.element.outerHTML)
+      expect(results).toHaveNoViolations()
+    })
+  })
 })

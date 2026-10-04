@@ -21,19 +21,32 @@
 import { computed, ref } from 'vue'
 import type { NavItem } from '@/shared/navigation/navItem'
 import { useVocabulary } from '@/shared/composables'
+import { panelProfile } from '@/shared/model'
 import { BaseDialog, RecordRow } from '@/shared/ui'
 import { useLogout } from '../model/logout'
 
 const props = defineProps<{ extraItems?: NavItem[] }>()
 const vocabulary = useVocabulary()
 
-/** Rótulo visible de una entrada, con el vocabulario de la barbería (DEC-110). */
+/** Rótulo visible de una entrada: el de su perfil, o el del vocabulario de la barbería (DEC-110). */
 function labelOf(item: NavItem): string {
+  const own = item.profiles?.[panelProfile.value]?.label
+  if (own) return own
   return item.labelFor ? item.labelFor(vocabulary.value) : item.label
 }
 
 const baseItems: NavItem[] = [{ to: { name: 'panel' }, label: 'Agenda', primary: true }]
-const items = computed<NavItem[]>(() => [...baseItems, ...(props.extraItems ?? [])])
+
+// Perfil del panel (DEC-115): el barbero individual no ve la gestión de equipo. Se
+// resuelve aquí, una sola vez, para que dock, "Más" y escritorio coincidan siempre.
+const items = computed<NavItem[]>(() =>
+  [...baseItems, ...(props.extraItems ?? [])]
+    .filter((item) => !item.profiles?.[panelProfile.value]?.hidden)
+    .map((item) => {
+      const primary = item.profiles?.[panelProfile.value]?.primary
+      return primary === undefined ? item : { ...item, primary }
+    }),
+)
 const primaryItems = computed(() => items.value.filter((item) => item.primary))
 const secondaryItems = computed(() => items.value.filter((item) => !item.primary))
 

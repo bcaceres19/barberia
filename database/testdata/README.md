@@ -15,3 +15,4 @@ sección 2.
 | `ui_bloqueos_barberos_286.sql` | Dos barberías y usuarios sintéticos dedicados al E2E de integración de bloqueos en Barberos (#286). Aplicar únicamente en BD local de pruebas con rol migrador; incluye hashes argon2id reales de una contraseña ficticia documentada. |
 
 - `ui_paginacion_barberos_288.sql`: dos tenants dedicados para el E2E de paginación numerada de Barberos (#288), con 17 y 3 personas sintéticas. Solo entorno local/test; no aplicar en producción.
+- `ui_barbero_individual_294.sql`: una barbería con UN solo barbero, perfil `solo`, cuatro servicios (tres ya ofrecidos), horario de lunes a sábado y tres turnos de hoy, para ver y probar el perfil de barbero individual (#294, `DEC-115`). Cuenta ficticia `mateo.demo@ejemplo.test` con la contraseña de desarrollo documentada en el archivo (hash argon2id real). Repetible: recrea los turnos de hoy. Solo entorno local/test; no aplicar en producción.

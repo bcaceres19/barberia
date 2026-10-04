@@ -17,6 +17,8 @@ export const staffNavItems: NavItem[] = [
     label: 'Barberos',
     labelFor: (v) => v.Professionals,
     primary: true,
+    // Un barbero individual no gestiona un equipo: esta misma pantalla es su ficha (DEC-115).
+    profiles: { solo: { label: 'Mi perfil' } },
   },
 ]
 

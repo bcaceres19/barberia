@@ -14,6 +14,7 @@ const salon: BrandSettings = {
   professionalTerm: 'estilista',
   professionalTermPlural: 'estilistas',
   professionalTermGender: 'feminine',
+  panelProfile: 'solo',
 }
 
 async function load() {
@@ -41,6 +42,26 @@ describe('brandStore', () => {
     expect(store.vocabulary.value.Professionals).toBe('Estilistas')
     expect(store.effectiveAccent.value).toBe('emerald')
     expect(JSON.parse(window.localStorage.getItem(KEY)!)).toEqual(salon)
+  })
+
+  it('exposes the panel profile and reads a copy saved before profiles existed as the full panel', async () => {
+    const store = await load()
+    expect(store.panelProfile.value).toBe('shop')
+    expect(store.isSoloProfile.value).toBe(false)
+
+    store.setBrand(salon)
+    expect(store.panelProfile.value).toBe('solo')
+    expect(store.isSoloProfile.value).toBe(true)
+
+    const legacy: Partial<BrandSettings> = { ...salon }
+    delete legacy.panelProfile
+    window.localStorage.setItem(KEY, JSON.stringify(legacy))
+    const next = await load()
+    expect(next.brandState.brand.accent).toBe('emerald')
+    expect(next.panelProfile.value).toBe('shop')
+
+    window.localStorage.setItem(KEY, JSON.stringify({ ...salon, panelProfile: 'team' }))
+    expect((await load()).panelProfile.value).toBe('shop')
   })
 
   it('paints the stored copy on the next visit before the server answers', async () => {

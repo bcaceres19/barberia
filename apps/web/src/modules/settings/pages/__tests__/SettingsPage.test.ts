@@ -370,6 +370,90 @@ describe('SettingsPage', () => {
     })
   })
 
+  describe('perfil del panel (DEC-115)', () => {
+    it('offers the two profiles, with the full panel selected by default', async () => {
+      const wrapper = await mountReady()
+
+      const group = wrapper.get('[role="radiogroup"][aria-label="Perfil del panel"]')
+      const labels = group.findAll('.profile-card__title').map((l) => l.text())
+      expect(labels).toEqual(['Barbería con equipo', 'Barbero individual'])
+      expect(group.get<HTMLInputElement>('input[value="shop"]').element.checked).toBe(true)
+      expect(group.get<HTMLInputElement>('input[value="solo"]').element.checked).toBe(false)
+    })
+
+    it('writes the options with the words of the barbershop', async () => {
+      // Las opciones usan el vocabulario CONFIRMADO (el del resto del panel), no el borrador.
+      const salon = {
+        ...DEFAULT_BRAND,
+        businessTerm: 'salón',
+        businessTermGender: 'masculine' as const,
+        professionalTerm: 'estilista',
+        professionalTermPlural: 'estilistas',
+        professionalTermGender: 'feminine' as const,
+      }
+      setBrand(salon)
+      const wrapper = await mountReady(salon)
+
+      const labels = wrapper
+        .get('[role="radiogroup"][aria-label="Perfil del panel"]')
+        .findAll('.profile-card__title')
+        .map((l) => l.text())
+      expect(labels).toEqual(['Salón con equipo', 'Estilista individual'])
+    })
+
+    it('marks the draft as changed without applying it until it is saved', async () => {
+      const wrapper = await mountReady()
+
+      await wrapper.get('input[type="radio"][value="solo"]').setValue(true)
+
+      expect(wrapper.get('.save-bar').text()).toContain('Marca y vocabulario')
+      // Todavía no se confirmó: el panel sigue siendo el completo.
+      expect(brandState.brand.panelProfile).toBe('shop')
+    })
+
+    it('saves the solo profile, publishes it to the whole app and can go back', async () => {
+      const wrapper = await mountReady()
+      saveBrandMock.mockImplementation(async (brand) => ({ kind: 'success', brand }))
+
+      await wrapper.get('input[type="radio"][value="solo"]').setValue(true)
+      await submit(wrapper)
+
+      expect(saveBrandMock.mock.calls[0]![0]).toMatchObject({ panelProfile: 'solo' })
+      expect(brandState.brand.panelProfile).toBe('solo')
+      expect(wrapper.find('.save-bar').exists()).toBe(false)
+
+      await wrapper.get('input[type="radio"][value="shop"]').setValue(true)
+      await submit(wrapper)
+
+      expect(saveBrandMock.mock.calls[1]![0]).toMatchObject({ panelProfile: 'shop' })
+      expect(brandState.brand.panelProfile).toBe('shop')
+    })
+
+    it('keeps the confirmed profile when the save fails, and restores it on discard', async () => {
+      const wrapper = await mountReady()
+      saveBrandMock.mockResolvedValueOnce({ kind: 'network-error' })
+
+      await wrapper.get('input[type="radio"][value="solo"]').setValue(true)
+      await submit(wrapper)
+      expect(brandState.brand.panelProfile).toBe('shop')
+
+      const discard = wrapper.findAll('.save-bar button').find((b) => b.text() === 'Descartar')!
+      await discard.trigger('click')
+      expect(
+        wrapper.get<HTMLInputElement>('input[type="radio"][value="shop"]').element.checked,
+      ).toBe(true)
+    })
+
+    it('shows the profile that was already saved', async () => {
+      const wrapper = await mountReady({ ...DEFAULT_BRAND, panelProfile: 'solo' })
+
+      expect(
+        wrapper.get<HTMLInputElement>('input[type="radio"][value="solo"]').element.checked,
+      ).toBe(true)
+      expect(wrapper.find('.save-bar').exists()).toBe(false)
+    })
+  })
+
   describe('vocabulario', () => {
     it('fills the word, its plural and its gender from a preset', async () => {
       const wrapper = await mountReady()

@@ -85,6 +85,12 @@ func (h *UpdateBrandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var panelProfile *shops.PanelProfile
+	if req.PanelProfile != nil {
+		profile := shops.PanelProfile(*req.PanelProfile)
+		panelProfile = &profile
+	}
+
 	// Normalización, validación y persistencia viven en shops.BrandService:
 	// este handler no repite ninguna regla (estandar-backend-go.md §4).
 	brand, err := h.service.Update(r.Context(), principal.BarbershopID, shops.Brand{
@@ -94,7 +100,7 @@ func (h *UpdateBrandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ProfessionalTerm:       req.ProfessionalTerm,
 		ProfessionalTermPlural: req.ProfessionalTermPlural,
 		ProfessionalTermGender: shops.Gender(req.ProfessionalTermGender),
-	})
+	}, panelProfile)
 	if err != nil {
 		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
 		return
@@ -106,7 +112,7 @@ func (h *UpdateBrandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // newBrandResponse construye la representación canónica: siempre los mismos
-// seis campos, en la misma forma para GET y para la respuesta 200 de PATCH.
+// siete campos, en la misma forma para GET y para la respuesta 200 de PATCH.
 func newBrandResponse(b shops.Brand) BrandResponse {
 	return BrandResponse{
 		Accent:                 b.Accent,
@@ -115,5 +121,6 @@ func newBrandResponse(b shops.Brand) BrandResponse {
 		ProfessionalTerm:       b.ProfessionalTerm,
 		ProfessionalTermPlural: b.ProfessionalTermPlural,
 		ProfessionalTermGender: string(b.ProfessionalTermGender),
+		PanelProfile:           string(b.PanelProfile),
 	}
 }

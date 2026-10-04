@@ -12,7 +12,12 @@ import type { NavItem } from '@/shared/navigation/navItem'
 export { schedulesPrivateShellChildRoutes } from './routes'
 
 export const schedulesNavItems: NavItem[] = [
-  { to: { name: 'schedules-horarios' }, label: 'Horarios' },
+  {
+    to: { name: 'schedules-horarios' },
+    label: 'Horarios',
+    // Quien trabaja solo vive de su horario: sube al dock (DEC-115).
+    profiles: { solo: { primary: true } },
+  },
 ]
 
 export const BarberBlocksPanel = defineAsyncComponent(

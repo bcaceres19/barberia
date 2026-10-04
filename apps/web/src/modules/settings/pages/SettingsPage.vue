@@ -38,6 +38,7 @@ import {
   type BrandSettings,
   type Gender,
   type MotionMode,
+  type PanelProfile,
   type TextScaleKey,
   type ThemeMode,
 } from '@/shared/model'
@@ -357,6 +358,23 @@ const GENDER_OPTIONS: readonly { value: Gender; label: string }[] = [
   { value: 'masculine', label: 'Masculino' },
 ]
 
+// Perfil del panel (DEC-115): se escribe con las palabras de la barbería confirmadas, no
+// con las del borrador, para que la opción diga lo mismo que el resto del panel.
+const PROFILE_OPTIONS = computed<readonly { value: PanelProfile; label: string; hint: string }[]>(
+  () => [
+    {
+      value: 'shop',
+      label: `${v.value.Business} con equipo`,
+      hint: `Gestión de ${v.value.professionals}, servicios por ${v.value.professional} y selector de ${v.value.professional} en la agenda.`,
+    },
+    {
+      value: 'solo',
+      label: `${v.value.Professional} individual`,
+      hint: 'Para quien trabaja solo: agenda, servicios, horarios y tu perfil, sin gestión de equipo.',
+    },
+  ],
+)
+
 const ACCENT_OPTIONS = BRAND_ACCENTS.map((a) => ({ value: a.key, label: a.label }))
 
 /** Valor de cada acento tal como se verá en el modo vigente. */
@@ -380,11 +398,12 @@ const reduceMotion = computed({
 
 const SECTIONS = [
   { id: 'configuracion-pantalla', number: '01', label: 'Pantalla' },
-  { id: 'configuracion-marca', number: '02', label: 'Marca' },
-  { id: 'configuracion-vocabulario', number: '03', label: 'Vocabulario' },
-  { id: 'configuracion-hora', number: '04', label: 'Hora' },
-  { id: 'configuracion-contacto', number: '05', label: 'Contacto' },
-  { id: 'configuracion-reservas', number: '06', label: 'Reservas' },
+  { id: 'configuracion-perfil', number: '02', label: 'Perfil del panel' },
+  { id: 'configuracion-marca', number: '03', label: 'Marca' },
+  { id: 'configuracion-vocabulario', number: '04', label: 'Vocabulario' },
+  { id: 'configuracion-hora', number: '05', label: 'Hora' },
+  { id: 'configuracion-contacto', number: '06', label: 'Contacto' },
+  { id: 'configuracion-reservas', number: '07', label: 'Reservas' },
 ] as const
 
 const activeSection = ref<string>(SECTIONS[0].id)
@@ -632,15 +651,53 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
             </div>
           </SettingsPanel>
 
-          <!-- 02 · Marca (toda la barbería) -->
+          <!-- 02 · Perfil del panel (toda la barbería) -->
+          <SettingsPanel
+            id="configuracion-perfil"
+            number="02"
+            title="Perfil del panel"
+            description="Elige qué muestra NAVA según cómo trabajas. Cambia solo lo que ves: no borra ningún dato."
+            scope="shop"
+            :scope-label="`Para ${v.theBusiness}`"
+            style="--panel-index: 1"
+          >
+            <div class="settings-field">
+              <span class="settings-field__label" id="field-panel-profile">Cómo trabajas</span>
+              <OptionGroup
+                :model-value="brand.panelProfile"
+                :options="PROFILE_OPTIONS"
+                label="Perfil del panel"
+                :disabled="saving"
+                class="settings-profiles"
+                @update:model-value="(value: PanelProfile) => (brand.panelProfile = value)"
+              >
+                <template #default="{ option, selected }">
+                  <span class="profile-card" :class="{ 'profile-card--selected': selected }">
+                    <span class="profile-card__mark" aria-hidden="true" />
+                    <span class="profile-card__copy">
+                      <span class="profile-card__title">{{ option.label }}</span>
+                      <span class="profile-card__hint">{{ option.hint }}</span>
+                    </span>
+                  </span>
+                </template>
+              </OptionGroup>
+              <p class="settings-field__hint">
+                Puedes volver al panel con equipo cuando quieras, por ejemplo al contratar a
+                alguien. Si ya tienes más de {{ v.aProfessional }}, el panel individual los sigue
+                mostrando donde hace falta elegir.
+              </p>
+            </div>
+          </SettingsPanel>
+
+          <!-- 03 · Marca (toda la barbería) -->
           <SettingsPanel
             id="configuracion-marca"
-            number="02"
+            number="03"
             title="Marca"
             description="El nombre y el color con los que tu equipo reconoce el panel."
             scope="shop"
             :scope-label="`Para ${v.theBusiness}`"
-            style="--panel-index: 1"
+            style="--panel-index: 2"
           >
             <BaseInput
               :model-value="shop.name"
@@ -684,15 +741,15 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
             </div>
           </SettingsPanel>
 
-          <!-- 03 · Vocabulario (toda la barbería) -->
+          <!-- 04 · Vocabulario (toda la barbería) -->
           <SettingsPanel
             id="configuracion-vocabulario"
-            number="03"
+            number="04"
             title="Vocabulario"
             description="Las palabras con las que NAVA nombra tu negocio y a quien atiende los turnos."
             scope="shop"
             :scope-label="`Para ${v.theBusiness}`"
-            style="--panel-index: 2"
+            style="--panel-index: 3"
           >
             <div class="vocab-group">
               <BaseInput
@@ -834,15 +891,15 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
             </aside>
           </SettingsPanel>
 
-          <!-- 04 · Hora (toda la barbería) -->
+          <!-- 05 · Hora (toda la barbería) -->
           <SettingsPanel
             id="configuracion-hora"
-            number="04"
+            number="05"
             title="Hora"
             description="Toda hora de la agenda, de los horarios y de las reservas se calcula en esta zona, nunca en la de cada dispositivo."
             scope="shop"
             :scope-label="`Para ${v.theBusiness}`"
-            style="--panel-index: 3"
+            style="--panel-index: 4"
           >
             <TimezoneField
               :model-value="shop.timezone"
@@ -853,15 +910,15 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
             />
           </SettingsPanel>
 
-          <!-- 05 · Contacto (toda la barbería) -->
+          <!-- 06 · Contacto (toda la barbería) -->
           <SettingsPanel
             id="configuracion-contacto"
-            number="05"
+            number="06"
             title="Contacto"
             description="Opcional. Es el correo y el teléfono con los que tus clientes pueden escribirte."
             scope="shop"
             :scope-label="`Para ${v.theBusiness}`"
-            style="--panel-index: 4"
+            style="--panel-index: 5"
           >
             <div class="settings-grid">
               <BaseInput
@@ -889,13 +946,13 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
             </div>
           </SettingsPanel>
 
-          <!-- 06 · Reservas públicas: enlace a su propia pantalla (HU-093) -->
+          <!-- 07 · Reservas públicas: enlace a su propia pantalla (HU-093) -->
           <SettingsPanel
             id="configuracion-reservas"
-            number="06"
+            number="07"
             title="Reservas"
             description="Cuándo y con cuánta anticipación pueden reservar tus clientes, y cómo cancelan."
-            style="--panel-index: 5"
+            style="--panel-index: 6"
           >
             <RouterLink :to="{ name: 'configuracion-reserva-publica' }" class="settings-link">
               <span class="settings-link__copy">
@@ -1395,6 +1452,81 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
 
 .settings-genders {
   --option-group-gap: 0;
+}
+
+/* Perfil del panel (DEC-115): dos tarjetas lado a lado, con el rombo de la casa como
+   marca de la elegida. La selección se dice con texto y con borde, no solo con color. */
+.settings-profiles {
+  --option-group-gap: 12px;
+}
+
+.settings-profiles > :deep(.option-group__option) {
+  flex: 1 1 260px;
+}
+
+.profile-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  height: 100%;
+  padding: 16px;
+  border: var(--border-width-normal) solid var(--color-field-strong-border);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--color-on-strong) 3%, transparent);
+  transition:
+    background-color var(--motion-duration-base) var(--motion-easing-standard),
+    border-color var(--motion-duration-base) var(--motion-easing-standard);
+}
+
+.profile-card:hover {
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 55%, transparent);
+}
+
+.profile-card--selected {
+  background: color-mix(in srgb, var(--color-brand-accent-surface) 10%, transparent);
+  border-color: var(--color-brand-accent-surface);
+  box-shadow: 0 0 0 1px var(--color-brand-accent-surface);
+}
+
+.profile-card__mark {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  margin-top: 5px;
+  border: var(--border-width-normal) solid var(--color-on-strong-muted);
+  transform: rotate(45deg);
+  transition:
+    background-color var(--motion-duration-base) var(--motion-easing-standard),
+    border-color var(--motion-duration-base) var(--motion-easing-standard);
+}
+
+.profile-card--selected .profile-card__mark {
+  background: var(--color-brand-accent-surface);
+  border-color: var(--color-brand-accent-surface);
+}
+
+.profile-card__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.profile-card__title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+  color: var(--color-on-strong);
+}
+
+.profile-card--selected .profile-card__title {
+  color: var(--color-brand-accent-surface);
+}
+
+.profile-card__hint {
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--color-on-strong-muted);
 }
 
 .gender-pill {
