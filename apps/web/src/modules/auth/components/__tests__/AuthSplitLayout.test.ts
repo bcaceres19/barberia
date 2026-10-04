@@ -4,7 +4,7 @@
  * (aria-hidden), the content-column mark is decorative too, slot content
  * renders, default/custom tagline, the required caption, and axe.
  */
-import { describe, it, expect } from 'vitest'
+import { afterEach, describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
 import AuthSplitLayout from '../AuthSplitLayout.vue'
@@ -29,6 +29,25 @@ describe('AuthSplitLayout', () => {
     const mark = wrapper.get('.auth-split__mark')
     expect(mark.attributes('aria-hidden')).toBe('true')
     expect(mark.text()).toContain('NAVA')
+  })
+
+  it('adds an ornamental backdrop inside the decorative brand panel, without text', () => {
+    const wrapper = mountLayout()
+    const backdrop = wrapper.get('.auth-split__brand .brand-backdrop')
+    expect(backdrop.attributes('aria-hidden')).toBe('true')
+    expect(backdrop.text()).toBe('')
+  })
+
+  describe('entrada escalonada de la tarjeta', () => {
+    afterEach(() => vi.useRealTimers())
+
+    it('se retira tras la entrada para que alertas tardías no hereden sus retrasos', async () => {
+      vi.useFakeTimers()
+      const wrapper = mountLayout()
+      expect(wrapper.get('.auth-split__card').classes()).toContain('auth-split__card--intro')
+      await vi.advanceTimersByTimeAsync(1700)
+      expect(wrapper.get('.auth-split__card').classes()).not.toContain('auth-split__card--intro')
+    })
   })
 
   it('renders the default tagline', () => {

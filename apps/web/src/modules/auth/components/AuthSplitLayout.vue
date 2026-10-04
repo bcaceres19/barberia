@@ -10,7 +10,9 @@
 // `LoginPage`/`RecoveryPage` conservan su propio estado y encabezado real
 // (`<h1>`); ni el panel de marca ni la marca reglada del encabezado son un
 // landmark de contenido, por eso ambos llevan `aria-hidden`.
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { NavaWordmark } from '@/shared/ui'
+import AuthBrandBackdrop from './AuthBrandBackdrop.vue'
 
 interface Props {
   tagline?: string
@@ -22,12 +24,28 @@ interface Props {
 withDefaults(defineProps<Props>(), {
   tagline: 'Gestión precisa para tu barbería.',
 })
+
+// La entrada escalonada de la tarjeta solo aplica a lo que ya está montado
+// al abrir la pantalla. Se retira al terminar para que una alerta o el reto
+// telefónico que aparezcan después usen su propia transición corta (estándar
+// visual §8: 160 ms, sin retrasos no esenciales) y no el escalón de la
+// entrada. El estado final de cada elemento es el normal, así que quitar la
+// clase no produce salto alguno.
+const introActive = ref(true)
+let introTimer: ReturnType<typeof setTimeout> | undefined
+onMounted(() => {
+  introTimer = setTimeout(() => {
+    introActive.value = false
+  }, 1600)
+})
+onBeforeUnmount(() => clearTimeout(introTimer))
 </script>
 
 <template>
   <main class="auth-split">
     <div class="auth-split__frame">
       <div class="auth-split__brand" aria-hidden="true">
+        <AuthBrandBackdrop />
         <div class="auth-split__wordmark-group">
           <NavaWordmark variant="inverted" size="lg" />
           <span class="auth-split__rule"></span>
@@ -36,7 +54,7 @@ withDefaults(defineProps<Props>(), {
         <p class="auth-split__caption">{{ caption }} · NAVA</p>
       </div>
       <div class="auth-split__content">
-        <div class="auth-split__card">
+        <div class="auth-split__card" :class="{ 'auth-split__card--intro': introActive }">
           <div class="auth-split__mark" aria-hidden="true">
             <NavaWordmark variant="ink" size="lg" />
             <span class="auth-split__mark-rule"></span>
@@ -84,6 +102,16 @@ withDefaults(defineProps<Props>(), {
   background-color: var(--color-surface-strong);
   border-bottom: var(--border-width-normal) solid var(--color-action-soft-border);
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* El contenido real del panel queda por encima del fondo ornamental. */
+.auth-split__wordmark-group,
+.auth-split__tagline,
+.auth-split__caption {
+  position: relative;
+  z-index: 1;
 }
 
 .auth-split__brand :deep(.nava-wordmark--lg) {
@@ -200,6 +228,164 @@ withDefaults(defineProps<Props>(), {
   max-width: 470px;
 }
 
+/* Entrada del panel de marca: la marca se descubre de izquierda a derecha,
+   la regla se abre desde el rombo, el lema y la leyenda suben con suavidad.
+   Cada animación termina en el estado normal del elemento (`backwards`), así
+   que sin animación —reduced motion— todo queda ya compuesto. */
+.auth-split__wordmark-group :deep(.nava-wordmark) {
+  animation: auth-reveal-wipe 1.1s cubic-bezier(0.65, 0, 0.2, 1) 0.15s backwards;
+}
+
+.auth-split__rule {
+  animation: auth-rule-open 1s cubic-bezier(0.65, 0, 0.2, 1) 0.9s backwards;
+}
+
+.auth-split__rule::after {
+  animation: auth-diamond-in 0.9s cubic-bezier(0.3, 1.4, 0.5, 1) 1.1s backwards;
+}
+
+.auth-split__tagline {
+  animation: auth-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 1.2s backwards;
+}
+
+.auth-split__caption {
+  animation: auth-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 1.6s backwards;
+}
+
+/* Entrada de la tarjeta: cada bloque sube 12 px y aparece, en cascada corta
+   (marca, encabezado, formulario, resto). */
+.auth-split__card--intro > * {
+  animation: auth-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
+.auth-split__card--intro > :nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.auth-split__card--intro > :nth-child(2) {
+  animation-delay: 0.22s;
+}
+
+.auth-split__card--intro > :nth-child(3) {
+  animation-delay: 0.34s;
+}
+
+.auth-split__card--intro > :nth-child(n + 4) {
+  animation-delay: 0.46s;
+}
+
+/* La regla de latón bajo la marca de la tarjeta se traza desde el centro. */
+.auth-split__card--intro .auth-split__mark-rule {
+  transform-origin: center;
+  animation: auth-rule-grow 0.9s cubic-bezier(0.65, 0, 0.2, 1) 0.45s backwards;
+}
+
+/* Mesa de patronaje también en el lienzo claro: una rejilla casi invisible
+   que se desvanece desde la esquina superior y una cinta métrica de latón
+   en el borde superior. Pura ornamentación, detrás del contenido. */
+.auth-split__content {
+  position: relative;
+  isolation: isolate;
+}
+
+.auth-split__content::before,
+.auth-split__content::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.auth-split__content::before {
+  inset: 0;
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--color-action-primary) 5%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--color-action-primary) 5%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 70% at 100% 0%, #000 0%, transparent 70%);
+  animation: auth-fade 1.8s ease-out 0.3s backwards;
+}
+
+.auth-split__content::after {
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 14px;
+  background-image:
+    linear-gradient(to right, var(--color-accent-brass) 1px, transparent 1px),
+    linear-gradient(to right, var(--color-accent-brass) 1px, transparent 1px);
+  background-size:
+    12px 7px,
+    60px 14px;
+  background-repeat: repeat-x;
+  opacity: 0.3;
+  mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent);
+  animation: auth-fade 1.6s ease-out 0.6s backwards;
+}
+
+@keyframes auth-reveal-wipe {
+  from {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes auth-rule-open {
+  from {
+    clip-path: inset(-20px 50% -20px 50%);
+  }
+  to {
+    clip-path: inset(-20px 0 -20px 0);
+  }
+}
+
+@keyframes auth-rule-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes auth-diamond-in {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) rotate(-135deg) scale(0);
+  }
+}
+
+@keyframes auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@keyframes auth-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes auth-seam-glint {
+  from {
+    background-position: 0 100%;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
 @media (min-width: 1024px) {
   .auth-split {
     padding: 0;
@@ -219,6 +405,25 @@ withDefaults(defineProps<Props>(), {
     padding: var(--space-16) var(--space-10);
     border-right: var(--border-width-normal) solid var(--color-action-soft-border);
     border-bottom: 0;
+  }
+
+  /* Destello que recorre la costura entre los dos paneles, de arriba abajo. */
+  .auth-split__brand::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 1px;
+    z-index: 1;
+    background-image: linear-gradient(
+      to bottom,
+      transparent 0 42%,
+      var(--color-brand-accent-surface) 50%,
+      transparent 58% 100%
+    );
+    background-size: 100% 300%;
+    animation: auth-seam-glint 7s ease-in-out 2s infinite;
   }
 
   .auth-split__brand :deep(.nava-wordmark--lg) {
@@ -279,6 +484,21 @@ withDefaults(defineProps<Props>(), {
   .auth-split__content {
     padding-right: var(--space-4);
     padding-left: var(--space-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-split__wordmark-group :deep(.nava-wordmark),
+  .auth-split__rule,
+  .auth-split__rule::after,
+  .auth-split__tagline,
+  .auth-split__caption,
+  .auth-split__card--intro > *,
+  .auth-split__card--intro .auth-split__mark-rule,
+  .auth-split__content::before,
+  .auth-split__content::after,
+  .auth-split__brand::after {
+    animation: none;
   }
 }
 </style>

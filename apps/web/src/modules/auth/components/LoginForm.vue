@@ -12,17 +12,6 @@ import {
   type LoginFieldErrors,
 } from '../validation/loginValidation'
 
-/** Resumen de error ya traducido a texto seguro por la página: el
- * formulario solo lo muestra, no interpreta `status`/`code`/`Problem`. */
-export interface LoginServerErrorSummary {
-  title: string
-  message: string
-  tone: 'danger' | 'warning' | 'info'
-  /** Acción de recuperación opcional (por ejemplo, "Reintentar" ante un
-   * error de red, CA-010-03). */
-  actionLabel?: string
-}
-
 const props = withDefaults(
   defineProps<{
     email: string
@@ -31,11 +20,9 @@ const props = withDefaults(
     /** El reto adicional deja las credenciales visibles pero bloqueadas:
      * mientras esté activo, su única acción primaria es verificar el OTP. */
     challengeActive?: boolean
-    serverError?: LoginServerErrorSummary | null
     recoveryHref: string
   }>(),
   {
-    serverError: null,
     challengeActive: false,
   },
 )
@@ -44,7 +31,6 @@ const emit = defineEmits<{
   'update:email': [value: string]
   'update:password': [value: string]
   submit: []
-  retry: []
 }>()
 
 const fieldErrors = ref<LoginFieldErrors>({})
@@ -105,8 +91,6 @@ const onSubmit = async () => {
 
   emit('submit')
 }
-
-const onRetry = () => emit('retry')
 </script>
 
 <template>
@@ -131,6 +115,7 @@ const onRetry = () => emit('retry')
       name="password"
       label="Contraseña"
       autocomplete="current-password"
+      placeholder="Escribe tu contraseña"
       required
       :show-required-marker="false"
       :disabled="submitting || challengeActive"
@@ -171,20 +156,6 @@ const onRetry = () => emit('retry')
         <li v-if="fieldErrors.email">{{ fieldErrors.email }}</li>
         <li v-if="fieldErrors.password">{{ fieldErrors.password }}</li>
       </ul>
-    </BaseAlert>
-
-    <BaseAlert
-      v-if="serverError"
-      :variant="serverError.tone"
-      :title="serverError.title"
-      role="alert"
-    >
-      {{ serverError.message }}
-      <template v-if="serverError.actionLabel" #action>
-        <BaseButton variant="secondary" size="md" type="button" @click="onRetry">
-          {{ serverError.actionLabel }}
-        </BaseButton>
-      </template>
     </BaseAlert>
   </form>
 </template>
@@ -240,6 +211,76 @@ const onRetry = () => emit('retry')
 
 .login-form :deep(.base-input__toggle:disabled) {
   opacity: 0.48;
+}
+
+/* Rótulo y línea base responden al foco: el rótulo pasa de latón a tinta y
+   un filete de latón recorre la base del campo de izquierda a derecha. El
+   anillo de foco de BaseInput sigue intacto; esto solo lo acompaña. */
+.login-form :deep(.base-input__label) {
+  transition: color var(--motion-duration-base) var(--motion-easing-standard);
+}
+
+.login-form :deep(.base-input__wrapper:focus-within .base-input__label) {
+  color: var(--color-action-primary);
+}
+
+.login-form :deep(.base-input__input-wrapper)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--border-width-emphasis);
+  background-color: var(--color-brand-accent-surface);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 320ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  pointer-events: none;
+}
+
+.login-form :deep(.base-input__input-wrapper:focus-within)::after {
+  transform: scaleX(1);
+}
+
+/* Reflejo de latón que cruza el botón al pasar o enfocar: una pasada, no un
+   bucle. El texto queda por encima y el botón no cambia de tamaño. */
+.login-form__submit {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.login-form__submit::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -40%;
+  z-index: -1;
+  width: 32%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    color-mix(in srgb, var(--color-brand-accent-surface) 38%, transparent),
+    transparent
+  );
+  transform: translateX(0) skewX(-18deg);
+  transition: transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  pointer-events: none;
+}
+
+.login-form__submit:hover:not(:disabled)::after,
+.login-form__submit:focus-visible::after {
+  transform: translateX(460%) skewX(-18deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-form :deep(.base-input__label),
+  .login-form :deep(.base-input__input-wrapper)::after,
+  .login-form__submit::after {
+    transition: none;
+  }
 }
 
 .login-form__summary-list {

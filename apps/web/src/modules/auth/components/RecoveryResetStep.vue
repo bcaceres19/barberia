@@ -216,6 +216,43 @@ const onRestart = () => emit('restart')
   padding-left: var(--space-5);
 }
 
+/* Cascada corta al entrar al paso: confirmación, requisitos, campos y acción
+   suben en orden, igual que la tarjeta de acceso. Solo alcanza a los seis
+   bloques que existen al entrar: el resumen de errores y el aviso de política
+   que llegan después no heredan retraso y usan la entrada de `BaseAlert`. */
+.recovery-reset > :nth-child(-n + 6) {
+  animation: recovery-reset-rise 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
+.recovery-reset > :nth-child(2) {
+  animation-delay: 0.08s;
+}
+
+.recovery-reset > :nth-child(3) {
+  animation-delay: 0.16s;
+}
+
+.recovery-reset > :nth-child(4) {
+  animation-delay: 0.24s;
+}
+
+.recovery-reset > :nth-child(n + 5) {
+  animation-delay: 0.32s;
+}
+
+@keyframes recovery-reset-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recovery-reset > :nth-child(-n + 6) {
+    animation: none;
+  }
+}
+
 .recovery-back {
   margin: 0;
   text-align: center;

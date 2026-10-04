@@ -154,7 +154,7 @@ describe('LoginPage', () => {
     expect(router.currentRoute.value.name).toBe('panel')
   })
 
-  it('shows a non-enumerable message and preserves the email on invalid credentials (CA-010-02)', async () => {
+  it('raises a non-enumerable error toast and preserves the email on invalid credentials (CA-010-02, DEC-108)', async () => {
     loginMock.mockResolvedValueOnce({ kind: 'invalid-credentials' } satisfies LoginOutcome)
     const { wrapper } = await mountPage()
 
@@ -164,9 +164,18 @@ describe('LoginPage', () => {
     expect((wrapper.get('input[name="email"]').element as HTMLInputElement).value).toBe(
       'barbero@ejemplo.test',
     )
-    expect(wrapper.text()).toContain('Revisa tu correo y contraseña')
+    // El rechazo es un aviso emergente, no una alerta fija bajo el formulario.
+    expect(wrapper.find('.base-alert').exists()).toBe(false)
+    expect(toastState.items.map((item) => [item.variant, item.title, item.detail])).toEqual([
+      [
+        'danger',
+        'No pudimos iniciar tu sesión',
+        'Revisa tu correo y contraseña e inténtalo de nuevo.',
+      ],
+    ])
     // No debe mencionar si el correo existe o no.
-    expect(wrapper.text().toLowerCase()).not.toContain('no existe')
+    const toast = toastState.items[0]!
+    expect(`${toast.title} ${toast.detail}`.toLowerCase()).not.toContain('no existe')
   })
 
   it('does not show a contradictory "required field" hint after the password is cleared post-rejection', async () => {
@@ -183,7 +192,7 @@ describe('LoginPage', () => {
 
     expect((wrapper.get('input[name="password"]').element as HTMLInputElement).value).toBe('')
     expect(wrapper.find('.base-input__error').exists()).toBe(false)
-    expect(wrapper.text()).toContain('Revisa tu correo y contraseña')
+    expect(toastState.items.map((item) => item.title)).toEqual(['No pudimos iniciar tu sesión'])
   })
 
   it('offers a Reintentar toast and preserves both fields on a network error (CA-010-03)', async () => {
@@ -331,6 +340,18 @@ describe('LoginPage', () => {
 
     const button = wrapper.get('button[type="submit"]')
     expect(button.attributes('aria-busy')).toBe('true')
+  })
+
+  it('raises an error toast when the server rejects the login format', async () => {
+    loginMock.mockResolvedValueOnce({ kind: 'validation-error' } satisfies LoginOutcome)
+    const { wrapper } = await mountPage()
+
+    await fillAndSubmit(wrapper)
+    await flushPromises()
+
+    expect(toastState.items.map((item) => [item.variant, item.title])).toEqual([
+      ['danger', 'Revisa los datos ingresados'],
+    ])
   })
 
   it('has no axe violations after a server error is shown', async () => {
