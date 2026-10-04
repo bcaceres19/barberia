@@ -11,6 +11,10 @@ func TestListPage_TotalsBoundsAndTenantIsolation(t *testing.T) {
 	ctx := context.Background()
 	ours := createBarber(t, repo, shopC, "Página C "+uniqueSuffix(t))
 	other := createBarber(t, repo, shopD, "Página D "+uniqueSuffix(t))
+	// El test no debe depender de fixtures de UI: garantiza más de una página de tamaño 3.
+	for i := 0; i < 3; i++ {
+		createBarber(t, repo, shopC, "Página C extra "+uniqueSuffix(t))
+	}
 	first, err := repo.ListPage(ctx, string(shopC), 1, 3)
 	if err != nil {
 		t.Fatal(err)
