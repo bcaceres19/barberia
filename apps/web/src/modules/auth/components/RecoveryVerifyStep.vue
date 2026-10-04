@@ -164,6 +164,8 @@ async function onSubmit() {
         type="button"
         variant="secondary"
         size="md"
+        class="recovery-verify__resend"
+        :class="{ 'recovery-verify__resend--ready': canResend }"
         :disabled="!canResend"
         @click="onResend"
       >
@@ -207,6 +209,99 @@ async function onSubmit() {
 .recovery-verify__submit {
   width: 100%;
   min-height: 56px;
+}
+
+/* Las seis casillas del código se componen una a una de izquierda a derecha,
+   como las marcas de una regla. Un dígito escrito se asienta con un pequeño golpe y un código
+   rechazado sacude las casillas; ambos movimientos se disparan al cambiar de
+   clase, así que no se repiten mientras la persona sigue escribiendo. */
+.recovery-verify :deep(.otp-input__slot) {
+  animation: recovery-slot-in 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
+.recovery-verify :deep(.otp-input__slot:nth-child(1)) {
+  animation-delay: 0.12s;
+}
+
+.recovery-verify :deep(.otp-input__slot:nth-child(2)) {
+  animation-delay: 0.18s;
+}
+
+.recovery-verify :deep(.otp-input__slot:nth-child(3)) {
+  animation-delay: 0.24s;
+}
+
+.recovery-verify :deep(.otp-input__slot:nth-child(4)) {
+  animation-delay: 0.3s;
+}
+
+.recovery-verify :deep(.otp-input__slot:nth-child(5)) {
+  animation-delay: 0.36s;
+}
+
+.recovery-verify :deep(.otp-input__slot:nth-child(6)) {
+  animation-delay: 0.42s;
+}
+
+.recovery-verify :deep(.otp-input__slot--filled) {
+  animation: recovery-slot-fill 0.28s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+.recovery-verify :deep(.otp-input__slot--invalid) {
+  animation: recovery-slot-shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+.recovery-verify :deep(.otp-input__error) {
+  animation: recovery-slot-in 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
+/* Al terminar la cuenta atrás el botón de reenvío avisa una vez con un aro de
+   latón que se expande; no se repite ni compite con el foco. */
+.recovery-verify__resend--ready {
+  animation: recovery-ready-ring 0.9s ease-out 1;
+}
+
+@keyframes recovery-slot-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes recovery-slot-fill {
+  40% {
+    transform: translateY(-3px) scale(1.06);
+  }
+}
+
+@keyframes recovery-slot-shake {
+  20%,
+  60% {
+    transform: translateX(-5px);
+  }
+  40%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes recovery-ready-ring {
+  from {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent-brass) 55%, transparent);
+  }
+  to {
+    box-shadow: 0 0 0 12px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recovery-verify :deep(.otp-input__slot),
+  .recovery-verify :deep(.otp-input__slot--filled),
+  .recovery-verify :deep(.otp-input__slot--invalid),
+  .recovery-verify :deep(.otp-input__error),
+  .recovery-verify__resend--ready {
+    animation: none;
+  }
 }
 
 .recovery-back {

@@ -7,11 +7,16 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { BaseAlert } from '@/shared/ui'
 import AuthSplitLayout from '../components/AuthSplitLayout.vue'
-import LoginForm, { type LoginServerErrorSummary } from '../components/LoginForm.vue'
+import LoginForm from '../components/LoginForm.vue'
 import PhoneChallengeForm from '../components/PhoneChallengeForm.vue'
 import { login } from '../api/loginApi'
 import { useToast } from '@/shared/composables'
-import { notifyConnectionLost, notifyUnexpectedError } from '../model/authFeedback'
+import {
+  notifyConnectionLost,
+  notifyInvalidCredentials,
+  notifyInvalidLoginFormat,
+  notifyUnexpectedError,
+} from '../model/authFeedback'
 import { resetForFreshLogin } from '../model/sessionStore'
 import { isSafeInternalRedirect } from '../model/redirectTarget'
 import type { LoginOutcome } from '../model/loginOutcome'
@@ -40,32 +45,6 @@ const showSessionExpired = computed(
 // su propio flujo (solicitar/verificar código); esta página solo decide
 // cuándo mostrarlo y qué hacer cuando se verifica con éxito.
 const showPhoneChallenge = computed(() => screenState.value.status === 'rate-limited')
-
-// Convierte el resultado ya mapeado (`LoginOutcome`) en el resumen que
-// `LoginForm` puede mostrar sin conocer status HTTP ni `Problem`.
-const serverError = computed<LoginServerErrorSummary | null>(() => {
-  const state = screenState.value
-  switch (state.status) {
-    case 'invalid-credentials':
-      return {
-        tone: 'danger',
-        title: 'No pudimos iniciar tu sesión',
-        // CA-005-02/CA-010-02: el mismo mensaje cubre correo inexistente y
-        // contraseña incorrecta; nunca distingue el motivo.
-        message: 'Revisa tu correo y contraseña e inténtalo de nuevo.',
-      }
-    case 'validation-error':
-      return {
-        tone: 'danger',
-        title: 'Revisa los datos ingresados',
-        message: 'El correo o la contraseña no tienen un formato válido.',
-      }
-    // Conexión perdida, demasiados intentos y error inesperado no pertenecen
-    // a ningún campo: se avisan como toast (DEC-095), no como alerta fija.
-    default:
-      return null
-  }
-})
 
 async function attemptLogin() {
   // Guardia de doble envío (CA-010-04): la asignación a un ref es
@@ -101,9 +80,11 @@ async function attemptLogin() {
       // para permitir un reintento de un solo toque.
       password.value = ''
       screenState.value = { status: 'invalid-credentials' }
+      notifyInvalidCredentials()
       return
     case 'validation-error':
       screenState.value = { status: 'validation-error' }
+      notifyInvalidLoginFormat()
       return
     case 'network-error':
       screenState.value = { status: 'network-error' }
@@ -151,12 +132,10 @@ const onChallengeVerified = () => {
       :password="password"
       :submitting="isSubmitting"
       :challenge-active="showPhoneChallenge"
-      :server-error="serverError"
       recovery-href="/recuperar-acceso"
       @update:email="(value) => (email = value)"
       @update:password="(value) => (password = value)"
       @submit="onSubmit"
-      @retry="onSubmit"
     />
 
     <BaseAlert

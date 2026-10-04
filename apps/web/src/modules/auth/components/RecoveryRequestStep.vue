@@ -162,8 +162,8 @@ async function onSubmit() {
             stroke-linejoin="round"
             aria-hidden="true"
           >
-            <circle cx="12" cy="12" r="9.5" />
-            <path d="M7.8 12.4l3 3 5.4-6" />
+            <circle class="recovery-channel__check-ring" cx="12" cy="12" r="9.5" />
+            <path class="recovery-channel__check-tick" d="M7.8 12.4l3 3 5.4-6" />
           </svg>
         </button>
       </div>
@@ -175,61 +175,72 @@ async function onSubmit() {
       <p v-if="channel === null" class="recovery-request__hint">
         Elige por dónde quieres recibir tu código de un solo uso.
       </p>
-      <p v-else-if="channel === 'whatsapp'" class="recovery-request__hint">
+      <p
+        v-else-if="channel === 'whatsapp'"
+        class="recovery-request__hint recovery-request__hint--swap"
+      >
         Escribe el número de teléfono de tu cuenta. Si existe, te enviaremos un código de un solo
         uso a tu <strong>teléfono</strong>.
       </p>
-      <p v-else class="recovery-request__hint">
+      <p v-else class="recovery-request__hint recovery-request__hint--swap">
         Escribe el correo de tu cuenta. Si existe, te enviaremos un código de un solo uso por
         <strong>correo</strong>.
       </p>
     </div>
 
-    <template v-if="channel !== null">
-      <!-- `key` fuerza un campo nuevo por canal: cambia tipo, etiqueta y
-           autocompletado sin arrastrar el estado del anterior. -->
-      <BaseInput
-        v-if="channel === 'whatsapp'"
-        key="whatsapp"
-        :model-value="values.whatsapp"
-        type="tel"
-        name="whatsapp"
-        label="Teléfono"
-        autocomplete="tel"
-        placeholder="+573001234567"
-        required
-        :show-required-marker="false"
-        :disabled="isSubmitting"
-        :error="fieldError"
-        @update:model-value="handleInput"
-      />
-      <BaseInput
-        v-else
-        key="email"
-        :model-value="values.email"
-        type="email"
-        name="email"
-        label="Correo"
-        autocomplete="username"
-        placeholder="tu-correo@ejemplo.com"
-        required
-        :show-required-marker="false"
-        :disabled="isSubmitting"
-        :error="fieldError"
-        @update:model-value="handleInput"
-      />
+    <!-- Al elegir canal el campo y el botón se despliegan (la altura crece
+         desde cero) en vez de aparecer de golpe y empujar el enlace de abajo. -->
+    <Transition name="recovery-reveal">
+      <div v-if="channel !== null" class="recovery-reveal">
+        <div class="recovery-reveal__inner">
+          <!-- `key` fuerza un campo nuevo por canal: cambia tipo, etiqueta y
+               autocompletado sin arrastrar el estado del anterior. -->
+          <BaseInput
+            v-if="channel === 'whatsapp'"
+            key="whatsapp"
+            class="recovery-request__field"
+            :model-value="values.whatsapp"
+            type="tel"
+            name="whatsapp"
+            label="Teléfono"
+            autocomplete="tel"
+            placeholder="+573001234567"
+            required
+            :show-required-marker="false"
+            :disabled="isSubmitting"
+            :error="fieldError"
+            @update:model-value="handleInput"
+          />
+          <BaseInput
+            v-else
+            key="email"
+            class="recovery-request__field"
+            :model-value="values.email"
+            type="email"
+            name="email"
+            label="Correo"
+            autocomplete="username"
+            placeholder="tu-correo@ejemplo.com"
+            required
+            :show-required-marker="false"
+            :disabled="isSubmitting"
+            :error="fieldError"
+            @update:model-value="handleInput"
+          />
 
-      <BaseButton
-        type="submit"
-        variant="primary"
-        size="lg"
-        :loading="isSubmitting"
-        :disabled="isSubmitting"
-        class="recovery-request__submit"
-      >
-        {{ isSubmitting ? 'Enviando…' : 'Enviar código' }}
-      </BaseButton>
-    </template>
+          <BaseButton
+            type="submit"
+            variant="primary"
+            size="lg"
+            :loading="isSubmitting"
+            :disabled="isSubmitting"
+            class="recovery-request__submit"
+          >
+            {{ isSubmitting ? 'Enviando…' : 'Enviar código' }}
+          </BaseButton>
+        </div>
+      </div>
+    </Transition>
 
     <p class="recovery-back">
       <RouterLink :to="{ name: 'acceso' }">Volver al acceso</RouterLink>
@@ -381,6 +392,147 @@ async function onSubmit() {
 
   .recovery-channel {
     min-height: 72px;
+  }
+}
+
+/* Selector de canal: el relleno de tinta se ilumina en vez de saltar, el botón
+   se alza al pasar y se hunde al pulsar, y la marca de elegido se dibuja
+   (aro y visto) con un pequeño rebote. */
+.recovery-channel {
+  transition:
+    background-color var(--motion-duration-base) var(--motion-easing-standard),
+    border-color var(--motion-duration-base) var(--motion-easing-standard),
+    color var(--motion-duration-base) var(--motion-easing-standard),
+    transform var(--motion-duration-base) cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow var(--motion-duration-base) var(--motion-easing-standard);
+}
+
+.recovery-channel:hover:not(:disabled):not(.recovery-channel--selected) {
+  border-color: var(--color-accent-brass);
+  box-shadow: 0 6px 14px -8px color-mix(in srgb, var(--color-action-primary) 45%, transparent);
+  transform: translateY(-2px);
+}
+
+.recovery-channel:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+}
+
+.recovery-channel__icon {
+  transition: transform 320ms cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+.recovery-channel:hover:not(:disabled) .recovery-channel__icon,
+.recovery-channel--selected .recovery-channel__icon {
+  transform: scale(1.1) rotate(-4deg);
+}
+
+.recovery-channel__check {
+  animation: recovery-check-pop 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) backwards;
+}
+
+.recovery-channel__check-ring {
+  stroke-dasharray: 60;
+  animation: recovery-check-draw 0.45s cubic-bezier(0.65, 0, 0.2, 1) backwards;
+}
+
+.recovery-channel__check-tick {
+  stroke-dasharray: 18;
+  animation: recovery-check-draw 0.35s cubic-bezier(0.65, 0, 0.2, 1) 0.2s backwards;
+}
+
+@keyframes recovery-check-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4) rotate(-40deg);
+  }
+}
+
+@keyframes recovery-check-draw {
+  from {
+    stroke-dashoffset: 60;
+  }
+}
+
+/* El mensaje del canal elegido sustituye al anterior subiendo con suavidad. */
+.recovery-request__hint--swap,
+.recovery-request__field {
+  animation: recovery-hint-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
+@keyframes recovery-hint-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* Despliegue del campo y el botón: la fila de la rejilla pasa de 0fr a 1fr. El
+   margen negativo y el relleno superior reservan el hueco del `gap` del
+   formulario dentro del propio bloque, para que el enlace de abajo no salte
+   al terminar. El recorte solo existe mientras dura el movimiento, así el aro
+   de foco del campo no queda cortado en reposo. */
+.recovery-reveal {
+  display: grid;
+  grid-template-rows: 1fr;
+  margin-top: calc(-1 * var(--space-8));
+}
+
+.recovery-reveal__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-height: 0;
+  padding-top: var(--space-8);
+}
+
+.recovery-reveal-enter-active,
+.recovery-reveal-leave-active {
+  transition:
+    grid-template-rows 360ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 280ms var(--motion-easing-standard);
+}
+
+.recovery-reveal-enter-active > .recovery-reveal__inner,
+.recovery-reveal-leave-active > .recovery-reveal__inner {
+  overflow: hidden;
+}
+
+.recovery-reveal-enter-from,
+.recovery-reveal-leave-to {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+
+/* Cada campo del bloque entra con un pequeño retraso, como la cascada de la
+   tarjeta de acceso. */
+.recovery-reveal-enter-active .recovery-reveal__inner > * {
+  animation: recovery-hint-in 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
+.recovery-reveal-enter-active .recovery-reveal__inner > :nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recovery-channel,
+  .recovery-channel__icon,
+  .recovery-reveal-enter-active,
+  .recovery-reveal-leave-active {
+    transition: none;
+  }
+
+  .recovery-channel:hover:not(:disabled),
+  .recovery-channel:active:not(:disabled) {
+    transform: none;
+  }
+
+  .recovery-channel__check,
+  .recovery-channel__check-ring,
+  .recovery-channel__check-tick,
+  .recovery-request__hint--swap,
+  .recovery-request__field,
+  .recovery-reveal-enter-active .recovery-reveal__inner > * {
+    animation: none;
   }
 }
 

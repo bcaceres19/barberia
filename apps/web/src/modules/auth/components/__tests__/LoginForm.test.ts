@@ -1,6 +1,6 @@
 /**
  * Pruebas de LoginForm: render inicial, etiquetas/ayuda, validación de
- * forma, resumen de errores con foco, estados servidor (props), enlace de
+ * forma, resumen de errores con foco, enlace de
  * recuperación y accesibilidad (vitest-axe). LoginForm no llama al API ni
  * conoce RFC 9457: esas pruebas viven en LoginPage.test.ts.
  */
@@ -8,7 +8,6 @@ import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
 import LoginForm from '../LoginForm.vue'
-import type { LoginServerErrorSummary } from '../LoginForm.vue'
 
 // Igual que el resto de la suite de HU-009: jsdom no implementa Canvas2D,
 // así que color-contrast no puede medir contraste real ahí (ya verificado
@@ -25,7 +24,6 @@ interface MountFormOptions {
   password?: string
   submitting?: boolean
   challengeActive?: boolean
-  serverError?: LoginServerErrorSummary | null
   recoveryHref?: string
   attachToBody?: boolean
 }
@@ -190,57 +188,6 @@ describe('LoginForm', () => {
     })
   })
 
-  describe('Estados de servidor (props)', () => {
-    it('renders invalid-credentials summary without revealing which field was wrong', () => {
-      const wrapper = mountForm({
-        serverError: {
-          tone: 'danger',
-          title: 'No pudimos iniciar tu sesión',
-          message: 'Revisa tu correo y contraseña e inténtalo de nuevo.',
-        },
-      })
-      const alert = wrapper.get('[role="alert"].base-alert')
-      expect(alert.text()).toContain('Revisa tu correo y contraseña')
-    })
-
-    it('renders a retry action for a recoverable network error (CA-010-03)', async () => {
-      const wrapper = mountForm({
-        serverError: {
-          tone: 'warning',
-          title: 'No pudimos conectar',
-          message: 'Revisa tu conexión e inténtalo de nuevo.',
-          actionLabel: 'Reintentar',
-        },
-      })
-      const retryButton = wrapper.findAll('button').find((button) => button.text() === 'Reintentar')
-      expect(retryButton).toBeDefined()
-      await retryButton?.trigger('click')
-      expect(wrapper.emitted('retry')).toBeTruthy()
-    })
-
-    it('renders a 429 rate-limit explanation without claiming HU-007 exists', () => {
-      const wrapper = mountForm({
-        serverError: {
-          tone: 'warning',
-          title: 'Demasiados intentos',
-          message: 'Espera un momento antes de volver a intentarlo.',
-        },
-      })
-      expect(wrapper.text()).toContain('Demasiados intentos')
-    })
-
-    it('renders an unexpected-error state with a safe, generic message', () => {
-      const wrapper = mountForm({
-        serverError: {
-          tone: 'danger',
-          title: 'Ocurrió un error inesperado',
-          message: 'Inténtalo de nuevo en unos segundos.',
-        },
-      })
-      expect(wrapper.text()).toContain('Ocurrió un error inesperado')
-    })
-  })
-
   describe('Accesibilidad', () => {
     it('has no axe violations in the default state', async () => {
       const wrapper = mountForm()
@@ -248,14 +195,8 @@ describe('LoginForm', () => {
       expect(results).toHaveNoViolations()
     })
 
-    it('has no axe violations with field errors and a server error visible', async () => {
-      const wrapper = mountForm({
-        serverError: {
-          tone: 'danger',
-          title: 'No pudimos iniciar tu sesión',
-          message: 'Revisa tu correo y contraseña e inténtalo de nuevo.',
-        },
-      })
+    it('has no axe violations with field errors visible', async () => {
+      const wrapper = mountForm()
       await wrapper.get('form').trigger('submit')
       const results = await axe(wrapper.element, axeOptions)
       expect(results).toHaveNoViolations()

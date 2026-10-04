@@ -104,6 +104,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-079` | 2026-09-02 | Los mockups aprobados y la firma cromática NAVA gobiernan rediseños y pantallas nuevas, con libertad de composición y herramientas | Dirección visual de nuevas entregas frontend | Confirmada |
 | `DEC-106` | 2026-10-02 | Skill compartido para arranque local con esquema y agenda comprobados | Operación local de agentes; issue #287 | Confirmada |
 | `DEC-107` | 2026-10-02 | Barberos admite modo numerado para tabla adaptada al viewport y conserva cursor para selectores | HU-021; issue #288 | Confirmada |
+| `DEC-108` | 2026-10-03 | El rechazo de credenciales en `/acceso` se avisa como aviso emergente, acotando DEC-095 | Acceso; `docs/03-desarrollo/estandar-diseno-visual.md` §6.8 | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -1217,3 +1218,15 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Decisión:** la tabla de Barberos sigue el paginador numerado de Servicios y solicita solo las filas que caben en el viewport; recalcula al redimensionar y muestra la última página tras un alta, respetando el orden por fecha de alta. `GET /private/barbers` añade `page`/`pageSize` como modo optativo, con total exacto, página efectiva y totalPages (piso 1), preservando `cursor`/`limit` y su respuesta para selectores existentes. No se mezclan modos. PageSize admite 1–50, por defecto 20; una página fuera de rango se ajusta a la última. Ambos modos mantienen orden `(created_at,id)` y RN-TEN-01. Total y filas se leen en una misma sentencia PostgreSQL para compartir snapshot.
 - **Alcance:** excepción puntual a §6.10 OpenAPI para la tabla de Barberos; complementa DEC-103 sin sustituir el cursor de otros listados. Sin búsqueda nueva, migraciones, límite de equipo ni funciones nuevas.
 - **Fuente:** petición del propietario del 2026-10-02 de paginador como Servicios y cantidad de filas que soporte la pantalla sin scroll; issue [#288](https://github.com/bcaceres19/barberia/issues/288).
+
+### DEC-108 · El rechazo de credenciales en `/acceso` se avisa como aviso emergente
+
+- **Fecha:** 2026-10-03.
+- **Decisión:** cuando el servidor rechaza el inicio de sesión (credenciales inválidas o formato rechazado), `/acceso` lo comunica con un aviso emergente de error de la cola compartida (`DEC-095`), arriba a la derecha en escritorio y a todo el ancho superior en móvil, que se retira solo a los 12 s, en vez de una alerta fija roja bajo el formulario. El texto no cambia y sigue sin distinguir correo inexistente de contraseña incorrecta (`CA-005-02`, `CA-010-02`); el correo se conserva y la contraseña se limpia como hasta ahora. Los errores locales de campo (`Escribe tu contraseña`) y el resumen de campos siguen en línea.
+- **Alcance de la sustitución:** acota `DEC-095` («los errores de formulario o diálogo siguen en línea») solo para el rechazo del servidor en el inicio de sesión. Recuperación de acceso no cambia: sus errores de código o política siguen en línea.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** una alerta roja fija permanecía tras el error y competía con el formulario; el propietario ya había indicado que las notificaciones van en la esquina superior derecha y se retiran con el tiempo.
+- **Riesgo residual aceptado:** un aviso efímero puede pasar inadvertido; el campo de contraseña vacío tras el rechazo y el `role="alert"` del aviso de error lo compensan, y la pausa por foco, cursor y apertura cubre WCAG 2.2.1.
+- **Alternativas descartadas:** mantener la alerta en línea (contradice la instrucción); mostrar ambas (duplica el mensaje).
+- **Documentos afectados:** `docs/03-desarrollo/estandar-diseno-visual.md` (§6.8), `apps/web/e2e/evidence/auth-fidelidad-desviaciones.md`.
+- **Fuente:** instrucción explícita del propietario del 2026-10-03 («esa notificación roja… las notificaciones deben aparecer en la esquina superior derecha y que se vayan eliminando temporalmente»).
