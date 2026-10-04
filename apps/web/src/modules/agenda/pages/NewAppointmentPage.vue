@@ -757,7 +757,8 @@ function onBarberSelect(barberId: string) {
   gap: 18px;
   min-height: 100%;
   padding: 20px;
-  background-color: var(--color-surface-strong);
+  /* Transparente: la tinta y el fondo animado los pone el cascarón. */
+  background: transparent;
 }
 
 .new-appointment-page__header {
@@ -778,7 +779,7 @@ function onBarberSelect(barberId: string) {
 .new-appointment-page__timezone {
   margin: 0;
   font-family: var(--font-family-base);
-  font-size: 14px;
+  font-size: var(--font-size-body-sm);
   line-height: 20px;
   color: var(--color-on-strong-muted);
 }
@@ -860,7 +861,7 @@ function onBarberSelect(barberId: string) {
     color-mix(in srgb, var(--color-brand-accent-surface) 60%, transparent);
   border-radius: 2px;
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: var(--font-size-body-sm);
   line-height: 1;
   color: var(--color-brand-accent-surface);
 }
@@ -874,7 +875,7 @@ function onBarberSelect(barberId: string) {
 .new-appointment-page__section-title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 19px;
+  font-size: var(--font-size-h3);
   line-height: 1.15;
   font-weight: 400;
   color: var(--color-on-strong);
@@ -883,7 +884,7 @@ function onBarberSelect(barberId: string) {
 .new-appointment-page__section-hint {
   margin: 2px 0 0;
   font-family: var(--font-family-base);
-  font-size: 13px;
+  font-size: var(--font-size-body-sm);
   line-height: 18px;
   color: var(--color-on-strong-muted);
   text-wrap: balance;
@@ -904,7 +905,7 @@ function onBarberSelect(barberId: string) {
 .new-appointment-page__hint {
   margin: 0;
   font-family: var(--font-family-base);
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   line-height: 17px;
   color: var(--color-on-strong-muted);
 }
@@ -921,7 +922,7 @@ function onBarberSelect(barberId: string) {
 
 .new-appointment-page__label {
   font-family: var(--font-sans);
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   line-height: 14px;
   letter-spacing: 0.14em;
@@ -937,7 +938,7 @@ function onBarberSelect(barberId: string) {
 .new-appointment-page :deep(.base-input) {
   --input-height: 46px;
   --input-padding-x: 13px;
-  --input-font-size: 15px;
+  --input-font-size: var(--font-size-body);
   --input-line-height: 1.3;
   --input-bg: color-mix(in srgb, var(--color-on-strong) 4%, transparent);
   --input-border-color: color-mix(in srgb, var(--color-on-strong) 12%, transparent);
@@ -952,7 +953,7 @@ function onBarberSelect(barberId: string) {
 }
 
 .new-appointment-page :deep(.base-input__label) {
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   line-height: 14px;
   letter-spacing: 0.14em;
 }
@@ -1002,7 +1003,7 @@ function onBarberSelect(barberId: string) {
 }
 
 .new-appointment-page :deep(.base-input__error) {
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   line-height: 16px;
   font-weight: 600;
   color: var(--color-danger-on-strong);
@@ -1028,7 +1029,7 @@ function onBarberSelect(barberId: string) {
   height: 46px;
   padding: 0 34px 0 13px;
   font-family: var(--font-family-base);
-  font-size: 15px;
+  font-size: var(--font-size-body);
   line-height: 1.3;
   color: var(--color-on-strong);
   background-color: color-mix(in srgb, var(--color-on-strong) 4%, transparent);
@@ -1101,7 +1102,7 @@ function onBarberSelect(barberId: string) {
   min-height: 46px;
   padding: 0 13px;
   gap: 10px;
-  font-size: 15px;
+  font-size: var(--font-size-body);
   background-color: color-mix(in srgb, var(--color-on-strong) 4%, transparent);
   border-color: color-mix(in srgb, var(--color-on-strong) 12%, transparent);
   border-bottom-color: color-mix(in srgb, var(--color-on-strong) 30%, transparent);
@@ -1132,7 +1133,7 @@ function onBarberSelect(barberId: string) {
   min-height: 70px;
   padding: 12px 13px;
   font-family: var(--font-family-base);
-  font-size: 15px;
+  font-size: var(--font-size-body);
   line-height: 1.3;
   color: var(--color-on-strong);
   background-color: color-mix(in srgb, var(--color-on-strong) 4%, transparent);
@@ -1167,7 +1168,7 @@ function onBarberSelect(barberId: string) {
 
 .new-appointment-page__counter {
   font-family: var(--font-family-base);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   color: var(--color-on-strong-muted);
   font-variant-numeric: tabular-nums;
 }
@@ -1175,7 +1176,7 @@ function onBarberSelect(barberId: string) {
 .new-appointment-page__error {
   margin: 0;
   font-family: var(--font-family-base);
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   line-height: 16px;
   font-weight: 600;
   color: var(--color-danger-on-strong);
@@ -1187,7 +1188,7 @@ function onBarberSelect(barberId: string) {
   gap: 8px;
   margin: 0;
   font-family: var(--font-family-base);
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   line-height: 16px;
   color: var(--color-on-strong-muted);
 }
@@ -1232,7 +1233,7 @@ function onBarberSelect(barberId: string) {
 .new-appointment-page__resumen-title {
   margin: 0;
   font-family: var(--font-sans);
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   line-height: 14px;
   letter-spacing: 0.16em;
@@ -1268,7 +1269,7 @@ function onBarberSelect(barberId: string) {
 
 .new-appointment-page__resumen-label {
   font-family: var(--font-sans);
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   line-height: 14px;
   letter-spacing: 0.14em;
@@ -1282,7 +1283,7 @@ function onBarberSelect(barberId: string) {
   gap: 9px;
   margin: 0;
   font-family: var(--font-family-base);
-  font-size: 15px;
+  font-size: var(--font-size-body);
   line-height: 21px;
   font-weight: 600;
   color: var(--color-on-strong);
@@ -1301,7 +1302,7 @@ function onBarberSelect(barberId: string) {
   width: 100%;
   height: 48px;
   padding: 0 22px;
-  font-size: 15px;
+  font-size: var(--font-size-body);
   font-weight: 600;
   letter-spacing: 0.02em;
   background-color: var(--color-brand-accent-surface);
@@ -1339,7 +1340,7 @@ function onBarberSelect(barberId: string) {
 .new-appointment-page :deep(.base-alert) {
   --alert-padding: 13px 15px;
   --alert-title-size: 16px;
-  --alert-font-size: 14px;
+  --alert-font-size: var(--font-size-body-sm);
   --alert-line-height: 20px;
 
   border: var(--border-width-normal) solid var(--alert-border);
@@ -1347,7 +1348,7 @@ function onBarberSelect(barberId: string) {
 }
 
 .new-appointment-page :deep(.base-alert__status) {
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   line-height: 14px;
   letter-spacing: 0.15em;
   color: currentcolor;
@@ -1356,7 +1357,7 @@ function onBarberSelect(barberId: string) {
 
 .new-appointment-page__alert-title {
   display: block;
-  font-size: 16px;
+  font-size: var(--font-size-body);
   line-height: 23px;
   font-weight: 600;
   color: var(--color-surface-strong);
@@ -1412,7 +1413,7 @@ function onBarberSelect(barberId: string) {
 .new-appointment-page__ticket {
   padding: 13px 15px;
   margin-bottom: 12px;
-  font-size: 15px;
+  font-size: var(--font-size-body);
   line-height: 22px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -1432,11 +1433,11 @@ function onBarberSelect(barberId: string) {
   }
 
   .new-appointment-page__title {
-    font-size: 38px;
+    font-size: var(--font-size-title-page);
   }
 
   .new-appointment-page__timezone {
-    font-size: 15px;
+    font-size: var(--font-size-body);
     line-height: 22px;
   }
 
@@ -1478,11 +1479,11 @@ function onBarberSelect(barberId: string) {
   .new-appointment-page__section-number {
     width: 27px;
     height: 27px;
-    font-size: 15px;
+    font-size: var(--font-size-body);
   }
 
   .new-appointment-page__section-title {
-    font-size: 21px;
+    font-size: var(--font-size-title-item);
   }
 
   .new-appointment-page__section-hint {
@@ -1499,7 +1500,7 @@ function onBarberSelect(barberId: string) {
   }
 
   .new-appointment-page__hint {
-    font-size: 13px;
+    font-size: var(--font-size-body-sm);
     line-height: 18px;
   }
 
@@ -1509,7 +1510,7 @@ function onBarberSelect(barberId: string) {
 
   .new-appointment-page__label,
   .new-appointment-page :deep(.base-input__label) {
-    font-size: 11px;
+    font-size: var(--font-size-caption);
     line-height: 15px;
   }
 
@@ -1531,7 +1532,7 @@ function onBarberSelect(barberId: string) {
   }
 
   .new-appointment-page__counter {
-    font-size: 11px;
+    font-size: var(--font-size-caption);
   }
 
   .new-appointment-page__resumen {
@@ -1539,7 +1540,7 @@ function onBarberSelect(barberId: string) {
   }
 
   .new-appointment-page__resumen-title {
-    font-size: 11px;
+    font-size: var(--font-size-caption);
     line-height: 15px;
   }
 
@@ -1553,7 +1554,7 @@ function onBarberSelect(barberId: string) {
 
   .new-appointment-page__resumen-value {
     gap: 10px;
-    font-size: 16px;
+    font-size: var(--font-size-body);
     line-height: 22px;
   }
 
@@ -1562,7 +1563,7 @@ function onBarberSelect(barberId: string) {
     min-width: 240px;
     height: 50px;
     padding: 0 30px;
-    font-size: 16px;
+    font-size: var(--font-size-body);
     align-self: flex-start;
   }
 
@@ -1573,17 +1574,17 @@ function onBarberSelect(barberId: string) {
   .new-appointment-page :deep(.base-alert) {
     --alert-padding: 15px 18px;
     --alert-title-size: 17px;
-    --alert-font-size: 15px;
+    --alert-font-size: var(--font-size-body);
     --alert-line-height: 22px;
   }
 
   .new-appointment-page :deep(.base-alert__status) {
-    font-size: 11px;
+    font-size: var(--font-size-caption);
     line-height: 15px;
   }
 
   .new-appointment-page__alert-title {
-    font-size: 17px;
+    font-size: var(--font-size-body-lg);
     line-height: 24px;
   }
 
@@ -1599,7 +1600,7 @@ function onBarberSelect(barberId: string) {
 
   .new-appointment-page__ticket {
     padding: 14px 18px;
-    font-size: 16px;
+    font-size: var(--font-size-body);
     line-height: 23px;
   }
 }

@@ -515,8 +515,7 @@ var errLifecycleAbortInternal = errors.New("catalog/postgres: transición de cic
 
 // lockServiceForTransition bloquea (SELECT ... FOR UPDATE) la fila de
 // service dentro de la transacción vigente, para resistir dos
-// confirmaciones concurrentes sobre el mismo servicio (mismo patrón que
-// AssignmentRepository.Unassign, DEC-068-style): la segunda conexión que
+// confirmaciones concurrentes sobre el mismo servicio: la segunda conexión que
 // intente la misma transición espera a que la primera confirme o revierta,
 // y al continuar ve el estado YA actualizado. found=false cubre "no existe"
 // o "es de otra barbería" (CA-024-07).

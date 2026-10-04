@@ -246,6 +246,64 @@ describe('PublicAvailabilityPage', () => {
     expect(options[1]!.attributes('aria-checked')).toBe('true')
   })
 
+  it('offers a strip of the days with availability and jumps to the chosen day (DEC-111)', async () => {
+    getMock.mockResolvedValueOnce({
+      data: availabilityFixture(),
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mountAvailabilityPage({
+      slug: 'barberia-ejemplo',
+      serviceId: SERVICE_A,
+      barberId: BARBER_A,
+    })
+    await flushPromises()
+
+    const chips = wrapper.findAll('.pb-day')
+    expect(chips).toHaveLength(2)
+    expect(chips[0]!.text()).toContain('15')
+    expect(chips[1]!.text()).toContain('16')
+    expect(chips[0]!.attributes('aria-current')).toBe('date')
+    expect(chips[1]!.attributes('aria-current')).toBeUndefined()
+
+    await chips[1]!.trigger('click')
+
+    expect(chips[1]!.attributes('aria-current')).toBe('date')
+    expect(chips[0]!.attributes('aria-current')).toBeUndefined()
+    // El día elegido en la tira es el mismo que muestra la etiqueta y las franjas.
+    expect(wrapper.find('[aria-live="polite"]').text()).toContain('16 de septiembre')
+    expect(wrapper.findAll('[role="radio"]')).toHaveLength(1)
+  })
+
+  it('announces the whole summary once, while the visual ticket repeats it by parts (DEC-111)', async () => {
+    getMock.mockResolvedValueOnce({
+      data: availabilityFixture(),
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mountAvailabilityPage({
+      slug: 'barberia-ejemplo',
+      serviceId: SERVICE_A,
+      barberId: BARBER_A,
+    })
+    await flushPromises()
+    expect(wrapper.find('.pb-ticket').exists()).toBe(false)
+
+    await wrapper.findAll('[role="radio"]')[0]!.trigger('click')
+
+    const announced = wrapper.find('.pb-sr-only[role="status"]')
+    expect(announced.text()).toContain('Franja elegida:')
+    expect(announced.text()).toContain('zona horaria de la barbería: America/Bogota')
+    expect(announced.text()).toContain('dura 30 min')
+    // La ficha visual no se anuncia una segunda vez.
+    const ticket = wrapper.find('.pb-ticket')
+    expect(ticket.attributes('aria-hidden')).toBe('true')
+    expect(ticket.text()).toContain('Dura 30 min')
+    expect(ticket.text()).toContain('America/Bogota')
+    // Elegir una hora nunca insinúa que ya se reservó (RN-DIS-03).
+    expect(ticket.text()).not.toMatch(/reserv|confirm/i)
+  })
+
   it('shows a distinct empty state with zero slots in the whole window (CA-095-04)', async () => {
     getMock.mockResolvedValueOnce({
       data: availabilityFixture({ slots: [] }),

@@ -13,9 +13,8 @@ import (
 // fakeAssignmentRepository es un doble de catalog.AssignmentRepository:
 // prueba solo la orquestación de catalog.AssignmentService (validación de
 // forma, consulta al puerto de barbero ANTES de tocar el repositorio,
-// traducción de Outcome a apperr), nunca SQL, RLS ni el bloqueo de fila
-// real de DEC-068 (eso vive en postgres/assignment_repository_test.go
-// contra PostgreSQL real).
+// traducción de Outcome a apperr), nunca SQL ni RLS (eso vive en
+// postgres/assignment_repository_test.go contra PostgreSQL real).
 type fakeAssignmentRepository struct {
 	listFn     func(ctx context.Context, barbershopID, barberID string, cursor *catalog.Cursor, limit int) (catalog.AssignmentListResult, error)
 	assignFn   func(ctx context.Context, barbershopID, barberID, serviceID string) (catalog.AssignResult, error)
@@ -253,20 +252,6 @@ func TestAssignmentService_Unassign_NoSuchAssignment_NotFound(t *testing.T) {
 
 	_, err := svc.Unassign(context.Background(), fakeShop, fakeBarber, fakeService)
 	mustBeNotFound(t, err)
-}
-
-func TestAssignmentService_Unassign_LastActiveAssignment_Conflict(t *testing.T) {
-	// DEC-068/CA-023-05: rechazo con un error de conflicto de negocio, no
-	// una validación de campo.
-	repo := &fakeAssignmentRepository{
-		unassignFn: func(context.Context, string, string, string) (catalog.UnassignResult, error) {
-			return catalog.UnassignResult{Outcome: catalog.UnassignOutcomeLastActiveConflict}, nil
-		},
-	}
-	svc := catalog.NewAssignmentService(repo, alwaysExists())
-
-	_, err := svc.Unassign(context.Background(), fakeShop, fakeBarber, fakeService)
-	mustBeConflict(t, err)
 }
 
 func TestAssignmentService_Unassign_Deleted_Succeeds(t *testing.T) {

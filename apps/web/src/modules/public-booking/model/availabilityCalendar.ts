@@ -39,3 +39,27 @@ export function groupSlotsByCivilDate(
   }
   return Array.from(byDay.entries(), ([civilDate, daySlots]) => ({ civilDate, slots: daySlots }))
 }
+
+/** Partes cortas de un día civil para la tira de fechas: «lun», «15» y
+ * «sep». Como `formatCivilDateFull`, se ancla a mediodía UTC y se formatea
+ * en UTC: una fecha civil ya resuelta nunca se reinterpreta por la zona de
+ * la barbería ni por la del dispositivo (RN-DIS-07). */
+export interface CivilDateChip {
+  weekday: string
+  day: string
+  month: string
+}
+
+export function civilDateChip(civilDate: string): CivilDateChip {
+  const [year, month, day] = civilDate.split('-').map(Number)
+  const at = new Date(Date.UTC(year!, month! - 1, day!, 12))
+  const parts = new Intl.DateTimeFormat('es-CO', {
+    timeZone: 'UTC',
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  }).formatToParts(at)
+  const pick = (type: Intl.DateTimeFormatPartTypes) =>
+    (parts.find((part) => part.type === type)?.value ?? '').replace(/\.$/, '')
+  return { weekday: pick('weekday'), day: pick('day'), month: pick('month') }
+}

@@ -83,7 +83,8 @@ test.describe('Exploración pública de fechas y horarios (HU-095)', () => {
     await firstSlot.click()
     await expect(firstSlot).toHaveAttribute('aria-checked', 'true')
 
-    const summary = page.locator('.availability__summary')
+    // La oración completa la anuncia un `role="status"` (la ficha visual la repite por partes).
+    const summary = page.getByRole('status').filter({ hasText: 'Franja elegida' })
     await expect(summary).toContainText('martes, 15 de septiembre de 2026')
     await expect(summary).toContainText('America/Bogota')
     await expect(summary).toContainText('30 min')

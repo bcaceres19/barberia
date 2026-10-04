@@ -204,7 +204,7 @@ const slotsClasses = (index: number) => {
 
 .otp-input__label {
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   line-height: 14px;
   letter-spacing: 0.08em;

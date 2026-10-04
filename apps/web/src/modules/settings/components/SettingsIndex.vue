@@ -62,7 +62,7 @@ function onClick(event: MouseEvent, id: string) {
   min-height: 40px;
   padding: 9px 12px;
   color: var(--color-on-strong-muted);
-  font-size: 13px;
+  font-size: var(--font-size-body-sm);
   line-height: 20px;
   text-decoration: none;
   transition:
@@ -106,7 +106,7 @@ function onClick(event: MouseEvent, id: string) {
 
 .settings-index__number {
   font-family: var(--font-display);
-  font-size: 15px;
+  font-size: var(--font-size-body);
   color: var(--color-brand-accent-surface);
 }
 

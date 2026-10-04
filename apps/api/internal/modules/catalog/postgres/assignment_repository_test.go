@@ -284,7 +284,7 @@ func TestRawSQL_CompositeFK_RejectsCrossTenantAssociation(t *testing.T) {
 	}
 }
 
-// --- Unassign: CA-023-05, CA-023-06, DEC-068 -----------------------------
+// --- Unassign: CA-023-05, DEC-114 ----------------------------------------
 
 func TestUnassign_NotLastAssignment_Deletes(t *testing.T) {
 	db := setupTestDB(t)
@@ -317,9 +317,9 @@ func TestUnassign_NotLastAssignment_Deletes(t *testing.T) {
 	}
 }
 
-func TestUnassign_LastActiveAssignment_RejectedWithoutDeleting(t *testing.T) {
-	// DEC-068/CA-023-05/CA-023-06: un solo barbero asignado a un servicio
-	// activo; retirarlo dejaría el servicio en cero, así que se rechaza.
+func TestUnassign_LastAssignmentOfActiveService_Deletes(t *testing.T) {
+	// DEC-114 (sustituye a DEC-068): retirar al único barbero de un servicio
+	// activo es válido; el servicio queda sin asignaciones.
 	db := setupTestDB(t)
 	repo := newAssignmentRepository(db)
 	suffix := uniqueSuffix(t)
@@ -332,33 +332,27 @@ func TestUnassign_LastActiveAssignment_RejectedWithoutDeleting(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unassign: %v", err)
 	}
-	if result.Outcome != catalog.UnassignOutcomeLastActiveConflict {
-		t.Fatalf("expected UnassignOutcomeLastActiveConflict, got %v", result.Outcome)
+	if result.Outcome != catalog.UnassignOutcomeDeleted {
+		t.Fatalf("expected UnassignOutcomeDeleted, got %v", result.Outcome)
 	}
 
-	// Nada se borró: la fila sigue ahí.
 	page, err := repo.List(context.Background(), string(shopG), barber.ID, nil, 50)
 	if err != nil {
 		t.Fatalf("List: %v", err)
 	}
-	found := false
 	for _, item := range page.Items {
 		if item.ServiceID == service.ID {
-			found = true
+			t.Fatal("expected the last assignment to be gone after Unassign")
 		}
 	}
-	if !found {
-		t.Fatal("CA-023-06: the rejected unassign must NOT have deleted the row")
-	}
 
-	// La operación es segura ante repetición: reintentarla produce el
-	// MISMO rechazo, nunca un borrado accidental en el segundo intento.
+	// Repetir la operación es seguro: la asociación ya no existe.
 	again, err := repo.Unassign(context.Background(), string(shopG), barber.ID, service.ID)
 	if err != nil {
 		t.Fatalf("Unassign (retry): %v", err)
 	}
-	if again.Outcome != catalog.UnassignOutcomeLastActiveConflict {
-		t.Fatalf("CA-023-05: expected the retry to be rejected the same way, got %v", again.Outcome)
+	if again.Outcome != catalog.UnassignOutcomeNotFound {
+		t.Fatalf("expected the retry to report NotFound, got %v", again.Outcome)
 	}
 }
 
@@ -395,17 +389,12 @@ func TestUnassign_UnknownService_NotFound(t *testing.T) {
 	}
 }
 
-// TestUnassign_ConcurrentRaceOnLastTwoAssignments_ExactlyOneSucceeds es LA
-// prueba de la carrera que DEC-068 exige explícitamente: dos
-// desasignaciones concurrentes REALES (dos conexiones físicas) de las DOS
-// ÚLTIMAS filas activas de un mismo servicio. Exactamente una debe tener
-// éxito (UnassignOutcomeDeleted) y la otra debe ser rechazada
-// (UnassignOutcomeLastActiveConflict): el servicio JAMÁS puede quedar en
-// cero asignaciones como resultado de esta carrera. El bloqueo de fila
-// (`SELECT ... FOR UPDATE` sobre `service`) dentro de
-// AssignmentRepository.Unassign es lo que hace esto posible: ambas
-// transacciones se serializan sobre la MISMA fila de `service`.
-func TestUnassign_ConcurrentRaceOnLastTwoAssignments_ExactlyOneSucceeds(t *testing.T) {
+// TestUnassign_ConcurrentOnLastTwoAssignments_BothSucceed: dos
+// desasignaciones concurrentes REALES (dos conexiones físicas) de las dos
+// únicas filas de un servicio. Sin la regla de DEC-068 (sustituida por
+// DEC-114) ambas terminan en UnassignOutcomeDeleted y el servicio queda sin
+// asignaciones, sin errores ni filas a medias.
+func TestUnassign_ConcurrentOnLastTwoAssignments_BothSucceed(t *testing.T) {
 	db := setupTestDB(t)
 	repo := newAssignmentRepository(db)
 	suffix := uniqueSuffix(t)
@@ -443,27 +432,10 @@ func TestUnassign_ConcurrentRaceOnLastTwoAssignments_ExactlyOneSucceeds(t *testi
 	if errB != nil {
 		t.Fatalf("goroutine B: %v", errB)
 	}
-
-	outcomes := []catalog.UnassignOutcome{resultA.Outcome, resultB.Outcome}
-	deletedCount, conflictCount := 0, 0
-	for _, o := range outcomes {
-		switch o {
-		case catalog.UnassignOutcomeDeleted:
-			deletedCount++
-		case catalog.UnassignOutcomeLastActiveConflict:
-			conflictCount++
-		default:
-			t.Fatalf("unexpected outcome in the race: %v", o)
-		}
-	}
-	if deletedCount != 1 || conflictCount != 1 {
-		t.Fatalf("DEC-068: expected exactly one Deleted and one LastActiveConflict, got A=%v B=%v",
-			resultA.Outcome, resultB.Outcome)
+	if resultA.Outcome != catalog.UnassignOutcomeDeleted || resultB.Outcome != catalog.UnassignOutcomeDeleted {
+		t.Fatalf("expected both unassigns to delete, got A=%v B=%v", resultA.Outcome, resultB.Outcome)
 	}
 
-	// Verificación final, la que de verdad importa: el servicio conserva
-	// AL MENOS una asignación activa, nunca cero (CA-023-06).
-	remaining := 0
 	for _, barberID := range []string{barberA.ID, barberB.ID} {
 		page, err := repo.List(context.Background(), string(shopG), barberID, nil, 50)
 		if err != nil {
@@ -471,12 +443,9 @@ func TestUnassign_ConcurrentRaceOnLastTwoAssignments_ExactlyOneSucceeds(t *testi
 		}
 		for _, item := range page.Items {
 			if item.ServiceID == service.ID {
-				remaining++
+				t.Fatalf("expected no assignment left for barber %s", barberID)
 			}
 		}
-	}
-	if remaining != 1 {
-		t.Fatalf("DEC-068: expected exactly 1 remaining assignment for the service after the race, got %d", remaining)
 	}
 }
 

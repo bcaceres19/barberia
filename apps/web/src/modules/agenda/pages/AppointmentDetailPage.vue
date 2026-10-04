@@ -1450,7 +1450,7 @@ function occurredAtLabel(entry: HistoryEntry): string {
   border-radius: 50%;
   color: var(--color-on-strong);
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: var(--font-size-h2);
 }
 
 .appointment-detail-page__identity {
@@ -1535,7 +1535,7 @@ function occurredAtLabel(entry: HistoryEntry): string {
 
 .appointment-detail-page__fact dt {
   font-family: var(--font-family-base);
-  font-size: 14px;
+  font-size: var(--font-size-body-sm);
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -1543,7 +1543,7 @@ function occurredAtLabel(entry: HistoryEntry): string {
 .appointment-detail-page__fact dd {
   margin: 0;
   font-family: var(--font-family-base);
-  font-size: 14px;
+  font-size: var(--font-size-body-sm);
   line-height: 20px;
   color: var(--color-text-primary);
 }
@@ -1620,14 +1620,14 @@ function occurredAtLabel(entry: HistoryEntry): string {
 
 .appointment-detail-page__history-event {
   font-family: var(--font-family-base);
-  font-size: 14px;
+  font-size: var(--font-size-body-sm);
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
 .appointment-detail-page__history-meta {
   font-family: var(--font-family-base);
-  font-size: 13px;
+  font-size: var(--font-size-body-sm);
   color: var(--color-text-secondary);
 }
 
@@ -1710,7 +1710,7 @@ function occurredAtLabel(entry: HistoryEntry): string {
 
 .appointment-detail-page__correct-label {
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   line-height: 14px;
   letter-spacing: 0.08em;
@@ -1790,7 +1790,7 @@ function occurredAtLabel(entry: HistoryEntry): string {
 
 :global(.appointment-detail-page__reschedule-dialog .base-dialog__title) {
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: var(--font-size-title-item);
   font-weight: 400;
 }
 
@@ -1818,16 +1818,16 @@ function occurredAtLabel(entry: HistoryEntry): string {
     width: 58px;
     height: 58px;
     flex-basis: 58px;
-    font-size: 19px;
+    font-size: var(--font-size-h3);
   }
 
   .appointment-detail-page__title {
-    font-size: 25px;
+    font-size: var(--font-size-h2);
     line-height: 30px;
   }
 
   .appointment-detail-page__status {
-    font-size: 14px;
+    font-size: var(--font-size-body-sm);
   }
 
   /* Hasta cuatro acciones pueden coexistir sobre un turno confirmed ya
@@ -1873,7 +1873,7 @@ function occurredAtLabel(entry: HistoryEntry): string {
 
   .appointment-detail-page__fact dt,
   .appointment-detail-page__fact dd {
-    font-size: 11px;
+    font-size: var(--font-size-caption);
     line-height: 15px;
   }
 
@@ -1885,7 +1885,7 @@ function occurredAtLabel(entry: HistoryEntry): string {
   }
 
   .appointment-detail-page__history-title {
-    font-size: 20px;
+    font-size: var(--font-size-title-item);
     line-height: 25px;
   }
 
@@ -1901,13 +1901,13 @@ function occurredAtLabel(entry: HistoryEntry): string {
   }
 
   .appointment-detail-page__history-event {
-    font-size: 12px;
+    font-size: var(--font-size-caption);
   }
 
   .appointment-detail-page__history-meta,
   .appointment-detail-page__history-reason,
   .appointment-detail-page__history-changes {
-    font-size: 11px;
+    font-size: var(--font-size-caption);
     line-height: 15px;
   }
 

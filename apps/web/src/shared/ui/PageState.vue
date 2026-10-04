@@ -112,7 +112,7 @@ const style = computed(() => ({ '--page-state-mark': markVar.value }))
 .page-state__status {
   margin: 0;
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;

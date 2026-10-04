@@ -77,13 +77,13 @@ const emit = defineEmits<{ discard: []; save: [] }>()
   display: flex;
   flex-direction: column;
   min-width: 0;
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   line-height: 17px;
   color: var(--color-on-strong-muted);
 }
 
 .save-bar__text strong {
-  font-size: 13px;
+  font-size: var(--font-size-body-sm);
   font-weight: 600;
   color: var(--color-on-strong);
 }
@@ -99,7 +99,7 @@ const emit = defineEmits<{ discard: []; save: [] }>()
 
   height: 36px;
   padding-inline: 16px;
-  font-size: 12px;
+  font-size: var(--font-size-caption);
 }
 
 .save-bar :deep(.base-button--primary) {

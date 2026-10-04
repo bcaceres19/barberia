@@ -5,7 +5,7 @@
  * de la barbería queda en el día civil correcto (RN-DIS-07).
  */
 import { describe, it, expect } from 'vitest'
-import { groupSlotsByCivilDate } from '../availabilityCalendar'
+import { civilDateChip, groupSlotsByCivilDate } from '../availabilityCalendar'
 
 describe('groupSlotsByCivilDate', () => {
   it('returns an empty array for an empty slot list', () => {
@@ -51,5 +51,20 @@ describe('groupSlotsByCivilDate', () => {
     expect(days).toHaveLength(1)
     expect(days[0]!.civilDate).toBe('2026-09-15')
     expect(days[0]!.slots).toHaveLength(2)
+  })
+})
+
+describe('civilDateChip', () => {
+  it('returns the short weekday, day and month of a civil date in Spanish', () => {
+    expect(civilDateChip('2026-09-15')).toEqual({ weekday: 'mar', day: '15', month: 'sept' })
+    expect(civilDateChip('2026-12-31')).toEqual({ weekday: 'jue', day: '31', month: 'dic' })
+  })
+
+  it('never reads the device time zone: the civil date is the same everywhere', () => {
+    // Una fecha civil se ancla a mediodía UTC; ni a UTC-12 ni a UTC+14 cruza el día.
+    for (const date of ['2026-03-01', '2026-02-28', '2027-01-01']) {
+      const chip = civilDateChip(date)
+      expect(chip.day).toBe(String(Number(date.slice(-2))))
+    }
   })
 })

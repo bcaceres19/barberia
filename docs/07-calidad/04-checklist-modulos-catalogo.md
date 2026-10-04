@@ -62,7 +62,7 @@ Límites reales (`catalogValidation.ts`): nombre máx. 120, descripción máx. 5
 
 - [ ] Marcar la misma casilla (asignar) dos veces con clics muy rápidos: una sola fila de asignación creada, no una petición duplicada visible como error.
 - [ ] Asignar un servicio a un barbero, y en otra pestaña **desactivar ese mismo servicio** desde `CatalogPage`; volver a la pestaña de asignación sin recargar: ¿la casilla sigue marcada como si nada, o refleja de algún modo que el servicio ya no está activo? Si no refleja nada, verificar al menos que la próxima carga real de la lista sí lo hace correctamente.
-- [ ] Intentar desasignar la **última** asignación activa de un servicio activo (`DEC-068`: se rechaza retirar la última asignación de un servicio activo) — confirmar que el rechazo se comunica con un mensaje claro y no como un 500 ni un error genérico de red.
+- [ ] Desasignar la **última** asignación de un servicio activo (`DEC-114`: se permite) — confirmar que la casilla se desmarca sin mensaje de error y que el servicio deja de aparecer en la reserva pública.
 - [ ] Dos desasignaciones concurrentes sobre la misma última asignación (dos pestañas, clic casi simultáneo): exactamente una debe tener éxito o ambas deben fallar de forma controlada; nunca debe quedar el servicio activo sin ningún barbero asignado por una condición de carrera.
 - [ ] Con muchos barberos y muchos servicios (cruzando el límite de una página en cualquiera de los dos selectores paginados por cursor): asignar mientras se pagina no debe duplicar ni perder una fila visible.
 - [ ] Barbero o servicio con nombre idéntico a otro (ver §2 y §3): confirmar que el selector de esta pantalla permite distinguir cuál es cuál sin ambigüedad antes de asignar.

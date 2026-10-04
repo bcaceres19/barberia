@@ -186,13 +186,8 @@ describe('barberServicesApi.unassignService', () => {
     expect(await unassignService('unknown', 's-1')).toEqual({ kind: 'not-found' })
   })
 
-  it('maps a 409 with code=conflict to last-active-conflict (DEC-068)', async () => {
+  it('maps any other failure status, including 409, to unexpected-error', async () => {
     deleteMock.mockResolvedValueOnce(problem(409, { code: 'conflict' }))
-    expect(await unassignService('b-1', 's-1')).toEqual({ kind: 'last-active-conflict' })
-  })
-
-  it('maps a 409 with an unrelated code to unexpected-error, never assuming DEC-068 by status alone', async () => {
-    deleteMock.mockResolvedValueOnce(problem(409, { code: 'idempotency-conflict' }))
     expect(await unassignService('b-1', 's-1')).toEqual({ kind: 'unexpected-error' })
   })
 

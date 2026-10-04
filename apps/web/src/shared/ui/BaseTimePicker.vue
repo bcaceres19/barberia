@@ -268,7 +268,7 @@ watch(
 }
 .base-time-picker__label {
   color: var(--color-on-strong-muted);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   line-height: 14px;
   letter-spacing: 0.08em;
@@ -370,7 +370,7 @@ watch(
 }
 .base-time-picker__column label {
   text-align: center;
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;

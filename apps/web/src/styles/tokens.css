@@ -168,6 +168,19 @@
   --font-size-caption-line: 16px;
   --font-weight-caption: 500;
 
+  /* Escala del panel privado (sobre tinta). Ninguna pantalla escribe un
+     tamaño suelto: el piso legible es --font-size-caption (12px, solo
+     versalitas espaciadas y datos auxiliares) y el techo de un título de
+     página es --font-size-title-page. La serif condensada necesita unos
+     puntos más que la sans para pesar igual, por eso los títulos van aparte
+     de la escala de texto corrido. */
+  --font-size-title-item: 21px;
+  --font-size-title-item-line: 26px;
+  --font-size-title-section: 28px;
+  --font-size-title-section-line: 32px;
+  --font-size-title-page: 36px;
+  --font-size-title-page-line: 40px;
+
   /* Espaciado: unidad base 4px */
   --space-0: 0;
   --space-1: 4px;

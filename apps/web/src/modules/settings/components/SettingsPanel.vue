@@ -68,7 +68,7 @@ defineProps<{
 .settings-panel__number {
   flex: 0 0 auto;
   font-family: var(--font-display);
-  font-size: 34px;
+  font-size: var(--font-size-title-page);
   line-height: 1;
   color: var(--color-brand-accent-surface);
 }
@@ -81,7 +81,7 @@ defineProps<{
 .settings-panel__title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: var(--font-size-h2);
   font-weight: 400;
   line-height: 28px;
   color: var(--color-on-strong);
@@ -90,7 +90,7 @@ defineProps<{
 .settings-panel__description {
   margin: 4px 0 0;
   max-width: 56ch;
-  font-size: 13px;
+  font-size: var(--font-size-body-sm);
   line-height: 19px;
   color: var(--color-on-strong-muted);
 }
@@ -103,7 +103,7 @@ defineProps<{
   gap: 6px;
   margin-top: 6px;
   color: var(--color-on-strong-muted);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   letter-spacing: 0.08em;
   line-height: 16px;
@@ -169,11 +169,11 @@ defineProps<{
   }
 
   .settings-panel__number {
-    font-size: 28px;
+    font-size: var(--font-size-title-section);
   }
 
   .settings-panel__title {
-    font-size: 21px;
+    font-size: var(--font-size-title-item);
     line-height: 25px;
   }
 

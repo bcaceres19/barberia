@@ -122,13 +122,11 @@ func (s *AssignmentService) IsAssigned(ctx context.Context, barbershopID, barber
 }
 
 // Unassign retira la asociación entre barberID y serviceID dentro de
-// barbershopID (CA-023-05, CA-023-06, DEC-068). No existe tal asignación
-// (barbero o servicio inexistente/ajeno, o la asociación concreta nunca
-// existió) produce apperr.NotFound uniforme; ser la última asignación
-// activa de un servicio activo produce apperr.Conflict, verificado dentro
-// de la misma transacción que el DELETE (Repository.Unassign), resistente
-// a la carrera de dos desasignaciones concurrentes de las dos últimas filas
-// de un mismo servicio.
+// barbershopID (CA-023-05). No existe tal asignación (barbero o servicio
+// inexistente/ajeno, o la asociación concreta nunca existió) produce
+// apperr.NotFound uniforme. Retirar a cualquier barbero es válido, también
+// el último de un servicio activo (DEC-114, que sustituye a DEC-068): ese
+// servicio deja de ofrecerse al público hasta que se asigne otro barbero.
 func (s *AssignmentService) Unassign(ctx context.Context, barbershopID, barberID, serviceID string) (UnassignResult, error) {
 	if err := ctx.Err(); err != nil {
 		return UnassignResult{}, apperr.Internal(fmt.Errorf("catalog: contexto cancelado antes de retirar servicio: %w", err))
@@ -147,11 +145,8 @@ func (s *AssignmentService) Unassign(ctx context.Context, barbershopID, barberID
 	if err != nil {
 		return UnassignResult{}, apperr.Internal(fmt.Errorf("catalog: retirar servicio: %w", err))
 	}
-	switch result.Outcome {
-	case UnassignOutcomeNotFound:
+	if result.Outcome == UnassignOutcomeNotFound {
 		return UnassignResult{}, errAssignmentNotFound()
-	case UnassignOutcomeLastActiveConflict:
-		return UnassignResult{}, errLastActiveAssignment()
 	}
 	return result, nil
 }

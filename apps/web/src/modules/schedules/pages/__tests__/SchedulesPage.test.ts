@@ -12,6 +12,8 @@ import { resetToasts, toastState } from '@/shared/model/toastStore'
 import { DEFAULT_BRAND, resetBrand, setBrand } from '@/shared/model'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
+import BaseDatePicker from '@/shared/ui/BaseDatePicker.vue'
+import BaseTimePicker from '@/shared/ui/BaseTimePicker.vue'
 
 const fetchBarberSummariesMock = vi.hoisted(() => vi.fn())
 const fetchBarbershopTimezoneMock = vi.hoisted(() => vi.fn())
@@ -85,8 +87,12 @@ async function mountReady(barbers = oneBarber, items: (typeof mondayMorning)[] =
   return wrapper
 }
 
-function barberSelect(wrapper: VueWrapper): HTMLSelectElement {
-  return wrapper.element.querySelector('#schedules-barber-select') as HTMLSelectElement
+// El selector de barbero es un listbox propio (BaseSelect): se abre con su
+// disparador y las opciones solo existen mientras está abierto.
+async function openBarberList(wrapper: VueWrapper) {
+  await wrapper.get('#schedules-barber-select').trigger('click')
+  await flushPromises()
+  return wrapper.findAll('[role="option"]')
 }
 
 async function openCreateDialog(wrapper: VueWrapper) {
@@ -102,12 +108,24 @@ function editForm(wrapper: VueWrapper) {
   return wrapper.get('form[name="updateWorkingHour"]')
 }
 
+// La hora y la fecha ya no son inputs nativos sino selectores propios: se les
+// entrega el valor por su evento, igual que lo haría su panel al aplicar.
+async function setTime(form: ReturnType<typeof createForm>, time: string, index = 0) {
+  form.findAllComponents(BaseTimePicker)[index]!.vm.$emit('update:modelValue', time)
+  await flushPromises()
+}
+
+async function setDate(form: ReturnType<typeof createForm>, date: string) {
+  form.findComponent(BaseDatePicker).vm.$emit('update:modelValue', date)
+  await flushPromises()
+}
+
 async function fillCreateForm(
   wrapper: VueWrapper,
   { startsTime = '08:00', durationMinutes = '60' } = {},
 ) {
-  await wrapper.get('#schedules-create-weekday').setValue('1')
-  await createForm(wrapper).get('input[name="startsTime"]').setValue(startsTime)
+  await createForm(wrapper).get('button[role="radio"][aria-label="Lunes"]').trigger('click')
+  await setTime(createForm(wrapper), startsTime)
   await createForm(wrapper).get('input[name="durationMinutes"]').setValue(durationMinutes)
 }
 
@@ -155,11 +173,11 @@ describe('SchedulesPage', () => {
 
   it('a barber with one tramo and one with a full team select use the same component', async () => {
     const oneWrapper = await mountReady(oneBarber, [mondayMorning])
-    expect(oneWrapper.get('#schedules-barber-select').findAll('option').length).toBe(1)
+    expect((await openBarberList(oneWrapper)).length).toBe(1)
     expect(oneWrapper.text()).toContain('08:00')
 
     const fourWrapper = await mountReady(fourBarbers, [])
-    expect(fourWrapper.get('#schedules-barber-select').findAll('option').length).toBe(4)
+    expect((await openBarberList(fourWrapper)).length).toBe(4)
   })
 
   it('always shows all seven weekdays, with or without tramos (CA-040-01)', async () => {
@@ -213,9 +231,8 @@ describe('SchedulesPage', () => {
       kind: 'success',
       page: { items: [{ ...mondayMorning, id: 'wh-2', startsTime: '10:00' }], nextCursor: null },
     })
-    const select = barberSelect(wrapper)
-    select.value = 'b-2'
-    await select.dispatchEvent(new Event('change'))
+    const options = await openBarberList(wrapper)
+    await options[1]!.trigger('click')
     await flushPromises()
 
     expect(fetchWorkingHoursMock).toHaveBeenLastCalledWith('b-2')
@@ -252,7 +269,7 @@ describe('SchedulesPage', () => {
   it('rejects an empty starts time on the client without calling the API', async () => {
     const wrapper = await mountReady(oneBarber, [])
     await openCreateDialog(wrapper)
-    await wrapper.get('#schedules-create-weekday').setValue('1')
+    await createForm(wrapper).get('button[role="radio"][aria-label="Lunes"]').trigger('click')
     await createForm(wrapper).get('input[name="durationMinutes"]').setValue('60')
 
     await createForm(wrapper).trigger('submit')
@@ -268,7 +285,7 @@ describe('SchedulesPage', () => {
     await editButtons[0]!.trigger('click')
     await flushPromises()
 
-    await editForm(wrapper).get('input[name="startsTime"]').setValue('09:00')
+    await setTime(editForm(wrapper), '09:00')
 
     updateWorkingHourMock.mockResolvedValueOnce({
       kind: 'success',
@@ -439,7 +456,7 @@ describe('SchedulesPage · HU-041', () => {
   it('creating a closed exception succeeds and appends it to the list', async () => {
     const wrapper = await mountReady(oneBarber, [])
     await openExceptionCreateDialog(wrapper)
-    await exceptionCreateForm(wrapper).get('input[name="effectiveDate"]').setValue('2026-12-08')
+    await setDate(exceptionCreateForm(wrapper), '2026-12-08')
 
     createScheduleExceptionMock.mockResolvedValueOnce({
       kind: 'success',
@@ -463,7 +480,7 @@ describe('SchedulesPage · HU-041', () => {
   it('a duplicate date (CA-041-05) shows a recoverable message without closing the dialog', async () => {
     const wrapper = await mountReady(oneBarber, [])
     await openExceptionCreateDialog(wrapper)
-    await exceptionCreateForm(wrapper).get('input[name="effectiveDate"]').setValue('2026-12-08')
+    await setDate(exceptionCreateForm(wrapper), '2026-12-08')
 
     createScheduleExceptionMock.mockResolvedValueOnce({ kind: 'date-conflict' })
     await exceptionCreateForm(wrapper).trigger('submit')
@@ -512,26 +529,185 @@ describe('SchedulesPage · HU-041', () => {
     await useButton.trigger('click')
     await flushPromises()
 
-    const dateInput = exceptionCreateForm(wrapper).get('input[name="effectiveDate"]')
-      .element as HTMLInputElement
-    expect(dateInput.value).toBe('2026-12-25')
+    expect(exceptionCreateForm(wrapper).findComponent(BaseDatePicker).props('modelValue')).toBe(
+      '2026-12-25',
+    )
+  })
+
+  it('marks a holiday that already has an exception instead of offering to register another', async () => {
+    fetchScheduleExceptionsMock.mockReset().mockResolvedValueOnce({
+      kind: 'success',
+      page: { items: [{ ...closedException, effectiveDate: '2026-12-25' }], nextCursor: null },
+    })
+    fetchColombianHolidaysMock.mockReset().mockResolvedValueOnce({
+      kind: 'success',
+      items: [{ date: '2026-12-25', name: 'Navidad' }],
+    })
+    const wrapper = await mountReady(oneBarber, [])
+
+    expect(wrapper.text()).toContain('Con excepción')
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Registrar excepción')).toBe(false)
+  })
+})
+
+// --- Tablero semanal --------------------------------------------------------
+
+describe('SchedulesPage · tablero semanal', () => {
+  beforeEach(() => {
+    fetchBarberSummariesMock.mockReset()
+    fetchWorkingHoursMock.mockReset()
+    createWorkingHourMock.mockReset()
+    fetchBarbershopTimezoneMock.mockReset().mockResolvedValue({ kind: 'unavailable' })
+    fetchHolidayCalendarMock.mockReset().mockResolvedValue({ kind: 'success', enabled: false })
+    fetchScheduleExceptionsMock
+      .mockReset()
+      .mockResolvedValue({ kind: 'success', page: { items: [], nextCursor: null } })
+    fetchColombianHolidaysMock.mockReset().mockResolvedValue({ kind: 'unavailable' })
+  })
+
+  it('totals the week and counts the days with a working schedule', async () => {
+    const wrapper = await mountReady(oneBarber, [
+      mondayMorning,
+      { ...mondayMorning, id: 'wh-2', startsTime: '14:00', durationMinutes: 210 },
+      { ...mondayMorning, id: 'wh-3', isoWeekday: 3 },
+    ])
+
+    const stats = wrapper.get('dl').text()
+    expect(stats).toContain('11 h 30 min')
+    expect(stats).toContain('2/7')
+  })
+
+  it('labels a day without tramos as free, and still lists it (CA-040-01)', async () => {
+    const wrapper = await mountReady(oneBarber, [mondayMorning])
+
+    expect(wrapper.findAll('section.week-board__day')).toHaveLength(7)
+    expect(wrapper.findAll('.week-board__day--free')).toHaveLength(6)
+    expect(wrapper.text()).toContain('Día libre')
+  })
+
+  it('shows when each tramo ends next to its start and duration', async () => {
+    const wrapper = await mountReady(oneBarber, [mondayMorning])
+
+    expect(wrapper.text()).toContain('08:00 · 240 min')
+    expect(wrapper.text()).toContain('hasta 12:00')
+  })
+
+  it('opens the create dialog on the day whose + was pressed', async () => {
+    const wrapper = await mountReady(oneBarber, [])
+    await wrapper.get('button[aria-label="Agregar un tramo el Martes"]').trigger('click')
+    await flushPromises()
+
+    expect(
+      createForm(wrapper)
+        .get('button[role="radio"][aria-label="Martes"]')
+        .attributes('aria-checked'),
+    ).toBe('true')
+
+    await setTime(createForm(wrapper), '09:00')
+    createWorkingHourMock.mockResolvedValueOnce({
+      kind: 'success',
+      workingHour: { ...mondayMorning, isoWeekday: 2, startsTime: '09:00' },
+    })
+    await createForm(wrapper).trigger('submit')
+    await flushPromises()
+
+    expect(createWorkingHourMock).toHaveBeenCalledWith('b-1', 2, '09:00', 60, expect.any(String))
+  })
+
+  it('previews the tramo being written together with the ones the day already has', async () => {
+    const wrapper = await mountReady(oneBarber, [mondayMorning])
+    await wrapper.get('button[aria-label="Agregar un tramo el Lunes"]').trigger('click')
+    await flushPromises()
+
+    expect(createForm(wrapper).text()).toContain('Elige la hora y la duración')
+
+    await setTime(createForm(wrapper), '13:00')
+
+    expect(createForm(wrapper).text()).toContain('Lunes · 13:00 – 14:00 · 1 h')
+    // El de la mañana sigue en la pista como contexto, atenuado.
+    expect(createForm(wrapper).findAll('.day-track__bar--muted')).toHaveLength(1)
+  })
+
+  it('marks today in the barbershop timezone, not the device one', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    try {
+      // Domingo 4 de octubre, 22:30 en Bogotá (lunes 5 UTC).
+      vi.setSystemTime(new Date('2026-10-05T03:30:00Z'))
+      fetchBarbershopTimezoneMock.mockReset().mockResolvedValueOnce({
+        kind: 'success',
+        timezone: 'America/Bogota',
+      })
+      const wrapper = await mountReady(oneBarber, [mondayMorning])
+
+      const today = wrapper.findAll('.week-board__day--today')
+      expect(today).toHaveLength(1)
+      expect(today[0]!.text()).toContain('Domingo')
+      expect(today[0]!.text()).toContain('Hoy')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('marks no day as today when the timezone is unknown', async () => {
+    const wrapper = await mountReady(oneBarber, [mondayMorning])
+
+    expect(wrapper.find('.week-board__day--today').exists()).toBe(false)
+  })
+
+  it('opens the exceptions section first and keeps one section open at a time', async () => {
+    fetchColombianHolidaysMock.mockReset().mockResolvedValueOnce({
+      kind: 'success',
+      items: [{ date: '2026-12-25', name: 'Navidad' }],
+    })
+    const wrapper = await mountReady(oneBarber, [])
+    const trigger = (title: string) =>
+      wrapper.findAll('.accordion-item__trigger').find((t) => t.text().startsWith(title))!
+
+    expect(trigger('Excepciones de jornada').attributes('aria-expanded')).toBe('true')
+    expect(trigger('Calendario de festivos').attributes('aria-expanded')).toBe('false')
+    expect(trigger('Próximos festivos').attributes('aria-expanded')).toBe('false')
+
+    await trigger('Calendario de festivos').trigger('click')
+    expect(trigger('Calendario de festivos').attributes('aria-expanded')).toBe('true')
+    expect(trigger('Excepciones de jornada').attributes('aria-expanded')).toBe('false')
+
+    await trigger('Calendario de festivos').trigger('click')
+    expect(trigger('Calendario de festivos').attributes('aria-expanded')).toBe('false')
+  })
+
+  it('summarizes each section in its header badge', async () => {
+    fetchHolidayCalendarMock.mockReset().mockResolvedValueOnce({ kind: 'success', enabled: true })
+    fetchScheduleExceptionsMock.mockReset().mockResolvedValueOnce({
+      kind: 'success',
+      page: { items: [closedException], nextCursor: null },
+    })
+    const wrapper = await mountReady(oneBarber, [])
+    const badge = (title: string) =>
+      wrapper
+        .findAll('.accordion-item__trigger')
+        .find((t) => t.text().startsWith(title))!
+        .get('.accordion-item__badge')
+        .text()
+
+    expect(badge('Calendario de festivos')).toBe('Activo')
+    expect(badge('Excepciones de jornada')).toBe('1')
   })
   describe('perfil de barbero individual (DEC-115)', () => {
     it('hides the barber picker with one barber and still loads that schedule', async () => {
       setBrand({ ...DEFAULT_BRAND, panelProfile: 'solo' })
       const wrapper = await mountReady(oneBarber, [mondayMorning])
 
-      expect(barberSelect(wrapper)).toBeNull()
+      expect(wrapper.find('#schedules-barber-select').exists()).toBe(false)
       expect(fetchWorkingHoursMock).toHaveBeenCalledWith('b-1')
       expect(wrapper.text()).toContain('08:00')
     })
 
     it('keeps the picker in the solo profile with several barbers, and in the full panel', async () => {
       setBrand({ ...DEFAULT_BRAND, panelProfile: 'solo' })
-      expect(barberSelect(await mountReady(fourBarbers))).not.toBeNull()
+      expect((await mountReady(fourBarbers)).find('#schedules-barber-select').exists()).toBe(true)
 
       resetBrand()
-      expect(barberSelect(await mountReady(oneBarber))).not.toBeNull()
+      expect((await mountReady(oneBarber)).find('#schedules-barber-select').exists()).toBe(true)
     })
 
     it('points the empty state at "Mi perfil" instead of "Barberos"', async () => {

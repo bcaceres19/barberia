@@ -77,11 +77,9 @@ antes de agregar código.
   cursor, asignación con semántica HTTP naturalmente repetible (sin
   `Idempotency-Key`: repetir el mismo `PUT` responde `200` en vez de `201`
   con el mismo `createdAt`, sin crear una segunda fila) y desasignación.
-  Retirar la última asignación activa de un servicio activo responde `409`
-  (`DEC-068`), verificado dentro de la misma transacción que bloquea la
-  fila de `service` (`SELECT ... FOR UPDATE`) para resistir la carrera de
-  dos desasignaciones concurrentes de las dos últimas filas de un mismo
-  servicio. `catalog` colabora con `staff` SOLO a través de
+  Se puede retirar a cualquier barbero, también al último de un servicio
+  activo (`DEC-114`, que sustituye a `DEC-068`): la desasignación es un
+  único `DELETE` acotado por tenant y repetirla responde `404`. `catalog` colabora con `staff` SOLO a través de
   `catalog.BarberPort`, un puerto pequeño que `staff.BarberLookup`
   satisface de forma estructural: ningún paquete de un módulo importa al
   otro (verificado por `internal/platform/archtest/
@@ -1268,27 +1266,19 @@ La existencia de `serviceId` la verifica `catalog` directamente (es su
 propia tabla `service`, mismo módulo bajo prueba, no una dependencia
 cruzada).
 
-### Última asignación activa: rechazo con bloqueo de fila (DEC-068, CA-023-05/06)
+### Retirar al último barbero de un servicio (DEC-114, CA-023-05/06)
 
-`AssignmentRepository.Unassign` ejecuta, dentro de UNA sola `InTenantTx`:
-
-1. `SELECT is_active FROM service WHERE id = $1 AND barbershop_id = $2
-   FOR UPDATE`: bloquea la fila de `service` hasta el fin de la
-   transacción. Dos desasignaciones concurrentes del MISMO `service_id` se
-   serializan aquí, sin importar qué `barber_id` retire cada una.
-2. Confirma que la asociación exista (si no, `UnassignOutcomeNotFound`).
-3. Cuenta cuántas filas activas quedan para ese `service_id` (incluida la
-   que se retiraría). Si el servicio está activo y esa cuenta es `<= 1`,
-   sería la última: `UnassignOutcomeLastActiveConflict`, sin borrar nada.
-4. En cualquier otro caso, `DELETE` y `UnassignOutcomeDeleted`.
-
-El lock del paso 1 es lo que hace la carrera segura: una segunda
-transacción que intente retirar la penúltima fila del mismo servicio espera
-ahí; al reanudarse, ve la cuenta YA actualizada y rechaza correctamente si
-le toca ser la última.
-`TestUnassign_ConcurrentRaceOnLastTwoAssignments_ExactlyOneSucceeds`
-(`internal/modules/catalog/postgres/assignment_repository_test.go`, con
-`-race`, dos conexiones reales) demuestra esto contra PostgreSQL real.
+`AssignmentRepository.Unassign` ejecuta un único `DELETE FROM barber_service
+WHERE barbershop_id = $1 AND barber_id = $2 AND service_id = $3` dentro de
+`InTenantTx`. Sin fila afectada devuelve `UnassignOutcomeNotFound` (404
+uniforme: la asociación nunca existió, ya se retiró, o el barbero/servicio es
+ajeno); con fila, `UnassignOutcomeDeleted`. No cuenta asignaciones ni bloquea
+`service`: `DEC-114` sustituye a `DEC-068`, que rechazaba retirar la última
+con `409`. Un servicio activo sin barberos no se ofrece en la reserva pública
+(`ListPublicServices` exige al menos una fila en `barber_service`).
+`TestUnassign_ConcurrentOnLastTwoAssignments_BothSucceed` verifica con dos
+conexiones reales que dos retiros simultáneos de las dos únicas filas
+terminan ambos en `Deleted`.
 
 ### Semántica HTTP naturalmente repetible, sin `Idempotency-Key`
 
@@ -1309,15 +1299,15 @@ NOTHING`); repetir `DELETE` sobre una asociación ya retirada responde `404`.
 | `CA-023-02` | Cumplido | `TestAssign_Repeated_DoesNotCreateASecondRow`, `TestAssignmentService_Assign_Repeated_ReturnsAlreadyExistsWithoutError`, HTTP journey (200 con `createdAt` original en la repetición). |
 | `CA-023-03` | Cumplido | `TestAssign_SameServiceToMultipleBarbers_EachIsAnIndependentResource`, E2E ("un mismo servicio se asigna a varios barberos"). |
 | `CA-023-04` | Cumplido | `TestAssign_ServiceFromAnotherTenant_ServiceNotFound`, `TestRawSQL_CompositeFK_RejectsCrossTenantAssociation` (FK real, `23503`), `TestBarberServices_HTTP_TwoTenants_CrossAccessReturns404WithoutLeaking`, `hu023_asignaciones.sql` ("CA-023-04"). |
-| `CA-023-05` | Cumplido | `TestUnassign_LastActiveAssignment_RejectedWithoutDeleting` (incluye reintento seguro), `TestBarberServices_HTTP_LastActiveAssignment_Returns409`, E2E DEC-068. |
-| `CA-023-06` | Cumplido | `TestUnassign_ConcurrentRaceOnLastTwoAssignments_ExactlyOneSucceeds` (`-race`, dos conexiones reales), `hu023_asignaciones.sql` ("CA-023-06"). |
+| `CA-023-05` | Cumplido | `TestUnassign_LastAssignmentOfActiveService_Deletes` (incluye reintento con `NotFound`), `TestBarberServices_HTTP_LastAssignment_CanBeRemoved`, E2E «retirar la última asignación» (`DEC-114`). |
+| `CA-023-06` | Cumplido | `TestUnassign_ConcurrentOnLastTwoAssignments_BothSucceed` (dos conexiones reales), `hu023_asignaciones.sql` ("CA-023-06", esquema). |
 | `CA-023-07` | Cumplido | Esquema exacto verificado en `hu023_asignaciones.sql`; `TestBarberServices_HTTP_ResponseNeverIncludesNameDurationPrice`. |
 | `CA-023-08` | Parcial (backend no aplica; ver `apps/web/README.md`) | Evidencia de frontend/accesibilidad documentada en `apps/web/README.md` y `apps/web/e2e/`. |
 
 ### Pruebas
 
 - Unitarias: `internal/modules/catalog/assignment_service_test.go` (doble en memoria de `catalog.AssignmentRepository`/`BarberPort`); `internal/modules/staff/lookup_test.go`.
-- PostgreSQL real, incluida la carrera de DEC-068 con `-race`: `internal/modules/catalog/postgres/assignment_repository_test.go`.
+- PostgreSQL real, incluidos dos retiros concurrentes de las dos únicas filas: `internal/modules/catalog/postgres/assignment_repository_test.go`.
 - SQL directo con el rol real: `database/tests/hu023_asignaciones.sql`.
 - Router de producción con dos tenants reales: `cmd/api/barber_services_integration_test.go`.
 - Arquitectura (sin imports cruzados `catalog`↔`staff`): `internal/platform/archtest/module_boundary_test.go`.
@@ -1360,7 +1350,7 @@ RN-IDE-01):
 2. `lockServiceForTransition` bloquea la fila (`SELECT is_active FROM
    service WHERE id = $1 AND barbershop_id = $2 FOR UPDATE`): dos
    confirmaciones concurrentes del MISMO servicio se serializan aquí,
-   idéntico patrón que `AssignmentRepository.Unassign` (HU-023, DEC-068).
+   para que la segunda vea el estado ya actualizado.
    `found=false` (fila inexistente o de otra barbería) hace `ROLLBACK`
    entero, dejando la clave de idempotencia libre para un reintento
    legítimo (`CA-024-07`).
@@ -1448,7 +1438,7 @@ transacciones podrían insertar tramos que se solapan entre sí sin que
 ninguna vea a la otra (phantom read clásico a `READ COMMITTED`).
 `lockBarberForScheduleWrite` bloquea en cambio la fila de `barber` antes de
 verificar solape, serializando todas las escrituras de horario de ese
-barbero (mismo criterio que DEC-068 bloqueando la fila de `service`).
+barbero (mismo criterio que `lockServiceForTransition` con la fila de `service`).
 `TestCreate_ConcurrentOverlappingCreates_ExactlyOneSucceeds`
 (`internal/modules/schedule/postgres/repository_test.go`, `-race`, dos
 goroutines reales sobre el mismo pool) demuestra que exactamente una de dos

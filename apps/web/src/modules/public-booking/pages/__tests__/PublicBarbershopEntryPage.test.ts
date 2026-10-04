@@ -93,6 +93,36 @@ describe('PublicBarbershopEntryPage', () => {
     expect(wrapper.text()).toContain('Hora local de la barbería')
   })
 
+  it('keeps the barbershop clock moving instead of freezing the time of the first paint (DEC-111)', async () => {
+    vi.useFakeTimers()
+    try {
+      vi.setSystemTime(new Date('2026-09-15T19:00:00Z'))
+      getMock.mockResolvedValueOnce({
+        data: {
+          name: 'Barbería Ejemplo',
+          timezone: 'America/Bogota',
+          contactEmail: null,
+          contactPhone: null,
+        },
+        error: undefined,
+        response: okResponse(),
+      })
+      const wrapper = mountEntryPage({ slug: 'barberia-ejemplo' })
+      await flushPromises()
+      expect(wrapper.text()).toMatch(/2:00\s*p\.\s*m\./)
+
+      vi.setSystemTime(new Date('2026-09-15T19:05:00Z'))
+      await vi.advanceTimersByTimeAsync(15_000)
+      expect(wrapper.text()).toMatch(/2:05\s*p\.\s*m\./)
+
+      // Al salir de la pantalla el reloj deja de correr.
+      wrapper.unmount()
+      expect(vi.getTimerCount()).toBe(0)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('shows contact when configured and omits the block when both are absent (CA-090-04)', async () => {
     getMock.mockResolvedValueOnce({
       data: {

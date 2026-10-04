@@ -58,8 +58,37 @@ describe('schedulesApi.fetchBarberSummaries', () => {
 
     const outcome = await fetchBarberSummaries()
 
-    expect(outcome).toEqual({ kind: 'success', items: [{ id: 'b-1', fullName: 'Carlos Ramírez' }] })
+    expect(outcome).toEqual({
+      kind: 'success',
+      items: [{ id: 'b-1', fullName: 'Carlos Ramírez', photoUrl: null }],
+    })
     expect(getMock).toHaveBeenCalledWith('/private/barbers', { params: { query: { limit: 50 } } })
+  })
+
+  it('exposes the portrait URL only for barbers that have a photo', async () => {
+    getMock.mockResolvedValueOnce(
+      ok({
+        items: [
+          { id: 'b-1', fullName: 'Carlos Ramírez', photoUpdatedAt: '2026-09-30T10:00:00Z' },
+          { id: 'b-2', fullName: 'Ana Torres', photoUpdatedAt: null },
+        ],
+        nextCursor: null,
+      }),
+    )
+
+    const outcome = await fetchBarberSummaries()
+
+    expect(outcome).toEqual({
+      kind: 'success',
+      items: [
+        {
+          id: 'b-1',
+          fullName: 'Carlos Ramírez',
+          photoUrl: '/api/v1/private/barbers/b-1/photo?v=2026-09-30T10%3A00%3A00Z',
+        },
+        { id: 'b-2', fullName: 'Ana Torres', photoUrl: null },
+      ],
+    })
   })
 
   it('maps a network failure to network-error', async () => {

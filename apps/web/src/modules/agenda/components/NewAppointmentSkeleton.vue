@@ -77,7 +77,7 @@ const BANDS: readonly (readonly number[])[] = [[2], [2, 2], [2], [1]]
   gap: 10px;
   margin: 0;
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   letter-spacing: 0.14em;
   line-height: 1;
@@ -231,7 +231,7 @@ const BANDS: readonly (readonly number[])[] = [[2], [2, 2], [2], [1]]
 
   .nt-skeleton__status {
     gap: 12px;
-    font-size: 12px;
+    font-size: var(--font-size-caption);
   }
 
   .nt-skeleton__spinner {

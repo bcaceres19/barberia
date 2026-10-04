@@ -12,7 +12,15 @@
 // formulario que conservan.
 import { computed, onMounted, onUnmounted, ref, useSlots, watch } from 'vue'
 import { PAGE_MIN_HOLD_MS, useMinHoldLoading, useToast, useVocabulary } from '@/shared/composables'
-import { BaseAlert, BaseBadge, BaseButton, BaseDialog, BaseInput, DiamondLoader } from '@/shared/ui'
+import {
+  BaseAlert,
+  BaseBadge,
+  BaseButton,
+  BaseDialog,
+  BaseInput,
+  DiamondLoader,
+  EmptyScene,
+} from '@/shared/ui'
 import {
   createService,
   deactivateService,
@@ -1076,14 +1084,29 @@ async function reloadAfterConflict(serviceId: string) {
         class="catalog-page__ready"
         :class="{ 'catalog-page__ready--fitting': fitPending }"
       >
-        <p v-if="services.length === 0 && pageStatus !== 'loading'" class="catalog-page__empty">
-          <template v-if="isSearching">
-            No encontramos servicios que coincidan con «{{ activeSearch }}».
+        <EmptyScene
+          v-if="services.length === 0 && pageStatus !== 'loading'"
+          :scene="isSearching ? 'search' : 'services'"
+          class="catalog-page__empty"
+        >
+          <template #title>
+            <template v-if="isSearching">
+              No encontramos servicios que coincidan con «{{ activeSearch }}».
+            </template>
+            <template v-else>Aún no tienes servicios registrados.</template>
           </template>
-          <template v-else>
-            Aún no tienes servicios registrados. Agrega el primero para empezar.
+          <template #hint>
+            <template v-if="isSearching">Prueba con otra palabra o borra la búsqueda.</template>
+            <template v-else>
+              Crea el primero con su duración y precio; en cuanto lo guardes aparece en tu catálogo.
+            </template>
           </template>
-        </p>
+          <template v-if="!isSearching" #action>
+            <BaseButton type="button" variant="primary" @click="openCreateDialog">
+              Agregar servicio
+            </BaseButton>
+          </template>
+        </EmptyScene>
 
         <div
           v-else
@@ -1827,7 +1850,7 @@ async function reloadAfterConflict(serviceId: string) {
      precio/insignia/acciones. El resto de la pantalla sigue centrado como
      columna de lectura (no se estira a todo el ancho); solo se ensancha lo
      que la tabla necesita. */
-  --catalog-width: 820px;
+  --catalog-width: 920px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -1836,7 +1859,8 @@ async function reloadAfterConflict(serviceId: string) {
   padding: 34px 32px 48px;
   margin: 0 auto;
   color: var(--color-on-strong);
-  background: var(--color-surface-strong);
+  /* Transparente: la tinta y el fondo animado los pone el cascarón. */
+  background: transparent;
 }
 
 /* Con la columna «Lo ofrezco» (DEC-115) la tabla gana 120px para que el nombre del
@@ -1903,7 +1927,7 @@ async function reloadAfterConflict(serviceId: string) {
 
 @media (min-width: 1024px) {
   .catalog-page__title {
-    font-size: 40px;
+    font-size: var(--font-size-title-page);
     line-height: 46px;
   }
 }
@@ -1919,10 +1943,11 @@ async function reloadAfterConflict(serviceId: string) {
   color: var(--color-on-strong-muted);
 }
 
-.catalog-page__create :deep(.base-button) {
-  height: 34px;
-  padding-inline: 14px;
-  font-size: 11px;
+.catalog-page__create.base-button {
+  height: 40px;
+  padding-inline: 18px;
+  font-size: var(--font-size-body-sm);
+  font-weight: 600;
 }
 
 .catalog-page__create :deep(.base-button__content)::before {
@@ -1939,18 +1964,17 @@ async function reloadAfterConflict(serviceId: string) {
    oscura (--color-brand-accent-surface/--color-brand-accent-text). Se
    sobrescribe aquí, no en BaseButton, porque el resto de sus usos siguen
    sobre superficie clara. */
-.catalog-page__create :deep(.base-button--primary) {
+.catalog-page__create.base-button--primary {
   background-color: var(--color-brand-accent-surface);
   color: var(--color-brand-accent-text);
   border-color: var(--color-brand-accent-surface);
 }
 
-.catalog-page__create :deep(.base-button--primary:hover:not(:disabled):not(.base-button--loading)) {
+.catalog-page__create.base-button--primary:hover:not(:disabled):not(.base-button--loading) {
   filter: brightness(92%);
 }
 
-.catalog-page__create
-  :deep(.base-button--primary:active:not(:disabled):not(.base-button--loading)) {
+.catalog-page__create.base-button--primary:active:not(:disabled):not(.base-button--loading) {
   filter: brightness(84%);
 }
 
@@ -2094,11 +2118,6 @@ async function reloadAfterConflict(serviceId: string) {
   }
 }
 
-.catalog-page__empty {
-  padding: var(--space-4);
-  color: var(--color-on-strong-muted);
-}
-
 /* Panel hundido sobre tinta (--color-field-strong, tokens.css: "así leen
    como un hueco en la página y no como un velo claro sobre el azul"), mismo
    vocabulario que los campos de BarberSelect/AgendaDatePicker. */
@@ -2117,7 +2136,7 @@ async function reloadAfterConflict(serviceId: string) {
 .catalog-page__columns,
 .catalog-page__row {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 80px 116px 104px 204px;
+  grid-template-columns: minmax(220px, 1fr) 84px 124px 108px 232px;
   align-items: center;
   gap: 12px;
 }
@@ -2128,13 +2147,18 @@ async function reloadAfterConflict(serviceId: string) {
      vez), y el encabezado sigue el mismo --font-size-body para no quedar
      más chico que los datos que etiqueta. */
   min-height: 44px;
-  padding: 0 14px;
+  padding: 0 16px;
   margin: 0;
   border: none;
   font-family: var(--font-sans);
-  font-size: var(--font-size-body);
+  /* Encabezado reglado: versalitas espaciadas de latón, el mismo rótulo que
+     usan los campos y las demás pantallas del panel (antes un gris en negrita
+     de 16px que competía con los datos que etiqueta). */
+  font-size: var(--font-size-caption);
   font-weight: 600;
-  color: var(--color-on-strong-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-brand-accent-surface);
 }
 
 /* Alto FIJO, no min-height (issue reportado 2026-09-28, "que se adapte
@@ -2174,7 +2198,7 @@ async function reloadAfterConflict(serviceId: string) {
   border-radius: var(--radius-sm);
   color: var(--color-brand-accent-surface);
   font-family: var(--font-display);
-  font-size: 17px;
+  font-size: var(--font-size-body-lg);
   line-height: 1;
 }
 
@@ -2300,9 +2324,9 @@ async function reloadAfterConflict(serviceId: string) {
 }
 
 .catalog-page__item-actions :deep(.base-button) {
-  height: 34px;
-  padding-inline: 12px;
-  font-size: var(--font-size-caption);
+  height: 36px;
+  padding-inline: 14px;
+  font-size: var(--font-size-body-sm);
 }
 
 /* "Editar"/"Cambiar estado" usan BaseButton--secondary, calibrado para relleno
@@ -2504,8 +2528,7 @@ async function reloadAfterConflict(serviceId: string) {
 /* Entrada escalonada: cada fila arranca `--row-index` pasos después que la
    anterior (tope de 8 pasos para que una página de 50 filas no tarde en
    terminar de aparecer). `both` mantiene la fila oculta durante su retraso. */
-.catalog-page__row,
-.catalog-page__empty {
+.catalog-page__row {
   animation: catalog-row-enter 320ms var(--motion-easing-standard) both;
   animation-delay: calc(min(var(--row-index, 0), 8) * 45ms);
 }
@@ -2530,8 +2553,7 @@ async function reloadAfterConflict(serviceId: string) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .catalog-page__row,
-  .catalog-page__empty {
+  .catalog-page__row {
     animation: none;
   }
 }
@@ -2574,10 +2596,10 @@ async function reloadAfterConflict(serviceId: string) {
    horizontal de sobra): un paginador numerado vive de la repetición, no
    necesita el mismo padding que un botón de acción con texto largo. */
 .catalog-page__pagination-nav :deep(.base-button) {
-  height: 34px;
-  min-width: 34px;
+  height: 38px;
+  min-width: 38px;
   padding-inline: 10px;
-  font-size: var(--font-size-caption);
+  font-size: var(--font-size-body-sm);
   --btn-focus-ring: 0 0 0 2px var(--color-surface-strong), 0 0 0 4px var(--color-focus);
 }
 
@@ -2667,7 +2689,7 @@ async function reloadAfterConflict(serviceId: string) {
   color: var(--color-brand-accent-text);
   border-radius: var(--radius-md);
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: var(--font-size-title-item);
   line-height: 1;
   /* Entra un instante después de la tarjeta (mitad de --motion-duration-
      fast) para que se sienta como un segundo tiempo del mismo gesto, no
@@ -3004,7 +3026,7 @@ async function reloadAfterConflict(serviceId: string) {
   border-radius: 50%;
   color: var(--color-on-strong-muted);
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: var(--font-size-body-sm);
   line-height: 1;
 }
 
@@ -3197,7 +3219,7 @@ async function reloadAfterConflict(serviceId: string) {
   background-color: color-mix(in srgb, var(--color-success-on-strong) 16%, transparent);
   border-radius: 50%;
   color: var(--color-success-on-strong);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   line-height: 1;
 }
 
@@ -3363,15 +3385,27 @@ async function reloadAfterConflict(serviceId: string) {
    mínimo de la columna de nombre, verificado en vivo en todo el rango
    641–960px. */
 @media (max-width: 960px) and (min-width: 641px) {
+  .catalog-page {
+    padding-inline: 20px;
+  }
+
   .catalog-page__columns,
   .catalog-page__row {
-    grid-template-columns: minmax(140px, 1fr) 56px 82px 70px 140px;
+    grid-template-columns: minmax(100px, 1fr) 64px 100px 88px 156px;
     gap: 8px;
   }
 
   .catalog-page__table--offer .catalog-page__columns,
   .catalog-page__table--offer .catalog-page__row {
-    grid-template-columns: minmax(80px, 1fr) 56px 82px 70px 64px 140px;
+    grid-template-columns: minmax(70px, 1fr) 56px 82px 70px 60px 140px;
+  }
+
+  .catalog-page__columns {
+    letter-spacing: 0.06em;
+  }
+
+  .catalog-page__item-meta {
+    font-size: var(--font-size-body-sm);
   }
 
   .catalog-page__item-actions {
@@ -3379,9 +3413,9 @@ async function reloadAfterConflict(serviceId: string) {
   }
 
   .catalog-page__item-actions :deep(.base-button) {
-    height: 26px;
+    height: 32px;
     padding-inline: 6px;
-    font-size: 10px;
+    font-size: var(--font-size-caption);
   }
 }
 
@@ -3409,9 +3443,9 @@ async function reloadAfterConflict(serviceId: string) {
     justify-content: center;
   }
 
-  .catalog-page__create :deep(.base-button) {
-    width: 32px;
-    height: 32px;
+  .catalog-page__create.base-button {
+    width: var(--control-height-icon);
+    height: var(--control-height-icon);
     padding: 0;
     overflow: hidden;
     font-size: 0;
@@ -3423,7 +3457,7 @@ async function reloadAfterConflict(serviceId: string) {
 
   .catalog-page__create :deep(.base-button__content)::before {
     margin: 0;
-    font-size: 21px;
+    font-size: var(--font-size-title-item);
   }
 
   .catalog-page__columns {
@@ -3453,11 +3487,11 @@ async function reloadAfterConflict(serviceId: string) {
   .catalog-page__item-icon {
     width: 28px;
     height: 28px;
-    font-size: 13px;
+    font-size: var(--font-size-body-sm);
   }
 
   .catalog-page__item-name {
-    font-size: 13px;
+    font-size: var(--font-size-body-sm);
   }
 
   .catalog-page__item-duration,
@@ -3466,7 +3500,7 @@ async function reloadAfterConflict(serviceId: string) {
     /* 28px de ficha + 9px de espacio del heading (arriba): alinea bajo el
        nombre en vez de bajo la ficha. */
     margin-left: 37px;
-    font-size: 11px;
+    font-size: var(--font-size-caption);
   }
 
   .catalog-page__item-price {
@@ -3488,7 +3522,7 @@ async function reloadAfterConflict(serviceId: string) {
   .catalog-page__item-actions {
     grid-column: 2;
     grid-row: 2;
-    flex-direction: column;
+    gap: 6px;
   }
 
   /* La regla de seis columnas de «Lo ofrezco» pesa más que la de móvil de arriba: se
@@ -3513,9 +3547,9 @@ async function reloadAfterConflict(serviceId: string) {
   }
 
   .catalog-page__item-actions :deep(.base-button) {
-    height: 24px;
-    padding-inline: 7px;
-    font-size: 9px;
+    height: 34px;
+    padding-inline: 10px;
+    font-size: var(--font-size-caption);
   }
 }
 </style>

@@ -926,20 +926,20 @@ async function onDeleteSeries(item: TimeBlockSeries) {
   margin: 0;
   color: var(--color-brand-accent-surface);
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   overflow-wrap: anywhere;
 }
 .blocks-panel__intro {
   margin: 20px 0 8px;
-  font-size: 14px;
+  font-size: var(--font-size-body-sm);
   color: var(--color-on-strong-muted);
 }
 .blocks-panel__timezone {
   margin: 0 0 24px;
   color: var(--color-on-strong-muted);
-  font-size: 12px;
+  font-size: var(--font-size-caption);
 }
 .blocks-panel__ledger {
   display: grid;
@@ -959,14 +959,14 @@ async function onDeleteSeries(item: TimeBlockSeries) {
 }
 .blocks-panel__section-head > span {
   color: var(--color-brand-accent-surface);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   letter-spacing: 0.1em;
 }
 .blocks-panel h3 {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: 22px;
+  font-size: var(--font-size-title-item);
 }
 .blocks-panel__list {
   list-style: none;
@@ -998,28 +998,28 @@ async function onDeleteSeries(item: TimeBlockSeries) {
 }
 .blocks-panel__record-top strong {
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: var(--font-size-title-item);
   font-weight: 400;
 }
 .blocks-panel__stamp {
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   border: 1px solid currentColor;
   padding: 3px 6px;
 }
 .blocks-panel__interval {
-  font-size: 14px;
+  font-size: var(--font-size-body-sm);
   line-height: 1.7;
   margin: 12px 0 6px;
 }
 .blocks-panel__reason {
-  font-size: 14px;
+  font-size: var(--font-size-body-sm);
   margin: 12px 0;
   line-height: 1.5;
 }
 .blocks-panel__validity {
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   margin: 6px 0;
 }
 .blocks-panel__record-footer {
@@ -1032,7 +1032,7 @@ async function onDeleteSeries(item: TimeBlockSeries) {
   border-top: 1px solid var(--color-border-subtle);
 }
 .blocks-panel__record-footer > span {
-  font-size: 11px;
+  font-size: var(--font-size-caption);
 }
 .blocks-panel__empty,
 .blocks-panel__state {
@@ -1048,23 +1048,23 @@ async function onDeleteSeries(item: TimeBlockSeries) {
 }
 .blocks-panel__empty > span {
   color: var(--color-brand-accent-surface);
-  font-size: 26px;
+  font-size: var(--font-size-title-section);
 }
 .blocks-panel__empty p {
   margin: 10px 0;
   color: var(--color-on-strong);
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: var(--font-size-title-item);
 }
 .blocks-panel__empty small {
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   line-height: 1.6;
 }
 .blocks-panel__note {
   margin: 24px 0 0;
   padding-top: 16px;
   border-top: 1px solid var(--color-field-strong-border);
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   color: var(--color-on-strong-muted);
   line-height: 1.6;
 }
@@ -1097,7 +1097,7 @@ async function onDeleteSeries(item: TimeBlockSeries) {
 .block-form__identity strong {
   display: block;
   font-family: var(--font-display);
-  font-size: 18px;
+  font-size: var(--font-size-body-lg);
   font-weight: 400;
   margin-top: 5px;
   overflow-wrap: anywhere;
@@ -1110,7 +1110,7 @@ async function onDeleteSeries(item: TimeBlockSeries) {
 }
 .block-form legend {
   color: var(--color-brand-accent-surface);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 14px;
@@ -1131,7 +1131,7 @@ async function onDeleteSeries(item: TimeBlockSeries) {
 }
 .block-form__date-field > label {
   color: var(--color-on-strong-muted);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   line-height: 14px;
   letter-spacing: 0.08em;
@@ -1152,13 +1152,13 @@ async function onDeleteSeries(item: TimeBlockSeries) {
   padding: 14px 16px;
 }
 .block-form__preview p {
-  font-size: 14px;
+  font-size: var(--font-size-body-sm);
   line-height: 1.7;
   margin: 8px 0;
 }
 .block-form__preview small {
   color: var(--color-on-strong-muted);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
 }
 .block-form__footer {
   display: flex;
@@ -1235,7 +1235,7 @@ async function onDeleteSeries(item: TimeBlockSeries) {
 }
 .block-dialog .base-dialog__title {
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: var(--font-size-title-section);
   font-weight: 400;
   line-height: 1.2;
 }

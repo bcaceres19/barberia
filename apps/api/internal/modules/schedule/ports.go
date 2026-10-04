@@ -101,7 +101,7 @@ type Repository interface {
 	// si procede, bloquea el barbero (SELECT ... FOR UPDATE, para resistir
 	// la carrera de dos altas concurrentes sobre un mismo barbero y día
 	// cuando el conjunto de tramos existentes parte vacío -"phantom read"-,
-	// mismo criterio que DEC-068 bloqueando la fila de service), verifica
+	// mismo criterio que lockServiceForTransition con la fila de service), verifica
 	// solape contra los tramos existentes del mismo (barbershopID,
 	// barberID, input.ISOWeekday), INSERT si no hay solape, y Complete.
 	// input ya llegó validado por Service; key y fingerprint ya fueron

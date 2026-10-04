@@ -46,12 +46,8 @@ type AssignmentRepository interface {
 	// sobre `barber_service`, sin paginar ni cargar la fila completa.
 	Exists(ctx context.Context, barbershopID, barberID, serviceID string) (bool, error)
 
-	// Unassign ejecuta, dentro de UNA sola InTenantTx que bloquea la fila
-	// de `service` (SELECT ... FOR UPDATE) para resistir la carrera de dos
-	// desasignaciones concurrentes de las dos últimas filas de un mismo
-	// servicio (DEC-068): verificar que la asociación exista
-	// (UnassignOutcomeNotFound si no), verificar que no sea la última fila
-	// activa de un servicio activo (UnassignOutcomeLastActiveConflict si lo
-	// es), y DELETE (UnassignOutcomeDeleted en caso contrario).
+	// Unassign borra la asociación dentro del tenant (UnassignOutcomeDeleted)
+	// o informa que no existía (UnassignOutcomeNotFound). No exige conservar
+	// otra asignación: DEC-114 sustituye a DEC-068.
 	Unassign(ctx context.Context, barbershopID, barberID, serviceID string) (UnassignResult, error)
 }

@@ -1,0 +1,196 @@
+/*
+ * Vocabulario de movimiento del panel privado (DEC-109/DEC-111): el mismo
+ * repertorio que ya usan Horarios, Configuración y la reserva pública —
+ * entradas escalonadas que suben, trazos de latón que se dibujan, marcas que
+ * se rellenan y un destello único al confirmar — expuesto como utilidades
+ * para que Agenda, Servicios, Barberos y las demás pantallas no reescriban
+ * cada keyframe. Todo es `transform`/`opacity`/`clip-path`: nada que dispare
+ * layout. Una pantalla escalona una lista poniendo `--i` en cada elemento
+ * (`:style="{ '--i': index }"`); el tope evita que una lista larga tarde en
+ * aparecer.
+ *
+ * `prefers-reduced-motion` y `data-motion="reduced"` (Configuración) dejan
+ * cada elemento en su estado final: sin retraso, sin traslación.
+ */
+
+:root {
+  --motion-ease-out: cubic-bezier(0.22, 0.8, 0.24, 1);
+  --motion-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --motion-duration-enter: 520ms;
+  --motion-stagger: 55ms;
+}
+
+@keyframes nava-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes nava-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes nava-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Regla que se dibuja de izquierda a derecha (filetes, ejes). */
+@keyframes nava-wipe {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes nava-grow-x {
+  from {
+    opacity: 0;
+    transform: scaleX(0.2);
+  }
+
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes nava-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Destello único que cruza una superficie (fila recién creada o confirmada). */
+@keyframes nava-glint {
+  from {
+    background-position: -140% 0;
+  }
+
+  to {
+    background-position: 240% 0;
+  }
+}
+
+@keyframes nava-shimmer {
+  from {
+    background-position: -200% 0;
+  }
+
+  to {
+    background-position: 200% 0;
+  }
+}
+
+.nv-rise {
+  animation: nava-rise var(--motion-duration-enter) var(--motion-ease-out) backwards;
+  animation-delay: calc(min(var(--i, 0), 12) * var(--motion-stagger));
+}
+
+.nv-fade {
+  animation: nava-fade var(--motion-duration-enter) var(--motion-ease-out) backwards;
+  animation-delay: calc(min(var(--i, 0), 12) * var(--motion-stagger));
+}
+
+.nv-slide {
+  animation: nava-slide-in var(--motion-duration-enter) var(--motion-ease-out) backwards;
+  animation-delay: calc(min(var(--i, 0), 12) * var(--motion-stagger));
+}
+
+.nv-pop {
+  animation: nava-pop 460ms var(--motion-ease-spring) backwards;
+  animation-delay: calc(min(var(--i, 0), 12) * var(--motion-stagger));
+}
+
+.nv-wipe {
+  animation: nava-wipe 700ms var(--motion-ease-out) backwards;
+  animation-delay: calc(min(var(--i, 0), 12) * var(--motion-stagger));
+}
+
+/*
+ * Fila de registro interactiva: se desplaza un paso hacia su acción al pasar
+ * el cursor y se hunde al pulsarla. Se usa junto a un enlace o fila de lista
+ * del panel; el desplazamiento es de 3px para que nunca mueva el layout.
+ */
+.nv-lift {
+  transition:
+    transform var(--motion-duration-base) var(--motion-ease-out),
+    background-color var(--motion-duration-base) var(--motion-easing-standard),
+    border-color var(--motion-duration-base) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-base) var(--motion-easing-standard);
+}
+
+@media (hover: hover) {
+  .nv-lift:hover {
+    transform: translateX(3px);
+  }
+}
+
+.nv-lift:active {
+  transform: translateX(1px) scale(0.995);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nv-rise,
+  .nv-fade,
+  .nv-slide,
+  .nv-pop,
+  .nv-wipe {
+    animation: none;
+  }
+
+  .nv-lift,
+  .nv-lift:hover,
+  .nv-lift:active {
+    transform: none;
+    transition: none;
+  }
+}
+
+:root[data-motion='reduced'] .nv-rise,
+:root[data-motion='reduced'] .nv-fade,
+:root[data-motion='reduced'] .nv-slide,
+:root[data-motion='reduced'] .nv-pop,
+:root[data-motion='reduced'] .nv-wipe {
+  animation: none;
+}
+
+:root[data-motion='reduced'] .nv-lift,
+:root[data-motion='reduced'] .nv-lift:hover,
+:root[data-motion='reduced'] .nv-lift:active {
+  transform: none;
+  transition: none;
+}

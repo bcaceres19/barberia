@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { pickTime, selectBarber } from './horarios-controles'
 
 /**
  * Recorrido E2E de HU-040 (horario laboral recurrente). Corre contra el API
@@ -53,8 +54,8 @@ async function addWorkingHour(
 ) {
   await page.getByRole('button', { name: 'Agregar tramo' }).click()
   const dialog = page.getByRole('dialog', { name: 'Agregar tramo' })
-  await dialog.getByLabel('Día').selectOption({ label: weekday })
-  await dialog.getByLabel('Hora de inicio').fill(startsTime)
+  await dialog.getByRole('radio', { name: weekday }).click()
+  await pickTime(dialog, page, 'Hora de inicio', startsTime)
   await dialog.getByLabel('Duración (minutos)').fill(durationMinutes)
   await dialog.getByRole('button', { name: 'Guardar' }).click()
   return dialog
@@ -77,7 +78,7 @@ test.describe('Horario laboral recurrente (HU-040)', () => {
     await addBarber(page, barberName)
 
     await openSchedules(page)
-    await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
+    await selectBarber(page, barberName)
 
     const dialog = await addWorkingHour(page, {
       weekday: 'Lunes',
@@ -88,7 +89,7 @@ test.describe('Horario laboral recurrente (HU-040)', () => {
     await expect(page.getByText('08:00 · 240 min')).toBeVisible()
 
     await page.reload()
-    await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
+    await selectBarber(page, barberName)
     await expect(page.getByText('08:00 · 240 min')).toBeVisible()
   })
 
@@ -102,7 +103,7 @@ test.describe('Horario laboral recurrente (HU-040)', () => {
     await addBarber(page, barberName)
 
     await openSchedules(page)
-    await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
+    await selectBarber(page, barberName)
 
     await addWorkingHour(page, { weekday: 'Martes', startsTime: '08:00', durationMinutes: '240' })
     await expect(page.getByText('08:00 · 240 min')).toBeVisible()
@@ -122,7 +123,7 @@ test.describe('Horario laboral recurrente (HU-040)', () => {
     await addBarber(page, barberName)
 
     await openSchedules(page)
-    await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
+    await selectBarber(page, barberName)
 
     await addWorkingHour(page, {
       weekday: 'Miércoles',
@@ -143,7 +144,7 @@ test.describe('Horario laboral recurrente (HU-040)', () => {
 
     // Nada nuevo se persistió: sigue habiendo un único tramo ese día.
     await page.reload()
-    await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
+    await selectBarber(page, barberName)
     await expect(page.getByText('09:00 · 60 min')).not.toBeVisible()
   })
 
@@ -157,13 +158,13 @@ test.describe('Horario laboral recurrente (HU-040)', () => {
     await addBarber(page, barberName)
 
     await openSchedules(page)
-    await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
+    await selectBarber(page, barberName)
     await addWorkingHour(page, { weekday: 'Jueves', startsTime: '08:00', durationMinutes: '60' })
     await expect(page.getByText('08:00 · 60 min')).toBeVisible()
 
     await page.getByRole('button', { name: /Editar tramo de Jueves/ }).click()
     const editDialog = page.getByRole('dialog', { name: 'Editar tramo' })
-    await editDialog.getByLabel('Hora de inicio').fill('09:00')
+    await pickTime(editDialog, page, 'Hora de inicio', '09:00')
     await editDialog.getByRole('button', { name: 'Guardar' }).click()
     await expect(editDialog).toBeHidden()
     await expect(page.getByText('09:00 · 60 min')).toBeVisible()
@@ -175,7 +176,7 @@ test.describe('Horario laboral recurrente (HU-040)', () => {
     // Persistencia real: recargar confirma que el retiro fue físico, no
     // solo un cambio visual.
     await page.reload()
-    await page.getByLabel('Barbero', { exact: true }).selectOption({ label: barberName })
+    await selectBarber(page, barberName)
     await expect(page.getByText('09:00 · 60 min')).not.toBeVisible()
   })
 
@@ -208,8 +209,8 @@ test.describe('Horario laboral recurrente (HU-040)', () => {
 
     // El selector de A nunca ofrece el barbero de B.
     await openSchedules(page)
-    await expect(
-      page.getByLabel('Barbero', { exact: true }).locator('option', { hasText: nameB }),
-    ).toHaveCount(0)
+    await page.locator('#schedules-barber-select').click()
+    await expect(page.getByRole('listbox')).toBeVisible()
+    await expect(page.getByRole('option', { name: nameB })).toHaveCount(0)
   })
 })

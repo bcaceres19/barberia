@@ -118,7 +118,7 @@ func (h *AssignServiceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 // UnassignServiceHandler expone
 // DELETE /private/barbers/{barberId}/services/{serviceId} (CA-023-05,
-// CA-023-06, DEC-068).
+// DEC-114).
 type UnassignServiceHandler struct {
 	service *catalog.AssignmentService
 }

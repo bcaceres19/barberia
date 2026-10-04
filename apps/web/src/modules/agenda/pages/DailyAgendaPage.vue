@@ -19,7 +19,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router'
 import { useMinHoldLoading, useVocabulary } from '@/shared/composables'
 import { capitalize, isSoloProfile } from '@/shared/model'
-import { BaseAlert, BaseBadge, BaseButton, DiamondLoader, PageState } from '@/shared/ui'
+import { BaseAlert, BaseBadge, BaseButton, DiamondLoader, EmptyScene, PageState } from '@/shared/ui'
 import {
   formatCivilDateFull,
   getCivilDateInTimezone,
@@ -614,7 +614,7 @@ const dayChangeMarkerPercent = computed(() => {
     :aria-busy="agendaStatus === 'updating'"
     aria-labelledby="daily-agenda-page-title"
   >
-    <header class="daily-agenda-page__header">
+    <header class="daily-agenda-page__header nv-rise">
       <div>
         <h1 id="daily-agenda-page-title" class="daily-agenda-page__title">Agenda</h1>
         <p v-if="selectedDateLabel" class="daily-agenda-page__date">
@@ -656,30 +656,24 @@ const dayChangeMarkerPercent = computed(() => {
 
     <template v-else>
       <!-- Evento 04: sin barberos activos, sin selección inventada ni CTA. -->
-      <PageState
-        v-if="barbers.length === 0"
-        variant="info"
-        :headline="`Aún no tienes ${v.professionalsRegistered}.`"
-        role="status"
-      >
-        <template v-if="isSoloProfile">
-          Crea tu perfil en
-          <RouterLink class="page-state__link" :to="{ name: 'staff-barberos' }"
-            >«Mi perfil»</RouterLink
-          >
-          para ver tu agenda.
+      <EmptyScene v-if="barbers.length === 0" scene="team" role="status">
+        <template #title>Aún no tienes {{ v.professionalsRegistered }}.</template>
+        <template #hint>
+          <template v-if="isSoloProfile">
+            Crea tu perfil en
+            <RouterLink :to="{ name: 'staff-barberos' }">«Mi perfil»</RouterLink>
+            para ver tu agenda.
+          </template>
+          <template v-else>
+            Agrega {{ v.oneProfessional }} en la sección
+            <RouterLink :to="{ name: 'staff-barberos' }">«{{ v.Professionals }}»</RouterLink>
+            para ver su agenda.
+          </template>
         </template>
-        <template v-else>
-          Agrega {{ v.oneProfessional }} en la sección
-          <RouterLink class="page-state__link" :to="{ name: 'staff-barberos' }"
-            >«{{ v.Professionals }}»</RouterLink
-          >
-          para ver su agenda.
-        </template>
-      </PageState>
+      </EmptyScene>
 
       <template v-else>
-        <div class="daily-agenda-page__controls">
+        <div class="daily-agenda-page__controls nv-rise" style="--i: 1">
           <div v-if="!hideBarberPicker" class="daily-agenda-page__picker">
             <label for="daily-agenda-barber-select" class="daily-agenda-page__label">{{
               v.Professional
@@ -807,7 +801,11 @@ const dayChangeMarkerPercent = computed(() => {
                  redundante de llegar al mismo detalle para teclado/lector.
                  Se dibuja también con la lista vacía (evento 09): el eje del
                  día vacío se conserva con el marcador "Ahora". -->
-            <div v-if="timelineBounds" class="daily-agenda-page__timeline-wrapper">
+            <div
+              v-if="timelineBounds"
+              class="daily-agenda-page__timeline-wrapper nv-rise"
+              style="--i: 2"
+            >
               <!-- Control de zoom (pedido explícito del propietario,
                    2026-09-04): no representado en el atlas — es una imagen
                    estática sin controles — y por eso vive fuera del bloque
@@ -879,7 +877,7 @@ const dayChangeMarkerPercent = computed(() => {
                     >
                   </div>
 
-                  <div class="daily-agenda-page__timeline-track">
+                  <div class="daily-agenda-page__timeline-track nv-wipe">
                     <div
                       v-for="minute in timelineHalfHourGuides"
                       :key="`half-${minute}`"
@@ -907,7 +905,7 @@ const dayChangeMarkerPercent = computed(() => {
                     />
 
                     <RouterLink
-                      v-for="entry in entries"
+                      v-for="(entry, index) in entries"
                       :key="`timeline-${entry.id}`"
                       tabindex="-1"
                       class="daily-agenda-page__timeline-slip"
@@ -922,7 +920,7 @@ const dayChangeMarkerPercent = computed(() => {
                         'daily-agenda-page__timeline-slip--end':
                           timelineSlipStyle(entry).right !== undefined,
                       }"
-                      :style="timelineSlipStyle(entry)"
+                      :style="{ ...timelineSlipStyle(entry), '--i': index + 3 }"
                       :to="{
                         name: 'agenda-detalle-turno',
                         params: { appointmentId: entry.id },
@@ -955,25 +953,35 @@ const dayChangeMarkerPercent = computed(() => {
                  no reemplaza la pantalla completa como PageState — por eso
                  no usa ese componente. "Nuevo turno" vive aquí una sola vez,
                  no se repite en el encabezado. -->
-            <div v-if="entries.length === 0" class="daily-agenda-page__empty-state">
-              <span class="daily-agenda-page__empty-divider" aria-hidden="true" />
-              <p class="daily-agenda-page__empty-headline">
+            <EmptyScene
+              v-if="entries.length === 0"
+              scene="agenda"
+              class="daily-agenda-page__empty-state"
+            >
+              <template #title>
                 No hay turnos para {{ selectedBarber?.fullName }} {{ emptyStateDateText }}.
-              </p>
-              <BaseButton type="button" variant="primary" @click="goToNewAppointment">
-                Nuevo turno
-              </BaseButton>
-            </div>
+              </template>
+              <template #hint>
+                Cuando alguien reserve, o registres un turno a mano, aparecerá aquí en su hora.
+              </template>
+              <template #action>
+                <BaseButton type="button" variant="primary" @click="goToNewAppointment">
+                  Nuevo turno
+                </BaseButton>
+              </template>
+            </EmptyScene>
 
             <ul
               v-else
+              :key="`${selectedBarberId}-${selectedDate}`"
               class="daily-agenda-page__list"
               :aria-label="`Turnos de ${selectedBarber?.fullName}`"
             >
               <li
-                v-for="entry in entries"
+                v-for="(entry, index) in entries"
                 :key="entry.id"
-                class="daily-agenda-page__item"
+                class="daily-agenda-page__item nv-rise nv-lift"
+                :style="{ '--i': index + 3 }"
                 :class="{
                   'daily-agenda-page__item--terminal': entry.status !== 'confirmed',
                   'daily-agenda-page__item--current': isEntryInProgress(entry),
@@ -1026,7 +1034,8 @@ const dayChangeMarkerPercent = computed(() => {
   gap: 14px;
   min-height: 100%;
   padding: 20px;
-  background-color: var(--color-surface-strong);
+  /* Transparente: la tinta y el fondo animado los pone el cascarón. */
+  background: transparent;
 }
 
 @media (min-width: 1024px) {
@@ -1054,7 +1063,7 @@ const dayChangeMarkerPercent = computed(() => {
 
 @media (min-width: 1024px) {
   .daily-agenda-page__title {
-    font-size: 40px;
+    font-size: var(--font-size-title-page);
     line-height: 46px;
   }
 }
@@ -1165,7 +1174,7 @@ const dayChangeMarkerPercent = computed(() => {
 
 .daily-agenda-page__label {
   font-family: var(--font-family-base);
-  font-size: var(--font-size-body-sm);
+  font-size: var(--font-size-caption);
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -1226,47 +1235,6 @@ const dayChangeMarkerPercent = computed(() => {
     flex: 0 0 150px;
     min-width: 150px;
   }
-}
-
-/* Evento 09 del atlas: divisor-titular-acción locales, mismo lenguaje
-   visual que PageState pero sin ocupar toda el área de contenido — el eje
-   del día vacío sigue visible arriba. */
-.daily-agenda-page__empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-8) var(--space-4);
-  text-align: center;
-}
-
-.daily-agenda-page__empty-divider {
-  position: relative;
-  width: 220px;
-  height: 2px;
-  background-color: var(--color-accent-brass);
-}
-
-.daily-agenda-page__empty-divider::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 9px;
-  height: 9px;
-  transform: translate(-50%, -50%) rotate(45deg);
-  background-color: var(--color-accent-brass);
-  box-shadow: 0 0 0 8px var(--color-surface-strong);
-}
-
-.daily-agenda-page__empty-headline {
-  margin: 0;
-  max-width: 32ch;
-  font-family: var(--font-display);
-  font-size: var(--font-size-h2);
-  line-height: var(--font-size-h2-line);
-  font-weight: var(--font-weight-h2);
-  color: var(--color-on-strong);
 }
 
 .daily-agenda-page__list {
@@ -1418,7 +1386,7 @@ const dayChangeMarkerPercent = computed(() => {
 .daily-agenda-page__item-time {
   flex: 0 0 118px;
   font-family: var(--font-family-base);
-  font-size: 15px;
+  font-size: var(--font-size-body);
   font-weight: 400;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
@@ -1436,7 +1404,7 @@ const dayChangeMarkerPercent = computed(() => {
 /* Persona atendida como texto principal de la ficha (§6.1). */
 .daily-agenda-page__item-name {
   font-family: var(--font-family-base);
-  font-size: 17px;
+  font-size: var(--font-size-body-lg);
   font-weight: 600;
   color: var(--color-on-strong);
 }
@@ -1444,9 +1412,41 @@ const dayChangeMarkerPercent = computed(() => {
 .daily-agenda-page__item-service {
   font-family: var(--font-family-base);
   margin-top: 2px;
-  font-size: 14px;
+  font-size: var(--font-size-body-sm);
   line-height: 16px;
   color: var(--color-on-strong-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .daily-agenda-page__timeline-slip,
+  .daily-agenda-page__timeline-mark--now::after {
+    animation: none;
+  }
+}
+
+/* Reflejo sutil al pasar sobre un turno de la lista: sube el velo y el
+   nombre toma el latón; el desplazamiento de 3px viene de `.nv-lift`. */
+.daily-agenda-page__item {
+  position: relative;
+  transition:
+    transform var(--motion-duration-base) var(--motion-ease-out),
+    box-shadow var(--motion-duration-base) var(--motion-easing-standard),
+    border-color var(--motion-duration-base) var(--motion-easing-standard),
+    background-color var(--motion-duration-base) var(--motion-easing-standard);
+}
+
+@media (hover: hover) {
+  .daily-agenda-page__item:hover {
+    background-color: color-mix(in srgb, var(--color-on-strong) 5%, transparent);
+  }
+}
+
+.daily-agenda-page__item-main:hover {
+  text-decoration: none;
+}
+
+.daily-agenda-page__item:hover .daily-agenda-page__item-name {
+  color: var(--color-brand-accent-surface);
 }
 
 @media (max-width: 1023px) {
@@ -1454,15 +1454,41 @@ const dayChangeMarkerPercent = computed(() => {
     width: 100%;
   }
 
+  /* El rótulo «Fecha» encabeza la fila completa (Anterior · fecha ·
+     Siguiente) alineado a la izquierda, igual que «Barbero» sobre su
+     selector: el contenedor del selector se disuelve y cada pieza ocupa su
+     área de la cuadrícula. */
   .daily-agenda-page__date-nav {
     display: grid;
     align-items: end;
     width: 100%;
+    column-gap: var(--space-2);
+    row-gap: var(--space-2);
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.65fr) minmax(0, 1.05fr);
+    grid-template-areas:
+      'label label label'
+      'prev date next';
   }
 
   .daily-agenda-page__date-input-wrap {
+    display: contents;
+  }
+
+  .daily-agenda-page__date-input-wrap > .daily-agenda-page__label {
+    grid-area: label;
+  }
+
+  .daily-agenda-page__date-input-wrap > :not(.daily-agenda-page__label) {
+    grid-area: date;
     min-width: 0;
+  }
+
+  .daily-agenda-page__date-nav > :first-child {
+    grid-area: prev;
+  }
+
+  .daily-agenda-page__date-nav > :last-child {
+    grid-area: next;
   }
 
   .daily-agenda-page__item {
@@ -1481,17 +1507,17 @@ const dayChangeMarkerPercent = computed(() => {
 
   .daily-agenda-page__item-time {
     flex-basis: auto;
-    font-size: 13px;
+    font-size: var(--font-size-body-sm);
     color: var(--color-on-strong-soft);
   }
 
   .daily-agenda-page__item-name {
-    font-size: 16px;
+    font-size: var(--font-size-body);
     line-height: 22px;
   }
 
   .daily-agenda-page__item-service {
-    font-size: 13px;
+    font-size: var(--font-size-body-sm);
     line-height: 18px;
   }
 }
@@ -1523,16 +1549,23 @@ const dayChangeMarkerPercent = computed(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
     padding: 0;
     background-color: transparent;
     color: var(--color-brand-accent-surface);
     border: 1px solid color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
     border-radius: 2px;
-    font-size: 14px;
+    font-size: var(--font-size-body);
     line-height: 1;
     cursor: pointer;
+    transition:
+      background-color var(--motion-duration-fast) var(--motion-easing-standard),
+      transform var(--motion-duration-fast) var(--motion-ease-out);
+  }
+
+  .daily-agenda-page__timeline-zoom-btn:active:not(:disabled) {
+    transform: scale(0.9);
   }
 
   .daily-agenda-page__timeline-zoom-btn:hover:not(:disabled) {
@@ -1545,7 +1578,7 @@ const dayChangeMarkerPercent = computed(() => {
   }
 
   .daily-agenda-page__timeline-zoom-label {
-    min-width: 40px;
+    min-width: 48px;
     font-size: var(--font-size-caption);
     font-variant-numeric: tabular-nums;
     text-align: center;
@@ -1633,7 +1666,7 @@ const dayChangeMarkerPercent = computed(() => {
        valores en escritorio, más angostos que el resto del sistema de
        insignias porque esta es la única marca que flota sola sobre el eje,
        no dentro de una fila con más contexto alrededor. */
-    font-size: 10px;
+    font-size: var(--font-size-caption);
     /* Sin esto hereda line-height:24px de body (src/styles/base.css) — el
        atlas nunca fija un line-height para .mark em porque su body no
        redefine el valor por defecto del navegador (issue #189, reporte en
@@ -1704,6 +1737,59 @@ const dayChangeMarkerPercent = computed(() => {
     bottom: 0;
     z-index: 1;
     border-left: var(--border-width-emphasis) solid var(--color-brand-accent-surface);
+  }
+
+  /* Rombo con latido sobre la línea de "Ahora": el único elemento de la
+     pantalla que se mueve sin que nadie lo toque, y solo porque el tiempo
+     real avanza. */
+  .daily-agenda-page__timeline-mark--now::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -6px;
+    width: 10px;
+    height: 10px;
+    background-color: var(--color-brand-accent-surface);
+    transform: rotate(45deg);
+  }
+
+  /* Onda que sale del rombo: borde que escala y se apaga. Solo transform y
+     opacity, por pasos; animar `box-shadow` forzaba un repintado por cuadro. */
+  .daily-agenda-page__timeline-mark--now::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -6px;
+    width: 10px;
+    height: 10px;
+    border: var(--border-width-emphasis) solid var(--color-brand-accent-surface);
+    opacity: 0;
+    transform: rotate(45deg);
+    animation: agenda-now-ring 2.4s steps(24, end) infinite;
+  }
+
+  @keyframes agenda-now-ring {
+    from {
+      opacity: 0.9;
+      transform: rotate(45deg) scale(1);
+    }
+
+    to {
+      opacity: 0;
+      transform: rotate(45deg) scale(2.8);
+    }
+  }
+
+  /* Cada ficha crece desde su hora de inicio (borde izquierdo) con el
+     escalonado de la lista: el día se "dibuja" en el carril en vez de
+     aparecer de golpe. Solo escala/opacidad, nunca el ancho real. */
+  .daily-agenda-page__timeline-slip {
+    transform-origin: left center;
+    animation: nava-grow-x 520ms var(--motion-ease-out) backwards;
+    animation-delay: calc(min(var(--i, 0), 14) * var(--motion-stagger));
+    transition:
+      box-shadow var(--motion-duration-base) var(--motion-easing-standard),
+      background-color var(--motion-duration-base) var(--motion-easing-standard);
   }
 
   .daily-agenda-page__timeline-slip {
@@ -1833,7 +1919,7 @@ const dayChangeMarkerPercent = computed(() => {
   }
 
   .daily-agenda-page__timeline-slip-time {
-    font-size: 11px;
+    font-size: var(--font-size-caption);
     font-weight: 400;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.03em;
@@ -1842,7 +1928,7 @@ const dayChangeMarkerPercent = computed(() => {
 
   .daily-agenda-page__timeline-slip-name {
     overflow: hidden;
-    font-size: 13px;
+    font-size: var(--font-size-body-sm);
     font-weight: 600;
     color: var(--color-on-strong);
     text-overflow: ellipsis;
@@ -1851,7 +1937,7 @@ const dayChangeMarkerPercent = computed(() => {
 
   .daily-agenda-page__timeline-slip-service {
     overflow: hidden;
-    font-size: 12px;
+    font-size: var(--font-size-caption);
     color: var(--color-on-strong-soft);
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1875,7 +1961,7 @@ const dayChangeMarkerPercent = computed(() => {
   background-color: transparent;
   border: none;
   border-radius: 0;
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   line-height: 14px;
   letter-spacing: 0.08em;
@@ -1937,7 +2023,7 @@ const dayChangeMarkerPercent = computed(() => {
 @media (max-width: 1023px) {
   :deep(.base-badge) {
     margin-top: 4px;
-    font-size: 10px;
+    font-size: var(--font-size-caption);
   }
 }
 </style>

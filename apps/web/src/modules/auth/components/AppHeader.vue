@@ -67,7 +67,7 @@ const { loggingOut, logout: onLogout } = useLogout()
 .app-header__barbershop {
   margin: 0;
   overflow: hidden;
-  font-size: 16px;
+  font-size: var(--font-size-body);
   font-weight: 400;
   color: var(--color-on-strong-muted);
   text-overflow: ellipsis;
@@ -123,7 +123,7 @@ const { loggingOut, logout: onLogout } = useLogout()
   }
 
   .app-header__barbershop {
-    font-size: 13px;
+    font-size: var(--font-size-body-sm);
   }
 }
 </style>

@@ -842,12 +842,12 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | --- | --- |
 | Función | `F-CONF-02` (servicios por barbero) |
 | Reglas | `RN-SER-03`, `RN-SER-04`, `RN-TEN-01`, `RN-DAT-02` |
-| Decisiones | `DEC-004`, `DEC-019`, `DEC-024`, `DEC-033`–`DEC-040`, `DEC-068` |
+| Decisiones | `DEC-004`, `DEC-019`, `DEC-024`, `DEC-033`–`DEC-040`, `DEC-068` (sustituida por `DEC-114` en la última asignación) |
 | Actor | Barbero autenticado |
 | Depende de | `HU-021`, `HU-022` integradas en `main` (cumplido) |
 | Bloquea | Horarios por barbero, disponibilidad y selección pública de barbero |
 | Estado | Implementada; issue real [#76](https://github.com/bcaceres19/barberia/issues/76); [PR #83](https://github.com/bcaceres19/barberia/pull/83) abierto contra `main`, pendiente de revisión/CI/merge |
-| Riesgo | Una relación sin tenant compuesto puede asociar recursos de barberías distintas; permitir retirar la última asignación de un servicio activo contradiría `DEC-068` y dejaría un servicio activo imposible de reservar. |
+| Riesgo | Una relación sin tenant compuesto puede asociar recursos de barberías distintas; retirar la última asignación de un servicio activo (`DEC-114`) lo deja sin barberos y, mientras tanto, fuera de la reserva pública. |
 
 **Historia**
 
@@ -856,7 +856,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 **Alcance incluido**
 
 - Asociación tenant-aware `barber_service` entre filas reales de `barber` y `service`, sin copiar nombre, duración ni precio.
-- Consulta de asignaciones por barbero y operaciones explícitas para asignar y desasignar; desasignar la última fila activa de un servicio activo se rechaza (`DEC-068`).
+- Consulta de asignaciones por barbero y operaciones explícitas para asignar y desasignar; se puede desasignar cualquier fila, también la última de un servicio activo (`DEC-114`).
 - La misma ruta y pantalla funcionan para un barbero con todos los servicios, varios con servicios compartidos y un equipo con especialidades distintas.
 - Interfaz dentro de la experiencia privada existente, usando APIs públicas mínimas de `staff` y `catalog` o composición en `app`; ningún módulo importa archivos internos de otro.
 - Migración Atlas mínima, RLS, FK compuestas, contrato privado, módulo Go y pruebas con dos tenants.
@@ -875,14 +875,14 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | `CA-023-02` | Cuando se asigna un servicio permitido a un barbero, entonces la relación aparece al recargar y repetir exactamente la operación no crea una segunda fila. |
 | `CA-023-03` | Un mismo servicio puede asignarse a varios barberos de la misma barbería y cada asociación sigue siendo un recurso independiente. |
 | `CA-023-04` | Intentar asociar un barbero o servicio de otra barbería responde `404` o conflicto uniforme y la FK tenant-aware/RLS rechaza la relación incluso con el rol real de aplicación. |
-| `CA-023-05` | Intentar retirar la última asignación activa de un servicio activo se rechaza con `409`/`422` (`DEC-068`); la operación es segura ante repetición y nunca borra el barbero, el servicio ni una cita. |
-| `CA-023-06` | Un servicio activo nunca queda con cero asignaciones como resultado de esta historia; base de datos, API e interfaz coinciden en rechazar ese estado (`DEC-068`). |
+| `CA-023-05` | Retirar una asignación existente responde `204`, incluida la última de un servicio activo (`DEC-114`, que sustituye a `DEC-068`); repetir la operación responde `404` uniforme y nunca borra el barbero, el servicio ni una cita. |
+| `CA-023-06` | Un servicio activo que queda sin asignaciones no se ofrece en la reserva pública hasta asignar otro barbero (`DEC-114`, `HU-091`); API e interfaz no lo tratan como error. |
 | `CA-023-07` | La asociación no contiene nombre, duración, precio, estado ni columnas de otro dueño; el contrato no expone precios o duraciones por barbero. |
 | `CA-023-08` | La interfaz anuncia guardado/error, funciona con teclado, evita doble envío y conserva una composición usable en 320, 360, 768 y 1280 px. |
 
 **Pruebas obligatorias**
 
-- Dominio/servicio para asignación repetida, desasignación y rechazo de la última asignación activa (`DEC-068`).
+- Dominio/servicio para asignación repetida y desasignación, incluida la de la última asignación (`DEC-114`).
 - PostgreSQL real con dos tenants, FK compuestas, RLS, permisos exactos y carreras de asignación repetida.
 - HTTP/contrato para consulta, alta/baja de asociación, `401`, `404`, conflicto y campos desconocidos.
 - Componente y E2E para un barbero, cuatro barberos, servicio compartido y aislamiento cruzado.

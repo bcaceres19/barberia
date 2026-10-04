@@ -1,8 +1,9 @@
 <script setup lang="ts">
 // Página coordinadora de la selección pública de barbero (HU-092, CA-092-01
 // a CA-092-05). Sin mockup asignado: composición libre dentro de NAVA /
-// Tailored Grid (DEC-078). Posee estado y reintento; no conoce la forma
-// RFC 9457 del contrato (eso queda dentro de `api/listPublicBarbersApi.ts`).
+// Tailored Grid (DEC-078), alojada en el cascarón de la reserva pública
+// (DEC-111). Posee estado y reintento; no conoce la forma RFC 9457 del
+// contrato (eso queda dentro de `api/listPublicBarbersApi.ts`).
 //
 // Matriz 0/1/N (CA-092-01): con un único barbero elegible se preselecciona
 // automáticamente y se informa sin exigir una interacción adicional; con
@@ -17,7 +18,9 @@
 // el barbero sigue en la lista fresca -nunca se asume compatible sin
 // revalidarla contra la respuesta del servidor.
 import { computed, nextTick, ref, watch } from 'vue'
-import { BaseButton, EmptyState, PageState } from '@/shared/ui'
+import { BarberAvatar } from '@/shared/ui'
+import BookingStateScreen from '../components/BookingStateScreen.vue'
+import ChoiceMark from '../components/ChoiceMark.vue'
 import { listPublicBarbers } from '../api/listPublicBarbersApi'
 import type { PublicBarber } from '../model/publicBarberListOutcome'
 
@@ -153,262 +156,92 @@ function onListKeydown(event: KeyboardEvent) {
   }
 }
 
-const unexpectedErrorMessage = computed(() => {
-  const state = screenState.value
-  if (state.status !== 'unexpected-error') return ''
-  return state.requestId
-    ? `Inténtalo de nuevo. Si continúa, comparte este código con soporte: ${state.requestId}.`
-    : 'Inténtalo de nuevo en unos segundos.'
-})
+const failedRequestId = computed(() =>
+  screenState.value.status === 'unexpected-error' ? screenState.value.requestId : undefined,
+)
+
+const selectedBarber = computed(() => barbers.value.find((b) => b.id === selectedBarberId.value))
 </script>
 
 <template>
-  <main v-if="screenState.status !== 'success'" class="barber-selection barber-selection--state">
-    <h1 class="visually-hidden">Elegir barbero</h1>
-    <PageState
-      v-if="screenState.status === 'loading'"
-      variant="loading"
-      headline="Cargando barberos…"
-      role="status"
-    />
-    <PageState
-      v-else-if="screenState.status === 'not-found'"
-      variant="danger"
-      status-label="Error"
-      headline="No encontramos ese enlace"
-      role="alert"
-    >
-      <template #default
-        >Revisa que copiaste la dirección completa, o pídele al barbero que te la vuelva a
-        compartir.</template
-      >
-      <template #action>
-        <BaseButton variant="secondary" @click="retry">Reintentar</BaseButton>
-      </template>
-    </PageState>
-    <PageState
-      v-else-if="screenState.status === 'network-error'"
-      variant="warning"
-      status-label="Atención"
-      headline="No pudimos conectar"
-      role="alert"
-    >
-      <template #default>Revisa tu conexión e inténtalo de nuevo.</template>
-      <template #action>
-        <BaseButton variant="primary" @click="retry">Reintentar</BaseButton>
-      </template>
-    </PageState>
-    <PageState
-      v-else
-      variant="danger"
-      status-label="Error"
-      headline="Ocurrió un error inesperado"
-      role="alert"
-    >
-      <template #default>{{ unexpectedErrorMessage }}</template>
-      <template #action>
-        <BaseButton variant="primary" @click="retry">Reintentar</BaseButton>
-      </template>
-    </PageState>
-  </main>
+  <BookingStateScreen
+    v-if="screenState.status !== 'success'"
+    :status="screenState.status"
+    :request-id="failedRequestId"
+    title="Elegir barbero"
+    loading-headline="Cargando barberos…"
+    @retry="retry"
+  />
 
-  <main v-else class="barber-selection barber-selection--list">
-    <div class="barber-selection__container">
-      <h1 class="barber-selection__title">Elige tu barbero</h1>
+  <main v-else class="pb-page pb-page--bar">
+    <p class="pb-eyebrow">Tu barbero</p>
+    <h1 class="pb-title">Elige tu barbero</h1>
+    <div class="pb-rule" aria-hidden="true"></div>
 
-      <EmptyState
-        v-if="barbers.length === 0"
-        message="Este servicio no tiene barberos disponibles en este momento."
-      />
+    <div v-if="barbers.length === 0" class="pb-empty">
+      <span class="pb-empty__mark" aria-hidden="true"></span>
+      <p class="pb-empty__message">Este servicio no tiene barberos disponibles en este momento.</p>
+    </div>
 
-      <!-- CA-092-01: un único barbero elegible se informa sin presentarse
-           como una elección pendiente (sin radiogroup, sin paso adicional). -->
-      <p v-else-if="isSinglePreselected" class="barber-selection__preselected" role="status">
+    <!-- CA-092-01: un único barbero elegible se informa sin presentarse
+         como una elección pendiente (sin radiogroup, sin paso adicional). -->
+    <div v-else-if="isSinglePreselected" class="pb-ficha">
+      <BarberAvatar :full-name="barbers[0]!.fullName" size="hero" />
+      <p class="pb-ficha__text" role="status">
         Te atenderá <strong>{{ barbers[0]!.fullName }}</strong>
       </p>
-
-      <ul
-        v-else
-        class="barber-selection__list"
-        role="radiogroup"
-        aria-label="Barberos disponibles"
-        @keydown="onListKeydown"
-      >
-        <li
-          v-for="(barber, index) in barbers"
-          :key="barber.id"
-          :ref="(el) => setOptionRef(el as Element | null, index)"
-          class="barber-selection__item"
-          :class="{ 'barber-selection__item--selected': barber.id === selectedBarberId }"
-          role="radio"
-          :aria-checked="barber.id === selectedBarberId"
-          :tabindex="index === activeIndex ? 0 : -1"
-          @click="selectBarber(barber.id)"
-        >
-          <span class="barber-selection__item-check" aria-hidden="true"></span>
-          <span class="barber-selection__item-name">{{ barber.fullName }}</span>
-        </li>
-      </ul>
-
-      <RouterLink
-        v-if="selectedBarberId"
-        :to="{
-          name: 'reserva-publica-horario',
-          params: { slug: props.slug, serviceId: props.serviceId, barberId: selectedBarberId },
-        }"
-        class="barber-selection__cta"
-      >
-        Continuar
-      </RouterLink>
     </div>
+
+    <ul
+      v-else
+      class="pb-choices"
+      role="radiogroup"
+      aria-label="Barberos disponibles"
+      @keydown="onListKeydown"
+    >
+      <li
+        v-for="(barber, index) in barbers"
+        :key="barber.id"
+        :ref="(el) => setOptionRef(el as Element | null, index)"
+        class="pb-choice pb-choice--person"
+        :class="{ 'pb-choice--selected': barber.id === selectedBarberId }"
+        :style="{ '--pb-i': index }"
+        role="radio"
+        :aria-checked="barber.id === selectedBarberId"
+        :tabindex="index === activeIndex ? 0 : -1"
+        @click="selectBarber(barber.id)"
+      >
+        <ChoiceMark />
+        <span class="pb-choice__body pb-choice__body--person">
+          <BarberAvatar :full-name="barber.fullName" size="row" />
+          <span class="pb-choice__name">{{ barber.fullName }}</span>
+        </span>
+      </li>
+    </ul>
+
+    <Transition name="pb-bar">
+      <div v-if="selectedBarber" class="pb-actionbar">
+        <!-- Con un único barbero la ficha de arriba ya dice quién atiende:
+             repetir su nombre aquí solo duplicaría el mismo dato. -->
+        <p v-if="isSinglePreselected" class="pb-actionbar__summary">
+          <span class="pb-actionbar__label">Siguiente</span>
+          <span class="pb-actionbar__value">Fecha y hora</span>
+        </p>
+        <p v-else class="pb-actionbar__summary">
+          <span class="pb-actionbar__label">Tu barbero</span>
+          <span class="pb-actionbar__value">{{ selectedBarber.fullName }}</span>
+        </p>
+        <RouterLink
+          :to="{
+            name: 'reserva-publica-horario',
+            params: { slug: props.slug, serviceId: props.serviceId, barberId: selectedBarber.id },
+          }"
+          class="pb-cta"
+        >
+          <span>Continuar</span>
+          <span class="pb-cta__arrow" aria-hidden="true">→</span>
+        </RouterLink>
+      </div>
+    </Transition>
   </main>
 </template>
-
-<style scoped>
-.barber-selection {
-  display: flex;
-  min-height: 100dvh;
-  justify-content: center;
-  padding: var(--space-6) var(--space-4);
-}
-
-.barber-selection--state {
-  align-items: center;
-  background-color: var(--color-surface-strong);
-}
-
-.barber-selection--list {
-  background-color: var(--color-canvas);
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.barber-selection__container {
-  display: flex;
-  width: 100%;
-  max-width: 640px;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-
-.barber-selection__title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 32px;
-  line-height: 40px;
-  letter-spacing: -0.015em;
-  color: var(--color-text-primary);
-}
-
-.barber-selection__preselected {
-  margin: 0;
-  padding: var(--space-4);
-  color: var(--color-text-primary);
-  background-color: var(--color-surface);
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: 4px;
-}
-
-.barber-selection__list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.barber-selection__item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  cursor: pointer;
-  background-color: var(--color-surface);
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: 4px;
-}
-
-.barber-selection__item:hover {
-  border-color: var(--color-accent-brass);
-}
-
-.barber-selection__item:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 2px var(--color-canvas),
-    0 0 0 4px var(--color-focus);
-}
-
-/* La selección se marca con el ícono de check Y el borde de énfasis, nunca
-   solo con un cambio de color (CA-092-05, mismo criterio que
-   PublicServiceCatalogPage.vue/CA-091-04). */
-.barber-selection__item--selected {
-  border-color: var(--color-accent-brass);
-  border-width: var(--border-width-emphasis);
-}
-
-.barber-selection__item-check {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  border: var(--border-width-normal) solid var(--color-border-subtle);
-  border-radius: 50%;
-}
-
-.barber-selection__item--selected .barber-selection__item-check {
-  background-color: var(--color-accent-brass);
-  border-color: var(--color-accent-brass);
-}
-
-.barber-selection__item-name {
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.barber-selection__cta {
-  display: inline-flex;
-  align-self: flex-start;
-  align-items: center;
-  justify-content: center;
-  height: var(--control-height-primary-mobile);
-  padding: 0 var(--space-5);
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body);
-  font-weight: 500;
-  color: var(--color-on-strong);
-  text-decoration: none;
-  background-color: var(--color-action-primary);
-  border: var(--border-width-normal) solid var(--color-action-primary);
-  border-radius: 2px;
-}
-
-.barber-selection__cta:hover {
-  background-color: var(--color-action-primary-hover);
-  border-color: var(--color-action-primary-hover);
-}
-
-.barber-selection__cta:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 2px var(--color-canvas),
-    0 0 0 4px var(--color-focus);
-}
-
-@media (min-width: 1024px) {
-  .barber-selection__title {
-    font-size: 40px;
-    line-height: 48px;
-  }
-}
-</style>

@@ -10,8 +10,8 @@
 // `/reservar/:slug/servicios/:serviceId/barbero/:barberId/horario` la
 // exploración pública de fechas y horarios (HU-095) y
 // `/reservar/:slug/servicios/:serviceId/barbero/:barberId/horario/:startsAt/cliente`
-// la captura de datos del cliente (HU-096): cinco cascarones propios,
-// separados del panel autenticado (`auth.privateShellRoute`) y sin el guard
+// la captura de datos del cliente (HU-096): cinco pantallas propias,
+// separadas del panel autenticado (`auth.privateShellRoute`) y sin el guard
 // `requireSession` -ninguna ruta pública de reserva exige sesión
 // (CA-090-03). `props: true` entrega `slug`/`serviceId`/`barberId`/
 // `startsAt` como props del componente, no vía `useRoute()`: la página no
@@ -20,37 +20,54 @@
 // sin interpretarse en esta página (HU-096 no persiste ni revalida la
 // franja, HU-097 lo hará): solo se conserva para que la confirmación
 // pública, cuando exista, reciba el contexto completo sin pedirlo de nuevo.
+//
+// Las cinco pantallas son hijas de un único cascarón (`PublicBookingLayout`):
+// el fondo, el progreso y la transición entre pasos persisten mientras la
+// persona recorre la reserva, en vez de reiniciarse con cada ruta. Las
+// hijas conservan su ruta absoluta y su nombre, así que ninguna URL ni
+// `router.push({ name })` cambia. `meta.bookingStep` indica el paso del
+// asistente (1-4); la entrada no lo tiene porque aún no es un paso.
 import type { RouteRecordRaw } from 'vue-router'
 
 export const publicBookingRoutes: RouteRecordRaw[] = [
   {
     path: '/reservar/:slug',
-    name: 'reserva-publica-entrada',
-    component: () => import('./pages/PublicBarbershopEntryPage.vue'),
-    props: true,
-  },
-  {
-    path: '/reservar/:slug/servicios',
-    name: 'reserva-publica-servicios',
-    component: () => import('./pages/PublicServiceCatalogPage.vue'),
-    props: true,
-  },
-  {
-    path: '/reservar/:slug/servicios/:serviceId/barbero',
-    name: 'reserva-publica-barbero',
-    component: () => import('./pages/PublicBarberSelectionPage.vue'),
-    props: true,
-  },
-  {
-    path: '/reservar/:slug/servicios/:serviceId/barbero/:barberId/horario',
-    name: 'reserva-publica-horario',
-    component: () => import('./pages/PublicAvailabilityPage.vue'),
-    props: true,
-  },
-  {
-    path: '/reservar/:slug/servicios/:serviceId/barbero/:barberId/horario/:startsAt/cliente',
-    name: 'reserva-publica-cliente',
-    component: () => import('./pages/PublicCustomerDetailsPage.vue'),
-    props: true,
+    component: () => import('./layouts/PublicBookingLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'reserva-publica-entrada',
+        component: () => import('./pages/PublicBarbershopEntryPage.vue'),
+        props: true,
+      },
+      {
+        path: '/reservar/:slug/servicios',
+        name: 'reserva-publica-servicios',
+        component: () => import('./pages/PublicServiceCatalogPage.vue'),
+        props: true,
+        meta: { bookingStep: 1 },
+      },
+      {
+        path: '/reservar/:slug/servicios/:serviceId/barbero',
+        name: 'reserva-publica-barbero',
+        component: () => import('./pages/PublicBarberSelectionPage.vue'),
+        props: true,
+        meta: { bookingStep: 2 },
+      },
+      {
+        path: '/reservar/:slug/servicios/:serviceId/barbero/:barberId/horario',
+        name: 'reserva-publica-horario',
+        component: () => import('./pages/PublicAvailabilityPage.vue'),
+        props: true,
+        meta: { bookingStep: 3 },
+      },
+      {
+        path: '/reservar/:slug/servicios/:serviceId/barbero/:barberId/horario/:startsAt/cliente',
+        name: 'reserva-publica-cliente',
+        component: () => import('./pages/PublicCustomerDetailsPage.vue'),
+        props: true,
+        meta: { bookingStep: 4 },
+      },
+    ],
   },
 ]
