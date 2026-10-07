@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.40"
+version: "1.41"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-10-04"
+ultima_actualizacion: "2026-10-07"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -112,6 +112,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-113` | 2026-10-03 | Estados vacíos del panel como escena animada | `docs/03-desarrollo/estandar-diseno-visual.md` | Confirmada |
 | `DEC-114` | 2026-10-04 | Se puede retirar a cualquier barbero de un servicio, también al último; sustituye a `DEC-068` | `DP-SER-02`, `HU-023`, `CA-023-05`, `CA-023-06` | Confirmada |
 | `DEC-115` | 2026-10-04 | Perfil del panel por barbería: `shop` (con equipo) o `solo` (barbero individual), solo presentación | `HU-025`; issue #294; amplía `DEC-110` | Confirmada (elección del ajuste); composición del panel sujeta a revisión |
+| `DEC-116` | 2026-10-07 | Pruebas UI con Luna medium, prompts persistentes y cuentas sintéticas aisladas | Propietario; issue #300 | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -1342,3 +1343,12 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Límites:** no concede ni retira permisos, no cambia la reserva pública ni agrega funciones de negocio (reportes, ingresos, clientes). El enlace público de reserva no se muestra en el panel porque ningún endpoint privado lo expone; hacerlo exige su propia decisión.
 - **Documentos afectados:** `docs/02-requisitos/historias-usuario.md` (`HU-025`, `CA-025-10`–`CA-025-14`), `docs/03-desarrollo/especificacion-frontend-nava.md` (§5.1), `docs/00-control/{matriz-trazabilidad,historial-cambios}.md`, `api/openapi/` (0.28.0), `database/{README.md,tests/panel_perfil_barbero_individual.sql,testdata/ui_barbero_individual_294.sql}`, `.github/workflows/ci.yml`.
 - **Fuente:** elección explícita del propietario del 2026-10-04 y issue [#294](https://github.com/bcaceres19/barberia/issues/294).
+
+### DEC-116 · Campañas de interfaz con agentes Luna y fixtures privados
+
+- **Fecha:** 2026-10-07.
+- **Decisión:** por solicitud explícita del propietario se crea ui-app-testing canónico y adaptador Claude para «prueba toda la app». Orquesta GPT-6 Luna / medium por pantalla, máximo dos simultáneos, contexto mínimo, prompts persistentes y cuentas/tenants/navegadores independientes; access/recovery seriales y cierre cruzado.
+- **Fuente y responsable:** propietario, instrucción de crear documentos, usuarios y skill; [#300](https://github.com/bcaceres19/barberia/issues/300).
+- **Límites:** UI real sobre API/PostgreSQL locales, sin fixes ni terceros reales. Credenciales/códigos/enlaces/trazas crudas privados e ignorados. Sesión opaca DEC-050. El skill no cambia modelo del hilo actual ni promete delegación en otro runtime.
+- **Criterios:** inventario, esperados trazables, estado por caso y evidencia responsive/accesible/persistencia. Preparación no equivale a campaña completa.
+- **Artefactos:** AGENTS.md, .agents/skills/ui-app-testing, adaptador .claude, docs/07-calidad/pruebas-ui, prompts y tools/qa. Validación estricta del sistema obligatoria.

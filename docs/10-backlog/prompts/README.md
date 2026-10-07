@@ -1,9 +1,9 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.96"
+version: "1.97"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-09-26"
+ultima_actualizacion: "2026-10-07"
 documentos_relacionados:
   - "../../../AGENTS.md"
   - "../../../CLAUDE.md"
@@ -244,6 +244,28 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-FEAT-GCAL-03-PUBLICACION-NAVA-A-GOOGLE-v1](hu/gcal-03-publicacion-nava-a-google.md) | `hu` | Sin HU asignada todavía | `pending` | `draft` | Publicación NAVA → Google con cola propia. Espera 02; sin issue real no pasa a `ready` | Sin rama ni PR |
 | [PROMPT-FEAT-GCAL-04-FRONTEND-CONEXION-v1](hu/gcal-04-frontend-conexion.md) | `hu` | Sin HU asignada todavía | `pending` | `draft` | Interfaz del barbero. Espera 02 y 03; sin issue real no pasa a `ready` | Sin rama ni PR |
 | [PROMPT-OPS-GCAL-05-PUESTA-EN-MARCHA-v1](ops/gcal-05-puesta-en-marcha.md) | `ops` | Sin HU asignada todavía | `pending` | `draft` | Revisión integral y guía de puesta en marcha. Espera 03 y 04; sin issue real no pasa a `ready` | Sin rama ni PR |
+
+| [PROMPT-TEST-300-KIT-UI-v1](test/issue-300-kit-ui.md) | test | Kit UI | [#300](https://github.com/bcaceres19/barberia/issues/300) | executed | Solicitud del propietario, DEC-116 | test/300-exploracion-ui-luna; sin PR |
+| [PROMPT-REVIEW-300-UI-SKILL-v1](review/issue-300-ui-skill.md) | review | Validación skill | [#300](https://github.com/bcaceres19/barberia/issues/300) | executed | Solicitud del propietario, DEC-116 | test/300-exploracion-ui-luna; sin PR |
+| [PROMPT-ORCH-301-UI-LUNA-v1](orchestration/pruebas-ui-luna.md) | orchestration | UI implementada | [#301](https://github.com/bcaceres19/barberia/issues/301) | ready | Kit #300, única campaña sin fixes | Partición de campaña; sin producto |
+| [PROMPT-TEST-301-UI-ACCESS-v1](test/issue-301-ui-access.md) | test | HU-005,HU-006,HU-007,HU-010,HU-012 | [#301](https://github.com/bcaceres19/barberia/issues/301) | ready | Kit #300, única campaña sin fixes | Partición de campaña; sin producto |
+| [PROMPT-TEST-301-UI-RECOVERY-v1](test/issue-301-ui-recovery.md) | test | HU-008,HU-011 | [#301](https://github.com/bcaceres19/barberia/issues/301) | ready | Kit #300, única campaña sin fixes | Partición de campaña; sin producto |
+| [PROMPT-TEST-301-UI-SHOP-v1](test/issue-301-ui-shop.md) | test | HU-020,HU-012 | [#301](https://github.com/bcaceres19/barberia/issues/301) | ready | Kit #300, única campaña sin fixes | Partición de campaña; sin producto |
+| [PROMPT-TEST-301-UI-POLICY-v1](test/issue-301-ui-policy.md) | test | HU-093 | [#301](https://github.com/bcaceres19/barberia/issues/301) | ready | Kit #300, única campaña sin fixes | Partición de campaña; sin producto |
+| [PROMPT-TEST-301-UI-STAFF-v1](test/issue-301-ui-staff.md) | test | HU-021,HU-042 | [#301](https://github.com/bcaceres19/barberia/issues/301) | ready | Kit #300, única campaña sin fixes | Partición de campaña; sin producto |
+| [PROMPT-TEST-301-UI-CATALOG-v1](test/issue-301-ui-catalog.md) | test | HU-022,HU-024 | [#301](https://github.com/bcaceres19/barberia/issues/301) | ready | Kit #300, única campaña sin fixes | Partición de campaña; sin producto |
+| [PROMPT-TEST-301-UI-ASSIGNMENTS-v1](test/issue-301-ui-assignments.md) | test | HU-023 | [#301](https://github.com/bcaceres19/barberia/issues/301) | ready | Kit #300, única campaña sin fixes | Partición de campaña; sin producto |
+| [PROMPT-TEST-301-UI-SCHEDULES-v1](test/issue-301-ui-schedules.md) | test | HU-040,HU-041 | [#301](https://github.com/bcaceres19/barberia/issues/301) | ready | Kit #300, única campaña sin fixes | Partición de campaña; sin producto |
+| [PROMPT-TEST-301-UI-AGENDA-v1](test/issue-301-ui-agenda.md) | test | HU-062,HU-063 | [#301](https://github.com/bcaceres19/barberia/issues/301) | ready | Kit #300, única campaña sin fixes | Partición de campaña; sin producto |
+| [PROMPT-TEST-301-UI-MANUAL-v1](test/issue-301-ui-manual.md) | test | HU-061 | [#301](https://github.com/bcaceres19/barberia/issues/301) | ready | Kit #300, única campaña sin fixes | Partición de campaña; sin producto |
+| [PROMPT-TEST-301-UI-DETAIL-v1](test/issue-301-ui-detail.md) | test | HU-064,HU-065,HU-066,HU-067,HU-068 | [#301](https://github.com/bcaceres19/barberia/issues/301) | ready | Kit #300, única campaña sin fixes | Partición de campaña; sin producto |
+| [PROMPT-TEST-301-UI-PUBLIC-ENTRY-v1](test/issue-301-ui-public-entry.md) | test | HU-090 | [#301](https://github.com/bcaceres19/barberia/issues/301) | ready | Kit #300, única campaña sin fixes | Partición de campaña; sin producto |
+| [PROMPT-TEST-301-UI-PUBLIC-CATALOG-v1](test/issue-301-ui-public-catalog.md) | test | HU-091 | [#301](https://github.com/bcaceres19/barberia/issues/301) | ready | Kit #300, única campaña sin fixes | Partición de campaña; sin producto |
+| [PROMPT-TEST-301-UI-PUBLIC-BARBER-v1](test/issue-301-ui-public-barber.md) | test | HU-092 | [#301](https://github.com/bcaceres19/barberia/issues/301) | ready | Kit #300, única campaña sin fixes | Partición de campaña; sin producto |
+| [PROMPT-TEST-301-UI-PUBLIC-SLOTS-v1](test/issue-301-ui-public-slots.md) | test | HU-094,HU-095 | [#301](https://github.com/bcaceres19/barberia/issues/301) | ready | Kit #300, única campaña sin fixes | Partición de campaña; sin producto |
+| [PROMPT-TEST-301-UI-PUBLIC-CONFIRM-v1](test/issue-301-ui-public-confirm.md) | test | HU-096,HU-097 | [#301](https://github.com/bcaceres19/barberia/issues/301) | ready | Kit #300, única campaña sin fixes | Partición de campaña; sin producto |
+| [PROMPT-TEST-301-UI-CUSTOMER-v1](test/issue-301-ui-customer.md) | test | HU-098,HU-099 | [#301](https://github.com/bcaceres19/barberia/issues/301) | ready | Kit #300, única campaña sin fixes | Partición de campaña; sin producto |
+| [PROMPT-TEST-301-UI-JOURNEYS-v1](test/issue-301-ui-journeys.md) | test | Recorridos P0 | [#301](https://github.com/bcaceres19/barberia/issues/301) | ready | Kit #300, única campaña sin fixes | Partición de campaña; sin producto |
 
 ## 10. Lista de control al guardar o entregar
 

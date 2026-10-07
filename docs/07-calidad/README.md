@@ -16,6 +16,8 @@ documentos_relacionados:
 
 # Exploración combinatoria y checklists de bugs
 
+> **Entrada vigente (2026-10-07):** [Campañas UI con Luna](pruebas-ui/README.md), 17 pantallas y flujos cruzados. Las secciones históricas de agosto no representan el checkout actual. Fuentes normativas conservan precedencia.
+
 ## 1. Qué es esta carpeta y qué no es
 
 Esta carpeta guarda **checklists de exploración manual o dirigida por IA** del aplicativo ya construido, orientados a encontrar defectos que una prueba automatizada puntual no cubre: combinaciones raras de campos, condiciones de carrera de interfaz, responsive roto, datos mal almacenados y errores 500/no controlados que solo aparecen al combinar varias cosas a la vez.

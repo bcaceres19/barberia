@@ -10,9 +10,9 @@ documentos_relacionados:
   - "04-checklist-modulos-catalogo.md"
 ---
 
-# Matriz de combinaciones por pares
+# Matriz histórica de combinaciones exploratorias
 
-Tablas ya reducidas por combinación por pares (ver técnica en [`01-metodologia-y-uso.md`](01-metodologia-y-uso.md) §2), listas para ejecutar fila por fila. Cada fila es una sesión concreta: una combinación de valores de distintas dimensiones que aparece junta al menos una vez, cubriendo todos los pares posibles con el mínimo de filas.
+Muestras históricas, no acreditan todos los pares ni un mínimo de filas. Contrastar esperados con RN/DEC/HU. Para ejecución actual usar [fronteras y combinaciones](pruebas-ui/07-combinaciones.md).
 
 ## 1. Crear servicio (`CatalogPage`)
 
@@ -21,7 +21,7 @@ Dimensiones: **Nombre** (vacío / típico / 120 exacto / 121 / duplicado-activo)
 | # | Nombre | Duración | Precio | Ancho | Red | Resultado esperado |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | típico | 1 | 45000.50 | 320 | normal | Creado; visible en la lista a 320 px sin desbordes |
-| 2 | 121 chars | 1440 | 0 | 768 | normal | Ambos errores de campo mostrados juntos, sin envío |
+| 2 | 121 chars | 1440 | 0 | 768 | normal | Nombre inválido y precio 0 inválido; duración 1440 válida según DEC-067; sin envío |
 | 3 | vacío | 0 | 45000.999 | 1280 | normal | Tres errores de campo, ninguno llega al servidor |
 | 4 | duplicado-activo | 1441 | vacío | 320 | offline al enviar | Rechazo por `name-conflict` **o** por red, nunca ambos a la vez de forma confusa; datos del formulario conservados |
 | 5 | 120 exacto | "30.5" | 45,000 | 768 | lenta | Errores de duración y precio junto con estado de carga visible mientras se valida en cliente (no debería ni llegar a la red) |
