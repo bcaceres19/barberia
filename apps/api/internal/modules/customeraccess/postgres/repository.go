@@ -60,7 +60,9 @@ func (r *Repository) ResolveAppointmentByTokenHash(ctx context.Context, tokenHas
 			        ap.attendee_name, ap.service_name_snapshot, ap.duration_minutes_snapshot,
 			        br.full_name, ap.starts_at, ap.ends_at, ap.status,
 			        bs.cancellation_deadline_minutes, bs.late_cancellation_client_allowed,
-			        bs.late_cancellation_reason_required
+			        bs.late_cancellation_reason_required,
+			        bs.business_term, bs.business_term_gender,
+			        bs.professional_term, bs.professional_term_plural, bs.professional_term_gender
 			   FROM appointment_access_token t
 			   JOIN appointment ap ON ap.barbershop_id = t.barbershop_id AND ap.id = t.appointment_id
 			   JOIN barbershop bs ON bs.id = t.barbershop_id
@@ -75,6 +77,9 @@ func (r *Repository) ResolveAppointmentByTokenHash(ctx context.Context, tokenHas
 			&view.BarberName, &view.StartsAt, &view.EndsAt, &view.Status,
 			&view.CancellationDeadlineMinutes, &view.LateCancellationClientAllowed,
 			&view.LateCancellationReasonRequired,
+			&view.Vocabulary.BusinessTerm, &view.Vocabulary.BusinessTermGender,
+			&view.Vocabulary.ProfessionalTerm, &view.Vocabulary.ProfessionalTermPlural,
+			&view.Vocabulary.ProfessionalTermGender,
 		)
 		switch {
 		case err == nil:

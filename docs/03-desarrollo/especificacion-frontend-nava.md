@@ -535,7 +535,7 @@ Cada página y región que consulta datos define:
 
 La interfaz siempre usa **turno**. API, TypeScript generado y backend usan `appointment`. No se introducen “cita”, “booking” o “reserva” para nombrar el objeto ya creado. “Reserva” puede describir el proceso público: “Reserva tu turno”.
 
-Las palabras «barbería» y «barbero» son los valores iniciales del vocabulario de cada barbería (`DEC-110`): todo el panel privado las sustituye por las que el negocio configure (barbero, manicurista, tatuadora; barbería, estudio, spa…), concordadas en género y número, incluidos Horarios, los avisos, las validaciones y las etiquetas «Cancelado por…» (`DEC-119`). Las pantallas públicas y el acceso del cliente adoptan el mismo vocabulario cuando se integre el issue #309. `turno` y los estados autorizados no se configuran.
+Las palabras «barbería» y «barbero» son los valores iniciales del vocabulario de cada barbería (`DEC-110`): todo el panel privado las sustituye por las que el negocio configure (barbero, manicurista, tatuadora; barbería, estudio, spa…), concordadas en género y número, incluidos Horarios, los avisos, las validaciones y las etiquetas «Cancelado por…» (`DEC-119`). La reserva pública y el acceso del cliente adoptan el mismo vocabulario, que el API público entrega junto al perfil de la barbería y al turno (`DEC-119`, #309). `turno` y los estados autorizados no se configuran.
 
 ### 10.2 Voz
 

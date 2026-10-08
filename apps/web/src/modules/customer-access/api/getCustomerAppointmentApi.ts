@@ -40,6 +40,13 @@ export async function getCustomerAppointment(
         cancellationDeadlineMinutes: data.cancellationDeadlineMinutes,
         lateCancellationClientAllowed: data.lateCancellationClientAllowed,
         lateCancellationReasonRequired: data.lateCancellationReasonRequired,
+        vocabulary: {
+          businessTerm: data.vocabulary.businessTerm,
+          businessTermGender: data.vocabulary.businessTermGender,
+          professionalTerm: data.vocabulary.professionalTerm,
+          professionalTermPlural: data.vocabulary.professionalTermPlural,
+          professionalTermGender: data.vocabulary.professionalTermGender,
+        },
       }
       return { kind: 'success', appointment }
     }

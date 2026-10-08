@@ -22,4 +22,18 @@ type CustomerAppointmentResponse struct {
 	CancellationDeadlineMinutes    int       `json:"cancellationDeadlineMinutes"`
 	LateCancellationClientAllowed  bool      `json:"lateCancellationClientAllowed"`
 	LateCancellationReasonRequired bool      `json:"lateCancellationReasonRequired"`
+
+	Vocabulary PublicVocabularyResponse `json:"vocabulary"`
+}
+
+// PublicVocabularyResponse es la forma exacta del componente OpenAPI
+// PublicVocabulary.yaml (DEC-119): las palabras con las que la barbería nombra a
+// su negocio y a su profesional, para que el cliente lea «tu manicurista» y no
+// «tu barbero». Nunca el acento ni el perfil del panel.
+type PublicVocabularyResponse struct {
+	BusinessTerm           string `json:"businessTerm"`
+	BusinessTermGender     string `json:"businessTermGender"`
+	ProfessionalTerm       string `json:"professionalTerm"`
+	ProfessionalTermPlural string `json:"professionalTermPlural"`
+	ProfessionalTermGender string `json:"professionalTermGender"`
 }

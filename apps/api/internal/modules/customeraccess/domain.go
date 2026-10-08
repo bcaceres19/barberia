@@ -28,4 +28,20 @@ type AppointmentView struct {
 	CancellationDeadlineMinutes    int
 	LateCancellationClientAllowed  bool
 	LateCancellationReasonRequired bool
+	Vocabulary                     Vocabulary
+}
+
+// Vocabulary es la palabra con la que la barbería llama a su negocio y a su
+// profesional (DEC-110, DEC-119), con el plural del profesional y el género
+// gramatical de ambas (`masculine` o `feminine`) para que la interfaz pública
+// concuerde. Es un subconjunto de shops.Brand sin acento ni perfil del panel;
+// este paquete no importa shops (CA-002-06), así que repite su propia forma
+// mínima. La base garantiza forma y largo (barbershop_*_term_ck); una
+// barbería que nunca lo configuró tiene los valores iniciales.
+type Vocabulary struct {
+	BusinessTerm           string
+	BusinessTermGender     string
+	ProfessionalTerm       string
+	ProfessionalTermPlural string
+	ProfessionalTermGender string
 }

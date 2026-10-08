@@ -89,6 +89,8 @@ properties:
     description: Si una cancelación tardía exige motivo (HU-093, HU-099 la exige).
     examples:
       - true
+  vocabulary:
+    $ref: './PublicVocabulary.yaml'
 required:
   - barbershopName
   - timezone
@@ -102,3 +104,4 @@ required:
   - cancellationDeadlineMinutes
   - lateCancellationClientAllowed
   - lateCancellationReasonRequired
+  - vocabulary

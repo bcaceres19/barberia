@@ -16,6 +16,15 @@ vi.mock('@/shared/api/httpClient', () => ({
 
 const { default: PublicBarbershopEntryPage } = await import('../PublicBarbershopEntryPage.vue')
 
+// Una barbería que nunca configuró su vocabulario recibe los valores iniciales (DEC-119).
+const initialVocabulary = {
+  businessTerm: 'barbería',
+  businessTermGender: 'feminine',
+  professionalTerm: 'barbero',
+  professionalTermPlural: 'barberos',
+  professionalTermGender: 'masculine',
+}
+
 function okResponse(): Response {
   return { ok: true, status: 200, headers: new Headers() } as Response
 }
@@ -49,7 +58,7 @@ describe('PublicBarbershopEntryPage', () => {
     )
     const wrapper = mountEntryPage({ slug: 'barberia-ejemplo' })
 
-    expect(wrapper.text()).toContain('Abriendo tu barbería')
+    expect(wrapper.text()).toContain('Abriendo tu reserva')
 
     resolveRequest({ data: undefined, error: undefined, response: errorResponse(500) })
     await flushPromises()
@@ -62,6 +71,7 @@ describe('PublicBarbershopEntryPage', () => {
         timezone: 'America/Bogota',
         contactEmail: null,
         contactPhone: null,
+        vocabulary: initialVocabulary,
       },
       error: undefined,
       response: okResponse(),
@@ -82,6 +92,7 @@ describe('PublicBarbershopEntryPage', () => {
         timezone: 'America/Bogota',
         contactEmail: null,
         contactPhone: null,
+        vocabulary: initialVocabulary,
       },
       error: undefined,
       response: okResponse(),
@@ -103,6 +114,7 @@ describe('PublicBarbershopEntryPage', () => {
           timezone: 'America/Bogota',
           contactEmail: null,
           contactPhone: null,
+          vocabulary: initialVocabulary,
         },
         error: undefined,
         response: okResponse(),
@@ -130,6 +142,7 @@ describe('PublicBarbershopEntryPage', () => {
         timezone: 'America/Bogota',
         contactEmail: 'contacto@ejemplo.test',
         contactPhone: '+573001234567',
+        vocabulary: initialVocabulary,
       },
       error: undefined,
       response: okResponse(),
@@ -145,6 +158,7 @@ describe('PublicBarbershopEntryPage', () => {
         timezone: 'America/Bogota',
         contactEmail: null,
         contactPhone: null,
+        vocabulary: initialVocabulary,
       },
       error: undefined,
       response: okResponse(),
@@ -162,6 +176,7 @@ describe('PublicBarbershopEntryPage', () => {
         timezone: 'America/Bogota',
         contactEmail: null,
         contactPhone: null,
+        vocabulary: initialVocabulary,
       },
       error: undefined,
       response: okResponse(),
@@ -197,6 +212,7 @@ describe('PublicBarbershopEntryPage', () => {
         timezone: 'America/Bogota',
         contactEmail: null,
         contactPhone: null,
+        vocabulary: initialVocabulary,
       },
       error: undefined,
       response: okResponse(),
@@ -239,6 +255,7 @@ describe('PublicBarbershopEntryPage', () => {
         timezone: 'America/Bogota',
         contactEmail: 'contacto@ejemplo.test',
         contactPhone: '+573001234567',
+        vocabulary: initialVocabulary,
       },
       error: undefined,
       response: okResponse(),

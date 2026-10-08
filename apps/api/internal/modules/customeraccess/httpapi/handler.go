@@ -70,5 +70,12 @@ func newCustomerAppointmentResponse(v customeraccess.AppointmentView) CustomerAp
 		CancellationDeadlineMinutes:    v.CancellationDeadlineMinutes,
 		LateCancellationClientAllowed:  v.LateCancellationClientAllowed,
 		LateCancellationReasonRequired: v.LateCancellationReasonRequired,
+		Vocabulary: PublicVocabularyResponse{
+			BusinessTerm:           v.Vocabulary.BusinessTerm,
+			BusinessTermGender:     v.Vocabulary.BusinessTermGender,
+			ProfessionalTerm:       v.Vocabulary.ProfessionalTerm,
+			ProfessionalTermPlural: v.Vocabulary.ProfessionalTermPlural,
+			ProfessionalTermGender: v.Vocabulary.ProfessionalTermGender,
+		},
 	}
 }

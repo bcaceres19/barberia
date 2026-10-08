@@ -1,4 +1,5 @@
 import { test, expect, type Route } from '@playwright/test'
+import { INITIAL_VOCABULARY } from './fixtures/vocabularioInicial'
 
 /**
  * Recorrido E2E de HU-090 (docs/03-desarrollo/estrategia-pruebas.md §5.3):
@@ -21,6 +22,7 @@ async function fulfillProfile(
     timezone: string
     contactEmail: string | null
     contactPhone: string | null
+    vocabulary: typeof INITIAL_VOCABULARY
   },
 ) {
   await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) })
@@ -34,6 +36,7 @@ test.describe('Entrada pública de reservas (HU-090)', () => {
         timezone: 'America/Bogota',
         contactEmail: 'contacto@ejemplo.test',
         contactPhone: '+573001234567',
+        vocabulary: INITIAL_VOCABULARY,
       })
     })
 
@@ -83,6 +86,7 @@ test.describe('Entrada pública de reservas (HU-090)', () => {
         timezone: 'America/Bogota',
         contactEmail: null,
         contactPhone: null,
+        vocabulary: INITIAL_VOCABULARY,
       })
     })
 
@@ -108,6 +112,7 @@ test.describe('Entrada pública de reservas (HU-090)', () => {
         timezone: 'America/Bogota',
         contactEmail: null,
         contactPhone: null,
+        vocabulary: INITIAL_VOCABULARY,
       })
     })
 

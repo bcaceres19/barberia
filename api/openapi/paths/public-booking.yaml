@@ -30,7 +30,7 @@
     operationId: resolvePublicBarbershop
     security: []
     x-business-rules: [RN-TEN-01, RN-DAT-01, RN-DAT-02]
-    x-decisions: [DEC-016, DEC-019, DEC-022, DEC-024, DEC-033, DEC-034, DEC-035, DEC-036, DEC-037, DEC-038, DEC-039, DEC-077, DEC-078, DEC-079, DEC-082]
+    x-decisions: [DEC-016, DEC-019, DEC-022, DEC-024, DEC-033, DEC-034, DEC-035, DEC-036, DEC-037, DEC-038, DEC-039, DEC-077, DEC-078, DEC-079, DEC-082, DEC-110, DEC-119]
     parameters:
       - name: slug
         in: path

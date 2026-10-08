@@ -6,6 +6,8 @@
 // formado, desconocido o no publicable llegan TODOS como `not-found`
 // (CA-090-02), nunca distinguidos.
 
+import type { VocabularyTerms } from '@/shared/model'
+
 /** Contexto público mínimo de una barbería habilitada (CA-090-01,
  * CA-090-04). contactEmail/contactPhone son `null` cuando la barbería no
  * tiene ese contacto configurado. */
@@ -14,6 +16,8 @@ export interface PublicBarbershopProfile {
   timezone: string
   contactEmail: string | null
   contactPhone: string | null
+  /** Palabras con las que la barbería nombra a su negocio y a su profesional (DEC-119). */
+  vocabulary: VocabularyTerms
 }
 
 /** Resultado discriminado de resolver un enlace público contra el API

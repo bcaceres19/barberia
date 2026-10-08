@@ -15,6 +15,12 @@ content:
           timezone: America/Bogota
           contactEmail: contacto@ejemplo.test
           contactPhone: "+573001234567"
+          vocabulary:
+            businessTerm: barbería
+            businessTermGender: feminine
+            professionalTerm: barbero
+            professionalTermPlural: barberos
+            professionalTermGender: masculine
       sinContacto:
         summary: Barbería sin contacto público configurado
         value:
@@ -22,3 +28,22 @@ content:
           timezone: America/Bogota
           contactEmail: null
           contactPhone: null
+          vocabulary:
+            businessTerm: barbería
+            businessTermGender: feminine
+            professionalTerm: barbero
+            professionalTermPlural: barberos
+            professionalTermGender: masculine
+      otroRubro:
+        summary: Estudio de uñas que llama «manicurista» a su profesional
+        value:
+          name: Estudio Lila
+          timezone: America/Bogota
+          contactEmail: null
+          contactPhone: null
+          vocabulary:
+            businessTerm: estudio de uñas
+            businessTermGender: masculine
+            professionalTerm: manicurista
+            professionalTermPlural: manicuristas
+            professionalTermGender: feminine

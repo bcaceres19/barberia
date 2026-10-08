@@ -51,6 +51,10 @@ describe('buildVocabulary con los valores iniciales', () => {
     expect(`${v.ThisProfessional} ya no está disponible`).toBe('Este barbero ya no está disponible')
     expect(`${v.TheProfessional} o el servicio elegidos`).toBe('El barbero o el servicio elegidos')
     expect(`Cancelado ${v.byTheProfessional}`).toBe('Cancelado por el barbero')
+    expect(`${v.ThisBusiness} todavía no tiene servicios`).toBe(
+      'Esta barbería todavía no tiene servicios',
+    )
+    expect(`contacta ${v.toTheBusiness}`).toBe('contacta a la barbería')
     expect(`Para ${v.allTheBusiness}`).toBe('Para toda la barbería')
     expect(`pertenecer a ${v.anotherBusiness}`).toBe('pertenecer a otra barbería')
   })
@@ -85,6 +89,7 @@ describe('buildVocabulary con un vocabulario propio', () => {
     expect(v.theBusiness).toBe('el salón de belleza')
     expect(v.thisBusiness).toBe('este salón de belleza')
     expect(v.businessEnding).toBe('o')
+    expect(v.toTheBusiness).toBe('al salón de belleza')
     expect(v.allTheBusiness).toBe('todo el salón de belleza')
     expect(v.anotherBusiness).toBe('otro salón de belleza')
     expect(

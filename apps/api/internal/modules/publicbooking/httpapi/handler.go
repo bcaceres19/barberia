@@ -72,6 +72,13 @@ func newPublicBarbershopProfileResponse(p publicbooking.BarbershopProfile) Publi
 		Timezone:     p.Timezone,
 		ContactEmail: p.ContactEmail,
 		ContactPhone: p.ContactPhone,
+		Vocabulary: PublicVocabularyResponse{
+			BusinessTerm:           p.Vocabulary.BusinessTerm,
+			BusinessTermGender:     p.Vocabulary.BusinessTermGender,
+			ProfessionalTerm:       p.Vocabulary.ProfessionalTerm,
+			ProfessionalTermPlural: p.Vocabulary.ProfessionalTermPlural,
+			ProfessionalTermGender: p.Vocabulary.ProfessionalTermGender,
+		},
 	}
 }
 

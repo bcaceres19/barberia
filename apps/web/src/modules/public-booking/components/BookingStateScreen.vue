@@ -48,8 +48,7 @@ const unexpectedErrorMessage = computed(() =>
       role="alert"
     >
       <template #default
-        >Revisa que copiaste la dirección completa, o pídele al barbero que te la vuelva a
-        compartir.</template
+        >Revisa que copiaste la dirección completa, o pide que te la vuelvan a compartir.</template
       >
       <template #action>
         <BaseButton variant="secondary" @click="emit('retry')">Reintentar</BaseButton>
