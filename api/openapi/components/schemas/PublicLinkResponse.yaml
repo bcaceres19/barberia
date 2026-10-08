@@ -4,7 +4,7 @@ additionalProperties: false
 description: >
   Identificador del enlace público de reservas de la barbería de la sesión.
   El cliente compone la URL completa con su propio origen:
-  `{origen}/reservar/{slug}`. Tiene la forma `<nombre>-<código aleatorio>`,
+  `{origen}/reservar/{slug}`. Tiene la forma `<nombre><código aleatorio de 8>` sin guiones (`DEC-118`; los generados antes pueden llevarlos),
   es único globalmente y no cambia al renombrar la barbería. No contiene
   ningún identificador interno.
 properties:
@@ -13,6 +13,6 @@ properties:
     minLength: 3
     maxLength: 40
     pattern: '^[a-z0-9]([a-z0-9-]{1,38}[a-z0-9])$'
-    example: corte-fino-k7x2m9
+    example: cortefinok7x2m9q4
 required:
   - slug

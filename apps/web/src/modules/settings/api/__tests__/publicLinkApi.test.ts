@@ -22,12 +22,15 @@ function problem(status: number) {
 describe('publicLinkApi.fetchPublicLink', () => {
   beforeEach(() => getMock.mockReset())
 
-  it('maps a 200 body to a success outcome and asks the right path', async () => {
-    getMock.mockResolvedValueOnce(ok({ slug: 'corte-fino-k7x2m9' }))
+  it.each(['cortefinok7x2m9q4', 'corte-fino-k7x2m9'])(
+    'maps a 200 body to a success outcome (new slug, or a legacy one with hyphens): %s',
+    async (slug) => {
+      getMock.mockResolvedValueOnce(ok({ slug }))
 
-    expect(await fetchPublicLink()).toEqual({ kind: 'success', slug: 'corte-fino-k7x2m9' })
-    expect(getMock).toHaveBeenCalledWith('/private/settings/public-link')
-  })
+      expect(await fetchPublicLink()).toEqual({ kind: 'success', slug })
+      expect(getMock).toHaveBeenCalledWith('/private/settings/public-link')
+    },
+  )
 
   it.each(['', 'ab', '-corte-fino', 'Corte-Fino-k7x2m9', 'corte fino', 'a'.repeat(41)])(
     'discards a slug the database would never emit (%j)',

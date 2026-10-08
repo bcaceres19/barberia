@@ -4,6 +4,16 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.30.1 · 2026-10-08
+
+### Cambiado (comportamiento, no forma del contrato)
+
+- El slug que se genera pasa de `<nombre>-<código de 6>` a
+  `<nombre><código de 8>` sin guiones, p. ej. `mateobarberok7x2m9q4`
+  (`DEC-118`, issue #306). Mismo patrón `barbershop_public_slug_ck`, así que el
+  esquema `PublicLinkResponse` no cambia salvo su descripción y ejemplo. Los
+  slugs ya generados se conservan y siguen resolviendo.
+
 ## 0.30.0 · 2026-10-08
 
 ### Agregado

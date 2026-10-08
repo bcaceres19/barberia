@@ -299,7 +299,7 @@
       público de reservas de la barbería derivada de la sesión vigente, para
       que su dueño pueda verlo y copiarlo cuando lo necesite. Si la barbería
       todavía no tiene enlace, esta primera lectura lo genera
-      (`<nombre>-<código aleatorio>`, único globalmente) y lo conserva: las
+      (`<nombre><código aleatorio>` sin guiones, único globalmente) y lo conserva: las
       lecturas siguientes devuelven el mismo y renombrar la barbería no lo
       cambia. No hay operación para editarlo ni regenerarlo. `barbershopId`
       nunca es un parámetro: el tenant se deriva exclusivamente de

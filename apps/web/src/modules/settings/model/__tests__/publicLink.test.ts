@@ -5,14 +5,14 @@ import { buildPublicLinkUrl } from '../publicLink'
 
 describe('buildPublicLinkUrl', () => {
   it('joins the origin, the public booking path and the slug', () => {
-    expect(buildPublicLinkUrl('https://nava.example', 'corte-fino-k7x2m9')).toBe(
-      'https://nava.example/reservar/corte-fino-k7x2m9',
+    expect(buildPublicLinkUrl('https://nava.example', 'cortefinok7x2m9q4')).toBe(
+      'https://nava.example/reservar/cortefinok7x2m9q4',
     )
   })
 
   it('does not duplicate a trailing slash in the origin', () => {
-    expect(buildPublicLinkUrl('https://nava.example/', 'corte-fino-k7x2m9')).toBe(
-      'https://nava.example/reservar/corte-fino-k7x2m9',
+    expect(buildPublicLinkUrl('https://nava.example/', 'cortefinok7x2m9q4')).toBe(
+      'https://nava.example/reservar/cortefinok7x2m9q4',
     )
   })
 
@@ -20,10 +20,10 @@ describe('buildPublicLinkUrl', () => {
     const router = createRouter({ history: createMemoryHistory(), routes: publicBookingRoutes })
     const resolved = router.resolve({
       name: 'reserva-publica-entrada',
-      params: { slug: 'corte-fino-k7x2m9' },
+      params: { slug: 'cortefinok7x2m9q4' },
     })
 
-    expect(buildPublicLinkUrl('http://localhost', 'corte-fino-k7x2m9')).toBe(
+    expect(buildPublicLinkUrl('http://localhost', 'cortefinok7x2m9q4')).toBe(
       `http://localhost${resolved.href}`,
     )
   })

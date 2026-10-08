@@ -76,8 +76,8 @@ func TestUpdate_GeneratesSlugFromName_WhenSlugIsNull(t *testing.T) {
 	}
 
 	got := readPublicSlug(t, db, shopA)
-	if got == nil || !regexp.MustCompile(`^barberia-slug-automatico-[a-z2-9]{6}$`).MatchString(*got) {
-		t.Fatalf("expected public_slug=barberia-slug-automatico-<código de 6>, got %v", got)
+	if got == nil || !regexp.MustCompile(`^barberiaslugautomatico[a-z2-9]{8}$`).MatchString(*got) {
+		t.Fatalf("expected public_slug=barberiaslugautomatico<código de 8>, got %v", got)
 	}
 }
 
@@ -138,27 +138,27 @@ func TestUpdate_SlugCollision_RetriesWithAnotherCode(t *testing.T) {
 
 	const collidingName = "Café Aroma Colisión"
 
-	repoA := shopspostgres.New(db).WithSlugCode(fixedCodes("aaaaaa"))
+	repoA := shopspostgres.New(db).WithSlugCode(fixedCodes("aaaaaaaa"))
 	if _, err := repoA.Update(context.Background(), shopA, shops.UpdateInput{
 		Name: collidingName, Timezone: "America/Bogota",
 	}); err != nil {
 		t.Fatalf("Update shopA: %v", err)
 	}
 	slugA := readPublicSlug(t, db, shopA)
-	if slugA == nil || *slugA != "cafe-aroma-colision-aaaaaa" {
-		t.Fatalf("expected shopA public_slug=%q, got %v", "cafe-aroma-colision-aaaaaa", slugA)
+	if slugA == nil || *slugA != "cafearomacolisionaaaaaaaa" {
+		t.Fatalf("expected shopA public_slug=%q, got %v", "cafearomacolisionaaaaaaaa", slugA)
 	}
 
 	// shopB sortea primero el mismo código (colisión real) y luego otro.
-	repoB := shopspostgres.New(db).WithSlugCode(fixedCodes("aaaaaa", "bbbbbb"))
+	repoB := shopspostgres.New(db).WithSlugCode(fixedCodes("aaaaaaaa", "bbbbbbbb"))
 	if _, err := repoB.Update(context.Background(), shopB, shops.UpdateInput{
 		Name: collidingName, Timezone: "America/Bogota",
 	}); err != nil {
 		t.Fatalf("Update shopB must survive the collision: %v", err)
 	}
 	slugB := readPublicSlug(t, db, shopB)
-	if slugB == nil || *slugB != "cafe-aroma-colision-bbbbbb" {
-		t.Fatalf("expected shopB public_slug=%q after retrying, got %v", "cafe-aroma-colision-bbbbbb", slugB)
+	if slugB == nil || *slugB != "cafearomacolisionbbbbbbbb" {
+		t.Fatalf("expected shopB public_slug=%q after retrying, got %v", "cafearomacolisionbbbbbbbb", slugB)
 	}
 
 	if *slugA == *slugB {
@@ -174,13 +174,13 @@ func TestUpdate_SlugCollision_ExhaustedAttempts_FailsWithoutWriting(t *testing.T
 	resetSlugFixture(t, db, shopA, "Barbería de prueba (aislamiento de paquete) 1")
 	resetSlugFixture(t, db, shopB, "Barbería de prueba (aislamiento de paquete) 2")
 
-	if _, err := shopspostgres.New(db).WithSlugCode(fixedCodes("aaaaaa")).Update(context.Background(), shopA, shops.UpdateInput{
+	if _, err := shopspostgres.New(db).WithSlugCode(fixedCodes("aaaaaaaa")).Update(context.Background(), shopA, shops.UpdateInput{
 		Name: "Mismo Nombre", Timezone: "America/Bogota",
 	}); err != nil {
 		t.Fatalf("Update shopA: %v", err)
 	}
 
-	always := func() (string, error) { return "aaaaaa", nil }
+	always := func() (string, error) { return "aaaaaaaa", nil }
 	_, err := shopspostgres.New(db).WithSlugCode(always).Update(context.Background(), shopB, shops.UpdateInput{
 		Name: "Mismo Nombre", Timezone: "America/Bogota",
 	})

@@ -41,7 +41,7 @@ func isPublicSlugConflict(err error) bool {
 // producción; una secuencia fija en las pruebas de colisión).
 type slugCodeFunc func() (string, error)
 
-// claimSlug asigna a barbershopID un public_slug `<base del nombre>-<código>`
+// claimSlug asigna a barbershopID un public_slug `<base del nombre><código>`
 // dentro de la transacción tenant-aware de q (DEC-082, DEC-117). El llamador
 // debe haber bloqueado la fila con FOR UPDATE y comprobado que el slug es
 // NULL: esta función nunca sobrescribe uno existente. Una colisión real de

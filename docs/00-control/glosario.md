@@ -121,7 +121,7 @@ Entidad técnica: `working_hour` (DDL-NAM-01: nombre en singular). La excepción
 `working_hour_override` y `working_hour_override_segment`.
 
 ### Enlace público de reservas
-Dirección web que el barbero comparte con sus clientes y que da acceso al flujo de reserva sin necesidad de iniciar sesión. Es única por barbería, lleva el nombre del negocio más un código aleatorio (`corte-fino-k7x2m9`) y el dueño la consulta y copia desde Configuración (`DEC-117`).
+Dirección web que el barbero comparte con sus clientes y que da acceso al flujo de reserva sin necesidad de iniciar sesión. Es única por barbería, lleva el nombre del negocio más un código aleatorio, todo junto (`cortefinok7x2m9q4`, `DEC-118`) y el dueño la consulta y copia desde Configuración (`DEC-117`).
 
 ---
 

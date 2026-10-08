@@ -18,7 +18,7 @@ type PublicLink struct {
 // núcleo no importa internal/platform/database ni pgx (CA-002-06).
 type PublicLinkRepository interface {
 	// Ensure devuelve el public_slug de barbershopID y, si todavía es NULL, lo
-	// genera `<nombre>-<código>` en la misma transacción tenant-aware, de modo
+	// genera `<nombre><código>` en la misma transacción tenant-aware, de modo
 	// que dos llamadas concurrentes no producen dos slugs. found=false cubre
 	// una fila no visible en el tenant vigente (defensivo, mismo criterio que
 	// UpdateResult.Found). Nunca reescribe un slug existente.

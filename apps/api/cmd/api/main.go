@@ -271,7 +271,7 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	private.Patch("/settings/brand", updateBrandHandler.ServeHTTP)
 
 	// Issue #304 (DEC-117): enlace público de reservas de la barbería de la
-	// sesión, generado `<nombre>-<código>` en la primera lectura si aún no
+	// sesión, generado `<nombre><código>` en la primera lectura si aún no
 	// existe. Solo lectura: no hay editar ni regenerar.
 	publicLinkService := shops.NewPublicLinkService(shopspostgres.NewPublicLinkRepository(db))
 	getPublicLinkHandler := shopshttpapi.NewGetPublicLinkHandler(publicLinkService)

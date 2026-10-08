@@ -27,7 +27,7 @@ func (f *fakePublicLinkRepository) Ensure(_ context.Context, barbershopID string
 }
 
 func TestGetPublicLinkHandler_Success_ReturnsOnlyTheSlugAndForbidsCaching(t *testing.T) {
-	repo := &fakePublicLinkRepository{slug: "corte-fino-k7x2m9", found: true}
+	repo := &fakePublicLinkRepository{slug: "cortefinok7x2m9q4", found: true}
 	h := httpapi.NewGetPublicLinkHandler(shops.NewPublicLinkService(repo))
 
 	rec := httptest.NewRecorder()
@@ -40,7 +40,7 @@ func TestGetPublicLinkHandler_Success_ReturnsOnlyTheSlugAndForbidsCaching(t *tes
 	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if len(body) != 1 || body["slug"] != "corte-fino-k7x2m9" {
+	if len(body) != 1 || body["slug"] != "cortefinok7x2m9q4" {
 		t.Fatalf("expected exactly {slug}, got %v", body)
 	}
 	if got := rec.Header().Get("Cache-Control"); got != "no-store" {

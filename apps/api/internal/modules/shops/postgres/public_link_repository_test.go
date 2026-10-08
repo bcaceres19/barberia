@@ -59,8 +59,8 @@ func TestEnsure_NullSlug_GeneratesNameWithRandomCodeAndPersistsIt(t *testing.T) 
 	if err != nil || !found {
 		t.Fatalf("Ensure: found=%v err=%v", found, err)
 	}
-	if !regexp.MustCompile(`^corte-fino-estudio-[a-z2-9]{6}$`).MatchString(slug) {
-		t.Fatalf("expected corte-fino-estudio-<código de 6>, got %q", slug)
+	if !regexp.MustCompile(`^cortefinoestudio[a-z2-9]{8}$`).MatchString(slug) {
+		t.Fatalf("expected cortefinoestudio<código de 8>, got %q", slug)
 	}
 	if stored := readPublicSlug(t, db, shopA); stored == nil || *stored != slug {
 		t.Fatalf("the generated slug must be persisted, stored=%v", stored)
@@ -140,7 +140,7 @@ func TestEnsure_TwoTenantsSameName_GetDistinctUnrelatedLinksThatResolveOnlyToThe
 	}
 	// Un slug vecino inventado (el patrón de los viejos «-2», «-3») no
 	// resuelve a ninguna barbería: el código aleatorio no se puede deducir.
-	for _, guess := range []string{"barberia-gemela", "barberia-gemela-2", "barberia-gemela-3"} {
+	for _, guess := range []string{"barberiagemela", "barberiagemela2", "barberia-gemela", "barberia-gemela-2"} {
 		if got := resolveSlug(t, db, guess); got != nil {
 			t.Fatalf("guessed slug %q must not resolve, got %v", guess, *got)
 		}
