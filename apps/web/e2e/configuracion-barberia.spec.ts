@@ -196,6 +196,53 @@ test.describe('Configuración (HU-020, DEC-110)', () => {
     await restoreInitialBrand(page)
   })
 
+  test('el enlace público es único, estable, se copia y cada uno abre solo su barbería (DEC-117)', async ({
+    browser,
+  }) => {
+    await openSettings(page)
+    const linkField = page.getByRole('textbox', { name: 'Tu enlace de reservas' })
+    await expect(linkField).toHaveText(/\/reservar\/[a-z0-9-]+$/)
+    const linkA = (await linkField.innerText()).trim()
+    // Un slug generado ahora lleva el código aleatorio; uno anterior a DEC-117 no.
+    expect(linkA).toMatch(/\/reservar\/[a-z0-9][a-z0-9-]*[a-z0-9]$/)
+
+    // Estable: otra lectura (recarga) devuelve exactamente el mismo enlace.
+    await page.reload()
+    await expect(linkField).toHaveText(linkA)
+
+    // Copiar entrega el mismo texto que se ve.
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
+    await page.getByRole('button', { name: 'Copiar enlace' }).click()
+    await expect(page.getByText('Enlace copiado.')).toBeVisible()
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(linkA)
+
+    // Sin sesión, el enlace abre la reserva de ESTA barbería.
+    const nameA = (await page.getByTestId('barbershop-name').innerText()).trim()
+    const visitor = await browser.newContext()
+    const visitorPage = await visitor.newPage()
+    await visitorPage.goto(linkA)
+    await expect(visitorPage.getByRole('heading', { level: 1 })).toHaveText(nameA)
+
+    // La barbería B recibe otro enlace, y el de A sigue mostrando a A.
+    const other = await browser.newContext()
+    const pageB = await other.newPage()
+    await login(pageB, EMAIL_B, PASSWORD_B)
+    await openSettings(pageB)
+    const linkB = (
+      await pageB.getByRole('textbox', { name: 'Tu enlace de reservas' }).innerText()
+    ).trim()
+    expect(linkB).not.toBe(linkA)
+    const nameB = (await pageB.getByTestId('barbershop-name').innerText()).trim()
+    expect(nameB).not.toBe(nameA)
+    await visitorPage.goto(linkB)
+    await expect(visitorPage.getByRole('heading', { level: 1 })).toHaveText(nameB)
+    await visitorPage.goto(linkA)
+    await expect(visitorPage.getByRole('heading', { level: 1 })).toHaveText(nameA)
+
+    await other.close()
+    await visitor.close()
+  })
+
   test('las preferencias de este dispositivo se aplican al instante, persisten y no tocan el acceso (DEC-110)', async () => {
     await openSettings(page)
 

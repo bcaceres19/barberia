@@ -1,9 +1,9 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.51"
+version: "1.52"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-10-04"
+ultima_actualizacion: "2026-10-08"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/reglas-negocio.md"
@@ -978,7 +978,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 - Idioma distinto de español, formato 12/24 h global y preferencias sincronizadas por usuario entre dispositivos.
 - Vocabulario en Horarios y en las pantallas públicas (conservan el inicial hasta su propio cambio).
 - Renombrar `barber`, los contratos de la API o los términos `turno` y estados.
-- Del perfil del panel: roles o permisos por usuario, el vínculo `barber`–`staff_user` (`DEC-100`), el enlace público de reserva en el panel y cualquier función de negocio nueva.
+- Del perfil del panel: roles o permisos por usuario, el vínculo `barber`–`staff_user` (`DEC-100`), el enlace público de reserva en el panel (resuelto después por `DEC-117`) y cualquier función de negocio nueva.
 
 **Criterios de aceptación**
 
@@ -1785,7 +1785,8 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 - Ruta pública que resuelve una barbería habilitada desde un identificador no confiado y muestra nombre, zona horaria y contacto público mínimo.
 - Estado de carga, enlace inválido/no disponible y recuperación sin revelar IDs internos ni la existencia de otro tenant.
 - Cascarón público responsive y accesible, separado del panel autenticado.
-- `public_slug` generado automáticamente desde el nombre de la barbería (slugify + sufijo numérico ante colisión), único globalmente, editable desde la configuración existente de `HU-020` con ruptura sin redirección del enlace anterior (`DEC-082`).
+- `public_slug` generado automáticamente desde el nombre de la barbería (slugify + código aleatorio de 6 símbolos, `DEC-117`, que sustituye el sufijo numérico de `DEC-082`), único globalmente. La edición manual con ruptura sin redirección que preveía `DEC-082` sigue sin implementarse.
+- Enlace del dueño en Configuración (`DEC-117`): ver la URL completa, copiarla y abrirla; si la barbería aún no tiene slug, la primera lectura lo genera. Solo lectura: sin regenerar ni editar.
 
 **Alcance excluido**
 
@@ -1802,8 +1803,9 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | `CA-090-03` | Ningún parámetro del cliente fija `barbershopId`; API, aplicación y PostgreSQL resuelven y aíslan el tenant de forma coherente. |
 | `CA-090-04` | La pantalla solo muestra datos públicos aprobados y logs/errores no contienen contacto privado, tokens ni datos personales. |
 | `CA-090-05` | Carga, error y reintento conservan contexto; 320, 360, 768 y 1280 px, teclado, foco, zoom 200 % y axe-core quedan verificados. |
+| `CA-090-06` | Cada barbería recibe un enlace único `<nombre>-<código aleatorio>` que no se puede deducir del nombre ni de otro enlace, que su dueño ve completo y copia desde Configuración cuando quiera (también si nunca guardó la configuración), que no cambia al renombrar la barbería y que abre únicamente su propia barbería: ni el endpoint del dueño ni el enlace permiten leer o abrir otro tenant (`DEC-117`). |
 
-**Pruebas obligatorias:** dominio/HTTP para resolución uniforme; PostgreSQL real con dos tenants; componente/router y E2E de enlace válido/inválido; evidencia responsive y accesible.
+**Pruebas obligatorias:** dominio/HTTP para resolución uniforme; PostgreSQL real con dos tenants (unicidad, reintento ante colisión, aislamiento y generación concurrente del enlace del dueño); componente/router y E2E de enlace válido/inválido y de copiado; evidencia responsive y accesible.
 
 **Terminado cuando** el visitante entra sin cuenta al contexto público correcto, sin poder seleccionar ni inferir otro tenant.
 

@@ -356,6 +356,26 @@ export interface paths {
         patch: operations["updateBrand"];
         trace?: never;
     };
+    "/private/settings/public-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar el enlace público de reservas de la barbería activa
+         * @description Lectura autenticada (issue #304, DEC-117) del identificador del enlace público de reservas de la barbería derivada de la sesión vigente, para que su dueño pueda verlo y copiarlo cuando lo necesite. Si la barbería todavía no tiene enlace, esta primera lectura lo genera (`<nombre>-<código aleatorio>`, único globalmente) y lo conserva: las lecturas siguientes devuelven el mismo y renombrar la barbería no lo cambia. No hay operación para editarlo ni regenerarlo. `barbershopId` nunca es un parámetro: el tenant se deriva exclusivamente de `SessionCookie`, de modo que no existe forma de pedir el enlace de otra barbería. La respuesta no se almacena en caché.
+         */
+        get: operations["getPublicLink"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/private/barbers": {
         parameters: {
             query?: never;
@@ -2006,6 +2026,11 @@ export interface components {
          * @enum {string}
          */
         PanelProfile: "shop" | "solo";
+        /** @description Identificador del enlace público de reservas de la barbería de la sesión. El cliente compone la URL completa con su propio origen: `{origen}/reservar/{slug}`. Tiene la forma `<nombre>-<código aleatorio>`, es único globalmente y no cambia al renombrar la barbería. No contiene ningún identificador interno. */
+        PublicLinkResponse: {
+            /** @example corte-fino-k7x2m9 */
+            slug: string;
+        };
         /** @description Tramo recurrente de la jornada laboral de un barbero, para un único día ISO de la semana. Una jornada partida se representa con varios tramos del mismo día (CA-040-02); un tramo nocturno cruza medianoche cuando startsTime + durationMinutes supera las 24:00 (DEC-020, CA-040-03). */
         WorkingHourResponse: {
             /**
@@ -3407,6 +3432,18 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
+        /** @description Enlace público de reservas de la barbería activa. */
+        PublicLinkSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                /** @description Siempre `no-store`; la primera lectura puede generar el enlace. */
+                "Cache-Control"?: "no-store";
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["PublicLinkResponse"];
+            };
+        };
         /** @description Página de tramos de horario laboral del barbero de la ruta, ordenada por día ISO de la semana y hora de inicio. */
         WorkingHourListSuccess: {
             headers: {
@@ -4329,6 +4366,21 @@ export interface operations {
             401: components["responses"]["UnauthorizedProblem"];
             404: components["responses"]["NotFoundProblem"];
             422: components["responses"]["BrandValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getPublicLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["PublicLinkSuccess"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

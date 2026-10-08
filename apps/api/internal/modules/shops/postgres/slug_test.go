@@ -1,5 +1,5 @@
 // Pruebas de integración de la generación automática del slug público
-// (HU-090, DEC-082) dentro de shops.Repository.Update, contra PostgreSQL
+// (HU-090, DEC-082, DEC-117) dentro de shops.Repository.Update, contra PostgreSQL
 // REAL: la unicidad GLOBAL entre dos tenants y el reintento ante
 // unique_violation solo se pueden verificar contra la restricción real de
 // la base (docs/03-desarrollo/estrategia-pruebas.md §2), nunca con un doble.
@@ -9,6 +9,8 @@ package postgres_test
 
 import (
 	"context"
+	"errors"
+	"regexp"
 	"testing"
 
 	"system-barbershop/internal/modules/shops"
@@ -74,8 +76,8 @@ func TestUpdate_GeneratesSlugFromName_WhenSlugIsNull(t *testing.T) {
 	}
 
 	got := readPublicSlug(t, db, shopA)
-	if got == nil || *got != "barberia-slug-automatico" {
-		t.Fatalf("expected public_slug=%q, got %v", "barberia-slug-automatico", got)
+	if got == nil || !regexp.MustCompile(`^barberia-slug-automatico-[a-z2-9]{6}$`).MatchString(*got) {
+		t.Fatalf("expected public_slug=barberia-slug-automatico-<código de 6>, got %v", got)
 	}
 }
 
@@ -109,40 +111,83 @@ func TestUpdate_DoesNotRegenerateSlug_WhenAlreadySet(t *testing.T) {
 	}
 }
 
-// TestUpdate_SlugCollisionAcrossTenants_AppendsDeterministicSuffix cubre
-// DEC-082 (unicidad GLOBAL, sufijo numérico determinístico): dos barberías
-// DISTINTAS con nombres que producen la misma base de slug reciben
-// identificadores distintos, resuelto por el reintento real ante
-// unique_violation de idx_barbershop_public_slug.
-func TestUpdate_SlugCollisionAcrossTenants_AppendsDeterministicSuffix(t *testing.T) {
+// fixedCodes devuelve un generador que entrega los códigos en orden: permite
+// forzar una colisión real contra idx_barbershop_public_slug sin depender del
+// azar.
+func fixedCodes(codes ...string) func() (string, error) {
+	i := 0
+	return func() (string, error) {
+		if i >= len(codes) {
+			return "", errors.New("fixedCodes: sin más códigos")
+		}
+		code := codes[i]
+		i++
+		return code, nil
+	}
+}
+
+// TestUpdate_SlugCollision_RetriesWithAnotherCode cubre DEC-082/DEC-117
+// (unicidad GLOBAL): dos barberías DISTINTAS con el mismo nombre y el mismo
+// código sorteado chocan en idx_barbershop_public_slug; la segunda reintenta
+// con otro código dentro de la misma transacción y termina con un slug
+// distinto, sin error para quien guarda.
+func TestUpdate_SlugCollision_RetriesWithAnotherCode(t *testing.T) {
 	db := setupTestDB(t)
-	repo := shopspostgres.New(db)
 	resetSlugFixture(t, db, shopA, "Barbería de prueba (aislamiento de paquete) 1")
 	resetSlugFixture(t, db, shopB, "Barbería de prueba (aislamiento de paquete) 2")
 
 	const collidingName = "Café Aroma Colisión"
 
-	if _, err := repo.Update(context.Background(), shopA, shops.UpdateInput{
+	repoA := shopspostgres.New(db).WithSlugCode(fixedCodes("aaaaaa"))
+	if _, err := repoA.Update(context.Background(), shopA, shops.UpdateInput{
 		Name: collidingName, Timezone: "America/Bogota",
 	}); err != nil {
 		t.Fatalf("Update shopA: %v", err)
 	}
 	slugA := readPublicSlug(t, db, shopA)
-	if slugA == nil || *slugA != "cafe-aroma-colision" {
-		t.Fatalf("expected shopA public_slug=%q, got %v", "cafe-aroma-colision", slugA)
+	if slugA == nil || *slugA != "cafe-aroma-colision-aaaaaa" {
+		t.Fatalf("expected shopA public_slug=%q, got %v", "cafe-aroma-colision-aaaaaa", slugA)
 	}
 
-	if _, err := repo.Update(context.Background(), shopB, shops.UpdateInput{
+	// shopB sortea primero el mismo código (colisión real) y luego otro.
+	repoB := shopspostgres.New(db).WithSlugCode(fixedCodes("aaaaaa", "bbbbbb"))
+	if _, err := repoB.Update(context.Background(), shopB, shops.UpdateInput{
 		Name: collidingName, Timezone: "America/Bogota",
 	}); err != nil {
-		t.Fatalf("Update shopB: %v", err)
+		t.Fatalf("Update shopB must survive the collision: %v", err)
 	}
 	slugB := readPublicSlug(t, db, shopB)
-	if slugB == nil || *slugB != "cafe-aroma-colision-2" {
-		t.Fatalf("expected shopB public_slug=%q (deterministic suffix), got %v", "cafe-aroma-colision-2", slugB)
+	if slugB == nil || *slugB != "cafe-aroma-colision-bbbbbb" {
+		t.Fatalf("expected shopB public_slug=%q after retrying, got %v", "cafe-aroma-colision-bbbbbb", slugB)
 	}
 
 	if *slugA == *slugB {
 		t.Fatalf("CA-090-03/RN-TEN-01: two tenants ended up with the same public_slug %q", *slugA)
+	}
+}
+
+// TestUpdate_SlugCollision_ExhaustedAttempts_FailsWithoutWriting: si todos los
+// intentos chocan, la actualización falla entera (error, no bucle) y no deja
+// el nombre a medias.
+func TestUpdate_SlugCollision_ExhaustedAttempts_FailsWithoutWriting(t *testing.T) {
+	db := setupTestDB(t)
+	resetSlugFixture(t, db, shopA, "Barbería de prueba (aislamiento de paquete) 1")
+	resetSlugFixture(t, db, shopB, "Barbería de prueba (aislamiento de paquete) 2")
+
+	if _, err := shopspostgres.New(db).WithSlugCode(fixedCodes("aaaaaa")).Update(context.Background(), shopA, shops.UpdateInput{
+		Name: "Mismo Nombre", Timezone: "America/Bogota",
+	}); err != nil {
+		t.Fatalf("Update shopA: %v", err)
+	}
+
+	always := func() (string, error) { return "aaaaaa", nil }
+	_, err := shopspostgres.New(db).WithSlugCode(always).Update(context.Background(), shopB, shops.UpdateInput{
+		Name: "Mismo Nombre", Timezone: "America/Bogota",
+	})
+	if err == nil {
+		t.Fatal("expected an error when every attempt collides")
+	}
+	if got := readPublicSlug(t, db, shopB); got != nil {
+		t.Fatalf("a failed update must leave public_slug NULL, got %q", *got)
 	}
 }

@@ -1,5 +1,5 @@
-// Pruebas EN AISLAMIENTO de shops.SlugBase/SlugWithSuffix (HU-090,
-// DEC-082): funciones puras, sin PostgreSQL. La generación dentro de una
+// Pruebas EN AISLAMIENTO de shops.SlugBase/SlugWithCode/NewSlugCode
+// (HU-090, DEC-082, DEC-117): funciones puras, sin PostgreSQL. La generación dentro de una
 // transacción real, el reintento ante unique_violation y la unicidad
 // GLOBAL entre dos tenants se prueban contra PostgreSQL real en
 // internal/modules/shops/postgres/repository_test.go
@@ -7,6 +7,7 @@
 package shops_test
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
@@ -87,24 +88,74 @@ func TestSlugBase_ResultMatchesDatabaseFormat(t *testing.T) {
 	}
 }
 
-func TestSlugWithSuffix_AppendsDeterministicNumericSuffix(t *testing.T) {
-	got := shops.SlugWithSuffix("barberia-ejemplo", 2)
-	if got != "barberia-ejemplo-2" {
-		t.Fatalf("expected %q, got %q", "barberia-ejemplo-2", got)
-	}
-	got3 := shops.SlugWithSuffix("barberia-ejemplo", 3)
-	if got3 != "barberia-ejemplo-3" {
-		t.Fatalf("expected %q, got %q", "barberia-ejemplo-3", got3)
+func TestSlugWithCode_JoinsBaseAndCodeWithAHyphen(t *testing.T) {
+	got := shops.SlugWithCode("barberia-ejemplo", "k7x2m9")
+	if got != "barberia-ejemplo-k7x2m9" {
+		t.Fatalf("expected %q, got %q", "barberia-ejemplo-k7x2m9", got)
 	}
 }
 
-func TestSlugWithSuffix_TruncatesBaseToStayWithinMaxLength(t *testing.T) {
+func TestSlugWithCode_TruncatesBaseToStayWithinMaxLength(t *testing.T) {
 	base := strings.Repeat("a", shops.SlugMaxLength)
-	got := shops.SlugWithSuffix(base, 12)
-	if len(got) > shops.SlugMaxLength {
-		t.Fatalf("expected at most %d chars, got %d (%q)", shops.SlugMaxLength, len(got), got)
+	got := shops.SlugWithCode(base, "k7x2m9")
+	if len(got) != shops.SlugMaxLength {
+		t.Fatalf("expected exactly %d chars, got %d (%q)", shops.SlugMaxLength, len(got), got)
 	}
-	if !strings.HasSuffix(got, "-12") {
-		t.Fatalf("expected suffix -12 preserved, got %q", got)
+	if !strings.HasSuffix(got, "-k7x2m9") {
+		t.Fatalf("expected code preserved, got %q", got)
+	}
+}
+
+func TestSlugWithCode_TruncationLandsOnHyphen_DoesNotLeaveDoubleHyphen(t *testing.T) {
+	// El corte cae justo en un guion de la base: sin recorte quedaría "--".
+	base := strings.Repeat("a", 32) + "-" + strings.Repeat("b", 7)
+	got := shops.SlugWithCode(base, "k7x2m9")
+	if strings.Contains(got, "--") {
+		t.Fatalf("expected no consecutive hyphens, got %q", got)
+	}
+}
+
+var slugFormat = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]{1,38}[a-z0-9])$`)
+
+func TestSlugWithCode_ResultMatchesDatabaseFormat(t *testing.T) {
+	for _, name := range []string{"Barbería Ejemplo", "A B", "!!!", strings.Repeat("x", 200), "Café & Corte 123"} {
+		got := shops.SlugWithCode(shops.SlugBase(shops.NormalizeName(name)), "k7x2m9")
+		if !slugFormat.MatchString(got) {
+			t.Fatalf("SlugWithCode(SlugBase(%q)) = %q: no cumple barbershop_public_slug_ck", name, got)
+		}
+	}
+}
+
+func TestNewSlugCode_HasFixedLengthAndSafeAlphabet(t *testing.T) {
+	for range 200 {
+		code, err := shops.NewSlugCode()
+		if err != nil {
+			t.Fatalf("NewSlugCode: %v", err)
+		}
+		if len(code) != shops.SlugCodeLength {
+			t.Fatalf("expected %d chars, got %q", shops.SlugCodeLength, code)
+		}
+		if strings.ContainsAny(code, "ilo01-") {
+			t.Fatalf("code %q contains an ambiguous character or a hyphen", code)
+		}
+		if !regexp.MustCompile(`^[a-z0-9]+$`).MatchString(code) {
+			t.Fatalf("code %q outside [a-z0-9]", code)
+		}
+	}
+}
+
+func TestNewSlugCode_IsNotSequential(t *testing.T) {
+	seen := make(map[string]struct{})
+	for range 500 {
+		code, err := shops.NewSlugCode()
+		if err != nil {
+			t.Fatalf("NewSlugCode: %v", err)
+		}
+		seen[code] = struct{}{}
+	}
+	// 500 sorteos sobre ~887 millones: una repetición indicaría un
+	// generador predecible o con muy poca entropía.
+	if len(seen) != 500 {
+		t.Fatalf("expected 500 distinct codes, got %d", len(seen))
 	}
 }

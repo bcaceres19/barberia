@@ -4,6 +4,25 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.30.0 · 2026-10-08
+
+### Agregado
+
+- `GET /private/settings/public-link` (`operationId: getPublicLink`, tag
+  `Settings`, `DEC-117`, issue #304): enlace público de reservas de la
+  barbería de la sesión, `{ "slug": "corte-fino-k7x2m9" }`. Si la barbería aún
+  no tiene enlace, la primera lectura lo genera y las siguientes devuelven el
+  mismo. Respuesta con `Cache-Control: no-store`. Cambio compatible: es una
+  operación nueva; no cambia ninguna otra.
+
+### Cambiado (comportamiento, no forma del contrato)
+
+- El slug que se genera al guardar `PUT /private/settings/barbershop` o al
+  leer el enlace pasa de `<nombre>`, `<nombre>-2`, … a
+  `<nombre>-<código aleatorio de 6>` (`DEC-117`, sustituye el sufijo numérico
+  de `DEC-082`). Los slugs ya existentes no cambian y siguen resolviendo en
+  `/public/barbershops/{slug}`.
+
 ## 0.29.0 · 2026-10-04
 
 ### Cambiado

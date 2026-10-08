@@ -454,3 +454,70 @@ func TestContract_OpenAPIYAML_RegistersBrandPath(t *testing.T) {
 		t.Fatal("openapi.yaml no registra paths./private/settings/brand")
 	}
 }
+
+// --- Enlace público de reservas (issue #304, DEC-117) -----------------------
+
+type publicLinkPathFile struct {
+	PublicLink struct {
+		Get operation `yaml:"get"`
+	} `yaml:"/private/settings/public-link"`
+}
+
+type slugSchemaDoc struct {
+	Properties map[string]struct {
+		MinLength int    `yaml:"minLength"`
+		MaxLength int    `yaml:"maxLength"`
+		Pattern   string `yaml:"pattern"`
+	} `yaml:"properties"`
+}
+
+// TestContract_PublicLinkSchema_MatchesDTOAndDatabaseLimits: la respuesta
+// declara solo `slug` (ningún identificador interno) y sus límites son los de
+// barbershop_public_slug_ck / shops.SlugMinLength-SlugMaxLength.
+func TestContract_PublicLinkSchema_MatchesDTOAndDatabaseLimits(t *testing.T) {
+	response := loadYAML[schemaDoc](t, "api/openapi/components/schemas/PublicLinkResponse.yaml")
+	requireProps(t, response, []string{"slug"})
+	if _, ok := response.Properties["barbershopId"]; ok {
+		t.Fatal("PublicLinkResponse nunca debe declarar barbershopId")
+	}
+
+	slug := loadYAML[slugSchemaDoc](t, "api/openapi/components/schemas/PublicLinkResponse.yaml").Properties["slug"]
+	if slug.MinLength != shops.SlugMinLength || slug.MaxLength != shops.SlugMaxLength {
+		t.Fatalf("slug declara [%d,%d], shops espera [%d,%d]", slug.MinLength, slug.MaxLength, shops.SlugMinLength, shops.SlugMaxLength)
+	}
+	if slug.Pattern != `^[a-z0-9]([a-z0-9-]{1,38}[a-z0-9])$` {
+		t.Fatalf("slug.pattern no coincide con barbershop_public_slug_ck: %q", slug.Pattern)
+	}
+}
+
+func TestContract_PublicLinkOperation_SecurityAndResponses(t *testing.T) {
+	doc := loadYAML[publicLinkPathFile](t, "api/openapi/paths/settings.yaml")
+	op := doc.PublicLink.Get
+
+	if op.OperationID != "getPublicLink" {
+		t.Fatalf("expected operationId getPublicLink, got %q", op.OperationID)
+	}
+	if len(op.Security) != 1 {
+		t.Fatalf("expected exactly one security requirement, got %v", op.Security)
+	}
+	want := []string{"200", "401", "404", "500"}
+	for _, s := range want {
+		if _, ok := op.Responses[s]; !ok {
+			t.Errorf("el contrato no documenta la respuesta %s, pero el handler la produce", s)
+		}
+	}
+	if len(op.Responses) != len(want) {
+		t.Errorf("el contrato documenta %d respuestas, se esperaban %d", len(op.Responses), len(want))
+	}
+}
+
+func TestContract_OpenAPIYAML_RegistersPublicLinkPath(t *testing.T) {
+	type pathsDoc struct {
+		Paths map[string]any `yaml:"paths"`
+	}
+	doc := loadYAML[pathsDoc](t, "api/openapi/openapi.yaml")
+
+	if _, ok := doc.Paths["/private/settings/public-link"]; !ok {
+		t.Fatal("openapi.yaml no registra paths./private/settings/public-link")
+	}
+}
