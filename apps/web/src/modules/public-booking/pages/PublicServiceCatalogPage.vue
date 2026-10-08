@@ -17,6 +17,7 @@ import BookingStateScreen from '../components/BookingStateScreen.vue'
 import ChoiceMark from '../components/ChoiceMark.vue'
 import { listPublicServices } from '../api/listPublicServicesApi'
 import type { PublicService } from '../model/publicServiceListOutcome'
+import { usePublicVocabulary } from '../model/publicVocabulary'
 
 interface Props {
   /** Identificador del enlace público, tal como llega del parámetro de
@@ -25,6 +26,7 @@ interface Props {
   slug: string
 }
 const props = defineProps<Props>()
+const v = usePublicVocabulary()
 
 type ScreenState =
   | { status: 'loading' }
@@ -150,7 +152,7 @@ const selectedService = computed(() => services.value.find((s) => s.id === selec
     <div v-if="services.length === 0" class="pb-empty">
       <span class="pb-empty__mark" aria-hidden="true"></span>
       <p class="pb-empty__message">
-        Esta barbería todavía no tiene servicios disponibles para reservar.
+        {{ v.ThisBusiness }} todavía no tiene servicios disponibles para reservar.
       </p>
     </div>
 

@@ -5,7 +5,7 @@ description: "Prueba toda la app NAVA o una pantalla desde la interfaz real con 
 
 # Pruebas de interfaz de NAVA
 
-Fuente: solicitud explícita del propietario, DEC-116, issue #300. Activa «prueben esta app», «prueba toda la app» o una pantalla. Entrega hallazgos/cobertura; no cambia producto.
+Fuente: solicitud explícita del propietario, DEC-120, issue #300. Activa «prueben esta app», «prueba toda la app» o una pantalla. Entrega hallazgos/cobertura; no cambia producto.
 
 ## Preparación
 

@@ -7,6 +7,8 @@
 // vencido o revocado llegan TODOS como `not-found` (CA-098-02), nunca
 // distinguidos.
 
+import type { Vocabulary, VocabularyTerms } from '@/shared/model'
+
 /** Estado vigente del turno (docs/02-requisitos/estados-citas.md). Se
  * duplica aquí en vez de importar `modules/agenda` (CA-002-06, mismo
  * criterio que publicbooking frente a booking en el backend): los módulos
@@ -14,16 +16,23 @@
 export type AppointmentStatus =
   'confirmed' | 'completed' | 'cancelled_by_customer' | 'cancelled_by_barber' | 'no_show'
 
-export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
+const FIXED_STATUS_LABELS: Record<Exclude<AppointmentStatus, 'cancelled_by_barber'>, string> = {
   confirmed: 'Confirmado',
   completed: 'Completado',
   cancelled_by_customer: 'Cancelado por el cliente',
-  cancelled_by_barber: 'Cancelado por el barbero',
   no_show: 'No se presentó',
 }
 
+// El estado técnico `cancelled_by_barber` no se renombra (DEC-016); su etiqueta
+// nombra a quien atendía con la palabra de la barbería (DEC-119).
+export function appointmentStatusLabel(status: AppointmentStatus, v: Vocabulary): string {
+  return status === 'cancelled_by_barber'
+    ? `Cancelado ${v.byTheProfessional}`
+    : FIXED_STATUS_LABELS[status]
+}
+
 // Variante de BaseBadge para cada estado (RN-CNF-02, CA-098-04): el color
-// nunca es la única señal, el texto de APPOINTMENT_STATUS_LABELS siempre lo
+// nunca es la única señal, el texto de appointmentStatusLabel siempre lo
 // acompaña. Ninguna variante insinúa que la falta de respuesta cancele el
 // turno: `confirmed` es 'info', nunca 'warning'/'danger'.
 export const APPOINTMENT_STATUS_BADGE_VARIANT: Record<
@@ -52,6 +61,8 @@ export interface CustomerAppointment {
   cancellationDeadlineMinutes: number
   lateCancellationClientAllowed: boolean
   lateCancellationReasonRequired: boolean
+  /** Palabras con las que la barbería nombra a su negocio y a su profesional (DEC-119). */
+  vocabulary: VocabularyTerms
 }
 
 /** Resultado discriminado de resolver un token de acceso contra el API

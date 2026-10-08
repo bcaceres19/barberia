@@ -22,7 +22,7 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
-  tagline: 'Gestión precisa para tu barbería.',
+  tagline: 'Gestión precisa para tu negocio.',
 })
 
 // La entrada escalonada de la tarjeta solo aplica a lo que ya está montado

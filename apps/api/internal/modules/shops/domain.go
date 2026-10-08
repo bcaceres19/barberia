@@ -1,6 +1,7 @@
 package shops
 
 import (
+	"crypto/rand"
 	"fmt"
 	"regexp"
 	"strings"
@@ -76,8 +77,7 @@ var slugFoldReplacer = strings.NewReplacer(
 )
 
 var (
-	slugNonAlnumPattern   = regexp.MustCompile(`[^a-z0-9]+`)
-	slugTrimHyphenPattern = regexp.MustCompile(`(^-+|-+$)`)
+	slugNonAlnumPattern = regexp.MustCompile(`[^a-z0-9]+`)
 )
 
 const (
@@ -91,21 +91,19 @@ const (
 	slugFallback = "barberia"
 )
 
-// SlugBase deriva la base del slug público (DEC-082, resuelve DP-PUB-01) a
-// partir de un nombre YA normalizado (NormalizeName): minúsculas, plegado
-// ASCII de acentos, cualquier carácter fuera de [a-z0-9] colapsado a un
-// solo guion, sin guion inicial/final, truncado a SlugMaxLength. Pura: no
-// toca la base de datos ni decide la unicidad global -eso lo resuelve el
-// repositorio reintentando con SlugWithSuffix ante un unique_violation real
-// sobre idx_barbershop_public_slug-.
+// SlugBase deriva la base del slug público (DEC-082, resuelve DP-PUB-01; el
+// código aleatorio final lo añade DEC-117 con SlugWithCode, y DEC-118 la deja
+// sin guiones) a partir de un nombre YA normalizado (NormalizeName):
+// minúsculas, plegado ASCII de acentos y todo carácter fuera de [a-z0-9]
+// eliminado, de modo que «Mateo · Barbero» da «mateobarbero». Truncada a
+// SlugMaxLength. Pura: no toca la base de datos ni decide la unicidad global
+// -eso lo resuelve el repositorio reintentando con otro código (SlugWithCode)
+// ante un unique_violation real sobre idx_barbershop_public_slug-.
 func SlugBase(name string) string {
 	folded := slugFoldReplacer.Replace(strings.ToLower(name))
-	base := slugNonAlnumPattern.ReplaceAllString(folded, "-")
-	base = slugTrimHyphenPattern.ReplaceAllString(base, "")
+	base := slugNonAlnumPattern.ReplaceAllString(folded, "")
 	if utf8.RuneCountInString(base) > SlugMaxLength {
-		runes := []rune(base)
-		base = string(runes[:SlugMaxLength])
-		base = slugTrimHyphenPattern.ReplaceAllString(base, "")
+		base = string([]rune(base)[:SlugMaxLength])
 	}
 	if utf8.RuneCountInString(base) < SlugMinLength {
 		return slugFallback
@@ -113,15 +111,45 @@ func SlugBase(name string) string {
 	return base
 }
 
-// SlugWithSuffix agrega el sufijo numérico determinístico que DEC-082 exige
-// ante una colisión real de unicidad global ('-2', '-3', ...), recortando
-// base lo necesario para que el resultado nunca exceda SlugMaxLength.
-func SlugWithSuffix(base string, attempt int) string {
-	suffix := fmt.Sprintf("-%d", attempt)
-	maxBase := SlugMaxLength - utf8.RuneCountInString(suffix)
-	if utf8.RuneCountInString(base) > maxBase {
-		runes := []rune(base)
-		base = string(runes[:maxBase])
+// slugCodeAlphabet excluye los caracteres que se confunden al dictar o
+// leer un enlace (i, l, o, 0, 1): 31 símbolos.
+const slugCodeAlphabet = "abcdefghjkmnpqrstuvwxyz23456789"
+
+// SlugCodeLength es el largo del código aleatorio del slug público (DEC-118,
+// que lo sube de 6 a 8): 31^8 ≈ 852 mil millones de combinaciones por nombre,
+// suficiente para que el enlace de otra barbería no se pueda adivinar ni
+// enumerar, y todavía corto para que el enlace se lea y se dicte.
+const SlugCodeLength = 8
+
+// NewSlugCode devuelve un código aleatorio de SlugCodeLength símbolos de
+// slugCodeAlphabet, sacado de crypto/rand (DEC-117). No es un secreto de
+// autenticación: el enlace público es compartible por diseño; el código solo
+// vuelve inviable adivinar el de otra barbería. Un fallo de crypto/rand es
+// irrecuperable para quien genera el slug, así que se propaga como error en
+// lugar de caer en un valor predecible.
+func NewSlugCode() (string, error) {
+	raw := make([]byte, SlugCodeLength)
+	if _, err := rand.Read(raw); err != nil {
+		return "", fmt.Errorf("shops: generar código de slug: %w", err)
 	}
-	return base + suffix
+	code := make([]byte, SlugCodeLength)
+	for i, b := range raw {
+		// 256 no es múltiplo de 31: el módulo sesga ~3 % hacia los primeros
+		// símbolos, irrelevante para un identificador sin valor de secreto
+		// y con unicidad garantizada por idx_barbershop_public_slug.
+		code[i] = slugCodeAlphabet[int(b)%len(slugCodeAlphabet)]
+	}
+	return string(code), nil
+}
+
+// SlugWithCode compone el slug público `<base><code>` (DEC-117, DEC-118) sin
+// separador, recortando base lo necesario para que el resultado nunca exceda
+// SlugMaxLength. El código lleva siempre SlugCodeLength símbolos, así que el
+// recorte nunca lo toca.
+func SlugWithCode(base, code string) string {
+	maxBase := SlugMaxLength - utf8.RuneCountInString(code)
+	if utf8.RuneCountInString(base) > maxBase {
+		base = string([]rune(base)[:maxBase])
+	}
+	return base + code
 }

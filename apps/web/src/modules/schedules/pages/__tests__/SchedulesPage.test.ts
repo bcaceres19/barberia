@@ -728,3 +728,75 @@ describe('SchedulesPage · tablero semanal', () => {
     })
   })
 })
+
+describe('SchedulesPage · vocabulario del negocio (DEC-119)', () => {
+  const nails = {
+    ...DEFAULT_BRAND,
+    businessTerm: 'estudio',
+    businessTermGender: 'masculine' as const,
+    professionalTerm: 'manicurista',
+    professionalTermPlural: 'manicuristas',
+    professionalTermGender: 'feminine' as const,
+  }
+
+  beforeEach(() => {
+    resetToasts()
+    resetBrand()
+    fetchBarberSummariesMock.mockReset()
+    fetchWorkingHoursMock.mockReset()
+    fetchBarbershopTimezoneMock.mockReset().mockResolvedValue({
+      kind: 'success',
+      timezone: 'America/Bogota',
+    })
+    fetchHolidayCalendarMock.mockReset().mockResolvedValue({ kind: 'success', enabled: false })
+    fetchScheduleExceptionsMock
+      .mockReset()
+      .mockResolvedValue({ kind: 'success', page: { items: [], nextCursor: null } })
+    fetchColombianHolidaysMock.mockReset().mockResolvedValue({ kind: 'unavailable' })
+  })
+
+  function expectNoFixedWords(wrapper: VueWrapper) {
+    expect(wrapper.text()).not.toMatch(/barber(o|a|os|as|ía|ías)\b/i)
+  }
+
+  it('names the picker, the timezone note and the holiday switch with the configured words', async () => {
+    setBrand(nails)
+    const wrapper = await mountReady(fourBarbers)
+
+    expect(wrapper.get('#schedules-barber-select').text()).not.toBe('')
+    expect(wrapper.text()).toContain('Manicurista')
+    expect(wrapper.text()).toContain('Horas en la zona horaria del estudio:')
+    expect(wrapper.text()).toContain('festivos colombianos de esta manicurista')
+    expectNoFixedWords(wrapper)
+  })
+
+  it('writes the empty state and its link with the configured plural', async () => {
+    setBrand(nails)
+    fetchBarberSummariesMock.mockResolvedValueOnce({ kind: 'success', items: [] })
+    const wrapper = mountPage()
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Aún no tienes manicuristas registradas.')
+    expect(wrapper.text()).toContain('“Manicuristas”')
+    expectNoFixedWords(wrapper)
+  })
+
+  it('writes the recoverable errors with the configured word', async () => {
+    setBrand(nails)
+    fetchBarberSummariesMock.mockResolvedValueOnce({ kind: 'success', items: oneBarber })
+    fetchWorkingHoursMock.mockResolvedValueOnce({ kind: 'network-error' })
+    fetchScheduleExceptionsMock.mockResolvedValueOnce({ kind: 'network-error' })
+    const wrapper = mountPage()
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('No pudimos cargar el horario de esta manicurista')
+    expectNoFixedWords(wrapper)
+  })
+
+  it('keeps the original words when the business never configured its own', async () => {
+    const wrapper = await mountReady(fourBarbers)
+
+    expect(wrapper.text()).toContain('Horas en la zona horaria de la barbería:')
+    expect(wrapper.text()).toContain('festivos colombianos de este barbero')
+  })
+})

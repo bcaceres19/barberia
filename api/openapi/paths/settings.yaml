@@ -290,3 +290,32 @@
         $ref: '../components/responses/BrandValidationProblem.yaml'
       "500":
         $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/settings/public-link:
+  get:
+    tags: [Settings]
+    summary: Consultar el enlace público de reservas de la barbería activa
+    description: >
+      Lectura autenticada (issue #304, DEC-117) del identificador del enlace
+      público de reservas de la barbería derivada de la sesión vigente, para
+      que su dueño pueda verlo y copiarlo cuando lo necesite. Si la barbería
+      todavía no tiene enlace, esta primera lectura lo genera
+      (`<nombre><código aleatorio>` sin guiones, único globalmente) y lo conserva: las
+      lecturas siguientes devuelven el mismo y renombrar la barbería no lo
+      cambia. No hay operación para editarlo ni regenerarlo. `barbershopId`
+      nunca es un parámetro: el tenant se deriva exclusivamente de
+      `SessionCookie`, de modo que no existe forma de pedir el enlace de otra
+      barbería. La respuesta no se almacena en caché.
+    operationId: getPublicLink
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-082, DEC-117]
+    responses:
+      "200":
+        $ref: '../components/responses/PublicLinkSuccess.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

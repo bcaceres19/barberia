@@ -7,11 +7,12 @@
 // cuenta, portal, edición, reprogramación o cancelación (HU-099).
 import { computed, onMounted, ref } from 'vue'
 import { BaseAlert, BaseBadge, BaseButton, NavaWordmark, PageState } from '@/shared/ui'
+import { buildVocabularyFromTerms } from '@/shared/model'
 import { formatInstantInTimezone, formatTimeInTimezone } from '@/shared/time/formatInstant'
 import { getCustomerAppointment } from '../api/getCustomerAppointmentApi'
 import {
   APPOINTMENT_STATUS_BADGE_VARIANT,
-  APPOINTMENT_STATUS_LABELS,
+  appointmentStatusLabel,
   type CustomerAppointment,
 } from '../model/customerAppointmentOutcome'
 
@@ -57,9 +58,17 @@ const retry = () => {
   void load()
 }
 
+// Vocabulario de la barbería del turno (DEC-119): hasta que el servidor responde, o si
+// no responde, valen los valores iniciales.
+const v = computed(() =>
+  buildVocabularyFromTerms(
+    screenState.value.status === 'success' ? screenState.value.appointment.vocabulary : null,
+  ),
+)
+
 const statusLabel = computed(() =>
   screenState.value.status === 'success'
-    ? APPOINTMENT_STATUS_LABELS[screenState.value.appointment.status]
+    ? appointmentStatusLabel(screenState.value.appointment.status, v.value)
     : '',
 )
 const statusBadgeVariant = computed(() =>
@@ -86,10 +95,10 @@ const cancellationPolicyLabel = computed(() => {
   if (screenState.value.status !== 'success') return ''
   const { appointment } = screenState.value
   if (!appointment.lateCancellationClientAllowed) {
-    return `Puedes cancelar sin costo hasta ${appointment.cancellationDeadlineMinutes} minutos antes de tu turno. Pasado ese plazo, contacta directamente a la barbería.`
+    return `Puedes cancelar sin costo hasta ${appointment.cancellationDeadlineMinutes} minutos antes de tu turno. Pasado ese plazo, contacta directamente ${v.value.toTheBusiness}.`
   }
   const reasonNote = appointment.lateCancellationReasonRequired ? ' indicando el motivo' : ''
-  return `Puedes cancelar hasta ${appointment.cancellationDeadlineMinutes} minutos antes sin costo, o después${reasonNote} conforme a la política de la barbería.`
+  return `Puedes cancelar hasta ${appointment.cancellationDeadlineMinutes} minutos antes sin costo, o después${reasonNote} conforme a la política ${v.value.ofTheBusiness}.`
 })
 
 const unexpectedErrorMessage = computed(() => {
@@ -187,7 +196,7 @@ const unexpectedErrorMessage = computed(() => {
           </dd>
         </div>
         <div class="customer-appointment__fact">
-          <dt>Barbero</dt>
+          <dt>{{ v.Professional }}</dt>
           <dd>{{ screenState.appointment.barberName }}</dd>
         </div>
       </dl>

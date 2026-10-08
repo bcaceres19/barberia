@@ -33,7 +33,7 @@
     operationId: getCustomerAppointment
     security: []
     x-business-rules: [RN-CNF-01, RN-CNF-02, RN-DAT-01, RN-DAT-02, RN-DAT-03, RN-TEN-01]
-    x-decisions: [DEC-016, DEC-022, DEC-024, DEC-025, DEC-049, DEC-077, DEC-078, DEC-079, DEC-089, DEC-091]
+    x-decisions: [DEC-016, DEC-022, DEC-024, DEC-025, DEC-049, DEC-077, DEC-078, DEC-079, DEC-089, DEC-091, DEC-110, DEC-119]
     parameters:
       - name: token
         in: path

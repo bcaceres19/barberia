@@ -1,6 +1,6 @@
 # Representación pública mínima de una barbería habilitada (HU-090,
-# CA-090-01, CA-090-04): nombre, zona horaria IANA y contacto público
-# opcional. Nunca un identificador interno (id, barbershopId) ni el slug
+# CA-090-01, CA-090-04): nombre, zona horaria IANA, contacto público
+# opcional y vocabulario del negocio (DEC-119). Nunca un identificador interno (id, barbershopId) ni el slug
 # mismo: el visitante llega con el slug en la URL, nunca lo necesita en el
 # cuerpo de la respuesta.
 type: object
@@ -38,8 +38,11 @@ properties:
     description: Teléfono de contacto público de la barbería en formato E.164; null cuando no está configurado.
     examples:
       - "+573001234567"
+  vocabulary:
+    $ref: './PublicVocabulary.yaml'
 required:
   - name
   - timezone
   - contactEmail
   - contactPhone
+  - vocabulary

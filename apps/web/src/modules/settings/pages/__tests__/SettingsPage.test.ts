@@ -28,6 +28,11 @@ const saveMock = vi.hoisted(() => vi.fn())
 const fetchBrandMock = vi.hoisted(() => vi.fn())
 const saveBrandMock = vi.hoisted(() => vi.fn())
 const updateBarbershopNameMock = vi.hoisted(() => vi.fn())
+// El enlace público tiene su propio recurso y su propia prueba
+// (PublicLinkPanel.test.ts): aquí solo se evita la red.
+const fetchPublicLinkMock = vi.hoisted(() =>
+  vi.fn(() => Promise.resolve({ kind: 'success', slug: 'barberia-ejemplo-k7x2m9' })),
+)
 
 vi.mock('../../api/settingsApi', () => ({
   fetchBarbershopSettings: fetchMock,
@@ -37,6 +42,7 @@ vi.mock('../../api/brandApi', () => ({
   fetchBrand: fetchBrandMock,
   saveBrand: saveBrandMock,
 }))
+vi.mock('../../api/publicLinkApi', () => ({ fetchPublicLink: fetchPublicLinkMock }))
 vi.mock('@/modules/auth', () => ({ updateBarbershopName: updateBarbershopNameMock }))
 
 const { default: SettingsPage } = await import('../SettingsPage.vue')
@@ -554,6 +560,27 @@ describe('SettingsPage', () => {
 
       await reset().trigger('click')
       expect(appearance.theme).toBe('ink')
+    })
+  })
+
+  describe('enlace público (DEC-117)', () => {
+    it('adds the link as section 07, before the booking rules, and lists it in the index', async () => {
+      const wrapper = await mountReady()
+
+      const panel = wrapper.get('#configuracion-enlace')
+      expect(panel.get('.settings-panel__number').text()).toBe('07')
+      expect(panel.get('h2').text()).toBe('Enlace público')
+      expect(panel.get('[role="textbox"]').text()).toContain('/reservar/barberia-ejemplo-k7x2m9')
+      expect(wrapper.get('#configuracion-reservas .settings-panel__number').text()).toBe('08')
+      expect(wrapper.get('a[href="#configuracion-enlace"]').text()).toContain('Enlace')
+      wrapper.unmount()
+    })
+
+    it('is read-only: opening the link never makes the draft dirty', async () => {
+      const wrapper = await mountReady()
+
+      expect(wrapper.find('.save-bar').exists()).toBe(false)
+      wrapper.unmount()
     })
   })
 

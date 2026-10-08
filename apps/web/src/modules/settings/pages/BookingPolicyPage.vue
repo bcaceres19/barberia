@@ -9,7 +9,7 @@
 // formulario (precondición `If-Match` de la siguiente escritura, CA-093-02),
 // nunca como un campo editable.
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useToast } from '@/shared/composables'
+import { useToast, useVocabulary } from '@/shared/composables'
 import { BaseAlert, BaseButton, BaseInput, DiamondLoader } from '@/shared/ui'
 import { fetchBookingPolicy, saveBookingPolicy } from '../api/bookingPolicyApi'
 import BookingPolicyPreview from '../components/BookingPolicyPreview.vue'
@@ -81,6 +81,7 @@ const attemptedSubmit = ref(false)
 // La confirmación persistente sigue en la pantalla; el aviso emergente la
 // acompaña (DEC-095).
 const toast = useToast()
+const v = useVocabulary()
 
 // requestToken evita que una carga inicial obsoleta sobrescriba el
 // formulario con datos viejos (mismo criterio que SettingsPage.vue).
@@ -349,7 +350,7 @@ function onReloadAfterConflict() {
             title="Ventana de reserva"
             description="Desde cuándo y hasta cuándo puede reservar un cliente, y cada cuánto se ofrece una franja."
             scope="shop"
-            scope-label="Para toda la barbería"
+            :scope-label="`Para ${v.allTheBusiness}`"
             style="--panel-index: 0"
           >
             <div class="policy-grid">
@@ -419,7 +420,7 @@ function onReloadAfterConflict() {
             title="Cancelación del cliente"
             description="Hasta cuándo puede cancelar por su cuenta y qué pasa si lo hace fuera de plazo."
             scope="shop"
-            scope-label="Para toda la barbería"
+            :scope-label="`Para ${v.allTheBusiness}`"
             style="--panel-index: 1"
           >
             <BaseInput

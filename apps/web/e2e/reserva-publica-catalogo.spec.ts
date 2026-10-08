@@ -1,4 +1,5 @@
 import { test, expect, type Route } from '@playwright/test'
+import { INITIAL_VOCABULARY } from './fixtures/vocabularioInicial'
 
 /**
  * Recorrido E2E de HU-091 (docs/03-desarrollo/estrategia-pruebas.md §5.3):
@@ -150,6 +151,7 @@ test.describe('Catálogo público de servicios (HU-091)', () => {
           timezone: 'America/Bogota',
           contactEmail: null,
           contactPhone: null,
+          vocabulary: INITIAL_VOCABULARY,
         }),
       })
     })

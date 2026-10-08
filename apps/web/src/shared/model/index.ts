@@ -38,6 +38,7 @@ export {
 } from './brandStore'
 export {
   buildVocabulary,
+  buildVocabularyFromTerms,
   capitalize,
   DEFAULT_BRAND,
   isPanelProfile,
@@ -47,7 +48,7 @@ export {
   TERM_MIN_LENGTH,
   validateTerm,
 } from './vocabulary'
-export type { BrandSettings, Gender, PanelProfile, Vocabulary } from './vocabulary'
+export type { BrandSettings, Gender, PanelProfile, Vocabulary, VocabularyTerms } from './vocabulary'
 export {
   attachWorkspaceTheme,
   effectiveZoom,

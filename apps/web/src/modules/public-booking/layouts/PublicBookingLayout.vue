@@ -12,16 +12,50 @@
 // principal de la entrada (estandar-diseno-visual.md §3.2).
 import { computed, provide, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute, type RouteLocationRaw } from 'vue-router'
+import { buildVocabularyFromTerms } from '@/shared/model'
 import { NavaWordmark } from '@/shared/ui'
 import BookingBackdrop from '../components/BookingBackdrop.vue'
 import BookingProgress from '../components/BookingProgress.vue'
 import { bookingChromeKey } from '../model/bookingChrome'
+import { loadPublicProfile, publicTermsFor } from '../model/publicProfile'
+import { publicVocabularyKey } from '../model/publicVocabulary'
 import '../styles/publicBooking.css'
 
 const route = useRoute()
 
 const completed = ref(false)
 provide(bookingChromeKey, { completed })
+
+// Vocabulario de la barbería (DEC-119): se lee una vez del perfil público del enlace
+// y se ofrece a todas las pantallas, que pueden abrirse directamente desde un enlace.
+// Sin respuesta (enlace desconocido, red caída) valen los valores iniciales: cada
+// pantalla muestra su propio estado de error. Las pantallas no se montan hasta que la
+// lectura termina, para que nadie vea un instante «barbero» antes de «manicurista».
+const currentSlug = computed(() => String(route.params.slug ?? ''))
+const vocabularySettled = ref(false)
+const v = computed(() => buildVocabularyFromTerms(publicTermsFor(currentSlug.value)))
+provide(publicVocabularyKey, v)
+
+// La entrada no espera: ella misma lee el perfil (comparte la petición) y solo dice
+// la palabra del negocio cuando ya la tiene; su texto de carga es neutro.
+const showScreens = computed(
+  () => vocabularySettled.value || route.name === 'reserva-publica-entrada',
+)
+
+watch(
+  currentSlug,
+  async (current) => {
+    if (!current) {
+      vocabularySettled.value = true
+      return
+    }
+    vocabularySettled.value = false
+    await loadPublicProfile(current)
+    if (currentSlug.value !== current) return
+    vocabularySettled.value = true
+  },
+  { immediate: true },
+)
 
 const TOTAL_STEPS = 4
 
@@ -48,7 +82,7 @@ const back = computed<{ to: RouteLocationRaw; label: string } | null>(() => {
     case 'reserva-publica-horario':
       return {
         to: { name: 'reserva-publica-barbero', params: { slug, serviceId } },
-        label: 'Barbero',
+        label: v.value.Professional,
       }
     case 'reserva-publica-cliente':
       return {
@@ -102,7 +136,7 @@ watch(
       <BookingProgress v-if="step !== null" :step="progressStep" />
     </header>
 
-    <RouterView v-slot="{ Component, route: current }">
+    <RouterView v-if="showScreens" v-slot="{ Component, route: current }">
       <Transition :name="`pb-step-${direction}`" mode="out-in">
         <component :is="Component" :key="String(current.name)" />
       </Transition>

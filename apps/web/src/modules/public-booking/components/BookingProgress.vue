@@ -6,6 +6,7 @@
 // lleva `aria-current="step"`, halo y etiqueta más clara; los completados van
 // rellenos y se anuncian como «completado»; los pendientes son contorno.
 import { computed, onMounted, ref, watch } from 'vue'
+import { usePublicVocabulary } from '../model/publicVocabulary'
 
 interface Props {
   /** Paso actual, 1-based. Un valor mayor que el último paso significa que
@@ -15,7 +16,8 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const STEPS = ['Servicio', 'Barbero', 'Horario', 'Tus datos'] as const
+const v = usePublicVocabulary()
+const STEPS = computed(() => ['Servicio', v.value.Professional, 'Horario', 'Tus datos'])
 
 // El tramo parte de cero en el primer montaje para que la regla se dibuje al
 // abrir la reserva; después sigue a `step` con la misma transición.
@@ -33,8 +35,8 @@ watch(
 )
 
 const fill = computed(() => {
-  const clamped = Math.min(Math.max(shownStep.value, 1), STEPS.length)
-  return (clamped - 1) / (STEPS.length - 1)
+  const clamped = Math.min(Math.max(shownStep.value, 1), STEPS.value.length)
+  return (clamped - 1) / (STEPS.value.length - 1)
 })
 
 function stateOf(index: number): 'done' | 'current' | 'upcoming' {

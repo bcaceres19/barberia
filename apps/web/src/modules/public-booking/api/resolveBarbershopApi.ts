@@ -28,6 +28,13 @@ export async function resolveBarbershop(slug: string): Promise<ResolveBarbershop
           timezone: data.timezone,
           contactEmail: data.contactEmail,
           contactPhone: data.contactPhone,
+          vocabulary: {
+            businessTerm: data.vocabulary.businessTerm,
+            businessTermGender: data.vocabulary.businessTermGender,
+            professionalTerm: data.vocabulary.professionalTerm,
+            professionalTermPlural: data.vocabulary.professionalTermPlural,
+            professionalTermGender: data.vocabulary.professionalTermGender,
+          },
         },
       }
     }

@@ -4,7 +4,7 @@ Fecha: 2026-10-07. Rama: test/300-exploracion-ui-luna. Base de producto comproba
 
 ## Artefactos
 
-- Skill canónico ui-app-testing, adaptador Claude y autorización explícita DEC-116.
+- Skill canónico ui-app-testing, adaptador Claude y autorización explícita DEC-120.
 - Catálogo de 17 pantallas, fichas, transversales, recorridos, combinaciones, límites e informe.
 - 21 prompts persistentes: 17 pantallas, journeys, orquestación, preparación y evaluación; issues reales #300/#301.
 - Aprovisionador local con guard de ambiente/destino/roles, Argon2 del módulo existente y credenciales privadas. Sin dependencias nuevas, permisos nuevos ni cambios de producto/esquema.

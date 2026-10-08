@@ -356,6 +356,26 @@ export interface paths {
         patch: operations["updateBrand"];
         trace?: never;
     };
+    "/private/settings/public-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar el enlace público de reservas de la barbería activa
+         * @description Lectura autenticada (issue #304, DEC-117) del identificador del enlace público de reservas de la barbería derivada de la sesión vigente, para que su dueño pueda verlo y copiarlo cuando lo necesite. Si la barbería todavía no tiene enlace, esta primera lectura lo genera (`<nombre><código aleatorio>` sin guiones, único globalmente) y lo conserva: las lecturas siguientes devuelven el mismo y renombrar la barbería no lo cambia. No hay operación para editarlo ni regenerarlo. `barbershopId` nunca es un parámetro: el tenant se deriva exclusivamente de `SessionCookie`, de modo que no existe forma de pedir el enlace de otra barbería. La respuesta no se almacena en caché.
+         */
+        get: operations["getPublicLink"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/private/barbers": {
         parameters: {
             query?: never;
@@ -1553,6 +1573,14 @@ export interface components {
              */
             affectedAppointments: number;
         };
+        /** @description Palabra con la que la barbería llama a su negocio y a su profesional, con el plural del profesional y el género gramatical de ambas para que los artículos concuerden. Viaja siempre presente: una barbería que nunca lo configuró recibe los valores iniciales (`barbería` y `barbero`). */
+        PublicVocabulary: {
+            businessTerm: components["schemas"]["BrandTerm"];
+            businessTermGender: components["schemas"]["BrandTermGender"];
+            professionalTerm: components["schemas"]["BrandTerm"];
+            professionalTermPlural: components["schemas"]["BrandTerm"];
+            professionalTermGender: components["schemas"]["BrandTermGender"];
+        };
         /** @description Contexto público de la barbería resuelta por su enlace de reservas. contactEmail/contactPhone viajan siempre presentes en el cuerpo, con valor `null` explícito cuando la barbería no tiene ese contacto configurado (nunca se omiten ni se representan como cadena vacía), misma convención que BarbershopSettingsResponse. */
         PublicBarbershopProfile: {
             /**
@@ -1576,6 +1604,7 @@ export interface components {
              * @example +573001234567
              */
             contactPhone: string | null;
+            vocabulary: components["schemas"]["PublicVocabulary"];
         };
         /** @description Servicio ofrecido públicamente por la barbería resuelta: activo y con al menos una asignación vigente a un barbero (HU-091, CA-091-01). currency es siempre "COP" (DEC-067). */
         PublicServiceResponse: {
@@ -1823,6 +1852,7 @@ export interface components {
              * @example true
              */
             lateCancellationReasonRequired: boolean;
+            vocabulary: components["schemas"]["PublicVocabulary"];
         };
         /** @description Solicitud de recuperación de acceso por el canal elegido. */
         RecoveryRequestRequest: {
@@ -2006,6 +2036,11 @@ export interface components {
          * @enum {string}
          */
         PanelProfile: "shop" | "solo";
+        /** @description Identificador del enlace público de reservas de la barbería de la sesión. El cliente compone la URL completa con su propio origen: `{origen}/reservar/{slug}`. Tiene la forma `<nombre><código aleatorio de 8>` sin guiones (`DEC-118`; los generados antes pueden llevarlos), es único globalmente y no cambia al renombrar la barbería. No contiene ningún identificador interno. */
+        PublicLinkResponse: {
+            /** @example cortefinok7x2m9q4 */
+            slug: string;
+        };
         /** @description Tramo recurrente de la jornada laboral de un barbero, para un único día ISO de la semana. Una jornada partida se representa con varios tramos del mismo día (CA-040-02); un tramo nocturno cruza medianoche cuando startsTime + durationMinutes supera las 24:00 (DEC-020, CA-040-03). */
         WorkingHourResponse: {
             /**
@@ -3407,6 +3442,18 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
+        /** @description Enlace público de reservas de la barbería activa. */
+        PublicLinkSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                /** @description Siempre `no-store`; la primera lectura puede generar el enlace. */
+                "Cache-Control"?: "no-store";
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["PublicLinkResponse"];
+            };
+        };
         /** @description Página de tramos de horario laboral del barbero de la ruta, ordenada por día ISO de la semana y hora de inicio. */
         WorkingHourListSuccess: {
             headers: {
@@ -4329,6 +4376,21 @@ export interface operations {
             401: components["responses"]["UnauthorizedProblem"];
             404: components["responses"]["NotFoundProblem"];
             422: components["responses"]["BrandValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getPublicLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["PublicLinkSuccess"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

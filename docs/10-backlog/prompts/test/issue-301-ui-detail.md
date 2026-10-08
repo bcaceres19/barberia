@@ -15,7 +15,7 @@ pr: null
 pr_url: null
 depends_on: ["#300"]
 rules: ["RN-TEN-01", "RN-DAT-02", "RN-IDE-01"]
-decisions: ["DEC-076", "DEC-116"]
+decisions: ["DEC-076", "DEC-120"]
 acceptance_criteria: ["CA-064-01", "CA-065-01", "CA-066-01", "CA-067-01", "CA-068-01"]
 source_docs:
   - "AGENTS.md"

@@ -4,6 +4,50 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.31.0 · 2026-10-08
+
+### Agregado
+
+- Esquema `PublicVocabulary` (`businessTerm`, `businessTermGender`,
+  `professionalTerm`, `professionalTermPlural`, `professionalTermGender`) y
+  propiedad obligatoria `vocabulary` en las respuestas `PublicBarbershopProfile`
+  (`GET /public/barbershops/{slug}`) y `CustomerAppointmentResponse`
+  (`GET /customer/appointments/{token}`), `DEC-119`, issue #309. La reserva
+  pública y el acceso al turno nombran al negocio y a su profesional con la
+  palabra que la barbería configuró (`DEC-110`). Cambio compatible: solo agrega
+  una propiedad a respuestas con `additionalProperties: false` que el cliente
+  del repositorio actualiza en el mismo cambio; no expone el acento ni el
+  perfil del panel.
+
+## 0.30.1 · 2026-10-08
+
+### Cambiado (comportamiento, no forma del contrato)
+
+- El slug que se genera pasa de `<nombre>-<código de 6>` a
+  `<nombre><código de 8>` sin guiones, p. ej. `mateobarberok7x2m9q4`
+  (`DEC-118`, issue #306). Mismo patrón `barbershop_public_slug_ck`, así que el
+  esquema `PublicLinkResponse` no cambia salvo su descripción y ejemplo. Los
+  slugs ya generados se conservan y siguen resolviendo.
+
+## 0.30.0 · 2026-10-08
+
+### Agregado
+
+- `GET /private/settings/public-link` (`operationId: getPublicLink`, tag
+  `Settings`, `DEC-117`, issue #304): enlace público de reservas de la
+  barbería de la sesión, `{ "slug": "corte-fino-k7x2m9" }`. Si la barbería aún
+  no tiene enlace, la primera lectura lo genera y las siguientes devuelven el
+  mismo. Respuesta con `Cache-Control: no-store`. Cambio compatible: es una
+  operación nueva; no cambia ninguna otra.
+
+### Cambiado (comportamiento, no forma del contrato)
+
+- El slug que se genera al guardar `PUT /private/settings/barbershop` o al
+  leer el enlace pasa de `<nombre>`, `<nombre>-2`, … a
+  `<nombre>-<código aleatorio de 6>` (`DEC-117`, sustituye el sufijo numérico
+  de `DEC-082`). Los slugs ya existentes no cambian y siguen resolviendo en
+  `/public/barbershops/{slug}`.
+
 ## 0.29.0 · 2026-10-04
 
 ### Cambiado

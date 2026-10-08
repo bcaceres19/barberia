@@ -3,7 +3,7 @@
 // con key=barberId. Los formularios y las peticiones conservan ese dueño.
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { getCivilDateInTimezone } from '@/shared/time/civilDate'
-import { useToast } from '@/shared/composables'
+import { useToast, useVocabulary } from '@/shared/composables'
 import {
   BaseAlert,
   BaseButton,
@@ -88,6 +88,7 @@ const visibleBlocks = computed(() => blocks.value.filter((b) => !b.deletedAt))
 const activeSeries = computed(() => series.value.filter((s) => !s.deletedAt))
 
 const toast = useToast()
+const v = useVocabulary()
 
 async function loadTimezone() {
   timezoneLoading.value = true
@@ -211,7 +212,7 @@ async function onSubmitCreateBlock() {
 
   const timeZone = barbershopTimezone.value
   if (!timeZone) {
-    createBlockError.value = 'No pudimos determinar la zona horaria de la barbería. Reintenta.'
+    createBlockError.value = `No pudimos determinar la zona horaria ${v.value.ofTheBusiness}. Reintenta.`
     return
   }
 
@@ -236,7 +237,7 @@ async function onSubmitCreateBlock() {
     createBlockError.value =
       validateInstant(startInstantRaw) ??
       validateInstant(endInstantRaw) ??
-      'La fecha u hora no es válida en la zona de la barbería.'
+      `La fecha u hora no es válida en la zona ${v.value.ofTheBusiness}.`
     return
   }
 
@@ -269,7 +270,7 @@ async function onSubmitCreateBlock() {
       isCreateBlockOpen.value = false
       createBlockStatus.value = 'idle'
       toast.success('Bloqueo agregado', {
-        detail: 'El bloqueo ya aparece en el calendario del barbero.',
+        detail: `El bloqueo ya aparece en el calendario ${v.value.ofTheProfessional}.`,
       })
       return
     case 'validation-error':
@@ -453,7 +454,7 @@ async function onDeleteSeries(item: TimeBlockSeries) {
       Un descanso, un día libre o un imprevisto. Reserva ese tiempo para {{ barberName }}.
     </p>
     <p v-if="barbershopTimezone" class="blocks-panel__timezone">
-      Horas de la barbería · {{ barbershopTimezone }}
+      Horas {{ v.ofTheBusiness }} · {{ barbershopTimezone }}
     </p>
     <p v-else-if="timezoneLoading" role="status">Consultando la zona horaria…</p>
     <BaseAlert v-else variant="warning" title="No pudimos consultar la zona horaria">
@@ -713,7 +714,7 @@ async function onDeleteSeries(item: TimeBlockSeries) {
         <div class="block-form__preview" aria-live="polite">
           <span class="blocks-panel__eyebrow">Así queda el bloqueo</span>
           <p>{{ blockTypeLabel(createBlockType) }} · {{ blockPreview }}</p>
-          <small>Horas de la barbería · {{ barbershopTimezone }}</small>
+          <small>Horas {{ v.ofTheBusiness }} · {{ barbershopTimezone }}</small>
         </div>
         <BaseAlert v-if="createBlockError" variant="danger">{{ createBlockError }}</BaseAlert>
         <BaseAlert v-else-if="createBlockStatus === 'validation-error'" variant="danger"
@@ -724,7 +725,7 @@ async function onDeleteSeries(item: TimeBlockSeries) {
           iniciar un bloqueo nuevo.</BaseAlert
         >
         <BaseAlert v-else-if="createBlockStatus === 'not-found'" variant="danger"
-          >Este barbero ya no está disponible.</BaseAlert
+          >{{ v.ThisProfessional }} ya no está disponible.</BaseAlert
         >
         <BaseAlert
           v-else-if="
@@ -837,7 +838,7 @@ async function onDeleteSeries(item: TimeBlockSeries) {
           iniciar una serie nueva.</BaseAlert
         >
         <BaseAlert v-else-if="createSeriesStatus === 'not-found'" variant="danger"
-          >Este barbero ya no está disponible.</BaseAlert
+          >{{ v.ThisProfessional }} ya no está disponible.</BaseAlert
         >
         <BaseAlert
           v-else-if="

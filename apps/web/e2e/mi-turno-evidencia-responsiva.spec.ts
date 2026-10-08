@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { INITIAL_VOCABULARY } from './fixtures/vocabularioInicial'
 
 /**
  * Evidencia visual responsive/accesible de HU-098 (docs/03-desarrollo/
@@ -60,6 +61,7 @@ const APPOINTMENT_VIEW = {
   cancellationDeadlineMinutes: 20,
   lateCancellationClientAllowed: true,
   lateCancellationReasonRequired: true,
+  vocabulary: INITIAL_VOCABULARY,
 }
 
 for (const viewport of viewports) {

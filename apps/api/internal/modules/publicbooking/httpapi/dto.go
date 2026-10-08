@@ -13,10 +13,22 @@ import (
 // barbería no tiene ese contacto configurado, igual que
 // shops/httpapi.BarbershopSettingsResponse.
 type PublicBarbershopProfileResponse struct {
-	Name         string  `json:"name"`
-	Timezone     string  `json:"timezone"`
-	ContactEmail *string `json:"contactEmail"`
-	ContactPhone *string `json:"contactPhone"`
+	Name         string                   `json:"name"`
+	Timezone     string                   `json:"timezone"`
+	ContactEmail *string                  `json:"contactEmail"`
+	ContactPhone *string                  `json:"contactPhone"`
+	Vocabulary   PublicVocabularyResponse `json:"vocabulary"`
+}
+
+// PublicVocabularyResponse es la forma exacta del componente OpenAPI
+// PublicVocabulary.yaml (DEC-119): las palabras con las que la barbería nombra a
+// su negocio y a su profesional. Nunca el acento ni el perfil del panel.
+type PublicVocabularyResponse struct {
+	BusinessTerm           string `json:"businessTerm"`
+	BusinessTermGender     string `json:"businessTermGender"`
+	ProfessionalTerm       string `json:"professionalTerm"`
+	ProfessionalTermPlural string `json:"professionalTermPlural"`
+	ProfessionalTermGender string `json:"professionalTermGender"`
 }
 
 // PublicServiceResponse es la proyección pública mínima de un servicio

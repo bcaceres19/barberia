@@ -112,7 +112,7 @@ Se evitan como lenguaje dominante los clichés de barbería —tijeras, navajas,
 - El wordmark se escribe `NAVA`, en mayúsculas, sin agregar “App”, “Studio” o “Barber”.
 - En el panel privado, NAVA identifica la plataforma y el nombre de la barbería identifica el tenant activo.
 - En la reserva pública, el nombre de la barbería conserva la jerarquía principal y NAVA aparece como firma secundaria.
-- No se inventan logotipos de barberías. La única personalización por barbería es la de `DEC-110`: un color de acento de una paleta cerrada y el vocabulario con el que nombra a su negocio y a su profesional (§6.9); nada más cambia por tenant.
+- No se inventan logotipos de barberías. La única personalización por barbería es la de `DEC-110`: un color de acento de una paleta cerrada y el vocabulario con el que nombra a su negocio y a su profesional (§6.9, extendido a toda la interfaz por `DEC-119`); nada más cambia por tenant.
 
 ## 4. Firma cromática obligatoria
 

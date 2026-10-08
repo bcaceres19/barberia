@@ -1,0 +1,19 @@
+# Respuesta 200 de GET /private/settings/public-link (issue #304, DEC-117).
+description: Enlace público de reservas de la barbería activa.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+  Cache-Control:
+    description: Siempre `no-store`; la primera lectura puede generar el enlace.
+    schema:
+      type: string
+      enum: [no-store]
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/PublicLinkResponse.yaml'
+    examples:
+      enlace:
+        summary: Barbería con enlace ya generado
+        value:
+          slug: cortefinok7x2m9q4

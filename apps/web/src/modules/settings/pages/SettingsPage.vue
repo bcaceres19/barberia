@@ -62,6 +62,7 @@ import {
   validateTimezone,
 } from '../validation/settingsValidation'
 import OptionGroup from '../components/OptionGroup.vue'
+import PublicLinkPanel from '../components/PublicLinkPanel.vue'
 import SaveBar from '../components/SaveBar.vue'
 import SettingsIndex from '../components/SettingsIndex.vue'
 import SettingsPanel from '../components/SettingsPanel.vue'
@@ -173,7 +174,7 @@ function runValidation(): FieldErrors {
   const set = (key: keyof FieldErrors, message: string | undefined) => {
     if (message) errors[key] = message
   }
-  set('name', validateName(shop.name))
+  set('name', validateName(shop.name, v.value))
   set('timezone', validateTimezone(shop.timezone))
   set('contactEmail', validateContactEmail(shop.contactEmail))
   set('contactPhone', validateContactPhone(shop.contactPhone))
@@ -403,7 +404,8 @@ const SECTIONS = [
   { id: 'configuracion-vocabulario', number: '04', label: 'Vocabulario' },
   { id: 'configuracion-hora', number: '05', label: 'Hora' },
   { id: 'configuracion-contacto', number: '06', label: 'Contacto' },
-  { id: 'configuracion-reservas', number: '07', label: 'Reservas' },
+  { id: 'configuracion-enlace', number: '07', label: 'Enlace' },
+  { id: 'configuracion-reservas', number: '08', label: 'Reservas' },
 ] as const
 
 const activeSection = ref<string>(SECTIONS[0].id)
@@ -946,13 +948,24 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
             </div>
           </SettingsPanel>
 
-          <!-- 07 · Reservas públicas: enlace a su propia pantalla (HU-093) -->
+          <!-- 07 · Enlace público de reservas (DEC-117): solo lectura, no es parte del borrador -->
+          <SettingsPanel
+            id="configuracion-enlace"
+            number="07"
+            title="Enlace público"
+            description="La dirección que compartes para que tus clientes reserven. Cópiala cuando la necesites."
+            style="--panel-index: 6"
+          >
+            <PublicLinkPanel />
+          </SettingsPanel>
+
+          <!-- 08 · Reservas públicas: enlace a su propia pantalla (HU-093) -->
           <SettingsPanel
             id="configuracion-reservas"
-            number="07"
+            number="08"
             title="Reservas"
             description="Cuándo y con cuánta anticipación pueden reservar tus clientes, y cómo cancelan."
-            style="--panel-index: 6"
+            style="--panel-index: 7"
           >
             <RouterLink :to="{ name: 'configuracion-reserva-publica' }" class="settings-link">
               <span class="settings-link__copy">

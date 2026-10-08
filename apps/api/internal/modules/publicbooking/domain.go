@@ -12,13 +12,29 @@ import (
 
 // BarbershopProfile es la representación pública mínima de una barbería
 // habilitada (HU-090, CA-090-01, CA-090-04): nombre, zona horaria IANA y
-// contacto público opcional. Nunca incluye un identificador interno, el
+// contacto público opcional y vocabulario del negocio (DEC-119). Nunca incluye un identificador interno, el
 // slug mismo, ni ningún otro dato de configuración privada.
 type BarbershopProfile struct {
 	Name         string
 	Timezone     string
 	ContactEmail *string
 	ContactPhone *string
+	Vocabulary   Vocabulary
+}
+
+// Vocabulary es la palabra con la que la barbería llama a su negocio y a su
+// profesional (DEC-110, DEC-119), con el plural del profesional y el género
+// gramatical de ambas (`masculine` o `feminine`) para que la interfaz pública
+// concuerde. Es un subconjunto de shops.Brand sin acento ni perfil del panel;
+// este paquete no importa shops (CA-002-06), así que repite su propia forma
+// mínima. La base garantiza forma y largo (barbershop_*_term_ck); una
+// barbería que nunca lo configuró tiene los valores iniciales.
+type Vocabulary struct {
+	BusinessTerm           string
+	BusinessTermGender     string
+	ProfessionalTerm       string
+	ProfessionalTermPlural string
+	ProfessionalTermGender string
 }
 
 // MaxSlugLength acota la longitud aceptada del identificador antes de

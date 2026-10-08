@@ -270,6 +270,13 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	private.Get("/settings/brand", getBrandHandler.ServeHTTP)
 	private.Patch("/settings/brand", updateBrandHandler.ServeHTTP)
 
+	// Issue #304 (DEC-117): enlace público de reservas de la barbería de la
+	// sesión, generado `<nombre><código>` en la primera lectura si aún no
+	// existe. Solo lectura: no hay editar ni regenerar.
+	publicLinkService := shops.NewPublicLinkService(shopspostgres.NewPublicLinkRepository(db))
+	getPublicLinkHandler := shopshttpapi.NewGetPublicLinkHandler(publicLinkService)
+	private.Get("/settings/public-link", getPublicLinkHandler.ServeHTTP)
+
 	// HU-021: registro y listado de barberos de la barbería activa.
 	// staffpostgres.New recibe el mismo idempotency.SQLCoordinator real que
 	// protege el alta (RN-IDE-01, DEC-043), coordinado dentro de la misma
