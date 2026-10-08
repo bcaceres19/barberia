@@ -890,7 +890,9 @@ describe('StaffPage', () => {
       expect(wrapper.find('.staff-page__create').exists()).toBe(false)
       expect(wrapper.find('.staff-page__columns').exists()).toBe(false)
       expect(wrapper.find('.staff-page__footer').exists()).toBe(false)
-      expect(wrapper.text()).toContain('Desde ')
+      // Su propia tarjeta, no una fila de tabla sin cabecera (DEC-115).
+      expect(wrapper.find('.staff-page__row').exists()).toBe(false)
+      expect(wrapper.text()).toContain('En NAVA desde')
       // Lo propio de la persona sigue ahí: editar y la acción de «Bloquear» del slot.
       expect(wrapper.find('button[aria-label="Editar Carlos Ramírez"]').exists()).toBe(true)
     })
