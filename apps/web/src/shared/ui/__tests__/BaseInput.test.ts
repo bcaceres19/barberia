@@ -35,7 +35,7 @@ describe('BaseInput', () => {
     })
 
     it('applies type attribute', () => {
-      const types = ['text', 'email', 'password', 'number', 'tel', 'url', 'search'] as const
+      const types = ['text', 'email', 'password', 'tel', 'url', 'search'] as const
       types.forEach((type) => {
         const wrapper = mount(BaseInput, { props: { type } })
         expect(wrapper.find('input').attributes('type')).toBe(type)
@@ -219,11 +219,29 @@ describe('BaseInput', () => {
       expect(wrapper.find('input').attributes('maxlength')).toBe('10')
     })
 
-    it('applies min/max/step for number type', () => {
-      const wrapper = mount(BaseInput, { props: { type: 'number', min: 0, max: 100, step: 5 } })
-      expect(wrapper.find('input').attributes('min')).toBe('0')
-      expect(wrapper.find('input').attributes('max')).toBe('100')
-      expect(wrapper.find('input').attributes('step')).toBe('5')
+    it('dibuja type=number como texto numérico, sin flechas nativas', () => {
+      const input = mount(BaseInput, { props: { type: 'number', min: 0, max: 100 } }).find('input')
+      expect(input.attributes('type')).toBe('text')
+      expect(input.attributes('inputmode')).toBe('numeric')
+      expect(input.attributes('pattern')).toBe('[0-9]*')
+      expect(input.attributes('min')).toBeUndefined()
+    })
+
+    it('type=number descarta letras, signos y decimales al escribir o pegar', async () => {
+      const wrapper = mount(BaseInput, { props: { type: 'number', modelValue: '' } })
+      const input = wrapper.find('input')
+      for (const [typed, expected] of [
+        ['-5', '5'],
+        ['12ab3', '123'],
+        ['1e5', '15'],
+        ['+7', '7'],
+        ['3.5', '35'],
+        ['abc', ''],
+      ]) {
+        await input.setValue(typed)
+        expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([expected])
+        expect((input.element as HTMLInputElement).value).toBe(expected)
+      }
     })
   })
 
