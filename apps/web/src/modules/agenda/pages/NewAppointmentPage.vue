@@ -295,7 +295,7 @@ function onBarberSelect(barberId: string) {
     <header class="new-appointment-page__header">
       <h1 id="new-appointment-title" class="new-appointment-page__title">Nuevo turno</h1>
       <p v-if="barbershopTimezone" class="new-appointment-page__timezone">
-        Horas en la zona horaria de la barbería: {{ barbershopTimezone }}
+        Horas en la zona horaria {{ v.ofTheBusiness }}: {{ barbershopTimezone }}
       </p>
     </header>
 
@@ -361,8 +361,8 @@ function onBarberSelect(barberId: string) {
             min) · {{ created.priceAmount }} {{ created.currency }}
           </span>
           <span class="new-appointment-page__success-note">
-            El turno quedó confirmado en la agenda del barbero. Las notificaciones al cliente
-            todavía no están disponibles (B5 las agrega más adelante).
+            El turno quedó confirmado en la agenda {{ v.ofTheProfessional }}. Las notificaciones al
+            cliente todavía no están disponibles (B5 las agrega más adelante).
           </span>
           <template #action>
             <BaseButton
@@ -477,14 +477,14 @@ function onBarberSelect(barberId: string) {
                       v-else-if="servicesStatus === 'ready' && services.length === 0"
                       class="new-appointment-page__note new-appointment-page__note--warning"
                     >
-                      Este barbero no tiene servicios activos asignados.
+                      {{ v.ThisProfessional }} no tiene servicios activos asignados.
                     </p>
                     <p
                       v-else-if="servicesStatus === 'error'"
                       class="new-appointment-page__note new-appointment-page__note--danger"
                       role="alert"
                     >
-                      No pudimos cargar los servicios de este barbero.
+                      No pudimos cargar los servicios {{ v.ofThisProfessional }}.
                     </p>
                     <p
                       v-if="attempted && fieldErrors.serviceId"
@@ -672,7 +672,7 @@ function onBarberSelect(barberId: string) {
             inténtalo de nuevo.
           </BaseAlert>
           <BaseAlert v-else-if="saveStatus === 'not-found'" variant="danger" role="alert">
-            El barbero o el servicio elegidos ya no están disponibles.
+            {{ v.TheProfessional }} o el servicio elegidos ya no están disponibles.
           </BaseAlert>
           <BaseAlert
             v-else-if="saveStatus === 'network-error' || saveStatus === 'unexpected-error'"

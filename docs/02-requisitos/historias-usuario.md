@@ -953,7 +953,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | --- | --- |
 | Función | `F-CONF-01` (extensión de la configuración de la barbería) |
 | Reglas | `RN-TEN-01`, `RN-DAT-02`, `RN-DIS-07` |
-| Decisiones | `DEC-024`, `DEC-039` (ampliada), `DEC-077`, `DEC-095`, `DEC-110`, `DEC-115` (perfil del panel) |
+| Decisiones | `DEC-024`, `DEC-039` (ampliada), `DEC-077`, `DEC-095`, `DEC-110`, `DEC-115` (perfil del panel), `DEC-119` (vocabulario multirrubro) |
 | Actor | Barbero autenticado |
 | Depende de | `HU-012`, `HU-020`, `HU-093` (se conserva sin cambios); `HU-021`, `HU-023` para el perfil del panel |
 | Bloquea | Ninguna |
@@ -998,6 +998,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | `CA-025-12` | Con `solo` y exactamente un barbero, Agenda, Nuevo turno y Horarios no piden elegirlo (la selección sigue en la URL, `DEC-074`) y «Mi perfil» es su ficha sin controles de equipo; con varios barberos, o en `shop`, los controles de elección y de alta se conservan. |
 | `CA-025-13` | Con `solo`, «Lo ofrezco» refleja y cambia la asignación real del único barbero solo cuando el servidor confirma; un servicio nuevo queda ofrecido y, si esa asignación falla, el servicio existe y se avisa. |
 | `CA-025-14` | Volver a `shop` devuelve las pantallas de equipo sin cambiar ningún dato; el perfil, «Lo ofrezco» y «mi día» son accesibles y se componen sin desbordar a 320, 360, 768 y 1280 px en Tinta y Marfil. |
+| `CA-025-15` | El vocabulario del negocio (`DEC-110`) rige todo el panel: Horarios, bloqueos, Nuevo turno, Detalle del turno, Política de reserva, validaciones y etiquetas «Cancelado por…» usan la palabra y el género configurados, y con los valores iniciales cada texto sale idéntico al anterior (`DEC-119`, #308). Las pantallas públicas y el acceso del cliente quedan para #309. |
 
 **Pruebas obligatorias**
 

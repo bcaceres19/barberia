@@ -70,6 +70,9 @@ export const BUSINESS_PRESETS: readonly BusinessPreset[] = [
   { term: 'peluquería', gender: 'feminine' },
   { term: 'estudio', gender: 'masculine' },
   { term: 'spa', gender: 'masculine' },
+  { term: 'estudio de uñas', gender: 'masculine' },
+  { term: 'centro de estética', gender: 'masculine' },
+  { term: 'estudio de tatuajes', gender: 'masculine' },
 ]
 
 export const PROFESSIONAL_PRESETS: readonly ProfessionalPreset[] = [
@@ -78,4 +81,9 @@ export const PROFESSIONAL_PRESETS: readonly ProfessionalPreset[] = [
   { singular: 'estilista', plural: 'estilistas', gender: 'feminine' },
   { singular: 'peluquero', plural: 'peluqueros', gender: 'masculine' },
   { singular: 'peluquera', plural: 'peluqueras', gender: 'feminine' },
+  { singular: 'manicurista', plural: 'manicuristas', gender: 'feminine' },
+  { singular: 'esteticista', plural: 'esteticistas', gender: 'feminine' },
+  { singular: 'masajista', plural: 'masajistas', gender: 'feminine' },
+  { singular: 'tatuador', plural: 'tatuadores', gender: 'masculine' },
+  { singular: 'tatuadora', plural: 'tatuadoras', gender: 'feminine' },
 ]

@@ -174,7 +174,7 @@ function runValidation(): FieldErrors {
   const set = (key: keyof FieldErrors, message: string | undefined) => {
     if (message) errors[key] = message
   }
-  set('name', validateName(shop.name))
+  set('name', validateName(shop.name, v.value))
   set('timezone', validateTimezone(shop.timezone))
   set('contactEmail', validateContactEmail(shop.contactEmail))
   set('contactPhone', validateContactPhone(shop.contactPhone))

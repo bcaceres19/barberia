@@ -37,7 +37,7 @@ import type { BarberSummary } from '../model/appointment'
 import { summarizeDay } from '../model/daySummary'
 import {
   APPOINTMENT_STATUS_BADGE_VARIANT,
-  APPOINTMENT_STATUS_LABELS,
+  appointmentStatusLabel,
   type DailyAgendaEntry,
 } from '../model/dailyAgenda'
 import AgendaSkeleton from '../components/AgendaSkeleton.vue'
@@ -322,7 +322,7 @@ function diamondStyle(entry: DailyAgendaEntry): Record<string, string> {
 // `confirmed`: es solo presentación de la agenda, no cambia el dato.
 function statusLabel(entry: DailyAgendaEntry): string {
   if (isEntryInProgress(entry)) return 'En proceso'
-  return APPOINTMENT_STATUS_LABELS[entry.status]
+  return appointmentStatusLabel(entry.status, v.value)
 }
 
 function statusBadgeVariant(entry: DailyAgendaEntry) {

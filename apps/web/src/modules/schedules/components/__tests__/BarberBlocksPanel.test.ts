@@ -8,6 +8,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { BaseInput, BaseDatePicker, BaseTimePicker } from '@/shared/ui'
 import { toastState } from '@/shared/model/toastStore'
+import { DEFAULT_BRAND, resetBrand, setBrand } from '@/shared/model'
 
 const fetchBarbershopTimezoneMock = vi.hoisted(() => vi.fn())
 const fetchTimeBlocksMock = vi.hoisted(() => vi.fn())
@@ -393,6 +394,44 @@ describe('BarberBlocksPanel · avisos emergentes (DEC-095)', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('Sin bloqueos puntuales')
     expect(wrapper.findAll('.blocks-panel__record')).toHaveLength(1)
+    wrapper.unmount()
+  })
+})
+
+describe('BarberBlocksPanel · vocabulario del negocio (DEC-119)', () => {
+  beforeEach(() => {
+    for (const mock of [
+      fetchBarbershopTimezoneMock,
+      fetchTimeBlocksMock,
+      fetchTimeBlockSeriesMock,
+      createTimeBlockMock,
+    ]) {
+      mock.mockReset()
+    }
+    resetBrand()
+  })
+
+  it('names the business and the professional with the configured words', async () => {
+    setBrand({
+      ...DEFAULT_BRAND,
+      businessTerm: 'estudio',
+      businessTermGender: 'masculine',
+      professionalTerm: 'manicurista',
+      professionalTermPlural: 'manicuristas',
+      professionalTermGender: 'feminine',
+    })
+    const wrapper = await mountReady()
+
+    expect(wrapper.text()).toContain('Horas del estudio · America/Bogota')
+    expect(wrapper.text()).not.toContain('de la barbería')
+    resetBrand()
+    wrapper.unmount()
+  })
+
+  it('keeps the original words by default', async () => {
+    const wrapper = await mountReady()
+
+    expect(wrapper.text()).toContain('Horas de la barbería · America/Bogota')
     wrapper.unmount()
   })
 })

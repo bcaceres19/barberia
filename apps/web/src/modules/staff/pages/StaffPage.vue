@@ -374,14 +374,15 @@ function onCreateDialogClosed() {
 
 function onCreateFullNameInput(value: string | number) {
   createFullName.value = String(value)
-  if (createAttempted.value) createFieldError.value = validateFullName(createFullName.value)
+  if (createAttempted.value)
+    createFieldError.value = validateFullName(createFullName.value, v.value)
 }
 
 async function onSubmitCreate() {
   if (createStatus.value === 'saving') return
 
   createAttempted.value = true
-  const error = validateFullName(createFullName.value)
+  const error = validateFullName(createFullName.value, v.value)
   createFieldError.value = error
   if (error) return
 
@@ -469,7 +470,8 @@ function onRenameDialogClosed() {
 
 function onRenameFullNameInput(value: string | number) {
   renameFullName.value = String(value)
-  if (renameAttempted.value) renameFieldError.value = validateFullName(renameFullName.value)
+  if (renameAttempted.value)
+    renameFieldError.value = validateFullName(renameFullName.value, v.value)
 }
 
 type StepFailure = 'validation-error' | 'not-found' | 'network-error' | 'unexpected-error'
@@ -490,7 +492,7 @@ async function onSubmitRename() {
   if (renameStatus.value === 'saving' || !target) return
 
   renameAttempted.value = true
-  const error = validateFullName(renameFullName.value)
+  const error = validateFullName(renameFullName.value, v.value)
   renameFieldError.value = error
   if (error) return
 
