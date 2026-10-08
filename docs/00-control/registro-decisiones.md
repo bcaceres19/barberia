@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.40"
+version: "1.41"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-10-04"
+ultima_actualizacion: "2026-10-08"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -112,6 +112,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-113` | 2026-10-03 | Estados vacíos del panel como escena animada | `docs/03-desarrollo/estandar-diseno-visual.md` | Confirmada |
 | `DEC-114` | 2026-10-04 | Se puede retirar a cualquier barbero de un servicio, también al último; sustituye a `DEC-068` | `DP-SER-02`, `HU-023`, `CA-023-05`, `CA-023-06` | Confirmada |
 | `DEC-115` | 2026-10-04 | Perfil del panel por barbería: `shop` (con equipo) o `solo` (barbero individual), solo presentación | `HU-025`; issue #294; amplía `DEC-110` | Confirmada (elección del ajuste); composición del panel sujeta a revisión |
+| `DEC-116` | 2026-10-08 | «Mi perfil» del barbero individual es una tarjeta propia, no una fila de tabla; amplía `DEC-115` | `HU-025`; issue #302 | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -1342,3 +1343,13 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Límites:** no concede ni retira permisos, no cambia la reserva pública ni agrega funciones de negocio (reportes, ingresos, clientes). El enlace público de reserva no se muestra en el panel porque ningún endpoint privado lo expone; hacerlo exige su propia decisión.
 - **Documentos afectados:** `docs/02-requisitos/historias-usuario.md` (`HU-025`, `CA-025-10`–`CA-025-14`), `docs/03-desarrollo/especificacion-frontend-nava.md` (§5.1), `docs/00-control/{matriz-trazabilidad,historial-cambios}.md`, `api/openapi/` (0.28.0), `database/{README.md,tests/panel_perfil_barbero_individual.sql,testdata/ui_barbero_individual_294.sql}`, `.github/workflows/ci.yml`.
 - **Fuente:** elección explícita del propietario del 2026-10-04 y issue [#294](https://github.com/bcaceres19/barberia/issues/294).
+
+### DEC-116 · «Mi perfil» del barbero individual como tarjeta propia (amplía `DEC-115`)
+
+- **Fecha:** 2026-10-08.
+- **Decisión:** en el perfil de panel `solo`, «Mi perfil» deja de reutilizar la fila de la tabla de equipo (`DEC-115`, punto 1 de «Qué cambia en `solo`») y pasa a ser su propia tarjeta: retrato grande con marco de esquinas, rol, nombre, los mismos datos (en NAVA desde, foto) y las mismas acciones (editar, bloquear), sin encabezados de tabla ni fila sin cabecera. Sigue siendo `StaffPage` quien carga los datos y abre el diálogo de edición (`MyProfileCard.vue` es solo de presentación, recibe los datos por props y emite `edit`); la tarjeta reemplaza la tabla únicamente cuando hay exactamente un barbero bajo perfil `solo`. Con más de un barbero (o ninguno) la pantalla conserva el comportamiento ya fijado por `DEC-115`: tabla de equipo completa, o el estado vacío de «Crear mi perfil».
+- **Quién lo decidió:** el propietario, el 2026-10-08, al ver la pantalla real y señalar que una fila de tabla sin cabecera seguía leyéndose como una tabla, no como la ficha de una sola persona.
+- **Alcance:** presentación pura, igual que `DEC-115`. No cambia datos, autorización, reglas de agenda ni el modelo (`barbershop.panel_profile` sin cambios); no toca la dependencia de `DEC-114` ya registrada en `DEC-115`.
+- **Responsable:** propietario del proyecto.
+- **Documentos afectados:** `docs/00-control/historial-cambios.md`.
+- **Fuente:** instrucción explícita del propietario del 2026-10-08, issue [#302](https://github.com/bcaceres19/barberia/issues/302).

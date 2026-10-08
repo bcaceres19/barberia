@@ -32,6 +32,7 @@ import {
   uploadBarberPhoto,
 } from '../api/staffApi'
 import BarberPhotoField from '../components/BarberPhotoField.vue'
+import MyProfileCard from '../components/MyProfileCard.vue'
 import { newIdempotencyKey } from '../model/idempotencyKey'
 import type { Barber } from '../model/barber'
 import { NO_PHOTO_CHANGE, type PhotoDraft } from '../model/photoDraft'
@@ -112,7 +113,10 @@ async function load(page = 1, initial = false) {
       totalItems.value = outcome.page.total
       totalPages.value = outcome.page.totalPages
       loadStatus.value = 'ready'
-      if (barbers.value.length === 0) fitPending.value = false
+      // La tarjeta del perfil individual no pagina ni mide filas de tabla
+      // (DEC-115): sin esto, fitPending se quedaría en true para siempre
+      // porque listRef nunca se monta en ese caso.
+      if (barbers.value.length === 0 || soloCard.value) fitPending.value = false
     } else if (initial) loadStatus.value = 'load-error'
     else pageFailed.value = true
     if (pendingPaginationFocus) {
@@ -637,8 +641,25 @@ async function onSubmitRename() {
           </template>
         </EmptyScene>
 
+        <!-- Perfil individual (DEC-115): su propia tarjeta, no una fila de
+             tabla sin cabecera. StaffPage sigue siendo dueño de los datos y
+             del diálogo de edición; la tarjeta solo presenta. -->
+        <MyProfileCard
+          v-if="soloCard"
+          :full-name="barbers[0]!.fullName"
+          :photo-url="photoOf(barbers[0]!)"
+          :has-photo="hasPhoto(barbers[0]!)"
+          :since-label="formatDate(barbers[0]!.createdAt)"
+          :role-label="v.Professional"
+          @edit="openRenameDialog(barbers[0]!)"
+        >
+          <template #actions>
+            <slot name="barber-actions" :barber="barbers[0]!" />
+          </template>
+        </MyProfileCard>
+
         <div v-else class="staff-page__table">
-          <div v-if="!soloCard" class="staff-page__columns" aria-hidden="true">
+          <div class="staff-page__columns" aria-hidden="true">
             <span>{{ v.Professional }}</span
             ><span>En NAVA desde</span><span>Foto</span><span>Acción</span>
           </div>
@@ -686,7 +707,7 @@ async function onSubmitRename() {
                 </div>
               </div>
               <span class="staff-page__item-meta staff-page__item-since">
-                {{ soloCard ? 'Desde ' : '' }}{{ formatDate(barber.createdAt) }}
+                {{ formatDate(barber.createdAt) }}
               </span>
               <span
                 class="staff-page__photo-state"
