@@ -24,12 +24,12 @@ func (f *fakePublicLinkRepository) Ensure(_ context.Context, barbershopID string
 var _ shops.PublicLinkRepository = (*fakePublicLinkRepository)(nil)
 
 func TestPublicLinkService_Get_ReturnsTheSlugOfTheSessionBarbershop(t *testing.T) {
-	repo := &fakePublicLinkRepository{slug: "corte-fino-k7x2m9", found: true}
+	repo := &fakePublicLinkRepository{slug: "cortefinok7x2m9q4", found: true}
 	got, err := shops.NewPublicLinkService(repo).Get(context.Background(), "shop-1")
 	if err != nil {
 		t.Fatalf("Get: %v", err)
 	}
-	if got.Slug != "corte-fino-k7x2m9" || repo.gotShopID != "shop-1" {
+	if got.Slug != "cortefinok7x2m9q4" || repo.gotShopID != "shop-1" {
 		t.Fatalf("unexpected result %+v for shop %q", got, repo.gotShopID)
 	}
 }

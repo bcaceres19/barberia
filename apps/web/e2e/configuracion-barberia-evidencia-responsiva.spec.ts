@@ -73,7 +73,7 @@ async function openSettings(
     } else if (pathname.endsWith('/settings/public-link')) {
       await route.fulfill(
         publicLinkStatus === 200
-          ? json({ slug: 'nava-qa-local-k7x2m9' })
+          ? json({ slug: 'navaqalocalk7x2m9q4' })
           : json({ title: 'Error' }, publicLinkStatus),
       )
     } else {
@@ -180,13 +180,13 @@ test.describe('enlace público (DEC-117)', () => {
       const panel = page.locator('#configuracion-enlace')
       await panel.scrollIntoViewIfNeeded()
       await expect(panel.getByRole('textbox', { name: 'Tu enlace de reservas' })).toHaveText(
-        /\/reservar\/nava-qa-local-k7x2m9$/,
+        /\/reservar\/navaqalocalk7x2m9q4$/,
       )
 
       await panel.getByRole('button', { name: 'Copiar enlace' }).click()
       await expect(panel.getByText('Enlace copiado.')).toBeVisible()
       expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(
-        /\/reservar\/nava-qa-local-k7x2m9$/,
+        /\/reservar\/navaqalocalk7x2m9q4$/,
       )
 
       await expectNoHorizontalScroll(page)

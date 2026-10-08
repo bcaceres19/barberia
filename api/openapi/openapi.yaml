@@ -4,7 +4,7 @@
 #
 # Issue #304 (DEC-117) agrega GET /private/settings/public-link
 # (paths/settings.yaml): el enlace público de reservas de la barbería de la
-# sesión, generado `<nombre>-<código aleatorio>` en la primera lectura.
+# sesión, generado `<nombre><código aleatorio>` (sin guiones, `DEC-118`) en la primera lectura.
 #
 # HU-098 agrega el tag CustomerAccess y su primera operación: GET
 # /customer/appointments/{token} (paths/customer-appointments.yaml), lectura
@@ -86,7 +86,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.30.0
+  version: 0.30.1
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer

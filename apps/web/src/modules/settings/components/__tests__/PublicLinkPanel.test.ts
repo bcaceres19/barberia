@@ -10,7 +10,7 @@ vi.mock('../../api/publicLinkApi', () => ({ fetchPublicLink: fetchPublicLinkMock
 
 const { default: PublicLinkPanel } = await import('../PublicLinkPanel.vue')
 
-const SLUG = 'corte-fino-k7x2m9'
+const SLUG = 'cortefinok7x2m9q4'
 const URL_ = `${window.location.origin}/reservar/${SLUG}`
 
 function mountPanel() {

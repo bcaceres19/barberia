@@ -14,27 +14,28 @@ import (
 	"system-barbershop/internal/modules/shops"
 )
 
-func TestSlugBase_SimpleName_LowercasesAndHyphenates(t *testing.T) {
+func TestSlugBase_SimpleName_LowercasesAndJoins(t *testing.T) {
 	got := shops.SlugBase(shops.NormalizeName("Barbería Ejemplo"))
-	if got != "barberia-ejemplo" {
-		t.Fatalf("expected %q, got %q", "barberia-ejemplo", got)
+	if got != "barberiaejemplo" {
+		t.Fatalf("expected %q, got %q", "barberiaejemplo", got)
 	}
 }
 
 func TestSlugBase_AccentedCharacters_FoldToASCII(t *testing.T) {
 	got := shops.SlugBase(shops.NormalizeName("Peluquería José Núñez Ñoño"))
-	if got != "peluqueria-jose-nunez-nono" {
-		t.Fatalf("expected %q, got %q", "peluqueria-jose-nunez-nono", got)
+	if got != "peluqueriajosenuneznono" {
+		t.Fatalf("expected %q, got %q", "peluqueriajosenuneznono", got)
 	}
 }
 
-func TestSlugBase_NonAlphanumericRuns_CollapseToSingleHyphen(t *testing.T) {
-	got := shops.SlugBase(shops.NormalizeName("  Barber@Shop!!   #1  "))
-	if strings.Contains(got, "--") {
-		t.Fatalf("expected no consecutive hyphens, got %q", got)
+func TestSlugBase_SeparatorsAndSymbols_AreDropped(t *testing.T) {
+	got := shops.SlugBase(shops.NormalizeName("Mateo · Barbero"))
+	if got != "mateobarbero" {
+		t.Fatalf("expected %q, got %q", "mateobarbero", got)
 	}
-	if strings.HasPrefix(got, "-") || strings.HasSuffix(got, "-") {
-		t.Fatalf("expected no leading/trailing hyphen, got %q", got)
+	got = shops.SlugBase(shops.NormalizeName("  Barber@Shop!!   #1  "))
+	if got != "barbershop1" {
+		t.Fatalf("expected %q, got %q", "barbershop1", got)
 	}
 }
 
@@ -43,16 +44,6 @@ func TestSlugBase_TooLong_TruncatesToMaxLength(t *testing.T) {
 	got := shops.SlugBase(longName)
 	if len(got) > shops.SlugMaxLength {
 		t.Fatalf("expected at most %d chars, got %d (%q)", shops.SlugMaxLength, len(got), got)
-	}
-}
-
-func TestSlugBase_TruncationLandsOnHyphen_TrimsIt(t *testing.T) {
-	// 39 letras + un espacio en la posición 40: al truncar a 40 el corte
-	// cae justo en el guion que reemplazó ese espacio.
-	name := strings.Repeat("a", 39) + " " + strings.Repeat("b", 10)
-	got := shops.SlugBase(name)
-	if strings.HasSuffix(got, "-") {
-		t.Fatalf("expected no trailing hyphen after truncation, got %q", got)
 	}
 }
 
@@ -81,37 +72,28 @@ func TestSlugBase_ResultMatchesDatabaseFormat(t *testing.T) {
 			t.Fatalf("SlugBase(%q) = %q: no debe empezar ni terminar en guion", name, got)
 		}
 		for _, r := range got {
-			if !(r >= 'a' && r <= 'z') && !(r >= '0' && r <= '9') && r != '-' {
-				t.Fatalf("SlugBase(%q) = %q: carácter fuera de [a-z0-9-]: %q", name, got, r)
+			if !(r >= 'a' && r <= 'z') && !(r >= '0' && r <= '9') {
+				t.Fatalf("SlugBase(%q) = %q: carácter fuera de [a-z0-9]: %q", name, got, r)
 			}
 		}
 	}
 }
 
-func TestSlugWithCode_JoinsBaseAndCodeWithAHyphen(t *testing.T) {
-	got := shops.SlugWithCode("barberia-ejemplo", "k7x2m9")
-	if got != "barberia-ejemplo-k7x2m9" {
-		t.Fatalf("expected %q, got %q", "barberia-ejemplo-k7x2m9", got)
+func TestSlugWithCode_JoinsBaseAndCodeWithoutSeparator(t *testing.T) {
+	got := shops.SlugWithCode("mateobarbero", "k7x2m9q4")
+	if got != "mateobarberok7x2m9q4" {
+		t.Fatalf("expected %q, got %q", "mateobarberok7x2m9q4", got)
 	}
 }
 
 func TestSlugWithCode_TruncatesBaseToStayWithinMaxLength(t *testing.T) {
 	base := strings.Repeat("a", shops.SlugMaxLength)
-	got := shops.SlugWithCode(base, "k7x2m9")
+	got := shops.SlugWithCode(base, "k7x2m9q4")
 	if len(got) != shops.SlugMaxLength {
 		t.Fatalf("expected exactly %d chars, got %d (%q)", shops.SlugMaxLength, len(got), got)
 	}
-	if !strings.HasSuffix(got, "-k7x2m9") {
+	if !strings.HasSuffix(got, "k7x2m9q4") {
 		t.Fatalf("expected code preserved, got %q", got)
-	}
-}
-
-func TestSlugWithCode_TruncationLandsOnHyphen_DoesNotLeaveDoubleHyphen(t *testing.T) {
-	// El corte cae justo en un guion de la base: sin recorte quedaría "--".
-	base := strings.Repeat("a", 32) + "-" + strings.Repeat("b", 7)
-	got := shops.SlugWithCode(base, "k7x2m9")
-	if strings.Contains(got, "--") {
-		t.Fatalf("expected no consecutive hyphens, got %q", got)
 	}
 }
 
@@ -119,7 +101,7 @@ var slugFormat = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]{1,38}[a-z0-9])$`)
 
 func TestSlugWithCode_ResultMatchesDatabaseFormat(t *testing.T) {
 	for _, name := range []string{"Barbería Ejemplo", "A B", "!!!", strings.Repeat("x", 200), "Café & Corte 123"} {
-		got := shops.SlugWithCode(shops.SlugBase(shops.NormalizeName(name)), "k7x2m9")
+		got := shops.SlugWithCode(shops.SlugBase(shops.NormalizeName(name)), "k7x2m9q4")
 		if !slugFormat.MatchString(got) {
 			t.Fatalf("SlugWithCode(SlugBase(%q)) = %q: no cumple barbershop_public_slug_ck", name, got)
 		}

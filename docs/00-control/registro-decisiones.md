@@ -1,6 +1,6 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.42"
+version: "1.43"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-10-08"
@@ -1372,3 +1372,16 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Riesgo residual aceptado:** (a) las barberías con slug anterior a esta decisión conservan un enlace sin código, adivinable por su nombre; no hay forma de regenerarlo hasta que exista esa mejora; (b) el enlace es compartible por diseño y no es un secreto de autenticación: quien lo tiene puede iniciar una reserva en esa barbería, nunca ver datos privados (`CA-090-04`).
 - **Documentos afectados:** `docs/02-requisitos/historias-usuario.md` (`HU-090`, `CA-090-06`), `docs/00-control/{matriz-trazabilidad,historial-cambios,glosario}.md`, `docs/03-desarrollo/especificacion-frontend-nava.md` (Configuración), `api/openapi/` (0.30.0, `GET /private/settings/public-link`), `apps/api/internal/modules/shops`, `apps/web/src/modules/settings`.
 - **Fuente:** instrucción explícita del propietario del 2026-10-08 y issue [#304](https://github.com/bcaceres19/barberia/issues/304).
+
+### DEC-118 · Slug público sin guiones y con código de 8 caracteres (amplía `DEC-117`)
+
+- **Fecha:** 2026-10-08.
+- **Decisión:** el `public_slug` que se genera pasa de `<nombre>-<código de 6>` (p. ej. `mateo-barbero-53dx3x`) a `<nombre><código de 8>` **todo junto, sin guiones** (p. ej. `mateobarberok7x2m9q4`). La base del nombre elimina cualquier carácter fuera de `a–z`, `0–9` tras plegar acentos y pasar a minúsculas (`Mateo · Barbero` → `mateobarbero`); el código sube a 8 símbolos del mismo alfabeto sin confundibles (31⁸ ≈ 852 mil millones de combinaciones por nombre) y se pega a la base sin separador. La base se recorta a 32 caracteres para que el total no pase de 40 y el código nunca se corte. Sigue cumpliendo `barbershop_public_slug_ck` (el guion es permitido por el patrón, no obligatorio); no hay migración.
+- **Se mantiene de `DEC-117`:** generación en el primer guardado o en la primera lectura del enlace, único global con reintento ante colisión, solo ver y copiar, aislamiento por tenant, slugs existentes conservados.
+- **Slugs existentes:** los generados antes (con guiones y 6 símbolos) siguen resolviendo y no se reescriben.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** al ver la pantalla real, el propietario señaló que con guiones el enlace «queda todo raro» y pidió un código algo más largo («no tanto») y todo junto.
+- **Alternativas descartadas:** conservar el guion solo ante el código (`mateobarbero-k7x2m9q4`: es lo que el propietario descartó); subir a 10 o más símbolos (el propietario pidió «no tanto»; 8 ya hace inviable enumerar).
+- **Riesgo residual aceptado:** sin separador, el límite entre nombre y código no es visible; es solo estético, la unicidad la garantiza el índice, no el formato.
+- **Documentos afectados:** `docs/00-control/{historial-cambios,glosario}.md`, `docs/02-requisitos/historias-usuario.md` (`CA-090-06`), `api/openapi/` (0.30.1), `apps/api/internal/modules/shops`.
+- **Fuente:** instrucción explícita del propietario del 2026-10-08 e issue [#306](https://github.com/bcaceres19/barberia/issues/306).
