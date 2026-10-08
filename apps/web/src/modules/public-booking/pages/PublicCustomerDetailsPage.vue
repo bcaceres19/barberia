@@ -14,6 +14,7 @@ import { BaseAlert, BaseButton, BaseInput } from '@/shared/ui'
 import { confirmPublicAppointment } from '../api/confirmPublicAppointmentApi'
 import { useBookingChrome } from '../model/bookingChrome'
 import { newIdempotencyKey } from '../model/idempotencyKey'
+import { usePublicVocabulary } from '../model/publicVocabulary'
 import type {
   ConfirmedPublicAppointment,
   PublicAppointmentAlternative,
@@ -42,6 +43,7 @@ interface Props {
   startsAt: string
 }
 const props = defineProps<Props>()
+const v = usePublicVocabulary()
 
 // El cascarón dibuja el progreso: al confirmar, se completa.
 const chrome = useBookingChrome()
@@ -438,7 +440,7 @@ function chooseAlternative(startsAt: string) {
         <h2 class="pb-sheet__heading">¡Tu turno quedó confirmado!</h2>
         <dl v-if="confirmedAppointment" class="customer-details__summary-list">
           <div class="customer-details__summary-row">
-            <dt>Barbería</dt>
+            <dt>{{ v.Business }}</dt>
             <dd>{{ confirmedAppointment.barbershopName }}</dd>
           </div>
           <div class="customer-details__summary-row">

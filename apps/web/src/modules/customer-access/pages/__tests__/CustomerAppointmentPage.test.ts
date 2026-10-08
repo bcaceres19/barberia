@@ -39,6 +39,13 @@ function successData() {
     cancellationDeadlineMinutes: 20,
     lateCancellationClientAllowed: true,
     lateCancellationReasonRequired: true,
+    vocabulary: {
+      businessTerm: 'barbería',
+      businessTermGender: 'feminine',
+      professionalTerm: 'barbero',
+      professionalTermPlural: 'barberos',
+      professionalTermGender: 'masculine',
+    },
   }
 }
 
@@ -160,6 +167,35 @@ describe('CustomerAppointmentPage', () => {
 
     expect(wrapper.text()).toContain('req-abc-123')
     expect(wrapper.text()).toContain('Ocurrió un error inesperado')
+  })
+
+  it('names the business and the professional with the words the barbershop configured (DEC-119)', async () => {
+    getMock.mockResolvedValueOnce({
+      data: {
+        ...successData(),
+        barbershopName: 'Estudio Lila',
+        barberName: 'Laura Mejía',
+        status: 'cancelled_by_barber',
+        lateCancellationClientAllowed: false,
+        vocabulary: {
+          businessTerm: 'estudio',
+          businessTermGender: 'masculine',
+          professionalTerm: 'tatuadora',
+          professionalTermPlural: 'tatuadoras',
+          professionalTermGender: 'feminine',
+        },
+      },
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mountPage({ token: 'token-en-claro' })
+    await flushPromises()
+
+    const text = wrapper.text()
+    expect(text).toContain('Tatuadora')
+    expect(text).toContain('Cancelado por la tatuadora')
+    expect(text).toContain('contacta directamente al estudio')
+    expect(text).not.toMatch(/barber(o|a|os|as|ía|ías)\b/i)
   })
 
   it('has no accessibility violations in the loading state', async () => {

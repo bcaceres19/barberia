@@ -1,6 +1,7 @@
 import { test, expect, type Route } from '@playwright/test'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { INITIAL_VOCABULARY } from './fixtures/vocabularioInicial'
 
 /**
  * Evidencia visual responsive/accesible de HU-090 (docs/03-desarrollo/
@@ -61,6 +62,7 @@ async function fulfillProfile(route: Route) {
       timezone: 'America/Bogota',
       contactEmail: 'contacto@ejemplo.test',
       contactPhone: '+573001234567',
+      vocabulary: INITIAL_VOCABULARY,
     }),
   })
 }
@@ -83,7 +85,7 @@ for (const viewport of viewports) {
         await fulfillProfile(route)
       })
       await page.goto('/reservar/barberia-ejemplo')
-      await expect(page.getByText('Abriendo tu barbería')).toBeVisible()
+      await expect(page.getByText('Abriendo tu reserva')).toBeVisible()
       await page.screenshot({
         path: path.join(evidenceDir, viewport.name, 'carga.png'),
         fullPage: true,

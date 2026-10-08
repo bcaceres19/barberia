@@ -66,6 +66,11 @@ func TestResolveBarbershopHandler_Success_ReturnsPublicProfile(t *testing.T) {
 		profile: publicbooking.BarbershopProfile{
 			Name: "Barbería Ejemplo", Timezone: "America/Bogota",
 			ContactEmail: &email, ContactPhone: &phone,
+			Vocabulary: publicbooking.Vocabulary{
+				BusinessTerm: "estudio de uñas", BusinessTermGender: "masculine",
+				ProfessionalTerm: "manicurista", ProfessionalTermPlural: "manicuristas",
+				ProfessionalTermGender: "feminine",
+			},
 		},
 	}
 	h := httpapi.NewResolveBarbershopHandler(publicbooking.NewService(repo))
@@ -83,6 +88,15 @@ func TestResolveBarbershopHandler_Success_ReturnsPublicProfile(t *testing.T) {
 	}
 	if body.Name != "Barbería Ejemplo" || body.Timezone != "America/Bogota" {
 		t.Fatalf("unexpected response: %+v", body)
+	}
+	// DEC-119: el vocabulario del negocio viaja tal como la barbería lo configuró.
+	wantVocabulary := httpapi.PublicVocabularyResponse{
+		BusinessTerm: "estudio de uñas", BusinessTermGender: "masculine",
+		ProfessionalTerm: "manicurista", ProfessionalTermPlural: "manicuristas",
+		ProfessionalTermGender: "feminine",
+	}
+	if body.Vocabulary != wantVocabulary {
+		t.Fatalf("vocabulary = %+v, want %+v", body.Vocabulary, wantVocabulary)
 	}
 	if body.ContactEmail == nil || *body.ContactEmail != email {
 		t.Fatalf("expected contactEmail=%q, got %v", email, body.ContactEmail)

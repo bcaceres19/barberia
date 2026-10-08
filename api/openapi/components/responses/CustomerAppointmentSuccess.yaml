@@ -30,3 +30,9 @@ content:
           cancellationDeadlineMinutes: 20
           lateCancellationClientAllowed: true
           lateCancellationReasonRequired: true
+          vocabulary:
+            businessTerm: barbería
+            businessTermGender: feminine
+            professionalTerm: barbero
+            professionalTermPlural: barberos
+            professionalTermGender: masculine

@@ -58,6 +58,11 @@ func TestGetAppointmentHandler_Success_ReturnsAppointmentView(t *testing.T) {
 			CancellationDeadlineMinutes:    20,
 			LateCancellationClientAllowed:  true,
 			LateCancellationReasonRequired: true,
+			Vocabulary: customeraccess.Vocabulary{
+				BusinessTerm: "estudio", BusinessTermGender: "masculine",
+				ProfessionalTerm: "tatuadora", ProfessionalTermPlural: "tatuadoras",
+				ProfessionalTermGender: "feminine",
+			},
 		},
 	}
 	h := httpapi.NewGetAppointmentHandler(customeraccess.NewService(repo))
@@ -81,6 +86,14 @@ func TestGetAppointmentHandler_Success_ReturnsAppointmentView(t *testing.T) {
 	}
 	if body.Status != "confirmed" {
 		t.Fatalf("Status = %q", body.Status)
+	}
+	// DEC-119: el vocabulario de la barbería viaja con el turno.
+	if body.Vocabulary.ProfessionalTerm != "tatuadora" ||
+		body.Vocabulary.ProfessionalTermPlural != "tatuadoras" ||
+		body.Vocabulary.ProfessionalTermGender != "feminine" ||
+		body.Vocabulary.BusinessTerm != "estudio" ||
+		body.Vocabulary.BusinessTermGender != "masculine" {
+		t.Fatalf("vocabulary = %+v", body.Vocabulary)
 	}
 	if len(repo.calls) != 1 {
 		t.Fatalf("expected exactly one repository call, got %d", len(repo.calls))

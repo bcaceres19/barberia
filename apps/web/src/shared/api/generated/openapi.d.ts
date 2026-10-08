@@ -1573,6 +1573,14 @@ export interface components {
              */
             affectedAppointments: number;
         };
+        /** @description Palabra con la que la barbería llama a su negocio y a su profesional, con el plural del profesional y el género gramatical de ambas para que los artículos concuerden. Viaja siempre presente: una barbería que nunca lo configuró recibe los valores iniciales (`barbería` y `barbero`). */
+        PublicVocabulary: {
+            businessTerm: components["schemas"]["BrandTerm"];
+            businessTermGender: components["schemas"]["BrandTermGender"];
+            professionalTerm: components["schemas"]["BrandTerm"];
+            professionalTermPlural: components["schemas"]["BrandTerm"];
+            professionalTermGender: components["schemas"]["BrandTermGender"];
+        };
         /** @description Contexto público de la barbería resuelta por su enlace de reservas. contactEmail/contactPhone viajan siempre presentes en el cuerpo, con valor `null` explícito cuando la barbería no tiene ese contacto configurado (nunca se omiten ni se representan como cadena vacía), misma convención que BarbershopSettingsResponse. */
         PublicBarbershopProfile: {
             /**
@@ -1596,6 +1604,7 @@ export interface components {
              * @example +573001234567
              */
             contactPhone: string | null;
+            vocabulary: components["schemas"]["PublicVocabulary"];
         };
         /** @description Servicio ofrecido públicamente por la barbería resuelta: activo y con al menos una asignación vigente a un barbero (HU-091, CA-091-01). currency es siempre "COP" (DEC-067). */
         PublicServiceResponse: {
@@ -1843,6 +1852,7 @@ export interface components {
              * @example true
              */
             lateCancellationReasonRequired: boolean;
+            vocabulary: components["schemas"]["PublicVocabulary"];
         };
         /** @description Solicitud de recuperación de acceso por el canal elegido. */
         RecoveryRequestRequest: {

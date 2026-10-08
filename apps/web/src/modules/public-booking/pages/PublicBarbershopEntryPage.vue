@@ -8,8 +8,9 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { formatInstantInTimezone } from '@/shared/time/formatInstant'
 import BookingStateScreen from '../components/BookingStateScreen.vue'
-import { resolveBarbershop } from '../api/resolveBarbershopApi'
+import { loadPublicProfile } from '../model/publicProfile'
 import type { PublicBarbershopProfile } from '../model/barbershopProfileOutcome'
+import { usePublicVocabulary } from '../model/publicVocabulary'
 
 interface Props {
   /** Identificador del enlace público, tal como llega del parámetro de
@@ -18,6 +19,7 @@ interface Props {
   slug: string
 }
 const props = defineProps<Props>()
+const v = usePublicVocabulary()
 
 type ScreenState =
   | { status: 'loading' }
@@ -30,7 +32,7 @@ const screenState = ref<ScreenState>({ status: 'loading' })
 
 async function load() {
   screenState.value = { status: 'loading' }
-  const outcome = await resolveBarbershop(props.slug)
+  const outcome = await loadPublicProfile(props.slug)
   switch (outcome.kind) {
     case 'success':
       screenState.value = { status: 'success', profile: outcome.profile }
@@ -83,7 +85,7 @@ const failedRequestId = computed(() =>
     :status="screenState.status"
     :request-id="failedRequestId"
     title="Entrada pública de reservas"
-    loading-headline="Abriendo tu barbería…"
+    loading-headline="Abriendo tu reserva…"
     @retry="retry"
   />
 
@@ -92,7 +94,7 @@ const failedRequestId = computed(() =>
     <h1 class="pb-hero__name">{{ screenState.profile.name }}</h1>
     <div class="pb-rule" aria-hidden="true"></div>
 
-    <p class="pb-clock">Hora local de la barbería: {{ currentTimeLabel }}</p>
+    <p class="pb-clock">Hora local {{ v.ofTheBusiness }}: {{ currentTimeLabel }}</p>
 
     <dl
       v-if="screenState.profile.contactEmail || screenState.profile.contactPhone"

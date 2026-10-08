@@ -4,6 +4,21 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.31.0 · 2026-10-08
+
+### Agregado
+
+- Esquema `PublicVocabulary` (`businessTerm`, `businessTermGender`,
+  `professionalTerm`, `professionalTermPlural`, `professionalTermGender`) y
+  propiedad obligatoria `vocabulary` en las respuestas `PublicBarbershopProfile`
+  (`GET /public/barbershops/{slug}`) y `CustomerAppointmentResponse`
+  (`GET /customer/appointments/{token}`), `DEC-119`, issue #309. La reserva
+  pública y el acceso al turno nombran al negocio y a su profesional con la
+  palabra que la barbería configuró (`DEC-110`). Cambio compatible: solo agrega
+  una propiedad a respuestas con `additionalProperties: false` que el cliente
+  del repositorio actualiza en el mismo cambio; no expone el acento ni el
+  perfil del panel.
+
 ## 0.30.1 · 2026-10-08
 
 ### Cambiado (comportamiento, no forma del contrato)

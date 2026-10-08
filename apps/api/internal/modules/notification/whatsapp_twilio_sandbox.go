@@ -61,7 +61,7 @@ func (p TwilioSandboxWhatsAppOTPProvider) Deliver(ctx context.Context, phone str
 	values := url.Values{
 		"From": {"whatsapp:" + p.cfg.FromE164},
 		"To":   {"whatsapp:" + phone},
-		"Body": {"Tu código de verificación de Barbería es: " + prepared.Code()},
+		"Body": {"Tu código de verificación de NAVA es: " + prepared.Code()},
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
 		fmt.Sprintf("%s/Accounts/%s/Messages.json", twilioMessagingBaseURL, p.cfg.AccountSID),

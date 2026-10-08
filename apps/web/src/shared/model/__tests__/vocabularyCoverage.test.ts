@@ -1,5 +1,5 @@
 /**
- * Cobertura del vocabulario (DEC-110, DEC-119): ninguna pantalla del panel
+ * Cobertura del vocabulario (DEC-110, DEC-119): ninguna pantalla del panel ni de la reserva pública
  * escribe «barbero» ni «barbería» como texto fijo; las dice con `useVocabulary`.
  * Si esta prueba falla, la palabra que el negocio eligió (manicurista, estudio...)
  * se perdería en esa pantalla. Es una red de seguridad estática: lee el código
@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'vitest'
 
 const sources = import.meta.glob(
-  '/src/modules/{agenda,schedules,staff,barberServices,settings,catalog,auth}/**/*.{vue,ts}',
+  '/src/modules/{agenda,schedules,staff,barberServices,settings,catalog,auth,public-booking,customer-access}/**/*.{vue,ts}',
   { query: '?raw', import: 'default', eager: true },
 ) as Record<string, string>
 
@@ -17,7 +17,7 @@ const sources = import.meta.glob(
 // y los valores iniciales declarados como respaldo.
 const ALLOWED = [
   /staff-barberos|configuracion-barberia|reserva-publica-barbero|barber-services/,
-  /servicios-por-barbero|path: 'barber(os|ia)'/,
+  /servicios-por-barbero|path: '([^']*\/)?barber(o|os|ia)?[/']/,
   /cancelled_by_barber|appointment_cancelled_by_barber|barber_id/,
   /\b(label|term|singular|plural): '(Barberos|Servicios por barbero|barber[a-zí]*)'/,
   /label: 'Servicios por barbero'|label: 'Barberos'/,

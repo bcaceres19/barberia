@@ -59,11 +59,18 @@ func (r *Repository) ResolveBySlug(ctx context.Context, slug string) (publicbook
 	profileFound := false
 	err = r.db.InTenantTx(ctx, barbershopID, func(ctx context.Context, q database.Queries) error {
 		err := q.QueryRow(ctx,
-			`SELECT name, timezone, contact_email, contact_phone
+			`SELECT name, timezone, contact_email, contact_phone,
+			        business_term, business_term_gender,
+			        professional_term, professional_term_plural, professional_term_gender
 			   FROM barbershop
 			  WHERE id = $1`,
 			string(barbershopID),
-		).Scan(&profile.Name, &profile.Timezone, &profile.ContactEmail, &profile.ContactPhone)
+		).Scan(
+			&profile.Name, &profile.Timezone, &profile.ContactEmail, &profile.ContactPhone,
+			&profile.Vocabulary.BusinessTerm, &profile.Vocabulary.BusinessTermGender,
+			&profile.Vocabulary.ProfessionalTerm, &profile.Vocabulary.ProfessionalTermPlural,
+			&profile.Vocabulary.ProfessionalTermGender,
+		)
 		switch {
 		case err == nil:
 			profileFound = true

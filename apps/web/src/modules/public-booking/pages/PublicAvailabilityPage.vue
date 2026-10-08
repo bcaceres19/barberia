@@ -26,6 +26,7 @@ import {
   type AvailabilityDay,
 } from '../model/availabilityCalendar'
 import type { PublicAvailabilitySlot } from '../model/publicAvailabilityOutcome'
+import { usePublicVocabulary } from '../model/publicVocabulary'
 
 interface Props {
   /** Identificador del enlace público, tal como llega del parámetro de
@@ -41,6 +42,7 @@ interface Props {
   barberId: string
 }
 const props = defineProps<Props>()
+const v = usePublicVocabulary()
 
 type ScreenState =
   | { status: 'loading' }
@@ -233,7 +235,7 @@ const selectionSummary = computed(() => {
   if (!day) return ''
   const date = formatCivilDateFull(day.civilDate)
   const time = slotTimeLabel(selectedSlot.value)
-  return `${date}, ${time} · zona horaria de la barbería: ${timezone.value} · dura ${durationMinutes.value} min`
+  return `${date}, ${time} · zona horaria ${v.value.ofTheBusiness}: ${timezone.value} · dura ${durationMinutes.value} min`
 })
 
 // Piezas de la ficha visual de la franja elegida. La oración completa
@@ -291,7 +293,7 @@ const failedRequestId = computed(() =>
     </div>
 
     <template v-else>
-      <p class="pb-zone">Horas en la zona horaria de la barbería: {{ timezone }}</p>
+      <p class="pb-zone">Horas en la zona horaria {{ v.ofTheBusiness }}: {{ timezone }}</p>
 
       <div class="pb-days" role="group" aria-label="Días con disponibilidad">
         <button

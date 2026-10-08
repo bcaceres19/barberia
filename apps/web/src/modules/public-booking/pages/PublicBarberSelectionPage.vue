@@ -23,6 +23,7 @@ import BookingStateScreen from '../components/BookingStateScreen.vue'
 import ChoiceMark from '../components/ChoiceMark.vue'
 import { listPublicBarbers } from '../api/listPublicBarbersApi'
 import type { PublicBarber } from '../model/publicBarberListOutcome'
+import { usePublicVocabulary } from '../model/publicVocabulary'
 
 interface Props {
   /** Identificador del enlace público, tal como llega del parámetro de
@@ -34,6 +35,7 @@ interface Props {
   serviceId: string
 }
 const props = defineProps<Props>()
+const v = usePublicVocabulary()
 
 type ScreenState =
   | { status: 'loading' }
@@ -168,19 +170,21 @@ const selectedBarber = computed(() => barbers.value.find((b) => b.id === selecte
     v-if="screenState.status !== 'success'"
     :status="screenState.status"
     :request-id="failedRequestId"
-    title="Elegir barbero"
-    loading-headline="Cargando barberos…"
+    :title="`Elegir ${v.professional}`"
+    :loading-headline="`Cargando ${v.professionals}…`"
     @retry="retry"
   />
 
   <main v-else class="pb-page pb-page--bar">
-    <p class="pb-eyebrow">Tu barbero</p>
-    <h1 class="pb-title">Elige tu barbero</h1>
+    <p class="pb-eyebrow">Tu {{ v.professional }}</p>
+    <h1 class="pb-title">Elige tu {{ v.professional }}</h1>
     <div class="pb-rule" aria-hidden="true"></div>
 
     <div v-if="barbers.length === 0" class="pb-empty">
       <span class="pb-empty__mark" aria-hidden="true"></span>
-      <p class="pb-empty__message">Este servicio no tiene barberos disponibles en este momento.</p>
+      <p class="pb-empty__message">
+        Este servicio no tiene {{ v.professionals }} disponibles en este momento.
+      </p>
     </div>
 
     <!-- CA-092-01: un único barbero elegible se informa sin presentarse
@@ -196,7 +200,7 @@ const selectedBarber = computed(() => barbers.value.find((b) => b.id === selecte
       v-else
       class="pb-choices"
       role="radiogroup"
-      aria-label="Barberos disponibles"
+      :aria-label="`${v.Professionals} disponibles`"
       @keydown="onListKeydown"
     >
       <li
@@ -228,7 +232,7 @@ const selectedBarber = computed(() => barbers.value.find((b) => b.id === selecte
           <span class="pb-actionbar__value">Fecha y hora</span>
         </p>
         <p v-else class="pb-actionbar__summary">
-          <span class="pb-actionbar__label">Tu barbero</span>
+          <span class="pb-actionbar__label">Tu {{ v.professional }}</span>
           <span class="pb-actionbar__value">{{ selectedBarber.fullName }}</span>
         </p>
         <RouterLink

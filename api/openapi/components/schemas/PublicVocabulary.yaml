@@ -1,0 +1,29 @@
+# Vocabulario público de la barbería (issue #309, DEC-119): las palabras con
+# las que el negocio se nombra a sí mismo y a su profesional (DEC-110), para
+# que la reserva pública y el acceso al turno digan «manicurista» o «estudio»
+# y no «barbero» o «barbería». Subconjunto de BrandResponse: nunca el acento
+# ni el perfil del panel, que siguen siendo del panel privado (DEC-111).
+type: object
+additionalProperties: false
+description: >
+  Palabra con la que la barbería llama a su negocio y a su profesional, con el
+  plural del profesional y el género gramatical de ambas para que los artículos
+  concuerden. Viaja siempre presente: una barbería que nunca lo configuró
+  recibe los valores iniciales (`barbería` y `barbero`).
+properties:
+  businessTerm:
+    $ref: './BrandTerm.yaml'
+  businessTermGender:
+    $ref: './BrandTermGender.yaml'
+  professionalTerm:
+    $ref: './BrandTerm.yaml'
+  professionalTermPlural:
+    $ref: './BrandTerm.yaml'
+  professionalTermGender:
+    $ref: './BrandTermGender.yaml'
+required:
+  - businessTerm
+  - businessTermGender
+  - professionalTerm
+  - professionalTermPlural
+  - professionalTermGender

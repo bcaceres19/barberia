@@ -217,6 +217,85 @@ func TestResolveBySlug_TenantAIsolatedFromTenantB(t *testing.T) {
 	}
 }
 
+// setVocabulary fija el vocabulario de la barbería de slug y lo devuelve a los
+// valores iniciales al terminar la prueba, para no contaminar a las demás (la
+// barbería del fixture es compartida). Escribe como barberia_app dentro de su
+// propio tenant, igual que el panel.
+func setVocabulary(t *testing.T, db *database.DB, repo *publicbookingpostgres.Repository, slug string, v publicbooking.Vocabulary) {
+	t.Helper()
+	id, found, err := repo.ResolveBarbershopID(context.Background(), slug)
+	if err != nil || !found {
+		t.Fatalf("ResolveBarbershopID(%s): found=%v err=%v", slug, found, err)
+	}
+	write := func(v publicbooking.Vocabulary) error {
+		return db.InTenantTx(context.Background(), database.BarbershopID(id), func(ctx context.Context, q database.Queries) error {
+			_, err := q.Exec(ctx,
+				`UPDATE barbershop
+				    SET business_term = $2, business_term_gender = $3,
+				        professional_term = $4, professional_term_plural = $5, professional_term_gender = $6
+				  WHERE id = $1`,
+				id, v.BusinessTerm, v.BusinessTermGender,
+				v.ProfessionalTerm, v.ProfessionalTermPlural, v.ProfessionalTermGender,
+			)
+			return err
+		})
+	}
+	if err := write(v); err != nil {
+		t.Fatalf("fijar vocabulario: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = write(publicbooking.Vocabulary{
+			BusinessTerm: "barbería", BusinessTermGender: "feminine",
+			ProfessionalTerm: "barbero", ProfessionalTermPlural: "barberos",
+			ProfessionalTermGender: "masculine",
+		})
+	})
+}
+
+// TestResolveBySlug_Vocabulary_DefaultsAndPerTenant cubre DEC-119: una barbería
+// que nunca configuró su vocabulario recibe los valores iniciales, y una que sí
+// lo configuró recibe el suyo sin filtrarlo a la otra (RN-TEN-01).
+func TestResolveBySlug_Vocabulary_DefaultsAndPerTenant(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+
+	wantDefault := publicbooking.Vocabulary{
+		BusinessTerm: "barbería", BusinessTermGender: "feminine",
+		ProfessionalTerm: "barbero", ProfessionalTermPlural: "barberos",
+		ProfessionalTermGender: "masculine",
+	}
+	wantNails := publicbooking.Vocabulary{
+		BusinessTerm: "estudio de uñas", BusinessTermGender: "masculine",
+		ProfessionalTerm: "manicurista", ProfessionalTermPlural: "manicuristas",
+		ProfessionalTermGender: "feminine",
+	}
+
+	uno, found, err := repo.ResolveBySlug(context.Background(), slugUno)
+	if err != nil || !found {
+		t.Fatalf("ResolveBySlug(slugUno): found=%v err=%v", found, err)
+	}
+	if uno.Vocabulary != wantDefault {
+		t.Fatalf("slugUno debe traer el vocabulario inicial: %+v", uno.Vocabulary)
+	}
+
+	setVocabulary(t, db, repo, slugDos, wantNails)
+
+	dos, found, err := repo.ResolveBySlug(context.Background(), slugDos)
+	if err != nil || !found {
+		t.Fatalf("ResolveBySlug(slugDos): found=%v err=%v", found, err)
+	}
+	if dos.Vocabulary != wantNails {
+		t.Fatalf("slugDos vocabulary = %+v, want %+v", dos.Vocabulary, wantNails)
+	}
+	uno, _, err = repo.ResolveBySlug(context.Background(), slugUno)
+	if err != nil {
+		t.Fatalf("ResolveBySlug(slugUno): %v", err)
+	}
+	if uno.Vocabulary != wantDefault {
+		t.Fatalf("RN-TEN-01: el vocabulario de slugDos se filtró a slugUno: %+v", uno.Vocabulary)
+	}
+}
+
 // TestListPublicServices_ActiveAndAssigned_ExcludesInactiveAndUnassigned
 // cubre CA-091-01: de los cuatro servicios de la barbería HU-091 Uno (dos
 // activos+asignados, uno activo sin asignar, uno inactivo+asignado), solo

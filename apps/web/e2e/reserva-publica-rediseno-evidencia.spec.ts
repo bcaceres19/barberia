@@ -1,6 +1,7 @@
 import { test, expect, type Page, type Route } from '@playwright/test'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { INITIAL_VOCABULARY } from './fixtures/vocabularioInicial'
 
 /**
  * Evidencia del rediseño de la reserva pública (DEC-111): el recorrido
@@ -44,6 +45,7 @@ async function mockApi(page: Page, options: MockOptions = {}) {
       timezone: 'America/Bogota',
       contactEmail: 'contacto@ejemplo.test',
       contactPhone: '+573001234567',
+      vocabulary: INITIAL_VOCABULARY,
     }),
   )
   await page.route(`${base}/services**`, (route) =>

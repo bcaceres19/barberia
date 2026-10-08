@@ -339,3 +339,57 @@ func TestResolveAppointmentByTokenHash_TenantIsolation(t *testing.T) {
 		t.Fatalf("el token de shopDos trae la política de otra barbería: %+v", viewDos)
 	}
 }
+
+// TestResolveAppointmentByTokenHash_Vocabulary_PerTenant cubre DEC-119: el turno
+// trae el vocabulario de SU barbería (el inicial en shopUno, el configurado en
+// shopDos) sin mezclar el de la otra (CA-098-05, RN-TEN-01).
+func TestResolveAppointmentByTokenHash_Vocabulary_PerTenant(t *testing.T) {
+	db := setupTestDB(t)
+	repo := customeraccesspostgres.New(db)
+
+	// shopDos pasa a llamarse «estudio» y su profesional «tatuadora»; se restaura
+	// al terminar porque la barbería del fixture es compartida.
+	write := func(business, businessGender, term, plural, gender string) error {
+		return db.InTenantTx(context.Background(), database.BarbershopID(shopDos), func(ctx context.Context, q database.Queries) error {
+			_, err := q.Exec(ctx,
+				`UPDATE barbershop
+				    SET business_term = $2, business_term_gender = $3,
+				        professional_term = $4, professional_term_plural = $5, professional_term_gender = $6
+				  WHERE id = $1`,
+				shopDos, business, businessGender, term, plural, gender,
+			)
+			return err
+		})
+	}
+	if err := write("estudio", "masculine", "tatuadora", "tatuadoras", "feminine"); err != nil {
+		t.Fatalf("fijar vocabulario: %v", err)
+	}
+	t.Cleanup(func() { _ = write("barbería", "feminine", "barbero", "barberos", "masculine") })
+
+	apptUno := createTestAppointment(t, db, shopUno, barberUno, serviceUno, booking.StatusConfirmed)
+	tokenUno := insertAccessToken(t, db, shopUno, apptUno.ID, tokenState{expiresIn: 90 * 24 * time.Hour})
+	apptDos := createTestAppointment(t, db, shopDos, barberDos, serviceDos, booking.StatusConfirmed)
+	tokenDos := insertAccessToken(t, db, shopDos, apptDos.ID, tokenState{expiresIn: 90 * 24 * time.Hour})
+
+	sumUno := sha256.Sum256([]byte(tokenUno))
+	viewUno, found, err := repo.ResolveAppointmentByTokenHash(context.Background(), hex.EncodeToString(sumUno[:]))
+	if err != nil || !found {
+		t.Fatalf("resolver token de shopUno: found=%v err=%v", found, err)
+	}
+	if v := viewUno.Vocabulary; v.BusinessTerm != "barbería" || v.BusinessTermGender != "feminine" ||
+		v.ProfessionalTerm != "barbero" || v.ProfessionalTermPlural != "barberos" ||
+		v.ProfessionalTermGender != "masculine" {
+		t.Fatalf("shopUno debe traer el vocabulario inicial: %+v", v)
+	}
+
+	sumDos := sha256.Sum256([]byte(tokenDos))
+	viewDos, found, err := repo.ResolveAppointmentByTokenHash(context.Background(), hex.EncodeToString(sumDos[:]))
+	if err != nil || !found {
+		t.Fatalf("resolver token de shopDos: found=%v err=%v", found, err)
+	}
+	if v := viewDos.Vocabulary; v.BusinessTerm != "estudio" || v.BusinessTermGender != "masculine" ||
+		v.ProfessionalTerm != "tatuadora" || v.ProfessionalTermPlural != "tatuadoras" ||
+		v.ProfessionalTermGender != "feminine" {
+		t.Fatalf("shopDos debe traer su propio vocabulario: %+v", v)
+	}
+}
