@@ -107,3 +107,21 @@ describe('presets', () => {
     }
   })
 })
+
+describe('presets multirrubro (DEC-119)', () => {
+  it('ofrecen palabras para otros rubros además de la barbería', () => {
+    expect(BUSINESS_PRESETS.map((p) => p.term)).toEqual(
+      expect.arrayContaining(['estudio de uñas', 'centro de estética', 'estudio de tatuajes']),
+    )
+    expect(PROFESSIONAL_PRESETS.map((p) => p.singular)).toEqual(
+      expect.arrayContaining(['manicurista', 'esteticista', 'masajista', 'tatuador', 'tatuadora']),
+    )
+  })
+
+  it('no repiten ninguna palabra', () => {
+    const terms = BUSINESS_PRESETS.map((p) => p.term)
+    const singulars = PROFESSIONAL_PRESETS.map((p) => p.singular)
+    expect(new Set(terms).size).toBe(terms.length)
+    expect(new Set(singulars).size).toBe(singulars.length)
+  })
+})

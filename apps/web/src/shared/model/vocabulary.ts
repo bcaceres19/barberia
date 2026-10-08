@@ -92,6 +92,10 @@ export interface Vocabulary {
   ofTheBusiness: string
   /** "esta barbería" / "este salón". */
   thisBusiness: string
+  /** "toda la barbería" / "todo el salón". */
+  allTheBusiness: string
+  /** "otra barbería" / "otro salón". */
+  anotherBusiness: string
 
   professional: string
   Professional: string
@@ -105,6 +109,12 @@ export interface Vocabulary {
   theProfessionals: string
   /** "este barbero" / "esta estilista". */
   thisProfessional: string
+  /** "Este barbero" / "Esta estilista": para un título que abre la frase. */
+  ThisProfessional: string
+  /** "El barbero" / "La estilista": para un título que abre la frase. */
+  TheProfessional: string
+  /** "por el barbero" / "por la estilista". */
+  byTheProfessional: string
   /** "de este barbero" / "de esta estilista". */
   ofThisProfessional: string
   /** "al barbero" / "a la estilista". */
@@ -142,6 +152,8 @@ export function buildVocabulary(brand: BrandSettings): Vocabulary {
     theBusiness: `${b.the} ${business}`,
     ofTheBusiness: b.the === 'el' ? `del ${business}` : `de ${b.the} ${business}`,
     thisBusiness: `${b.this} ${business}`,
+    allTheBusiness: `${b.the === 'el' ? 'todo el' : 'toda la'} ${business}`,
+    anotherBusiness: `${b.the === 'el' ? 'otro' : 'otra'} ${business}`,
 
     professional,
     Professional: capitalize(professional),
@@ -151,6 +163,9 @@ export function buildVocabulary(brand: BrandSettings): Vocabulary {
     theProfessional: `${p.the} ${professional}`,
     theProfessionals: `${plural(p.the)} ${professionals}`,
     thisProfessional: `${p.this} ${professional}`,
+    ThisProfessional: capitalize(`${p.this} ${professional}`),
+    TheProfessional: capitalize(`${p.the} ${professional}`),
+    byTheProfessional: `por ${p.the} ${professional}`,
     ofThisProfessional: `de ${p.this} ${professional}`,
     toTheProfessional: p.the === 'el' ? `al ${professional}` : `a ${p.the} ${professional}`,
     ofTheProfessional: p.the === 'el' ? `del ${professional}` : `de ${p.the} ${professional}`,

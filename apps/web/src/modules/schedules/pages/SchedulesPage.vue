@@ -13,7 +13,7 @@
 // La semana se dibuja como un tablero (WeeklyBoard): barras de latón sobre una
 // regla horaria común, con la lista real de tramos debajo de cada día.
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useToast } from '@/shared/composables'
+import { useToast, useVocabulary } from '@/shared/composables'
 import { isSoloProfile } from '@/shared/model'
 import { getCivilDateInTimezone } from '@/shared/time/civilDate'
 import {
@@ -100,6 +100,8 @@ const barbershopTimezone = ref<string | null>(null)
 const workingHoursStatus = ref<WorkingHoursStatus>('idle')
 const workingHours = ref<WorkingHour[]>([])
 const pendingDeleteIds = ref<Set<string>>(new Set())
+
+const v = useVocabulary()
 
 // Perfil de barbero individual (DEC-115): con un solo barbero no hay selector.
 const hideBarberPicker = computed(() => isSoloProfile.value && barbers.value.length === 1)
@@ -959,7 +961,7 @@ const editPreview = computed(() =>
             v-if="!hideBarberPicker"
             id="schedules-barber-select"
             class="schedules-page__select"
-            label="Barbero"
+            :label="v.Professional"
             :model-value="selectedBarberId ?? ''"
             :options="barberOptions"
             @update:model-value="onBarberChange"
@@ -1008,7 +1010,11 @@ const editPreview = computed(() =>
         role="status"
         aria-live="polite"
       >
-        <DiamondLoader label="Cargando barberos…" layout="inline" :phrases="LOADING_PHRASES" />
+        <DiamondLoader
+          :label="`Cargando ${v.professionals}…`"
+          layout="inline"
+          :phrases="LOADING_PHRASES"
+        />
         <div class="schedules-page__skeleton" aria-hidden="true">
           <span v-for="n in 4" :key="n" class="schedules-page__skeleton-row">
             <span class="schedules-page__skeleton-bar schedules-page__skeleton-bar--day" />
@@ -1032,7 +1038,9 @@ const editPreview = computed(() =>
       <div v-else class="schedules-page__ready">
         <EmptyScene v-if="barbers.length === 0" scene="agenda" class="schedules-page__empty">
           <template #title>{{
-            isSoloProfile ? 'Aún no tienes tu perfil.' : 'Aún no tienes barberos registrados.'
+            isSoloProfile
+              ? 'Aún no tienes tu perfil.'
+              : `Aún no tienes ${v.professionalsRegistered}.`
           }}</template>
           <template #hint>
             <template v-if="isSoloProfile">
@@ -1042,7 +1050,7 @@ const editPreview = computed(() =>
             </template>
             <template v-else>
               Agrega uno en la sección
-              <RouterLink :to="{ name: 'staff-barberos' }">“Barberos”</RouterLink>
+              <RouterLink :to="{ name: 'staff-barberos' }">“{{ v.Professionals }}”</RouterLink>
               antes de configurar su horario.
             </template>
           </template>
@@ -1072,7 +1080,7 @@ const editPreview = computed(() =>
             <BaseAlert
               v-else-if="workingHoursStatus === 'error'"
               variant="warning"
-              title="No pudimos cargar el horario de este barbero"
+              :title="`No pudimos cargar el horario ${v.ofThisProfessional}`"
               role="alert"
             >
               Revisa tu conexión e inténtalo de nuevo.
@@ -1111,7 +1119,7 @@ const editPreview = computed(() =>
                 <path d="M8 4.5V8l2.4 1.6" />
               </svg>
               <span
-                >Horas en la zona horaria de la barbería:
+                >Horas en la zona horaria {{ v.ofTheBusiness }}:
                 <strong>{{ barbershopTimezone }}</strong></span
               >
             </p>
@@ -1153,7 +1161,7 @@ const editPreview = computed(() =>
                   <span class="schedules-switch__thumb" />
                 </span>
                 <span class="schedules-switch__text"
-                  >Cerrar automáticamente los festivos colombianos de este barbero</span
+                  >Cerrar automáticamente los festivos colombianos {{ v.ofThisProfessional }}</span
                 >
               </label>
               <BaseAlert v-if="holidayCalendarError" variant="warning" role="alert">
@@ -1196,8 +1204,8 @@ const editPreview = computed(() =>
               </div>
 
               <BaseAlert v-else-if="exceptionsStatus === 'error'" variant="warning" role="alert">
-                No pudimos cargar las excepciones de este barbero. Revisa tu conexión e inténtalo de
-                nuevo.
+                No pudimos cargar las excepciones {{ v.ofThisProfessional }}. Revisa tu conexión e
+                inténtalo de nuevo.
                 <template #action>
                   <BaseButton type="button" variant="secondary" @click="onRetryExceptions">
                     Reintentar
@@ -1328,7 +1336,7 @@ const editPreview = computed(() =>
     <BaseDialog
       v-model="isCreateOpen"
       title="Agregar tramo"
-      :description="`Define cuándo trabaja ${selectedBarber?.fullName ?? 'el barbero'} ese día.`"
+      :description="`Define cuándo trabaja ${selectedBarber?.fullName ?? v.theProfessional} ese día.`"
       size="md"
       content-class="schedules-page__dialog"
       @close="onCreateDialogClosed"
@@ -1353,7 +1361,7 @@ const editPreview = computed(() =>
         <BaseAlert
           v-if="createStatus === 'not-found'"
           variant="warning"
-          title="Este barbero ya no está disponible"
+          :title="`${v.ThisProfessional} ya no está disponible`"
           role="alert"
         >
           Cierra este diálogo y recarga la lista.
@@ -1619,7 +1627,7 @@ const editPreview = computed(() =>
         <BaseAlert
           v-if="createExceptionStatus === 'not-found'"
           variant="warning"
-          title="Este barbero ya no está disponible"
+          :title="`${v.ThisProfessional} ya no está disponible`"
           role="alert"
         >
           Cierra este diálogo y recarga la lista.

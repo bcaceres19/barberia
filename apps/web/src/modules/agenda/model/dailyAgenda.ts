@@ -1,3 +1,5 @@
+import type { Vocabulary } from '@/shared/model'
+
 // Vocabulario cerrado de estados_citas.md §2, mismo texto que
 // `booking.Status` en el backend (nunca números, DEC-016/estados-citas.md
 // §11).
@@ -23,12 +25,19 @@ export type DailyAgendaEntry = {
 
 // Etiquetas en español de los cinco estados (CA-062-03): la interfaz nunca
 // muestra el texto técnico en inglés de la API.
-export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
+const FIXED_STATUS_LABELS: Record<Exclude<AppointmentStatus, 'cancelled_by_barber'>, string> = {
   confirmed: 'Confirmado',
   completed: 'Completado',
   cancelled_by_customer: 'Cancelado por el cliente',
-  cancelled_by_barber: 'Cancelado por el barbero',
   no_show: 'No se presentó',
+}
+
+// El estado técnico `cancelled_by_barber` no se renombra (DEC-016, contrato); su
+// etiqueta nombra a quien atiende con la palabra de la barbería (DEC-110, DEC-119).
+export function appointmentStatusLabel(status: AppointmentStatus, v: Vocabulary): string {
+  return status === 'cancelled_by_barber'
+    ? `Cancelado ${v.byTheProfessional}`
+    : FIXED_STATUS_LABELS[status]
 }
 
 // Variante de BaseBadge para cada uno de los cinco estados (CA-062-03):

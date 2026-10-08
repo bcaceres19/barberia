@@ -52,7 +52,7 @@ describe('AuthSplitLayout', () => {
 
   it('renders the default tagline', () => {
     const wrapper = mountLayout()
-    expect(wrapper.text()).toContain('Gestión precisa para tu barbería.')
+    expect(wrapper.text()).toContain('Gestión precisa para tu negocio.')
   })
 
   it('renders a custom tagline when provided', () => {

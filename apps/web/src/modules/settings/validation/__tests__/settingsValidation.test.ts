@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { buildVocabulary, DEFAULT_BRAND } from '@/shared/model'
 import {
   validateContactEmail,
   validateContactPhone,
@@ -6,18 +7,30 @@ import {
   validateTimezone,
 } from '../settingsValidation'
 
+const v = buildVocabulary(DEFAULT_BRAND)
+
 describe('validateName', () => {
   it('rejects empty and whitespace-only names', () => {
-    expect(validateName('')).toBeTruthy()
-    expect(validateName('   ')).toBeTruthy()
+    expect(validateName('', v)).toBeTruthy()
+    expect(validateName('   ', v)).toBeTruthy()
   })
 
   it('rejects a name longer than 120 characters', () => {
-    expect(validateName('a'.repeat(121))).toBeTruthy()
+    expect(validateName('a'.repeat(121), v)).toBeTruthy()
+  })
+
+  it('names the business with the configured word (DEC-119)', () => {
+    const studio = buildVocabulary({
+      ...DEFAULT_BRAND,
+      businessTerm: 'estudio',
+      businessTermGender: 'masculine',
+    })
+    expect(validateName('', v)).toBe('Escribe el nombre de la barbería.')
+    expect(validateName('', studio)).toBe('Escribe el nombre del estudio.')
   })
 
   it('accepts a valid name', () => {
-    expect(validateName('Barbería Ejemplo')).toBeUndefined()
+    expect(validateName('Barbería Ejemplo', v)).toBeUndefined()
   })
 })
 

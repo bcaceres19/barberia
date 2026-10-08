@@ -29,10 +29,10 @@ import {
 } from '../api/appointmentsApi'
 import { newIdempotencyKey } from '../model/idempotencyKey'
 import type { AppointmentDetail, HistoryEntry } from '../model/appointmentDetail'
-import { HISTORY_EVENT_LABELS, historyFieldLabel } from '../model/appointmentDetail'
+import { historyEventLabel, historyFieldLabel } from '../model/appointmentDetail'
 import {
   APPOINTMENT_STATUS_BADGE_VARIANT,
-  APPOINTMENT_STATUS_LABELS,
+  appointmentStatusLabel,
   isTerminalStatus,
   type AppointmentStatus,
 } from '../model/dailyAgenda'
@@ -80,7 +80,7 @@ const historyNextCursor = ref<string | null>(null)
 const historyLoadingMore = ref(false)
 
 const statusLabel = computed(() =>
-  detail.value ? APPOINTMENT_STATUS_LABELS[detail.value.status] : '',
+  detail.value ? appointmentStatusLabel(detail.value.status, v.value) : '',
 )
 // Mismo mapa que DailyAgendaPage.vue: cancelled_by_barber ya tiene el
 // tratamiento terminal 'danger' que el atlas asigna a un turno cancelado
@@ -173,7 +173,7 @@ const CORRECTABLE_TERMINALS: AppointmentStatus[] = [
 const correctDestinationOptions = computed(() =>
   CORRECTABLE_TERMINALS.filter((status) => status !== detail.value?.status).map((status) => ({
     value: status,
-    label: APPOINTMENT_STATUS_LABELS[status],
+    label: appointmentStatusLabel(status, v.value),
   })),
 )
 
@@ -656,7 +656,7 @@ function onLoadMoreHistory() {
 }
 
 function eventLabel(entry: HistoryEntry): string {
-  return HISTORY_EVENT_LABELS[entry.eventType] ?? entry.eventType
+  return historyEventLabel(entry.eventType, v.value) ?? entry.eventType
 }
 
 function occurredAtLabel(entry: HistoryEntry): string {
@@ -686,7 +686,7 @@ function occurredAtLabel(entry: HistoryEntry): string {
       title="Este turno ya no está disponible"
       role="alert"
     >
-      Puede haberse eliminado o pertenecer a otra barbería.
+      Puede haberse eliminado o pertenecer a {{ v.anotherBusiness }}.
     </BaseAlert>
 
     <BaseAlert
@@ -926,7 +926,8 @@ function occurredAtLabel(entry: HistoryEntry): string {
                   class="appointment-detail-page__history-changes"
                 >
                   <li v-for="change in entry.changes" :key="change.fieldName">
-                    {{ historyFieldLabel(change.fieldName) }}: {{ change.previousValue ?? '—' }} →
+                    {{ historyFieldLabel(change.fieldName, v) }}:
+                    {{ change.previousValue ?? '—' }} →
                     {{ change.newValue ?? '—' }}
                   </li>
                 </ul>

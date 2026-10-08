@@ -5,6 +5,8 @@
 // solo se comprueba que no esté vacía ni exceda el largo. La confirmación
 // real contra pg_timezone_names ocurre en el servidor (CA-020-03) y su
 // 422 se muestra como un error general del formulario, no de este campo.
+import type { Vocabulary } from '@/shared/model'
+
 export const NAME_MAX_LENGTH = 120
 export const TIMEZONE_MAX_LENGTH = 64
 export const CONTACT_EMAIL_MAX_LENGTH = 254
@@ -18,9 +20,9 @@ const CONTACT_EMAIL_SHAPE_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 // Exactamente la misma expresión que barbershop_contact_phone_ck.
 const CONTACT_PHONE_E164_PATTERN = /^\+[1-9][0-9]{7,14}$/
 
-export function validateName(name: string): string | undefined {
+export function validateName(name: string, v: Vocabulary): string | undefined {
   const trimmed = name.trim()
-  if (!trimmed) return 'Escribe el nombre de la barbería.'
+  if (!trimmed) return `Escribe el nombre ${v.ofTheBusiness}.`
   if (trimmed.length > NAME_MAX_LENGTH)
     return `El nombre no puede superar ${NAME_MAX_LENGTH} caracteres.`
   return undefined
