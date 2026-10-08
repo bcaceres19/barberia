@@ -48,6 +48,7 @@ async function openSettings(
   width: number,
   height: number,
   prefs: { theme?: string; textScale?: string; motion?: string } = {},
+  publicLinkStatus = 200,
 ) {
   await page.setViewportSize({ width, height })
   await page.addInitScript((stored) => {
@@ -69,6 +70,12 @@ async function openSettings(
       await route.fulfill(json(settings))
     } else if (pathname.endsWith('/settings/brand')) {
       await route.fulfill(json(brand))
+    } else if (pathname.endsWith('/settings/public-link')) {
+      await route.fulfill(
+        publicLinkStatus === 200
+          ? json({ slug: 'nava-qa-local-k7x2m9' })
+          : json({ title: 'Error' }, publicLinkStatus),
+      )
     } else {
       await route.fulfill(json({ title: 'Mock endpoint not found' }, 404))
     }
@@ -160,6 +167,62 @@ for (const theme of ['ink', 'ivory'] as const) {
     })
   })
 }
+
+test.describe('enlace público (DEC-117)', () => {
+  for (const viewport of viewports) {
+    test(`${viewport.name}: el enlace completo cabe, se copia y se anuncia`, async ({
+      page,
+      context,
+    }) => {
+      await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+      await openSettings(page, viewport.width, viewport.height)
+
+      const panel = page.locator('#configuracion-enlace')
+      await panel.scrollIntoViewIfNeeded()
+      await expect(panel.getByRole('textbox', { name: 'Tu enlace de reservas' })).toHaveText(
+        /\/reservar\/nava-qa-local-k7x2m9$/,
+      )
+
+      await panel.getByRole('button', { name: 'Copiar enlace' }).click()
+      await expect(panel.getByText('Enlace copiado.')).toBeVisible()
+      expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(
+        /\/reservar\/nava-qa-local-k7x2m9$/,
+      )
+
+      await expectNoHorizontalScroll(page)
+      await panel.screenshot({
+        path: path.join(evidenceDir, 'enlace-publico', `${viewport.name}-copiado.png`),
+      })
+    })
+  }
+
+  test('sin permiso de portapapeles queda seleccionado y lo dice', async ({ page }) => {
+    await openSettings(page, 1280, 900)
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: () => Promise.reject(new Error('denied')) },
+        configurable: true,
+      })
+    })
+
+    const panel = page.locator('#configuracion-enlace')
+    await panel.getByRole('button', { name: 'Copiar enlace' }).click()
+
+    await expect(panel.getByText(/cópialo con Ctrl\+C/)).toBeVisible()
+    await expect(panel.getByRole('textbox', { name: 'Tu enlace de reservas' })).toBeFocused()
+    await panel.screenshot({
+      path: path.join(evidenceDir, 'enlace-publico', '1280-manual.png'),
+    })
+  })
+
+  test('si el servidor falla, avisa y se puede reintentar', async ({ page }) => {
+    await openSettings(page, 1280, 900, {}, 500)
+    const panel = page.locator('#configuracion-enlace')
+    await expect(panel.getByText('No pudimos cargar tu enlace')).toBeVisible()
+    await panel.screenshot({ path: path.join(evidenceDir, 'enlace-publico', '1280-error.png') })
+    expect(await axeViolations(page)).toEqual([])
+  })
+})
 
 test.describe('tamaño de texto', () => {
   for (const textScale of ['small', 'large', 'xlarge'] as const) {
