@@ -1,6 +1,6 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.45"
+version: "1.46"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-10-08"
@@ -114,6 +114,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-115` | 2026-10-04 | Perfil del panel por barbería: `shop` (con equipo) o `solo` (barbero individual), solo presentación | `HU-025`; issue #294; amplía `DEC-110` | Confirmada (elección del ajuste); composición del panel sujeta a revisión |
 | `DEC-116` | 2026-10-08 | «Mi perfil» del barbero individual es una tarjeta propia, no una fila de tabla; amplía `DEC-115` | `HU-025`; issue #302 | Confirmada |
 | `DEC-119` | 2026-10-08 | NAVA es multirrubro: el vocabulario del negocio llega a toda la interfaz (panel completo en #308; reserva pública, acceso del cliente y mensajes en #309); amplía `DEC-110` | `HU-025`; issues #308 y #309 | Confirmada |
+| `DEC-121` | 2026-10-08 | El backend sube a Go 1.26.9 porque la línea 1.25 no tiene versión corregida de 9 vulnerabilidades de la librería estándar; amplía `DEC-023` | `DEC-035`; issue #317 | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -1401,3 +1402,13 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Riesgo residual aceptado:** (a) la concordancia solo conoce masculino y femenino; una palabra de género ambiguo («masajista») usa el género que el negocio elija. (b) El «Calendario de festivos colombianos» de Horarios sigue siendo específico de Colombia; ampliarlo a otros países queda fuera de esta decisión. (c) La URL pública y las rutas conservan palabras técnicas («barbero», «barberos»), que el usuario puede ver en la barra de direcciones.
 - **Documentos afectados:** `docs/00-control/{registro-decisiones,historial-cambios,matriz-trazabilidad}.md`, `docs/02-requisitos/historias-usuario.md` (`HU-025`, `CA-025-15`), `docs/03-desarrollo/especificacion-frontend-nava.md` (§ vocabulario), `docs/03-desarrollo/estandar-diseno-visual.md`, `api/openapi/` (0.31.0, `PublicVocabulary`, `PublicBarbershopProfile`, `CustomerAppointmentResponse`), `apps/api/internal/modules/{publicbooking,customeraccess,notification}`, `apps/web/src/modules/{schedules,agenda,settings,staff,auth,public-booking,customer-access}`, `apps/web/src/shared/model/vocabulary.ts`.
 - **Fuente:** instrucción explícita del propietario del 2026-10-08 e issues [#308](https://github.com/bcaceres19/barberia/issues/308) y [#309](https://github.com/bcaceres19/barberia/issues/309).
+
+### DEC-121 · El backend sube a Go 1.26.9 (amplía `DEC-023`)
+
+- **Fecha:** 2026-10-08.
+- **Decisión:** `apps/api/go.mod` pasa de `go 1.25.0` / `toolchain go1.25.13` a `go 1.26.0` / `toolchain go1.26.9`, y CI instala Go 1.26. `DEC-023` fija Go como lenguaje del backend sin atar una versión menor; esta decisión fija la mínima soportada por seguridad.
+- **Motivo:** `govulncheck` (control obligatorio de CI) detectó nueve vulnerabilidades de la librería estándar alcanzables por el código (`net/http`, `net/textproto`, `crypto/tls`: GO-2026-6603, 6605, 6607, 6608, 6610, 6611, 6612, 6613 y 6617). Todas se corrigen en Go 1.26.9; la línea 1.25 no publica versión corregida. Sin la subida, el job de Go falla en todos los PR y en `main`.
+- **Alcance:** solo versión del lenguaje y del toolchain; ningún cambio de código de aplicación, contrato ni dependencias de terceros. Verificado con `go vet`, `go build`, `go test -race ./...` contra PostgreSQL real y `govulncheck ./...` (0 vulnerabilidades alcanzables).
+- **Responsable:** propietario del proyecto (elección explícita del 2026-10-08, ante tres opciones: subir a 1.26, esperar un parche de 1.25 o integrar con el control en rojo).
+- **Alternativas descartadas:** esperar un parche de 1.25 (puede no existir y deja la integración bloqueada); integrar con el check de seguridad en rojo (contradice la regla de integrar solo con CI en verde).
+- **Fuente:** instrucción explícita del propietario del 2026-10-08 e issue [#317](https://github.com/bcaceres19/barberia/issues/317).
