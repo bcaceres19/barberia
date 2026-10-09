@@ -789,12 +789,12 @@ const HOW_IT_WORKS = [
   background:
     radial-gradient(
       ellipse 60% 120% at 0% 0%,
-      color-mix(in srgb, var(--gcal-tone) 14%, transparent),
-      transparent 70%
+      color-mix(in srgb, var(--gcal-tone) 26%, transparent),
+      transparent 72%
     ),
-    color-mix(in srgb, var(--color-on-strong) 3%, transparent);
-  border: var(--border-width-normal) solid var(--color-field-strong-border);
-  border-top: var(--border-width-emphasis) solid var(--gcal-tone);
+    color-mix(in srgb, var(--gcal-tone) 6%, transparent);
+  border: var(--border-width-normal) solid color-mix(in srgb, var(--gcal-tone) 38%, transparent);
+  border-top: 3px solid var(--gcal-tone);
   border-radius: 3px;
   transition:
     border-color 400ms var(--motion-ease-out, ease-out),
@@ -824,6 +824,7 @@ const HOW_IT_WORKS = [
 .gcal-hero__emblem {
   width: 112px;
   height: 112px;
+  filter: drop-shadow(0 0 16px color-mix(in srgb, var(--gcal-tone) 40%, transparent));
 }
 
 /* Etiqueta de estado propia: el badge compartido pinta su punto con un color de superficie
@@ -832,29 +833,27 @@ const HOW_IT_WORKS = [
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  min-height: 28px;
+  min-height: 30px;
   padding: 0 14px 0 12px;
   font-size: var(--font-size-body-sm);
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.2;
-  color: var(--color-on-strong);
+  color: var(--color-surface-strong);
   white-space: nowrap;
-  background: color-mix(in srgb, var(--gcal-tone) 12%, transparent);
-  border: var(--border-width-normal) solid color-mix(in srgb, var(--gcal-tone) 65%, transparent);
+  background: var(--gcal-tone);
+  border: var(--border-width-normal) solid var(--gcal-tone);
   border-radius: 999px;
   transition:
     background-color 400ms var(--motion-ease-out, ease-out),
     border-color 400ms var(--motion-ease-out, ease-out);
 }
 
-/* El rombo de NAVA hace de indicador: cambia de tono con el estado (la transición suaviza el
-   cambio) y, sin conexión, es solo contorno: «todavía no hay nada encendido». */
 .gcal-status__dot {
   position: relative;
   flex: 0 0 auto;
   width: 8px;
   height: 8px;
-  background: var(--gcal-tone);
+  background: var(--color-surface-strong);
   border-radius: 1px;
   transform: rotate(45deg);
   transition:
@@ -866,7 +865,7 @@ const HOW_IT_WORKS = [
 .gcal-hero--needs-barber .gcal-status__dot,
 .gcal-hero--unavailable .gcal-status__dot {
   background: transparent;
-  box-shadow: inset 0 0 0 1.5px var(--gcal-tone);
+  box-shadow: inset 0 0 0 1.5px var(--color-surface-strong);
 }
 
 .gcal-hero--connected .gcal-status__dot::after,
@@ -874,7 +873,7 @@ const HOW_IT_WORKS = [
   position: absolute;
   inset: 0;
   content: '';
-  border: 1.5px solid var(--gcal-tone);
+  border: 1.5px solid var(--color-surface-strong);
   border-radius: 1px;
   animation: gcal-dot-ping 2.4s var(--motion-ease-out, ease-out) infinite;
 }

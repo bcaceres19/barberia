@@ -82,7 +82,11 @@ const fourBarbers = [
 // transitionend), así que el <Transition mode="out-in"> de carga/error/listo
 // cambia de hijo al instante.
 function mountPage() {
-  return mount(StaffPage, { global: { stubs: { teleport: true, transition: true } } })
+  return mount(StaffPage, {
+    global: {
+      stubs: { teleport: true, transition: true, RouterLink: { template: '<a><slot /></a>' } },
+    },
+  })
 }
 
 // useMinHoldLoading mantiene el rombo/esqueleto al menos DEFAULT_MIN_HOLD_MS con
@@ -413,7 +417,9 @@ describe('StaffPage', () => {
       })
       wrapper = mount(StaffPage, {
         attachTo: scroller,
-        global: { stubs: { teleport: true, transition: true } },
+        global: {
+          stubs: { teleport: true, transition: true, RouterLink: { template: '<a><slot /></a>' } },
+        },
       })
       await flushPromises()
       await waitOutInitialLoadHold()
@@ -492,6 +498,9 @@ describe('StaffPage', () => {
     await openDetail(wrapper)
 
     expect(openDialogElement(wrapper).textContent).toContain('Sin vincular')
+    // Sin vínculo todavía no hay acceso a Google Calendar: se explica para qué sirve vincular.
+    expect(openDialogElement(wrapper).textContent).toContain('Vincúlate para publicar')
+    expect(openDialogElement(wrapper).textContent).not.toContain('Conectar Google Calendar')
     dialogButton(wrapper, 'Este soy yo').click()
     await flushPromises()
 
@@ -499,6 +508,8 @@ describe('StaffPage', () => {
     expect(linkMyBarberMock).toHaveBeenCalledWith('b-1')
     expect(openDialogElement(wrapper).textContent).toContain('Eres tú')
     expect(dialogButton(wrapper, 'Ya no soy yo')).toBeTruthy()
+    // Al vincularse aparece el siguiente paso: ir a conectar Google Calendar.
+    expect(openDialogElement(wrapper).textContent).toContain('Conectar Google Calendar')
     expect(toastState.items.some((t) => t.title.includes('Ahora eres Carlos Ramírez'))).toBe(true)
   })
 
