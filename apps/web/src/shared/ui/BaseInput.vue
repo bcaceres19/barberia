@@ -103,8 +103,22 @@ const hasError = computed(() => !!props.error)
 // required, etc.) no se tocan.
 const isPasswordField = computed(() => props.type === 'password')
 const isRevealed = ref(false)
-const effectiveType = computed(() =>
-  isPasswordField.value ? (isRevealed.value ? 'text' : 'password') : props.type,
+// `type="number"` es un contrato de la app, no del navegador: todos los
+// campos numéricos son enteros no negativos (minutos, días, duración). El
+// <input type="number"> nativo dibuja flechas de incremento/decremento que
+// rompen el diseño reglado, deja teclear "-", "e", "." y "+", y su `min`
+// solo valida el valor final. Se dibuja como texto con teclado numérico y
+// se filtra a dígitos al escribir o pegar, así nunca muestra un signo, una
+// letra ni un negativo; los límites mín./máx. los sigue validando cada
+// formulario al enviar.
+const isNumericField = computed(() => props.type === 'number')
+const effectiveType = computed(() => {
+  if (isPasswordField.value) return isRevealed.value ? 'text' : 'password'
+  return isNumericField.value ? 'text' : props.type
+})
+const effectiveInputMode = computed(() => (isNumericField.value ? 'numeric' : undefined))
+const effectivePattern = computed(
+  () => props.pattern ?? (isNumericField.value ? '[0-9]*' : undefined),
 )
 const toggleReveal = () => {
   isRevealed.value = !isRevealed.value
@@ -140,6 +154,12 @@ const labelClasses = computed(() => {
 
 const handleInput = (event: Event) => {
   const target = event.target as HTMLInputElement
+  if (isNumericField.value) {
+    const digits = target.value.replace(/\D/g, '')
+    // Si el valor filtrado coincide con el del padre, Vue no vuelve a
+    // renderizar y el carácter rechazado seguiría a la vista.
+    if (digits !== target.value) target.value = digits
+  }
   emit('update:modelValue', target.value)
   emit('input', event)
 }
@@ -192,12 +212,13 @@ const handleFocus = (event: FocusEvent) => {
         :aria-readonly="readonly"
         :aria-disabled="disabled ? 'true' : undefined"
         :aria-required="required"
-        :pattern="pattern"
+        :inputmode="effectiveInputMode"
+        :pattern="effectivePattern"
         :minlength="minlength"
         :maxlength="maxlength"
-        :min="min"
-        :max="max"
-        :step="step"
+        :min="isNumericField ? undefined : min"
+        :max="isNumericField ? undefined : max"
+        :step="isNumericField ? undefined : step"
         @input="handleInput"
         @change="handleChange"
         @blur="handleBlur"

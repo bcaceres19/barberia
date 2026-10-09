@@ -41,7 +41,10 @@ function choose(part: Part, value: number) {
   else minuteText.value = pad(value)
 }
 function edit(part: Part, event: Event) {
-  const text = (event.target as HTMLInputElement).value
+  const input = event.target as HTMLInputElement
+  // Solo dígitos: letras y signos no llegan a mostrarse en el campo.
+  const text = input.value.replace(/\D/g, '')
+  if (text !== input.value) input.value = text
   if (part === 'hour') hourText.value = text
   else minuteText.value = text
   if (validPart(text, part === 'hour' ? 23 : 59)) {

@@ -585,14 +585,10 @@ function onCreateDescriptionInput(value: string | number) {
   revalidateCreateIfAttempted()
 }
 
-// Sin signo (issue reportado 2026-09-28, "este campo no debe aceptar
-// negativos, solo positivos"): validateDurationMinutes ya rechaza "-5" al
-// enviar (su patrón exige solo dígitos), pero esto evita que el campo
-// siquiera MUESTRE un signo mientras se escribe — el navegador permite
-// teclear "-" en un type="number" pese al `min`, que solo limita el valor
-// final, no las pulsaciones.
+// BaseInput type="number" ya descarta todo lo que no sea dígito (sin signo
+// ni letras); validateDurationMinutes sigue validando el rango al enviar.
 function onCreateDurationInput(value: string | number) {
-  createDurationRaw.value = String(value).replace(/-/g, '')
+  createDurationRaw.value = String(value)
   revalidateCreateIfAttempted()
 }
 
@@ -699,11 +695,8 @@ function onEditDescriptionInput(value: string | number) {
   revalidateEditIfAttempted()
 }
 
-// Mismo descarte de "-" que onCreateDurationInput (issue 2026-09-28,
-// "aplica eso mismo para las pantallas emergentes de editar y eliminar"):
-// el campo Duración de Editar es el mismo control, con el mismo problema.
 function onEditDurationInput(value: string | number) {
-  editDurationRaw.value = String(value).replace(/-/g, '')
+  editDurationRaw.value = String(value)
   revalidateEditIfAttempted()
 }
 
@@ -2769,29 +2762,6 @@ async function reloadAfterConflict(serviceId: string) {
   .catalog-page__lifecycle-icon::after {
     animation: none;
   }
-}
-
-/* Campo "Duración (minutos)", alta Y edición (issue 2026-09-28, primero
-   "hay unos que tienen cosas que chocan con el diseño" y luego "aplica eso
-   mismo para las pantallas emergentes de editar y eliminar"): las flechas
-   nativas del navegador para type="number" son cromo del sistema operativo
-   (gris, sin radio, sin relación con el resto del campo reglado). Se
-   ocultan sin sustituirlas por un stepper propio: el campo se sigue
-   editando escribiendo, igual que Precio ya se edita sin controles
-   nativos. onCreateDurationInput/onEditDurationInput (ver script) además
-   descartan cualquier "-" mientras se escribe, así el campo nunca admite
-   un valor negativo aunque el navegador permita teclearlo. */
-.catalog-page__create-form :deep(input[type='number']),
-.catalog-page__edit-form :deep(input[type='number']) {
-  -moz-appearance: textfield;
-}
-
-.catalog-page__create-form :deep(input[type='number']::-webkit-outer-spin-button),
-.catalog-page__create-form :deep(input[type='number']::-webkit-inner-spin-button),
-.catalog-page__edit-form :deep(input[type='number']::-webkit-outer-spin-button),
-.catalog-page__edit-form :deep(input[type='number']::-webkit-inner-spin-button) {
-  margin: 0;
-  -webkit-appearance: none;
 }
 
 /* Campos reglados sobre tinta, alta Y edición (issue 2026-09-28, "ajusta
