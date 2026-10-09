@@ -1,6 +1,6 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.46"
+version: "1.47"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-10-08"
@@ -114,6 +114,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-115` | 2026-10-04 | Perfil del panel por barbería: `shop` (con equipo) o `solo` (barbero individual), solo presentación | `HU-025`; issue #294; amplía `DEC-110` | Confirmada (elección del ajuste); composición del panel sujeta a revisión |
 | `DEC-116` | 2026-10-08 | «Mi perfil» del barbero individual es una tarjeta propia, no una fila de tabla; amplía `DEC-115` | `HU-025`; issue #302 | Confirmada |
 | `DEC-119` | 2026-10-08 | NAVA es multirrubro: el vocabulario del negocio llega a toda la interfaz (panel completo en #308; reserva pública, acceso del cliente y mensajes en #309); amplía `DEC-110` | `HU-025`; issues #308 y #309 | Confirmada |
+| `DEC-120` | 2026-10-07 | Pruebas UI con Luna medium, prompts persistentes y cuentas sintéticas aisladas | Propietario; issue #300 | Confirmada |
 | `DEC-121` | 2026-10-08 | El backend sube a Go 1.26.9 porque la línea 1.25 no tiene versión corregida de 9 vulnerabilidades de la librería estándar; amplía `DEC-023` | `DEC-035`; issue #317 | Confirmada |
 
 ## 3. Decisiones detalladas
@@ -1402,6 +1403,16 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Riesgo residual aceptado:** (a) la concordancia solo conoce masculino y femenino; una palabra de género ambiguo («masajista») usa el género que el negocio elija. (b) El «Calendario de festivos colombianos» de Horarios sigue siendo específico de Colombia; ampliarlo a otros países queda fuera de esta decisión. (c) La URL pública y las rutas conservan palabras técnicas («barbero», «barberos»), que el usuario puede ver en la barra de direcciones.
 - **Documentos afectados:** `docs/00-control/{registro-decisiones,historial-cambios,matriz-trazabilidad}.md`, `docs/02-requisitos/historias-usuario.md` (`HU-025`, `CA-025-15`), `docs/03-desarrollo/especificacion-frontend-nava.md` (§ vocabulario), `docs/03-desarrollo/estandar-diseno-visual.md`, `api/openapi/` (0.31.0, `PublicVocabulary`, `PublicBarbershopProfile`, `CustomerAppointmentResponse`), `apps/api/internal/modules/{publicbooking,customeraccess,notification}`, `apps/web/src/modules/{schedules,agenda,settings,staff,auth,public-booking,customer-access}`, `apps/web/src/shared/model/vocabulary.ts`.
 - **Fuente:** instrucción explícita del propietario del 2026-10-08 e issues [#308](https://github.com/bcaceres19/barberia/issues/308) y [#309](https://github.com/bcaceres19/barberia/issues/309).
+
+### DEC-120 · Campañas de interfaz con agentes Luna y fixtures privados
+
+- **Nota de numeración (2026-10-08):** esta decisión se redactó en la rama `test/300-exploracion-ui-luna` como `DEC-116`; al integrarla, `main` ya usaba ese código para «Mi perfil» (issue #302), y como los códigos no se reutilizan se renumeró a `DEC-120`.
+- **Fecha:** 2026-10-07.
+- **Decisión:** por solicitud explícita del propietario se crea ui-app-testing canónico y adaptador Claude para «prueba toda la app». Orquesta GPT-6 Luna / medium por pantalla, máximo dos simultáneos, contexto mínimo, prompts persistentes y cuentas/tenants/navegadores independientes; access/recovery seriales y cierre cruzado.
+- **Fuente y responsable:** propietario, instrucción de crear documentos, usuarios y skill; [#300](https://github.com/bcaceres19/barberia/issues/300).
+- **Límites:** UI real sobre API/PostgreSQL locales, sin fixes ni terceros reales. Credenciales/códigos/enlaces/trazas crudas privados e ignorados. Sesión opaca DEC-050. El skill no cambia modelo del hilo actual ni promete delegación en otro runtime.
+- **Criterios:** inventario, esperados trazables, estado por caso y evidencia responsive/accesible/persistencia. Preparación no equivale a campaña completa.
+- **Artefactos:** AGENTS.md, .agents/skills/ui-app-testing, adaptador .claude, docs/07-calidad/pruebas-ui, prompts y tools/qa. Validación estricta del sistema obligatoria.
 
 ### DEC-121 · El backend sube a Go 1.26.9 (amplía `DEC-023`)
 

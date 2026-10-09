@@ -24,6 +24,7 @@ desktop.ini
 
 # Go
 apps/api/bin/
+apps/api/.qa-hash-*/
 apps/api/coverage.out
 apps/api/**/coverage.out
 *.test

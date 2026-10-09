@@ -12,6 +12,9 @@ documentos_relacionados:
 
 # Módulos futuros pendientes de checklist
 
+> **Registro histórico de agosto.** Agenda, reserva pública y bloqueos ya tienen UI. Consultar [inventario actual](pruebas-ui/03-inventario.md) y [límites reales](pruebas-ui/08-cobertura.md); no usar este archivo para declarar pantallas inexistentes.
+
+
 Al 2026-08-25, estas carpetas del código son solo el esqueleto de un módulo (`index.ts` sin páginas ni rutas en el frontend; `doc.go` sin dominio en el backend). **No existe interfaz que explorar todavía.** No se fabrica un checklist contra una pantalla que no existe: eso produciría pasos falsos que nadie puede ejecutar y confusión sobre qué está realmente probado.
 
 `apps/web/src/modules/public-booking` salió de esta tabla el 2026-09-11: `HU-090` le agrega una primera pantalla real (`/reservar/:slug`, entrada pública sin sesión). Un checklist completo de "reserva pública" sigue prematuro -concurrencia, idempotencia de creación, catálogo, selección de barbero y disponibilidad llegan con `HU-091` en adelante, todavía bloqueadas por `DP-PUB-02`–`DP-PUB-06`/`CT-011`-, así que las filas de concurrencia/idempotencia de la lista de abajo esperan a que esas capacidades existan de verdad.
