@@ -106,7 +106,9 @@ superseded_by: null
 
 Issue real #98 creado y rama `feat/98-hu042-bloqueos-agenda` abierta desde `main` el 2026-08-26; `CT-008` está resuelta por `DEC-070` (FK en `ON DELETE RESTRICT`), `HU-040` y `HU-041` están integradas en `main`. La parte de impacto sobre citas se completa con la capacidad dueña de B3; esta HU no crea una tabla appointment parcial ni simula citas.
 
-**Estado 2026-08-26:** integrada en `main` vía [PR #99](https://github.com/bcaceres19/barberia/pull/99) con CI verde. El backend (contrato, migración/RLS, dominio, servicio, repositorio, HTTP) quedó completo y probado contra PostgreSQL real; el frontend cubre bloqueos puntuales y series `weekly`. El seguimiento de UI de `date_list`/excepciones/edición de serie y de evidencia E2E/responsive vive en el issue [#100](https://github.com/bcaceres19/barberia/issues/100), mismo criterio que `CA-040-08`/`CA-041-08`.
+**Estado 2026-08-26:** integrada en `main` vía [PR #99](https://github.com/bcaceres19/barberia/pull/99) con CI verde. El backend (contrato, migración/RLS, dominio, servicio, repositorio, HTTP) quedó completo y probado contra PostgreSQL real; el frontend cubre bloqueos puntuales y series `weekly`. El seguimiento de UI de `date_list`/excepciones/edición de serie y de evidencia E2E/responsive vivió en el issue [#100](https://github.com/bcaceres19/barberia/issues/100), mismo criterio que `CA-040-08`/`CA-041-08`.
+
+**Actualización 2026-10-08 (#100):** la interfaz de bloqueos dentro de Barberos (DEC-105) ya cubre las series por fechas explícitas (`date_list`: alta con sus fechas, agregar y retirar fechas), las excepciones de cualquier serie («esta instancia no» y restaurarla) y la edición por alcance (`whole` y `this_and_following`, esta última solo en series `weekly`). Sin cambios de contrato, migración ni regla de negocio: usa las operaciones ya integradas. Pruebas: cliente tipado y diálogos en Vitest; E2E `apps/web/e2e/barberos-bloqueos-series.spec.ts` contra API y PostgreSQL reales con axe, 320/360/768/1280 px y foco; evidencia en `apps/web/e2e/evidence/barberos/bloqueos-100/`.
 
 ## Objetivo
 

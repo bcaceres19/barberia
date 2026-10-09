@@ -6,9 +6,10 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
-import { BaseInput, BaseDatePicker, BaseTimePicker } from '@/shared/ui'
+import { BaseInput, BaseDatePicker, BaseTimePicker, BaseSelect } from '@/shared/ui'
 import { toastState } from '@/shared/model/toastStore'
 import { DEFAULT_BRAND, resetBrand, setBrand } from '@/shared/model'
+import { displayCivilDate } from '../../model/displayDate'
 
 const fetchBarbershopTimezoneMock = vi.hoisted(() => vi.fn())
 const fetchTimeBlocksMock = vi.hoisted(() => vi.fn())
@@ -17,6 +18,9 @@ const createTimeBlockMock = vi.hoisted(() => vi.fn())
 const createTimeBlockSeriesMock = vi.hoisted(() => vi.fn())
 const deleteTimeBlockMock = vi.hoisted(() => vi.fn())
 const deleteTimeBlockSeriesMock = vi.hoisted(() => vi.fn())
+const createDateListSeriesMock = vi.hoisted(() => vi.fn())
+const updateTimeBlockSeriesMock = vi.hoisted(() => vi.fn())
+const addSeriesExceptionMock = vi.hoisted(() => vi.fn())
 
 vi.mock('../../api/schedulesApi', () => ({
   fetchBarbershopTimezone: fetchBarbershopTimezoneMock,
@@ -28,6 +32,9 @@ vi.mock('../../api/timeBlocksApi', () => ({
   createTimeBlockSeries: createTimeBlockSeriesMock,
   deleteTimeBlock: deleteTimeBlockMock,
   deleteTimeBlockSeries: deleteTimeBlockSeriesMock,
+  createDateListSeries: createDateListSeriesMock,
+  updateTimeBlockSeries: updateTimeBlockSeriesMock,
+  addSeriesException: addSeriesExceptionMock,
 }))
 
 const { default: BarberBlocksPanel } = await import('../../components/BarberBlocksPanel.vue')
@@ -53,11 +60,15 @@ const weeklySeries = {
   startsTime: '12:00',
   durationMinutes: 60,
   effectiveFrom: '2026-09-01',
+  effectiveUntil: null,
   reason: null,
   deletedAt: null,
   deletedBy: null,
   createdAt: '2026-09-01T12:00:00Z',
   updatedAt: '2026-09-01T12:00:00Z',
+  // El contrato siempre responde ambas colecciones, vacías si no hay ninguna.
+  dates: [],
+  exceptions: [],
 }
 
 async function mountReady() {
@@ -97,6 +108,9 @@ describe('BarberBlocksPanel · avisos emergentes (DEC-095)', () => {
       createTimeBlockSeriesMock,
       deleteTimeBlockMock,
       deleteTimeBlockSeriesMock,
+      createDateListSeriesMock,
+      updateTimeBlockSeriesMock,
+      addSeriesExceptionMock,
     ]) {
       mock.mockReset()
     }
@@ -433,5 +447,139 @@ describe('BarberBlocksPanel · vocabulario del negocio (DEC-119)', () => {
 
     expect(wrapper.text()).toContain('Horas de la barbería · America/Bogota')
     wrapper.unmount()
+  })
+})
+
+describe('BarberBlocksPanel · series por fechas, edición y excepciones (#100)', () => {
+  beforeEach(() => {
+    for (const mock of [
+      fetchBarbershopTimezoneMock,
+      fetchTimeBlocksMock,
+      fetchTimeBlockSeriesMock,
+      createDateListSeriesMock,
+      updateTimeBlockSeriesMock,
+      addSeriesExceptionMock,
+    ]) {
+      mock.mockReset()
+    }
+  })
+
+  function named(wrapper: VueWrapper, label: string) {
+    const found = wrapper.findAll('button').find((b) => b.attributes('aria-label') === label)
+    if (!found) throw new Error(`Botón no encontrado: ${label}`)
+    return found
+  }
+  // El contenido de un diálogo se vuelve a montar al abrirse: cada paso lo
+  // resuelve de nuevo en lugar de conservar wrappers que pueden quedar viejos.
+  function dialogOf(wrapper: VueWrapper, title: string) {
+    const found = wrapper.findAll('[role="dialog"]').find((d) => d.text().includes(title))
+    if (!found) throw new Error(`Diálogo no encontrado: ${title}`)
+    return found
+  }
+  async function pickDate(wrapper: VueWrapper, title: string, index: number, value: string) {
+    const picker = dialogOf(wrapper, title).findAllComponents(BaseDatePicker).at(index)!
+    picker.vm.$emit('update:modelValue', value)
+    await flushPromises()
+  }
+  async function press(wrapper: VueWrapper, title: string, label: string) {
+    const target = dialogOf(wrapper, title)
+      .findAll('button')
+      .find((b) => b.text() === label)!
+    await target.trigger('click')
+    await flushPromises()
+  }
+  async function submit(wrapper: VueWrapper, title: string) {
+    await dialogOf(wrapper, title).get('form').trigger('submit')
+    await flushPromises()
+  }
+  const seriesRecords = (wrapper: VueWrapper) =>
+    wrapper.findAll('section[aria-labelledby="weekly-blocks-title"] .blocks-panel__record')
+
+  it('creates a block by dates and lists it with its date count', async () => {
+    const wrapper = await mountReady()
+    createDateListSeriesMock.mockResolvedValueOnce({
+      kind: 'success',
+      series: {
+        ...weeklySeries,
+        id: 'ser-d',
+        blockType: 'vacation',
+        recurrenceKind: 'date_list',
+        isoWeekday: null,
+        startsTime: '00:00',
+        durationMinutes: 1440,
+        dates: [{ blockDate: '2099-12-15' }, { blockDate: '2099-12-16' }],
+      },
+    })
+    const title = 'Agregar bloqueo por fechas'
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === title)!
+      .trigger('click')
+    await flushPromises()
+    await pickDate(wrapper, title, 0, '2099-12-01')
+    for (const date of ['2099-12-15', '2099-12-16']) {
+      await pickDate(wrapper, title, 1, date)
+      await press(wrapper, title, 'Añadir a la lista')
+    }
+    await submit(wrapper, title)
+
+    expect(createDateListSeriesMock).toHaveBeenCalledOnce()
+    const records = seriesRecords(wrapper)
+    expect(records).toHaveLength(2)
+    expect(records[1]!.text()).toContain('Vacaciones')
+    expect(records[1]!.text()).toContain('2 fechas')
+  })
+
+  it('edits the whole series in place', async () => {
+    const wrapper = await mountReady()
+    updateTimeBlockSeriesMock.mockResolvedValueOnce({
+      kind: 'success',
+      series: { ...weeklySeries, startsTime: '13:30', durationMinutes: 45 },
+    })
+
+    await named(wrapper, 'Editar serie Almuerzo Lunes').trigger('click')
+    await flushPromises()
+    await submit(wrapper, 'Editar serie de bloqueo')
+
+    const records = seriesRecords(wrapper)
+    expect(records).toHaveLength(1)
+    expect(records[0]!.text()).toContain('13:30')
+  })
+
+  it('shows both halves of a split series: the original cut the day before and the new one', async () => {
+    const wrapper = await mountReady()
+    updateTimeBlockSeriesMock.mockResolvedValueOnce({
+      kind: 'success',
+      series: { ...weeklySeries, id: 'ser-new', startsTime: '14:00', effectiveFrom: '2026-12-01' },
+    })
+    const title = 'Editar serie de bloqueo'
+
+    await named(wrapper, 'Editar serie Almuerzo Lunes').trigger('click')
+    await flushPromises()
+    const scope = dialogOf(wrapper, title).findAllComponents(BaseSelect)[1]
+    ;(scope as unknown as VueWrapper).vm.$emit('update:modelValue', 'this_and_following')
+    await flushPromises()
+    await pickDate(wrapper, title, 0, '2026-12-01')
+    await submit(wrapper, title)
+
+    const records = seriesRecords(wrapper)
+    expect(records).toHaveLength(2)
+    expect(records[0]!.text()).toContain(displayCivilDate('2026-11-30'))
+    expect(records[1]!.text()).toContain('14:00')
+  })
+
+  it('adds an exception from its dialog and counts it on the record', async () => {
+    const wrapper = await mountReady()
+    addSeriesExceptionMock.mockResolvedValueOnce({ kind: 'success' })
+    const title = 'Excepciones de la serie'
+
+    await named(wrapper, 'Excepciones de la serie Almuerzo Lunes').trigger('click')
+    await flushPromises()
+    await pickDate(wrapper, title, 0, '2099-01-12')
+    await press(wrapper, title, 'Agregar excepción')
+
+    expect(addSeriesExceptionMock).toHaveBeenCalledWith('b-1', 'ser-1', '2099-01-12', null)
+    expect(seriesRecords(wrapper)[0]!.text()).toContain('1 excepción')
   })
 })
