@@ -135,9 +135,10 @@ const isAlert = computed(() => props.view === 'reauth' || props.view === 'sync-e
 .gcal-emblem__body,
 .gcal-emblem__band,
 .gcal-emblem__ring {
-  stroke: var(--emblem-tone);
-  stroke-width: 2.2;
+  stroke: var(--color-on-strong);
+  stroke-width: 2;
   stroke-linecap: round;
+  opacity: 0.88;
 }
 
 .gcal-emblem__band {
@@ -163,7 +164,7 @@ const isAlert = computed(() => props.view === 'reauth' || props.view === 'sync-e
 }
 
 .gcal-emblem__day {
-  fill: color-mix(in srgb, var(--emblem-tone) 30%, transparent);
+  fill: color-mix(in srgb, var(--color-on-strong) 22%, transparent);
   transform-box: fill-box;
   transform-origin: center;
   animation: nava-pop 420ms var(--motion-ease-spring, ease-out) backwards;
@@ -172,7 +173,7 @@ const isAlert = computed(() => props.view === 'reauth' || props.view === 'sync-e
 
 .gcal-emblem--connected .gcal-emblem__day,
 .gcal-emblem--syncing .gcal-emblem__day {
-  fill: color-mix(in srgb, var(--emblem-tone) 70%, transparent);
+  fill: color-mix(in srgb, var(--emblem-tone) 55%, transparent);
 }
 
 .gcal-emblem__diamond {
