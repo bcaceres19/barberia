@@ -179,10 +179,33 @@
   min-height: 0;
 }
 
-/* Solo la lista cede alto: los demás hijos (la tira de días tiene `overflow`
-   y por eso podría encogerse a nada) conservan su tamaño natural. */
-.pb-page--fit > :not(.pb-slots) {
+/* Solo la lista (o la hoja, en «Tus datos») cede alto: los demás hijos (la
+   tira de días tiene `overflow` y por eso podría encogerse a nada) conservan
+   su tamaño natural. */
+.pb-page--fit > :not(.pb-slots, .pb-sheet) {
   flex-shrink: 0;
+}
+
+/* «Tus datos»: la hoja conserva su marco, su cinta métrica y su sombra, y lo
+   que se desplaza es su contenido (formulario, resumen o confirmación; solo
+   hay uno a la vez). El relleno de 6 px, compensado con margen negativo,
+   evita recortar el aro de foco de los campos. Con menos de 240 px útiles el
+   documento vuelve a desplazarse en lugar de dejar un formulario inservible. */
+.pb-page--fit > .pb-sheet {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 1;
+  min-height: 0;
+}
+
+.pb-page--fit > .pb-sheet > * {
+  flex: 0 1 auto;
+  min-height: 240px;
+  padding: 6px;
+  margin: -6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 /* La ficha «Franja elegida» repite lo que ya dice la barra de acción («Tu

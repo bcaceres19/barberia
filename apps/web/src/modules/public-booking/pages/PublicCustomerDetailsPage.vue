@@ -209,7 +209,7 @@ function chooseAlternative(startsAt: string) {
 </script>
 
 <template>
-  <main class="pb-page pb-page--center">
+  <main class="pb-page pb-page--center pb-page--fit">
     <p class="pb-eyebrow">
       {{
         confirmState === 'confirmed'
