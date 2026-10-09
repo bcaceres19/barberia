@@ -406,6 +406,7 @@ const SECTIONS = [
   { id: 'configuracion-contacto', number: '06', label: 'Contacto' },
   { id: 'configuracion-enlace', number: '07', label: 'Enlace' },
   { id: 'configuracion-reservas', number: '08', label: 'Reservas' },
+  { id: 'configuracion-integraciones', number: '09', label: 'Integraciones' },
 ] as const
 
 const activeSection = ref<string>(SECTIONS[0].id)
@@ -972,6 +973,25 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
                 <span class="settings-link__title">Reglas de reserva pública</span>
                 <span class="settings-link__detail"
                   >Anticipación mínima, ventana, rejilla de horarios y cancelación.</span
+                >
+              </span>
+              <span class="settings-link__arrow" aria-hidden="true">→</span>
+            </RouterLink>
+          </SettingsPanel>
+
+          <!-- 09 · Integraciones: enlace a la pantalla de Google Calendar (DEC-099) -->
+          <SettingsPanel
+            id="configuracion-integraciones"
+            number="09"
+            title="Integraciones"
+            description="Conecta tu calendario para ver tu agenda de NAVA donde ya organizas tu día."
+            style="--panel-index: 8"
+          >
+            <RouterLink :to="{ name: 'integraciones-google-calendar' }" class="settings-link">
+              <span class="settings-link__copy">
+                <span class="settings-link__title">Google Calendar</span>
+                <span class="settings-link__detail"
+                  >Publica tus turnos y bloqueos en tu calendario y elige tu recordatorio.</span
                 >
               </span>
               <span class="settings-link__arrow" aria-hidden="true">→</span>
