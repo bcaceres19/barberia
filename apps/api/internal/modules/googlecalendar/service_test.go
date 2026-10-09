@@ -49,6 +49,8 @@ type fakeRepo struct {
 	barbers     map[string]string // shop|user -> barber
 	connections map[string]googlecalendar.Connection
 	states      map[string]*storedState
+	counts      googlecalendar.JobCounts
+	requeued    int
 }
 
 type storedState struct {
@@ -136,6 +138,23 @@ func (r *fakeRepo) ConsumeState(_ context.Context, shop, hash string, now time.T
 	}
 	s.consumed = true
 	return s.OAuthState, true, nil
+}
+
+func (r *fakeRepo) JobCounts(context.Context, string, string) (googlecalendar.JobCounts, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.counts, nil
+}
+
+func (r *fakeRepo) RequeueConnection(_ context.Context, shop, barber string, _ time.Time) (googlecalendar.JobCounts, bool, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	c, ok := r.connections[shop+"|"+barber]
+	if !ok || (c.Status != googlecalendar.StatusConnected && c.Status != googlecalendar.StatusError) {
+		return googlecalendar.JobCounts{}, false, nil
+	}
+	r.requeued++
+	return googlecalendar.JobCounts{Pending: r.counts.Pending + r.counts.Failed}, true, nil
 }
 
 func (r *fakeRepo) BarberOfUser(_ context.Context, shop, user string) (string, bool, error) {

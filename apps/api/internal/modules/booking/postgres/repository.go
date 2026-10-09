@@ -51,6 +51,7 @@ const createManualAppointmentIdempotencyTTL = 10 * time.Minute
 type Repository struct {
 	db    *database.DB
 	coord idempotency.Coordinator
+	hook  SyncHook
 }
 
 // New construye el repositorio a partir del pool tenant-aware compartido y
@@ -105,6 +106,9 @@ func (r *Repository) CreateInternal(
 
 		appointment, err := insertAppointment(ctx, q, barbershopID, customer.ID, input)
 		if err != nil {
+			return err
+		}
+		if err := r.appointmentChanged(ctx, q, barbershopID, appointment.ID); err != nil {
 			return err
 		}
 
@@ -251,6 +255,9 @@ func (r *Repository) CreateManual(
 
 		appointment, err := insertAppointment(ctx, q, barbershopID, customer.ID, effectiveInput)
 		if err != nil {
+			return err
+		}
+		if err := r.appointmentChanged(ctx, q, barbershopID, appointment.ID); err != nil {
 			return err
 		}
 
@@ -1271,6 +1278,9 @@ func (r *Repository) Reschedule(
 			if err != nil {
 				return err
 			}
+			if err := r.appointmentChanged(ctx, q, barbershopID, current.id); err != nil {
+				return err
+			}
 			if err := insertAppointmentRescheduledHistory(
 				ctx, q, barbershopID, current.id, input.Actor,
 				current.startsAt, current.endsAt, input.NewStartsAt, input.NewEndsAt,
@@ -1521,6 +1531,9 @@ func (r *Repository) CancelByBarber(
 			}
 			updatedAt, err := updateAppointmentStatusCancelledByBarber(ctx, q, barbershopID, current.id)
 			if err != nil {
+				return err
+			}
+			if err := r.appointmentChanged(ctx, q, barbershopID, current.id); err != nil {
 				return err
 			}
 			if err := insertAppointmentCancelledByBarberHistory(ctx, q, barbershopID, current.id, input.Actor); err != nil {
@@ -1821,6 +1834,9 @@ func (r *Repository) CompleteAppointment(
 			if err != nil {
 				return err
 			}
+			if err := r.appointmentChanged(ctx, q, barbershopID, current.id); err != nil {
+				return err
+			}
 			if err := insertAppointmentCompletedHistory(ctx, q, barbershopID, current.id, input.Actor); err != nil {
 				return err
 			}
@@ -1916,6 +1932,9 @@ func (r *Repository) MarkNoShow(
 			}
 			updatedAt, err := updateAppointmentStatusNoShow(ctx, q, barbershopID, current.id)
 			if err != nil {
+				return err
+			}
+			if err := r.appointmentChanged(ctx, q, barbershopID, current.id); err != nil {
 				return err
 			}
 			if err := insertAppointmentNoShowHistory(ctx, q, barbershopID, current.id, input.Actor); err != nil {
@@ -2183,6 +2202,9 @@ func (r *Repository) CorrectAppointmentStatus(
 			}
 			updatedAt, err := updateAppointmentStatusCorrected(ctx, q, barbershopID, current.id, destination)
 			if err != nil {
+				return err
+			}
+			if err := r.appointmentChanged(ctx, q, barbershopID, current.id); err != nil {
 				return err
 			}
 			if err := insertAppointmentStatusCorrectedHistory(

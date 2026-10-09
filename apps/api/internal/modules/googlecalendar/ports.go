@@ -15,6 +15,9 @@ type Repository interface {
 
 	// SaveConnected crea o reutiliza la fila del barbero y la deja `connected`
 	// con las credenciales nuevas, limpiando el error y la fecha de desconexión.
+	// En la MISMA transacción encola la publicación inicial: las citas y bloqueos
+	// futuros de los próximos 6 meses y la reconciliación de los vínculos que ya
+	// existían (DEC-101.8).
 	SaveConnected(ctx context.Context, barbershopID, barberID string, saved ConnectedData) (Connection, error)
 
 	// MarkStatus cambia el estado de la conexión. Para ReauthRequired y
@@ -22,8 +25,9 @@ type Repository interface {
 	// cuenta); para Error las conserva. found=false si no hay conexión.
 	MarkStatus(ctx context.Context, barbershopID, barberID string, status Status, errorCode string, at time.Time) (found bool, err error)
 
-	// SetReminder guarda reminder_minutes (nil = predeterminados). found=false
-	// si no hay conexión o está desconectada.
+	// SetReminder guarda reminder_minutes (nil = predeterminados) y, en la misma
+	// transacción, encola la actualización de los eventos futuros ya publicados
+	// (DEC-101.5). found=false si no hay conexión o está desconectada.
 	SetReminder(ctx context.Context, barbershopID, barberID string, minutes *int) (Connection, bool, error)
 
 	// CreateState guarda un estado OAuth de un solo uso y purga los vencidos
@@ -36,6 +40,21 @@ type Repository interface {
 
 	// BarberOfUser devuelve el barbero vinculado al usuario (DEC-100).
 	BarberOfUser(ctx context.Context, barbershopID, staffUserID string) (barberID string, found bool, err error)
+
+	// JobCounts cuenta los trabajos de la conexión del barbero: los que esperan o
+	// se ejecutan y los que agotaron sus intentos.
+	JobCounts(ctx context.Context, barbershopID, barberID string) (JobCounts, error)
+
+	// RequeueConnection hace vencer ya los trabajos pendientes de la conexión y
+	// reencola los fallidos («Sincronizar ahora»). Solo reordena la cola de ESA
+	// conexión y es segura ante varios clics. found=false sin conexión que publique.
+	RequeueConnection(ctx context.Context, barbershopID, barberID string, now time.Time) (JobCounts, bool, error)
+}
+
+// JobCounts resume la cola de una conexión.
+type JobCounts struct {
+	Pending int
+	Failed  int
 }
 
 // ConnectedData son los datos con que una conexión queda `connected`.

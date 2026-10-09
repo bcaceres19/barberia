@@ -258,6 +258,9 @@ func (r *Repository) CreateBlock(
 		if err != nil {
 			return fmt.Errorf("insert time block: %w", err)
 		}
+		if err := r.timeBlockChanged(ctx, q, barbershopID, b.ID); err != nil {
+			return err
+		}
 
 		body, err := marshalTimeBlockResponse(b)
 		if err != nil {
@@ -300,7 +303,10 @@ func (r *Repository) DeleteBlock(ctx context.Context, barbershopID, barberID, bl
 			return fmt.Errorf("soft delete time block: %w", err)
 		}
 		found = tag.RowsAffected() > 0
-		return nil
+		if !found {
+			return nil
+		}
+		return r.timeBlockChanged(ctx, q, barbershopID, blockID)
 	})
 	if err != nil {
 		return false, fmt.Errorf("schedule/postgres: delete time block: %w", err)

@@ -41,6 +41,7 @@ const workingHourWeekdayStartUniqueConstraint = "working_hour_shop_barber_weekda
 type Repository struct {
 	db    *database.DB
 	coord idempotency.Coordinator
+	hook  SyncHook
 }
 
 // New construye el repositorio con el coordinador de idempotencia real

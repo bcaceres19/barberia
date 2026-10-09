@@ -40,6 +40,8 @@ type StatusView struct {
 	Enabled      bool
 	BarberLinked bool
 	Connection   *Connection
+	// Jobs resume la cola de la conexión (pendientes y fallidos).
+	Jobs JobCounts
 }
 
 // Service implementa los casos de uso de la conexión. Con la integración
@@ -133,8 +135,38 @@ func (s *Service) Status(ctx context.Context, barbershopID, staffUserID string) 
 	}
 	if found {
 		view.Connection = &conn
+		counts, err := s.repo.JobCounts(ctx, barbershopID, barberID)
+		if err != nil {
+			return StatusView{}, apperr.Internal(fmt.Errorf("googlecalendar: contar trabajos: %w", err))
+		}
+		view.Jobs = counts
 	}
 	return view, nil
+}
+
+// SyncNow es «Sincronizar ahora»: hace vencer ya los trabajos pendientes de la
+// conexión del barbero y reintenta los fallidos. No llama a Google (lo hace el
+// worker) ni toca el dominio de NAVA, solo reordena la cola de ESA conexión, y es
+// segura ante varios clics.
+func (s *Service) SyncNow(ctx context.Context, barbershopID, staffUserID string) (JobCounts, error) {
+	if !s.Enabled() {
+		return JobCounts{}, errIntegrationDisabled()
+	}
+	barberID, linked, err := s.repo.BarberOfUser(ctx, barbershopID, staffUserID)
+	if err != nil {
+		return JobCounts{}, apperr.Internal(fmt.Errorf("googlecalendar: resolver barbero del usuario: %w", err))
+	}
+	if !linked {
+		return JobCounts{}, errNoLinkedBarber()
+	}
+	counts, found, err := s.repo.RequeueConnection(ctx, barbershopID, barberID, s.clock.Now())
+	if err != nil {
+		return JobCounts{}, apperr.Internal(fmt.Errorf("googlecalendar: sincronizar ahora: %w", err))
+	}
+	if !found {
+		return JobCounts{}, errNotConnected()
+	}
+	return counts, nil
 }
 
 // StartConnect inicia la autorización: guarda un estado de un solo uso ligado a

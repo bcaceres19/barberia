@@ -332,6 +332,35 @@ func (d *DB) CallSecurityDefinerRow(ctx context.Context, query string, args []an
 	return nil
 }
 
+// CallSecurityDefinerRows es la variante de CallSecurityDefinerRow para
+// funciones SECURITY DEFINER que devuelven VARIAS filas (por ejemplo el reclamo
+// de trabajos del worker, issue #324, DDL-CON-01). Mismas reglas: query debe ser
+// SIEMPRE una función SECURITY DEFINER estrecha y revisada, concedida
+// exclusivamente a barberia_worker, nunca una tabla ni una consulta ad hoc; no se
+// fija app.barbershop_id y no hay transacción. scan recorre las filas y el
+// cursor se cierra aquí.
+func (d *DB) CallSecurityDefinerRows(ctx context.Context, query string, args []any, scan func(pgx.Rows) error) error {
+	conn, err := d.pool.Acquire(ctx)
+	if err != nil {
+		return fmt.Errorf("database: acquire connection: %w", err)
+	}
+	defer conn.Release()
+
+	rows, err := conn.Query(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("database: call security definer function: %w", err)
+	}
+	defer rows.Close()
+
+	if err := scan(rows); err != nil {
+		return fmt.Errorf("database: call security definer function: %w", err)
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("database: call security definer function: %w", err)
+	}
+	return nil
+}
+
 // HealthCheck verifica conectividad con timeout corto y propio. La respuesta
 // indica disponible o no disponible y NADA más: sin versión de PostgreSQL,
 // sin nombre de base, sin host, sin usuario, sin texto del error del driver.

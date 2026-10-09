@@ -2000,12 +2000,12 @@ atlas migrate apply --env local
 
 `GET /private/barbers` conserva cursor/limit y añade modo optativo page/pageSize (1–50 filas, por defecto 20). No admite mezclar modos; parámetros inválidos responden 400. Una sola sentencia tenant-aware obtiene total, página efectiva y filas en orden (created_at,id), sin leer bytes de fotos; fuera de rango se ajusta a la última página. No requiere migraciones.
 
-## Conexión con Google Calendar (HU-026)
+## Conexión y publicación en Google Calendar (HU-026 y HU-027)
 
 Cada barbero conecta SU Google Calendar (`DEC-099`): la sincronización es
 unidireccional, de NAVA hacia Google, y nada de lo que ocurra en Google altera
-citas ni disponibilidad. Esta entrega gestiona solo la **conexión**; la
-publicación de eventos llega en el issue #324. El módulo dueño es
+citas ni disponibilidad. `HU-026` es la **conexión**; `HU-027`, la
+**publicación** de citas y bloqueos (más abajo). El módulo dueño es
 `internal/modules/googlecalendar`: el núcleo no importa Chi, PostgreSQL ni el
 SDK de Google, el adaptador de Google vive en `google/`, la persistencia en
 `postgres/` y HTTP en `httpapi/`.
@@ -2021,7 +2021,8 @@ ninguna acepta un identificador de barbero, usuario ni barbería.
 | `POST .../connect` | Emite un `state` de un solo uso (10 min, ligado a barbería, barbero, usuario y sesión) y devuelve la URL de consentimiento (PKCE S256, acceso offline, `prompt=consent`). `409` si la integración no está configurada o no hay barbero vinculado. |
 | `POST .../callback` | La pantalla de retorno del frontend reenvía `state` y `code`. Consume el `state`, canjea el código con el verificador PKCE y guarda el refresh token cifrado. Responde `connected`, `denied` o `failed`; cualquier `state` inválido, vencido, usado o ajeno responde el mismo `400`. |
 | `PATCH .../google-calendar` | `reminderMinutes` de 0 a 40320 (o `null`). |
-| `DELETE .../google-calendar` | Revoca el permiso en Google (mejor esfuerzo), borra credenciales y correo. Idempotente. |
+| `DELETE .../google-calendar` | Revoca el permiso en Google (mejor esfuerzo), borra credenciales y correo y vacía la cola. Idempotente. |
+| `POST .../sync` | «Sincronizar ahora»: hace vencer ya los cambios pendientes de la conexión y reintenta los fallidos. No llama a Google ni toca citas; segura ante varios clics. |
 
 ### Variables de entorno
 
@@ -2061,3 +2062,85 @@ valor presente pero mal formado sí impide el arranque. Ninguna se comitea.
 - **`reauth_required`:** Google revocó o caducó el permiso (`invalid_grant`). Se borran las credenciales y la conexión queda a la espera de que el barbero vuelva a conectar; no hay nada que reparar en el servidor. Una caída de Google (`error`) nunca cambia ni pierde una cita.
 - Cambiar o quitar el vínculo barbero–usuario desconecta la conexión del barbero anterior (revoca y borra credenciales) para que quien tome ese barbero después no herede una cuenta ajena.
 - Pruebas: `go test ./internal/modules/googlecalendar/... ./cmd/api/...` (PostgreSQL real con dos barberías y un Google falso; no tocan la red) y `database/tests/google_calendar_conexion.sql`.
+
+### Publicación de citas y bloqueos (HU-027)
+
+La cola es **a nivel de estado**: un trabajo dice «reconcilia este recurso», no
+«crea» o «cancela». Al ejecutarlo el worker lee la cita o el bloqueo ACTUAL y deja
+el evento igual (`DEC-101`), así que varios cambios seguidos se funden en un
+trabajo pendiente y un reintento o una ejecución fuera de orden nunca publica un
+estado viejo. El vínculo persistido decide entre crear y actualizar.
+
+**Mecanismo de encolado transaccional (`DEC-102`).** `booking` y `schedule`
+definen un puerto `SyncHook` en su adaptador PostgreSQL (`booking/postgres/sync_hook.go`,
+`schedule/postgres/sync_hook.go`) y lo llaman, con el `q` de la MISMA transacción,
+después de toda escritura sobre `appointment` o `time_block`. La raíz de
+composición (`cmd/api`) inyecta `googlecalendar/postgres.Enqueuer`, que ejecuta una
+sentencia `INSERT ... ON CONFLICT DO NOTHING` sobre `google_calendar_sync_job` solo
+si el barbero tiene una conexión viva (`connected` o `error`). Ni `booking` ni
+`schedule` importan la integración (lo comprueba `internal/platform/archtest`) y un
+error del gancho revierte el cambio de negocio. `sync_hook_test.go` falla si
+aparece una escritura sobre esas tablas sin llamar al gancho: **toda escritura
+nueva (por ejemplo la cancelación por el cliente, HU-099) debe llamarlo.**
+
+**El worker** (`cmd/worker`) arranca el publicador si las variables
+`GOOGLE_CALENDAR_*` están completas (necesita las MISMAS que el API, la misma clave
+de cifrado incluida). Se conecta como `barberia_worker`, que no tiene acceso a
+ninguna tabla: solo ejecuta funciones `SECURITY DEFINER` (`gcal_claim_jobs`,
+`gcal_job_context`, `gcal_finish_job`, `gcal_restore_*`, `gcal_enqueue_missing`),
+sin contexto de tenant (`DEC-040`). Cadencias (constantes en
+`googlecalendar.DefaultPublisherConfig`):
+
+| Parámetro | Valor | Efecto |
+| --- | --- | --- |
+| Sondeo | 5 s | Pausa cuando no hay trabajo; con trabajo continúa sin esperar. |
+| Lote | 5 trabajos | Se reclaman con `SKIP LOCKED`; varios workers conviven sin duplicar. |
+| Lease | 300 s | Si el worker cae, otro retoma el trabajo con un `claim_token` nuevo y el anterior ya no puede finalizarlo. |
+| Reintentos | 8 | Espera 30 s duplicándose (30 s, 1, 2, 4, 8, 16, 32 min) con tope de 1 h; `Retry-After` de Google se respeta. Al agotarlos el trabajo queda `failed` hasta «Sincronizar ahora». |
+| Chequeo de eventos borrados | cada 5 min por conexión | Ver abajo. |
+
+**Qué publica.** Cita `confirmed` → un evento «Nombre — Servicio» (descripción: servicio y
+estado; nunca teléfono, notas ni identificadores internos fuera de las propiedades
+extendidas privadas `navaResourceType`, `navaResourceId` y `navaConnectionId`), en la
+zona horaria de la barbería. Reprogramar actualiza el mismo evento;
+`cancelled_by_customer`/`cancelled_by_barber` lo eliminan (un `404`/`410` es éxito);
+`completed` y `no_show` lo conservan. Bloqueos manuales de tipo `break`, `lunch`,
+`unavailable`, `day_off`, `vacation` y `emergency` (el festivo automático y las series
+no); el título es el del tipo, el motivo no se publica. Al conectar se publican las
+citas y bloqueos futuros de los próximos 6 meses. Recordatorio: un único `popup` de
+`reminder_minutes` o los predeterminados del calendario; cambiarlo actualiza los
+eventos futuros. Lo pasado no se publica.
+
+**Invitación al cliente (`DEC-122`).** Con correo del cliente y la conexión `connected`,
+el evento lo incluye como asistente (`sendUpdates=all`, sin permiso para modificar,
+invitar ni ver a otros). Google le envía la invitación, la actualización de horario y
+la cancelación. Solo se notifica lo que el invitado ve: una huella (título, horario,
+correo) decide, así que refrescar el recordatorio de todos los eventos no envía
+correos. Aceptar o rechazar la invitación no modifica NAVA.
+
+**Idempotencia.** El id del evento es determinista en (conexión, recurso, generación):
+si el worker cae entre «crear en Google» y «guardar el vínculo», el reintento propone
+el mismo id, Google responde que ya existe y se adopta el evento en vez de crear un
+segundo. Google no reutiliza el id de un evento borrado, así que recrear sube la
+generación.
+
+**Eventos borrados por error en Google (`DEC-101`).** Cada 5 minutos el worker lista,
+por conexión, SOLO los eventos que NAVA publicó (propiedad privada `navaConnectionId`,
+sin `syncToken` ni webhook) y reencola los vínculos vigentes y futuros cuyo evento
+falta. Nunca restaura una cita cancelada, terminal o pasada ni un bloqueo retirado, y
+nunca modifica el dominio de NAVA. Un cambio hecho en Google se restablece en la
+siguiente actualización originada en NAVA.
+
+**Errores de Google.** `401` fuerza una renovación del access token y reintenta una
+vez; si persiste, o si el refresh token da `invalid_grant`, la conexión pasa a
+`reauth_required` (credenciales borradas y cola vaciada). `429`, `5xx`, cuota y red
+reintentan con backoff. `403` sin cuota (permiso denegado), `404` del calendario y
+`400` son permanentes: el trabajo queda `failed` y la conexión en `error` con su
+código en `last_error_code`; «Sincronizar ahora» reintenta. Una caída de Google nunca
+pierde ni revierte una cita.
+
+**Operación.** Revisar la cola de un barbero: `GET /private/integrations/google-calendar`
+(`pendingSyncJobs`, `failedSyncJobs`, `lastSyncedAt`). Los logs del worker
+(`google_calendar.event.reconciled`, `.job.*`, `.restore.*`) llevan conexión, recurso y
+operación, nunca tokens ni correos. Pruebas: `go test ./internal/modules/googlecalendar/...
+./cmd/api/...` (Google falso, sin red) y `database/tests/google_calendar_sync.sql`.

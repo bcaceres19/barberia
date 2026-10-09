@@ -15,6 +15,17 @@ type ConnectionResponse struct {
 	ReminderMinutes *int       `json:"reminderMinutes"`
 	ConnectedAt     *time.Time `json:"connectedAt"`
 	LastSyncedAt    *time.Time `json:"lastSyncedAt"`
+	// PendingSyncJobs son los cambios que esperan publicarse en Google y
+	// FailedSyncJobs los que agotaron sus intentos (el barbero puede
+	// reintentarlos con «Sincronizar ahora»).
+	PendingSyncJobs int `json:"pendingSyncJobs"`
+	FailedSyncJobs  int `json:"failedSyncJobs"`
+}
+
+// SyncResponse es GoogleCalendarSyncResponse (OpenAPI).
+type SyncResponse struct {
+	PendingSyncJobs int `json:"pendingSyncJobs"`
+	FailedSyncJobs  int `json:"failedSyncJobs"`
 }
 
 // AuthorizationResponse es GoogleCalendarAuthorizationResponse (OpenAPI).

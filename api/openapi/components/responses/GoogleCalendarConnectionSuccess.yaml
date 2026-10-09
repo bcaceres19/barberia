@@ -19,6 +19,8 @@ content:
           reminderMinutes: 30
           connectedAt: "2026-10-09T15:04:05Z"
           lastSyncedAt: null
+          pendingSyncJobs: 0
+          failedSyncJobs: 0
       sinConectar:
         summary: Vinculado pero sin conectar
         value:
@@ -29,6 +31,8 @@ content:
           reminderMinutes: null
           connectedAt: null
           lastSyncedAt: null
+          pendingSyncJobs: 0
+          failedSyncJobs: 0
       desactivada:
         summary: Integración sin configurar en el servidor
         value:
@@ -39,3 +43,5 @@ content:
           reminderMinutes: null
           connectedAt: null
           lastSyncedAt: null
+          pendingSyncJobs: 0
+          failedSyncJobs: 0

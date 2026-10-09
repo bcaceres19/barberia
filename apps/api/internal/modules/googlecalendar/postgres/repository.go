@@ -89,6 +89,9 @@ func (r *Repository) SaveConnected(ctx context.Context, barbershopID, barberID s
 			return fmt.Errorf("upsert connection: %w", err)
 		}
 		conn = c
+		if _, err := q.Exec(ctx, enqueueInitialSQL, barbershopID, barberID, data.At); err != nil {
+			return fmt.Errorf("enqueue initial publication: %w", err)
+		}
 		return nil
 	})
 	if err != nil {
@@ -130,6 +133,13 @@ func (r *Repository) MarkStatus(ctx context.Context, barbershopID, barberID stri
 			return fmt.Errorf("update status: %w", err)
 		}
 		found = tag.RowsAffected() > 0
+		// Una conexión que ya no publica detiene su cola (DEC-101.11); al volver a
+		// conectar, la publicación inicial reencola lo vigente.
+		if found && (status == googlecalendar.StatusDisconnected || status == googlecalendar.StatusReauthRequired) {
+			if _, err := q.Exec(ctx, deleteConnectionJobsSQL, barbershopID, barberID); err != nil {
+				return fmt.Errorf("drop connection jobs: %w", err)
+			}
+		}
 		return nil
 	})
 	if err != nil {
@@ -151,8 +161,12 @@ func (r *Repository) SetReminder(ctx context.Context, barbershopID, barberID str
 		case err == nil:
 			conn, found = c, true
 		case errors.Is(err, pgx.ErrNoRows):
+			return nil
 		default:
 			return fmt.Errorf("update reminder: %w", err)
+		}
+		if _, err := q.Exec(ctx, enqueueReminderRefreshSQL, barbershopID, barberID, time.Now().UTC()); err != nil {
+			return fmt.Errorf("enqueue reminder refresh: %w", err)
 		}
 		return nil
 	})
@@ -245,4 +259,125 @@ func (r *Repository) BarberOfUser(ctx context.Context, barbershopID, staffUserID
 		return "", false, fmt.Errorf("googlecalendar/postgres: barber of user: %w", err)
 	}
 	return barberID, found, nil
+}
+
+const enqueueInitialSQL = `
+INSERT INTO google_calendar_sync_job (barbershop_id, connection_id, resource_type, resource_id)
+SELECT c.barbershop_id, c.id, 'appointment', a.id
+  FROM google_calendar_connection c
+  JOIN appointment a ON a.barbershop_id = c.barbershop_id AND a.barber_id = c.barber_id
+ WHERE c.barbershop_id = $1 AND c.barber_id = $2 AND c.status = 'connected'
+   AND a.status = 'confirmed' AND a.ends_at > $3::timestamptz
+   AND a.starts_at < $3::timestamptz + interval '6 months'
+UNION
+SELECT c.barbershop_id, c.id, 'time_block', t.id
+  FROM google_calendar_connection c
+  JOIN time_block t ON t.barbershop_id = c.barbershop_id AND t.barber_id = c.barber_id
+ WHERE c.barbershop_id = $1 AND c.barber_id = $2 AND c.status = 'connected'
+   AND t.deleted_at IS NULL AND t.source = 'manual' AND t.block_type <> 'holiday'
+   AND t.ends_at > $3::timestamptz AND t.starts_at < $3::timestamptz + interval '6 months'
+UNION
+SELECT l.barbershop_id, l.connection_id, l.resource_type, l.resource_id
+  FROM google_calendar_event_link l
+  JOIN google_calendar_connection c ON c.barbershop_id = l.barbershop_id AND c.id = l.connection_id
+ WHERE c.barbershop_id = $1 AND c.barber_id = $2 AND c.status = 'connected'
+ON CONFLICT (connection_id, resource_type, resource_id) WHERE status = 'pending' DO NOTHING`
+
+const enqueueReminderRefreshSQL = `
+INSERT INTO google_calendar_sync_job (barbershop_id, connection_id, resource_type, resource_id)
+SELECT l.barbershop_id, l.connection_id, l.resource_type, l.resource_id
+  FROM google_calendar_event_link l
+  JOIN google_calendar_connection c ON c.barbershop_id = l.barbershop_id AND c.id = l.connection_id
+  LEFT JOIN appointment a ON l.resource_type = 'appointment' AND a.barbershop_id = l.barbershop_id AND a.id = l.resource_id
+  LEFT JOIN time_block t ON l.resource_type = 'time_block' AND t.barbershop_id = l.barbershop_id AND t.id = l.resource_id
+ WHERE c.barbershop_id = $1 AND c.barber_id = $2 AND c.status IN ('connected', 'error')
+   AND ((a.id IS NOT NULL AND a.status = 'confirmed' AND a.ends_at > $3::timestamptz)
+     OR (t.id IS NOT NULL AND t.deleted_at IS NULL AND t.ends_at > $3::timestamptz))
+ON CONFLICT (connection_id, resource_type, resource_id) WHERE status = 'pending' DO NOTHING`
+
+const deleteConnectionJobsSQL = `
+DELETE FROM google_calendar_sync_job
+ WHERE barbershop_id = $1
+   AND connection_id = (SELECT id FROM google_calendar_connection WHERE barbershop_id = $1 AND barber_id = $2)`
+
+// JobCounts implementa googlecalendar.Repository.JobCounts.
+func (r *Repository) JobCounts(ctx context.Context, barbershopID, barberID string) (googlecalendar.JobCounts, error) {
+	var counts googlecalendar.JobCounts
+	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
+		return q.QueryRow(ctx,
+			`SELECT count(*) FILTER (WHERE j.status IN ('pending', 'processing')),
+			        count(*) FILTER (WHERE j.status = 'failed')
+			   FROM google_calendar_sync_job j
+			   JOIN google_calendar_connection c ON c.barbershop_id = j.barbershop_id AND c.id = j.connection_id
+			  WHERE c.barbershop_id = $1 AND c.barber_id = $2`,
+			barbershopID, barberID).Scan(&counts.Pending, &counts.Failed)
+	})
+	if err != nil {
+		return googlecalendar.JobCounts{}, fmt.Errorf("googlecalendar/postgres: job counts: %w", err)
+	}
+	return counts, nil
+}
+
+// RequeueConnection implementa googlecalendar.Repository.RequeueConnection.
+func (r *Repository) RequeueConnection(ctx context.Context, barbershopID, barberID string, now time.Time) (googlecalendar.JobCounts, bool, error) {
+	var counts googlecalendar.JobCounts
+	found := false
+	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
+		var connectionID string
+		err := q.QueryRow(ctx,
+			`SELECT id::text FROM google_calendar_connection
+			  WHERE barbershop_id = $1 AND barber_id = $2 AND status IN ('connected', 'error')`,
+			barbershopID, barberID).Scan(&connectionID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil
+		}
+		if err != nil {
+			return fmt.Errorf("select connection: %w", err)
+		}
+		found = true
+
+		// Un fallido con un gemelo más nuevo ya no aporta nada: se descarta para
+		// que reactivar el resto no choque con el índice de un único pendiente.
+		if _, err := q.Exec(ctx,
+			`DELETE FROM google_calendar_sync_job f
+			  WHERE f.barbershop_id = $1 AND f.connection_id = $2 AND f.status = 'failed'
+			    AND EXISTS (
+			      SELECT 1 FROM google_calendar_sync_job o
+			       WHERE o.connection_id = f.connection_id AND o.resource_type = f.resource_type
+			         AND o.resource_id = f.resource_id AND o.id <> f.id
+			         AND (o.status = 'pending'
+			              OR (o.status = 'failed' AND (o.created_at, o.id) > (f.created_at, f.id))))`,
+			barbershopID, connectionID); err != nil {
+			return fmt.Errorf("drop superseded failed jobs: %w", err)
+		}
+		if _, err := q.Exec(ctx,
+			`UPDATE google_calendar_sync_job
+			    SET status = 'pending', attempts = 0, run_at = $3, last_error_code = NULL
+			  WHERE barbershop_id = $1 AND connection_id = $2 AND status = 'failed'`,
+			barbershopID, connectionID, now); err != nil {
+			return fmt.Errorf("retry failed jobs: %w", err)
+		}
+		if _, err := q.Exec(ctx,
+			`UPDATE google_calendar_sync_job SET run_at = LEAST(run_at, $3)
+			  WHERE barbershop_id = $1 AND connection_id = $2 AND status = 'pending'`,
+			barbershopID, connectionID, now); err != nil {
+			return fmt.Errorf("make pending jobs due: %w", err)
+		}
+		// Reintentar tras un error permanente: si vuelve a fallar, el worker lo marca de nuevo.
+		if _, err := q.Exec(ctx,
+			`UPDATE google_calendar_connection SET status = 'connected', last_error_code = NULL
+			  WHERE barbershop_id = $1 AND id = $2 AND status = 'error'`,
+			barbershopID, connectionID); err != nil {
+			return fmt.Errorf("reset connection error: %w", err)
+		}
+		return q.QueryRow(ctx,
+			`SELECT count(*) FILTER (WHERE status IN ('pending', 'processing')),
+			        count(*) FILTER (WHERE status = 'failed')
+			   FROM google_calendar_sync_job WHERE barbershop_id = $1 AND connection_id = $2`,
+			barbershopID, connectionID).Scan(&counts.Pending, &counts.Failed)
+	})
+	if err != nil {
+		return googlecalendar.JobCounts{}, false, fmt.Errorf("googlecalendar/postgres: requeue connection: %w", err)
+	}
+	return counts, found, nil
 }

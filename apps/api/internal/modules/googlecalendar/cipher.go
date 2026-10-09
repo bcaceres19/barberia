@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 )
 
 // keySize es AES-256 (DEC-102).
@@ -51,6 +52,32 @@ func NewCipher(activeID string, keys map[string][]byte) (*Cipher, error) {
 		aeads[id] = aead
 	}
 	return &Cipher{activeID: activeID, aeads: aeads, random: rand.Reader}, nil
+}
+
+// NewCipherFromKeys arma el cifrador desde la configuración: la clave activa
+// (base64) con su identificador y las claves anteriores `id:base64` que solo
+// sirven para descifrar. Nunca incluye el valor de una clave en un error.
+func NewCipherFromKeys(activeID, activeKey string, previous []string) (*Cipher, error) {
+	active, err := ParseKey(activeKey)
+	if err != nil {
+		return nil, errors.New("googlecalendar: clave de cifrado activa inválida")
+	}
+	keys := map[string][]byte{activeID: active}
+	for _, entry := range previous {
+		id, encoded, ok := strings.Cut(entry, ":")
+		if !ok {
+			return nil, errors.New("googlecalendar: clave de cifrado anterior sin identificador")
+		}
+		key, err := ParseKey(encoded)
+		if err != nil {
+			return nil, errors.New("googlecalendar: clave de cifrado anterior inválida")
+		}
+		if _, dup := keys[id]; dup {
+			return nil, errors.New("googlecalendar: identificador de clave repetido")
+		}
+		keys[id] = key
+	}
+	return NewCipher(activeID, keys)
 }
 
 // ParseKey decodifica una clave de 32 bytes en base64 estándar.

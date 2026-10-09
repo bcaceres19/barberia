@@ -4,6 +4,19 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.34.0 · 2026-10-10
+
+### Agregado
+
+- `POST /private/integrations/google-calendar/sync` (`syncGoogleCalendarNow`,
+  «Sincronizar ahora»), `DEC-101`, issue #324: hace vencer los cambios pendientes
+  de la conexión y reintenta los fallidos; no llama a Google ni toca citas.
+- `pendingSyncJobs` y `failedSyncJobs` en `GoogleCalendarConnectionResponse`
+  (obligatorios en la respuesta): permiten mostrar «Sincronizando» y ofrecer el
+  reintento. Cambio compatible: agrega propiedades a respuestas con
+  `additionalProperties: false` que el cliente del repositorio actualiza en el
+  mismo cambio.
+
 ## 0.33.0 · 2026-10-09
 
 ### Agregado

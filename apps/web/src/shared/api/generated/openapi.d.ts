@@ -424,6 +424,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/private/integrations/google-calendar/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sincronizar ahora
+         * @description Hace vencer ya los cambios pendientes de la conexión del barbero y reintenta los que agotaron sus intentos; el worker los publica en segundos. Solo reordena la cola de ESA conexión: no llama a Google, no modifica citas ni bloqueos y es segura ante varios clics (la misma operación repetida deja el mismo estado). Responde `404` sin conexión que publique y `409` si la integración no está configurada o no hay barbero vinculado.
+         */
+        post: operations["syncGoogleCalendarNow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/private/integrations/google-calendar/callback": {
         parameters: {
             query?: never;
@@ -2168,6 +2188,10 @@ export interface components {
              * @description Instante de la última publicación correcta en Google, o `null`.
              */
             lastSyncedAt: string | null;
+            /** @description Cambios de citas y bloqueos que esperan publicarse en Google. Con valor mayor que cero la pantalla puede mostrar «Sincronizando». */
+            pendingSyncJobs: number;
+            /** @description Cambios que agotaron sus intentos de publicación. El barbero los reintenta con «Sincronizar ahora». */
+            failedSyncJobs: number;
         };
         /** @description Anticipación del recordatorio de los eventos del barbero. Es el único campo editable de la conexión; nunca acepta tokens, estado ni el barbero. */
         UpdateGoogleCalendarReminderRequest: {
@@ -2184,6 +2208,13 @@ export interface components {
              * @description URL de consentimiento de Google (código de autorización con PKCE).
              */
             authorizationUrl: string;
+        };
+        /** @description Estado de la cola de la conexión tras pedir «Sincronizar ahora». */
+        GoogleCalendarSyncResponse: {
+            /** @description Cambios que esperan publicarse, ya vencidos; el worker los toma en segundos. */
+            pendingSyncJobs: number;
+            /** @description Cambios que siguen fallidos; normalmente 0 tras reintentarlos. */
+            failedSyncJobs: number;
         };
         /** @description Parámetros que Google agregó a la URL de retorno. `state` es obligatorio y de un solo uso. `code` viene con un consentimiento correcto; `error` (por ejemplo `access_denied`) viene cuando el barbero rechazó el permiso. Nunca lleva identificadores de barbero, usuario ni barbería. */
         CompleteGoogleCalendarConnectionRequest: {
@@ -3672,6 +3703,16 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
+        /** @description La cola de la conexión quedó lista para publicarse ya. Devuelve cuántos cambios esperan y cuántos siguen fallidos. */
+        GoogleCalendarSyncRequested: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["GoogleCalendarSyncResponse"];
+            };
+        };
         /** @description Desenlace de la conexión. Nunca contiene el código OAuth, el `state` ni tokens. */
         GoogleCalendarCallbackCompleted: {
             headers: {
@@ -4700,6 +4741,22 @@ export interface operations {
         responses: {
             200: components["responses"]["GoogleCalendarAuthorizationStarted"];
             401: components["responses"]["UnauthorizedProblem"];
+            409: components["responses"]["GoogleCalendarInvalidStateProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    syncGoogleCalendarNow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["GoogleCalendarSyncRequested"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
             409: components["responses"]["GoogleCalendarInvalidStateProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };

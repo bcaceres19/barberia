@@ -55,6 +55,18 @@ properties:
       - "null"
     format: date-time
     description: Instante de la última publicación correcta en Google, o `null`.
+  pendingSyncJobs:
+    type: integer
+    minimum: 0
+    description: >
+      Cambios de citas y bloqueos que esperan publicarse en Google. Con valor
+      mayor que cero la pantalla puede mostrar «Sincronizando».
+  failedSyncJobs:
+    type: integer
+    minimum: 0
+    description: >
+      Cambios que agotaron sus intentos de publicación. El barbero los reintenta
+      con «Sincronizar ahora».
 required:
   - enabled
   - barberLinked
@@ -63,3 +75,5 @@ required:
   - reminderMinutes
   - connectedAt
   - lastSyncedAt
+  - pendingSyncJobs
+  - failedSyncJobs

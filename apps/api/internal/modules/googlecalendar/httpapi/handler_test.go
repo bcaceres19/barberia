@@ -98,6 +98,19 @@ func (r *memRepo) ConsumeState(_ context.Context, _, hash string, now time.Time)
 	return s, true, nil
 }
 
+func (r *memRepo) JobCounts(context.Context, string, string) (googlecalendar.JobCounts, error) {
+	return googlecalendar.JobCounts{Pending: 2, Failed: 1}, nil
+}
+
+func (r *memRepo) RequeueConnection(context.Context, string, string, time.Time) (googlecalendar.JobCounts, bool, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.conn == nil || r.conn.Status == googlecalendar.StatusDisconnected {
+		return googlecalendar.JobCounts{}, false, nil
+	}
+	return googlecalendar.JobCounts{Pending: 3}, true, nil
+}
+
 func (r *memRepo) BarberOfUser(context.Context, string, string) (string, bool, error) {
 	return barber, r.linked, nil
 }
@@ -320,6 +333,9 @@ type pathsFile struct {
 	Callback struct {
 		Post operation `yaml:"post"`
 	} `yaml:"/private/integrations/google-calendar/callback"`
+	Sync struct {
+		Post operation `yaml:"post"`
+	} `yaml:"/private/integrations/google-calendar/sync"`
 }
 
 func repoRoot(t *testing.T) string {
@@ -375,6 +391,7 @@ func TestContract_OperationsAndResponses(t *testing.T) {
 	requireOperation(t, doc.Item.Delete, "disconnectGoogleCalendar", "204", "401", "500")
 	requireOperation(t, doc.Connect.Post, "startGoogleCalendarConnection", "200", "401", "409", "500")
 	requireOperation(t, doc.Callback.Post, "completeGoogleCalendarConnection", "200", "400", "401", "409", "500")
+	requireOperation(t, doc.Sync.Post, "syncGoogleCalendarNow", "200", "401", "404", "409", "500")
 }
 
 type schemaDoc struct {
@@ -384,10 +401,11 @@ type schemaDoc struct {
 
 func TestContract_SchemasMatchTheDTOsAndNeverCarrySecrets(t *testing.T) {
 	cases := map[string][]string{
-		"GoogleCalendarConnectionResponse":        {"enabled", "barberLinked", "status", "accountEmail", "reminderMinutes", "connectedAt", "lastSyncedAt"},
+		"GoogleCalendarConnectionResponse":        {"enabled", "barberLinked", "status", "accountEmail", "reminderMinutes", "connectedAt", "lastSyncedAt", "pendingSyncJobs", "failedSyncJobs"},
 		"GoogleCalendarAuthorizationResponse":     {"authorizationUrl"},
 		"CompleteGoogleCalendarConnectionRequest": {"state", "code", "error"},
 		"GoogleCalendarCallbackResponse":          {"result"},
+		"GoogleCalendarSyncResponse":              {"pendingSyncJobs", "failedSyncJobs"},
 		"UpdateGoogleCalendarReminderRequest":     {"reminderMinutes"},
 	}
 	for name, want := range cases {
@@ -420,9 +438,49 @@ func TestContract_OpenAPIRegistersTheIntegrationPaths(t *testing.T) {
 		"/private/integrations/google-calendar",
 		"/private/integrations/google-calendar/connect",
 		"/private/integrations/google-calendar/callback",
+		"/private/integrations/google-calendar/sync",
 	} {
 		if _, ok := doc.Paths[p]; !ok {
 			t.Errorf("openapi.yaml no registra %s", p)
 		}
+	}
+}
+
+func TestSyncNow_ReportsTheQueueAndRequiresAConnection(t *testing.T) {
+	repo := newRepo(true)
+	h := newHandlers(t, repo, true)
+
+	if rec := do(h.SyncNow, request(http.MethodPost, "")); rec.Code != http.StatusNotFound {
+		t.Fatalf("sin conexión se espera 404, got %d", rec.Code)
+	}
+
+	rec := do(h.Connect, request(http.MethodPost, ""))
+	state := strings.TrimPrefix(decode(t, rec)["authorizationUrl"].(string), "https://accounts.example.test/auth?state=")
+	do(h.Callback, request(http.MethodPost, `{"state":"`+state+`","code":"c"}`))
+
+	rec = do(h.SyncNow, request(http.MethodPost, ""))
+	body := decode(t, rec)
+	if rec.Code != http.StatusOK || body["pendingSyncJobs"] != float64(3) || body["failedSyncJobs"] != float64(0) {
+		t.Fatalf("sync: %d %v", rec.Code, body)
+	}
+
+	if rec := do(newHandlers(t, newRepo(false), true).SyncNow, request(http.MethodPost, "")); rec.Code != http.StatusConflict {
+		t.Fatalf("sin barbero vinculado: expected 409, got %d", rec.Code)
+	}
+	if rec := do(newHandlers(t, newRepo(true), false).SyncNow, request(http.MethodPost, "")); rec.Code != http.StatusConflict {
+		t.Fatalf("integración desactivada: expected 409, got %d", rec.Code)
+	}
+}
+
+func TestGet_ReportsTheQueueCounters(t *testing.T) {
+	repo := newRepo(true)
+	h := newHandlers(t, repo, true)
+	rec := do(h.Connect, request(http.MethodPost, ""))
+	state := strings.TrimPrefix(decode(t, rec)["authorizationUrl"].(string), "https://accounts.example.test/auth?state=")
+	do(h.Callback, request(http.MethodPost, `{"state":"`+state+`","code":"c"}`))
+
+	body := decode(t, do(h.Get, request(http.MethodGet, "")))
+	if body["pendingSyncJobs"] != float64(2) || body["failedSyncJobs"] != float64(1) {
+		t.Fatalf("la lectura expone los contadores de la cola: %v", body)
 	}
 }

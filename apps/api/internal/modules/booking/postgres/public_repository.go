@@ -82,6 +82,9 @@ func (r *Repository) CreatePublic(
 		if err != nil {
 			return err
 		}
+		if err := r.appointmentChanged(ctx, q, barbershopID, appointment.ID); err != nil {
+			return err
+		}
 
 		customerID := customer.ID
 		actor := booking.Actor{Type: booking.ActorTypeCustomer, CustomerID: &customerID}
