@@ -46,3 +46,21 @@ export type DeleteTimeBlockSeriesOutcome =
   | { kind: 'not-found' }
   | { kind: 'network-error' }
   | { kind: 'unexpected-error' }
+
+export type UpdateTimeBlockSeriesOutcome =
+  | { kind: 'success'; series: TimeBlockSeries }
+  | { kind: 'validation-error' }
+  | { kind: 'not-found' }
+  | { kind: 'network-error' }
+  | { kind: 'unexpected-error' }
+
+// Alta/retiro de una fecha explícita o de una excepción. `duplicate` es el 409
+// determinista de «ya registrada»; al retirar, `not-found` significa que ya no
+// existía (reintentar es seguro) y la pantalla lo trata como retirada.
+export type SeriesChildOutcome =
+  | { kind: 'success' }
+  | { kind: 'duplicate' }
+  | { kind: 'validation-error' }
+  | { kind: 'not-found' }
+  | { kind: 'network-error' }
+  | { kind: 'unexpected-error' }

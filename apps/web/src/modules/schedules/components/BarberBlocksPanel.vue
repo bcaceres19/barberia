@@ -2,7 +2,7 @@
 // HU-042 / DEC-105: una instancia por barbero, compuesta en app y montada
 // con key=barberId. Los formularios y las peticiones conservan ese dueño.
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { getCivilDateInTimezone } from '@/shared/time/civilDate'
+import { getCivilDateInTimezone, shiftCivilDate } from '@/shared/time/civilDate'
 import { useToast, useVocabulary } from '@/shared/composables'
 import {
   BaseAlert,
@@ -25,6 +25,7 @@ import {
   fetchTimeBlocks,
 } from '../api/timeBlocksApi'
 import { civilDateTimeToInstant, formatInstantInTimezone } from '../model/civilTime'
+import { displayCivilDate } from '../model/displayDate'
 import { newIdempotencyKey } from '../model/idempotencyKey'
 import {
   BLOCK_TYPES,
@@ -43,6 +44,8 @@ import {
   validateStartsTime,
 } from '../validation/timeBlockValidation'
 import { validateDurationMinutes } from '../validation/scheduleValidation'
+import SeriesFormDialog from './SeriesFormDialog.vue'
+import SeriesInstancesDialog from './SeriesInstancesDialog.vue'
 
 type ListStatus = 'idle' | 'loading' | 'ready' | 'error'
 type SaveStatus =
@@ -158,14 +161,7 @@ async function loadMore(kind: 'blocks' | 'series') {
 function isPast(block: TimeBlock): boolean {
   return Date.parse(block.endsAt) <= Date.now()
 }
-function displayDate(date: string): string {
-  return new Intl.DateTimeFormat('es-CO', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(`${date}T12:00:00Z`))
-}
+const displayDate = displayCivilDate
 const blockPreview = computed(() =>
   createStartDate.value && createEndDate.value
     ? `${displayDate(createStartDate.value)} · ${createStartTime.value || '—'} → ${displayDate(createEndDate.value)} · ${createEndTime.value || '—'}`
@@ -423,6 +419,74 @@ async function onDeleteSeries(item: TimeBlockSeries) {
     action: { label: 'Reintentar', icon: 'retry', run: () => void onDeleteSeries(item) },
   })
 }
+
+// --- Series por fechas, edición y excepciones (#100) ---------------------
+
+const isDateListOpen = ref(false)
+const editingSeries = ref<TimeBlockSeries | null>(null)
+const isEditOpen = ref(false)
+const managingSeriesId = ref<string | null>(null)
+const isInstancesOpen = ref(false)
+const managingSeries = computed(
+  () => series.value.find((item) => item.id === managingSeriesId.value) ?? null,
+)
+
+function onDateListCreated(created: TimeBlockSeries) {
+  requestToken++
+  series.value.push(created)
+}
+
+function openEditSeries(item: TimeBlockSeries) {
+  editingSeries.value = item
+  isEditOpen.value = true
+}
+
+function onSeriesUpdated(payload: {
+  originalId: string
+  series: TimeBlockSeries
+  splitFrom: string | null
+}) {
+  requestToken++
+  if (payload.splitFrom === null) {
+    series.value = series.value.map((item) =>
+      item.id === payload.originalId ? payload.series : item,
+    )
+    return
+  }
+  // «Esta y las siguientes»: la API recorta la original el día anterior al
+  // corte y responde la serie nueva; la lista refleja las dos.
+  const until = shiftCivilDate(payload.splitFrom, -1)
+  series.value = series.value
+    .map((item) => (item.id === payload.originalId ? { ...item, effectiveUntil: until } : item))
+    .concat(payload.series)
+}
+
+function openInstances(item: TimeBlockSeries) {
+  managingSeriesId.value = item.id
+  isInstancesOpen.value = true
+}
+
+function onSeriesChanged(next: TimeBlockSeries) {
+  requestToken++
+  series.value = series.value.map((item) => (item.id === next.id ? next : item))
+}
+
+function seriesName(item: TimeBlockSeries): string {
+  return `${blockTypeLabel(item.blockType)} ${item.isoWeekday ? weekdayLabel(item.isoWeekday) : 'por fechas'}`
+}
+
+function seriesCounts(item: TimeBlockSeries): string {
+  const parts: string[] = []
+  if (item.recurrenceKind === 'date_list') {
+    parts.push(item.dates.length === 1 ? '1 fecha' : `${item.dates.length} fechas`)
+  }
+  if (item.exceptions.length > 0) {
+    parts.push(
+      item.exceptions.length === 1 ? '1 excepción' : `${item.exceptions.length} excepciones`,
+    )
+  }
+  return parts.join(' · ')
+}
 </script>
 
 <template>
@@ -447,6 +511,12 @@ async function onDeleteSeries(item: TimeBlockSeries) {
           :disabled="!barbershopTimezone || seriesStatus !== 'ready'"
           @click="openCreateSeriesDialog"
           >Agregar serie semanal</BaseButton
+        >
+        <BaseButton
+          variant="secondary"
+          :disabled="!barbershopTimezone || seriesStatus !== 'ready'"
+          @click="isDateListOpen = true"
+          >Agregar bloqueo por fechas</BaseButton
         >
       </div>
     </header>
@@ -602,18 +672,37 @@ async function onDeleteSeries(item: TimeBlockSeries) {
                 ><template v-else> · Sin fecha de fin</template>
               </p>
               <p v-if="item.reason" class="blocks-panel__reason">{{ item.reason }}</p>
+              <p v-if="seriesCounts(item)" class="blocks-panel__validity">
+                {{ seriesCounts(item) }}
+              </p>
               <div class="blocks-panel__record-footer">
                 <span>{{
                   item.recurrenceKind === 'weekly' ? 'Se repite cada semana' : 'Fechas explícitas'
-                }}</span
-                ><BaseButton
-                  variant="secondary"
-                  :aria-label="`Retirar serie ${blockTypeLabel(item.blockType)} ${item.isoWeekday ? weekdayLabel(item.isoWeekday) : 'por fechas'}`"
-                  :loading="pendingDeleteSeriesIds.has(item.id)"
-                  :disabled="pendingDeleteSeriesIds.has(item.id)"
-                  @click="onDeleteSeries(item)"
-                  >Retirar</BaseButton
-                >
+                }}</span>
+                <div class="blocks-panel__record-actions">
+                  <BaseButton
+                    variant="secondary"
+                    :aria-label="`${item.recurrenceKind === 'date_list' ? 'Fechas y excepciones' : 'Excepciones'} de la serie ${seriesName(item)}`"
+                    @click="openInstances(item)"
+                    >{{
+                      item.recurrenceKind === 'date_list' ? 'Fechas' : 'Excepciones'
+                    }}</BaseButton
+                  >
+                  <BaseButton
+                    variant="secondary"
+                    :aria-label="`Editar serie ${seriesName(item)}`"
+                    @click="openEditSeries(item)"
+                    >Editar</BaseButton
+                  >
+                  <BaseButton
+                    variant="secondary"
+                    :aria-label="`Retirar serie ${seriesName(item)}`"
+                    :loading="pendingDeleteSeriesIds.has(item.id)"
+                    :disabled="pendingDeleteSeriesIds.has(item.id)"
+                    @click="onDeleteSeries(item)"
+                    >Retirar</BaseButton
+                  >
+                </div>
               </div>
             </li>
           </TransitionGroup>
@@ -866,6 +955,31 @@ async function onDeleteSeries(item: TimeBlockSeries) {
         </div></template
       >
     </BaseDialog>
+
+    <SeriesFormDialog
+      v-model="isDateListOpen"
+      mode="create-dates"
+      :barber-id="barberId"
+      :barber-name="barberName"
+      :today="todayCivilDate"
+      @created="onDateListCreated"
+    />
+    <SeriesFormDialog
+      v-model="isEditOpen"
+      mode="edit"
+      :barber-id="barberId"
+      :barber-name="barberName"
+      :series="editingSeries"
+      :today="todayCivilDate"
+      @updated="onSeriesUpdated"
+    />
+    <SeriesInstancesDialog
+      v-model="isInstancesOpen"
+      :barber-id="barberId"
+      :series="managingSeries"
+      :today="todayCivilDate"
+      @update:series="onSeriesChanged"
+    />
   </section>
 </template>
 
@@ -1025,6 +1139,7 @@ async function onDeleteSeries(item: TimeBlockSeries) {
 }
 .blocks-panel__record-footer {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -1034,6 +1149,12 @@ async function onDeleteSeries(item: TimeBlockSeries) {
 }
 .blocks-panel__record-footer > span {
   font-size: var(--font-size-caption);
+}
+.blocks-panel__record-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
 }
 .blocks-panel__empty,
 .blocks-panel__state {
@@ -1265,6 +1386,13 @@ async function onDeleteSeries(item: TimeBlockSeries) {
   background: transparent;
   border-color: var(--color-brand-accent-surface);
   color: var(--color-on-strong);
+}
+/* El hover/active base del botón secundario usa superficies claras: sobre la
+   tinta del diálogo dejaban texto claro sobre fondo claro (contraste 1,13). */
+.block-dialog .base-button--secondary:hover:not(:disabled):not(.base-button--loading),
+.block-dialog .base-button--secondary:active:not(:disabled):not(.base-button--loading) {
+  background: var(--color-field-strong);
+  border-color: var(--color-brand-accent-surface);
 }
 .block-dialog .base-dialog__close {
   color: var(--color-on-strong);

@@ -3,10 +3,9 @@
 // respuestas reales de time-blocks/time-block-series a los outcomes
 // discriminados que la página consume; ningún componente ve `Problem`,
 // `status` HTTP crudo ni cabeceras. Cubre el alta/listado/retiro de
-// bloqueos puntuales y series recurrentes; los sub-recursos de fechas
-// explícitas/excepciones y la edición de series (scope whole/
-// this_and_following) ya existen en el backend pero todavía no tienen
-// pantalla propia (ver prompt HU-042, seguimiento pendiente).
+// bloqueos puntuales y series recurrentes (weekly y date_list), los
+// sub-recursos de fechas explícitas y excepciones, y la edición de series
+// por alcance (whole / this_and_following).
 import { httpClient } from '@/shared/api/httpClient'
 import type {
   BlockType,
@@ -22,6 +21,8 @@ import type {
   DeleteTimeBlockSeriesOutcome,
   FetchTimeBlockSeriesOutcome,
   FetchTimeBlocksOutcome,
+  SeriesChildOutcome,
+  UpdateTimeBlockSeriesOutcome,
 } from '../model/blockOutcome'
 
 // Cada página conserva el máximo del contrato; la vista ofrece cargar las siguientes.
@@ -169,6 +170,174 @@ export async function createTimeBlockSeries(
       default:
         return { kind: 'unexpected-error' }
     }
+  } catch {
+    return { kind: 'network-error' }
+  }
+}
+
+export interface DateListSeriesInput {
+  blockType: BlockType
+  startsTime: string
+  durationMinutes: number
+  effectiveFrom: string
+  effectiveUntil: string | null
+  reason: string | null
+  explicitDates: string[]
+}
+
+// Serie por fechas explícitas (RN-BLQ-01: «bloqueo de varios días»): el
+// contrato admite crear la serie con todas sus fechas en una sola operación.
+export async function createDateListSeries(
+  barberId: string,
+  input: DateListSeriesInput,
+  idempotencyKey: string,
+): Promise<CreateTimeBlockSeriesOutcome> {
+  try {
+    const { data, response } = await httpClient.POST(
+      '/private/barbers/{barberId}/time-block-series',
+      {
+        params: { path: { barberId }, header: { 'Idempotency-Key': idempotencyKey } },
+        body: { recurrenceKind: 'date_list', ...input },
+      },
+    )
+    if (response.ok && data) {
+      return { kind: 'success', series: toSeries(data) }
+    }
+    switch (response.status) {
+      case 404:
+        return { kind: 'not-found' }
+      case 409:
+        return { kind: 'idempotency-conflict' }
+      case 422:
+        return { kind: 'validation-error' }
+      default:
+        return { kind: 'unexpected-error' }
+    }
+  } catch {
+    return { kind: 'network-error' }
+  }
+}
+
+export interface UpdateSeriesInput {
+  blockType: BlockType
+  startsTime: string
+  durationMinutes: number
+  effectiveFrom: string
+  effectiveUntil: string | null
+  reason: string | null
+}
+
+// scope=whole reemplaza la cabecera; scope=this_and_following (solo weekly)
+// recorta la serie en effectiveDate-1 y responde la serie NUEVA, que la
+// pantalla agrega junto a la original ya recortada.
+export async function updateTimeBlockSeries(
+  barberId: string,
+  seriesId: string,
+  input: UpdateSeriesInput,
+  split: { effectiveDate: string } | null,
+): Promise<UpdateTimeBlockSeriesOutcome> {
+  try {
+    const { data, response } = await httpClient.PATCH(
+      '/private/barbers/{barberId}/time-block-series/{seriesId}',
+      {
+        params: { path: { barberId, seriesId } },
+        body: split
+          ? { scope: 'this_and_following', effectiveDate: split.effectiveDate, ...input }
+          : { scope: 'whole', ...input },
+      },
+    )
+    if (response.ok && data) {
+      return { kind: 'success', series: toSeries(data) }
+    }
+    switch (response.status) {
+      case 404:
+        return { kind: 'not-found' }
+      case 422:
+        return { kind: 'validation-error' }
+      default:
+        return { kind: 'unexpected-error' }
+    }
+  } catch {
+    return { kind: 'network-error' }
+  }
+}
+
+// Fechas explícitas y excepciones no usan protocolo de idempotencia: un
+// duplicado responde 409 de forma determinista y no crea nada.
+function toChildOutcome(status: number, ok: boolean): SeriesChildOutcome {
+  if (ok) return { kind: 'success' }
+  switch (status) {
+    case 404:
+      return { kind: 'not-found' }
+    case 409:
+      return { kind: 'duplicate' }
+    case 422:
+      return { kind: 'validation-error' }
+    default:
+      return { kind: 'unexpected-error' }
+  }
+}
+
+export async function addSeriesDate(
+  barberId: string,
+  seriesId: string,
+  blockDate: string,
+): Promise<SeriesChildOutcome> {
+  try {
+    const { response } = await httpClient.POST(
+      '/private/barbers/{barberId}/time-block-series/{seriesId}/dates',
+      { params: { path: { barberId, seriesId } }, body: { blockDate } },
+    )
+    return toChildOutcome(response.status, response.ok)
+  } catch {
+    return { kind: 'network-error' }
+  }
+}
+
+export async function removeSeriesDate(
+  barberId: string,
+  seriesId: string,
+  blockDate: string,
+): Promise<SeriesChildOutcome> {
+  try {
+    const { response } = await httpClient.DELETE(
+      '/private/barbers/{barberId}/time-block-series/{seriesId}/dates/{blockDate}',
+      { params: { path: { barberId, seriesId, blockDate } } },
+    )
+    return toChildOutcome(response.status, response.ok)
+  } catch {
+    return { kind: 'network-error' }
+  }
+}
+
+export async function addSeriesException(
+  barberId: string,
+  seriesId: string,
+  excludedDate: string,
+  reason: string | null,
+): Promise<SeriesChildOutcome> {
+  try {
+    const { response } = await httpClient.POST(
+      '/private/barbers/{barberId}/time-block-series/{seriesId}/exceptions',
+      { params: { path: { barberId, seriesId } }, body: { excludedDate, reason } },
+    )
+    return toChildOutcome(response.status, response.ok)
+  } catch {
+    return { kind: 'network-error' }
+  }
+}
+
+export async function removeSeriesException(
+  barberId: string,
+  seriesId: string,
+  excludedDate: string,
+): Promise<SeriesChildOutcome> {
+  try {
+    const { response } = await httpClient.DELETE(
+      '/private/barbers/{barberId}/time-block-series/{seriesId}/exceptions/{excludedDate}',
+      { params: { path: { barberId, seriesId, excludedDate } } },
+    )
+    return toChildOutcome(response.status, response.ok)
   } catch {
     return { kind: 'network-error' }
   }

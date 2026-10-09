@@ -1,0 +1,103 @@
+/* Formularios de los diálogos de series de bloqueo (HU-042, #100): misma
+   gramática que los diálogos de BarberBlocksPanel (DEC-105). El tema oscuro
+   del contenedor lo aporta `.block-dialog`, definido por el panel. */
+.block-form {
+  display: grid;
+  gap: 22px;
+}
+.block-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.block-form__row > * {
+  min-width: 0;
+}
+.block-form__date-field {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+}
+.block-form__date-field > label {
+  color: var(--color-on-strong-muted);
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+  line-height: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.block-form__date-field > label span {
+  color: var(--color-danger-on-strong);
+}
+.block-form__date-field :deep(.agenda-date-picker__trigger) {
+  min-height: 44px;
+}
+.block-form fieldset {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  margin: 0;
+  display: grid;
+  gap: 16px;
+}
+.block-form legend {
+  color: var(--color-brand-accent-surface);
+  font-size: var(--font-size-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 14px;
+}
+.block-form__summary {
+  border-left: 2px solid var(--color-brand-accent-surface);
+  background: var(--color-field-strong);
+  padding: 14px 16px;
+}
+.block-form__summary p {
+  font-size: var(--font-size-body-sm);
+  line-height: 1.7;
+  margin: 8px 0 0;
+}
+.block-form__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.block-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.block-chips li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-field-strong-border);
+  font-size: var(--font-size-body-sm);
+  overflow-wrap: anywhere;
+}
+.block-chips small {
+  display: block;
+  color: var(--color-on-strong-muted);
+  font-size: var(--font-size-caption);
+}
+.block-chips__empty {
+  margin: 0;
+  padding: 14px;
+  border: 1px dashed var(--color-field-strong-border);
+  color: var(--color-on-strong-muted);
+  font-size: var(--font-size-body-sm);
+}
+@media (max-width: 380px) {
+  .block-form__row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .block-form__footer :deep(.base-button) {
+    flex: 1;
+  }
+}
