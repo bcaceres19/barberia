@@ -19,6 +19,6 @@ export { loadWorkspaceBrand } from './model/workspaceBrand'
 // mecanismo de composición, sin agrupar visualmente: NavItem no modela
 // jerarquía todavía).
 export const settingsNavItems: NavItem[] = [
-  { to: { name: 'configuracion-barberia' }, label: 'Configuración' },
   { to: { name: 'configuracion-reserva-publica' }, label: 'Reserva pública' },
+  { to: { name: 'configuracion-barberia' }, label: 'Configuración' },
 ]

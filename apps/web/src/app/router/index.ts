@@ -65,7 +65,7 @@ const routes: RouteRecordRaw[] = [
     [
       // Orden de los 5 destinos P0 del dock (especificacion-frontend-nava.md
       // §5.1): Agenda (entrada base de AppNav) · Servicios · Barberos ·
-      // Horarios · Configuración. barberServicesNavItems aporta un sexto
+      // Horarios · Configuración (siempre última). barberServicesNavItems aporta un sexto
       // ítem temporal ("Servicios por barbero", ver su propio módulo) hasta
       // que la Fase 5 lo fusione dentro de "Servicios"; agendaNavItems
       // aporta un arreglo vacío desde la Fase 2 (issue #135, "Nuevo turno"
@@ -74,9 +74,10 @@ const routes: RouteRecordRaw[] = [
       ...catalogNavItems,
       ...staffNavItems,
       ...schedulesNavItems,
-      ...settingsNavItems,
       ...barberServicesNavItems,
       ...agendaNavItems,
+      // Configuración siempre al final: es lo que menos se usa a diario.
+      ...settingsNavItems,
     ],
   ),
 ]
