@@ -32,6 +32,10 @@ type fakeRepository struct {
 	putPhotoFn    func(barbershopID, barberID string, photo staff.Photo) (staff.PhotoResult, error)
 	getPhotoFn    func(barbershopID, barberID string) (staff.StoredPhoto, bool, error)
 	deletePhotoFn func(barbershopID, barberID string) (bool, error)
+
+	getLinkedFn func(barbershopID, staffUserID string) (staff.Barber, bool, error)
+	linkFn      func(barbershopID, staffUserID, barberID string) (staff.LinkResult, error)
+	unlinkFn    func(barbershopID, staffUserID string) (string, error)
 }
 
 func (f *fakeRepository) List(_ context.Context, barbershopID string, cursor *staff.Cursor, limit int) (staff.ListResult, error) {
@@ -60,6 +64,18 @@ func (f *fakeRepository) GetPhoto(_ context.Context, barbershopID, barberID stri
 
 func (f *fakeRepository) DeletePhoto(_ context.Context, barbershopID, barberID string) (bool, error) {
 	return f.deletePhotoFn(barbershopID, barberID)
+}
+
+func (f *fakeRepository) GetLinked(_ context.Context, barbershopID, staffUserID string) (staff.Barber, bool, error) {
+	return f.getLinkedFn(barbershopID, staffUserID)
+}
+
+func (f *fakeRepository) Link(_ context.Context, barbershopID, staffUserID, barberID string) (staff.LinkResult, error) {
+	return f.linkFn(barbershopID, staffUserID, barberID)
+}
+
+func (f *fakeRepository) Unlink(_ context.Context, barbershopID, staffUserID string) (string, error) {
+	return f.unlinkFn(barbershopID, staffUserID)
 }
 
 var _ staff.Repository = (*fakeRepository)(nil)

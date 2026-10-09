@@ -45,3 +45,22 @@ export type RemoveBarberPhotoOutcome =
   | { kind: 'not-found' }
   | { kind: 'network-error' }
   | { kind: 'unexpected-error' }
+
+// Vínculo del usuario con su barbero (DEC-100). `none` en la lectura no es un
+// error: el vínculo es opcional (el dueño que no atiende clientes no tiene
+// barbero). `taken` es el 409: ese barbero ya pertenece a otro usuario.
+export type FetchMyBarberOutcome =
+  | { kind: 'linked'; barber: Barber }
+  | { kind: 'none' }
+  | { kind: 'network-error' }
+  | { kind: 'unexpected-error' }
+
+export type LinkMyBarberOutcome =
+  | { kind: 'success'; barber: Barber }
+  | { kind: 'taken' }
+  | { kind: 'not-found' }
+  | { kind: 'network-error' }
+  | { kind: 'unexpected-error' }
+
+export type UnlinkMyBarberOutcome =
+  { kind: 'success' } | { kind: 'network-error' } | { kind: 'unexpected-error' }

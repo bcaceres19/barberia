@@ -27,8 +27,11 @@ import {
   barberPhotoUrl,
   createBarber,
   fetchBarberPage,
+  fetchMyBarber,
+  linkMyBarber,
   removeBarberPhoto,
   renameBarber,
+  unlinkMyBarber,
   uploadBarberPhoto,
 } from '../api/staffApi'
 import BarberPhotoField from '../components/BarberPhotoField.vue'
@@ -221,6 +224,7 @@ watch(
 )
 onMounted(() => {
   void load(1, true)
+  void loadMyBarber()
   window.addEventListener('resize', scheduleFit)
 })
 onUnmounted(() => {
@@ -330,7 +334,58 @@ const detailTarget = ref<Barber | null>(null)
 
 function openDetailDialog(barber: Barber) {
   detailTarget.value = barber
+  linkError.value = null
   isDetailOpen.value = true
+}
+
+// --- Vínculo con mi usuario (DEC-100) ---------------------------------------
+
+// Cuál barbero es el usuario autenticado, o null si ninguno (el vínculo es
+// opcional). Se lee una vez al montar; si falla, la ficha simplemente no ofrece
+// la acción en vez de bloquear la pantalla: el equipo se consulta igual.
+const myBarberId = ref<string | null>(null)
+const myBarberKnown = ref(false)
+const linkStatus = ref<'idle' | 'saving'>('idle')
+const linkError = ref<string | null>(null)
+
+async function loadMyBarber() {
+  const outcome = await fetchMyBarber()
+  if (outcome.kind === 'linked') myBarberId.value = outcome.barber.id
+  else if (outcome.kind === 'none') myBarberId.value = null
+  myBarberKnown.value = outcome.kind === 'linked' || outcome.kind === 'none'
+}
+
+const detailIsMine = computed(
+  () => detailTarget.value !== null && detailTarget.value.id === myBarberId.value,
+)
+
+async function onToggleMine() {
+  const barber = detailTarget.value
+  if (!barber || linkStatus.value === 'saving') return
+  linkStatus.value = 'saving'
+  linkError.value = null
+  if (detailIsMine.value) {
+    const outcome = await unlinkMyBarber()
+    if (outcome.kind === 'success') {
+      myBarberId.value = null
+      toast.success(`Ya no eres ${barber.fullName} en NAVA`)
+    } else {
+      linkError.value = 'No pudimos quitar el vínculo. Inténtalo de nuevo.'
+    }
+  } else {
+    const outcome = await linkMyBarber(barber.id)
+    if (outcome.kind === 'success') {
+      myBarberId.value = barber.id
+      toast.success(`Ahora eres ${barber.fullName} en NAVA`)
+    } else if (outcome.kind === 'taken') {
+      linkError.value = `Este ${v.value.professional} ya está vinculado a otro usuario.`
+    } else if (outcome.kind === 'not-found') {
+      linkError.value = `Este ${v.value.professional} ya no existe.`
+    } else {
+      linkError.value = 'No pudimos guardar el vínculo. Inténtalo de nuevo.'
+    }
+  }
+  linkStatus.value = 'idle'
 }
 
 function onDetailEdit() {
@@ -845,6 +900,27 @@ async function onSubmitRename() {
             <dd>{{ hasPhoto(detailTarget) ? 'Con foto' : 'Sin foto' }}</dd>
           </div>
         </dl>
+        <!-- Vínculo con mi usuario (DEC-100): el control vive DENTRO del área con
+             scroll, junto al dato que cambia. Así la ficha no pierde altura en el
+             pie y, si en una pantalla baja se vuelve desplazable, la región ya
+             contiene un control enfocable (axe: scrollable-region-focusable). -->
+        <div v-if="myBarberKnown" class="staff-page__link" :style="{ '--row-index': 3 }">
+          <div class="staff-page__link-text">
+            <span class="staff-page__link-label">Tu usuario</span>
+            <span class="staff-page__link-state">{{
+              detailIsMine ? 'Eres tú' : 'Sin vincular'
+            }}</span>
+          </div>
+          <BaseButton
+            type="button"
+            variant="secondary"
+            :disabled="linkStatus === 'saving'"
+            @click="onToggleMine"
+          >
+            {{ detailIsMine ? 'Ya no soy yo' : 'Este soy yo' }}
+          </BaseButton>
+        </div>
+        <BaseAlert v-if="linkError" variant="danger" role="alert">{{ linkError }}</BaseAlert>
       </div>
       <!-- Pie fuera del área con scroll: "Cerrar"/"Editar" nunca quedan fuera de
            la pantalla. -->
@@ -1831,6 +1907,45 @@ async function onSubmitRename() {
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
+}
+
+.staff-page__link {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  background-color: var(--color-field-strong);
+  border: var(--border-width-normal) solid var(--color-field-strong-border);
+  border-radius: var(--radius-sm);
+  animation: staff-detail-enter 380ms var(--motion-easing-standard) both;
+  animation-delay: calc(120ms + var(--row-index, 0) * 70ms);
+}
+
+.staff-page__link-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.staff-page__link-label {
+  color: var(--color-on-strong-muted);
+  font-size: var(--font-size-caption);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.staff-page__link-state {
+  font-family: var(--font-display);
+  font-size: var(--font-size-h3);
+  line-height: 1.2;
+}
+
+.staff-page__detail > .base-alert {
+  margin-top: var(--space-2);
 }
 
 .staff-page__detail-footer {

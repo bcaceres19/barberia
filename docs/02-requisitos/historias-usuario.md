@@ -1,9 +1,9 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.52"
+version: "1.53"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-10-08"
+ultima_actualizacion: "2026-10-09"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/reglas-negocio.md"
@@ -728,7 +728,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | --- | --- |
 | Función | `F-CONF-02` (registro y listado; servicios y horario se completan en historias posteriores) |
 | Reglas | `RN-TEN-01` |
-| Decisiones | `DEC-019`, `DEC-024`, `DEC-033`, `DEC-037`, `DEC-078` |
+| Decisiones | `DEC-019`, `DEC-024`, `DEC-033`, `DEC-037`, `DEC-078`, `DEC-100` (vínculo opcional, issue [#322](https://github.com/bcaceres19/barberia/issues/322)) |
 | Actor | Barbero autenticado |
 | Depende de | `HU-020` y criterio de salida de B0 |
 | Bloquea | Historias de servicios por barbero, B2 y la selección pública de barbero en B4 |
@@ -745,11 +745,12 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 - La barbería con una sola persona conserva una fila `barber`; no se infiere el barbero desde `barbershop` ni desde la sesión.
 - Pantalla “Barberos” en el módulo `staff`, con lista, estado vacío, formulario accesible para añadir y edición del nombre.
 - Contrato OpenAPI privado, módulo Go `staff`, migración Atlas, RLS, cliente tipado y componentes Vue.
+- Vínculo explícito y opcional entre el usuario autenticado y su barbero (`DEC-100`, issue #322): `barber.staff_user_id` nullable, único por barbería en ambos sentidos, que el propio usuario selecciona, cambia o quita desde la ficha del barbero («Este soy yo»), y un aviso interno de «vínculo liberado» para que otros módulos reaccionen. Lo necesita la integración con Google Calendar (`DEC-099`).
 
 **Alcance excluido**
 
 - Eliminar, desactivar o reactivar barberos: el efecto sobre citas futuras no está definido en el alcance confirmado y no se inventa en esta historia.
-- Crear credenciales, invitar usuarios, asignar roles o enlazar automáticamente `staff_user` con `barber`.
+- Crear credenciales, invitar usuarios, asignar roles o enlazar `staff_user` con `barber` de forma automática o por inferencia (nombre, correo, teléfono) o por una persona distinta del propio usuario.
 - Asignar servicios, configurar horarios o calcular disponibilidad; llegan en las historias posteriores de B1 y B2.
 - Selección pública de barbero y agenda por barbero, que pertenecen a B4 y B3 respectivamente.
 - Datos personales adicionales al nombre necesario para mostrar al profesional.
@@ -764,8 +765,13 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | `CA-021-04` | Dado un barbero existente de la barbería activa, cuando se modifica su nombre con un valor válido, entonces la lista muestra el nuevo nombre sin duplicar el recurso. |
 | `CA-021-05` | Dado el identificador de un barbero de otra barbería, cuando se intenta consultarlo o editarlo, entonces se responde `404`; cuando se lista el equipo, nunca aparece en el resultado. |
 | `CA-021-06` | La base de datos rechaza insertar o relacionar un `barber` con un `barbershop_id` distinto del contexto de la transacción, incluso mediante acceso directo con el rol de aplicación. |
-| `CA-021-07` | El API no expone operaciones de borrado, desactivación, credenciales, servicios ni horarios para esta historia; el contrato y el cliente generado contienen únicamente lectura, alta y edición del nombre. |
+| `CA-021-07` | El API no expone operaciones de borrado, desactivación, credenciales, servicios ni horarios para esta historia; el contrato y el cliente generado contienen únicamente lectura, alta y edición del nombre y, por `DEC-100`, las tres operaciones del vínculo propio (`CA-021-09` a `CA-021-13`). |
 | `CA-021-08` | La pantalla presenta estados de carga, vacío, error recuperable y éxito; añadir o editar es operable con teclado, mantiene objetivos táctiles de 44 px y funciona sin pérdida a 320, 360, 768 y 1280 px. |
+| `CA-021-09` | Dado un usuario autenticado, cuando declara ser un barbero libre de su barbería, entonces `GET /private/me/barber` devuelve ese barbero; repetir la misma selección deja el mismo estado. La solicitud nunca lleva un identificador de usuario: actúa siempre sobre la sesión. |
+| `CA-021-10` | Dado un usuario ya vinculado, cuando elige otro barbero libre, entonces el vínculo se mueve en una sola operación y el barbero anterior queda libre; un usuario es como máximo un barbero y un barbero tiene como máximo un usuario, también ante solicitudes simultáneas. |
+| `CA-021-11` | Dado un barbero vinculado a otro usuario, cuando se intenta tomarlo, entonces se responde `409` sin revelar quién lo tiene y el vínculo anterior del solicitante se conserva. |
+| `CA-021-12` | Dado un usuario vinculado, cuando quita su vínculo (o no tenía ninguno), entonces se responde `204` y el barbero, sus citas y su agenda no cambian; sin vínculo, `GET /private/me/barber` responde `404`. |
+| `CA-021-13` | Dado un barbero de otra barbería o inexistente, cuando se intenta vincular, entonces se responde el mismo `404` que para cualquier operación del barbero; la base rechaza vincular un usuario de otra barbería (FK compuesta) y ninguna respuesta expone `staffUserId`. |
 
 **Pruebas obligatorias**
 

@@ -451,3 +451,141 @@ func (r *Repository) ListPage(ctx context.Context, shop string, page, size int) 
 	})
 	return result, err
 }
+
+// GetLinked implementa staff.Repository.GetLinked.
+func (r *Repository) GetLinked(ctx context.Context, barbershopID, staffUserID string) (staff.Barber, bool, error) {
+	var b staff.Barber
+	found := false
+	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
+		err := q.QueryRow(ctx,
+			`SELECT `+barberColumns+`
+			   FROM barber b `+barberPhotoJoin+`
+			  WHERE b.barbershop_id = $1 AND b.staff_user_id = $2`,
+			barbershopID, staffUserID,
+		).Scan(&b.ID, &b.FullName, &b.CreatedAt, &b.UpdatedAt, &b.PhotoUpdatedAt)
+		switch {
+		case err == nil:
+			found = true
+		case errors.Is(err, pgx.ErrNoRows):
+			// found queda false: el usuario no tiene barbero.
+		default:
+			return fmt.Errorf("select linked barber: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return staff.Barber{}, false, fmt.Errorf("staff/postgres: get linked barber: %w", err)
+	}
+	return b, found, nil
+}
+
+// Link implementa staff.Repository.Link. El bloqueo consultivo por usuario
+// serializa dos solicitudes simultáneas del MISMO usuario (así la unicidad
+// parcial nunca llega a violarse por una carrera). Entre usuarios distintos
+// decide el UPDATE condicional `staff_user_id IS NULL`: es atómico, así que de
+// dos usuarios que piden el mismo barbero libre solo uno lo obtiene.
+func (r *Repository) Link(ctx context.Context, barbershopID, staffUserID, barberID string) (staff.LinkResult, error) {
+	var result staff.LinkResult
+	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
+		if _, err := q.Exec(ctx,
+			`SELECT pg_advisory_xact_lock(hashtextextended('barber_link:' || $1::text, 0))`,
+			staffUserID,
+		); err != nil {
+			return fmt.Errorf("lock link: %w", err)
+		}
+
+		var currentOwner *string
+		err := q.QueryRow(ctx,
+			`SELECT staff_user_id::text FROM barber WHERE id = $1 AND barbershop_id = $2`,
+			barberID, barbershopID,
+		).Scan(&currentOwner)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil // Found queda false: inexistente o de otra barbería.
+		}
+		if err != nil {
+			return fmt.Errorf("select barber owner: %w", err)
+		}
+		result.Found = true
+
+		switch {
+		case currentOwner != nil && *currentOwner == staffUserID:
+			// Ya es suyo: idempotente, nada que cambiar ni liberar.
+		case currentOwner != nil:
+			result.Taken = true
+			return nil
+		default:
+			var released *string
+			err := q.QueryRow(ctx,
+				`UPDATE barber SET staff_user_id = NULL
+				  WHERE barbershop_id = $1 AND staff_user_id = $2
+				  RETURNING id::text`,
+				barbershopID, staffUserID,
+			).Scan(&released)
+			if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+				return fmt.Errorf("release previous barber: %w", err)
+			}
+			if released != nil {
+				result.ReleasedBarberID = *released
+			}
+
+			tag, err := q.Exec(ctx,
+				`UPDATE barber SET staff_user_id = $3
+				  WHERE id = $1 AND barbershop_id = $2 AND staff_user_id IS NULL`,
+				barberID, barbershopID, staffUserID,
+			)
+			if err != nil {
+				return fmt.Errorf("take barber: %w", err)
+			}
+			if tag.RowsAffected() == 0 {
+				// Otro usuario lo tomó entre la lectura y el UPDATE: se deshace
+				// la liberación para conservar el vínculo anterior del solicitante.
+				result.Taken = true
+				result.ReleasedBarberID = ""
+				return errLinkTaken
+			}
+		}
+
+		return selectBarber(ctx, q, barbershopID, barberID).
+			Scan(&result.Barber.ID, &result.Barber.FullName, &result.Barber.CreatedAt,
+				&result.Barber.UpdatedAt, &result.Barber.PhotoUpdatedAt)
+	})
+	if errors.Is(err, errLinkTaken) {
+		return staff.LinkResult{Found: true, Taken: true}, nil
+	}
+	if err != nil {
+		return staff.LinkResult{}, fmt.Errorf("staff/postgres: link barber: %w", err)
+	}
+	return result, nil
+}
+
+// errLinkTaken aborta (y por tanto revierte) la transacción de Link cuando
+// otro usuario ganó la carrera por el barbero.
+var errLinkTaken = errors.New("staff/postgres: barbero tomado por otro usuario")
+
+// Unlink implementa staff.Repository.Unlink.
+func (r *Repository) Unlink(ctx context.Context, barbershopID, staffUserID string) (string, error) {
+	released := ""
+	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
+		var id *string
+		err := q.QueryRow(ctx,
+			`UPDATE barber SET staff_user_id = NULL
+			  WHERE barbershop_id = $1 AND staff_user_id = $2
+			  RETURNING id::text`,
+			barbershopID, staffUserID,
+		).Scan(&id)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil
+		}
+		if err != nil {
+			return fmt.Errorf("unlink barber: %w", err)
+		}
+		if id != nil {
+			released = *id
+		}
+		return nil
+	})
+	if err != nil {
+		return "", fmt.Errorf("staff/postgres: unlink barber: %w", err)
+	}
+	return released, nil
+}

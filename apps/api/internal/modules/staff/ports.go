@@ -105,6 +105,19 @@ type Repository interface {
 	// barbero no existe o es de otra barbería; quitar una fotografía que no
 	// existe es un éxito (idempotente).
 	DeletePhoto(ctx context.Context, barbershopID, barberID string) (found bool, err error)
+
+	// GetLinked lee el barbero vinculado al usuario (DEC-100). found=false
+	// cuando el usuario no tiene barbero.
+	GetLinked(ctx context.Context, barbershopID, staffUserID string) (barber Barber, found bool, err error)
+
+	// Link vincula al usuario con el barbero en UNA transacción: serializa las
+	// operaciones del mismo usuario, libera su barbero anterior y toma el
+	// nuevo solo si está libre o ya es suyo. Nunca pisa el vínculo de otro
+	// usuario (Taken) ni cruza barberías (Found=false).
+	Link(ctx context.Context, barbershopID, staffUserID, barberID string) (LinkResult, error)
+
+	// Unlink libera el barbero del usuario y devuelve su id ("" si no tenía).
+	Unlink(ctx context.Context, barbershopID, staffUserID string) (releasedBarberID string, err error)
 }
 
 // PageResult es el modo numerado de la tabla (DEC-107); cursor conserva ListResult.

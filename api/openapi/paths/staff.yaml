@@ -369,3 +369,86 @@
         $ref: '../components/responses/NotFoundProblem.yaml'
       "500":
         $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/me/barber:
+  get:
+    tags: [Staff]
+    summary: Consultar el barbero vinculado al usuario autenticado
+    description: >
+      Devuelve el barbero que el usuario autenticado declaró ser (`DEC-100`).
+      El vínculo es opcional: el dueño que no atiende clientes puede no tener
+      barbero y recibe `404`. Nunca expone la identidad de otro usuario.
+    operationId: getMyBarber
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-019, DEC-047, DEC-099, DEC-100]
+    responses:
+      "200":
+        $ref: '../components/responses/BarberSuccess.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  put:
+    tags: [Staff]
+    summary: Declarar cuál barbero es el usuario autenticado
+    description: >
+      Vincula al usuario autenticado con un barbero de la barbería activa
+      (`DEC-100`). Actúa siempre sobre el principal de la sesión y el cuerpo
+      nunca acepta un identificador de usuario, así que nadie asigna el vínculo
+      de otra persona. Si el usuario ya estaba vinculado a otro barbero, ese
+      vínculo se libera en la misma transacción. Es idempotente: repetir la
+      misma selección deja el mismo estado y responde `200`, por eso no lleva
+      `Idempotency-Key`. Un barbero ya vinculado a otro usuario responde `409`.
+      Un identificador inexistente o de otra barbería responde el mismo `404`
+      que el resto de operaciones del barbero (`CA-021-05`).
+    operationId: linkMyBarber
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-019, DEC-047, DEC-099, DEC-100]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/LinkMyBarberRequest.yaml'
+          examples:
+            vincular:
+              summary: Soy este barbero
+              value:
+                barberId: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+    responses:
+      "200":
+        $ref: '../components/responses/BarberUpdated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "409":
+        $ref: '../components/responses/MyBarberLinkConflictProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  delete:
+    tags: [Staff]
+    summary: Quitar el vínculo del usuario autenticado con su barbero
+    description: >
+      Libera el vínculo propio (`DEC-100`). Es idempotente: sin vínculo también
+      responde `204`. No borra ni desactiva al barbero (`DEC-047`) y no afecta
+      a sus citas.
+    operationId: unlinkMyBarber
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01]
+    x-decisions: [DEC-019, DEC-047, DEC-099, DEC-100]
+    responses:
+      "204":
+        $ref: '../components/responses/MyBarberUnlinked.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

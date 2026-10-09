@@ -7,12 +7,12 @@ target_agents:
   - "any"
 repository: "bcaceres19/barberia"
 base_branch: "main"
-primary_hu: null
+primary_hu: "HU-021"
 related_hu: []
 issue: "322"
 issue_url: "https://github.com/bcaceres19/barberia/issues/322"
 suggested_issue_title: "feat(barberos): vincular un barbero con su usuario del área privada"
-branch: null
+branch: "feat/322-vinculo-barbero-usuario"
 pr: null
 pr_url: null
 depends_on:

@@ -4,6 +4,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.32.0 · 2026-10-09
+
+### Agregado
+
+- `GET`, `PUT` y `DELETE /private/me/barber` (`getMyBarber`, `linkMyBarber`,
+  `unlinkMyBarber`), `DEC-100`, issue #322: el usuario autenticado consulta,
+  declara y quita cuál barbero es él. Actúa siempre sobre el principal de la
+  sesión y el cuerpo (`LinkMyBarberRequest`) solo lleva `barberId`, nunca un
+  identificador de usuario. `409` si el barbero ya pertenece a otro usuario.
+  Cambio compatible: operaciones nuevas; `BarberResponse` no cambia y sigue sin
+  exponer `staffUserId`.
+
 ## 0.31.0 · 2026-10-08
 
 ### Agregado

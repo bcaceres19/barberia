@@ -289,6 +289,14 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	putBarberPhotoHandler := staffhttpapi.NewPutBarberPhotoHandler(staffService)
 	getBarberPhotoHandler := staffhttpapi.NewGetBarberPhotoHandler(staffService)
 	deleteBarberPhotoHandler := staffhttpapi.NewDeleteBarberPhotoHandler(staffService)
+	// DEC-100: el usuario autenticado declara cuál barbero es (opcional). Actúa
+	// siempre sobre el principal de la sesión, nunca sobre otro usuario.
+	getMyBarberHandler := staffhttpapi.NewGetMyBarberHandler(staffService)
+	linkMyBarberHandler := staffhttpapi.NewLinkMyBarberHandler(staffService)
+	unlinkMyBarberHandler := staffhttpapi.NewUnlinkMyBarberHandler(staffService)
+	private.Get("/me/barber", getMyBarberHandler.ServeHTTP)
+	private.Put("/me/barber", linkMyBarberHandler.ServeHTTP)
+	private.Delete("/me/barber", unlinkMyBarberHandler.ServeHTTP)
 	private.Get("/barbers", listBarbersHandler.ServeHTTP)
 	private.Post("/barbers", createBarberHandler.ServeHTTP)
 	private.Get("/barbers/{barberId}", getBarberHandler.ServeHTTP)

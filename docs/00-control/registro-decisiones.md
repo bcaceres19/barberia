@@ -1,6 +1,6 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.48"
+version: "1.49"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-10-09"
@@ -547,6 +547,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** mantener el ciclo de vida completo y registrar una ampliación de alcance de `HU-021` ahora, descartada porque el propietario prefiere no comprometerse a ese alcance antes de necesitarlo.
 - **Documentos afectados:** `database/modelo-fisico-referencia.sql` (tabla `barber`), `02-requisitos/historias-usuario.md` (sin cambio, ya refleja este alcance).
 - **Fuente:** `docs/05-backend/revision-ddl-seguridad-2026-08-11.md`, hallazgo `DDL-BIZ-02`; aprobación explícita del propietario el 2026-08-11.
+- **Actualización (2026-10-09):** `DEC-100` levantó parcialmente la restricción sobre el vínculo con `staff_user`: existe `barber.staff_user_id` opcional, que solo el propio usuario establece (migración `20261009120000_add_barber_staff_user_link.sql`, issue [#322](https://github.com/bcaceres19/barberia/issues/322)). Borrado, desactivación y orden manual siguen fuera.
 
 ### DEC-048 · Segundo y tercer recordatorio
 

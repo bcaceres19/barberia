@@ -38,6 +38,11 @@ type staffPathsFile struct {
 		Get    operation `yaml:"get"`
 		Delete operation `yaml:"delete"`
 	} `yaml:"/private/barbers/{barberId}/photo"`
+	Me struct {
+		Get    operation `yaml:"get"`
+		Put    operation `yaml:"put"`
+		Delete operation `yaml:"delete"`
+	} `yaml:"/private/me/barber"`
 }
 
 func findRepoRoot(t *testing.T) string {
@@ -195,6 +200,24 @@ func TestContract_DeleteBarberPhotoOperation_MethodPathSecurityAndResponses(t *t
 	requireResponses(t, doc.Photo.Delete, "deleteBarberPhoto", []string{"204", "401", "404", "500"})
 }
 
+// DEC-100: el vínculo propio actúa sobre el principal de la sesión.
+func TestContract_MyBarberOperations_MethodPathSecurityAndResponses(t *testing.T) {
+	doc := loadYAML[staffPathsFile](t, "api/openapi/paths/staff.yaml")
+	requireResponses(t, doc.Me.Get, "getMyBarber", []string{"200", "401", "404", "500"})
+	requireResponses(t, doc.Me.Put, "linkMyBarber", []string{"200", "400", "401", "404", "409", "500"})
+	requireResponses(t, doc.Me.Delete, "unlinkMyBarber", []string{"204", "401", "500"})
+}
+
+func TestContract_LinkMyBarberRequestSchema_OnlyBarberID(t *testing.T) {
+	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/LinkMyBarberRequest.yaml")
+	requireProps(t, schema, []string{"barberId"})
+	for _, forbidden := range []string{"staffUserId", "userId", "barbershopId"} {
+		if _, ok := schema.Properties[forbidden]; ok {
+			t.Errorf("el vínculo propio nunca debe aceptar %q: nadie asigna el vínculo de otra persona", forbidden)
+		}
+	}
+}
+
 // TestContract_OpenAPIYAML_RegistersStaffPaths confirma que openapi.yaml
 // registra ambos paths bajo el mismo documento raíz que las demás
 // operaciones privadas, con la misma técnica de referencia JSON pointer.
@@ -209,6 +232,9 @@ func TestContract_OpenAPIYAML_RegistersStaffPaths(t *testing.T) {
 	}
 	if _, ok := doc.Paths["/private/barbers/{barberId}"]; !ok {
 		t.Fatal("openapi.yaml no registra paths./private/barbers/{barberId}")
+	}
+	if _, ok := doc.Paths["/private/me/barber"]; !ok {
+		t.Fatal("openapi.yaml no registra paths./private/me/barber")
 	}
 	if _, ok := doc.Paths["/private/barbers/{barberId}/photo"]; !ok {
 		t.Fatal("openapi.yaml no registra paths./private/barbers/{barberId}/photo")
