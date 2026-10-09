@@ -36,7 +36,9 @@ BEGIN
   SELECT string_agg(column_name, ', ') INTO v_offenders
   FROM information_schema.columns
   WHERE table_schema = 'public' AND table_name = 'barber'
-    AND column_name IN ('active', 'deleted_at', 'sort_order', 'staff_user_id', 'is_active');
+    -- `staff_user_id` salió de esta lista: DEC-100 (issue #322) levantó esa parte de DEC-047
+    -- con un vínculo opcional; lo cubre tests/barbero_vinculo_usuario.sql.
+    AND column_name IN ('active', 'deleted_at', 'sort_order', 'is_active');
   IF v_offenders IS NOT NULL THEN
     RAISE EXCEPTION 'DEC-047/CA-021-07: barber tiene columnas fuera de alcance: %', v_offenders;
   END IF;

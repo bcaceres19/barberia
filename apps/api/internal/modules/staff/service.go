@@ -13,7 +13,8 @@ import (
 // registrar y renombrar barberos de la barbería activa; y, por DEC-104, subir,
 // leer y quitar su fotografía opcional.
 type Service struct {
-	repo Repository
+	repo      Repository
+	observers []LinkObserver
 }
 
 // NewService construye el servicio.

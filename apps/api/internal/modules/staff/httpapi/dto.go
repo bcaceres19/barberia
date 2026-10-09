@@ -44,3 +44,11 @@ type CreateBarberRequest struct {
 type UpdateBarberRequest struct {
 	FullName string `json:"fullName"`
 }
+
+// LinkMyBarberRequest es el cuerpo de PUT /private/me/barber (DEC-100).
+// Cerrado y limitado a barberId: nunca lleva un staffUserId, porque el
+// usuario es siempre el principal de la sesión y nadie asigna el vínculo de
+// otra persona.
+type LinkMyBarberRequest struct {
+	BarberID string `json:"barberId"`
+}

@@ -30,6 +30,9 @@ const {
   uploadBarberPhoto,
   removeBarberPhoto,
   barberPhotoUrl,
+  fetchMyBarber,
+  linkMyBarber,
+  unlinkMyBarber,
 } = await import('../staffApi')
 
 function ok(body: unknown) {
@@ -325,5 +328,74 @@ describe('staffApi.fetchBarberPage (#288)', () => {
   it('rejects a cursor response instead of inventing numbered metadata', async () => {
     getMock.mockResolvedValueOnce(ok({ items: [barberBody], nextCursor: null }))
     expect(await fetchBarberPage(1, 3)).toEqual({ kind: 'unexpected-error' })
+  })
+})
+
+// DEC-100: el vínculo propio actúa sobre la sesión, nunca sobre otro usuario.
+describe('staffApi.fetchMyBarber', () => {
+  beforeEach(() => getMock.mockReset())
+
+  it('maps a 200 to the linked barber and sends no user identifier', async () => {
+    getMock.mockResolvedValueOnce(ok(barberBody))
+    expect(await fetchMyBarber()).toEqual({ kind: 'linked', barber: barberBody })
+    expect(getMock).toHaveBeenCalledWith('/private/me/barber')
+  })
+
+  it('maps a 404 to none: the link is optional, not an error', async () => {
+    getMock.mockResolvedValueOnce(problem(404))
+    expect(await fetchMyBarber()).toEqual({ kind: 'none' })
+  })
+
+  it('maps other statuses and a rejected request', async () => {
+    getMock.mockResolvedValueOnce(problem(500))
+    expect(await fetchMyBarber()).toEqual({ kind: 'unexpected-error' })
+    getMock.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    expect(await fetchMyBarber()).toEqual({ kind: 'network-error' })
+  })
+})
+
+describe('staffApi.linkMyBarber', () => {
+  beforeEach(() => putMock.mockReset())
+
+  it('sends only the barberId in the body', async () => {
+    putMock.mockResolvedValueOnce(ok(barberBody))
+    expect(await linkMyBarber(barberBody.id)).toEqual({ kind: 'success', barber: barberBody })
+    expect(putMock).toHaveBeenCalledWith('/private/me/barber', {
+      body: { barberId: barberBody.id },
+    })
+  })
+
+  it.each([
+    [404, 'not-found'],
+    [409, 'taken'],
+    [500, 'unexpected-error'],
+  ])('maps status %i to %s', async (status, kind) => {
+    putMock.mockResolvedValueOnce(problem(status))
+    expect(await linkMyBarber(barberBody.id)).toEqual({ kind })
+  })
+
+  it('maps a rejected request (no HTTP response) to network-error', async () => {
+    putMock.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    expect(await linkMyBarber(barberBody.id)).toEqual({ kind: 'network-error' })
+  })
+})
+
+describe('staffApi.unlinkMyBarber', () => {
+  beforeEach(() => deleteMock.mockReset())
+
+  it('maps a 204 to success', async () => {
+    deleteMock.mockResolvedValueOnce({
+      data: undefined,
+      response: new Response(null, { status: 204 }),
+    })
+    expect(await unlinkMyBarber()).toEqual({ kind: 'success' })
+    expect(deleteMock).toHaveBeenCalledWith('/private/me/barber')
+  })
+
+  it('maps other statuses and a rejected request', async () => {
+    deleteMock.mockResolvedValueOnce(problem(500))
+    expect(await unlinkMyBarber()).toEqual({ kind: 'unexpected-error' })
+    deleteMock.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    expect(await unlinkMyBarber()).toEqual({ kind: 'network-error' })
   })
 })

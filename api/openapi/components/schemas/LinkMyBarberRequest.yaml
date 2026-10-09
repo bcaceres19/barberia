@@ -1,0 +1,22 @@
+# Cuerpo de PUT /private/me/barber (DEC-100). Cerrado: solo `barberId`, el
+# barbero que el usuario autenticado declara ser. Nunca lleva un
+# `staffUserId`: el usuario es siempre el principal de la sesión, de modo que
+# nadie puede asignar el vínculo de otra persona.
+type: object
+description: >
+  Selección del barbero propio del usuario autenticado. Si el usuario ya
+  estaba vinculado a otro barbero, el vínculo anterior se libera en la misma
+  operación.
+properties:
+  barberId:
+    type: string
+    format: uuid
+    description: >
+      Identificador del barbero de la barbería activa que el usuario declara
+      ser. Un identificador inexistente o de otra barbería responde el mismo
+      `404` que el resto de operaciones del barbero (`CA-021-05`).
+    examples:
+      - 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+required:
+  - barberId
+additionalProperties: false

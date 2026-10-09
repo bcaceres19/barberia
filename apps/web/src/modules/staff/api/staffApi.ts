@@ -8,8 +8,11 @@ import type { Barber, BarberPage, NumberedBarberPage } from '../model/barber'
 import type {
   CreateBarberOutcome,
   FetchBarbersOutcome,
+  FetchMyBarberOutcome,
+  LinkMyBarberOutcome,
   RemoveBarberPhotoOutcome,
   RenameBarberOutcome,
+  UnlinkMyBarberOutcome,
   UploadBarberPhotoOutcome,
 } from '../model/staffOutcome'
 
@@ -165,6 +168,46 @@ export async function removeBarberPhoto(barberId: string): Promise<RemoveBarberP
 
     if (response.ok) return { kind: 'success' }
     if (response.status === 404) return { kind: 'not-found' }
+    return { kind: 'unexpected-error' }
+  } catch {
+    return { kind: 'network-error' }
+  }
+}
+
+// Vínculo del usuario autenticado con su barbero (DEC-100). Las tres
+// operaciones actúan sobre la sesión: ninguna envía un identificador de usuario.
+export async function fetchMyBarber(): Promise<FetchMyBarberOutcome> {
+  try {
+    const { data, response } = await httpClient.GET('/private/me/barber')
+    if (response.ok && data) return { kind: 'linked', barber: toBarber(data) }
+    if (response.status === 404) return { kind: 'none' }
+    return { kind: 'unexpected-error' }
+  } catch {
+    return { kind: 'network-error' }
+  }
+}
+
+export async function linkMyBarber(barberId: string): Promise<LinkMyBarberOutcome> {
+  try {
+    const { data, response } = await httpClient.PUT('/private/me/barber', { body: { barberId } })
+    if (response.ok && data) return { kind: 'success', barber: toBarber(data) }
+    switch (response.status) {
+      case 404:
+        return { kind: 'not-found' }
+      case 409:
+        return { kind: 'taken' }
+      default:
+        return { kind: 'unexpected-error' }
+    }
+  } catch {
+    return { kind: 'network-error' }
+  }
+}
+
+export async function unlinkMyBarber(): Promise<UnlinkMyBarberOutcome> {
+  try {
+    const { response } = await httpClient.DELETE('/private/me/barber')
+    if (response.ok) return { kind: 'success' }
     return { kind: 'unexpected-error' }
   } catch {
     return { kind: 'network-error' }

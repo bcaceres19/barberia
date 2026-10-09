@@ -1,0 +1,9 @@
+# Respuesta 204 de DELETE /private/me/barber (DEC-100). Sin cuerpo
+# (docs/06-api/estandar-openapi.md sección 11).
+description: >
+  El usuario autenticado ya no está vinculado a ningún barbero. Quitar un
+  vínculo que no existe también responde `204`: la operación es idempotente.
+  No modifica al barbero, sus citas ni su agenda.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'

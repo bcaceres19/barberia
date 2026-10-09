@@ -376,6 +376,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/private/me/barber": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar el barbero vinculado al usuario autenticado
+         * @description Devuelve el barbero que el usuario autenticado declaró ser (`DEC-100`). El vínculo es opcional: el dueño que no atiende clientes puede no tener barbero y recibe `404`. Nunca expone la identidad de otro usuario.
+         */
+        get: operations["getMyBarber"];
+        /**
+         * Declarar cuál barbero es el usuario autenticado
+         * @description Vincula al usuario autenticado con un barbero de la barbería activa (`DEC-100`). Actúa siempre sobre el principal de la sesión y el cuerpo nunca acepta un identificador de usuario, así que nadie asigna el vínculo de otra persona. Si el usuario ya estaba vinculado a otro barbero, ese vínculo se libera en la misma transacción. Es idempotente: repetir la misma selección deja el mismo estado y responde `200`, por eso no lleva `Idempotency-Key`. Un barbero ya vinculado a otro usuario responde `409`. Un identificador inexistente o de otra barbería responde el mismo `404` que el resto de operaciones del barbero (`CA-021-05`).
+         */
+        put: operations["linkMyBarber"];
+        post?: never;
+        /**
+         * Quitar el vínculo del usuario autenticado con su barbero
+         * @description Libera el vínculo propio (`DEC-100`). Es idempotente: sin vínculo también responde `204`. No borra ni desactiva al barbero (`DEC-047`) y no afecta a sus citas.
+         */
+        delete: operations["unlinkMyBarber"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/private/barbers": {
         parameters: {
             query?: never;
@@ -2041,6 +2069,15 @@ export interface components {
             /** @example cortefinok7x2m9q4 */
             slug: string;
         };
+        /** @description Selección del barbero propio del usuario autenticado. Si el usuario ya estaba vinculado a otro barbero, el vínculo anterior se libera en la misma operación. */
+        LinkMyBarberRequest: {
+            /**
+             * Format: uuid
+             * @description Identificador del barbero de la barbería activa que el usuario declara ser. Un identificador inexistente o de otra barbería responde el mismo `404` que el resto de operaciones del barbero (`CA-021-05`).
+             * @example 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+             */
+            barberId: string;
+        };
         /** @description Tramo recurrente de la jornada laboral de un barbero, para un único día ISO de la semana. Una jornada partida se representa con varios tramos del mismo día (CA-040-02); un tramo nocturno cruza medianoche cuando startsTime + durationMinutes supera las 24:00 (DEC-020, CA-040-03). */
         WorkingHourResponse: {
             /**
@@ -3454,6 +3491,24 @@ export interface components {
                 "application/json": components["schemas"]["PublicLinkResponse"];
             };
         };
+        /** @description El barbero ya está vinculado a otro usuario de esta barbería. No se persistió ningún cambio y el vínculo anterior del solicitante, si existía, se conserva. Quien lo tenga puede liberarlo desde su propia sesión. */
+        MyBarberLinkConflictProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description El usuario autenticado ya no está vinculado a ningún barbero. Quitar un vínculo que no existe también responde `204`: la operación es idempotente. No modifica al barbero, sus citas ni su agenda. */
+        MyBarberUnlinked: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
         /** @description Página de tramos de horario laboral del barbero de la ruta, ordenada por día ISO de la semana y hora de inicio. */
         WorkingHourListSuccess: {
             headers: {
@@ -4391,6 +4446,56 @@ export interface operations {
             200: components["responses"]["PublicLinkSuccess"];
             401: components["responses"]["UnauthorizedProblem"];
             404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getMyBarber: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["BarberSuccess"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    linkMyBarber: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkMyBarberRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["BarberUpdated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            409: components["responses"]["MyBarberLinkConflictProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    unlinkMyBarber: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: components["responses"]["MyBarberUnlinked"];
+            401: components["responses"]["UnauthorizedProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

@@ -19,6 +19,9 @@ const createMock = vi.hoisted(() => vi.fn())
 const renameMock = vi.hoisted(() => vi.fn())
 const uploadPhotoMock = vi.hoisted(() => vi.fn())
 const removePhotoMock = vi.hoisted(() => vi.fn())
+const fetchMyBarberMock = vi.hoisted(() => vi.fn())
+const linkMyBarberMock = vi.hoisted(() => vi.fn())
+const unlinkMyBarberMock = vi.hoisted(() => vi.fn())
 
 vi.mock('../../api/staffApi', () => ({
   fetchBarberPage: async (page: number, pageSize: number) => {
@@ -39,6 +42,9 @@ vi.mock('../../api/staffApi', () => ({
   renameBarber: renameMock,
   uploadBarberPhoto: uploadPhotoMock,
   removeBarberPhoto: removePhotoMock,
+  fetchMyBarber: fetchMyBarberMock,
+  linkMyBarber: linkMyBarberMock,
+  unlinkMyBarber: unlinkMyBarberMock,
   // La URL real depende del cliente HTTP; aquí basta una forma reconocible.
   barberPhotoUrl: (b: { id: string; photoUpdatedAt: string | null }) =>
     b.photoUpdatedAt ? `/photo/${b.id}?v=${b.photoUpdatedAt}` : null,
@@ -189,6 +195,10 @@ describe('StaffPage', () => {
     renameMock.mockReset()
     uploadPhotoMock.mockReset()
     removePhotoMock.mockReset()
+    fetchMyBarberMock.mockReset()
+    fetchMyBarberMock.mockResolvedValue({ kind: 'none' })
+    linkMyBarberMock.mockReset()
+    unlinkMyBarberMock.mockReset()
     URL.revokeObjectURL = vi.fn()
   })
 
@@ -464,6 +474,71 @@ describe('StaffPage', () => {
     await flushPromises()
 
     expect(openDialogInput(wrapper).value).toBe('Carlos Ramírez')
+  })
+
+  // --- Vínculo con mi usuario (DEC-100) -------------------------------------
+
+  async function openDetail(wrapper: VueWrapper) {
+    await wrapper.get('.staff-page__item-trigger').trigger('click')
+    await flushPromises()
+  }
+
+  it('offers «Este soy yo» for a barber that is not mine and links it by barber id only', async () => {
+    linkMyBarberMock.mockResolvedValueOnce({
+      kind: 'success',
+      barber: barber('b-1', 'Carlos Ramírez'),
+    })
+    const wrapper = await mountReady([barber('b-1', 'Carlos Ramírez')])
+    await openDetail(wrapper)
+
+    expect(openDialogElement(wrapper).textContent).toContain('Sin vincular')
+    dialogButton(wrapper, 'Este soy yo').click()
+    await flushPromises()
+
+    expect(linkMyBarberMock).toHaveBeenCalledTimes(1)
+    expect(linkMyBarberMock).toHaveBeenCalledWith('b-1')
+    expect(openDialogElement(wrapper).textContent).toContain('Eres tú')
+    expect(dialogButton(wrapper, 'Ya no soy yo')).toBeTruthy()
+    expect(toastState.items.some((t) => t.title.includes('Ahora eres Carlos Ramírez'))).toBe(true)
+  })
+
+  it('shows «Eres tú» for my barber and «Ya no soy yo» removes the link', async () => {
+    fetchMyBarberMock.mockResolvedValue({ kind: 'linked', barber: barber('b-1', 'Carlos Ramírez') })
+    unlinkMyBarberMock.mockResolvedValueOnce({ kind: 'success' })
+    const wrapper = await mountReady([barber('b-1', 'Carlos Ramírez')])
+    await openDetail(wrapper)
+
+    expect(openDialogElement(wrapper).textContent).toContain('Eres tú')
+    dialogButton(wrapper, 'Ya no soy yo').click()
+    await flushPromises()
+
+    expect(unlinkMyBarberMock).toHaveBeenCalledOnce()
+    expect(openDialogElement(wrapper).textContent).toContain('Sin vincular')
+    expect(dialogButton(wrapper, 'Este soy yo')).toBeTruthy()
+  })
+
+  it('explains a barber that already belongs to another user and keeps the state', async () => {
+    linkMyBarberMock.mockResolvedValueOnce({ kind: 'taken' })
+    const wrapper = await mountReady([barber('b-1', 'Carlos Ramírez')])
+    await openDetail(wrapper)
+
+    dialogButton(wrapper, 'Este soy yo').click()
+    await flushPromises()
+
+    const dialog = openDialogElement(wrapper)
+    expect(dialog.textContent).toContain('ya está vinculado a otro usuario')
+    expect(dialog.textContent).toContain('Sin vincular')
+    expect(dialogButton(wrapper, 'Este soy yo').disabled).toBe(false)
+  })
+
+  it('does not offer the link when the current link could not be read', async () => {
+    fetchMyBarberMock.mockResolvedValue({ kind: 'network-error' })
+    const wrapper = await mountReady([barber('b-1', 'Carlos Ramírez')])
+    await openDetail(wrapper)
+
+    const dialog = openDialogElement(wrapper)
+    expect(dialog.textContent).not.toContain('Tu usuario')
+    expect(dialog.textContent).not.toContain('Este soy yo')
   })
 
   // --- Alta -----------------------------------------------------------
