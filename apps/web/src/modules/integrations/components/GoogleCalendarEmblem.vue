@@ -115,7 +115,7 @@ const isAlert = computed(() => props.view === 'reauth' || props.view === 'sync-e
 .gcal-emblem__orbit {
   stroke: var(--emblem-tone);
   stroke-width: 1.5;
-  opacity: 0.35;
+  opacity: 0;
   transform-origin: 56px 56px;
 }
 

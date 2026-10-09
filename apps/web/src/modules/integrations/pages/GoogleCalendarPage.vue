@@ -13,7 +13,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useToast, useVocabulary } from '@/shared/composables'
-import { BaseAlert, BaseBadge, BaseButton, BaseDialog, BaseInput, DiamondLoader } from '@/shared/ui'
+import { BaseAlert, BaseButton, BaseDialog, BaseInput, DiamondLoader } from '@/shared/ui'
 import GoogleCalendarEmblem from '../components/GoogleCalendarEmblem.vue'
 import GoogleCalendarSteps from '../components/GoogleCalendarSteps.vue'
 import {
@@ -244,20 +244,20 @@ function formatRelative(iso: string | null): string {
   return relativeFormat.format(Math.round(diffSeconds / 86400), 'day')
 }
 
-const badge = computed(() => {
+const statusLabel = computed(() => {
   switch (view.value) {
     case 'connected':
-      return { variant: 'success' as const, label: 'Conectado' }
+      return 'Conectado'
     case 'syncing':
-      return { variant: 'info' as const, label: 'Sincronizando' }
+      return 'Sincronizando'
     case 'reauth':
-      return { variant: 'warning' as const, label: 'Requiere reconexión' }
+      return 'Requiere reconexión'
     case 'sync-error':
-      return { variant: 'danger' as const, label: 'Error de sincronización' }
+      return 'Error de sincronización'
     case 'unavailable':
-      return { variant: 'neutral' as const, label: 'No disponible' }
+      return 'No disponible'
     default:
-      return { variant: 'neutral' as const, label: 'No conectado' }
+      return 'No conectado'
   }
 })
 
@@ -403,14 +403,10 @@ const HOW_IT_WORKS = [
         <GoogleCalendarEmblem class="gcal-hero__emblem" :view="view" />
 
         <div class="gcal-hero__main">
-          <BaseBadge
-            :variant="badge.variant"
-            :dot="true"
-            size="md"
-            outline
-            class="gcal-hero__badge"
-            >{{ badge.label }}</BaseBadge
-          >
+          <span class="gcal-status" role="status">
+            <span class="gcal-status__dot" aria-hidden="true" />
+            {{ statusLabel }}
+          </span>
           <!-- `key`: al cambiar de estado el texto entra de nuevo en vez de cambiar a golpe. -->
           <div :key="view" class="gcal-hero__copy nv-rise">
             <h2 id="gcal-state-title" class="gcal-hero__title">{{ headline }}</h2>
@@ -830,11 +826,73 @@ const HOW_IT_WORKS = [
   height: 112px;
 }
 
-/* El badge outline neutro desaparece sobre tinta: texto y borde toman el tono del estado. */
-.gcal-hero__badge {
+/* Etiqueta de estado propia: el badge compartido pinta su punto con un color de superficie
+   clara y desaparece sobre tinta. Aquí el punto y el borde toman el tono del estado. */
+.gcal-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 28px;
+  padding: 0 14px 0 12px;
+  font-size: var(--font-size-body-sm);
+  font-weight: 600;
+  line-height: 1.2;
   color: var(--color-on-strong);
-  background: color-mix(in srgb, var(--gcal-tone) 14%, transparent);
-  border-color: color-mix(in srgb, var(--gcal-tone) 70%, transparent);
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--gcal-tone) 12%, transparent);
+  border: var(--border-width-normal) solid color-mix(in srgb, var(--gcal-tone) 65%, transparent);
+  border-radius: 999px;
+  transition:
+    background-color 400ms var(--motion-ease-out, ease-out),
+    border-color 400ms var(--motion-ease-out, ease-out);
+}
+
+/* El rombo de NAVA hace de indicador: cambia de tono con el estado (la transición suaviza el
+   cambio) y, sin conexión, es solo contorno: «todavía no hay nada encendido». */
+.gcal-status__dot {
+  position: relative;
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  background: var(--gcal-tone);
+  border-radius: 1px;
+  transform: rotate(45deg);
+  transition:
+    background-color 400ms var(--motion-ease-out, ease-out),
+    box-shadow 400ms var(--motion-ease-out, ease-out);
+}
+
+.gcal-hero--not-connected .gcal-status__dot,
+.gcal-hero--needs-barber .gcal-status__dot,
+.gcal-hero--unavailable .gcal-status__dot {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--gcal-tone);
+}
+
+.gcal-hero--connected .gcal-status__dot::after,
+.gcal-hero--syncing .gcal-status__dot::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  border: 1.5px solid var(--gcal-tone);
+  border-radius: 1px;
+  animation: gcal-dot-ping 2.4s var(--motion-ease-out, ease-out) infinite;
+}
+
+.gcal-hero--syncing .gcal-status__dot::after {
+  animation-duration: 1.2s;
+}
+
+@keyframes gcal-dot-ping {
+  from {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(2.6);
+  }
 }
 
 .gcal-hero__main {
@@ -1196,6 +1254,7 @@ const HOW_IT_WORKS = [
   grid-template-columns: auto minmax(0, 1fr);
   column-gap: 12px;
   row-gap: 4px;
+  align-content: start;
   padding: 16px;
   background: color-mix(in srgb, var(--color-on-strong) 3%, transparent);
   border: var(--border-width-normal) solid var(--color-field-strong-border);
@@ -1386,10 +1445,13 @@ const HOW_IT_WORKS = [
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gcal-action__icon--spin {
+  .gcal-action__icon--spin,
+  .gcal-status__dot::after {
     animation: none;
   }
 
+  .gcal-status,
+  .gcal-status__dot,
   .gcal-hero,
   .gcal-mode,
   .gcal-mode__dot::after,
@@ -1450,10 +1512,13 @@ const HOW_IT_WORKS = [
 
 <style>
 /* Animaciones reducidas desde Configuración (DEC-112): mismo efecto que prefers-reduced-motion. */
-:root[data-motion='reduced'] .gcal-action__icon--spin {
+:root[data-motion='reduced'] .gcal-action__icon--spin,
+:root[data-motion='reduced'] .gcal-status__dot::after {
   animation: none;
 }
 
+:root[data-motion='reduced'] .gcal-status,
+:root[data-motion='reduced'] .gcal-status__dot,
 :root[data-motion='reduced'] .gcal-hero,
 :root[data-motion='reduced'] .gcal-mode,
 :root[data-motion='reduced'] .gcal-mode__dot::after,
