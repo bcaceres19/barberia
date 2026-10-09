@@ -449,21 +449,37 @@ const HOW_IT_WORKS = [
           <BaseButton
             v-if="canConnect"
             type="button"
+            size="lg"
             :variant="view === 'sync-error' ? 'secondary' : 'primary'"
             :disabled="busy !== null || redirecting"
             @click="onConnect"
           >
-            {{
-              redirecting
-                ? 'Abriendo Google…'
-                : view === 'reauth' || view === 'sync-error'
-                  ? 'Volver a conectar'
-                  : 'Conectar Google Calendar'
-            }}
+            <span class="gcal-action">
+              <svg
+                class="gcal-action__icon gcal-action__icon--plug"
+                viewBox="0 0 20 20"
+                width="16"
+                height="16"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path
+                  d="M8 12l4-4M7.5 9.5l-2 2a2.8 2.8 0 0 0 4 4l2-2M12.5 10.5l2-2a2.8 2.8 0 0 0-4-4l-2 2"
+                />
+              </svg>
+              {{
+                redirecting
+                  ? 'Abriendo Google…'
+                  : view === 'reauth' || view === 'sync-error'
+                    ? 'Volver a conectar'
+                    : 'Conectar Google Calendar'
+              }}
+            </span>
           </BaseButton>
           <BaseButton
             v-if="isConnectedLike"
             type="button"
+            size="lg"
             variant="primary"
             :disabled="busy !== null"
             @click="onSync"
@@ -485,8 +501,10 @@ const HOW_IT_WORKS = [
           </BaseButton>
           <BaseButton
             v-if="isConnectedLike || view === 'reauth'"
+            class="gcal-hero__disconnect"
             type="button"
-            variant="secondary"
+            size="lg"
+            variant="danger"
             :disabled="busy !== null"
             @click="openDisconnect"
           >
@@ -959,6 +977,28 @@ const HOW_IT_WORKS = [
   animation: gcal-spin 1s linear infinite;
 }
 
+/* Gestos de los iconos al señalar el botón: el de sincronizar da media vuelta y el de enlace
+   se acerca; con la acción en curso (`--spin`) gira sin parar. */
+.gcal-action__icon {
+  transition: transform 360ms var(--motion-ease-out, ease-out);
+}
+
+@media (hover: hover) {
+  :is(.base-button:hover:not(:disabled))
+    .gcal-action__icon:not(.gcal-action__icon--spin):not(.gcal-action__icon--plug) {
+    transform: rotate(180deg);
+  }
+
+  :is(.base-button:hover:not(:disabled)) .gcal-action__icon--plug {
+    transform: rotate(-12deg) scale(1.12);
+  }
+}
+
+/* «Desconectar» queda al final de la fila, apartado de la acción principal. */
+.gcal-hero__disconnect {
+  margin-left: auto;
+}
+
 .gcal-facts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1175,46 +1215,57 @@ const HOW_IT_WORKS = [
   gap: 8px;
 }
 
+/* Atajos: misma familia reglada que los botones del panel (esquina de 2 px, filete de latón con
+   filete inferior acentuado) y el mismo gesto al pulsar. */
 .gcal-chip {
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: 40px;
+  padding: 0 16px;
   font: inherit;
   font-size: var(--font-size-body-sm);
-  color: var(--color-on-strong);
+  font-weight: 500;
+  color: var(--color-brand-accent-surface);
   cursor: pointer;
   background: transparent;
   border: var(--border-width-normal) solid
-    color-mix(in srgb, var(--color-on-strong) 30%, transparent);
-  border-radius: 999px;
+    color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
+  border-bottom: var(--border-width-emphasis) solid var(--color-brand-accent-surface);
+  border-radius: 2px;
   transition:
-    background-color 200ms var(--motion-ease-out, ease-out),
-    border-color 200ms var(--motion-ease-out, ease-out),
-    color 200ms var(--motion-ease-out, ease-out),
+    background-color 160ms var(--motion-easing-standard, ease),
+    color 160ms var(--motion-easing-standard, ease),
+    box-shadow 160ms var(--motion-easing-standard, ease),
     transform 160ms var(--motion-ease-out, ease-out);
 }
 
-.gcal-chip:hover:not(:disabled) {
-  border-color: var(--color-brand-accent-surface);
+@media (hover: hover) {
+  .gcal-chip:hover:not(:disabled):not(.gcal-chip--on) {
+    background: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
+  }
+
+  .gcal-chip:hover:not(:disabled) {
+    box-shadow: 0 8px 18px -12px var(--color-brand-accent-surface);
+  }
 }
 
 .gcal-chip:active:not(:disabled) {
-  transform: scale(0.96);
+  transform: translateY(1px) scale(0.985);
 }
 
 .gcal-chip--on {
   color: var(--color-brand-accent-text);
   background: var(--color-brand-accent-surface);
-  border-color: var(--color-brand-accent-surface);
 }
 
 .gcal-chip:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--color-surface-strong),
+    0 0 0 4px var(--color-focus);
 }
 
 .gcal-chip:disabled {
   cursor: default;
-  opacity: 0.45;
+  opacity: 0.4;
 }
 
 .gcal-expand-enter-active,
@@ -1380,6 +1431,7 @@ const HOW_IT_WORKS = [
 
 .gcal-ink :deep(.base-button--primary:hover:not(:disabled):not(.base-button--loading)) {
   filter: brightness(92%);
+  box-shadow: 0 8px 18px -10px var(--color-brand-accent-surface);
 }
 
 .gcal-ink :deep(.base-button--primary:active:not(:disabled):not(.base-button--loading)) {
@@ -1395,6 +1447,7 @@ const HOW_IT_WORKS = [
 
 .gcal-ink :deep(.base-button--secondary:hover:not(:disabled):not(.base-button--loading)) {
   background-color: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
+  box-shadow: 0 8px 18px -12px var(--color-brand-accent-surface);
 }
 
 /* «Desconectar» confirmado (variant="danger"): ghost rojo, como «Desactivar» en Servicios. */
@@ -1407,6 +1460,7 @@ const HOW_IT_WORKS = [
 
 .gcal-ink :deep(.base-button--danger:hover:not(:disabled):not(.base-button--loading)) {
   background-color: color-mix(in srgb, var(--color-danger-on-strong) 12%, transparent);
+  box-shadow: 0 8px 18px -12px var(--color-danger-on-strong);
   filter: none;
 }
 
@@ -1437,6 +1491,10 @@ const HOW_IT_WORKS = [
 
   .gcal-hero__actions {
     width: 100%;
+  }
+
+  .gcal-hero__disconnect {
+    margin-left: 0;
   }
 
   .gcal-hero__actions > :deep(.base-button),
