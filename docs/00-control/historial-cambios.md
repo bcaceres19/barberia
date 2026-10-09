@@ -1,6 +1,6 @@
 ---
 titulo: "Historial de cambios documentales"
-version: "4.01"
+version: "4.02"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-10-08"
@@ -316,6 +316,7 @@ Las versiones se aplican por documento. Mientras no exista historial Git, la fec
 | 2026-10-08 | `docs/00-control/{registro-decisiones,historial-cambios,matriz-trazabilidad}.md`, `docs/02-requisitos/historias-usuario.md`, `docs/03-desarrollo/{especificacion-frontend-nava,estandar-diseno-visual}.md`, `apps/web/src/modules/{schedules,agenda,settings,staff,auth}/**`, `apps/web/src/shared/model/`, `apps/web/e2e/` | Se registra `DEC-119` (issues [#308](https://github.com/bcaceres19/barberia/issues/308) y [#309](https://github.com/bcaceres19/barberia/issues/309), amplía `DEC-110`): NAVA es multirrubro y el vocabulario del negocio llega a Horarios y al resto del panel; la reserva pública, el acceso del cliente y los mensajes salientes quedan para #309. Presentación pura, sin migración ni cambio de contrato. | Instrucción explícita del propietario del 2026-10-08. |
 | 2026-10-08 | `docs/00-control/{registro-decisiones,historial-cambios,matriz-trazabilidad}.md`, `docs/02-requisitos/historias-usuario.md` (`CA-025-16`), `docs/03-desarrollo/especificacion-frontend-nava.md`, `api/openapi/` (0.31.0), `apps/api/internal/modules/{publicbooking,customeraccess,notification}/**`, `apps/web/src/modules/{public-booking,customer-access}/**`, `apps/web/e2e/` | `DEC-119`, parte pública (issue [#309](https://github.com/bcaceres19/barberia/issues/309)): `GET /public/barbershops/{slug}` y `GET /customer/appointments/{token}` devuelven `vocabulary`; la reserva pública y el acceso al turno nombran al negocio y a su profesional con la palabra configurada. Sin migración. | Instrucción explícita del propietario del 2026-10-08. |
 | 2026-10-08 | `docs/00-control/{registro-decisiones,historial-cambios}.md`, `AGENTS.md`, `.agents/skills/ui-app-testing/`, `docs/10-backlog/` | Integración de `test/300-exploracion-ui-luna` en `main`: su decisión de pruebas UI con agentes Luna, redactada como `DEC-116`, se renumera a `DEC-120` porque `main` ya usaba `DEC-116` para «Mi perfil». Sin cambio de contenido. | Instrucción del propietario del 2026-10-08 (integrar todas las ramas en `main`). |
+| 2026-10-08 | `docs/00-control/{registro-decisiones,historial-cambios}.md`, `apps/api/go.mod`, `apps/api/README.md`, `.github/workflows/ci.yml` | Se registra `DEC-121` (issue [#317](https://github.com/bcaceres19/barberia/issues/317), amplía `DEC-023`): el backend sube a Go 1.26.9 porque `govulncheck` encontró nueve vulnerabilidades de la librería estándar sin versión corregida en 1.25. Sin cambio de código de aplicación. | Instrucción explícita del propietario del 2026-10-08. |
 
 ## 4. Pendiente para la siguiente versión
 
