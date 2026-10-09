@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.53"
+version: "1.54"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-10-09"
@@ -1025,6 +1025,62 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 > **B2 integrado con seguimientos abiertos.** Las tres historias separan las dos funciones P0 del bloque: HU-040 configura la jornada semanal; HU-041 resuelve fechas especiales y festivos; HU-042 administra bloqueos puntuales y recurrentes. CT-008 quedó resuelta como DEC-070 (las FK del modelo físico de B2 usan ON DELETE RESTRICT, no CASCADE). HU-040 está integrada en main (PR #93, issue real #90 abierto por CA-040-08 parcial); HU-041 está integrada en main (PR #96, issue real #95 abierto por CA-041-08 parcial); HU-042 está integrada en main (PR #99, issue real #98); su seguimiento de UI/E2E (#100: series por fechas, excepciones, edición por alcance, E2E y responsive) quedó completo el 2026-10-08.
 
 Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas afectadas y la agenda consumen estas capacidades en B3/B4; no se implementan aquí.
+
+### HU-026 · Conexión del barbero con su Google Calendar
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-CONF-02` (extensión: integración del barbero con un calendario externo; la publicación de citas es la historia siguiente de esta orquestación) |
+| Reglas | `RN-TEN-01`, `RN-DAT-02` |
+| Decisiones | `DEC-019`, `DEC-099` (NAVA → Google, por barbero), `DEC-100` (el barbero se resuelve por el vínculo con el usuario), `DEC-101`, `DEC-102` (tokens cifrados, PKCE, configuración) |
+| Actor | Barbero autenticado |
+| Depende de | `HU-021` con el vínculo barbero–usuario (`CA-021-09`–`CA-021-13`) |
+| Bloquea | La publicación de citas y bloqueos en Google Calendar y la pantalla de conexión del barbero |
+| Riesgo | Guardar un token en claro o dejarlo en un log da acceso al calendario personal de una persona; un `state` reutilizable o ajeno permite conectar la cuenta de Google de un atacante; heredar la conexión al cambiar de barbero expone una cuenta ajena; que una caída de Google afecte a las reservas rompe la regla de que NAVA manda. |
+
+**Historia**
+
+> Como barbero, quiero conectar mi propio Google Calendar a NAVA, para ver mi agenda en el calendario que ya uso sin que lo que haga en Google altere mis citas ni mi disponibilidad.
+
+**Alcance incluido**
+
+- Conexión OAuth con PKCE (S256), acceso offline y consentimiento forzado; alcances mínimos `calendar.events`, `openid` y `email`. `state` de un solo uso, de 10 minutos, ligado a barbería, barbero, usuario y sesión.
+- Estados `not_connected`, `connected`, `reauth_required`, `error` y `disconnected`; una conexión por barbero que se reutiliza al reconectar.
+- Refresh token cifrado con AES-256-GCM y `key_id` para rotar la clave; el access token no se persiste y se renueva bajo demanda.
+- `reminder_minutes` de 0 a 40320 (o predeterminado), guardado en la conexión.
+- Desconexión que revoca el permiso en Google (mejor esfuerzo) y borra credenciales y correo; desconectar al cambiar o quitar el vínculo del barbero (`DEC-100`).
+- Operaciones `GET`/`PATCH`/`DELETE /private/integrations/google-calendar`, `POST .../connect` y `POST .../callback`; configuración `GOOGLE_CALENDAR_*` con la integración desactivada si falta alguna variable; guía de Google Cloud.
+
+**Alcance excluido**
+
+- Crear, actualizar o eliminar eventos, la cola y el worker (siguiente historia de esta orquestación).
+- Leer cambios de Google, webhook, `watch` o `syncToken` (`DEC-099`) y la pantalla del barbero.
+- Cuentas de clientes, administradores o un calendario global.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-026-01` | Dado un usuario con barbero vinculado, cuando inicia la conexión, entonces recibe la URL de consentimiento de Google con PKCE S256, acceso offline y los alcances mínimos, y la base guarda solo el hash del `state` y el verificador cifrado; sin barbero vinculado o con la integración sin configurar responde `409`. |
+| `CA-026-02` | Dado un `state` vigente de esa sesión, cuando Google devuelve el código, entonces se canjea con el verificador PKCE, la conexión queda `connected` con la cuenta de Google y el refresh token solo existe cifrado en la base. |
+| `CA-026-03` | Dado un `state` ausente, vencido, ya usado o emitido para otra sesión, usuario o barbería, cuando se intenta completar, entonces se responde `400` con el mismo mensaje, sin llamar a Google ni crear conexión, y el `state` queda consumido. |
+| `CA-026-04` | Dado que el barbero rechaza el permiso o no concede el de calendario, o Google falla al canjear, cuando vuelve a NAVA, entonces el resultado es `denied` o `failed` y no queda conexión. |
+| `CA-026-05` | Dado un refresh token que Google ya no acepta, cuando se pide un access token, entonces la conexión pasa a `reauth_required` con las credenciales borradas; un fallo transitorio no cambia el estado y una caída de Google nunca afecta a una cita. |
+| `CA-026-06` | Dado un valor fuera de 0 a 40320, cuando se guarda el recordatorio, entonces se responde `422` sin escribir; `null` usa los recordatorios predeterminados del calendario; sin conexión responde `404`. |
+| `CA-026-07` | Dada una conexión, cuando el barbero desconecta (o su usuario cambia o quita el vínculo con ese barbero), entonces se revoca el permiso en Google aunque Google no responda, se borran credenciales y correo, la fila y el recordatorio se conservan y quien tome ese barbero después no hereda la cuenta. |
+| `CA-026-08` | Dadas dos barberías, entonces cada una ve y modifica solo sus conexiones y estados (RLS y claves foráneas compuestas) y dos callbacks simultáneos con el mismo `state` producen exactamente un ganador. |
+| `CA-026-09` | Ninguna respuesta, log ni error contiene tokens, `client_secret`, `state` ni el código OAuth; sin las variables `GOOGLE_CALENDAR_*` el API arranca con la integración desactivada y un valor presente pero mal formado impide el arranque. |
+
+**Pruebas obligatorias**
+
+- Unitarias del cifrado (ida y vuelta, clave o contexto incorrectos, rotación) y del servicio con un Google falso.
+- Adaptador de Google contra un servidor falso: URL de consentimiento, canje con PKCE, `invalid_grant` frente a un 503, revocación y que ningún error filtre el código o el token.
+- PostgreSQL real con dos barberías: RLS, claves foráneas, un único ganador por `state` y credenciales ligadas al estado.
+- HTTP y contrato, y el recorrido completo contra el router real con un Google falso, incluida la desconexión al cambiar el vínculo.
+
+**Terminado cuando** un barbero puede conectar y desconectar su Google Calendar con el token cifrado en reposo, sin que ninguna falla de Google afecte a las citas y sin publicar todavía ningún evento.
+
+---
 
 ---
 
@@ -2231,7 +2287,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 
 | Bloque | Rango reservado | Se redacta cuando |
 | --- | --- | --- |
-| B1 | `HU-025` – | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
+| B1 | `HU-027` – (`HU-026`: conexión con Google Calendar, `DEC-099`) | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
 | B2 | `HU-040` – `HU-042` | Integradas en `main` (PR `#93`, `#96`, `#99`); seguimientos parciales en issues `#90`, `#95`, `#98` y `#100` (este último completo el 2026-10-08) |
 | B3 | `HU-069` – | `HU-066`–`HU-068` ya integradas en `main`; continuar con T3 y cierre automático solo después de revisar este lote y resolver cualquier duda de semántica de snapshots/configuración |
 | B4 | `HU-100` – | `HU-090`–`HU-099` ya redactadas; `DP-PUB-01` resuelta (`DEC-082`), `HU-090` implementada (issue [#243](https://github.com/bcaceres19/barberia/issues/243), PR abierto); continuar con el resto solo después de resolver `DP-PUB-02`–`DP-PUB-06`/`CT-011` |

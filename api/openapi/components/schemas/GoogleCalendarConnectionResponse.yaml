@@ -1,0 +1,65 @@
+# Estado de la integración del barbero con su Google Calendar (issue #323,
+# DEC-099, DEC-102). Nunca contiene tokens, secretos, el código OAuth ni el
+# `state`: solo lo que el barbero necesita ver.
+type: object
+additionalProperties: false
+description: >
+  Estado de la integración del usuario autenticado. `enabled` es falso cuando
+  el servidor no tiene credenciales de Google configuradas (la integración
+  queda desactivada y el resto del producto funciona). `barberLinked` es falso
+  mientras el usuario no haya declarado cuál barbero es (`DEC-100`): sin
+  barbero no se puede conectar.
+properties:
+  enabled:
+    type: boolean
+    description: El servidor tiene la integración con Google Calendar configurada.
+  barberLinked:
+    type: boolean
+    description: El usuario autenticado está vinculado a un barbero.
+  status:
+    type: string
+    enum: [not_connected, connected, reauth_required, error, disconnected]
+    description: >
+      `not_connected`: nunca conectó. `connected`: publica con normalidad.
+      `reauth_required`: Google revocó o caducó el permiso; hay que reconectar.
+      `error`: fallo transitorio, el permiso sigue siendo válido.
+      `disconnected`: el barbero desconectó.
+  accountEmail:
+    type:
+      - string
+      - "null"
+    maxLength: 254
+    description: Cuenta de Google conectada, o `null` sin conexión.
+    examples:
+      - barbero@ejemplo.test
+  reminderMinutes:
+    type:
+      - integer
+      - "null"
+    minimum: 0
+    maximum: 40320
+    description: >
+      Anticipación, en minutos, del recordatorio de cada evento (0 a 40320).
+      `null` usa los recordatorios predeterminados del calendario del barbero.
+    examples:
+      - 30
+  connectedAt:
+    type:
+      - string
+      - "null"
+    format: date-time
+    description: Instante de la última conexión, o `null`.
+  lastSyncedAt:
+    type:
+      - string
+      - "null"
+    format: date-time
+    description: Instante de la última publicación correcta en Google, o `null`.
+required:
+  - enabled
+  - barberLinked
+  - status
+  - accountEmail
+  - reminderMinutes
+  - connectedAt
+  - lastSyncedAt

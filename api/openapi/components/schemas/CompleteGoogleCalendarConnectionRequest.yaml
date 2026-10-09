@@ -1,0 +1,26 @@
+# Cuerpo de POST /private/integrations/google-calendar/callback (issue #323).
+# Lo que Google devolvió en la URL de redirección, reenviado por la pantalla de
+# retorno del frontend.
+type: object
+additionalProperties: false
+description: >
+  Parámetros que Google agregó a la URL de retorno. `state` es obligatorio y de
+  un solo uso. `code` viene con un consentimiento correcto; `error` (por
+  ejemplo `access_denied`) viene cuando el barbero rechazó el permiso. Nunca
+  lleva identificadores de barbero, usuario ni barbería.
+properties:
+  state:
+    type: string
+    minLength: 1
+    maxLength: 256
+    description: Valor de un solo uso emitido al iniciar la conexión.
+  code:
+    type: string
+    maxLength: 2048
+    description: Código de autorización de Google (ausente si el barbero rechazó).
+  error:
+    type: string
+    maxLength: 128
+    description: Código de error OAuth de Google, por ejemplo `access_denied`.
+required:
+  - state

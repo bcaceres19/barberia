@@ -1,6 +1,8 @@
 package config_test
 
 import (
+	"bytes"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"testing"
@@ -469,4 +471,123 @@ func TestDatabaseDSN_RedactsKeywordFormat(t *testing.T) {
 	if strings.Contains(rendered, "supersecreto") {
 		t.Fatalf("password leaked via keyword-format DSN: %s", rendered)
 	}
+}
+
+// --- Google Calendar (DEC-099, DEC-102) -------------------------------------
+
+func googleKey(fill byte) string {
+	return base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{fill}, 32))
+}
+
+func googleEnv() map[string]string {
+	env := baseLocalEnv()
+	env["GOOGLE_CALENDAR_CLIENT_ID"] = "cliente.apps.googleusercontent.com"
+	env["GOOGLE_CALENDAR_CLIENT_SECRET"] = "secreto-de-prueba"
+	env["GOOGLE_CALENDAR_REDIRECT_URI"] = "http://localhost:5173/panel/barberia/google-calendar/callback"
+	env["GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY"] = googleKey(1)
+	return env
+}
+
+func productionGoogleEnv() map[string]string {
+	env := googleEnv()
+	env["APP_ENVIRONMENT"] = "production"
+	env["APP_DATABASE_URL"] = "postgres://barberia_app:secret@db:5432/barberia?sslmode=require"
+	env["APP_WORKER_DATABASE_URL"] = "postgres://barberia_worker:secret@db:5432/barberia?sslmode=require"
+	env["APP_META_WHATSAPP_PHONE_NUMBER_ID"] = "1234567890"
+	env["APP_META_WHATSAPP_ACCESS_TOKEN"] = "meta-access-token-de-prueba"
+	env["APP_META_WHATSAPP_TEMPLATE_NAME"] = "recuperacion_acceso"
+	env["APP_RESEND_API_KEY"] = "resend-api-key-de-prueba"
+	env["APP_RESEND_FROM_ADDRESS"] = "no-responder@barberia.test"
+	env["GOOGLE_CALENDAR_REDIRECT_URI"] = "https://app.ejemplo.test/panel/barberia/google-calendar/callback"
+	return env
+}
+
+func TestLoad_GoogleCalendar_AbsentVariablesDisableTheIntegrationWithoutFailing(t *testing.T) {
+	withEnv(t, baseLocalEnv(), func() {
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatalf("la ausencia de variables no debe fallar el arranque: %v", err)
+		}
+		if cfg.GoogleCalendarEnabled() || cfg.GoogleCalendarPartiallyConfigured() {
+			t.Fatal("sin variables la integración está desactivada y no es una configuración parcial")
+		}
+	})
+}
+
+func TestLoad_GoogleCalendar_CompleteConfigurationEnablesIt(t *testing.T) {
+	env := googleEnv()
+	env["GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY_PREVIOUS"] = "v0:" + googleKey(9)
+	withEnv(t, env, func() {
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !cfg.GoogleCalendarEnabled() || cfg.GoogleCalendarTokenKeyID != "v1" || len(cfg.GoogleCalendarPreviousKeys) != 1 {
+			t.Fatalf("configuración inesperada: %+v", cfg.GoogleCalendarPreviousKeys)
+		}
+	})
+}
+
+func TestLoad_GoogleCalendar_MissingAnyOfTheFourDisablesAndFlagsPartial(t *testing.T) {
+	for _, missing := range []string{
+		"GOOGLE_CALENDAR_CLIENT_ID", "GOOGLE_CALENDAR_CLIENT_SECRET",
+		"GOOGLE_CALENDAR_REDIRECT_URI", "GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY",
+	} {
+		t.Run(missing, func(t *testing.T) {
+			env := googleEnv()
+			env[missing] = "" // getEnv trata una variable vacía como ausente
+			withEnv(t, env, func() {
+				cfg, err := config.Load()
+				if err != nil {
+					t.Fatalf("faltar una variable no debe fallar el arranque: %v", err)
+				}
+				if cfg.GoogleCalendarEnabled() || !cfg.GoogleCalendarPartiallyConfigured() {
+					t.Fatal("con una variable ausente la integración queda desactivada y se avisa como parcial")
+				}
+			})
+		})
+	}
+}
+
+func TestLoad_GoogleCalendar_MalformedValuesFailLoudly(t *testing.T) {
+	cases := map[string]struct {
+		base     func() map[string]string
+		override map[string]string
+		wantErr  string
+	}{
+		"clave de 16 bytes": {googleEnv, map[string]string{
+			"GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY": base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{1}, 16))}, "32 bytes"},
+		"clave no base64": {googleEnv, map[string]string{"GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY": "###"}, "32 bytes"},
+		"redirect http en producción": {productionGoogleEnv, map[string]string{
+			"GOOGLE_CALENDAR_REDIRECT_URI": "http://app.ejemplo.test/callback"}, "HTTPS"},
+		"redirect http a un host que no es localhost": {googleEnv, map[string]string{
+			"GOOGLE_CALENDAR_REDIRECT_URI": "http://app.ejemplo.test/callback"}, "HTTPS"},
+		"redirect sin host": {googleEnv, map[string]string{"GOOGLE_CALENDAR_REDIRECT_URI": "/panel/callback"}, "URL válida"},
+		"anterior sin id":   {googleEnv, map[string]string{"GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY_PREVIOUS": googleKey(2)}, "id:clave"},
+		"anterior repite el id activo": {googleEnv, map[string]string{
+			"GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY_PREVIOUS": "v1:" + googleKey(2)}, "repite"},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			env := tc.base()
+			for k, v := range tc.override {
+				env[k] = v
+			}
+			withEnv(t, env, func() {
+				_, err := config.Load()
+				if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+					t.Fatalf("un valor presente pero mal formado debe impedir el arranque con %q, fue: %v", tc.wantErr, err)
+				}
+			})
+		})
+	}
+}
+
+func TestLoad_GoogleCalendar_HTTPSRedirectIsValidInProduction(t *testing.T) {
+	withEnv(t, productionGoogleEnv(), func() {
+		cfg, err := config.Load()
+		if err != nil || !cfg.GoogleCalendarEnabled() {
+			t.Fatalf("HTTPS en producción es válido: %v", err)
+		}
+	})
 }

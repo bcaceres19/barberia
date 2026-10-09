@@ -1,0 +1,160 @@
+# Integración del barbero con SU Google Calendar (issue #323, DEC-099,
+# DEC-102): conexión OAuth con PKCE, estado, recordatorio y desconexión. La
+# sincronización es unidireccional, de NAVA hacia Google: nada de lo que
+# ocurra en Google modifica citas ni disponibilidad. Todas las operaciones
+# actúan sobre el barbero vinculado al usuario autenticado y nunca aceptan un
+# identificador de barbero, de usuario ni de barbería.
+/private/integrations/google-calendar:
+  get:
+    tags: [Integrations]
+    summary: Consultar el estado de la integración con Google Calendar
+    description: >
+      Estado de la integración del barbero vinculado al usuario autenticado
+      (`DEC-100`). Nunca devuelve tokens ni secretos. Sin barbero vinculado
+      responde `barberLinked: false`; sin credenciales de Google configuradas
+      en el servidor, `enabled: false`.
+    operationId: getGoogleCalendarConnection
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-099, DEC-100, DEC-102]
+    responses:
+      "200":
+        $ref: '../components/responses/GoogleCalendarConnectionSuccess.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  patch:
+    tags: [Integrations]
+    summary: Cambiar la anticipación del recordatorio de los eventos
+    description: >
+      Guarda `reminderMinutes` (0 a 40320, o `null` para los recordatorios
+      predeterminados del calendario). Aplica a los eventos que se publiquen
+      desde ahora; la actualización de los ya publicados la hace el publicador
+      (issue #324). Sin conexión responde `404`.
+    operationId: updateGoogleCalendarReminder
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01]
+    x-decisions: [DEC-099, DEC-101]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/UpdateGoogleCalendarReminderRequest.yaml'
+          examples:
+            treintaMinutos:
+              summary: Avisar 30 minutos antes
+              value:
+                reminderMinutes: 30
+            predeterminado:
+              summary: Usar los recordatorios del calendario
+              value:
+                reminderMinutes: null
+    responses:
+      "200":
+        $ref: '../components/responses/GoogleCalendarConnectionSuccess.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "422":
+        $ref: '../components/responses/GoogleCalendarReminderValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  delete:
+    tags: [Integrations]
+    summary: Desconectar Google Calendar
+    description: >
+      Revoca el permiso en Google (mejor esfuerzo: desconectar nunca depende de
+      que Google responda), borra las credenciales y detiene la publicación. No
+      borra citas ni elimina los eventos ya creados en Google (`DP-INT-03`). Es
+      idempotente.
+    operationId: disconnectGoogleCalendar
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01]
+    x-decisions: [DEC-099, DEC-102]
+    responses:
+      "204":
+        $ref: '../components/responses/GoogleCalendarDisconnected.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/integrations/google-calendar/connect:
+  post:
+    tags: [Integrations]
+    summary: Iniciar la conexión con Google Calendar
+    description: >
+      Devuelve la URL de consentimiento de Google (código de autorización con
+      PKCE, acceso offline y consentimiento forzado; alcances mínimos
+      `calendar.events`, `openid` y `email`). Guarda un `state` de un solo uso,
+      ligado a barbería, barbero, usuario y sesión, que vence a los 10 minutos.
+      No es idempotente a propósito: cada solicitud emite un `state` nuevo.
+      Responde `409` si la integración no está configurada o el usuario no
+      tiene barbero vinculado.
+    operationId: startGoogleCalendarConnection
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01]
+    x-decisions: [DEC-099, DEC-100, DEC-102]
+    responses:
+      "200":
+        $ref: '../components/responses/GoogleCalendarAuthorizationStarted.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "409":
+        $ref: '../components/responses/GoogleCalendarInvalidStateProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/integrations/google-calendar/callback:
+  post:
+    tags: [Integrations]
+    summary: Completar la conexión tras el consentimiento de Google
+    description: >
+      Google redirige al navegador a la pantalla de retorno del frontend (el
+      `redirect_uri` registrado en Google Cloud) con `code` y `state`; esa
+      pantalla los reenvía aquí. Exige la sesión que inició la conexión y un
+      `state` vigente, de un solo uso y emitido por esa misma sesión y barbero;
+      cualquier otro caso responde `400` con el mismo mensaje, sin revelar cuál
+      falló, y el `state` queda consumido. Canjea el código con PKCE y guarda el
+      refresh token cifrado. Nunca devuelve ni registra el código, el `state` ni
+      tokens. No es idempotente por diseño: el `state` solo sirve una vez.
+    operationId: completeGoogleCalendarConnection
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01]
+    x-decisions: [DEC-099, DEC-102]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/CompleteGoogleCalendarConnectionRequest.yaml'
+          examples:
+            consentimiento:
+              summary: El barbero aceptó
+              value:
+                state: Zm9vYmFyYmF6cXV4
+                code: 4/0AeaYSHB...
+            rechazo:
+              summary: El barbero rechazó el permiso
+              value:
+                state: Zm9vYmFyYmF6cXV4
+                error: access_denied
+    responses:
+      "200":
+        $ref: '../components/responses/GoogleCalendarCallbackCompleted.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "409":
+        $ref: '../components/responses/GoogleCalendarInvalidStateProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

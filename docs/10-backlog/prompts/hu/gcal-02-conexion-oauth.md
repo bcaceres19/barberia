@@ -7,14 +7,14 @@ target_agents:
   - "any"
 repository: "bcaceres19/barberia"
 base_branch: "main"
-primary_hu: null
+primary_hu: "HU-026"
 related_hu: []
 issue: "323"
 issue_url: "https://github.com/bcaceres19/barberia/issues/323"
 suggested_issue_title: "feat(integraciones): conectar y desconectar Google Calendar por barbero"
-branch: null
-pr: null
-pr_url: null
+branch: "feat/323-conexion-oauth-google-calendar"
+pr: 328
+pr_url: "https://github.com/bcaceres19/barberia/pull/328"
 depends_on:
   - "PROMPT-FEAT-GCAL-01-v1 integrado (vínculo barbero–usuario)"
   - "PR del issue #284 integrado (DEC-102)"
