@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-CHORE-197-BLOQUEOS-FIDELIDAD-v1"
 version: "1.0"
 kind: "chore"
-status: "blocked"
+status: "superseded"
 target_agents: ["claude", "codex"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
@@ -33,10 +33,12 @@ source_docs:
   - "docs/10-backlog/prompts/hu/hu-042-bloqueos-agenda.md"
   - "apps/web/src/modules/schedules"
 created_at: "2026-09-04"
-updated_at: "2026-09-04"
+updated_at: "2026-10-08"
 supersedes: null
-superseded_by: null
+superseded_by: "DEC-105"
 ---
+
+> **Sustituido el 2026-10-08 (#198).** `DEC-105` (2026-09-30, instrucción del propietario) integró los bloqueos en una ventana de Barberos con identidad guiada y sin mockup exacto asignado, y retiró «Bloqueos» como destino independiente; el atlas `bloqueos-eventos` describe esa pantalla separada. La interfaz vigente se verificó en el issue [#100](https://github.com/bcaceres19/barberia/issues/100) y en la revisión final [#198](https://github.com/bcaceres19/barberia/issues/198). No ejecutar.
 
 # Fidelidad de Bloqueos al atlas NAVA
 

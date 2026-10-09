@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-ORCH-NAVA-ATLAS-v3"
 version: "3.0"
 kind: "orchestration"
-status: "ready"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -106,7 +106,7 @@ source_docs:
   - "apps/web/package.json"
   - "apps/web/src/app/router/index.ts"
 created_at: "2026-09-03"
-updated_at: "2026-09-03"
+updated_at: "2026-10-08"
 supersedes: "PROMPT-ORCH-NAVA-ATLAS-v2"
 superseded_by: null
 ---

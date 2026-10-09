@@ -297,8 +297,10 @@ async function onLogoutFromMore() {
     padding: 0 40px;
   }
 
+  /* Cada destino mide lo que su rótulo necesita y reparte el sobrante: con
+     partes iguales, «Servicios por barbero» se truncaba a 1280 px. */
   .app-nav__item {
-    flex: 1;
+    flex: 1 1 auto;
   }
 
   .app-nav__link {
