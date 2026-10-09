@@ -1,0 +1,21 @@
+# 422 de PATCH /private/integrations/google-calendar (issue #323).
+description: >
+  El cuerpo es JSON válido, pero `reminderMinutes` está fuera de 0 a 40320. No
+  se guardó ningún cambio.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      fueraDeRango:
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: la anticipación del recordatorio debe estar entre 0 y 40320 minutos
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

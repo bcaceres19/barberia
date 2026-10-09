@@ -1,0 +1,41 @@
+# Respuesta 200 de las operaciones de lectura y edición de la conexión con
+# Google Calendar (issue #323).
+description: Estado de la integración del barbero con Google Calendar.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/GoogleCalendarConnectionResponse.yaml'
+    examples:
+      conectado:
+        summary: Conectado con recordatorio de 30 minutos
+        value:
+          enabled: true
+          barberLinked: true
+          status: connected
+          accountEmail: barbero@ejemplo.test
+          reminderMinutes: 30
+          connectedAt: "2026-10-09T15:04:05Z"
+          lastSyncedAt: null
+      sinConectar:
+        summary: Vinculado pero sin conectar
+        value:
+          enabled: true
+          barberLinked: true
+          status: not_connected
+          accountEmail: null
+          reminderMinutes: null
+          connectedAt: null
+          lastSyncedAt: null
+      desactivada:
+        summary: Integración sin configurar en el servidor
+        value:
+          enabled: false
+          barberLinked: true
+          status: not_connected
+          accountEmail: null
+          reminderMinutes: null
+          connectedAt: null
+          lastSyncedAt: null

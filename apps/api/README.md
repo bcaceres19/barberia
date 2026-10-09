@@ -1999,3 +1999,65 @@ atlas migrate apply --env local
 ### Listado numerado de Barberos (DEC-107, #288)
 
 `GET /private/barbers` conserva cursor/limit y añade modo optativo page/pageSize (1–50 filas, por defecto 20). No admite mezclar modos; parámetros inválidos responden 400. Una sola sentencia tenant-aware obtiene total, página efectiva y filas en orden (created_at,id), sin leer bytes de fotos; fuera de rango se ajusta a la última página. No requiere migraciones.
+
+## Conexión con Google Calendar (HU-026)
+
+Cada barbero conecta SU Google Calendar (`DEC-099`): la sincronización es
+unidireccional, de NAVA hacia Google, y nada de lo que ocurra en Google altera
+citas ni disponibilidad. Esta entrega gestiona solo la **conexión**; la
+publicación de eventos llega en el issue #324. El módulo dueño es
+`internal/modules/googlecalendar`: el núcleo no importa Chi, PostgreSQL ni el
+SDK de Google, el adaptador de Google vive en `google/`, la persistencia en
+`postgres/` y HTTP en `httpapi/`.
+
+### Operaciones
+
+Todas actúan sobre el barbero vinculado al usuario autenticado (`DEC-100`) y
+ninguna acepta un identificador de barbero, usuario ni barbería.
+
+| Operación | Efecto |
+| --- | --- |
+| `GET /private/integrations/google-calendar` | Estado: `enabled`, `barberLinked`, `status`, cuenta, recordatorio y fechas. Nunca tokens. |
+| `POST .../connect` | Emite un `state` de un solo uso (10 min, ligado a barbería, barbero, usuario y sesión) y devuelve la URL de consentimiento (PKCE S256, acceso offline, `prompt=consent`). `409` si la integración no está configurada o no hay barbero vinculado. |
+| `POST .../callback` | La pantalla de retorno del frontend reenvía `state` y `code`. Consume el `state`, canjea el código con el verificador PKCE y guarda el refresh token cifrado. Responde `connected`, `denied` o `failed`; cualquier `state` inválido, vencido, usado o ajeno responde el mismo `400`. |
+| `PATCH .../google-calendar` | `reminderMinutes` de 0 a 40320 (o `null`). |
+| `DELETE .../google-calendar` | Revoca el permiso en Google (mejor esfuerzo), borra credenciales y correo. Idempotente. |
+
+### Variables de entorno
+
+Sin las cuatro primeras la integración queda **desactivada** y el resto del
+producto funciona; el API lo avisa al arrancar si hay alguna pero no todas. Un
+valor presente pero mal formado sí impide el arranque. Ninguna se comitea.
+
+| Variable | Obligatoria | Descripción |
+| --- | --- | --- |
+| `GOOGLE_CALENDAR_CLIENT_ID` | para activar | ID de cliente OAuth de Google Cloud (no es secreto). |
+| `GOOGLE_CALENDAR_CLIENT_SECRET` | para activar | Secreto del cliente. Solo en el gestor de secretos o en `.env.local`. |
+| `GOOGLE_CALENDAR_REDIRECT_URI` | para activar | URL registrada en Google a la que vuelve el navegador: la pantalla de retorno del frontend, `{origen}/panel/barberia/google-calendar/callback`. HTTPS fuera de local/test; `http://localhost` solo en local. |
+| `GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY` | para activar | Clave AES-256 de 32 bytes en base64: `openssl rand -base64 32`. |
+| `GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY_ID` | no (`v1`) | Identificador de esa clave; se guarda junto a cada texto cifrado. |
+| `GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY_PREVIOUS` | no | Claves anteriores `id:base64` separadas por coma, solo para descifrar lo guardado antes de rotar. |
+
+### Guía de Google Cloud
+
+1. En <https://console.cloud.google.com> crea un proyecto (p. ej. `nava-barberia`) y habilita **Google Calendar API** en *APIs y servicios → Biblioteca*.
+2. En *Google Auth Platform* (o *Pantalla de consentimiento de OAuth*) elige tipo **Externo**, pon el nombre `NAVA` y tu correo de soporte, y deja el estado en **Testing**.
+3. En *Acceso a los datos* agrega solo los alcances `.../auth/calendar.events`, `openid` y `.../auth/userinfo.email` (nunca `calendar` completo).
+4. En *Público → Usuarios de prueba* agrega los correos de Google de cada barbero que conectará mientras la app esté en Testing (máximo 100; los tokens de prueba caducan a los 7 días).
+5. En *Credenciales → Crear credenciales → ID de cliente de OAuth* elige **Aplicación web** y registra como URI de redirección la de cada ambiente. Usa un cliente distinto por ambiente.
+
+| Ambiente | URI de redirección autorizada |
+| --- | --- |
+| Local | `http://localhost:5173/panel/barberia/google-calendar/callback` |
+| Desarrollo / piloto / producción | `https://<dominio>/panel/barberia/google-calendar/callback` (HTTPS obligatorio, mismo origen que sirve el frontend y `/api/v1`) |
+
+6. Copia el ID de cliente y el secreto a las variables anteriores. El secreto no se pega en chats ni en Git.
+7. **Producción:** `calendar.events` es un alcance **sensible**. Antes de pasar la app a *In production* Google exige verificación: dominio propio verificado, política de privacidad pública que describa el uso de los datos de Calendar, justificación del alcance y un video corto del flujo. Tarda de días a semanas; sin ella los barberos ven la advertencia «Google no ha verificado esta app» y están limitados a los usuarios de prueba.
+
+### Seguridad y operación
+
+- El refresh token solo existe **cifrado** (AES-256-GCM con el contexto `barbería|barbero` como dato autenticado: trasplantarlo a otra fila no lo descifra). El access token nunca se persiste. Ningún token, `client_secret`, `state` ni código aparece en logs, respuestas o errores; los errores de Google se reducen a su código estándar.
+- **Rotar la clave:** genera una nueva, ponla como `GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY` con un `..._KEY_ID` nuevo (`v2`) y deja la anterior en `..._KEY_PREVIOUS` (`v1:<base64>`). Lo nuevo se cifra con `v2`; lo viejo se sigue leyendo con `v1`. Quita la anterior cuando ningún registro la use (`SELECT DISTINCT token_key_id FROM google_calendar_connection`).
+- **`reauth_required`:** Google revocó o caducó el permiso (`invalid_grant`). Se borran las credenciales y la conexión queda a la espera de que el barbero vuelva a conectar; no hay nada que reparar en el servidor. Una caída de Google (`error`) nunca cambia ni pierde una cita.
+- Cambiar o quitar el vínculo barbero–usuario desconecta la conexión del barbero anterior (revoca y borra credenciales) para que quien tome ese barbero después no herede una cuenta ajena.
+- Pruebas: `go test ./internal/modules/googlecalendar/... ./cmd/api/...` (PostgreSQL real con dos barberías y un Google falso; no tocan la red) y `database/tests/google_calendar_conexion.sql`.

@@ -376,6 +376,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/private/integrations/google-calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar el estado de la integración con Google Calendar
+         * @description Estado de la integración del barbero vinculado al usuario autenticado (`DEC-100`). Nunca devuelve tokens ni secretos. Sin barbero vinculado responde `barberLinked: false`; sin credenciales de Google configuradas en el servidor, `enabled: false`.
+         */
+        get: operations["getGoogleCalendarConnection"];
+        put?: never;
+        post?: never;
+        /**
+         * Desconectar Google Calendar
+         * @description Revoca el permiso en Google (mejor esfuerzo: desconectar nunca depende de que Google responda), borra las credenciales y detiene la publicación. No borra citas ni elimina los eventos ya creados en Google (`DP-INT-03`). Es idempotente.
+         */
+        delete: operations["disconnectGoogleCalendar"];
+        options?: never;
+        head?: never;
+        /**
+         * Cambiar la anticipación del recordatorio de los eventos
+         * @description Guarda `reminderMinutes` (0 a 40320, o `null` para los recordatorios predeterminados del calendario). Aplica a los eventos que se publiquen desde ahora; la actualización de los ya publicados la hace el publicador (issue #324). Sin conexión responde `404`.
+         */
+        patch: operations["updateGoogleCalendarReminder"];
+        trace?: never;
+    };
+    "/private/integrations/google-calendar/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Iniciar la conexión con Google Calendar
+         * @description Devuelve la URL de consentimiento de Google (código de autorización con PKCE, acceso offline y consentimiento forzado; alcances mínimos `calendar.events`, `openid` y `email`). Guarda un `state` de un solo uso, ligado a barbería, barbero, usuario y sesión, que vence a los 10 minutos. No es idempotente a propósito: cada solicitud emite un `state` nuevo. Responde `409` si la integración no está configurada o el usuario no tiene barbero vinculado.
+         */
+        post: operations["startGoogleCalendarConnection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/private/integrations/google-calendar/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Completar la conexión tras el consentimiento de Google
+         * @description Google redirige al navegador a la pantalla de retorno del frontend (el `redirect_uri` registrado en Google Cloud) con `code` y `state`; esa pantalla los reenvía aquí. Exige la sesión que inició la conexión y un `state` vigente, de un solo uso y emitido por esa misma sesión y barbero; cualquier otro caso responde `400` con el mismo mensaje, sin revelar cuál falló, y el `state` queda consumido. Canjea el código con PKCE y guarda el refresh token cifrado. Nunca devuelve ni registra el código, el `state` ni tokens. No es idempotente por diseño: el `state` solo sirve una vez.
+         */
+        post: operations["completeGoogleCalendarConnection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/private/me/barber": {
         parameters: {
             query?: never;
@@ -2069,6 +2137,71 @@ export interface components {
             /** @example cortefinok7x2m9q4 */
             slug: string;
         };
+        /** @description Estado de la integración del usuario autenticado. `enabled` es falso cuando el servidor no tiene credenciales de Google configuradas (la integración queda desactivada y el resto del producto funciona). `barberLinked` es falso mientras el usuario no haya declarado cuál barbero es (`DEC-100`): sin barbero no se puede conectar. */
+        GoogleCalendarConnectionResponse: {
+            /** @description El servidor tiene la integración con Google Calendar configurada. */
+            enabled: boolean;
+            /** @description El usuario autenticado está vinculado a un barbero. */
+            barberLinked: boolean;
+            /**
+             * @description `not_connected`: nunca conectó. `connected`: publica con normalidad. `reauth_required`: Google revocó o caducó el permiso; hay que reconectar. `error`: fallo transitorio, el permiso sigue siendo válido. `disconnected`: el barbero desconectó.
+             * @enum {string}
+             */
+            status: "not_connected" | "connected" | "reauth_required" | "error" | "disconnected";
+            /**
+             * @description Cuenta de Google conectada, o `null` sin conexión.
+             * @example barbero@ejemplo.test
+             */
+            accountEmail: string | null;
+            /**
+             * @description Anticipación, en minutos, del recordatorio de cada evento (0 a 40320). `null` usa los recordatorios predeterminados del calendario del barbero.
+             * @example 30
+             */
+            reminderMinutes: number | null;
+            /**
+             * Format: date-time
+             * @description Instante de la última conexión, o `null`.
+             */
+            connectedAt: string | null;
+            /**
+             * Format: date-time
+             * @description Instante de la última publicación correcta en Google, o `null`.
+             */
+            lastSyncedAt: string | null;
+        };
+        /** @description Anticipación del recordatorio de los eventos del barbero. Es el único campo editable de la conexión; nunca acepta tokens, estado ni el barbero. */
+        UpdateGoogleCalendarReminderRequest: {
+            /**
+             * @description Minutos entre 0 y 40320 (el límite de Google), o `null` para usar los recordatorios predeterminados del calendario del barbero. Fuera de rango responde `422` sin guardar nada.
+             * @example 30
+             */
+            reminderMinutes: number | null;
+        };
+        /** @description URL de consentimiento de Google a la que el navegador debe ir para conectar. Lleva un `state` de un solo uso ligado a la sesión y vence a los 10 minutos. */
+        GoogleCalendarAuthorizationResponse: {
+            /**
+             * Format: uri
+             * @description URL de consentimiento de Google (código de autorización con PKCE).
+             */
+            authorizationUrl: string;
+        };
+        /** @description Parámetros que Google agregó a la URL de retorno. `state` es obligatorio y de un solo uso. `code` viene con un consentimiento correcto; `error` (por ejemplo `access_denied`) viene cuando el barbero rechazó el permiso. Nunca lleva identificadores de barbero, usuario ni barbería. */
+        CompleteGoogleCalendarConnectionRequest: {
+            /** @description Valor de un solo uso emitido al iniciar la conexión. */
+            state: string;
+            /** @description Código de autorización de Google (ausente si el barbero rechazó). */
+            code?: string;
+            /** @description Código de error OAuth de Google, por ejemplo `access_denied`. */
+            error?: string;
+        };
+        /** @description Desenlace de la conexión con Google Calendar. */
+        GoogleCalendarCallbackResponse: {
+            /**
+             * @description `connected`: quedó conectado. `denied`: el barbero rechazó el permiso o no concedió el de calendario. `failed`: Google no completó el intercambio; se puede volver a intentar.
+             * @enum {string}
+             */
+            result: "connected" | "denied" | "failed";
+        };
         /** @description Selección del barbero propio del usuario autenticado. Si el usuario ya estaba vinculado a otro barbero, el vínculo anterior se libera en la misma operación. */
         LinkMyBarberRequest: {
             /**
@@ -3491,6 +3624,64 @@ export interface components {
                 "application/json": components["schemas"]["PublicLinkResponse"];
             };
         };
+        /** @description Estado de la integración del barbero con Google Calendar. */
+        GoogleCalendarConnectionSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["GoogleCalendarConnectionResponse"];
+            };
+        };
+        /** @description La integración quedó desconectada: se revocó el permiso en Google (mejor esfuerzo) y se borraron las credenciales. Es idempotente: sin conexión también responde `204`. No borra citas ni los eventos ya creados en Google. */
+        GoogleCalendarDisconnected: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
+        /** @description El cuerpo es JSON válido, pero `reminderMinutes` está fuera de 0 a 40320. No se guardó ningún cambio. */
+        GoogleCalendarReminderValidationProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description URL de consentimiento de Google para iniciar la conexión. */
+        GoogleCalendarAuthorizationStarted: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["GoogleCalendarAuthorizationResponse"];
+            };
+        };
+        /** @description La operación no es posible en el estado actual: la integración no está configurada en el servidor, o el usuario todavía no declaró cuál barbero es (`DEC-100`). No se ejecutó ningún efecto. */
+        GoogleCalendarInvalidStateProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description Desenlace de la conexión. Nunca contiene el código OAuth, el `state` ni tokens. */
+        GoogleCalendarCallbackCompleted: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["GoogleCalendarCallbackResponse"];
+            };
+        };
         /** @description El barbero ya está vinculado a otro usuario de esta barbería. No se persistió ningún cambio y el vínculo anterior del solicitante, si existía, se conserva. Quien lo tenga puede liberarlo desde su propia sesión. */
         MyBarberLinkConflictProblem: {
             headers: {
@@ -4446,6 +4637,90 @@ export interface operations {
             200: components["responses"]["PublicLinkSuccess"];
             401: components["responses"]["UnauthorizedProblem"];
             404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getGoogleCalendarConnection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["GoogleCalendarConnectionSuccess"];
+            401: components["responses"]["UnauthorizedProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    disconnectGoogleCalendar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: components["responses"]["GoogleCalendarDisconnected"];
+            401: components["responses"]["UnauthorizedProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    updateGoogleCalendarReminder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateGoogleCalendarReminderRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["GoogleCalendarConnectionSuccess"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            422: components["responses"]["GoogleCalendarReminderValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    startGoogleCalendarConnection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["GoogleCalendarAuthorizationStarted"];
+            401: components["responses"]["UnauthorizedProblem"];
+            409: components["responses"]["GoogleCalendarInvalidStateProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    completeGoogleCalendarConnection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteGoogleCalendarConnectionRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["GoogleCalendarCallbackCompleted"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            409: components["responses"]["GoogleCalendarInvalidStateProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

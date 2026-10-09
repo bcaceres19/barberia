@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -26,6 +27,10 @@ import (
 	"system-barbershop/internal/modules/customeraccess"
 	customeraccesshttpapi "system-barbershop/internal/modules/customeraccess/httpapi"
 	customeraccesspostgres "system-barbershop/internal/modules/customeraccess/postgres"
+	"system-barbershop/internal/modules/googlecalendar"
+	googlecalendargoogle "system-barbershop/internal/modules/googlecalendar/google"
+	googlecalendarhttpapi "system-barbershop/internal/modules/googlecalendar/httpapi"
+	googlecalendarpostgres "system-barbershop/internal/modules/googlecalendar/postgres"
 	"system-barbershop/internal/modules/notification"
 	"system-barbershop/internal/modules/publicbooking"
 	publicbookinghttpapi "system-barbershop/internal/modules/publicbooking/httpapi"
@@ -294,6 +299,20 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	getMyBarberHandler := staffhttpapi.NewGetMyBarberHandler(staffService)
 	linkMyBarberHandler := staffhttpapi.NewLinkMyBarberHandler(staffService)
 	unlinkMyBarberHandler := staffhttpapi.NewUnlinkMyBarberHandler(staffService)
+	googleCalendarService, err := buildGoogleCalendarService(db, logger, cfg)
+	if err != nil {
+		return nil, err
+	}
+	// DEC-100: cambiar o quitar el vínculo desconecta el Google Calendar del
+	// barbero anterior, para que quien lo tome después no herede una cuenta ajena.
+	staffService.ObserveLinkReleased(googleCalendarService)
+	googleCalendarHandlers := googlecalendarhttpapi.New(googleCalendarService)
+	private.Get("/integrations/google-calendar", googleCalendarHandlers.Get)
+	private.Patch("/integrations/google-calendar", googleCalendarHandlers.UpdateReminder)
+	private.Delete("/integrations/google-calendar", googleCalendarHandlers.Disconnect)
+	private.Post("/integrations/google-calendar/connect", googleCalendarHandlers.Connect)
+	private.Post("/integrations/google-calendar/callback", googleCalendarHandlers.Callback)
+
 	private.Get("/me/barber", getMyBarberHandler.ServeHTTP)
 	private.Put("/me/barber", linkMyBarberHandler.ServeHTTP)
 	private.Delete("/me/barber", unlinkMyBarberHandler.ServeHTTP)
@@ -693,4 +712,54 @@ func selectWhatsAppOTPProvider(cfg config.Config, logger *slog.Logger, secret []
 		}, nil), auth.NewCryptoPhoneCodeGenerator(), secret)
 	}
 	return auth.NewLocalWhatsAppOTPProvider(auth.NewCryptoPhoneCodeGenerator(), auth.NewLoggingPhoneCodeSender(logger), secret)
+}
+
+// newGoogleCalendarProvider construye el adaptador real de Google. Es una
+// variable solo para que las pruebas de integración apunten a un Google falso;
+// ningún código de producción la reasigna.
+var newGoogleCalendarProvider = func(cfg config.Config) googlecalendar.OAuthProvider {
+	return googlecalendargoogle.New(googlecalendargoogle.Config{
+		ClientID:     cfg.GoogleCalendarClientID,
+		ClientSecret: cfg.GoogleCalendarClientSecret,
+		RedirectURL:  cfg.GoogleCalendarRedirectURI,
+	})
+}
+
+// buildGoogleCalendarService arma el módulo de la integración con Google
+// Calendar (DEC-099, DEC-102). Con las credenciales ausentes devuelve un
+// servicio DESACTIVADO —sin proveedor ni cifrador— para que el resto del
+// producto funcione y las rutas respondan que no está disponible; una
+// configuración presente pero mal formada ya falló en config.Load.
+func buildGoogleCalendarService(db *database.DB, logger *slog.Logger, cfg config.Config) (*googlecalendar.Service, error) {
+	deps := googlecalendar.Deps{
+		Repo:   googlecalendarpostgres.New(db),
+		Clock:  clock.System{},
+		Logger: logger,
+	}
+	if cfg.GoogleCalendarPartiallyConfigured() {
+		logger.Warn("google_calendar.config.incomplete",
+			"detail", "faltan variables GOOGLE_CALENDAR_*; la integración queda desactivada")
+	}
+	if cfg.GoogleCalendarEnabled() {
+		active, err := googlecalendar.ParseKey(cfg.GoogleCalendarTokenEncryptionKey)
+		if err != nil {
+			return nil, errors.New("googlecalendar: clave de cifrado inválida")
+		}
+		keys := map[string][]byte{cfg.GoogleCalendarTokenKeyID: active}
+		for _, entry := range cfg.GoogleCalendarPreviousKeys {
+			id, encoded, _ := strings.Cut(entry, ":")
+			previous, err := googlecalendar.ParseKey(encoded)
+			if err != nil {
+				return nil, errors.New("googlecalendar: clave de cifrado anterior inválida")
+			}
+			keys[id] = previous
+		}
+		cipher, err := googlecalendar.NewCipher(cfg.GoogleCalendarTokenKeyID, keys)
+		if err != nil {
+			return nil, errors.New("googlecalendar: fallo al iniciar el cifrador")
+		}
+		deps.Cipher = cipher
+		deps.Provider = newGoogleCalendarProvider(cfg)
+	}
+	return googlecalendar.NewService(deps), nil
 }

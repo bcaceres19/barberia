@@ -1,0 +1,13 @@
+# Respuesta de POST /private/integrations/google-calendar/connect (issue #323).
+type: object
+additionalProperties: false
+description: >
+  URL de consentimiento de Google a la que el navegador debe ir para conectar.
+  Lleva un `state` de un solo uso ligado a la sesión y vence a los 10 minutos.
+properties:
+  authorizationUrl:
+    type: string
+    format: uri
+    description: URL de consentimiento de Google (código de autorización con PKCE).
+required:
+  - authorizationUrl

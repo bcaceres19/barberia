@@ -1,0 +1,15 @@
+# Respuesta 200 de POST /private/integrations/google-calendar/callback.
+description: >
+  Desenlace de la conexión. Nunca contiene el código OAuth, el `state` ni
+  tokens.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/GoogleCalendarCallbackResponse.yaml'
+    examples:
+      conectado:
+        value:
+          result: connected

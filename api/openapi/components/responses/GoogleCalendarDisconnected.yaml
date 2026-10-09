@@ -1,0 +1,9 @@
+# Respuesta 204 de DELETE /private/integrations/google-calendar. Sin cuerpo
+# (docs/06-api/estandar-openapi.md sección 11).
+description: >
+  La integración quedó desconectada: se revocó el permiso en Google (mejor
+  esfuerzo) y se borraron las credenciales. Es idempotente: sin conexión
+  también responde `204`. No borra citas ni los eventos ya creados en Google.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'

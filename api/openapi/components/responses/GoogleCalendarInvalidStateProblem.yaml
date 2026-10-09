@@ -1,0 +1,33 @@
+# 409 de las operaciones de conexión con Google Calendar (issue #323).
+description: >
+  La operación no es posible en el estado actual: la integración no está
+  configurada en el servidor, o el usuario todavía no declaró cuál barbero es
+  (`DEC-100`). No se ejecutó ningún efecto.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      sinBarbero:
+        summary: El usuario no tiene barbero vinculado
+        value:
+          type: /api/v1/problems/invalid-state
+          title: Estado inválido
+          status: 409
+          detail: vincula tu usuario con un barbero antes de conectar Google Calendar
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: invalid-state
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      desactivada:
+        summary: Integración sin configurar
+        value:
+          type: /api/v1/problems/invalid-state
+          title: Estado inválido
+          status: 409
+          detail: la integración con Google Calendar no está disponible en este entorno
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: invalid-state
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

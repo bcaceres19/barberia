@@ -1,0 +1,14 @@
+# Respuesta de POST /private/integrations/google-calendar/callback (issue #323).
+type: object
+additionalProperties: false
+description: Desenlace de la conexión con Google Calendar.
+properties:
+  result:
+    type: string
+    enum: [connected, denied, failed]
+    description: >
+      `connected`: quedó conectado. `denied`: el barbero rechazó el permiso o no
+      concedió el de calendario. `failed`: Google no completó el intercambio;
+      se puede volver a intentar.
+required:
+  - result

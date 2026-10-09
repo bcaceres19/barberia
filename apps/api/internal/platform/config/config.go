@@ -4,6 +4,7 @@
 package config
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net"
 	"net/url"
@@ -236,6 +237,43 @@ type Config struct {
 	// caso, nunca se bloquea el arranque ni la confirmación por su
 	// ausencia.
 	PublicWebBaseURL string
+
+	// GoogleCalendar* configuran la conexión de cada barbero con SU Google
+	// Calendar (DEC-099, DEC-102). Las cuatro primeras son obligatorias para
+	// activar la integración: si falta alguna, la integración queda
+	// desactivada y el resto del producto funciona (GoogleCalendarEnabled).
+	// Secretos: nunca se registran ni se comitean.
+	GoogleCalendarClientID     string
+	GoogleCalendarClientSecret string
+	// GoogleCalendarRedirectURI es la URL registrada en Google Cloud a la que
+	// Google devuelve al navegador: la pantalla de retorno del frontend. Exige
+	// HTTPS fuera de local/test (DEC-102).
+	GoogleCalendarRedirectURI string
+	// GoogleCalendarTokenEncryptionKey es la clave AES-256 (32 bytes en
+	// base64) con la que se cifra el refresh token (DEC-102).
+	GoogleCalendarTokenEncryptionKey string
+	// GoogleCalendarTokenKeyID identifica esa clave en cada texto cifrado
+	// ("v1" por defecto); cambiarla junto con la clave permite rotar.
+	GoogleCalendarTokenKeyID string
+	// GoogleCalendarPreviousKeys son claves anteriores, "id:base64" separadas
+	// por coma, que siguen sirviendo para DESCIFRAR lo guardado antes de rotar.
+	GoogleCalendarPreviousKeys []string
+}
+
+// GoogleCalendarEnabled informa si están las cuatro variables que activan la
+// integración con Google Calendar. Con alguna ausente la integración queda
+// desactivada sin impedir el arranque (DEC-102).
+func (c Config) GoogleCalendarEnabled() bool {
+	return c.GoogleCalendarClientID != "" && c.GoogleCalendarClientSecret != "" &&
+		c.GoogleCalendarRedirectURI != "" && c.GoogleCalendarTokenEncryptionKey != ""
+}
+
+// GoogleCalendarPartiallyConfigured informa si hay alguna variable de Google
+// Calendar sin que la integración esté completa: casi siempre es un olvido.
+func (c Config) GoogleCalendarPartiallyConfigured() bool {
+	any := c.GoogleCalendarClientID != "" || c.GoogleCalendarClientSecret != "" ||
+		c.GoogleCalendarRedirectURI != "" || c.GoogleCalendarTokenEncryptionKey != ""
+	return any && !c.GoogleCalendarEnabled()
 }
 
 // Load lee la configuración desde variables de entorno y aplica valores por
@@ -421,6 +459,16 @@ func Load() (Config, error) {
 		ResendSubject:     getEnv("APP_RESEND_SUBJECT", "Código de recuperación de acceso"),
 
 		PublicWebBaseURL: getEnv("APP_PUBLIC_WEB_BASE_URL", ""),
+
+		GoogleCalendarClientID:           getEnv("GOOGLE_CALENDAR_CLIENT_ID", ""),
+		GoogleCalendarClientSecret:       getEnv("GOOGLE_CALENDAR_CLIENT_SECRET", ""),
+		GoogleCalendarRedirectURI:        getEnv("GOOGLE_CALENDAR_REDIRECT_URI", ""),
+		GoogleCalendarTokenEncryptionKey: getEnv("GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY", ""),
+		GoogleCalendarTokenKeyID:         getEnv("GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY_ID", "v1"),
+		GoogleCalendarPreviousKeys:       getEnvCSV("GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY_PREVIOUS"),
+	}
+	if err := validateGoogleCalendar(cfg); err != nil {
+		return Config{}, err
 	}
 
 	if cfg.DatabaseURL == "" {
@@ -634,4 +682,48 @@ func getEnvDuration(key string, fallback string) (time.Duration, error) {
 		return 0, fmt.Errorf("config: %s=%q no es una duración válida: %w", key, value, err)
 	}
 	return d, nil
+}
+
+// validateGoogleCalendar rechaza valores PRESENTES pero mal formados: una clave
+// que no mide 32 bytes o una URI de retorno sin HTTPS fuera de local/test no
+// deben degradarse en silencio a «integración desactivada». La AUSENCIA de
+// variables sí desactiva la integración sin fallar (DEC-102).
+func validateGoogleCalendar(cfg Config) error {
+	if cfg.GoogleCalendarRedirectURI != "" {
+		u, err := url.Parse(cfg.GoogleCalendarRedirectURI)
+		if err != nil || u.Host == "" || u.Fragment != "" {
+			return fmt.Errorf("config: GOOGLE_CALENDAR_REDIRECT_URI no es una URL válida")
+		}
+		localHTTP := entornosSinTLSObligatorio[cfg.Environment] && u.Scheme == "http" &&
+			(u.Hostname() == "localhost" || u.Hostname() == "127.0.0.1")
+		if u.Scheme != "https" && !localHTTP {
+			return fmt.Errorf(
+				"config: GOOGLE_CALENDAR_REDIRECT_URI debe usar HTTPS (http://localhost solo se admite en local/test)")
+		}
+	}
+	if cfg.GoogleCalendarTokenEncryptionKey != "" {
+		if !validGoogleKey(cfg.GoogleCalendarTokenEncryptionKey) {
+			return fmt.Errorf("config: GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY debe ser una clave de 32 bytes en base64")
+		}
+		if strings.TrimSpace(cfg.GoogleCalendarTokenKeyID) == "" {
+			return fmt.Errorf("config: GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY_ID no puede quedar vacío")
+		}
+	}
+	seen := map[string]bool{cfg.GoogleCalendarTokenKeyID: true}
+	for _, entry := range cfg.GoogleCalendarPreviousKeys {
+		id, key, ok := strings.Cut(entry, ":")
+		if !ok || id == "" || !validGoogleKey(key) {
+			return fmt.Errorf("config: GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY_PREVIOUS debe tener la forma id:clave-base64 con claves de 32 bytes")
+		}
+		if seen[id] {
+			return fmt.Errorf("config: GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY_PREVIOUS repite el identificador de clave %q", id)
+		}
+		seen[id] = true
+	}
+	return nil
+}
+
+func validGoogleKey(encoded string) bool {
+	raw, err := base64.StdEncoding.DecodeString(encoded)
+	return err == nil && len(raw) == 32
 }

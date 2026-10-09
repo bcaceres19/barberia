@@ -1,0 +1,13 @@
+# Respuesta 200 de POST /private/integrations/google-calendar/connect.
+description: URL de consentimiento de Google para iniciar la conexión.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/GoogleCalendarAuthorizationResponse.yaml'
+    examples:
+      consentimiento:
+        value:
+          authorizationUrl: https://accounts.google.com/o/oauth2/v2/auth?client_id=...&state=...

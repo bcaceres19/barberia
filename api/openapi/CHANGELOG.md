@@ -4,6 +4,22 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.33.0 · 2026-10-09
+
+### Agregado
+
+- Etiqueta `Integrations` y las operaciones de la conexión del barbero con su
+  Google Calendar (`DEC-099`, `DEC-102`, issue #323): `GET`/`PATCH`/`DELETE
+  /private/integrations/google-calendar` (`getGoogleCalendarConnection`,
+  `updateGoogleCalendarReminder`, `disconnectGoogleCalendar`), `POST .../connect`
+  (`startGoogleCalendarConnection`, devuelve la URL de consentimiento) y `POST
+  .../callback` (`completeGoogleCalendarConnection`, la pantalla de retorno del
+  frontend reenvía `state` y `code`; responde `connected`, `denied` o `failed`). Actúan
+  sobre el barbero vinculado al usuario autenticado y nunca aceptan un
+  identificador de barbero, usuario ni barbería; ninguna respuesta lleva tokens,
+  secretos, el código OAuth ni el `state`. Cambio compatible: operaciones y
+  esquemas nuevos.
+
 ## 0.32.0 · 2026-10-09
 
 ### Agregado
