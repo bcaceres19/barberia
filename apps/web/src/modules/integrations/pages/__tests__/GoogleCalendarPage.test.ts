@@ -126,6 +126,31 @@ describe('GoogleCalendarPage', () => {
     expect(wrapper.text()).not.toContain('Conectar Google Calendar')
   })
 
+  it('walks through the three steps and marks where the barber is', async () => {
+    const linking = await mountWith({ ...base, barberLinked: false })
+    const first = linking.findAll('.gcal-step')
+    expect(first).toHaveLength(3)
+    expect(first[0].attributes('aria-current')).toBe('step')
+    expect(first[1].attributes('aria-current')).toBeUndefined()
+
+    const connecting = await mountWith(base)
+    const second = connecting.findAll('.gcal-step')
+    expect(second[0].classes()).toContain('gcal-step--done')
+    expect(second[1].attributes('aria-current')).toBe('step')
+  })
+
+  it('hides the steps once Google Calendar is connected', async () => {
+    const wrapper = await mountWith(connected)
+    expect(wrapper.find('.gcal-steps').exists()).toBe(false)
+  })
+
+  it('shows the how-it-works cards in plain, short language', async () => {
+    const wrapper = await mountWith(connected)
+    const cards = wrapper.findAll('.gcal-how__item')
+    expect(cards).toHaveLength(4)
+    expect(cards[0].text()).toContain('NAVA manda')
+  })
+
   it('shows «No conectado» with the connect action, and the how-it-works copy always', async () => {
     const wrapper = await mountWith(base)
     expect(wrapper.text()).toContain('No conectado')
@@ -135,7 +160,7 @@ describe('GoogleCalendarPage', () => {
     expect(how).toContain('no modifica tus turnos')
     expect(how).toContain('NAVA lo vuelve a crear')
     expect(how).toContain('cancélalo desde NAVA')
-    expect(how).toContain('Google le envía una invitación')
+    expect(how).toContain('Google les envía la invitación')
   })
 
   it('shows the connected state with account, last sync and the three actions', async () => {
@@ -272,14 +297,36 @@ describe('GoogleCalendarPage', () => {
   it('starts on the Google defaults when there is no reminder and saves null', async () => {
     reminderMock.mockResolvedValue({ kind: 'success', connection: connected })
     const wrapper = await mountWith(connected)
-    const checkbox = wrapper.get('input[type="checkbox"]')
-    expect((checkbox.element as HTMLInputElement).checked).toBe(true)
+    const defaults = wrapper.get('input[name="reminderMode"][value="default"]')
+    expect((defaults.element as HTMLInputElement).checked).toBe(true)
     expect(wrapper.find('input[name="reminderMinutes"]').exists()).toBe(false)
 
     await wrapper.get('form').trigger('submit')
     await flushPromises()
     expect(reminderMock).toHaveBeenCalledTimes(1)
     expect(reminderMock).toHaveBeenCalledWith(null)
+  })
+
+  it('switches to custom minutes and lets a shortcut fill the field', async () => {
+    reminderMock.mockResolvedValue({
+      kind: 'success',
+      connection: { ...connected, reminderMinutes: 60 },
+    })
+    const wrapper = await mountWith(connected)
+    await wrapper.get('input[name="reminderMode"][value="custom"]').setValue(true)
+    expect(wrapper.find('input[name="reminderMinutes"]').exists()).toBe(true)
+
+    const hour = wrapper.findAll('.gcal-chip').find((c) => c.text() === '1 hora')
+    expect(hour?.attributes('aria-pressed')).toBe('false')
+    await hour?.trigger('click')
+    expect(hour?.attributes('aria-pressed')).toBe('true')
+    expect((wrapper.get('input[name="reminderMinutes"]').element as HTMLInputElement).value).toBe(
+      '60',
+    )
+
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+    expect(reminderMock).toHaveBeenCalledWith(60)
   })
 
   it('loads the saved minutes, validates the range and saves a valid value', async () => {

@@ -225,12 +225,21 @@ for (const state of states) {
     for (const { theme, viewport } of combos) {
       test(`${theme} a ${viewport.name}: sin scroll horizontal y accesible`, async ({ page }) => {
         await openPage(page, state.connection, viewport.width, viewport.height, theme)
-        await page.screenshot({
-          path: path.join(evidenceDir, theme, viewport.name, `${state.name}.png`),
-          fullPage: true,
-        })
         await expectNoHorizontalScroll(page)
         expect(await axeViolations(page)).toEqual([])
+        // El contenido se desplaza dentro del cascarón: la evidencia se toma con un viewport lo
+        // bastante alto para que se vea la pantalla completa y no solo lo que cabe sin desplazar.
+        const contentHeight = await page.evaluate(
+          () => document.querySelector('.gcal-page')?.scrollHeight ?? 0,
+        )
+        await page.setViewportSize({
+          width: viewport.width,
+          height: Math.max(viewport.height, contentHeight + 200),
+        })
+        await page.waitForTimeout(300)
+        await page.screenshot({
+          path: path.join(evidenceDir, theme, viewport.name, `${state.name}.png`),
+        })
       })
     }
   })
@@ -245,24 +254,29 @@ test('recorrido: conectar, sincronizar, guardar el recordatorio y desconectar', 
   await page.getByRole('button', { name: 'Conectar Google Calendar' }).click()
   await expect(page).toHaveURL(/\/panel\/barberia\/google-calendar$/)
   await expect(page.getByText('barbero@ejemplo.test')).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Tu conexión' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Publicando tus cambios' })).toBeVisible()
   // La URL de retorno no conserva el código OAuth ni el state.
   expect(page.url()).not.toContain('codigo-1')
   expect(page.url()).not.toContain('estado-1')
   expect(mock.calls.filter((c) => c.startsWith('callback'))).toEqual(['callback:estado-1:codigo-1'])
 
   // Con cambios en cola se muestra «Sincronizando» y «Sincronizar ahora» los publica.
-  await expect(page.getByText('Sincronizando 2 cambios')).toBeVisible()
+  await expect(page.getByText('Estamos enviando 2 cambios a Google')).toBeVisible()
   await page.getByRole('button', { name: 'Sincronizar ahora' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Tu agenda ya está en Google Calendar' }),
+  ).toBeVisible()
   await expect(page.getByText('Última sincronización')).toBeVisible()
   expect(mock.calls).toContain('sync')
 
   // Recordatorio: validación y guardado.
-  await page.getByLabel('Usar los recordatorios predeterminados de Google').uncheck()
-  await page.getByLabel('Minutos de anticipación').fill('99999')
+  await page.getByLabel('Avisarme antes de cada turno', { exact: false }).check()
+  await page.getByRole('button', { name: '1 hora' }).click()
+  await expect(page.getByLabel('Minutos de anticipación', { exact: true })).toHaveValue('60')
+  await page.getByLabel('Minutos de anticipación', { exact: true }).fill('99999')
   await page.getByRole('button', { name: 'Guardar recordatorio' }).click()
   await expect(page.getByText('de 0 a 40320')).toBeVisible()
-  await page.getByLabel('Minutos de anticipación').fill('45')
+  await page.getByLabel('Minutos de anticipación', { exact: true }).fill('45')
   await page.getByRole('button', { name: 'Guardar recordatorio' }).click()
   await expect.poll(() => mock.calls.includes('reminder:45')).toBe(true)
   await page.screenshot({
