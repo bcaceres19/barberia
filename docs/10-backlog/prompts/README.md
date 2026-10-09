@@ -1,9 +1,9 @@
 ---
 titulo: "Catálogo de prompts persistentes"
-version: "1.97"
+version: "1.98"
 estado: "Obligatorio para prompts reutilizables"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-10-07"
+ultima_actualizacion: "2026-10-09"
 documentos_relacionados:
   - "../../../AGENTS.md"
   - "../../../CLAUDE.md"
@@ -239,10 +239,10 @@ Un prompt mutable atiende una preocupación primaria y un issue. Si un trabajo n
 | [PROMPT-CHORE-195-SERVICIOS-POR-BARBERO-FIDELIDAD-v1.1](chore/issue-195-servicios-por-barbero-fidelidad-v1.1.md) | `chore` | `HU-023` | [#195](https://github.com/bcaceres19/barberia/issues/195) | `executed` | Fidelidad de asignaciones de servicios por barbero del atlas | Integrada mediante [PR #233](https://github.com/bcaceres19/barberia/pull/233), squash `0b39cda` |
 | [PROMPT-CHORE-196-HORARIOS-FIDELIDAD-v1.1](chore/issue-196-horarios-fidelidad-v1.1.md) | `chore` | `HU-040`, `HU-041` | [#196](https://github.com/bcaceres19/barberia/issues/196) | `in_progress` | Fidelidad de horarios, festivos y excepciones del atlas | Rama `chore/196-horarios-fidelidad`; [PR #234](https://github.com/bcaceres19/barberia/pull/234) |
 | [PROMPT-ORCH-GCAL-BARBERO-v1](orchestration/google-calendar-barbero.md) | `orchestration` | Sin HU asignada todavía | [#284](https://github.com/bcaceres19/barberia/issues/284) | `draft` | Orden y dependencias de la publicación unidireccional NAVA → Google Calendar por barbero (`DEC-099`–`DEC-102`); el issue #284 cubre solo el registro documental | Rama `docs/284-google-calendar-decisiones`, [PR #285](https://github.com/bcaceres19/barberia/pull/285) |
-| [PROMPT-FEAT-GCAL-01-VINCULO-BARBERO-USUARIO-v1](hu/gcal-01-vinculo-barbero-usuario.md) | `hu` | Sin HU asignada todavía | `pending` | `draft` | Vínculo barbero–usuario (`DEC-100`). Espera #284 integrado; sin issue real no pasa a `ready` | Sin rama ni PR |
-| [PROMPT-FEAT-GCAL-02-CONEXION-OAUTH-v1](hu/gcal-02-conexion-oauth.md) | `hu` | Sin HU asignada todavía | `pending` | `draft` | OAuth, conexión y tokens cifrados. Espera 01; sin issue real no pasa a `ready` | Sin rama ni PR |
-| [PROMPT-FEAT-GCAL-03-PUBLICACION-NAVA-A-GOOGLE-v1](hu/gcal-03-publicacion-nava-a-google.md) | `hu` | Sin HU asignada todavía | `pending` | `draft` | Publicación NAVA → Google con cola propia. Espera 02; sin issue real no pasa a `ready` | Sin rama ni PR |
-| [PROMPT-FEAT-GCAL-04-FRONTEND-CONEXION-v1](hu/gcal-04-frontend-conexion.md) | `hu` | Sin HU asignada todavía | `pending` | `draft` | Interfaz del barbero. Espera 02 y 03; sin issue real no pasa a `ready` | Sin rama ni PR |
+| [PROMPT-FEAT-GCAL-01-VINCULO-BARBERO-USUARIO-v1](hu/gcal-01-vinculo-barbero-usuario.md) | `hu` | Sin HU asignada todavía | [#322](https://github.com/bcaceres19/barberia/issues/322) | `ready` | Vínculo barbero–usuario (`DEC-100`). Espera #284 integrado; sin issue real no pasa a `ready` | Sin rama ni PR |
+| [PROMPT-FEAT-GCAL-02-CONEXION-OAUTH-v1](hu/gcal-02-conexion-oauth.md) | `hu` | Sin HU asignada todavía | [#323](https://github.com/bcaceres19/barberia/issues/323) | `ready` | OAuth, conexión y tokens cifrados. Espera 01; sin issue real no pasa a `ready` | Sin rama ni PR |
+| [PROMPT-FEAT-GCAL-03-PUBLICACION-NAVA-A-GOOGLE-v1](hu/gcal-03-publicacion-nava-a-google.md) | `hu` | Sin HU asignada todavía | [#324](https://github.com/bcaceres19/barberia/issues/324) | `ready` | Publicación NAVA → Google con cola propia. Espera 02; sin issue real no pasa a `ready` | Sin rama ni PR |
+| [PROMPT-FEAT-GCAL-04-FRONTEND-CONEXION-v1](hu/gcal-04-frontend-conexion.md) | `hu` | Sin HU asignada todavía | [#325](https://github.com/bcaceres19/barberia/issues/325) | `ready` | Interfaz del barbero. Espera 02 y 03; sin issue real no pasa a `ready` | Sin rama ni PR |
 | [PROMPT-OPS-GCAL-05-PUESTA-EN-MARCHA-v1](ops/gcal-05-puesta-en-marcha.md) | `ops` | Sin HU asignada todavía | `pending` | `draft` | Revisión integral y guía de puesta en marcha. Espera 03 y 04; sin issue real no pasa a `ready` | Sin rama ni PR |
 
 | [PROMPT-TEST-300-KIT-UI-v1](test/issue-300-kit-ui.md) | test | Kit UI | [#300](https://github.com/bcaceres19/barberia/issues/300) | executed | Solicitud del propietario, DEC-120 | test/300-exploracion-ui-luna; sin PR |

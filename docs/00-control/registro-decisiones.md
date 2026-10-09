@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.47"
+version: "1.48"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-10-08"
+ultima_actualizacion: "2026-10-09"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -1423,3 +1423,18 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Responsable:** propietario del proyecto (elección explícita del 2026-10-08, ante tres opciones: subir a 1.26, esperar un parche de 1.25 o integrar con el control en rojo).
 - **Alternativas descartadas:** esperar un parche de 1.25 (puede no existir y deja la integración bloqueada); integrar con el check de seguridad en rojo (contradice la regla de integrar solo con CI en verde).
 - **Fuente:** instrucción explícita del propietario del 2026-10-08 e issue [#317](https://github.com/bcaceres19/barberia/issues/317).
+
+### DEC-122 · Invitación al cliente como asistente del evento de Google Calendar (amplía `DEC-099` y `DEC-101`)
+
+- **Fecha:** 2026-10-09.
+- **Decisión:** cuando la cita tiene correo del cliente y el barbero tiene Google Calendar conectado, el evento que NAVA publica en el calendario del barbero incluye a ese correo como **asistente**. Google envía la invitación y, en cuentas Google, el evento aparece en el calendario del cliente. No hay cuentas, OAuth ni tokens de clientes: el evento sigue siendo del barbero y la única conexión es la de `DEC-099`.
+  1. **Cuándo se invita.** Solo con correo presente en la cita y conexión del barbero en estado `connected`. Sin correo no se invita; la cita y el evento del barbero no cambian.
+  2. **Ciclo de vida.** Crear el evento envía la invitación (`sendUpdates=all`); reprogramar actualiza el mismo evento y Google avisa al cliente; cancelar desde la app elimina el evento y Google envía la cancelación. `completed` y `no_show` conservan el evento sin enviar avisos.
+  3. **Sin retorno.** Aceptar, rechazar o borrar la invitación en el calendario del cliente no modifica citas, bloqueos ni disponibilidad de NAVA (`DEC-099`). NAVA no lee respuestas de asistentes.
+  4. **Privacidad.** El correo del cliente solo se envía como campo de asistente; no aparece en título, descripción ni propiedades extendidas. El evento fija `guestsCanModify=false`, `guestsCanInviteOthers=false` y `guestsCanSeeOtherGuests=false`. El título sigue siendo `Nombre del cliente — Servicio` (`DEC-101`). La confirmación pública avisa al cliente, solo cuando dio correo, de que recibirá una invitación de Google Calendar.
+  5. **Conexión del barbero ausente o caída.** Sin conexión `connected` no se invita ni se encola; una caída de Google nunca pierde la cita (`DEC-102`). Un cliente sin cuenta Google recibe el correo de invitación estándar con el archivo `.ics`.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** el propietario pidió que el cliente también reciba la cita en su Google Calendar usando el correo que entrega al reservar. Google no permite escribir en el calendario de una persona sin su consentimiento OAuth; invitar como asistente es la vía soportada que no exige cuentas ni credenciales de clientes.
+- **Alternativas descartadas:** OAuth de cada cliente para escribir en su calendario (contradice `DEC-099`, obliga a guardar tokens de clientes y amplía la verificación de Google); botón «Agregar a mi calendario» con `.ics` (válido, pero no automático).
+- **Documentos afectados:** `alcance-mvp.md`, prompts `gcal-03` y `gcal-04`, y, al implementarse, contrato OpenAPI, diccionario de datos y política de privacidad.
+- **Fuente:** instrucción explícita del propietario del 2026-10-09 («el sistema, por medio del correo que ofrece el cliente, agende la cita en su Google Calendar igualmente al barbero»); issue [#321](https://github.com/bcaceres19/barberia/issues/321).

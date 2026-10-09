@@ -2,15 +2,15 @@
 prompt_id: "PROMPT-FEAT-GCAL-04-FRONTEND-CONEXION-v1"
 version: "1.0"
 kind: "hu"
-status: "draft"
+status: "ready"
 target_agents:
   - "any"
 repository: "bcaceres19/barberia"
 base_branch: "main"
 primary_hu: null
 related_hu: []
-issue: "pending"
-issue_url: null
+issue: "325"
+issue_url: "https://github.com/bcaceres19/barberia/issues/325"
 suggested_issue_title: "feat(web): conectar, sincronizar y desconectar Google Calendar desde el área del barbero"
 branch: null
 pr: null
@@ -21,6 +21,7 @@ depends_on:
 rules: []
 decisions:
   - "DEC-099"
+  - "DEC-122"
   - "DEC-101"
 acceptance_criteria: []
 source_docs:
@@ -41,7 +42,7 @@ source_docs:
   - "docs/03-desarrollo/estandar-diseno-visual.md"
   - ".agents/skills/visual-qa/SKILL.md"
 created_at: "2026-09-26"
-updated_at: "2026-09-26"
+updated_at: "2026-10-09"
 supersedes: null
 superseded_by: null
 ---
@@ -69,6 +70,7 @@ El barbero autenticado puede conectar, ver el estado, sincronizar ahora y descon
 ## Alcance incluido
 
 - Sección del área del barbero con los estados No conectado, Conectando, Conectado (cuenta, calendario y última sincronización), Sincronizando, Requiere reconexión y Error de sincronización, y las acciones Conectar, Sincronizar ahora y Desconectar.
+- Aviso en la confirmación pública de la reserva, solo cuando el cliente dio correo y el barbero tiene Google Calendar conectado, de que recibirá una invitación de Google Calendar (`DEC-122`).
 - Campo de configuración de la anticipación del recordatorio en minutos (por ejemplo 30), con la opción de usar los recordatorios predeterminados de Google, validado de 0 a 40320.
 - Cliente tipado del contrato; el componente no conoce la forma interna del API ni maneja tokens.
 - Texto que deje claro que la publicación es de NAVA hacia Google y que los cambios hechos en Google no modifican la agenda de NAVA; si un evento se borra allí por error, NAVA lo restaura y solo se deja de publicar cancelando la cita desde la app.

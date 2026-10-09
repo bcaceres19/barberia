@@ -2,15 +2,15 @@
 prompt_id: "PROMPT-FEAT-GCAL-01-VINCULO-BARBERO-USUARIO-v1"
 version: "1.0"
 kind: "hu"
-status: "draft"
+status: "ready"
 target_agents:
   - "any"
 repository: "bcaceres19/barberia"
 base_branch: "main"
 primary_hu: null
 related_hu: []
-issue: "pending"
-issue_url: null
+issue: "322"
+issue_url: "https://github.com/bcaceres19/barberia/issues/322"
 suggested_issue_title: "feat(barberos): vincular un barbero con su usuario del área privada"
 branch: null
 pr: null
@@ -44,7 +44,7 @@ source_docs:
   - "docs/03-desarrollo/estandar-diseno-visual.md"
   - ".agents/skills/visual-qa/SKILL.md"
 created_at: "2026-09-26"
-updated_at: "2026-09-26"
+updated_at: "2026-10-09"
 supersedes: null
 superseded_by: null
 ---
