@@ -1,6 +1,6 @@
 ---
 titulo: "Historial de cambios documentales"
-version: "4.02"
+version: "4.03"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-10-08"
@@ -319,6 +319,7 @@ Las versiones se aplican por documento. Mientras no exista historial Git, la fec
 | 2026-10-08 | `docs/00-control/{registro-decisiones,historial-cambios}.md`, `apps/api/go.mod`, `apps/api/README.md`, `.github/workflows/ci.yml` | Se registra `DEC-121` (issue [#317](https://github.com/bcaceres19/barberia/issues/317), amplía `DEC-023`): el backend sube a Go 1.26.9 porque `govulncheck` encontró nueve vulnerabilidades de la librería estándar sin versión corregida en 1.25. Sin cambio de código de aplicación. | Instrucción explícita del propietario del 2026-10-08. |
 | 2026-10-08 | `apps/web/src/modules/schedules/**`, `apps/web/e2e/barberos-bloqueos-series.spec.ts`, `apps/web/e2e/evidence/barberos/bloqueos-100/`, `docs/02-requisitos/historias-usuario.md`, `docs/10-backlog/plan-bloques.md`, `docs/00-control/matriz-trazabilidad.md`, `docs/10-backlog/prompts/hu/hu-042-bloqueos-agenda.md` | Seguimiento de `HU-042` (issue [#100](https://github.com/bcaceres19/barberia/issues/100)): la ventana de bloqueos de Barberos (`DEC-105`) incorpora series por fechas explícitas, fechas y excepciones, y edición por alcance (`whole`/`this_and_following`), con E2E real, axe y responsive. Sin cambio de contrato, migración ni regla de negocio. | Instrucción explícita del propietario del 2026-10-08. |
 | 2026-10-08 | `apps/web/e2e/revision-integral-nava-198.spec.ts`, `apps/web/e2e/evidence/revision-integral-198/`, `apps/web/src/modules/auth/components/AppNav.vue`, `docs/10-backlog/prompts/{README.md,chore/issue-197-*.md,orchestration/redisenio-integral-nava-tailored-grid-v3.md}` | Revisión integral final del rediseño NAVA (issue [#198](https://github.com/bcaceres19/barberia/issues/198), cierra el maestro [#184](https://github.com/bcaceres19/barberia/issues/184)): recorrido real de 10 rutas en 4 anchos sin violaciones axe, desbordamientos ni errores; el dock de escritorio deja de truncar «Servicios por barbero». Los dos prompts de [#197](https://github.com/bcaceres19/barberia/issues/197) pasan a `superseded` por `DEC-105` y la orquestación `PROMPT-ORCH-NAVA-ATLAS-v3` a `executed`. | Instrucción explícita del propietario del 2026-10-08. |
+| 2026-10-09 | `docs/00-control/{registro-decisiones,historial-cambios}.md`, `docs/01-producto/alcance-mvp.md`, `docs/10-backlog/prompts/{README.md,hu/gcal-03-*,hu/gcal-04-*}` | Se registra `DEC-122` (issue [#321](https://github.com/bcaceres19/barberia/issues/321), amplía `DEC-099` y `DEC-101`): el cliente con correo recibe la cita en su Google Calendar como asistente invitado al evento del barbero, sin OAuth ni tokens de clientes y sin efecto de retorno sobre NAVA. Los prompts `gcal-03` y `gcal-04` incorporan la invitación y el aviso público. Registro 1.47 → 1.48, historial 4.02 → 4.03. |
 
 ## 4. Pendiente para la siguiente versión
 

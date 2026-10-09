@@ -2,15 +2,15 @@
 prompt_id: "PROMPT-FEAT-GCAL-02-CONEXION-OAUTH-v1"
 version: "1.0"
 kind: "hu"
-status: "draft"
+status: "ready"
 target_agents:
   - "any"
 repository: "bcaceres19/barberia"
 base_branch: "main"
 primary_hu: null
 related_hu: []
-issue: "pending"
-issue_url: null
+issue: "323"
+issue_url: "https://github.com/bcaceres19/barberia/issues/323"
 suggested_issue_title: "feat(integraciones): conectar y desconectar Google Calendar por barbero"
 branch: null
 pr: null
@@ -42,7 +42,7 @@ source_docs:
   - "docs/04-arquitectura/stack-despliegue-operacion.md"
   - "apps/api/internal/platform/config"
 created_at: "2026-09-26"
-updated_at: "2026-09-26"
+updated_at: "2026-10-09"
 supersedes: null
 superseded_by: null
 ---

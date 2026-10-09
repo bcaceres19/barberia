@@ -239,7 +239,7 @@ Múltiples sedes con administración compleja · roles administrativos altamente
 
 ### De integraciones
 
-Integraciones contables · integraciones avanzadas con redes sociales · integración bidireccional completa con calendarios externos *(`DEC-099` admite únicamente publicar las citas y bloqueos de un barbero en su Google Calendar, sin importar cambios de vuelta (solo comprueba que sus eventos sigan existiendo); siguen fuera los calendarios de clientes, administradores, globales o de recursos y otros proveedores)*.
+Integraciones contables · integraciones avanzadas con redes sociales · integración bidireccional completa con calendarios externos *(`DEC-099` admite únicamente publicar las citas y bloqueos de un barbero en su Google Calendar, sin importar cambios de vuelta (solo comprueba que sus eventos sigan existiendo); el cliente solo recibe una invitación como asistente del evento del barbero (`DEC-122`), sin cuenta ni conexión propia; siguen fuera los calendarios conectados de clientes, administradores, globales o de recursos y otros proveedores)*.
 
 ### De arquitectura
 

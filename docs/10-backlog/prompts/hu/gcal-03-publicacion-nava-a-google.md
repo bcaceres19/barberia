@@ -2,15 +2,15 @@
 prompt_id: "PROMPT-FEAT-GCAL-03-PUBLICACION-NAVA-A-GOOGLE-v1"
 version: "1.0"
 kind: "hu"
-status: "draft"
+status: "ready"
 target_agents:
   - "any"
 repository: "bcaceres19/barberia"
 base_branch: "main"
 primary_hu: null
 related_hu: []
-issue: "pending"
-issue_url: null
+issue: "324"
+issue_url: "https://github.com/bcaceres19/barberia/issues/324"
 suggested_issue_title: "feat(integraciones): publicar citas y bloqueos de NAVA en Google Calendar"
 branch: null
 pr: null
@@ -22,6 +22,7 @@ rules:
   - "RN-TEN-01"
 decisions:
   - "DEC-099"
+  - "DEC-122"
   - "DEC-101"
   - "DEC-102"
 acceptance_criteria: []
@@ -43,7 +44,7 @@ source_docs:
   - "apps/api/cmd/worker"
   - "apps/api/internal/platform/idempotency"
 created_at: "2026-09-26"
-updated_at: "2026-09-26"
+updated_at: "2026-10-09"
 supersedes: null
 superseded_by: null
 ---
@@ -77,6 +78,7 @@ Toda cita confirmada, reprogramada o cancelada y todo bloqueo compatible del bar
 - Trabajo periódico del worker (cadencia de pocos minutos, a fijar y documentar) que lista solo los eventos publicados por NAVA (propiedad extendida privada `navaConnectionId`, sin `syncToken`) y recrea los que falten de citas confirmadas futuras y bloqueos vigentes futuros; nunca restaura citas canceladas, terminales ni pasadas, y nunca modifica el dominio de NAVA.
 - Cancelación desde la app: elimina el evento, cierra el vínculo para que no se recree y trata `404`/`410` como éxito; un evento modificado en Google se restablece en la siguiente actualización de NAVA.
 - Actualización de los eventos futuros cuando el barbero cambia `reminder_minutes`.
+- Invitación al cliente (`DEC-122`): si la cita tiene correo y la conexión está `connected`, el evento lo incluye como asistente con `sendUpdates=all`, `guestsCanModify=false`, `guestsCanInviteOthers=false` y `guestsCanSeeOtherGuests=false`; el correo solo viaja como asistente, nunca en título, descripción ni propiedades extendidas. La respuesta del cliente no modifica NAVA.
 - Publicación inicial de las citas y bloqueos futuros dentro de la ventana de 6 meses al conectar, y acción «Sincronizar ahora» que solo procesa la cola pendiente de esa conexión, segura ante varios clics.
 
 ## Fuera de alcance
@@ -89,7 +91,7 @@ Toda cita confirmada, reprogramada o cancelada y todo bloqueo compatible del bar
 
 - Las transacciones de reserva no esperan a ningún servicio externo.
 - Idempotencia de la reserva y de la reprogramación existentes; sin cambios en `appointment`, `time_block` ni sus reglas.
-- Datos personales: nada de teléfono, correo, notas ni tokens en el evento, los logs o el trabajo.
+- Datos personales: nada de teléfono, notas ni tokens en el evento, los logs o el trabajo; el correo del cliente solo como asistente (`DEC-122`) y nunca en logs.
 
 ## Trabajo requerido
 
