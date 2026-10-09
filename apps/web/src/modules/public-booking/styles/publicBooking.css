@@ -166,6 +166,35 @@
   order: 2;
 }
 
+/* Paso con una lista que puede crecer sin límite (las horas del día): la
+   pantalla ocupa exactamente la ventana y solo esa lista hace scroll, de modo
+   que cabecera, días y barra de acción permanecen a la vista. Si la ventana
+   es tan baja que ni una fila de la lista cabe, el documento vuelve a
+   desplazarse en lugar de recortar contenido. */
+.pb-layout:has(.pb-page--fit) {
+  height: 100dvh;
+}
+
+.pb-page--fit {
+  min-height: 0;
+}
+
+/* Solo la lista cede alto: los demás hijos (la tira de días tiene `overflow`
+   y por eso podría encogerse a nada) conservan su tamaño natural. */
+.pb-page--fit > :not(.pb-slots) {
+  flex-shrink: 0;
+}
+
+/* La ficha «Franja elegida» repite lo que ya dice la barra de acción («Tu
+   horario») y suma ~160 px. En ventanas bajas se omite para que las horas
+   conserven alto; la tecnología de apoyo la sigue oyendo por el estado
+   `pb-sr-only`. */
+@media (max-height: 860px) {
+  .pb-page--fit .pb-ticket {
+    display: none;
+  }
+}
+
 /* Un paso adelante entra desde la derecha y uno atrás desde la izquierda. El
    que sale solo se desvanece: sin `transform` en la salida, un elemento
    `sticky` (la barra de acción) no salta mientras se retira. */
@@ -804,6 +833,21 @@
   padding: 0;
   margin: var(--space-5) 0 0;
   list-style: none;
+}
+
+/* La lista cede el alto sobrante a la pantalla y se desplaza por dentro. El
+   relleno de 6 px (compensado con margen negativo, así el ancho visible no
+   cambia) evita que el scroll recorte el aro de foco, el pop de la franja
+   elegida y el desplazamiento de 2 px al pasar el cursor. */
+.pb-page--fit .pb-slots {
+  flex: 0 1 auto;
+  align-content: start;
+  min-height: 72px;
+  padding: 6px;
+  margin: calc(var(--space-5) - 6px) -6px 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .pb-slot {

@@ -276,7 +276,7 @@ const failedRequestId = computed(() =>
     @retry="retry"
   />
 
-  <main v-else class="pb-page pb-page--bar">
+  <main v-else class="pb-page pb-page--bar pb-page--fit">
     <p class="pb-eyebrow">Fecha y hora</p>
     <h1 class="pb-title">Elige fecha y hora</h1>
     <div class="pb-rule" aria-hidden="true"></div>
