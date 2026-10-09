@@ -198,6 +198,13 @@
   min-height: 0;
 }
 
+/* El formulario es a la vez la zona con scroll y una columna flex: sus hijos
+   no deben encogerse para caber (el botón llegó a quedar en 19 px), sino
+   desbordar y desplazarse. */
+.pb-page--fit > .pb-sheet > * > * {
+  flex-shrink: 0;
+}
+
 .pb-page--fit > .pb-sheet > * {
   flex: 0 1 auto;
   min-height: 240px;
@@ -1158,11 +1165,13 @@
 /* ── Hoja de papel: formulario, resumen y confirmación ──────────────────── */
 
 .pb-sheet {
+  --pb-sheet-bg: color-mix(in srgb, #000 26%, var(--color-surface-strong));
+
   position: relative;
   padding: var(--space-8) var(--space-5) var(--space-6);
   margin: var(--space-8) 0 0;
   color: var(--pb-text);
-  background-color: color-mix(in srgb, #000 26%, var(--color-surface-strong));
+  background-color: var(--pb-sheet-bg);
   background-image: linear-gradient(
     to bottom,
     color-mix(in srgb, var(--pb-brass) 4%, transparent),

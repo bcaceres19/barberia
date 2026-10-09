@@ -42,6 +42,12 @@ for (const viewport of viewports) {
     await page.getByLabel('Teléfono').fill('+573001234567')
     await page.getByLabel('Correo').fill('ana@example.com')
 
+    // «Ver resumen» conserva su alto (no se comprime al caber justo) y queda
+    // fijo y visible al pie de la hoja sin tener que desplazar.
+    const pinned = page.getByRole('button', { name: 'Ver resumen' })
+    await expect(pinned).toBeInViewport({ ratio: 1 })
+    expect((await pinned.boundingBox())!.height).toBeGreaterThanOrEqual(40)
+
     // «Ver resumen» es alcanzable desplazando solo la hoja.
     const submit = page.getByRole('button', { name: 'Ver resumen' })
     await submit.scrollIntoViewIfNeeded()

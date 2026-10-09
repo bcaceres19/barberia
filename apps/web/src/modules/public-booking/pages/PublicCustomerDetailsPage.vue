@@ -318,9 +318,11 @@ function chooseAlternative(startsAt: string) {
           </div>
         </div>
 
-        <BaseButton type="submit" variant="primary" size="lg" class="customer-details__submit"
-          >Ver resumen</BaseButton
-        >
+        <div class="customer-details__submit-bar">
+          <BaseButton type="submit" variant="primary" size="lg" class="customer-details__submit"
+            >Ver resumen</BaseButton
+          >
+        </div>
       </form>
 
       <!-- Resumen y confirmación real (HU-096/HU-097, CA-097-07): exige
@@ -792,9 +794,21 @@ function chooseAlternative(startsAt: string) {
     0 0 0 4px var(--color-on-strong);
 }
 
+/* Cuando el formulario no cabe y se desplaza por dentro de la hoja, la acción
+   queda fija al pie en vez de asomar cortada: el fondo tapa los campos que
+   pasan por debajo y la sombra difumina su borde. Si todo cabe, `sticky` no
+   hace nada. */
+.customer-details__submit-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  padding-top: var(--space-2);
+  background-color: var(--pb-sheet-bg);
+  box-shadow: 0 -14px 12px -6px var(--pb-sheet-bg);
+}
+
 .customer-details__submit {
   width: 100%;
-  margin-top: var(--space-2);
 }
 
 .customer-details__summary,
