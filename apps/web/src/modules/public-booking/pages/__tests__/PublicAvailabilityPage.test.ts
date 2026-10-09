@@ -304,6 +304,46 @@ describe('PublicAvailabilityPage', () => {
     expect(ticket.text()).not.toMatch(/reserv|confirm/i)
   })
 
+  it('keeps the ticket mounted when the slot changes, renewing only its time (and its date on another day)', async () => {
+    getMock.mockResolvedValueOnce({
+      data: availabilityFixture(),
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mountAvailabilityPage({
+      slug: 'barberia-ejemplo',
+      serviceId: SERVICE_A,
+      barberId: BARBER_A,
+    })
+    await flushPromises()
+    const options = wrapper.findAll('[role="radio"]')
+    await options[0]!.trigger('click')
+
+    const ticket = wrapper.find('.pb-ticket').element
+    const kicker = wrapper.find('.pb-ticket__kicker').element
+    const foot = wrapper.find('.pb-ticket__foot').element
+    const date = wrapper.find('.pb-ticket__date').element
+    const time = wrapper.find('.pb-ticket__time').element
+    const firstTime = wrapper.find('.pb-ticket__time').text()
+
+    // Otra hora del mismo día: solo se renueva la hora.
+    await options[1]!.trigger('click')
+    expect(wrapper.find('.pb-ticket').element).toBe(ticket)
+    expect(wrapper.find('.pb-ticket__kicker').element).toBe(kicker)
+    expect(wrapper.find('.pb-ticket__foot').element).toBe(foot)
+    expect(wrapper.find('.pb-ticket__date').element).toBe(date)
+    expect(wrapper.find('.pb-ticket__time').element).not.toBe(time)
+    expect(wrapper.find('.pb-ticket__time').text()).not.toBe(firstTime)
+
+    // Una hora de otro día: la fecha también se renueva, la ficha sigue siendo la misma.
+    const sameDayTime = wrapper.find('.pb-ticket__time').element
+    await wrapper.findAll('.pb-day')[1]!.trigger('click')
+    await wrapper.findAll('[role="radio"]')[0]!.trigger('click')
+    expect(wrapper.find('.pb-ticket').element).toBe(ticket)
+    expect(wrapper.find('.pb-ticket__date').element).not.toBe(date)
+    expect(wrapper.find('.pb-ticket__time').element).not.toBe(sameDayTime)
+  })
+
   it('shows a distinct empty state with zero slots in the whole window (CA-095-04)', async () => {
     getMock.mockResolvedValueOnce({
       data: availabilityFixture({ slots: [] }),

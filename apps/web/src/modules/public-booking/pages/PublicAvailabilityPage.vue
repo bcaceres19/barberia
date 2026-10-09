@@ -365,15 +365,13 @@ const failedRequestId = computed(() =>
       <p v-if="selectionSummary" class="pb-sr-only" role="status">
         Franja elegida: {{ selectionSummary }}
       </p>
-      <div
-        v-if="selectionSummary"
-        :key="selectedSlot?.startsAt"
-        class="pb-ticket"
-        aria-hidden="true"
-      >
+      <!-- La ficha se monta una sola vez, al elegir la primera franja. Al
+           cambiar de hora solo se vuelven a montar (y a animar) la hora y,
+           si cambia de día, la fecha: el resto de la ficha se queda quieto. -->
+      <div v-if="selectionSummary" class="pb-ticket" aria-hidden="true">
         <span class="pb-ticket__kicker">Franja elegida</span>
-        <span class="pb-ticket__date">{{ selectedDateLabel }}</span>
-        <span class="pb-ticket__time">{{ selectedTimeLabel }}</span>
+        <span :key="selectedDateLabel" class="pb-ticket__date">{{ selectedDateLabel }}</span>
+        <span :key="selectedTimeLabel" class="pb-ticket__time">{{ selectedTimeLabel }}</span>
         <span class="pb-ticket__foot">Dura {{ durationMinutes }} min · {{ timezone }}</span>
       </div>
 
