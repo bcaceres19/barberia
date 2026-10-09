@@ -7,14 +7,14 @@ target_agents:
   - "any"
 repository: "bcaceres19/barberia"
 base_branch: "main"
-primary_hu: null
+primary_hu: "HU-028"
 related_hu: []
 issue: "325"
 issue_url: "https://github.com/bcaceres19/barberia/issues/325"
 suggested_issue_title: "feat(web): conectar, sincronizar y desconectar Google Calendar desde el área del barbero"
-branch: null
-pr: null
-pr_url: null
+branch: "feat/325-google-calendar-pantalla"
+pr: 330
+pr_url: "https://github.com/bcaceres19/barberia/pull/330"
 depends_on:
   - "PROMPT-FEAT-GCAL-02-v1 integrado"
   - "PROMPT-FEAT-GCAL-03-v1 integrado"

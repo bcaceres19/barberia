@@ -83,6 +83,21 @@ describe('PublicCustomerDetailsPage', () => {
     expect(attendedRow.text()).toContain('Ana Ríos')
   })
 
+  it('tells the customer, before confirming, that Google may invite them at their email (DEC-122)', async () => {
+    const wrapper = mountPage()
+    await fillValidForm(wrapper)
+    expect(wrapper.find('.customer-details__invite-note').exists()).toBe(false)
+
+    await wrapper.find('form').trigger('submit')
+
+    const note = wrapper.get('.customer-details__invite-note')
+    expect(note.text()).toContain('Si el negocio usa Google Calendar')
+    expect(note.text()).toContain('recibirás una invitación')
+    // Condicional: nunca promete una invitación que el negocio quizá no envíe.
+    expect(note.text()).not.toMatch(/^Recibirás/)
+    expect(note.get('strong').text()).not.toBe('')
+  })
+
   it('requires a non-empty attendee name when booking for someone else (CA-096-01)', async () => {
     const wrapper = mountPage()
     await fillValidForm(wrapper)

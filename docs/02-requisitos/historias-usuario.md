@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.55"
+version: "1.56"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-10-09"
@@ -1134,6 +1134,58 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 - Recorrido completo por el router real con el worker real y un Google falso: reserva → reprogramar → cancelar, bloqueo, evento borrado, Google caído con «Sincronizar ahora», permiso revocado y aislamiento.
 
 **Terminado cuando** las citas y bloqueos de un barbero conectado aparecen como eventos de su calendario, el cliente recibe la invitación, una caída de Google no pierde nada y lo borrado por error se restaura, todo sin que Google altere NAVA.
+
+---
+
+### HU-028 · Pantalla de Google Calendar del barbero
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-CONF-02` (extensión: pantalla de la integración con el calendario externo) |
+| Reglas | `RN-TEN-01` |
+| Decisiones | `DEC-095` (avisos emergentes), `DEC-099`, `DEC-100`, `DEC-101`, `DEC-102`, `DEC-122` (invitación al cliente) |
+| Actor | Barbero autenticado y cliente de la reserva pública |
+| Depende de | `HU-026`, `HU-027`, `HU-021` (vínculo «Este soy yo») |
+| Bloquea | La guía de puesta en marcha y la revisión integral de la integración |
+| Riesgo | Una pantalla que maneje el código OAuth o lo deje en la URL lo expone; un doble clic que repita una acción; no dejar claro que NAVA manda y Google es una vista lleva a editar allí esperando cambiar la agenda; prometer al cliente una invitación que el negocio quizá no envía. |
+
+**Historia**
+
+> Como barbero, quiero conectar, ver el estado, sincronizar y desconectar mi Google Calendar desde NAVA, y elegir mi recordatorio, para tener mi agenda en el calendario que ya uso sabiendo con claridad qué hace y qué no hace la integración.
+
+**Alcance incluido**
+
+- Pantalla `/panel/barberia/google-calendar`, enlazada desde la sección «Integraciones» de Configuración (sin entrada propia en el dock), con los estados No disponible, Falta vincular el barbero, No conectado, Conectado (cuenta, calendario y última sincronización), Sincronizando (cambios en cola, con consulta periódica), Requiere reconexión y Error de sincronización, y las acciones Conectar, Sincronizar ahora y Desconectar (con confirmación).
+- Pantalla de retorno `/panel/barberia/google-calendar/callback` (el `redirect_uri` registrado en Google Cloud): reenvía `state` y `code` una sola vez al API, limpia la URL de inmediato y distingue conectado, permiso rechazado, fallo y autorización vencida.
+- Recordatorio en minutos (0 a 40320) o los predeterminados de Google, validado en el cliente y en el servidor.
+- Texto que explica que la publicación es de NAVA hacia Google, que un evento borrado por error se restaura y que solo se deja de publicar cancelando el turno en la app.
+- Aviso en el resumen de la reserva pública, antes de confirmar: «Si el negocio usa Google Calendar, recibirás una invitación a este turno en {correo}» (`DEC-122`).
+- Cliente tipado del contrato; la pantalla no maneja tokens.
+
+**Alcance excluido**
+
+- Cualquier cambio de backend o de contrato. Por eso el aviso al cliente es condicional («Si el negocio usa…»): la reserva pública no sabe si el barbero tiene la integración conectada y exponerlo exigiría un campo nuevo en su respuesta (seguimiento posible).
+- Mostrar bloqueos u origen de Google en la agenda (`DEC-099`).
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-028-01` | Cada estado de la integración se muestra con su rótulo, texto y acciones (conectar, volver a conectar, sincronizar ahora, desconectar) y sin acciones cuando no está disponible; un cambio en cola muestra «Sincronizando» y se consulta hasta que se vacía. |
+| `CA-028-02` | Conectar envía al barbero a Google; la pantalla de retorno reenvía una sola vez `state` y `code`, limpia la URL antes de llamar al API y nunca los guarda; el rechazo del permiso, un fallo de Google y una autorización vencida tienen su propio mensaje y un camino de vuelta. |
+| `CA-028-03` | Sincronizar, desconectar (tras confirmar), conectar y guardar el recordatorio se bloquean mientras están en curso: un doble clic no repite la acción; un error recuperable no pierde lo escrito ni deja la pantalla inutilizable. |
+| `CA-028-04` | El recordatorio acepta enteros de 0 a 40320 o «usar los de Google»; un valor inválido se rechaza en el cliente y un `422` del servidor se muestra bajo el campo. |
+| `CA-028-05` | La pantalla explica que NAVA manda y Google es una vista, que un evento borrado por error se restaura, que solo se deja de publicar cancelando el turno desde la app y que el cliente recibe la invitación. |
+| `CA-028-06` | El resumen de la reserva pública avisa, de forma condicional, que Google puede invitar al cliente en el correo que dio. |
+| `CA-028-07` | Sin scroll horizontal a 320, 360, 768 y 1280 px en Tinta y Marfil, con teclado, foco visible, orden de encabezados correcto y sin violaciones de axe (contraste incluido). |
+
+**Pruebas obligatorias**
+
+- Componente por estado y acción, doble clic, validación del recordatorio y accesibilidad; cliente tipado y modelo.
+- E2E con el API simulado: conectar (redirección simulada), sincronizar, guardar el recordatorio y desconectar; retorno con autorización vencida; enlace desde Configuración.
+- Evidencia responsive y accesible en `apps/web/e2e/evidence/google-calendar/`.
+
+**Terminado cuando** el barbero conecta y administra su Google Calendar desde NAVA sin que el código OAuth toque la URL ni el almacenamiento, entendiendo qué hace la integración.
 
 ---
 
@@ -2342,7 +2394,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 
 | Bloque | Rango reservado | Se redacta cuando |
 | --- | --- | --- |
-| B1 | `HU-028` – (`HU-026` y `HU-027`: conexión y publicación en Google Calendar, `DEC-099`) | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
+| B1 | `HU-029` – (`HU-026`, `HU-027` y `HU-028`: conexión, publicación y pantalla de Google Calendar, `DEC-099`) | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
 | B2 | `HU-040` – `HU-042` | Integradas en `main` (PR `#93`, `#96`, `#99`); seguimientos parciales en issues `#90`, `#95`, `#98` y `#100` (este último completo el 2026-10-08) |
 | B3 | `HU-069` – | `HU-066`–`HU-068` ya integradas en `main`; continuar con T3 y cierre automático solo después de revisar este lote y resolver cualquier duda de semántica de snapshots/configuración |
 | B4 | `HU-100` – | `HU-090`–`HU-099` ya redactadas; `DP-PUB-01` resuelta (`DEC-082`), `HU-090` implementada (issue [#243](https://github.com/bcaceres19/barberia/issues/243), PR abierto); continuar con el resto solo después de resolver `DP-PUB-02`–`DP-PUB-06`/`CT-011` |

@@ -362,6 +362,15 @@ function chooseAlternative(startsAt: string) {
           </div>
         </dl>
 
+        <!-- DEC-122: si el negocio publica su agenda en Google Calendar, Google invita al
+             cliente al turno en el correo que dio. El aviso es condicional porque esta
+             pantalla no sabe si el negocio lo usa; nunca promete una invitación. -->
+        <p class="customer-details__invite-note">
+          Si el negocio usa Google Calendar, recibirás una invitación a este turno en
+          <strong>{{ email }}</strong
+          >.
+        </p>
+
         <BaseAlert v-if="confirmState === 'error'" variant="danger" role="alert">
           {{ errorMessage }}
         </BaseAlert>
@@ -805,6 +814,14 @@ function chooseAlternative(startsAt: string) {
   flex-direction: column;
   margin: 0;
   border-top: 1px solid var(--pb-line-strong);
+}
+
+.customer-details__invite-note {
+  margin: 0;
+  font-size: var(--font-size-body-sm);
+  line-height: var(--font-size-body-sm-line);
+  color: var(--pb-muted);
+  overflow-wrap: anywhere;
 }
 
 .customer-details__summary-row {

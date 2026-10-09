@@ -6,6 +6,7 @@ import {
   barberServicesPrivateShellChildRoutes,
 } from '@/modules/barberServices'
 import { catalogNavItems, catalogPrivateShellChildRoutes } from '@/modules/catalog'
+import { integrationsPrivateShellChildRoutes } from '@/modules/integrations'
 import { customerAccessRoutes } from '@/modules/customer-access'
 import { publicBookingRoutes } from '@/modules/public-booking'
 import { schedulesNavItems, schedulesPrivateShellChildRoutes } from '@/modules/schedules'
@@ -40,6 +41,7 @@ const routes: RouteRecordRaw[] = [
     [
       ...privateShellChildRoutes,
       ...settingsPrivateShellChildRoutes,
+      ...integrationsPrivateShellChildRoutes,
       ...staffPrivateShellChildRoutes.map((route) =>
         route.name === 'staff-barberos'
           ? {
