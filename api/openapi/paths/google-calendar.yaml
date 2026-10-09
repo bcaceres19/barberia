@@ -112,6 +112,33 @@
         $ref: '../components/responses/GoogleCalendarInvalidStateProblem.yaml'
       "500":
         $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/integrations/google-calendar/sync:
+  post:
+    tags: [Integrations]
+    summary: Sincronizar ahora
+    description: >
+      Hace vencer ya los cambios pendientes de la conexión del barbero y
+      reintenta los que agotaron sus intentos; el worker los publica en segundos.
+      Solo reordena la cola de ESA conexión: no llama a Google, no modifica citas
+      ni bloqueos y es segura ante varios clics (la misma operación repetida deja
+      el mismo estado). Responde `404` sin conexión que publique y `409` si la
+      integración no está configurada o no hay barbero vinculado.
+    operationId: syncGoogleCalendarNow
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01]
+    x-decisions: [DEC-099, DEC-101, DEC-102]
+    responses:
+      "200":
+        $ref: '../components/responses/GoogleCalendarSyncRequested.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "409":
+        $ref: '../components/responses/GoogleCalendarInvalidStateProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
 /private/integrations/google-calendar/callback:
   post:
     tags: [Integrations]

@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.54"
+version: "1.55"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-10-09"
@@ -1079,6 +1079,61 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 - HTTP y contrato, y el recorrido completo contra el router real con un Google falso, incluida la desconexión al cambiar el vínculo.
 
 **Terminado cuando** un barbero puede conectar y desconectar su Google Calendar con el token cifrado en reposo, sin que ninguna falla de Google afecte a las citas y sin publicar todavía ningún evento.
+
+---
+
+### HU-027 · Publicación de citas y bloqueos en Google Calendar
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-CONF-02` (extensión: publicación de la agenda del barbero en su calendario externo) |
+| Reglas | `RN-TEN-01`, `RN-DAT-02`, `RN-CON-03` (NAVA manda), `RN-IDE-01` |
+| Decisiones | `DEC-019`, `DEC-040`, `DEC-099`, `DEC-100`, `DEC-101` (semántica), `DEC-102` (cola propia), `DEC-122` (invitación al cliente) |
+| Actor | Barbero autenticado y worker |
+| Depende de | `HU-026`, `HU-061`/`HU-065`–`HU-068` (citas), `HU-042` (bloqueos), `HU-097` (reserva pública) |
+| Bloquea | La pantalla del barbero para conectar y sincronizar |
+| Riesgo | Llamar a Google dentro de la transacción de una reserva la ata a un servicio externo; un trabajo que cuenta operaciones en vez de leer el estado publica uno viejo; publicar de más expone datos personales; un worker con acceso a las tablas rompe el aislamiento por tenant; recrear lo cancelado confunde al barbero y al cliente. |
+
+**Historia**
+
+> Como barbero con mi Google Calendar conectado, quiero ver mis citas y bloqueos como eventos de mi calendario (y que el cliente reciba la invitación), para organizar mi día con el calendario que ya uso sin que Google altere mis citas.
+
+**Alcance incluido**
+
+- Cola propia `google_calendar_sync_job` escrita en la misma transacción del cambio de negocio mediante un puerto `SyncHook` que definen `booking` y `schedule` (no importan la integración); un trabajo pendiente por recurso; reclamo con lease y finalización por `claim_token` (`DDL-CON-01`).
+- Worker con acceso solo a funciones `SECURITY DEFINER`: crear, actualizar el mismo evento y eliminar por cancelación; `completed` y `no_show` lo conservan; lo pasado no se publica; bloqueos manuales publicables; recordatorio de `reminder_minutes`; zona de la barbería; título «Nombre — Servicio» sin datos personales.
+- Invitación del cliente como asistente cuando hay correo y la conexión está `connected` (`DEC-122`), con aviso solo de lo que el invitado ve.
+- Backoff exponencial con tope y máximo de intentos; error permanente cambia el estado de la conexión; `reauth_required` por permiso revocado.
+- Chequeo periódico que restaura los eventos que el barbero borró por error; publicación inicial de 6 meses al conectar; «Sincronizar ahora» y contadores de la cola en el estado de la conexión.
+
+**Alcance excluido**
+
+- Importar cambios de Google, webhook, `watch`, `syncToken`, eventos externos como bloqueos o reprogramar/cancelar desde Google (`DEC-099`).
+- Series de bloqueo (`DP-INT-02`), la cancelación por el cliente (`HU-099`, que deberá llamar al gancho) y la pantalla del barbero (siguiente historia de esta orquestación).
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-027-01` | Dada una reserva pública o manual de un barbero conectado, entonces existe exactamente un evento «Nombre — Servicio» en su calendario, con el horario en la zona de la barbería, sin teléfono, notas ni identificadores internos fuera de las propiedades privadas; reintentar el trabajo no crea un segundo evento. |
+| `CA-027-02` | Reprogramar actualiza el mismo evento; cancelar (por el barbero o el cliente) lo elimina y cierra el vínculo, tratando `404`/`410` como éxito; `completed` y `no_show` lo conservan. |
+| `CA-027-03` | Con correo del cliente y la conexión `connected`, el evento lo incluye como asistente sin permisos de modificar, invitar ni ver a otros; Google le envía la invitación, el cambio de horario y la cancelación, y refrescar solo el recordatorio no le envía correos; sin correo no se invita; su respuesta no modifica NAVA. |
+| `CA-027-04` | Un bloqueo manual publicable crea su evento con el título de su tipo y sin su motivo, y retirarlo lo elimina; el festivo automático y las series no se publican. |
+| `CA-027-05` | Una caída, `429` o `5xx` de Google nunca pierde la cita: el trabajo reintenta con backoff y se detiene al agotar los intentos; un `401` renueva el token una vez; un refresh token revocado deja la conexión en `reauth_required` con las credenciales borradas y la cola vacía; «Sincronizar ahora» reintenta los fallidos y es segura ante varios clics. |
+| `CA-027-06` | Un evento borrado en Google se recrea una sola vez en el siguiente ciclo sin modificar la cita; una cita cancelada en la app, terminal o pasada y un bloqueo retirado nunca se recrean; un cambio hecho en Google no altera citas ni bloqueos. |
+| `CA-027-07` | Cambiar `reminder_minutes` actualiza los eventos futuros ya publicados; con valor el evento lleva ese único recordatorio emergente y sin valor usa los predeterminados. |
+| `CA-027-08` | Varios workers simultáneos nunca toman el mismo trabajo; un worker caído deja que otro retome su trabajo y el primero ya no puede finalizarlo. |
+| `CA-027-09` | Cada barbería ve y reordena solo su cola y sus vínculos; el worker no tiene acceso directo a ninguna tabla y solo ejecuta las funciones de reclamo y finalización. |
+| `CA-027-10` | Si encolar falla, el cambio de negocio se revierte; toda escritura sobre `appointment` o `time_block` avisa al gancho, y `booking`/`schedule` no importan la integración. |
+
+**Pruebas obligatorias**
+
+- Publicador con un Google falso: crear, actualizar, eliminar, conservar, adoptar un evento ya creado, recrear con otra generación, invitación y notificaciones, errores por tipo, backoff, token expirado y revocado, caché del token, reclamación perdida y restauración.
+- Cliente de eventos de Google contra un servidor falso: forma del cuerpo, `sendUpdates`, errores sin cuerpo ni token, listado paginado solo de los eventos de NAVA.
+- PostgreSQL real con dos barberías: encolado y fundido, lease, varios workers, CAS, `retry`/`failed`/`reauth`, contexto solo con el token vigente, chequeo de borrados, publicación inicial, desconexión y recordatorio, y que el worker no lea tablas.
+- Recorrido completo por el router real con el worker real y un Google falso: reserva → reprogramar → cancelar, bloqueo, evento borrado, Google caído con «Sincronizar ahora», permiso revocado y aislamiento.
+
+**Terminado cuando** las citas y bloqueos de un barbero conectado aparecen como eventos de su calendario, el cliente recibe la invitación, una caída de Google no pierde nada y lo borrado por error se restaura, todo sin que Google altere NAVA.
 
 ---
 
@@ -2287,7 +2342,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 
 | Bloque | Rango reservado | Se redacta cuando |
 | --- | --- | --- |
-| B1 | `HU-027` – (`HU-026`: conexión con Google Calendar, `DEC-099`) | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
+| B1 | `HU-028` – (`HU-026` y `HU-027`: conexión y publicación en Google Calendar, `DEC-099`) | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
 | B2 | `HU-040` – `HU-042` | Integradas en `main` (PR `#93`, `#96`, `#99`); seguimientos parciales en issues `#90`, `#95`, `#98` y `#100` (este último completo el 2026-10-08) |
 | B3 | `HU-069` – | `HU-066`–`HU-068` ya integradas en `main`; continuar con T3 y cierre automático solo después de revisar este lote y resolver cualquier duda de semántica de snapshots/configuración |
 | B4 | `HU-100` – | `HU-090`–`HU-099` ya redactadas; `DP-PUB-01` resuelta (`DEC-082`), `HU-090` implementada (issue [#243](https://github.com/bcaceres19/barberia/issues/243), PR abierto); continuar con el resto solo después de resolver `DP-PUB-02`–`DP-PUB-06`/`CT-011` |

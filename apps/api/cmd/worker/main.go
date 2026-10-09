@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,6 +14,10 @@ import (
 
 	"system-barbershop/internal/modules/auth"
 	authpostgres "system-barbershop/internal/modules/auth/postgres"
+	"system-barbershop/internal/modules/googlecalendar"
+	googlecalendargoogle "system-barbershop/internal/modules/googlecalendar/google"
+	googlecalendarpostgres "system-barbershop/internal/modules/googlecalendar/postgres"
+	"system-barbershop/internal/platform/clock"
 	"system-barbershop/internal/platform/config"
 	"system-barbershop/internal/platform/database"
 	"system-barbershop/internal/platform/observability"
@@ -74,6 +79,21 @@ func run() error {
 		cfg.RecoveryCodePurgeLimit,
 	)
 
+	// Issue #324 (DEC-102): publicación en Google Calendar. Con las credenciales
+	// ausentes el worker sigue purgando y la integración queda desactivada.
+	if cfg.GoogleCalendarEnabled() {
+		publisher, err := buildGoogleCalendarPublisher(db, logger, cfg)
+		if err != nil {
+			logger.Error("no se pudo iniciar el publicador de Google Calendar")
+			return err
+		}
+		go publisher.Run(ctx)
+		logger.Info("worker: publicación en Google Calendar activa")
+	} else if cfg.GoogleCalendarPartiallyConfigured() {
+		logger.Warn("google_calendar.config.incomplete",
+			"detail", "faltan variables GOOGLE_CALENDAR_*; la publicación queda desactivada")
+	}
+
 	logger.Info("worker iniciado", "environment", cfg.Environment, "purge_interval", purgeInterval.String())
 
 	ticker := time.NewTicker(purgeInterval)
@@ -99,4 +119,28 @@ func run() error {
 			}
 		}
 	}
+}
+
+// buildGoogleCalendarPublisher arma el publicador de Google Calendar. db es el
+// pool del worker (barberia_worker): solo ejecuta las funciones de reclamo y
+// finalización (DEC-040, DEC-102).
+func buildGoogleCalendarPublisher(db *database.DB, logger *slog.Logger, cfg config.Config) (*googlecalendar.Publisher, error) {
+	cipher, err := googlecalendar.NewCipherFromKeys(cfg.GoogleCalendarTokenKeyID,
+		cfg.GoogleCalendarTokenEncryptionKey, cfg.GoogleCalendarPreviousKeys)
+	if err != nil {
+		return nil, errors.New("googlecalendar: fallo al iniciar el cifrador")
+	}
+	return googlecalendar.NewPublisher(googlecalendar.PublisherDeps{
+		Store: googlecalendarpostgres.NewWorkerRepository(db),
+		API:   googlecalendargoogle.NewEventsClient("", nil),
+		Provider: googlecalendargoogle.New(googlecalendargoogle.Config{
+			ClientID:     cfg.GoogleCalendarClientID,
+			ClientSecret: cfg.GoogleCalendarClientSecret,
+			RedirectURL:  cfg.GoogleCalendarRedirectURI,
+		}),
+		Cipher: cipher,
+		Clock:  clock.System{},
+		Config: googlecalendar.DefaultPublisherConfig(),
+		Logger: logger,
+	}), nil
 }

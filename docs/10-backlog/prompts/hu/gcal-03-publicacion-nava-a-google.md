@@ -7,12 +7,12 @@ target_agents:
   - "any"
 repository: "bcaceres19/barberia"
 base_branch: "main"
-primary_hu: null
+primary_hu: "HU-027"
 related_hu: []
 issue: "324"
 issue_url: "https://github.com/bcaceres19/barberia/issues/324"
 suggested_issue_title: "feat(integraciones): publicar citas y bloqueos de NAVA en Google Calendar"
-branch: null
+branch: "feat/324-publicacion-google-calendar"
 pr: null
 pr_url: null
 depends_on:

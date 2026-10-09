@@ -86,7 +86,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.33.0
+  version: 0.34.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -179,6 +179,8 @@ paths:
     $ref: './paths/google-calendar.yaml#/~1private~1integrations~1google-calendar'
   /private/integrations/google-calendar/connect:
     $ref: './paths/google-calendar.yaml#/~1private~1integrations~1google-calendar~1connect'
+  /private/integrations/google-calendar/sync:
+    $ref: './paths/google-calendar.yaml#/~1private~1integrations~1google-calendar~1sync'
   /private/integrations/google-calendar/callback:
     $ref: './paths/google-calendar.yaml#/~1private~1integrations~1google-calendar~1callback'
   /private/me/barber:

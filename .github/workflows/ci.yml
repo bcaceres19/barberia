@@ -94,7 +94,8 @@ jobs:
                    20261003120000_add_barbershop_brand.sql \
                    20261004120000_add_barbershop_panel_profile.sql \
                    20261009120000_add_barber_staff_user_link.sql \
-                   20261009130000_create_google_calendar_connection.sql; do
+                   20261009130000_create_google_calendar_connection.sql \
+                   20261010100000_create_google_calendar_sync.sql; do
             psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$f"
           done
           psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_app PASSWORD 'app_test';"
@@ -321,6 +322,11 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/google_calendar_conexion.sql
+
+      - name: Suite de la cola de publicación en Google Calendar (DEC-101, DEC-102)
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/google_calendar_sync.sql
 
       - name: Suite de registro y listado de barberos HU-021
         env:

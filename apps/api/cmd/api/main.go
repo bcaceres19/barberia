@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -311,6 +310,7 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	private.Patch("/integrations/google-calendar", googleCalendarHandlers.UpdateReminder)
 	private.Delete("/integrations/google-calendar", googleCalendarHandlers.Disconnect)
 	private.Post("/integrations/google-calendar/connect", googleCalendarHandlers.Connect)
+	private.Post("/integrations/google-calendar/sync", googleCalendarHandlers.SyncNow)
 	private.Post("/integrations/google-calendar/callback", googleCalendarHandlers.Callback)
 
 	private.Get("/me/barber", getMyBarberHandler.ServeHTTP)
@@ -370,7 +370,7 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	// mismo puerto y mismo criterio que catalog.AssignmentService frente a
 	// HU-023: ni schedule importa staff, ni staff importa schedule.
 	scheduleService := schedule.NewService(
-		schedulepostgres.New(db, idempotency.NewSQLCoordinator()),
+		schedulepostgres.New(db, idempotency.NewSQLCoordinator()).WithSyncHook(googlecalendarpostgres.NewEnqueuer()),
 		staff.NewBarberLookup(staffService),
 	)
 	listWorkingHoursHandler := schedulehttpapi.NewListWorkingHoursHandler(scheduleService)
@@ -477,7 +477,9 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	// (catalog.NewManualBookingCatalog, schedule.NewManualBookingBlocks,
 	// shops.NewTimezoneLookup): booking nunca importa esos tres módulos, ni
 	// viceversa (mismo criterio que catalog/schedule frente a staff, HU-023).
-	bookingRepo := bookingpostgres.New(db, idempotency.NewSQLCoordinator())
+	// DEC-102: cada escritura sobre `appointment` encola, en la misma transacción,
+	// la publicación en Google Calendar del barbero (si tiene una conexión viva).
+	bookingRepo := bookingpostgres.New(db, idempotency.NewSQLCoordinator()).WithSyncHook(googlecalendarpostgres.NewEnqueuer())
 
 	// HU-097: confirmación pública concurrente. ConfirmationService
 	// (publicbooking, dueño del flujo público) colabora con booking SOLO a
@@ -741,20 +743,8 @@ func buildGoogleCalendarService(db *database.DB, logger *slog.Logger, cfg config
 			"detail", "faltan variables GOOGLE_CALENDAR_*; la integración queda desactivada")
 	}
 	if cfg.GoogleCalendarEnabled() {
-		active, err := googlecalendar.ParseKey(cfg.GoogleCalendarTokenEncryptionKey)
-		if err != nil {
-			return nil, errors.New("googlecalendar: clave de cifrado inválida")
-		}
-		keys := map[string][]byte{cfg.GoogleCalendarTokenKeyID: active}
-		for _, entry := range cfg.GoogleCalendarPreviousKeys {
-			id, encoded, _ := strings.Cut(entry, ":")
-			previous, err := googlecalendar.ParseKey(encoded)
-			if err != nil {
-				return nil, errors.New("googlecalendar: clave de cifrado anterior inválida")
-			}
-			keys[id] = previous
-		}
-		cipher, err := googlecalendar.NewCipher(cfg.GoogleCalendarTokenKeyID, keys)
+		cipher, err := googlecalendar.NewCipherFromKeys(cfg.GoogleCalendarTokenKeyID,
+			cfg.GoogleCalendarTokenEncryptionKey, cfg.GoogleCalendarPreviousKeys)
 		if err != nil {
 			return nil, errors.New("googlecalendar: fallo al iniciar el cifrador")
 		}

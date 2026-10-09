@@ -1,0 +1,16 @@
+# Respuesta 200 de POST /private/integrations/google-calendar/sync.
+description: >
+  La cola de la conexión quedó lista para publicarse ya. Devuelve cuántos cambios
+  esperan y cuántos siguen fallidos.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/GoogleCalendarSyncResponse.yaml'
+    examples:
+      enCola:
+        value:
+          pendingSyncJobs: 3
+          failedSyncJobs: 0

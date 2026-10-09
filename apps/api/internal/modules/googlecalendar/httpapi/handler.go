@@ -64,6 +64,8 @@ func newConnectionResponse(view googlecalendar.StatusView) ConnectionResponse {
 	}
 	if view.Connection != nil {
 		fillFromConnection(&response, *view.Connection)
+		response.PendingSyncJobs = view.Jobs.Pending
+		response.FailedSyncJobs = view.Jobs.Failed
 	}
 	return response
 }
@@ -77,6 +79,21 @@ func fillFromConnection(response *ConnectionResponse, conn googlecalendar.Connec
 	response.ReminderMinutes = conn.ReminderMinutes
 	response.ConnectedAt = conn.ConnectedAt
 	response.LastSyncedAt = conn.LastSyncedAt
+}
+
+// SyncNow expone POST /private/integrations/google-calendar/sync.
+func (h *Handlers) SyncNow(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+	principal, ok := principalOrInternalError(w, r, requestID)
+	if !ok {
+		return
+	}
+	counts, err := h.service.SyncNow(r.Context(), principal.BarbershopID, principal.StaffUserID)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+	writeJSON(w, http.StatusOK, SyncResponse{PendingSyncJobs: counts.Pending, FailedSyncJobs: counts.Failed})
 }
 
 // Handlers reúne los handlers de la integración.

@@ -22,6 +22,16 @@ import (
 var modulePairsForbiddenToImport = [][2]string{
 	{"internal/modules/catalog", "system-barbershop/internal/modules/staff"},
 	{"internal/modules/staff", "system-barbershop/internal/modules/catalog"},
+	// Issue #324 (DEC-102): booking y schedule solo definen un puerto de enganche
+	// (SyncHook) que la raíz de composición implementa con googlecalendar; ni ellos
+	// importan la integración ni la integración importa a booking, schedule o staff
+	// (lee `appointment`, `time_block` y el vínculo por SQL propio).
+	{"internal/modules/booking", "system-barbershop/internal/modules/googlecalendar"},
+	{"internal/modules/schedule", "system-barbershop/internal/modules/googlecalendar"},
+	{"internal/modules/staff", "system-barbershop/internal/modules/googlecalendar"},
+	{"internal/modules/googlecalendar", "system-barbershop/internal/modules/booking"},
+	{"internal/modules/googlecalendar", "system-barbershop/internal/modules/schedule"},
+	{"internal/modules/googlecalendar", "system-barbershop/internal/modules/staff"},
 }
 
 // TestModulesDoNotImportEachOther recorre internal/modules/<módulo> y falla

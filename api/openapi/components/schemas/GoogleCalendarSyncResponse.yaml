@@ -1,0 +1,18 @@
+# Respuesta de POST /private/integrations/google-calendar/sync (issue #324).
+type: object
+additionalProperties: false
+description: Estado de la cola de la conexión tras pedir «Sincronizar ahora».
+properties:
+  pendingSyncJobs:
+    type: integer
+    minimum: 0
+    description: >
+      Cambios que esperan publicarse, ya vencidos; el worker los toma en segundos.
+  failedSyncJobs:
+    type: integer
+    minimum: 0
+    description: >
+      Cambios que siguen fallidos; normalmente 0 tras reintentarlos.
+required:
+  - pendingSyncJobs
+  - failedSyncJobs
