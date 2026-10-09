@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-CHORE-197-GENERACION-MOCKUP-BLOQUEOS-PENPOT-v1"
 version: "1.0"
 kind: "chore"
-status: "blocked"
+status: "superseded"
 target_agents: ["codex"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
@@ -30,12 +30,14 @@ source_docs:
   - "apps/web/src/modules/schedules"
   - "apps/web/src/styles/tokens.css"
 created_at: "2026-09-06"
-updated_at: "2026-09-08"
+updated_at: "2026-10-08"
 artifacts:
   - "docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/bloqueos-eventos/README.md"
 supersedes: null
-superseded_by: null
+superseded_by: "DEC-105"
 ---
+
+> **Sustituido el 2026-10-08 (#198).** `DEC-105` (2026-09-30, instrucción del propietario) integró los bloqueos en una ventana de Barberos con identidad guiada y sin mockup exacto asignado, y retiró «Bloqueos» como destino independiente; el atlas `bloqueos-eventos` describe esa pantalla separada. La interfaz vigente se verificó en el issue [#100](https://github.com/bcaceres19/barberia/issues/100) y en la revisión final [#198](https://github.com/bcaceres19/barberia/issues/198). No ejecutar.
 
 # Genera el mockup editable de Bloqueos con Penpot
 
