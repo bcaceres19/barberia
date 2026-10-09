@@ -13,6 +13,7 @@
 // entrada escalonada, carga con el rombo) con el retrato del barbero como
 // protagonista.
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { RouterLink } from 'vue-router'
 import { PAGE_MIN_HOLD_MS, useMinHoldLoading, useToast, useVocabulary } from '@/shared/composables'
 import {
   BarberAvatar,
@@ -376,7 +377,9 @@ async function onToggleMine() {
     const outcome = await linkMyBarber(barber.id)
     if (outcome.kind === 'success') {
       myBarberId.value = barber.id
-      toast.success(`Ahora eres ${barber.fullName} en NAVA`)
+      toast.success(`Ahora eres ${barber.fullName} en NAVA`, {
+        detail: 'Siguiente paso: conecta tu Google Calendar desde esta ficha.',
+      })
     } else if (outcome.kind === 'taken') {
       linkError.value = `Este ${v.value.professional} ya está vinculado a otro usuario.`
     } else if (outcome.kind === 'not-found') {
@@ -910,6 +913,9 @@ async function onSubmitRename() {
             <span class="staff-page__link-state">{{
               detailIsMine ? 'Eres tú' : 'Sin vincular'
             }}</span>
+            <span v-if="!detailIsMine" class="staff-page__link-hint"
+              >Vincúlate para publicar tu agenda en Google Calendar.</span
+            >
           </div>
           <BaseButton
             type="button"
@@ -921,6 +927,21 @@ async function onSubmitRename() {
           </BaseButton>
         </div>
         <BaseAlert v-if="linkError" variant="danger" role="alert">{{ linkError }}</BaseAlert>
+        <!-- Siguiente paso natural tras vincularse: ir a conectar Google Calendar. -->
+        <RouterLink
+          v-if="myBarberKnown && detailIsMine"
+          :to="{ name: 'integraciones-google-calendar' }"
+          class="staff-page__gcal"
+          :style="{ '--row-index': 4 }"
+        >
+          <span class="staff-page__link-text">
+            <span class="staff-page__gcal-title">Conectar Google Calendar</span>
+            <span class="staff-page__link-hint"
+              >Tus turnos y bloqueos aparecerán en tu calendario.</span
+            >
+          </span>
+          <span class="staff-page__gcal-arrow" aria-hidden="true">→</span>
+        </RouterLink>
       </div>
       <!-- Pie fuera del área con scroll: "Cerrar"/"Editar" nunca quedan fuera de
            la pantalla. -->
@@ -1942,6 +1963,63 @@ async function onSubmitRename() {
   font-family: var(--font-display);
   font-size: var(--font-size-h3);
   line-height: 1.2;
+}
+
+.staff-page__link-hint {
+  color: var(--color-on-strong-muted);
+  font-size: var(--font-size-caption);
+  line-height: 1.4;
+}
+
+.staff-page__gcal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 44px;
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  color: inherit;
+  text-decoration: none;
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 10%, transparent);
+  border: var(--border-width-normal) solid
+    color-mix(in srgb, var(--color-brand-accent-surface) 55%, transparent);
+  border-radius: var(--radius-sm);
+  transition: border-color 200ms var(--motion-easing-standard);
+  animation: staff-detail-enter 380ms var(--motion-easing-standard) both;
+  animation-delay: calc(120ms + var(--row-index, 0) * 70ms);
+}
+
+.staff-page__gcal:hover,
+.staff-page__gcal:focus-visible {
+  border-color: var(--color-brand-accent-surface);
+}
+
+.staff-page__gcal:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.staff-page__gcal-title {
+  font-weight: 600;
+}
+
+.staff-page__gcal-arrow {
+  color: var(--color-brand-accent-surface);
+  transition: transform 220ms var(--motion-easing-standard);
+}
+
+.staff-page__gcal:hover .staff-page__gcal-arrow,
+.staff-page__gcal:focus-visible .staff-page__gcal-arrow {
+  transform: translateX(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .staff-page__gcal,
+  .staff-page__gcal-arrow {
+    animation: none;
+    transition: none;
+  }
 }
 
 .staff-page__detail > .base-alert {
