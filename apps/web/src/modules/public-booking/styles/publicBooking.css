@@ -166,6 +166,65 @@
   order: 2;
 }
 
+/* Paso con una lista que puede crecer sin límite (las horas del día): la
+   pantalla ocupa exactamente la ventana y solo esa lista hace scroll, de modo
+   que cabecera, días y barra de acción permanecen a la vista. Si la ventana
+   es tan baja que ni una fila de la lista cabe, el documento vuelve a
+   desplazarse en lugar de recortar contenido. */
+.pb-layout:has(.pb-page--fit) {
+  height: 100dvh;
+}
+
+.pb-page--fit {
+  min-height: 0;
+}
+
+/* Solo la lista (o la hoja, en «Tus datos») cede alto: los demás hijos (la
+   tira de días tiene `overflow` y por eso podría encogerse a nada) conservan
+   su tamaño natural. */
+.pb-page--fit > :not(.pb-slots, .pb-sheet) {
+  flex-shrink: 0;
+}
+
+/* «Tus datos»: la hoja conserva su marco, su cinta métrica y su sombra, y lo
+   que se desplaza es su contenido (formulario, resumen o confirmación; solo
+   hay uno a la vez). El relleno de 6 px, compensado con margen negativo,
+   evita recortar el aro de foco de los campos. Con menos de 240 px útiles el
+   documento vuelve a desplazarse en lugar de dejar un formulario inservible. */
+.pb-page--fit > .pb-sheet {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 1;
+  min-height: 0;
+}
+
+/* El formulario es a la vez la zona con scroll y una columna flex: sus hijos
+   no deben encogerse para caber (el botón llegó a quedar en 19 px), sino
+   desbordar y desplazarse. */
+.pb-page--fit > .pb-sheet > * > * {
+  flex-shrink: 0;
+}
+
+.pb-page--fit > .pb-sheet > * {
+  flex: 0 1 auto;
+  min-height: 240px;
+  padding: 6px;
+  margin: -6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+/* La ficha «Franja elegida» repite lo que ya dice la barra de acción («Tu
+   horario») y suma ~160 px. En ventanas bajas se omite para que las horas
+   conserven alto; la tecnología de apoyo la sigue oyendo por el estado
+   `pb-sr-only`. */
+@media (max-height: 860px) {
+  .pb-page--fit .pb-ticket {
+    display: none;
+  }
+}
+
 /* Un paso adelante entra desde la derecha y uno atrás desde la izquierda. El
    que sale solo se desvanece: sin `transform` en la salida, un elemento
    `sticky` (la barra de acción) no salta mientras se retira. */
@@ -806,6 +865,21 @@
   list-style: none;
 }
 
+/* La lista cede el alto sobrante a la pantalla y se desplaza por dentro. El
+   relleno de 6 px (compensado con margen negativo, así el ancho visible no
+   cambia) evita que el scroll recorte el aro de foco, el pop de la franja
+   elegida y el desplazamiento de 2 px al pasar el cursor. */
+.pb-page--fit .pb-slots {
+  flex: 0 1 auto;
+  align-content: start;
+  min-height: 72px;
+  padding: 6px;
+  margin: calc(var(--space-5) - 6px) -6px 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
 .pb-slot {
   position: relative;
   display: flex;
@@ -1091,11 +1165,13 @@
 /* ── Hoja de papel: formulario, resumen y confirmación ──────────────────── */
 
 .pb-sheet {
+  --pb-sheet-bg: color-mix(in srgb, #000 26%, var(--color-surface-strong));
+
   position: relative;
   padding: var(--space-8) var(--space-5) var(--space-6);
   margin: var(--space-8) 0 0;
   color: var(--pb-text);
-  background-color: color-mix(in srgb, #000 26%, var(--color-surface-strong));
+  background-color: var(--pb-sheet-bg);
   background-image: linear-gradient(
     to bottom,
     color-mix(in srgb, var(--pb-brass) 4%, transparent),
