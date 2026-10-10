@@ -118,6 +118,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-121` | 2026-10-08 | El backend sube a Go 1.26.9 porque la línea 1.25 no tiene versión corregida de 9 vulnerabilidades de la librería estándar; amplía `DEC-023` | `DEC-035`; issue #317 | Confirmada |
 | `DEC-123` | 2026-10-10 | OTP de WhatsApp solo por Meta Cloud API, con modo de desarrollo en texto libre y plantilla Authentication preparada | `HU-007`, `HU-008`; issue #347; amplía `DEC-066` | Confirmada |
 | `DEC-124` | 2026-10-10 | El modo de texto libre de WhatsApp (`text`) se permite en cualquier ambiente como opción explícita mientras Meta no habilite la plantilla Authentication; amplía `DEC-123` | `HU-007`, `HU-008`; issue #351 | Confirmada |
+| `DEC-125` | 2026-10-10 | Se retira el soporte de OTP validado por un proveedor externo: la función SQL `auth_phone_challenge_destination` y el manejo de rechazo del proveedor; NAVA genera y valida siempre el código | `HU-007`, `HU-008`; issue #353; completa `DEC-123` | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -1447,3 +1448,18 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** conservar el texto libre solo en `local`/`test` (impide operar el piloto); enviar por correo cuando la ventana esté cerrada (cambia el canal elegido por la persona, `DEC-092`); crear una plantilla `UTILITY` para eludir la restricción (Meta no la admite para códigos de verificación).
 - **Documentos afectados:** `apps/api` (configuración, adaptador, selector, pruebas, `README.md`, `.env.example`), `historial-cambios.md`; issue [#351](https://github.com/bcaceres19/barberia/issues/351). Sin cambios de contrato ni migraciones.
 - **Fuente:** instrucción explícita del propietario el 2026-10-10 («por el momento, modo text»; las plantillas llegan con producción).
+
+### DEC-125 · Retiro del soporte de OTP validado por un proveedor externo
+
+- **Fecha:** 2026-10-10.
+- **Decisión:** con `DEC-123`, NAVA genera, persiste (HMAC) y valida siempre el OTP; el proveedor de WhatsApp solo lo transporta. Por eso se elimina la maquinaria que existía para que un proveedor externo fuera la autoridad del código:
+  1. la función SQL `auth_phone_challenge_destination` (migración `20261010120000_drop_auth_phone_challenge_destination.sql`; la `20260919220000` es inmutable y se conserva) y su consulta `ChallengePhone`;
+  2. `ErrWhatsAppOTPRejected`, el digest de rechazo y el constructor de OTP administrado por el proveedor;
+  3. el parámetro de teléfono de `VerificationDigest`, que pasa a `VerificationDigest(code) string`.
+- **Se conserva:** el puerto `auth.WhatsAppOTPProvider` (`Prepare`, `Deliver`, `VerificationDigest`) como único punto de entrega por WhatsApp; el reto y la recuperación no cambian de contrato, límites ni respuestas uniformes (`DEC-065`).
+- **Cambio de comportamiento sin impacto externo:** verificar un reto sin reto activo ya no se detiene antes de calcular el digest; `auth_phone_challenge_verify` sigue devolviendo `false` de forma idéntica para cuenta inexistente, código incorrecto, vencido, agotado o de otra IP.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** el código y la función no tienen ningún usuario tras `DEC-123`; mantenerlos amplía la superficie `SECURITY DEFINER` y deja rutas de validación que nadie ejerce.
+- **Alternativas descartadas:** conservar la función como punto de extensión (código muerto sin pruebas de uso); volver a la construcción previa de los servicios sin el puerto (reescribe constructores y pruebas sin beneficio).
+- **Documentos afectados:** `apps/api/internal/modules/{auth,notification}`, `database/{migrations,modelo-fisico-referencia.sql,tests/hu007_defensa_abuso.sql,README.md}`, `.github/workflows/ci.yml`; issue [#353](https://github.com/bcaceres19/barberia/issues/353).
+- **Fuente:** instrucción explícita del propietario el 2026-10-10 («quitar el soporte de OTP del proveedor»).

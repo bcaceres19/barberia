@@ -840,39 +840,6 @@ COMMENT ON FUNCTION auth_phone_challenge_verify(text, text, text) IS
   'inexistente, código incorrecto, vencido, agotado o de otra IP devuelven exactamente '
   'false: la capa HTTP no puede distinguirlos (no enumeración).';
 
--- Lectura estrecha usada antes de delegar una verificación a un proveedor
--- externo. No forma parte del contrato HTTP ni permite consultar retos
--- arbitrarios: exige el mismo correo e ip_hash y un reto todavía activo.
-CREATE OR REPLACE FUNCTION auth_phone_challenge_destination(p_email text, p_ip_hash text)
-RETURNS text
-LANGUAGE plpgsql
-STABLE
-SECURITY DEFINER
-SET search_path = ''
-AS $$
-DECLARE
-  v_now timestamptz := pg_catalog.now();
-  v_user record;
-BEGIN
-  IF p_email IS NULL OR p_ip_hash IS NULL OR char_length(p_ip_hash) <> 64 THEN
-    RAISE EXCEPTION 'auth_phone_challenge_destination: argumentos inválidos.';
-  END IF;
-  SELECT u.id, u.barbershop_id, u.phone INTO v_user
-  FROM public.staff_user u
-  WHERE u.email = pg_catalog.lower(p_email) AND u.is_active AND u.phone_verified_at IS NOT NULL;
-  IF NOT FOUND THEN RETURN NULL; END IF;
-  PERFORM 1 FROM public.auth_phone_challenge c
-  WHERE c.barbershop_id = v_user.barbershop_id AND c.staff_user_id = v_user.id
-    AND c.ip_hash = p_ip_hash AND c.consumed_at IS NULL AND c.invalidated_at IS NULL
-    AND c.expires_at > v_now
-  ORDER BY c.created_at DESC LIMIT 1;
-  IF NOT FOUND THEN RETURN NULL; END IF;
-  RETURN v_user.phone;
-END;
-$$;
-REVOKE ALL ON FUNCTION auth_phone_challenge_destination(text, text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION auth_phone_challenge_destination(text, text) TO barberia_app;
-
 CREATE OR REPLACE FUNCTION auth_phone_challenge_purge_expired(p_limit integer)
 RETURNS integer
 LANGUAGE plpgsql
