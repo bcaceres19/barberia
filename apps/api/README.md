@@ -691,8 +691,7 @@ resuelve tenant ni llama `PasswordHasher.Verify` en esa rama). Responde
   el login normalmente, sin token adicional.
 - `cmd/api.selectWhatsAppOTPProvider` es el único selector de proveedor.
   `meta` envía el código de NAVA por Meta WhatsApp Cloud API, en modo
-  `template` (plantilla Authentication) o `development` (texto libre, solo
-  `local`/`test`). Los handlers y servicios de autenticación dependen
+  `template` (plantilla Authentication) o `text` (texto libre). Los handlers y servicios de autenticación dependen
   únicamente de `auth.WhatsAppOTPProvider`.
 - Si `meta` no está configurado en `local` o `test`, el proveedor local solo
   registra el resultado para conservar las E2E sin terceros. Una configuración
@@ -701,7 +700,7 @@ resuelve tenant ni llama `PasswordHasher.Verify` en esa rama). Responde
 
 | `OTP_PROVIDER` | Configuración | Remitente HU-007 |
 | --- | --- | --- |
-| `meta` | Meta completa (`template`, o `development` en `local`/`test`) | `notification.MetaWhatsAppOTPProvider` |
+| `meta` | Meta completa (`template` o `text`) | `notification.MetaWhatsAppOTPProvider` |
 | `meta` | Meta ausente, `local`/`test` | proveedor local de registro |
 | `meta` | Meta ausente, `pilot`/`production` | arranque rechazado por configuración |
 
@@ -908,9 +907,9 @@ por si algo construye un `config.Config` sin pasar por `Load`.
 | `APP_META_WHATSAPP_API_VERSION` | `v24.0` | Versión de Meta Graph API. |
 | `APP_META_WHATSAPP_PHONE_NUMBER_ID` | (vacía) | Secreto: número emisor en Meta. |
 | `APP_META_WHATSAPP_ACCESS_TOKEN` | (vacía) | Secreto: autenticación contra Meta Graph API. |
-| `APP_META_WHATSAPP_MODE` | `template` | `template` envía la plantilla Authentication; `development` envía texto libre y solo se acepta en `local`/`test`. |
+| `APP_META_WHATSAPP_MODE` | `template` | `template` envía la plantilla Authentication; `text` envía texto libre (`DEC-124`). |
 | `APP_META_WHATSAPP_TEMPLATE_NAME` | (vacía) | Plantilla "Authentication" pre-aprobada. Obligatoria en modo `template`. |
-| `APP_META_WHATSAPP_TEST_RECIPIENTS` | (vacía) | Teléfonos E.164 separados por coma a los que puede escribir el modo `development`. Obligatoria en ese modo. |
+| `APP_META_WHATSAPP_TEST_RECIPIENTS` | (vacía) | Teléfonos E.164 separados por coma; si se define, restringe el envío. Obligatoria con el modo `text` en `local`/`test`. |
 | `APP_META_WHATSAPP_LANGUAGE_CODE` | `es` | Idioma de esa plantilla. |
 | `OTP_PROVIDER` | `meta` | Único valor aceptado; cualquier otro hace fallar el arranque (`DEC-123`). |
 | `APP_RESEND_API_KEY` | (vacía) | Secreto: autenticación contra Resend. |
@@ -928,10 +927,14 @@ duplicaría el código. El único límite de reenvío es el de HU-007/HU-008.
 | Modo | Dónde | Mensaje |
 | --- | --- | --- |
 | `template` (por defecto) | cualquier ambiente | Plantilla `AUTHENTICATION` con el código en el cuerpo y en el botón `COPY_CODE` |
-| `development` | solo `local`/`test` | Texto libre con el código, solo a `APP_META_WHATSAPP_TEST_RECIPIENTS` |
+| `text` | cualquier ambiente | Texto libre con el código (`DEC-124`) |
 
-`development` no sustituye a la plantilla: `config.Load` rechaza ese modo fuera
-de `local`/`test` y nunca hay un respaldo silencioso de plantilla a texto.
+`text` se elige de forma explícita y es la alternativa mientras Meta no habilite
+la plantilla; nunca hay un respaldo silencioso de plantilla a texto. En
+`local`/`test` exige `APP_META_WHATSAPP_TEST_RECIPIENTS` para no escribir a
+datos de prueba; en los demás ambientes la lista es opcional y, si se define,
+restringe el envío. Al arrancar fuera de `local`/`test` se registra un aviso:
+solo recibe el código quien escribió al número en las últimas 24 horas.
 
 **Ventana de 24 horas.** Meta solo acepta texto libre si el destinatario
 escribió al número emisor en las últimas 24 horas. NAVA no recibe mensajes
@@ -961,10 +964,10 @@ que NAVA aún no consume.
 **Plantilla Authentication, pendiente.** Meta rechazó crear
 `codigo_verificacion` (`code 10`, `subcode 2388185`: la cuenta no puede crear
 plantillas). Hasta que lo permita, el modo `template` falla con
-`ErrTemplateUnavailable` y la prueba real se hace en `development`. Al
+`ErrTemplateUnavailable` y el envío real se hace en modo `text`. Al
 habilitarse: crear la plantilla `AUTHENTICATION` con botón `COPY_CODE` y
 vigencia de 5 minutos, esperar `APPROVED`, fijar `APP_META_WHATSAPP_TEMPLATE_NAME`
-y `APP_META_WHATSAPP_LANGUAGE_CODE`, y quitar `APP_META_WHATSAPP_MODE=development`.
+y `APP_META_WHATSAPP_LANGUAGE_CODE`, y pasar `APP_META_WHATSAPP_MODE` a `template`.
 
 **Prueba manual desde Bash** (con un destinatario ya autorizado; no se
 ejecuta en CI):

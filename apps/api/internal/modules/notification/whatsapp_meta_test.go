@@ -58,10 +58,10 @@ func templateConfig() notification.MetaWhatsAppConfig {
 	}
 }
 
-func developmentConfig() notification.MetaWhatsAppConfig {
+func textConfig() notification.MetaWhatsAppConfig {
 	return notification.MetaWhatsAppConfig{
 		APIVersion: "v24.0", PhoneNumberID: "1315949954943476", AccessToken: testToken,
-		Mode: notification.MetaModeDevelopment, TestRecipients: []string{testRecipient},
+		Mode: notification.MetaModeText, TestRecipients: []string{testRecipient},
 	}
 }
 
@@ -83,11 +83,11 @@ func acceptingServer(t *testing.T, c *capturedRequest) *httptest.Server {
 	}))
 }
 
-func TestMetaSender_DevelopmentMode_PostsFreeTextWithExactCode(t *testing.T) {
+func TestMetaSender_TextMode_PostsFreeTextWithExactCode(t *testing.T) {
 	var got capturedRequest
 	srv := acceptingServer(t, &got)
 	defer srv.Close()
-	sender := newMetaSenderAgainstTestServer(t, srv, developmentConfig())
+	sender := newMetaSenderAgainstTestServer(t, srv, textConfig())
 
 	res, err := sender.SendOTP(context.Background(), testRecipient, testCode)
 	if err != nil {
@@ -110,12 +110,12 @@ func TestMetaSender_DevelopmentMode_PostsFreeTextWithExactCode(t *testing.T) {
 	if text["preview_url"] != false {
 		t.Fatalf("expected preview_url=false, got %v", text["preview_url"])
 	}
-	want := "NAVA — Prueba de integración\n\nTu código de prueba es: 583921\n\nEste mensaje es una simulación de desarrollo."
+	want := "NAVA — Tu código de verificación es: 583921\n\nNo lo compartas con nadie. Si no lo solicitaste, ignora este mensaje."
 	if text["body"] != want {
 		t.Fatalf("unexpected body:\n%q", text["body"])
 	}
 	if _, hasTemplate := got.body["template"]; hasTemplate {
-		t.Fatal("development mode must not send a template")
+		t.Fatal("text mode must not send a template")
 	}
 }
 
@@ -174,11 +174,11 @@ func TestMetaSender_InvalidRecipient_NeverCallsMeta(t *testing.T) {
 	}
 }
 
-func TestMetaSender_DevelopmentMode_RejectsRecipientOutsideAllowlist(t *testing.T) {
+func TestMetaSender_TextMode_RejectsRecipientOutsideAllowlist(t *testing.T) {
 	var got capturedRequest
 	srv := acceptingServer(t, &got)
 	defer srv.Close()
-	sender := newMetaSenderAgainstTestServer(t, srv, developmentConfig())
+	sender := newMetaSenderAgainstTestServer(t, srv, textConfig())
 
 	err := sender.Send(context.Background(), "+573009999999", testCode)
 	if !errors.Is(err, notification.ErrRecipientNotAuthorized) {
@@ -189,7 +189,23 @@ func TestMetaSender_DevelopmentMode_RejectsRecipientOutsideAllowlist(t *testing.
 	}
 }
 
-func TestMetaSender_TemplateMode_IgnoresDevelopmentAllowlist(t *testing.T) {
+func TestMetaSender_WithoutAllowlist_SendsToAnyValidRecipient(t *testing.T) {
+	var got capturedRequest
+	srv := acceptingServer(t, &got)
+	defer srv.Close()
+	cfg := textConfig()
+	cfg.TestRecipients = nil
+	sender := newMetaSenderAgainstTestServer(t, srv, cfg)
+
+	if err := sender.Send(context.Background(), "+573009999999", testCode); err != nil {
+		t.Fatalf("without an allowlist any valid recipient must be accepted: %v", err)
+	}
+	if got.calls.Load() != 1 {
+		t.Fatalf("expected one request, got %d", got.calls.Load())
+	}
+}
+
+func TestMetaSender_TemplateMode_AlsoHonoursAllowlist(t *testing.T) {
 	var got capturedRequest
 	srv := acceptingServer(t, &got)
 	defer srv.Close()
@@ -197,8 +213,11 @@ func TestMetaSender_TemplateMode_IgnoresDevelopmentAllowlist(t *testing.T) {
 	cfg.TestRecipients = []string{"+573000000000"}
 	sender := newMetaSenderAgainstTestServer(t, srv, cfg)
 
-	if err := sender.Send(context.Background(), testRecipient, testCode); err != nil {
-		t.Fatalf("template mode must send to any valid recipient: %v", err)
+	if err := sender.Send(context.Background(), testRecipient, testCode); !errors.Is(err, notification.ErrRecipientNotAuthorized) {
+		t.Fatalf("expected ErrRecipientNotAuthorized, got %v", err)
+	}
+	if got.calls.Load() != 0 {
+		t.Fatal("a recipient outside the allowlist must never reach Meta")
 	}
 }
 

@@ -28,21 +28,29 @@ func TestSelectWhatsAppOTPProvider_SelectsConfiguredProvider(t *testing.T) {
 			want: "notification.MetaWhatsAppOTPProvider",
 		},
 		{
-			name: "desarrollo con destinatarios usa Meta",
+			name: "texto con destinatarios en local usa Meta",
 			cfg: config.Config{
-				OTPProvider: "meta", MetaWhatsAppMode: "development",
+				OTPProvider: "meta", MetaWhatsAppMode: "text", Environment: "local",
 				MetaWhatsAppPhoneNumberID: fakeMetaPhoneNumberID, MetaWhatsAppAccessToken: fakeMetaAccessToken,
 				MetaWhatsAppTestRecipients: []string{"+573001234567"},
 			},
 			want: "notification.MetaWhatsAppOTPProvider",
 		},
 		{
-			name: "desarrollo sin destinatarios no envía",
+			name: "texto sin destinatarios en local no envía",
 			cfg: config.Config{
-				OTPProvider: "meta", MetaWhatsAppMode: "development",
+				OTPProvider: "meta", MetaWhatsAppMode: "text", Environment: "local",
 				MetaWhatsAppPhoneNumberID: fakeMetaPhoneNumberID, MetaWhatsAppAccessToken: fakeMetaAccessToken,
 			},
 			want: "auth.localWhatsAppOTPProvider",
+		},
+		{
+			name: "texto sin destinatarios en producción usa Meta",
+			cfg: config.Config{
+				OTPProvider: "meta", MetaWhatsAppMode: "text", Environment: "production",
+				MetaWhatsAppPhoneNumberID: fakeMetaPhoneNumberID, MetaWhatsAppAccessToken: fakeMetaAccessToken,
+			},
+			want: "notification.MetaWhatsAppOTPProvider",
 		},
 		{
 			name: "modo plantilla sin plantilla no envía",
