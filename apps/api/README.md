@@ -982,6 +982,50 @@ curl -sS -X POST "https://graph.facebook.com/v24.0/$APP_META_WHATSAPP_PHONE_NUMB
 `APP_META_WABA` y `APP_META_ID` (WABA y app de Meta) no los usa el envío; se
 reservan para administrar plantillas y el webhook.
 
+### Webhook de Meta WhatsApp (`DEC-126`)
+
+Meta avisa a NAVA de los estados de entrega (`sent`, `delivered`, `read`,
+`failed`) y de los mensajes entrantes. La ruta existe solo si el despliegue define
+**los dos** secretos; con uno solo el API no arranca y sin ellos responde 404.
+
+| Variable | Uso |
+| --- | --- |
+| `APP_META_WEBHOOK_VERIFY_TOKEN` | Token propio (mínimo 16 caracteres) que escribes en el panel de Meta al registrar la URL. Distinto del access token y del secreto de la app. |
+| `APP_META_APP_SECRET` | «Clave secreta de la app» de Meta (Configuración → Básica). Autentica cada notificación con `X-Hub-Signature-256`. |
+
+Requiere además `APP_META_WHATSAPP_PHONE_NUMBER_ID`: los eventos de otro número de
+la misma cuenta se ignoran.
+
+- `GET /api/v1/public/webhooks/meta/whatsapp`: devuelve `hub.challenge` solo con
+  `hub.mode=subscribe` y el token correcto; si no, `401`.
+- `POST /api/v1/public/webhooks/meta/whatsapp`: la firma se comprueba, en tiempo
+  constante, **antes** de leer el cuerpo; sin firma válida responde `401` y no toca
+  la base de datos. Un fallo al guardar responde `500` para que Meta reintente (cada
+  registro es idempotente).
+- Qué se guarda: por cada mensaje entrante, el HMAC del teléfono y la hora
+  (`whatsapp_conversation_window`, vence a las 24 h); por cada estado, `wamid`,
+  estado y código de error (`whatsapp_message_status`, 30 días). El texto de los
+  mensajes y el teléfono en claro no se leen, guardan ni registran. Un estado
+  `failed` nuevo queda en el log con su `wamid` y código (por ejemplo `131047`).
+- `notification.MetaWebhookService.ConversationOpen` indica si hay un mensaje
+  entrante en las últimas 24 h. **Ningún envío se decide con ese valor**: `false`
+  significa «sin registro», no «Meta lo rechazará»; un webhook perdido bloquearía
+  códigos legítimos, así que Meta sigue siendo quien valida.
+- El worker purga los datos vencidos cada 5 minutos.
+
+**Probarlo en local.** Meta solo llama a una URL pública HTTPS; en desarrollo
+expón el puerto del API con un túnel (por ejemplo `cloudflared tunnel --url
+http://localhost:8080`) y registra `https://<túnel>/api/v1/public/webhooks/meta/whatsapp`
+en WhatsApp → Configuración → Webhook, con el token de verificación y el campo
+`messages` suscrito. Para simular una notificación sin Meta:
+
+```bash
+body='{"object":"whatsapp_business_account","entry":[{"changes":[{"field":"messages","value":{"metadata":{"phone_number_id":"'"$APP_META_WHATSAPP_PHONE_NUMBER_ID"'"},"statuses":[{"id":"wamid.prueba","status":"delivered","timestamp":"'"$(date +%s)"'"}]}}]}]}'
+sig="sha256=$(printf '%s' "$body" | openssl dgst -sha256 -hmac "$APP_META_APP_SECRET" -hex | sed 's/^.* //')"
+curl -i -X POST http://localhost:8080/api/v1/public/webhooks/meta/whatsapp \
+  -H "Content-Type: application/json" -H "X-Hub-Signature-256: $sig" -d "$body"
+```
+
 ### Prueba local completa: capturar el código sin un proveedor real
 
 `APP_RECOVERY_CAPTURE_FILE=<ruta>` hace que

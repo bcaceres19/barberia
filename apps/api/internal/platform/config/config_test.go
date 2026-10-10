@@ -605,3 +605,71 @@ func TestLoad_GoogleCalendar_HTTPSRedirectIsValidInProduction(t *testing.T) {
 		}
 	})
 }
+
+func metaWebhookEnv() map[string]string {
+	env := baseLocalEnv()
+	env["APP_META_WHATSAPP_PHONE_NUMBER_ID"] = "1234567890"
+	env["APP_META_WHATSAPP_ACCESS_TOKEN"] = "meta-access-token-de-prueba"
+	env["APP_META_WHATSAPP_MODE"] = "text"
+	env["APP_META_WHATSAPP_TEST_RECIPIENTS"] = "+573001234567"
+	env["APP_META_WEBHOOK_VERIFY_TOKEN"] = "token-de-verificacion-de-prueba"
+	env["APP_META_APP_SECRET"] = "app-secret-de-prueba-0123456789"
+	return env
+}
+
+func TestLoad_MetaWebhookDisabledByDefault(t *testing.T) {
+	withEnv(t, baseLocalEnv(), func() {
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if cfg.MetaWebhookEnabled() {
+			t.Fatal("the webhook must be disabled without its two secrets")
+		}
+	})
+}
+
+func TestLoad_MetaWebhookEnabledWithBothSecrets(t *testing.T) {
+	withEnv(t, metaWebhookEnv(), func() {
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if !cfg.MetaWebhookEnabled() {
+			t.Fatal("expected the webhook to be enabled")
+		}
+	})
+}
+
+func TestLoad_MetaWebhookRejectsIncompleteOrUnsafeConfiguration(t *testing.T) {
+	tests := map[string]func(map[string]string){
+		"solo token de verificación": func(env map[string]string) { delete(env, "APP_META_APP_SECRET") },
+		"solo secreto de la app":     func(env map[string]string) { delete(env, "APP_META_WEBHOOK_VERIFY_TOKEN") },
+		"token corto":                func(env map[string]string) { env["APP_META_WEBHOOK_VERIFY_TOKEN"] = "corto" },
+		"secreto corto":              func(env map[string]string) { env["APP_META_APP_SECRET"] = "corto" },
+		"sin id del número": func(env map[string]string) {
+			delete(env, "APP_META_WHATSAPP_PHONE_NUMBER_ID")
+			delete(env, "APP_META_WHATSAPP_ACCESS_TOKEN")
+			delete(env, "APP_META_WHATSAPP_MODE")
+			delete(env, "APP_META_WHATSAPP_TEST_RECIPIENTS")
+		},
+		"token igual al secreto": func(env map[string]string) {
+			env["APP_META_WEBHOOK_VERIFY_TOKEN"] = env["APP_META_APP_SECRET"]
+		},
+		"token igual al access token": func(env map[string]string) {
+			env["APP_META_WEBHOOK_VERIFY_TOKEN"] = env["APP_META_WHATSAPP_ACCESS_TOKEN"] + "-extra-largo"
+			env["APP_META_WHATSAPP_ACCESS_TOKEN"] = env["APP_META_WEBHOOK_VERIFY_TOKEN"]
+		},
+	}
+	for name, mutate := range tests {
+		t.Run(name, func(t *testing.T) {
+			env := metaWebhookEnv()
+			mutate(env)
+			withEnv(t, env, func() {
+				if _, err := config.Load(); err == nil {
+					t.Fatalf("expected %q to be rejected", name)
+				}
+			})
+		})
+	}
+}

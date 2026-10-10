@@ -17,6 +17,8 @@ import (
 	"system-barbershop/internal/modules/googlecalendar"
 	googlecalendargoogle "system-barbershop/internal/modules/googlecalendar/google"
 	googlecalendarpostgres "system-barbershop/internal/modules/googlecalendar/postgres"
+	"system-barbershop/internal/modules/notification"
+	notificationpostgres "system-barbershop/internal/modules/notification/postgres"
 	"system-barbershop/internal/platform/clock"
 	"system-barbershop/internal/platform/config"
 	"system-barbershop/internal/platform/database"
@@ -79,6 +81,13 @@ func run() error {
 		cfg.RecoveryCodePurgeLimit,
 	)
 
+	// Issue #355 (DEC-126): purga de ventanas vencidas y estados de entrega de
+	// WhatsApp. Sin webhook configurado las tablas están vacías y el lote no
+	// borra nada.
+	whatsAppPurge := notification.NewWhatsAppPurgeService(
+		notificationpostgres.NewWhatsAppPurgeRepository(db), cfg.PhoneChallengePurgeLimit,
+	)
+
 	// Issue #324 (DEC-102): publicación en Google Calendar. Con las credenciales
 	// ausentes el worker sigue purgando y la integración queda desactivada.
 	if cfg.GoogleCalendarEnabled() {
@@ -105,6 +114,11 @@ func run() error {
 			logger.Info("worker apagado")
 			return nil
 		case <-ticker.C:
+			if whatsAppDeleted, err := whatsAppPurge.PurgeOnce(ctx); err != nil {
+				logger.Error("worker: fallo al purgar los datos del webhook de WhatsApp")
+			} else if whatsAppDeleted > 0 {
+				logger.Info("worker: purga de WhatsApp completada", "whatsapp_deleted", whatsAppDeleted)
+			}
 			loginThrottleDeleted, phoneChallengeDeleted, recoveryCodeDeleted, err := purgeService.PurgeOnce(ctx)
 			if err != nil {
 				logger.Error("worker: fallo al purgar login_throttle/auth_phone_challenge/staff_recovery_code")

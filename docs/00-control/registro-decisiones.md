@@ -119,6 +119,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-123` | 2026-10-10 | OTP de WhatsApp solo por Meta Cloud API, con modo de desarrollo en texto libre y plantilla Authentication preparada | `HU-007`, `HU-008`; issue #347; amplía `DEC-066` | Confirmada |
 | `DEC-124` | 2026-10-10 | El modo de texto libre de WhatsApp (`text`) se permite en cualquier ambiente como opción explícita mientras Meta no habilite la plantilla Authentication; amplía `DEC-123` | `HU-007`, `HU-008`; issue #351 | Confirmada |
 | `DEC-125` | 2026-10-10 | Se retira el soporte de OTP validado por un proveedor externo: la función SQL `auth_phone_challenge_destination` y el manejo de rechazo del proveedor; NAVA genera y valida siempre el código | `HU-007`, `HU-008`; issue #353; completa `DEC-123` | Confirmada |
+| `DEC-126` | 2026-10-10 | Webhook de Meta WhatsApp: estados de entrega y ventana de 24 h por teléfono, autenticado por token propio y firma HMAC, sin decidir envíos con él | `DEC-027`, `DEC-123`, `DEC-124`; issue #355 | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -1463,3 +1464,21 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** conservar la función como punto de extensión (código muerto sin pruebas de uso); volver a la construcción previa de los servicios sin el puerto (reescribe constructores y pruebas sin beneficio).
 - **Documentos afectados:** `apps/api/internal/modules/{auth,notification}`, `database/{migrations,modelo-fisico-referencia.sql,tests/hu007_defensa_abuso.sql,README.md}`, `.github/workflows/ci.yml`; issue [#353](https://github.com/bcaceres19/barberia/issues/353).
 - **Fuente:** instrucción explícita del propietario el 2026-10-10 («quitar el soporte de OTP del proveedor»).
+
+### DEC-126 · Webhook de Meta WhatsApp: estados de entrega y ventana de atención de 24 horas
+
+- **Fecha:** 2026-10-10.
+- **Decisión:** NAVA expone `GET` y `POST /api/v1/public/webhooks/meta/whatsapp` para recibir de Meta los estados de entrega de los mensajes que envía y los mensajes entrantes del número de la plataforma. Es infraestructura de `DEC-027` (WhatsApp oficial) y no implementa todavía ninguna historia de B5.
+  1. **Activación.** La ruta existe solo si el despliegue define `APP_META_WEBHOOK_VERIFY_TOKEN` y `APP_META_APP_SECRET`; con uno solo el API no arranca y sin ellos responde 404. Ambos exigen al menos 16 caracteres, no pueden repetirse entre sí ni coincidir con el access token, y requieren `APP_META_WHATSAPP_PHONE_NUMBER_ID`.
+  2. **Autenticación.** La verificación (`GET`) compara el token propio en tiempo constante y solo devuelve un desafío alfanumérico acotado. Cada notificación (`POST`) se autentica con `X-Hub-Signature-256` (HMAC-SHA256 del cuerpo exacto con el secreto de la app) **antes** de interpretar el cuerpo; sin firma válida responde `401` y no toca la base de datos. No hay sesión ni cookies.
+  3. **Qué se guarda.** Por cada mensaje entrante, el HMAC (con el secreto de despliegue y un prefijo de dominio) del teléfono y la hora, en `whatsapp_conversation_window`, que vence 24 horas después del último mensaje. Por cada estado `sent`, `delivered`, `read` o `failed`, el `wamid`, el estado y el código de error de Meta, en `whatsapp_message_status`, durante 30 días. No se lee, guarda ni registra el texto de los mensajes ni el teléfono en claro (`RN-DAT-02`).
+  4. **Idempotencia.** La ventana conserva el mensaje más reciente y nunca retrocede ni se extiende con fechas futuras; un estado se registra una vez por `(wamid, estado)`. Un fallo al guardar responde `500` para que Meta reintente, lo que es seguro por lo anterior.
+  5. **Solo el número configurado.** Los eventos de otro `phone_number_id` de la misma cuenta se ignoran.
+  6. **La ventana no decide envíos.** `ConversationOpen` informa si hay un mensaje entrante registrado en las últimas 24 horas, pero ningún envío lo consulta: un webhook perdido haría creer cerrada una ventana abierta y bloquearía códigos legítimos. Meta sigue validando y el rechazo `131047` se traduce a `ErrConversationWindowClosed` (`DEC-123`, `DEC-124`). Queda disponible para B5 (por ejemplo, avisar al barbero que escriba al número).
+  7. **Sin tenant.** Las tablas no llevan `barbershop_id`: el número emisor es único de la plataforma y un teléfono puede existir en varias barberías. Mantienen RLS forzada con solo la política administrativa de `barberia_owner` (`DEC-024`, `DEC-040`), como `auth_phone_challenge`. Ningún rol de aplicación tiene acceso directo; la API ejecuta tres funciones `SECURITY DEFINER` y el worker, la purga (`DEC-040`, `DDL-AUT-01`).
+- **Fuera de alcance:** responder mensajes entrantes, mostrar el estado en la interfaz, reintentar envíos fallidos y registrar la suscripción en el panel de Meta (operación del propietario, con una URL pública).
+- **Responsable:** propietario del proyecto.
+- **Motivo:** en modo texto (`DEC-124`) el código solo llega a quien escribió al número en las últimas 24 horas; sin webhook NAVA no ve los fallos de entrega ni cuándo escribió cada persona.
+- **Alternativas descartadas:** decidir o bloquear envíos con la ventana registrada (riesgo de rechazar OTP legítimos por un webhook perdido); guardar el teléfono en claro (dato personal innecesario); `barbershop_id` en las tablas (no corresponde a un tenant y obligaría a elegir uno); un token de verificación igual al access token (ampliaría el daño de una filtración).
+- **Documentos afectados:** `apps/api` (módulo `notification`, configuración, rutas, worker, `README.md`, `.env.example`), `api/openapi` (0.35.0), `database` (migración `20261010130000`, modelo físico, prueba SQL, `README.md`), `.github/workflows/ci.yml`, `historial-cambios.md`; issue [#355](https://github.com/bcaceres19/barberia/issues/355).
+- **Fuente:** instrucción explícita del propietario el 2026-10-10 de implementar el webhook de Meta.

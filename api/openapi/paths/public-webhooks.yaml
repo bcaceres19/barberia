@@ -1,0 +1,132 @@
+# Webhook de Meta WhatsApp Cloud API (issue #355, DEC-126). Lo llama Meta, no
+# el frontend: NAVA no lo consume desde apps/web. Existe solo si el despliegue
+# define APP_META_WEBHOOK_VERIFY_TOKEN y APP_META_APP_SECRET; sin ellos la ruta
+# responde 404 como cualquier ruta desconocida. No usa sesión: la verificación
+# se autentica con un token propio y cada notificación con la firma HMAC-SHA256
+# del cuerpo exacto.
+/public/webhooks/meta/whatsapp:
+  get:
+    tags: [Webhooks]
+    summary: Verificar la suscripción del webhook de Meta
+    description: >
+      Meta llama a esta operación al registrar la URL del webhook. Si
+      `hub.mode` es `subscribe` y `hub.verify_token` coincide con
+      `APP_META_WEBHOOK_VERIFY_TOKEN` (un secreto distinto del access token y
+      de la clave de firma), responde `200` con `hub.challenge` tal cual, en
+      texto plano. Cualquier otro caso responde `401` sin indicar qué falló.
+      El desafío solo admite letras, dígitos, guion y guion bajo (hasta 128): no
+      se refleja ningún otro contenido del solicitante.
+    operationId: verifyMetaWhatsAppWebhook
+    security: []
+    x-business-rules: [RN-DAT-02]
+    x-decisions: [DEC-027, DEC-123, DEC-126]
+    parameters:
+      - name: hub.mode
+        in: query
+        required: true
+        description: Debe ser `subscribe`.
+        schema:
+          type: string
+          maxLength: 32
+        example: subscribe
+      - name: hub.verify_token
+        in: query
+        required: true
+        description: Token de verificación configurado en el despliegue y en el panel de Meta.
+        schema:
+          type: string
+          maxLength: 256
+      - name: hub.challenge
+        in: query
+        required: true
+        description: Valor que Meta espera recibir de vuelta.
+        schema:
+          type: string
+          pattern: '^[A-Za-z0-9_-]{1,128}$'
+        example: "1158201444"
+    responses:
+      "200":
+        description: Verificación aceptada. El cuerpo es el desafío recibido.
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          text/plain:
+            schema:
+              type: string
+              pattern: '^[A-Za-z0-9_-]{1,128}$'
+            example: "1158201444"
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  post:
+    tags: [Webhooks]
+    summary: Recibir una notificación de Meta WhatsApp
+    description: >
+      Recibe mensajes entrantes y estados de entrega (`sent`, `delivered`, `read`
+      y `failed`) del número de NAVA. La firma de la cabecera
+      `X-Hub-Signature-256` (`sha256=` y el HMAC-SHA256 hexadecimal del cuerpo
+      exacto con `APP_META_APP_SECRET`) se comprueba, en tiempo constante, ANTES
+      de interpretar el cuerpo: una firma ausente o inválida responde `401` y no
+      toca la base de datos. Solo se procesan los eventos del
+      `phone_number_id` configurado. Cada mensaje entrante abre la ventana de
+      24 horas de su teléfono, que se guarda únicamente como HMAC; cada estado
+      se registra una vez por mensaje y estado, de modo que reintentos de Meta
+      no duplican nada. El contenido de los mensajes no se lee, guarda ni
+      registra. Un fallo al guardar responde `500` para que Meta reintente; es
+      seguro porque cada registro es idempotente. La respuesta de éxito no
+      lleva cuerpo.
+    operationId: receiveMetaWhatsAppWebhook
+    security: []
+    x-business-rules: [RN-DAT-02]
+    x-decisions: [DEC-027, DEC-123, DEC-124, DEC-126]
+    parameters:
+      - name: X-Hub-Signature-256
+        in: header
+        required: true
+        description: >
+          Firma del cuerpo exacto: `sha256=` seguido del HMAC-SHA256 en
+          hexadecimal calculado con el secreto de la aplicación de Meta.
+        schema:
+          type: string
+          pattern: '^sha256=[0-9a-f]{64}$'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/MetaWhatsAppWebhookRequest.yaml'
+          examples:
+            estadoDeEntrega:
+              summary: Un mensaje enviado por NAVA fue entregado
+              value:
+                object: whatsapp_business_account
+                entry:
+                  - id: "957400180752495"
+                    changes:
+                      - field: messages
+                        value:
+                          messaging_product: whatsapp
+                          metadata:
+                            display_phone_number: "573108953493"
+                            phone_number_id: "1315949954943476"
+                          statuses:
+                            - id: wamid.HBgMNTczMDE2ODIzNjI0FQIAERgS
+                              status: delivered
+                              timestamp: "1790000000"
+                              recipient_id: "573016823624"
+    responses:
+      "200":
+        description: Notificación autenticada y procesada. Sin cuerpo.
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

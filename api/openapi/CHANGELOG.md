@@ -4,6 +4,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.35.0 · 2026-10-10
+
+### Agregado
+
+- Etiqueta `Webhooks` y `GET`/`POST /public/webhooks/meta/whatsapp`
+  (`verifyMetaWhatsAppWebhook`, `receiveMetaWhatsAppWebhook`), `DEC-126`, issue
+  #355: verificación de la suscripción con un token propio y notificaciones de
+  Meta (estados de entrega y mensajes entrantes) autenticadas con la firma
+  `X-Hub-Signature-256`. Lo llama Meta, no el frontend. Cambio compatible:
+  operaciones y esquema nuevos; la ruta solo existe si el despliegue define sus
+  dos secretos.
+
 ## 0.34.0 · 2026-10-10
 
 ### Agregado

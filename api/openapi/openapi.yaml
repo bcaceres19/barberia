@@ -2,6 +2,11 @@
 # docs/06-api/estandar-openapi.md (DEC-037). No se edita el bundle generado
 # en dist/; este archivo y los que referencia son la fuente.
 #
+# Issue #355 (DEC-126) agrega el tag Webhooks y GET/POST
+# /public/webhooks/meta/whatsapp (paths/public-webhooks.yaml): verificación y
+# notificaciones firmadas de Meta WhatsApp Cloud API. Lo llama Meta; el frontend
+# no lo consume.
+#
 # Issue #304 (DEC-117) agrega GET /private/settings/public-link
 # (paths/settings.yaml): el enlace público de reservas de la barbería de la
 # sesión, generado `<nombre><código aleatorio>` (sin guiones, `DEC-118`) en la primera lectura.
@@ -86,7 +91,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.34.0
+  version: 0.35.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -138,6 +143,12 @@ tags:
       unidireccional de sus citas en SU Google Calendar (DEC-099): conexión
       OAuth con PKCE, estado, recordatorio y desconexión. NAVA manda; Google
       es una vista y nunca modifica citas ni disponibilidad.
+  - name: Webhooks
+    description: >-
+      Notificaciones que envían proveedores externos a NAVA. Hoy, el webhook de
+      Meta WhatsApp Cloud API (estados de entrega y mensajes entrantes,
+      DEC-126). Lo llama el proveedor, no el frontend; se autentica con un
+      token de verificación y la firma HMAC del cuerpo, nunca con sesión.
 paths:
   /public/barbershops/{slug}:
     $ref: './paths/public-booking.yaml#/~1public~1barbershops~1{slug}'
@@ -151,6 +162,8 @@ paths:
     $ref: './paths/public-booking.yaml#/~1public~1barbershops~1{slug}~1services~1{serviceId}~1barbers~1{barberId}~1appointments'
   /customer/appointments/{token}:
     $ref: './paths/customer-appointments.yaml#/~1customer~1appointments~1{token}'
+  /public/webhooks/meta/whatsapp:
+    $ref: './paths/public-webhooks.yaml#/~1public~1webhooks~1meta~1whatsapp'
   /public/auth/login:
     $ref: './paths/public-auth.yaml#/~1public~1auth~1login'
   /public/auth/challenge:
