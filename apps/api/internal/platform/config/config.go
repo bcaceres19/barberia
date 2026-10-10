@@ -210,7 +210,7 @@ type Config struct {
 
 	// OTPProvider selecciona el proveedor de OTP WhatsApp. El único valor
 	// aceptado es "meta"; existe para rechazar de forma explícita un
-	// despliegue que aún declare el proveedor retirado (DEC-123).
+	// despliegue que declare otro proveedor (DEC-123).
 	OTPProvider string
 
 	// ResendAPIKey autentica contra la API de Resend (DEC-066). Secreto:
@@ -502,7 +502,7 @@ func Load() (Config, error) {
 	}
 
 	if cfg.OTPProvider != "meta" {
-		return Config{}, fmt.Errorf("config: OTP_PROVIDER solo admite meta (Twilio fue retirado, DEC-123)")
+		return Config{}, fmt.Errorf("config: OTP_PROVIDER solo admite meta (DEC-123)")
 	}
 	if err := validateMetaWhatsApp(cfg); err != nil {
 		return Config{}, err

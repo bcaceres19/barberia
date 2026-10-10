@@ -210,8 +210,8 @@ func TestLoad_LocalEnvironment_MissingProviderCredentials_StillLoads(t *testing.
 	})
 }
 
-func TestLoad_RetiredTwilioProviderRejected(t *testing.T) {
-	for _, provider := range []string{"twilio", "twilio_sandbox"} {
+func TestLoad_UnsupportedOTPProviderRejected(t *testing.T) {
+	for _, provider := range []string{"sms", "otro"} {
 		env := baseLocalEnv()
 		env["OTP_PROVIDER"] = provider
 		withEnv(t, env, func() {
