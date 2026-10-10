@@ -33,13 +33,13 @@ var e164Pattern = regexp.MustCompile(`^\+[1-9][0-9]{7,14}$`)
 type MetaWhatsAppMode string
 
 const (
-	// MetaModeTemplate envía la plantilla de categoría AUTHENTICATION. Es el
-	// único modo permitido fuera de local/test.
+	// MetaModeTemplate envía la plantilla de categoría AUTHENTICATION, la
+	// única que Meta admite fuera de la ventana de atención de 24 horas.
 	MetaModeTemplate MetaWhatsAppMode = "template"
-	// MetaModeDevelopment envía texto libre. Solo se acepta en local/test, a
-	// destinatarios autorizados y mientras exista una ventana de atención
-	// abierta; no sustituye a la plantilla de autenticación.
-	MetaModeDevelopment MetaWhatsAppMode = "development"
+	// MetaModeText envía texto libre (DEC-124): Meta solo lo entrega si el
+	// destinatario escribió al número en las últimas 24 horas. Es la
+	// alternativa mientras Meta no habilite la plantilla de autenticación.
+	MetaModeText MetaWhatsAppMode = "text"
 )
 
 // MetaWhatsAppConfig agrupa los valores de despliegue del adaptador de Meta
@@ -53,7 +53,8 @@ type MetaWhatsAppConfig struct {
 	Mode          MetaWhatsAppMode
 	TemplateName  string
 	LanguageCode  string
-	// TestRecipients son los teléfonos E.164 autorizados en modo desarrollo.
+	// TestRecipients, si no está vacía, restringe el envío a esos teléfonos
+	// E.164 en cualquier modo.
 	TestRecipients []string
 	// Logger registra el wamid aceptado; nunca recibe teléfono, código ni
 	// token. Con nil no se registra nada.
@@ -146,7 +147,7 @@ func (s MetaWhatsAppSender) SendOTP(ctx context.Context, phoneE164, code string)
 	if !e164Pattern.MatchString(phoneE164) {
 		return MetaSendResult{}, ErrInvalidRecipient
 	}
-	if s.cfg.Mode == MetaModeDevelopment && !slices.Contains(s.cfg.TestRecipients, phoneE164) {
+	if len(s.cfg.TestRecipients) > 0 && !slices.Contains(s.cfg.TestRecipients, phoneE164) {
 		return MetaSendResult{}, ErrRecipientNotAuthorized
 	}
 
@@ -194,9 +195,9 @@ func (s MetaWhatsAppSender) SendOTP(ctx context.Context, phoneE164, code string)
 
 func (s MetaWhatsAppSender) buildMessage(to, code string) metaMessage {
 	msg := metaMessage{MessagingProduct: "whatsapp", RecipientType: "individual", To: to}
-	if s.cfg.Mode == MetaModeDevelopment {
+	if s.cfg.Mode == MetaModeText {
 		msg.Type = "text"
-		msg.Text = &metaText{Body: developmentMessage(code)}
+		msg.Text = &metaText{Body: textMessage(code)}
 		return msg
 	}
 	// Plantilla AUTHENTICATION con botón COPY_CODE: el cuerpo y el botón
@@ -213,7 +214,7 @@ func (s MetaWhatsAppSender) buildMessage(to, code string) metaMessage {
 	return msg
 }
 
-func developmentMessage(code string) string {
-	return "NAVA — Prueba de integración\n\nTu código de prueba es: " + code +
-		"\n\nEste mensaje es una simulación de desarrollo."
+func textMessage(code string) string {
+	return "NAVA — Tu código de verificación es: " + code +
+		"\n\nNo lo compartas con nadie. Si no lo solicitaste, ignora este mensaje."
 }

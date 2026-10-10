@@ -117,6 +117,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-120` | 2026-10-07 | Pruebas UI con Luna medium, prompts persistentes y cuentas sintéticas aisladas | Propietario; issue #300 | Confirmada |
 | `DEC-121` | 2026-10-08 | El backend sube a Go 1.26.9 porque la línea 1.25 no tiene versión corregida de 9 vulnerabilidades de la librería estándar; amplía `DEC-023` | `DEC-035`; issue #317 | Confirmada |
 | `DEC-123` | 2026-10-10 | OTP de WhatsApp solo por Meta Cloud API, con modo de desarrollo en texto libre y plantilla Authentication preparada | `HU-007`, `HU-008`; issue #347; amplía `DEC-066` | Confirmada |
+| `DEC-124` | 2026-10-10 | El modo de texto libre de WhatsApp (`text`) se permite en cualquier ambiente como opción explícita mientras Meta no habilite la plantilla Authentication; amplía `DEC-123` | `HU-007`, `HU-008`; issue #351 | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -1420,7 +1421,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Fecha:** 2026-10-10.
 - **Decisión:** el reto de acceso de `HU-007` y el canal WhatsApp de recuperación de `HU-008` se entregan únicamente por Meta WhatsApp Cloud API en modo directo (`DEC-066`). `OTP_PROVIDER` solo admite `meta`; cualquier otro valor impide el arranque.
   1. **El código es de NAVA.** NAVA genera, persiste (HMAC), expira, limita y valida el OTP; Meta solo lo transporta. No existe un proveedor que sea autoridad del código.
-  2. **Dos modos** (`APP_META_WHATSAPP_MODE`). `template` (por defecto): plantilla de categoría `AUTHENTICATION` con el código en el cuerpo y en el botón `COPY_CODE`. `development`: texto libre con el código, aceptado únicamente con `APP_ENVIRONMENT` `local` o `test` y solo para los teléfonos de `APP_META_WHATSAPP_TEST_RECIPIENTS`. Nunca hay un respaldo silencioso de plantilla a texto libre ni se crean plantillas `UTILITY`/`MARKETING` para evitar la restricción.
+  2. **Dos modos** (`APP_META_WHATSAPP_MODE`). `template` (por defecto): plantilla de categoría `AUTHENTICATION` con el código en el cuerpo y en el botón `COPY_CODE`. `development`: texto libre con el código, aceptado únicamente con `APP_ENVIRONMENT` `local` o `test` y solo para los teléfonos de `APP_META_WHATSAPP_TEST_RECIPIENTS` (ampliado y renombrado a `text` por `DEC-124`). Nunca hay un respaldo silencioso de plantilla a texto libre ni se crean plantillas `UTILITY`/`MARKETING` para evitar la restricción.
   3. **Ventana de 24 horas.** Sin webhook NAVA no conoce la ventana de atención: deja que Meta valide y traduce el rechazo `131047` a un error de dominio. Un HTTP 200 significa «aceptado» (se registra el `wamid`), no «entregado».
   4. **Sin reintentos automáticos.** Una solicitud por envío; un fallo de red, timeout o 5xx se devuelve como error sin repetir, porque Meta pudo haber aceptado el mensaje. El límite de reenvío sigue siendo el de `HU-007`/`HU-008`.
   5. **Errores y secretos.** Los errores de Graph API se clasifican (ventana cerrada, destinatario no permitido, credenciales, límite, plantilla no disponible) conservando solo estado, `code`, `error_subcode` y `fbtrace_id`. Token, teléfono completo y código nunca aparecen en errores, logs ni respuestas.
@@ -1431,3 +1432,18 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** conservar un proveedor de respaldo (mantiene credenciales, un modelo de OTP administrado por el proveedor y dos rutas de validación); enviar texto libre en producción mientras la plantilla esté bloqueada (incumple la política de Meta y oculta fallos); reintentar automáticamente ante timeout (duplicaría el código).
 - **Documentos afectados:** `apps/api` (adaptador, configuración, selector, pruebas, `README.md`, `.env.example`), `tools/qa/start-local.sh`, `historial-cambios.md`; issue [#347](https://github.com/bcaceres19/barberia/issues/347). Sin cambios de contrato OpenAPI ni migraciones (`20260919220000` es inmutable y se conserva).
 - **Fuente:** instrucción explícita del propietario el 2026-10-10 de usar únicamente Meta WhatsApp Cloud API para el OTP.
+
+### DEC-124 · Modo de texto libre de WhatsApp en cualquier ambiente hasta que Meta habilite la plantilla
+
+- **Fecha:** 2026-10-10.
+- **Decisión:** el modo `development` de `DEC-123` pasa a llamarse `text` y se acepta en cualquier ambiente, siempre como opción explícita (`APP_META_WHATSAPP_MODE=text`), mientras Meta no permita crear la plantilla `AUTHENTICATION`. Cuando esté disponible, producción vuelve a `template` cambiando solo esa variable y definiendo la plantilla.
+  1. **Destinatarios.** `APP_META_WHATSAPP_TEST_RECIPIENTS` es obligatoria con `text` en `local`/`test`, para no escribir a datos de prueba, y opcional en los demás ambientes; si se define, restringe el envío en cualquier modo.
+  2. **Límite de Meta.** El texto libre solo se entrega a quien escribió al número en las últimas 24 horas. Quien no lo hizo no recibe el código: Meta responde `131047` y el adaptador devuelve `ErrConversationWindowClosed`. La respuesta pública de recuperación y del reto sigue siendo uniforme (`DEC-065`), de modo que esa persona no ve el fallo. Es una limitación aceptada por el propietario mientras dure el modo `text`.
+  3. **Mensaje.** Texto sin referencias a pruebas: «NAVA — Tu código de verificación es: …», con la indicación de no compartirlo.
+  4. **Visibilidad.** Fuera de `local`/`test` el arranque registra un aviso con esta limitación.
+  5. **Sin cambios** en generación, expiración, validación ni límites del OTP (`DEC-064`, `DEC-123`).
+- **Responsable:** propietario del proyecto.
+- **Motivo:** Meta rechaza crear plantillas `AUTHENTICATION` para la cuenta (`code 10`, `subcode 2388185`) y el proyecto debe seguir operando mientras tanto.
+- **Alternativas descartadas:** conservar el texto libre solo en `local`/`test` (impide operar el piloto); enviar por correo cuando la ventana esté cerrada (cambia el canal elegido por la persona, `DEC-092`); crear una plantilla `UTILITY` para eludir la restricción (Meta no la admite para códigos de verificación).
+- **Documentos afectados:** `apps/api` (configuración, adaptador, selector, pruebas, `README.md`, `.env.example`), `historial-cambios.md`; issue [#351](https://github.com/bcaceres19/barberia/issues/351). Sin cambios de contrato ni migraciones.
+- **Fuente:** instrucción explícita del propietario el 2026-10-10 («por el momento, modo text»; las plantillas llegan con producción).

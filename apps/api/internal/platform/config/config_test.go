@@ -237,9 +237,23 @@ func TestLoad_MetaDefaultsToTemplateModeAndRecentGraphVersion(t *testing.T) {
 	})
 }
 
-func TestLoad_MetaDevelopmentModeLoadsInLocalWithRecipients(t *testing.T) {
+func productionTextEnv() map[string]string {
+	return map[string]string{
+		"APP_ENVIRONMENT":                   "production",
+		"APP_DATABASE_URL":                  "postgres://barberia_app:secret@db:5432/barberia?sslmode=require",
+		"APP_WORKER_DATABASE_URL":           "postgres://barberia_worker:secret@db:5432/barberia?sslmode=require",
+		"APP_AUTH_HMAC_SECRET":              testHMACSecret,
+		"APP_META_WHATSAPP_MODE":            "text",
+		"APP_META_WHATSAPP_PHONE_NUMBER_ID": "1234567890",
+		"APP_META_WHATSAPP_ACCESS_TOKEN":    "meta-access-token-de-prueba",
+		"APP_RESEND_API_KEY":                "resend-api-key-de-prueba",
+		"APP_RESEND_FROM_ADDRESS":           "no-responder@barberia.test",
+	}
+}
+
+func TestLoad_MetaTextModeLoadsInLocalWithRecipients(t *testing.T) {
 	env := baseLocalEnv()
-	env["APP_META_WHATSAPP_MODE"] = "development"
+	env["APP_META_WHATSAPP_MODE"] = "text"
 	env["APP_META_WHATSAPP_PHONE_NUMBER_ID"] = "1234567890"
 	env["APP_META_WHATSAPP_ACCESS_TOKEN"] = "meta-access-token-de-prueba"
 	env["APP_META_WHATSAPP_TEST_RECIPIENTS"] = "+573001234567, +573009876543"
@@ -249,37 +263,55 @@ func TestLoad_MetaDevelopmentModeLoadsInLocalWithRecipients(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		if !cfg.MetaWhatsAppConfigured() || len(cfg.MetaWhatsAppTestRecipients) != 2 {
-			t.Fatalf("expected development mode to be configured with two recipients, cfg=%+v", cfg)
+			t.Fatalf("expected text mode to be configured with two recipients, cfg=%+v", cfg)
 		}
 	})
 }
 
-func TestLoad_MetaDevelopmentModeRejectedOutsideLocalOrTest(t *testing.T) {
-	env := map[string]string{
-		"APP_ENVIRONMENT":                   "production",
-		"APP_DATABASE_URL":                  "postgres://barberia_app:secret@db:5432/barberia?sslmode=require",
-		"APP_WORKER_DATABASE_URL":           "postgres://barberia_worker:secret@db:5432/barberia?sslmode=require",
-		"APP_AUTH_HMAC_SECRET":              testHMACSecret,
-		"APP_META_WHATSAPP_MODE":            "development",
-		"APP_META_WHATSAPP_PHONE_NUMBER_ID": "1234567890",
-		"APP_META_WHATSAPP_ACCESS_TOKEN":    "meta-access-token-de-prueba",
-		"APP_META_WHATSAPP_TEST_RECIPIENTS": "+573001234567",
-		"APP_RESEND_API_KEY":                "resend-api-key-de-prueba",
-		"APP_RESEND_FROM_ADDRESS":           "no-responder@barberia.test",
-	}
-	withEnv(t, env, func() {
-		if _, err := config.Load(); err == nil {
-			t.Fatal("expected development mode to be rejected in production")
-		}
-	})
-}
-
-func TestLoad_MetaDevelopmentModeRequiresValidRecipients(t *testing.T) {
-	for _, recipients := range []string{"", "3001234567", "+57300abc"} {
+func TestLoad_MetaTextModeRequiresRecipientsInLocalAndTest(t *testing.T) {
+	for _, environment := range []string{"local", "test"} {
 		env := baseLocalEnv()
-		env["APP_META_WHATSAPP_MODE"] = "development"
+		env["APP_ENVIRONMENT"] = environment
+		env["APP_META_WHATSAPP_MODE"] = "text"
 		env["APP_META_WHATSAPP_PHONE_NUMBER_ID"] = "1234567890"
 		env["APP_META_WHATSAPP_ACCESS_TOKEN"] = "meta-access-token-de-prueba"
+		withEnv(t, env, func() {
+			if _, err := config.Load(); err == nil {
+				t.Fatalf("expected text mode without recipients to be rejected in %s", environment)
+			}
+		})
+	}
+}
+
+func TestLoad_MetaTextModeAllowedInProductionWithoutRecipientsOrTemplate(t *testing.T) {
+	withEnv(t, productionTextEnv(), func() {
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatalf("text mode must load in production: %v", err)
+		}
+		if !cfg.MetaWhatsAppConfigured() {
+			t.Fatal("expected text mode to count as configured in production without recipients")
+		}
+	})
+}
+
+func TestLoad_MetaTextModeInProductionStillRequiresCredentials(t *testing.T) {
+	for _, missing := range []string{"APP_META_WHATSAPP_PHONE_NUMBER_ID", "APP_META_WHATSAPP_ACCESS_TOKEN"} {
+		t.Run(missing, func(t *testing.T) {
+			env := productionTextEnv()
+			delete(env, missing)
+			withEnv(t, env, func() {
+				if _, err := config.Load(); err == nil {
+					t.Fatalf("expected production without %s to be rejected", missing)
+				}
+			})
+		})
+	}
+}
+
+func TestLoad_MetaTextModeRecipientsMustBeE164(t *testing.T) {
+	for _, recipients := range []string{"3001234567", "+57300abc"} {
+		env := productionTextEnv()
 		env["APP_META_WHATSAPP_TEST_RECIPIENTS"] = recipients
 		withEnv(t, env, func() {
 			if _, err := config.Load(); err == nil {
@@ -287,6 +319,16 @@ func TestLoad_MetaDevelopmentModeRequiresValidRecipients(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLoad_MetaRejectsRetiredDevelopmentMode(t *testing.T) {
+	env := baseLocalEnv()
+	env["APP_META_WHATSAPP_MODE"] = "development"
+	withEnv(t, env, func() {
+		if _, err := config.Load(); err == nil {
+			t.Fatal("expected the retired development mode to be rejected")
+		}
+	})
 }
 
 func TestLoad_MetaRejectsUnknownMode(t *testing.T) {

@@ -194,8 +194,8 @@ type Config struct {
 	// nunca se registra ni se comitea.
 	MetaWhatsAppAccessToken string
 	// MetaWhatsAppMode es "template" (plantilla AUTHENTICATION, valor por
-	// defecto) o "development" (texto libre). "development" solo se acepta
-	// en local/test (DEC-123).
+	// defecto) o "text" (texto libre, DEC-124). "text" solo llega a quien
+	// escribió al número en las últimas 24 h.
 	MetaWhatsAppMode string
 	// MetaWhatsAppTemplateName es el nombre de la plantilla de categoría
 	// "Authentication" aprobada por Meta para el código de recuperación
@@ -204,8 +204,9 @@ type Config struct {
 	// MetaWhatsAppLanguageCode es el código de idioma de esa plantilla
 	// (p. ej. "es" o "es_CO").
 	MetaWhatsAppLanguageCode string
-	// MetaWhatsAppTestRecipients lista los teléfonos E.164 a los que el modo
-	// "development" puede escribir. Obligatoria en ese modo.
+	// MetaWhatsAppTestRecipients restringe el modo "text" a esos teléfonos
+	// E.164. Obligatoria en local/test para no escribir a datos de prueba;
+	// opcional en los demás ambientes.
 	MetaWhatsAppTestRecipients []string
 
 	// OTPProvider selecciona el proveedor de OTP WhatsApp. El único valor
@@ -534,10 +535,10 @@ func Load() (Config, error) {
 		// entrega (Meta WhatsApp Cloud API + Resend), no el marcador de
 		// posición que solo registra en el log. Faltar cualquiera de estos
 		// valores debe impedir el arranque, igual que un DSN sin TLS.
-		if cfg.OTPProvider == "meta" && (cfg.MetaWhatsAppPhoneNumberID == "" || cfg.MetaWhatsAppAccessToken == "" || cfg.MetaWhatsAppTemplateName == "") {
+		if cfg.OTPProvider == "meta" && !cfg.MetaWhatsAppConfigured() {
 			return Config{}, fmt.Errorf(
-				"config: APP_META_WHATSAPP_PHONE_NUMBER_ID/APP_META_WHATSAPP_ACCESS_TOKEN/" +
-					"APP_META_WHATSAPP_TEMPLATE_NAME son obligatorios fuera de local/test (DEC-066)",
+				"config: APP_META_WHATSAPP_PHONE_NUMBER_ID/APP_META_WHATSAPP_ACCESS_TOKEN y, en modo template, " +
+					"APP_META_WHATSAPP_TEMPLATE_NAME son obligatorios fuera de local/test (DEC-066, DEC-124)",
 			)
 		}
 		if cfg.ResendAPIKey == "" || cfg.ResendFromAddress == "" {
@@ -574,28 +575,26 @@ func (c Config) MetaWhatsAppConfigured() bool {
 	if c.MetaWhatsAppPhoneNumberID == "" || c.MetaWhatsAppAccessToken == "" {
 		return false
 	}
-	if c.MetaWhatsAppMode == "development" {
-		return len(c.MetaWhatsAppTestRecipients) > 0
+	switch c.MetaWhatsAppMode {
+	case "text":
+		return c.Environment != "local" && c.Environment != "test" || len(c.MetaWhatsAppTestRecipients) > 0
+	default:
+		return c.MetaWhatsAppTemplateName != ""
 	}
-	return c.MetaWhatsAppTemplateName != ""
 }
 
 var metaTestRecipientPattern = regexp.MustCompile(`^\+[1-9][0-9]{7,14}$`)
 
 // validateMetaWhatsApp impide un despliegue a medias: las credenciales se
-// configuran juntas y el texto libre de desarrollo nunca llega a un ambiente
-// con TLS obligatorio (DEC-123).
+// configuran juntas y el texto libre exige, en local/test, una lista cerrada
+// de destinatarios (DEC-123, DEC-124).
 func validateMetaWhatsApp(cfg Config) error {
-	if cfg.MetaWhatsAppMode != "template" && cfg.MetaWhatsAppMode != "development" {
-		return fmt.Errorf("config: APP_META_WHATSAPP_MODE debe ser template o development")
+	if cfg.MetaWhatsAppMode != "template" && cfg.MetaWhatsAppMode != "text" {
+		return fmt.Errorf("config: APP_META_WHATSAPP_MODE debe ser template o text")
 	}
-	if cfg.MetaWhatsAppMode == "development" {
-		if cfg.Environment != "local" && cfg.Environment != "test" {
-			return fmt.Errorf("config: APP_META_WHATSAPP_MODE=development solo puede usarse en local/test; use template")
-		}
-		if len(cfg.MetaWhatsAppTestRecipients) == 0 {
-			return fmt.Errorf("config: APP_META_WHATSAPP_TEST_RECIPIENTS es obligatoria con APP_META_WHATSAPP_MODE=development")
-		}
+	if cfg.MetaWhatsAppMode == "text" && (cfg.Environment == "local" || cfg.Environment == "test") &&
+		len(cfg.MetaWhatsAppTestRecipients) == 0 {
+		return fmt.Errorf("config: APP_META_WHATSAPP_TEST_RECIPIENTS es obligatoria con APP_META_WHATSAPP_MODE=text en local/test")
 	}
 	for _, phone := range cfg.MetaWhatsAppTestRecipients {
 		if !metaTestRecipientPattern.MatchString(phone) {

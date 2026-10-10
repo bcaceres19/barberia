@@ -680,6 +680,9 @@ func selectConfirmationEmailSender(cfg config.Config, logger *slog.Logger) publi
 // config) the code is logged instead of sent.
 func selectWhatsAppOTPProvider(cfg config.Config, logger *slog.Logger, secret []byte) auth.WhatsAppOTPProvider {
 	if cfg.MetaWhatsAppConfigured() {
+		if cfg.MetaWhatsAppMode == "text" && cfg.Environment != "local" && cfg.Environment != "test" {
+			logger.Warn("whatsapp en modo texto: solo llega a quien escribió al número en las últimas 24 horas (DEC-124)")
+		}
 		return notification.NewMetaWhatsAppOTPProvider(notification.NewMetaWhatsAppSender(notification.MetaWhatsAppConfig{
 			APIVersion:     cfg.MetaWhatsAppAPIVersion,
 			PhoneNumberID:  cfg.MetaWhatsAppPhoneNumberID,
