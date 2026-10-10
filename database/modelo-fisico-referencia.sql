@@ -3100,9 +3100,10 @@ COMMENT ON FUNCTION customer_anonymize(uuid, uuid, timestamptz) IS
 -- ===========================================================================
 -- G.2 · Webhook de Meta WhatsApp — DEC-126 (issue #355)
 -- ===========================================================================
--- Dos tablas sin barbershop_id ni RLS por diseño (el número emisor es único de
--- la plataforma) y sin ningún GRANT: la API solo ejecuta funciones y la purga es
--- exclusiva del worker (DDL-AUT-01, DEC-040). El teléfono se guarda únicamente
+-- Dos tablas sin barbershop_id (el número emisor es único de la plataforma), con
+-- RLS forzada y solo la política administrativa de barberia_owner, y sin ningún
+-- GRANT: la API solo ejecuta funciones y la purga es exclusiva del worker
+-- (DDL-AUT-01, DEC-040). El teléfono se guarda únicamente
 -- como HMAC. Migración: 20261010130000_create_whatsapp_webhook.sql.
 
 -- ---------------------------------------------------------------------------
@@ -3124,10 +3125,17 @@ COMMENT ON TABLE whatsapp_conversation_window IS
   'Propietario funcional: plataforma. Retención: hasta expires_at (24 h después del último '
   'mensaje entrante, el límite de Meta para texto libre). Clasificación: dato personal '
   'seudonimizado; phone_hash es HMAC-SHA256 con el secreto de despliegue, nunca el teléfono. '
-  'Sin barbershop_id ni RLS por diseño: el número emisor es único de la plataforma.';
+  'Sin barbershop_id por diseño: el número emisor es único de la plataforma. RLS forzada '
+  'con solo la política administrativa de barberia_owner.';
 
 CREATE INDEX idx_whatsapp_conversation_window_expires_at
   ON whatsapp_conversation_window (expires_at);
+
+ALTER TABLE whatsapp_conversation_window ENABLE ROW LEVEL SECURITY;
+ALTER TABLE whatsapp_conversation_window FORCE  ROW LEVEL SECURITY;
+
+CREATE POLICY whatsapp_conversation_window_all_admin_policy ON whatsapp_conversation_window
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 
 -- ---------------------------------------------------------------------------
 -- G.2.2 · whatsapp_message_status
@@ -3150,12 +3158,20 @@ COMMENT ON TABLE whatsapp_message_status IS
   'Propietario funcional: plataforma. Retención: 30 días desde received_at. Clasificación: '
   'técnico. Solo guarda el identificador del mensaje (wamid), el estado y el código de error '
   'de Meta: ni teléfono ni contenido. La clave (wamid, status) hace idempotente la repetición '
-  'de una notificación. Sin barbershop_id ni RLS por diseño.';
+  'de una notificación. Sin barbershop_id por diseño; RLS forzada con solo la política '
+  'administrativa de barberia_owner.';
 
 CREATE INDEX idx_whatsapp_message_status_received_at
   ON whatsapp_message_status (received_at);
 
--- DDL-AUT-01: ningún GRANT sobre las tablas. Todo acceso es por las funciones.
+ALTER TABLE whatsapp_message_status ENABLE ROW LEVEL SECURITY;
+ALTER TABLE whatsapp_message_status FORCE  ROW LEVEL SECURITY;
+
+CREATE POLICY whatsapp_message_status_all_admin_policy ON whatsapp_message_status
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
+
+-- DDL-AUT-01: ningún GRANT sobre las tablas ni política para barberia_app o
+-- barberia_worker. Todo acceso es por las funciones.
 
 -- ---------------------------------------------------------------------------
 -- G.2.3 · Funciones

@@ -15,6 +15,24 @@
 
 \echo '=== Issue #355 · pruebas del webhook de Meta WhatsApp ==='
 
+-- RLS ----------------------------------------------------------------------
+DO $$
+DECLARE
+  v_table text;
+BEGIN
+  FOREACH v_table IN ARRAY ARRAY['whatsapp_conversation_window', 'whatsapp_message_status'] LOOP
+    IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = v_table AND relrowsecurity AND relforcerowsecurity) THEN
+      RAISE EXCEPTION '% debe tener RLS habilitada y forzada.', v_table;
+    END IF;
+    IF (SELECT count(*) FROM pg_policies WHERE schemaname = 'public' AND tablename = v_table) <> 1
+       OR NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = v_table AND cmd = 'ALL' AND 'barberia_owner' = ANY(roles)) THEN
+      RAISE EXCEPTION '% debe tener únicamente la política administrativa de barberia_owner.', v_table;
+    END IF;
+  END LOOP;
+END
+$$;
+\echo 'Issue #355 OK · RLS forzada con solo la política administrativa'
+
 -- Privilegios ---------------------------------------------------------------
 DO $$
 DECLARE

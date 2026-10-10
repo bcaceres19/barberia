@@ -7,8 +7,9 @@
 --   consulta, y la de purga del worker.
 --
 -- Reglas y decisiones
---   RN-DAT-02 (nada sensible en logs ni en claro), DEC-024 (RLS: estas tablas no
---   tienen `barbershop_id` por diseño, igual que `login_throttle`), DEC-027
+--   RN-DAT-02 (nada sensible en logs ni en claro), DEC-024 (RLS forzada en toda
+--   tabla; estas no tienen `barbershop_id`, así que solo llevan la política
+--   administrativa de `barberia_owner`, igual que `auth_phone_challenge`), DEC-027
 --   (WhatsApp oficial), DEC-035/DEC-036 (estándar y Atlas), DEC-040 (roles
 --   separados), DDL-AUT-01 (sin GRANT directo a `barberia_app`: solo funciones
 --   estrechas), DEC-123/DEC-124 (OTP por Meta, modo texto), DEC-126.
@@ -21,7 +22,8 @@
 --   corresponde.
 --
 -- Condición de seguridad
---   Se ejecuta con `barberia_migrator`. Las cuatro funciones son SECURITY DEFINER
+--   Se ejecuta con `barberia_migrator`, que hereda `barberia_owner`; la política
+--   administrativa se escribe `FOR ALL TO barberia_owner` (DEC-040). Las cuatro funciones son SECURITY DEFINER
 --   con `search_path=''` y nombres calificados. `barberia_app` ejecuta las de
 --   escritura/lectura; solo `barberia_worker` ejecuta la purga. Ninguna tabla se
 --   concede a ningún rol.
@@ -32,10 +34,11 @@
 
 DO $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'barberia_app')
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'barberia_owner')
+     OR NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'barberia_app')
      OR NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'barberia_worker') THEN
     RAISE EXCEPTION
-      'Esta migración depende de los roles barberia_app y barberia_worker '
+      'Esta migración depende de los roles barberia_owner, barberia_app y barberia_worker '
       '(20260811145252_harden_roles_and_definer_functions.sql).';
   END IF;
 END
@@ -60,10 +63,17 @@ COMMENT ON TABLE whatsapp_conversation_window IS
   'Propietario funcional: plataforma. Retención: hasta expires_at (24 h después del último '
   'mensaje entrante, el límite de Meta para texto libre). Clasificación: dato personal '
   'seudonimizado; phone_hash es HMAC-SHA256 con el secreto de despliegue, nunca el teléfono. '
-  'Sin barbershop_id ni RLS por diseño: el número emisor es único de la plataforma.';
+  'Sin barbershop_id por diseño: el número emisor es único de la plataforma. RLS forzada '
+  'con solo la política administrativa de barberia_owner.';
 
 CREATE INDEX idx_whatsapp_conversation_window_expires_at
   ON whatsapp_conversation_window (expires_at);
+
+ALTER TABLE whatsapp_conversation_window ENABLE ROW LEVEL SECURITY;
+ALTER TABLE whatsapp_conversation_window FORCE  ROW LEVEL SECURITY;
+
+CREATE POLICY whatsapp_conversation_window_all_admin_policy ON whatsapp_conversation_window
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
 
 -- ---------------------------------------------------------------------------
 -- 2. whatsapp_message_status
@@ -86,12 +96,20 @@ COMMENT ON TABLE whatsapp_message_status IS
   'Propietario funcional: plataforma. Retención: 30 días desde received_at. Clasificación: '
   'técnico. Solo guarda el identificador del mensaje (wamid), el estado y el código de error '
   'de Meta: ni teléfono ni contenido. La clave (wamid, status) hace idempotente la repetición '
-  'de una notificación. Sin barbershop_id ni RLS por diseño.';
+  'de una notificación. Sin barbershop_id por diseño; RLS forzada con solo la política '
+  'administrativa de barberia_owner.';
 
 CREATE INDEX idx_whatsapp_message_status_received_at
   ON whatsapp_message_status (received_at);
 
--- DDL-AUT-01: ningún GRANT sobre las tablas. Todo acceso es por las funciones.
+ALTER TABLE whatsapp_message_status ENABLE ROW LEVEL SECURITY;
+ALTER TABLE whatsapp_message_status FORCE  ROW LEVEL SECURITY;
+
+CREATE POLICY whatsapp_message_status_all_admin_policy ON whatsapp_message_status
+  FOR ALL TO barberia_owner USING (true) WITH CHECK (true);
+
+-- DDL-AUT-01: ningún GRANT sobre las tablas ni política para barberia_app o
+-- barberia_worker. Todo acceso es por las funciones.
 
 -- ---------------------------------------------------------------------------
 -- 3. Funciones
