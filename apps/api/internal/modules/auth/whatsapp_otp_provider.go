@@ -19,7 +19,7 @@ var rejectedOTPDigest = strings.Repeat("0", 64)
 
 // PreparedWhatsAppOTP contains only the material needed to persist and
 // deliver a challenge. The code is empty for provider-managed challenges
-// such as Twilio Verify and never reaches a repository or a log.
+// (a provider that validates codes itself) and never reaches a repository or a log.
 type PreparedWhatsAppOTP struct {
 	persistenceDigest string
 	code              string

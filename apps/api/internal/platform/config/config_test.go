@@ -210,119 +210,91 @@ func TestLoad_LocalEnvironment_MissingProviderCredentials_StillLoads(t *testing.
 	})
 }
 
-func TestLoad_TwilioRequiresOnlyTwilioConfiguration(t *testing.T) {
-	env := baseLocalEnv()
-	env["OTP_PROVIDER"] = "twilio"
-	env["TWILIO_ACCOUNT_SID"] = "ACtest"
-	env["TWILIO_AUTH_TOKEN"] = "token-de-prueba"
-	env["TWILIO_VERIFY_SERVICE_SID"] = "VAtest"
-	withEnv(t, env, func() {
-		cfg, err := config.Load()
-		if err != nil || cfg.OTPProvider != "twilio" || cfg.TwilioVerifyChannel != "sms" {
-			t.Fatalf("expected Twilio config to load, cfg=%+v err=%v", cfg, err)
-		}
-	})
-}
-
-func TestLoad_TwilioRejectsUnsupportedVerifyChannel(t *testing.T) {
-	env := baseLocalEnv()
-	env["OTP_PROVIDER"] = "twilio"
-	env["TWILIO_ACCOUNT_SID"] = "ACtest"
-	env["TWILIO_AUTH_TOKEN"] = "token-de-prueba"
-	env["TWILIO_VERIFY_SERVICE_SID"] = "VAtest"
-	env["TWILIO_VERIFY_CHANNEL"] = "email"
-	withEnv(t, env, func() {
-		if _, err := config.Load(); err == nil {
-			t.Fatal("expected unsupported Twilio Verify channel to be rejected")
-		}
-	})
-}
-
-func TestLoad_TwilioSandboxAllowsAPIKeyCredentials(t *testing.T) {
-	env := baseLocalEnv()
-	env["OTP_PROVIDER"] = "twilio_sandbox"
-	env["TWILIO_ACCOUNT_SID"] = "ACtest"
-	env["TWILIO_API_KEY_SID"] = "SKtest"
-	env["TWILIO_API_KEY_SECRET"] = "api-key-secret-de-prueba"
-	env["TWILIO_WHATSAPP_SANDBOX_FROM"] = "+14155238886"
-	withEnv(t, env, func() {
-		if _, err := config.Load(); err != nil {
-			t.Fatalf("expected API Key credentials to load: %v", err)
-		}
-	})
-}
-
-func TestLoad_TwilioMissingConfigurationRejected(t *testing.T) {
-	env := baseLocalEnv()
-	env["OTP_PROVIDER"] = "twilio"
-	withEnv(t, env, func() {
-		if _, err := config.Load(); err == nil {
-			t.Fatal("expected missing Twilio configuration to be rejected")
-		}
-	})
-}
-
-func TestLoad_TwilioOTPExpiryCannotExceedVerifyLifetime(t *testing.T) {
-	env := baseLocalEnv()
-	env["OTP_PROVIDER"] = "twilio"
-	env["TWILIO_ACCOUNT_SID"] = "ACtest"
-	env["TWILIO_AUTH_TOKEN"] = "token-de-prueba"
-	env["TWILIO_VERIFY_SERVICE_SID"] = "VAtest"
-	env["APP_RECOVERY_CODE_EXPIRES_SECONDS"] = "601"
-	withEnv(t, env, func() {
-		if _, err := config.Load(); err == nil {
-			t.Fatal("expected Twilio OTP lifetime above Verify limit to be rejected")
-		}
-	})
-}
-
-func TestLoad_TwilioSandboxRequiresDevelopmentConfiguration(t *testing.T) {
-	env := baseLocalEnv()
-	env["OTP_PROVIDER"] = "twilio_sandbox"
-	env["TWILIO_ACCOUNT_SID"] = "ACtest"
-	env["TWILIO_AUTH_TOKEN"] = "token-de-prueba"
-	env["TWILIO_WHATSAPP_SANDBOX_FROM"] = "+14155238886"
-	withEnv(t, env, func() {
-		cfg, err := config.Load()
-		if err != nil || cfg.OTPProvider != "twilio_sandbox" {
-			t.Fatalf("expected Sandbox config to load, cfg=%+v err=%v", cfg, err)
-		}
-	})
-}
-
-func TestLoad_TwilioSandboxRejectsMissingOrNonLocalConfiguration(t *testing.T) {
-	t.Run("missing sender", func(t *testing.T) {
+func TestLoad_RetiredTwilioProviderRejected(t *testing.T) {
+	for _, provider := range []string{"twilio", "twilio_sandbox"} {
 		env := baseLocalEnv()
-		env["OTP_PROVIDER"] = "twilio_sandbox"
-		env["TWILIO_ACCOUNT_SID"] = "ACtest"
-		env["TWILIO_AUTH_TOKEN"] = "token-de-prueba"
+		env["OTP_PROVIDER"] = provider
 		withEnv(t, env, func() {
 			if _, err := config.Load(); err == nil {
-				t.Fatal("expected missing Sandbox sender to be rejected")
+				t.Fatalf("expected OTP_PROVIDER=%s to be rejected", provider)
 			}
 		})
-	})
-	t.Run("production", func(t *testing.T) {
-		env := baseLocalEnv()
-		env["APP_ENVIRONMENT"] = "production"
-		env["OTP_PROVIDER"] = "twilio_sandbox"
-		env["TWILIO_ACCOUNT_SID"] = "ACtest"
-		env["TWILIO_AUTH_TOKEN"] = "token-de-prueba"
-		env["TWILIO_WHATSAPP_SANDBOX_FROM"] = "+14155238886"
-		withEnv(t, env, func() {
-			if _, err := config.Load(); err == nil {
-				t.Fatal("expected Sandbox in production to be rejected")
-			}
-		})
+	}
+}
+
+func TestLoad_MetaDefaultsToTemplateModeAndRecentGraphVersion(t *testing.T) {
+	withEnv(t, baseLocalEnv(), func() {
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if cfg.MetaWhatsAppMode != "template" || cfg.MetaWhatsAppAPIVersion != "v24.0" {
+			t.Fatalf("unexpected defaults: mode=%q version=%q", cfg.MetaWhatsAppMode, cfg.MetaWhatsAppAPIVersion)
+		}
+		if cfg.MetaWhatsAppConfigured() {
+			t.Fatal("expected Meta to be unconfigured without credentials")
+		}
 	})
 }
 
-func TestLoad_MetaDoesNotRequireTwilioConfiguration(t *testing.T) {
+func TestLoad_MetaDevelopmentModeLoadsInLocalWithRecipients(t *testing.T) {
 	env := baseLocalEnv()
-	env["OTP_PROVIDER"] = "meta"
+	env["APP_META_WHATSAPP_MODE"] = "development"
+	env["APP_META_WHATSAPP_PHONE_NUMBER_ID"] = "1234567890"
+	env["APP_META_WHATSAPP_ACCESS_TOKEN"] = "meta-access-token-de-prueba"
+	env["APP_META_WHATSAPP_TEST_RECIPIENTS"] = "+573001234567, +573009876543"
 	withEnv(t, env, func() {
-		if _, err := config.Load(); err != nil {
-			t.Fatalf("meta must not require Twilio configuration: %v", err)
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if !cfg.MetaWhatsAppConfigured() || len(cfg.MetaWhatsAppTestRecipients) != 2 {
+			t.Fatalf("expected development mode to be configured with two recipients, cfg=%+v", cfg)
+		}
+	})
+}
+
+func TestLoad_MetaDevelopmentModeRejectedOutsideLocalOrTest(t *testing.T) {
+	env := map[string]string{
+		"APP_ENVIRONMENT":                   "production",
+		"APP_DATABASE_URL":                  "postgres://barberia_app:secret@db:5432/barberia?sslmode=require",
+		"APP_WORKER_DATABASE_URL":           "postgres://barberia_worker:secret@db:5432/barberia?sslmode=require",
+		"APP_AUTH_HMAC_SECRET":              testHMACSecret,
+		"APP_META_WHATSAPP_MODE":            "development",
+		"APP_META_WHATSAPP_PHONE_NUMBER_ID": "1234567890",
+		"APP_META_WHATSAPP_ACCESS_TOKEN":    "meta-access-token-de-prueba",
+		"APP_META_WHATSAPP_TEST_RECIPIENTS": "+573001234567",
+		"APP_RESEND_API_KEY":                "resend-api-key-de-prueba",
+		"APP_RESEND_FROM_ADDRESS":           "no-responder@barberia.test",
+	}
+	withEnv(t, env, func() {
+		if _, err := config.Load(); err == nil {
+			t.Fatal("expected development mode to be rejected in production")
+		}
+	})
+}
+
+func TestLoad_MetaDevelopmentModeRequiresValidRecipients(t *testing.T) {
+	for _, recipients := range []string{"", "3001234567", "+57300abc"} {
+		env := baseLocalEnv()
+		env["APP_META_WHATSAPP_MODE"] = "development"
+		env["APP_META_WHATSAPP_PHONE_NUMBER_ID"] = "1234567890"
+		env["APP_META_WHATSAPP_ACCESS_TOKEN"] = "meta-access-token-de-prueba"
+		env["APP_META_WHATSAPP_TEST_RECIPIENTS"] = recipients
+		withEnv(t, env, func() {
+			if _, err := config.Load(); err == nil {
+				t.Fatalf("expected recipients %q to be rejected", recipients)
+			}
+		})
+	}
+}
+
+func TestLoad_MetaRejectsUnknownMode(t *testing.T) {
+	env := baseLocalEnv()
+	env["APP_META_WHATSAPP_MODE"] = "texto"
+	withEnv(t, env, func() {
+		if _, err := config.Load(); err == nil {
+			t.Fatal("expected unknown mode to be rejected")
 		}
 	})
 }

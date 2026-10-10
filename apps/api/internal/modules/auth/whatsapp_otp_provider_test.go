@@ -11,7 +11,7 @@ import (
 )
 
 // providerMarker imita la marca opaca de un proveedor que administra el OTP
-// (Twilio Verify): 64 hex sin relación con el código.
+// externo: 64 hex sin relación con el código.
 const providerMarker = "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1"
 
 // fakeManagedOTPProvider reemplaza a un proveedor externo sin tráfico real.

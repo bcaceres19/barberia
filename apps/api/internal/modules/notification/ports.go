@@ -1,6 +1,9 @@
 package notification
 
-import "context"
+import (
+	"context"
+	"errors"
+)
 
 // WhatsAppSender entrega un código corto por WhatsApp a un teléfono en
 // formato E.164. Puerto angosto: ningún llamador conoce el proveedor
@@ -14,3 +17,7 @@ type WhatsAppSender interface {
 type EmailSender interface {
 	Send(ctx context.Context, email, code string) error
 }
+
+// errDeliveryFailed marca cualquier fallo de entrega de un adaptador cuyo
+// resultado no tiene una clasificación más específica.
+var errDeliveryFailed = errors.New("notification: fallo de entrega")

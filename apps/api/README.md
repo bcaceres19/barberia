@@ -684,30 +684,26 @@ resuelve tenant ni llama `PasswordHasher.Verify` en esa rama). Responde
   6 dígitos, vigente 5 min, máximo 5 intentos, atado a la IP concreta que lo
   pidió. Con `OTP_PROVIDER=meta`, se conserva el HMAC-SHA256 del código
   (nunca `SHA-256` simple: 10⁶ combinaciones son triviales de recuperar
-  offline sin un secreto). Con `OTP_PROVIDER=twilio`, Twilio Verify es la
-  autoridad de validación y PostgreSQL solo conserva un marcador opaco para
-  los límites y el flujo de negocio.
+  offline sin un secreto). NAVA genera y valida el código; Meta solo lo
+  transporta (`DEC-123`).
   Éxito: `204`, limpia `escalated_until`/`attempt_count` de esa IP en la
   misma transacción (`auth_phone_challenge_verify`); el barbero reintenta
   el login normalmente, sin token adicional.
 - `cmd/api.selectWhatsAppOTPProvider` es el único selector de proveedor.
-  `meta` usa la misma plantilla Authentication aprobada para HU-007 y
-  recuperación; `twilio` usa Twilio Verify con el canal configurado
-  (`sms` por defecto; `whatsapp` cuando se habilite su sender). Los handlers
-  y servicios de autenticación dependen únicamente de
-  `auth.WhatsAppOTPProvider`.
+  `meta` envía el código de NAVA por Meta WhatsApp Cloud API, en modo
+  `template` (plantilla Authentication) o `development` (texto libre, solo
+  `local`/`test`). Los handlers y servicios de autenticación dependen
+  únicamente de `auth.WhatsAppOTPProvider`.
 - Si `meta` no está configurado en `local` o `test`, el proveedor local solo
   registra el resultado para conservar las E2E sin terceros. Una configuración
   Meta parcial falla al arrancar; fuera de `local`/`test`, `meta` exige sus
-  credenciales y `twilio` exige exclusivamente sus tres variables.
+  credenciales en modo `template`.
 
 | `OTP_PROVIDER` | Configuración | Remitente HU-007 |
 | --- | --- | --- |
-| `meta` | Meta completa | `notification.MetaWhatsAppOTPProvider` |
+| `meta` | Meta completa (`template`, o `development` en `local`/`test`) | `notification.MetaWhatsAppOTPProvider` |
 | `meta` | Meta ausente, `local`/`test` | proveedor local de registro |
 | `meta` | Meta ausente, `pilot`/`production` | arranque rechazado por configuración |
-| `twilio` | credenciales, Verify Service y canal Twilio | `notification.TwilioVerifyOTPProvider` |
-| `twilio_sandbox` | `local`/`test` y credenciales Sandbox | `notification.TwilioSandboxWhatsAppOTPProvider` |
 
 ### Activación local de Meta para el reto
 
@@ -889,7 +885,6 @@ del proveedor WhatsApp queda centralizada. Cada adaptador aplica un timeout de
 | Meta completo | Resend completo | Ambiente | Remitente |
 | --- | --- | --- | --- |
 | sí | sí | cualquiera, `OTP_PROVIDER=meta` | `notification.EmailOnlyRecoverySender` (correo; WhatsApp va por Meta OTP) |
-| — | sí | cualquiera, `OTP_PROVIDER=twilio` | `notification.EmailOnlyRecoverySender` (correo; teléfono va por Verify) |
 | no | sí | `local`/`test` | `notification.EmailOnlyRecoverySender` (solo correo, issue #86) |
 | no | sí | `pilot`/`production` | `auth.LoggingRecoveryCodeSender` (nunca correo único fuera de local/test) |
 | — | no | cualquiera | `auth.LoggingRecoveryCodeSender` |
@@ -897,55 +892,92 @@ del proveedor WhatsApp queda centralizada. Cada adaptador aplica un timeout de
 `auth.LoggingRecoveryCodeSender` es el marcador de posición que solo
 registra que "habría" enviado, sin teléfono/correo/código — mismo patrón que
 el reto telefónico de HU-007. Fuera de local/test, `config.Load` exige Resend
-y, solo con `OTP_PROVIDER=meta`, Meta completos para arrancar; la fila de
+y Meta completo para arrancar; la fila de
 correo único en la tabla es una segunda llave dentro de `selectRecoverySender`
 por si algo construye un `config.Config` sin pasar por `Load`.
 
 | Variable | Por defecto | Uso |
 | --- | --- | --- |
-| `APP_RECOVERY_CODE_EXPIRES_SECONDS` | `900` (`meta`), `600` (`twilio`) | Vigencia del código. Con Twilio no puede superar 600 s, su límite de Verify. |
+| `APP_RECOVERY_CODE_EXPIRES_SECONDS` | `900` | Vigencia del código. |
 | `APP_RECOVERY_CODE_MAX_ATTEMPTS` | `5` | Intentos antes de invalidar. |
 | `APP_RECOVERY_RESEND_COOLDOWN_SECONDS` | `60` | Mínimo entre reenvíos. |
 | `APP_RECOVERY_RESEND_WINDOW_SECONDS` | `3600` | Ventana del límite de reenvío. |
 | `APP_RECOVERY_RESEND_MAX_PER_WINDOW` | `3` | Máximo de códigos por cuenta en esa ventana. |
 | `APP_RECOVERY_RESET_TOKEN_EXPIRES_SECONDS` | `300` | Vigencia del token de reinicio. |
 | `APP_RECOVERY_CODE_PURGE_LIMIT` | `500` | Lote de purga del worker (1–1000). |
-| `APP_META_WHATSAPP_API_VERSION` | `v21.0` | Versión de Meta Graph API. |
+| `APP_META_WHATSAPP_API_VERSION` | `v24.0` | Versión de Meta Graph API. |
 | `APP_META_WHATSAPP_PHONE_NUMBER_ID` | (vacía) | Secreto: número emisor en Meta. |
 | `APP_META_WHATSAPP_ACCESS_TOKEN` | (vacía) | Secreto: autenticación contra Meta Graph API. |
-| `APP_META_WHATSAPP_TEMPLATE_NAME` | (vacía) | Plantilla "Authentication" pre-aprobada. |
+| `APP_META_WHATSAPP_MODE` | `template` | `template` envía la plantilla Authentication; `development` envía texto libre y solo se acepta en `local`/`test`. |
+| `APP_META_WHATSAPP_TEMPLATE_NAME` | (vacía) | Plantilla "Authentication" pre-aprobada. Obligatoria en modo `template`. |
+| `APP_META_WHATSAPP_TEST_RECIPIENTS` | (vacía) | Teléfonos E.164 separados por coma a los que puede escribir el modo `development`. Obligatoria en ese modo. |
 | `APP_META_WHATSAPP_LANGUAGE_CODE` | `es` | Idioma de esa plantilla. |
-| `OTP_PROVIDER` | `meta` | Proveedor OTP telefónico: `meta`, `twilio` o `twilio_sandbox`. Cambiarlo requiere reiniciar el API. |
-| `TWILIO_ACCOUNT_SID` | (vacía) | Obligatoria con `OTP_PROVIDER=twilio` o `twilio_sandbox`; credencial de cuenta Twilio. |
-| `TWILIO_AUTH_TOKEN` | (vacía) | Credencial opcional: junto con Account SID, alternativa a API Key. |
-| `TWILIO_API_KEY_SID` | (vacía) | Credencial opcional para `twilio` o `twilio_sandbox`; se usa junto al secreto de API Key. |
-| `TWILIO_API_KEY_SECRET` | (vacía) | Secreto opcional para `twilio` o `twilio_sandbox`; se usa junto al SID de API Key. |
-| `TWILIO_VERIFY_SERVICE_SID` | (vacía) | Obligatoria solo con `OTP_PROVIDER=twilio`; Verify Service existente. |
-| `TWILIO_VERIFY_CHANNEL` | `sms` | Canal de Twilio Verify: `sms` para el uso temporal actual o `whatsapp` cuando Meta/WABA esté habilitado. |
-| `TWILIO_WHATSAPP_SANDBOX_FROM` | (vacía) | Obligatoria solo con `OTP_PROVIDER=twilio_sandbox`; número Sandbox en E.164, sin prefijo `whatsapp:`. |
+| `OTP_PROVIDER` | `meta` | Único valor aceptado; un despliegue que aún declare `twilio` o `twilio_sandbox` no arranca (`DEC-123`). |
 | `APP_RESEND_API_KEY` | (vacía) | Secreto: autenticación contra Resend. |
 | `APP_RESEND_FROM_ADDRESS` | (vacía) | Remitente verificado del correo. |
 | `APP_RESEND_SUBJECT` | `Código de recuperación de acceso` | Asunto fijo del correo. |
 
-### WhatsApp Sandbox de Twilio: solo desarrollo
+### Meta WhatsApp Cloud API: modos de envío (`DEC-123`)
 
-`OTP_PROVIDER=twilio_sandbox` usa Twilio Programmable Messaging, no Twilio
-Verify. Está rechazado fuera de `APP_ENVIRONMENT=local`/`test`; la aplicación
-genera y verifica el OTP localmente, igual que Meta, mientras Twilio solo
-entrega el mensaje. No sirve para producción ni para usuarios que no se hayan
-unido al Sandbox.
+`MetaWhatsAppSender` envía a `POST https://graph.facebook.com/{versión}/{phone_number_id}/messages`
+con `Authorization: Bearer`. El código siempre es el que genera NAVA; Meta no
+lo crea. Una sola solicitud por envío: ni un fallo de red, ni un timeout, ni un
+5xx se reintentan, porque Meta pudo haber aceptado el mensaje y repetirlo
+duplicaría el código. El único límite de reenvío es el de HU-007/HU-008.
 
-El Sandbox permite texto libre únicamente mientras esté abierta la ventana de
-servicio de 24 horas iniciada por `join`; fuera de ella requiere una plantilla
-preaprobada. No se crea ni se usa una plantilla propia en el Sandbox.
+| Modo | Dónde | Mensaje |
+| --- | --- | --- |
+| `template` (por defecto) | cualquier ambiente | Plantilla `AUTHENTICATION` con el código en el cuerpo y en el botón `COPY_CODE` |
+| `development` | solo `local`/`test` | Texto libre con el código, solo a `APP_META_WHATSAPP_TEST_RECIPIENTS` |
 
-Twilio solo permite activar y configurar Sandbox desde la consola web: en
-**Messaging → Try out WhatsApp** (cuentas Trial) o la página **Try WhatsApp**
-de Legacy Console, aceptar términos y escanear el QR o enviar el mensaje
-`join <código>` mostrado. Configure el valor E.164 que muestra Twilio como
-`TWILIO_WHATSAPP_SANDBOX_FROM`. Ese `join` abre una ventana de 24 horas para
-mensajes de texto libre y la sesión expira a los tres días; cada número de
-prueba debe unirse de nuevo. Nunca use este proveedor en pilot/production.
+`development` no sustituye a la plantilla: `config.Load` rechaza ese modo fuera
+de `local`/`test` y nunca hay un respaldo silencioso de plantilla a texto.
+
+**Ventana de 24 horas.** Meta solo acepta texto libre si el destinatario
+escribió al número emisor en las últimas 24 horas. NAVA no recibe mensajes
+entrantes (no hay webhook), así que no conoce el estado de la ventana: deja que
+Meta valide y traduce el rechazo `131047` a `notification.ErrConversationWindowClosed`.
+Para probar, escriba primero un mensaje cualquiera al número emisor desde el
+teléfono de prueba.
+
+**Errores.** `notification.MetaAPIError` conserva estado HTTP, `code`,
+`error_subcode` y `fbtrace_id`; nunca el mensaje de Meta, que puede traer el
+número. Se clasifican con `errors.Is`:
+
+| Error de dominio | Origen |
+| --- | --- |
+| `ErrConversationWindowClosed` | `131047` |
+| `ErrRecipientNotAllowed` | `131030` (el número no está en la lista de la cuenta) |
+| `ErrRecipientUnreachable` | `131026` |
+| `ErrMetaCredentials` | HTTP 401/403, `190`, `10`, `200–299` (token o permisos) |
+| `ErrMetaRateLimited` | HTTP 429, `4`, `17`, `80007`, `130429`, `131048`, `131056` |
+| `ErrTemplateUnavailable` | `132000`, `132001`, `132012`, `132015`, `132016` |
+| `ErrInvalidRecipient` / `ErrRecipientNotAuthorized` | validados antes de llamar a Meta |
+
+HTTP 200 significa que Meta **aceptó** el mensaje (se registra su `wamid`), no
+que se entregó. Los estados `sent/delivered/read/failed` llegan por webhook,
+que NAVA aún no consume.
+
+**Plantilla Authentication, pendiente.** Meta rechazó crear
+`codigo_verificacion` (`code 10`, `subcode 2388185`: la cuenta no puede crear
+plantillas). Hasta que lo permita, el modo `template` falla con
+`ErrTemplateUnavailable` y la prueba real se hace en `development`. Al
+habilitarse: crear la plantilla `AUTHENTICATION` con botón `COPY_CODE` y
+vigencia de 5 minutos, esperar `APPROVED`, fijar `APP_META_WHATSAPP_TEMPLATE_NAME`
+y `APP_META_WHATSAPP_LANGUAGE_CODE`, y quitar `APP_META_WHATSAPP_MODE=development`.
+
+**Prueba manual desde Bash** (con un destinatario ya autorizado; no se
+ejecuta en CI):
+
+```bash
+curl -sS -X POST "https://graph.facebook.com/v24.0/$APP_META_WHATSAPP_PHONE_NUMBER_ID/messages" \
+  -H "Authorization: Bearer $APP_META_WHATSAPP_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"messaging_product":"whatsapp","recipient_type":"individual","to":"573001234567","type":"text","text":{"preview_url":false,"body":"NAVA — prueba"}}'
+```
+
+`APP_META_WABA` y `APP_META_ID` (WABA y app de Meta) no los usa el envío; se
+reservan para administrar plantillas y el webhook.
 
 ### Prueba local completa: capturar el código sin un proveedor real
 
