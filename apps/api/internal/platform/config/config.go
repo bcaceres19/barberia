@@ -209,6 +209,15 @@ type Config struct {
 	// opcional en los demás ambientes.
 	MetaWhatsAppTestRecipients []string
 
+	// MetaWebhookVerifyToken es el token que Meta devuelve en la verificación
+	// del webhook (GET). Secreto propio, distinto del access token. Junto con
+	// MetaAppSecret activa la ruta del webhook; sin ambos la ruta no existe.
+	MetaWebhookVerifyToken string
+	// MetaAppSecret es el secreto de la aplicación de Meta con el que se
+	// verifica la firma X-Hub-Signature-256 de cada notificación. Secreto:
+	// nunca se registra.
+	MetaAppSecret string
+
 	// OTPProvider selecciona el proveedor de OTP WhatsApp. El único valor
 	// aceptado es "meta"; existe para rechazar de forma explícita un
 	// despliegue que declare otro proveedor (DEC-123).
@@ -433,6 +442,8 @@ func Load() (Config, error) {
 		MetaWhatsAppMode:           getEnv("APP_META_WHATSAPP_MODE", "template"),
 		MetaWhatsAppTemplateName:   getEnv("APP_META_WHATSAPP_TEMPLATE_NAME", ""),
 		MetaWhatsAppTestRecipients: getEnvCSV("APP_META_WHATSAPP_TEST_RECIPIENTS"),
+		MetaWebhookVerifyToken:     getEnv("APP_META_WEBHOOK_VERIFY_TOKEN", ""),
+		MetaAppSecret:              getEnv("APP_META_APP_SECRET", ""),
 		MetaWhatsAppLanguageCode:   getEnv("APP_META_WHATSAPP_LANGUAGE_CODE", "es"),
 
 		OTPProvider: otpProvider,
@@ -508,6 +519,9 @@ func Load() (Config, error) {
 	if err := validateMetaWhatsApp(cfg); err != nil {
 		return Config{}, err
 	}
+	if err := validateMetaWebhook(cfg); err != nil {
+		return Config{}, err
+	}
 
 	requiresHardening := !entornosSinTLSObligatorio[cfg.Environment]
 
@@ -581,6 +595,35 @@ func (c Config) MetaWhatsAppConfigured() bool {
 	default:
 		return c.MetaWhatsAppTemplateName != ""
 	}
+}
+
+// MetaWebhookEnabled indica si se atiende el webhook de Meta (DEC-126).
+func (c Config) MetaWebhookEnabled() bool {
+	return c.MetaWebhookVerifyToken != "" && c.MetaAppSecret != ""
+}
+
+const minMetaWebhookSecretLength = 16
+
+// validateMetaWebhook exige que el webhook se configure completo o no se
+// configure: un token sin secreto aceptaría la verificación pero no podría
+// autenticar ninguna notificación (DEC-126).
+func validateMetaWebhook(cfg Config) error {
+	if cfg.MetaWebhookVerifyToken == "" && cfg.MetaAppSecret == "" {
+		return nil
+	}
+	if !cfg.MetaWebhookEnabled() {
+		return fmt.Errorf("config: APP_META_WEBHOOK_VERIFY_TOKEN y APP_META_APP_SECRET deben configurarse juntas o permanecer ausentes")
+	}
+	if len(cfg.MetaWebhookVerifyToken) < minMetaWebhookSecretLength || len(cfg.MetaAppSecret) < minMetaWebhookSecretLength {
+		return fmt.Errorf("config: APP_META_WEBHOOK_VERIFY_TOKEN y APP_META_APP_SECRET deben tener al menos %d caracteres", minMetaWebhookSecretLength)
+	}
+	if cfg.MetaWhatsAppPhoneNumberID == "" {
+		return fmt.Errorf("config: el webhook de Meta requiere APP_META_WHATSAPP_PHONE_NUMBER_ID para descartar eventos de otros números")
+	}
+	if cfg.MetaWebhookVerifyToken == cfg.MetaAppSecret || cfg.MetaWebhookVerifyToken == cfg.MetaWhatsAppAccessToken {
+		return fmt.Errorf("config: APP_META_WEBHOOK_VERIFY_TOKEN debe ser distinto de APP_META_APP_SECRET y del access token")
+	}
+	return nil
 }
 
 var metaTestRecipientPattern = regexp.MustCompile(`^\+[1-9][0-9]{7,14}$`)

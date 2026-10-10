@@ -31,6 +31,8 @@ import (
 	googlecalendarhttpapi "system-barbershop/internal/modules/googlecalendar/httpapi"
 	googlecalendarpostgres "system-barbershop/internal/modules/googlecalendar/postgres"
 	"system-barbershop/internal/modules/notification"
+	notificationhttpapi "system-barbershop/internal/modules/notification/httpapi"
+	notificationpostgres "system-barbershop/internal/modules/notification/postgres"
 	"system-barbershop/internal/modules/publicbooking"
 	publicbookinghttpapi "system-barbershop/internal/modules/publicbooking/httpapi"
 	publicbookingpostgres "system-barbershop/internal/modules/publicbooking/postgres"
@@ -633,6 +635,20 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	router.Post("/api/v1/public/auth/recovery/request", recoveryRequestHandler.ServeHTTP)
 	router.Post("/api/v1/public/auth/recovery/verify", recoveryVerifyHandler.ServeHTTP)
 	router.Post("/api/v1/public/auth/recovery/reset-password", recoveryResetPasswordHandler.ServeHTTP)
+
+	// DEC-126: webhook de Meta WhatsApp. Sin APP_META_WEBHOOK_VERIFY_TOKEN y
+	// APP_META_APP_SECRET la ruta no existe (404 uniforme).
+	if cfg.MetaWebhookEnabled() {
+		metaWebhookHandler := notificationhttpapi.NewMetaWebhookHandler(
+			notification.NewMetaWebhookService(
+				notificationpostgres.NewWhatsAppEventRepository(db),
+				cfg.MetaWhatsAppPhoneNumberID, hmacSecret, logger,
+			),
+			cfg.MetaWebhookVerifyToken, cfg.MetaAppSecret, logger,
+		)
+		router.Get("/api/v1/public/webhooks/meta/whatsapp", metaWebhookHandler.Verify)
+		router.Post("/api/v1/public/webhooks/meta/whatsapp", metaWebhookHandler.Receive)
+	}
 
 	return router, nil
 }

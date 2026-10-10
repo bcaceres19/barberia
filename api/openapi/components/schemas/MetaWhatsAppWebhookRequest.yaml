@@ -1,0 +1,80 @@
+# Cuerpo de las notificaciones de Meta WhatsApp Cloud API (DEC-126). Es el
+# esquema de Meta, no de NAVA: se documentan solo los campos que NAVA lee y se
+# toleran los demás (`additionalProperties: true`), porque Meta agrega campos
+# sin avisar y rechazarlos haría fallar entregas legítimas. NAVA no lee el
+# contenido de los mensajes entrantes.
+type: object
+required: [object]
+additionalProperties: true
+properties:
+  object:
+    type: string
+    description: Solo `whatsapp_business_account` se procesa; cualquier otro valor se acepta y se ignora.
+    example: whatsapp_business_account
+  entry:
+    type: array
+    items:
+      type: object
+      additionalProperties: true
+      properties:
+        id:
+          type: string
+          description: Identificador de la cuenta de WhatsApp Business.
+        changes:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+            properties:
+              field:
+                type: string
+                description: Solo `messages` se procesa.
+              value:
+                type: object
+                additionalProperties: true
+                properties:
+                  metadata:
+                    type: object
+                    additionalProperties: true
+                    properties:
+                      phone_number_id:
+                        type: string
+                        description: Número que recibió el evento; los de otro número se ignoran.
+                  messages:
+                    type: array
+                    description: Mensajes entrantes. Solo se usan `from` y `timestamp`.
+                    items:
+                      type: object
+                      additionalProperties: true
+                      properties:
+                        id: {type: string}
+                        from:
+                          type: string
+                          description: Teléfono de quien escribe, E.164 sin `+`. Se guarda solo como HMAC.
+                        timestamp:
+                          type: string
+                          description: Segundos Unix.
+                  statuses:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                      properties:
+                        id:
+                          type: string
+                          description: "`wamid` del mensaje enviado."
+                        status:
+                          type: string
+                          description: Se registran `sent`, `delivered`, `read` y `failed`; otros valores se ignoran.
+                        timestamp:
+                          type: string
+                          description: Segundos Unix.
+                        errors:
+                          type: array
+                          items:
+                            type: object
+                            additionalProperties: true
+                            properties:
+                              code:
+                                type: integer
+                                description: Código de error de Meta (por ejemplo `131047`, ventana cerrada).
