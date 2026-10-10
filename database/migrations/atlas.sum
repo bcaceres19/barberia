@@ -1,4 +1,4 @@
-h1:ZQUX12qSBP14M+1nvPq1iScSozecYX44o+ww0Xod1mI=
+h1:p04CRf/sRbHVnYW0Q8ARga9XEuZZVP7ZCp390H/7rMs=
 20260807170000_create_tenant_foundation.sql h1:9KyewD/Xqtm6MjQ7MkTora3f47kjPOobGVfE2q66AUI=
 20260807170100_create_idempotency_record.sql h1:he0jfwTn3otdzgu/qHhFo7Z4ra9+1AL/mT2db82DOrU=
 20260811145252_harden_roles_and_definer_functions.sql h1:KhiZKVpFfL81T+f/73nMkVD0ndVWsCdM4ShqMHZfZ/g=
@@ -28,3 +28,4 @@ h1:ZQUX12qSBP14M+1nvPq1iScSozecYX44o+ww0Xod1mI=
 20261009120000_add_barber_staff_user_link.sql h1:IE+UGy7lKP4ljrZKWiBXsC/w7gNzZxhwF3kLxM72zpY=
 20261009130000_create_google_calendar_connection.sql h1:w+2fml+AOwtYN7V9HqlbzlCjzZu5UEvG8iyf0aJUzpE=
 20261010100000_create_google_calendar_sync.sql h1:zqw5T0COYNNTxenvX3z7h7aXf3Ss673yPsKb+zqTZy0=
+20261010120000_drop_auth_phone_challenge_destination.sql h1:nlBRYkuXJ4chtUmSTblddrjZBsPMpmSTr5UhvVLZyEQ=

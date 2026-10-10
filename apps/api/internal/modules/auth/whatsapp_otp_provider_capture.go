@@ -27,9 +27,6 @@ func (p CapturingWhatsAppOTPProvider) Deliver(ctx context.Context, phone string,
 	if err := p.inner.Deliver(ctx, phone, prepared); err != nil {
 		return err
 	}
-	if prepared.Code() == "" {
-		return fmt.Errorf("auth: un proveedor OTP gestionado no admite captura de código")
-	}
 	data, err := json.Marshal(struct {
 		Phone string `json:"phone"`
 		Code  string `json:"code"`
@@ -43,6 +40,6 @@ func (p CapturingWhatsAppOTPProvider) Deliver(ctx context.Context, phone string,
 	return nil
 }
 
-func (p CapturingWhatsAppOTPProvider) VerificationDigest(ctx context.Context, phone, code string) (string, error) {
-	return p.inner.VerificationDigest(ctx, phone, code)
+func (p CapturingWhatsAppOTPProvider) VerificationDigest(code string) string {
+	return p.inner.VerificationDigest(code)
 }

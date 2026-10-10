@@ -7,9 +7,9 @@ import (
 	"system-barbershop/internal/modules/auth"
 )
 
-// MetaWhatsAppOTPProvider preserves Meta's application-managed OTP model:
-// it generates a local code, sends it through the existing sender and later
-// yields its HMAC digest for the auth repository to validate.
+// MetaWhatsAppOTPProvider generates the OTP locally, transports it through
+// the Meta sender and yields its HMAC digest for the auth repository to
+// validate: Meta never sees the verification.
 type MetaWhatsAppOTPProvider struct {
 	sender authPhoneSender
 	codes  auth.PhoneCodeGenerator
@@ -38,6 +38,6 @@ func (p MetaWhatsAppOTPProvider) Deliver(ctx context.Context, phone string, prep
 	return p.sender.Send(ctx, phone, prepared.Code())
 }
 
-func (p MetaWhatsAppOTPProvider) VerificationDigest(_ context.Context, _ string, code string) (string, error) {
-	return auth.HMACHex(code, p.secret), nil
+func (p MetaWhatsAppOTPProvider) VerificationDigest(code string) string {
+	return auth.HMACHex(code, p.secret)
 }

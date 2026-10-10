@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"crypto/rand"
-	"errors"
 	"fmt"
 	"math/big"
 
@@ -80,11 +79,6 @@ type PhoneChallengeRepository interface {
 	// atado a ipHash. ok=true ya limpió el escalamiento de esa IP en
 	// login_throttle, en la misma transacción.
 	VerifyChallenge(ctx context.Context, email, ipHash, codeHash string) (ok bool, err error)
-
-	// ChallengePhone returns the verified destination only for an active
-	// challenge bound to the same email and IP. It is an internal lookup used
-	// before an external provider validates the user-entered code.
-	ChallengePhone(ctx context.Context, email, ipHash string) (phone string, found bool, err error)
 }
 
 // PhoneChallengeService implementa el reto telefónico de HU-007 (DEC-062).
@@ -165,25 +159,7 @@ func (s *PhoneChallengeService) Verify(ctx context.Context, rawEmail, ipHash, co
 	}
 
 	email := NormalizeEmail(rawEmail)
-	phone, found, err := s.repo.ChallengePhone(ctx, email, ipHash)
-	if err != nil {
-		return apperr.Internal(fmt.Errorf("auth: resolver teléfono del reto: %w", err))
-	}
-	if !found {
-		return errInvalidChallenge()
-	}
-	codeHash, err := s.provider.VerificationDigest(ctx, phone, code)
-	if err != nil {
-		if errors.Is(err, ErrWhatsAppOTPRejected) {
-			// Registrar el intento fallido localmente conserva max_attempts
-			// aunque el proveedor sea la autoridad del código.
-			if _, repoErr := s.repo.VerifyChallenge(ctx, email, ipHash, rejectedOTPDigest); repoErr != nil {
-				return apperr.Internal(fmt.Errorf("auth: registrar intento fallido del reto: %w", repoErr))
-			}
-			return errInvalidChallenge()
-		}
-		return apperr.Internal(fmt.Errorf("auth: validar OTP del reto telefónico: %w", err))
-	}
+	codeHash := s.provider.VerificationDigest(code)
 
 	ok, err := s.repo.VerifyChallenge(ctx, email, ipHash, codeHash)
 	if err != nil {

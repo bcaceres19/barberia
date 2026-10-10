@@ -28,10 +28,6 @@ func (s stubPhoneChallengeRepository) VerifyChallenge(context.Context, string, s
 	return s.verifyOK, nil
 }
 
-func (s stubPhoneChallengeRepository) ChallengePhone(context.Context, string, string) (string, bool, error) {
-	return s.requestPhone, s.requestPhone != "", nil
-}
-
 type stubCodeGenerator struct{}
 
 func (stubCodeGenerator) New() (string, error) { return "123456", nil }

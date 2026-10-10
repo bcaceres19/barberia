@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -261,22 +260,10 @@ func (s *RecoveryService) Verify(ctx context.Context, target RecoveryTarget, cod
 	}
 	var codeHash string
 	if target.Channel == RecoveryChannelWhatsApp {
-		phone, valid := NormalizePhone(target.Value)
-		if !valid {
+		if _, valid := NormalizePhone(target.Value); !valid {
 			return "", "", "", errInvalidRecoveryCode()
 		}
-		codeHash, err = s.whatsappProvider.VerificationDigest(ctx, phone, code)
-		if err != nil {
-			if errors.Is(err, ErrWhatsAppOTPRejected) {
-				// Igual que el reto telefónico: el intento fallido se cuenta
-				// localmente para que max_attempts invalide el código.
-				if _, _, _, repoErr := s.repo.VerifyRecovery(ctx, email, rejectedOTPDigest, tokenHash, s.cfg.ResetTokenExpiresSeconds); repoErr != nil {
-					return "", "", "", apperr.Internal(fmt.Errorf("auth: registrar intento fallido de recuperación: %w", repoErr))
-				}
-				return "", "", "", errInvalidRecoveryCode()
-			}
-			return "", "", "", apperr.Internal(fmt.Errorf("auth: validar OTP de recuperación: %w", err))
-		}
+		codeHash = s.whatsappProvider.VerificationDigest(code)
 	} else {
 		codeHash = HMACHex(code, s.secret)
 	}

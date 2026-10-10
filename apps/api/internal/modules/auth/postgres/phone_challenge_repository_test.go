@@ -284,78 +284,8 @@ func escalateAndRequest(t *testing.T, throttleRepo *authpostgres.ThrottleReposit
 	return codeHash
 }
 
-// ChallengePhone alimenta la validación por proveedor externo: solo entrega
-// el teléfono del reto activo del mismo correo e IP, y cada barbería recibe
-// únicamente el suyo.
-func TestPhoneChallengeRepository_ChallengePhone_ActiveChallengeReturnsOnlyItsOwnPhonePerTenant(t *testing.T) {
-	db := setupTestDB(t)
-	defer db.Close()
-	throttleRepo := authpostgres.NewThrottleRepository(db)
-	challengeRepo := authpostgres.NewPhoneChallengeRepository(db)
-
-	ipA := testThrottleIPHash(t, "challenge-phone-tenant-a")
-	ipB := testThrottleIPHash(t, "challenge-phone-tenant-b")
-	escalateAndRequest(t, throttleRepo, challengeRepo, verifiedEmailA, ipA, "phone-a")
-	escalateAndRequest(t, throttleRepo, challengeRepo, "dueno.b@ejemplo.test", ipB, "phone-b")
-
-	phoneA, foundA, err := challengeRepo.ChallengePhone(context.Background(), verifiedEmailA, ipA)
-	if err != nil || !foundA {
-		t.Fatalf("tenant A: found=%v err=%v", foundA, err)
-	}
-	phoneB, foundB, err := challengeRepo.ChallengePhone(context.Background(), "dueno.b@ejemplo.test", ipB)
-	if err != nil || !foundB {
-		t.Fatalf("tenant B: found=%v err=%v", foundB, err)
-	}
-	if phoneA != "+573000000001" || phoneB != "+573000000003" || phoneA == phoneB {
-		t.Fatalf("each tenant must receive only its own destination, got %q and %q", phoneA, phoneB)
-	}
-
-	// Un reto de una barbería no se resuelve con el correo o la IP de la otra.
-	if _, found, err := challengeRepo.ChallengePhone(context.Background(), verifiedEmailA, ipB); err != nil || found {
-		t.Fatalf("tenant A email with tenant B IP must not resolve: found=%v err=%v", found, err)
-	}
-	if _, found, err := challengeRepo.ChallengePhone(context.Background(), "dueno.b@ejemplo.test", ipA); err != nil || found {
-		t.Fatalf("tenant B email with tenant A IP must not resolve: found=%v err=%v", found, err)
-	}
-}
-
-func TestPhoneChallengeRepository_ChallengePhone_NoActiveChallengeUnverifiedOrUnknown_NotFound(t *testing.T) {
-	db := setupTestDB(t)
-	defer db.Close()
-	challengeRepo := authpostgres.NewPhoneChallengeRepository(db)
-	ip := testThrottleIPHash(t, "challenge-phone-none")
-
-	for name, email := range map[string]string{
-		"verified phone without a challenge": verifiedEmailA,
-		"unverified phone":                   unverifiedEmailA,
-		"unknown account":                    "no-existe@ejemplo.test",
-	} {
-		if _, found, err := challengeRepo.ChallengePhone(context.Background(), email, ip); err != nil || found {
-			t.Fatalf("%s: expected not found, got found=%v err=%v", name, found, err)
-		}
-	}
-}
-
-func TestPhoneChallengeRepository_ChallengePhone_ConsumedChallenge_NotFound(t *testing.T) {
-	db := setupTestDB(t)
-	defer db.Close()
-	throttleRepo := authpostgres.NewThrottleRepository(db)
-	challengeRepo := authpostgres.NewPhoneChallengeRepository(db)
-
-	ip := testThrottleIPHash(t, "challenge-phone-consumed")
-	codeHash := escalateAndRequest(t, throttleRepo, challengeRepo, verifiedEmailA, ip, "phone-consumed")
-	if ok, err := challengeRepo.VerifyChallenge(context.Background(), verifiedEmailA, ip, codeHash); err != nil || !ok {
-		t.Fatalf("VerifyChallenge: ok=%v err=%v", ok, err)
-	}
-
-	if _, found, err := challengeRepo.ChallengePhone(context.Background(), verifiedEmailA, ip); err != nil || found {
-		t.Fatalf("a consumed challenge must not resolve again: found=%v err=%v", found, err)
-	}
-}
-
-// Un digest que nunca coincide (rechazo del proveedor) avanza el contador
-// local hasta invalidar el reto, igual que un código incorrecto local.
-func TestPhoneChallengeRepository_VerifyChallenge_NeverMatchingDigest_ExhaustsAttempts(t *testing.T) {
+// Un digest que nunca coincide avanza el contador hasta invalidar el reto.
+func TestPhoneChallengeRepository_VerifyChallenge_WrongDigest_ExhaustsAttempts(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
 	throttleRepo := authpostgres.NewThrottleRepository(db)
@@ -372,8 +302,5 @@ func TestPhoneChallengeRepository_VerifyChallenge_NeverMatchingDigest_ExhaustsAt
 	}
 	if ok, err := challengeRepo.VerifyChallenge(context.Background(), verifiedEmailA, ip, codeHash); err != nil || ok {
 		t.Fatalf("the correct digest must fail once attempts are exhausted: ok=%v err=%v", ok, err)
-	}
-	if _, found, err := challengeRepo.ChallengePhone(context.Background(), verifiedEmailA, ip); err != nil || found {
-		t.Fatalf("an exhausted challenge must not resolve: found=%v err=%v", found, err)
 	}
 }
