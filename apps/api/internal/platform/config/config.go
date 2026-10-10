@@ -193,32 +193,25 @@ type Config struct {
 	// MetaWhatsAppAccessToken autentica contra Meta Graph API. Secreto:
 	// nunca se registra ni se comitea.
 	MetaWhatsAppAccessToken string
+	// MetaWhatsAppMode es "template" (plantilla AUTHENTICATION, valor por
+	// defecto) o "development" (texto libre). "development" solo se acepta
+	// en local/test (DEC-123).
+	MetaWhatsAppMode string
 	// MetaWhatsAppTemplateName es el nombre de la plantilla de categoría
 	// "Authentication" aprobada por Meta para el código de recuperación
-	// (DEC-066).
+	// (DEC-066). Obligatoria en modo "template".
 	MetaWhatsAppTemplateName string
 	// MetaWhatsAppLanguageCode es el código de idioma de esa plantilla
 	// (p. ej. "es" o "es_CO").
 	MetaWhatsAppLanguageCode string
+	// MetaWhatsAppTestRecipients lista los teléfonos E.164 a los que el modo
+	// "development" puede escribir. Obligatoria en ese modo.
+	MetaWhatsAppTestRecipients []string
 
-	// OTPProvider selecciona el proveedor de OTP WhatsApp sin cambiar los
-	// casos de uso: "meta", "twilio" o "twilio_sandbox". El último está
-	// limitado a local/test y existe únicamente para desarrollo.
+	// OTPProvider selecciona el proveedor de OTP WhatsApp. El único valor
+	// aceptado es "meta"; existe para rechazar de forma explícita un
+	// despliegue que aún declare el proveedor retirado (DEC-123).
 	OTPProvider string
-	// TwilioVerify* son obligatorias exclusivamente cuando OTP_PROVIDER es
-	// "twilio"; nunca se registran ni se requieren para Meta.
-	TwilioAccountSID       string
-	TwilioAuthToken        string
-	TwilioAPIKeySID        string
-	TwilioAPIKeySecret     string
-	TwilioVerifyServiceSID string
-	// TwilioVerifyChannel selecciona el canal del mismo Verify Service.
-	// "sms" evita requisitos de WhatsApp/Meta; "whatsapp" permite volver
-	// al canal original cuando exista un sender propio habilitado.
-	TwilioVerifyChannel string
-	// TwilioWhatsAppSandboxFrom es el número emisor que muestra el entorno
-	// Sandbox de Twilio. Solo se exige con OTP_PROVIDER=twilio_sandbox.
-	TwilioWhatsAppSandboxFrom string
 
 	// ResendAPIKey autentica contra la API de Resend (DEC-066). Secreto:
 	// nunca se registra ni se comitea.
@@ -366,13 +359,7 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 
-	// Twilio Verify expires a verification after ten minutes. Keep the
-	// application record within that boundary so its persisted state never
-	// claims a provider-managed OTP can remain usable after Verify rejects it.
 	recoveryCodeDefault := 900
-	if otpProvider == "twilio" {
-		recoveryCodeDefault = 600
-	}
 	recoveryCodeExpires, err := getEnvInt("APP_RECOVERY_CODE_EXPIRES_SECONDS", recoveryCodeDefault)
 	if err != nil {
 		return Config{}, err
@@ -439,20 +426,15 @@ func Load() (Config, error) {
 		RecoveryResetTokenExpiresSeconds: recoveryResetTokenExpires,
 		RecoveryCodePurgeLimit:           recoveryCodePurgeLimit,
 
-		MetaWhatsAppAPIVersion:    getEnv("APP_META_WHATSAPP_API_VERSION", "v21.0"),
-		MetaWhatsAppPhoneNumberID: getEnv("APP_META_WHATSAPP_PHONE_NUMBER_ID", ""),
-		MetaWhatsAppAccessToken:   getEnv("APP_META_WHATSAPP_ACCESS_TOKEN", ""),
-		MetaWhatsAppTemplateName:  getEnv("APP_META_WHATSAPP_TEMPLATE_NAME", ""),
-		MetaWhatsAppLanguageCode:  getEnv("APP_META_WHATSAPP_LANGUAGE_CODE", "es"),
+		MetaWhatsAppAPIVersion:     getEnv("APP_META_WHATSAPP_API_VERSION", "v24.0"),
+		MetaWhatsAppPhoneNumberID:  getEnv("APP_META_WHATSAPP_PHONE_NUMBER_ID", ""),
+		MetaWhatsAppAccessToken:    getEnv("APP_META_WHATSAPP_ACCESS_TOKEN", ""),
+		MetaWhatsAppMode:           getEnv("APP_META_WHATSAPP_MODE", "template"),
+		MetaWhatsAppTemplateName:   getEnv("APP_META_WHATSAPP_TEMPLATE_NAME", ""),
+		MetaWhatsAppTestRecipients: getEnvCSV("APP_META_WHATSAPP_TEST_RECIPIENTS"),
+		MetaWhatsAppLanguageCode:   getEnv("APP_META_WHATSAPP_LANGUAGE_CODE", "es"),
 
-		OTPProvider:               otpProvider,
-		TwilioAccountSID:          getEnv("TWILIO_ACCOUNT_SID", ""),
-		TwilioAuthToken:           getEnv("TWILIO_AUTH_TOKEN", ""),
-		TwilioAPIKeySID:           getEnv("TWILIO_API_KEY_SID", ""),
-		TwilioAPIKeySecret:        getEnv("TWILIO_API_KEY_SECRET", ""),
-		TwilioVerifyServiceSID:    getEnv("TWILIO_VERIFY_SERVICE_SID", ""),
-		TwilioVerifyChannel:       getEnv("TWILIO_VERIFY_CHANNEL", "sms"),
-		TwilioWhatsAppSandboxFrom: getEnv("TWILIO_WHATSAPP_SANDBOX_FROM", ""),
+		OTPProvider: otpProvider,
 
 		ResendAPIKey:      getEnv("APP_RESEND_API_KEY", ""),
 		ResendFromAddress: getEnv("APP_RESEND_FROM_ADDRESS", ""),
@@ -519,47 +501,11 @@ func Load() (Config, error) {
 		}
 	}
 
-	metaConfiguredValues := 0
-	for _, value := range []string{
-		cfg.MetaWhatsAppPhoneNumberID,
-		cfg.MetaWhatsAppAccessToken,
-		cfg.MetaWhatsAppTemplateName,
-	} {
-		if value != "" {
-			metaConfiguredValues++
-		}
+	if cfg.OTPProvider != "meta" {
+		return Config{}, fmt.Errorf("config: OTP_PROVIDER solo admite meta (Twilio fue retirado, DEC-123)")
 	}
-	if cfg.OTPProvider != "meta" && cfg.OTPProvider != "twilio" && cfg.OTPProvider != "twilio_sandbox" {
-		return Config{}, fmt.Errorf("config: OTP_PROVIDER debe ser meta, twilio o twilio_sandbox")
-	}
-	twilioCredentialsComplete := cfg.TwilioAuthToken != "" || (cfg.TwilioAPIKeySID != "" && cfg.TwilioAPIKeySecret != "")
-	if cfg.OTPProvider == "twilio" && (cfg.TwilioAccountSID == "" || !twilioCredentialsComplete || cfg.TwilioVerifyServiceSID == "") {
-		return Config{}, fmt.Errorf("config: TWILIO_ACCOUNT_SID, TWILIO_VERIFY_SERVICE_SID y TWILIO_AUTH_TOKEN o TWILIO_API_KEY_SID/TWILIO_API_KEY_SECRET son obligatorias cuando OTP_PROVIDER=twilio")
-	}
-	if cfg.OTPProvider == "twilio" && cfg.TwilioVerifyChannel != "sms" && cfg.TwilioVerifyChannel != "whatsapp" {
-		return Config{}, fmt.Errorf("config: TWILIO_VERIFY_CHANNEL debe ser sms o whatsapp cuando OTP_PROVIDER=twilio")
-	}
-	if cfg.OTPProvider == "twilio" && (cfg.PhoneChallengeExpiresSeconds > 600 || cfg.RecoveryCodeExpiresSeconds > 600) {
-		return Config{}, fmt.Errorf(
-			"config: APP_PHONE_CHALLENGE_EXPIRES_SECONDS y APP_RECOVERY_CODE_EXPIRES_SECONDS no pueden superar 600 cuando OTP_PROVIDER=twilio (límite de Twilio Verify)",
-		)
-	}
-	if cfg.OTPProvider == "twilio_sandbox" {
-		if cfg.Environment != "local" && cfg.Environment != "test" {
-			return Config{}, fmt.Errorf("config: OTP_PROVIDER=twilio_sandbox solo puede usarse en local/test")
-		}
-		if cfg.TwilioAccountSID == "" || !twilioCredentialsComplete || cfg.TwilioWhatsAppSandboxFrom == "" {
-			return Config{}, fmt.Errorf("config: TWILIO_ACCOUNT_SID, TWILIO_WHATSAPP_SANDBOX_FROM y TWILIO_AUTH_TOKEN o TWILIO_API_KEY_SID/TWILIO_API_KEY_SECRET son obligatorias cuando OTP_PROVIDER=twilio_sandbox")
-		}
-		if !strings.HasPrefix(cfg.TwilioWhatsAppSandboxFrom, "+") {
-			return Config{}, fmt.Errorf("config: TWILIO_WHATSAPP_SANDBOX_FROM debe estar en formato E.164")
-		}
-	}
-	if metaConfiguredValues > 0 && metaConfiguredValues < 3 {
-		return Config{}, fmt.Errorf(
-			"config: APP_META_WHATSAPP_PHONE_NUMBER_ID/APP_META_WHATSAPP_ACCESS_TOKEN/" +
-				"APP_META_WHATSAPP_TEMPLATE_NAME deben configurarse juntas o permanecer ausentes",
-		)
+	if err := validateMetaWhatsApp(cfg); err != nil {
+		return Config{}, err
 	}
 
 	requiresHardening := !entornosSinTLSObligatorio[cfg.Environment]
@@ -617,6 +563,55 @@ func requireTLS(dsn, varName string) error {
 	if sslmode == "" || sslmode == "disable" {
 		return fmt.Errorf(
 			"config: %s requiere sslmode distinto de 'disable' fuera de local/test", varName,
+		)
+	}
+	return nil
+}
+
+// MetaWhatsAppConfigured indica si hay credenciales suficientes para el modo
+// elegido. Sin ellas, local/test cae en el remitente que solo registra.
+func (c Config) MetaWhatsAppConfigured() bool {
+	if c.MetaWhatsAppPhoneNumberID == "" || c.MetaWhatsAppAccessToken == "" {
+		return false
+	}
+	if c.MetaWhatsAppMode == "development" {
+		return len(c.MetaWhatsAppTestRecipients) > 0
+	}
+	return c.MetaWhatsAppTemplateName != ""
+}
+
+var metaTestRecipientPattern = regexp.MustCompile(`^\+[1-9][0-9]{7,14}$`)
+
+// validateMetaWhatsApp impide un despliegue a medias: las credenciales se
+// configuran juntas y el texto libre de desarrollo nunca llega a un ambiente
+// con TLS obligatorio (DEC-123).
+func validateMetaWhatsApp(cfg Config) error {
+	if cfg.MetaWhatsAppMode != "template" && cfg.MetaWhatsAppMode != "development" {
+		return fmt.Errorf("config: APP_META_WHATSAPP_MODE debe ser template o development")
+	}
+	if cfg.MetaWhatsAppMode == "development" {
+		if cfg.Environment != "local" && cfg.Environment != "test" {
+			return fmt.Errorf("config: APP_META_WHATSAPP_MODE=development solo puede usarse en local/test; use template")
+		}
+		if len(cfg.MetaWhatsAppTestRecipients) == 0 {
+			return fmt.Errorf("config: APP_META_WHATSAPP_TEST_RECIPIENTS es obligatoria con APP_META_WHATSAPP_MODE=development")
+		}
+	}
+	for _, phone := range cfg.MetaWhatsAppTestRecipients {
+		if !metaTestRecipientPattern.MatchString(phone) {
+			return fmt.Errorf("config: APP_META_WHATSAPP_TEST_RECIPIENTS debe contener teléfonos E.164 separados por coma")
+		}
+	}
+
+	needsTemplate := cfg.MetaWhatsAppMode == "template"
+	anySet := cfg.MetaWhatsAppPhoneNumberID != "" || cfg.MetaWhatsAppAccessToken != "" ||
+		(needsTemplate && cfg.MetaWhatsAppTemplateName != "")
+	complete := cfg.MetaWhatsAppPhoneNumberID != "" && cfg.MetaWhatsAppAccessToken != "" &&
+		(!needsTemplate || cfg.MetaWhatsAppTemplateName != "")
+	if anySet && !complete {
+		return fmt.Errorf(
+			"config: APP_META_WHATSAPP_PHONE_NUMBER_ID/APP_META_WHATSAPP_ACCESS_TOKEN" +
+				" (y APP_META_WHATSAPP_TEMPLATE_NAME en modo template) deben configurarse juntas o permanecer ausentes",
 		)
 	}
 	return nil

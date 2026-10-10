@@ -641,13 +641,11 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 // delivery belongs exclusively to WhatsAppOTPProvider, so this function never
 // constructs a second Meta client for the same request.
 func selectRecoverySender(cfg config.Config, logger *slog.Logger) auth.RecoveryCodeSender {
-	metaComplete := cfg.MetaWhatsAppPhoneNumberID != "" && cfg.MetaWhatsAppAccessToken != "" &&
-		cfg.MetaWhatsAppTemplateName != ""
 	resendComplete := cfg.ResendAPIKey != "" && cfg.ResendFromAddress != ""
 	emailOnlyAllowed := cfg.Environment == "local" || cfg.Environment == "test"
 
 	switch {
-	case resendComplete && (emailOnlyAllowed || cfg.OTPProvider == "twilio" || metaComplete):
+	case resendComplete && (emailOnlyAllowed || cfg.MetaWhatsAppConfigured()):
 		return notification.NewEmailOnlyRecoverySender(
 			notification.NewResendEmailSender(notification.ResendEmailConfig{
 				APIKey:      cfg.ResendAPIKey,
@@ -678,39 +676,19 @@ func selectConfirmationEmailSender(cfg config.Config, logger *slog.Logger) publi
 }
 
 // selectWhatsAppOTPProvider is the sole provider switch. Auth and HTTP only
-// receive its port, so moving between Meta and Twilio needs an environment
-// change and restart, never a controller or use-case change.
+// receive its port. Without Meta credentials (local/test only, enforced by
+// config) the code is logged instead of sent.
 func selectWhatsAppOTPProvider(cfg config.Config, logger *slog.Logger, secret []byte) auth.WhatsAppOTPProvider {
-	if cfg.OTPProvider == "twilio" {
-		return notification.NewTwilioVerifyOTPProvider(
-			notification.TwilioVerifyConfig{
-				AccountSID:       cfg.TwilioAccountSID,
-				AuthToken:        cfg.TwilioAuthToken,
-				APIKeySID:        cfg.TwilioAPIKeySID,
-				APIKeySecret:     cfg.TwilioAPIKeySecret,
-				VerifyServiceSID: cfg.TwilioVerifyServiceSID,
-				Channel:          cfg.TwilioVerifyChannel,
-			},
-			auth.HMACHex("twilio-verify-provider-managed", secret), nil,
-		)
-	}
-	if cfg.OTPProvider == "twilio_sandbox" {
-		return notification.NewTwilioSandboxWhatsAppOTPProvider(
-			notification.TwilioSandboxConfig{
-				AccountSID:   cfg.TwilioAccountSID,
-				AuthToken:    cfg.TwilioAuthToken,
-				APIKeySID:    cfg.TwilioAPIKeySID,
-				APIKeySecret: cfg.TwilioAPIKeySecret,
-				FromE164:     cfg.TwilioWhatsAppSandboxFrom,
-			},
-			auth.NewCryptoPhoneCodeGenerator(), secret, nil,
-		)
-	}
-	if cfg.MetaWhatsAppPhoneNumberID != "" && cfg.MetaWhatsAppAccessToken != "" && cfg.MetaWhatsAppTemplateName != "" {
+	if cfg.MetaWhatsAppConfigured() {
 		return notification.NewMetaWhatsAppOTPProvider(notification.NewMetaWhatsAppSender(notification.MetaWhatsAppConfig{
-			APIVersion: cfg.MetaWhatsAppAPIVersion, PhoneNumberID: cfg.MetaWhatsAppPhoneNumberID,
-			AccessToken: cfg.MetaWhatsAppAccessToken, TemplateName: cfg.MetaWhatsAppTemplateName,
-			LanguageCode: cfg.MetaWhatsAppLanguageCode,
+			APIVersion:     cfg.MetaWhatsAppAPIVersion,
+			PhoneNumberID:  cfg.MetaWhatsAppPhoneNumberID,
+			AccessToken:    cfg.MetaWhatsAppAccessToken,
+			Mode:           notification.MetaWhatsAppMode(cfg.MetaWhatsAppMode),
+			TemplateName:   cfg.MetaWhatsAppTemplateName,
+			LanguageCode:   cfg.MetaWhatsAppLanguageCode,
+			TestRecipients: cfg.MetaWhatsAppTestRecipients,
+			Logger:         logger,
 		}, nil), auth.NewCryptoPhoneCodeGenerator(), secret)
 	}
 	return auth.NewLocalWhatsAppOTPProvider(auth.NewCryptoPhoneCodeGenerator(), auth.NewLoggingPhoneCodeSender(logger), secret)

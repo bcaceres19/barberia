@@ -116,6 +116,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-119` | 2026-10-08 | NAVA es multirrubro: el vocabulario del negocio llega a toda la interfaz (panel completo en #308; reserva pública, acceso del cliente y mensajes en #309); amplía `DEC-110` | `HU-025`; issues #308 y #309 | Confirmada |
 | `DEC-120` | 2026-10-07 | Pruebas UI con Luna medium, prompts persistentes y cuentas sintéticas aisladas | Propietario; issue #300 | Confirmada |
 | `DEC-121` | 2026-10-08 | El backend sube a Go 1.26.9 porque la línea 1.25 no tiene versión corregida de 9 vulnerabilidades de la librería estándar; amplía `DEC-023` | `DEC-035`; issue #317 | Confirmada |
+| `DEC-123` | 2026-10-10 | OTP de WhatsApp solo por Meta Cloud API, con modo de desarrollo en texto libre y plantilla Authentication preparada; se retira Twilio y sustituye a `DEC-096`, `DEC-097` y `DEC-098` | `HU-007`, `HU-008`; issue #347; amplía `DEC-066` | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -1101,6 +1102,8 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 
 ### DEC-096 · Proveedor OTP WhatsApp reversible durante la indisponibilidad de Meta
 
+> **Sustituida por `DEC-123` (2026-10-10):** Twilio se retiró del código y de la configuración.
+
 - **Fecha:** 2026-09-19.
 - **Decisión:** Meta WhatsApp Cloud API se conserva como proveedor `meta`. Mientras su verificación esté indisponible, el despliegue puede seleccionar `OTP_PROVIDER=twilio` para usar Twilio Verify mediante un canal configurado; volver a `OTP_PROVIDER=meta` solo requiere reiniciar con esa configuración. Los controladores, contratos HTTP y casos de uso no conocen el proveedor.
 - **Persistencia y seguridad:** con Meta la aplicación mantiene el HMAC del código generado localmente. Con Twilio, Verify es la autoridad del OTP: la aplicación persiste solo una marca opaca para conservar cooldown, límite, expiración y el paso posterior del dominio, nunca el código ni su hash. El estado `approved` es el único que autoriza consumir el reto local. La vigencia local no puede superar los 600 s de Verify cuando se selecciona Twilio. Los errores del proveedor se traducen detrás del puerto OTP y no exponen payloads, secretos ni destinos completos.
@@ -1111,6 +1114,8 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 
 ### DEC-097 · Sandbox de Twilio aislado para desarrollo de OTP WhatsApp
 
+> **Sustituida por `DEC-123` (2026-10-10):** Twilio se retiró del código y de la configuración.
+
 - **Fecha:** 2026-09-19.
 - **Decisión:** se habilita `OTP_PROVIDER=twilio_sandbox` exclusivamente en `local` y `test`, como adaptación de Twilio Programmable Messaging para probar entrega WhatsApp mientras Meta/WABA no está disponible. No sustituye `OTP_PROVIDER=twilio`, que conserva Twilio Verify para un sender productivo, ni altera `meta`.
 - **Seguridad y límites:** Sandbox vuelve al modelo local de generación y HMAC del OTP; Twilio solo transmite el mensaje y nunca es autoridad de verificación. Requiere `TWILIO_ACCOUNT_SID`, credenciales Twilio y el sender E.164 `TWILIO_WHATSAPP_SANDBOX_FROM`; la configuración falla fuera de local/test. Solo puede enviar texto libre durante la ventana de servicio de 24 horas que inicia `join`; fuera de ella el Sandbox exige una plantilla preaprobada y no admite plantillas propias. La activación, unión de destinatarios y renovación de sesión son manuales en la consola Twilio; no se automatizan ni se usan para producción.
@@ -1118,6 +1123,8 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Fuente:** petición explícita del propietario tras confirmar que Meta Business permanece rechazado; issue [#282](https://github.com/bcaceres19/barberia/issues/282).
 
 ### DEC-098 · SMS de Twilio Verify como contingencia temporal de OTP
+
+> **Sustituida por `DEC-123` (2026-10-10):** Twilio se retiró del código y de la configuración.
 
 - **Fecha:** 2026-09-19.
 - **Decisión:** `OTP_PROVIDER=twilio` usa `TWILIO_VERIFY_CHANNEL=sms` por defecto mientras Meta/WABA no está disponible. El mismo Verify Service crea y valida los códigos; no se genera ni persiste un OTP de aplicación. `TWILIO_VERIFY_CHANNEL=whatsapp` conserva el retorno reversible cuando exista el sender propio requerido por Meta.
@@ -1439,3 +1446,20 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** OAuth de cada cliente para escribir en su calendario (contradice `DEC-099`, obliga a guardar tokens de clientes y amplía la verificación de Google); botón «Agregar a mi calendario» con `.ics` (válido, pero no automático).
 - **Documentos afectados:** `alcance-mvp.md`, prompts `gcal-03` y `gcal-04`, y, al implementarse, contrato OpenAPI, diccionario de datos y política de privacidad.
 - **Fuente:** instrucción explícita del propietario del 2026-10-09 («el sistema, por medio del correo que ofrece el cliente, agende la cita en su Google Calendar igualmente al barbero»); issue [#321](https://github.com/bcaceres19/barberia/issues/321).
+
+### DEC-123 · OTP de WhatsApp solo por Meta Cloud API: modo de desarrollo, plantilla Authentication preparada y retiro de Twilio
+
+- **Fecha:** 2026-10-10.
+- **Decisión:** el reto de acceso de `HU-007` y el canal WhatsApp de recuperación de `HU-008` se entregan únicamente por Meta WhatsApp Cloud API en modo directo (`DEC-066`). Se retiran Twilio Verify y Twilio Sandbox (`DEC-096`, `DEC-097`, `DEC-098` quedan sustituidas): `OTP_PROVIDER` solo admite `meta` y un despliegue que aún declare `twilio` o `twilio_sandbox` no arranca.
+  1. **El código es de NAVA.** NAVA genera, persiste (HMAC), expira, limita y valida el OTP; Meta solo lo transporta. No existe un proveedor que sea autoridad del código.
+  2. **Dos modos** (`APP_META_WHATSAPP_MODE`). `template` (por defecto): plantilla de categoría `AUTHENTICATION` con el código en el cuerpo y en el botón `COPY_CODE`. `development`: texto libre con el código, aceptado únicamente con `APP_ENVIRONMENT` `local` o `test` y solo para los teléfonos de `APP_META_WHATSAPP_TEST_RECIPIENTS`. Nunca hay un respaldo silencioso de plantilla a texto libre ni se crean plantillas `UTILITY`/`MARKETING` para evitar la restricción.
+  3. **Ventana de 24 horas.** Sin webhook NAVA no conoce la ventana de atención: deja que Meta valide y traduce el rechazo `131047` a un error de dominio. Un HTTP 200 significa «aceptado» (se registra el `wamid`), no «entregado».
+  4. **Sin reintentos automáticos.** Una solicitud por envío; un fallo de red, timeout o 5xx se devuelve como error sin repetir, porque Meta pudo haber aceptado el mensaje. El límite de reenvío sigue siendo el de `HU-007`/`HU-008`.
+  5. **Errores y secretos.** Los errores de Graph API se clasifican (ventana cerrada, destinatario no permitido, credenciales, límite, plantilla no disponible) conservando solo estado, `code`, `error_subcode` y `fbtrace_id`. Token, teléfono completo y código nunca aparecen en errores, logs ni respuestas.
+  6. **Webhook y plantilla pendientes.** El webhook de estados y mensajes entrantes queda fuera de este alcance. Meta rechazó crear la plantilla `AUTHENTICATION` (`code 10`, `subcode 2388185`); el modo `template` queda listo y su activación depende de que Meta habilite la creación.
+- **Variables:** `APP_META_WHATSAPP_MODE`, `APP_META_WHATSAPP_TEST_RECIPIENTS`; la versión de Graph API por defecto pasa a `v24.0` (`APP_META_WHATSAPP_API_VERSION`). Se retiran todas las `TWILIO_*`. `APP_META_WABA` y `APP_META_ID` no los usa el envío.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** Meta ya está operativo (WABA y número verificados), por lo que la contingencia de `DEC-096`–`DEC-098` deja de justificar dos proveedores adicionales, su configuración y su superficie de pruebas.
+- **Alternativas descartadas:** conservar Twilio como respaldo (mantiene credenciales, un modelo de OTP administrado por el proveedor y dos rutas de validación); enviar texto libre en producción mientras la plantilla esté bloqueada (incumple la política de Meta y oculta fallos); reintentar automáticamente ante timeout (duplicaría el código).
+- **Documentos afectados:** `apps/api` (adaptador, configuración, selector, pruebas, `README.md`, `.env.example`), `tools/qa/start-local.sh`, `historial-cambios.md`; issue [#347](https://github.com/bcaceres19/barberia/issues/347). Sin cambios de contrato OpenAPI ni migraciones (`20260919220000` es inmutable y se conserva).
+- **Fuente:** instrucción explícita del propietario el 2026-10-10 de migrar integralmente de Twilio a Meta WhatsApp Cloud API.

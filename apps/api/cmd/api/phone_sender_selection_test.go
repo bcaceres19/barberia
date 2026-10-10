@@ -12,16 +12,58 @@ import (
 func TestSelectWhatsAppOTPProvider_SelectsConfiguredProvider(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	secret := []byte("secreto-de-prueba-suficientemente-largo-0123456789")
-	meta := selectWhatsAppOTPProvider(config.Config{OTPProvider: "meta", MetaWhatsAppPhoneNumberID: fakeMetaPhoneNumberID, MetaWhatsAppAccessToken: fakeMetaAccessToken, MetaWhatsAppTemplateName: fakeMetaTemplateName}, logger, secret)
-	if got := fmt.Sprintf("%T", meta); got != "notification.MetaWhatsAppOTPProvider" {
-		t.Fatalf("expected Meta provider, got %s", got)
+
+	tests := []struct {
+		name string
+		cfg  config.Config
+		want string
+	}{
+		{
+			name: "plantilla completa usa Meta",
+			cfg: config.Config{
+				OTPProvider: "meta", MetaWhatsAppMode: "template",
+				MetaWhatsAppPhoneNumberID: fakeMetaPhoneNumberID, MetaWhatsAppAccessToken: fakeMetaAccessToken,
+				MetaWhatsAppTemplateName: fakeMetaTemplateName,
+			},
+			want: "notification.MetaWhatsAppOTPProvider",
+		},
+		{
+			name: "desarrollo con destinatarios usa Meta",
+			cfg: config.Config{
+				OTPProvider: "meta", MetaWhatsAppMode: "development",
+				MetaWhatsAppPhoneNumberID: fakeMetaPhoneNumberID, MetaWhatsAppAccessToken: fakeMetaAccessToken,
+				MetaWhatsAppTestRecipients: []string{"+573001234567"},
+			},
+			want: "notification.MetaWhatsAppOTPProvider",
+		},
+		{
+			name: "desarrollo sin destinatarios no envía",
+			cfg: config.Config{
+				OTPProvider: "meta", MetaWhatsAppMode: "development",
+				MetaWhatsAppPhoneNumberID: fakeMetaPhoneNumberID, MetaWhatsAppAccessToken: fakeMetaAccessToken,
+			},
+			want: "auth.localWhatsAppOTPProvider",
+		},
+		{
+			name: "modo plantilla sin plantilla no envía",
+			cfg: config.Config{
+				OTPProvider: "meta", MetaWhatsAppMode: "template",
+				MetaWhatsAppPhoneNumberID: fakeMetaPhoneNumberID, MetaWhatsAppAccessToken: fakeMetaAccessToken,
+			},
+			want: "auth.localWhatsAppOTPProvider",
+		},
+		{
+			name: "sin credenciales registra el código",
+			cfg:  config.Config{OTPProvider: "meta", MetaWhatsAppMode: "template"},
+			want: "auth.localWhatsAppOTPProvider",
+		},
 	}
-	twilio := selectWhatsAppOTPProvider(config.Config{OTPProvider: "twilio", TwilioAccountSID: "ACfake", TwilioAuthToken: "fake", TwilioVerifyServiceSID: "VAfake"}, logger, secret)
-	if got := fmt.Sprintf("%T", twilio); got != "notification.TwilioVerifyOTPProvider" {
-		t.Fatalf("expected Twilio provider, got %s", got)
-	}
-	sandbox := selectWhatsAppOTPProvider(config.Config{OTPProvider: "twilio_sandbox", TwilioAccountSID: "ACfake", TwilioAuthToken: "fake", TwilioWhatsAppSandboxFrom: "+14155238886"}, logger, secret)
-	if got := fmt.Sprintf("%T", sandbox); got != "notification.TwilioSandboxWhatsAppOTPProvider" {
-		t.Fatalf("expected Twilio Sandbox provider, got %s", got)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := fmt.Sprintf("%T", selectWhatsAppOTPProvider(tt.cfg, logger, secret))
+			if got != tt.want {
+				t.Fatalf("expected %s, got %s", tt.want, got)
+			}
+		})
 	}
 }
