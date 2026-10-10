@@ -117,7 +117,7 @@ El resultado debe permitir que el operador configure solamente Resend durante es
 
 ## Fuera de alcance
 
-- Implementar, contratar o configurar Meta WhatsApp Cloud API, Twilio, Telnyx, números virtuales o SIM.
+- Implementar, contratar o configurar Meta WhatsApp Cloud API, Telnyx, números virtuales o SIM.
 - Cambiar `DEC-051`, `DEC-066`, la historia `HU-008` o el requisito dual de piloto/producción.
 - Permitir correo único en `pilot` o `production`, incluso mediante una variable ambigua o un valor por defecto.
 - Eliminar la precondición de teléfono verificado de `auth_recovery_request` o crear una migración para alterar esa regla.

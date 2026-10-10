@@ -912,7 +912,7 @@ por si algo construye un `config.Config` sin pasar por `Load`.
 | `APP_META_WHATSAPP_TEMPLATE_NAME` | (vacía) | Plantilla "Authentication" pre-aprobada. Obligatoria en modo `template`. |
 | `APP_META_WHATSAPP_TEST_RECIPIENTS` | (vacía) | Teléfonos E.164 separados por coma a los que puede escribir el modo `development`. Obligatoria en ese modo. |
 | `APP_META_WHATSAPP_LANGUAGE_CODE` | `es` | Idioma de esa plantilla. |
-| `OTP_PROVIDER` | `meta` | Único valor aceptado; un despliegue que aún declare `twilio` o `twilio_sandbox` no arranca (`DEC-123`). |
+| `OTP_PROVIDER` | `meta` | Único valor aceptado; cualquier otro hace fallar el arranque (`DEC-123`). |
 | `APP_RESEND_API_KEY` | (vacía) | Secreto: autenticación contra Resend. |
 | `APP_RESEND_FROM_ADDRESS` | (vacía) | Remitente verificado del correo. |
 | `APP_RESEND_SUBJECT` | `Código de recuperación de acceso` | Asunto fijo del correo. |
