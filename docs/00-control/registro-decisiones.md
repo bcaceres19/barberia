@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.53"
+version: "1.54"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-10-26"
+ultima_actualizacion: "2026-10-27"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -120,6 +120,11 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-124` | 2026-10-10 | El modo de texto libre de WhatsApp (`text`) se permite en cualquier ambiente como opción explícita mientras Meta no habilite la plantilla Authentication; amplía `DEC-123` | `HU-007`, `HU-008`; issue #351 | Confirmada |
 | `DEC-125` | 2026-10-10 | Se retira el soporte de OTP validado por un proveedor externo: la función SQL `auth_phone_challenge_destination` y el manejo de rechazo del proveedor; NAVA genera y valida siempre el código | `HU-007`, `HU-008`; issue #353; completa `DEC-123` | Confirmada |
 | `DEC-126` | 2026-10-10 | Webhook de Meta WhatsApp: estados de entrega y ventana de 24 h por teléfono, autenticado por token propio y firma HMAC, sin decidir envíos con él | `DEC-027`, `DEC-123`, `DEC-124`; issue #355 | Confirmada |
+| `DEC-128` | 2026-10-26 | Reseñas y calificación interna por barbero, gatilladas por un turno `completed`, publicación inmediata y ocultable | `HU-098`, `HU-100`; issue #357 | Confirmada |
+| `DEC-129` | 2026-10-26 | Reseñas y estrellas de Google por negocio (barbería o barbero independiente), una sola ficha por barbería | `DEC-082`, `DEC-110`; `HU-101`; issue #358 | Confirmada |
+| `DEC-130` | 2026-10-26 | Ubicación de la barbería en la reserva pública, configurable por barbería, con mapa de Google | `DEC-110`, `DEC-115`; `HU-102`; issue #359 | Confirmada |
+| `DEC-131` | 2026-10-26 | Domicilio: interruptor general de la barbería y dirección del cliente geocodificada con mapa de Google | `DEC-089`–`DEC-091`; `HU-103`; issue #360 | Confirmada |
+| `DEC-132` | 2026-10-27 | El backend sube a Go 1.26.10 porque la línea 1.26.9 tiene una vulnerabilidad de la librería estándar alcanzable (`GO-2026-6809`); amplía `DEC-121` | `DEC-023`; issue #363 | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -1544,3 +1549,13 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** domicilio como servicio propio del catálogo, con su propio precio y duración (el propietario eligió el interruptor general en la misma conversación); domicilio configurable por servicio (añade una matriz servicio×modalidad que nadie pidió); dirección en texto libre sin geocodificar (no permite mostrar el mapa interactivo que se pidió y arrastra direcciones ambiguas al panel del barbero).
 - **Documentos afectados:** `database` (migración que añade `offers_home_service` a `barbershop` y `is_home_service`/`service_address`/`service_latitude`/`service_longitude` con su `CHECK` a `appointment`), `api/openapi` (recurso de marca de `DEC-110`, contrato de confirmación de `HU-097`, detalle de turno privado), `apps/api` (módulos `publicbooking`, `booking`, `staff`/Configuración), `apps/web` (reserva pública y agenda/detalle del panel), `historias-usuario.md` (`HU-103`), `matriz-trazabilidad.md`, `historial-cambios.md`.
 - **Fuente:** instrucción explícita del propietario el 2026-10-26: «si llegado el caso la barbería tiene la opción de domicilios, que se habilite la especificación de la dirección con mapa si se usa dicho servicio»; forma de interruptor general y nivel de integración de pago confirmados en la misma conversación.
+
+### DEC-132 · El backend sube a Go 1.26.10 (amplía `DEC-121`)
+
+- **Fecha:** 2026-10-27.
+- **Decisión:** `apps/api/go.mod` pasa de `toolchain go1.26.9` a `toolchain go1.26.10` (`go 1.26.0` sin cambio). CI sigue instalando la línea 1.26.
+- **Motivo:** `govulncheck` (control obligatorio de CI) detectó `GO-2026-6809` (desconfiar de certificados intermedios comprometidos en `crypto/x509`), alcanzable desde `internal/modules/googlecalendar/google/client.go` (`Client.Revoke` → `io.Copy` → `x509.Certificate.Verify`). Se corrige en Go 1.26.10. Sin la subida, el job de Go falla en todos los PR y en `main`, incluido un PR puramente documental sin cambios de código Go.
+- **Alcance:** solo versión del toolchain; ningún cambio de código de aplicación, contrato ni dependencias de terceros. Verificado con `go vet`, `go build` y `govulncheck ./...` (0 vulnerabilidades alcanzables); `go test -race ./...` se verifica en CI contra PostgreSQL real.
+- **Responsable:** propietario del proyecto.
+- **Alternativas descartadas:** integrar con el check de seguridad en rojo (contradice la regla de integrar solo con CI en verde); esperar un parche de la línea 1.26.9 (ya existe 1.26.10, no hay motivo para esperar).
+- **Fuente:** detectado por el agente el 2026-10-27 al revisar por qué el PR documental #362 (reseñas/ubicación/domicilio) no podía integrarse con CI en verde; mismo patrón ya aprobado por el propietario en `DEC-121`, issue [#363](https://github.com/bcaceres19/barberia/issues/363).
