@@ -71,7 +71,7 @@ Que un cliente con un turno `completed` pueda calificar una sola vez a su barber
 
 - Reseñas del negocio/local (`HU-101`).
 - Respuesta pública del barbero, edición de una reseña ya enviada, aprobación previa a publicar, notificación al barbero.
-- Cualquier cambio a la matriz 0/1/N de `HU-092` o a la proyección de `DEC-127`.
+- Cualquier cambio a la matriz 0/1/N de `HU-092` o a su proyección pública ya fijada (nombre, foto y descripción).
 
 ## Estado existente que debe conservarse
 

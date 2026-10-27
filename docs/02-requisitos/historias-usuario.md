@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.58"
+version: "1.57"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-10-26"
@@ -2032,7 +2032,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | --- | --- |
 | Función | `F-PUB-04` (selección) |
 | Reglas | `RN-TEN-01`, `RN-CON-01`, `RN-DAT-02` |
-| Decisiones | `DEC-019`, `DEC-024`, `DEC-047`, `DEC-068`, `DEC-077`–`DEC-079`, `DEC-127` |
+| Decisiones | `DEC-019`, `DEC-024`, `DEC-047`, `DEC-068`, `DEC-077`–`DEC-079` |
 | Actor | Cliente que ya eligió un servicio |
 | Depende de | `HU-091`; `HU-021`/`HU-023` integradas |
 | Bloquea | `HU-094`–`HU-097` |
@@ -2051,7 +2051,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 
 **Alcance excluido**
 
-- Preferencias, ranking, “cualquiera”, asignación automática, perfiles más allá de lo que fija `DEC-127` (fotografía y descripción corta opcionales) o baja de barberos.
+- Preferencias, ranking, “cualquiera”, asignación automática, perfiles, fotos o baja de barberos.
 - Consultar disponibilidad o crear la cita.
 
 **Criterios de aceptación**
@@ -2063,7 +2063,6 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | `CA-092-03` | Un ID ajeno, inexistente o ya no asignado se rechaza de forma uniforme antes de consultar horas o crear cita. |
 | `CA-092-04` | Cambiar el servicio limpia una selección incompatible y conserva una compatible únicamente tras revalidarla. |
 | `CA-092-05` | Estados y selector funcionan con teclado, foco visible, lector, zoom 200 % y los cuatro anchos normativos. |
-| `CA-092-06` | `DEC-127`: cada barbero listado muestra su fotografía (o el monograma si no tiene) y su descripción corta cuando existe; la imagen solo se sirve para un barbero que la lista ya muestra y cualquier otro caso responde el mismo `404`. |
 
 **Pruebas obligatorias:** matriz 0/1/N barberos; PostgreSQL real con asignaciones cruzadas; contrato, componente y E2E de preselección/elección.
 
