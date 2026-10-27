@@ -1,9 +1,9 @@
 ---
 titulo: "Historial de cambios documentales"
-version: "4.07"
+version: "4.08"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-10-08"
+ultima_actualizacion: "2026-10-27"
 documentos_relacionados:
   - "registro-decisiones.md"
   - "contradicciones.md"
@@ -328,6 +328,7 @@ Las versiones se aplican por documento. Mientras no exista historial Git, la fec
 | 2026-10-10 | `docs/00-control/{registro-decisiones,historial-cambios}.md`, `apps/api/{README.md,.env.example}`, `apps/api/internal/modules/notification/whatsapp_meta.go` y pruebas, `apps/api/internal/platform/config/`, `apps/api/cmd/api/main.go` | Modo de texto libre de WhatsApp (`APP_META_WHATSAPP_MODE=text`) en cualquier ambiente mientras Meta no habilite la plantilla Authentication (issue [#351](https://github.com/bcaceres19/barberia/issues/351), `DEC-124`, amplía `DEC-123`): lista de destinatarios obligatoria solo en `local`/`test`, mensaje apto para personas reales y aviso de la ventana de 24 h al arrancar. Sin cambios de contrato ni migraciones. |
 | 2026-10-10 | `docs/00-control/{registro-decisiones,historial-cambios}.md`, `database/{migrations/20261010120000_drop_auth_phone_challenge_destination.sql (nueva),migrations/atlas.sum,modelo-fisico-referencia.sql,tests/hu007_defensa_abuso.sql,README.md}`, `apps/api/internal/modules/{auth,notification}`, `.github/workflows/ci.yml` | Se retira el soporte de OTP validado por un proveedor externo (issue [#353](https://github.com/bcaceres19/barberia/issues/353), `DEC-125`, completa `DEC-123`): se elimina `auth_phone_challenge_destination` con una migración nueva, `ChallengePhone`, `ErrWhatsAppOTPRejected` y el OTP administrado por el proveedor; `VerificationDigest` deja de recibir el teléfono. Sin cambios de contrato HTTP. |
 | 2026-10-10 | `docs/00-control/{registro-decisiones,historial-cambios}.md`, `api/openapi/{openapi.yaml,CHANGELOG.md,paths/public-webhooks.yaml (nuevo),components/schemas/MetaWhatsAppWebhookRequest.yaml (nuevo)}`, `database/{migrations/20261010130000_create_whatsapp_webhook.sql (nueva),migrations/atlas.sum,modelo-fisico-referencia.sql,tests/whatsapp_webhook.sql (nueva),README.md}`, `apps/api/{README.md,.env.example,cmd/api,cmd/worker,internal/modules/notification,internal/platform/config}`, `.github/workflows/ci.yml`, `tools/qa/start-local.sh` | Webhook de Meta WhatsApp (issue [#355](https://github.com/bcaceres19/barberia/issues/355), `DEC-126`): `GET`/`POST /public/webhooks/meta/whatsapp` con token de verificación propio y firma HMAC antes de leer el cuerpo; registro idempotente de estados de entrega y de la ventana de 24 h por HMAC de teléfono en dos tablas sin acceso directo, purga por el worker y prueba SQL. La ventana no decide envíos. OpenAPI 0.34.0 → 0.35.0. |
+| 2026-10-27 | `docs/00-control/{registro-decisiones,historial-cambios}.md`, `apps/api/go.mod` | El backend sube a Go 1.26.10 (issue [#363](https://github.com/bcaceres19/barberia/issues/363), `DEC-132`, amplía `DEC-121`): `toolchain go1.26.9` → `go1.26.10` porque `govulncheck` detectó `GO-2026-6809` (certificados intermedios comprometidos en `crypto/x509`), alcanzable desde el adaptador de Google Calendar. Solo versión del toolchain; sin cambios de código de aplicación. |
 
 ## 4. Pendiente para la siguiente versión
 

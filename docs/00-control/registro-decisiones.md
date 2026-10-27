@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.49"
+version: "1.50"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-10-09"
+ultima_actualizacion: "2026-10-27"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -120,6 +120,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-124` | 2026-10-10 | El modo de texto libre de WhatsApp (`text`) se permite en cualquier ambiente como opción explícita mientras Meta no habilite la plantilla Authentication; amplía `DEC-123` | `HU-007`, `HU-008`; issue #351 | Confirmada |
 | `DEC-125` | 2026-10-10 | Se retira el soporte de OTP validado por un proveedor externo: la función SQL `auth_phone_challenge_destination` y el manejo de rechazo del proveedor; NAVA genera y valida siempre el código | `HU-007`, `HU-008`; issue #353; completa `DEC-123` | Confirmada |
 | `DEC-126` | 2026-10-10 | Webhook de Meta WhatsApp: estados de entrega y ventana de 24 h por teléfono, autenticado por token propio y firma HMAC, sin decidir envíos con él | `DEC-027`, `DEC-123`, `DEC-124`; issue #355 | Confirmada |
+| `DEC-132` | 2026-10-27 | El backend sube a Go 1.26.10 porque la línea 1.26.9 tiene una vulnerabilidad de la librería estándar alcanzable (`GO-2026-6809`); amplía `DEC-121` | `DEC-023`; issue #363 | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -1482,3 +1483,13 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** decidir o bloquear envíos con la ventana registrada (riesgo de rechazar OTP legítimos por un webhook perdido); guardar el teléfono en claro (dato personal innecesario); `barbershop_id` en las tablas (no corresponde a un tenant y obligaría a elegir uno); un token de verificación igual al access token (ampliaría el daño de una filtración).
 - **Documentos afectados:** `apps/api` (módulo `notification`, configuración, rutas, worker, `README.md`, `.env.example`), `api/openapi` (0.35.0), `database` (migración `20261010130000`, modelo físico, prueba SQL, `README.md`), `.github/workflows/ci.yml`, `historial-cambios.md`; issue [#355](https://github.com/bcaceres19/barberia/issues/355).
 - **Fuente:** instrucción explícita del propietario el 2026-10-10 de implementar el webhook de Meta.
+
+### DEC-132 · El backend sube a Go 1.26.10 (amplía `DEC-121`)
+
+- **Fecha:** 2026-10-27.
+- **Decisión:** `apps/api/go.mod` pasa de `toolchain go1.26.9` a `toolchain go1.26.10` (`go 1.26.0` sin cambio). CI sigue instalando la línea 1.26.
+- **Motivo:** `govulncheck` (control obligatorio de CI) detectó `GO-2026-6809` (desconfiar de certificados intermedios comprometidos en `crypto/x509`), alcanzable desde `internal/modules/googlecalendar/google/client.go` (`Client.Revoke` → `io.Copy` → `x509.Certificate.Verify`). Se corrige en Go 1.26.10. Sin la subida, el job de Go falla en todos los PR y en `main`, incluido un PR puramente documental sin cambios de código Go.
+- **Alcance:** solo versión del toolchain; ningún cambio de código de aplicación, contrato ni dependencias de terceros. Verificado con `go vet`, `go build` y `govulncheck ./...` (0 vulnerabilidades alcanzables); `go test -race ./...` se verifica en CI contra PostgreSQL real.
+- **Responsable:** propietario del proyecto.
+- **Alternativas descartadas:** integrar con el check de seguridad en rojo (contradice la regla de integrar solo con CI en verde); esperar un parche de la línea 1.26.9 (ya existe 1.26.10, no hay motivo para esperar).
+- **Fuente:** detectado por el agente el 2026-10-27 al revisar por qué el PR documental #362 (reseñas/ubicación/domicilio) no podía integrarse con CI en verde; mismo patrón ya aprobado por el propietario en `DEC-121`, issue [#363](https://github.com/bcaceres19/barberia/issues/363).
