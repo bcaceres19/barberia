@@ -1,9 +1,9 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.56"
+version: "1.57"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-10-09"
+ultima_actualizacion: "2026-10-26"
 documentos_relacionados:
   - "../01-producto/alcance-mvp.md"
   - "../01-producto/reglas-negocio.md"
@@ -52,7 +52,7 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | B1 · Identidad de la barbería y catálogo | `HU-020` – `HU-025` | `HU-020`–`HU-024` integradas en `main` ([PR #79](https://github.com/bcaceres19/barberia/pull/79), [PR #83](https://github.com/bcaceres19/barberia/pull/83), [PR #84](https://github.com/bcaceres19/barberia/pull/84)); `HU-025` implementada contra el issue [#292](https://github.com/bcaceres19/barberia/issues/292) (`DEC-110`) |
 | B2 · Horario laboral y bloqueos | `HU-040` – `HU-042` | Integradas en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93), [PR #96](https://github.com/bcaceres19/barberia/pull/96), [PR #99](https://github.com/bcaceres19/barberia/pull/99)); seguimientos parciales en `#90`, `#95`, `#98` y `#100` |
 | B3 · Agenda, estados e integridad | `HU-060` – `HU-068` | `HU-060`–`HU-068` integradas en `main`, issues reales [#225](https://github.com/bcaceres19/barberia/issues/225)–[#227](https://github.com/bcaceres19/barberia/issues/227); tercer lote de B3 completo, T3/cierre automático pendientes |
-| B4 · Reserva pública y disponibilidad | `HU-090` – `HU-099` | Redactadas como propuesta en issue [#240](https://github.com/bcaceres19/barberia/issues/240); implementación bloqueada por decisiones `DP-PUB-01`–`DP-PUB-06`/`CT-011` |
+| B4 · Reserva pública y disponibilidad | `HU-090` – `HU-103` | `HU-090`–`HU-099` redactadas como propuesta en issue [#240](https://github.com/bcaceres19/barberia/issues/240), `DP-PUB-01`–`DP-PUB-06`/`CT-011` resueltas; `HU-100`–`HU-103` (reseñas internas, reseñas de Google, ubicación y domicilio) redactadas el 2026-10-26 (`DEC-128`–`DEC-131`), sin issue real todavía |
 | B5 · Notificaciones y recordatorios | `HU-130` – | Pendientes |
 | B6 · Operación, privacidad y piloto | `HU-150` – | Pendientes |
 
@@ -2390,6 +2390,188 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 
 ---
 
+### HU-100 · Reseñas y calificación interna por barbero
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-PUB-09` |
+| Reglas | `RN-TEN-01`, `RN-DAT-02` |
+| Decisiones | `DEC-089`, `DEC-104`, `DEC-128` |
+| Actor | Cliente de un turno ya `completed` |
+| Depende de | `HU-098` integrada (satisfecho, PR #272) |
+| Bloquea | Ninguna |
+| Estado | Propuesta; sin issue real todavía |
+| Riesgo | Aceptar una reseña sin turno completado único detrás, o sin ocultamiento reversible, abre abuso y daña la confianza del listado público. |
+
+**Historia**
+
+> Como cliente que ya fue atendido, quiero calificar a mi barbero desde el acceso a mi turno, para dejar constancia de mi experiencia real.
+
+**Alcance incluido**
+
+- Acción «Calificar a `{barbero}`» en la página de acceso al turno (`HU-098`), visible solo cuando el turno es `completed` y no tiene reseña todavía.
+- Formulario con calificación de 1 a 5 (obligatoria) y comentario opcional de hasta 500 caracteres.
+- Persistencia con una sola reseña por turno; estrellas (`rating`) y total (`ratingCount`) del barbero expuestos en `BarberResponse`/`PublicBarberResponse`, calculados sobre reseñas no ocultas.
+- Ocultar/mostrar una reseña desde el panel del barbero o del propietario, reversible y sin borrar la fila.
+
+**Alcance excluido**
+
+- Reseña de la barbería o el local completo (la cubre `HU-101` con datos de Google).
+- Respuesta pública del barbero, edición de una reseña ya enviada, cola de aprobación previa a publicar, notificación al barbero.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-100-01` | Un turno `completed` sin reseña previa muestra la acción «Calificar»; uno no completado, cancelado, ajeno o ya calificado no la muestra, y cualquier intento responde el mismo `404`/`409` uniforme sin distinguir la causa. |
+| `CA-100-02` | Una calificación fuera de 1–5 o ausente se rechaza con `422`; un comentario vacío o de solo espacios se guarda `NULL`; más de 500 caracteres se rechaza. |
+| `CA-100-03` | Como máximo una reseña por `appointment_id` (`UNIQUE`); un segundo intento sobre el mismo turno no crea una fila ni modifica la existente. |
+| `CA-100-04` | La reseña publicada aparece de inmediato en la selección pública del barbero (`HU-092`) con su calificación y comentario; `rating`/`ratingCount` del barbero son el promedio y el total de reseñas no ocultas, `NULL` sin ninguna. |
+| `CA-100-05` | Ocultar una reseña la retira del promedio y de la lista pública de inmediato, pero la conserva visible en el panel con su fecha; volver a mostrarla la reincorpora sin perder su contenido. |
+| `CA-100-06` | El formulario, las estrellas y la lista de reseñas cumplen teclado, foco visible, lector, zoom 200 % y los cuatro anchos normativos. |
+
+**Pruebas obligatorias:** PostgreSQL real con dos tenants, unicidad por turno y promedio que excluye las ocultas; contrato; componente; E2E calificar tras turno completado → aparece en la selección pública → ocultar → desaparece.
+
+**Terminado cuando** cada reseña queda ligada de forma verificable a un único turno completado y el promedio público nunca incluye una oculta.
+
+---
+
+### HU-101 · Reseñas y estrellas de Google del negocio
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-PUB-10` |
+| Reglas | `RN-TEN-01` |
+| Decisiones | `DEC-082`, `DEC-110`, `DEC-129` |
+| Actor | Cliente que visita la reserva pública |
+| Depende de | Credencial de servidor de Google Places configurada en el ambiente de despliegue |
+| Bloquea | Ninguna |
+| Estado | Propuesta; sin issue real todavía |
+| Riesgo | Exponer la clave de servidor en el navegador o incumplir los términos de caché de Google Maps Platform puede suspender la credencial de toda la plataforma. |
+
+**Historia**
+
+> Como cliente, quiero ver la calificación y las reseñas reales de Google del negocio antes de reservar, para confiar en la barbería.
+
+**Alcance incluido**
+
+- `googlePlaceId` configurable en Configuración, junto a los demás ajustes de marca (`DEC-110`).
+- `GET /public/barbershops/{slug}/reviews`: calificación, total y hasta 5 reseñas con la atribución que exige Google.
+- Caché de servidor de 6 horas; nunca se persiste el texto de una reseña más allá de esa ventana.
+- Sección oculta, sin error visible, cuando falta `googlePlaceId`, falta la credencial o la consulta falla.
+
+**Alcance excluido**
+
+- Responder reseñas de Google desde NAVA, importarlas al sistema interno (`HU-100`), otros proveedores (Facebook, TripAdvisor), ficha de Google por barbero individual dentro de una empresa de varios barberos.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-101-01` | Sin `googlePlaceId` configurado, la reserva pública no muestra el apartado de reseñas de Google. |
+| `CA-101-02` | Con `googlePlaceId` válido, la respuesta incluye calificación, total y hasta 5 reseñas, cada una con atribución a Google y un enlace a la ficha real. |
+| `CA-101-03` | Una consulta fallida (red, cuota agotada, identificador inválido) no propaga error al cliente: oculta la sección y registra el fallo solo en el servidor. |
+| `CA-101-04` | La clave de servidor nunca se expone en el HTML ni en el JavaScript servidos al navegador; el mapa usa, si lo necesita, una clave de frontend distinta y restringida por dominio. |
+| `CA-101-05` | Una segunda consulta dentro de las 6 horas de caché no vuelve a golpear la API de Google (verificable por conteo de llamadas en la prueba del adaptador). |
+| `CA-101-06` | La sección cumple responsive, teclado, foco visible y zoom 200 % en los cuatro anchos normativos. |
+
+**Pruebas obligatorias:** adaptador con servidor de Google simulado (éxito, fallo, cuota agotada, sin resultados); contrato; componente; E2E con interceptor de red que simula la respuesta de Google.
+
+**Terminado cuando** la reserva pública muestra reseñas reales de Google solo cuando hay una ficha configurada y las oculta sin error en cualquier otro caso, sin violar los términos de caché de la plataforma.
+
+---
+
+### HU-102 · Ubicación de la barbería en la reserva pública
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-PUB-11` |
+| Reglas | `RN-TEN-01` |
+| Decisiones | `DEC-082`, `DEC-110`, `DEC-115`, `DEC-130` |
+| Actor | Cliente que visita la reserva pública |
+| Depende de | Credencial de Geocoding/Maps configurada en el ambiente de despliegue |
+| Bloquea | Ninguna |
+| Estado | Propuesta; sin issue real todavía |
+| Riesgo | Geocodificar mal una dirección, o mostrar un mapa de una barbería que solo atiende a domicilio, confunde al cliente sobre dónde se presta el servicio. |
+
+**Historia**
+
+> Como cliente, quiero ver dónde queda la barbería antes de reservar, cuando tiene local, para saber si puedo llegar.
+
+**Alcance incluido**
+
+- `has_physical_location`, `address`, `latitude` y `longitude` en `barbershop`; edición en Configuración y geocodificación en el servidor al guardar una dirección nueva.
+- Campos necesarios en `GET /public/barbershops/{slug}` para mostrar el mapa cuando corresponda.
+- Mapa interactivo de Google con marcador y dirección en texto en la reserva pública, visible solo con `has_physical_location = true` y coordenadas presentes.
+
+**Alcance excluido**
+
+- Varias sedes, horario distinto por sede, instrucciones de llegada, geocodificación en el navegador del cliente.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-102-01` | Guardar una dirección geocodificable la convierte en `latitude`/`longitude` y las persiste; una dirección que Google no puede geocodificar se rechaza con `422` antes de guardar, sin modificar el valor anterior. |
+| `CA-102-02` | `has_physical_location = false` oculta la sección en la reserva pública aunque existan `address`/coordenadas guardadas. |
+| `CA-102-03` | `has_physical_location = true` sin coordenadas guardadas tampoco muestra la sección, sin error visible al cliente. |
+| `CA-102-04` | Con ambas condiciones cumplidas, la reserva pública muestra el mapa centrado en las coordenadas con un marcador y la dirección en texto junto a él. |
+| `CA-102-05` | Apagar `has_physical_location` conserva `address`/coordenadas sin borrarlas; reactivarlo las muestra de nuevo sin pedir que se recapturen. |
+| `CA-102-06` | El mapa y la dirección cumplen responsive, teclado/foco para los controles interactivos y zoom 200 % en los cuatro anchos normativos. |
+
+**Pruebas obligatorias:** adaptador de Geocoding simulado (éxito, dirección ambigua o no encontrada); PostgreSQL real con dos tenants; contrato; componente; E2E con y sin ubicación visible.
+
+**Terminado cuando** la reserva pública nunca muestra un mapa sin coordenadas reales, ni oculta la ubicación de una barbería que la activó con una dirección válida.
+
+---
+
+### HU-103 · Domicilio: dirección del cliente con mapa en la reserva pública
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-PUB-12` |
+| Reglas | `RN-TEN-01`, `RN-DAT-02`, `RN-CON-01` |
+| Decisiones | `DEC-085`, `DEC-089`–`DEC-091`, `DEC-131` |
+| Actor | Cliente que reserva un turno |
+| Depende de | `HU-096`, `HU-097` integradas (satisfecho); credencial de Google Places Autocomplete configurada |
+| Bloquea | Ninguna |
+| Estado | Propuesta; sin issue real todavía |
+| Riesgo | Confirmar un turno a domicilio sin coordenadas reales deja al barbero sin saber a dónde ir; aceptar domicilio cuando la barbería lo desactivó entre la elección y el envío crea una expectativa que no se cumple. |
+
+**Historia**
+
+> Como cliente, quiero pedir que me atiendan a domicilio e indicar mi dirección con un mapa, cuando la barbería ofrece esa modalidad, para que el barbero sepa exactamente a dónde ir.
+
+**Alcance incluido**
+
+- `offers_home_service` en `barbershop` como interruptor general, editable en Configuración.
+- Paso «¿en el local o a domicilio?» en el flujo público, entre `HU-096` y la confirmación de `HU-097`, presente solo cuando `offers_home_service = true`.
+- Campo de dirección con autocompletado de Google Places y mapa interactivo de confirmación; exige una selección válida con coordenadas antes de continuar.
+- `is_home_service`, `service_address`, `service_latitude` y `service_longitude` en `appointment`, con una restricción que exige los tres datos de dirección juntos cuando hay domicilio y los tres nulos cuando no; la confirmación pública los acepta y los persiste en la misma transacción que crea el turno.
+- La dirección a domicilio es visible únicamente en el panel privado de esa barbería sobre ese turno.
+
+**Alcance excluido**
+
+- Cobro o recargo distinto por domicilio, radio de cobertura o distancia máxima, ruta u optimización de desplazamiento, domicilio como servicio propio del catálogo con su propio precio o duración, domicilio configurable por servicio individual.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-103-01` | `offers_home_service = false` no muestra el paso de modalidad; el turno siempre nace sin domicilio (`is_home_service = false`, los tres campos de dirección en `NULL`). |
+| `CA-103-02` | `offers_home_service = true` muestra el paso; elegir «en el local» continúa igual que `CA-103-01`. |
+| `CA-103-03` | Elegir «a domicilio» exige una selección válida del autocompletado con coordenadas antes de habilitar continuar; un texto libre sin selección no es suficiente. |
+| `CA-103-04` | Confirmar con domicilio persiste `is_home_service = true` junto con `service_address`/`latitude`/`longitude` en la misma transacción que crea el turno; confirmar sin domicilio deja los tres en `NULL`. Una combinación parcial queda impedida por una restricción de base de datos incluso ante un error de aplicación. |
+| `CA-103-05` | Confirmar con domicilio cuando `offers_home_service` pasó a `false` entre la elección y el envío responde `422` sin crear el turno, mismo criterio que las demás revalidaciones de `HU-097`. |
+| `CA-103-06` | La dirección a domicilio es visible en el panel privado de esa barbería sobre ese turno (agenda y detalle) y nunca en la reserva pública de otro cliente, en las reseñas de `HU-100`/`HU-101` ni en ningún registro (`RN-DAT-02`). |
+| `CA-103-07` | El paso de modalidad, el autocompletado y el mapa de confirmación cumplen teclado, foco visible, lector, zoom 200 % y los cuatro anchos normativos. |
+
+**Pruebas obligatorias:** PostgreSQL real con dos tenants sobre la restricción de consistencia; contrato de confirmación con y sin domicilio, y con `offers_home_service` revalidado; componente del selector de modalidad y el autocompletado (simulado); E2E completo con domicilio y sin él.
+
+**Terminado cuando** ningún turno a domicilio existe sin dirección geocodificada completa, y ningún turno sin domicilio arrastra datos de dirección.
+
+---
+
 ## 8. Historias pendientes de redacción
 
 | Bloque | Rango reservado | Se redacta cuando |
@@ -2397,7 +2579,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | B1 | `HU-029` – (`HU-026`, `HU-027` y `HU-028`: conexión, publicación y pantalla de Google Calendar, `DEC-099`) | `HU-020`–`HU-024` implementadas (`DEC-067`–`DEC-069` propagadas); redactar lo restante solo después de revisar el criterio de salida de B1 |
 | B2 | `HU-040` – `HU-042` | Integradas en `main` (PR `#93`, `#96`, `#99`); seguimientos parciales en issues `#90`, `#95`, `#98` y `#100` (este último completo el 2026-10-08) |
 | B3 | `HU-069` – | `HU-066`–`HU-068` ya integradas en `main`; continuar con T3 y cierre automático solo después de revisar este lote y resolver cualquier duda de semántica de snapshots/configuración |
-| B4 | `HU-100` – | `HU-090`–`HU-099` ya redactadas; `DP-PUB-01` resuelta (`DEC-082`), `HU-090` implementada (issue [#243](https://github.com/bcaceres19/barberia/issues/243), PR abierto); continuar con el resto solo después de resolver `DP-PUB-02`–`DP-PUB-06`/`CT-011` |
+| B4 | `HU-104` – | `HU-090`–`HU-103` ya redactadas (`HU-100`–`HU-103`: reseñas internas, reseñas de Google, ubicación y domicilio, `DEC-128`–`DEC-131`); continuar con el resto solo tras resolver cualquier duda nueva de esas cuatro historias |
 | B5 | `HU-130` – | B4 cumple su criterio de salida |
 | B6 | `HU-150` – | B5 cumple su criterio de salida |
 

@@ -1,9 +1,9 @@
 ---
 titulo: "Alcance del MVP"
-version: "1.0"
+version: "1.1"
 estado: "Borrador"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-08-05"
+ultima_actualizacion: "2026-10-26"
 documentos_relacionados:
   - "reglas-negocio.md"
   - "prioridades.md"
@@ -13,7 +13,7 @@ documentos_relacionados:
   - "../00-control/registro-decisiones.md"
 ---
 
-> **Estado del contenido:** Hay 45 funciones P0 confirmadas. No queda ninguna elevación pendiente del lote de decisiones del 5 de agosto de 2026.
+> **Estado del contenido:** Hay 49 funciones P0 confirmadas. No queda ninguna elevación pendiente del lote de decisiones del 5 de agosto de 2026; `F-PUB-09`–`F-PUB-12` se elevan el 2026-10-26 por instrucción directa del propietario (`DEC-128`–`DEC-131`).
 >
 > Este documento no convierte automáticamente las propuestas en decisiones aprobadas.
 
@@ -127,6 +127,10 @@ Se dejan explícitos para que nadie asuma lo contrario:
 | `F-PUB-06` | Identificación de la persona atendida | Se reutiliza el reservante; campo adicional solo si difiere. `RN-RES-02` |
 | `F-PUB-07` | Confirmación y acceso al turno | Pantalla, correo y enlace aleatorio largo para consultar o cancelar. `DEC-022` |
 | `F-PUB-08` | Cancelación por parte del cliente | Sujeta al plazo y a la política configurable posterior. `RN-CAN-01`, `RN-CAN-02` |
+| `F-PUB-09` | Reseñas y calificación interna por barbero | Solo tras turno `completed`, una por turno, publicación inmediata y ocultable. `DEC-128` |
+| `F-PUB-10` | Reseñas y estrellas de Google del negocio | Ficha de Google por barbería (o del barbero independiente); integración de pago. `DEC-129` |
+| `F-PUB-11` | Ubicación de la barbería en la reserva pública | Configurable; oculta si la barbería no tiene local. `DEC-130` |
+| `F-PUB-12` | Domicilio con dirección del cliente y mapa | Interruptor general de la barbería; dirección geocodificada obligatoria. `DEC-131` |
 
 ### Disponibilidad e integridad — `DISP`
 
@@ -265,6 +269,7 @@ No quedan dudas de este lote que cambien qué se construye. Las incorporaciones 
 | `DEC-026` | Defensa escalonada e incidente escrito entran en P0 |
 | `DEC-027` | Correo y WhatsApp oficial son canales del MVP |
 | `DEC-032` | `F-NOT-03` pasa a P0; `CT-001` queda resuelta |
+| `DEC-128`–`DEC-131` | `F-PUB-09`–`F-PUB-12` pasan a P0: reseñas internas por barbero, reseñas y estrellas de Google del negocio, ubicación configurable de la barbería y domicilio con dirección del cliente, todas por instrucción directa del propietario el 2026-10-26 |
 
 ---
 
