@@ -10,7 +10,8 @@ description: >
   plural y género gramatical, para que la interfaz concuerde). Los términos
   viajan recortados y en minúsculas; la interfaz capitaliza donde corresponde.
   Incluye el panel del usuario que consulta (`panelProfile`), derivado de sus
-  roles en la base de datos (`DEC-134`); no es un dato de la barbería.
+  roles en la base de datos (`DEC-134`); no es un dato de la barbería. Incluye
+  la ubicación física opcional que la reserva pública muestra (`DEC-130`).
 properties:
   accent:
     $ref: './BrandAccent.yaml'
@@ -26,6 +27,30 @@ properties:
     $ref: './BrandTermGender.yaml'
   panelProfile:
     $ref: './PanelProfile.yaml'
+  hasPhysicalLocation:
+    type: boolean
+    description: >
+      Interruptor explícito de `DEC-130`: `true` = la barbería tiene un local que
+      mostrar en la reserva pública. Apagarlo conserva `address` y las
+      coordenadas. Una barbería nueva nace con `true` y sin dirección.
+  address:
+    type: [string, "null"]
+    maxLength: 200
+    description: Dirección del local en texto; `null` mientras no se ha capturado.
+    examples:
+      - Calle 10 # 5-20, Bogotá
+  latitude:
+    type: [number, "null"]
+    minimum: -90
+    maximum: 90
+    description: >
+      Latitud resultante de geocodificar `address` en el servidor al guardarla;
+      `null` sin dirección. Solo lectura: el cliente no la envía.
+  longitude:
+    type: [number, "null"]
+    minimum: -180
+    maximum: 180
+    description: Longitud, igual que `latitude`.
 required:
   - accent
   - businessTerm
@@ -34,3 +59,7 @@ required:
   - professionalTermPlural
   - professionalTermGender
   - panelProfile
+  - hasPhysicalLocation
+  - address
+  - latitude
+  - longitude

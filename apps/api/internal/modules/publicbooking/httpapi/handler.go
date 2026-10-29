@@ -67,7 +67,14 @@ func (h *ResolveBarbershopHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 }
 
 func newPublicBarbershopProfileResponse(p publicbooking.BarbershopProfile) PublicBarbershopProfileResponse {
+	var location *PublicLocationResponse
+	if p.Location != nil {
+		location = &PublicLocationResponse{
+			Address: p.Location.Address, Latitude: p.Location.Latitude, Longitude: p.Location.Longitude,
+		}
+	}
 	return PublicBarbershopProfileResponse{
+		Location:     location,
 		Name:         p.Name,
 		Timezone:     p.Timezone,
 		ContactEmail: p.ContactEmail,

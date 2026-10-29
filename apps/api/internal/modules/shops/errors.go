@@ -99,3 +99,23 @@ func errBrandTermInvalid(field string) error {
 func errBrandGenderInvalid(field string) error {
 	return apperr.Validation(fmt.Sprintf("%s debe ser masculine o feminine", field))
 }
+
+func errAddressTooLong() error {
+	return apperr.Validation(fmt.Sprintf("address no puede superar %d caracteres", MaxAddressLength))
+}
+
+// errAddressUnresolvable es el 422 de CA-102-01: la dirección no se pudo ubicar
+// con precisión suficiente y NO se guardó nada.
+func errAddressUnresolvable() error {
+	return apperr.Validation(
+		"no pudimos ubicar esa dirección en el mapa; escríbela completa (calle, número y ciudad)")
+}
+
+// errGeocoderUnavailable cubre un fallo ajeno a la dirección (sin credencial,
+// cuota, red). El catálogo de errores no tiene un 503: se responde 422 con un
+// mensaje distinto para que la persona reintente, y la causa real solo se
+// registra en el servidor.
+func errGeocoderUnavailable() error {
+	return apperr.Validation(
+		"no pudimos verificar la dirección en este momento; inténtalo de nuevo en unos minutos")
+}

@@ -35,6 +35,13 @@ export async function resolveBarbershop(slug: string): Promise<ResolveBarbershop
             professionalTermPlural: data.vocabulary.professionalTermPlural,
             professionalTermGender: data.vocabulary.professionalTermGender,
           },
+          location: data.location
+            ? {
+                address: data.location.address,
+                latitude: data.location.latitude,
+                longitude: data.location.longitude,
+              }
+            : null,
         },
       }
     }

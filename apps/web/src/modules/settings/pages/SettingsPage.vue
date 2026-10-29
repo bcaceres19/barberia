@@ -42,11 +42,21 @@ import {
   type TextScaleKey,
   type ThemeMode,
 } from '@/shared/model'
-import { BaseAlert, BaseButton, BaseInput, DiamondLoader } from '@/shared/ui'
+import { isMapAvailable } from '@/shared/model/mapEmbed'
+import { BaseAlert, BaseButton, BaseInput, DiamondLoader, LocationMap } from '@/shared/ui'
 import { updateBarbershopName } from '@/modules/auth'
 import { fetchBrand, saveBrand } from '../api/brandApi'
 import { fetchBarbershopSettings, saveBarbershopSettings } from '../api/settingsApi'
 import { toFormValues, type BarbershopSettingsFormValues } from '../model/barbershopSettings'
+import { DEFAULT_LOCATION, type LocationSettings } from '../model/brandOutcome'
+import {
+  ADDRESS_MAX_LENGTH,
+  draftFromSaved,
+  locationChange,
+  sameLocation,
+  validateAddress,
+  type LocationDraft,
+} from '../model/locationDraft'
 import {
   brandForSave,
   BUSINESS_PRESETS,
@@ -98,6 +108,9 @@ const brand = reactive<BrandSettings>({ ...DEFAULT_BRAND })
 // Último valor confirmado por el servidor: contra él se mide qué cambió.
 const savedShop = ref<BarbershopSettingsFormValues>({ ...shop })
 const savedBrand = ref<BrandSettings>({ ...DEFAULT_BRAND })
+// Ubicación física (DEC-130): se guarda con la misma petición que la marca.
+const location = reactive<LocationDraft>(draftFromSaved(DEFAULT_LOCATION))
+const savedLocation = ref<LocationSettings>({ ...DEFAULT_LOCATION })
 
 const { start: startLoadingHold, hold: holdLoadingReveal } = useMinHoldLoading(PAGE_MIN_HOLD_MS)
 let requestToken = 0
@@ -115,6 +128,8 @@ async function load() {
       Object.assign(brand, brandOutcome.brand)
       savedShop.value = { ...shop }
       savedBrand.value = { ...brandOutcome.brand }
+      Object.assign(location, draftFromSaved(brandOutcome.location))
+      savedLocation.value = { ...brandOutcome.location }
       loadStatus.value = 'ready'
       return
     }
@@ -128,12 +143,14 @@ onMounted(load)
 
 const shopDirty = computed(() => !sameBarbershop(shop, savedShop.value))
 const brandDirty = computed(() => !sameBrand(brand, savedBrand.value))
-const dirty = computed(() => shopDirty.value || brandDirty.value)
+const locationDirty = computed(() => !sameLocation(location, savedLocation.value))
+const dirty = computed(() => shopDirty.value || brandDirty.value || locationDirty.value)
 
 const dirtySummary = computed(() => {
   const parts: string[] = []
   if (brandDirty.value) parts.push('marca y vocabulario')
   if (shopDirty.value) parts.push('datos básicos')
+  if (locationDirty.value) parts.push('ubicación')
   const text = parts.join(' y ')
   return text.charAt(0).toLocaleUpperCase('es') + text.slice(1)
 })
@@ -163,7 +180,8 @@ type FieldErrors = Partial<
     | 'contactPhone'
     | 'businessTerm'
     | 'professionalTerm'
-    | 'professionalTermPlural',
+    | 'professionalTermPlural'
+    | 'address',
     string
   >
 >
@@ -181,6 +199,7 @@ function runValidation(): FieldErrors {
   set('businessTerm', validateTerm(brand.businessTerm))
   set('professionalTerm', validateTerm(brand.professionalTerm))
   set('professionalTermPlural', validateTerm(brand.professionalTermPlural))
+  set('address', validateAddress(location.address))
   return errors
 }
 
@@ -193,6 +212,11 @@ function onShopInput<K extends keyof BarbershopSettingsFormValues>(
   value: string | number,
 ) {
   shop[field] = String(value)
+  revalidate()
+}
+
+function onAddressInput(value: string | number) {
+  location.address = String(value)
   revalidate()
 }
 
@@ -302,14 +326,30 @@ async function onSave() {
     }
   }
 
-  if (brandDirty.value) {
-    const outcome = await saveBrand(brandForSave(brand))
+  if (brandDirty.value || locationDirty.value) {
+    // La ubicación viaja en la misma petición que la marca (un solo PATCH): solo
+    // lo que cambió, para no volver a geocodificar una dirección sin tocar.
+    const outcome = await saveBrand(
+      brandForSave(brand),
+      locationChange(location, savedLocation.value),
+    )
     if (outcome.kind === 'success') {
       Object.assign(brand, outcome.brand)
       savedBrand.value = { ...outcome.brand }
+      Object.assign(location, draftFromSaved(outcome.location))
+      savedLocation.value = { ...outcome.location }
       setBrand(outcome.brand)
       setAccentPreview(null)
       savedSomething = true
+    } else if (outcome.kind === 'location-error') {
+      // Nada se guardó (ni la marca): el error se muestra junto al campo.
+      fieldErrors.value = {
+        ...fieldErrors.value,
+        address:
+          'No pudimos ubicar esa dirección en el mapa. Escríbela completa: calle, número y ciudad.',
+      }
+      attempted.value = true
+      void focusFirstError()
     } else {
       brandError.value =
         outcome.kind === 'validation-error'
@@ -334,6 +374,7 @@ function onDiscard() {
   if (saving.value) return
   Object.assign(shop, savedShop.value)
   Object.assign(brand, savedBrand.value)
+  Object.assign(location, draftFromSaved(savedLocation.value))
   setAccentPreview(null)
   attempted.value = false
   fieldErrors.value = {}
@@ -386,9 +427,10 @@ const SECTIONS = [
   { id: 'configuracion-vocabulario', number: '03', label: 'Vocabulario' },
   { id: 'configuracion-hora', number: '04', label: 'Hora' },
   { id: 'configuracion-contacto', number: '05', label: 'Contacto' },
-  { id: 'configuracion-enlace', number: '06', label: 'Enlace' },
-  { id: 'configuracion-reservas', number: '07', label: 'Reservas' },
-  { id: 'configuracion-integraciones', number: '08', label: 'Integraciones' },
+  { id: 'configuracion-ubicacion', number: '06', label: 'Ubicación' },
+  { id: 'configuracion-enlace', number: '07', label: 'Enlace' },
+  { id: 'configuracion-reservas', number: '08', label: 'Reservas' },
+  { id: 'configuracion-integraciones', number: '09', label: 'Integraciones' },
 ] as const
 
 const activeSection = ref<string>(SECTIONS[0].id)
@@ -907,24 +949,84 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
             </div>
           </SettingsPanel>
 
-          <!-- 06 · Enlace público de reservas (DEC-117): solo lectura, no es parte del borrador -->
+          <!-- 06 · Ubicación (DEC-130, HU-102): interruptor, dirección y vista previa del mapa -->
+          <SettingsPanel
+            id="configuracion-ubicacion"
+            number="06"
+            title="Ubicación"
+            description="Dónde queda tu local. Tus clientes ven el mapa al reservar."
+            scope="shop"
+            :scope-label="`Para ${v.theBusiness}`"
+            style="--panel-index: 5"
+          >
+            <SwitchField
+              v-model="location.hasPhysicalLocation"
+              label="Tengo un local que mostrar"
+              :hint="
+                location.hasPhysicalLocation
+                  ? 'Tus clientes verán el mapa y la dirección en la reserva pública.'
+                  : 'Apagado: la reserva pública no muestra mapa ni dirección. Útil si atiendes solo a domicilio; tu dirección se conserva.'
+              "
+              :disabled="saving"
+            />
+            <BaseInput
+              :model-value="location.address"
+              name="address"
+              label="Dirección del local"
+              hint="Calle, número y ciudad. La ubicamos en el mapa al guardar."
+              :maxlength="ADDRESS_MAX_LENGTH"
+              autocomplete="street-address"
+              :disabled="saving"
+              :error="fieldErrors.address"
+              :class="{ 'settings-input--filled': !!location.address }"
+              @update:model-value="onAddressInput"
+            />
+            <p class="settings-field__hint">
+              La dirección es pública: cualquiera que abra tu enlace de reservas puede verla. Si
+              trabajas desde tu casa, apaga el interruptor para no mostrarla.
+            </p>
+            <div
+              v-if="
+                savedLocation.address &&
+                savedLocation.latitude !== null &&
+                savedLocation.longitude !== null &&
+                isMapAvailable()
+              "
+              class="settings-location-preview"
+            >
+              <span class="settings-field__label settings-field__label--sub">
+                {{
+                  savedLocation.hasPhysicalLocation
+                    ? 'Así se ve en tu reserva pública'
+                    : 'Guardada, pero oculta mientras el interruptor siga apagado'
+                }}
+              </span>
+              <LocationMap
+                :latitude="savedLocation.latitude"
+                :longitude="savedLocation.longitude"
+                :address="savedLocation.address"
+              />
+            </div>
+          </SettingsPanel>
+
+          <!-- 07 · Enlace público de reservas (DEC-117): solo lectura, no es parte del borrador -->
           <SettingsPanel
             id="configuracion-enlace"
-            number="06"
+            number="07"
             title="Enlace público"
             description="La dirección que compartes para que tus clientes reserven. Cópiala cuando la necesites."
-            style="--panel-index: 5"
+            style="--panel-index: 6"
           >
             <PublicLinkPanel />
           </SettingsPanel>
 
-          <!-- 07 · Reservas públicas: enlace a su propia pantalla (HU-093) -->
+          <!-- 08 · Reservas públicas: enlace a su propia pantalla (HU-093) -->
           <SettingsPanel
             id="configuracion-reservas"
-            number="07"
+            number="08"
             title="Reservas"
             description="Cuándo y con cuánta anticipación pueden reservar tus clientes, y cómo cancelan."
-            style="--panel-index: 6"
+            style="--panel-index: 7"
           >
             <RouterLink :to="{ name: 'configuracion-reserva-publica' }" class="settings-link">
               <span class="settings-link__copy">
@@ -937,13 +1039,13 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
             </RouterLink>
           </SettingsPanel>
 
-          <!-- 08 · Integraciones: enlace a la pantalla de Google Calendar (DEC-099) -->
+          <!-- 09 · Integraciones: enlace a la pantalla de Google Calendar (DEC-099) -->
           <SettingsPanel
             id="configuracion-integraciones"
-            number="08"
+            number="09"
             title="Integraciones"
             description="Conecta tu calendario para ver tu agenda de NAVA donde ya organizas tu día."
-            style="--panel-index: 7"
+            style="--panel-index: 8"
           >
             <RouterLink :to="{ name: 'integraciones-google-calendar' }" class="settings-link">
               <span class="settings-link__copy">
@@ -1122,6 +1224,12 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
   font-size: var(--font-size-caption);
   line-height: 18px;
   color: var(--color-on-strong-muted);
+}
+
+.settings-location-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .settings-grid {

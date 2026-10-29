@@ -261,6 +261,14 @@ type Config struct {
 	// GoogleCalendarPreviousKeys son claves anteriores, "id:base64" separadas
 	// por coma, que siguen sirviendo para DESCIFRAR lo guardado antes de rotar.
 	GoogleCalendarPreviousKeys []string
+
+	// GoogleMapsAPIKey es la clave de SERVIDOR de Google Maps Platform
+	// (GOOGLE_MAPS_API_KEY) que usa el backend para geocodificar la dirección de
+	// la barbería al guardarla (DEC-130) y, en HU-101, para consultar Places. Es
+	// opcional: vacía deja la verificación de direcciones sin servicio (en local
+	// y test se sustituye por un geocodificador simulado). Nunca se envía al
+	// navegador; el mapa del frontend usa otra clave, restringida por dominio.
+	GoogleMapsAPIKey string
 }
 
 // GoogleCalendarEnabled informa si están las cuatro variables que activan la
@@ -460,6 +468,8 @@ func Load() (Config, error) {
 		GoogleCalendarTokenEncryptionKey: getEnv("GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY", ""),
 		GoogleCalendarTokenKeyID:         getEnv("GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY_ID", "v1"),
 		GoogleCalendarPreviousKeys:       getEnvCSV("GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY_PREVIOUS"),
+
+		GoogleMapsAPIKey: getEnv("GOOGLE_MAPS_API_KEY", ""),
 	}
 	if err := validateGoogleCalendar(cfg); err != nil {
 		return Config{}, err

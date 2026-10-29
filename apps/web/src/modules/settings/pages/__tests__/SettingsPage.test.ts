@@ -22,6 +22,7 @@ import {
   setBrand,
 } from '@/shared/model'
 import { resetToasts, toastState } from '@/shared/model/toastStore'
+import { DEFAULT_LOCATION } from '../../model/brandOutcome'
 
 const fetchMock = vi.hoisted(() => vi.fn())
 const saveMock = vi.hoisted(() => vi.fn())
@@ -72,7 +73,7 @@ async function settle() {
 
 async function mountReady(brand = DEFAULT_BRAND) {
   fetchMock.mockResolvedValueOnce({ kind: 'success', settings: loadedSettings })
-  fetchBrandMock.mockResolvedValueOnce({ kind: 'success', brand })
+  fetchBrandMock.mockResolvedValueOnce({ kind: 'success', brand, location: DEFAULT_LOCATION })
   const wrapper = mount(SettingsPage, mountOptions)
   await settle()
   return wrapper
@@ -103,7 +104,11 @@ describe('SettingsPage', () => {
     it('shows a non-blank loading state, then the loaded values of both resources', async () => {
       let resolveFetch: (value: unknown) => void = () => {}
       fetchMock.mockReturnValueOnce(new Promise((resolve) => (resolveFetch = resolve)))
-      fetchBrandMock.mockResolvedValueOnce({ kind: 'success', brand: DEFAULT_BRAND })
+      fetchBrandMock.mockResolvedValueOnce({
+        kind: 'success',
+        brand: DEFAULT_BRAND,
+        location: DEFAULT_LOCATION,
+      })
       const wrapper = mount(SettingsPage, mountOptions)
 
       expect(wrapper.text()).toContain('Cargando')
@@ -129,7 +134,11 @@ describe('SettingsPage', () => {
       'shows a recoverable error with Reintentar when the %s fail to load',
       async (_name, fail) => {
         fetchMock.mockResolvedValue({ kind: 'success', settings: loadedSettings })
-        fetchBrandMock.mockResolvedValue({ kind: 'success', brand: DEFAULT_BRAND })
+        fetchBrandMock.mockResolvedValue({
+          kind: 'success',
+          brand: DEFAULT_BRAND,
+          location: DEFAULT_LOCATION,
+        })
         fail()
         const wrapper = mount(SettingsPage, mountOptions)
         await settle()
@@ -150,7 +159,11 @@ describe('SettingsPage', () => {
         kind: 'success',
         settings: { ...loadedSettings, contactEmail: null, contactPhone: null },
       })
-      fetchBrandMock.mockResolvedValueOnce({ kind: 'success', brand: DEFAULT_BRAND })
+      fetchBrandMock.mockResolvedValueOnce({
+        kind: 'success',
+        brand: DEFAULT_BRAND,
+        location: DEFAULT_LOCATION,
+      })
       const wrapper = mount(SettingsPage, mountOptions)
       await settle()
 
@@ -215,7 +228,11 @@ describe('SettingsPage', () => {
 
     it('saves only the brand when only it changed, normalized, and publishes it to the whole app', async () => {
       const wrapper = await mountReady()
-      saveBrandMock.mockImplementationOnce(async (brand) => ({ kind: 'success', brand }))
+      saveBrandMock.mockImplementationOnce(async (brand) => ({
+        kind: 'success',
+        brand,
+        location: DEFAULT_LOCATION,
+      }))
 
       await wrapper.get('input[name="businessTerm"]').setValue('  Salón   de Belleza ')
       await submit(wrapper)
@@ -234,7 +251,11 @@ describe('SettingsPage', () => {
         kind: 'success',
         settings: { ...loadedSettings, name: 'Nuevo' },
       })
-      saveBrandMock.mockImplementationOnce(async (brand) => ({ kind: 'success', brand }))
+      saveBrandMock.mockImplementationOnce(async (brand) => ({
+        kind: 'success',
+        brand,
+        location: DEFAULT_LOCATION,
+      }))
 
       await wrapper.get('input[name="name"]').setValue('Nuevo')
       await wrapper.get('input[name="businessTerm"]').setValue('estudio')
@@ -365,7 +386,11 @@ describe('SettingsPage', () => {
 
     it('saves the accent and keeps it as the confirmed one', async () => {
       const wrapper = await mountReady()
-      saveBrandMock.mockImplementationOnce(async (brand) => ({ kind: 'success', brand }))
+      saveBrandMock.mockImplementationOnce(async (brand) => ({
+        kind: 'success',
+        brand,
+        location: DEFAULT_LOCATION,
+      }))
 
       await wrapper.get('input[type="radio"][value="sapphire"]').setValue(true)
       await submit(wrapper)
@@ -392,12 +417,16 @@ describe('SettingsPage', () => {
       const wrapper = await mountReady()
 
       const numbers = wrapper.findAll('.settings-panel__number').map((n) => n.text())
-      expect(numbers).toEqual(['01', '02', '03', '04', '05', '06', '07', '08'])
+      expect(numbers).toEqual(['01', '02', '03', '04', '05', '06', '07', '08', '09'])
     })
 
     it('keeps the panel of the user when the brand is saved, and never sends it', async () => {
       const wrapper = await mountReady({ ...DEFAULT_BRAND, panelProfile: 'employee' })
-      saveBrandMock.mockImplementation(async (brand) => ({ kind: 'success', brand }))
+      saveBrandMock.mockImplementation(async (brand) => ({
+        kind: 'success',
+        brand,
+        location: DEFAULT_LOCATION,
+      }))
 
       await wrapper.get('input[type="radio"][value="sapphire"]').setValue(true)
       await submit(wrapper)
@@ -529,15 +558,160 @@ describe('SettingsPage', () => {
     })
   })
 
+  describe('ubicación (DEC-130, HU-102)', () => {
+    const savedLocation = {
+      hasPhysicalLocation: true,
+      address: 'Calle 10 # 5-20, Bogotá',
+      latitude: 4.598056,
+      longitude: -74.076111,
+    }
+
+    async function mountWithLocation(location: typeof savedLocation | typeof DEFAULT_LOCATION) {
+      fetchMock.mockResolvedValueOnce({ kind: 'success', settings: loadedSettings })
+      fetchBrandMock.mockResolvedValueOnce({ kind: 'success', brand: DEFAULT_BRAND, location })
+      const wrapper = mount(SettingsPage, mountOptions)
+      await settle()
+      return wrapper
+    }
+
+    it('adds the section 06 with the switch and the saved address', async () => {
+      const wrapper = await mountWithLocation(savedLocation)
+
+      const panel = wrapper.get('#configuracion-ubicacion')
+      expect(panel.get('.settings-panel__number').text()).toBe('06')
+      expect(panel.get('h2').text()).toBe('Ubicación')
+      expect(panel.get('[role="switch"]').attributes('aria-checked')).toBe('true')
+      expect((panel.get('input[name="address"]').element as HTMLInputElement).value).toBe(
+        'Calle 10 # 5-20, Bogotá',
+      )
+      expect(wrapper.get('a[href="#configuracion-ubicacion"]').text()).toContain('Ubicación')
+      wrapper.unmount()
+    })
+
+    it('previews the saved map only when there are coordinates', async () => {
+      const withMap = await mountWithLocation(savedLocation)
+      expect(withMap.find('#configuracion-ubicacion iframe').exists()).toBe(true)
+      withMap.unmount()
+
+      const without = await mountWithLocation(DEFAULT_LOCATION)
+      expect(without.find('#configuracion-ubicacion iframe').exists()).toBe(false)
+      without.unmount()
+    })
+
+    it('warns that the address is public', async () => {
+      const wrapper = await mountWithLocation(DEFAULT_LOCATION)
+
+      expect(wrapper.get('#configuracion-ubicacion').text()).toContain('La dirección es pública')
+      wrapper.unmount()
+    })
+
+    it('sends only the new address (trimmed) and keeps the switch untouched', async () => {
+      const wrapper = await mountWithLocation(DEFAULT_LOCATION)
+      saveBrandMock.mockImplementationOnce(async (brand) => ({
+        kind: 'success',
+        brand,
+        location: { ...savedLocation },
+      }))
+
+      await wrapper.get('input[name="address"]').setValue('  Calle 10   # 5-20, Bogotá ')
+      expect(wrapper.get('.save-bar').text()).toContain('Ubicación')
+      await submit(wrapper)
+
+      expect(saveBrandMock).toHaveBeenCalledTimes(1)
+      expect(saveBrandMock.mock.calls[0]![1]).toEqual({ address: 'Calle 10 # 5-20, Bogotá' })
+      expect(saveMock).not.toHaveBeenCalled()
+      // Tras guardar aparece la vista previa con las coordenadas que fijó el servidor.
+      expect(wrapper.find('#configuracion-ubicacion iframe').exists()).toBe(true)
+      expect(wrapper.find('.save-bar').exists()).toBe(false)
+      wrapper.unmount()
+    })
+
+    it('turning the switch off sends only the switch, never the address', async () => {
+      const wrapper = await mountWithLocation(savedLocation)
+      saveBrandMock.mockImplementationOnce(async (brand) => ({
+        kind: 'success',
+        brand,
+        location: { ...savedLocation, hasPhysicalLocation: false },
+      }))
+
+      await wrapper.get('#configuracion-ubicacion [role="switch"]').trigger('click')
+      await submit(wrapper)
+
+      expect(saveBrandMock.mock.calls[0]![1]).toEqual({ hasPhysicalLocation: false })
+      expect(wrapper.get('#configuracion-ubicacion').text()).toContain('oculta')
+      wrapper.unmount()
+    })
+
+    it('clearing the address sends null to remove it with its coordinates', async () => {
+      const wrapper = await mountWithLocation(savedLocation)
+      saveBrandMock.mockImplementationOnce(async (brand) => ({
+        kind: 'success',
+        brand,
+        location: DEFAULT_LOCATION,
+      }))
+
+      await wrapper.get('input[name="address"]').setValue('   ')
+      await submit(wrapper)
+
+      expect(saveBrandMock.mock.calls[0]![1]).toEqual({ address: null })
+      wrapper.unmount()
+    })
+
+    it('shows a recoverable error next to the field when the address cannot be located (CA-102-01)', async () => {
+      const wrapper = await mountWithLocation(savedLocation)
+      saveBrandMock.mockResolvedValueOnce({ kind: 'location-error' })
+
+      await wrapper.get('input[name="address"]').setValue('Ninguna parte 999')
+      await submit(wrapper)
+
+      const panel = wrapper.get('#configuracion-ubicacion')
+      expect(panel.text()).toContain('No pudimos ubicar esa dirección')
+      expect(panel.get('input[name="address"]').attributes('aria-invalid')).toBe('true')
+      // Lo escrito se conserva y no se anuncia un guardado que no ocurrió.
+      expect((panel.get('input[name="address"]').element as HTMLInputElement).value).toBe(
+        'Ninguna parte 999',
+      )
+      expect(toastState.items).toHaveLength(0)
+      expect(wrapper.find('.save-bar').exists()).toBe(true)
+      wrapper.unmount()
+    })
+
+    it('rejects an address over 200 characters before sending', async () => {
+      const wrapper = await mountWithLocation(DEFAULT_LOCATION)
+
+      await wrapper.get('input[name="address"]').setValue('x'.repeat(201))
+      await submit(wrapper)
+
+      expect(saveBrandMock).not.toHaveBeenCalled()
+      wrapper.unmount()
+    })
+
+    it('discarding restores the saved address and switch', async () => {
+      const wrapper = await mountWithLocation(savedLocation)
+
+      await wrapper.get('input[name="address"]').setValue('Otra dirección')
+      await wrapper.get('#configuracion-ubicacion [role="switch"]').trigger('click')
+      await wrapper.get('.save-bar button[type="button"]').trigger('click')
+
+      expect((wrapper.get('input[name="address"]').element as HTMLInputElement).value).toBe(
+        'Calle 10 # 5-20, Bogotá',
+      )
+      expect(
+        wrapper.get('#configuracion-ubicacion [role="switch"]').attributes('aria-checked'),
+      ).toBe('true')
+      wrapper.unmount()
+    })
+  })
+
   describe('enlace público (DEC-117)', () => {
-    it('adds the link as section 06, before the booking rules, and lists it in the index', async () => {
+    it('adds the link as section 07, before the booking rules, and lists it in the index', async () => {
       const wrapper = await mountReady()
 
       const panel = wrapper.get('#configuracion-enlace')
-      expect(panel.get('.settings-panel__number').text()).toBe('06')
+      expect(panel.get('.settings-panel__number').text()).toBe('07')
       expect(panel.get('h2').text()).toBe('Enlace público')
       expect(panel.get('[role="textbox"]').text()).toContain('/reservar/barberia-ejemplo-k7x2m9')
-      expect(wrapper.get('#configuracion-reservas .settings-panel__number').text()).toBe('07')
+      expect(wrapper.get('#configuracion-reservas .settings-panel__number').text()).toBe('08')
       expect(wrapper.get('a[href="#configuracion-enlace"]').text()).toContain('Enlace')
       wrapper.unmount()
     })

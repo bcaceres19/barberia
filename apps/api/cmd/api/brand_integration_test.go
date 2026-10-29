@@ -67,7 +67,8 @@ func restoreBrandRow(t *testing.T, db *database.DB, shop string) {
 				`UPDATE barbershop
 				    SET brand_accent = 'brass', business_term = 'barbería', business_term_gender = 'feminine',
 				        professional_term = 'barbero', professional_term_plural = 'barberos',
-				        professional_term_gender = 'masculine'
+				        professional_term_gender = 'masculine',
+				        has_physical_location = true, address = NULL, latitude = NULL, longitude = NULL
 				  WHERE id = $1`, shop)
 			return err
 		})
@@ -274,5 +275,131 @@ func TestBrand_HTTP_PatchRejectsPanelProfile(t *testing.T) {
 	}
 	if got := decodeBrand(t, doBrandRequest(router, http.MethodGet, raw, nil)); got != initialBrand {
 		t.Fatalf("a rejected PATCH must not write anything, got %+v", got)
+	}
+}
+
+// locationBody es la parte de ubicación (DEC-130) del recurso de marca. Se
+// decodifica aparte de brandBody para no alterar las comparaciones de marca.
+type locationBody struct {
+	HasPhysicalLocation bool     `json:"hasPhysicalLocation"`
+	Address             *string  `json:"address"`
+	Latitude            *float64 `json:"latitude"`
+	Longitude           *float64 `json:"longitude"`
+}
+
+func decodeLocation(t *testing.T, rec *httptest.ResponseRecorder) locationBody {
+	t.Helper()
+	var body locationBody
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode location: %v: %s", err, rec.Body.String())
+	}
+	return body
+}
+
+// patchBody arma un PATCH de marca válido más los campos de ubicación dados.
+func patchBody(extra map[string]any) map[string]any {
+	body := map[string]any{
+		"accent": "brass", "businessTerm": "barbería", "businessTermGender": "feminine",
+		"professionalTerm": "barbero", "professionalTermPlural": "barberos", "professionalTermGender": "masculine",
+	}
+	for k, v := range extra {
+		body[k] = v
+	}
+	return body
+}
+
+// TestBrand_HTTP_Location_GeocodesOnSaveAndKeepsItWhenTheSwitchIsOff cubre
+// CA-102-01 y CA-102-05 contra el router real: una dirección se convierte en
+// coordenadas al guardar (geocodificador simulado en el ambiente `test`),
+// apagar el interruptor conserva el dato y reactivarlo lo devuelve.
+func TestBrand_HTTP_Location_GeocodesOnSaveAndKeepsItWhenTheSwitchIsOff(t *testing.T) {
+	db := setupTestDB(t)
+	t.Cleanup(func() { db.Close() })
+	router, err := buildRouter(db, discardLogger(), testRouterConfig())
+	if err != nil {
+		t.Fatalf("buildRouter: %v", err)
+	}
+	restoreBrandRow(t, db, shopA)
+	raw := createSessionCookie(t, db, shopA, staffUserActiveA, "brand-location-a")
+
+	saved := doBrandRequest(router, http.MethodPatch, raw, patchBody(map[string]any{"address": "  Calle 10   # 5-20, Bogotá "}))
+	if saved.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", saved.Code, saved.Body.String())
+	}
+	loc := decodeLocation(t, saved)
+	if !loc.HasPhysicalLocation || loc.Address == nil || *loc.Address != "Calle 10 # 5-20, Bogotá" ||
+		loc.Latitude == nil || loc.Longitude == nil {
+		t.Fatalf("debe guardar la dirección normalizada con sus coordenadas: %+v", loc)
+	}
+
+	// Un PATCH de la marca sin tocar la ubicación no la altera.
+	same := decodeLocation(t, doBrandRequest(router, http.MethodPatch, raw, patchBody(nil)))
+	if same.Address == nil || same.Latitude == nil || *same.Latitude != *loc.Latitude {
+		t.Fatalf("un PATCH sin ubicación no debe tocarla: %+v", same)
+	}
+
+	off := decodeLocation(t, doBrandRequest(router, http.MethodPatch, raw, patchBody(map[string]any{"hasPhysicalLocation": false})))
+	if off.HasPhysicalLocation || off.Address == nil || off.Latitude == nil {
+		t.Fatalf("CA-102-05: apagar conserva dirección y coordenadas: %+v", off)
+	}
+	on := decodeLocation(t, doBrandRequest(router, http.MethodPatch, raw, patchBody(map[string]any{"hasPhysicalLocation": true})))
+	if !on.HasPhysicalLocation || on.Address == nil || *on.Latitude != *loc.Latitude {
+		t.Fatalf("CA-102-05: reactivar devuelve lo guardado sin recapturar: %+v", on)
+	}
+
+	cleared := decodeLocation(t, doBrandRequest(router, http.MethodPatch, raw, patchBody(map[string]any{"address": nil})))
+	if cleared.Address != nil || cleared.Latitude != nil || cleared.Longitude != nil {
+		t.Fatalf("address null quita dirección y coordenadas: %+v", cleared)
+	}
+}
+
+// TestBrand_HTTP_Location_UnresolvableAddress_Returns422AndKeepsThePrevious
+// cubre CA-102-01: una dirección que no se geocodifica se rechaza con 422 y el
+// valor anterior queda intacto (el geocodificador simulado rechaza < 5 letras).
+func TestBrand_HTTP_Location_UnresolvableAddress_Returns422AndKeepsThePrevious(t *testing.T) {
+	db := setupTestDB(t)
+	t.Cleanup(func() { db.Close() })
+	router, err := buildRouter(db, discardLogger(), testRouterConfig())
+	if err != nil {
+		t.Fatalf("buildRouter: %v", err)
+	}
+	restoreBrandRow(t, db, shopA)
+	raw := createSessionCookie(t, db, shopA, staffUserActiveA, "brand-location-422")
+
+	if rec := doBrandRequest(router, http.MethodPatch, raw, patchBody(map[string]any{"address": "Carrera 7 # 32-16"})); rec.Code != http.StatusOK {
+		t.Fatalf("seed: %d %s", rec.Code, rec.Body.String())
+	}
+	bad := doBrandRequest(router, http.MethodPatch, raw, patchBody(map[string]any{"address": "ab", "accent": "ruby"}))
+	if bad.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422, got %d: %s", bad.Code, bad.Body.String())
+	}
+	got := doBrandRequest(router, http.MethodGet, raw, nil)
+	if loc := decodeLocation(t, got); loc.Address == nil || *loc.Address != "Carrera 7 # 32-16" {
+		t.Fatalf("la dirección anterior debe quedar intacta: %+v", loc)
+	}
+	if decodeBrand(t, got).Accent != "brass" {
+		t.Fatal("un 422 de ubicación no debe guardar tampoco el resto de la marca")
+	}
+}
+
+// TestBrand_HTTP_Location_TwoTenants_NeverCrossesBarbershops: la ubicación de A
+// no aparece en B.
+func TestBrand_HTTP_Location_TwoTenants_NeverCrossesBarbershops(t *testing.T) {
+	db := setupTestDB(t)
+	t.Cleanup(func() { db.Close() })
+	router, err := buildRouter(db, discardLogger(), testRouterConfig())
+	if err != nil {
+		t.Fatalf("buildRouter: %v", err)
+	}
+	restoreBrandRow(t, db, shopA)
+	restoreBrandRow(t, db, shopB)
+	rawA := createSessionCookie(t, db, shopA, staffUserActiveA, "brand-location-twoa")
+	rawB := createSessionCookie(t, db, shopB, staffUserActiveB, "brand-location-twob")
+
+	if rec := doBrandRequest(router, http.MethodPatch, rawA, patchBody(map[string]any{"address": "Solo de la barbería A"})); rec.Code != http.StatusOK {
+		t.Fatalf("seed A: %d %s", rec.Code, rec.Body.String())
+	}
+	if loc := decodeLocation(t, doBrandRequest(router, http.MethodGet, rawB, nil)); loc.Address != nil || loc.Latitude != nil {
+		t.Fatalf("RN-TEN-01: la ubicación de A se filtró a B: %+v", loc)
 	}
 }

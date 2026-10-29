@@ -299,6 +299,18 @@ func TestContract_OpenAPIYAML_RegistersBookingPolicyPath(t *testing.T) {
 	}
 }
 
+// pick devuelve solo las propiedades pedidas, para comprobar un subconjunto
+// con requireProps sin exigir que el resto sea required.
+func pick(props map[string]any, names []string) map[string]any {
+	out := make(map[string]any, len(names))
+	for _, n := range names {
+		if v, ok := props[n]; ok {
+			out[n] = v
+		}
+	}
+	return out
+}
+
 // --- Marca y vocabulario (issue #292, DEC-110) ------------------------------
 
 type brandPathFile struct {
@@ -321,16 +333,49 @@ var brandFields = []string{
 // desde DEC-134 lo deriva el API de los roles del usuario y ya no se envía.
 const panelProfileField = "panelProfile"
 
+// Ubicación de la barbería (DEC-130, HU-102): la respuesta siempre trae los
+// cuatro; la petición solo admite el interruptor y la dirección (opcionales:
+// ausente = sin cambio), nunca las coordenadas, que calcula el servidor.
+var (
+	locationResponseFields = []string{"hasPhysicalLocation", "address", "latitude", "longitude"}
+	locationRequestFields  = []string{"hasPhysicalLocation", "address"}
+)
+
 // TestContract_BrandSchemas_MatchDTOFields verifica que BrandResponse y
 // UpdateBrandRequest declaran exactamente los campos de los DTO y que ninguno
 // declara barbershopId (el tenant sale solo de la sesión). panelProfile solo
 // existe en la respuesta: el panel lo deciden los roles (DEC-134).
 func TestContract_BrandSchemas_MatchDTOFields(t *testing.T) {
 	response := loadYAML[schemaDoc](t, "api/openapi/components/schemas/BrandResponse.yaml")
-	requireProps(t, response, append(append([]string{}, brandFields...), panelProfileField))
+	responseFields := append(append([]string{}, brandFields...), panelProfileField)
+	responseFields = append(responseFields, locationResponseFields...)
+	requireProps(t, response, responseFields)
+	for _, field := range locationResponseFields {
+		if !containsString(response.Required, field) {
+			t.Errorf("BrandResponse no marca %q como required", field)
+		}
+	}
 
 	request := loadYAML[schemaDoc](t, "api/openapi/components/schemas/UpdateBrandRequest.yaml")
-	requireProps(t, request, brandFields)
+	requireProps(t, schemaDoc{Properties: pick(request.Properties, brandFields), Required: request.Required}, brandFields)
+	if len(request.Properties) != len(brandFields)+len(locationRequestFields) {
+		t.Fatalf("UpdateBrandRequest declara %d propiedades, se esperaban %d", len(request.Properties), len(brandFields)+len(locationRequestFields))
+	}
+	for _, field := range locationRequestFields {
+		if _, ok := request.Properties[field]; !ok {
+			t.Errorf("UpdateBrandRequest no declara %q", field)
+		}
+	}
+	for _, field := range []string{"latitude", "longitude"} {
+		if _, ok := request.Properties[field]; ok {
+			t.Fatalf("UpdateBrandRequest no debe declarar %s: lo calcula el servidor (DEC-130)", field)
+		}
+	}
+	for _, field := range locationRequestFields {
+		if containsString(request.Required, field) {
+			t.Errorf("UpdateBrandRequest marca %q como required: debe ser opcional (ausente = sin cambio)", field)
+		}
+	}
 	if _, ok := request.Properties[panelProfileField]; ok {
 		t.Fatalf("UpdateBrandRequest no debe declarar %s: lo deciden los roles (DEC-134)", panelProfileField)
 	}

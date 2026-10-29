@@ -4,6 +4,28 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.39.0 · 2026-10-30
+
+### Añadido
+
+- Ubicación física de la barbería (`DEC-130`, `HU-102`). `BrandResponse` suma
+  `hasPhysicalLocation`, `address`, `latitude` y `longitude` (siempre presentes,
+  con `null` explícito sin dirección) y `UpdateBrandRequest` suma
+  `hasPhysicalLocation` y `address`, ambos opcionales: ausentes no tocan la
+  ubicación. Una dirección nueva se geocodifica en el servidor y, si no se puede
+  ubicar con precisión de calle, `PATCH /private/settings/brand` responde `422`
+  sin escribir nada; apagar el interruptor conserva dirección y coordenadas.
+  Las coordenadas son solo lectura.
+- `PublicBarbershopProfile` suma la propiedad obligatoria `location`
+  (`PublicLocation` o `null`): solo viaja con el interruptor activo y
+  coordenadas guardadas.
+
+### Compatibilidad
+
+- Compatible para quien envía `PATCH` sin los campos nuevos. Un cliente que
+  valida estrictamente la respuesta de `GET /private/settings/brand` o de
+  `GET /public/barbershops/{slug}` debe conocer las propiedades nuevas.
+
 ## 0.38.0 · 2026-10-28
 
 ### Cambiado

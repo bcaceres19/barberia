@@ -40,9 +40,19 @@ properties:
       - "+573001234567"
   vocabulary:
     $ref: './PublicVocabulary.yaml'
+  location:
+    oneOf:
+      - $ref: './PublicLocation.yaml'
+      - type: "null"
+    description: >
+      Ubicación física de la barbería (`DEC-130`). `null` salvo que la barbería
+      haya activado la ubicación y tenga coordenadas: con el interruptor
+      apagado, o sin dirección geocodificada, la reserva pública no pinta
+      ninguna sección.
 required:
   - name
   - timezone
   - contactEmail
   - contactPhone
   - vocabulary
+  - location

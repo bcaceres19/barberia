@@ -2491,7 +2491,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Actor | Cliente que visita la reserva pública |
 | Depende de | Credencial de Geocoding/Maps configurada en el ambiente de despliegue |
 | Bloquea | Ninguna |
-| Estado | Propuesta; sin issue real todavía |
+| Estado | Implementada en [#359](https://github.com/bcaceres19/barberia/issues/359) |
 | Riesgo | Geocodificar mal una dirección, o mostrar un mapa de una barbería que solo atiende a domicilio, confunde al cliente sobre dónde se presta el servicio. |
 
 **Historia**

@@ -16,6 +16,7 @@ import (
 type brandUpdateCall struct {
 	barbershopID string
 	brand        shops.Brand
+	location     shops.LocationWrite
 }
 
 type fakeBrandRepository struct {
@@ -32,8 +33,8 @@ func (f *fakeBrandRepository) Get(_ context.Context, _ string) (shops.Brand, boo
 	return f.getBrand, f.getFound, f.getErr
 }
 
-func (f *fakeBrandRepository) Update(_ context.Context, barbershopID string, brand shops.Brand) (shops.BrandUpdateResult, error) {
-	f.updateCalls = append(f.updateCalls, brandUpdateCall{barbershopID, brand})
+func (f *fakeBrandRepository) Update(_ context.Context, barbershopID string, brand shops.Brand, location shops.LocationWrite) (shops.BrandUpdateResult, error) {
+	f.updateCalls = append(f.updateCalls, brandUpdateCall{barbershopID, brand, location})
 	return f.updateResult, f.updateErr
 }
 
@@ -52,7 +53,7 @@ func validBrand() shops.Brand {
 
 func TestBrandService_Get_Found_ReturnsBrand(t *testing.T) {
 	want := shops.DefaultBrand
-	svc := shops.NewBrandService(&fakeBrandRepository{getBrand: want, getFound: true})
+	svc := shops.NewBrandService(&fakeBrandRepository{getBrand: want, getFound: true}, nil)
 
 	got, err := svc.Get(context.Background(), shopID)
 	if err != nil {
@@ -64,7 +65,7 @@ func TestBrandService_Get_Found_ReturnsBrand(t *testing.T) {
 }
 
 func TestBrandService_Get_NotFound_ReturnsNotFound(t *testing.T) {
-	svc := shops.NewBrandService(&fakeBrandRepository{})
+	svc := shops.NewBrandService(&fakeBrandRepository{}, nil)
 
 	_, err := svc.Get(context.Background(), shopID)
 	if err == nil {
@@ -74,9 +75,9 @@ func TestBrandService_Get_NotFound_ReturnsNotFound(t *testing.T) {
 
 func TestBrandService_Update_NormalizesTermsBeforeWriting(t *testing.T) {
 	repo := &fakeBrandRepository{updateResult: shops.BrandUpdateResult{Found: true}}
-	svc := shops.NewBrandService(repo)
+	svc := shops.NewBrandService(repo, nil)
 
-	if _, err := svc.Update(context.Background(), shopID, validBrand()); err != nil {
+	if _, err := svc.Update(context.Background(), shopID, validBrand(), shops.LocationPatch{}); err != nil {
 		t.Fatalf("Update: %v", err)
 	}
 	if len(repo.updateCalls) != 1 {
@@ -95,11 +96,11 @@ func TestBrandService_Update_NormalizesTermsBeforeWriting(t *testing.T) {
 
 func TestBrandService_Update_CollapsesInnerWhitespace(t *testing.T) {
 	repo := &fakeBrandRepository{updateResult: shops.BrandUpdateResult{Found: true}}
-	svc := shops.NewBrandService(repo)
+	svc := shops.NewBrandService(repo, nil)
 
 	in := validBrand()
 	in.BusinessTerm = "salón   de \t belleza"
-	if _, err := svc.Update(context.Background(), shopID, in); err != nil {
+	if _, err := svc.Update(context.Background(), shopID, in, shops.LocationPatch{}); err != nil {
 		t.Fatalf("Update: %v", err)
 	}
 	if repo.updateCalls[0].brand.BusinessTerm != "salón de belleza" {
@@ -112,7 +113,7 @@ func TestBrandService_Update_AcceptsEveryAllowedAccent(t *testing.T) {
 		repo := &fakeBrandRepository{updateResult: shops.BrandUpdateResult{Found: true}}
 		in := validBrand()
 		in.Accent = accent
-		if _, err := shops.NewBrandService(repo).Update(context.Background(), shopID, in); err != nil {
+		if _, err := shops.NewBrandService(repo, nil).Update(context.Background(), shopID, in, shops.LocationPatch{}); err != nil {
 			t.Fatalf("accent %q should be accepted: %v", accent, err)
 		}
 	}
@@ -141,7 +142,7 @@ func TestBrandService_Update_InvalidField_ReturnsValidationAndNeverWrites(t *tes
 			in := validBrand()
 			mutate(&in)
 
-			_, err := shops.NewBrandService(repo).Update(context.Background(), shopID, in)
+			_, err := shops.NewBrandService(repo, nil).Update(context.Background(), shopID, in, shops.LocationPatch{})
 			assertValidation(t, err)
 			if len(repo.updateCalls) != 0 {
 				t.Fatalf("a rejected field must never reach the repository, got %d writes", len(repo.updateCalls))
@@ -155,7 +156,7 @@ func TestBrandService_Update_AcceptsAccentsApostropheAndHyphen(t *testing.T) {
 		repo := &fakeBrandRepository{updateResult: shops.BrandUpdateResult{Found: true}}
 		in := validBrand()
 		in.BusinessTerm = term
-		if _, err := shops.NewBrandService(repo).Update(context.Background(), shopID, in); err != nil {
+		if _, err := shops.NewBrandService(repo, nil).Update(context.Background(), shopID, in, shops.LocationPatch{}); err != nil {
 			t.Fatalf("term %q should be accepted: %v", term, err)
 		}
 	}
@@ -164,7 +165,7 @@ func TestBrandService_Update_AcceptsAccentsApostropheAndHyphen(t *testing.T) {
 func TestBrandService_Update_NotFound_ReturnsNotFound(t *testing.T) {
 	repo := &fakeBrandRepository{updateResult: shops.BrandUpdateResult{Found: false}}
 
-	_, err := shops.NewBrandService(repo).Update(context.Background(), shopID, validBrand())
+	_, err := shops.NewBrandService(repo, nil).Update(context.Background(), shopID, validBrand(), shops.LocationPatch{})
 	if err == nil {
 		t.Fatal("expected not found when the barbershop is not visible")
 	}
@@ -175,7 +176,7 @@ func TestBrandService_Update_CanceledContext_NeverWrites(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	if _, err := shops.NewBrandService(repo).Update(ctx, shopID, validBrand()); err == nil {
+	if _, err := shops.NewBrandService(repo, nil).Update(ctx, shopID, validBrand(), shops.LocationPatch{}); err == nil {
 		t.Fatal("expected an error for a canceled context")
 	}
 	if len(repo.updateCalls) != 0 {

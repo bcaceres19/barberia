@@ -1,4 +1,4 @@
-h1:YoShB0obrd7pShqsMEIbbcmkPixoObz4hBy1zWZMVDQ=
+h1:X86XYa1SiSMAWXHPXl5cbW8fQdkB7jKByCXx1jZJdDg=
 20260807170000_create_tenant_foundation.sql h1:9KyewD/Xqtm6MjQ7MkTora3f47kjPOobGVfE2q66AUI=
 20260807170100_create_idempotency_record.sql h1:he0jfwTn3otdzgu/qHhFo7Z4ra9+1AL/mT2db82DOrU=
 20260811145252_harden_roles_and_definer_functions.sql h1:KhiZKVpFfL81T+f/73nMkVD0ndVWsCdM4ShqMHZfZ/g=
@@ -33,3 +33,4 @@ h1:YoShB0obrd7pShqsMEIbbcmkPixoObz4hBy1zWZMVDQ=
 20261026120000_add_barber_description.sql h1:7SsYwcjJJZnlyRsRIE4GDD9a9AEqXoe14uF6cmgH4G0=
 20261029120000_relax_barbershop_slot_grid_check.sql h1:lugu4u1qiHPymvTaUODZiDaeRcaJEQHPViWKnLb1IkQ=
 20261029130000_create_staff_user_role.sql h1:/rgogBPuE2/a1fgVEUppHeAcXvuhppuJWsHYkTlxckY=
+20261030120000_add_barbershop_location.sql h1:TyxPtP0XmZ8ywIsK4/8p0uf7zlL2mPXZaZfY0u44GP8=

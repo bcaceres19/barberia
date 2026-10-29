@@ -7,7 +7,8 @@ additionalProperties: false
 description: >
   Marca y vocabulario a guardar. Los seis campos de la marca viajan siempre
   presentes. No incluye `panelProfile`: el panel lo deciden los roles del
-  usuario (`DEC-134`).
+  usuario (`DEC-134`). La ubicación (`hasPhysicalLocation`, `address`) es
+  opcional: ausente no la toca (`DEC-130`).
 properties:
   accent:
     $ref: './BrandAccent.yaml'
@@ -21,6 +22,23 @@ properties:
     $ref: './BrandTerm.yaml'
   professionalTermGender:
     $ref: './BrandTermGender.yaml'
+  hasPhysicalLocation:
+    type: boolean
+    description: >
+      Interruptor de la ubicación física (`DEC-130`). Ausente conserva el valor
+      actual; apagarlo no borra la dirección ni las coordenadas.
+  address:
+    type: [string, "null"]
+    maxLength: 200
+    description: >
+      Dirección del local en texto (`DEC-130`). Ausente conserva la dirección y
+      sus coordenadas; `null` o una cadena vacía las quita; una dirección nueva
+      se recorta, se colapsan sus espacios y se geocodifica en el servidor antes
+      de guardar. Si Google no puede ubicarla con precisión de calle responde
+      `422` sin escribir nada (tampoco la marca). Las coordenadas no se envían:
+      las calcula el servidor.
+    examples:
+      - Calle 10 # 5-20, Bogotá
 required:
   - accent
   - businessTerm

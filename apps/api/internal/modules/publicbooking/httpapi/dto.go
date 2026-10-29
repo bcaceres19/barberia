@@ -18,6 +18,18 @@ type PublicBarbershopProfileResponse struct {
 	ContactEmail *string                  `json:"contactEmail"`
 	ContactPhone *string                  `json:"contactPhone"`
 	Vocabulary   PublicVocabularyResponse `json:"vocabulary"`
+	// Location es null salvo que la barbería muestre un local (DEC-130, HU-102).
+	Location *PublicLocationResponse `json:"location"`
+}
+
+// PublicLocationResponse es la forma exacta del componente OpenAPI
+// PublicLocation.yaml: la dirección en texto y las coordenadas con las que el
+// navegador centra el mapa. Nunca llega con el interruptor apagado ni sin
+// coordenadas: en ese caso location es null.
+type PublicLocationResponse struct {
+	Address   string  `json:"address"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
 }
 
 // PublicVocabularyResponse es la forma exacta del componente OpenAPI

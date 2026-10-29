@@ -40,6 +40,7 @@ import (
 	schedulehttpapi "system-barbershop/internal/modules/schedule/httpapi"
 	schedulepostgres "system-barbershop/internal/modules/schedule/postgres"
 	"system-barbershop/internal/modules/shops"
+	shopsgoogle "system-barbershop/internal/modules/shops/google"
 	shopshttpapi "system-barbershop/internal/modules/shops/httpapi"
 	shopspostgres "system-barbershop/internal/modules/shops/postgres"
 	"system-barbershop/internal/modules/staff"
@@ -275,7 +276,7 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	// Servicio propio: el contrato de HU-020 declara exactamente cuatro
 	// campos (CA-020-07) y no se amplía; sin versionado, la última
 	// escritura gana porque son preferencias de presentación.
-	brandService := shops.NewBrandService(shopspostgres.NewBrandRepository(db))
+	brandService := shops.NewBrandService(shopspostgres.NewBrandRepository(db), buildGeocoder(logger, cfg))
 	panelProfileService := shops.NewPanelProfileService(shopspostgres.NewPanelProfileRepository(db))
 	getBrandHandler := shopshttpapi.NewGetBrandHandler(brandService, panelProfileService)
 	updateBrandHandler := shopshttpapi.NewUpdateBrandHandler(brandService, panelProfileService)
@@ -717,6 +718,26 @@ func selectWhatsAppOTPProvider(cfg config.Config, logger *slog.Logger, secret []
 		}, nil), auth.NewCryptoPhoneCodeGenerator(), secret)
 	}
 	return auth.NewLocalWhatsAppOTPProvider(auth.NewCryptoPhoneCodeGenerator(), auth.NewLoggingPhoneCodeSender(logger), secret)
+}
+
+// buildGeocoder elige el geocodificador de direcciones (DEC-130): el real de
+// Google si hay GOOGLE_MAPS_API_KEY; en local y test, sin clave, uno simulado
+// determinista para poder ver y probar la ubicación sin credenciales; en
+// cualquier otro ambiente sin clave, ninguno, y guardar una dirección nueva
+// responde que la verificación no está disponible.
+func buildGeocoder(logger *slog.Logger, cfg config.Config) shops.Geocoder {
+	switch {
+	case cfg.GoogleMapsAPIKey != "":
+		return shopsgoogle.New(shopsgoogle.Config{APIKey: cfg.GoogleMapsAPIKey, Logger: logger})
+	case cfg.Environment == "local" || cfg.Environment == "test":
+		logger.Warn("shops.geocode.simulado",
+			"detail", "sin GOOGLE_MAPS_API_KEY: las direcciones se geocodifican con un punto simulado cerca de Bogotá")
+		return shopsgoogle.Simulated{}
+	default:
+		logger.Warn("shops.geocode.sin_clave",
+			"detail", "sin GOOGLE_MAPS_API_KEY: no se pueden verificar direcciones nuevas")
+		return nil
+	}
 }
 
 // newGoogleCalendarProvider construye el adaptador real de Google. Es una

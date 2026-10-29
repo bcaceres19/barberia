@@ -20,6 +20,20 @@ type BarbershopProfile struct {
 	ContactEmail *string
 	ContactPhone *string
 	Vocabulary   Vocabulary
+	// Location es nil salvo que la barbería muestre un local (DEC-130): el
+	// interruptor activo Y coordenadas guardadas. Con cualquier otra
+	// combinación es nil y la reserva pública no pinta ninguna sección.
+	Location *Location
+}
+
+// Location es la ubicación física que la reserva pública muestra (DEC-130,
+// HU-102): la dirección en texto y las coordenadas ya geocodificadas con las
+// que el navegador centra el mapa. Este paquete no importa shops (CA-002-06),
+// así que repite su propia forma mínima.
+type Location struct {
+	Address   string
+	Latitude  float64
+	Longitude float64
 }
 
 // Vocabulary es la palabra con la que la barbería llama a su negocio y a su

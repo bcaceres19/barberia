@@ -11,6 +11,12 @@ import type { VocabularyTerms } from '@/shared/model'
 /** Contexto público mínimo de una barbería habilitada (CA-090-01,
  * CA-090-04). contactEmail/contactPhone son `null` cuando la barbería no
  * tiene ese contacto configurado. */
+export interface PublicBarbershopLocation {
+  address: string
+  latitude: number
+  longitude: number
+}
+
 export interface PublicBarbershopProfile {
   name: string
   timezone: string
@@ -18,6 +24,12 @@ export interface PublicBarbershopProfile {
   contactPhone: string | null
   /** Palabras con las que la barbería nombra a su negocio y a su profesional (DEC-119). */
   vocabulary: VocabularyTerms
+  /**
+   * Dónde queda el local (DEC-130, HU-102). `null` si la barbería no muestra
+   * uno: interruptor apagado o sin dirección geocodificada. Nunca se pinta un
+   * mapa sin coordenadas reales.
+   */
+  location: PublicBarbershopLocation | null
 }
 
 /** Resultado discriminado de resolver un enlace público contra el API
