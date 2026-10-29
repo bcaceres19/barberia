@@ -64,7 +64,11 @@ let currentVersionToken = ''
 
 type FieldErrors = Partial<
   Record<
-    'minAdvanceMinutes' | 'maxAdvanceDays' | 'cancellationDeadlineMinutes' | 'lateCancellation',
+    | 'minAdvanceMinutes'
+    | 'maxAdvanceDays'
+    | 'slotGridMinutes'
+    | 'cancellationDeadlineMinutes'
+    | 'lateCancellation',
     string
   >
 >
