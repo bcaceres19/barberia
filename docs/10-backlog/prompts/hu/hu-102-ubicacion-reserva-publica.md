@@ -12,8 +12,8 @@ issue: 359
 issue_url: "https://github.com/bcaceres19/barberia/issues/359"
 suggested_issue_title: "feat(public-booking): implementar HU-102 ubicación de la barbería"
 branch: "feat/359-hu102-ubicacion-barberia"
-pr: null
-pr_url: null
+pr: 368
+pr_url: "https://github.com/bcaceres19/barberia/pull/368"
 depends_on: ["Credencial de Google Geocoding/Maps disponible en el ambiente de despliegue"]
 rules: ["RN-TEN-01"]
 decisions: ["DEC-082", "DEC-110", "DEC-115", "DEC-130"]
