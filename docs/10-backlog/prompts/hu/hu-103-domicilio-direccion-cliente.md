@@ -12,8 +12,8 @@ issue: 360
 issue_url: "https://github.com/bcaceres19/barberia/issues/360"
 suggested_issue_title: "feat(public-booking): implementar HU-103 domicilio con dirección del cliente"
 branch: "feat/360-hu103-domicilio"
-pr: null
-pr_url: null
+pr: 372
+pr_url: "https://github.com/bcaceres19/barberia/pull/372"
 depends_on: ["HU-096 integrada (satisfecho)", "HU-097 integrada (satisfecho, PR #270)", "Credencial de Google Places Autocomplete disponible (comparte familia con HU-102)"]
 rules: ["RN-TEN-01", "RN-DAT-02", "RN-CON-01"]
 decisions: ["DEC-085", "DEC-089", "DEC-090", "DEC-091", "DEC-131"]
