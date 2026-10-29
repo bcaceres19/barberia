@@ -72,14 +72,17 @@ export async function fetchBarberPage(
   }
 }
 
+// `description` es opcional (DEC-127): vacía o ausente equivale a «sin
+// descripción» y se omite del cuerpo.
 export async function createBarber(
   fullName: string,
   idempotencyKey: string,
+  description?: string,
 ): Promise<CreateBarberOutcome> {
   try {
     const { data, response } = await httpClient.POST('/private/barbers', {
       params: { header: { 'Idempotency-Key': idempotencyKey } },
-      body: { fullName },
+      body: description?.trim() ? { fullName, description: description.trim() } : { fullName },
     })
 
     if (response.ok && data) {
@@ -99,14 +102,21 @@ export async function createBarber(
   }
 }
 
+// PATCH del nombre y, si se pasa `description`, de la descripción (DEC-127):
+// `undefined` la deja como está (no viaja en el cuerpo) y una cadena vacía la
+// quita (viaja como `null`).
 export async function renameBarber(
   barberId: string,
   fullName: string,
+  description?: string,
 ): Promise<RenameBarberOutcome> {
   try {
     const { data, response } = await httpClient.PATCH('/private/barbers/{barberId}', {
       params: { path: { barberId } },
-      body: { fullName },
+      body:
+        description === undefined
+          ? { fullName }
+          : { fullName, description: description.trim() || null },
     })
 
     if (response.ok && data) {
@@ -222,6 +232,8 @@ interface BarberWire {
   // Opcional a propósito: una respuesta de alta repetida por idempotencia que
   // se guardó antes de DEC-104 no lo trae; ausente equivale a "sin fotografía".
   photoUpdatedAt?: string | null
+  // Opcional por la misma razón (DEC-127): ausente equivale a "sin descripción".
+  description?: string | null
 }
 
 function toBarber(data: BarberWire): Barber {
@@ -231,6 +243,7 @@ function toBarber(data: BarberWire): Barber {
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
     photoUpdatedAt: data.photoUpdatedAt ?? null,
+    description: data.description ?? null,
   }
 }
 

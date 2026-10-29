@@ -4,8 +4,8 @@ import { fileURLToPath } from 'node:url'
 
 /**
  * Evidencia visual responsive/accesible del perfil «barbero individual» (#294, DEC-115):
- * Agenda (sin selector y con «mi día»), Servicios (columna «Lo ofrezco»), Mi perfil y la
- * sección «Perfil del panel» de Configuración, en 320/360/768/1280 px y en los dos modos
+ * Agenda (sin selector y con «mi día»), Servicios (columna «Lo ofrezco») y Mi perfil
+ * en 320/360/768/1280 px y en los dos modos
  * (Tinta y Marfil), sin scroll horizontal y con axe-core (incluido el contraste real de
  * color) sobre cada combinación. Corre con respuestas simuladas del API: el recorrido contra
  * el API real vive en perfil-barbero-individual.spec.ts. Las capturas van a
@@ -186,16 +186,6 @@ const screens = [
     name: 'mi-perfil',
     url: '/panel/barberos',
     ready: (page: Page) => expect(page.getByRole('heading', { name: 'Mi perfil' })).toBeVisible(),
-  },
-  {
-    name: 'configuracion-perfil',
-    url: '/panel/barberia',
-    ready: async (page: Page) => {
-      const group = page.getByRole('radiogroup', { name: 'Perfil del panel' })
-      await expect(group).toBeVisible()
-      // La página abre en «Pantalla»: se lleva la sección nueva al encuadre antes de capturar.
-      await page.locator('#configuracion-perfil').scrollIntoViewIfNeeded()
-    },
   },
 ] as const
 

@@ -317,33 +317,27 @@ var brandFields = []string{
 	"professionalTerm", "professionalTermPlural", "professionalTermGender",
 }
 
-// panelProfileField es el séptimo campo (issue #294, DEC-115): siempre presente
-// en la respuesta y optativo en la solicitud.
+// panelProfileField es el séptimo campo de la respuesta (issue #294, DEC-115):
+// desde DEC-134 lo deriva el API de los roles del usuario y ya no se envía.
 const panelProfileField = "panelProfile"
 
 // TestContract_BrandSchemas_MatchDTOFields verifica que BrandResponse y
 // UpdateBrandRequest declaran exactamente los campos de los DTO y que ninguno
-// declara barbershopId (el tenant sale solo de la sesión). panelProfile es
-// required en la respuesta y optativo en la solicitud: un cliente que no lo
-// conoce no debe reiniciar el perfil guardado.
+// declara barbershopId (el tenant sale solo de la sesión). panelProfile solo
+// existe en la respuesta: el panel lo deciden los roles (DEC-134).
 func TestContract_BrandSchemas_MatchDTOFields(t *testing.T) {
 	response := loadYAML[schemaDoc](t, "api/openapi/components/schemas/BrandResponse.yaml")
 	requireProps(t, response, append(append([]string{}, brandFields...), panelProfileField))
 
 	request := loadYAML[schemaDoc](t, "api/openapi/components/schemas/UpdateBrandRequest.yaml")
-	if _, ok := request.Properties[panelProfileField]; !ok {
-		t.Fatalf("UpdateBrandRequest no declara %s", panelProfileField)
-	}
-	if len(request.Properties) != len(brandFields)+1 {
-		t.Fatalf("UpdateBrandRequest declara %d propiedades, se esperaban %d", len(request.Properties), len(brandFields)+1)
+	requireProps(t, request, brandFields)
+	if _, ok := request.Properties[panelProfileField]; ok {
+		t.Fatalf("UpdateBrandRequest no debe declarar %s: lo deciden los roles (DEC-134)", panelProfileField)
 	}
 	for _, field := range brandFields {
 		if !containsString(request.Required, field) {
 			t.Errorf("UpdateBrandRequest no marca %q como required", field)
 		}
-	}
-	if containsString(request.Required, panelProfileField) {
-		t.Errorf("UpdateBrandRequest no debe exigir %s: es optativo (DEC-115)", panelProfileField)
 	}
 
 	for name, schema := range map[string]schemaDoc{"BrandResponse": response, "UpdateBrandRequest": request} {
@@ -363,15 +357,16 @@ func containsString(list []string, want string) bool {
 }
 
 // TestContract_PanelProfileEnum_MatchesShopsProfiles ata el contrato a los
-// perfiles del dominio (y estos, a barbershop_panel_profile_ck).
+// paneles del dominio: añadir uno en un lado sin el otro hace fallar la prueba.
 func TestContract_PanelProfileEnum_MatchesShopsProfiles(t *testing.T) {
 	doc := loadYAML[enumSchemaDoc](t, "api/openapi/components/schemas/PanelProfile.yaml")
-	if len(doc.Enum) != 2 {
-		t.Fatalf("se esperaban 2 perfiles, el contrato documenta %v", doc.Enum)
+	domain := []shops.PanelProfile{shops.PanelProfileShop, shops.PanelProfileSolo, shops.PanelProfileEmployee}
+	if len(doc.Enum) != len(domain) {
+		t.Fatalf("el dominio tiene %d paneles, el contrato documenta %v", len(domain), doc.Enum)
 	}
-	for _, p := range doc.Enum {
-		if !shops.PanelProfile(p).IsValid() {
-			t.Errorf("el contrato documenta %q pero el dominio no lo reconoce", p)
+	for _, p := range domain {
+		if !containsString(doc.Enum, string(p)) {
+			t.Errorf("el dominio tiene %q pero el contrato no lo documenta", p)
 		}
 	}
 }

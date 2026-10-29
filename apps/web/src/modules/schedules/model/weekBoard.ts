@@ -108,6 +108,16 @@ export function endLabel(startsTime: string, durationMinutes: number): string {
   return end > MINUTES_PER_DAY ? `${time} (+1)` : time
 }
 
+// durationBetween traduce «de HH:MM a HH:MM» a los minutos que pide la API. Una
+// hora de fin igual o anterior a la de inicio cruza la medianoche (22:00 → 01:00
+// son 180 min) y la misma hora completa 24 h (00:00 → 00:00 es el día entero),
+// que es el máximo que acepta el contrato.
+export function durationBetween(startsTime: string, endsTime: string): number {
+  const diff = timeToMinutes(endsTime) - timeToMinutes(startsTime)
+  const wrapped = ((diff % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY
+  return wrapped === 0 ? MINUTES_PER_DAY : wrapped
+}
+
 // formatHours: 480 → "8 h", 450 → "7 h 30 min", 45 → "45 min".
 export function formatHours(minutes: number): string {
   const hours = Math.floor(minutes / 60)

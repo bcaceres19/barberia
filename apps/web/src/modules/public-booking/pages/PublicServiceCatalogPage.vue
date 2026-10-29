@@ -144,7 +144,7 @@ const selectedService = computed(() => services.value.find((s) => s.id === selec
     @retry="retry"
   />
 
-  <main v-else class="pb-page pb-page--bar">
+  <main v-else class="pb-page pb-page--bar pb-page--scroll-choices">
     <p class="pb-eyebrow">Servicios</p>
     <h1 class="pb-title">Elige tu servicio</h1>
     <div class="pb-rule" aria-hidden="true"></div>

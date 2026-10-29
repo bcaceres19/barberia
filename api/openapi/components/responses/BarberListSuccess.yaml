@@ -21,6 +21,7 @@ content:
               createdAt: "2026-08-23T15:04:05Z"
               updatedAt: "2026-08-23T15:04:05Z"
               photoUpdatedAt: "2026-09-30T12:00:00Z"
+              description: "Fade, barba y navaja con más de diez años en el oficio."
           nextCursor: null
       barberiaConEquipo:
         summary: Barbería con varios barberos, primera página
@@ -31,9 +32,11 @@ content:
               createdAt: "2026-08-23T15:04:05Z"
               updatedAt: "2026-08-23T15:04:05Z"
               photoUpdatedAt: "2026-09-30T12:00:00Z"
+              description: "Fade, barba y navaja con más de diez años en el oficio."
             - id: 1a2b3c4d-5e6f-4708-9a0b-1c2d3e4f5061
               fullName: Ana Torres
               createdAt: "2026-08-23T15:05:10Z"
               updatedAt: "2026-08-23T15:05:10Z"
               photoUpdatedAt: null
+              description: null
           nextCursor: eyJjcmVhdGVkQXQiOiIyMDI2LTA4LTIzVDE1OjA1OjEwWiIsImlkIjoiMWEyYjNjNGQtNWU2Zi00NzA4LTlhMGItMWMyZDNlNGY1MDYxIn0=

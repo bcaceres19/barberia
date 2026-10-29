@@ -1032,6 +1032,12 @@ const dayChangeMarkerPercent = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  /* Alto del visor del cascarón, no solo un mínimo: así cabecera, controles y
+     línea temporal quedan fijos y el único scroll es el de la lista de turnos
+     (ver .daily-agenda-page__list). Si la pantalla es tan baja que ni con la
+     lista en su alto mínimo cabe todo, el contenido desborda y es el cascarón
+     quien desplaza, como antes. */
+  height: 100%;
   min-height: 100%;
   padding: 20px;
   /* Transparente: la tinta y el fondo animado los pone el cascarón. */
@@ -1239,11 +1245,48 @@ const dayChangeMarkerPercent = computed(() => {
 
 .daily-agenda-page__list {
   display: flex;
+  flex: 1 1 0;
   flex-direction: column;
   gap: 10px;
-  padding: 0;
+  /* Alto mínimo (dos fichas y media): en una pantalla muy baja la lista no
+     se reduce a una ranura; antes de eso prefiere desbordar la página. */
+  min-height: 120px;
+  /* El relleno deja sitio al foco, a la elevación de la ficha al pasar el
+     cursor y a la barra de scroll sin recortarlos. */
+  padding: 3px 8px 3px 3px;
   margin: 0;
   list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Misma barra de latón sobre tinta que usa el cascarón. */
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-brand-accent-surface) 45%, transparent)
+    transparent;
+}
+
+.daily-agenda-page__list > .daily-agenda-page__item {
+  flex-shrink: 0;
+}
+
+/* Pantallas bajas: se aprieta el ritmo vertical de la cabecera para dejar más
+   alto a la lista de turnos, que es la única región con scroll. */
+@media (max-height: 820px) {
+  .daily-agenda-page {
+    gap: 10px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+}
+
+/* Muy bajas (p. ej. un portátil pequeño en horizontal): la línea temporal es
+   una presentación aria-hidden del mismo contenido que la lista, así que cede
+   su alto antes de obligar al panel a desplazarse. */
+@media (max-height: 640px) {
+  /* Mayor especificidad que las reglas de escritorio posteriores, que fijan su
+     propio display. */
+  .daily-agenda-page .daily-agenda-page__timeline-wrapper {
+    display: none;
+  }
 }
 
 /* Ficha (§6.1, §7.2): pergamino, no blanco puro — sobre tinta el blanco

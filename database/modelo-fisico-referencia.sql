@@ -922,6 +922,8 @@ CREATE TABLE barber (
   id            uuid        NOT NULL DEFAULT gen_random_uuid(),
   barbershop_id uuid        NOT NULL,
   full_name     text        NOT NULL,
+  -- DEC-127: descripción corta y opcional, visible en la reserva pública.
+  description   text        NULL,
   created_at    timestamptz NOT NULL DEFAULT now(),
   updated_at    timestamptz NOT NULL DEFAULT now(),
 
@@ -930,7 +932,10 @@ CREATE TABLE barber (
                                         REFERENCES barbershop (id) ON DELETE RESTRICT,
   CONSTRAINT barber_barbershop_id_id_uk UNIQUE (barbershop_id, id),
 
-  CONSTRAINT barber_full_name_ck CHECK (btrim(full_name) <> '' AND char_length(full_name) <= 120)
+  CONSTRAINT barber_full_name_ck CHECK (btrim(full_name) <> '' AND char_length(full_name) <= 120),
+  CONSTRAINT barber_description_ck CHECK (
+    description IS NULL OR (btrim(description) <> '' AND char_length(description) <= 280)
+  )
 );
 
 COMMENT ON TABLE barber IS

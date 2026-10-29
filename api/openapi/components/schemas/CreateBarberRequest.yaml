@@ -20,6 +20,18 @@ properties:
       `422` sin persistir nada (CA-021-03).
     examples:
       - Carlos Ramírez
+  description:
+    type:
+      - string
+      - "null"
+    maxLength: 280
+    description: >
+      Descripción corta y opcional del barbero (DEC-127), visible en la reserva
+      pública. El servidor recorta espacios; ausente, `null`, vacía o de solo
+      espacios equivale a «sin descripción». Más de 280 caracteres responde
+      `422` sin persistir nada.
+    examples:
+      - Fade, barba y navaja con más de diez años en el oficio.
 required:
   - fullName
 additionalProperties: false

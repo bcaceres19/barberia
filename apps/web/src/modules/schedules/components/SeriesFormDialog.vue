@@ -26,6 +26,7 @@ import {
 } from '../model/timeBlock'
 import { weekdayLabel } from '../model/workingHour'
 import { validateDurationMinutes } from '../validation/scheduleValidation'
+import { durationBetween, minutesToTime, timeToMinutes } from '../model/weekBoard'
 import {
   validateEffectiveFrom,
   validateReason,
@@ -67,7 +68,7 @@ const isWeekly = computed(() => props.series?.recurrenceKind === 'weekly')
 
 const blockType = ref<BlockType>('vacation')
 const startsTime = ref('00:00')
-const duration = ref(1440)
+const endsTime = ref('00:00')
 const effectiveFrom = ref('')
 const endMode = ref<EndMode>('open')
 const effectiveUntil = ref('')
@@ -101,6 +102,7 @@ const splitting = computed(
   () => isEdit.value && isWeekly.value && scope.value === 'this_and_following',
 )
 const busy = computed(() => status.value === 'saving')
+const duration = computed(() => durationBetween(startsTime.value, endsTime.value))
 
 function reset() {
   error.value = undefined
@@ -113,7 +115,7 @@ function reset() {
   if (isEdit.value && current) {
     blockType.value = current.blockType
     startsTime.value = current.startsTime
-    duration.value = current.durationMinutes
+    endsTime.value = minutesToTime(timeToMinutes(current.startsTime) + current.durationMinutes)
     effectiveFrom.value = current.effectiveFrom
     endMode.value = current.effectiveUntil ? 'until' : 'open'
     effectiveUntil.value = current.effectiveUntil ?? ''
@@ -123,7 +125,7 @@ function reset() {
   }
   blockType.value = 'vacation'
   startsTime.value = '00:00'
-  duration.value = 1440
+  endsTime.value = '00:00'
   effectiveFrom.value = ''
   endMode.value = 'open'
   effectiveUntil.value = ''
@@ -156,7 +158,7 @@ function removePendingDate(date: string) {
 
 const summary = computed(() => {
   const kind = blockTypeLabel(blockType.value)
-  const clock = `${startsTime.value || '—'} · ${duration.value || '—'} min`
+  const clock = `${startsTime.value || '—'} → ${endsTime.value || '—'}`
   if (isEdit.value && isWeekly.value && props.series?.isoWeekday) {
     return `${kind} · ${weekdayLabel(props.series.isoWeekday)} · ${clock}`
   }
@@ -166,6 +168,7 @@ const summary = computed(() => {
 function validate(): string | undefined {
   const base =
     validateStartsTime(startsTime.value) ??
+    validateStartsTime(endsTime.value) ??
     validateDurationMinutes(duration.value) ??
     validateReason(reason.value)
   if (base) return base
@@ -271,7 +274,7 @@ const previousDay = computed(() =>
     :model-value="modelValue"
     :title="title"
     :description="description"
-    size="md"
+    size="lg"
     content-class="block-dialog"
     :close-on-backdrop="!busy"
     :close-on-escape="!busy"
@@ -309,13 +312,7 @@ const previousDay = computed(() =>
       </div>
       <div class="block-form__row">
         <BaseTimePicker v-model="startsTime" label="Hora de inicio" required :disabled="busy" />
-        <BaseInput
-          v-model.number="duration"
-          type="number"
-          label="Duración (minutos)"
-          required
-          :disabled="busy"
-        />
+        <BaseTimePicker v-model="endsTime" label="Hora de fin" required :disabled="busy" />
       </div>
       <div v-if="!splitting" class="block-form__date-field">
         <label :id="`series-from-label-${uid}`" :for="`series-from-${uid}`"

@@ -376,87 +376,34 @@ describe('SettingsPage', () => {
     })
   })
 
-  describe('perfil del panel (DEC-115)', () => {
-    it('offers the two profiles, with the full panel selected by default', async () => {
+  describe('el panel lo deciden los roles (DEC-134)', () => {
+    it('no longer offers a «Perfil del panel» section', async () => {
       const wrapper = await mountReady()
 
-      const group = wrapper.get('[role="radiogroup"][aria-label="Perfil del panel"]')
-      const labels = group.findAll('.profile-card__title').map((l) => l.text())
-      expect(labels).toEqual(['Barbería con equipo', 'Barbero individual'])
-      expect(group.get<HTMLInputElement>('input[value="shop"]').element.checked).toBe(true)
-      expect(group.get<HTMLInputElement>('input[value="solo"]').element.checked).toBe(false)
+      expect(wrapper.find('[role="radiogroup"][aria-label="Perfil del panel"]').exists()).toBe(
+        false,
+      )
+      expect(wrapper.find('#configuracion-perfil').exists()).toBe(false)
+      expect(wrapper.find('a[href="#configuracion-perfil"]').exists()).toBe(false)
+      expect(wrapper.text()).not.toContain('Cómo trabajas')
     })
 
-    it('writes the options with the words of the barbershop', async () => {
-      // Las opciones usan el vocabulario CONFIRMADO (el del resto del panel), no el borrador.
-      const salon = {
-        ...DEFAULT_BRAND,
-        businessTerm: 'salón',
-        businessTermGender: 'masculine' as const,
-        professionalTerm: 'estilista',
-        professionalTermPlural: 'estilistas',
-        professionalTermGender: 'feminine' as const,
-      }
-      setBrand(salon)
-      const wrapper = await mountReady(salon)
-
-      const labels = wrapper
-        .get('[role="radiogroup"][aria-label="Perfil del panel"]')
-        .findAll('.profile-card__title')
-        .map((l) => l.text())
-      expect(labels).toEqual(['Salón con equipo', 'Estilista individual'])
-    })
-
-    it('marks the draft as changed without applying it until it is saved', async () => {
+    it('numbers the remaining sections without a gap', async () => {
       const wrapper = await mountReady()
 
-      await wrapper.get('input[type="radio"][value="solo"]').setValue(true)
-
-      expect(wrapper.get('.save-bar').text()).toContain('Marca y vocabulario')
-      // Todavía no se confirmó: el panel sigue siendo el completo.
-      expect(brandState.brand.panelProfile).toBe('shop')
+      const numbers = wrapper.findAll('.settings-panel__number').map((n) => n.text())
+      expect(numbers).toEqual(['01', '02', '03', '04', '05', '06', '07', '08'])
     })
 
-    it('saves the solo profile, publishes it to the whole app and can go back', async () => {
-      const wrapper = await mountReady()
+    it('keeps the panel of the user when the brand is saved, and never sends it', async () => {
+      const wrapper = await mountReady({ ...DEFAULT_BRAND, panelProfile: 'employee' })
       saveBrandMock.mockImplementation(async (brand) => ({ kind: 'success', brand }))
 
-      await wrapper.get('input[type="radio"][value="solo"]').setValue(true)
+      await wrapper.get('input[type="radio"][value="sapphire"]').setValue(true)
       await submit(wrapper)
 
-      expect(saveBrandMock.mock.calls[0]![0]).toMatchObject({ panelProfile: 'solo' })
-      expect(brandState.brand.panelProfile).toBe('solo')
-      expect(wrapper.find('.save-bar').exists()).toBe(false)
-
-      await wrapper.get('input[type="radio"][value="shop"]').setValue(true)
-      await submit(wrapper)
-
-      expect(saveBrandMock.mock.calls[1]![0]).toMatchObject({ panelProfile: 'shop' })
-      expect(brandState.brand.panelProfile).toBe('shop')
-    })
-
-    it('keeps the confirmed profile when the save fails, and restores it on discard', async () => {
-      const wrapper = await mountReady()
-      saveBrandMock.mockResolvedValueOnce({ kind: 'network-error' })
-
-      await wrapper.get('input[type="radio"][value="solo"]').setValue(true)
-      await submit(wrapper)
-      expect(brandState.brand.panelProfile).toBe('shop')
-
-      const discard = wrapper.findAll('.save-bar button').find((b) => b.text() === 'Descartar')!
-      await discard.trigger('click')
-      expect(
-        wrapper.get<HTMLInputElement>('input[type="radio"][value="shop"]').element.checked,
-      ).toBe(true)
-    })
-
-    it('shows the profile that was already saved', async () => {
-      const wrapper = await mountReady({ ...DEFAULT_BRAND, panelProfile: 'solo' })
-
-      expect(
-        wrapper.get<HTMLInputElement>('input[type="radio"][value="solo"]').element.checked,
-      ).toBe(true)
-      expect(wrapper.find('.save-bar').exists()).toBe(false)
+      expect(saveBrandMock).toHaveBeenCalledTimes(1)
+      expect(brandState.brand.panelProfile).toBe('employee')
     })
   })
 
@@ -500,6 +447,25 @@ describe('SettingsPage', () => {
       expect(preview).toContain('Aún no tienes estilistas registradas en la barbería.')
       expect(preview).toContain('Elige a la estilista y el servicio.')
     })
+
+    it.each(['solo', 'employee'] as const)(
+      'does not simulate team actions in the preview of the %s panel (DEC-134)',
+      async (profile) => {
+        // El panel del usuario llega al estado compartido al iniciar la sesión.
+        setBrand({ ...DEFAULT_BRAND, panelProfile: profile })
+        const wrapper = await mountReady({ ...DEFAULT_BRAND, panelProfile: profile })
+
+        const preset = wrapper.findAll('.preset-chip').find((b) => b.text() === 'estilista')!
+        await preset.trigger('click')
+
+        const preview = wrapper.get('[aria-label="Vista previa del vocabulario"]').text()
+        expect(preview).not.toContain('Agregar')
+        expect(preview).not.toContain('Aún no tienes')
+        expect(preview).not.toContain('Elige a la estilista')
+        expect(preview).toContain('Mi perfil de estilista')
+        expect(preview).toContain('Tus clientes reservan en la barbería.')
+      },
+    )
 
     it('writes the scope of each section with the confirmed barbershop word', async () => {
       // La marca confirmada llega al estado compartido al iniciar la sesión.
@@ -564,14 +530,14 @@ describe('SettingsPage', () => {
   })
 
   describe('enlace público (DEC-117)', () => {
-    it('adds the link as section 07, before the booking rules, and lists it in the index', async () => {
+    it('adds the link as section 06, before the booking rules, and lists it in the index', async () => {
       const wrapper = await mountReady()
 
       const panel = wrapper.get('#configuracion-enlace')
-      expect(panel.get('.settings-panel__number').text()).toBe('07')
+      expect(panel.get('.settings-panel__number').text()).toBe('06')
       expect(panel.get('h2').text()).toBe('Enlace público')
       expect(panel.get('[role="textbox"]').text()).toContain('/reservar/barberia-ejemplo-k7x2m9')
-      expect(wrapper.get('#configuracion-reservas .settings-panel__number').text()).toBe('08')
+      expect(wrapper.get('#configuracion-reservas .settings-panel__number').text()).toBe('07')
       expect(wrapper.get('a[href="#configuracion-enlace"]').text()).toContain('Enlace')
       wrapper.unmount()
     })

@@ -49,11 +49,7 @@ export async function saveBookingPolicy(
       body: {
         minAdvanceMinutes: values.minAdvanceMinutes,
         maxAdvanceDays: values.maxAdvanceDays,
-        // El contrato declara slotGridMinutes como enum [5,10,15,20,30,60]
-        // (DEC-083); el formulario ya valida esa pertenencia antes de
-        // llegar aquí (validateSlotGridMinutes), así que el aserto es
-        // seguro.
-        slotGridMinutes: values.slotGridMinutes as 5 | 10 | 15 | 20 | 30 | 60,
+        slotGridMinutes: values.slotGridMinutes,
         cancellationDeadlineMinutes: values.cancellationDeadlineMinutes,
         lateCancellationClientAllowed: values.lateCancellationClientAllowed,
         lateCancellationReasonRequired: values.lateCancellationReasonRequired,

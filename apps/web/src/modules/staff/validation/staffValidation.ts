@@ -14,3 +14,19 @@ export function validateFullName(fullName: string, v: Vocabulary): string | unde
   }
   return undefined
 }
+
+// Mismo tope que `barber_description_ck` y el contrato (DEC-127). El servidor
+// cuenta caracteres Unicode, no unidades UTF-16: aquí igual, para que un emoji
+// no cuente doble y el cliente rechace exactamente lo que el servidor rechaza.
+export const DESCRIPTION_MAX_LENGTH = 280
+
+export function descriptionLength(description: string): number {
+  return Array.from(description.trim()).length
+}
+
+export function validateDescription(description: string): string | undefined {
+  if (descriptionLength(description) > DESCRIPTION_MAX_LENGTH) {
+    return `La descripción no puede superar ${DESCRIPTION_MAX_LENGTH} caracteres.`
+  }
+  return undefined
+}

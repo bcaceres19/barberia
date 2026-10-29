@@ -14,7 +14,7 @@ suggested_issue_title: "feat(availability): implementar HU-094 disponibilidad p√
 branch: "feat/251-hu094-disponibilidad-publica"
 pr: null
 pr_url: null
-depends_on: ["HU-091 a HU-093 integradas (satisfecho)", "DP-PUB-03 resuelta mediante DEC-084 (satisfecho, 2026-09-11)", "Issue real con CA-094-01 a CA-094-06 (satisfecho, issue #251)"]
+depends_on: ["HU-091 a HU-093 integradas (satisfecho)", "DP-PUB-03 resuelta mediante DEC-084 (satisfecho, 2026-09-11; sustituida por DEC-135, 2026-10-28)", "Issue real con CA-094-01 a CA-094-06 (satisfecho, issue #251)"]
 rules: ["RN-DIS-01", "RN-DIS-02", "RN-DIS-03", "RN-DIS-04", "RN-DIS-05", "RN-DIS-06", "RN-DIS-07", "RN-BLQ-01", "RN-BLQ-02", "RN-BLQ-03", "RN-BLQ-04", "RN-CON-01", "RN-CON-03", "RN-CAN-04", "RN-TEN-01"]
 decisions: ["DEC-002", "DEC-005", "DEC-006", "DEC-007", "DEC-008", "DEC-009", "DEC-012", "DEC-018", "DEC-019", "DEC-020", "DEC-024", "DEC-070", "DEC-073", "DEC-076", "DEC-084"]
 acceptance_criteria: ["CA-094-01", "CA-094-02", "CA-094-03", "CA-094-04", "CA-094-05", "CA-094-06"]

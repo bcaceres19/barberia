@@ -20,6 +20,16 @@ vi.mock('../../api/confirmPublicAppointmentApi', () => ({
   confirmPublicAppointment: confirmPublicAppointmentMock,
 }))
 
+const routerPushMock = vi.hoisted(() => vi.fn())
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ push: routerPushMock }),
+}))
+
+const listPublicBarbersMock = vi.hoisted(() => vi.fn())
+vi.mock('../../api/listPublicBarbersApi', () => ({
+  listPublicBarbers: listPublicBarbersMock,
+}))
+
 const { default: PublicCustomerDetailsPage } = await import('../PublicCustomerDetailsPage.vue')
 
 const BASE_PROPS = {
@@ -48,7 +58,23 @@ function mountPage() {
 }
 
 beforeEach(() => {
+  // El diálogo de conflicto se teletransporta al <body>: sin limpiarlo, los de
+  // pruebas anteriores se acumulan.
+  document.body.innerHTML = ''
   confirmPublicAppointmentMock.mockReset()
+  routerPushMock.mockReset()
+  listPublicBarbersMock.mockReset()
+  listPublicBarbersMock.mockResolvedValue({
+    kind: 'success',
+    barbers: [
+      {
+        id: BASE_PROPS.barberId,
+        fullName: 'Mateo Cruz',
+        description: null,
+        photoUpdatedAt: '2026-10-01T10:00:00Z',
+      },
+    ],
+  })
 })
 
 async function fillValidForm(wrapper: ReturnType<typeof mountPage>) {
@@ -78,9 +104,44 @@ describe('PublicCustomerDetailsPage', () => {
     await wrapper.find('form').trigger('submit')
 
     expect(wrapper.text()).toContain('Ana Ríos')
-    const rows = wrapper.findAll('.customer-details__summary-row')
-    const attendedRow = rows.find((row) => row.text().includes('Atiende a'))!
-    expect(attendedRow.text()).toContain('Ana Ríos')
+    // Para uno mismo el resumen no repite el nombre como «Turno para».
+    const labels = wrapper.findAll('.customer-details__summary-row dt').map((dt) => dt.text())
+    expect(labels).toEqual(['Cliente', 'Teléfono', 'Correo'])
+    expect(wrapper.text()).not.toContain('Atiende a')
+  })
+
+  it('shows the appointment date and time as the headline of the summary', async () => {
+    const wrapper = mountPage()
+    await fillValidForm(wrapper)
+    await wrapper.find('form').trigger('submit')
+
+    const when = wrapper.get('.customer-details__when')
+    expect(when.get('.customer-details__when-time').text()).toMatch(/\d{1,2}:\d{2}/)
+    expect(when.get('.customer-details__when-day').text()).toContain('2026')
+  })
+
+  it('shows the chosen barber with their photo in the summary', async () => {
+    const wrapper = mountPage()
+    await flushPromises()
+    await fillValidForm(wrapper)
+    await wrapper.find('form').trigger('submit')
+
+    const who = wrapper.get('.customer-details__who')
+    expect(who.text()).toContain('Mateo Cruz')
+    expect(who.get('img').attributes('src')).toContain(
+      `/public/barbershops/barberia-ejemplo/barbers/${BASE_PROPS.barberId}/photo`,
+    )
+  })
+
+  it('still shows a complete summary when the barber cannot be loaded', async () => {
+    listPublicBarbersMock.mockResolvedValue({ kind: 'network-error' })
+    const wrapper = mountPage()
+    await flushPromises()
+    await fillValidForm(wrapper)
+    await wrapper.find('form').trigger('submit')
+
+    expect(wrapper.find('.customer-details__who').exists()).toBe(false)
+    expect(wrapper.text()).toContain('Ana Ríos')
   })
 
   it('tells the customer, before confirming, that Google may invite them at their email (DEC-122)', async () => {
@@ -113,10 +174,37 @@ describe('PublicCustomerDetailsPage', () => {
     await wrapper.find('form').trigger('submit')
 
     const rows = wrapper.findAll('.customer-details__summary-row')
-    const attendedRow = rows.find((row) => row.text().includes('Atiende a'))!
+    const attendedRow = rows.find((row) => row.text().includes('Turno para'))!
     expect(attendedRow.text()).toContain('Mateo Ruiz')
     const clientRow = rows.find((row) => row.text().includes('Cliente'))!
     expect(clientRow.text()).toContain('Ana Ríos')
+  })
+
+  it('sends the E.164 number built from the prefix box and the national number', async () => {
+    confirmPublicAppointmentMock.mockResolvedValue({
+      kind: 'success',
+      appointment: CONFIRMED_APPOINTMENT,
+    })
+    const wrapper = mountPage()
+    await wrapper.find('input[type="text"]').setValue('Ana Ríos')
+    await wrapper.find('select').setValue('MX')
+    await wrapper.find('input[type="tel"]').setValue('55 1234 5678')
+    await wrapper.find('input[type="email"]').setValue('ana@example.com')
+    await wrapper.find('form').trigger('submit')
+
+    expect(wrapper.text()).toContain('+52 5512345678')
+
+    await wrapper.findAll('button[type="button"]')[1]!.trigger('click')
+    await flushPromises()
+
+    expect(confirmPublicAppointmentMock.mock.calls[0]![3].phone).toBe('+525512345678')
+  })
+
+  it('keeps the note box at a fixed size', () => {
+    const wrapper = mountPage()
+    const note = wrapper.get('textarea')
+
+    expect(note.attributes('rows')).toBe('3')
   })
 
   it('lets the customer go back to editing without losing the data already entered', async () => {
@@ -127,19 +215,20 @@ describe('PublicCustomerDetailsPage', () => {
 
     await wrapper.find('button[type="button"]').trigger('click')
     expect(wrapper.find('form').exists()).toBe(true)
-    expect((wrapper.find('input[type="tel"]').element as HTMLInputElement).value).toBe(
-      '+573001234567',
-    )
+    // El prefijo vive en su casilla: al volver a editar, el teléfono sigue
+    // partido en país y número nacional.
+    expect((wrapper.find('input[type="tel"]').element as HTMLInputElement).value).toBe('3001234567')
+    expect((wrapper.find('select').element as HTMLSelectElement).value).toBe('CO')
   })
 
   it('rejects an invalid phone/email format', async () => {
     const wrapper = mountPage()
     await wrapper.find('input[type="text"]').setValue('Ana Ríos')
-    await wrapper.find('input[type="tel"]').setValue('3001234567')
+    await wrapper.find('input[type="tel"]').setValue('123')
     await wrapper.find('input[type="email"]').setValue('no-arroba')
     await wrapper.find('form').trigger('submit')
 
-    expect(wrapper.text()).toContain('indicativo de país')
+    expect(wrapper.text()).toContain('no parece completo')
     expect(wrapper.text()).toContain('formato inválido')
   })
 
@@ -259,7 +348,21 @@ describe('PublicCustomerDetailsPage', () => {
     await flushPromises()
   })
 
-  it('shows nearby alternatives and lets the customer retry with one (RN-CON-05, DEC-090)', async () => {
+  // El diálogo de conflicto se teletransporta al <body>: se consulta ahí.
+  const conflictDialog = () => document.body.querySelector<HTMLElement>('.pb-conflict-dialog')
+  const isConflictOpen = () => !!conflictDialog()?.closest('.base-dialog__overlay--open')
+
+  async function reachConflict(wrapper: ReturnType<typeof mountPage>) {
+    await fillValidForm(wrapper)
+    await wrapper.find('form').trigger('submit')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('Confirmar turno'))!
+      .trigger('click')
+    await flushPromises()
+  }
+
+  it('opens a blocking dialog on a schedule conflict and lets the customer retry with an alternative (RN-CON-05, DEC-090)', async () => {
     confirmPublicAppointmentMock.mockResolvedValueOnce({
       kind: 'schedule-conflict',
       alternatives: [{ startsAt: '2026-09-20T15:00:00Z' }, { startsAt: '2026-09-20T15:30:00Z' }],
@@ -269,22 +372,26 @@ describe('PublicCustomerDetailsPage', () => {
       appointment: CONFIRMED_APPOINTMENT,
     })
     const wrapper = mountPage()
-    await fillValidForm(wrapper)
-    await wrapper.find('form').trigger('submit')
+    await reachConflict(wrapper)
 
-    const confirmButton = wrapper
-      .findAll('button')
-      .find((b) => b.text().includes('Confirmar turno'))!
-    await confirmButton.trigger('click')
+    expect(isConflictOpen()).toBe(true)
+    expect(conflictDialog()!.getAttribute('role')).toBe('dialog')
+    expect(conflictDialog()!.textContent).toContain('Ese horario se acaba de ocupar')
+    // Sin salida lateral: ni botón de cerrar, y el aviso ya no vive en la hoja.
+    expect(conflictDialog()!.querySelector('.base-dialog__close')).toBeNull()
+    expect(wrapper.find('.base-alert').exists()).toBe(false)
+    // Los datos del formulario nunca se pierden ante el conflicto (RN-CON-05).
+    expect(wrapper.text()).toContain('+57 3001234567')
+
+    const alternativeButtons =
+      conflictDialog()!.querySelectorAll<HTMLButtonElement>('.pb-conflict__alt')
+    expect(alternativeButtons.length).toBe(2)
+    alternativeButtons[0]!.click()
     await flushPromises()
 
-    expect(wrapper.text()).toContain('Ese horario se acaba de ocupar')
-    // Los datos del formulario nunca se pierden ante el conflicto (RN-CON-05).
-    expect(wrapper.text()).toContain('+573001234567')
-
-    const alternativeButtons = wrapper.findAll('.customer-details__alternatives button')
-    expect(alternativeButtons.length).toBe(2)
-    await alternativeButtons[0]!.trigger('click')
+    // Elegir una alternativa cierra el diálogo y exige confirmar de nuevo.
+    expect(isConflictOpen()).toBe(false)
+    expect(confirmPublicAppointmentMock).toHaveBeenCalledTimes(1)
 
     const retryButton = wrapper.findAll('button').find((b) => b.text().includes('Confirmar turno'))!
     await retryButton.trigger('click')
@@ -297,6 +404,30 @@ describe('PublicCustomerDetailsPage', () => {
     const secondKey = confirmPublicAppointmentMock.mock.calls[1]![4]
     expect(secondKey).not.toBe(firstKey)
     expect(wrapper.text()).toContain('¡Tu turno quedó confirmado!')
+    wrapper.unmount()
+  })
+
+  it('sends the customer back to the calendar from the conflict dialog', async () => {
+    confirmPublicAppointmentMock.mockResolvedValueOnce({
+      kind: 'schedule-conflict',
+      alternatives: [],
+    })
+    const wrapper = mountPage()
+    await reachConflict(wrapper)
+
+    expect(conflictDialog()!.textContent).toContain('No quedan horarios libres')
+    expect(conflictDialog()!.querySelector('.pb-conflict__alt')).toBeNull()
+    conflictDialog()!.querySelector<HTMLButtonElement>('.base-dialog__footer button')!.click()
+
+    expect(routerPushMock).toHaveBeenCalledWith({
+      name: 'reserva-publica-horario',
+      params: {
+        slug: BASE_PROPS.slug,
+        serviceId: BASE_PROPS.serviceId,
+        barberId: BASE_PROPS.barberId,
+      },
+    })
+    wrapper.unmount()
   })
 
   it('shows a network error and lets the customer retry with the same idempotency key', async () => {
@@ -328,22 +459,63 @@ describe('PublicCustomerDetailsPage', () => {
     expect(wrapper.text()).toContain('¡Tu turno quedó confirmado!')
   })
 
-  it('has no accessibility violations on the schedule-conflict state', async () => {
+  it('has no accessibility violations on the schedule-conflict dialog', async () => {
     confirmPublicAppointmentMock.mockResolvedValueOnce({
       kind: 'schedule-conflict',
       alternatives: [{ startsAt: '2026-09-20T15:00:00Z' }],
     })
     const wrapper = mountPage()
+    await reachConflict(wrapper)
+
+    const results = await axe(conflictDialog()!)
+    expect(results).toHaveNoViolations()
+    wrapper.unmount()
+  })
+
+  it('presents the confirmation as a ticket with service, price, date, barber and no access token', async () => {
+    confirmPublicAppointmentMock.mockResolvedValueOnce({
+      kind: 'success',
+      appointment: CONFIRMED_APPOINTMENT,
+    })
+    const wrapper = mountPage()
+    await flushPromises()
     await fillValidForm(wrapper)
     await wrapper.find('form').trigger('submit')
-    const confirmButton = wrapper
+    await wrapper
       .findAll('button')
       .find((b) => b.text().includes('Confirmar turno'))!
-    await confirmButton.trigger('click')
+      .trigger('click')
     await flushPromises()
 
-    const results = await axe(wrapper.element)
-    expect(results).toHaveNoViolations()
+    const ticket = wrapper.get('.ticket__card')
+    expect(ticket.text()).toContain('Corte clásico')
+    expect(ticket.text()).toContain('30 min')
+    expect(ticket.text()).toMatch(/20\.000/)
+    expect(ticket.get('.ticket__leaf-day').text()).toBe('20')
+    expect(ticket.get('.ticket__who-name').text()).toBe('Mateo Cruz')
+    // Para uno mismo no hay fila «Turno para»; la credencial nunca se dibuja (DEC-089).
+    expect(ticket.find('.ticket__for').exists()).toBe(false)
+    expect(wrapper.html()).not.toContain(CONFIRMED_APPOINTMENT.accessToken)
+    expect(wrapper.text()).toContain('ana@example.com')
+  })
+
+  it('names the attendee on the ticket only when the turn is for someone else', async () => {
+    confirmPublicAppointmentMock.mockResolvedValueOnce({
+      kind: 'success',
+      appointment: { ...CONFIRMED_APPOINTMENT, attendeeName: 'Mateo Ruiz' },
+    })
+    const wrapper = mountPage()
+    await fillValidForm(wrapper)
+    await wrapper.findAll('input[type="radio"]')[1]!.setValue()
+    await wrapper.findAll('input[type="text"]')[1]!.setValue('Mateo Ruiz')
+    await wrapper.find('form').trigger('submit')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('Confirmar turno'))!
+      .trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('.ticket__for').text()).toContain('Mateo Ruiz')
   })
 
   it('has no accessibility violations on the confirmed state', async () => {

@@ -4,6 +4,72 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.38.0 · 2026-10-28
+
+### Cambiado
+
+- `PanelProfile` añade el valor `employee` (panel individual limitado del rol
+  `empleado`) y `panelProfile` de `BrandResponse` deja de ser un dato de la
+  barbería: se deriva de los roles del usuario que consulta (`DEC-134`).
+
+- La descripción de `GET .../availability` documenta que las franjas caen en la
+  rejilla fija del tramo laboral y no se reinician donde termina un turno
+  (`DEC-135`, que sustituye `DEC-084`). Sin cambio de forma; cambia qué franjas
+  se ofrecen cuando hay turnos ocupados.
+
+### Eliminado
+
+- `panelProfile` sale de `UpdateBrandRequest`: `PATCH /private/settings/brand`
+  rechaza el campo como forma inválida. El panel lo deciden los roles en la base
+  de datos, no un ajuste de Configuración.
+
+### Compatibilidad
+
+- **Incompatible** para un cliente que enviaba `panelProfile` en el `PATCH`
+  (ahora responde `400`) o que no conoce el valor `employee` al leerlo. El único
+  cliente conocido, la web de NAVA, se actualiza en la misma entrega.
+
+## 0.37.0 · 2026-10-28
+
+### Cambiado
+
+- `slotGridMinutes` en `UpdateBookingPolicyRequest` y `BookingPolicyResponse`
+  deja de ser el conjunto `{5, 10, 15, 20, 30, 60}` y pasa a ser un entero de 1 a
+  60, `DEC-133` (sustituye el conjunto discreto de `DEC-083`). El valor por
+  defecto sigue siendo 15. Un valor fuera de ese rango responde `422` como antes.
+
+### Compatibilidad
+
+Compatible para quien escribe: todo valor que se enviaba antes sigue siendo
+válido. En la respuesta ahora pueden llegar enteros que antes no existían (por
+ejemplo 25 o 45); un cliente que validara el campo contra el conjunto anterior
+debe aceptar el rango 1..60.
+
+## 0.36.0 · 2026-10-26
+
+### Agregado
+
+- `description` (cadena de hasta 280 caracteres o `null`) en `BarberResponse`
+  (obligatorio, nullable) y, opcional y nullable, en `CreateBarberRequest` y
+  `UpdateBarberRequest`, `DEC-127`: descripción corta del barbero que escribe el
+  equipo en el panel. En el `PATCH`, ausente conserva la actual y `null` o vacía
+  la quita.
+- `description` y `photoUpdatedAt` (ambos obligatorios, nullable) en
+  `PublicBarberResponse`, `DEC-127`: la reserva pública muestra la descripción y
+  la fotografía del barbero.
+- `GET /public/barbershops/{slug}/barbers/{barberId}/photo`
+  (`getPublicBarberPhoto`), `DEC-127`: bytes de la fotografía de un barbero que
+  la reserva pública ya muestra, sin sesión, con `ETag` y `304`. `404` uniforme
+  para slug inválido, barbero ajeno, sin fotografía o sin asignación vigente.
+
+### Compatibilidad
+
+Cambio compatible para quien lee: campos nuevos en respuestas y una operación
+nueva; los clientes que ignoran campos desconocidos no se rompen. El alta
+idempotente ya persistida antes de este cambio (vigencia 24 h) se repite sin
+`description`; el cliente lo trata como «sin descripción». Los campos de
+solicitud son opcionales.
+
 ## 0.35.0 · 2026-10-10
 
 ### Agregado

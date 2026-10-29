@@ -30,7 +30,15 @@ export async function listPublicBarbers(
     if (response.ok && data) {
       return {
         kind: 'success',
-        barbers: data.items.map((item) => ({ id: item.id, fullName: item.fullName })),
+        barbers: data.items.map((item) => ({
+          id: item.id,
+          fullName: item.fullName,
+          // Ausente equivale a «sin descripción / sin foto»: el contrato los
+          // declara siempre presentes (DEC-127), pero el cliente no se rompe
+          // si una respuesta antigua llegara sin ellos.
+          description: item.description ?? null,
+          photoUpdatedAt: item.photoUpdatedAt ?? null,
+        })),
       }
     }
 

@@ -67,9 +67,9 @@ describe('BookingPolicyPage', () => {
     expect((wrapper.find('input[name="maxAdvanceDays"]').element as HTMLInputElement).value).toBe(
       '3',
     )
-    expect(
-      (wrapper.get('input[type="radio"][value="15"]').element as HTMLInputElement).checked,
-    ).toBe(true)
+    expect((wrapper.find('input[name="slotGridMinutes"]').element as HTMLInputElement).value).toBe(
+      '15',
+    )
     expect(
       (wrapper.find('input[name="cancellationDeadlineMinutes"]').element as HTMLInputElement).value,
     ).toBe('20')
@@ -273,11 +273,11 @@ describe('BookingPolicyPage', () => {
     expect(wrapper.text()).not.toContain('Los cambios se guardaron correctamente.')
   })
 
-  it('changes the slot grid with the radio group and mirrors it in the live preview', async () => {
+  it('changes the slot grid with the numeric field and mirrors it in the live preview', async () => {
     const wrapper = await mountReady()
     expect(wrapper.get('.policy-preview').text()).toContain('una cada 15 min')
 
-    await wrapper.get('input[type="radio"][value="30"]').setValue(true)
+    await wrapper.get('input[name="slotGridMinutes"]').setValue('30')
 
     expect(wrapper.get('.policy-preview').text()).toContain('una cada 30 min')
     expect(wrapper.get('.policy-preview').text()).toContain('10:30')
@@ -288,6 +288,53 @@ describe('BookingPolicyPage', () => {
     await wrapper.get('form').trigger('submit')
     await flushPromises()
     expect(saveMock.mock.calls[0]![0]).toMatchObject({ slotGridMinutes: 30 })
+  })
+
+  it('accepts any whole step between 1 and 60, not only the old discrete set', async () => {
+    const wrapper = await mountReady()
+    saveMock.mockResolvedValueOnce({
+      kind: 'success',
+      policy: { ...loadedPolicy, slotGridMinutes: 7, versionToken: 'tok-2' },
+    })
+
+    await wrapper.get('input[name="slotGridMinutes"]').setValue('7')
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(saveMock.mock.calls[0]![0]).toMatchObject({ slotGridMinutes: 7 })
+  })
+
+  it.each(['0', ''])('rejects slotGridMinutes=%j before calling the API', async (typed) => {
+    const wrapper = await mountReady()
+
+    await wrapper.get('input[name="slotGridMinutes"]').setValue(typed)
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Escribe un número entero entre 1 y 60 minutos.')
+    expect(saveMock).not.toHaveBeenCalled()
+  })
+
+  it('caps the slot grid at 60 while typing instead of waiting for the save', async () => {
+    const wrapper = await mountReady()
+    const input = wrapper.get('input[name="slotGridMinutes"]')
+
+    await input.setValue('77')
+    expect((input.element as HTMLInputElement).value).toBe('60')
+    expect(wrapper.get('.policy-preview').text()).toContain('una cada 60 min')
+
+    await input.setValue('60')
+    await input.setValue('600')
+    expect((input.element as HTMLInputElement).value).toBe('60')
+  })
+
+  it('never shows a sign or a decimal separator in the slot grid field', async () => {
+    const wrapper = await mountReady()
+    const input = wrapper.get('input[name="slotGridMinutes"]')
+
+    await input.setValue('-5.5')
+
+    expect((input.element as HTMLInputElement).value).toBe('55')
   })
 
   it('describes the cancellation rule in the preview', async () => {

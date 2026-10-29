@@ -320,8 +320,10 @@ func (r *Repository) ListPublicBarbers(ctx context.Context, slug string, service
 
 	err = r.db.InTenantTx(ctx, barbershopID, func(ctx context.Context, q database.Queries) error {
 		rows, err := q.Query(ctx,
-			`SELECT b.id, b.full_name
+			`SELECT b.id, b.full_name, b.description, p.updated_at
 			   FROM barber b
+			   LEFT JOIN barber_photo p
+			     ON p.barbershop_id = b.barbershop_id AND p.barber_id = b.id
 			   JOIN barber_service bs
 			     ON bs.barbershop_id = b.barbershop_id AND bs.barber_id = b.id
 			   JOIN service s
@@ -340,7 +342,7 @@ func (r *Repository) ListPublicBarbers(ctx context.Context, slug string, service
 		items := make([]publicbooking.PublicBarber, 0)
 		for rows.Next() {
 			var barber publicbooking.PublicBarber
-			if err := rows.Scan(&barber.ID, &barber.FullName); err != nil {
+			if err := rows.Scan(&barber.ID, &barber.FullName, &barber.Description, &barber.PhotoUpdatedAt); err != nil {
 				return fmt.Errorf("list public barbers: scan: %w", err)
 			}
 			items = append(items, barber)
@@ -356,6 +358,58 @@ func (r *Repository) ListPublicBarbers(ctx context.Context, slug string, service
 		return publicbooking.PublicBarberListResult{}, false, fmt.Errorf("publicbooking/postgres: read public barbers: %w", err)
 	}
 	return result, true, nil
+}
+
+// GetPublicBarberPhoto implementa publicbooking.Repository.GetPublicBarberPhoto
+// (DEC-127) con el mismo patrón de dos pasos: resuelve el slug sin tenant y lee
+// la imagen dentro de una transacción tenant-aware. El EXISTS limita la
+// lectura a quien la reserva pública ya muestra (asignación vigente a un
+// servicio activo): una fotografía de un barbero que no se ofrece no se
+// publica por adivinar su identificador.
+func (r *Repository) GetPublicBarberPhoto(ctx context.Context, slug string, barberID string) (publicbooking.PublicBarberPhoto, bool, error) {
+	barbershopID, found, err := r.db.ResolveTenant(ctx,
+		`SELECT public_resolve_barbershop_by_slug($1)`,
+		slug,
+	)
+	if err != nil {
+		return publicbooking.PublicBarberPhoto{}, false, fmt.Errorf("publicbooking/postgres: resolve tenant by slug: %w", err)
+	}
+	if !found {
+		return publicbooking.PublicBarberPhoto{}, false, nil
+	}
+
+	var photo publicbooking.PublicBarberPhoto
+	photoFound := false
+	err = r.db.InTenantTx(ctx, barbershopID, func(ctx context.Context, q database.Queries) error {
+		err := q.QueryRow(ctx,
+			`SELECT p.content_type, p.image, p.updated_at
+			   FROM barber_photo p
+			  WHERE p.barbershop_id = $1
+			    AND p.barber_id = $2
+			    AND EXISTS (
+			          SELECT 1
+			            FROM barber_service bs
+			            JOIN service s
+			              ON s.barbershop_id = bs.barbershop_id AND s.id = bs.service_id
+			           WHERE bs.barbershop_id = p.barbershop_id
+			             AND bs.barber_id = p.barber_id
+			             AND s.is_active = true)`,
+			string(barbershopID), barberID,
+		).Scan(&photo.ContentType, &photo.Data, &photo.UpdatedAt)
+		switch {
+		case err == nil:
+			photoFound = true
+		case errors.Is(err, pgx.ErrNoRows):
+			// photoFound queda false: sin fotografía, ajeno o no elegible.
+		default:
+			return fmt.Errorf("select public barber photo: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return publicbooking.PublicBarberPhoto{}, false, fmt.Errorf("publicbooking/postgres: read public barber photo: %w", err)
+	}
+	return photo, photoFound, nil
 }
 
 // FindCustomerMatches implementa publicbooking.CustomerRepository.

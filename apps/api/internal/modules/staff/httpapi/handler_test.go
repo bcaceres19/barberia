@@ -26,8 +26,8 @@ type fakeRepository struct {
 	listPageFn func(context.Context, string, int, int) (staff.PageResult, error)
 	listFn     func(barbershopID string, cursor *staff.Cursor, limit int) (staff.ListResult, error)
 	getFn      func(barbershopID, barberID string) (staff.Barber, bool, error)
-	createFn   func(barbershopID, fullName string, key idempotency.Key, fp idempotency.Fingerprint) (staff.CreateResult, error)
-	renameFn   func(barbershopID, barberID, fullName string) (staff.RenameResult, error)
+	createFn   func(barbershopID, fullName string, description *string, key idempotency.Key, fp idempotency.Fingerprint) (staff.CreateResult, error)
+	updateFn   func(barbershopID, barberID, fullName string, description staff.DescriptionPatch) (staff.UpdateResult, error)
 
 	putPhotoFn    func(barbershopID, barberID string, photo staff.Photo) (staff.PhotoResult, error)
 	getPhotoFn    func(barbershopID, barberID string) (staff.StoredPhoto, bool, error)
@@ -46,12 +46,12 @@ func (f *fakeRepository) Get(_ context.Context, barbershopID, barberID string) (
 	return f.getFn(barbershopID, barberID)
 }
 
-func (f *fakeRepository) Create(_ context.Context, barbershopID, fullName string, key idempotency.Key, fp idempotency.Fingerprint) (staff.CreateResult, error) {
-	return f.createFn(barbershopID, fullName, key, fp)
+func (f *fakeRepository) Create(_ context.Context, barbershopID, fullName string, description *string, key idempotency.Key, fp idempotency.Fingerprint) (staff.CreateResult, error) {
+	return f.createFn(barbershopID, fullName, description, key, fp)
 }
 
-func (f *fakeRepository) Rename(_ context.Context, barbershopID, barberID, fullName string) (staff.RenameResult, error) {
-	return f.renameFn(barbershopID, barberID, fullName)
+func (f *fakeRepository) Update(_ context.Context, barbershopID, barberID, fullName string, description staff.DescriptionPatch) (staff.UpdateResult, error) {
+	return f.updateFn(barbershopID, barberID, fullName, description)
 }
 
 func (f *fakeRepository) PutPhoto(_ context.Context, barbershopID, barberID string, photo staff.Photo) (staff.PhotoResult, error) {
@@ -283,7 +283,7 @@ func TestGetBarberHandler_OtherTenantsID_SameNotFoundAsNonexistent(t *testing.T)
 // --- Create ---------------------------------------------------------------
 
 func TestCreateBarberHandler_MissingIdempotencyKey_Returns400(t *testing.T) {
-	repo := &fakeRepository{createFn: func(string, string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
+	repo := &fakeRepository{createFn: func(string, string, *string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
 		t.Fatal("repository must not be called without an idempotency key")
 		return staff.CreateResult{}, nil
 	}}
@@ -299,7 +299,7 @@ func TestCreateBarberHandler_MissingIdempotencyKey_Returns400(t *testing.T) {
 }
 
 func TestCreateBarberHandler_UnknownField_Returns400(t *testing.T) {
-	repo := &fakeRepository{createFn: func(string, string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
+	repo := &fakeRepository{createFn: func(string, string, *string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
 		t.Fatal("repository must not be called for an unknown field")
 		return staff.CreateResult{}, nil
 	}}
@@ -316,7 +316,7 @@ func TestCreateBarberHandler_UnknownField_Returns400(t *testing.T) {
 }
 
 func TestCreateBarberHandler_ValidationError_Returns422WithoutCallingRepository(t *testing.T) {
-	repo := &fakeRepository{createFn: func(string, string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
+	repo := &fakeRepository{createFn: func(string, string, *string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
 		t.Fatal("repository must not be called for an invalid name")
 		return staff.CreateResult{}, nil
 	}}
@@ -339,7 +339,7 @@ func TestCreateBarberHandler_Proceed_Returns201WithLocationAndBody(t *testing.T)
 		ContentType: "application/json",
 		Body:        `{"id":"8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4","fullName":"Carlos","createdAt":"` + now.Format(time.RFC3339Nano) + `","updatedAt":"` + now.Format(time.RFC3339Nano) + `"}`,
 	}
-	repo := &fakeRepository{createFn: func(barbershopID, fullName string, key idempotency.Key, fp idempotency.Fingerprint) (staff.CreateResult, error) {
+	repo := &fakeRepository{createFn: func(barbershopID, fullName string, _ *string, key idempotency.Key, fp idempotency.Fingerprint) (staff.CreateResult, error) {
 		if barbershopID != testShopID {
 			t.Fatalf("unexpected shop: %s", barbershopID)
 		}
@@ -379,7 +379,7 @@ func TestCreateBarberHandler_Replay_ReturnsSameStatusAndBodyWithLocation(t *test
 		ContentType: "application/json",
 		Body:        `{"id":"8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4","fullName":"Carlos","createdAt":"2026-08-23T15:04:05Z","updatedAt":"2026-08-23T15:04:05Z"}`,
 	}
-	repo := &fakeRepository{createFn: func(string, string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
+	repo := &fakeRepository{createFn: func(string, string, *string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
 		return staff.CreateResult{
 			Decision: idempotency.Decision{Outcome: idempotency.OutcomeReplay, Response: stored},
 			Response: stored,
@@ -404,7 +404,7 @@ func TestCreateBarberHandler_Replay_ReturnsSameStatusAndBodyWithLocation(t *test
 }
 
 func TestCreateBarberHandler_ConflictFingerprint_Returns409(t *testing.T) {
-	repo := &fakeRepository{createFn: func(string, string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
+	repo := &fakeRepository{createFn: func(string, string, *string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
 		return staff.CreateResult{Decision: idempotency.Decision{Outcome: idempotency.OutcomeConflictFingerprint}}, nil
 	}}
 	h := httpapi.NewCreateBarberHandler(staff.NewService(repo))
@@ -424,7 +424,7 @@ func TestCreateBarberHandler_ConflictFingerprint_Returns409(t *testing.T) {
 }
 
 func TestCreateBarberHandler_Locked_Returns409(t *testing.T) {
-	repo := &fakeRepository{createFn: func(string, string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
+	repo := &fakeRepository{createFn: func(string, string, *string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
 		return staff.CreateResult{Decision: idempotency.Decision{Outcome: idempotency.OutcomeLocked}}, nil
 	}}
 	h := httpapi.NewCreateBarberHandler(staff.NewService(repo))
@@ -444,7 +444,7 @@ func TestCreateBarberHandler_Locked_Returns409(t *testing.T) {
 }
 
 func TestCreateBarberHandler_ThroughFullRouter_NeverLogsFullNameOrBody(t *testing.T) {
-	repo := &fakeRepository{createFn: func(string, string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
+	repo := &fakeRepository{createFn: func(string, string, *string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
 		return staff.CreateResult{
 			Decision: idempotency.Decision{Outcome: idempotency.OutcomeProceed},
 			Barber:   staff.Barber{ID: "b-1", FullName: "Nombre Sensible No Debe Aparecer"},
@@ -469,15 +469,15 @@ func TestCreateBarberHandler_ThroughFullRouter_NeverLogsFullNameOrBody(t *testin
 
 // --- Rename ---------------------------------------------------------------
 
-func TestRenameBarberHandler_Success_Returns200(t *testing.T) {
+func TestUpdateBarberHandler_Success_Returns200(t *testing.T) {
 	now := time.Now().UTC()
-	repo := &fakeRepository{renameFn: func(barbershopID, barberID, fullName string) (staff.RenameResult, error) {
+	repo := &fakeRepository{updateFn: func(barbershopID, barberID, fullName string, _ staff.DescriptionPatch) (staff.UpdateResult, error) {
 		if fullName != "Nuevo Nombre" {
 			t.Fatalf("unexpected fullName: %s", fullName)
 		}
-		return staff.RenameResult{Found: true, Barber: staff.Barber{ID: barberID, FullName: fullName, CreatedAt: now, UpdatedAt: now}}, nil
+		return staff.UpdateResult{Found: true, Barber: staff.Barber{ID: barberID, FullName: fullName, CreatedAt: now, UpdatedAt: now}}, nil
 	}}
-	h := httpapi.NewRenameBarberHandler(staff.NewService(repo))
+	h := httpapi.NewUpdateBarberHandler(staff.NewService(repo))
 
 	req := requestWithBarberID(http.MethodPatch, "/api/v1/private/barbers/8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4",
 		[]byte(`{"fullName":"Nuevo Nombre"}`), "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4")
@@ -489,12 +489,12 @@ func TestRenameBarberHandler_Success_Returns200(t *testing.T) {
 	}
 }
 
-func TestRenameBarberHandler_UnknownField_Returns400(t *testing.T) {
-	repo := &fakeRepository{renameFn: func(string, string, string) (staff.RenameResult, error) {
+func TestUpdateBarberHandler_UnknownField_Returns400(t *testing.T) {
+	repo := &fakeRepository{updateFn: func(string, string, string, staff.DescriptionPatch) (staff.UpdateResult, error) {
 		t.Fatal("repository must not be called for an unknown field")
-		return staff.RenameResult{}, nil
+		return staff.UpdateResult{}, nil
 	}}
-	h := httpapi.NewRenameBarberHandler(staff.NewService(repo))
+	h := httpapi.NewUpdateBarberHandler(staff.NewService(repo))
 
 	req := requestWithBarberID(http.MethodPatch, "/api/v1/private/barbers/8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4",
 		[]byte(`{"fullName":"X","active":false}`), "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4")
@@ -506,12 +506,12 @@ func TestRenameBarberHandler_UnknownField_Returns400(t *testing.T) {
 	}
 }
 
-func TestRenameBarberHandler_EmptyObject_Returns422(t *testing.T) {
-	repo := &fakeRepository{renameFn: func(string, string, string) (staff.RenameResult, error) {
+func TestUpdateBarberHandler_EmptyObject_Returns422(t *testing.T) {
+	repo := &fakeRepository{updateFn: func(string, string, string, staff.DescriptionPatch) (staff.UpdateResult, error) {
 		t.Fatal("repository must not be called for an empty object")
-		return staff.RenameResult{}, nil
+		return staff.UpdateResult{}, nil
 	}}
-	h := httpapi.NewRenameBarberHandler(staff.NewService(repo))
+	h := httpapi.NewUpdateBarberHandler(staff.NewService(repo))
 
 	req := requestWithBarberID(http.MethodPatch, "/api/v1/private/barbers/8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4",
 		[]byte(`{}`), "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4")
@@ -523,11 +523,11 @@ func TestRenameBarberHandler_EmptyObject_Returns422(t *testing.T) {
 	}
 }
 
-func TestRenameBarberHandler_NotFound_Returns404(t *testing.T) {
-	repo := &fakeRepository{renameFn: func(string, string, string) (staff.RenameResult, error) {
-		return staff.RenameResult{Found: false}, nil
+func TestUpdateBarberHandler_NotFound_Returns404(t *testing.T) {
+	repo := &fakeRepository{updateFn: func(string, string, string, staff.DescriptionPatch) (staff.UpdateResult, error) {
+		return staff.UpdateResult{Found: false}, nil
 	}}
-	h := httpapi.NewRenameBarberHandler(staff.NewService(repo))
+	h := httpapi.NewUpdateBarberHandler(staff.NewService(repo))
 
 	req := requestWithBarberID(http.MethodPatch, "/api/v1/private/barbers/99999999-9999-4999-8999-999999999999",
 		[]byte(`{"fullName":"X"}`), "99999999-9999-4999-8999-999999999999")
@@ -539,12 +539,12 @@ func TestRenameBarberHandler_NotFound_Returns404(t *testing.T) {
 	}
 }
 
-func TestRenameBarberHandler_ValidationError_Returns422(t *testing.T) {
-	repo := &fakeRepository{renameFn: func(string, string, string) (staff.RenameResult, error) {
+func TestUpdateBarberHandler_ValidationError_Returns422(t *testing.T) {
+	repo := &fakeRepository{updateFn: func(string, string, string, staff.DescriptionPatch) (staff.UpdateResult, error) {
 		t.Fatal("repository must not be called for an invalid name")
-		return staff.RenameResult{}, nil
+		return staff.UpdateResult{}, nil
 	}}
-	h := httpapi.NewRenameBarberHandler(staff.NewService(repo))
+	h := httpapi.NewUpdateBarberHandler(staff.NewService(repo))
 
 	req := requestWithBarberID(http.MethodPatch, "/api/v1/private/barbers/8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4",
 		[]byte(`{"fullName":"   "}`), "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4")
@@ -580,4 +580,130 @@ func (f *fakeRepository) ListPage(ctx context.Context, shop string, page, size i
 		return f.listPageFn(ctx, shop, page, size)
 	}
 	return staff.PageResult{}, nil
+}
+
+// --- Descripción del barbero (DEC-127) -------------------------------------
+
+func TestCreateBarberHandler_Description_ReachesRepository(t *testing.T) {
+	now := time.Now().UTC()
+	var got *string
+	repo := &fakeRepository{createFn: func(_, _ string, description *string, _ idempotency.Key, _ idempotency.Fingerprint) (staff.CreateResult, error) {
+		got = description
+		stored := idempotency.StoredResponse{Status: 201, ContentType: "application/json", Body: `{"id":"8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4"}`}
+		return staff.CreateResult{
+			Decision: idempotency.Decision{Outcome: idempotency.OutcomeProceed},
+			Barber:   staff.Barber{ID: "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4", FullName: "Carlos", CreatedAt: now, UpdatedAt: now},
+			Response: stored,
+		}, nil
+	}}
+	h := httpapi.NewCreateBarberHandler(staff.NewService(repo))
+
+	req := requestWithPrincipal(http.MethodPost, "/api/v1/private/barbers", []byte(`{"fullName":"Carlos","description":"  Fade y barba  "}`))
+	req.Header.Set(httpserver.IdempotencyKeyHeader, "key-1")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got == nil || *got != "Fade y barba" {
+		t.Fatalf("expected the trimmed description in the repository call, got %v", got)
+	}
+}
+
+func TestCreateBarberHandler_DescriptionTooLong_Returns422(t *testing.T) {
+	repo := &fakeRepository{createFn: func(string, string, *string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
+		t.Fatal("repository must not be called for an invalid description")
+		return staff.CreateResult{}, nil
+	}}
+	h := httpapi.NewCreateBarberHandler(staff.NewService(repo))
+
+	body := `{"fullName":"Carlos","description":"` + strings.Repeat("a", staff.DescriptionMaxLength+1) + `"}`
+	req := requestWithPrincipal(http.MethodPost, "/api/v1/private/barbers", []byte(body))
+	req.Header.Set(httpserver.IdempotencyKeyHeader, "key-1")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+// El PATCH distingue ausente (conserva), null/vacío (quita) y texto (escribe).
+func TestUpdateBarberHandler_Description_AbsentNullEmptyAndText(t *testing.T) {
+	const id = "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4"
+	cases := map[string]struct {
+		body      string
+		wantSet   bool
+		wantValue string // "" = nil
+	}{
+		"ausente": {`{"fullName":"Carlos"}`, false, ""},
+		"null":    {`{"fullName":"Carlos","description":null}`, true, ""},
+		"vacía":   {`{"fullName":"Carlos","description":""}`, true, ""},
+		"texto":   {`{"fullName":"Carlos","description":"Navaja"}`, true, "Navaja"},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			var got staff.DescriptionPatch
+			repo := &fakeRepository{updateFn: func(_, barberID, fullName string, description staff.DescriptionPatch) (staff.UpdateResult, error) {
+				got = description
+				now := time.Now().UTC()
+				return staff.UpdateResult{Found: true, Barber: staff.Barber{ID: barberID, FullName: fullName, CreatedAt: now, UpdatedAt: now}}, nil
+			}}
+			h := httpapi.NewUpdateBarberHandler(staff.NewService(repo))
+
+			rec := httptest.NewRecorder()
+			h.ServeHTTP(rec, requestWithBarberID(http.MethodPatch, "/api/v1/private/barbers/"+id, []byte(tc.body), id))
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+			}
+			if got.Set != tc.wantSet {
+				t.Fatalf("Set: want %v, got %v", tc.wantSet, got.Set)
+			}
+			switch {
+			case tc.wantValue == "" && got.Value != nil:
+				t.Fatalf("expected a nil value, got %q", *got.Value)
+			case tc.wantValue != "" && (got.Value == nil || *got.Value != tc.wantValue):
+				t.Fatalf("expected %q, got %v", tc.wantValue, got.Value)
+			}
+		})
+	}
+}
+
+func TestUpdateBarberHandler_DescriptionOfWrongType_Returns400(t *testing.T) {
+	repo := &fakeRepository{updateFn: func(string, string, string, staff.DescriptionPatch) (staff.UpdateResult, error) {
+		t.Fatal("repository must not be called for a malformed body")
+		return staff.UpdateResult{}, nil
+	}}
+	h := httpapi.NewUpdateBarberHandler(staff.NewService(repo))
+
+	const id = "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4"
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, requestWithBarberID(http.MethodPatch, "/api/v1/private/barbers/"+id, []byte(`{"fullName":"Carlos","description":42}`), id))
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestUpdateBarberHandler_Response_CarriesDescription(t *testing.T) {
+	const id = "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4"
+	description := "Navaja clásica"
+	now := time.Now().UTC()
+	repo := &fakeRepository{updateFn: func(_, barberID, fullName string, _ staff.DescriptionPatch) (staff.UpdateResult, error) {
+		return staff.UpdateResult{Found: true, Barber: staff.Barber{ID: barberID, FullName: fullName, CreatedAt: now, UpdatedAt: now, Description: &description}}, nil
+	}}
+	h := httpapi.NewUpdateBarberHandler(staff.NewService(repo))
+
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, requestWithBarberID(http.MethodPatch, "/api/v1/private/barbers/"+id, []byte(`{"fullName":"Carlos","description":"Navaja clásica"}`), id))
+
+	var body map[string]any
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if body["description"] != description {
+		t.Fatalf("expected the response to carry the description, got %v", body["description"])
+	}
 }

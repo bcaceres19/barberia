@@ -44,6 +44,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/barbershops/{slug}/barbers/{barberId}/photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Leer la fotografía pública de un barbero
+         * @description Sirve los bytes de la fotografía de un barbero que la reserva pública ya muestra (DEC-127), sin sesión. Se usa como `src` de una imagen. Lleva `ETag` (derivado de `photoUpdatedAt`) y responde `304` a una solicitud condicional con `If-None-Match`; el cliente añade `photoUpdatedAt` como parámetro de consulta de la URL solo para invalidar su propia caché, el servidor lo ignora. Solo se sirve la imagen de un barbero con asignación vigente a un servicio activo: un `slug` inválido o de una barbería no publicable, un `barberId` inexistente, de otra barbería, sin fotografía o sin asignación vigente responden exactamente el mismo `404`, sin distinguir la causa (CA-090-02, RN-TEN-01, RN-DAT-02).
+         */
+        get: operations["getPublicBarberPhoto"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/public/barbershops/{slug}/services/{serviceId}/barbers": {
         parameters: {
             query?: never;
@@ -53,7 +73,7 @@ export interface paths {
         };
         /**
          * Listar los barberos elegibles para un servicio público
-         * @description Lista (HU-092, CA-092-02) los barberos de la barbería resuelta por `slug` con asignación vigente al servicio activo `serviceId`. Mismo `slug` y misma resolución sin contexto de tenant que `GET /public/barbershops/{slug}` (`public_resolve_barbershop_by_slug`); un `slug` mal formado, desconocido o de una barbería no publicable produce EXACTAMENTE la misma respuesta `404` uniforme (CA-090-02, RN-TEN-01). `serviceId` sin forma de UUID, ajeno a esta barbería, inexistente o de un servicio inactivo NUNCA produce un error distinto (CA-092-03): en todos esos casos la respuesta es `200` con `items: []`, exactamente igual que un servicio sin ningún barbero asignado hoy -la causa no se distingue. La proyección es mínima: id y nombre completo; nunca foto, biografía, preferencia ni ningún identificador de tenant (CA-092-02, RN-DAT-02). El cliente decide la preselección automática (exactamente un elemento) o la elección explícita (varios elementos) a partir del tamaño de `items`; el contrato no agrega un campo adicional para eso (CA-092-01).
+         * @description Lista (HU-092, CA-092-02) los barberos de la barbería resuelta por `slug` con asignación vigente al servicio activo `serviceId`. Mismo `slug` y misma resolución sin contexto de tenant que `GET /public/barbershops/{slug}` (`public_resolve_barbershop_by_slug`); un `slug` mal formado, desconocido o de una barbería no publicable produce EXACTAMENTE la misma respuesta `404` uniforme (CA-090-02, RN-TEN-01). `serviceId` sin forma de UUID, ajeno a esta barbería, inexistente o de un servicio inactivo NUNCA produce un error distinto (CA-092-03): en todos esos casos la respuesta es `200` con `items: []`, exactamente igual que un servicio sin ningún barbero asignado hoy -la causa no se distingue. La proyección es mínima: id, nombre completo y, por DEC-127, descripción opcional y versión de la fotografía opcional (`photoUpdatedAt`; los bytes se piden aparte); nunca preferencia ni ningún identificador de tenant (CA-092-02, RN-DAT-02). El cliente decide la preselección automática (exactamente un elemento) o la elección explícita (varios elementos) a partir del tamaño de `items`; el contrato no agrega un campo adicional para eso (CA-092-01).
          */
         get: operations["listPublicBarbers"];
         put?: never;
@@ -73,7 +93,7 @@ export interface paths {
         };
         /**
          * Listar los inicios públicos válidos de un servicio con un barbero
-         * @description Proyecta (HU-094, CA-094-01 a CA-094-06) los instantes donde el servicio activo `serviceId` completo cabe con el barbero `barberId`, dentro de la barbería resuelta por `slug`: intersección de jornada efectiva (recurrente, excepciones, festivos, B2), bloqueos vigentes y citas que ocupan agenda (B3), aplicando la duración del servicio, la anticipación mínima, la ventana máxima y la rejilla vigentes de la barbería (HU-093). Cuando una interrupción termina fuera de la rejilla original del tramo, la generación reinicia desde ese instante (`DEC-084`, resuelve `DP-PUB-03`). Mismo `slug` y misma resolución sin contexto de tenant que `GET /public/barbershops/{slug}`; un `slug` mal formado, desconocido o de una barbería no publicable produce EXACTAMENTE la misma respuesta `404` uniforme (CA-090-02, RN-TEN-01). `serviceId`/`barberId` sin forma de UUID, ajeno a esta barbería, inexistente, inactivo o sin asignación vigente NUNCA producen un error distinto (mismo criterio que CA-092-03): la respuesta es `200` con `slots: []`, exactamente igual que "sin franjas hoy" -la causa no se distingue. Consultar esta operación no reserva ni aparta ninguna franja (RN-DIS-03): es de solo lectura y no crea filas, bloqueos ni sesiones (CA-094-04).
+         * @description Proyecta (HU-094, CA-094-01 a CA-094-06) los instantes donde el servicio activo `serviceId` completo cabe con el barbero `barberId`, dentro de la barbería resuelta por `slug`: intersección de jornada efectiva (recurrente, excepciones, festivos, B2), bloqueos vigentes y citas que ocupan agenda (B3), aplicando la duración del servicio, la anticipación mínima, la ventana máxima y la rejilla vigentes de la barbería (HU-093). Las franjas caen siempre en la rejilla fija del tramo laboral (inicio del tramo + k × `slotGridMinutes`), aunque una interrupción termine fuera de ella: no se reinicia desde ese instante (`DEC-135`, que sustituye `DEC-084`). Mismo `slug` y misma resolución sin contexto de tenant que `GET /public/barbershops/{slug}`; un `slug` mal formado, desconocido o de una barbería no publicable produce EXACTAMENTE la misma respuesta `404` uniforme (CA-090-02, RN-TEN-01). `serviceId`/`barberId` sin forma de UUID, ajeno a esta barbería, inexistente, inactivo o sin asignación vigente NUNCA producen un error distinto (mismo criterio que CA-092-03): la respuesta es `200` con `slots: []`, exactamente igual que "sin franjas hoy" -la causa no se distingue. Consultar esta operación no reserva ni aparta ninguna franja (RN-DIS-03): es de solo lectura y no crea filas, bloqueos ni sesiones (CA-094-04).
          */
         get: operations["listPublicAvailability"];
         put?: never;
@@ -118,6 +138,30 @@ export interface paths {
         get: operations["getCustomerAppointment"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/webhooks/meta/whatsapp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Verificar la suscripción del webhook de Meta
+         * @description Meta llama a esta operación al registrar la URL del webhook. Si `hub.mode` es `subscribe` y `hub.verify_token` coincide con `APP_META_WEBHOOK_VERIFY_TOKEN` (un secreto distinto del access token y de la clave de firma), responde `200` con `hub.challenge` tal cual, en texto plano. Cualquier otro caso responde `401` sin indicar qué falló. El desafío solo admite letras, dígitos, guion y guion bajo (hasta 128): no se refleja ningún otro contenido del solicitante.
+         */
+        get: operations["verifyMetaWhatsAppWebhook"];
+        put?: never;
+        /**
+         * Recibir una notificación de Meta WhatsApp
+         * @description Recibe mensajes entrantes y estados de entrega (`sent`, `delivered`, `read` y `failed`) del número de NAVA. La firma de la cabecera `X-Hub-Signature-256` (`sha256=` y el HMAC-SHA256 hexadecimal del cuerpo exacto con `APP_META_APP_SECRET`) se comprueba, en tiempo constante, ANTES de interpretar el cuerpo: una firma ausente o inválida responde `401` y no toca la base de datos. Solo se procesan los eventos del `phone_number_id` configurado. Cada mensaje entrante abre la ventana de 24 horas de su teléfono, que se guarda únicamente como HMAC; cada estado se registra una vez por mensaje y estado, de modo que reintentos de Meta no duplican nada. El contenido de los mensajes no se lee, guarda ni registra. Un fallo al guardar responde `500` para que Meta reintente; es seguro porque cada registro es idempotente. La respuesta de éxito no lleva cuerpo.
+         */
+        post: operations["receiveMetaWhatsAppWebhook"];
         delete?: never;
         options?: never;
         head?: never;
@@ -322,7 +366,7 @@ export interface paths {
         get: operations["getBookingPolicy"];
         /**
          * Actualizar la política pública de reserva y cancelación
-         * @description Reemplazo completo y autenticado (HU-093, CA-093-02) de los seis campos de la política pública, protegido por la precondición de versión `If-Match` (concurrencia optimista, mismo criterio que `HU-065`): si la representación vigente ya cambió, responde `409` con `code: version-conflict` en vez de aplicar un último escritor silencioso. Cada campo se valida contra el rango o conjunto discreto de `DEC-083`; `lateCancellationReasonRequired` no puede ser `true` si `lateCancellationClientAllowed` es `false` (combinación incoherente), y `minAdvanceMinutes` no puede alcanzar ni superar `maxAdvanceDays * 1440`. Un campo fuera de rango o una combinación incoherente responde `422` sin escribir nada, ni siquiera parcialmente (`CA-093-02`). Cambiar la política nunca reescribe citas, historial ni cancelaciones ya realizadas (`CA-093-04`). El cuerpo no declara `barbershopId`: el tenant se deriva exclusivamente de `SessionCookie` (`CA-093-03`).
+         * @description Reemplazo completo y autenticado (HU-093, CA-093-02) de los seis campos de la política pública, protegido por la precondición de versión `If-Match` (concurrencia optimista, mismo criterio que `HU-065`): si la representación vigente ya cambió, responde `409` con `code: version-conflict` en vez de aplicar un último escritor silencioso. Cada campo se valida contra su rango (`DEC-083`; la rejilla `slotGridMinutes`, entero de 1 a 60, `DEC-133`); `lateCancellationReasonRequired` no puede ser `true` si `lateCancellationClientAllowed` es `false` (combinación incoherente), y `minAdvanceMinutes` no puede alcanzar ni superar `maxAdvanceDays * 1440`. Un campo fuera de rango o una combinación incoherente responde `422` sin escribir nada, ni siquiera parcialmente (`CA-093-02`). Cambiar la política nunca reescribe citas, historial ni cancelaciones ya realizadas (`CA-093-04`). El cuerpo no declara `barbershopId`: el tenant se deriva exclusivamente de `SessionCookie` (`CA-093-03`).
          */
         put: operations["updateBookingPolicy"];
         post?: never;
@@ -341,7 +385,7 @@ export interface paths {
         };
         /**
          * Consultar la marca y el vocabulario de la barbería activa
-         * @description Lectura autenticada (issue #292, DEC-110) del color de acento y del vocabulario (palabra del negocio y del profesional, con plural y género gramatical) de la barbería derivada de la sesión vigente. Una barbería que nunca los cambió recibe los valores iniciales (`brass`, `barbería`, `barbero`) y el perfil `shop` (`DEC-115`), exactamente la interfaz anterior. Recurso propio, separado de `/private/settings/barbershop` para no ampliar el contrato cerrado de `HU-020` (`CA-020-07`). `barbershopId` nunca es un parámetro: el tenant se deriva exclusivamente de `SessionCookie`.
+         * @description Lectura autenticada (issue #292, DEC-110) del color de acento y del vocabulario (palabra del negocio y del profesional, con plural y género gramatical) de la barbería derivada de la sesión vigente. Una barbería que nunca los cambió recibe los valores iniciales (`brass`, `barbería`, `barbero`), exactamente la interfaz anterior. Incluye el panel del usuario que consulta (`panelProfile`), derivado de sus roles en la base de datos (`DEC-134`) y no de un ajuste de la barbería. Recurso propio, separado de `/private/settings/barbershop` para no ampliar el contrato cerrado de `HU-020` (`CA-020-07`). `barbershopId` nunca es un parámetro: el tenant se deriva exclusivamente de `SessionCookie`.
          */
         get: operations["getBrand"];
         put?: never;
@@ -351,7 +395,7 @@ export interface paths {
         head?: never;
         /**
          * Actualizar la marca y el vocabulario de la barbería activa
-         * @description Actualización autenticada (issue #292, DEC-110; perfil del panel, issue #294, DEC-115) de los seis campos de marca y vocabulario, que viajan siempre presentes; cualquier otro campo -en particular un identificador de barbería- se rechaza como forma inválida. `panelProfile` (`shop` o `solo`) es optativo: si se omite, el perfil guardado no cambia; fuera de la lista responde `422`. `accent` pertenece a una lista cerrada (nunca un color libre) y cada término se recorta, se colapsa y se pasa a minúsculas antes de validarlo y guardarlo. Un valor inválido responde `422` sin escribir nada. Son preferencias de presentación: no hay precondición de versión y la última escritura gana. Escribir toca `updated_at` de la fila, así que invalida el token `If-Match` de una política de reserva leída antes (`HU-093`), igual que una escritura de `HU-020`. La respuesta devuelve la representación canónica ya guardada, la misma forma que `GET`.
+         * @description Actualización autenticada (issue #292, DEC-110) de los seis campos de marca y vocabulario, que viajan siempre presentes; cualquier otro campo -en particular un identificador de barbería o `panelProfile`, que desde `DEC-134` lo deciden los roles del usuario- se rechaza como forma inválida. `accent` pertenece a una lista cerrada (nunca un color libre) y cada término se recorta, se colapsa y se pasa a minúsculas antes de validarlo y guardarlo. Un valor inválido responde `422` sin escribir nada. Son preferencias de presentación: no hay precondición de versión y la última escritura gana. Escribir toca `updated_at` de la fila, así que invalida el token `If-Match` de una política de reserva leída antes (`HU-093`), igual que una escritura de `HU-020`. La respuesta devuelve la representación canónica ya guardada, la misma forma que `GET`.
          */
         patch: operations["updateBrand"];
         trace?: never;
@@ -1408,7 +1452,7 @@ export interface components {
              */
             contactPhone: string;
         };
-        /** @description Marca y vocabulario de la barbería activa: color de acento de una lista cerrada, la palabra con la que llama a su negocio y a su profesional (con plural y género gramatical, para que la interfaz concuerde). Los términos viajan recortados y en minúsculas; la interfaz capitaliza donde corresponde. Incluye el perfil del panel (`panelProfile`, `DEC-115`), otra preferencia de presentación de la barbería. */
+        /** @description Marca y vocabulario de la barbería activa: color de acento de una lista cerrada, la palabra con la que llama a su negocio y a su profesional (con plural y género gramatical, para que la interfaz concuerde). Los términos viajan recortados y en minúsculas; la interfaz capitaliza donde corresponde. Incluye el panel del usuario que consulta (`panelProfile`), derivado de sus roles en la base de datos (`DEC-134`); no es un dato de la barbería. */
         BrandResponse: {
             accent: components["schemas"]["BrandAccent"];
             businessTerm: components["schemas"]["BrandTerm"];
@@ -1418,7 +1462,7 @@ export interface components {
             professionalTermGender: components["schemas"]["BrandTermGender"];
             panelProfile: components["schemas"]["PanelProfile"];
         };
-        /** @description Marca y vocabulario a guardar. Los seis campos de la marca viajan siempre presentes; `panelProfile` es optativo y, si se omite, conserva el perfil guardado. */
+        /** @description Marca y vocabulario a guardar. Los seis campos de la marca viajan siempre presentes. No incluye `panelProfile`: el panel lo deciden los roles del usuario (`DEC-134`). */
         UpdateBrandRequest: {
             accent: components["schemas"]["BrandAccent"];
             businessTerm: components["schemas"]["BrandTerm"];
@@ -1426,7 +1470,6 @@ export interface components {
             professionalTerm: components["schemas"]["BrandTerm"];
             professionalTermPlural: components["schemas"]["BrandTerm"];
             professionalTermGender: components["schemas"]["BrandTermGender"];
-            panelProfile?: components["schemas"]["PanelProfile"];
         };
         /**
          * @description Color de acento del panel: `brass` (el latón NAVA, valor inicial), `emerald`, `sapphire`, `ruby`, `amethyst` o `copper`.
@@ -1477,6 +1520,12 @@ export interface components {
              * @example null
              */
             photoUpdatedAt: string | null;
+            /**
+             * @description Descripción corta del barbero (DEC-127), o `null` si no tiene. Es contenido público: la reserva pública la muestra junto a su nombre y su fotografía.
+             * @example Fade, barba y navaja con más de diez años en el oficio.
+             * @example null
+             */
+            description: string | null;
         };
         /** @description Página de barberos de la barbería activa, ordenada de forma estable por fecha de alta y luego por identificador. Conserva cursor por defecto y admite modo numerado con page/pageSize (DEC-107); nextCursor es null en modo numerado. */
         BarberListResponse: {
@@ -1503,14 +1552,24 @@ export interface components {
              * @example Carlos Ramírez
              */
             fullName: string;
+            /**
+             * @description Descripción corta y opcional del barbero (DEC-127), visible en la reserva pública. El servidor recorta espacios; ausente, `null`, vacía o de solo espacios equivale a «sin descripción». Más de 280 caracteres responde `422` sin persistir nada.
+             * @example Fade, barba y navaja con más de diez años en el oficio.
+             */
+            description?: string | null;
         };
-        /** @description Renombrado de un barbero de la barbería activa. Nunca modifica su identificador, su fecha de alta ni ningún otro campo: `updatedAt` es lo único adicional que cambia, gestionado por el servidor. */
+        /** @description Actualización del nombre y, opcionalmente, la descripción de un barbero de la barbería activa. Nunca modifica su identificador, su fecha de alta ni ningún otro campo: `updatedAt` es lo único adicional que cambia, gestionado por el servidor. */
         UpdateBarberRequest: {
             /**
              * @description Nuevo nombre visible del barbero, ya recortado por el servidor. Un valor vacío, compuesto solo por espacios o mayor de 120 caracteres responde `422` sin persistir nada (CA-021-03); nombres repetidos dentro de la misma barbería son válidos.
              * @example Carlos A. Ramírez
              */
             fullName: string;
+            /**
+             * @description Nueva descripción del barbero (DEC-127). Ausente conserva la actual; `null`, vacía o de solo espacios la quita; más de 280 caracteres responde `422` sin persistir nada. El servidor recorta espacios.
+             * @example Fade, barba y navaja con más de diez años en el oficio.
+             */
+            description?: string | null;
         };
         /** @description Servicio del catálogo de la barbería activa. currency es siempre "COP" (DEC-067): fija para todo el MVP, nunca aceptada como entrada del cliente. isActive/deactivatedAt son de solo lectura: ningún endpoint de HU-022 (create/update) los acepta como entrada; solo cambian mediante POST .../deactivate y POST .../reactivate (HU-024). */
         ServiceResponse: {
@@ -1780,6 +1839,19 @@ export interface components {
              * @example Juan Pérez
              */
             fullName: string;
+            /**
+             * @description Descripción corta del barbero (DEC-127), o `null` si la barbería no escribió ninguna.
+             * @example Fade, barba y navaja con más de diez años en el oficio.
+             * @example null
+             */
+            description: string | null;
+            /**
+             * Format: date-time
+             * @description Versión de la fotografía del barbero (DEC-127), o `null` si no tiene (el cliente muestra su monograma). Se añade como parámetro de consulta a la URL de `GET /public/barbershops/{slug}/barbers/{barberId}/photo` para no reutilizar una copia vieja al cambiarla.
+             * @example 2026-09-30T12:00:00Z
+             * @example null
+             */
+            photoUpdatedAt: string | null;
         };
         /** @description Barberos con asignación vigente al servicio activo resuelto (HU-092, CA-092-02), ordenados de forma estable por fecha de asignación y luego por identificador. Un arreglo vacío (CA-092-03) cubre por igual un servicio sin ningún barbero asignado, ajeno a esta barbería, inexistente o inactivo: la causa nunca se distingue. */
         PublicBarberListResponse: {
@@ -1970,6 +2042,63 @@ export interface components {
             lateCancellationReasonRequired: boolean;
             vocabulary: components["schemas"]["PublicVocabulary"];
         };
+        MetaWhatsAppWebhookRequest: {
+            /**
+             * @description Solo `whatsapp_business_account` se procesa; cualquier otro valor se acepta y se ignora.
+             * @example whatsapp_business_account
+             */
+            object: string;
+            entry?: ({
+                /** @description Identificador de la cuenta de WhatsApp Business. */
+                id?: string;
+                changes?: ({
+                    /** @description Solo `messages` se procesa. */
+                    field?: string;
+                    value?: {
+                        metadata?: {
+                            /** @description Número que recibió el evento; los de otro número se ignoran. */
+                            phone_number_id?: string;
+                        } & {
+                            [key: string]: unknown;
+                        };
+                        /** @description Mensajes entrantes. Solo se usan `from` y `timestamp`. */
+                        messages?: ({
+                            id?: string;
+                            /** @description Teléfono de quien escribe, E.164 sin `+`. Se guarda solo como HMAC. */
+                            from?: string;
+                            /** @description Segundos Unix. */
+                            timestamp?: string;
+                        } & {
+                            [key: string]: unknown;
+                        })[];
+                        statuses?: ({
+                            /** @description `wamid` del mensaje enviado. */
+                            id?: string;
+                            /** @description Se registran `sent`, `delivered`, `read` y `failed`; otros valores se ignoran. */
+                            status?: string;
+                            /** @description Segundos Unix. */
+                            timestamp?: string;
+                            errors?: ({
+                                /** @description Código de error de Meta (por ejemplo `131047`, ventana cerrada). */
+                                code?: number;
+                            } & {
+                                [key: string]: unknown;
+                            })[];
+                        } & {
+                            [key: string]: unknown;
+                        })[];
+                    } & {
+                        [key: string]: unknown;
+                    };
+                } & {
+                    [key: string]: unknown;
+                })[];
+            } & {
+                [key: string]: unknown;
+            })[];
+        } & {
+            [key: string]: unknown;
+        };
         /** @description Solicitud de recuperación de acceso por el canal elegido. */
         RecoveryRequestRequest: {
             /**
@@ -2089,7 +2218,7 @@ export interface components {
             /** @constant */
             channel?: "whatsapp";
         });
-        /** @description Configuración de anticipación, ventana, rejilla y cancelación tardía de la barbería activa. Los rangos y el conjunto discreto de slotGridMinutes están fijados por DEC-083. */
+        /** @description Configuración de anticipación, ventana, rejilla y cancelación tardía de la barbería activa. Los rangos están fijados por DEC-083 y el de slotGridMinutes (entero de 1 a 60) por DEC-133. */
         BookingPolicyResponse: {
             /**
              * @description Anticipación mínima en minutos para reservar públicamente (RN-DIS-04). 0 desactiva el mínimo.
@@ -2104,9 +2233,8 @@ export interface components {
             /**
              * @description Paso en minutos de la rejilla de franjas ofrecidas al cliente (RN-DIS-06).
              * @example 15
-             * @enum {integer}
              */
-            slotGridMinutes: 5 | 10 | 15 | 20 | 30 | 60;
+            slotGridMinutes: number;
             /**
              * @description Plazo en minutos antes de la cita hasta el cual el cliente puede cancelar por su cuenta (RN-CAN-01). 0 desactiva la cancelación propia del cliente.
              * @example 20
@@ -2134,11 +2262,8 @@ export interface components {
             minAdvanceMinutes: number;
             /** @example 3 */
             maxAdvanceDays: number;
-            /**
-             * @example 15
-             * @enum {integer}
-             */
-            slotGridMinutes: 5 | 10 | 15 | 20 | 30 | 60;
+            /** @example 15 */
+            slotGridMinutes: number;
             /** @example 20 */
             cancellationDeadlineMinutes: number;
             /** @example true */
@@ -2147,11 +2272,11 @@ export interface components {
             lateCancellationReasonRequired: boolean;
         };
         /**
-         * @description Perfil del panel: `shop` (barbería con equipo, el panel completo; valor inicial) o `solo` (barbero individual: sin gestión de equipo ni selector de barbero). Un barbero independiente sigue siendo una barbería con un solo barbero (`DEC-019`); el perfil solo cambia lo que el panel muestra.
+         * @description Panel que ve el usuario: `shop` (rol `empresa`, o sin ningún rol: el panel completo con gestión de equipo), `solo` (rol `independiente`: barbero individual, sin gestión de equipo ni selector de barbero) o `employee` (rol `empleado`: panel individual limitado, sin Servicios, Reserva pública ni Configuración). Con varios roles prevalece `empresa`, luego `independiente` y luego `empleado`. Un barbero independiente sigue siendo una barbería con un solo barbero (`DEC-019`); el perfil solo cambia lo que el panel muestra.
          * @example solo
          * @enum {string}
          */
-        PanelProfile: "shop" | "solo";
+        PanelProfile: "shop" | "solo" | "employee";
         /** @description Identificador del enlace público de reservas de la barbería de la sesión. El cliente compone la URL completa con su propio origen: `{origen}/reservar/{slug}`. Tiene la forma `<nombre><código aleatorio de 8>` sin guiones (`DEC-118`; los generados antes pueden llevarlos), es único globalmente y no cambia al renombrar la barbería. No contiene ningún identificador interno. */
         PublicLinkResponse: {
             /** @example cortefinok7x2m9q4 */
@@ -3543,6 +3668,21 @@ export interface components {
                 "application/json": components["schemas"]["PublicServiceListResponse"];
             };
         };
+        /** @description Fotografía del barbero (JPEG o PNG). */
+        PublicBarberPhotoSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                /** @description Validador de la versión de la imagen, derivado de `photoUpdatedAt`. El navegador lo devuelve en `If-None-Match` y recibe `304` mientras no cambie. */
+                ETag?: string;
+                /** @description `private, max-age=3600`: es el retrato de una persona, nunca almacenable por una caché compartida. El cliente versiona la URL con `photoUpdatedAt`, así que una fotografía nueva no se sirve de una copia vieja. */
+                "Cache-Control"?: string;
+                [name: string]: unknown;
+            };
+            content: {
+                "image/jpeg": string;
+                "image/png": string;
+            };
+        };
         /** @description Barberos con asignación vigente al servicio activo resuelto. */
         PublicBarberListSuccess: {
             headers: {
@@ -4265,6 +4405,29 @@ export interface operations {
             500: components["responses"]["InternalErrorProblem"];
         };
     };
+    getPublicBarberPhoto: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Validador `ETag` de la copia que el cliente ya tiene. */
+                "If-None-Match"?: string;
+            };
+            path: {
+                /** @description Identificador del enlace público de reservas, tal como aparece en la URL (DEC-082). */
+                slug: string;
+                /** @description Identificador del barbero, tal como lo entrega la lista pública. */
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["PublicBarberPhotoSuccess"];
+            304: components["responses"]["BarberPhotoNotModified"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
     listPublicBarbers: {
         parameters: {
             query?: never;
@@ -4395,6 +4558,73 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    verifyMetaWhatsAppWebhook: {
+        parameters: {
+            query: {
+                /**
+                 * @description Debe ser `subscribe`.
+                 * @example subscribe
+                 */
+                "hub.mode": string;
+                /** @description Token de verificación configurado en el despliegue y en el panel de Meta. */
+                "hub.verify_token": string;
+                /**
+                 * @description Valor que Meta espera recibir de vuelta.
+                 * @example 1158201444
+                 */
+                "hub.challenge": string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Verificación aceptada. El cuerpo es el desafío recibido. */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example 1158201444 */
+                    "text/plain": string;
+                };
+            };
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    receiveMetaWhatsAppWebhook: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Firma del cuerpo exacto: `sha256=` seguido del HMAC-SHA256 en hexadecimal calculado con el secreto de la aplicación de Meta. */
+                "X-Hub-Signature-256": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MetaWhatsAppWebhookRequest"];
+            };
+        };
+        responses: {
+            /** @description Notificación autenticada y procesada. Sin cuerpo. */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

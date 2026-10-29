@@ -44,6 +44,14 @@ async function openSchedules(page: Page) {
   await expect(page.getByRole('heading', { name: 'Horarios' })).toBeVisible()
 }
 
+// El diálogo captura «de HH:MM a HH:MM»; las pruebas siguen describiendo el
+// tramo por su duración y aquí se traduce a la hora de fin.
+function endTime(startsTime: string, durationMinutes: string): string {
+  const [hours, minutes] = startsTime.split(':').map(Number) as [number, number]
+  const end = (hours * 60 + minutes + Number(durationMinutes)) % (24 * 60)
+  return `${String(Math.floor(end / 60)).padStart(2, '0')}:${String(end % 60).padStart(2, '0')}`
+}
+
 async function addWorkingHour(
   page: Page,
   {
@@ -56,7 +64,7 @@ async function addWorkingHour(
   const dialog = page.getByRole('dialog', { name: 'Agregar tramo' })
   await dialog.getByRole('radio', { name: weekday }).click()
   await pickTime(dialog, page, 'Hora de inicio', startsTime)
-  await dialog.getByLabel('Duración (minutos)').fill(durationMinutes)
+  await pickTime(dialog, page, 'Hora de fin', endTime(startsTime, durationMinutes))
   await dialog.getByRole('button', { name: 'Guardar' }).click()
   return dialog
 }
@@ -164,7 +172,9 @@ test.describe('Horario laboral recurrente (HU-040)', () => {
 
     await page.getByRole('button', { name: /Editar tramo de Jueves/ }).click()
     const editDialog = page.getByRole('dialog', { name: 'Editar tramo' })
+    // 08:00–09:00 pasa a 09:00–10:00: la duración (60 min) se conserva.
     await pickTime(editDialog, page, 'Hora de inicio', '09:00')
+    await pickTime(editDialog, page, 'Hora de fin', '10:00')
     await editDialog.getByRole('button', { name: 'Guardar' }).click()
     await expect(editDialog).toBeHidden()
     await expect(page.getByText('09:00 · 60 min')).toBeVisible()

@@ -125,6 +125,9 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-130` | 2026-10-26 | Ubicación de la barbería en la reserva pública, configurable por barbería, con mapa de Google | `DEC-110`, `DEC-115`; `HU-102`; issue #359 | Confirmada |
 | `DEC-131` | 2026-10-26 | Domicilio: interruptor general de la barbería y dirección del cliente geocodificada con mapa de Google | `DEC-089`–`DEC-091`; `HU-103`; issue #360 | Confirmada |
 | `DEC-132` | 2026-10-27 | El backend sube a Go 1.26.10 porque la línea 1.26.9 tiene una vulnerabilidad de la librería estándar alcanzable (`GO-2026-6809`); amplía `DEC-121` | `DEC-023`; issue #363 | Confirmada |
+| `DEC-133` | 2026-10-28 | La rejilla de horarios es un entero libre de 1 a 60 minutos, editado con un campo numérico; sustituye el conjunto `{5, 10, 15, 20, 30, 60}` de `DEC-083` | `DEC-083`, `DEC-084`; issue pendiente | Confirmada |
+| `DEC-134` | 2026-10-28 | El tipo de panel (empresa, empleado, independiente) se define en la BD por roles del usuario, no en Configuración; sustituye `barbershop.panel_profile` de `DEC-115` | `DEC-115`, `DEC-116`, `DEC-100`; issue #365 | Confirmada (modelo de roles); composición del panel de empleado sujeta a revisión |
+| `DEC-135` | 2026-10-28 | Las franjas ofrecidas caen siempre en la rejilla fija anclada al inicio del tramo laboral; sustituye el reinicio tras una interrupción de `DEC-084` | `DEC-084`, `DEC-133`, `RN-DIS-06`; `DP-PUB-03` | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -1559,3 +1562,47 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Responsable:** propietario del proyecto.
 - **Alternativas descartadas:** integrar con el check de seguridad en rojo (contradice la regla de integrar solo con CI en verde); esperar un parche de la línea 1.26.9 (ya existe 1.26.10, no hay motivo para esperar).
 - **Fuente:** detectado por el agente el 2026-10-27 al revisar por qué el PR documental #362 (reseñas/ubicación/domicilio) no podía integrarse con CI en verde; mismo patrón ya aprobado por el propietario en `DEC-121`, issue [#363](https://github.com/bcaceres19/barberia/issues/363).
+### DEC-133 · Rejilla de horarios: entero de 1 a 60 minutos
+
+- **Fecha:** 2026-10-28.
+- **Decisión:** el paso de la rejilla de horarios (`RN-DIS-06`) deja de restringirse al conjunto `{5, 10, 15, 20, 30, 60}` y pasa a ser **cualquier entero de 1 a 60 minutos**. El valor inicial sigue siendo 15. La pantalla de reserva pública lo edita con un campo numérico que no admite signos, decimales ni letras y que el cliente web y el servicio validan contra el mismo rango. Reemplaza únicamente la línea de la rejilla de `DEC-083`; los demás rangos de esa decisión no cambian.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** el propietario pidió que la rejilla se configure «por medio de un campo numérico que no supere los 60 y que no permita valores negativos». el motor de disponibilidad funciona con cualquier paso positivo (la rejilla fija de `DEC-135` sustituye el reinicio que `DEC-084` suponía) y el conjunto discreto no protegía ninguna invariante técnica.
+- **Alternativas descartadas:** mantener el conjunto de `DEC-083` con un selector (contradice el campo numérico pedido); un campo libre sin tope (la rejilla no debe superar la hora); un rango múltiplo de 5 (el propietario eligió el entero de 1 a 60).
+- **Consecuencias:** un paso como 7 produce franjas poco legibles (9:00, 9:07, 9:14…); es una elección consciente de la barbería, no un error. Las reglas previas se mantienen: la creación manual sigue sin ceñirse a la rejilla y las duraciones no múltiplo del paso dejan huecos residuales (`RN-DIS-06`).
+- **Documentos afectados:** `docs/01-producto/reglas-negocio.md` (`RN-DIS-06`), `docs/00-control/{matriz-trazabilidad,historial-cambios}.md`, `docs/07-calidad/pruebas-ui/{07-combinaciones.md,pantallas/policy.md}`, `api/openapi` (0.37.0: `slotGridMinutes` entero de 1 a 60), `database` (migración `20261029120000_relax_barbershop_slot_grid_check.sql`, `README.md`), `.github/workflows/ci.yml`, `apps/api` (módulo `shops`), `apps/web` (módulo `settings`).
+- **Fuente:** instrucción explícita del propietario el 2026-10-28 (rejilla por campo numérico, de 1 a 60, sin negativos), confirmada con la opción «cualquier entero de 1 a 60».
+
+### DEC-134 · El tipo de panel se define por roles en la BD, no en Configuración (sustituye en parte a `DEC-115`)
+
+- **Fecha:** 2026-10-28.
+- **Issue:** [#365](https://github.com/bcaceres19/barberia/issues/365).
+- **Decisión:**
+  1. **Tres roles.** Cada usuario de una barbería (`staff_user`) tiene uno o más roles: `empresa` (la barbería como negocio con equipo), `empleado` (barbero que trabaja para esa barbería) e `independiente` (barbero que trabaja por su cuenta). Un barbero de una barbería con equipo puede tener su propia cuenta y seguir en ella: entonces es a la vez `empleado` e `independiente`.
+  2. **Almacenamiento.** Tabla de roles por usuario, con un `CHECK` sobre los tres valores y unicidad por `(usuario, rol)`, que permite la combinación `empleado` + `independiente`. Sigue las reglas de tenant y RLS de `DEC-024` y `DEC-040`.
+  3. **El panel lo decide el rol, no un ajuste.** Se retira la sección «Perfil del panel» de Configuración y `panelProfile` deja de ser editable en `PATCH /private/settings/brand`. Los roles se asignan en el alta o directamente en la BD; ninguna pantalla los cambia.
+  4. **Tres presentaciones.** `empresa`: el panel completo con gestión de equipo (lo que hoy es `shop`). `independiente`: el panel de barbero individual de `DEC-115`/`DEC-116` (lo que hoy es `solo`). `empleado`: un panel individual **más limitado** que el del independiente, sin el detalle de gestión propio de quien trabaja por su cuenta.
+  5. **Migración de datos.** `barbershop.panel_profile = 'solo'` pasa a rol `independiente` del usuario de esa barbería; `'shop'`, a rol `empresa`. Después se retira la columna en una migración aparte, sin editar la de `DEC-115` (`DEC-036`).
+- **Quién lo decidió:** el propietario, el 2026-10-28, al señalar que lo individual o de equipo «se define en la BD por roles, no en configuración como dice la pantalla actual». Eligió tabla de roles por usuario, quitar la sección de Configuración y mapear `panel_profile` a roles asignados en la BD.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** `DEC-115` descartó «rol por usuario» por el alcance de autorización y RLS; el propietario lo retoma como la forma correcta de modelar quién es independiente, quién es empresa y quién es empleado, incluida la barbería cuyo barbero se vuelve independiente sin salir de ella.
+- **Alternativas descartadas:** una columna de un solo rol (no expresa «empleado e independiente»); mantener `panel_profile` editable en Configuración (contradice lo anterior); inferir el panel de cuántos barberos hay (descartada ya por `DEC-115`).
+- **Resolución de las dudas** (propuestas del agente que el propietario aceptó con «sí, hazlo» el 2026-10-28; sujetas a su revisión): `DP-ROL-01` el panel de `empleado` conserva Agenda, Barberos y Horarios y oculta Servicios, Servicios por barbero, Reserva pública y Configuración (las rutas ocultas redirigen a la Agenda); `DP-ROL-02` quien es `empleado` e `independiente` ve el panel individual completo; `DP-ROL-03` los roles son del usuario (`staff_user`) y por ahora solo deciden la presentación, sin autorización por rol en el API. Con prioridad `empresa` > `independiente` > `empleado`, y sin ningún rol el panel completo (`shop`), como antes.
+- **Derivación en el API.** `panelProfile` de `GET /private/settings/brand` deja de ser un dato de la barbería: se calcula con los roles del usuario autenticado (`empresa` → `shop`, `independiente` → `solo`, `empleado` → `employee`). `PATCH` ya no lo acepta.
+- **Límites:** presentación pura: no concede ni retira permisos de API ni limita los datos que el API devuelve a un `empleado`; esa restricción exige una decisión de autorización por rol. La columna `barbershop.panel_profile` se retira en una migración posterior.
+- **Documentos afectados:** `docs/02-requisitos/historias-usuario.md` (`HU-025`, `CA-025-10`), `docs/03-desarrollo/especificacion-frontend-nava.md` (§5.1), `docs/00-control/{dudas-pendientes,matriz-trazabilidad,historial-cambios}.md`, `api/openapi` (0.38.0: `PanelProfile` con `employee`, `panelProfile` derivado y fuera de `UpdateBrandRequest`), `database` (migración `20261029130000_create_staff_user_role.sql`, `tests/staff_user_role.sql`, `testdata/staff_user_role_365.sql`, `README.md`), `.github/workflows/ci.yml`, `apps/api` (módulo `shops`), `apps/web` (`brandStore`, `profileGuard`, `AppNav`, `SettingsPage` y los módulos con entradas de navegación). La columna `barbershop.panel_profile` y su prueba SQL siguen hasta su retiro en una migración posterior.
+- **Fuente:** instrucción explícita del propietario el 2026-10-28.
+
+### DEC-135 · Rejilla fija anclada al inicio del tramo (sustituye a `DEC-084`)
+
+- **Fecha:** 2026-10-28.
+- **Decisión:** las franjas que se ofrecen al cliente caen siempre en `inicio del tramo laboral + k × paso`, con el tramo ya fusionado (`RN-DIS-02`). La rejilla **no se reinicia** donde termina un bloqueo, una cita u otra interrupción: una franja solo se ofrece si el servicio completo cabe antes de la siguiente interrupción o del cierre del tramo. Revierte la resolución de `DP-PUB-03` que `DEC-084` fijó el 2026-09-11.
+- **Ejemplo:** tramo 9:00–18:00, rejilla de 40 min y una cita que termina a las 9:30. Con `DEC-084` se ofrecía 9:30, 10:10, 10:50…; ahora se ofrece 9:40, 10:20, 11:00… (múltiplos de 40 desde las 9:00). Con una interrupción que termina a las 13:47 y rejilla de 15 min, la primera franja posterior es 14:00 y no 13:47.
+- **Quién lo decidió:** el propietario, el 2026-10-28, al ver franjas como 9:30 con una rejilla configurada de 40 minutos («no tienen nada que ver con lo configurado»). Entre «rejilla fija» y «mantener el reinicio» eligió la rejilla fija.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** la rejilla es el paso que la barbería configura (`RN-DIS-06`, `DEC-133`); franjas que dependen de dónde terminó el último turno la hacen impredecible y la agenda pública deja de verse alineada con el paso elegido.
+- **Consecuencia aceptada:** pueden quedar huecos sin ofrecer entre el final de una interrupción y la siguiente marca de la rejilla (p. ej. de 13:47 a 14:00). La creación manual del barbero sigue sin ceñirse a la rejilla (`RN-DIS-06`).
+- **Alternativas descartadas:** mantener el reinicio de `DEC-084` (aprovecha huecos, pero produce horas fuera del paso configurado).
+- **Alcance:** solo cambia qué franjas genera `availability.GenerateStarts`; `RN-DIS-04` (anticipación y ventana) y `RN-CON-01`/`RN-CON-03` (solapes) se siguen aplicando igual.
+- **Documentos afectados:** `docs/01-producto/reglas-negocio.md` (`RN-DIS-06`), `docs/02-requisitos/historias-usuario.md` (`HU-094`), `docs/00-control/{dudas-pendientes,matriz-trazabilidad,historial-cambios}.md`, `docs/10-backlog/prompts/hu/hu-094-motor-disponibilidad-publica.md`, `api/openapi` (descripción de la disponibilidad pública, 0.38.0), `apps/api` (`availability`).
+- **Fuente:** instrucción explícita del propietario el 2026-10-28.

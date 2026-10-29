@@ -9,8 +9,8 @@ description: >
   cerrada, la palabra con la que llama a su negocio y a su profesional (con
   plural y género gramatical, para que la interfaz concuerde). Los términos
   viajan recortados y en minúsculas; la interfaz capitaliza donde corresponde.
-  Incluye el perfil del panel (`panelProfile`, `DEC-115`), otra preferencia de
-  presentación de la barbería.
+  Incluye el panel del usuario que consulta (`panelProfile`), derivado de sus
+  roles en la base de datos (`DEC-134`); no es un dato de la barbería.
 properties:
   accent:
     $ref: './BrandAccent.yaml'

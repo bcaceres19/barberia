@@ -37,14 +37,35 @@ INSERT INTO barbershop (id, name, timezone, public_slug) VALUES
    'Barbería de prueba HU-092 Dos', 'America/Bogota', 'barberia-hu092-dos')
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO barber (id, barbershop_id, full_name) VALUES
+-- DEC-127: Uno-1 tiene descripción y fotografía (ambas visibles en la reserva
+-- pública); Uno-2 no tiene ninguna (los campos viajan como null); Uno-3 tiene
+-- fotografía pero ninguna asignación vigente, así que NO es elegible y su
+-- imagen no se sirve; Dos-1 tiene fotografía de OTRA barbería (aislamiento).
+INSERT INTO barber (id, barbershop_id, full_name, description) VALUES
   ('00920011-0092-0092-0092-009200110011',
-   '00920001-0092-0092-0092-009200010001', 'Barbero HU-092 Uno-1'),
+   '00920001-0092-0092-0092-009200010001', 'Barbero HU-092 Uno-1',
+   'Descripción pública HU-092 Uno-1'),
   ('00920012-0092-0092-0092-009200120012',
-   '00920001-0092-0092-0092-009200010001', 'Barbero HU-092 Uno-2'),
+   '00920001-0092-0092-0092-009200010001', 'Barbero HU-092 Uno-2', NULL),
+  ('00920014-0092-0092-0092-009200140014',
+   '00920001-0092-0092-0092-009200010001', 'Barbero HU-092 Uno-3 sin asignación', NULL),
   ('00920013-0092-0092-0092-009200130013',
-   '00920002-0092-0092-0092-009200020002', 'Barbero HU-092 Dos-1')
+   '00920002-0092-0092-0092-009200020002', 'Barbero HU-092 Dos-1', NULL)
 ON CONFLICT (id) DO NOTHING;
+
+-- PNG de 1x1 píxel: la prueba de la API no decodifica la imagen (la validación
+-- vive en staff.ValidatePhoto al subirla), solo comprueba qué bytes se sirven.
+INSERT INTO barber_photo (barbershop_id, barber_id, content_type, image) VALUES
+  ('00920001-0092-0092-0092-009200010001',
+   '00920011-0092-0092-0092-009200110011', 'image/png',
+   decode('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c6360000002000001e221bc330000000049454e44ae426082', 'hex')),
+  ('00920001-0092-0092-0092-009200010001',
+   '00920014-0092-0092-0092-009200140014', 'image/png',
+   decode('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c6360000002000001e221bc330000000049454e44ae426082', 'hex')),
+  ('00920002-0092-0092-0092-009200020002',
+   '00920013-0092-0092-0092-009200130013', 'image/png',
+   decode('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c6360000002000001e221bc330000000049454e44ae426082', 'hex'))
+ON CONFLICT DO NOTHING;
 
 -- Uno: activo, con exactamente UN barbero asignado (CA-092-01, caso "1":
 -- preselección automática).

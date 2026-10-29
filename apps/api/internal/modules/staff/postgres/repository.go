@@ -63,6 +63,7 @@ type barberResponseWire struct {
 	CreatedAt      time.Time  `json:"createdAt"`
 	UpdatedAt      time.Time  `json:"updatedAt"`
 	PhotoUpdatedAt *time.Time `json:"photoUpdatedAt"`
+	Description    *string    `json:"description"`
 }
 
 func marshalBarberResponse(b staff.Barber) ([]byte, error) {
@@ -72,6 +73,7 @@ func marshalBarberResponse(b staff.Barber) ([]byte, error) {
 		CreatedAt:      b.CreatedAt,
 		UpdatedAt:      b.UpdatedAt,
 		PhotoUpdatedAt: b.PhotoUpdatedAt,
+		Description:    b.Description,
 	})
 }
 
@@ -79,8 +81,14 @@ func marshalBarberResponse(b staff.Barber) ([]byte, error) {
 // versión de su fotografía (DEC-104). LEFT JOIN a barber_photo por la PK
 // compuesta (barbershop_id, barber_id): nunca lee los bytes de `image`, solo
 // `updated_at`, así que el listado del equipo no arrastra imágenes.
+// scanBarber enumera los destinos de barberColumns en el mismo orden: un solo
+// lugar que cambia cuando la lectura de un barbero gana una columna.
+func scanBarber(b *staff.Barber) []any {
+	return []any{&b.ID, &b.FullName, &b.CreatedAt, &b.UpdatedAt, &b.PhotoUpdatedAt, &b.Description}
+}
+
 const (
-	barberColumns   = `b.id, b.full_name, b.created_at, b.updated_at, p.updated_at`
+	barberColumns   = `b.id, b.full_name, b.created_at, b.updated_at, p.updated_at, b.description`
 	barberPhotoJoin = `LEFT JOIN barber_photo p
 	                     ON p.barbershop_id = b.barbershop_id AND p.barber_id = b.id`
 )
@@ -128,7 +136,7 @@ func (r *Repository) List(ctx context.Context, barbershopID string, cursor *staf
 		items := make([]staff.Barber, 0, fetchLimit)
 		for rows.Next() {
 			var b staff.Barber
-			if err := rows.Scan(&b.ID, &b.FullName, &b.CreatedAt, &b.UpdatedAt, &b.PhotoUpdatedAt); err != nil {
+			if err := rows.Scan(scanBarber(&b)...); err != nil {
 				return fmt.Errorf("list barbers: scan: %w", err)
 			}
 			items = append(items, b)
@@ -165,7 +173,7 @@ func (r *Repository) Get(ctx context.Context, barbershopID, barberID string) (st
 
 	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
 		err := selectBarber(ctx, q, barbershopID, barberID).
-			Scan(&b.ID, &b.FullName, &b.CreatedAt, &b.UpdatedAt, &b.PhotoUpdatedAt)
+			Scan(scanBarber(&b)...)
 		switch {
 		case err == nil:
 			found = true
@@ -198,6 +206,7 @@ func (r *Repository) Create(
 	ctx context.Context,
 	barbershopID string,
 	fullName string,
+	description *string,
 	key idempotency.Key,
 	fingerprint idempotency.Fingerprint,
 ) (staff.CreateResult, error) {
@@ -219,11 +228,11 @@ func (r *Repository) Create(
 
 		var b staff.Barber
 		if err := q.QueryRow(ctx,
-			`INSERT INTO barber (barbershop_id, full_name)
-			      VALUES ($1, $2)
-			   RETURNING id, full_name, created_at, updated_at`,
-			barbershopID, fullName,
-		).Scan(&b.ID, &b.FullName, &b.CreatedAt, &b.UpdatedAt); err != nil {
+			`INSERT INTO barber (barbershop_id, full_name, description)
+			      VALUES ($1, $2, $3)
+			   RETURNING id, full_name, created_at, updated_at, description`,
+			barbershopID, fullName, description,
+		).Scan(&b.ID, &b.FullName, &b.CreatedAt, &b.UpdatedAt, &b.Description); err != nil {
 			return fmt.Errorf("insert barber: %w", err)
 		}
 
@@ -260,40 +269,42 @@ func (r *Repository) Create(
 	return result, nil
 }
 
-// Rename implementa staff.Repository.Rename: UPDATE ... RETURNING dentro de
+// Update implementa staff.Repository.Update: UPDATE ... RETURNING dentro de
 // una única sentencia, filtrando por id Y barbershop_id (defensa en
 // profundidad sobre barber_update_tenant_policy). Nunca crea ni duplica una
 // fila (CA-021-04); cero filas afectadas cubre tanto "no existe" como "es
-// de otra barbería" (CA-021-05).
-func (r *Repository) Rename(ctx context.Context, barbershopID, barberID, fullName string) (staff.RenameResult, error) {
-	var result staff.RenameResult
+// de otra barbería" (CA-021-05). La descripción se escribe solo cuando el
+// cambio la trae ($4 en true); si no, `CASE` conserva la actual.
+func (r *Repository) Update(ctx context.Context, barbershopID, barberID, fullName string, description staff.DescriptionPatch) (staff.UpdateResult, error) {
+	var result staff.UpdateResult
 
 	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
 		var b staff.Barber
 		err := q.QueryRow(ctx,
-			`WITH renamed AS (
+			`WITH updated AS (
 			    UPDATE barber
-			       SET full_name = $3
+			       SET full_name = $3,
+			           description = CASE WHEN $4 THEN $5 ELSE description END
 			     WHERE id = $1 AND barbershop_id = $2
-			 RETURNING id, barbershop_id, full_name, created_at, updated_at
+			 RETURNING id, barbershop_id, full_name, created_at, updated_at, description
 			 )
-			 SELECT b.id, b.full_name, b.created_at, b.updated_at, p.updated_at
-			   FROM renamed b `+barberPhotoJoin,
-			barberID, barbershopID, fullName,
-		).Scan(&b.ID, &b.FullName, &b.CreatedAt, &b.UpdatedAt, &b.PhotoUpdatedAt)
+			 SELECT b.id, b.full_name, b.created_at, b.updated_at, p.updated_at, b.description
+			   FROM updated b `+barberPhotoJoin,
+			barberID, barbershopID, fullName, description.Set, description.Value,
+		).Scan(scanBarber(&b)...)
 		switch {
 		case err == nil:
 			result.Found = true
 			result.Barber = b
 		case errors.Is(err, pgx.ErrNoRows):
-			// result.Found queda false: defensivo, ver RenameResult.Found.
+			// result.Found queda false: defensivo, ver UpdateResult.Found.
 		default:
 			return fmt.Errorf("update barber: %w", err)
 		}
 		return nil
 	})
 	if err != nil {
-		return staff.RenameResult{}, fmt.Errorf("staff/postgres: rename barber: %w", err)
+		return staff.UpdateResult{}, fmt.Errorf("staff/postgres: update barber: %w", err)
 	}
 	return result, nil
 }
@@ -338,7 +349,7 @@ func (r *Repository) PutPhoto(ctx context.Context, barbershopID, barberID string
 
 		var b staff.Barber
 		if err := selectBarber(ctx, q, barbershopID, barberID).
-			Scan(&b.ID, &b.FullName, &b.CreatedAt, &b.UpdatedAt, &b.PhotoUpdatedAt); err != nil {
+			Scan(scanBarber(&b)...); err != nil {
 			return fmt.Errorf("select barber after photo upsert: %w", err)
 		}
 		result.Found = true
@@ -426,12 +437,12 @@ func (r *Repository) ListPage(ctx context.Context, shop string, page, size int) 
   ), bounds AS (
    SELECT total, GREATEST(1, (total + $2 - 1) / $2) AS pages FROM counted
   ), selected AS (
-   SELECT b.id, b.full_name, b.created_at, b.updated_at, p.updated_at AS photo_updated_at FROM barber b `+barberPhotoJoin+`
+   SELECT b.id, b.full_name, b.created_at, b.updated_at, p.updated_at AS photo_updated_at, b.description FROM barber b `+barberPhotoJoin+`
    WHERE b.barbershop_id = $1 ORDER BY b.created_at, b.id
    LIMIT $2 OFFSET (SELECT (LEAST($3, pages) - 1) * $2 FROM bounds)
   )
   SELECT total, pages, LEAST($3, pages), s.id, s.full_name,
-         s.created_at, s.updated_at, s.photo_updated_at
+         s.created_at, s.updated_at, s.photo_updated_at, s.description
   FROM bounds LEFT JOIN selected s ON true`, shop, size, page)
 		if err != nil {
 			return fmt.Errorf("list barber page: %w", err)
@@ -440,11 +451,12 @@ func (r *Repository) ListPage(ctx context.Context, shop string, page, size int) 
 		for rows.Next() {
 			var id, name *string
 			var created, updated, photo *time.Time
-			if err := rows.Scan(&result.Total, &result.TotalPages, &result.Page, &id, &name, &created, &updated, &photo); err != nil {
+			var description *string
+			if err := rows.Scan(&result.Total, &result.TotalPages, &result.Page, &id, &name, &created, &updated, &photo, &description); err != nil {
 				return err
 			}
 			if id != nil {
-				result.Items = append(result.Items, staff.Barber{ID: *id, FullName: *name, CreatedAt: *created, UpdatedAt: *updated, PhotoUpdatedAt: photo})
+				result.Items = append(result.Items, staff.Barber{ID: *id, FullName: *name, CreatedAt: *created, UpdatedAt: *updated, PhotoUpdatedAt: photo, Description: description})
 			}
 		}
 		return rows.Err()
@@ -462,7 +474,7 @@ func (r *Repository) GetLinked(ctx context.Context, barbershopID, staffUserID st
 			   FROM barber b `+barberPhotoJoin+`
 			  WHERE b.barbershop_id = $1 AND b.staff_user_id = $2`,
 			barbershopID, staffUserID,
-		).Scan(&b.ID, &b.FullName, &b.CreatedAt, &b.UpdatedAt, &b.PhotoUpdatedAt)
+		).Scan(scanBarber(&b)...)
 		switch {
 		case err == nil:
 			found = true
@@ -546,8 +558,7 @@ func (r *Repository) Link(ctx context.Context, barbershopID, staffUserID, barber
 		}
 
 		return selectBarber(ctx, q, barbershopID, barberID).
-			Scan(&result.Barber.ID, &result.Barber.FullName, &result.Barber.CreatedAt,
-				&result.Barber.UpdatedAt, &result.Barber.PhotoUpdatedAt)
+			Scan(scanBarber(&result.Barber)...)
 	})
 	if errors.Is(err, errLinkTaken) {
 		return staff.LinkResult{Found: true, Taken: true}, nil

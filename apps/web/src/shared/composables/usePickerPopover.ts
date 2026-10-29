@@ -15,19 +15,27 @@ export function usePickerPopover(
   function reposition() {
     if (!open.value || !trigger.value || !panel.value) return
     const field = trigger.value.getBoundingClientRect()
-    panel.value.style.setProperty('--picker-trigger-width', `${field.width}px`)
-    const width = panel.value.offsetWidth
-    const height = Math.min(panel.value.scrollHeight, window.innerHeight - 16)
-    left.value = Math.max(8, Math.min(field.left, window.innerWidth - width - 8))
+    // `getBoundingClientRect` devuelve píxeles visuales, pero `left`/`top` de un
+    // panel fixed se interpretan dentro del `zoom` de la página (tamaño de letra
+    // «Grande» = 1,125): sin convertir, el panel queda corrido ese factor. El
+    // factor real se mide con el propio panel (visual / CSS) en vez de leerlo.
+    const box = panel.value.getBoundingClientRect()
+    const zoom = panel.value.offsetWidth > 0 ? box.width / panel.value.offsetWidth : 1
+    panel.value.style.setProperty('--picker-trigger-width', `${field.width / zoom}px`)
+    const width = box.width
+    const height = Math.min(panel.value.scrollHeight * zoom, window.innerHeight - 16)
+    const visualLeft = Math.max(8, Math.min(field.left, window.innerWidth - width - 8))
     const below = field.bottom + 4
     const above = field.top - height - 4
-    top.value = Math.max(
+    const visualTop = Math.max(
       8,
       Math.min(
         below + height <= window.innerHeight - 8 ? below : above,
         window.innerHeight - height - 8,
       ),
     )
+    left.value = visualLeft / zoom
+    top.value = visualTop / zoom
   }
   function onOutside(event: MouseEvent) {
     if (!open.value || !(event.target instanceof Node)) return

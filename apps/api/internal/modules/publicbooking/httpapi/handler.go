@@ -184,7 +184,12 @@ func (h *ListPublicBarbersHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 }
 
 func newPublicBarberResponse(b publicbooking.PublicBarber) PublicBarberResponse {
-	return PublicBarberResponse{ID: b.ID, FullName: b.FullName}
+	return PublicBarberResponse{
+		ID:             b.ID,
+		FullName:       b.FullName,
+		Description:    b.Description,
+		PhotoUpdatedAt: b.PhotoUpdatedAt,
+	}
 }
 
 func newPublicBarberListResponse(result publicbooking.PublicBarberListResult) PublicBarberListResponse {
@@ -193,6 +198,49 @@ func newPublicBarberListResponse(result publicbooking.PublicBarberListResult) Pu
 		items = append(items, newPublicBarberResponse(barber))
 	}
 	return PublicBarberListResponse{Items: items}
+}
+
+// GetPublicBarberPhotoHandler expone
+// GET /public/barbershops/{slug}/barbers/{barberId}/photo (DEC-127): los bytes
+// de la fotografía de un barbero visible en la reserva pública, sin sesión.
+type GetPublicBarberPhotoHandler struct {
+	service *publicbooking.Service
+}
+
+// NewGetPublicBarberPhotoHandler construye el handler de la fotografía pública.
+func NewGetPublicBarberPhotoHandler(service *publicbooking.Service) *GetPublicBarberPhotoHandler {
+	return &GetPublicBarberPhotoHandler{service: service}
+}
+
+// ServeHTTP implementa http.Handler. Sirve la imagen con validador ETag; el
+// cliente versiona la URL con `photoUpdatedAt`, así que una fotografía nueva
+// nunca se sirve desde una caché vieja.
+func (h *GetPublicBarberPhotoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+
+	photo, err := h.service.PublicBarberPhoto(r.Context(),
+		httpserver.URLParam(r, slugParam), httpserver.URLParam(r, barberIDParam))
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	etag := `"` + strconv.FormatInt(photo.UpdatedAt.UnixMicro(), 10) + `"`
+	header := w.Header()
+	header.Set("ETag", etag)
+	// private: es el retrato de una persona; solo el navegador del visitante
+	// lo conserva, nunca un intermediario compartido.
+	header.Set("Cache-Control", "private, max-age=3600")
+
+	if r.Header.Get("If-None-Match") == etag {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+
+	header.Set("Content-Type", photo.ContentType)
+	header.Set("Content-Length", strconv.Itoa(len(photo.Data)))
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(photo.Data)
 }
 
 // ListPublicAvailabilityHandler expone

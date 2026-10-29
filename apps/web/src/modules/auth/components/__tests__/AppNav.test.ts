@@ -317,6 +317,27 @@ describe('AppNav', () => {
       expect(desktopLabels(wrapper)).not.toContain('Estilistas')
     })
 
+    it('hides the entries an employee does not administer (DEC-134)', async () => {
+      const employeeItems: NavItem[] = [
+        { to: { name: 'panel' }, label: 'Barberos', primary: true },
+        {
+          to: { name: 'schedules-horarios' },
+          label: 'Horarios',
+          profiles: { employee: { primary: true } },
+        },
+        {
+          to: { name: 'acceso' },
+          label: 'Configuración',
+          profiles: { employee: { hidden: true } },
+        },
+      ]
+      setBrand({ ...DEFAULT_BRAND, panelProfile: 'employee' })
+      const { wrapper } = await mountNav('/panel', employeeItems)
+
+      expect(desktopLabels(wrapper)).toEqual(['Agenda', 'Barberos', 'Horarios'])
+      expect(dockLabels(wrapper)).toEqual(['Agenda', 'Barberos', 'Horarios'])
+    })
+
     it('has no axe violations in the solo dock', async () => {
       setBrand({ ...DEFAULT_BRAND, panelProfile: 'solo' })
       const { wrapper } = await mountNav('/panel', items)

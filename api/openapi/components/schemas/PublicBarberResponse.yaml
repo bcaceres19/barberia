@@ -1,6 +1,6 @@
-# Proyección pública mínima de un barbero (HU-092, CA-092-02): id,
-# fullName. Nunca foto, biografía, preferencia, barbershopId ni ningún otro
-# identificador de tenant -esos campos quedan fuera de alcance de HU-092.
+# Proyección pública de un barbero (HU-092, CA-092-02; DEC-127): id, fullName,
+# description y photoUpdatedAt. Nunca preferencia, barbershopId ni ningún otro
+# identificador de tenant.
 type: object
 description: >
   Barbero de la barbería resuelta con asignación vigente al servicio activo
@@ -19,6 +19,33 @@ properties:
     description: Nombre completo visible del barbero.
     examples:
       - Juan Pérez
+  description:
+    type:
+      - string
+      - "null"
+    minLength: 1
+    maxLength: 280
+    description: >
+      Descripción corta del barbero (DEC-127), o `null` si la barbería no
+      escribió ninguna.
+    examples:
+      - Fade, barba y navaja con más de diez años en el oficio.
+      - null
+  photoUpdatedAt:
+    type:
+      - string
+      - "null"
+    format: date-time
+    description: >
+      Versión de la fotografía del barbero (DEC-127), o `null` si no tiene
+      (el cliente muestra su monograma). Se añade como parámetro de consulta a
+      la URL de `GET /public/barbershops/{slug}/barbers/{barberId}/photo` para
+      no reutilizar una copia vieja al cambiarla.
+    examples:
+      - "2026-09-30T12:00:00Z"
+      - null
 required:
   - id
   - fullName
+  - description
+  - photoUpdatedAt

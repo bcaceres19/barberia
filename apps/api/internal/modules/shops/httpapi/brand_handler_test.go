@@ -41,11 +41,30 @@ func (f *fakeBrandRepository) Update(_ context.Context, barbershopID string, bra
 
 var _ shops.BrandRepository = (*fakeBrandRepository)(nil)
 
+// fakePanelProfileRepository es un doble de shops.PanelProfileRepository: devuelve
+// los roles fijados y recuerda a quién se los pidieron.
+type fakePanelProfileRepository struct {
+	roles []shops.Role
+	calls [][2]string
+}
+
+func (f *fakePanelProfileRepository) RolesOf(_ context.Context, barbershopID, staffUserID string) ([]shops.Role, error) {
+	f.calls = append(f.calls, [2]string{barbershopID, staffUserID})
+	return f.roles, nil
+}
+
+var _ shops.PanelProfileRepository = (*fakePanelProfileRepository)(nil)
+
+// profilesFor construye el servicio de panel con los roles dados.
+func profilesFor(roles ...shops.Role) *shops.PanelProfileService {
+	return shops.NewPanelProfileService(&fakePanelProfileRepository{roles: roles})
+}
+
 const validBrandBody = `{"accent":"emerald","businessTerm":"Salón","businessTermGender":"masculine","professionalTerm":"Estilista","professionalTermPlural":"estilistas","professionalTermGender":"feminine"}`
 
 func TestGetBrandHandler_Success_ReturnsTheSevenFields(t *testing.T) {
 	repo := &fakeBrandRepository{getFound: true, getBrand: shops.DefaultBrand}
-	h := httpapi.NewGetBrandHandler(shops.NewBrandService(repo))
+	h := httpapi.NewGetBrandHandler(shops.NewBrandService(repo), profilesFor())
 
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, requestWithPrincipal(http.MethodGet, "/api/v1/private/settings/brand", nil))
@@ -80,7 +99,7 @@ func TestGetBrandHandler_Success_ReturnsTheSevenFields(t *testing.T) {
 }
 
 func TestGetBrandHandler_NotFound_Returns404(t *testing.T) {
-	h := httpapi.NewGetBrandHandler(shops.NewBrandService(&fakeBrandRepository{}))
+	h := httpapi.NewGetBrandHandler(shops.NewBrandService(&fakeBrandRepository{}), profilesFor())
 
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, requestWithPrincipal(http.MethodGet, "/api/v1/private/settings/brand", nil))
@@ -91,7 +110,7 @@ func TestGetBrandHandler_NotFound_Returns404(t *testing.T) {
 }
 
 func TestGetBrandHandler_MissingPrincipal_ReturnsSafe500(t *testing.T) {
-	h := httpapi.NewGetBrandHandler(shops.NewBrandService(&fakeBrandRepository{}))
+	h := httpapi.NewGetBrandHandler(shops.NewBrandService(&fakeBrandRepository{}), profilesFor())
 
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/v1/private/settings/brand", nil))
@@ -107,7 +126,7 @@ func TestUpdateBrandHandler_Success_ReturnsSavedRepresentationAndUsesPrincipalTe
 		ProfessionalTerm: "estilista", ProfessionalTermPlural: "estilistas", ProfessionalTermGender: shops.GenderFeminine,
 	}
 	repo := &fakeBrandRepository{updateResult: shops.BrandUpdateResult{Brand: saved, Found: true}}
-	h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(repo))
+	h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(repo), profilesFor())
 
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, requestWithPrincipal(http.MethodPatch, "/api/v1/private/settings/brand", []byte(validBrandBody)))
@@ -133,7 +152,7 @@ func TestUpdateBrandHandler_Success_ReturnsSavedRepresentationAndUsesPrincipalTe
 
 func TestUpdateBrandHandler_UnknownField_Returns400(t *testing.T) {
 	repo := &fakeBrandRepository{}
-	h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(repo))
+	h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(repo), profilesFor())
 
 	body := strings.TrimSuffix(validBrandBody, "}") + `,"barbershopId":"22222222-2222-2222-2222-222222222222"}`
 	rec := httptest.NewRecorder()
@@ -149,7 +168,7 @@ func TestUpdateBrandHandler_UnknownField_Returns400(t *testing.T) {
 
 func TestUpdateBrandHandler_TrailingJSON_Returns400(t *testing.T) {
 	repo := &fakeBrandRepository{}
-	h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(repo))
+	h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(repo), profilesFor())
 
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, requestWithPrincipal(http.MethodPatch, "/api/v1/private/settings/brand", []byte(validBrandBody+`{}`)))
@@ -160,7 +179,7 @@ func TestUpdateBrandHandler_TrailingJSON_Returns400(t *testing.T) {
 }
 
 func TestUpdateBrandHandler_MalformedJSON_Returns400(t *testing.T) {
-	h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(&fakeBrandRepository{}))
+	h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(&fakeBrandRepository{}), profilesFor())
 
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, requestWithPrincipal(http.MethodPatch, "/api/v1/private/settings/brand", []byte(`{no-json`)))
@@ -180,7 +199,7 @@ func TestUpdateBrandHandler_InvalidValue_Returns422WithoutWriting(t *testing.T) 
 	for name, body := range cases {
 		t.Run(name, func(t *testing.T) {
 			repo := &fakeBrandRepository{}
-			h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(repo))
+			h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(repo), profilesFor())
 
 			rec := httptest.NewRecorder()
 			h.ServeHTTP(rec, requestWithPrincipal(http.MethodPatch, "/api/v1/private/settings/brand", []byte(body)))
@@ -197,7 +216,7 @@ func TestUpdateBrandHandler_InvalidValue_Returns422WithoutWriting(t *testing.T) 
 
 func TestUpdateBrandHandler_MissingPrincipal_ReturnsSafe500(t *testing.T) {
 	repo := &fakeBrandRepository{}
-	h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(repo))
+	h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(repo), profilesFor())
 
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodPatch, "/api/v1/private/settings/brand", bytes.NewReader([]byte(validBrandBody))))
@@ -210,80 +229,77 @@ func TestUpdateBrandHandler_MissingPrincipal_ReturnsSafe500(t *testing.T) {
 	}
 }
 
-func TestUpdateBrandHandler_PanelProfile(t *testing.T) {
-	const prefix = `{"accent":"brass","businessTerm":"barbería","businessTermGender":"feminine","professionalTerm":"barbero","professionalTermPlural":"barberos","professionalTermGender":"masculine"`
+func TestBrandHandlers_PanelProfileComesFromTheRolesOfTheAuthenticatedUser(t *testing.T) {
+	cases := []struct {
+		name  string
+		roles []shops.Role
+		want  string
+	}{
+		{"sin roles", nil, "shop"},
+		{"empresa", []shops.Role{shops.RoleEmpresa}, "shop"},
+		{"independiente", []shops.Role{shops.RoleIndependiente}, "solo"},
+		{"empleado", []shops.Role{shops.RoleEmpleado}, "employee"},
+		{"empleado e independiente", []shops.Role{shops.RoleEmpleado, shops.RoleIndependiente}, "solo"},
+	}
+	for _, tc := range cases {
+		t.Run("GET "+tc.name, func(t *testing.T) {
+			repo := &fakeBrandRepository{getFound: true, getBrand: shops.DefaultBrand}
+			rolesRepo := &fakePanelProfileRepository{roles: tc.roles}
+			h := httpapi.NewGetBrandHandler(shops.NewBrandService(repo), shops.NewPanelProfileService(rolesRepo))
 
-	t.Run("solo se guarda y se devuelve", func(t *testing.T) {
-		saved := shops.DefaultBrand
-		saved.PanelProfile = shops.PanelProfileSolo
-		repo := &fakeBrandRepository{updateResult: shops.BrandUpdateResult{Brand: saved, Found: true}}
-		h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(repo))
+			rec := httptest.NewRecorder()
+			h.ServeHTTP(rec, requestWithPrincipal(http.MethodGet, "/api/v1/private/settings/brand", nil))
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+			}
+			var body httpapi.BrandResponse
+			if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+				t.Fatalf("decode: %v", err)
+			}
+			if body.PanelProfile != tc.want {
+				t.Fatalf("expected panelProfile %q, got %q", tc.want, body.PanelProfile)
+			}
+			// El panel se pregunta por la persona de la sesión, en su barbería.
+			if len(rolesRepo.calls) != 1 || rolesRepo.calls[0] != [2]string{testShopID, "u-1"} {
+				t.Fatalf("roles must be read for the principal, got %v", rolesRepo.calls)
+			}
+		})
+	}
+
+	t.Run("PATCH responde con el panel del usuario", func(t *testing.T) {
+		repo := &fakeBrandRepository{updateResult: shops.BrandUpdateResult{Brand: shops.DefaultBrand, Found: true}}
+		h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(repo), profilesFor(shops.RoleEmpleado))
 
 		rec := httptest.NewRecorder()
-		h.ServeHTTP(rec, requestWithPrincipal(http.MethodPatch, "/api/v1/private/settings/brand", []byte(prefix+`,"panelProfile":"solo"}`)))
+		h.ServeHTTP(rec, requestWithPrincipal(http.MethodPatch, "/api/v1/private/settings/brand", []byte(validBrandBody)))
 
 		if rec.Code != http.StatusOK {
 			t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
-		}
-		if got := repo.updateCalls[0].brand.PanelProfile; got != shops.PanelProfileSolo {
-			t.Fatalf("expected solo to reach the repository, got %q", got)
 		}
 		var body httpapi.BrandResponse
 		if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
 			t.Fatalf("decode: %v", err)
 		}
-		if body.PanelProfile != "solo" {
-			t.Fatalf("expected panelProfile solo in the response, got %q", body.PanelProfile)
+		if body.PanelProfile != "employee" {
+			t.Fatalf("expected panelProfile employee, got %q", body.PanelProfile)
 		}
 	})
+}
 
-	t.Run("omitido conserva el guardado", func(t *testing.T) {
-		repo := &fakeBrandRepository{updateResult: shops.BrandUpdateResult{Brand: shops.DefaultBrand, Found: true}}
-		h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(repo))
+// DEC-134: el panel ya no es editable; el contrato cerrado rechaza el campo.
+func TestUpdateBrandHandler_RejectsPanelProfile(t *testing.T) {
+	const body = `{"accent":"brass","businessTerm":"barbería","businessTermGender":"feminine","professionalTerm":"barbero","professionalTermPlural":"barberos","professionalTermGender":"masculine","panelProfile":"solo"}`
+	repo := &fakeBrandRepository{}
+	h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(repo), profilesFor())
 
-		rec := httptest.NewRecorder()
-		h.ServeHTTP(rec, requestWithPrincipal(http.MethodPatch, "/api/v1/private/settings/brand", []byte(prefix+`}`)))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, requestWithPrincipal(http.MethodPatch, "/api/v1/private/settings/brand", []byte(body)))
 
-		if rec.Code != http.StatusOK {
-			t.Fatalf("expected 200 for a client that does not know the profile, got %d: %s", rec.Code, rec.Body.String())
-		}
-		if got := repo.updateCalls[0].brand.PanelProfile; got != "" {
-			t.Fatalf("an omitted profile must reach the repository empty, got %q", got)
-		}
-	})
-
-	for name, value := range map[string]string{
-		"valor desconocido": `"individual"`,
-		"vacío explícito":   `""`,
-		"nulo":              `null`,
-		"número":            `1`,
-	} {
-		t.Run("rechaza "+name, func(t *testing.T) {
-			repo := &fakeBrandRepository{}
-			h := httpapi.NewUpdateBrandHandler(shops.NewBrandService(repo))
-
-			rec := httptest.NewRecorder()
-			h.ServeHTTP(rec, requestWithPrincipal(http.MethodPatch, "/api/v1/private/settings/brand", []byte(prefix+`,"panelProfile":`+value+`}`)))
-
-			// Un número no es un texto: 400 del decodificador; el resto, 422 del servicio.
-			// `null` decodifica como puntero nulo, es decir, «omitido»: 200 sin cambiar nada.
-			switch name {
-			case "número":
-				if rec.Code != http.StatusBadRequest {
-					t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
-				}
-			case "nulo":
-				if rec.Code != http.StatusOK && rec.Code != http.StatusNotFound {
-					t.Fatalf("expected null to behave as omitted, got %d: %s", rec.Code, rec.Body.String())
-				}
-			default:
-				if rec.Code != http.StatusUnprocessableEntity {
-					t.Fatalf("expected 422, got %d: %s", rec.Code, rec.Body.String())
-				}
-				if len(repo.updateCalls) != 0 {
-					t.Fatal("a rejected profile must never be written")
-				}
-			}
-		})
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for a field the contract no longer declares, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if len(repo.updateCalls) != 0 {
+		t.Fatal("a rejected body must never be written")
 	}
 }

@@ -20,7 +20,17 @@ export async function fetchBrand(): Promise<FetchBrandOutcome> {
 
 export async function saveBrand(brand: BrandSettings): Promise<SaveBrandOutcome> {
   try {
-    const { data, response } = await httpClient.PATCH('/private/settings/brand', { body: brand })
+    // El panel lo deciden los roles del usuario (DEC-134): el PATCH ya no lo admite.
+    const { data, response } = await httpClient.PATCH('/private/settings/brand', {
+      body: {
+        accent: brand.accent,
+        businessTerm: brand.businessTerm,
+        businessTermGender: brand.businessTermGender,
+        professionalTerm: brand.professionalTerm,
+        professionalTermPlural: brand.professionalTermPlural,
+        professionalTermGender: brand.professionalTermGender,
+      },
+    })
     if (response.ok && data) {
       const saved = toBrand(data)
       return saved ? { kind: 'success', brand: saved } : { kind: 'unexpected-error' }

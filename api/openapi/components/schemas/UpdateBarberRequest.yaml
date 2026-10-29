@@ -1,11 +1,12 @@
 # Cuerpo de PATCH /private/barbers/{barberId} (CA-021-03, CA-021-04).
-# Cerrado y limitado al único campo editable de HU-021: nunca active,
-# deletedAt, sortOrder, staffUserId, servicios ni horarios (DEC-047,
-# CA-021-07). Un objeto vacío `{}` se rechaza igual que un nombre vacío
+# Cerrado y limitado a los campos editables (el nombre de HU-021 y, por
+# DEC-127, la descripción): nunca active, deletedAt, sortOrder, staffUserId,
+# servicios ni horarios (DEC-047, CA-021-07). Un objeto vacío `{}` se rechaza igual que un nombre vacío
 # (`fullName` es requerido, sin valor por defecto que lo omita).
 type: object
 description: >
-  Renombrado de un barbero de la barbería activa. Nunca modifica su
+  Actualización del nombre y, opcionalmente, la descripción de un barbero de la
+  barbería activa. Nunca modifica su
   identificador, su fecha de alta ni ningún otro campo: `updatedAt` es lo
   único adicional que cambia, gestionado por el servidor.
 properties:
@@ -20,6 +21,17 @@ properties:
       dentro de la misma barbería son válidos.
     examples:
       - Carlos A. Ramírez
+  description:
+    type:
+      - string
+      - "null"
+    maxLength: 280
+    description: >
+      Nueva descripción del barbero (DEC-127). Ausente conserva la actual;
+      `null`, vacía o de solo espacios la quita; más de 280 caracteres
+      responde `422` sin persistir nada. El servidor recorta espacios.
+    examples:
+      - Fade, barba y navaja con más de diez años en el oficio.
 required:
   - fullName
 additionalProperties: false

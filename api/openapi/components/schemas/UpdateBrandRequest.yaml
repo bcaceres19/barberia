@@ -1,14 +1,13 @@
 # Cuerpo de PATCH /private/settings/brand (issue #292, DEC-110). Cerrado: el
 # handler rechaza cualquier campo desconocido, en particular un identificador
-# de barbería (el contrato ni siquiera lo declara). Los seis campos viajan
-# siempre presentes, salvo `panelProfile` (DEC-115), que es optativo: si falta,
-# el perfil guardado no cambia (un cliente que no lo conoce no lo reinicia).
+# de barbería (el contrato ni siquiera lo declara) y `panelProfile`, que desde
+# DEC-134 no se edita: lo deciden los roles del usuario en la base de datos.
 type: object
 additionalProperties: false
 description: >
   Marca y vocabulario a guardar. Los seis campos de la marca viajan siempre
-  presentes; `panelProfile` es optativo y, si se omite, conserva el perfil
-  guardado.
+  presentes. No incluye `panelProfile`: el panel lo deciden los roles del
+  usuario (`DEC-134`).
 properties:
   accent:
     $ref: './BrandAccent.yaml'
@@ -22,8 +21,6 @@ properties:
     $ref: './BrandTerm.yaml'
   professionalTermGender:
     $ref: './BrandTermGender.yaml'
-  panelProfile:
-    $ref: './PanelProfile.yaml'
 required:
   - accent
   - businessTerm

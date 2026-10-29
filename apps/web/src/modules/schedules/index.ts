@@ -15,8 +15,8 @@ export const schedulesNavItems: NavItem[] = [
   {
     to: { name: 'schedules-horarios' },
     label: 'Horarios',
-    // Quien trabaja solo vive de su horario: sube al dock (DEC-115).
-    profiles: { solo: { primary: true } },
+    // Quien trabaja solo, o como empleado, vive de su horario: sube al dock (DEC-115, DEC-134).
+    profiles: { solo: { primary: true }, employee: { primary: true } },
   },
 ]
 

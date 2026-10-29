@@ -13,9 +13,9 @@
 // GenerateStarts es la única función exportada relevante para el cálculo:
 // fusiona los tramos que se solapan (RN-DIS-02), resta las ocupaciones
 // (bloqueos + citas que ocupan agenda, ya fusionadas entre sí) y genera
-// franjas cada N minutos DENTRO de cada intervalo libre resultante,
-// anclando la rejilla al inicio de ESE intervalo libre -nunca al inicio del
-// tramo laboral original- lo que implementa DEC-084 (resuelve DP-PUB-03)
-// sin necesitar un caso especial: cualquier intervalo libre que empieza
-// justo después de una interrupción ya reinicia la rejilla por construcción.
+// franjas en la rejilla fija del tramo laboral (inicio del tramo + k × N),
+// dentro de cada intervalo libre resultante. La rejilla se ancla al inicio del
+// tramo y NO se reinicia donde termina una interrupción: DEC-135 sustituye el
+// reinicio de DEC-084 para que todas las franjas queden alineadas con el paso
+// configurado.
 package availability

@@ -13,21 +13,17 @@ import { useToast, useVocabulary } from '@/shared/composables'
 import { BaseAlert, BaseButton, BaseInput, DiamondLoader } from '@/shared/ui'
 import { fetchBookingPolicy, saveBookingPolicy } from '../api/bookingPolicyApi'
 import BookingPolicyPreview from '../components/BookingPolicyPreview.vue'
-import OptionGroup from '../components/OptionGroup.vue'
 import SaveBar from '../components/SaveBar.vue'
 import SettingsPanel from '../components/SettingsPanel.vue'
 import SwitchField from '../components/SwitchField.vue'
-import {
-  ALLOWED_SLOT_GRID_MINUTES,
-  toFormValues,
-  type BookingPolicyFormValues,
-} from '../model/bookingPolicy'
+import { toFormValues, type BookingPolicyFormValues } from '../model/bookingPolicy'
 import {
   validateAdvanceWithinWindow,
   validateCancellationDeadlineMinutes,
   validateLateCancellationCoherence,
   validateMaxAdvanceDays,
   validateMinAdvanceMinutes,
+  SLOT_GRID_MINUTES_CEIL,
   validateSlotGridMinutes,
 } from '../validation/bookingPolicyValidation'
 
@@ -68,11 +64,7 @@ let currentVersionToken = ''
 
 type FieldErrors = Partial<
   Record<
-    | 'minAdvanceMinutes'
-    | 'maxAdvanceDays'
-    | 'slotGridMinutes'
-    | 'cancellationDeadlineMinutes'
-    | 'lateCancellation',
+    'minAdvanceMinutes' | 'maxAdvanceDays' | 'cancellationDeadlineMinutes' | 'lateCancellation',
     string
   >
 >
@@ -135,14 +127,19 @@ function onNumberFieldInput(
   if (attemptedSubmit.value) fieldErrors.value = runValidation()
 }
 
-const SLOT_GRID_OPTIONS = ALLOWED_SLOT_GRID_MINUTES.map((minutes) => ({
-  value: String(minutes),
-  label: `${minutes} min`,
-}))
-
-function onSlotGridInput(value: string) {
-  form.slotGridMinutes = Number(value)
+// La rejilla nunca supera una hora (DEC-133): el tope se aplica al teclear,
+// no solo al guardar. Si el valor ya estaba en el tope, Vue no vuelve a
+// pintar el campo, así que se reescribe el DOM para que no quede el exceso.
+function onSlotGridInput(value: string | number) {
+  form.slotGridMinutes = Math.min(Number(value), SLOT_GRID_MINUTES_CEIL)
   if (attemptedSubmit.value) fieldErrors.value = runValidation()
+}
+
+function capSlotGridField(event: Event) {
+  const input = event.target
+  if (input instanceof HTMLInputElement && Number(input.value) > SLOT_GRID_MINUTES_CEIL) {
+    input.value = String(SLOT_GRID_MINUTES_CEIL)
+  }
 }
 
 function onLateCancellationClientAllowedInput(value: boolean) {
@@ -383,33 +380,21 @@ function onReloadAfterConflict() {
                 :error="fieldErrors.maxAdvanceDays"
                 @update:model-value="(value) => onNumberFieldInput('maxAdvanceDays', value)"
               />
-            </div>
-
-            <div class="policy-field">
-              <span id="field-slot-grid" class="policy-field__label"
-                >Rejilla de horarios (minutos)</span
-              >
-              <p class="policy-field__hint">
-                Cada cuántos minutos se ofrece una franja al cliente.
-              </p>
-              <OptionGroup
-                :model-value="String(form.slotGridMinutes)"
-                :options="SLOT_GRID_OPTIONS"
+              <BaseInput
+                :model-value="form.slotGridMinutes"
+                type="number"
+                name="slotGridMinutes"
                 label="Rejilla de horarios (minutos)"
+                hint="Cada cuántos minutos se ofrece una franja al cliente: de 1 a 60."
+                required
+                :show-required-marker="false"
+                :min="1"
+                :max="60"
                 :disabled="saveStatus === 'saving'"
-                class="policy-grid-options"
+                :error="fieldErrors.slotGridMinutes"
                 @update:model-value="onSlotGridInput"
-              >
-                <template #default="{ option, selected }">
-                  <span class="grid-chip" :class="{ 'grid-chip--selected': selected }">
-                    <span class="grid-chip__value">{{ option.label.replace(' min', '') }}</span>
-                    <span class="grid-chip__unit">min</span>
-                  </span>
-                </template>
-              </OptionGroup>
-              <p v-if="fieldErrors.slotGridMinutes" class="policy-field__error" role="alert">
-                {{ fieldErrors.slotGridMinutes }}
-              </p>
+                @input="capSlotGridField"
+              />
             </div>
           </SettingsPanel>
 
@@ -709,58 +694,6 @@ function onReloadAfterConflict() {
   line-height: 18px;
 }
 
-/* Rejilla: seis fichas con el valor en serif, como las franjas del cliente. */
-.policy-grid-options {
-  --option-group-gap: 10px;
-}
-
-.grid-chip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-width: 68px;
-  min-height: 64px;
-  padding: 8px 12px;
-  background: color-mix(in srgb, var(--color-on-strong) 3%, transparent);
-  border: var(--border-width-normal) solid var(--color-field-strong-border);
-  border-radius: 3px;
-  transition:
-    transform var(--motion-duration-base) var(--motion-easing-standard),
-    border-color var(--motion-duration-base) var(--motion-easing-standard),
-    background-color var(--motion-duration-base) var(--motion-easing-standard);
-}
-
-.grid-chip:hover {
-  transform: translateY(-3px);
-  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 55%, transparent);
-}
-
-.grid-chip--selected {
-  background: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
-  border-color: var(--color-brand-accent-surface);
-  box-shadow: 0 0 0 1px var(--color-brand-accent-surface);
-}
-
-.grid-chip__value {
-  font-family: var(--font-display);
-  font-size: var(--font-size-title-item);
-  line-height: 24px;
-  color: var(--color-on-strong);
-}
-
-.grid-chip__unit {
-  font-size: var(--font-size-caption);
-  letter-spacing: 0.08em;
-  line-height: 14px;
-  text-transform: uppercase;
-  color: var(--color-on-strong-muted);
-}
-
-.grid-chip--selected .grid-chip__unit {
-  color: var(--color-brand-accent-surface);
-}
-
 /* --- Campos reglados: mismo tratamiento que Servicios, Barberos y Configuración --- */
 
 .policy-ink :deep(.base-input) {
@@ -907,10 +840,6 @@ function onReloadAfterConflict() {
 
   .policy-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .grid-chip {
-    min-width: 60px;
   }
 }
 

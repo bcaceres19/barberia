@@ -225,6 +225,11 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	listPublicBarbersHandler := publicbookinghttpapi.NewListPublicBarbersHandler(publicBookingService)
 	router.Get("/api/v1/public/barbershops/{slug}/services/{serviceId}/barbers", listPublicBarbersHandler.ServeHTTP)
 
+	// DEC-127: fotografía del barbero visible en la reserva pública. Mismo
+	// criterio sin sesión; solo sirve la imagen de quien la lista ya muestra.
+	getPublicBarberPhotoHandler := publicbookinghttpapi.NewGetPublicBarberPhotoHandler(publicBookingService)
+	router.Get("/api/v1/public/barbershops/{slug}/barbers/{barberId}/photo", getPublicBarberPhotoHandler.ServeHTTP)
+
 	// HU-006: middleware de sesión (paso 8) montado UNA sola vez sobre el
 	// subrouter privado, ANTES de registrar ninguna ruta sobre él (chi
 	// exige que Use() preceda a cualquier Get/Post en ese mismo Router).
@@ -271,8 +276,9 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	// campos (CA-020-07) y no se amplía; sin versionado, la última
 	// escritura gana porque son preferencias de presentación.
 	brandService := shops.NewBrandService(shopspostgres.NewBrandRepository(db))
-	getBrandHandler := shopshttpapi.NewGetBrandHandler(brandService)
-	updateBrandHandler := shopshttpapi.NewUpdateBrandHandler(brandService)
+	panelProfileService := shops.NewPanelProfileService(shopspostgres.NewPanelProfileRepository(db))
+	getBrandHandler := shopshttpapi.NewGetBrandHandler(brandService, panelProfileService)
+	updateBrandHandler := shopshttpapi.NewUpdateBrandHandler(brandService, panelProfileService)
 	private.Get("/settings/brand", getBrandHandler.ServeHTTP)
 	private.Patch("/settings/brand", updateBrandHandler.ServeHTTP)
 
@@ -291,7 +297,7 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	listBarbersHandler := staffhttpapi.NewListBarbersHandler(staffService)
 	getBarberHandler := staffhttpapi.NewGetBarberHandler(staffService)
 	createBarberHandler := staffhttpapi.NewCreateBarberHandler(staffService)
-	renameBarberHandler := staffhttpapi.NewRenameBarberHandler(staffService)
+	renameBarberHandler := staffhttpapi.NewUpdateBarberHandler(staffService)
 	putBarberPhotoHandler := staffhttpapi.NewPutBarberPhotoHandler(staffService)
 	getBarberPhotoHandler := staffhttpapi.NewGetBarberPhotoHandler(staffService)
 	deleteBarberPhotoHandler := staffhttpapi.NewDeleteBarberPhotoHandler(staffService)

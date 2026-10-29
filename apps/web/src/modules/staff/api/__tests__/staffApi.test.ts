@@ -53,6 +53,7 @@ const barberBody = {
   createdAt: '2026-08-23T15:04:05Z',
   updatedAt: '2026-08-23T15:04:05Z',
   photoUpdatedAt: null,
+  description: null,
 }
 
 describe('staffApi.fetchBarbers', () => {
@@ -115,6 +116,32 @@ describe('staffApi.createBarber', () => {
     })
   })
 
+  it('sends a trimmed description when there is one (DEC-127)', async () => {
+    postMock.mockResolvedValueOnce(created({ ...barberBody, description: 'Fade y barba.' }))
+
+    const outcome = await createBarber('Carlos Ramírez', 'idem-key-1', '  Fade y barba.  ')
+
+    expect(postMock).toHaveBeenCalledWith('/private/barbers', {
+      params: { header: { 'Idempotency-Key': 'idem-key-1' } },
+      body: { fullName: 'Carlos Ramírez', description: 'Fade y barba.' },
+    })
+    expect(outcome).toEqual({
+      kind: 'success',
+      barber: { ...barberBody, description: 'Fade y barba.' },
+    })
+  })
+
+  it('omits a blank description from the body', async () => {
+    postMock.mockResolvedValueOnce(created(barberBody))
+
+    await createBarber('Carlos Ramírez', 'idem-key-1', '   ')
+
+    expect(postMock).toHaveBeenCalledWith('/private/barbers', {
+      params: { header: { 'Idempotency-Key': 'idem-key-1' } },
+      body: { fullName: 'Carlos Ramírez' },
+    })
+  })
+
   it('maps a 201 success body to a success outcome', async () => {
     postMock.mockResolvedValueOnce(created(barberBody))
 
@@ -168,6 +195,32 @@ describe('staffApi.renameBarber', () => {
       params: { path: { barberId: barberBody.id } },
       body: { fullName: 'Nuevo Nombre' },
     })
+  })
+
+  it('sends the description when it changed and null to remove it (DEC-127)', async () => {
+    patchMock.mockResolvedValue(ok(barberBody))
+
+    await renameBarber(barberBody.id, 'Carlos', ' Fade y barba. ')
+    await renameBarber(barberBody.id, 'Carlos', '   ')
+
+    expect(patchMock).toHaveBeenNthCalledWith(1, '/private/barbers/{barberId}', {
+      params: { path: { barberId: barberBody.id } },
+      body: { fullName: 'Carlos', description: 'Fade y barba.' },
+    })
+    expect(patchMock).toHaveBeenNthCalledWith(2, '/private/barbers/{barberId}', {
+      params: { path: { barberId: barberBody.id } },
+      body: { fullName: 'Carlos', description: null },
+    })
+  })
+
+  it('treats a missing description in a response as no description', async () => {
+    const withoutDescription: Partial<typeof barberBody> = { ...barberBody }
+    delete withoutDescription.description
+    patchMock.mockResolvedValueOnce(ok(withoutDescription))
+
+    const outcome = await renameBarber(barberBody.id, 'Carlos Ramírez')
+
+    expect(outcome).toEqual({ kind: 'success', barber: barberBody })
   })
 
   it('maps a 200 success body to a success outcome', async () => {

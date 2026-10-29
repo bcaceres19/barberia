@@ -111,8 +111,13 @@ const MAX_PAGE_SIZE = 50
 // variable no habría forma de predecir cuántas filas caben en el espacio
 // disponible, y volvería a aparecer scroll.
 const ROW_HEIGHT_DESKTOP_PX = 80
-const ROW_HEIGHT_MOBILE_PX = 100
+const ROW_HEIGHT_MOBILE_PX = 116
 const MOBILE_BREAKPOINT_QUERY = '(max-width: 640px)'
+// Pantallas bajas de escritorio/tableta: filas de 64px y cabecera más
+// compacta (ver la media query del mismo nombre en <style>) para que quepan
+// más filas sin scroll.
+const ROW_HEIGHT_COMPACT_PX = 64
+const COMPACT_QUERY = '(min-width: 641px) and (max-height: 820px)'
 
 // typeof matchMedia === 'function': jsdom (CatalogPage.test.ts) no la
 // implementa (issue detectado al verificar en vivo: un rechazo de promesa
@@ -120,11 +125,18 @@ const MOBILE_BREAKPOINT_QUERY = '(max-width: 640px)'
 // Ningún navegador real carece de esta API; el resguardo es solo para ese
 // entorno de pruebas, con el mismo resultado que ya asumía antes de que
 // existiera este cálculo (ancho de escritorio).
-function currentRowHeightPx(): number {
-  if (typeof window.matchMedia !== 'function') return ROW_HEIGHT_DESKTOP_PX
-  return window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches
-    ? ROW_HEIGHT_MOBILE_PX
-    : ROW_HEIGHT_DESKTOP_PX
+function currentRowHeightPx(list: HTMLElement, scale: number): number {
+  // El alto real de una fila ya pintada manda: refleja cualquier media query
+  // sin que estas constantes tengan que adivinarlo. Las constantes (en px de
+  // CSS, de ahí `scale`) solo cubren la primera medición sin filas y jsdom.
+  const measured = list.querySelector('.catalog-page__row')?.getBoundingClientRect().height ?? 0
+  if (measured > 0) return measured
+  if (typeof window.matchMedia !== 'function') return ROW_HEIGHT_DESKTOP_PX * scale
+  if (window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches) return ROW_HEIGHT_MOBILE_PX * scale
+  return (
+    (window.matchMedia(COMPACT_QUERY).matches ? ROW_HEIGHT_COMPACT_PX : ROW_HEIGHT_DESKTOP_PX) *
+    scale
+  )
 }
 
 // tableListRef/paginationFooterRef anclan la fila real de datos y el pie
@@ -186,8 +198,17 @@ function computeFittingPageSize(): number | null {
   if (!scrollParent) return null
   scrollParent.scrollTop = 0
 
-  const viewportHeight = scrollParent.clientHeight
-  const containerTop = scrollParent.getBoundingClientRect().top
+  // Todo se mide en px de pantalla (getBoundingClientRect), no mezclando
+  // clientHeight (px de CSS) con rects: con una escala de interfaz distinta
+  // de 1 (zoom del documento) las dos unidades difieren y el cálculo
+  // subestimaba las filas que caben. `scale` convierte los px de CSS fijos.
+  const scrollRect = scrollParent.getBoundingClientRect()
+  const viewportHeight = scrollRect.height
+  const containerTop = scrollRect.top
+  const scale =
+    scrollParent.clientHeight > 0 && viewportHeight > 0
+      ? viewportHeight / scrollParent.clientHeight
+      : 1
 
   const listRect = list.getBoundingClientRect()
   const paginationRect = pagination.getBoundingClientRect()
@@ -203,8 +224,8 @@ function computeFittingPageSize(): number | null {
     (listRect.top - containerTop) -
     gapBelowList -
     paginationRect.height -
-    PAGE_BOTTOM_PADDING_PX
-  const rows = Math.floor(available / currentRowHeightPx())
+    PAGE_BOTTOM_PADDING_PX * scale
+  const rows = Math.floor(available / currentRowHeightPx(list, scale))
 
   return Math.min(Math.max(rows, DYNAMIC_MIN_PAGE_SIZE), MAX_PAGE_SIZE)
 }
@@ -1243,8 +1264,17 @@ async function reloadAfterConflict(serviceId: string) {
             </template>
           </BaseAlert>
 
-          <div class="catalog-page__pagination-bar">
-            <span class="catalog-page__pagination-count" role="status">{{ resultsLabel }}</span>
+          <div
+            class="catalog-page__pagination-bar"
+            :style="{ '--pager-progress': String(currentPage / Math.max(totalPages, 1)) }"
+          >
+            <span class="catalog-page__pagination-count" role="status">
+              {{ resultsLabel }}
+              <span v-if="totalPages > 1" class="catalog-page__pagination-where">
+                · Página {{ currentPage }} de {{ totalPages }}
+              </span>
+            </span>
+            <span v-if="totalPages > 1" class="catalog-page__pagination-track" aria-hidden="true" />
             <nav
               v-if="totalPages > 1"
               class="catalog-page__pagination-nav"
@@ -1303,7 +1333,7 @@ async function reloadAfterConflict(serviceId: string) {
     <BaseDialog
       v-model="isDetailOpen"
       :title="detailTarget?.name"
-      size="sm"
+      size="lg"
       content-class="catalog-page__detail-dialog"
     >
       <template #icon>
@@ -1387,7 +1417,7 @@ async function reloadAfterConflict(serviceId: string) {
       v-model="isCreateOpen"
       title="Agregar servicio"
       description="Aparece en tu catálogo activo en cuanto lo guardes."
-      size="sm"
+      size="lg"
       content-class="catalog-page__create-dialog"
       @close="onCreateDialogClosed"
     >
@@ -1457,6 +1487,7 @@ async function reloadAfterConflict(serviceId: string) {
           :model-value="createDurationRaw"
           type="number"
           name="durationMinutes"
+          class="catalog-page__form-half"
           label="Duración (minutos)"
           required
           :min="1"
@@ -1470,6 +1501,7 @@ async function reloadAfterConflict(serviceId: string) {
         <BaseInput
           :model-value="createForm.price"
           name="price"
+          class="catalog-page__form-half"
           label="Precio (COP)"
           required
           placeholder="45000.00"
@@ -1507,7 +1539,7 @@ async function reloadAfterConflict(serviceId: string) {
     <BaseDialog
       v-model="isEditOpen"
       title="Editar servicio"
-      size="sm"
+      size="lg"
       content-class="catalog-page__edit-dialog"
       @close="onEditDialogClosed"
     >
@@ -1579,6 +1611,7 @@ async function reloadAfterConflict(serviceId: string) {
           :model-value="editDurationRaw"
           type="number"
           name="durationMinutes"
+          class="catalog-page__form-half"
           label="Duración (minutos)"
           required
           :min="1"
@@ -1592,6 +1625,7 @@ async function reloadAfterConflict(serviceId: string) {
         <BaseInput
           :model-value="editForm.price"
           name="price"
+          class="catalog-page__form-half"
           label="Precio (COP)"
           required
           placeholder="45000.00"
@@ -1628,7 +1662,7 @@ async function reloadAfterConflict(serviceId: string) {
     <BaseDialog
       v-model="isLifecycleOpen"
       title="Estado del servicio"
-      size="sm"
+      size="lg"
       :content-class="
         lifecycleIntent === 'deactivate'
           ? 'catalog-page__lifecycle-dialog catalog-page__lifecycle-dialog--danger'
@@ -1737,7 +1771,7 @@ async function reloadAfterConflict(serviceId: string) {
                 : 'Mueve el interruptor para reactivarlo.'
             }}
           </p>
-          <dl class="catalog-page__lifecycle-facts">
+          <dl class="catalog-page__lifecycle-facts catalog-page__facts-rich">
             <div>
               <dt>Duración</dt>
               <dd>
@@ -1843,7 +1877,7 @@ async function reloadAfterConflict(serviceId: string) {
      precio/insignia/acciones. El resto de la pantalla sigue centrado como
      columna de lectura (no se estira a todo el ancho); solo se ensancha lo
      que la tabla necesita. */
-  --catalog-width: 920px;
+  --catalog-width: 1280px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -1859,7 +1893,7 @@ async function reloadAfterConflict(serviceId: string) {
 /* Con la columna «Lo ofrezco» (DEC-115) la tabla gana 120px para que el nombre del
    servicio no se recorte; sin ella conserva su ancho de siempre. */
 .catalog-page--offer {
-  --catalog-width: 940px;
+  --catalog-width: 1280px;
 }
 
 .catalog-page__header,
@@ -2129,9 +2163,15 @@ async function reloadAfterConflict(serviceId: string) {
 .catalog-page__columns,
 .catalog-page__row {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 84px 124px 108px 232px;
+  /* Pistas con fr (no una sola 1fr entre anchos fijos): al ensanchar la
+     tabla en pantallas amplias el espacio sobrante se reparte entre nombre,
+     duración, precio y estado en vez de acumularse como un vacío junto a
+     las acciones, que conservan su ancho fijo y quedan pegadas a la derecha. */
+  grid-template-columns:
+    minmax(220px, 3fr) minmax(84px, 0.8fr) minmax(124px, 1.1fr) minmax(108px, 0.9fr)
+    232px;
   align-items: center;
-  gap: 12px;
+  gap: clamp(12px, 1.6vw, 28px);
 }
 
 .catalog-page__columns {
@@ -2293,7 +2333,9 @@ async function reloadAfterConflict(serviceId: string) {
    nombre accesible del interruptor dicen qué es. */
 .catalog-page__table--offer .catalog-page__columns,
 .catalog-page__table--offer .catalog-page__row {
-  grid-template-columns: minmax(200px, 1fr) 80px 116px 100px 88px 204px;
+  grid-template-columns:
+    minmax(200px, 3fr) minmax(80px, 0.8fr) minmax(116px, 1.1fr) minmax(100px, 0.9fr)
+    88px 204px;
 }
 
 .catalog-page__table--offer .catalog-page__columns > :nth-child(5) {
@@ -2559,11 +2601,19 @@ async function reloadAfterConflict(serviceId: string) {
 }
 
 .catalog-page__pagination-bar {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
+  box-sizing: border-box;
+  /* Alto fijo de 38px: con una sola página la barra solo tiene el texto del
+     total, y computeFittingPageSize mediría un paginador más bajo que el que
+     aparece al reducir las filas (desborde de 14px y scroll). Los botones
+     miden 32px y los 6px restantes alojan la cinta de progreso. */
+  min-height: 38px;
+  padding-bottom: 6px;
 }
 
 .catalog-page__pagination-count {
@@ -2571,63 +2621,188 @@ async function reloadAfterConflict(serviceId: string) {
   color: var(--color-on-strong-muted);
 }
 
+.catalog-page__pagination-where {
+  color: color-mix(in srgb, var(--color-brand-accent-surface) 85%, var(--color-on-strong-muted));
+  letter-spacing: 0.02em;
+}
+
+/* Cinta métrica de sastre: un filete que recorre toda la barra, relleno en
+   dorado hasta la proporción página/total, con un rombo en la punta (el mismo
+   rombo del estado y del interruptor "Lo ofrezco"). Es decorativa; la
+   posición real la comunica "Página X de Y" y aria-current. */
+.catalog-page__pagination-track {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1px;
+  background: color-mix(in srgb, var(--color-brand-accent-surface) 22%, transparent);
+  pointer-events: none;
+}
+
+.catalog-page__pagination-track::before {
+  content: '';
+  position: absolute;
+  inset-block: -1px;
+  inset-inline-start: 0;
+  width: calc(var(--pager-progress, 0) * 100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-brand-accent-surface) 55%, transparent) 40%,
+    var(--color-brand-accent-surface)
+  );
+  transition: width 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.catalog-page__pagination-track::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  inset-inline-start: calc(var(--pager-progress, 0) * 100%);
+  width: 7px;
+  height: 7px;
+  background: var(--color-brand-accent-surface);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--color-brand-accent-surface) 70%, transparent);
+  transform: translate(-50%, -50%) rotate(45deg);
+  transition: inset-inline-start 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .catalog-page__pagination-nav {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
 }
 
 .catalog-page__pagination-ellipsis {
   padding-inline: 4px;
   color: var(--color-on-strong-muted);
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: 0.1em;
 }
 
-/* Botones del paginador: mismo par dorado-sólido (página vigente)/tinta-
-   fantasma (el resto) que ya usa el CTA "Agregar servicio" y las acciones
-   de fila — no los valores por defecto de BaseButton, calibrados para
-   flotar sobre superficie clara. Cuadrados y compactos (34px, sin relleno
-   horizontal de sobra): un paginador numerado vive de la repetición, no
-   necesita el mismo padding que un botón de acción con texto largo. */
+/* Botones del paginador: sin caja. Números en la tipografía de display sobre
+   la tinta de la barra; la página vigente se marca con un rombo dorado
+   (cuadrado girado 45°) y un halo; el hover levanta el número a dorado y
+   dibuja una marca de la cinta bajo él. Anulan los valores de BaseButton,
+   calibrados para botones de acción con texto. */
 .catalog-page__pagination-nav :deep(.base-button) {
-  height: 38px;
-  min-width: 38px;
-  padding-inline: 10px;
-  font-size: var(--font-size-body-sm);
+  position: relative;
+  isolation: isolate;
+  height: 32px;
+  min-width: 32px;
+  padding-inline: 8px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-on-strong-soft);
   --btn-focus-ring: 0 0 0 2px var(--color-surface-strong), 0 0 0 4px var(--color-focus);
 }
 
-.catalog-page__pagination-nav :deep(.base-button--primary) {
-  background-color: var(--color-brand-accent-surface);
-  color: var(--color-brand-accent-text);
-  border-color: var(--color-brand-accent-surface);
+.catalog-page__pagination-nav :deep(.base-button::before) {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  border: 1px solid transparent;
+  background: transparent;
+  transform: translate(-50%, -50%) rotate(45deg) scale(0.6);
+  opacity: 0;
+  transition:
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease,
+    background-color 200ms ease;
 }
 
+.catalog-page__pagination-nav :deep(.base-button--secondary:hover:not(:disabled)) {
+  background: transparent;
+  color: var(--color-brand-accent-surface);
+}
+
+.catalog-page__pagination-nav :deep(.base-button--secondary:hover:not(:disabled)::before) {
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 45%, transparent);
+  transform: translate(-50%, -50%) rotate(45deg) scale(0.85);
+  opacity: 1;
+}
+
+.catalog-page__pagination-nav :deep(.base-button--primary),
 .catalog-page__pagination-nav
   :deep(.base-button--primary:hover:not(:disabled):not(.base-button--loading)) {
-  filter: brightness(92%);
-}
-
-.catalog-page__pagination-nav :deep(.base-button--secondary) {
-  background-color: transparent;
+  background: transparent;
+  border: 0;
+  filter: none;
+  box-shadow: none;
   color: var(--color-brand-accent-surface);
-  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
-  border-bottom-color: var(--color-brand-accent-surface);
+  font-weight: 600;
 }
 
-.catalog-page__pagination-nav
-  :deep(.base-button--secondary:hover:not(:disabled):not(.base-button--loading)) {
-  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
-  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
+.catalog-page__pagination-nav :deep(.base-button--primary::before) {
+  border-color: var(--color-brand-accent-surface);
+  background: color-mix(in srgb, var(--color-brand-accent-surface) 16%, transparent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--color-brand-accent-surface) 35%, transparent);
+  transform: translate(-50%, -50%) rotate(45deg) scale(1);
+  opacity: 1;
+}
+
+/* Anterior/siguiente: flechas finas en vez de la caja, más grandes que los
+   números para leerse como acciones y no como páginas. */
+.catalog-page__pagination-nav :deep(.base-button[aria-label^='Página']) {
+  font-family: var(--font-family-base);
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--color-brand-accent-surface);
 }
 
 .catalog-page__pagination-nav :deep(.base-button:disabled) {
-  opacity: 0.4;
+  opacity: 0.3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catalog-page__pagination-track::before,
+  .catalog-page__pagination-track::after,
+  .catalog-page__pagination-nav :deep(.base-button::before) {
+    transition: none;
+  }
 }
 
 .catalog-page__form {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+}
+
+/* Alta y edición: rejilla de dos columnas. Todo ocupa el ancho completo salvo
+   Duración y Precio, que van lado a lado (.catalog-page__form-half). */
+.catalog-page__create-form,
+.catalog-page__edit-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-5) var(--space-5);
+}
+
+.catalog-page__create-form > *,
+.catalog-page__edit-form > * {
+  grid-column: 1 / -1;
+}
+
+.catalog-page__create-form > .catalog-page__form-half,
+.catalog-page__edit-form > .catalog-page__form-half {
+  grid-column: auto;
+}
+
+@media (max-width: 560px) {
+  .catalog-page__create-form > .catalog-page__form-half,
+  .catalog-page__edit-form > .catalog-page__form-half {
+    grid-column: 1 / -1;
+  }
 }
 
 /* Los tres diálogos de esta pantalla (issue 2026-09-28, alta: "se ve como
@@ -3270,15 +3445,57 @@ async function reloadAfterConflict(serviceId: string) {
    diálogo. */
 /* Las cifras son el dato que se busca al abrir el detalle: un escalón sobre el
    cuerpo de las fichas de estado del diálogo de ciclo de vida. */
-.catalog-page__detail-facts dd {
-  font-size: var(--font-size-h2);
-  line-height: var(--font-size-h2-line);
+.catalog-page__detail-facts,
+.catalog-page__facts-rich {
+  gap: var(--space-4);
+}
+
+/* Ficha de cifra: filete de latón arriba (como el marco de la foto del
+   barbero), la cifra grande y su unidad a su lado en la misma línea. */
+.catalog-page__detail-facts > div,
+.catalog-page__facts-rich > div {
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  border-top: var(--border-width-emphasis) solid var(--color-brand-accent-surface);
+}
+
+.catalog-page__detail-facts dd,
+.catalog-page__facts-rich dd {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--font-size-display);
+  line-height: var(--font-size-display-line);
+}
+
+/* Tres fichas en el diálogo de estado: la cifra no cabe a 36 px sin partirse
+   ("45000.0 / 0"), así que baja un escalón y la unidad pasa a la línea de
+   abajo cuando falta sitio, nunca la cifra. */
+.catalog-page__facts-rich dd {
+  flex-wrap: wrap;
+  column-gap: var(--space-2);
+  row-gap: 0;
+  overflow-wrap: normal;
+  font-size: var(--font-size-h1);
+  line-height: var(--font-size-h1-line);
+}
+
+.catalog-page__facts-rich dd small {
+  flex-basis: auto;
+}
+
+.catalog-page__detail-facts dd small,
+.catalog-page__facts-rich dd small {
+  display: inline;
+  margin: 0;
+  font-size: var(--font-size-body-sm);
+  text-transform: uppercase;
 }
 
 .catalog-page__detail-text {
   margin: 0;
   color: var(--color-on-strong);
-  font-size: var(--font-size-body);
+  font-size: var(--font-size-body-lg);
   line-height: 1.6;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
@@ -3292,8 +3509,10 @@ async function reloadAfterConflict(serviceId: string) {
 .catalog-page__detail-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2) var(--space-5);
+  gap: var(--space-2) var(--space-6);
   margin: 0;
+  padding-top: var(--space-4);
+  border-top: var(--border-width-normal) solid var(--color-field-strong-border);
 }
 
 .catalog-page__detail-meta dt {
@@ -3389,6 +3608,30 @@ async function reloadAfterConflict(serviceId: string) {
   }
 }
 
+/* Pantallas bajas con ancho de escritorio/tableta: se compacta la cabecera y
+   la fila (64px) para ganar filas visibles sin scroll general. Debe coincidir
+   con ROW_HEIGHT_COMPACT_PX / COMPACT_QUERY del script. */
+@media (min-width: 641px) and (max-height: 820px) {
+  .catalog-page {
+    gap: 12px;
+    padding-top: 20px;
+  }
+
+  .catalog-page__subtitle {
+    display: none;
+  }
+
+  .catalog-page__row {
+    height: 64px;
+    padding-block: 10px;
+  }
+
+  .catalog-page__item-icon {
+    width: 36px;
+    height: 36px;
+  }
+}
+
 @media (max-width: 640px) {
   .catalog-page {
     gap: 12px;
@@ -3443,11 +3686,22 @@ async function reloadAfterConflict(serviceId: string) {
      ver ROW_HEIGHT_MOBILE_PX en el script) recortaba el botón
      "Desactivar" por abajo. 100px es lo medido en vivo que ambas filas
      internas necesitan sin recortarse. */
+  /* Tarjeta de tres franjas (nombre+estado / duración+precio+«Lo ofrezco» /
+     acciones a todo el ancho). Antes las acciones compartían franja con el
+     nombre y lo dejaban en ~100px ("Cor…") y el interruptor se montaba sobre
+     la duración. 116px es el alto FIJO medido: 8+28 (nombre) +4 +28 (datos)
+     +4 +36 (acciones) +8; debe coincidir con ROW_HEIGHT_MOBILE_PX. */
   .catalog-page__row {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 4px 10px;
-    height: 100px;
-    padding: 9px 10px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: 28px 28px 36px;
+    gap: 4px 8px;
+    height: 116px;
+    padding: 8px 10px;
+  }
+
+  .catalog-page__item-heading {
+    grid-column: 1 / 3;
+    grid-row: 1;
   }
 
   .catalog-page__item-heading {
@@ -3466,15 +3720,23 @@ async function reloadAfterConflict(serviceId: string) {
 
   .catalog-page__item-duration,
   .catalog-page__item-price {
+    grid-row: 2;
+    font-size: var(--font-size-caption);
+    white-space: nowrap;
+  }
+
+  .catalog-page__item-duration {
     grid-column: 1;
     /* 28px de ficha + 9px de espacio del heading (arriba): alinea bajo el
        nombre en vez de bajo la ficha. */
     margin-left: 37px;
-    font-size: var(--font-size-caption);
   }
 
+  /* El precio ya no se oculta en móvil: hay sitio en la franja de datos. */
   .catalog-page__item-price {
-    display: none;
+    grid-column: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   /* Antes ambos compartían "1 / span 2" (misma celda que "Editar"/
@@ -3484,42 +3746,42 @@ async function reloadAfterConflict(serviceId: string) {
      descripción). Cada uno a su propia fila —insignia junto al nombre,
      acciones junto a la duración— evita el choque sin tocar el marcado. */
   .catalog-page__row > :deep(.base-badge) {
-    grid-column: 2;
+    grid-column: 3;
     grid-row: 1;
     justify-self: end;
   }
 
+  /* Acciones a todo el ancho y con 36px de alto (más cerca del objetivo táctil
+     recomendado que los 34px anteriores). */
   .catalog-page__item-actions {
-    grid-column: 2;
-    grid-row: 2;
-    gap: 6px;
+    grid-column: 1 / -1;
+    grid-row: 3;
+    gap: 8px;
+  }
+
+  .catalog-page__item-actions :deep(.base-button) {
+    flex: 1 1 0;
+    height: 36px;
+    padding-inline: 10px;
+    font-size: var(--font-size-caption);
   }
 
   /* La regla de seis columnas de «Lo ofrezco» pesa más que la de móvil de arriba: se
-     devuelve aquí la cuadrícula de dos columnas de siempre. */
+     devuelve aquí la cuadrícula de tres columnas de la tarjeta. */
   .catalog-page__table--offer .catalog-page__row {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
   }
 
-  /* «Lo ofrezco» (DEC-115): junto a la duración, en la fila de abajo, alineado a
-     la derecha de su celda para no pisar la duración. */
+  /* «Lo ofrezco» (DEC-115): al extremo derecho de la franja de datos, en su
+     propia columna, así ya no se monta sobre la duración. */
   .catalog-page__item-offer {
-    grid-column: 1;
+    grid-column: 3;
     grid-row: 2;
     justify-self: end;
   }
 
-  /* El interruptor ocupa su celda de forma explícita, así que la duración (que se
-     colocaba sola en esa celda) pasaría a una fila implícita y se recortaría: se le
-     da la misma fila. */
-  .catalog-page__table--offer .catalog-page__item-duration {
-    grid-row: 2;
-  }
-
-  .catalog-page__item-actions :deep(.base-button) {
-    height: 34px;
-    padding-inline: 10px;
-    font-size: var(--font-size-caption);
+  .catalog-page__subtitle {
+    display: none;
   }
 }
 </style>
@@ -3552,6 +3814,16 @@ async function reloadAfterConflict(serviceId: string) {
 .catalog-page__lifecycle-dialog.base-dialog {
   background-color: var(--color-surface-strong) !important;
   border: var(--border-width-normal) solid var(--color-field-strong-border) !important;
+}
+
+/* Detalle, alta y edición se ensanchan a 720 px (size="lg"): con size="sm" los
+   campos quedaban apretados en una columna de 360 px. Sin ancho explícito el
+   diálogo se ajusta al contenido y max-width del contenedor no basta. */
+.catalog-page__detail-dialog.base-dialog,
+.catalog-page__create-dialog.base-dialog,
+.catalog-page__edit-dialog.base-dialog,
+.catalog-page__lifecycle-dialog.base-dialog {
+  width: min(100%, 720px) !important;
 }
 
 /* Mismo cubic-bezier con rebote que ya usa BarberSelect.vue para su marca

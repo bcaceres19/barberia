@@ -23,11 +23,6 @@ export interface BookingPolicyFormValues {
   lateCancellationReasonRequired: boolean
 }
 
-/** Valores permitidos de la rejilla (DEC-083): un conjunto discreto, no un
- * rango continuo. El formulario ofrece un `<select>`, nunca un número
- * libre. */
-export const ALLOWED_SLOT_GRID_MINUTES = [5, 10, 15, 20, 30, 60] as const
-
 export function toFormValues(policy: BookingPolicy): BookingPolicyFormValues {
   return {
     minAdvanceMinutes: policy.minAdvanceMinutes,

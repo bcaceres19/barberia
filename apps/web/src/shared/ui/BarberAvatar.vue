@@ -22,7 +22,7 @@ interface Props {
    * móvil) — cada opción de la lista desplegada. row: 52px (44px móvil) —
    * fila de la lista de equipo. hero: 120px (104px móvil) — detalle y
    * edición del barbero. */
-  size?: 'closed' | 'option' | 'row' | 'hero'
+  size?: 'closed' | 'option' | 'row' | 'portrait' | 'hero'
   photoUrl?: string | null
 }
 
@@ -96,6 +96,10 @@ const classes = computed(() => ['barber-avatar', `barber-avatar--${props.size}`]
   --avatar-size: 52px;
 }
 
+.barber-avatar--portrait {
+  --avatar-size: 84px;
+}
+
 .barber-avatar--hero {
   --avatar-size: 120px;
 }
@@ -111,6 +115,10 @@ const classes = computed(() => ['barber-avatar', `barber-avatar--${props.size}`]
 
   .barber-avatar--row {
     --avatar-size: 44px;
+  }
+
+  .barber-avatar--portrait {
+    --avatar-size: 72px;
   }
 
   .barber-avatar--hero {

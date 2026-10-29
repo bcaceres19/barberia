@@ -122,11 +122,12 @@ async function setDate(form: ReturnType<typeof createForm>, date: string) {
 
 async function fillCreateForm(
   wrapper: VueWrapper,
-  { startsTime = '08:00', durationMinutes = '60' } = {},
+  { startsTime = '08:00', endsTime = '09:00' } = {},
 ) {
   await createForm(wrapper).get('button[role="radio"][aria-label="Lunes"]').trigger('click')
-  await setTime(createForm(wrapper), startsTime)
-  await createForm(wrapper).get('input[name="durationMinutes"]').setValue(durationMinutes)
+  await setTime(createForm(wrapper), startsTime, 0)
+  // El formulario se vuelve a leer: tras el primer cambio se re-renderiza.
+  await setTime(createForm(wrapper), endsTime, 1)
 }
 
 const axeOptions = { rules: { 'color-contrast': { enabled: false } } }
@@ -270,7 +271,7 @@ describe('SchedulesPage', () => {
     const wrapper = await mountReady(oneBarber, [])
     await openCreateDialog(wrapper)
     await createForm(wrapper).get('button[role="radio"][aria-label="Lunes"]').trigger('click')
-    await createForm(wrapper).get('input[name="durationMinutes"]').setValue('60')
+    await setTime(createForm(wrapper), '09:00', 1)
 
     await createForm(wrapper).trigger('submit')
     await flushPromises()
@@ -285,7 +286,9 @@ describe('SchedulesPage', () => {
     await editButtons[0]!.trigger('click')
     await flushPromises()
 
-    await setTime(editForm(wrapper), '09:00')
+    // Mueve el tramo de 08:00–12:00 a 09:00–13:00: la duración (240) se deriva.
+    await setTime(editForm(wrapper), '09:00', 0)
+    await setTime(editForm(wrapper), '13:00', 1)
 
     updateWorkingHourMock.mockResolvedValueOnce({
       kind: 'success',
@@ -383,6 +386,14 @@ function exceptionCreateForm(wrapper: VueWrapper) {
   return wrapper.get('form[name="createScheduleException"]')
 }
 
+// «Abierto con tramos especiales»: muestra el primer tramo en blanco.
+async function openOpenShape(wrapper: VueWrapper) {
+  const radio = exceptionCreateForm(wrapper).findAll('input[name="createExceptionShape"]')[1]!
+  ;(radio.element as HTMLInputElement).checked = true
+  await radio.trigger('change')
+  await flushPromises()
+}
+
 const closedException = {
   id: 'exc-1',
   effectiveDate: '2026-12-08',
@@ -475,6 +486,57 @@ describe('SchedulesPage · HU-041', () => {
     )
     expect(wrapper.text()).toContain('2026-12-08')
     expect(toastState.items.map((item) => item.title)).toEqual(['Excepción agregada'])
+  })
+
+  it('captures an open exception segment as start and end time and sends the derived duration', async () => {
+    const wrapper = await mountReady(oneBarber, [])
+    await openExceptionCreateDialog(wrapper)
+    let form = exceptionCreateForm(wrapper)
+    await setDate(form, '2026-12-24')
+    await openOpenShape(wrapper)
+    form = exceptionCreateForm(wrapper)
+
+    // No hay campo de minutos: solo «Hora de inicio» y «Hora de fin».
+    expect(form.text()).not.toContain('Duración (minutos)')
+    expect(form.text()).toContain('Hora de fin')
+
+    // Los dos BaseTimePicker del formulario son el inicio y el fin del tramo.
+    await setTime(form, '08:00', 0)
+    // El formulario se vuelve a leer: tras el primer cambio se re-renderiza.
+    await setTime(exceptionCreateForm(wrapper), '13:30', 1)
+    createScheduleExceptionMock.mockResolvedValueOnce({
+      kind: 'success',
+      exception: { ...closedException, isClosed: false },
+    })
+    await exceptionCreateForm(wrapper).trigger('submit')
+    await flushPromises()
+
+    expect(createScheduleExceptionMock).toHaveBeenCalledWith(
+      'b-1',
+      '2026-12-24',
+      false,
+      null,
+      [{ startsTime: '08:00', durationMinutes: 330 }],
+      expect.any(String),
+    )
+  })
+
+  it('does not submit an open exception segment that has no end time', async () => {
+    const wrapper = await mountReady(oneBarber, [])
+    await openExceptionCreateDialog(wrapper)
+    let form = exceptionCreateForm(wrapper)
+    await setDate(form, '2026-12-24')
+    await openOpenShape(wrapper)
+    form = exceptionCreateForm(wrapper)
+    await setTime(form, '08:00', 0)
+
+    await exceptionCreateForm(wrapper).trigger('submit')
+    await flushPromises()
+
+    expect(createScheduleExceptionMock).not.toHaveBeenCalled()
+    expect(exceptionCreateForm(wrapper).text()).toContain(
+      'Revisa la hora de inicio y de fin de cada tramo.',
+    )
   })
 
   it('a duplicate date (CA-041-05) shows a recoverable message without closing the dialog', async () => {
@@ -603,7 +665,8 @@ describe('SchedulesPage · tablero semanal', () => {
         .attributes('aria-checked'),
     ).toBe('true')
 
-    await setTime(createForm(wrapper), '09:00')
+    await setTime(createForm(wrapper), '09:00', 0)
+    await setTime(createForm(wrapper), '10:00', 1)
     createWorkingHourMock.mockResolvedValueOnce({
       kind: 'success',
       workingHour: { ...mondayMorning, isoWeekday: 2, startsTime: '09:00' },
@@ -619,9 +682,10 @@ describe('SchedulesPage · tablero semanal', () => {
     await wrapper.get('button[aria-label="Agregar un tramo el Lunes"]').trigger('click')
     await flushPromises()
 
-    expect(createForm(wrapper).text()).toContain('Elige la hora y la duración')
+    expect(createForm(wrapper).text()).toContain('Elige la hora de inicio y de fin')
 
-    await setTime(createForm(wrapper), '13:00')
+    await setTime(createForm(wrapper), '13:00', 0)
+    await setTime(createForm(wrapper), '14:00', 1)
 
     expect(createForm(wrapper).text()).toContain('Lunes · 13:00 – 14:00 · 1 h')
     // El de la mañana sigue en la pista como contexto, atenuado.

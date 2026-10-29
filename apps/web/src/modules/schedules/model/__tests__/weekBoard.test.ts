@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   civilDateTile,
   computeScale,
+  durationBetween,
   endLabel,
   formatHours,
   minutesToTime,
@@ -35,6 +36,13 @@ describe('weekBoard', () => {
     expect(geometry.crossesMidnight).toBe(true)
     expect(geometry.from + geometry.span).toBeCloseTo(100)
     expect(endLabel('20:00', 480)).toBe('04:00 (+1)')
+  })
+
+  it('calcula la duración entre dos horas, cruzando la medianoche si hace falta', () => {
+    expect(durationBetween('13:00', '14:00')).toBe(60)
+    expect(durationBetween('12:00', '12:45')).toBe(45)
+    expect(durationBetween('22:00', '01:00')).toBe(180)
+    expect(durationBetween('00:00', '00:00')).toBe(1440)
   })
 
   it('ignora una hora a medio escribir al calcular la regla', () => {

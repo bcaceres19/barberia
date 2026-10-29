@@ -122,8 +122,9 @@
       versión `If-Match` (concurrencia optimista, mismo criterio que
       `HU-065`): si la representación vigente ya cambió, responde `409` con
       `code: version-conflict` en vez de aplicar un último escritor
-      silencioso. Cada campo se valida contra el rango o conjunto discreto
-      de `DEC-083`; `lateCancellationReasonRequired` no puede ser `true` si
+      silencioso. Cada campo se valida contra su rango (`DEC-083`; la
+      rejilla `slotGridMinutes`, entero de 1 a 60, `DEC-133`);
+      `lateCancellationReasonRequired` no puede ser `true` si
       `lateCancellationClientAllowed` es `false` (combinación incoherente),
       y `minAdvanceMinutes` no puede alcanzar ni superar
       `maxAdvanceDays * 1440`. Un campo fuera de rango o una combinación
@@ -199,8 +200,9 @@
       vocabulario (palabra del negocio y del profesional, con plural y
       género gramatical) de la barbería derivada de la sesión vigente. Una
       barbería que nunca los cambió recibe los valores iniciales (`brass`,
-      `barbería`, `barbero`) y el perfil `shop` (`DEC-115`), exactamente la
-      interfaz anterior. Recurso
+      `barbería`, `barbero`), exactamente la interfaz anterior. Incluye el
+      panel del usuario que consulta (`panelProfile`), derivado de sus roles en
+      la base de datos (`DEC-134`) y no de un ajuste de la barbería. Recurso
       propio, separado de `/private/settings/barbershop` para no ampliar el
       contrato cerrado de `HU-020` (`CA-020-07`). `barbershopId` nunca es un
       parámetro: el tenant se deriva exclusivamente de `SessionCookie`.
@@ -208,7 +210,7 @@
     security:
       - SessionCookie: []
     x-business-rules: [RN-TEN-01, RN-DAT-02]
-    x-decisions: [DEC-024, DEC-110, DEC-115]
+    x-decisions: [DEC-024, DEC-110, DEC-115, DEC-134]
     responses:
       "200":
         $ref: '../components/responses/BrandSuccess.yaml'
@@ -222,13 +224,11 @@
     tags: [Settings]
     summary: Actualizar la marca y el vocabulario de la barbería activa
     description: >
-      Actualización autenticada (issue #292, DEC-110; perfil del panel,
-      issue #294, DEC-115) de los seis campos de
+      Actualización autenticada (issue #292, DEC-110) de los seis campos de
       marca y vocabulario, que viajan siempre presentes; cualquier otro
-      campo -en particular un identificador de barbería- se rechaza como
-      forma inválida. `panelProfile` (`shop` o `solo`) es optativo: si se
-      omite, el perfil guardado no cambia; fuera de la lista responde `422`.
-      `accent` pertenece a una lista cerrada (nunca un color
+      campo -en particular un identificador de barbería o `panelProfile`, que
+      desde `DEC-134` lo deciden los roles del usuario- se rechaza como
+      forma inválida. `accent` pertenece a una lista cerrada (nunca un color
       libre) y cada término se recorta, se colapsa y se pasa a minúsculas
       antes de validarlo y guardarlo. Un valor inválido responde `422` sin
       escribir nada. Son preferencias de presentación: no hay precondición de
@@ -241,7 +241,7 @@
     security:
       - SessionCookie: []
     x-business-rules: [RN-TEN-01, RN-DAT-02]
-    x-decisions: [DEC-024, DEC-110, DEC-115]
+    x-decisions: [DEC-024, DEC-110, DEC-115, DEC-134]
     requestBody:
       required: true
       content:
@@ -258,16 +258,6 @@
                 professionalTerm: estilista
                 professionalTermPlural: estilistas
                 professionalTermGender: feminine
-            barberoIndividual:
-              summary: Activar el panel de barbero individual
-              value:
-                accent: brass
-                businessTerm: barbería
-                businessTermGender: feminine
-                professionalTerm: barbero
-                professionalTermPlural: barberos
-                professionalTermGender: masculine
-                panelProfile: solo
             valoresIniciales:
               summary: Volver a los valores iniciales
               value:

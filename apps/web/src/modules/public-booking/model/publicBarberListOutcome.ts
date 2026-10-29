@@ -5,12 +5,17 @@
 // estandar-frontend-vue.md §6), mismo criterio que
 // model/publicServiceListOutcome.ts.
 
-/** Barbero público mínimo, con asignación vigente al servicio activo
- * elegido (CA-092-02). Nunca foto, biografía ni preferencia (fuera de
- * alcance de HU-092). */
+/** Barbero público con asignación vigente al servicio activo elegido
+ * (CA-092-02). Por DEC-127 incluye su descripción opcional y la versión de su
+ * fotografía opcional (los bytes se piden aparte, ver `publicBarberPhotoUrl`);
+ * nunca preferencia ni ningún otro dato interno. */
 export interface PublicBarber {
   id: string
   fullName: string
+  /** Descripción corta que escribió la barbería, o null si no tiene. */
+  description: string | null
+  /** Versión de la fotografía, o null si no tiene (se muestra el monograma). */
+  photoUpdatedAt: string | null
 }
 
 /** Resultado discriminado de listar los barberos elegibles contra el API

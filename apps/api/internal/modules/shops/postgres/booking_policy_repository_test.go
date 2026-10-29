@@ -134,7 +134,7 @@ func TestBookingPolicyUpdate_StaleVersionToken_ReturnsVersionConflictWithoutWrit
 
 	// Una escritura real intermedia invalida staleRead.VersionToken.
 	fresh, err := repo.Update(context.Background(), bookingPolicyShopDos, shops.BookingPolicyUpdateInput{
-		MinAdvanceMinutes: 45, MaxAdvanceDays: 7, SlotGridMinutes: 20,
+		MinAdvanceMinutes: 45, MaxAdvanceDays: 7, SlotGridMinutes: 7, // paso que DEC-083 rechazaba y DEC-133 admite.
 		CancellationDeadlineMinutes: 30, LateCancellationClientAllowed: true,
 		LateCancellationReasonRequired: true, ExpectedVersionToken: staleRead.VersionToken,
 	})
@@ -158,7 +158,7 @@ func TestBookingPolicyUpdate_StaleVersionToken_ReturnsVersionConflictWithoutWrit
 	if err != nil || !found {
 		t.Fatalf("Get (after stale attempt): found=%v err=%v", found, err)
 	}
-	if current.MinAdvanceMinutes != 45 || current.MaxAdvanceDays != 7 || current.SlotGridMinutes != 20 || current.CancellationDeadlineMinutes != 30 {
+	if current.MinAdvanceMinutes != 45 || current.MaxAdvanceDays != 7 || current.SlotGridMinutes != 7 || current.CancellationDeadlineMinutes != 30 {
 		t.Fatalf("expected the stale update to write nothing, got %+v", current)
 	}
 
@@ -250,12 +250,12 @@ func TestBookingPolicyUpdate_InvalidValueBypassingService_HitsCheckConstraint(t 
 	}
 
 	_, err = repo.Update(context.Background(), bookingPolicyShopUno, shops.BookingPolicyUpdateInput{
-		MinAdvanceMinutes: 60, MaxAdvanceDays: 3, SlotGridMinutes: 7, // fuera del conjunto discreto.
+		MinAdvanceMinutes: 60, MaxAdvanceDays: 3, SlotGridMinutes: 61, // fuera del rango 1..60 de DEC-133.
 		CancellationDeadlineMinutes: 20, LateCancellationClientAllowed: true,
 		LateCancellationReasonRequired: true, ExpectedVersionToken: current.VersionToken,
 	})
 	if err == nil {
-		t.Fatal("expected the database CHECK constraint to reject slotGridMinutes=7")
+		t.Fatal("expected the database CHECK constraint to reject slotGridMinutes=61")
 	}
 
 	unchanged, found, getErr := repo.Get(context.Background(), bookingPolicyShopUno)

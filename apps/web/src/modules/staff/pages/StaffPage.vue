@@ -36,12 +36,13 @@ import {
   uploadBarberPhoto,
 } from '../api/staffApi'
 import BarberPhotoField from '../components/BarberPhotoField.vue'
+import BarberDescriptionField from '../components/BarberDescriptionField.vue'
 import MyProfileCard from '../components/MyProfileCard.vue'
 import { newIdempotencyKey } from '../model/idempotencyKey'
 import type { Barber } from '../model/barber'
 import { NO_PHOTO_CHANGE, type PhotoDraft } from '../model/photoDraft'
 import { capitalize, isSoloProfile } from '@/shared/model'
-import { validateFullName } from '../validation/staffValidation'
+import { validateDescription, validateFullName } from '../validation/staffValidation'
 
 const toast = useToast()
 // Palabras de la barbería (DEC-110): con los valores iniciales, el mismo texto de siempre.
@@ -403,6 +404,8 @@ function onDetailEdit() {
 const isCreateOpen = ref(false)
 const createFullName = ref('')
 const createFieldError = ref<string | undefined>(undefined)
+const createDescription = ref('')
+const createDescriptionError = ref<string | undefined>(undefined)
 const createStatus = ref<SaveStatus>('idle')
 const createAttempted = ref(false)
 const createPhotoDraft = ref<PhotoDraft>(NO_PHOTO_CHANGE)
@@ -415,6 +418,8 @@ let createIdempotencyKey = newIdempotencyKey()
 function openCreateDialog() {
   createFullName.value = ''
   createFieldError.value = undefined
+  createDescription.value = ''
+  createDescriptionError.value = undefined
   createStatus.value = 'idle'
   createAttempted.value = false
   createPhotoDraft.value = NO_PHOTO_CHANGE
@@ -436,16 +441,27 @@ function onCreateFullNameInput(value: string | number) {
     createFieldError.value = validateFullName(createFullName.value, v.value)
 }
 
+function onCreateDescriptionInput(value: string) {
+  createDescription.value = value
+  if (createAttempted.value) createDescriptionError.value = validateDescription(value)
+}
+
 async function onSubmitCreate() {
   if (createStatus.value === 'saving') return
 
   createAttempted.value = true
   const error = validateFullName(createFullName.value, v.value)
+  const descriptionError = validateDescription(createDescription.value)
   createFieldError.value = error
-  if (error) return
+  createDescriptionError.value = descriptionError
+  if (error || descriptionError) return
 
   createStatus.value = 'saving'
-  const outcome = await createBarber(createFullName.value.trim(), createIdempotencyKey)
+  const outcome = await createBarber(
+    createFullName.value.trim(),
+    createIdempotencyKey,
+    createDescription.value,
+  )
 
   switch (outcome.kind) {
     case 'success':
@@ -508,6 +524,8 @@ const isRenameOpen = ref(false)
 const renameTarget = ref<Barber | null>(null)
 const renameFullName = ref('')
 const renameFieldError = ref<string | undefined>(undefined)
+const renameDescription = ref('')
+const renameDescriptionError = ref<string | undefined>(undefined)
 const renameStatus = ref<SaveStatus>('idle')
 const renameAttempted = ref(false)
 const renamePhotoDraft = ref<PhotoDraft>(NO_PHOTO_CHANGE)
@@ -516,6 +534,8 @@ function openRenameDialog(barber: Barber) {
   renameTarget.value = barber
   renameFullName.value = barber.fullName
   renameFieldError.value = undefined
+  renameDescription.value = barber.description ?? ''
+  renameDescriptionError.value = undefined
   renameStatus.value = 'idle'
   renameAttempted.value = false
   renamePhotoDraft.value = NO_PHOTO_CHANGE
@@ -532,6 +552,11 @@ function onRenameFullNameInput(value: string | number) {
     renameFieldError.value = validateFullName(renameFullName.value, v.value)
 }
 
+function onRenameDescriptionInput(value: string) {
+  renameDescription.value = value
+  if (renameAttempted.value) renameDescriptionError.value = validateDescription(value)
+}
+
 type StepFailure = 'validation-error' | 'not-found' | 'network-error' | 'unexpected-error'
 
 // Un fallo de la foto (formato, tamaño) no es un error de campo del nombre: se
@@ -541,7 +566,8 @@ function failureStatus(kind: StepFailure, isPhoto: boolean): SaveStatus {
   return kind
 }
 
-// Guardar aplica en orden lo que cambió: primero el nombre y luego la foto. Cada
+// Guardar aplica en orden lo que cambió: primero el nombre y la descripción (un
+// solo PATCH) y luego la foto. Cada
 // paso confirmado actualiza al barbero de la lista y el objetivo del diálogo,
 // así un reintento tras un fallo a medias (el nombre ya quedó, la foto no)
 // nunca repite lo que ya se guardó. Sin cambios no envía nada.
@@ -551,13 +577,18 @@ async function onSubmitRename() {
 
   renameAttempted.value = true
   const error = validateFullName(renameFullName.value, v.value)
+  const descriptionError = validateDescription(renameDescription.value)
   renameFieldError.value = error
-  if (error) return
+  renameDescriptionError.value = descriptionError
+  if (error || descriptionError) return
 
   const fullName = renameFullName.value.trim()
+  const description = renameDescription.value.trim()
   const nameChanged = fullName !== target.fullName
+  const descriptionChanged = description !== (target.description ?? '')
+  const detailsChanged = nameChanged || descriptionChanged
   const draft = renamePhotoDraft.value
-  if (!nameChanged && draft.kind === 'none') {
+  if (!detailsChanged && draft.kind === 'none') {
     isRenameOpen.value = false
     return
   }
@@ -565,8 +596,13 @@ async function onSubmitRename() {
   renameStatus.value = 'saving'
   let current = target
 
-  if (nameChanged) {
-    const renamed = await renameBarber(current.id, fullName)
+  if (detailsChanged) {
+    // La descripción solo viaja si cambió: si no, el PATCH la conserva.
+    const renamed = await renameBarber(
+      current.id,
+      fullName,
+      descriptionChanged ? description : undefined,
+    )
     if (renamed.kind !== 'success') {
       renameStatus.value = failureStatus(renamed.kind, false)
       return
@@ -600,13 +636,17 @@ async function onSubmitRename() {
   renameStatus.value = 'idle'
   renamePhotoDraft.value = NO_PHOTO_CHANGE
 
-  if (nameChanged && draft.kind === 'none') {
+  if (nameChanged && !descriptionChanged && draft.kind === 'none') {
     toast.success('Nombre actualizado', {
       detail: `Guardamos el nuevo nombre ${v.value.ofTheProfessional}.`,
     })
-  } else if (!nameChanged && draft.kind === 'new') {
+  } else if (!nameChanged && descriptionChanged && draft.kind === 'none') {
+    toast.success('Descripción actualizada', {
+      detail: 'Los clientes la verán al elegir en la reserva.',
+    })
+  } else if (!detailsChanged && draft.kind === 'new') {
     toast.success('Foto actualizada', { detail: 'El nuevo retrato ya aparece en tu equipo.' })
-  } else if (!nameChanged && draft.kind === 'remove') {
+  } else if (!detailsChanged && draft.kind === 'remove') {
     toast.success('Foto quitada', {
       detail: `${capitalize(v.value.theProfessional)} vuelve a mostrarse con su monograma.`,
     })
@@ -707,6 +747,7 @@ async function onSubmitRename() {
         <MyProfileCard
           v-if="soloCard"
           :full-name="barbers[0]!.fullName"
+          :description="barbers[0]!.description"
           :photo-url="photoOf(barbers[0]!)"
           :has-photo="hasPhoto(barbers[0]!)"
           :since-label="formatDate(barbers[0]!.createdAt)"
@@ -878,7 +919,7 @@ async function onSubmitRename() {
     <BaseDialog
       v-model="isDetailOpen"
       :title="detailTarget?.fullName"
-      size="sm"
+      size="md"
       content-class="staff-page__dialog staff-page__detail-dialog"
     >
       <div v-if="detailTarget" class="staff-page__ink staff-page__detail">
@@ -891,6 +932,9 @@ async function onSubmitRename() {
             />
           </span>
           <p class="staff-page__detail-role">{{ v.Professional }}</p>
+          <p v-if="detailTarget.description" class="staff-page__detail-description">
+            {{ detailTarget.description }}
+          </p>
         </div>
 
         <dl class="staff-page__facts">
@@ -960,7 +1004,7 @@ async function onSubmitRename() {
       v-model="isCreateOpen"
       :title="`Agregar ${v.professional}`"
       description="Aparece en tu equipo en cuanto lo guardes."
-      size="md"
+      size="lg"
       content-class="staff-page__dialog staff-page__create-dialog"
       @close="onCreateDialogClosed"
     >
@@ -1016,6 +1060,13 @@ async function onSubmitRename() {
           @update:model-value="onCreateFullNameInput"
         />
 
+        <BarberDescriptionField
+          :model-value="createDescription"
+          :disabled="createStatus === 'saving'"
+          :error="createDescriptionError"
+          @update:model-value="onCreateDescriptionInput"
+        />
+
         <div class="staff-page__dialog-actions">
           <BaseButton type="button" variant="secondary" @click="isCreateOpen = false">
             Cancelar
@@ -1036,7 +1087,7 @@ async function onSubmitRename() {
     <BaseDialog
       v-model="isRenameOpen"
       :title="`Editar ${v.professional}`"
-      size="md"
+      size="lg"
       content-class="staff-page__dialog staff-page__edit-dialog"
       @close="onRenameDialogClosed"
     >
@@ -1100,6 +1151,13 @@ async function onSubmitRename() {
           :error="renameFieldError"
           :class="{ 'staff-page__input--filled': !!renameFullName }"
           @update:model-value="onRenameFullNameInput"
+        />
+
+        <BarberDescriptionField
+          :model-value="renameDescription"
+          :disabled="renameStatus === 'saving'"
+          :error="renameDescriptionError"
+          @update:model-value="onRenameDescriptionInput"
         />
 
         <div class="staff-page__dialog-actions">
@@ -1887,6 +1945,17 @@ async function onSubmitRename() {
   border-left: 0;
 }
 
+.staff-page__detail-description {
+  max-width: 36ch;
+  margin: 0;
+  color: var(--color-on-strong-muted);
+  font-size: var(--font-size-body);
+  line-height: var(--font-size-body-line);
+  text-align: center;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
 .staff-page__detail-role {
   margin: 0;
   color: var(--color-brand-accent-surface);
@@ -2031,6 +2100,38 @@ async function onSubmitRename() {
   flex-flow: row wrap;
   justify-content: flex-end;
   gap: var(--space-3);
+}
+
+/* Campos de alta/edición: llegan escalonados tras el rebote de la tarjeta. */
+.staff-page__form > * {
+  animation: staff-detail-enter 360ms var(--motion-easing-standard) backwards;
+  animation-delay: calc(140ms + var(--field-index, 0) * 60ms);
+}
+
+.staff-page__form > :nth-child(1) {
+  --field-index: 0;
+}
+
+.staff-page__form > :nth-child(2) {
+  --field-index: 1;
+}
+
+.staff-page__form > :nth-child(3) {
+  --field-index: 2;
+}
+
+.staff-page__form > :nth-child(4) {
+  --field-index: 3;
+}
+
+.staff-page__form > :nth-child(n + 5) {
+  --field-index: 4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .staff-page__form > * {
+    animation: none;
+  }
 }
 
 @keyframes staff-detail-enter {
@@ -2190,6 +2291,16 @@ async function onSubmitRename() {
 
 /* Mismo rebote de apertura que ya usan los diálogos de Servicios y
    BarberSelect: un elemento que llega y se asienta. */
+/* `size` solo fija max-width: el ancho real de cada diálogo se declara aquí. */
+.staff-page__create-dialog.base-dialog,
+.staff-page__edit-dialog.base-dialog {
+  width: min(100%, 720px) !important;
+}
+
+.staff-page__detail-dialog.base-dialog {
+  width: min(100%, 560px) !important;
+}
+
 .staff-page__dialog.base-dialog--open {
   transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }

@@ -57,7 +57,7 @@ func assertEqualTimes(t *testing.T, got, want []time.Time) {
 // TestGenerateStarts_ExhaustiveFactors cubre CA-094-01 a CA-094-03 con una
 // tabla exhaustiva de los factores que RN-DIS-02 exige considerar (jornada,
 // duración, citas/bloqueos que ocupan agenda, solapes, rejilla), más las
-// fronteras de RN-DIS-01/RN-DIS-05/RN-DIS-06 y DEC-084.
+// fronteras de RN-DIS-01/RN-DIS-05/RN-DIS-06 y DEC-135.
 func TestGenerateStarts_ExhaustiveFactors(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -124,7 +124,7 @@ func TestGenerateStarts_ExhaustiveFactors(t *testing.T) {
 			want:   wantTimes(at(9, 0), at(10, 0), at(11, 0), at(12, 0), at(14, 0)),
 		},
 		{
-			name: "DEC-084: la rejilla reinicia desde el instante en que termina la interrupción",
+			name: "DEC-135: la rejilla es fija y no reinicia donde termina la interrupción",
 			segments: []availability.Interval{
 				{Start: at(9, 0), End: at(18, 0)},
 			},
@@ -132,14 +132,29 @@ func TestGenerateStarts_ExhaustiveFactors(t *testing.T) {
 				{Start: at(9, 0), End: at(13, 47)},
 			},
 			policy: noWindowPolicy(15*time.Minute, 15*time.Minute),
-			// Reinicia en 13:47 (no espera a 14:00, múltiplo de la rejilla
-			// original del tramo desde las 9:00).
+			// La interrupción termina a las 13:47, pero la primera franja es la
+			// siguiente de la rejilla del tramo desde las 9:00 (14:00).
 			want: wantTimes(
-				at(13, 47), at(14, 2), at(14, 17), at(14, 32), at(14, 47),
-				at(15, 2), at(15, 17), at(15, 32), at(15, 47),
-				at(16, 2), at(16, 17), at(16, 32), at(16, 47),
-				at(17, 2), at(17, 17), at(17, 32),
+				at(14, 0), at(14, 15), at(14, 30), at(14, 45),
+				at(15, 0), at(15, 15), at(15, 30), at(15, 45),
+				at(16, 0), at(16, 15), at(16, 30), at(16, 45),
+				at(17, 0), at(17, 15), at(17, 30), at(17, 45),
 			),
+		},
+		{
+			name: "DEC-135: con paso de 40 min todas las franjas son múltiplos de 40 desde el inicio del tramo",
+			segments: []availability.Interval{
+				{Start: at(9, 0), End: at(13, 0)},
+			},
+			busy: []availability.Interval{
+				{Start: at(9, 0), End: at(9, 30)},
+				{Start: at(10, 50), End: at(11, 10)},
+			},
+			policy: noWindowPolicy(30*time.Minute, 40*time.Minute),
+			// Rejilla desde las 9:00: 9:00, 9:40, 10:20, 11:00, 11:40, 12:20.
+			// 9:00 cae en la cita y 11:00 en el bloqueo; tras el bloqueo (que
+			// termina a las 11:10) la siguiente es 11:40, no 11:10.
+			want: wantTimes(at(9, 40), at(10, 20), at(11, 40), at(12, 20)),
 		},
 		{
 			name:     "citas contiguas exactas no dejan hueco (RN-DIS-05) y no se ofrece nada entre ellas",

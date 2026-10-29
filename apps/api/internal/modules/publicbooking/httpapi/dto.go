@@ -55,11 +55,14 @@ type PublicServiceListResponse struct {
 
 // PublicBarberResponse es la proyección pública mínima de un barbero con
 // asignación vigente (HU-092, CA-092-02), forma exacta del componente
-// OpenAPI PublicBarberResponse.yaml: nunca foto, biografía ni ningún otro
-// campo fuera de alcance de HU-092.
+// OpenAPI PublicBarberResponse.yaml: id, nombre y, por DEC-127, descripción
+// (null si no tiene) y photoUpdatedAt (null si no tiene fotografía; si la
+// tiene, versiona la URL de la imagen). Nunca ningún otro campo del barbero.
 type PublicBarberResponse struct {
-	ID       string `json:"id"`
-	FullName string `json:"fullName"`
+	ID             string     `json:"id"`
+	FullName       string     `json:"fullName"`
+	Description    *string    `json:"description"`
+	PhotoUpdatedAt *time.Time `json:"photoUpdatedAt"`
 }
 
 // PublicBarberListResponse es la lista completa de barberos elegibles para

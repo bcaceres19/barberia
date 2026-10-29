@@ -289,8 +289,9 @@ describe('BarberBlocksPanel · avisos emergentes (DEC-095)', () => {
       .trigger('click')
     await flushPromises()
     const form = wrapper.findAll('form.blocks-page__form')[1]!
-    form.getComponent(BaseTimePicker).vm.$emit('update:modelValue', '12:00')
-    form.findAllComponents(BaseInput)[0]!.vm.$emit('update:modelValue', 45)
+    const times = form.findAllComponents(BaseTimePicker)
+    times[0]!.vm.$emit('update:modelValue', '12:00')
+    times[1]!.vm.$emit('update:modelValue', '12:45')
     form.getComponent(BaseDatePicker).vm.$emit('update:modelValue', '2099-01-01')
     await flushPromises()
     await form.trigger('submit')

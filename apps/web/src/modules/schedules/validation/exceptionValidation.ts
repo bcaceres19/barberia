@@ -57,7 +57,7 @@ export function validateExceptionShape(
   }
   for (const seg of segments) {
     if (validateStartsTime(seg.startsTime) || validateDurationMinutes(seg.durationMinutes)) {
-      return 'Revisa la hora y la duración de cada tramo.'
+      return 'Revisa la hora de inicio y de fin de cada tramo.'
     }
   }
   const intervals = segments

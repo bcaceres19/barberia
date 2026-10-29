@@ -132,16 +132,28 @@ func DecodeServiceCursor(raw string) (ServiceCursor, error) {
 	return ServiceCursor{CreatedAt: w.CreatedAt, ID: w.ID}, nil
 }
 
-// PublicBarber es la proyección pública mínima de un barbero con asignación
-// vigente al servicio activo resuelto (HU-092, CA-092-02): únicamente ID y
-// nombre completo. Nunca foto, biografía, preferencia ni ningún otro campo
-// de staff.Barber -esos quedan fuera del alcance de HU-092. El núcleo de
-// publicbooking no importa staff (CA-002-06, mismo criterio que
-// PublicService frente a catalog.Service): repite su propia proyección
-// mínima en vez de una dependencia cruzada entre módulos.
+// PublicBarber es la proyección pública de un barbero con asignación vigente
+// al servicio activo resuelto (HU-092, CA-092-02): ID, nombre completo y, por
+// DEC-127, su descripción opcional y la versión de su fotografía opcional
+// (nil mientras no tiene; el cliente pide los bytes por separado). Nunca
+// preferencia ni ningún otro campo de staff.Barber. El núcleo de publicbooking
+// no importa staff (CA-002-06, mismo criterio que PublicService frente a
+// catalog.Service): repite su propia proyección en vez de una dependencia
+// cruzada entre módulos.
 type PublicBarber struct {
-	ID       string
-	FullName string
+	ID             string
+	FullName       string
+	Description    *string
+	PhotoUpdatedAt *time.Time
+}
+
+// PublicBarberPhoto es la fotografía pública de un barbero (DEC-127): el
+// mismo contenido que `barber_photo`, entregado solo si el barbero es
+// elegible en la reserva pública.
+type PublicBarberPhoto struct {
+	ContentType string
+	Data        []byte
+	UpdatedAt   time.Time
 }
 
 // PublicBarberListResult es la lista completa (sin paginar: HU-092 no

@@ -14,12 +14,13 @@ import (
 // GetBrandHandler expone GET /private/settings/brand (issue #292): lectura
 // autenticada de la marca y el vocabulario de la barbería activa.
 type GetBrandHandler struct {
-	service *shops.BrandService
+	service  *shops.BrandService
+	profiles *shops.PanelProfileService
 }
 
 // NewGetBrandHandler construye el handler de lectura.
-func NewGetBrandHandler(service *shops.BrandService) *GetBrandHandler {
-	return &GetBrandHandler{service: service}
+func NewGetBrandHandler(service *shops.BrandService, profiles *shops.PanelProfileService) *GetBrandHandler {
+	return &GetBrandHandler{service: service, profiles: profiles}
 }
 
 // ServeHTTP implementa http.Handler.
@@ -38,21 +39,27 @@ func (h *GetBrandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
 		return
 	}
+	profile, err := h.profiles.For(r.Context(), principal.BarbershopID, principal.StaffUserID)
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(newBrandResponse(brand))
+	_ = json.NewEncoder(w).Encode(newBrandResponse(brand, profile))
 }
 
 // UpdateBrandHandler expone PATCH /private/settings/brand: actualización
 // autenticada de contrato cerrado, con los seis campos siempre presentes.
 type UpdateBrandHandler struct {
-	service *shops.BrandService
+	service  *shops.BrandService
+	profiles *shops.PanelProfileService
 }
 
 // NewUpdateBrandHandler construye el handler de actualización.
-func NewUpdateBrandHandler(service *shops.BrandService) *UpdateBrandHandler {
-	return &UpdateBrandHandler{service: service}
+func NewUpdateBrandHandler(service *shops.BrandService, profiles *shops.PanelProfileService) *UpdateBrandHandler {
+	return &UpdateBrandHandler{service: service, profiles: profiles}
 }
 
 // ServeHTTP implementa http.Handler.
@@ -85,12 +92,6 @@ func (h *UpdateBrandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var panelProfile *shops.PanelProfile
-	if req.PanelProfile != nil {
-		profile := shops.PanelProfile(*req.PanelProfile)
-		panelProfile = &profile
-	}
-
 	// Normalización, validación y persistencia viven en shops.BrandService:
 	// este handler no repite ninguna regla (estandar-backend-go.md §4).
 	brand, err := h.service.Update(r.Context(), principal.BarbershopID, shops.Brand{
@@ -100,7 +101,12 @@ func (h *UpdateBrandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ProfessionalTerm:       req.ProfessionalTerm,
 		ProfessionalTermPlural: req.ProfessionalTermPlural,
 		ProfessionalTermGender: shops.Gender(req.ProfessionalTermGender),
-	}, panelProfile)
+	})
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+	profile, err := h.profiles.For(r.Context(), principal.BarbershopID, principal.StaffUserID)
 	if err != nil {
 		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
 		return
@@ -108,12 +114,13 @@ func (h *UpdateBrandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(newBrandResponse(brand))
+	_ = json.NewEncoder(w).Encode(newBrandResponse(brand, profile))
 }
 
 // newBrandResponse construye la representación canónica: siempre los mismos
 // siete campos, en la misma forma para GET y para la respuesta 200 de PATCH.
-func newBrandResponse(b shops.Brand) BrandResponse {
+// El panel lo aporta quien consulta, no la marca (DEC-134).
+func newBrandResponse(b shops.Brand, profile shops.PanelProfile) BrandResponse {
 	return BrandResponse{
 		Accent:                 b.Accent,
 		BusinessTerm:           b.BusinessTerm,
@@ -121,6 +128,6 @@ func newBrandResponse(b shops.Brand) BrandResponse {
 		ProfessionalTerm:       b.ProfessionalTerm,
 		ProfessionalTermPlural: b.ProfessionalTermPlural,
 		ProfessionalTermGender: string(b.ProfessionalTermGender),
-		PanelProfile:           string(b.PanelProfile),
+		PanelProfile:           string(profile),
 	}
 }

@@ -21,6 +21,11 @@ VALUES ('294a0001-0000-4000-8000-000000000002', '294a0001-0000-4000-8000-0000000
         'mateo.demo@ejemplo.test', 'Mateo de prueba', true)
 ON CONFLICT (id) DO NOTHING;
 
+-- DEC-134: el panel individual lo decide el rol `independiente`, no un ajuste.
+INSERT INTO staff_user_role (barbershop_id, staff_user_id, role)
+VALUES ('294a0001-0000-4000-8000-000000000001', '294a0001-0000-4000-8000-000000000002', 'independiente')
+ON CONFLICT DO NOTHING;
+
 INSERT INTO staff_credential (staff_user_id, barbershop_id, password_hash, password_algorithm)
 VALUES ('294a0001-0000-4000-8000-000000000002', '294a0001-0000-4000-8000-000000000001',
         '$argon2id$v=19$m=19456,t=2,p=1$85G7e0c0elS58Y0r6XwbTQ$BDLtYxmfV8IV6H5Vvuj0djdhbHmnCcpBq4AECbiHga4',
