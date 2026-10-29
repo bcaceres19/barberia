@@ -44,6 +44,10 @@ type ConfirmPublicAppointmentInput struct {
 	BarberID    string
 	StartsAtRaw string
 	Identity    CustomerIdentityInput
+	// HomeService es nil para un turno en el local (DEC-131, HU-103); con valor,
+	// la dirección elegida con el autocompletado. Se revalida contra el
+	// interruptor de la barbería en el momento de confirmar (CA-103-05).
+	HomeService *HomeServiceInput
 }
 
 // ConfirmResult es el desenlace de un intento de confirmación pública
@@ -212,6 +216,21 @@ func (s *ConfirmationService) ConfirmAppointment(
 		return ConfirmResult{}, nil, err
 	}
 
+	// CA-103-05: se revalida contra el estado actual de la barbería, no contra lo
+	// que el cliente vio al elegir; si lo apagaron entre ambos momentos, 422 sin
+	// crear el turno.
+	var home *HomeService
+	if in.HomeService != nil {
+		if !profile.OffersHomeService {
+			return ConfirmResult{}, nil, errHomeServiceNotOffered()
+		}
+		normalized, err := NormalizeHomeService(*in.HomeService)
+		if err != nil {
+			return ConfirmResult{}, nil, err
+		}
+		home = &normalized
+	}
+
 	starts, timezone, _, err := s.availability.computeAvailableStarts(ctx, barbershopID, in.BarberID, durationMinutes)
 	if err != nil {
 		return ConfirmResult{}, nil, err
@@ -255,6 +274,7 @@ func (s *ConfirmationService) ConfirmAppointment(
 		identity.AttendeeName,
 		serviceName, durationMinutes, priceCents, currency,
 		customerNote,
+		homeAddressOf(home), homeLatitudeOf(home), homeLongitudeOf(home),
 		reconciliation.ReuseCustomerID,
 		reconciliation.UpdatePhone,
 		reconciliation.UpdateEmail,
@@ -401,4 +421,27 @@ func (s *ConfirmationService) sendConfirmationEmail(
 	}
 	formatted := startsAt.In(loc).Format("2006-01-02 15:04") + " (" + loc.String() + ")"
 	return s.email.SendConfirmation(ctx, identity.Email, profile.Name, serviceName, identity.AttendeeName, formatted, link)
+}
+
+// homeAddressOf, homeLatitudeOf y homeLongitudeOf desempaquetan el domicilio
+// opcional para el puerto, que usa tipos universales: nil los tres en el local.
+func homeAddressOf(h *HomeService) *string {
+	if h == nil {
+		return nil
+	}
+	return &h.Address
+}
+
+func homeLatitudeOf(h *HomeService) *float64 {
+	if h == nil {
+		return nil
+	}
+	return &h.Latitude
+}
+
+func homeLongitudeOf(h *HomeService) *float64 {
+	if h == nil {
+		return nil
+	}
+	return &h.Longitude
 }

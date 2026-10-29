@@ -34,6 +34,13 @@ properties:
     type: string
     examples:
       - COP
+  homeService:
+    oneOf:
+      - $ref: './HomeServiceAddress.yaml'
+      - type: "null"
+    description: >
+      Dirección del cliente cuando el turno es a domicilio (`DEC-131`); `null`
+      en el local. Solo la ve el panel de esa barbería (`CA-103-06`).
 required:
   - id
   - attendeeName
@@ -45,3 +52,4 @@ required:
   - durationMinutes
   - priceAmount
   - currency
+  - homeService

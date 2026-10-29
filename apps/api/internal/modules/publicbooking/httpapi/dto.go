@@ -20,6 +20,8 @@ type PublicBarbershopProfileResponse struct {
 	Vocabulary   PublicVocabularyResponse `json:"vocabulary"`
 	// Location es null salvo que la barbería muestre un local (DEC-130, HU-102).
 	Location *PublicLocationResponse `json:"location"`
+	// OffersHomeService indica si la barbería atiende a domicilio (DEC-131, HU-103).
+	OffersHomeService bool `json:"offersHomeService"`
 }
 
 // PublicLocationResponse es la forma exacta del componente OpenAPI
@@ -109,6 +111,19 @@ type ConfirmPublicAppointmentRequest struct {
 	Note           *string `json:"note"`
 	ForSomeoneElse bool    `json:"forSomeoneElse"`
 	AttendeeName   *string `json:"attendeeName"`
+	// HomeService es null para un turno en el local (DEC-131, HU-103). Con valor,
+	// la dirección elegida con el autocompletado de Google Places y sus
+	// coordenadas; el servidor revalida que la barbería ofrezca domicilio.
+	HomeService *HomeServiceRequest `json:"homeService"`
+}
+
+// HomeServiceRequest es la dirección del cliente para un turno a domicilio
+// (DEC-131): la forma exacta del componente OpenAPI HomeServiceAddress.yaml.
+// Cerrada como el resto del cuerpo. Es dato personal (RN-DAT-02): no se registra.
+type HomeServiceRequest struct {
+	Address   string  `json:"address"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
 }
 
 // ConfirmedPublicAppointmentResponse es la respuesta 201 de HU-097, forma

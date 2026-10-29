@@ -2535,7 +2535,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Actor | Cliente que reserva un turno |
 | Depende de | `HU-096`, `HU-097` integradas (satisfecho); credencial de Google Places Autocomplete configurada |
 | Bloquea | Ninguna |
-| Estado | Propuesta; sin issue real todavía |
+| Estado | Implementada en [#360](https://github.com/bcaceres19/barberia/issues/360) |
 | Riesgo | Confirmar un turno a domicilio sin coordenadas reales deja al barbero sin saber a dónde ir; aceptar domicilio cuando la barbería lo desactivó entre la elección y el envío crea una expectativa que no se cumple. |
 
 **Historia**

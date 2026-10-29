@@ -39,6 +39,11 @@ properties:
       las calcula el servidor.
     examples:
       - Calle 10 # 5-20, Bogotá
+  offersHomeService:
+    type: boolean
+    description: >
+      Interruptor general del servicio a domicilio (`DEC-131`). Ausente conserva
+      el valor; apagarlo no afecta los turnos ya creados con domicilio.
 required:
   - accent
   - businessTerm

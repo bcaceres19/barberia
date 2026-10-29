@@ -166,6 +166,13 @@ func (h *ListDailyAgendaHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	_ = json.NewEncoder(w).Encode(newDailyAgendaResponse(entries))
 }
 
+func newHomeServiceResponse(h *booking.HomeService) *HomeServiceResponse {
+	if h == nil {
+		return nil
+	}
+	return &HomeServiceResponse{Address: h.Address, Latitude: h.Latitude, Longitude: h.Longitude}
+}
+
 func newDailyAgendaResponse(entries []booking.DailyAgendaEntry) DailyAgendaResponse {
 	items := make([]DailyAgendaEntryResponse, 0, len(entries))
 	for _, e := range entries {
@@ -180,6 +187,7 @@ func newDailyAgendaResponse(entries []booking.DailyAgendaEntry) DailyAgendaRespo
 			DurationMinutes: e.DurationMinutesSnapshot,
 			PriceAmount:     formatPriceAmount(e.PriceAmountCentsSnapshot),
 			Currency:        e.CurrencySnapshot,
+			HomeService:     newHomeServiceResponse(e.HomeService),
 		})
 	}
 	return DailyAgendaResponse{Items: items}
@@ -252,6 +260,7 @@ func newAppointmentDetailResponse(d booking.AppointmentDetail) AppointmentDetail
 		DurationMinutes:  d.DurationMinutesSnapshot,
 		PriceAmount:      formatPriceAmount(d.PriceAmountCentsSnapshot),
 		Currency:         d.CurrencySnapshot,
+		HomeService:      newHomeServiceResponse(d.HomeService),
 		VersionToken:     d.VersionToken,
 		CreatedAt:        d.CreatedAt,
 	}

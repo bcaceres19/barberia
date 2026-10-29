@@ -19,6 +19,7 @@ function entry(
     durationMinutes: 30,
     priceAmount: '20000.00',
     currency: 'COP',
+    homeService: null,
   } satisfies DailyAgendaEntry
 }
 

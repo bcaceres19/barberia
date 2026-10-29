@@ -564,6 +564,7 @@ describe('SettingsPage', () => {
       address: 'Calle 10 # 5-20, Bogotá',
       latitude: 4.598056,
       longitude: -74.076111,
+      offersHomeService: false,
     }
 
     async function mountWithLocation(location: typeof savedLocation | typeof DEFAULT_LOCATION) {
@@ -623,6 +624,25 @@ describe('SettingsPage', () => {
       // Tras guardar aparece la vista previa con las coordenadas que fijó el servidor.
       expect(wrapper.find('#configuracion-ubicacion iframe').exists()).toBe(true)
       expect(wrapper.find('.save-bar').exists()).toBe(false)
+      wrapper.unmount()
+    })
+
+    it('turning on «Atiendo a domicilio» sends only that switch (DEC-131, HU-103)', async () => {
+      const wrapper = await mountWithLocation(savedLocation)
+      saveBrandMock.mockImplementationOnce(async (brand) => ({
+        kind: 'success',
+        brand,
+        location: { ...savedLocation, offersHomeService: true },
+      }))
+
+      // El segundo interruptor del panel: el primero es «Tengo local físico».
+      const homeSwitch = wrapper.findAll('#configuracion-ubicacion [role="switch"]')[1]!
+      expect(homeSwitch.attributes('aria-checked')).toBe('false')
+      await homeSwitch.trigger('click')
+      await submit(wrapper)
+
+      expect(saveBrandMock.mock.calls[0]![1]).toEqual({ offersHomeService: true })
+      expect(wrapper.get('#configuracion-ubicacion').text()).toContain('tus clientes podrán elegir')
       wrapper.unmount()
     })
 

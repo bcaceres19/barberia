@@ -27,5 +27,31 @@ content:
           durationMinutes: 30
           priceAmount: "20000.00"
           currency: COP
+          homeService: null
           versionToken: 3n9Kq1x2v8pQwZbJt5Yc0Rr6Hh4Ss7Ff1Gg3Dd8Ee2Aa
           createdAt: "2026-08-20T10:00:00Z"
+      turnoADomicilio:
+        summary: Turno público a domicilio, con la dirección del cliente
+        value:
+          id: 4a5b6c7d-8e9f-40a1-b2c3-d4e5f6071829
+          barberId: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+          barberFullName: Ana Gómez
+          attendeeName: Carlos Restrepo
+          customerFullName: Carlos Restrepo
+          customerPhone: "+573001234567"
+          customerEmail: carlos.restrepo@example.com
+          customerNote: null
+          startsAt: "2026-08-29T14:30:00Z"
+          endsAt: "2026-08-29T15:00:00Z"
+          status: confirmed
+          origin: public
+          serviceName: Corte clásico
+          durationMinutes: 30
+          priceAmount: "20000.00"
+          currency: COP
+          homeService:
+            address: Carrera 7 # 71-21, Bogotá
+            latitude: 4.6486
+            longitude: -74.0628
+          versionToken: 5o0Lr2y3w9qRxAcKu6Zd1Ss7Ii5Tt8Gg2Hh4Ee9Ff3Bb
+          createdAt: "2026-08-21T10:00:00Z"

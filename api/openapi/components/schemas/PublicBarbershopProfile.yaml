@@ -49,6 +49,11 @@ properties:
       haya activado la ubicación y tenga coordenadas: con el interruptor
       apagado, o sin dirección geocodificada, la reserva pública no pinta
       ninguna sección.
+  offersHomeService:
+    type: boolean
+    description: >
+      Si la barbería atiende a domicilio (`DEC-131`). Con `true` el cliente puede
+      elegir «a domicilio» al reservar e indicar su dirección.
 required:
   - name
   - timezone
@@ -56,3 +61,4 @@ required:
   - contactPhone
   - vocabulary
   - location
+  - offersHomeService

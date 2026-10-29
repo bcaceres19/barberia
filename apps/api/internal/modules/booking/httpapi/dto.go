@@ -221,6 +221,18 @@ type DailyAgendaEntryResponse struct {
 	DurationMinutes int       `json:"durationMinutes"`
 	PriceAmount     string    `json:"priceAmount"`
 	Currency        string    `json:"currency"`
+	// HomeService es la dirección del cliente cuando el turno es a domicilio
+	// (DEC-131); null en el local.
+	HomeService *HomeServiceResponse `json:"homeService"`
+}
+
+// HomeServiceResponse es la forma exacta del componente OpenAPI
+// HomeServiceAddress.yaml: dirección en texto y coordenadas de un turno a
+// domicilio. Dato personal (RN-DAT-02): solo el panel de esa barbería la lee.
+type HomeServiceResponse struct {
+	Address   string  `json:"address"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
 }
 
 // AppointmentDetailResponse es el cuerpo de
@@ -229,24 +241,25 @@ type DailyAgendaEntryResponse struct {
 // requerido, "Fuera de alcance"): VersionToken es el único dato de
 // concurrencia expuesto, opaco (booking.EncodeVersionToken).
 type AppointmentDetailResponse struct {
-	ID               string    `json:"id"`
-	BarberID         string    `json:"barberId"`
-	BarberFullName   string    `json:"barberFullName"`
-	AttendeeName     string    `json:"attendeeName"`
-	CustomerFullName string    `json:"customerFullName"`
-	CustomerPhone    *string   `json:"customerPhone"`
-	CustomerEmail    *string   `json:"customerEmail"`
-	CustomerNote     *string   `json:"customerNote"`
-	StartsAt         time.Time `json:"startsAt"`
-	EndsAt           time.Time `json:"endsAt"`
-	Status           string    `json:"status"`
-	Origin           string    `json:"origin"`
-	ServiceName      string    `json:"serviceName"`
-	DurationMinutes  int       `json:"durationMinutes"`
-	PriceAmount      string    `json:"priceAmount"`
-	Currency         string    `json:"currency"`
-	VersionToken     string    `json:"versionToken"`
-	CreatedAt        time.Time `json:"createdAt"`
+	ID               string               `json:"id"`
+	BarberID         string               `json:"barberId"`
+	BarberFullName   string               `json:"barberFullName"`
+	AttendeeName     string               `json:"attendeeName"`
+	CustomerFullName string               `json:"customerFullName"`
+	CustomerPhone    *string              `json:"customerPhone"`
+	CustomerEmail    *string              `json:"customerEmail"`
+	CustomerNote     *string              `json:"customerNote"`
+	StartsAt         time.Time            `json:"startsAt"`
+	EndsAt           time.Time            `json:"endsAt"`
+	Status           string               `json:"status"`
+	Origin           string               `json:"origin"`
+	ServiceName      string               `json:"serviceName"`
+	DurationMinutes  int                  `json:"durationMinutes"`
+	PriceAmount      string               `json:"priceAmount"`
+	Currency         string               `json:"currency"`
+	HomeService      *HomeServiceResponse `json:"homeService"`
+	VersionToken     string               `json:"versionToken"`
+	CreatedAt        time.Time            `json:"createdAt"`
 }
 
 // AppointmentHistoryResponse es el cuerpo de

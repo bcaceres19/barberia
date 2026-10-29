@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-103-v1"
 version: "1.0"
 kind: "hu"
-status: "ready"
+status: "executed"
 target_agents: ["codex", "claude"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
@@ -11,9 +11,9 @@ related_hu: ["HU-096", "HU-097", "HU-102"]
 issue: 360
 issue_url: "https://github.com/bcaceres19/barberia/issues/360"
 suggested_issue_title: "feat(public-booking): implementar HU-103 domicilio con dirección del cliente"
-branch: null
-pr: null
-pr_url: null
+branch: "feat/360-hu103-domicilio"
+pr: 372
+pr_url: "https://github.com/bcaceres19/barberia/pull/372"
 depends_on: ["HU-096 integrada (satisfecho)", "HU-097 integrada (satisfecho, PR #270)", "Credencial de Google Places Autocomplete disponible (comparte familia con HU-102)"]
 rules: ["RN-TEN-01", "RN-DAT-02", "RN-CON-01"]
 decisions: ["DEC-085", "DEC-089", "DEC-090", "DEC-091", "DEC-131"]
@@ -36,7 +36,7 @@ source_docs:
   - "apps/api/internal/modules/publicbooking"
   - "apps/api/internal/modules/booking"
 created_at: "2026-10-26"
-updated_at: "2026-10-26"
+updated_at: "2026-10-29"
 supersedes: null
 superseded_by: null
 ---

@@ -49,6 +49,9 @@ export async function saveBrand(
           ? { hasPhysicalLocation: location.hasPhysicalLocation }
           : {}),
         ...(location.address !== undefined ? { address: location.address } : {}),
+        ...(location.offersHomeService !== undefined
+          ? { offersHomeService: location.offersHomeService }
+          : {}),
       },
     })
     if (response.ok && data) {
@@ -93,5 +96,6 @@ function toLocation(data: LocationSettings): LocationSettings {
     address: data.address,
     latitude: data.latitude,
     longitude: data.longitude,
+    offersHomeService: data.offersHomeService,
   }
 }

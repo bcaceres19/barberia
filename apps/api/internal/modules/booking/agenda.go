@@ -37,6 +37,9 @@ type DailyAgendaEntry struct {
 	DurationMinutesSnapshot  int
 	PriceAmountCentsSnapshot int64
 	CurrencySnapshot         string
+	// HomeService es la dirección del cliente cuando el turno es a domicilio
+	// (DEC-131): el barbero la necesita para saber a dónde ir. nil en el local.
+	HomeService *HomeService
 }
 
 // AgendaService implementa el caso de uso de lectura de HU-062: agenda

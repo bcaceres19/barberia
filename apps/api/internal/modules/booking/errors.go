@@ -1,6 +1,10 @@
 package booking
 
-import "system-barbershop/internal/platform/apperr"
+import (
+	"errors"
+
+	"system-barbershop/internal/platform/apperr"
+)
 
 func errBarberIDRequired() error {
 	return apperr.Validation("el barbero es obligatorio")
@@ -182,3 +186,10 @@ func errCorrectionReasonTooLong() error {
 // en booking/postgres (errScheduleConflict, errCustomerNotFound): solo se
 // detectan al traducir un exclusion_violation/foreign_key_violation real de
 // PostgreSQL, no como validación de forma en este archivo.
+
+// errHomeServiceInvalid cubre una dirección a domicilio vacía, con espacios
+// sobrantes, demasiado larga o con coordenadas fuera de rango (DEC-131). Quien
+// llama (publicbooking) ya la normaliza, así que llegar aquí es un defecto.
+func errHomeServiceInvalid() error {
+	return apperr.Internal(errors.New("booking: la dirección a domicilio llegó con una forma inválida"))
+}

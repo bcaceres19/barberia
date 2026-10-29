@@ -41,13 +41,14 @@ func (r *BrandRepository) Get(ctx context.Context, barbershopID string) (shops.B
 		err := q.QueryRow(ctx,
 			`SELECT brand_accent, business_term, business_term_gender,
 			        professional_term, professional_term_plural, professional_term_gender,
-			        has_physical_location, address, latitude, longitude
+			        has_physical_location, address, latitude, longitude, offers_home_service
 			   FROM barbershop
 			  WHERE id = $1`,
 			barbershopID,
 		).Scan(&b.Accent, &b.BusinessTerm, &b.BusinessTermGender,
 			&b.ProfessionalTerm, &b.ProfessionalTermPlural, &b.ProfessionalTermGender,
-			&b.Location.HasPhysicalLocation, &b.Location.Address, &b.Location.Latitude, &b.Location.Longitude)
+			&b.Location.HasPhysicalLocation, &b.Location.Address, &b.Location.Latitude, &b.Location.Longitude,
+			&b.Location.OffersHomeService)
 		switch {
 		case err == nil:
 			found = true
@@ -69,7 +70,8 @@ func (r *BrandRepository) Get(ctx context.Context, barbershopID string) (shops.B
 // barbershop_update_tenant_policy). Una sola sentencia es atómica: o se
 // escriben los seis campos y la ubicación pedida, o ninguno. La ubicación se
 // conserva salvo que location la cambie (DEC-130): $8 = interruptor ($8 NULL lo
-// conserva) y $9 = reemplazar dirección y coordenadas a la vez.
+// conserva), $9 = reemplazar dirección y coordenadas a la vez y $13 = interruptor
+// de domicilio (DEC-131, NULL lo conserva).
 func (r *BrandRepository) Update(ctx context.Context, barbershopID string, brand shops.Brand, location shops.LocationWrite) (shops.BrandUpdateResult, error) {
 	var result shops.BrandUpdateResult
 
@@ -86,19 +88,22 @@ func (r *BrandRepository) Update(ctx context.Context, barbershopID string, brand
 			        has_physical_location = COALESCE($8::boolean, has_physical_location),
 			        address   = CASE WHEN $9::boolean THEN $10::text ELSE address END,
 			        latitude  = CASE WHEN $9::boolean THEN $11::numeric ELSE latitude END,
-			        longitude = CASE WHEN $9::boolean THEN $12::numeric ELSE longitude END
+			        longitude = CASE WHEN $9::boolean THEN $12::numeric ELSE longitude END,
+			        offers_home_service = COALESCE($13::boolean, offers_home_service)
 			  WHERE id = $1
 			RETURNING brand_accent, business_term, business_term_gender,
 			          professional_term, professional_term_plural, professional_term_gender,
-			          has_physical_location, address, latitude, longitude`,
+			          has_physical_location, address, latitude, longitude, offers_home_service`,
 			barbershopID,
 			brand.Accent, brand.BusinessTerm, string(brand.BusinessTermGender),
 			brand.ProfessionalTerm, brand.ProfessionalTermPlural, string(brand.ProfessionalTermGender),
 			location.HasPhysicalLocation, location.ReplaceAddress,
 			location.Address, location.Latitude, location.Longitude,
+			location.OffersHomeService,
 		).Scan(&b.Accent, &b.BusinessTerm, &b.BusinessTermGender,
 			&b.ProfessionalTerm, &b.ProfessionalTermPlural, &b.ProfessionalTermGender,
-			&b.Location.HasPhysicalLocation, &b.Location.Address, &b.Location.Latitude, &b.Location.Longitude)
+			&b.Location.HasPhysicalLocation, &b.Location.Address, &b.Location.Latitude, &b.Location.Longitude,
+			&b.Location.OffersHomeService)
 		switch {
 		case err == nil:
 			result.Found = true

@@ -14,6 +14,8 @@ export interface ConfirmPublicAppointmentInput {
   note: string | null
   forSomeoneElse: boolean
   attendeeName: string | null
+  /** `null` para un turno en el local; con valor, la dirección elegida (DEC-131). */
+  homeService: { address: string; latitude: number; longitude: number } | null
 }
 
 /**
@@ -48,6 +50,7 @@ export async function confirmPublicAppointment(
           note: input.note,
           forSomeoneElse: input.forSomeoneElse,
           attendeeName: input.attendeeName,
+          homeService: input.homeService,
         },
       },
     )

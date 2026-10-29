@@ -63,7 +63,7 @@ func profilesFor(roles ...shops.Role) *shops.PanelProfileService {
 
 const validBrandBody = `{"accent":"emerald","businessTerm":"Salón","businessTermGender":"masculine","professionalTerm":"Estilista","professionalTermPlural":"estilistas","professionalTermGender":"feminine"}`
 
-func TestGetBrandHandler_Success_ReturnsTheElevenFields(t *testing.T) {
+func TestGetBrandHandler_Success_ReturnsTheTwelveFields(t *testing.T) {
 	repo := &fakeBrandRepository{getFound: true, getBrand: shops.DefaultBrand}
 	h := httpapi.NewGetBrandHandler(shops.NewBrandService(repo, nil), profilesFor())
 
@@ -84,6 +84,8 @@ func TestGetBrandHandler_Success_ReturnsTheElevenFields(t *testing.T) {
 		"professionalTerm": "barbero", "professionalTermPlural": "barberos", "professionalTermGender": "masculine",
 		"panelProfile":        "shop",
 		"hasPhysicalLocation": true, "address": nil, "latitude": nil, "longitude": nil,
+		// El interruptor de domicilio (DEC-131) viaja siempre; nace apagado.
+		"offersHomeService": false,
 	}
 	if len(body) != len(want) {
 		t.Fatalf("expected exactly %d fields, got %v", len(want), body)

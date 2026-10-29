@@ -177,6 +177,10 @@ type ServiceAssignmentPort interface {
 // transaccional (booking.Repository.CreatePublic) sin duplicar SQL;
 // publicbooking nunca importa booking (CA-002-06).
 //
+// homeAddress/homeLatitude/homeLongitude son nil los tres cuando el turno es
+// en el local, o los tres con valor cuando es a domicilio (DEC-131); la base
+// lo exige con appointment_home_service_ck.
+//
 // customerExistingID no nil reutiliza ese cliente (sobrescribiendo
 // customerUpdatePhone/customerUpdateEmail cuando no son nil, el campo que
 // no participó en la coincidencia, DEC-085); nil crea un cliente nuevo con
@@ -201,6 +205,7 @@ type PublicAppointmentPort interface {
 		priceAmountCents int64,
 		currency string,
 		customerNote *string,
+		homeAddress *string, homeLatitude, homeLongitude *float64,
 		customerExistingID *string,
 		customerUpdatePhone *string,
 		customerUpdateEmail *string,

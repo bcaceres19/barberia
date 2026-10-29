@@ -4,6 +4,28 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.41.0 · 2026-11-01
+
+### Añadido
+
+- Servicio a domicilio (`DEC-131`, `HU-103`). `BrandResponse` suma
+  `offersHomeService` (obligatorio) y `UpdateBrandRequest` lo acepta opcional:
+  ausente conserva el interruptor y apagarlo no afecta turnos ya creados.
+  `PublicBarbershopProfile` suma `offersHomeService` (obligatorio).
+- `ConfirmPublicAppointmentRequest` acepta `homeService` (`HomeServiceAddress`:
+  `address`, `latitude`, `longitude`), `null` o ausente para el local. Con
+  domicilio, el servidor revalida el interruptor al confirmar: si la barbería no
+  lo ofrece responde `422` sin crear el turno.
+- `DailyAgendaEntry` y `AppointmentDetailResponse` suman `homeService` (obligatorio,
+  `null` en el local) para que el panel de esa barbería sepa a dónde ir. La
+  dirección es dato personal y nunca aparece en la reserva pública.
+
+### Compatibilidad
+
+- Los campos nuevos de respuesta son aditivos; un cliente que ignora
+  propiedades desconocidas no se rompe. `homeService` en la solicitud es
+  opcional, así que un cliente anterior sigue reservando en el local.
+
 ## 0.40.0 · 2026-10-31
 
 ### Añadido

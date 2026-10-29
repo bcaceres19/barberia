@@ -216,6 +216,7 @@
                       durationMinutes: 30
                       priceAmount: "20000.00"
                       currency: COP
+                      homeService: null
                     - id: 6f1a2b3c-4d5e-4f60-8172-8394a5b6c7d8
                       attendeeName: Ana Gómez
                       startsAt: "2026-08-28T23:30:00Z"
@@ -226,6 +227,10 @@
                       durationMinutes: 45
                       priceAmount: "35000.00"
                       currency: COP
+                      homeService:
+                        address: Carrera 7 # 71-21, Bogotá
+                        latitude: 4.6486
+                        longitude: -74.0628
               sinTurnos:
                 summary: Barbero sin ningún turno ese día
                 value:

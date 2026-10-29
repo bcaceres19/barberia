@@ -74,11 +74,12 @@ func newPublicBarbershopProfileResponse(p publicbooking.BarbershopProfile) Publi
 		}
 	}
 	return PublicBarbershopProfileResponse{
-		Location:     location,
-		Name:         p.Name,
-		Timezone:     p.Timezone,
-		ContactEmail: p.ContactEmail,
-		ContactPhone: p.ContactPhone,
+		Location:          location,
+		OffersHomeService: p.OffersHomeService,
+		Name:              p.Name,
+		Timezone:          p.Timezone,
+		ContactEmail:      p.ContactEmail,
+		ContactPhone:      p.ContactPhone,
 		Vocabulary: PublicVocabularyResponse{
 			BusinessTerm:           p.Vocabulary.BusinessTerm,
 			BusinessTermGender:     p.Vocabulary.BusinessTermGender,
@@ -384,6 +385,7 @@ func (h *ConfirmPublicAppointmentHandler) ServeHTTP(w http.ResponseWriter, r *ht
 			ForSomeoneElse: req.ForSomeoneElse,
 			AttendeeName:   req.AttendeeName,
 		},
+		HomeService: homeServiceInput(req.HomeService),
 	}, key, fingerprint)
 	if err != nil {
 		var conflict *publicbooking.ScheduleConflictError
@@ -422,4 +424,11 @@ func writeScheduleConflictProblem(w http.ResponseWriter, requestID string, confl
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(problem.Status)
 	_ = json.NewEncoder(w).Encode(ScheduleConflictProblemResponse{Problem: problem, Alternatives: alternatives})
+}
+
+func homeServiceInput(r *HomeServiceRequest) *publicbooking.HomeServiceInput {
+	if r == nil {
+		return nil
+	}
+	return &publicbooking.HomeServiceInput{Address: r.Address, Latitude: r.Latitude, Longitude: r.Longitude}
 }

@@ -25,7 +25,7 @@ import type {
   FetchDailyAgendaOutcome,
   RescheduleAppointmentOutcome,
 } from '../model/appointmentOutcome'
-import type { DailyAgendaEntry } from '../model/dailyAgenda'
+import type { DailyAgendaEntry, HomeService } from '../model/dailyAgenda'
 
 const PICKER_LIMIT = 50
 
@@ -158,6 +158,7 @@ function toDailyAgendaEntry(data: {
   durationMinutes: number
   priceAmount: string
   currency: string
+  homeService: HomeService | null
 }): DailyAgendaEntry {
   return {
     id: data.id,
@@ -170,6 +171,7 @@ function toDailyAgendaEntry(data: {
     durationMinutes: data.durationMinutes,
     priceAmount: data.priceAmount,
     currency: data.currency,
+    homeService: data.homeService,
   }
 }
 
@@ -214,6 +216,7 @@ function toAppointmentDetail(data: {
   currency: string
   versionToken: string
   createdAt: string
+  homeService: HomeService | null
 }): AppointmentDetail {
   return {
     id: data.id,
@@ -234,6 +237,7 @@ function toAppointmentDetail(data: {
     currency: data.currency,
     versionToken: data.versionToken,
     createdAt: data.createdAt,
+    homeService: data.homeService,
   }
 }
 

@@ -23,10 +23,15 @@ export interface LocationDraft {
   hasPhysicalLocation: boolean
   /** Texto del campo, tal como se escribe. */
   address: string
+  offersHomeService: boolean
 }
 
 export function draftFromSaved(saved: LocationSettings): LocationDraft {
-  return { hasPhysicalLocation: saved.hasPhysicalLocation, address: saved.address ?? '' }
+  return {
+    hasPhysicalLocation: saved.hasPhysicalLocation,
+    address: saved.address ?? '',
+    offersHomeService: saved.offersHomeService,
+  }
 }
 
 export function addressChanged(draft: LocationDraft, saved: LocationSettings): boolean {
@@ -34,7 +39,11 @@ export function addressChanged(draft: LocationDraft, saved: LocationSettings): b
 }
 
 export function sameLocation(draft: LocationDraft, saved: LocationSettings): boolean {
-  return draft.hasPhysicalLocation === saved.hasPhysicalLocation && !addressChanged(draft, saved)
+  return (
+    draft.hasPhysicalLocation === saved.hasPhysicalLocation &&
+    draft.offersHomeService === saved.offersHomeService &&
+    !addressChanged(draft, saved)
+  )
 }
 
 /**
@@ -45,6 +54,9 @@ export function locationChange(draft: LocationDraft, saved: LocationSettings): L
   const change: LocationChange = {}
   if (draft.hasPhysicalLocation !== saved.hasPhysicalLocation) {
     change.hasPhysicalLocation = draft.hasPhysicalLocation
+  }
+  if (draft.offersHomeService !== saved.offersHomeService) {
+    change.offersHomeService = draft.offersHomeService
   }
   if (addressChanged(draft, saved)) {
     const normalized = normalizeAddress(draft.address)

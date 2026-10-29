@@ -7,21 +7,10 @@
 // navegador. Sin ella, la sección de mapa queda oculta en producción (DEC-130);
 // en desarrollo se usa el incrustado sin clave para poder ver la pantalla.
 
-export interface MapEnv {
-  /** Clave de navegador de Maps Embed API, restringida por dominio. */
-  key?: string
-  /** `true` solo en el servidor de desarrollo de Vite. */
-  dev: boolean
-}
+import { readMapEnv, type MapEnv } from './mapEnv'
 
-/** Entorno real de la compilación. */
-export function readMapEnv(): MapEnv {
-  const key = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY
-  return {
-    key: typeof key === 'string' && key.trim() !== '' ? key.trim() : undefined,
-    dev: import.meta.env.DEV,
-  }
-}
+export type { MapEnv }
+export { readMapEnv }
 
 /** `true` si hay forma de dibujar el mapa en este entorno. */
 export function isMapAvailable(env: MapEnv = readMapEnv()): boolean {

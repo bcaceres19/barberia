@@ -1165,6 +1165,14 @@ lo necesita para layout; la apariencia semántica solo se elige con `variant`
 - **Panel** (detalle del barbero y ficha del perfil individual): `staff/components/BarberReviewsPanel.vue` muestra el promedio y todas las reseñas, las ocultas con su fecha, y permite ocultar/mostrar; el promedio lo recalcula el servidor.
 - **Pruebas**: `shared/model/__tests__/rating.test.ts`, `shared/ui/__tests__/StarRating*.test.ts`, componentes de cada módulo y `e2e/resenas-barbero.spec.ts` (calificar, ver y ocultar con respuestas simuladas, 320/360/768/1280, axe).
 
+## Servicio a domicilio (HU-103, DEC-131)
+
+- **Configuración** (panel 06 «Ubicación»): interruptor «Atiendo a domicilio» (`offersHomeService`), se guarda con la misma petición que la marca.
+- **Reserva pública** (`/reservar/:slug/.../cliente`): si la barbería lo ofrece **y** hay forma de buscar direcciones, los datos del cliente muestran «¿Dónde te atendemos?» (en el local / a domicilio). «A domicilio» exige elegir una sugerencia del autocompletado (`shared/ui/AddressAutocomplete.vue`, combobox accesible con mapa de confirmación); un texto escrito no es una dirección. El resumen añade «Te atendemos en» y la confirmación envía `homeService` solo en ese caso.
+- **Autocompletado** (`src/shared/model/placesAutocomplete.ts`): API REST de Google Places (New) desde el navegador con la clave de navegador `VITE_GOOGLE_MAPS_BROWSER_KEY` (habilitar también Places API (New) en esa clave, restringida por dominio); sin SDK de JavaScript ni tokens de sesión. Sin clave solo funciona en desarrollo, con un proveedor simulado y determinista (Bogotá); **en producción sin clave el paso no se ofrece**.
+- **Panel** (agenda y detalle del turno): la agenda marca «A domicilio»; el detalle muestra la dirección y un enlace «Abrir en Google Maps». La dirección es dato personal: no se muestra en ninguna otra pantalla.
+- **Pruebas**: `shared/model/__tests__/placesAutocomplete.test.ts`, `shared/ui/__tests__/AddressAutocomplete.test.ts`, bloque «servicio a domicilio» de `PublicCustomerDetailsPage.test.ts`, `SettingsPage.test.ts`, agenda/detalle y `e2e/domicilio-reserva-publica.spec.ts` (320/360/768/1280, axe).
+
 ## Requisitos
 
 - Node.js 20 o superior.

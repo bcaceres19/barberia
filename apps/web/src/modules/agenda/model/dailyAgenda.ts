@@ -8,6 +8,14 @@ export type AppointmentStatus =
 
 export type AppointmentOrigin = 'public' | 'manual'
 
+// Dirección de un turno a domicilio (DEC-131, HU-103). Dato personal del cliente
+// (RN-DAT-02): solo viaja por el API privado y se muestra al personal.
+export type HomeService = {
+  address: string
+  latitude: number
+  longitude: number
+}
+
 // DailyAgendaEntry (HU-062, CA-062-05) es la proyección mínima que la
 // agenda diaria muestra: nunca teléfono, correo, nota ni customerId.
 export type DailyAgendaEntry = {
@@ -21,6 +29,7 @@ export type DailyAgendaEntry = {
   durationMinutes: number
   priceAmount: string
   currency: string
+  homeService: HomeService | null
 }
 
 // Etiquetas en español de los cinco estados (CA-062-03): la interfaz nunca

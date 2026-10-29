@@ -2,7 +2,7 @@
 // texto que `booking.EventType`/`booking.ActorType` en el backend (nunca
 // números, DEC-016).
 import type { Vocabulary } from '@/shared/model'
-import type { AppointmentOrigin, AppointmentStatus } from './dailyAgenda'
+import type { AppointmentOrigin, AppointmentStatus, HomeService } from './dailyAgenda'
 
 // AppointmentDetail (CA-064-01 a CA-064-04) es la lectura completa de un
 // turno: nunca trae `customerId` ni ningún identificador de actor
@@ -28,6 +28,7 @@ export type AppointmentDetail = {
   currency: string
   versionToken: string
   createdAt: string
+  homeService: HomeService | null
 }
 
 export type HistoryEventType =
