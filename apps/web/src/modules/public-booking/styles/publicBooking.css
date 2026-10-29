@@ -1045,6 +1045,7 @@
 
 .pb-ticket__date {
   align-self: end;
+  animation: pb-ticket-swap 0.32s var(--pb-ease) backwards;
   font-family: var(--font-display);
   font-size: 26px;
   line-height: 30px;
@@ -1061,6 +1062,7 @@
   white-space: nowrap;
   font-variant-numeric: lining-nums tabular-nums;
   border-left: 1px dashed var(--pb-line-strong);
+  animation: pb-ticket-swap 0.32s var(--pb-ease) backwards;
 }
 
 .pb-ticket__foot {
@@ -1404,6 +1406,15 @@
   }
 }
 
+/* Relevo de la hora o la fecha de la ficha al cambiar de franja: entra desde
+   abajo sin mover el resto de la ficha. */
+@keyframes pb-ticket-swap {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
 @keyframes pb-sheet-in {
   from {
     opacity: 0;
@@ -1431,6 +1442,8 @@
   .pb-slot--selected,
   .pb-slot--selected::after,
   .pb-ticket,
+  .pb-ticket__date,
+  .pb-ticket__time,
   .pb-empty,
   .pb-ficha,
   .pb-hero__name,
