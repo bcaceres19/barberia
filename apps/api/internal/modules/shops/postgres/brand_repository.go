@@ -40,12 +40,14 @@ func (r *BrandRepository) Get(ctx context.Context, barbershopID string) (shops.B
 	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
 		err := q.QueryRow(ctx,
 			`SELECT brand_accent, business_term, business_term_gender,
-			        professional_term, professional_term_plural, professional_term_gender
+			        professional_term, professional_term_plural, professional_term_gender,
+			        has_physical_location, address, latitude, longitude
 			   FROM barbershop
 			  WHERE id = $1`,
 			barbershopID,
 		).Scan(&b.Accent, &b.BusinessTerm, &b.BusinessTermGender,
-			&b.ProfessionalTerm, &b.ProfessionalTermPlural, &b.ProfessionalTermGender)
+			&b.ProfessionalTerm, &b.ProfessionalTermPlural, &b.ProfessionalTermGender,
+			&b.Location.HasPhysicalLocation, &b.Location.Address, &b.Location.Latitude, &b.Location.Longitude)
 		switch {
 		case err == nil:
 			found = true
@@ -65,8 +67,10 @@ func (r *BrandRepository) Get(ctx context.Context, barbershopID string) (shops.B
 // Update implementa shops.BrandRepository.Update con un único UPDATE ...
 // RETURNING filtrado por barbershopID (defensa en profundidad sobre
 // barbershop_update_tenant_policy). Una sola sentencia es atómica: o se
-// escriben los seis campos o ninguno.
-func (r *BrandRepository) Update(ctx context.Context, barbershopID string, brand shops.Brand) (shops.BrandUpdateResult, error) {
+// escriben los seis campos y la ubicación pedida, o ninguno. La ubicación se
+// conserva salvo que location la cambie (DEC-130): $8 = interruptor ($8 NULL lo
+// conserva) y $9 = reemplazar dirección y coordenadas a la vez.
+func (r *BrandRepository) Update(ctx context.Context, barbershopID string, brand shops.Brand, location shops.LocationWrite) (shops.BrandUpdateResult, error) {
 	var result shops.BrandUpdateResult
 
 	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
@@ -78,15 +82,23 @@ func (r *BrandRepository) Update(ctx context.Context, barbershopID string, brand
 			        business_term_gender = $4,
 			        professional_term = $5,
 			        professional_term_plural = $6,
-			        professional_term_gender = $7
+			        professional_term_gender = $7,
+			        has_physical_location = COALESCE($8::boolean, has_physical_location),
+			        address   = CASE WHEN $9::boolean THEN $10::text ELSE address END,
+			        latitude  = CASE WHEN $9::boolean THEN $11::numeric ELSE latitude END,
+			        longitude = CASE WHEN $9::boolean THEN $12::numeric ELSE longitude END
 			  WHERE id = $1
 			RETURNING brand_accent, business_term, business_term_gender,
-			          professional_term, professional_term_plural, professional_term_gender`,
+			          professional_term, professional_term_plural, professional_term_gender,
+			          has_physical_location, address, latitude, longitude`,
 			barbershopID,
 			brand.Accent, brand.BusinessTerm, string(brand.BusinessTermGender),
 			brand.ProfessionalTerm, brand.ProfessionalTermPlural, string(brand.ProfessionalTermGender),
+			location.HasPhysicalLocation, location.ReplaceAddress,
+			location.Address, location.Latitude, location.Longitude,
 		).Scan(&b.Accent, &b.BusinessTerm, &b.BusinessTermGender,
-			&b.ProfessionalTerm, &b.ProfessionalTermPlural, &b.ProfessionalTermGender)
+			&b.ProfessionalTerm, &b.ProfessionalTermPlural, &b.ProfessionalTermGender,
+			&b.Location.HasPhysicalLocation, &b.Location.Address, &b.Location.Latitude, &b.Location.Longitude)
 		switch {
 		case err == nil:
 			result.Found = true

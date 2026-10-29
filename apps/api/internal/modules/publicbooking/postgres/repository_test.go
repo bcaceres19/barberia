@@ -303,6 +303,68 @@ func TestResolveBySlug_Vocabulary_DefaultsAndPerTenant(t *testing.T) {
 	}
 }
 
+// setLocation fija la ubicación de la barbería de slug y la restaura al terminar
+// (DEC-130). Escribe como barberia_app dentro de su propio tenant.
+func setLocation(t *testing.T, db *database.DB, repo *publicbookingpostgres.Repository, slug string, enabled bool, address *string, lat, lng *float64) {
+	t.Helper()
+	id, found, err := repo.ResolveBarbershopID(context.Background(), slug)
+	if err != nil || !found {
+		t.Fatalf("ResolveBarbershopID(%s): found=%v err=%v", slug, found, err)
+	}
+	write := func(enabled bool, address *string, lat, lng *float64) error {
+		return db.InTenantTx(context.Background(), database.BarbershopID(id), func(ctx context.Context, q database.Queries) error {
+			_, err := q.Exec(ctx,
+				`UPDATE barbershop
+				    SET has_physical_location = $2, address = $3, latitude = $4, longitude = $5
+				  WHERE id = $1`, id, enabled, address, lat, lng)
+			return err
+		})
+	}
+	if err := write(enabled, address, lat, lng); err != nil {
+		t.Fatalf("fijar ubicación: %v", err)
+	}
+	t.Cleanup(func() { _ = write(true, nil, nil, nil) })
+}
+
+// TestResolveBySlug_Location_OnlyWhenEnabledAndGeocoded cubre CA-102-02,
+// CA-102-03 y CA-102-04 en la capa de datos: la ubicación solo se publica con
+// el interruptor activo Y coordenadas, y nunca cruza de una barbería a otra.
+func TestResolveBySlug_Location_OnlyWhenEnabledAndGeocoded(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+	ctx := context.Background()
+	addr, lat, lng := "Calle 10 # 5-20, Bogotá", 4.598056, -74.076111
+
+	// Sin dirección capturada (estado inicial): sin sección.
+	p, _, err := repo.ResolveBySlug(ctx, slugUno)
+	if err != nil {
+		t.Fatalf("ResolveBySlug: %v", err)
+	}
+	if p.Location != nil {
+		t.Fatalf("CA-102-03: sin coordenadas no hay ubicación: %+v", p.Location)
+	}
+
+	// Interruptor activo con coordenadas: se publica tal cual.
+	setLocation(t, db, repo, slugUno, true, &addr, &lat, &lng)
+	p, _, _ = repo.ResolveBySlug(ctx, slugUno)
+	if p.Location == nil || p.Location.Address != addr || p.Location.Latitude != lat || p.Location.Longitude != lng {
+		t.Fatalf("CA-102-04: debe publicar la ubicación guardada: %+v", p.Location)
+	}
+
+	// La otra barbería no hereda nada (RN-TEN-01).
+	other, _, _ := repo.ResolveBySlug(ctx, slugDos)
+	if other.Location != nil {
+		t.Fatalf("RN-TEN-01: la ubicación de slugUno se filtró a slugDos: %+v", other.Location)
+	}
+
+	// Interruptor apagado: oculta aunque el dato exista (CA-102-02).
+	setLocation(t, db, repo, slugUno, false, &addr, &lat, &lng)
+	p, _, _ = repo.ResolveBySlug(ctx, slugUno)
+	if p.Location != nil {
+		t.Fatalf("CA-102-02: con el interruptor apagado no se publica: %+v", p.Location)
+	}
+}
+
 // TestListPublicServices_ActiveAndAssigned_ExcludesInactiveAndUnassigned
 // cubre CA-091-01: de los cuatro servicios de la barbería HU-091 Uno (dos
 // activos+asignados, uno activo sin asignar, uno inactivo+asignado), solo

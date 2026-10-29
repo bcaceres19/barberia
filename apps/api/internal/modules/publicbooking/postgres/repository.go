@@ -55,13 +55,19 @@ func (r *Repository) ResolveBySlug(ctx context.Context, slug string) (publicbook
 		return publicbooking.BarbershopProfile{}, false, nil
 	}
 
-	var profile publicbooking.BarbershopProfile
+	var (
+		profile             publicbooking.BarbershopProfile
+		hasPhysicalLocation bool
+		address             *string
+		latitude, longitude *float64
+	)
 	profileFound := false
 	err = r.db.InTenantTx(ctx, barbershopID, func(ctx context.Context, q database.Queries) error {
 		err := q.QueryRow(ctx,
 			`SELECT name, timezone, contact_email, contact_phone,
 			        business_term, business_term_gender,
-			        professional_term, professional_term_plural, professional_term_gender
+			        professional_term, professional_term_plural, professional_term_gender,
+			        has_physical_location, address, latitude, longitude
 			   FROM barbershop
 			  WHERE id = $1`,
 			string(barbershopID),
@@ -70,10 +76,17 @@ func (r *Repository) ResolveBySlug(ctx context.Context, slug string) (publicbook
 			&profile.Vocabulary.BusinessTerm, &profile.Vocabulary.BusinessTermGender,
 			&profile.Vocabulary.ProfessionalTerm, &profile.Vocabulary.ProfessionalTermPlural,
 			&profile.Vocabulary.ProfessionalTermGender,
+			&hasPhysicalLocation, &address, &latitude, &longitude,
 		)
 		switch {
 		case err == nil:
 			profileFound = true
+			// El mapa solo se publica con el interruptor activo y coordenadas
+			// reales (CA-102-02, CA-102-03); barbershop_coordinates_ck garantiza
+			// que latitud y longitud llegan juntas y con dirección.
+			if hasPhysicalLocation && address != nil && latitude != nil && longitude != nil {
+				profile.Location = &publicbooking.Location{Address: *address, Latitude: *latitude, Longitude: *longitude}
+			}
 		case errors.Is(err, pgx.ErrNoRows):
 			// profileFound queda false: defensivo (la función SECURITY
 			// DEFINER ya confirmó la fila en la misma sentencia SQL que

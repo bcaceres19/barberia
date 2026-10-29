@@ -266,6 +266,73 @@ describe('PublicBarbershopEntryPage', () => {
     expect(results).toHaveNoViolations()
   })
 
+  it('shows where the barbershop is, with the map and the address, when it has a location (CA-102-04)', async () => {
+    getMock.mockResolvedValueOnce({
+      data: {
+        name: 'Barbería Ejemplo',
+        timezone: 'America/Bogota',
+        contactEmail: null,
+        contactPhone: null,
+        vocabulary: initialVocabulary,
+        location: { address: 'Calle 10 # 5-20, Bogotá', latitude: 4.598056, longitude: -74.076111 },
+      },
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mountEntryPage({ slug: 'barberia-ubicacion-1' })
+    await flushPromises()
+
+    const section = wrapper.get('.pb-location')
+    expect(section.get('h2').text()).toBe('Dónde estamos')
+    expect(section.get('iframe').attributes('src')).toContain('4.598056')
+    expect(section.text()).toContain('Calle 10 # 5-20, Bogotá')
+  })
+
+  it.each([
+    ['location is null (switch off or not geocoded: CA-102-02, CA-102-03)', { location: null }],
+    ['the server omits location', {}],
+  ])('renders no location section, and no error, when %s', async (_name, extra) => {
+    getMock.mockResolvedValueOnce({
+      data: {
+        name: 'Barbería Ejemplo',
+        timezone: 'America/Bogota',
+        contactEmail: null,
+        contactPhone: null,
+        vocabulary: initialVocabulary,
+        ...extra,
+      },
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mountEntryPage({ slug: 'barberia-ubicacion-2' })
+    await flushPromises()
+
+    expect(wrapper.find('.pb-location').exists()).toBe(false)
+    expect(wrapper.find('iframe').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('Dónde estamos')
+    expect(wrapper.text()).toContain('Reservar un turno')
+  })
+
+  it('has no accessibility violations on success with a location', async () => {
+    getMock.mockResolvedValueOnce({
+      data: {
+        name: 'Barbería Ejemplo',
+        timezone: 'America/Bogota',
+        contactEmail: 'contacto@ejemplo.test',
+        contactPhone: '+573001234567',
+        vocabulary: initialVocabulary,
+        location: { address: 'Calle 10 # 5-20, Bogotá', latitude: 4.598056, longitude: -74.076111 },
+      },
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mountEntryPage({ slug: 'barberia-ubicacion-3' })
+    await flushPromises()
+    // jsdom no resuelve el contenido del iframe: axe revisa el resto de la página.
+    const results = await axe(wrapper.element, { iframes: false })
+    expect(results).toHaveNoViolations()
+  })
+
   it('has no accessibility violations on the not-found error state', async () => {
     getMock.mockResolvedValueOnce({
       data: undefined,

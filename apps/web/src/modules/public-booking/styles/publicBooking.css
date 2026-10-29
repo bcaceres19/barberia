@@ -1239,6 +1239,25 @@
   color: var(--pb-text);
 }
 
+/* Ubicación del local (DEC-130, HU-102): el mapa hereda el color del texto y su
+   marco, así que solo hace falta el título y el ritmo vertical de la entrada. */
+.pb-location {
+  max-width: 560px;
+  margin: var(--space-8) 0 0;
+  color: var(--pb-text);
+  animation: pb-rise 0.7s var(--pb-ease) 0.72s backwards;
+}
+
+.pb-location__title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pb-brass);
+}
+
 .pb-hero .pb-cta--wide {
   margin-top: var(--space-8);
   animation: pb-rise 0.7s var(--pb-ease) 0.8s backwards;
@@ -1450,6 +1469,7 @@
   .pb-clock,
   .pb-clock::before,
   .pb-contact,
+  .pb-location,
   .pb-hero .pb-cta--wide,
   .pb-sheet {
     animation: none;

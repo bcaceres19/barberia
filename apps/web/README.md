@@ -1151,6 +1151,13 @@ lo necesita para layout; la apariencia semántica solo se elige con `variant`
   desbloquean el scroll el uno al otro. No admite un prop `zIndex`: todos
   comparten la capa semántica `--layer-dialog`.
 
+## Ubicación de la barbería (HU-102, DEC-130)
+
+- **Configuración** (`/panel/configuracion`, panel 06 «Ubicación»): interruptor «Mostrar la ubicación», dirección y vista previa del mapa. Las coordenadas las calcula el servidor al guardar; el cliente solo envía el texto y nunca las manda. Apagar el interruptor conserva la dirección.
+- **Reserva pública** (`/reservar/:slug`): la sección «Dónde estamos» aparece solo si `location` llega en el perfil y hay forma de dibujar el mapa; si no, no se renderiza nada ni se muestra error.
+- **Mapa** (`src/shared/ui/LocationMap.vue`, `src/shared/model/mapEmbed.ts`): iframe de Google Maps Embed con `title`, la dirección en texto y un enlace «Abrir en Google Maps». Clave de navegador en `VITE_GOOGLE_MAPS_BROWSER_KEY` (restringida por dominio y a Maps Embed API; no es secreto). Sin clave, el mapa sin clave solo se usa en desarrollo (`import.meta.env.DEV`); en producción la sección se oculta.
+- **Pruebas**: `src/shared/model/__tests__/mapEmbed.test.ts`, `ui/__tests__/LocationMap.test.ts`, bloque «ubicación» de `SettingsPage.test.ts` y `PublicBarbershopEntryPage.test.ts`, y `e2e/ubicacion-reserva-publica.spec.ts` (con y sin ubicación, 320/360/768/1280, axe).
+
 ## Requisitos
 
 - Node.js 20 o superior.

@@ -20,3 +20,7 @@ content:
           professionalTermPlural: peluqueros
           professionalTermGender: masculine
           panelProfile: shop
+          hasPhysicalLocation: true
+          address: null
+          latitude: null
+          longitude: null

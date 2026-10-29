@@ -6,6 +6,8 @@
 // conoce la forma RFC 9457 del contrato (eso queda dentro de
 // `api/resolveBarbershopApi.ts`).
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { isMapAvailable } from '@/shared/model/mapEmbed'
+import { LocationMap } from '@/shared/ui'
 import { formatInstantInTimezone } from '@/shared/time/formatInstant'
 import BookingStateScreen from '../components/BookingStateScreen.vue'
 import { loadPublicProfile } from '../model/publicProfile'
@@ -109,6 +111,20 @@ const failedRequestId = computed(() =>
         <dd>{{ screenState.profile.contactEmail }}</dd>
       </div>
     </dl>
+
+    <!-- DEC-130: solo con interruptor activo y coordenadas reales; si no, nada, sin error. -->
+    <section
+      v-if="screenState.profile.location && isMapAvailable()"
+      class="pb-location"
+      aria-labelledby="pb-location-title"
+    >
+      <h2 id="pb-location-title" class="pb-location__title">Dónde estamos</h2>
+      <LocationMap
+        :latitude="screenState.profile.location.latitude"
+        :longitude="screenState.profile.location.longitude"
+        :address="screenState.profile.location.address"
+      />
+    </section>
 
     <RouterLink
       :to="{ name: 'reserva-publica-servicios', params: { slug: props.slug } }"

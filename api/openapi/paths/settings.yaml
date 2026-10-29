@@ -210,7 +210,7 @@
     security:
       - SessionCookie: []
     x-business-rules: [RN-TEN-01, RN-DAT-02]
-    x-decisions: [DEC-024, DEC-110, DEC-115, DEC-134]
+    x-decisions: [DEC-024, DEC-110, DEC-115, DEC-130, DEC-134]
     responses:
       "200":
         $ref: '../components/responses/BrandSuccess.yaml'
@@ -230,8 +230,12 @@
       desde `DEC-134` lo deciden los roles del usuario- se rechaza como
       forma inválida. `accent` pertenece a una lista cerrada (nunca un color
       libre) y cada término se recorta, se colapsa y se pasa a minúsculas
-      antes de validarlo y guardarlo. Un valor inválido responde `422` sin
-      escribir nada. Son preferencias de presentación: no hay precondición de
+      antes de validarlo y guardarlo. `hasPhysicalLocation` y `address` son
+      opcionales (`DEC-130`, `HU-102`): ausentes no tocan la ubicación; una
+      dirección nueva se geocodifica en el servidor antes de guardar y, si no se
+      puede ubicar con precisión de calle, responde `422` sin escribir nada (ni
+      la marca); apagar el interruptor conserva la dirección y sus coordenadas.
+      Un valor inválido responde `422` sin escribir nada. Son preferencias de presentación: no hay precondición de
       versión y la última escritura gana. Escribir toca `updated_at` de la
       fila, así que invalida el token `If-Match` de una política de reserva
       leída antes (`HU-093`), igual que una escritura de `HU-020`. La
@@ -241,7 +245,7 @@
     security:
       - SessionCookie: []
     x-business-rules: [RN-TEN-01, RN-DAT-02]
-    x-decisions: [DEC-024, DEC-110, DEC-115, DEC-134]
+    x-decisions: [DEC-024, DEC-110, DEC-115, DEC-130, DEC-134]
     requestBody:
       required: true
       content:
@@ -258,6 +262,17 @@
                 professionalTerm: estilista
                 professionalTermPlural: estilistas
                 professionalTermGender: feminine
+            conLocal:
+              summary: Fijar la dirección del local (se geocodifica al guardar)
+              value:
+                accent: brass
+                businessTerm: barbería
+                businessTermGender: feminine
+                professionalTerm: barbero
+                professionalTermPlural: barberos
+                professionalTermGender: masculine
+                hasPhysicalLocation: true
+                address: Calle 10 # 5-20, Bogotá
             valoresIniciales:
               summary: Volver a los valores iniciales
               value:

@@ -750,6 +750,25 @@ captura es únicamente para E2E local y no demuestra entrega de Meta.
 | `APP_PHONE_CHALLENGE_RESEND_COOLDOWN_SECONDS` | `60` | Mínimo entre reenvíos. |
 | `APP_PHONE_CHALLENGE_PURGE_LIMIT` | `500` | Lote de purga del worker (1-1000). |
 
+### Ubicación de la barbería (DEC-130, HU-102)
+
+Guardar una dirección en `PATCH /private/settings/brand` la geocodifica **en el
+servidor, una sola vez** (Google Geocoding) y persiste las coordenadas; el
+cliente nunca las envía. Una dirección que Google no resuelve con precisión
+(`partial_match` o ubicación `APPROXIMATE`) responde `422` sin tocar el valor
+anterior; si Google no responde, también `422` con otro mensaje.
+
+| Variable | Obligatoria | Descripción |
+| --- | --- | --- |
+| `GOOGLE_MAPS_API_KEY` | para activar en producción | Clave **de servidor** con Geocoding API habilitada, restringida por IP. Nunca viaja al navegador ni se registra. |
+
+Sin la clave, en `APP_ENVIRONMENT=local`/`test` se usa un geocodificador
+simulado y determinista (Bogotá ±2 km; menos de 5 caracteres no se resuelve);
+en cualquier otro ambiente el guardado de una dirección responde `422` y el
+API lo avisa al arrancar. El mapa del navegador usa otra clave
+(`VITE_GOOGLE_MAPS_BROWSER_KEY`, Maps Embed API, restringida por dominio); sin
+ella la sección se oculta fuera de desarrollo.
+
 ### Prueba local completa: capturar el código sin un WhatsApp real
 
 `APP_PHONE_CHALLENGE_CAPTURE_FILE=<ruta>` hace que

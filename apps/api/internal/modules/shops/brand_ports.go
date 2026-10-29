@@ -19,12 +19,13 @@ type BrandRepository interface {
 	// vigente.
 	Get(ctx context.Context, barbershopID string) (brand Brand, found bool, err error)
 
-	// Update reemplaza los seis campos de la marca en UNA sola sentencia
-	// filtrada por barbershopID (defensa en profundidad sobre RLS) y
-	// devuelve la fila guardada con RETURNING. BrandService ya normalizó y
-	// validó la entrada: las restricciones CHECK de la migración son la
-	// última línea de defensa, no la primera.
-	Update(ctx context.Context, barbershopID string, brand Brand) (BrandUpdateResult, error)
+	// Update reemplaza los seis campos de la marca y aplica los cambios de
+	// ubicación de location en UNA sola sentencia filtrada por barbershopID
+	// (defensa en profundidad sobre RLS) y devuelve la fila guardada con
+	// RETURNING. BrandService ya normalizó, validó y geocodificó la entrada: las
+	// restricciones CHECK de la migración son la última línea de defensa, no la
+	// primera. El valor cero de location no toca la ubicación.
+	Update(ctx context.Context, barbershopID string, brand Brand, location LocationWrite) (BrandUpdateResult, error)
 }
 
 // PanelProfileRepository es el puerto de lectura de los roles de un usuario

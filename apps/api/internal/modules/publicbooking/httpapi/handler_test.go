@@ -151,6 +151,34 @@ func TestResolveBarbershopHandler_NoContact_ReturnsNullNotOmitted(t *testing.T) 
 	}
 }
 
+func TestResolveBarbershopHandler_Location_NullWhenHiddenAndObjectWhenShown(t *testing.T) {
+	hidden := &fakeRepository{found: true, profile: publicbooking.BarbershopProfile{Name: "A", Timezone: "America/Bogota"}}
+	rec := httptest.NewRecorder()
+	httpapi.NewResolveBarbershopHandler(publicbooking.NewService(hidden)).ServeHTTP(rec, requestWithSlug("a"))
+	var raw map[string]any
+	if err := json.NewDecoder(rec.Body).Decode(&raw); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if v, present := raw["location"]; !present || v != nil {
+		t.Fatalf("sin ubicación visible, location debe viajar como null explícito, fue present=%v v=%v", present, v)
+	}
+
+	shown := &fakeRepository{found: true, profile: publicbooking.BarbershopProfile{
+		Name: "A", Timezone: "America/Bogota",
+		Location: &publicbooking.Location{Address: "Calle 10 # 5-20, Bogotá", Latitude: 4.598056, Longitude: -74.076111},
+	}}
+	rec = httptest.NewRecorder()
+	httpapi.NewResolveBarbershopHandler(publicbooking.NewService(shown)).ServeHTTP(rec, requestWithSlug("a"))
+	var body httpapi.PublicBarbershopProfileResponse
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if body.Location == nil || body.Location.Address != "Calle 10 # 5-20, Bogotá" ||
+		body.Location.Latitude != 4.598056 || body.Location.Longitude != -74.076111 {
+		t.Fatalf("location = %+v", body.Location)
+	}
+}
+
 func TestResolveBarbershopHandler_NotFound_ReturnsUniform404(t *testing.T) {
 	repo := &fakeRepository{found: false}
 	h := httpapi.NewResolveBarbershopHandler(publicbooking.NewService(repo))

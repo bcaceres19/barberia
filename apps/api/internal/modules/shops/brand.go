@@ -47,6 +47,10 @@ const (
 // términos se guardan recortados y en minúsculas; la interfaz capitaliza
 // donde corresponde.
 //
+// Location es la ubicación física opcional que la reserva pública muestra
+// (DEC-130, HU-102). Viaja con la marca porque se edita en la misma pantalla de
+// Configuración, pero tiene su propia lógica (geocodificación) en BrandService.
+//
 // El perfil del panel no es parte de la marca: depende de los roles de quien
 // consulta (DEC-134) y lo calcula PanelProfileService.
 type Brand struct {
@@ -56,6 +60,7 @@ type Brand struct {
 	ProfessionalTerm       string
 	ProfessionalTermPlural string
 	ProfessionalTermGender Gender
+	Location               Location
 }
 
 // Largos de un término, iguales a barbershop_business_term_ck,
@@ -81,6 +86,9 @@ var DefaultBrand = Brand{
 	ProfessionalTerm:       "barbero",
 	ProfessionalTermPlural: "barberos",
 	ProfessionalTermGender: GenderMasculine,
+	// La ubicación nace con el interruptor activo y sin dirección (DEC-130): no
+	// muestra mapa hasta que alguien captura una dirección.
+	Location: Location{HasPhysicalLocation: true},
 }
 
 // IsAllowedAccent informa si key pertenece a la lista cerrada de acentos.

@@ -1,0 +1,33 @@
+# Ubicación física pública de la barbería (DEC-130, HU-102): lo mínimo para que
+# la reserva pública dibuje un mapa con marcador y la dirección en texto. Solo
+# existe cuando la barbería activó `hasPhysicalLocation` Y hay coordenadas; en
+# cualquier otro caso `PublicBarbershopProfile.location` es `null`.
+type: object
+additionalProperties: false
+description: >
+  Dónde queda la barbería. La dirección es contenido público por diseño; las
+  coordenadas son el resultado de geocodificarla una vez en el servidor.
+properties:
+  address:
+    type: string
+    minLength: 1
+    maxLength: 200
+    description: Dirección del local en texto, junto al mapa para quien no pueda usarlo.
+    examples:
+      - Calle 10 # 5-20, Bogotá
+  latitude:
+    type: number
+    minimum: -90
+    maximum: 90
+    examples:
+      - 4.598056
+  longitude:
+    type: number
+    minimum: -180
+    maximum: 180
+    examples:
+      - -74.076111
+required:
+  - address
+  - latitude
+  - longitude

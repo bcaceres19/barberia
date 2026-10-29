@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-102-v1"
 version: "1.0"
 kind: "hu"
-status: "ready"
+status: "executed"
 target_agents: ["codex", "claude"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
@@ -11,7 +11,7 @@ related_hu: ["HU-090", "HU-025", "HU-101", "HU-103"]
 issue: 359
 issue_url: "https://github.com/bcaceres19/barberia/issues/359"
 suggested_issue_title: "feat(public-booking): implementar HU-102 ubicación de la barbería"
-branch: null
+branch: "feat/359-hu102-ubicacion-barberia"
 pr: null
 pr_url: null
 depends_on: ["Credencial de Google Geocoding/Maps disponible en el ambiente de despliegue"]
@@ -34,7 +34,7 @@ source_docs:
   - "apps/api/internal/modules/shops"
   - "apps/api/internal/modules/publicbooking"
 created_at: "2026-10-26"
-updated_at: "2026-10-26"
+updated_at: "2026-10-29"
 supersedes: null
 superseded_by: null
 ---

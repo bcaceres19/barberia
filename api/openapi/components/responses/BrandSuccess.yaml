@@ -18,8 +18,12 @@ content:
           professionalTermPlural: barberos
           professionalTermGender: masculine
           panelProfile: shop
+          hasPhysicalLocation: true
+          address: null
+          latitude: null
+          longitude: null
       salonDeBelleza:
-        summary: Salón con estilistas y acento esmeralda
+        summary: Salón con estilistas, acento esmeralda y local geocodificado
         value:
           accent: emerald
           businessTerm: salón de belleza
@@ -28,6 +32,10 @@ content:
           professionalTermPlural: estilistas
           professionalTermGender: feminine
           panelProfile: shop
+          hasPhysicalLocation: true
+          address: Calle 10 # 5-20, Bogotá
+          latitude: 4.598056
+          longitude: -74.076111
       barberoIndividual:
         summary: "Usuario con el rol independiente: panel individual completo"
         value:
@@ -38,6 +46,10 @@ content:
           professionalTermPlural: barberos
           professionalTermGender: masculine
           panelProfile: solo
+          hasPhysicalLocation: true
+          address: null
+          latitude: null
+          longitude: null
       empleado:
         summary: "Usuario con el rol empleado: panel individual limitado"
         value:
@@ -48,3 +60,7 @@ content:
           professionalTermPlural: barberos
           professionalTermGender: masculine
           panelProfile: employee
+          hasPhysicalLocation: true
+          address: null
+          latitude: null
+          longitude: null

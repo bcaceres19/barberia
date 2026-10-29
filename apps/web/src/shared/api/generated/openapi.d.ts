@@ -395,7 +395,7 @@ export interface paths {
         head?: never;
         /**
          * Actualizar la marca y el vocabulario de la barbería activa
-         * @description Actualización autenticada (issue #292, DEC-110) de los seis campos de marca y vocabulario, que viajan siempre presentes; cualquier otro campo -en particular un identificador de barbería o `panelProfile`, que desde `DEC-134` lo deciden los roles del usuario- se rechaza como forma inválida. `accent` pertenece a una lista cerrada (nunca un color libre) y cada término se recorta, se colapsa y se pasa a minúsculas antes de validarlo y guardarlo. Un valor inválido responde `422` sin escribir nada. Son preferencias de presentación: no hay precondición de versión y la última escritura gana. Escribir toca `updated_at` de la fila, así que invalida el token `If-Match` de una política de reserva leída antes (`HU-093`), igual que una escritura de `HU-020`. La respuesta devuelve la representación canónica ya guardada, la misma forma que `GET`.
+         * @description Actualización autenticada (issue #292, DEC-110) de los seis campos de marca y vocabulario, que viajan siempre presentes; cualquier otro campo -en particular un identificador de barbería o `panelProfile`, que desde `DEC-134` lo deciden los roles del usuario- se rechaza como forma inválida. `accent` pertenece a una lista cerrada (nunca un color libre) y cada término se recorta, se colapsa y se pasa a minúsculas antes de validarlo y guardarlo. `hasPhysicalLocation` y `address` son opcionales (`DEC-130`, `HU-102`): ausentes no tocan la ubicación; una dirección nueva se geocodifica en el servidor antes de guardar y, si no se puede ubicar con precisión de calle, responde `422` sin escribir nada (ni la marca); apagar el interruptor conserva la dirección y sus coordenadas. Un valor inválido responde `422` sin escribir nada. Son preferencias de presentación: no hay precondición de versión y la última escritura gana. Escribir toca `updated_at` de la fila, así que invalida el token `If-Match` de una política de reserva leída antes (`HU-093`), igual que una escritura de `HU-020`. La respuesta devuelve la representación canónica ya guardada, la misma forma que `GET`.
          */
         patch: operations["updateBrand"];
         trace?: never;
@@ -1452,7 +1452,7 @@ export interface components {
              */
             contactPhone: string;
         };
-        /** @description Marca y vocabulario de la barbería activa: color de acento de una lista cerrada, la palabra con la que llama a su negocio y a su profesional (con plural y género gramatical, para que la interfaz concuerde). Los términos viajan recortados y en minúsculas; la interfaz capitaliza donde corresponde. Incluye el panel del usuario que consulta (`panelProfile`), derivado de sus roles en la base de datos (`DEC-134`); no es un dato de la barbería. */
+        /** @description Marca y vocabulario de la barbería activa: color de acento de una lista cerrada, la palabra con la que llama a su negocio y a su profesional (con plural y género gramatical, para que la interfaz concuerde). Los términos viajan recortados y en minúsculas; la interfaz capitaliza donde corresponde. Incluye el panel del usuario que consulta (`panelProfile`), derivado de sus roles en la base de datos (`DEC-134`); no es un dato de la barbería. Incluye la ubicación física opcional que la reserva pública muestra (`DEC-130`). */
         BrandResponse: {
             accent: components["schemas"]["BrandAccent"];
             businessTerm: components["schemas"]["BrandTerm"];
@@ -1461,8 +1461,19 @@ export interface components {
             professionalTermPlural: components["schemas"]["BrandTerm"];
             professionalTermGender: components["schemas"]["BrandTermGender"];
             panelProfile: components["schemas"]["PanelProfile"];
+            /** @description Interruptor explícito de `DEC-130`: `true` = la barbería tiene un local que mostrar en la reserva pública. Apagarlo conserva `address` y las coordenadas. Una barbería nueva nace con `true` y sin dirección. */
+            hasPhysicalLocation: boolean;
+            /**
+             * @description Dirección del local en texto; `null` mientras no se ha capturado.
+             * @example Calle 10
+             */
+            address: string | null;
+            /** @description Latitud resultante de geocodificar `address` en el servidor al guardarla; `null` sin dirección. Solo lectura: el cliente no la envía. */
+            latitude: number | null;
+            /** @description Longitud, igual que `latitude`. */
+            longitude: number | null;
         };
-        /** @description Marca y vocabulario a guardar. Los seis campos de la marca viajan siempre presentes. No incluye `panelProfile`: el panel lo deciden los roles del usuario (`DEC-134`). */
+        /** @description Marca y vocabulario a guardar. Los seis campos de la marca viajan siempre presentes. No incluye `panelProfile`: el panel lo deciden los roles del usuario (`DEC-134`). La ubicación (`hasPhysicalLocation`, `address`) es opcional: ausente no la toca (`DEC-130`). */
         UpdateBrandRequest: {
             accent: components["schemas"]["BrandAccent"];
             businessTerm: components["schemas"]["BrandTerm"];
@@ -1470,6 +1481,13 @@ export interface components {
             professionalTerm: components["schemas"]["BrandTerm"];
             professionalTermPlural: components["schemas"]["BrandTerm"];
             professionalTermGender: components["schemas"]["BrandTermGender"];
+            /** @description Interruptor de la ubicación física (`DEC-130`). Ausente conserva el valor actual; apagarlo no borra la dirección ni las coordenadas. */
+            hasPhysicalLocation?: boolean;
+            /**
+             * @description Dirección del local en texto (`DEC-130`). Ausente conserva la dirección y sus coordenadas; `null` o una cadena vacía las quita; una dirección nueva se recorta, se colapsan sus espacios y se geocodifica en el servidor antes de guardar. Si Google no puede ubicarla con precisión de calle responde `422` sin escribir nada (tampoco la marca). Las coordenadas no se envían: las calcula el servidor.
+             * @example Calle 10
+             */
+            address?: string | null;
         };
         /**
          * @description Color de acento del panel: `brass` (el latón NAVA, valor inicial), `emerald`, `sapphire`, `ruby`, `amethyst` o `copper`.
@@ -1756,6 +1774,18 @@ export interface components {
             professionalTermPlural: components["schemas"]["BrandTerm"];
             professionalTermGender: components["schemas"]["BrandTermGender"];
         };
+        /** @description Dónde queda la barbería. La dirección es contenido público por diseño; las coordenadas son el resultado de geocodificarla una vez en el servidor. */
+        PublicLocation: {
+            /**
+             * @description Dirección del local en texto, junto al mapa para quien no pueda usarlo.
+             * @example Calle 10
+             */
+            address: string;
+            /** @example 4.598056 */
+            latitude: number;
+            /** @example -74.076111 */
+            longitude: number;
+        };
         /** @description Contexto público de la barbería resuelta por su enlace de reservas. contactEmail/contactPhone viajan siempre presentes en el cuerpo, con valor `null` explícito cuando la barbería no tiene ese contacto configurado (nunca se omiten ni se representan como cadena vacía), misma convención que BarbershopSettingsResponse. */
         PublicBarbershopProfile: {
             /**
@@ -1780,6 +1810,8 @@ export interface components {
              */
             contactPhone: string | null;
             vocabulary: components["schemas"]["PublicVocabulary"];
+            /** @description Ubicación física de la barbería (`DEC-130`). `null` salvo que la barbería haya activado la ubicación y tenga coordenadas: con el interruptor apagado, o sin dirección geocodificada, la reserva pública no pinta ninguna sección. */
+            location: components["schemas"]["PublicLocation"] | null;
         };
         /** @description Servicio ofrecido públicamente por la barbería resuelta: activo y con al menos una asignación vigente a un barbero (HU-091, CA-091-01). currency es siempre "COP" (DEC-067). */
         PublicServiceResponse: {
