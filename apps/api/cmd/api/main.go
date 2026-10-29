@@ -36,6 +36,9 @@ import (
 	"system-barbershop/internal/modules/publicbooking"
 	publicbookinghttpapi "system-barbershop/internal/modules/publicbooking/httpapi"
 	publicbookingpostgres "system-barbershop/internal/modules/publicbooking/postgres"
+	"system-barbershop/internal/modules/reviews"
+	reviewshttpapi "system-barbershop/internal/modules/reviews/httpapi"
+	reviewspostgres "system-barbershop/internal/modules/reviews/postgres"
 	"system-barbershop/internal/modules/schedule"
 	schedulehttpapi "system-barbershop/internal/modules/schedule/httpapi"
 	schedulepostgres "system-barbershop/internal/modules/schedule/postgres"
@@ -521,6 +524,16 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	customerAppointmentService := customeraccess.NewService(customeraccesspostgres.New(db))
 	getCustomerAppointmentHandler := customeraccesshttpapi.NewGetAppointmentHandler(customerAppointmentService)
 	router.Get("/api/v1/customer/appointments/{token}", getCustomerAppointmentHandler.ServeHTTP)
+
+	// HU-100 (DEC-128): reseñas internas por barbero. Crear (cliente, por el token
+	// del enlace), listar las visibles (público) y moderar (panel) comparten un
+	// único servicio; el promedio y el total del barbero lo calculan staff y
+	// publicbooking en su propia consulta.
+	reviewService := reviews.NewService(reviewspostgres.New(db))
+	router.Post("/api/v1/customer/appointments/{token}/review", reviewshttpapi.NewCreateReviewHandler(reviewService).ServeHTTP)
+	router.Get("/api/v1/public/barbershops/{slug}/barbers/{barberId}/reviews", reviewshttpapi.NewListPublicReviewsHandler(reviewService).ServeHTTP)
+	private.Get("/barbers/{barberId}/reviews", reviewshttpapi.NewListReviewsHandler(reviewService).ServeHTTP)
+	private.Patch("/barbers/{barberId}/reviews/{reviewId}", reviewshttpapi.NewUpdateReviewHandler(reviewService).ServeHTTP)
 
 	manualBookingService := booking.NewManualBookingService(
 		bookingRepo,

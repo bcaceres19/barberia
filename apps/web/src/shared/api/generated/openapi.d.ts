@@ -144,6 +144,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/customer/appointments/{token}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Calificar al barbero de un turno completado
+         * @description El cliente deja una calificación de 1 a 5 y un comentario opcional sobre el barbero que lo atendió (HU-100, `DEC-128`), con la misma credencial del enlace de su turno y sin sesión. Solo un turno `completed` sin reseña admite una: un turno no completado, cancelado o ya calificado responde siempre el mismo `409`, sin distinguir la causa (`CA-100-01`); un `token` inexistente, vencido o revocado responde el mismo `404` uniforme que `GET`. Como máximo una reseña por turno (`CA-100-03`): repetir la llamada no crea otra fila ni modifica la existente, así que no necesita `Idempotency-Key`. La reseña queda visible de inmediato en la selección pública del barbero y cuenta en su promedio.
+         */
+        post: operations["createCustomerAppointmentReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/barbershops/{slug}/barbers/{barberId}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Leer las reseñas visibles de un barbero
+         * @description Devuelve el promedio, el total y hasta 20 reseñas no ocultas del barbero, de la más reciente a la más antigua (HU-100, `CA-100-04`, `DEC-128`), sin sesión. Una reseña oculta no aparece ni cuenta (`CA-100-05`). Un `slug` inválido o de una barbería no publicable y un `barberId` inexistente o de otra barbería responden exactamente el mismo `404`, sin distinguir la causa (`CA-090-02`, `RN-TEN-01`).
+         */
+        get: operations["listPublicBarberReviews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/public/webhooks/meta/whatsapp": {
         parameters: {
             query?: never;
@@ -610,6 +650,46 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/private/barbers/{barberId}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar las reseñas de un barbero para moderarlas
+         * @description Todas las reseñas del barbero, ocultas incluidas y con su fecha de ocultamiento, de la más reciente a la más antigua (hasta 100), más el promedio y el total públicos (HU-100, `CA-100-05`, `DEC-128`). Un identificador inexistente o de otra barbería responde el mismo `404` (`RN-TEN-01`).
+         */
+        get: operations["listBarberReviews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/private/barbers/{barberId}/reviews/{reviewId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Ocultar o volver a mostrar una reseña
+         * @description El barbero o el propietario oculta (`hidden: true`) una reseña ofensiva o falsa, o la vuelve a mostrar (`hidden: false`) (HU-100, `CA-100-05`, `DEC-128`, mismo patrón reversible que quitar la foto, `DEC-104`). Ocultar la retira del promedio y de la lista pública de inmediato, pero la fila se conserva con su fecha; mostrarla de nuevo la reincorpora sin perder su contenido. Repetir la misma orden deja el mismo estado. Una reseña inexistente, de otro barbero o de otra barbería responde el mismo `404`.
+         */
+        patch: operations["updateBarberReview"];
         trace?: never;
     };
     "/private/services": {
@@ -1544,6 +1624,17 @@ export interface components {
              * @example null
              */
             description: string | null;
+            /**
+             * @description Promedio de 1 decimal de las reseñas no ocultas del barbero (`DEC-128`), o `null` mientras no tenga ninguna visible. Se calcula en cada consulta.
+             * @example 4.8
+             * @example null
+             */
+            rating: number | null;
+            /**
+             * @description Total de reseñas no ocultas del barbero (`DEC-128`); `0` sin ninguna.
+             * @example 12
+             */
+            ratingCount: number;
         };
         /** @description Página de barberos de la barbería activa, ordenada de forma estable por fecha de alta y luego por identificador. Conserva cursor por defecto y admite modo numerado con page/pageSize (DEC-107); nextCursor es null en modo numerado. */
         BarberListResponse: {
@@ -1884,6 +1975,17 @@ export interface components {
              * @example null
              */
             photoUpdatedAt: string | null;
+            /**
+             * @description Promedio de 1 decimal de las reseñas no ocultas del barbero (`DEC-128`), o `null` mientras no tenga ninguna visible. Se calcula en cada consulta.
+             * @example 4.8
+             * @example null
+             */
+            rating: number | null;
+            /**
+             * @description Total de reseñas no ocultas del barbero (`DEC-128`); `0` sin ninguna.
+             * @example 12
+             */
+            ratingCount: number;
         };
         /** @description Barberos con asignación vigente al servicio activo resuelto (HU-092, CA-092-02), ordenados de forma estable por fecha de asignación y luego por identificador. Un arreglo vacío (CA-092-03) cubre por igual un servicio sin ningún barbero asignado, ajeno a esta barbería, inexistente o inactivo: la causa nunca se distingue. */
         PublicBarberListResponse: {
@@ -2009,6 +2111,21 @@ export interface components {
             /** @description Presente solo cuando `code` vale `slot-conflict`: hasta 3 franjas cronológicamente cercanas a la elegida, mismo barbero y mismo servicio (DEC-090). Vacío solo cuando la ventana pública vigente no tiene ninguna franja restante en absoluto. */
             alternatives?: components["schemas"]["AlternativeSlotResponse"][];
         };
+        /** @description Reseña propia del turno que el cliente ve en el acceso a su cita. Solo calificación, comentario y fecha: nunca un identificador interno. */
+        CustomerReview: {
+            /** @example 5 */
+            rating: number;
+            /**
+             * @example Muy buen corte y puntual.
+             * @example null
+             */
+            comment: string | null;
+            /**
+             * Format: date-time
+             * @example 2027-03-15T16:10:00Z
+             */
+            createdAt: string;
+        };
         /** @description Lectura mínima del turno del cliente, autenticada únicamente por la credencial del enlace (HU-098). Nunca incluye un identificador interno ni datos de contacto: el cliente ya los conoce, y exponerlos aquí no cumple ningún criterio de aceptación. */
         CustomerAppointmentResponse: {
             /**
@@ -2073,6 +2190,56 @@ export interface components {
              */
             lateCancellationReasonRequired: boolean;
             vocabulary: components["schemas"]["PublicVocabulary"];
+            /**
+             * @description `true` solo con el turno `completed` y sin reseña todavía (`HU-100`, `CA-100-01`): es la señal para ofrecer «Calificar».
+             * @example true
+             */
+            canReview: boolean;
+            /** @description La reseña que el cliente ya dejó sobre este turno, o `null`. */
+            review: components["schemas"]["CustomerReview"] | null;
+        };
+        /** @description Reseña del cliente sobre el barbero que lo atendió. Cerrado: cualquier otro campo se rechaza. Nunca lleva datos del cliente: el turno sale del `token`. */
+        CreateReviewRequest: {
+            /**
+             * @description Calificación obligatoria de 1 a 5.
+             * @example 5
+             */
+            rating: number;
+            /**
+             * @description Comentario opcional de hasta 500 caracteres. Se recortan los espacios de los extremos; vacío o solo espacios se guarda como `null`. No debe incluir teléfonos, direcciones ni nombres de terceros (`RN-DAT-02`).
+             * @example Muy buen corte y puntual.
+             * @example null
+             */
+            comment?: string | null;
+        };
+        /** @description Reseña no oculta de un barbero. Sin identificador del turno ni del cliente: la reseña es anónima para el visitante. */
+        PublicReview: {
+            /** @example 5 */
+            rating: number;
+            /**
+             * @example Muy buen corte y puntual.
+             * @example null
+             */
+            comment: string | null;
+            /**
+             * Format: date-time
+             * @example 2027-03-15T16:10:00Z
+             */
+            createdAt: string;
+        };
+        /** @description Resumen y las reseñas no ocultas más recientes de un barbero (hasta 20), de la más reciente a la más antigua. */
+        PublicReviewList: {
+            /**
+             * @description Promedio de 1 decimal de las reseñas no ocultas, o `null` sin ninguna.
+             * @example 4.8
+             */
+            rating: number | null;
+            /**
+             * @description Total de reseñas no ocultas (puede superar los elementos devueltos).
+             * @example 12
+             */
+            ratingCount: number;
+            items: components["schemas"]["PublicReview"][];
         };
         MetaWhatsAppWebhookRequest: {
             /**
@@ -2398,6 +2565,51 @@ export interface components {
              * @example 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
              */
             barberId: string;
+        };
+        /** @description Reseña con su identificador y la fecha de ocultamiento. Una oculta sigue visible en el panel con su fecha y no cuenta en el promedio público. */
+        Review: {
+            /**
+             * Format: uuid
+             * @example 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+             */
+            id: string;
+            /** @example 2 */
+            rating: number;
+            /** @example null */
+            comment: string | null;
+            /**
+             * Format: date-time
+             * @description Momento en que se ocultó; `null` si está visible.
+             * @example null
+             */
+            hiddenAt: string | null;
+            /**
+             * Format: date-time
+             * @example 2027-03-15T16:10:00Z
+             */
+            createdAt: string;
+        };
+        /** @description Resumen público y todas las reseñas del barbero, ocultas incluidas (hasta 100), de la más reciente a la más antigua. */
+        ReviewList: {
+            /**
+             * @description Promedio de 1 decimal de las reseñas no ocultas, o `null` sin ninguna.
+             * @example 4.5
+             */
+            rating: number | null;
+            /**
+             * @description Total de reseñas no ocultas.
+             * @example 2
+             */
+            ratingCount: number;
+            items: components["schemas"]["Review"][];
+        };
+        /** @description Oculta o vuelve a mostrar una reseña. Cerrado: solo `hidden`. La calificación y el comentario nunca se editan. */
+        UpdateReviewRequest: {
+            /**
+             * @description `true` oculta (conserva la fecha original si ya estaba oculta); `false` vuelve a mostrar.
+             * @example true
+             */
+            hidden: boolean;
         };
         /** @description Tramo recurrente de la jornada laboral de un barbero, para un único día ISO de la semana. Una jornada partida se representa con varios tramos del mismo día (CA-040-02); un tramo nocturno cruza medianoche cuando startsTime + durationMinutes supera las 24:00 (DEC-020, CA-040-03). */
         WorkingHourResponse: {
@@ -3757,6 +3969,38 @@ export interface components {
                 "application/json": components["schemas"]["CustomerAppointmentResponse"];
             };
         };
+        /** @description Reseña guardada; ya cuenta en el promedio público del barbero. */
+        ReviewCreated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                /** @description Siempre `no-store` (RN-DAT-02). */
+                "Cache-Control"?: "no-store";
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["CustomerReview"];
+            };
+        };
+        /** @description El enlace es válido pero el turno no admite una reseña: no está completado, fue cancelado o ya fue calificado. Nunca se distingue la causa. */
+        ReviewNotAvailableProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description Resumen y reseñas visibles más recientes del barbero. */
+        PublicReviewListSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["PublicReviewList"];
+            };
+        };
         /** @description La solicitud fue recibida. Si la cuenta existe y tiene el teléfono verificado, se envía un código por WhatsApp oficial y correo; en cualquier otro caso no ocurre ningún envío, sin que la respuesta lo revele. */
         RecoveryRequestAccepted: {
             headers: {
@@ -3912,6 +4156,26 @@ export interface components {
                 [name: string]: unknown;
             };
             content?: never;
+        };
+        /** @description Resumen público y todas las reseñas del barbero, ocultas incluidas. */
+        ReviewListSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ReviewList"];
+            };
+        };
+        /** @description Reseña con su estado de visibilidad ya guardado. */
+        ReviewUpdated: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Review"];
+            };
         };
         /** @description Página de tramos de horario laboral del barbero de la ruta, ordenada por día ISO de la semana y hora de inicio. */
         WorkingHourListSuccess: {
@@ -4593,6 +4857,49 @@ export interface operations {
             500: components["responses"]["InternalErrorProblem"];
         };
     };
+    createCustomerAppointmentReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Credencial en claro del enlace de acceso al turno (DEC-089). */
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReviewRequest"];
+            };
+        };
+        responses: {
+            201: components["responses"]["ReviewCreated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            409: components["responses"]["ReviewNotAvailableProblem"];
+            422: components["responses"]["ValidationProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    listPublicBarberReviews: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del enlace público de reservas (DEC-082). */
+                slug: string;
+                /** @description Identificador del barbero, tal como lo entrega la lista pública. */
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["PublicReviewListSuccess"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
     verifyMetaWhatsAppWebhook: {
         parameters: {
             query: {
@@ -5255,6 +5562,50 @@ export interface operations {
             204: components["responses"]["BarberPhotoDeleted"];
             401: components["responses"]["UnauthorizedProblem"];
             404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    listBarberReviews: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["ReviewListSuccess"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    updateBarberReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del barbero. */
+                barberId: string;
+                /** @description Identificador de la reseña. */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateReviewRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["ReviewUpdated"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            422: components["responses"]["ValidationProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

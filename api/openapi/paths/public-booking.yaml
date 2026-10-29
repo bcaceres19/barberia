@@ -564,3 +564,47 @@
         $ref: '../components/responses/ValidationProblem.yaml'
       "500":
         $ref: '../components/responses/InternalErrorProblem.yaml'
+
+/public/barbershops/{slug}/barbers/{barberId}/reviews:
+  get:
+    tags: [PublicBooking]
+    summary: Leer las reseñas visibles de un barbero
+    description: >
+      Devuelve el promedio, el total y hasta 20 reseñas no ocultas del barbero,
+      de la más reciente a la más antigua (HU-100, `CA-100-04`, `DEC-128`), sin
+      sesión. Una reseña oculta no aparece ni cuenta (`CA-100-05`). Un `slug`
+      inválido o de una barbería no publicable y un `barberId` inexistente o de
+      otra barbería responden exactamente el mismo `404`, sin distinguir la
+      causa (`CA-090-02`, `RN-TEN-01`).
+    operationId: listPublicBarberReviews
+    security: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-024, DEC-082, DEC-128]
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        description: Identificador del enlace público de reservas (DEC-082).
+        schema:
+          type: string
+          maxLength: 100
+        examples:
+          slug:
+            value: barberia-ejemplo
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero, tal como lo entrega la lista pública.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+    responses:
+      "200":
+        $ref: '../components/responses/PublicReviewListSuccess.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

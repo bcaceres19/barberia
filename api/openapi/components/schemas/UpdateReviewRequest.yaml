@@ -1,0 +1,14 @@
+# Cuerpo de PATCH /private/barbers/{barberId}/reviews/{reviewId} (HU-100, DEC-128).
+type: object
+description: >
+  Oculta o vuelve a mostrar una reseña. Cerrado: solo `hidden`. La calificación y
+  el comentario nunca se editan.
+additionalProperties: false
+properties:
+  hidden:
+    type: boolean
+    description: "`true` oculta (conserva la fecha original si ya estaba oculta); `false` vuelve a mostrar."
+    examples:
+      - true
+required:
+  - hidden

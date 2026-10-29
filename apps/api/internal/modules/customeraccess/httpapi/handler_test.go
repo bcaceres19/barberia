@@ -95,6 +95,10 @@ func TestGetAppointmentHandler_Success_ReturnsAppointmentView(t *testing.T) {
 		body.Vocabulary.BusinessTermGender != "masculine" {
 		t.Fatalf("vocabulary = %+v", body.Vocabulary)
 	}
+	// HU-100: un turno confirmado nunca ofrece «Calificar» y no trae reseña.
+	if body.CanReview || body.Review != nil {
+		t.Fatalf("canReview/review = %v/%v, se esperaba false/nil", body.CanReview, body.Review)
+	}
 	if len(repo.calls) != 1 {
 		t.Fatalf("expected exactly one repository call, got %d", len(repo.calls))
 	}
@@ -157,5 +161,39 @@ func TestGetAppointmentHandler_EmptyToken_ReturnsNotFoundWithoutCallingRepositor
 	}
 	if len(repo.calls) != 0 {
 		t.Fatalf("no debía consultar el repositorio con un token vacío, calls = %d", len(repo.calls))
+	}
+}
+
+// HU-100 (CA-100-01): el handler transporta canReview y la reseña ya dejada, y
+// el cuerpo nunca trae un identificador interno de la reseña.
+func TestGetAppointmentHandler_Review_IsExposedWithoutInternalIDs(t *testing.T) {
+	comment := "Muy buen corte."
+	created := time.Date(2027, 3, 15, 16, 10, 0, 0, time.UTC)
+	repo := &fakeRepository{found: true, view: customeraccess.AppointmentView{
+		Status:    "completed",
+		CanReview: false,
+		Review:    &customeraccess.ReviewView{Rating: 5, Comment: &comment, CreatedAt: created},
+	}}
+	h := httpapi.NewGetAppointmentHandler(customeraccess.NewService(repo))
+
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, requestWithToken("token-en-claro"))
+
+	var body httpapi.CustomerAppointmentResponse
+	if err := json.NewDecoder(strings.NewReader(rec.Body.String())).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if body.CanReview || body.Review == nil || body.Review.Rating != 5 || body.Review.Comment == nil || *body.Review.Comment != comment {
+		t.Fatalf("review = %+v canReview = %v", body.Review, body.CanReview)
+	}
+	if strings.Contains(strings.ToLower(rec.Body.String()), "\"id\"") {
+		t.Fatalf("la reseña no debe exponer un identificador: %s", rec.Body.String())
+	}
+
+	repo.view = customeraccess.AppointmentView{Status: "completed", CanReview: true}
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, requestWithToken("token-en-claro"))
+	if !strings.Contains(rec.Body.String(), `"canReview":true`) || !strings.Contains(rec.Body.String(), `"review":null`) {
+		t.Fatalf("un turno completado sin reseña debe traer canReview=true y review=null: %s", rec.Body.String())
 	}
 }

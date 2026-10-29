@@ -1,0 +1,17 @@
+# Respuesta 200 de PATCH /private/barbers/{barberId}/reviews/{reviewId} (HU-100).
+description: Reseña con su estado de visibilidad ya guardado.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/Review.yaml'
+    examples:
+      ocultada:
+        value:
+          id: 1b2c3d4e-5f60-4718-8293-a4b5c6d7e8f9
+          rating: 1
+          comment: Comentario ofensivo.
+          hiddenAt: "2027-03-16T09:00:00Z"
+          createdAt: "2027-03-10T12:00:00Z"

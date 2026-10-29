@@ -13,6 +13,7 @@ package postgres_test
 import (
 	"context"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -694,5 +695,85 @@ func TestGetPublicBarberPhoto_OwnTenant_ServesItsOwnBarber(t *testing.T) {
 	_, found, err := repo.GetPublicBarberPhoto(context.Background(), slugBarberoDos, barberoOtraBarberiaID)
 	if err != nil || !found {
 		t.Fatalf("expected shop Dos to serve its own barber's photo, found=%v err=%v", found, err)
+	}
+}
+
+// DEC-128 §5 / CA-100-04: la lista pública trae el promedio y el total de las
+// reseñas no ocultas de cada barbero. Las reseñas se insertan directo en SQL (su
+// alta vive en el módulo reviews). La base persistente puede traer reseñas de
+// corridas anteriores: se comprueban diferencias, no valores absolutos.
+func TestListPublicBarbers_RatingCountsOnlyVisibleReviews(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+	ctx := context.Background()
+	const shopUno = "00920001-0092-0092-0092-009200010001"
+
+	read := func() (count int, avg *float64) {
+		t.Helper()
+		result, found, err := repo.ListPublicBarbers(ctx, slugBarberoUno, servicioVariosID)
+		if err != nil || !found {
+			t.Fatalf("ListPublicBarbers: found=%v err=%v", found, err)
+		}
+		for _, b := range result.Items {
+			if b.ID == barberoVariosSegundoID {
+				return b.RatingCount, b.Rating
+			}
+		}
+		t.Fatal("el barbero Uno-2 debe estar en la lista")
+		return 0, nil
+	}
+	before, _ := read()
+
+	err := db.InTenantTx(ctx, database.BarbershopID(shopUno), func(ctx context.Context, q database.Queries) error {
+		for i, c := range []struct {
+			rating int
+			hidden bool
+		}{{5, false}, {5, false}, {1, true}} {
+			var serviceID, customerID, appointmentID string
+			if err := q.QueryRow(ctx,
+				`INSERT INTO service (barbershop_id, name, duration_minutes, price_amount, price_currency)
+				 VALUES ($1, $2, 30, 20000, 'COP') RETURNING id`, shopUno, "Servicio reseña "+strconv.FormatInt(time.Now().UnixNano(), 10)).Scan(&serviceID); err != nil {
+				return err
+			}
+			if err := q.QueryRow(ctx,
+				`INSERT INTO customer (barbershop_id, full_name) VALUES ($1, 'Cliente de prueba') RETURNING id`, shopUno).Scan(&customerID); err != nil {
+				return err
+			}
+			starts := time.Date(2032, 1, 1, 8, 0, 0, 0, time.UTC).AddDate(0, 0, int(time.Now().UnixNano()%3000)).Add(time.Duration(i) * time.Hour)
+			if err := q.QueryRow(ctx,
+				`INSERT INTO appointment (barbershop_id, barber_id, service_id, customer_id, attendee_name, starts_at, ends_at,
+				                          status, origin, resolved_at, service_name_snapshot, duration_minutes_snapshot,
+				                          price_amount_snapshot, price_currency_snapshot)
+				 VALUES ($1, $2, $3, $4, 'Cliente de prueba', $5, $6, 'completed', 'manual', now(), 'Servicio', 30, 20000, 'COP')
+				 RETURNING id`, shopUno, barberoVariosSegundoID, serviceID, customerID, starts, starts.Add(30*time.Minute)).Scan(&appointmentID); err != nil {
+				return err
+			}
+			if _, err := q.Exec(ctx,
+				`INSERT INTO barber_review (barbershop_id, barber_id, appointment_id, rating, hidden_at)
+				 VALUES ($1, $2, $3, $4, CASE WHEN $5 THEN now() ELSE NULL END)`,
+				shopUno, barberoVariosSegundoID, appointmentID, c.rating, c.hidden); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("sembrar reseñas: %v", err)
+	}
+
+	after, avg := read()
+	if after != before+2 {
+		t.Fatalf("ratingCount = %d, se esperaban %d (la oculta no cuenta)", after, before+2)
+	}
+	if avg == nil || *avg < 1 || *avg > 5 {
+		t.Fatalf("rating = %v, se esperaba un promedio entre 1 y 5", avg)
+	}
+
+	// El barbero sin reseñas visibles de la otra barbería no hereda nada.
+	other, _, _ := repo.ListPublicBarbers(ctx, slugBarberoDos, servicioDosBarberoID)
+	for _, b := range other.Items {
+		if b.ID == barberoVariosSegundoID {
+			t.Fatal("la lista de otra barbería no debe incluir al barbero de Uno")
+		}
 	}
 }

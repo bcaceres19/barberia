@@ -234,6 +234,9 @@ interface BarberWire {
   photoUpdatedAt?: string | null
   // Opcional por la misma razón (DEC-127): ausente equivale a "sin descripción".
   description?: string | null
+  // Opcional por la misma razón (DEC-128): ausente equivale a «sin reseñas».
+  rating?: number | null
+  ratingCount?: number
 }
 
 function toBarber(data: BarberWire): Barber {
@@ -244,6 +247,8 @@ function toBarber(data: BarberWire): Barber {
     updatedAt: data.updatedAt,
     photoUpdatedAt: data.photoUpdatedAt ?? null,
     description: data.description ?? null,
+    rating: data.rating ?? null,
+    ratingCount: data.ratingCount ?? 0,
   }
 }
 

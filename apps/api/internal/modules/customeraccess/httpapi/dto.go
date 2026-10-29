@@ -24,6 +24,19 @@ type CustomerAppointmentResponse struct {
 	LateCancellationReasonRequired bool      `json:"lateCancellationReasonRequired"`
 
 	Vocabulary PublicVocabularyResponse `json:"vocabulary"`
+
+	// CanReview y Review (HU-100): la acción «Calificar» solo se ofrece con el
+	// turno completado y sin reseña; Review es la que el cliente ya dejó.
+	CanReview bool                    `json:"canReview"`
+	Review    *CustomerReviewResponse `json:"review"`
+}
+
+// CustomerReviewResponse es la forma de CustomerReview.yaml: lo que el cliente
+// dejó sobre su turno, sin identificadores internos.
+type CustomerReviewResponse struct {
+	Rating    int       `json:"rating"`
+	Comment   *string   `json:"comment"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 // PublicVocabularyResponse es la forma exacta del componente OpenAPI

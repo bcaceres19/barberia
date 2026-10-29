@@ -38,6 +38,7 @@ import {
 import BarberPhotoField from '../components/BarberPhotoField.vue'
 import BarberDescriptionField from '../components/BarberDescriptionField.vue'
 import MyProfileCard from '../components/MyProfileCard.vue'
+import BarberReviewsPanel from '../components/BarberReviewsPanel.vue'
 import { newIdempotencyKey } from '../model/idempotencyKey'
 import type { Barber } from '../model/barber'
 import { NO_PHOTO_CHANGE, type PhotoDraft } from '../model/photoDraft'
@@ -333,6 +334,18 @@ function replaceInList(barber: Barber) {
 // animación de salida y vaciarlo aquí lo dejaría en blanco a media salida.
 const isDetailOpen = ref(false)
 const detailTarget = ref<Barber | null>(null)
+
+// Moderar una reseña cambia el promedio que el servidor calcula (DEC-128): se refleja
+// en la fila y en el detalle sin recargar la página de barberos.
+function onReviewsChanged(
+  barberId: string,
+  summary: { rating: number | null; ratingCount: number },
+) {
+  barbers.value = barbers.value.map((b) => (b.id === barberId ? { ...b, ...summary } : b))
+  if (detailTarget.value?.id === barberId) {
+    detailTarget.value = { ...detailTarget.value, ...summary }
+  }
+}
 
 function openDetailDialog(barber: Barber) {
   detailTarget.value = barber
@@ -754,6 +767,14 @@ async function onSubmitRename() {
           :role-label="v.Professional"
           @edit="openRenameDialog(barbers[0]!)"
         >
+          <template #reviews>
+            <BarberReviewsPanel
+              :barber-id="barbers[0]!.id"
+              :rating="barbers[0]!.rating"
+              :rating-count="barbers[0]!.ratingCount"
+              @changed="onReviewsChanged(barbers[0]!.id, $event)"
+            />
+          </template>
           <template #actions>
             <slot name="barber-actions" :barber="barbers[0]!" />
           </template>
@@ -947,6 +968,12 @@ async function onSubmitRename() {
             <dd>{{ hasPhoto(detailTarget) ? 'Con foto' : 'Sin foto' }}</dd>
           </div>
         </dl>
+        <BarberReviewsPanel
+          :barber-id="detailTarget.id"
+          :rating="detailTarget.rating"
+          :rating-count="detailTarget.ratingCount"
+          @changed="onReviewsChanged(detailTarget.id, $event)"
+        />
         <!-- Vínculo con mi usuario (DEC-100): el control vive DENTRO del área con
              scroll, junto al dato que cambia. Así la ficha no pierde altura en el
              pie y, si en una pantalla baja se vuelve desplazable, la región ya

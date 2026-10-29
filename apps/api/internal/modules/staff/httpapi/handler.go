@@ -300,6 +300,8 @@ func newBarberResponse(b staff.Barber) BarberResponse {
 		UpdatedAt:      b.UpdatedAt,
 		PhotoUpdatedAt: b.PhotoUpdatedAt,
 		Description:    b.Description,
+		Rating:         b.Rating,
+		RatingCount:    b.RatingCount,
 	}
 }
 

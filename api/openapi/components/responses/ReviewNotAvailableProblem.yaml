@@ -1,0 +1,21 @@
+# 409 uniforme de POST /customer/appointments/{token}/review (HU-100, CA-100-01).
+description: >
+  El enlace es válido pero el turno no admite una reseña: no está completado,
+  fue cancelado o ya fue calificado. Nunca se distingue la causa.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      sinReseña:
+        value:
+          type: /api/v1/problems/conflict
+          title: Conflicto
+          status: 409
+          detail: este turno no admite una reseña
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: conflict
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

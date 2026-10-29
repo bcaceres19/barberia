@@ -1,0 +1,30 @@
+# Reseñas visibles de un barbero (HU-100, CA-100-04).
+type: object
+description: >
+  Resumen y las reseñas no ocultas más recientes de un barbero (hasta 20), de la
+  más reciente a la más antigua.
+properties:
+  rating:
+    type:
+      - number
+      - "null"
+    minimum: 1
+    maximum: 5
+    description: Promedio de 1 decimal de las reseñas no ocultas, o `null` sin ninguna.
+    examples:
+      - 4.8
+  ratingCount:
+    type: integer
+    minimum: 0
+    description: Total de reseñas no ocultas (puede superar los elementos devueltos).
+    examples:
+      - 12
+  items:
+    type: array
+    maxItems: 20
+    items:
+      $ref: './PublicReview.yaml'
+required:
+  - rating
+  - ratingCount
+  - items

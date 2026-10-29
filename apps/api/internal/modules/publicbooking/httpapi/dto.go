@@ -75,6 +75,10 @@ type PublicBarberResponse struct {
 	FullName       string     `json:"fullName"`
 	Description    *string    `json:"description"`
 	PhotoUpdatedAt *time.Time `json:"photoUpdatedAt"`
+	// Rating y RatingCount (DEC-128 §5): promedio de 1 decimal y total de las
+	// reseñas no ocultas; rating es null sin ninguna.
+	Rating      *float64 `json:"rating"`
+	RatingCount int      `json:"ratingCount"`
 }
 
 // PublicBarberListResponse es la lista completa de barberos elegibles para

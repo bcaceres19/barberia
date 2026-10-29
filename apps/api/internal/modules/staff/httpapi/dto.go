@@ -25,6 +25,8 @@ type BarberResponse struct {
 	UpdatedAt      time.Time  `json:"updatedAt"`
 	PhotoUpdatedAt *time.Time `json:"photoUpdatedAt"`
 	Description    *string    `json:"description"`
+	Rating         *float64   `json:"rating"`
+	RatingCount    int        `json:"ratingCount"`
 }
 
 // BarberListResponse es la página paginada por cursor de GET /private/barbers

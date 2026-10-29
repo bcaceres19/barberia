@@ -47,6 +47,14 @@ export async function getCustomerAppointment(
           professionalTermPlural: data.vocabulary.professionalTermPlural,
           professionalTermGender: data.vocabulary.professionalTermGender,
         },
+        canReview: data.canReview,
+        review: data.review
+          ? {
+              rating: data.review.rating,
+              comment: data.review.comment,
+              createdAt: data.review.createdAt,
+            }
+          : null,
       }
       return { kind: 'success', appointment }
     }

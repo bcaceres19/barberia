@@ -452,3 +452,103 @@
         $ref: '../components/responses/UnauthorizedProblem.yaml'
       "500":
         $ref: '../components/responses/InternalErrorProblem.yaml'
+
+/private/barbers/{barberId}/reviews:
+  get:
+    tags: [Staff]
+    summary: Listar las reseñas de un barbero para moderarlas
+    description: >
+      Todas las reseñas del barbero, ocultas incluidas y con su fecha de
+      ocultamiento, de la más reciente a la más antigua (hasta 100), más el
+      promedio y el total públicos (HU-100, `CA-100-05`, `DEC-128`). Un
+      identificador inexistente o de otra barbería responde el mismo `404`
+      (`RN-TEN-01`).
+    operationId: listBarberReviews
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-024, DEC-128]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+    responses:
+      "200":
+        $ref: '../components/responses/ReviewListSuccess.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+/private/barbers/{barberId}/reviews/{reviewId}:
+  patch:
+    tags: [Staff]
+    summary: Ocultar o volver a mostrar una reseña
+    description: >
+      El barbero o el propietario oculta (`hidden: true`) una reseña ofensiva o
+      falsa, o la vuelve a mostrar (`hidden: false`) (HU-100, `CA-100-05`,
+      `DEC-128`, mismo patrón reversible que quitar la foto, `DEC-104`). Ocultar
+      la retira del promedio y de la lista pública de inmediato, pero la fila se
+      conserva con su fecha; mostrarla de nuevo la reincorpora sin perder su
+      contenido. Repetir la misma orden deja el mismo estado. Una reseña
+      inexistente, de otro barbero o de otra barbería responde el mismo `404`.
+    operationId: updateBarberReview
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-024, DEC-104, DEC-128]
+    parameters:
+      - name: barberId
+        in: path
+        required: true
+        description: Identificador del barbero.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          barbero:
+            value: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+      - name: reviewId
+        in: path
+        required: true
+        description: Identificador de la reseña.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          reseña:
+            value: 1b2c3d4e-5f60-4718-8293-a4b5c6d7e8f9
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/UpdateReviewRequest.yaml'
+          examples:
+            ocultar:
+              value:
+                hidden: true
+            mostrar:
+              value:
+                hidden: false
+    responses:
+      "200":
+        $ref: '../components/responses/ReviewUpdated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "422":
+        $ref: '../components/responses/ValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

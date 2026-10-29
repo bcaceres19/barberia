@@ -4,6 +4,31 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.40.0 · 2026-10-31
+
+### Añadido
+
+- Reseñas internas por barbero (`DEC-128`, `HU-100`).
+  `POST /customer/appointments/{token}/review` guarda la calificación (1–5) y el
+  comentario opcional (≤500 caracteres) de un turno `completed` sin reseña:
+  `404` uniforme para un enlace inválido, `409` uniforme para un turno que no
+  admite reseña (no completado, cancelado o ya calificado) y `422` para una
+  calificación ausente/fuera de rango o un comentario largo.
+- `GET /public/barbershops/{slug}/barbers/{barberId}/reviews` devuelve el
+  promedio, el total y hasta 20 reseñas visibles.
+- `GET /private/barbers/{barberId}/reviews` y
+  `PATCH /private/barbers/{barberId}/reviews/{reviewId}` (`hidden`) listan y
+  moderan las reseñas; ocultar es reversible y no borra la fila.
+- `BarberResponse` y `PublicBarberResponse` suman `rating` (promedio de 1 decimal
+  o `null`) y `ratingCount`, ambos obligatorios, calculados sobre las reseñas no
+  ocultas. `CustomerAppointmentResponse` suma `canReview` y `review`, también
+  obligatorios.
+
+### Compatibilidad
+
+- Los campos nuevos de respuesta son aditivos; un cliente que ignora
+  propiedades desconocidas no se rompe. Las cuatro operaciones son nuevas.
+
 ## 0.39.0 · 2026-10-30
 
 ### Añadido

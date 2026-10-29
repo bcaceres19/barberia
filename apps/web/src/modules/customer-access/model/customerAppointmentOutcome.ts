@@ -46,6 +46,13 @@ export const APPOINTMENT_STATUS_BADGE_VARIANT: Record<
   no_show: 'warning',
 }
 
+/** La reseña que el cliente dejó sobre su turno (HU-100): sin identificadores. */
+export interface CustomerReview {
+  rating: number
+  comment: string | null
+  createdAt: string
+}
+
 /** Lectura mínima del turno del cliente (CA-098-01, CA-098-03): nunca un
  * identificador interno, contacto del cliente, nota ni historial. */
 export interface CustomerAppointment {
@@ -63,6 +70,10 @@ export interface CustomerAppointment {
   lateCancellationReasonRequired: boolean
   /** Palabras con las que la barbería nombra a su negocio y a su profesional (DEC-119). */
   vocabulary: VocabularyTerms
+  /** «Calificar» solo se ofrece con el turno completado y sin reseña (HU-100, CA-100-01). */
+  canReview: boolean
+  /** La reseña que el cliente ya dejó sobre este turno, o `null`. */
+  review: CustomerReview | null
 }
 
 /** Resultado discriminado de resolver un token de acceso contra el API
@@ -72,6 +83,26 @@ export interface CustomerAppointment {
  * aplicación ya usa (ver public-booking/model/barbershopProfileOutcome.ts). */
 export type GetCustomerAppointmentOutcome =
   | { kind: 'success'; appointment: CustomerAppointment }
+  | { kind: 'not-found' }
+  | { kind: 'network-error' }
+  | { kind: 'unexpected-error'; requestId?: string }
+
+/** Lo que el cliente envía al calificar (HU-100, CA-100-02). */
+export interface ReviewInput {
+  rating: number
+  /** Texto libre ya recortado; `null` si no escribió nada. */
+  comment: string | null
+}
+
+/**
+ * Resultado de calificar el turno (HU-100). `not-reviewable` es el `409`
+ * uniforme (turno no completado, cancelado o ya calificado); `not-found` el `404`
+ * del enlace; `validation-error` el `422`. Ninguno expone la forma RFC 9457.
+ */
+export type CreateReviewOutcome =
+  | { kind: 'success'; review: CustomerReview }
+  | { kind: 'validation-error' }
+  | { kind: 'not-reviewable' }
   | { kind: 'not-found' }
   | { kind: 'network-error' }
   | { kind: 'unexpected-error'; requestId?: string }

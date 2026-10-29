@@ -1158,6 +1158,13 @@ lo necesita para layout; la apariencia semántica solo se elige con `variant`
 - **Mapa** (`src/shared/ui/LocationMap.vue`, `src/shared/model/mapEmbed.ts`): iframe de Google Maps Embed con `title`, la dirección en texto y un enlace «Abrir en Google Maps». Clave de navegador en `VITE_GOOGLE_MAPS_BROWSER_KEY` (restringida por dominio y a Maps Embed API; no es secreto). Sin clave, el mapa sin clave solo se usa en desarrollo (`import.meta.env.DEV`); en producción la sección se oculta.
 - **Pruebas**: `src/shared/model/__tests__/mapEmbed.test.ts`, `ui/__tests__/LocationMap.test.ts`, bloque «ubicación» de `SettingsPage.test.ts` y `PublicBarbershopEntryPage.test.ts`, y `e2e/ubicacion-reserva-publica.spec.ts` (con y sin ubicación, 320/360/768/1280, axe).
 
+## Reseñas por barbero (HU-100, DEC-128)
+
+- **Cliente** (`/mi-turno/:token`): con `canReview` el turno completado muestra «Califica a …» (`customer-access/components/AppointmentReview.vue`): estrellas 1–5 (`shared/ui/StarRatingInput.vue`, radios nativos), comentario opcional con contador /500 y aviso de no escribir datos personales. Tras enviar (o si ya existe) se muestra de solo lectura. Un `409` o `404` recarga el turno.
+- **Reserva pública** (`/reservar/:slug/servicios/:serviceId/barbero`): promedio con `shared/ui/StarRating.vue` solo si hay reseñas visibles, y «Ver reseñas» (`public-booking/components/BarberReviews.vue`) del barbero elegido, fuera del `radiogroup`; la lista se pide al abrirla.
+- **Panel** (detalle del barbero y ficha del perfil individual): `staff/components/BarberReviewsPanel.vue` muestra el promedio y todas las reseñas, las ocultas con su fecha, y permite ocultar/mostrar; el promedio lo recalcula el servidor.
+- **Pruebas**: `shared/model/__tests__/rating.test.ts`, `shared/ui/__tests__/StarRating*.test.ts`, componentes de cada módulo y `e2e/resenas-barbero.spec.ts` (calificar, ver y ocultar con respuestas simuladas, 320/360/768/1280, axe).
+
 ## Requisitos
 
 - Node.js 20 o superior.

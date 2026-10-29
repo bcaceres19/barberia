@@ -1,0 +1,43 @@
+# Una reseña vista por quien modera en el panel (HU-100, CA-100-05).
+type: object
+description: >
+  Reseña con su identificador y la fecha de ocultamiento. Una oculta sigue
+  visible en el panel con su fecha y no cuenta en el promedio público.
+properties:
+  id:
+    type: string
+    format: uuid
+    examples:
+      - 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+  rating:
+    type: integer
+    minimum: 1
+    maximum: 5
+    examples:
+      - 2
+  comment:
+    type:
+      - string
+      - "null"
+    maxLength: 500
+    examples:
+      - null
+  hiddenAt:
+    type:
+      - string
+      - "null"
+    format: date-time
+    description: Momento en que se ocultó; `null` si está visible.
+    examples:
+      - null
+  createdAt:
+    type: string
+    format: date-time
+    examples:
+      - "2027-03-15T16:10:00Z"
+required:
+  - id
+  - rating
+  - comment
+  - hiddenAt
+  - createdAt

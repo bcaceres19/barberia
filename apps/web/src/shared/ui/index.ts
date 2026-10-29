@@ -22,6 +22,8 @@ export { default as OtpInput } from './OtpInput.vue'
 export { default as PageHeader } from './PageHeader.vue'
 export { default as PageState } from './PageState.vue'
 export { default as RecordRow } from './RecordRow.vue'
+export { default as StarRating } from './StarRating.vue'
+export { default as StarRatingInput } from './StarRatingInput.vue'
 
 // Tipos TypeScript para los componentes
 export type {} from './BaseButton.vue'

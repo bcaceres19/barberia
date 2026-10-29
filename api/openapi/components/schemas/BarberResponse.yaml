@@ -64,6 +64,25 @@ properties:
     examples:
       - Fade, barba y navaja con más de diez años en el oficio.
       - null
+  rating:
+    type:
+      - number
+      - "null"
+    minimum: 1
+    maximum: 5
+    description: >
+      Promedio de 1 decimal de las reseñas no ocultas del barbero (`DEC-128`),
+      o `null` mientras no tenga ninguna visible. Se calcula en cada consulta.
+    examples:
+      - 4.8
+      - null
+  ratingCount:
+    type: integer
+    minimum: 0
+    description: Total de reseñas no ocultas del barbero (`DEC-128`); `0` sin ninguna.
+    examples:
+      - 12
+
 required:
   - id
   - fullName
@@ -71,3 +90,5 @@ required:
   - updatedAt
   - photoUpdatedAt
   - description
+  - rating
+  - ratingCount

@@ -137,7 +137,7 @@ func createTestAppointment(t *testing.T, db *database.DB, shopID, barberID, serv
 
 	if status != booking.StatusConfirmed {
 		err := db.InTenantTx(context.Background(), database.BarbershopID(shopID), func(ctx context.Context, q database.Queries) error {
-			_, err := q.Exec(ctx, `UPDATE appointment SET status = $1 WHERE id = $2`, string(status), appointment.ID)
+			_, err := q.Exec(ctx, `UPDATE appointment SET status = $1, resolved_at = now() WHERE id = $2`, string(status), appointment.ID)
 			return err
 		})
 		if err != nil {
@@ -391,5 +391,44 @@ func TestResolveAppointmentByTokenHash_Vocabulary_PerTenant(t *testing.T) {
 		v.ProfessionalTerm != "tatuadora" || v.ProfessionalTermPlural != "tatuadoras" ||
 		v.ProfessionalTermGender != "feminine" {
 		t.Fatalf("shopDos debe traer su propio vocabulario: %+v", v)
+	}
+}
+
+// HU-100 (CA-100-01): «Calificar» solo se ofrece con el turno completado y sin
+// reseña; con la reseña ya dejada, la vista la trae y deja de ofrecerla.
+func TestResolveAppointmentByTokenHash_CanReview_FollowsStatusAndExistingReview(t *testing.T) {
+	db := setupTestDB(t)
+	repo := customeraccesspostgres.New(db)
+	hashOf := func(plain string) string {
+		sum := sha256.Sum256([]byte(plain))
+		return hex.EncodeToString(sum[:])
+	}
+
+	confirmed := createTestAppointment(t, db, shopUno, barberUno, serviceUno, booking.StatusConfirmed)
+	view, found, err := repo.ResolveAppointmentByTokenHash(context.Background(),
+		hashOf(insertAccessToken(t, db, shopUno, confirmed.ID, tokenState{expiresIn: 90 * 24 * time.Hour})))
+	if err != nil || !found || view.CanReview || view.Review != nil {
+		t.Fatalf("confirmado: found=%v err=%v canReview=%v review=%v", found, err, view.CanReview, view.Review)
+	}
+
+	completed := createTestAppointment(t, db, shopUno, barberUno, serviceUno, booking.StatusCompleted)
+	plain := insertAccessToken(t, db, shopUno, completed.ID, tokenState{expiresIn: 90 * 24 * time.Hour})
+	view, found, err = repo.ResolveAppointmentByTokenHash(context.Background(), hashOf(plain))
+	if err != nil || !found || !view.CanReview || view.Review != nil {
+		t.Fatalf("completado sin reseña: found=%v err=%v canReview=%v review=%v", found, err, view.CanReview, view.Review)
+	}
+
+	err = db.InTenantTx(context.Background(), database.BarbershopID(shopUno), func(ctx context.Context, q database.Queries) error {
+		_, err := q.Exec(ctx,
+			`INSERT INTO barber_review (barbershop_id, barber_id, appointment_id, rating, comment) VALUES ($1, $2, $3, 4, 'Bien')`,
+			shopUno, barberUno, completed.ID)
+		return err
+	})
+	if err != nil {
+		t.Fatalf("insertar reseña: %v", err)
+	}
+	view, _, err = repo.ResolveAppointmentByTokenHash(context.Background(), hashOf(plain))
+	if err != nil || view.CanReview || view.Review == nil || view.Review.Rating != 4 || view.Review.Comment == nil || *view.Review.Comment != "Bien" {
+		t.Fatalf("completado con reseña: err=%v canReview=%v review=%+v", err, view.CanReview, view.Review)
 	}
 }
