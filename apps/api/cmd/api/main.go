@@ -529,9 +529,21 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	// appointment_access_token/appointment/barber/barbershop directamente,
 	// sin importar booking ni publicbooking (mismo criterio de
 	// independencia entre módulos que el resto de cmd/api).
-	customerAppointmentService := customeraccess.NewService(customeraccesspostgres.New(db))
+	//
+	// HU-099: la cancelación del cliente (T5) resuelve el mismo token en
+	// customeraccess y delega en booking mediante
+	// booking.NewCustomerAppointmentCancellerAdapter (booking es dueño de la
+	// transacción, la política y el historial). El versionToken de la lectura
+	// usa booking.EncodeVersionToken, el mismo cálculo que valida booking.
+	cancelByCustomerService := booking.NewCancelAppointmentByCustomerService(bookingRepo, clock.System{}.Now)
+	customerAppointmentService := customeraccess.NewService(
+		customeraccesspostgres.New(db),
+		customeraccess.WithVersionTokens(booking.EncodeVersionToken),
+		customeraccess.WithCanceller(booking.NewCustomerAppointmentCancellerAdapter(cancelByCustomerService)),
+	)
 	getCustomerAppointmentHandler := customeraccesshttpapi.NewGetAppointmentHandler(customerAppointmentService)
 	router.Get("/api/v1/customer/appointments/{token}", getCustomerAppointmentHandler.ServeHTTP)
+	router.Post("/api/v1/customer/appointments/{token}/cancel", customeraccesshttpapi.NewCancelAppointmentHandler(customerAppointmentService).ServeHTTP)
 
 	// HU-100 (DEC-128): reseñas internas por barbero. Crear (cliente, por el token
 	// del enlace), listar las visibles (público) y moderar (panel) comparten un

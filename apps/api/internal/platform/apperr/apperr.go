@@ -92,6 +92,17 @@ const (
 	// correspondiente es "slot-conflict" (docs/06-api/estandar-openapi.md
 	// sección 5, ejemplo normativo).
 	KindScheduleConflict Kind = "schedule_conflict"
+	// KindCancellationWindowClosed cubre HU-099 (RN-CAN-01, RN-CAN-02): el
+	// reloj del servidor ya pasó el plazo de cancelación propia del cliente y
+	// la política de la barbería no permite cancelar fuera de plazo (o el
+	// turno ya empezó). Distinto de KindInvalidState: el turno sigue
+	// confirmado, es la política la que rechaza, y la interfaz debe indicar
+	// al cliente que contacte a la barbería. Código: "cancellation-window-closed".
+	KindCancellationWindowClosed Kind = "cancellation_window_closed"
+	// KindCancellationReasonRequired cubre HU-099 (RN-CAN-02, CA-099-03): la
+	// cancelación es válida pero la política exige un motivo y no llegó o
+	// llegó en blanco. Código: "cancellation-reason-required".
+	KindCancellationReasonRequired Kind = "cancellation_reason_required"
 )
 
 // Error es el error de aplicación que domain/servicios devuelven.
@@ -205,6 +216,16 @@ func InvalidState(message string) *Error {
 // que puede llegar al cliente.
 func ScheduleConflict(message string) *Error {
 	return &Error{Kind: KindScheduleConflict, Message: message}
+}
+
+// CancellationWindowClosed construye el rechazo de política de HU-099.
+func CancellationWindowClosed(message string) *Error {
+	return &Error{Kind: KindCancellationWindowClosed, Message: message}
+}
+
+// CancellationReasonRequired construye el rechazo por motivo faltante de HU-099.
+func CancellationReasonRequired(message string) *Error {
+	return &Error{Kind: KindCancellationReasonRequired, Message: message}
 }
 
 // As extrae un *Error de la cadena de err, igual que errors.As.

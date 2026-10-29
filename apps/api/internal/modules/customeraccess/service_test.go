@@ -16,9 +16,11 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"system-barbershop/internal/modules/customeraccess"
 	"system-barbershop/internal/platform/apperr"
+	"system-barbershop/internal/platform/idempotency"
 )
 
 type fakeRepository struct {
@@ -26,6 +28,15 @@ type fakeRepository struct {
 	found bool
 	err   error
 	calls []string
+
+	target      customeraccess.CancellationTarget
+	targetFound bool
+	targetCalls []string
+}
+
+func (f *fakeRepository) ResolveCancellationTarget(_ context.Context, tokenHash string) (customeraccess.CancellationTarget, bool, error) {
+	f.targetCalls = append(f.targetCalls, tokenHash)
+	return f.target, f.targetFound, f.err
 }
 
 func (f *fakeRepository) ResolveAppointmentByTokenHash(_ context.Context, tokenHash string) (customeraccess.AppointmentView, bool, error) {
@@ -109,5 +120,110 @@ func assertUniformNotFound(t *testing.T, err error) {
 	appErr, ok := apperr.As(err)
 	if !ok || appErr.Kind != apperr.KindNotFound {
 		t.Fatalf("err = %v, want apperr.KindNotFound", err)
+	}
+}
+
+type fakeCanceller struct {
+	calls []cancelCall
+	err   error
+}
+
+type cancelCall struct {
+	shop, appointment, version, reason string
+	key                                idempotency.Key
+}
+
+func (f *fakeCanceller) CancelAppointment(
+	_ context.Context, barbershopID, appointmentID, expectedVersionToken, reason string,
+	key idempotency.Key, _ idempotency.Fingerprint,
+) (idempotency.Decision, idempotency.StoredResponse, error) {
+	f.calls = append(f.calls, cancelCall{barbershopID, appointmentID, expectedVersionToken, reason, key})
+	if f.err != nil {
+		return idempotency.Decision{}, idempotency.StoredResponse{}, f.err
+	}
+	return idempotency.Decision{Outcome: idempotency.OutcomeProceed}, idempotency.StoredResponse{Status: 200, Body: `{"status":"cancelled_by_customer"}`}, nil
+}
+
+func TestServiceGetAppointmentByTokenEmitsVersionTokenFromInjectedEncoder(t *testing.T) {
+	updated := time.Date(2026, 11, 1, 10, 0, 0, 0, time.UTC)
+	repo := &fakeRepository{found: true, view: customeraccess.AppointmentView{AppointmentID: "appt-1", UpdatedAt: updated}}
+	svc := customeraccess.NewService(repo, customeraccess.WithVersionTokens(func(id string, at time.Time) string {
+		return id + "@" + at.Format(time.RFC3339)
+	}))
+
+	got, err := svc.GetAppointmentByToken(context.Background(), "token-en-claro")
+	if err != nil {
+		t.Fatalf("GetAppointmentByToken: %v", err)
+	}
+	if got.VersionToken != "appt-1@2026-11-01T10:00:00Z" {
+		t.Fatalf("VersionToken = %q", got.VersionToken)
+	}
+}
+
+func TestServiceCancelAppointmentResolvesTargetByHashAndDelegates(t *testing.T) {
+	repo := &fakeRepository{target: customeraccess.CancellationTarget{BarbershopID: "shop-1", AppointmentID: "appt-1"}, targetFound: true}
+	canceller := &fakeCanceller{}
+	svc := customeraccess.NewService(repo, customeraccess.WithCanceller(canceller))
+
+	decision, stored, err := svc.CancelAppointment(context.Background(), " token-en-claro ", "v1", "me surgió algo", "key-1", "fp-1")
+	if err != nil {
+		t.Fatalf("CancelAppointment: %v", err)
+	}
+	if decision.Outcome != idempotency.OutcomeProceed || stored.Status != 200 {
+		t.Fatalf("decision=%+v stored=%+v", decision, stored)
+	}
+	if len(repo.targetCalls) != 1 || repo.targetCalls[0] != hashOf("token-en-claro") {
+		t.Fatalf("hash enviado = %v, want SHA-256 del token recortado", repo.targetCalls)
+	}
+	want := cancelCall{"shop-1", "appt-1", "v1", "me surgió algo", "key-1"}
+	if len(canceller.calls) != 1 || canceller.calls[0] != want {
+		t.Fatalf("calls = %+v, want %+v", canceller.calls, want)
+	}
+}
+
+func TestServiceCancelAppointmentHidesWhyTheTokenIsNotUsable(t *testing.T) {
+	for name, token := range map[string]string{
+		"vacío":         "   ",
+		"demasiado":     strings.Repeat("a", customeraccess.MaxTokenLength+1),
+		"inexistente":   "token-que-no-existe",
+		"hash revocado": "token-revocado",
+	} {
+		t.Run(name, func(t *testing.T) {
+			repo := &fakeRepository{targetFound: false}
+			canceller := &fakeCanceller{}
+			svc := customeraccess.NewService(repo, customeraccess.WithCanceller(canceller))
+
+			_, _, err := svc.CancelAppointment(context.Background(), token, "v1", "", "key-1", "fp-1")
+			appErr, ok := apperr.As(err)
+			if !ok || appErr.Kind != apperr.KindNotFound {
+				t.Fatalf("esperaba NotFound uniforme, obtuvo %v", err)
+			}
+			if len(canceller.calls) != 0 {
+				t.Fatal("no debió intentar cancelar nada")
+			}
+		})
+	}
+}
+
+func TestServiceCancelAppointmentPropagatesPolicyRejection(t *testing.T) {
+	repo := &fakeRepository{target: customeraccess.CancellationTarget{BarbershopID: "shop-1", AppointmentID: "appt-1"}, targetFound: true}
+	canceller := &fakeCanceller{err: apperr.CancellationWindowClosed("fuera de plazo")}
+	svc := customeraccess.NewService(repo, customeraccess.WithCanceller(canceller))
+
+	_, _, err := svc.CancelAppointment(context.Background(), "token", "v1", "", "key-1", "fp-1")
+	appErr, ok := apperr.As(err)
+	if !ok || appErr.Kind != apperr.KindCancellationWindowClosed {
+		t.Fatalf("esperaba el rechazo de política, obtuvo %v", err)
+	}
+}
+
+func TestServiceCancelAppointmentRepositoryFailureIsInternal(t *testing.T) {
+	repo := &fakeRepository{err: errors.New("boom")}
+	svc := customeraccess.NewService(repo, customeraccess.WithCanceller(&fakeCanceller{}))
+
+	_, _, err := svc.CancelAppointment(context.Background(), "token", "v1", "", "key-1", "fp-1")
+	appErr, ok := apperr.As(err)
+	if !ok || appErr.Kind != apperr.KindInternal {
+		t.Fatalf("esperaba Internal, obtuvo %v", err)
 	}
 }

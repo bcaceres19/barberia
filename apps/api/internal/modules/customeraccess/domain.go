@@ -30,6 +30,19 @@ type AppointmentView struct {
 	LateCancellationReasonRequired bool
 	Vocabulary                     Vocabulary
 
+	// BarbershopContactEmail/Phone son el contacto público opcional de la
+	// barbería (HU-020, el mismo que ya muestra la reserva pública): es el
+	// «contacto seguro» al que el cliente acude cuando la política rechaza su
+	// cancelación (CA-099-06, RN-CAN-01).
+	BarbershopContactEmail *string
+	BarbershopContactPhone *string
+
+	// AppointmentID y UpdatedAt son internos: solo sirven para calcular
+	// VersionToken (If-Match de la cancelación, HU-099) y nunca se serializan.
+	AppointmentID string
+	UpdatedAt     time.Time
+	VersionToken  string
+
 	// CanReview es verdadero solo con el turno `completed` y sin reseña (HU-100,
 	// CA-100-01); Review trae la que el cliente ya dejó, si existe.
 	CanReview bool
@@ -57,4 +70,12 @@ type Vocabulary struct {
 	ProfessionalTerm       string
 	ProfessionalTermPlural string
 	ProfessionalTermGender string
+}
+
+// CancellationTarget es el turno al que un token vigente da acceso, resuelto
+// para ejecutar la cancelación del cliente (HU-099). Son identificadores
+// internos: nunca salen del servidor.
+type CancellationTarget struct {
+	BarbershopID  string
+	AppointmentID string
 }

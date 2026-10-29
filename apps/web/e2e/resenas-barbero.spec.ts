@@ -145,6 +145,9 @@ async function installApi(page: Page, initial: StoredReview[] = []) {
         cancellationDeadlineMinutes: 20,
         lateCancellationClientAllowed: true,
         lateCancellationReasonRequired: true,
+        versionToken: 'version-token-1',
+        barbershopContactEmail: null,
+        barbershopContactPhone: null,
         vocabulary: INITIAL_VOCABULARY,
         canReview: myReview === null,
         review: myReview

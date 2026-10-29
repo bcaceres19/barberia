@@ -144,6 +144,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/customer/appointments/{token}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancelar el turno por el cliente (T5)
+         * @description El cliente cancela su turno `confirmed` con la credencial del enlace y sin sesión (`HU-099`, `T5` de `estados-citas.md`). Solo procede si la política VIGENTE de la barbería lo autoriza, evaluada con el reloj del servidor y nunca con uno enviado por el cliente (`RN-CAN-01`, `RN-CAN-02`): hasta `startsAt - cancellationDeadlineMinutes` inclusive es dentro de plazo; después y antes de `startsAt` solo procede con `lateCancellationClientAllowed` y, si `lateCancellationReasonRequired`, con un `reason` no vacío; con el turno ya iniciado nunca procede. Un plazo de 0 minutos trata toda cancelación como tardía (`DEC-083`). Protegida con `Idempotency-Key` (`RN-IDE-01`, `DEC-043`) y con la precondición `If-Match` (el `versionToken` de `GET`): una repetición exacta reproduce la respuesta sin duplicar el historial. En una sola transacción el turno pasa a `cancelled_by_customer`, se registra el motivo y un único evento con actor cliente, y el enlace queda revocado (`DEC-089`): desde ese instante `GET` y cualquier repetición con ese enlace responden el `404` uniforme. La franja vuelve de inmediato a la disponibilidad pública (`HU-094`). Un `token` inexistente, vencido o revocado responde el mismo `404` uniforme que `GET`, sin revelar la causa. Notificar al barbero queda para B5.
+         */
+        post: operations["cancelCustomerAppointment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/customer/appointments/{token}/review": {
         parameters: {
             query?: never;
@@ -2239,6 +2259,15 @@ export interface components {
              * @example true
              */
             lateCancellationReasonRequired: boolean;
+            /**
+             * @description Token opaco de versión del turno (`HU-099`): se envía tal cual como `If-Match` al cancelar. Nunca se decodifica ni se persiste; si el turno cambió desde esta lectura, la cancelación responde `409` con `code: version-conflict`.
+             * @example 3n9Kq1x2v8pQwZbJt5Yc0Rr6Hh4Ss7Ff1Gg3Dd8Ee2Aa
+             */
+            versionToken: string;
+            /** @description Correo público opcional de la barbería (`HU-020`, el mismo de la reserva pública): el contacto seguro al que acudir cuando la política rechaza la cancelación (`CA-099-06`). `null` si no lo configuró. */
+            barbershopContactEmail: string | null;
+            /** @description Teléfono público opcional de la barbería; mismo propósito que `barbershopContactEmail`. */
+            barbershopContactPhone: string | null;
             vocabulary: components["schemas"]["PublicVocabulary"];
             /**
              * @description `true` solo con el turno `completed` y sin reseña todavía (`HU-100`, `CA-100-01`): es la señal para ofrecer «Calificar».
@@ -2247,6 +2276,22 @@ export interface components {
             canReview: boolean;
             /** @description La reseña que el cliente ya dejó sobre este turno, o `null`. */
             review: components["schemas"]["CustomerReview"] | null;
+        };
+        /** @description Motivo de la cancelación. Obligatorio solo cuando la política vigente lo exige (cancelación fuera de plazo con `lateCancellationReasonRequired`); en cualquier otro caso es opcional y, si llega en blanco, se trata como ausente. El cuerpo completo puede omitirse. */
+        CancelCustomerAppointmentRequest: {
+            /**
+             * @description Motivo en texto libre, de hasta 500 caracteres tras recortar espacios.
+             * @example Me surgió un imprevisto de trabajo.
+             */
+            reason?: string | null;
+        };
+        /** @description Resultado de la cancelación del cliente. */
+        CustomerAppointmentCancelled: {
+            /**
+             * @description Estado terminal en el que quedó el turno.
+             * @enum {string}
+             */
+            status: "cancelled_by_customer";
         };
         /** @description Reseña del cliente sobre el barbero que lo atendió. Cerrado: cualquier otro campo se rechaza. Nunca lleva datos del cliente: el turno sale del `token`. */
         CreateReviewRequest: {
@@ -4069,6 +4114,28 @@ export interface components {
                 "application/json": components["schemas"]["CustomerAppointmentResponse"];
             };
         };
+        /** @description El turno quedó `cancelled_by_customer` (o ya lo estaba: la operación es idempotente y no agrega otra entrada de historial). El enlace deja de ser accesible: tanto `GET` como repetir la cancelación con un enlace ya revocado responden el `404` uniforme (DEC-089). */
+        CustomerAppointmentCancelled: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                /** @description Siempre `no-store` (RN-DAT-02). */
+                "Cache-Control"?: "no-store";
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["CustomerAppointmentCancelled"];
+            };
+        };
+        /** @description Tres rechazos distinguibles por `code`, nunca por `detail`: `cancellation-window-closed` (el plazo venció y la política no permite cancelar fuera de plazo, o el turno ya empezó: el cliente debe contactar a la barbería, `barbershopContactEmail`/`barbershopContactPhone`), `cancellation-reason-required` (la cancelación fuera de plazo exige un motivo y no llegó o llegó en blanco) y `validation-error` (el motivo excede 500 caracteres). */
+        CancellationRejectedProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
         /** @description Reseña guardada; ya cuenta en el promedio público del barbero. */
         ReviewCreated: {
             headers: {
@@ -4964,6 +5031,44 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    cancelCustomerAppointment: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Clave elegida por el cliente que identifica un intento de escritura crítica. Repetir la misma clave con el mismo contenido (método, ruta y cuerpo) reproduce la respuesta original sin ejecutar el efecto de nuevo. Repetirla con contenido distinto es un conflicto: usa una clave nueva para una solicitud distinta. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                /** @description Token opaco de versión de la representación que el cliente leyó antes de esta escritura (`versionToken` de la respuesta de detalle). Si ya no coincide con la versión vigente del recurso, la operación responde `409` con `code: version-conflict`. */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                /** @description Credencial en claro del enlace de acceso al turno (DEC-089). */
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CancelCustomerAppointmentRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["CustomerAppointmentCancelled"];
+            400: components["responses"]["InvalidRequestProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            /** @description Tres conflictos distinguibles por `code`, nunca por `detail`: conflicto de idempotencia (misma clave con otro contenido u otra operación) u operación en curso con la misma clave; conflicto de versión (`code: version-conflict`, el `If-Match` ya no coincide: el turno cambió desde que se leyó); o estado inválido (`code: invalid-state`, el turno ya no está `confirmed`, p. ej. ya lo resolvió el barbero). */
+            409: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["CancellationRejectedProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

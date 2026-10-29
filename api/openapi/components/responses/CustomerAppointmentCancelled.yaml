@@ -1,0 +1,22 @@
+# Respuesta 200 de POST /customer/appointments/{token}/cancel (HU-099, T5).
+description: >
+  El turno quedó `cancelled_by_customer` (o ya lo estaba: la operación es
+  idempotente y no agrega otra entrada de historial). El enlace deja de ser
+  accesible: tanto `GET` como repetir la cancelación con un enlace ya
+  revocado responden el `404` uniforme (DEC-089).
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+  Cache-Control:
+    description: Siempre `no-store` (RN-DAT-02).
+    schema:
+      type: string
+      enum: [no-store]
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/CustomerAppointmentCancelled.yaml'
+    examples:
+      cancelado:
+        value:
+          status: cancelled_by_customer

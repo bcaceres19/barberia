@@ -7,12 +7,20 @@
 package httpapi
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 
 	"system-barbershop/internal/modules/customeraccess"
+	"system-barbershop/internal/platform/apperr"
 	"system-barbershop/internal/platform/httpserver"
+	"system-barbershop/internal/platform/idempotency"
 )
+
+// ifMatchHeader lleva el versionToken que el cliente leyó (HU-099).
+const ifMatchHeader = "If-Match"
 
 // tokenParam es el nombre del parámetro de ruta que cmd/api.buildRouter
 // registra para /customer/appointments/{token} (HU-098).
@@ -73,6 +81,9 @@ func newCustomerAppointmentResponse(v customeraccess.AppointmentView) CustomerAp
 		StartsAt:                       v.StartsAt,
 		EndsAt:                         v.EndsAt,
 		Status:                         v.Status,
+		VersionToken:                   v.VersionToken,
+		BarbershopContactEmail:         v.BarbershopContactEmail,
+		BarbershopContactPhone:         v.BarbershopContactPhone,
 		CancellationDeadlineMinutes:    v.CancellationDeadlineMinutes,
 		LateCancellationClientAllowed:  v.LateCancellationClientAllowed,
 		LateCancellationReasonRequired: v.LateCancellationReasonRequired,
@@ -83,5 +94,79 @@ func newCustomerAppointmentResponse(v customeraccess.AppointmentView) CustomerAp
 			ProfessionalTermPlural: v.Vocabulary.ProfessionalTermPlural,
 			ProfessionalTermGender: v.Vocabulary.ProfessionalTermGender,
 		},
+	}
+}
+
+// CancelAppointmentHandler expone POST /customer/appointments/{token}/cancel
+// (HU-099, T5): el cliente cancela su turno con la credencial del enlace, sin
+// sesión, protegido por Idempotency-Key (RN-IDE-01, DEC-043) y por la
+// precondición de versión If-Match. Reloj, política, estado y actor los decide
+// el servidor; el cuerpo solo puede traer `reason`.
+type CancelAppointmentHandler struct {
+	service *customeraccess.Service
+}
+
+// NewCancelAppointmentHandler construye el handler de cancelación.
+func NewCancelAppointmentHandler(service *customeraccess.Service) *CancelAppointmentHandler {
+	return &CancelAppointmentHandler{service: service}
+}
+
+// ServeHTTP implementa http.Handler. Valida cabeceras y cuerpo ANTES de tocar
+// la base (ninguna revela nada sobre el token) y nunca registra el token.
+func (h *CancelAppointmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+	w.Header().Set("Cache-Control", "no-store")
+	fail := func(err error) {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+	}
+
+	key, err := httpserver.IdempotencyKeyFromRequest(r)
+	if err != nil {
+		fail(err)
+		return
+	}
+	versionToken := r.Header.Get(ifMatchHeader)
+	if versionToken == "" {
+		fail(apperr.Invalid("falta la cabecera If-Match con el token de versión del turno"))
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			fail(err)
+			return
+		}
+		fail(apperr.Invalid("cuerpo de la solicitud ilegible"))
+		return
+	}
+	reason := ""
+	if len(bytes.TrimSpace(body)) > 0 {
+		var req CancelAppointmentRequest
+		dec := json.NewDecoder(bytes.NewReader(body))
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(&req); err != nil || dec.More() {
+			fail(apperr.Invalid("el cuerpo debe ser un objeto JSON válido con, a lo sumo, el campo reason"))
+			return
+		}
+		if req.Reason != nil {
+			reason = *req.Reason
+		}
+	}
+
+	decision, stored, err := h.service.CancelAppointment(
+		r.Context(), httpserver.URLParam(r, tokenParam), versionToken, reason,
+		key, httpserver.IdempotencyFingerprint(r, body),
+	)
+	if err != nil {
+		fail(err)
+		return
+	}
+	switch decision.Outcome {
+	case idempotency.OutcomeProceed, idempotency.OutcomeReplay:
+		httpserver.WriteStoredResponse(w, stored)
+	default:
+		fail(decision.AsError())
 	}
 }

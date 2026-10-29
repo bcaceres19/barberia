@@ -2,7 +2,7 @@
 # (consultar y cancelar). Ver docs/06-api/estandar-openapi.md. HU-098 agrega
 # la primera: GET /customer/appointments/{token}, lectura mínima autenticada
 # únicamente por la credencial del enlace, sin sesión. La cancelación
-# (HU-099, T5) se agrega después en este mismo archivo.
+# (HU-099, T5) vive en este mismo archivo: POST .../cancel.
 # security: [] en cada operación, según docs/06-api/estandar-openapi.md: la
 # audiencia customer no usa el esquema de sesión del barbero, la credencial
 # viaja en la ruta, no en una cabecera de autorización.
@@ -131,5 +131,115 @@
         $ref: '../components/responses/ReviewNotAvailableProblem.yaml'
       "422":
         $ref: '../components/responses/ValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+
+/customer/appointments/{token}/cancel:
+  post:
+    tags: [CustomerAccess]
+    summary: Cancelar el turno por el cliente (T5)
+    description: >
+      El cliente cancela su turno `confirmed` con la credencial del enlace y
+      sin sesión (`HU-099`, `T5` de `estados-citas.md`). Solo procede si la
+      política VIGENTE de la barbería lo autoriza, evaluada con el reloj del
+      servidor y nunca con uno enviado por el cliente (`RN-CAN-01`,
+      `RN-CAN-02`): hasta `startsAt - cancellationDeadlineMinutes` inclusive es
+      dentro de plazo; después y antes de `startsAt` solo procede con
+      `lateCancellationClientAllowed` y, si `lateCancellationReasonRequired`,
+      con un `reason` no vacío; con el turno ya iniciado nunca procede. Un plazo
+      de 0 minutos trata toda cancelación como tardía (`DEC-083`). Protegida con
+      `Idempotency-Key` (`RN-IDE-01`, `DEC-043`) y con la precondición `If-Match`
+      (el `versionToken` de `GET`): una repetición exacta reproduce la respuesta
+      sin duplicar el historial. En una sola transacción el turno pasa a
+      `cancelled_by_customer`, se registra el motivo y un único evento con actor
+      cliente, y el enlace queda revocado (`DEC-089`): desde ese instante `GET`
+      y cualquier repetición con ese enlace responden el `404` uniforme. La
+      franja vuelve de inmediato a la disponibilidad pública (`HU-094`). Un
+      `token` inexistente, vencido o revocado responde el mismo `404` uniforme
+      que `GET`, sin revelar la causa. Notificar al barbero queda para B5.
+    operationId: cancelCustomerAppointment
+    security: []
+    x-business-rules: [RN-CAN-01, RN-CAN-02, RN-CIT-03, RN-HIS-01, RN-HIS-02, RN-IDE-01, RN-TEN-01]
+    x-decisions: [DEC-010, DEC-016, DEC-024, DEC-041, DEC-043, DEC-083, DEC-089]
+    parameters:
+      - name: token
+        in: path
+        required: true
+        description: Credencial en claro del enlace de acceso al turno (DEC-089).
+        schema:
+          type: string
+          maxLength: 256
+        examples:
+          token:
+            value: 3n9F1sQe2z8mM5wYtR7pL0oXhC4bV6dK1aE9jU2gN8i
+      - $ref: '../components/parameters/IdempotencyKey.yaml'
+      - $ref: '../components/parameters/IfMatch.yaml'
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/CancelCustomerAppointmentRequest.yaml'
+          examples:
+            conMotivo:
+              value:
+                reason: Me surgió un imprevisto de trabajo.
+            sinCuerpo:
+              summary: Dentro de plazo el cuerpo puede omitirse
+              value: {}
+    responses:
+      "200":
+        $ref: '../components/responses/CustomerAppointmentCancelled.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "409":
+        description: >
+          Tres conflictos distinguibles por `code`, nunca por `detail`:
+          conflicto de idempotencia (misma clave con otro contenido u otra
+          operación) u operación en curso con la misma clave; conflicto de
+          versión (`code: version-conflict`, el `If-Match` ya no coincide: el
+          turno cambió desde que se leyó); o estado inválido
+          (`code: invalid-state`, el turno ya no está `confirmed`, p. ej. ya lo
+          resolvió el barbero).
+        headers:
+          X-Request-Id:
+            $ref: '../components/headers/XRequestId.yaml'
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/Problem.yaml'
+            examples:
+              contenidoDistinto:
+                summary: Misma clave, contenido distinto
+                value:
+                  type: /api/v1/problems/idempotency-conflict
+                  title: Conflicto de idempotencia
+                  status: 409
+                  detail: la clave de idempotencia ya se usó con un contenido distinto; usa una clave nueva
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: idempotency-conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              versionDesactualizada:
+                value:
+                  type: /api/v1/problems/version-conflict
+                  title: Conflicto de versión
+                  status: 409
+                  detail: el turno cambió desde que se leyó; recarga antes de reintentar
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: version-conflict
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+              estadoInvalido:
+                value:
+                  type: /api/v1/problems/invalid-state
+                  title: Estado inválido
+                  status: 409
+                  detail: el turno ya no está confirmado; recarga para ver su estado actual
+                  instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+                  code: invalid-state
+                  requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+      "422":
+        $ref: '../components/responses/CancellationRejectedProblem.yaml'
       "500":
         $ref: '../components/responses/InternalErrorProblem.yaml'

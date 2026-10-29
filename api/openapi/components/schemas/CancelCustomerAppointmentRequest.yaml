@@ -1,0 +1,17 @@
+# Cuerpo opcional de POST /customer/appointments/{token}/cancel (HU-099).
+# Cerrado: el servidor deriva estado, actor y tiempo, así que cualquier otro
+# campo se rechaza con 400 (nunca se ignora en silencio).
+type: object
+additionalProperties: false
+description: >
+  Motivo de la cancelación. Obligatorio solo cuando la política vigente lo
+  exige (cancelación fuera de plazo con `lateCancellationReasonRequired`);
+  en cualquier otro caso es opcional y, si llega en blanco, se trata como
+  ausente. El cuerpo completo puede omitirse.
+properties:
+  reason:
+    type: [string, "null"]
+    maxLength: 500
+    description: Motivo en texto libre, de hasta 500 caracteres tras recortar espacios.
+    examples:
+      - Me surgió un imprevisto de trabajo.

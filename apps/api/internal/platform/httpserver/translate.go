@@ -150,6 +150,27 @@ var scheduleConflictProblem = problemSpec{
 	status:  http.StatusConflict,
 }
 
+// cancellationWindowClosedProblem cubre apperr.KindCancellationWindowClosed
+// (HU-099, RN-CAN-01/RN-CAN-02): la política vigente no permite al cliente
+// cancelar a esta hora. 422 y no 409: el estado del turno es válido, es la
+// regla de negocio la que lo rechaza. El cliente debe mostrar el contacto de
+// la barbería, no ofrecer reintentar.
+var cancellationWindowClosedProblem = problemSpec{
+	typeURI: "/api/v1/problems/cancellation-window-closed",
+	title:   "Plazo de cancelación vencido",
+	code:    "cancellation-window-closed",
+	status:  http.StatusUnprocessableEntity,
+}
+
+// cancellationReasonRequiredProblem cubre apperr.KindCancellationReasonRequired
+// (HU-099, RN-CAN-02, CA-099-03): la cancelación fuera de plazo exige motivo.
+var cancellationReasonRequiredProblem = problemSpec{
+	typeURI: "/api/v1/problems/cancellation-reason-required",
+	title:   "Motivo de cancelación obligatorio",
+	code:    "cancellation-reason-required",
+	status:  http.StatusUnprocessableEntity,
+}
+
 // Translate convierte cualquier error en un Problem seguro para el cliente.
 // Es el único punto central de traducción que exige
 // docs/04-arquitectura/backend-go.md sección 5 ("los errores de dominio se
@@ -191,6 +212,10 @@ func Translate(err error, requestID string) Problem {
 			return newProblem(invalidStateProblem, appErr.Message, requestID)
 		case apperr.KindScheduleConflict:
 			return newProblem(scheduleConflictProblem, appErr.Message, requestID)
+		case apperr.KindCancellationWindowClosed:
+			return newProblem(cancellationWindowClosedProblem, appErr.Message, requestID)
+		case apperr.KindCancellationReasonRequired:
+			return newProblem(cancellationReasonRequiredProblem, appErr.Message, requestID)
 		}
 	}
 

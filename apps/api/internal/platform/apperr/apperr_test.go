@@ -157,3 +157,17 @@ func TestAs_UnwrapsWrappedError(t *testing.T) {
 		t.Fatalf("expected KindNotFound, got %q", got.Kind)
 	}
 }
+
+func TestCancellationRejections_HaveDistinctKinds(t *testing.T) {
+	closed, ok := apperr.As(apperr.CancellationWindowClosed("fuera de plazo"))
+	if !ok || closed.Kind != apperr.KindCancellationWindowClosed {
+		t.Fatalf("expected KindCancellationWindowClosed, got %+v", closed)
+	}
+	reason, ok := apperr.As(apperr.CancellationReasonRequired("falta el motivo"))
+	if !ok || reason.Kind != apperr.KindCancellationReasonRequired {
+		t.Fatalf("expected KindCancellationReasonRequired, got %+v", reason)
+	}
+	if closed.Kind == reason.Kind || closed.Kind == apperr.KindValidation {
+		t.Fatal("the two policy rejections must stay distinct from each other and from KindValidation (HU-099)")
+	}
+}
