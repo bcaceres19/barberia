@@ -1,0 +1,25 @@
+# Respuesta 200 de GET /private/barbers/{barberId}/reviews (HU-100).
+description: Resumen público y todas las reseñas del barbero, ocultas incluidas.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/ReviewList.yaml'
+    examples:
+      conUnaOculta:
+        value:
+          rating: 5
+          ratingCount: 1
+          items:
+            - id: 8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4
+              rating: 5
+              comment: Muy buen corte y puntual.
+              hiddenAt: null
+              createdAt: "2027-03-15T16:10:00Z"
+            - id: 1b2c3d4e-5f60-4718-8293-a4b5c6d7e8f9
+              rating: 1
+              comment: Comentario ofensivo.
+              hiddenAt: "2027-03-16T09:00:00Z"
+              createdAt: "2027-03-10T12:00:00Z"

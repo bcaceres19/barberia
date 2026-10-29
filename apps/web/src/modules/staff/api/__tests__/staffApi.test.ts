@@ -54,6 +54,8 @@ const barberBody = {
   updatedAt: '2026-08-23T15:04:05Z',
   photoUpdatedAt: null,
   description: null,
+  rating: null,
+  ratingCount: 0,
 }
 
 describe('staffApi.fetchBarbers', () => {

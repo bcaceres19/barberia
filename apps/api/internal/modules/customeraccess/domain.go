@@ -29,6 +29,19 @@ type AppointmentView struct {
 	LateCancellationClientAllowed  bool
 	LateCancellationReasonRequired bool
 	Vocabulary                     Vocabulary
+
+	// CanReview es verdadero solo con el turno `completed` y sin reseña (HU-100,
+	// CA-100-01); Review trae la que el cliente ya dejó, si existe.
+	CanReview bool
+	Review    *ReviewView
+}
+
+// ReviewView es la reseña que el cliente dejó sobre su turno (HU-100): solo
+// calificación, comentario y fecha, sin identificadores internos.
+type ReviewView struct {
+	Rating    int
+	Comment   *string
+	CreatedAt time.Time
 }
 
 // Vocabulary es la palabra con la que la barbería llama a su negocio y a su

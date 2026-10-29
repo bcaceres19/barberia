@@ -1,0 +1,26 @@
+# Respuesta 200 de GET /public/barbershops/{slug}/barbers/{barberId}/reviews (HU-100).
+description: Resumen y reseñas visibles más recientes del barbero.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/PublicReviewList.yaml'
+    examples:
+      conReseñas:
+        value:
+          rating: 4.5
+          ratingCount: 2
+          items:
+            - rating: 5
+              comment: Muy buen corte y puntual.
+              createdAt: "2027-03-15T16:10:00Z"
+            - rating: 4
+              comment: null
+              createdAt: "2027-03-01T18:00:00Z"
+      sinReseñas:
+        value:
+          rating: null
+          ratingCount: 0
+          items: []

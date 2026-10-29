@@ -769,6 +769,22 @@ API lo avisa al arrancar. El mapa del navegador usa otra clave
 (`VITE_GOOGLE_MAPS_BROWSER_KEY`, Maps Embed API, restringida por dominio); sin
 ella la sección se oculta fuera de desarrollo.
 
+### Reseñas por barbero (DEC-128, HU-100)
+
+Módulo `internal/modules/reviews` (sin dependencias de otros módulos): una reseña por turno `completed`
+(unicidad y estado los garantiza la base con un `UNIQUE` y un trigger, no solo el servicio).
+
+| Operación | Quién | Notas |
+| --- | --- | --- |
+| `POST /customer/appointments/{token}/review` | el cliente (enlace del turno) | `422` calificación fuera de 1–5 o comentario de más de 500 caracteres; `404` enlace inválido; `409` uniforme si el turno no admite reseña (no completado, de otro barbero o ya calificado), sin revelar la causa |
+| `GET /public/barbershops/{slug}/barbers/{barberId}/reviews` | público | solo no ocultas, hasta 20, de la más reciente a la más antigua |
+| `GET /private/barbers/{barberId}/reviews` | panel | todas, ocultas incluidas (hasta 100) |
+| `PATCH /private/barbers/{barberId}/reviews/{reviewId}` | panel | `{ "hidden": bool }`; la calificación y el comentario nunca se editan |
+
+`rating` (promedio de 1 decimal) y `ratingCount` se calculan sobre las no ocultas y viajan en
+`BarberResponse` y `PublicBarberResponse`. El enlace del turno vive 90 días, que acota cuándo puede
+reseñarse.
+
 ### Prueba local completa: capturar el código sin un WhatsApp real
 
 `APP_PHONE_CHALLENGE_CAPTURE_FILE=<ruta>` hace que

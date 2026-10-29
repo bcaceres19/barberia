@@ -1,0 +1,29 @@
+# Una reseña visible en la selección pública del barbero (HU-100, DEC-128).
+type: object
+description: >
+  Reseña no oculta de un barbero. Sin identificador del turno ni del cliente:
+  la reseña es anónima para el visitante.
+properties:
+  rating:
+    type: integer
+    minimum: 1
+    maximum: 5
+    examples:
+      - 5
+  comment:
+    type:
+      - string
+      - "null"
+    maxLength: 500
+    examples:
+      - Muy buen corte y puntual.
+      - null
+  createdAt:
+    type: string
+    format: date-time
+    examples:
+      - "2027-03-15T16:10:00Z"
+required:
+  - rating
+  - comment
+  - createdAt

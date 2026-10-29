@@ -16,6 +16,10 @@ export interface PublicBarber {
   description: string | null
   /** Versión de la fotografía, o null si no tiene (se muestra el monograma). */
   photoUpdatedAt: string | null
+  /** Promedio de 1 decimal de sus reseñas visibles (DEC-128), o null sin ninguna. */
+  rating: number | null
+  /** Total de reseñas visibles. */
+  ratingCount: number
 }
 
 /** Resultado discriminado de listar los barberos elegibles contra el API

@@ -38,6 +38,8 @@ export async function listPublicBarbers(
           // si una respuesta antigua llegara sin ellos.
           description: item.description ?? null,
           photoUpdatedAt: item.photoUpdatedAt ?? null,
+          rating: item.rating ?? null,
+          ratingCount: item.ratingCount ?? 0,
         })),
       }
     }

@@ -91,6 +91,18 @@ properties:
       - true
   vocabulary:
     $ref: './PublicVocabulary.yaml'
+  canReview:
+    type: boolean
+    description: >
+      `true` solo con el turno `completed` y sin reseña todavía (`HU-100`,
+      `CA-100-01`): es la señal para ofrecer «Calificar».
+    examples:
+      - true
+  review:
+    oneOf:
+      - $ref: './CustomerReview.yaml'
+      - type: "null"
+    description: La reseña que el cliente ya dejó sobre este turno, o `null`.
 required:
   - barbershopName
   - timezone
@@ -105,3 +117,5 @@ required:
   - lateCancellationClientAllowed
   - lateCancellationReasonRequired
   - vocabulary
+  - canReview
+  - review

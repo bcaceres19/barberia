@@ -45,6 +45,11 @@ type Barber struct {
 	// reserva pública solo muestra su nombre y fotografía. Nunca es una cadena
 	// vacía.
 	Description *string
+	// Rating es el promedio de 1 decimal de las reseñas no ocultas y RatingCount
+	// su total (DEC-128 §5); Rating es nil sin ninguna reseña visible. Solo lo
+	// llenan las lecturas; el alta devuelve el valor cero.
+	Rating      *float64
+	RatingCount int
 }
 
 // DescriptionPatch es el cambio pedido sobre la descripción en una

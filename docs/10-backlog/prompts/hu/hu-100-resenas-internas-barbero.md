@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-100-v1"
 version: "1.0"
 kind: "hu"
-status: "ready"
+status: "executed"
 target_agents: ["codex", "claude"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
@@ -11,7 +11,7 @@ related_hu: ["HU-092", "HU-098"]
 issue: 357
 issue_url: "https://github.com/bcaceres19/barberia/issues/357"
 suggested_issue_title: "feat(public-booking): implementar HU-100 reseñas internas por barbero"
-branch: null
+branch: "feat/357-hu100-resenas-internas"
 pr: null
 pr_url: null
 depends_on: ["HU-098 integrada (satisfecho, PR #272)"]
@@ -36,7 +36,7 @@ source_docs:
   - "apps/api/internal/modules/staff"
   - "apps/api/internal/modules/publicbooking"
 created_at: "2026-10-26"
-updated_at: "2026-10-26"
+updated_at: "2026-10-29"
 supersedes: null
 superseded_by: null
 ---

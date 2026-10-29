@@ -18,6 +18,8 @@ content:
               fullName: Juan Pérez
               description: Fade, barba y navaja con más de diez años en el oficio.
               photoUpdatedAt: "2026-09-30T12:00:00Z"
+              rating: null
+              ratingCount: 0
       variosBarberos:
         summary: Varios barberos elegibles (elección explícita, CA-092-01)
         value:
@@ -26,10 +28,14 @@ content:
               fullName: Ana Gómez
               description: Cortes clásicos y perfilado de barba.
               photoUpdatedAt: "2026-09-30T12:00:00Z"
+              rating: null
+              ratingCount: 0
             - id: 1c9a7f2d-3b4e-4a5f-9c6d-7e8f9a0b1c2d
               fullName: Luis Rojas
               description: null
               photoUpdatedAt: null
+              rating: null
+              ratingCount: 0
       sinBarberos:
         summary: >
           Sin barberos elegibles: servicio sin asignación, ajeno, inexistente

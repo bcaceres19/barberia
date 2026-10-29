@@ -46,6 +46,8 @@ function successData() {
       professionalTermPlural: 'barberos',
       professionalTermGender: 'masculine',
     },
+    canReview: false,
+    review: null,
   }
 }
 
@@ -223,5 +225,173 @@ describe('CustomerAppointmentPage', () => {
     await flushPromises()
     const results = await axe(wrapper.element)
     expect(results).toHaveNoViolations()
+  })
+})
+
+// HU-100 (DEC-128): «Calificar» solo con el turno completado y sin reseña.
+describe('CustomerAppointmentPage · reseña', () => {
+  const postMock = vi.fn()
+
+  beforeEach(async () => {
+    postMock.mockReset()
+    const { httpClient } = await import('@/shared/api/httpClient')
+    ;(httpClient as unknown as { POST: typeof postMock }).POST = postMock
+  })
+
+  function reviewable(overrides: Record<string, unknown> = {}) {
+    return { ...successData(), status: 'completed', canReview: true, review: null, ...overrides }
+  }
+
+  async function mountReviewable(data = reviewable()) {
+    getMock.mockResolvedValueOnce({ data, error: undefined, response: okResponse() })
+    const wrapper = mountPage({ token: 'token-en-claro' })
+    await flushPromises()
+    return wrapper
+  }
+
+  it('un turno no calificable no ofrece «Calificar» (CA-100-01)', async () => {
+    getMock.mockResolvedValueOnce({ data: successData(), error: undefined, response: okResponse() })
+    const wrapper = mountPage({ token: 'token-en-claro' })
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Califica a')
+    expect(wrapper.find('textarea').exists()).toBe(false)
+  })
+
+  it('un turno completado sin reseña muestra el formulario con el aviso de privacidad', async () => {
+    const wrapper = await mountReviewable()
+
+    expect(wrapper.get('h2').text()).toBe('Califica a Barbero Ejemplo')
+    expect(wrapper.findAll('input[type="radio"]')).toHaveLength(5)
+    expect(wrapper.text()).toContain(
+      'No escribas teléfonos, direcciones ni nombres de otras personas',
+    )
+    expect(wrapper.text()).toContain('(opcional)')
+  })
+
+  it('no envía sin calificación y avisa (CA-100-02)', async () => {
+    const wrapper = await mountReviewable()
+
+    await wrapper.get('form').trigger('submit')
+
+    expect(postMock).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('Elige de 1 a 5 estrellas.')
+  })
+
+  it('no envía un comentario de más de 500 caracteres', async () => {
+    const wrapper = await mountReviewable()
+    await wrapper.findAll('input[type="radio"]')[4]!.setValue(true)
+    await wrapper.get('textarea').setValue('a'.repeat(501))
+
+    await wrapper.get('form').trigger('submit')
+
+    expect(postMock).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('El comentario no puede superar 500 caracteres.')
+  })
+
+  it('envía calificación y comentario recortado, y pasa a «Gracias por tu reseña»', async () => {
+    postMock.mockResolvedValueOnce({
+      data: { rating: 5, comment: 'Muy buen corte', createdAt: '2027-03-15T16:10:00Z' },
+      error: undefined,
+      response: { ok: true, status: 201, headers: new Headers() } as Response,
+    })
+    const wrapper = await mountReviewable()
+    await wrapper.findAll('input[type="radio"]')[4]!.setValue(true)
+    await wrapper.get('textarea').setValue('  Muy buen corte  ')
+
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(postMock).toHaveBeenCalledWith('/customer/appointments/{token}/review', {
+      params: { path: { token: 'token-en-claro' } },
+      body: { rating: 5, comment: 'Muy buen corte' },
+    })
+    expect(wrapper.text()).toContain('Gracias por tu reseña')
+    expect(wrapper.text()).toContain('Muy buen corte')
+    expect(wrapper.find('textarea').exists()).toBe(false)
+  })
+
+  it('un comentario vacío viaja como null', async () => {
+    postMock.mockResolvedValueOnce({
+      data: { rating: 3, comment: null, createdAt: '2027-03-15T16:10:00Z' },
+      error: undefined,
+      response: { ok: true, status: 201, headers: new Headers() } as Response,
+    })
+    const wrapper = await mountReviewable()
+    await wrapper.findAll('input[type="radio"]')[2]!.setValue(true)
+    await wrapper.get('textarea').setValue('   ')
+
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(postMock.mock.calls[0]![1].body).toEqual({ rating: 3, comment: null })
+  })
+
+  it('un 409 avisa que ya no admite reseña y recarga el turno', async () => {
+    postMock.mockResolvedValueOnce({
+      data: undefined,
+      error: { status: 409 },
+      response: errorResponse(409),
+    })
+    const wrapper = await mountReviewable()
+    getMock.mockResolvedValueOnce({
+      data: reviewable({
+        canReview: false,
+        review: { rating: 4, comment: null, createdAt: '2027-03-15T16:10:00Z' },
+      }),
+      error: undefined,
+      response: okResponse(),
+    })
+    await wrapper.findAll('input[type="radio"]')[3]!.setValue(true)
+
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(getMock).toHaveBeenCalledTimes(2)
+    expect(wrapper.text()).toContain('Gracias por tu reseña')
+  })
+
+  it('un error de red conserva lo escrito y permite reintentar', async () => {
+    postMock.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    const wrapper = await mountReviewable()
+    await wrapper.findAll('input[type="radio"]')[3]!.setValue(true)
+    await wrapper.get('textarea').setValue('Mi comentario')
+
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('No pudimos conectar')
+    expect((wrapper.get('textarea').element as HTMLTextAreaElement).value).toBe('Mi comentario')
+    expect(wrapper.find('form').exists()).toBe(true)
+  })
+
+  it('con la reseña ya dejada la muestra de solo lectura, sin formulario', async () => {
+    const wrapper = await mountReviewable(
+      reviewable({
+        canReview: false,
+        review: { rating: 4, comment: 'Todo bien', createdAt: '2027-03-15T16:10:00Z' },
+      }),
+    )
+
+    expect(wrapper.text()).toContain('Gracias por tu reseña')
+    expect(wrapper.text()).toContain('Todo bien')
+    expect(wrapper.find('form').exists()).toBe(false)
+  })
+
+  it('el formulario y la reseña publicada no tienen violaciones de axe', async () => {
+    const form = await mountReviewable()
+    document.body.appendChild(form.element)
+    expect(await axe(form.element)).toHaveNoViolations()
+    form.unmount()
+
+    const done = await mountReviewable(
+      reviewable({
+        canReview: false,
+        review: { rating: 4, comment: 'Todo bien', createdAt: '2027-03-15T16:10:00Z' },
+      }),
+    )
+    document.body.appendChild(done.element)
+    expect(await axe(done.element)).toHaveNoViolations()
+    done.unmount()
   })
 })

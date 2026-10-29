@@ -36,3 +36,28 @@ content:
             professionalTerm: barbero
             professionalTermPlural: barberos
             professionalTermGender: masculine
+          canReview: false
+          review: null
+      turnoCompletadoSinReseña:
+        summary: Turno completado; el cliente aún puede calificar (HU-100)
+        value:
+          barbershopName: Barbería Ejemplo
+          timezone: America/Bogota
+          attendeeName: Cliente Ejemplo
+          serviceName: Corte clásico
+          durationMinutes: 30
+          barberName: Barbero Ejemplo
+          startsAt: "2027-03-15T15:00:00Z"
+          endsAt: "2027-03-15T15:30:00Z"
+          status: completed
+          cancellationDeadlineMinutes: 20
+          lateCancellationClientAllowed: true
+          lateCancellationReasonRequired: true
+          vocabulary:
+            businessTerm: barbería
+            businessTermGender: feminine
+            professionalTerm: barbero
+            professionalTermPlural: barberos
+            professionalTermGender: masculine
+          canReview: true
+          review: null

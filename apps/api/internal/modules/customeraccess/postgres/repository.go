@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 
@@ -53,6 +54,11 @@ func (r *Repository) ResolveAppointmentByTokenHash(ctx context.Context, tokenHas
 	}
 
 	var view customeraccess.AppointmentView
+	var (
+		reviewRating    *int
+		reviewComment   *string
+		reviewCreatedAt *time.Time
+	)
 	viewFound := false
 	err = r.db.InTenantTx(ctx, barbershopID, func(ctx context.Context, q database.Queries) error {
 		err := q.QueryRow(ctx,
@@ -62,11 +68,13 @@ func (r *Repository) ResolveAppointmentByTokenHash(ctx context.Context, tokenHas
 			        bs.cancellation_deadline_minutes, bs.late_cancellation_client_allowed,
 			        bs.late_cancellation_reason_required,
 			        bs.business_term, bs.business_term_gender,
-			        bs.professional_term, bs.professional_term_plural, bs.professional_term_gender
+			        bs.professional_term, bs.professional_term_plural, bs.professional_term_gender,
+			        rv.rating, rv.comment, rv.created_at
 			   FROM appointment_access_token t
 			   JOIN appointment ap ON ap.barbershop_id = t.barbershop_id AND ap.id = t.appointment_id
 			   JOIN barbershop bs ON bs.id = t.barbershop_id
 			   JOIN barber br    ON br.barbershop_id = t.barbershop_id AND br.id = ap.barber_id
+			   LEFT JOIN barber_review rv ON rv.barbershop_id = t.barbershop_id AND rv.appointment_id = ap.id
 			  WHERE t.token_hash = $1
 			    AND t.revoked_at IS NULL
 			    AND (t.expires_at IS NULL OR t.expires_at > now())`,
@@ -80,10 +88,15 @@ func (r *Repository) ResolveAppointmentByTokenHash(ctx context.Context, tokenHas
 			&view.Vocabulary.BusinessTerm, &view.Vocabulary.BusinessTermGender,
 			&view.Vocabulary.ProfessionalTerm, &view.Vocabulary.ProfessionalTermPlural,
 			&view.Vocabulary.ProfessionalTermGender,
+			&reviewRating, &reviewComment, &reviewCreatedAt,
 		)
 		switch {
 		case err == nil:
 			viewFound = true
+			if reviewRating != nil && reviewCreatedAt != nil {
+				view.Review = &customeraccess.ReviewView{Rating: *reviewRating, Comment: reviewComment, CreatedAt: *reviewCreatedAt}
+			}
+			view.CanReview = view.Status == "completed" && view.Review == nil
 		case errors.Is(err, pgx.ErrNoRows):
 			// viewFound queda false: defensivo (la función SECURITY
 			// DEFINER ya confirmó la fila vigente en la misma sentencia

@@ -48,6 +48,8 @@ defineEmits<{ edit: [] }>()
       </div>
     </dl>
 
+    <slot name="reviews" />
+
     <div class="my-profile-card__actions">
       <slot name="actions" />
       <BaseButton

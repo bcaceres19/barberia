@@ -172,12 +172,13 @@ func TestContract_OpenAPIYAML_RegistersPublicBarbershopPath(t *testing.T) {
 }
 
 // TestContract_PublicBarberResponseSchema_MatchesDTOFields verifica que
-// httpapi.PublicBarberResponse (id, fullName, description, photoUpdatedAt)
-// coincide exactamente con PublicBarberResponse.yaml y que los cuatro campos
-// son obligatorios (DEC-127: nullable pero siempre presentes).
+// httpapi.PublicBarberResponse (id, fullName, description, photoUpdatedAt y,
+// por DEC-128, rating/ratingCount) coincide exactamente con
+// PublicBarberResponse.yaml y que todos son obligatorios (nullable, pero
+// siempre presentes).
 func TestContract_PublicBarberResponseSchema_MatchesDTOFields(t *testing.T) {
 	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/PublicBarberResponse.yaml")
-	want := []string{"id", "fullName", "description", "photoUpdatedAt"}
+	want := []string{"id", "fullName", "description", "photoUpdatedAt", "rating", "ratingCount"}
 	if len(schema.Properties) != len(want) {
 		t.Fatalf("expected %d properties, schema has %d: %v", len(want), len(schema.Properties), schema.Properties)
 	}

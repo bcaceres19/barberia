@@ -636,7 +636,7 @@ func TestCreate_StoredResponseBody_MatchesHTTPAPIWireShape(t *testing.T) {
 	if err := json.Unmarshal([]byte(result.Response.Body), &generic); err != nil {
 		t.Fatalf("unmarshal stored body: %v", err)
 	}
-	wantKeys := []string{"id", "fullName", "createdAt", "updatedAt", "photoUpdatedAt", "description"}
+	wantKeys := []string{"id", "fullName", "createdAt", "updatedAt", "photoUpdatedAt", "description", "rating", "ratingCount"}
 	if len(generic) != len(wantKeys) {
 		t.Fatalf("expected exactly %v, got keys %v", wantKeys, generic)
 	}
@@ -773,5 +773,111 @@ func TestUpdate_Description_DatabaseRejectsEmptyAndOversized(t *testing.T) {
 	exact, err := repo.Update(ctx, string(shopC), barber.ID, barber.FullName, staff.DescriptionPatch{Set: true, Value: strPtr(strings.Repeat("ñ", 280))})
 	if err != nil || !exact.Found {
 		t.Fatalf("a 280-character description must be accepted, got %+v err=%v", exact, err)
+	}
+}
+
+// seedReview inserta, bajo el tenant de la barbería, un servicio, un cliente, una
+// cita completada y su reseña directamente en SQL (la aplicación del cliente
+// vive en el módulo reviews, que staff no importa). hidden=true la deja oculta.
+func seedReview(t *testing.T, db *database.DB, shop database.BarbershopID, barberID string, rating int, hidden bool, slot int) {
+	t.Helper()
+	suffix := uniqueSuffix(t)
+	err := db.InTenantTx(context.Background(), shop, func(ctx context.Context, q database.Queries) error {
+		var serviceID, customerID, appointmentID string
+		if err := q.QueryRow(ctx,
+			`INSERT INTO service (barbershop_id, name, duration_minutes, price_amount, price_currency)
+			 VALUES ($1, $2, 30, 20000, 'COP') RETURNING id`, string(shop), "Servicio reseña "+suffix).Scan(&serviceID); err != nil {
+			return err
+		}
+		if err := q.QueryRow(ctx,
+			`INSERT INTO customer (barbershop_id, full_name) VALUES ($1, 'Cliente de prueba') RETURNING id`, string(shop)).Scan(&customerID); err != nil {
+			return err
+		}
+		starts := time.Date(2031, 1, 1, 8, 0, 0, 0, time.UTC).AddDate(0, 0, slot).Add(time.Duration(len(suffix)) * time.Minute)
+		if err := q.QueryRow(ctx,
+			`INSERT INTO appointment (barbershop_id, barber_id, service_id, customer_id, attendee_name, starts_at, ends_at,
+			                          status, origin, resolved_at, service_name_snapshot, duration_minutes_snapshot,
+			                          price_amount_snapshot, price_currency_snapshot)
+			 VALUES ($1, $2, $3, $4, 'Cliente de prueba', $5, $6, 'completed', 'manual', now(), 'Servicio', 30, 20000, 'COP')
+			 RETURNING id`, string(shop), barberID, serviceID, customerID, starts, starts.Add(30*time.Minute)).Scan(&appointmentID); err != nil {
+			return err
+		}
+		_, err := q.Exec(ctx,
+			`INSERT INTO barber_review (barbershop_id, barber_id, appointment_id, rating, hidden_at)
+			 VALUES ($1, $2, $3, $4, CASE WHEN $5 THEN now() ELSE NULL END)`,
+			string(shop), barberID, appointmentID, rating, hidden)
+		return err
+	})
+	if err != nil {
+		t.Fatalf("seedReview: %v", err)
+	}
+}
+
+// DEC-128 §5: el promedio (1 decimal) y el total de la ficha del barbero cuentan
+// solo las reseñas no ocultas, sin columna derivada, y no cruzan barberías.
+func TestGetAndListPage_RatingCountsOnlyVisibleReviews_PerTenant(t *testing.T) {
+	db := setupTestDB(t)
+	repo := newRepository(db)
+	suffix := uniqueSuffix(t)
+
+	rated := createBarber(t, repo, shopC, "Con reseñas "+suffix)
+	unrated := createBarber(t, repo, shopC, "Sin reseñas "+suffix)
+	other := createBarber(t, repo, shopD, "De otra barbería "+suffix)
+
+	// Sin reseñas: promedio nulo y total 0 (no 0.0).
+	got, found, err := repo.Get(context.Background(), string(shopC), rated.ID)
+	if err != nil || !found {
+		t.Fatalf("Get: found=%v err=%v", found, err)
+	}
+	if got.Rating != nil || got.RatingCount != 0 {
+		t.Fatalf("sin reseñas: rating=%v count=%d", got.Rating, got.RatingCount)
+	}
+
+	seedReview(t, db, shopC, rated.ID, 5, false, 1)
+	seedReview(t, db, shopC, rated.ID, 4, false, 2)
+	seedReview(t, db, shopC, rated.ID, 1, true, 3) // oculta: no cuenta
+	seedReview(t, db, shopD, other.ID, 1, false, 4)
+
+	got, _, err = repo.Get(context.Background(), string(shopC), rated.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Rating == nil || *got.Rating != 4.5 || got.RatingCount != 2 {
+		t.Fatalf("rating=%v count=%d, se esperaba 4.5 y 2", got.Rating, got.RatingCount)
+	}
+
+	// Recorre todas las páginas: la base persistente puede tener más de una.
+	var items []staff.Barber
+	for pageNumber, totalPages := 1, 1; pageNumber <= totalPages; pageNumber++ {
+		page, err := repo.ListPage(context.Background(), string(shopC), pageNumber, 100)
+		if err != nil {
+			t.Fatalf("ListPage: %v", err)
+		}
+		totalPages = page.TotalPages
+		items = append(items, page.Items...)
+	}
+	var seenRated, seenUnrated bool
+	for _, b := range items {
+		switch b.ID {
+		case rated.ID:
+			seenRated = true
+			if b.Rating == nil || *b.Rating != 4.5 || b.RatingCount != 2 {
+				t.Fatalf("ListPage: rating=%v count=%d", b.Rating, b.RatingCount)
+			}
+		case unrated.ID:
+			seenUnrated = true
+			if b.Rating != nil || b.RatingCount != 0 {
+				t.Fatalf("ListPage sin reseñas: rating=%v count=%d", b.Rating, b.RatingCount)
+			}
+		}
+	}
+	if !seenRated || !seenUnrated {
+		t.Fatalf("ListPage no devolvió los barberos esperados: rated=%v unrated=%v (items=%d)", seenRated, seenUnrated, len(items))
+	}
+
+	// La reseña de otra barbería no se mezcla.
+	otherGot, _, _ := repo.Get(context.Background(), string(shopD), other.ID)
+	if otherGot.Rating == nil || *otherGot.Rating != 1 || otherGot.RatingCount != 1 {
+		t.Fatalf("otra barbería: rating=%v count=%d", otherGot.Rating, otherGot.RatingCount)
 	}
 }

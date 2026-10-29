@@ -64,6 +64,8 @@ type barberResponseWire struct {
 	UpdatedAt      time.Time  `json:"updatedAt"`
 	PhotoUpdatedAt *time.Time `json:"photoUpdatedAt"`
 	Description    *string    `json:"description"`
+	Rating         *float64   `json:"rating"`
+	RatingCount    int        `json:"ratingCount"`
 }
 
 func marshalBarberResponse(b staff.Barber) ([]byte, error) {
@@ -74,6 +76,8 @@ func marshalBarberResponse(b staff.Barber) ([]byte, error) {
 		UpdatedAt:      b.UpdatedAt,
 		PhotoUpdatedAt: b.PhotoUpdatedAt,
 		Description:    b.Description,
+		Rating:         b.Rating,
+		RatingCount:    b.RatingCount,
 	})
 }
 
@@ -84,13 +88,22 @@ func marshalBarberResponse(b staff.Barber) ([]byte, error) {
 // scanBarber enumera los destinos de barberColumns en el mismo orden: un solo
 // lugar que cambia cuando la lectura de un barbero gana una columna.
 func scanBarber(b *staff.Barber) []any {
-	return []any{&b.ID, &b.FullName, &b.CreatedAt, &b.UpdatedAt, &b.PhotoUpdatedAt, &b.Description}
+	return []any{&b.ID, &b.FullName, &b.CreatedAt, &b.UpdatedAt, &b.PhotoUpdatedAt, &b.Description, &b.Rating, &b.RatingCount}
 }
 
 const (
-	barberColumns   = `b.id, b.full_name, b.created_at, b.updated_at, p.updated_at, b.description`
+	barberColumns = `b.id, b.full_name, b.created_at, b.updated_at, p.updated_at, b.description,
+	                 rv.rating, rv.rating_count`
+	// barberPhotoJoin trae también el resumen de reseñas (DEC-128 §5): promedio de
+	// 1 decimal y total sobre las no ocultas, calculados en la consulta, sin
+	// columna derivada. Sin reseñas visibles el promedio es NULL y el total 0.
 	barberPhotoJoin = `LEFT JOIN barber_photo p
-	                     ON p.barbershop_id = b.barbershop_id AND p.barber_id = b.id`
+	                     ON p.barbershop_id = b.barbershop_id AND p.barber_id = b.id
+	                   LEFT JOIN LATERAL (
+	                     SELECT round(avg(r.rating)::numeric, 1)::float8 AS rating, count(*) AS rating_count
+	                       FROM barber_review r
+	                      WHERE r.barbershop_id = b.barbershop_id AND r.barber_id = b.id AND r.hidden_at IS NULL
+	                   ) rv ON true`
 )
 
 // List implementa staff.Repository.List: orden estable (created_at, id)
@@ -288,7 +301,7 @@ func (r *Repository) Update(ctx context.Context, barbershopID, barberID, fullNam
 			     WHERE id = $1 AND barbershop_id = $2
 			 RETURNING id, barbershop_id, full_name, created_at, updated_at, description
 			 )
-			 SELECT b.id, b.full_name, b.created_at, b.updated_at, p.updated_at, b.description
+			 SELECT `+barberColumns+`
 			   FROM updated b `+barberPhotoJoin,
 			barberID, barbershopID, fullName, description.Set, description.Value,
 		).Scan(scanBarber(&b)...)
@@ -437,12 +450,13 @@ func (r *Repository) ListPage(ctx context.Context, shop string, page, size int) 
   ), bounds AS (
    SELECT total, GREATEST(1, (total + $2 - 1) / $2) AS pages FROM counted
   ), selected AS (
-   SELECT b.id, b.full_name, b.created_at, b.updated_at, p.updated_at AS photo_updated_at, b.description FROM barber b `+barberPhotoJoin+`
+   SELECT b.id, b.full_name, b.created_at, b.updated_at, p.updated_at AS photo_updated_at, b.description,
+          rv.rating AS rating, rv.rating_count AS rating_count FROM barber b `+barberPhotoJoin+`
    WHERE b.barbershop_id = $1 ORDER BY b.created_at, b.id
    LIMIT $2 OFFSET (SELECT (LEAST($3, pages) - 1) * $2 FROM bounds)
   )
   SELECT total, pages, LEAST($3, pages), s.id, s.full_name,
-         s.created_at, s.updated_at, s.photo_updated_at, s.description
+         s.created_at, s.updated_at, s.photo_updated_at, s.description, s.rating, s.rating_count
   FROM bounds LEFT JOIN selected s ON true`, shop, size, page)
 		if err != nil {
 			return fmt.Errorf("list barber page: %w", err)
@@ -452,11 +466,13 @@ func (r *Repository) ListPage(ctx context.Context, shop string, page, size int) 
 			var id, name *string
 			var created, updated, photo *time.Time
 			var description *string
-			if err := rows.Scan(&result.Total, &result.TotalPages, &result.Page, &id, &name, &created, &updated, &photo, &description); err != nil {
+			var rating *float64
+			var ratingCount *int
+			if err := rows.Scan(&result.Total, &result.TotalPages, &result.Page, &id, &name, &created, &updated, &photo, &description, &rating, &ratingCount); err != nil {
 				return err
 			}
 			if id != nil {
-				result.Items = append(result.Items, staff.Barber{ID: *id, FullName: *name, CreatedAt: *created, UpdatedAt: *updated, PhotoUpdatedAt: photo, Description: description})
+				result.Items = append(result.Items, staff.Barber{ID: *id, FullName: *name, CreatedAt: *created, UpdatedAt: *updated, PhotoUpdatedAt: photo, Description: description, Rating: rating, RatingCount: *ratingCount})
 			}
 		}
 		return rows.Err()

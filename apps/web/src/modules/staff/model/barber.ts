@@ -12,6 +12,10 @@ export interface Barber {
   updatedAt: string
   photoUpdatedAt: string | null
   description: string | null
+  /** Promedio de 1 decimal de sus reseñas visibles (DEC-128), o null sin ninguna. */
+  rating: number | null
+  /** Total de reseñas visibles. */
+  ratingCount: number
 }
 
 /** Página paginada por cursor (CA-021-02): mismo `items`/`nextCursor` que

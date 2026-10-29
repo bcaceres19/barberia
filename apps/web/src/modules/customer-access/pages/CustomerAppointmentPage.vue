@@ -10,10 +10,13 @@ import { BaseAlert, BaseBadge, BaseButton, NavaWordmark, PageState } from '@/sha
 import { buildVocabularyFromTerms } from '@/shared/model'
 import { formatInstantInTimezone, formatTimeInTimezone } from '@/shared/time/formatInstant'
 import { getCustomerAppointment } from '../api/getCustomerAppointmentApi'
+import { createReview } from '../api/createReviewApi'
+import AppointmentReview from '../components/AppointmentReview.vue'
 import {
   APPOINTMENT_STATUS_BADGE_VARIANT,
   appointmentStatusLabel,
   type CustomerAppointment,
+  type ReviewInput,
 } from '../model/customerAppointmentOutcome'
 
 interface Props {
@@ -53,6 +56,44 @@ async function load() {
 }
 
 onMounted(load)
+
+// Reseña del turno (HU-100, DEC-128): la página posee el envío; el componente solo
+// presenta el formulario. Un `409` significa que el turno ya no admite reseña (la
+// calificó otra pestaña, o cambió de estado): se recarga para mostrar lo vigente.
+const reviewSubmitting = ref(false)
+const reviewError = ref('')
+
+async function submitReview(input: ReviewInput) {
+  if (screenState.value.status !== 'success' || reviewSubmitting.value) return
+  reviewSubmitting.value = true
+  reviewError.value = ''
+  const outcome = await createReview(props.token, input)
+  reviewSubmitting.value = false
+
+  switch (outcome.kind) {
+    case 'success':
+      screenState.value = {
+        status: 'success',
+        appointment: { ...screenState.value.appointment, canReview: false, review: outcome.review },
+      }
+      return
+    case 'not-reviewable':
+    case 'not-found':
+      reviewError.value = 'Este turno ya no admite una reseña.'
+      await load()
+      return
+    case 'validation-error':
+      reviewError.value = 'Revisa la calificación y el comentario e inténtalo de nuevo.'
+      return
+    case 'network-error':
+      reviewError.value = 'No pudimos conectar. Revisa tu conexión e inténtalo de nuevo.'
+      return
+    case 'unexpected-error':
+      reviewError.value = outcome.requestId
+        ? `No pudimos guardar tu reseña. Si continúa, comparte este código con soporte: ${outcome.requestId}.`
+        : 'No pudimos guardar tu reseña. Inténtalo de nuevo en unos segundos.'
+  }
+}
 
 const retry = () => {
   void load()
@@ -204,6 +245,15 @@ const unexpectedErrorMessage = computed(() => {
       <BaseAlert variant="plain" role="status">
         {{ cancellationPolicyLabel }}
       </BaseAlert>
+
+      <AppointmentReview
+        :can-review="screenState.appointment.canReview"
+        :review="screenState.appointment.review"
+        :professional-name="screenState.appointment.barberName"
+        :submitting="reviewSubmitting"
+        :error-message="reviewError"
+        @submit="submitReview"
+      />
     </div>
   </main>
 </template>

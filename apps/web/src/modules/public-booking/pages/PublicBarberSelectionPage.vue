@@ -18,7 +18,8 @@
 // el barbero sigue en la lista fresca -nunca se asume compatible sin
 // revalidarla contra la respuesta del servidor.
 import { computed, nextTick, ref, watch } from 'vue'
-import { BarberAvatar } from '@/shared/ui'
+import { BarberAvatar, StarRating } from '@/shared/ui'
+import BarberReviews from '../components/BarberReviews.vue'
 import BookingStateScreen from '../components/BookingStateScreen.vue'
 import ChoiceMark from '../components/ChoiceMark.vue'
 import { listPublicBarbers } from '../api/listPublicBarbersApi'
@@ -200,6 +201,12 @@ const selectedBarber = computed(() => barbers.value.find((b) => b.id === selecte
         <p class="pb-ficha__text" role="status">
           Te atenderá <strong>{{ barbers[0]!.fullName }}</strong>
         </p>
+        <StarRating
+          v-if="barbers[0]!.ratingCount > 0"
+          class="pb-rating"
+          :rating="barbers[0]!.rating"
+          :count="barbers[0]!.ratingCount"
+        />
         <p v-if="barbers[0]!.description" class="pb-ficha__description">
           {{ barbers[0]!.description }}
         </p>
@@ -237,6 +244,13 @@ const selectedBarber = computed(() => barbers.value.find((b) => b.id === selecte
           <span :id="`pb-barber-${barber.id}-name`" class="pb-choice__name">{{
             barber.fullName
           }}</span>
+          <StarRating
+            v-if="barber.ratingCount > 0"
+            class="pb-rating"
+            :rating="barber.rating"
+            :count="barber.ratingCount"
+            size="sm"
+          />
           <span
             v-if="barber.description"
             :id="`pb-barber-${barber.id}-description`"
@@ -246,6 +260,17 @@ const selectedBarber = computed(() => barbers.value.find((b) => b.id === selecte
         </span>
       </li>
     </ul>
+
+    <!-- Fuera del radiogroup: un botón dentro de una opción `radio` no sería
+         operable para el lector de pantalla. Muestra las del barbero elegido. -->
+    <BarberReviews
+      v-if="selectedBarber && selectedBarber.ratingCount > 0"
+      :key="selectedBarber.id"
+      :slug="props.slug"
+      :barber-id="selectedBarber.id"
+      :barber-name="selectedBarber.fullName"
+      :rating-count="selectedBarber.ratingCount"
+    />
 
     <Transition name="pb-bar">
       <div v-if="selectedBarber" class="pb-actionbar">

@@ -57,7 +57,13 @@ func (h *GetAppointmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 }
 
 func newCustomerAppointmentResponse(v customeraccess.AppointmentView) CustomerAppointmentResponse {
+	var review *CustomerReviewResponse
+	if v.Review != nil {
+		review = &CustomerReviewResponse{Rating: v.Review.Rating, Comment: v.Review.Comment, CreatedAt: v.Review.CreatedAt}
+	}
 	return CustomerAppointmentResponse{
+		CanReview:                      v.CanReview,
+		Review:                         review,
 		BarbershopName:                 v.BarbershopName,
 		Timezone:                       v.Timezone,
 		AttendeeName:                   v.AttendeeName,

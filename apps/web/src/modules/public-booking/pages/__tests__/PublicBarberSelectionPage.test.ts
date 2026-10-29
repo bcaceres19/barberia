@@ -42,6 +42,8 @@ function barberFixture(overrides: Partial<Record<string, unknown>> = {}) {
     fullName: 'Juan Pérez',
     description: null,
     photoUpdatedAt: null,
+    rating: null,
+    ratingCount: 0,
     ...overrides,
   }
 }
@@ -614,5 +616,74 @@ describe('PublicBarberSelectionPage', () => {
     const wrapper = await mountSeveral()
     const results = await axe(wrapper.element)
     expect(results).toHaveNoViolations()
+  })
+})
+
+describe('PublicBarberSelectionPage · reseñas (HU-100)', () => {
+  const second = '22222222-2222-2222-2222-222222222222'
+
+  it('shows the average only for barbers that have visible reviews', async () => {
+    getMock.mockResolvedValueOnce({
+      data: {
+        items: [
+          barberFixture({ rating: 4.5, ratingCount: 12 }),
+          barberFixture({ id: second, fullName: 'Ana Gómez' }),
+        ],
+      },
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
+      props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
+    })
+    await flushPromises()
+
+    const ratings = wrapper.findAll('[role="img"][aria-label*="de 5"]')
+    expect(ratings).toHaveLength(1)
+    expect(ratings[0]!.attributes('aria-label')).toBe('4,5 de 5 · 12 reseñas')
+  })
+
+  it('offers the review list only for the chosen barber and only if it has reviews', async () => {
+    getMock.mockResolvedValueOnce({
+      data: {
+        items: [
+          barberFixture({ rating: 4.5, ratingCount: 12 }),
+          barberFixture({ id: second, fullName: 'Ana Gómez' }),
+        ],
+      },
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
+      props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
+    })
+    await flushPromises()
+    expect(wrapper.text()).not.toContain('Ver reseñas')
+
+    await wrapper.findAll('[role="radio"]')[1]!.trigger('click')
+    expect(wrapper.text()).not.toContain('Ver reseñas')
+
+    await wrapper.findAll('[role="radio"]')[0]!.trigger('click')
+    expect(wrapper.text()).toContain('Ver reseñas (12)')
+  })
+
+  it('shows the single barber rating and its review list without an extra step', async () => {
+    getMock.mockResolvedValueOnce({
+      data: { items: [barberFixture({ rating: 5, ratingCount: 1 })] },
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
+      props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
+    })
+    await flushPromises()
+
+    expect(wrapper.get('.pb-ficha [role="img"]').attributes('aria-label')).toBe(
+      '5,0 de 5 · 1 reseña',
+    )
+    expect(wrapper.text()).toContain('Ver reseñas (1)')
   })
 })

@@ -2400,7 +2400,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Actor | Cliente de un turno ya `completed` |
 | Depende de | `HU-098` integrada (satisfecho, PR #272) |
 | Bloquea | Ninguna |
-| Estado | Propuesta; sin issue real todavía |
+| Estado | Implementada en [#357](https://github.com/bcaceres19/barberia/issues/357) |
 | Riesgo | Aceptar una reseña sin turno completado único detrás, o sin ocultamiento reversible, abre abuso y daña la confianza del listado público. |
 
 **Historia**

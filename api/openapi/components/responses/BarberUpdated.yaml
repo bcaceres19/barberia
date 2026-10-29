@@ -19,4 +19,6 @@ content:
           createdAt: "2026-08-23T15:04:05Z"
           updatedAt: "2026-08-23T16:10:00Z"
           photoUpdatedAt: null
+          rating: null
+          ratingCount: 0
           description: null

@@ -159,7 +159,7 @@ func requireResponses(t *testing.T, op operation, wantOperationID string, wantSt
 // añade photoUpdatedAt y DEC-127 description).
 func TestContract_BarberResponseSchema_MatchesDTOFields(t *testing.T) {
 	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/BarberResponse.yaml")
-	requireProps(t, schema, []string{"id", "fullName", "createdAt", "updatedAt", "photoUpdatedAt", "description"})
+	requireProps(t, schema, []string{"id", "fullName", "createdAt", "updatedAt", "photoUpdatedAt", "description", "rating", "ratingCount"})
 }
 
 func TestContract_CreateBarberRequestSchema_MatchesDTOFields(t *testing.T) {

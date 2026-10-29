@@ -333,10 +333,15 @@ func (r *Repository) ListPublicBarbers(ctx context.Context, slug string, service
 
 	err = r.db.InTenantTx(ctx, barbershopID, func(ctx context.Context, q database.Queries) error {
 		rows, err := q.Query(ctx,
-			`SELECT b.id, b.full_name, b.description, p.updated_at
+			`SELECT b.id, b.full_name, b.description, p.updated_at, rv.rating, rv.rating_count
 			   FROM barber b
 			   LEFT JOIN barber_photo p
 			     ON p.barbershop_id = b.barbershop_id AND p.barber_id = b.id
+			   LEFT JOIN LATERAL (
+			     SELECT round(avg(r.rating)::numeric, 1)::float8 AS rating, count(*) AS rating_count
+			       FROM barber_review r
+			      WHERE r.barbershop_id = b.barbershop_id AND r.barber_id = b.id AND r.hidden_at IS NULL
+			   ) rv ON true
 			   JOIN barber_service bs
 			     ON bs.barbershop_id = b.barbershop_id AND bs.barber_id = b.id
 			   JOIN service s
@@ -355,7 +360,7 @@ func (r *Repository) ListPublicBarbers(ctx context.Context, slug string, service
 		items := make([]publicbooking.PublicBarber, 0)
 		for rows.Next() {
 			var barber publicbooking.PublicBarber
-			if err := rows.Scan(&barber.ID, &barber.FullName, &barber.Description, &barber.PhotoUpdatedAt); err != nil {
+			if err := rows.Scan(&barber.ID, &barber.FullName, &barber.Description, &barber.PhotoUpdatedAt, &barber.Rating, &barber.RatingCount); err != nil {
 				return fmt.Errorf("list public barbers: scan: %w", err)
 			}
 			items = append(items, barber)

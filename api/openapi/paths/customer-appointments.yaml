@@ -75,3 +75,61 @@
                   requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
       "500":
         $ref: '../components/responses/InternalErrorProblem.yaml'
+
+/customer/appointments/{token}/review:
+  post:
+    tags: [CustomerAccess]
+    summary: Calificar al barbero de un turno completado
+    description: >
+      El cliente deja una calificación de 1 a 5 y un comentario opcional sobre
+      el barbero que lo atendió (HU-100, `DEC-128`), con la misma credencial del
+      enlace de su turno y sin sesión. Solo un turno `completed` sin reseña
+      admite una: un turno no completado, cancelado o ya calificado responde
+      siempre el mismo `409`, sin distinguir la causa (`CA-100-01`); un `token`
+      inexistente, vencido o revocado responde el mismo `404` uniforme que
+      `GET`. Como máximo una reseña por turno (`CA-100-03`): repetir la llamada
+      no crea otra fila ni modifica la existente, así que no necesita
+      `Idempotency-Key`. La reseña queda visible de inmediato en la selección
+      pública del barbero y cuenta en su promedio.
+    operationId: createCustomerAppointmentReview
+    security: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-089, DEC-104, DEC-128]
+    parameters:
+      - name: token
+        in: path
+        required: true
+        description: Credencial en claro del enlace de acceso al turno (DEC-089).
+        schema:
+          type: string
+          maxLength: 256
+        examples:
+          token:
+            value: 3n9F1sQe2z8mM5wYtR7pL0oXhC4bV6dK1aE9jU2gN8i
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/CreateReviewRequest.yaml'
+          examples:
+            conComentario:
+              value:
+                rating: 5
+                comment: Muy buen corte y puntual.
+            soloEstrellas:
+              value:
+                rating: 4
+    responses:
+      "201":
+        $ref: '../components/responses/ReviewCreated.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "409":
+        $ref: '../components/responses/ReviewNotAvailableProblem.yaml'
+      "422":
+        $ref: '../components/responses/ValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

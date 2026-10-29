@@ -196,6 +196,8 @@ func newPublicBarberResponse(b publicbooking.PublicBarber) PublicBarberResponse 
 		FullName:       b.FullName,
 		Description:    b.Description,
 		PhotoUpdatedAt: b.PhotoUpdatedAt,
+		Rating:         b.Rating,
+		RatingCount:    b.RatingCount,
 	}
 }
 
