@@ -135,7 +135,9 @@ jobs:
         env:
           TEST_DATABASE_URL: postgres://barberia_app:app_test@localhost:5432/postgres?sslmode=disable
           TEST_WORKER_DATABASE_URL: postgres://barberia_worker:worker_test@localhost:5432/postgres?sslmode=disable
-        run: go test -race ./...
+        # -p 1: los paquetes con BD comparten una sola base y reclaman la misma cola global
+        # (`google_calendar_sync_job`); en paralelo se roban trabajos entre sí (#369).
+        run: go test -race -p 1 ./...
 
       - name: govulncheck
         working-directory: apps/api
