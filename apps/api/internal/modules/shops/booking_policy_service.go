@@ -75,7 +75,7 @@ func (s *BookingPolicyService) Update(ctx context.Context, barbershopID string, 
 		return BookingPolicy{}, errBookingPolicyFieldOutOfRange("minAdvanceMinutes")
 	case input.MaxAdvanceDays < MaxAdvanceDaysFloor || input.MaxAdvanceDays > MaxAdvanceDaysCeil:
 		return BookingPolicy{}, errBookingPolicyFieldOutOfRange("maxAdvanceDays")
-	case !IsAllowedSlotGridMinutes(input.SlotGridMinutes):
+	case input.SlotGridMinutes < SlotGridMinutesFloor || input.SlotGridMinutes > SlotGridMinutesCeil:
 		return BookingPolicy{}, errBookingPolicyFieldOutOfRange("slotGridMinutes")
 	case input.CancellationDeadlineMinutes < CancellationDeadlineMinutesFloor || input.CancellationDeadlineMinutes > CancellationDeadlineMinutesCeil:
 		return BookingPolicy{}, errBookingPolicyFieldOutOfRange("cancellationDeadlineMinutes")

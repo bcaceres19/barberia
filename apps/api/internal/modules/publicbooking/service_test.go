@@ -32,6 +32,16 @@ type fakeRepository struct {
 	barbersFound  bool
 	barbersErr    error
 	barbersCalls  []barbersCall
+
+	photoResult publicbooking.PublicBarberPhoto
+	photoFound  bool
+	photoErr    error
+	photoCalls  []photoCall
+}
+
+type photoCall struct {
+	slug     string
+	barberID string
 }
 
 type listCall struct {
@@ -58,6 +68,11 @@ func (f *fakeRepository) ListPublicServices(_ context.Context, slug string, curs
 func (f *fakeRepository) ListPublicBarbers(_ context.Context, slug string, serviceID string) (publicbooking.PublicBarberListResult, bool, error) {
 	f.barbersCalls = append(f.barbersCalls, barbersCall{slug: slug, serviceID: serviceID})
 	return f.barbersResult, f.barbersFound, f.barbersErr
+}
+
+func (f *fakeRepository) GetPublicBarberPhoto(_ context.Context, slug string, barberID string) (publicbooking.PublicBarberPhoto, bool, error) {
+	f.photoCalls = append(f.photoCalls, photoCall{slug: slug, barberID: barberID})
+	return f.photoResult, f.photoFound, f.photoErr
 }
 
 var _ publicbooking.Repository = (*fakeRepository)(nil)
@@ -403,5 +418,64 @@ func TestListPublicBarbers_ContextCancelled_ReturnsInternalWithoutCallingReposit
 	}
 	if len(repo.barbersCalls) != 0 {
 		t.Fatalf("expected zero repository calls with a cancelled context, got %v", repo.barbersCalls)
+	}
+}
+
+// --- Fotografía pública del barbero (DEC-127) ----------------------------
+
+func TestPublicBarberPhoto_Found_ReturnsPhotoWithTrimmedSlug(t *testing.T) {
+	want := publicbooking.PublicBarberPhoto{ContentType: "image/png", Data: []byte{1, 2, 3}}
+	repo := &fakeRepository{photoResult: want, photoFound: true}
+	svc := publicbooking.NewService(repo)
+
+	got, err := svc.PublicBarberPhoto(context.Background(), "  barberia-ejemplo  ", validServiceID)
+	if err != nil {
+		t.Fatalf("PublicBarberPhoto: %v", err)
+	}
+	if got.ContentType != want.ContentType || string(got.Data) != string(want.Data) {
+		t.Fatalf("expected %+v, got %+v", want, got)
+	}
+	if len(repo.photoCalls) != 1 || repo.photoCalls[0].slug != "barberia-ejemplo" || repo.photoCalls[0].barberID != validServiceID {
+		t.Fatalf("expected one call with the trimmed slug, got %+v", repo.photoCalls)
+	}
+}
+
+func TestPublicBarberPhoto_NotFound_ReturnsNotFound(t *testing.T) {
+	repo := &fakeRepository{photoFound: false}
+	svc := publicbooking.NewService(repo)
+
+	_, err := svc.PublicBarberPhoto(context.Background(), "barberia-ejemplo", validServiceID)
+	assertNotFound(t, err)
+}
+
+// Todas las entradas inválidas producen el mismo NotFound que una foto
+// inexistente y nunca llegan al repositorio: la causa no se distingue.
+func TestPublicBarberPhoto_InvalidInput_ReturnsNotFoundWithoutCallingRepository(t *testing.T) {
+	for name, tc := range map[string]struct{ slug, barberID string }{
+		"slug vacío":                {"   ", validServiceID},
+		"slug demasiado largo":      {strings.Repeat("a", publicbooking.MaxSlugLength+1), validServiceID},
+		"barbero sin forma de UUID": {"barberia-ejemplo", "no-es-un-uuid"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			repo := &fakeRepository{photoFound: true}
+			svc := publicbooking.NewService(repo)
+
+			_, err := svc.PublicBarberPhoto(context.Background(), tc.slug, tc.barberID)
+			assertNotFound(t, err)
+			if len(repo.photoCalls) != 0 {
+				t.Fatalf("expected zero repository calls, got %+v", repo.photoCalls)
+			}
+		})
+	}
+}
+
+func TestPublicBarberPhoto_RepositoryError_ReturnsInternal(t *testing.T) {
+	repo := &fakeRepository{photoErr: errors.New("boom")}
+	svc := publicbooking.NewService(repo)
+
+	_, err := svc.PublicBarberPhoto(context.Background(), "barberia-ejemplo", validServiceID)
+	appErr, ok := apperr.As(err)
+	if !ok || appErr.Kind != apperr.KindInternal {
+		t.Fatalf("expected apperr.KindInternal, got %v", err)
 	}
 }

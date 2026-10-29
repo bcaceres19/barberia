@@ -49,13 +49,14 @@
   margin-bottom: 14px;
 }
 .block-form__summary {
-  border-left: 2px solid var(--color-brand-accent-surface);
+  border-top: 2px solid var(--color-brand-accent-surface);
   background: var(--color-field-strong);
-  padding: 14px 16px;
+  padding: 16px 20px;
 }
 .block-form__summary p {
-  font-size: var(--font-size-body-sm);
-  line-height: 1.7;
+  font-family: var(--font-display);
+  font-size: var(--font-size-body-lg);
+  line-height: 1.4;
   margin: 8px 0 0;
 }
 .block-form__footer {

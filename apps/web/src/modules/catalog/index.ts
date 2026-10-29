@@ -17,5 +17,11 @@ export const CatalogPage = defineAsyncComponent(() => import('./pages/CatalogPag
 export type { Service as CatalogService } from './model/service'
 
 export const catalogNavItems: NavItem[] = [
-  { to: { name: 'catalog-servicios' }, label: 'Servicios', primary: true },
+  {
+    to: { name: 'catalog-servicios' },
+    label: 'Servicios',
+    primary: true,
+    // El catálogo lo administra quien trabaja por su cuenta o la empresa (DEC-134).
+    profiles: { employee: { hidden: true } },
+  },
 ]

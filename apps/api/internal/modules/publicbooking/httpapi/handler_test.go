@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"system-barbershop/internal/modules/publicbooking"
 	"system-barbershop/internal/modules/publicbooking/httpapi"
@@ -32,6 +33,10 @@ type fakeRepository struct {
 	barbersResult publicbooking.PublicBarberListResult
 	barbersFound  bool
 	barbersErr    error
+
+	photoResult publicbooking.PublicBarberPhoto
+	photoFound  bool
+	photoErr    error
 }
 
 func (f *fakeRepository) ResolveBySlug(_ context.Context, slug string) (publicbooking.BarbershopProfile, bool, error) {
@@ -47,6 +52,11 @@ func (f *fakeRepository) ListPublicServices(_ context.Context, slug string, _ *p
 func (f *fakeRepository) ListPublicBarbers(_ context.Context, slug string, _ string) (publicbooking.PublicBarberListResult, bool, error) {
 	f.calls = append(f.calls, slug)
 	return f.barbersResult, f.barbersFound, f.barbersErr
+}
+
+func (f *fakeRepository) GetPublicBarberPhoto(_ context.Context, slug string, _ string) (publicbooking.PublicBarberPhoto, bool, error) {
+	f.calls = append(f.calls, slug)
+	return f.photoResult, f.photoFound, f.photoErr
 }
 
 var _ publicbooking.Repository = (*fakeRepository)(nil)
@@ -440,5 +450,117 @@ func TestListPublicBarbersHandler_RepositoryError_ReturnsSafe500(t *testing.T) {
 	}
 	if strings.Contains(rec.Body.String(), "boom") {
 		t.Fatalf("CA-003-02: the internal cause must never reach the response body: %s", rec.Body.String())
+	}
+}
+
+// --- DEC-127: descripción y fotografía en la lista y fotografía pública ----
+
+func TestListPublicBarbersHandler_DescriptionAndPhotoVersion_AreExposed(t *testing.T) {
+	description := "Fade, barba y navaja."
+	version := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
+	repo := &fakeRepository{
+		barbersFound: true,
+		barbersResult: publicbooking.PublicBarberListResult{Items: []publicbooking.PublicBarber{
+			{ID: "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4", FullName: "Juan Pérez", Description: &description, PhotoUpdatedAt: &version},
+			{ID: "1c9a7f2d-3b4e-4a5f-9c6d-7e8f9a0b1c2d", FullName: "Luis Rojas"},
+		}},
+	}
+	h := httpapi.NewListPublicBarbersHandler(publicbooking.NewService(repo))
+
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, requestWithSlugAndServiceID("barberia-ejemplo", validServiceID))
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var raw struct {
+		Items []map[string]any `json:"items"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&raw); err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+	if len(raw.Items) != 2 {
+		t.Fatalf("expected 2 items, got %+v", raw.Items)
+	}
+	if raw.Items[0]["description"] != description || raw.Items[0]["photoUpdatedAt"] != "2026-09-30T12:00:00Z" {
+		t.Fatalf("expected description and photo version on the first barber, got %+v", raw.Items[0])
+	}
+	// Sin descripción ni fotografía los campos viajan presentes con null
+	// explícito (el contrato los declara obligatorios y nullable).
+	for _, key := range []string{"description", "photoUpdatedAt"} {
+		value, present := raw.Items[1][key]
+		if !present || value != nil {
+			t.Fatalf("expected %q present with null, got present=%v value=%v", key, present, value)
+		}
+	}
+}
+
+func requestWithSlugAndBarberID(slug, barberID string) *http.Request {
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/public/barbershops/"+slug+"/barbers/"+barberID+"/photo", nil)
+	req = httpserver.RequestWithURLParam(req, "slug", slug)
+	return httpserver.RequestWithURLParam(req, "barberId", barberID)
+}
+
+func TestGetPublicBarberPhotoHandler_Success_ServesBytesWithETag(t *testing.T) {
+	updated := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
+	repo := &fakeRepository{
+		photoFound:  true,
+		photoResult: publicbooking.PublicBarberPhoto{ContentType: "image/png", Data: []byte{0x89, 'P', 'N', 'G'}, UpdatedAt: updated},
+	}
+	h := httpapi.NewGetPublicBarberPhotoHandler(publicbooking.NewService(repo))
+
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, requestWithSlugAndBarberID("barberia-ejemplo", validServiceID))
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := rec.Header().Get("Content-Type"); got != "image/png" {
+		t.Fatalf("expected image/png, got %q", got)
+	}
+	if got := rec.Header().Get("ETag"); got == "" {
+		t.Fatal("expected an ETag header")
+	}
+	if got := rec.Header().Get("Cache-Control"); got != "private, max-age=3600" {
+		t.Fatalf("expected a private cache policy for a person's portrait, got %q", got)
+	}
+	if rec.Body.Len() != 4 {
+		t.Fatalf("expected the 4 image bytes, got %d", rec.Body.Len())
+	}
+}
+
+func TestGetPublicBarberPhotoHandler_IfNoneMatch_Returns304WithoutBody(t *testing.T) {
+	repo := &fakeRepository{
+		photoFound:  true,
+		photoResult: publicbooking.PublicBarberPhoto{ContentType: "image/png", Data: []byte{1}, UpdatedAt: time.Unix(1790769600, 0).UTC()},
+	}
+	h := httpapi.NewGetPublicBarberPhotoHandler(publicbooking.NewService(repo))
+
+	first := httptest.NewRecorder()
+	h.ServeHTTP(first, requestWithSlugAndBarberID("barberia-ejemplo", validServiceID))
+	etag := first.Header().Get("ETag")
+
+	req := requestWithSlugAndBarberID("barberia-ejemplo", validServiceID)
+	req.Header.Set("If-None-Match", etag)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotModified {
+		t.Fatalf("expected 304, got %d", rec.Code)
+	}
+	if rec.Body.Len() != 0 {
+		t.Fatalf("expected an empty 304 body, got %d bytes", rec.Body.Len())
+	}
+}
+
+func TestGetPublicBarberPhotoHandler_NotFound_ReturnsUniform404(t *testing.T) {
+	h := httpapi.NewGetPublicBarberPhotoHandler(publicbooking.NewService(&fakeRepository{photoFound: false}))
+
+	for _, barberID := range []string{validServiceID, "no-es-un-uuid"} {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, requestWithSlugAndBarberID("barberia-ejemplo", barberID))
+		if rec.Code != http.StatusNotFound {
+			t.Fatalf("barberId %q: expected 404, got %d", barberID, rec.Code)
+		}
 	}
 }

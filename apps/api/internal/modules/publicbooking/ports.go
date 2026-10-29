@@ -48,6 +48,14 @@ type Repository interface {
 	// barbershopFound=false cubre exactamente el mismo universo de causas
 	// que ResolveBySlug found=false.
 	ListPublicBarbers(ctx context.Context, slug string, serviceID string) (result PublicBarberListResult, barbershopFound bool, err error)
+
+	// GetPublicBarberPhoto resuelve slug como ListPublicBarbers y lee la
+	// fotografía de barberID (DEC-127). found=false cubre, sin distinguirlas,
+	// una barbería no publicable, un barbero inexistente o de otra barbería,
+	// uno sin fotografía y uno sin asignación vigente a un servicio activo:
+	// solo se sirve la imagen de quien la reserva pública ya muestra.
+	// barberID ya llegó validado como forma de UUID por Service.
+	GetPublicBarberPhoto(ctx context.Context, slug string, barberID string) (photo PublicBarberPhoto, found bool, err error)
 }
 
 // AvailabilityRepository es el puerto de persistencia adicional que

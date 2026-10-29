@@ -104,7 +104,7 @@ func TestPutPhoto_ListAndGetExposePhotoUpdatedAtWithoutTheBytes(t *testing.T) {
 		t.Fatalf("List must mark who has a photo: withPhoto=%v withoutPhoto=%v", seenWith, seenWithout)
 	}
 
-	renamed, err := repo.Rename(ctx, string(shopC), withPhoto.ID, "Renombrado "+uniqueSuffix(t))
+	renamed, err := repo.Update(ctx, string(shopC), withPhoto.ID, "Renombrado "+uniqueSuffix(t), staff.DescriptionPatch{})
 	if err != nil || !renamed.Found || renamed.Barber.PhotoUpdatedAt == nil {
 		t.Fatalf("Rename must keep reporting the photo: found=%v err=%v photo=%v", renamed.Found, err, renamed.Barber.PhotoUpdatedAt)
 	}

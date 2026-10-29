@@ -15,6 +15,11 @@ import (
 // estricto que la base ya aplica (CA-021-03).
 const FullNameMaxLength = 120
 
+// DescriptionMaxLength coincide con barber_description_ck
+// (20261026120000_add_barber_description.sql): un texto de presentación, no
+// una biografía (DEC-127).
+const DescriptionMaxLength = 280
+
 // DefaultListLimit, MinListLimit y MaxListLimit acotan `limit` en la lista
 // paginada (CA-021-02): límites técnicos, no un máximo de negocio de
 // barberos por barbería (docs/06-api/estandar-openapi.md §6.10).
@@ -36,6 +41,19 @@ type Barber struct {
 	// PhotoUpdatedAt es nil mientras el barbero no tiene fotografía (DEC-104):
 	// el cliente usa el monograma. Cuando existe, es la versión de la imagen.
 	PhotoUpdatedAt *time.Time
+	// Description es nil mientras el barbero no tiene descripción (DEC-127): la
+	// reserva pública solo muestra su nombre y fotografía. Nunca es una cadena
+	// vacía.
+	Description *string
+}
+
+// DescriptionPatch es el cambio pedido sobre la descripción en una
+// actualización. Set en false significa "no tocar" (el campo no vino en el
+// cuerpo); Set en true con Value nil o vacío la quita. Value ya normalizado
+// por Service nunca es una cadena vacía: la ausencia es nil.
+type DescriptionPatch struct {
+	Set   bool
+	Value *string
 }
 
 // barberIDPattern es la misma forma canónica 8-4-4-4-12 que
@@ -60,6 +78,21 @@ func LooksLikeBarberID(id string) bool {
 // restante (CA-021-03: "preserva caracteres Unicode válidos").
 func NormalizeFullName(raw string) string {
 	return strings.TrimSpace(raw)
+}
+
+// NormalizeDescription recorta espacios y convierte "sin texto" en nil: una
+// descripción vacía o de solo espacios es lo mismo que no tener descripción
+// (barber_description_ck rechaza la cadena vacía). No trunca; el largo se
+// valida aparte.
+func NormalizeDescription(raw *string) *string {
+	if raw == nil {
+		return nil
+	}
+	trimmed := strings.TrimSpace(*raw)
+	if trimmed == "" {
+		return nil
+	}
+	return &trimmed
 }
 
 // Cursor es la posición decodificada de una página de la lista (CA-021-02):

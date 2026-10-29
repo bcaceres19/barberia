@@ -10,7 +10,7 @@ import (
 )
 
 // Service implementa los casos de uso de HU-021: listar, consultar,
-// registrar y renombrar barberos de la barbería activa; y, por DEC-104, subir,
+// registrar y actualizar (nombre y descripción) barberos de la barbería activa; y, por DEC-104, subir,
 // leer y quitar su fotografía opcional.
 type Service struct {
 	repo      Repository
@@ -94,6 +94,7 @@ func (s *Service) Create(
 	ctx context.Context,
 	barbershopID string,
 	fullNameRaw string,
+	descriptionRaw *string,
 	key idempotency.Key,
 	fingerprint idempotency.Fingerprint,
 ) (CreateResult, error) {
@@ -106,21 +107,27 @@ func (s *Service) Create(
 		return CreateResult{}, err
 	}
 
-	result, err := s.repo.Create(ctx, barbershopID, fullName, key, fingerprint)
+	description, err := validateDescription(descriptionRaw)
+	if err != nil {
+		return CreateResult{}, err
+	}
+
+	result, err := s.repo.Create(ctx, barbershopID, fullName, description, key, fingerprint)
 	if err != nil {
 		return CreateResult{}, apperr.Internal(fmt.Errorf("staff: registrar barbero: %w", err))
 	}
 	return result, nil
 }
 
-// Rename cambia el nombre de un barbero existente de la barbería activa
-// (CA-021-04). fullNameRaw es el valor crudo del cuerpo, sin normalizar. Un
+// Update cambia el nombre y, si viene en el cuerpo, la descripción de un
+// barbero existente de la barbería activa (CA-021-04, DEC-127). fullNameRaw y
+// description son los valores crudos del cuerpo, sin normalizar. Un
 // identificador inexistente o de otra barbería produce el mismo
 // apperr.NotFound que Get (CA-021-05); nombres duplicados dentro de la
 // misma barbería son válidos (esta historia no impone unicidad).
-func (s *Service) Rename(ctx context.Context, barbershopID, barberID, fullNameRaw string) (Barber, error) {
+func (s *Service) Update(ctx context.Context, barbershopID, barberID, fullNameRaw string, description DescriptionPatch) (Barber, error) {
 	if err := ctx.Err(); err != nil {
-		return Barber{}, apperr.Internal(fmt.Errorf("staff: contexto cancelado antes de renombrar barbero: %w", err))
+		return Barber{}, apperr.Internal(fmt.Errorf("staff: contexto cancelado antes de actualizar barbero: %w", err))
 	}
 	if !LooksLikeBarberID(barberID) {
 		return Barber{}, errBarberNotFound()
@@ -131,9 +138,17 @@ func (s *Service) Rename(ctx context.Context, barbershopID, barberID, fullNameRa
 		return Barber{}, err
 	}
 
-	result, err := s.repo.Rename(ctx, barbershopID, barberID, fullName)
+	if description.Set {
+		value, err := validateDescription(description.Value)
+		if err != nil {
+			return Barber{}, err
+		}
+		description.Value = value
+	}
+
+	result, err := s.repo.Update(ctx, barbershopID, barberID, fullName, description)
 	if err != nil {
-		return Barber{}, apperr.Internal(fmt.Errorf("staff: renombrar barbero: %w", err))
+		return Barber{}, apperr.Internal(fmt.Errorf("staff: actualizar barbero: %w", err))
 	}
 	if !result.Found {
 		return Barber{}, errBarberNotFound()
@@ -223,6 +238,18 @@ func validateFullName(raw string) (string, error) {
 		return "", errFullNameTooLong()
 	}
 	return fullName, nil
+}
+
+// validateDescription normaliza y valida la descripción opcional (DEC-127):
+// vacía o de solo espacios equivale a no tener descripción (nil); más de
+// DescriptionMaxLength caracteres se rechaza sin tocar el repositorio. Cuenta
+// caracteres Unicode, no bytes, por la misma razón que validateFullName.
+func validateDescription(raw *string) (*string, error) {
+	description := NormalizeDescription(raw)
+	if description != nil && utf8.RuneCountInString(*description) > DescriptionMaxLength {
+		return nil, errDescriptionTooLong()
+	}
+	return description, nil
 }
 
 // ListPage permite saltar a una página de la tabla sin descargar todo el equipo.

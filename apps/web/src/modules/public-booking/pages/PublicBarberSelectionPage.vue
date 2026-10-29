@@ -23,6 +23,7 @@ import BookingStateScreen from '../components/BookingStateScreen.vue'
 import ChoiceMark from '../components/ChoiceMark.vue'
 import { listPublicBarbers } from '../api/listPublicBarbersApi'
 import type { PublicBarber } from '../model/publicBarberListOutcome'
+import { publicBarberPhotoUrl } from '../model/publicBarberPhotoUrl'
 import { usePublicVocabulary } from '../model/publicVocabulary'
 
 interface Props {
@@ -175,7 +176,7 @@ const selectedBarber = computed(() => barbers.value.find((b) => b.id === selecte
     @retry="retry"
   />
 
-  <main v-else class="pb-page pb-page--bar">
+  <main v-else class="pb-page pb-page--bar pb-page--scroll-choices">
     <p class="pb-eyebrow">Tu {{ v.professional }}</p>
     <h1 class="pb-title">Elige tu {{ v.professional }}</h1>
     <div class="pb-rule" aria-hidden="true"></div>
@@ -190,10 +191,19 @@ const selectedBarber = computed(() => barbers.value.find((b) => b.id === selecte
     <!-- CA-092-01: un único barbero elegible se informa sin presentarse
          como una elección pendiente (sin radiogroup, sin paso adicional). -->
     <div v-else-if="isSinglePreselected" class="pb-ficha">
-      <BarberAvatar :full-name="barbers[0]!.fullName" size="hero" />
-      <p class="pb-ficha__text" role="status">
-        Te atenderá <strong>{{ barbers[0]!.fullName }}</strong>
-      </p>
+      <BarberAvatar
+        :full-name="barbers[0]!.fullName"
+        :photo-url="publicBarberPhotoUrl(props.slug, barbers[0]!)"
+        size="hero"
+      />
+      <div class="pb-ficha__body">
+        <p class="pb-ficha__text" role="status">
+          Te atenderá <strong>{{ barbers[0]!.fullName }}</strong>
+        </p>
+        <p v-if="barbers[0]!.description" class="pb-ficha__description">
+          {{ barbers[0]!.description }}
+        </p>
+      </div>
     </div>
 
     <ul
@@ -212,13 +222,27 @@ const selectedBarber = computed(() => barbers.value.find((b) => b.id === selecte
         :style="{ '--pb-i': index }"
         role="radio"
         :aria-checked="barber.id === selectedBarberId"
+        :aria-labelledby="`pb-barber-${barber.id}-name`"
+        :aria-describedby="barber.description ? `pb-barber-${barber.id}-description` : undefined"
         :tabindex="index === activeIndex ? 0 : -1"
         @click="selectBarber(barber.id)"
       >
         <ChoiceMark />
-        <span class="pb-choice__body pb-choice__body--person">
-          <BarberAvatar :full-name="barber.fullName" size="row" />
-          <span class="pb-choice__name">{{ barber.fullName }}</span>
+        <BarberAvatar
+          :full-name="barber.fullName"
+          :photo-url="publicBarberPhotoUrl(props.slug, barber)"
+          size="portrait"
+        />
+        <span class="pb-choice__body">
+          <span :id="`pb-barber-${barber.id}-name`" class="pb-choice__name">{{
+            barber.fullName
+          }}</span>
+          <span
+            v-if="barber.description"
+            :id="`pb-barber-${barber.id}-description`"
+            class="pb-choice__description pb-choice__description--clamped"
+            >{{ barber.description }}</span
+          >
         </span>
       </li>
     </ul>

@@ -9,11 +9,17 @@
 // ante un error de validación o conflicto (CA-096-03, CA-097-03) y resuelve
 // `attendeeName` sin pedirlo dos veces cuando el cliente reserva para sí
 // mismo (CA-096-01, RN-RES-02).
-import { computed, nextTick, ref } from 'vue'
-import { BaseAlert, BaseButton, BaseInput } from '@/shared/ui'
+import { computed, nextTick, onMounted, ref, useId } from 'vue'
+import { useRouter } from 'vue-router'
+import { BarberAvatar, BaseAlert, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
+import PhoneField from '../components/PhoneField.vue'
 import { confirmPublicAppointment } from '../api/confirmPublicAppointmentApi'
+import { listPublicBarbers } from '../api/listPublicBarbersApi'
 import { useBookingChrome } from '../model/bookingChrome'
 import { newIdempotencyKey } from '../model/idempotencyKey'
+import type { PublicBarber } from '../model/publicBarberListOutcome'
+import { publicBarberPhotoUrl } from '../model/publicBarberPhotoUrl'
+import { DEFAULT_PHONE_COUNTRY, composePhone, phoneCountry } from '../model/phoneCountries'
 import { usePublicVocabulary } from '../model/publicVocabulary'
 import type {
   ConfirmedPublicAppointment,
@@ -26,7 +32,7 @@ import {
   validateCustomerEmail,
   validateCustomerFullName,
   validateCustomerNote,
-  validateCustomerPhone,
+  validateCustomerPhoneParts,
 } from '../validation/customerIdentityValidation'
 
 interface Props {
@@ -44,6 +50,10 @@ interface Props {
 }
 const props = defineProps<Props>()
 const v = usePublicVocabulary()
+const router = useRouter()
+const gemId = `seal-gem-${useId()}`
+// Único por instancia: el diálogo vive en el <body> y no debe repetir ids.
+const conflictAltsLabelId = `pb-conflict-alts-${useId()}`
 
 // El cascarón dibuja el progreso: al confirmar, se completa.
 const chrome = useBookingChrome()
@@ -52,10 +62,25 @@ type AttendeeChoice = 'self' | 'other'
 
 const attendeeChoice = ref<AttendeeChoice>('self')
 const fullName = ref('')
-const phone = ref('')
+// El prefijo vive en su propia casilla; al API viaja el E.164 compuesto.
+const phoneCountryIso = ref(DEFAULT_PHONE_COUNTRY)
+const phoneNational = ref('')
+const phone = computed(() => composePhone(phoneCountryIso.value, phoneNational.value))
 const email = ref('')
 const note = ref('')
 const attendeeName = ref('')
+
+// El barbero elegido, para mostrarlo en el resumen con su foto. La página puede
+// abrirse directamente desde un enlace, así que se busca por id en la lista
+// pública del servicio. Es solo presentación: si no llega, el resumen sigue
+// siendo completo (el servidor valida el barbero al confirmar).
+const barber = ref<PublicBarber | null>(null)
+onMounted(async () => {
+  const outcome = await listPublicBarbers(props.slug, props.serviceId)
+  if (outcome.kind === 'success') {
+    barber.value = outcome.barbers.find((item) => item.id === props.barberId) ?? null
+  }
+})
 
 const attempted = ref(false)
 const reviewing = ref(false)
@@ -69,6 +94,10 @@ const confirmState = ref<ConfirmState>('idle')
 const confirmedAppointment = ref<ConfirmedPublicAppointment | null>(null)
 const alternatives = ref<PublicAppointmentAlternative[]>([])
 const errorMessage = ref('')
+// El servidor las entrega por cercanía; al cliente le sirven en orden de reloj.
+const sortedAlternatives = computed(() =>
+  [...alternatives.value].sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt)),
+)
 // idempotencyKey se conserva mientras el reintento es la MISMA solicitud
 // (red/error inesperado, RN-IDE-01): un contenido distinto (editar, elegir
 // otra alternativa) siempre pide una clave nueva.
@@ -80,7 +109,7 @@ const confirmedRef = ref<HTMLElement | null>(null)
 
 const fieldErrors = computed(() => ({
   fullName: validateCustomerFullName(fullName.value),
-  phone: validateCustomerPhone(phone.value),
+  phone: validateCustomerPhoneParts(phoneCountry(phoneCountryIso.value).dial, phoneNational.value),
   email: validateCustomerEmail(email.value),
   note: validateCustomerNote(note.value),
   attendeeName:
@@ -118,14 +147,71 @@ async function editAgain() {
   formRef.value?.querySelector<HTMLElement>('input, textarea')?.focus()
 }
 
-function formatLocalDateTime(iso: string): string {
+// Fecha larga y hora por separado: el resumen da a la hora el protagonismo.
+function formatLocalDay(iso: string): string {
   try {
-    return new Date(iso).toLocaleString('es-CO', {
-      dateStyle: 'full',
-      timeStyle: 'short',
+    return new Date(iso).toLocaleDateString('es-CO', { dateStyle: 'full' })
+  } catch {
+    return iso
+  }
+}
+
+function formatLocalDayShort(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString('es-CO', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
     })
   } catch {
     return iso
+  }
+}
+
+function formatLocalTime(iso: string): string {
+  try {
+    return new Date(iso).toLocaleTimeString('es-CO', { timeStyle: 'short' })
+  } catch {
+    return ''
+  }
+}
+
+// Piezas del talón de confirmación. Se calculan en la zona del navegador, igual
+// que el resto de fechas de esta pantalla.
+function leafParts(iso: string): { month: string; day: string; weekday: string } {
+  const date = new Date(iso)
+  return {
+    month: date.toLocaleDateString('es-CO', { month: 'short' }).replace('.', ''),
+    day: String(date.getDate()),
+    weekday: date.toLocaleDateString('es-CO', { weekday: 'long' }),
+  }
+}
+
+// «Hoy», «Mañana» o «En N días»: cuenta días de calendario, no bloques de 24 h.
+function untilLabel(iso: string): string {
+  const target = new Date(iso)
+  const today = new Date()
+  const days = Math.round(
+    (new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime() -
+      new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()) /
+      86_400_000,
+  )
+  if (days <= 0) return 'Hoy'
+  if (days === 1) return 'Mañana'
+  return `En ${days} días`
+}
+
+function formatMoney(amount: string, currency: string): string {
+  const value = Number(amount)
+  if (!Number.isFinite(value)) return `${amount} ${currency}`
+  try {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: 0,
+    }).format(value)
+  } catch {
+    return `${amount} ${currency}`
   }
 }
 
@@ -149,7 +235,7 @@ async function handleConfirm() {
     {
       startsAt: selectedStartsAt.value,
       fullName: fullName.value.trim(),
-      phone: phone.value.trim(),
+      phone: phone.value,
       email: email.value.trim(),
       note: note.value.trim() || null,
       forSomeoneElse: attendeeChoice.value === 'other',
@@ -200,6 +286,16 @@ async function handleConfirm() {
   }
 }
 
+// El conflicto obliga a editar el turno: o se elige una de las horas libres
+// cercanas (el resumen se actualiza y hay que volver a confirmar) o se vuelve
+// al calendario. Los datos del formulario siguen en esta página mientras tanto.
+function pickAnotherSlot() {
+  void router.push({
+    name: 'reserva-publica-horario',
+    params: { slug: props.slug, serviceId: props.serviceId, barberId: props.barberId },
+  })
+}
+
 function chooseAlternative(startsAt: string) {
   selectedStartsAt.value = startsAt
   alternatives.value = []
@@ -209,7 +305,48 @@ function chooseAlternative(startsAt: string) {
 </script>
 
 <template>
-  <main class="pb-page pb-page--center">
+  <main
+    class="pb-page pb-page--center"
+    :class="confirmState === 'confirmed' ? 'pb-page--confirmed' : 'pb-page--scroll-form'"
+  >
+    <span v-if="confirmState === 'confirmed'" class="customer-details__seal" aria-hidden="true">
+      <svg class="customer-details__gem" viewBox="0 0 64 64" fill="none" focusable="false">
+        <defs>
+          <clipPath :id="`${gemId}-clip`">
+            <path d="M32 4 60 32 32 60 4 32Z" />
+          </clipPath>
+          <linearGradient :id="`${gemId}-glint`" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#e6f5ea" stop-opacity="0" />
+            <stop offset="0.5" stop-color="#e6f5ea" stop-opacity="0.85" />
+            <stop offset="1" stop-color="#e6f5ea" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+        <path class="customer-details__gem-inner" d="M32 17 47 32 32 47 17 32Z" />
+        <path class="customer-details__gem-facets" d="M32 4V60M4 32H60M18 18 46 46M46 18 18 46" />
+        <path class="customer-details__gem-outline" d="M32 4 60 32 32 60 4 32Z" pathLength="100" />
+        <g :clip-path="`url(#${gemId}-clip)`">
+          <g transform="skewX(-22)">
+            <rect
+              class="customer-details__gem-glint"
+              x="-4"
+              y="0"
+              width="18"
+              height="64"
+              :fill="`url(#${gemId}-glint)`"
+            />
+          </g>
+        </g>
+      </svg>
+      <i
+        v-for="spark in 8"
+        :key="spark"
+        class="customer-details__spark"
+        :style="{
+          '--spark-angle': `${(spark - 1) * 45}deg`,
+          '--spark-delay': `${0.7 + (spark % 3) * 0.06}s`,
+        }"
+      ></i>
+    </span>
     <p class="pb-eyebrow">
       {{
         confirmState === 'confirmed'
@@ -222,7 +359,10 @@ function chooseAlternative(startsAt: string) {
     <h1 class="pb-title">{{ confirmState === 'confirmed' ? 'Todo listo' : 'Tus datos' }}</h1>
     <div class="pb-rule" aria-hidden="true"></div>
 
-    <section class="pb-sheet customer-details">
+    <section
+      class="pb-sheet customer-details"
+      :class="{ 'customer-details--ticket': confirmState === 'confirmed' }"
+    >
       <form
         v-if="!reviewing"
         ref="formRef"
@@ -230,91 +370,95 @@ function chooseAlternative(startsAt: string) {
         novalidate
         @submit.prevent="handleSubmit"
       >
-        <fieldset class="customer-details__fieldset">
-          <legend class="customer-details__legend">¿Para quién es el turno?</legend>
-          <div
-            class="customer-details__radio-group"
-            role="radiogroup"
-            aria-label="¿Para quién es el turno?"
-          >
-            <label class="customer-details__radio">
-              <input v-model="attendeeChoice" type="radio" name="attendee-choice" value="self" />
-              <span>Para mí</span>
-            </label>
-            <label class="customer-details__radio">
-              <input v-model="attendeeChoice" type="radio" name="attendee-choice" value="other" />
-              <span>Para otra persona</span>
-            </label>
-          </div>
-        </fieldset>
-
-        <BaseInput
-          v-model="fullName"
-          type="text"
-          label="Tu nombre"
-          autocomplete="name"
-          required
-          :error="attempted ? fieldErrors.fullName : undefined"
-        />
-
-        <BaseInput
-          v-if="attendeeChoice === 'other'"
-          v-model="attendeeName"
-          class="customer-details__rise"
-          type="text"
-          label="Nombre de la persona atendida"
-          autocomplete="off"
-          required
-          :maxlength="ATTENDEE_NAME_MAX_LENGTH"
-          :error="attempted ? fieldErrors.attendeeName : undefined"
-        />
-
-        <BaseInput
-          v-model="phone"
-          type="tel"
-          label="Teléfono"
-          placeholder="+573001234567"
-          autocomplete="tel"
-          required
-          :error="attempted ? fieldErrors.phone : undefined"
-        />
-
-        <BaseInput
-          v-model="email"
-          type="email"
-          label="Correo"
-          autocomplete="email"
-          required
-          :error="attempted ? fieldErrors.email : undefined"
-        />
-
-        <div class="customer-details__field">
-          <label for="customer-details-note" class="customer-details__label">Nota (opcional)</label>
-          <textarea
-            id="customer-details-note"
-            v-model="note"
-            class="customer-details__textarea"
-            rows="2"
-            :aria-invalid="attempted && !!fieldErrors.note"
-            :aria-describedby="
-              attempted && fieldErrors.note
-                ? 'customer-details-note-error'
-                : 'customer-details-note-counter'
-            "
-          />
-          <div class="customer-details__field-foot">
-            <span
-              v-if="attempted && fieldErrors.note"
-              id="customer-details-note-error"
-              class="customer-details__error"
-              role="alert"
+        <!-- Los campos viven en su propia región: con poco alto es lo único que
+             se desplaza y el botón de enviar queda siempre a la vista. -->
+        <div class="customer-details__fields">
+          <fieldset class="customer-details__fieldset customer-details__span">
+            <legend class="customer-details__legend">¿Para quién es el turno?</legend>
+            <div
+              class="customer-details__radio-group"
+              role="radiogroup"
+              aria-label="¿Para quién es el turno?"
             >
-              {{ fieldErrors.note }}
-            </span>
-            <span v-else />
-            <span id="customer-details-note-counter" class="customer-details__counter">
-              {{ note.length }}/{{ CUSTOMER_NOTE_MAX_LENGTH }}
-            </span>
+              <label class="customer-details__radio">
+                <input v-model="attendeeChoice" type="radio" name="attendee-choice" value="self" />
+                <span>Para mí</span>
+              </label>
+              <label class="customer-details__radio">
+                <input v-model="attendeeChoice" type="radio" name="attendee-choice" value="other" />
+                <span>Para otra persona</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <BaseInput
+            v-model="fullName"
+            :class="{ 'customer-details__span': attendeeChoice === 'self' }"
+            type="text"
+            label="Tu nombre"
+            autocomplete="name"
+            required
+            :error="attempted ? fieldErrors.fullName : undefined"
+          />
+
+          <BaseInput
+            v-if="attendeeChoice === 'other'"
+            v-model="attendeeName"
+            class="customer-details__rise"
+            type="text"
+            label="Nombre de la persona atendida"
+            autocomplete="off"
+            required
+            :maxlength="ATTENDEE_NAME_MAX_LENGTH"
+            :error="attempted ? fieldErrors.attendeeName : undefined"
+          />
+
+          <PhoneField
+            v-model:country="phoneCountryIso"
+            v-model:national="phoneNational"
+            required
+            :error="attempted ? fieldErrors.phone : undefined"
+          />
+
+          <BaseInput
+            v-model="email"
+            type="email"
+            label="Correo"
+            autocomplete="email"
+            required
+            :error="attempted ? fieldErrors.email : undefined"
+          />
+
+          <div class="customer-details__field customer-details__span">
+            <label for="customer-details-note" class="customer-details__label"
+              >Nota (opcional)</label
+            >
+            <textarea
+              id="customer-details-note"
+              v-model="note"
+              class="customer-details__textarea"
+              rows="3"
+              :aria-invalid="attempted && !!fieldErrors.note"
+              :aria-describedby="
+                attempted && fieldErrors.note
+                  ? 'customer-details-note-error'
+                  : 'customer-details-note-counter'
+              "
+            />
+            <div class="customer-details__field-foot">
+              <span
+                v-if="attempted && fieldErrors.note"
+                id="customer-details-note-error"
+                class="customer-details__error"
+                role="alert"
+              >
+                {{ fieldErrors.note }}
+              </span>
+              <span v-else />
+              <span id="customer-details-note-counter" class="customer-details__counter">
+                {{ note.length }}/{{ CUSTOMER_NOTE_MAX_LENGTH }}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -335,62 +479,67 @@ function chooseAlternative(startsAt: string) {
         tabindex="-1"
       >
         <h2 class="pb-sheet__heading">Revisa tus datos</h2>
-        <dl class="customer-details__summary-list">
-          <div class="customer-details__summary-row">
-            <dt>Cliente</dt>
-            <dd>{{ fullName }}</dd>
-          </div>
-          <div class="customer-details__summary-row">
-            <dt>Atiende a</dt>
-            <dd>{{ resolvedAttendeeName }}</dd>
-          </div>
-          <div class="customer-details__summary-row">
-            <dt>Teléfono</dt>
-            <dd>{{ phone }}</dd>
-          </div>
-          <div class="customer-details__summary-row">
-            <dt>Correo</dt>
-            <dd>{{ email }}</dd>
-          </div>
-          <div v-if="note.trim()" class="customer-details__summary-row">
-            <dt>Nota</dt>
-            <dd>{{ note }}</dd>
-          </div>
-          <div class="customer-details__summary-row">
-            <dt>Fecha y hora</dt>
-            <dd>{{ formatLocalDateTime(selectedStartsAt) }}</dd>
-          </div>
-        </dl>
 
-        <!-- DEC-122: si el negocio publica su agenda en Google Calendar, Google invita al
+        <!-- La cita es lo que el cliente viene a comprobar: va arriba, grande,
+             como el talón de un turno. -->
+        <div class="customer-details__when">
+          <span class="customer-details__when-label">Tu turno</span>
+          <span class="customer-details__when-time">{{ formatLocalTime(selectedStartsAt) }}</span>
+          <span class="customer-details__when-day">{{ formatLocalDay(selectedStartsAt) }}</span>
+          <span v-if="barber" class="customer-details__who">
+            <BarberAvatar
+              size="row"
+              :full-name="barber.fullName"
+              :photo-url="publicBarberPhotoUrl(slug, barber)"
+            />
+            <span class="customer-details__who-text">
+              <span class="customer-details__when-label">{{ v.Professional }}</span>
+              <span class="customer-details__who-name">{{ barber.fullName }}</span>
+            </span>
+          </span>
+        </div>
+
+        <!-- Región desplazable: con poco alto es lo único que se mueve y los
+             botones quedan siempre a la vista. -->
+        <div class="customer-details__summary-body">
+          <dl class="customer-details__summary-list">
+            <div class="customer-details__summary-row">
+              <dt>Cliente</dt>
+              <dd>{{ fullName }}</dd>
+            </div>
+            <!-- Solo cuando el turno es de otra persona: para uno mismo repetiría
+               el nombre del cliente. -->
+            <div v-if="attendeeChoice === 'other'" class="customer-details__summary-row">
+              <dt>Turno para</dt>
+              <dd>{{ resolvedAttendeeName }}</dd>
+            </div>
+            <div class="customer-details__summary-row">
+              <dt>Teléfono</dt>
+              <dd>{{ phoneCountry(phoneCountryIso).dial }} {{ phoneNational }}</dd>
+            </div>
+            <div class="customer-details__summary-row">
+              <dt>Correo</dt>
+              <dd>{{ email }}</dd>
+            </div>
+            <div v-if="note.trim()" class="customer-details__summary-row">
+              <dt>Nota</dt>
+              <dd>{{ note }}</dd>
+            </div>
+          </dl>
+
+          <!-- DEC-122: si el negocio publica su agenda en Google Calendar, Google invita al
              cliente al turno en el correo que dio. El aviso es condicional porque esta
              pantalla no sabe si el negocio lo usa; nunca promete una invitación. -->
-        <p class="customer-details__invite-note">
-          Si el negocio usa Google Calendar, recibirás una invitación a este turno en
-          <strong>{{ email }}</strong
-          >.
-        </p>
-
-        <BaseAlert v-if="confirmState === 'error'" variant="danger" role="alert">
-          {{ errorMessage }}
-        </BaseAlert>
-
-        <BaseAlert v-if="confirmState === 'schedule-conflict'" variant="warning" role="alert">
-          <p class="customer-details__conflict-line">Ese horario se acaba de ocupar.</p>
-          <p v-if="alternatives.length > 0" class="customer-details__conflict-line">
-            Estas horas siguen libres:
+          <p class="customer-details__invite-note">
+            Si el negocio usa Google Calendar, recibirás una invitación a este turno en
+            <strong>{{ email }}</strong
+            >.
           </p>
-          <ul v-if="alternatives.length > 0" class="customer-details__alternatives">
-            <li v-for="alt in alternatives" :key="alt.startsAt">
-              <BaseButton type="button" variant="soft" @click="chooseAlternative(alt.startsAt)">
-                {{ formatLocalDateTime(alt.startsAt) }}
-              </BaseButton>
-            </li>
-          </ul>
-          <p v-else class="customer-details__conflict-line">
-            No quedan horarios cercanos disponibles. Elige otro día.
-          </p>
-        </BaseAlert>
+
+          <BaseAlert v-if="confirmState === 'error'" variant="danger" role="alert">
+            {{ errorMessage }}
+          </BaseAlert>
+        </div>
 
         <div class="customer-details__actions">
           <BaseButton
@@ -416,60 +565,129 @@ function chooseAlternative(startsAt: string) {
 
       <!-- Confirmación real del servidor (CA-097-01, CA-097-07): el correo
            con el enlace de acceso ya se envió; el token en claro solo
-           existe en esta respuesta (DEC-089), nunca se vuelve a mostrar. -->
+           existe en esta respuesta (DEC-089), nunca se vuelve a mostrar ni
+           se dibuja aquí. Se presenta como un boleto de turno. -->
       <div
         v-else
         ref="confirmedRef"
-        class="customer-details__confirmed customer-details__rise"
+        class="customer-details__confirmed ticket"
         role="status"
         tabindex="-1"
       >
-        <span class="customer-details__seal" aria-hidden="true">
-          <svg viewBox="0 0 96 96" focusable="false">
-            <rect
-              class="customer-details__seal-diamond"
-              pathLength="1"
-              x="22"
-              y="22"
-              width="52"
-              height="52"
-            />
-            <path class="customer-details__seal-check" pathLength="1" d="M33 49l11 11 21-23" />
-          </svg>
-          <i
-            v-for="spark in 8"
-            :key="spark"
-            class="customer-details__spark"
-            :style="{
-              '--spark-angle': `${(spark - 1) * 45}deg`,
-              '--spark-delay': `${0.7 + (spark % 3) * 0.06}s`,
-            }"
-          ></i>
-        </span>
-        <h2 class="pb-sheet__heading">¡Tu turno quedó confirmado!</h2>
-        <dl v-if="confirmedAppointment" class="customer-details__summary-list">
-          <div class="customer-details__summary-row">
-            <dt>{{ v.Business }}</dt>
-            <dd>{{ confirmedAppointment.barbershopName }}</dd>
+        <p class="ticket__title">¡Tu turno quedó confirmado!</p>
+
+        <article v-if="confirmedAppointment" class="ticket__card">
+          <div class="ticket__main">
+            <p class="ticket__shop">{{ confirmedAppointment.barbershopName }}</p>
+            <p class="ticket__service">{{ confirmedAppointment.serviceName }}</p>
+            <p class="ticket__meta">
+              <span>{{ confirmedAppointment.durationMinutes }} min</span>
+              <span aria-hidden="true">·</span>
+              <span>{{
+                formatMoney(confirmedAppointment.priceAmount, confirmedAppointment.currency)
+              }}</span>
+            </p>
+            <span class="ticket__stamp" aria-hidden="true">Confirmado</span>
           </div>
-          <div class="customer-details__summary-row">
-            <dt>Servicio</dt>
-            <dd>{{ confirmedAppointment.serviceName }}</dd>
+
+          <div class="ticket__tear" aria-hidden="true"></div>
+
+          <div class="ticket__stub">
+            <div class="ticket__when">
+              <span class="ticket__leaf" aria-hidden="true">
+                <span class="ticket__leaf-month">{{
+                  leafParts(confirmedAppointment.startsAt).month
+                }}</span>
+                <span class="ticket__leaf-day">{{
+                  leafParts(confirmedAppointment.startsAt).day
+                }}</span>
+              </span>
+              <span class="ticket__when-text">
+                <span class="ticket__weekday">{{
+                  leafParts(confirmedAppointment.startsAt).weekday
+                }}</span>
+                <span class="ticket__time">{{
+                  formatLocalTime(confirmedAppointment.startsAt)
+                }}</span>
+                <span class="ticket__until">{{ untilLabel(confirmedAppointment.startsAt) }}</span>
+              </span>
+            </div>
+
+            <div v-if="barber" class="ticket__who">
+              <BarberAvatar
+                size="row"
+                :full-name="barber.fullName"
+                :photo-url="publicBarberPhotoUrl(slug, barber)"
+              />
+              <span class="ticket__who-text">
+                <span class="ticket__label">{{ v.Professional }}</span>
+                <span class="ticket__who-name">{{ barber.fullName }}</span>
+              </span>
+            </div>
           </div>
-          <div class="customer-details__summary-row">
-            <dt>Atiende a</dt>
-            <dd>{{ confirmedAppointment.attendeeName }}</dd>
-          </div>
-          <div class="customer-details__summary-row">
-            <dt>Fecha y hora</dt>
-            <dd>{{ formatLocalDateTime(confirmedAppointment.startsAt) }}</dd>
-          </div>
-        </dl>
+
+          <p v-if="attendeeChoice === 'other'" class="ticket__for">
+            <span class="ticket__label">Turno para</span>
+            <span>{{ confirmedAppointment.attendeeName }}</span>
+          </p>
+
+          <span class="ticket__bars" aria-hidden="true"></span>
+        </article>
+
         <p class="customer-details__note">
-          Te enviamos un correo con el enlace para consultar tu turno cuando quieras.
+          Te enviamos un correo a <strong>{{ email }}</strong> con el enlace para consultar tu turno
+          cuando quieras.
         </p>
       </div>
     </section>
+
+    <!-- Horario ocupado: un diálogo modal y sin salida lateral (ni Escape ni
+         clic fuera), para que el cliente no confirme sin haber revisado el
+         nuevo turno. -->
+    <BaseDialog
+      :model-value="confirmState === 'schedule-conflict'"
+      title="Ese horario se acaba de ocupar"
+      size="sm"
+      content-class="pb-conflict-dialog"
+      :close-on-backdrop="false"
+      :close-on-escape="false"
+      :show-close="false"
+    >
+      <template #icon>
+        <span class="pb-conflict__mark" aria-hidden="true">!</span>
+      </template>
+
+      <p class="pb-conflict__lead">
+        Alguien reservó las <strong>{{ formatLocalTime(selectedStartsAt) }}</strong> del
+        <strong>{{ formatLocalDay(selectedStartsAt) }}</strong> justo antes que tú. Elige otra hora
+        para seguir con tu turno.
+      </p>
+
+      <template v-if="alternatives.length > 0">
+        <p :id="conflictAltsLabelId" class="pb-conflict__label">Estas horas siguen libres</p>
+        <ul class="pb-conflict__alts" :aria-labelledby="conflictAltsLabelId">
+          <li v-for="alt in sortedAlternatives" :key="alt.startsAt">
+            <button type="button" class="pb-conflict__alt" @click="chooseAlternative(alt.startsAt)">
+              <span class="pb-conflict__alt-time">{{ formatLocalTime(alt.startsAt) }}</span>
+              <span class="pb-conflict__alt-day">{{ formatLocalDayShort(alt.startsAt) }}</span>
+            </button>
+          </li>
+        </ul>
+      </template>
+      <p v-else class="pb-conflict__lead">
+        No quedan horarios libres cerca de ese. Elige otro día en el calendario.
+      </p>
+
+      <template #footer>
+        <BaseButton
+          type="button"
+          :variant="alternatives.length > 0 ? 'secondary' : 'primary'"
+          @click="pickAnotherSlot"
+        >
+          Elegir otro horario
+        </BaseButton>
+      </template>
+    </BaseDialog>
   </main>
 </template>
 
@@ -484,32 +702,46 @@ function chooseAlternative(startsAt: string) {
 }
 
 /* Los campos del formulario entran escalonados, uno tras otro. */
-.pb-sheet__form > * {
+.customer-details__fields > * {
   animation: pb-rise 0.6s var(--pb-ease, ease) calc(0.35s + var(--i, 0) * 0.07s) backwards;
 }
 
-.pb-sheet__form > :nth-child(2) {
+.customer-details__fields > :nth-child(2) {
   --i: 1;
 }
 
-.pb-sheet__form > :nth-child(3) {
+.customer-details__fields > :nth-child(3) {
   --i: 2;
 }
 
-.pb-sheet__form > :nth-child(4) {
+.customer-details__fields > :nth-child(4) {
   --i: 3;
 }
 
-.pb-sheet__form > :nth-child(5) {
+.customer-details__fields > :nth-child(5) {
   --i: 4;
 }
 
-.pb-sheet__form > :nth-child(6) {
+.customer-details__fields > :nth-child(6) {
   --i: 5;
 }
 
-.pb-sheet__form > :nth-child(7) {
-  --i: 6;
+/* Rejilla de dos columnas: nombre y persona atendida, teléfono y correo van
+   en pareja; el selector, la nota y el nombre a solas ocupan el ancho. */
+.customer-details__fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5) var(--space-4);
+}
+
+@media (min-width: 560px) {
+  .customer-details__fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .customer-details__span {
+    grid-column: 1 / -1;
+  }
 }
 
 .customer-details__fieldset {
@@ -696,7 +928,8 @@ function chooseAlternative(startsAt: string) {
   font-size: var(--font-size-body);
   line-height: var(--font-size-body-line);
   color: var(--pb-text);
-  resize: vertical;
+  height: calc(var(--font-size-body-line) * 3 + var(--space-3) * 2);
+  resize: none;
   background-color: color-mix(in srgb, #000 46%, var(--color-surface-strong));
   border: var(--border-width-normal) solid var(--pb-line-strong);
   border-bottom: var(--border-width-emphasis) solid
@@ -793,20 +1026,119 @@ function chooseAlternative(startsAt: string) {
 }
 
 .customer-details__submit {
+  flex: none;
   width: 100%;
   margin-top: var(--space-2);
+  animation: pb-rise 0.6s var(--pb-ease, ease) 0.8s backwards;
 }
 
 .customer-details__summary,
 .customer-details__confirmed {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-4);
   outline: none;
 }
 
-.customer-details__confirmed .pb-sheet__heading {
-  text-align: center;
+.customer-details__summary-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.customer-details__summary .pb-sheet__heading {
+  margin-bottom: 0;
+}
+
+/* Talón del turno: hora en grande sobre la fecha, con filete de latón. */
+.customer-details__when {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-5);
+  background-image: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--pb-brass) 12%, transparent),
+    transparent 80%
+  );
+  border: 1px solid var(--pb-line);
+  border-left: 3px solid var(--pb-brass);
+  border-radius: 2px;
+}
+
+.customer-details__when-label {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 14px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pb-brass);
+}
+
+/* Cifras en la sans: la serif de títulos dibuja el 1 como una «l». */
+.customer-details__when-time {
+  font-family: var(--font-sans);
+  font-size: 36px;
+  font-weight: 500;
+  line-height: 44px;
+  font-variant-numeric: tabular-nums;
+  color: var(--pb-text);
+}
+
+.customer-details__when-day {
+  color: var(--pb-soft);
+}
+
+/* El día llega en minúscula («viernes, 30 de octubre…»): solo la inicial. */
+.customer-details__when-day::first-letter {
+  text-transform: uppercase;
+}
+
+/* Barbero elegido: retrato y nombre al pie del talón, separados por un filete. */
+.customer-details__who {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  padding-top: var(--space-3);
+  margin-top: var(--space-2);
+  border-top: 1px solid var(--pb-line);
+}
+
+/* En ancho, el barbero pasa a la derecha del talón: la hora y él se leen a la
+   vez y la hoja gana alto para los datos. */
+@media (min-width: 560px) {
+  .customer-details__when {
+    grid-template-columns: 1fr auto;
+    column-gap: var(--space-6);
+  }
+
+  .customer-details__when > :not(.customer-details__who) {
+    grid-column: 1;
+  }
+
+  .pb-page--scroll-form .customer-details__who,
+  .customer-details__who {
+    grid-row: 1 / span 3;
+    grid-column: 2;
+    align-self: center;
+    padding: 0 0 0 var(--space-6);
+    margin: 0;
+    border-top: 0;
+    border-left: 1px solid var(--pb-line);
+  }
+}
+
+.customer-details__who-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.customer-details__who-name {
+  overflow-wrap: anywhere;
+  font-weight: 500;
+  color: var(--pb-text);
 }
 
 .customer-details__summary-list {
@@ -884,15 +1216,6 @@ function chooseAlternative(startsAt: string) {
   border-left-color: var(--color-danger-on-strong);
 }
 
-.customer-details :deep(.base-alert--warning) {
-  background-color: color-mix(
-    in srgb,
-    var(--color-warning-on-strong) 12%,
-    var(--color-surface-strong)
-  );
-  border-left-color: var(--color-warning-on-strong);
-}
-
 .customer-details :deep(.base-alert__title),
 .customer-details :deep(.base-alert__text) {
   color: var(--pb-text);
@@ -900,23 +1223,6 @@ function chooseAlternative(startsAt: string) {
 
 .customer-details :deep(.base-alert__status) {
   color: var(--pb-brass);
-}
-
-.customer-details__conflict-line {
-  margin: 0;
-}
-
-.customer-details__conflict-line + .customer-details__conflict-line,
-.customer-details__alternatives {
-  margin-top: var(--space-2);
-}
-
-.customer-details__alternatives {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  padding: 0;
-  list-style: none;
 }
 
 .customer-details__actions {
@@ -936,9 +1242,470 @@ function chooseAlternative(startsAt: string) {
 }
 
 .customer-details__note {
+  max-width: 46ch;
   margin: 0;
   color: var(--pb-soft);
   text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.customer-details__note strong {
+  font-weight: 600;
+  color: var(--pb-text);
+}
+
+/* ── Confirmación: boleto de turno ───────────────────────────────────────── */
+
+/* La hoja de papel deja paso al boleto: sin panel, sin cinta métrica. */
+.pb-sheet.customer-details--ticket {
+  padding: 0;
+  margin-top: var(--space-6);
+  background: none;
+  border: 0;
+  box-shadow: none;
+  animation: none;
+}
+
+.customer-details--ticket::before {
+  display: none;
+}
+
+.ticket {
+  align-items: center;
+  gap: var(--space-5);
+}
+
+/* Cabecera de la confirmación: sello, rótulo y título centrados sobre el boleto. */
+.pb-page--confirmed {
+  align-items: center;
+}
+
+.pb-page--confirmed .pb-eyebrow {
+  justify-content: center;
+  margin-top: var(--space-5);
+}
+
+.pb-page--confirmed .pb-eyebrow::after {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background-color: currentcolor;
+}
+
+.pb-page--confirmed .pb-title {
+  font-size: clamp(48px, 13vw, 76px);
+  text-align: center;
+}
+
+.pb-page--confirmed .pb-rule {
+  display: none;
+}
+
+.pb-page--confirmed .customer-details {
+  width: 100%;
+}
+
+/* Halo de latón tras el sello. */
+.pb-page--confirmed .customer-details__seal::before {
+  content: '';
+  position: absolute;
+  inset: -34px;
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--color-success-on-strong) 24%, transparent),
+    transparent 68%
+  );
+  animation: ticket-halo 1.4s ease-out 0.8s backwards;
+}
+
+.ticket__title {
+  margin: 0;
+  font-size: var(--font-size-body-lg, 18px);
+  text-align: center;
+  color: var(--pb-soft);
+  animation: pb-rise 0.7s var(--pb-ease, ease) 0.9s backwards;
+}
+
+.ticket__card {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  overflow: hidden;
+  background-color: color-mix(in srgb, #000 26%, var(--color-surface-strong));
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--pb-brass) 7%, transparent),
+    transparent 160px
+  );
+  border: 1px solid var(--pb-line);
+  border-top: 2px solid var(--pb-brass);
+  border-radius: 4px;
+  box-shadow:
+    0 36px 60px -30px rgb(0 0 0 / 80%),
+    0 0 0 1px color-mix(in srgb, var(--pb-brass) 6%, transparent);
+  transform-origin: 50% 0;
+  animation: ticket-drop 0.95s cubic-bezier(0.2, 0.8, 0.2, 1) 1.1s backwards;
+}
+
+/* Un destello de latón cruza el boleto una sola vez al aterrizar. */
+.ticket__card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(
+    105deg,
+    transparent 40%,
+    color-mix(in srgb, var(--pb-brass) 22%, transparent) 50%,
+    transparent 60%
+  );
+  transform: translateX(-110%);
+  animation: ticket-shine 1.3s ease-in-out 1.9s;
+}
+
+.ticket__main {
+  position: relative;
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-6) var(--space-6) var(--space-5);
+}
+
+.ticket__shop,
+.ticket__label {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 14px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pb-brass);
+}
+
+.ticket__service {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(30px, 8vw, 40px);
+  line-height: 1.05;
+  color: var(--pb-text);
+  overflow-wrap: anywhere;
+}
+
+.ticket__meta {
+  display: flex;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  color: var(--pb-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Sello de tinta: cae con un golpe y se queda un poco ladeado. */
+.ticket__stamp {
+  position: absolute;
+  right: var(--space-6);
+  bottom: var(--space-5);
+  padding: 3px var(--space-3);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-success-on-strong);
+  border: 2px solid currentcolor;
+  border-radius: 3px;
+  outline: 1px solid color-mix(in srgb, currentcolor 45%, transparent);
+  outline-offset: 2px;
+  opacity: 0.92;
+  transform: rotate(-7deg);
+  animation: ticket-stamp 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) 2.1s backwards;
+}
+
+/* Perforación: línea de puntos con una muesca a cada lado. */
+.ticket__tear {
+  position: relative;
+  height: 0;
+  border-top: 2px dashed var(--pb-line-strong);
+}
+
+.ticket__tear::before,
+.ticket__tear::after {
+  content: '';
+  position: absolute;
+  top: -12px;
+  width: 22px;
+  height: 22px;
+  background-color: var(--color-surface-strong);
+  border: 1px solid var(--pb-line);
+  border-radius: 50%;
+}
+
+.ticket__tear::before {
+  left: -12px;
+}
+
+.ticket__tear::after {
+  right: -12px;
+}
+
+.ticket__stub {
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-6);
+}
+
+.ticket__when {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+/* Hoja de calendario: banda de latón con el mes y el día en grande. */
+.ticket__leaf {
+  display: grid;
+  flex: none;
+  width: 68px;
+  overflow: hidden;
+  text-align: center;
+  border: 1px solid var(--pb-brass);
+  border-radius: 3px;
+  animation: pb-pop 0.6s cubic-bezier(0.3, 1.5, 0.5, 1) 1.7s backwards;
+}
+
+.ticket__leaf-month {
+  padding: 3px 0;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pb-on-brass);
+  background-color: var(--pb-brass);
+}
+
+.ticket__leaf-day {
+  padding: 2px 0 6px;
+  font-family: var(--font-display);
+  font-size: 38px;
+  line-height: 44px;
+  color: var(--pb-text);
+}
+
+.ticket__when-text {
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+}
+
+.ticket__weekday {
+  color: var(--pb-soft);
+  text-transform: capitalize;
+}
+
+.ticket__time {
+  font-family: var(--font-sans);
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 36px;
+  font-variant-numeric: tabular-nums;
+  color: var(--pb-text);
+}
+
+.ticket__until {
+  padding: 2px var(--space-2);
+  margin-top: var(--space-1);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pb-brass);
+  border: 1px solid color-mix(in srgb, var(--pb-brass) 60%, transparent);
+  border-radius: 2px;
+}
+
+.ticket__who {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  min-width: 0;
+}
+
+.ticket__who-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ticket__who-name {
+  font-weight: 500;
+  color: var(--pb-text);
+  overflow-wrap: anywhere;
+}
+
+.ticket__for {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  align-items: baseline;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-6);
+  margin: 0;
+  color: var(--pb-text);
+  border-top: 1px solid var(--pb-line);
+}
+
+/* Franja de barras decorativa al pie, como el código de un boleto. No codifica
+   nada: la credencial del turno nunca se dibuja (DEC-089). */
+.ticket__bars {
+  display: block;
+  height: 26px;
+  margin: 0 var(--space-6) var(--space-5);
+  opacity: 0.4;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--pb-text) 0 2px,
+    transparent 2px 5px,
+    var(--pb-text) 5px 6px,
+    transparent 6px 10px,
+    var(--pb-text) 10px 13px,
+    transparent 13px 15px,
+    var(--pb-text) 15px 16px,
+    transparent 16px 21px
+  );
+}
+
+@media (min-width: 560px) {
+  .ticket__stub {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+
+  .ticket__who {
+    padding-left: var(--space-6);
+    border-left: 1px solid var(--pb-line);
+  }
+}
+
+/* Ventanas bajas: el boleto se compacta para que quepa sin desplazar la página. */
+@media (max-height: 900px) {
+  .pb-page--confirmed {
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-6);
+  }
+
+  .pb-page--confirmed .customer-details__seal {
+    width: 72px;
+    height: 72px;
+  }
+
+  .pb-page--confirmed .pb-eyebrow {
+    margin-top: var(--space-2);
+  }
+
+  .pb-page--confirmed .pb-title {
+    font-size: clamp(40px, 11vw, 56px);
+  }
+
+  .pb-page--confirmed .customer-details--ticket {
+    margin-top: var(--space-4);
+  }
+
+  .ticket {
+    gap: var(--space-3);
+  }
+
+  .ticket__main {
+    padding: var(--space-5) var(--space-5) var(--space-4);
+  }
+
+  .ticket__stub {
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .ticket__for {
+    padding: var(--space-2) var(--space-5);
+  }
+
+  .ticket__bars {
+    display: none;
+  }
+
+  .ticket__stub {
+    padding-bottom: var(--space-5);
+  }
+}
+
+@media (max-height: 800px) {
+  .pb-page--confirmed {
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-4);
+  }
+
+  .pb-page--confirmed .customer-details__seal {
+    width: 56px;
+    height: 56px;
+  }
+
+  .pb-page--confirmed .pb-title {
+    font-size: clamp(36px, 10vw, 48px);
+  }
+
+  .pb-page--confirmed .customer-details--ticket {
+    margin-top: var(--space-2);
+  }
+
+  .ticket__main {
+    padding-top: var(--space-4);
+  }
+
+  .ticket__stub {
+    padding-top: var(--space-3);
+    padding-bottom: var(--space-4);
+  }
+}
+
+@keyframes ticket-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-34px) rotate(-1.6deg) scale(0.97);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(6px) rotate(0.4deg) scale(1);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ticket-stamp {
+  from {
+    opacity: 0;
+    transform: rotate(-16deg) scale(2.2);
+  }
+  to {
+    opacity: 0.92;
+    transform: rotate(-7deg) scale(1);
+  }
+}
+
+@keyframes ticket-shine {
+  to {
+    transform: translateX(110%);
+  }
+}
+
+@keyframes ticket-halo {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* Sello de confirmación: el rombo se traza, el check se dibuja y ocho
@@ -951,29 +1718,44 @@ function chooseAlternative(startsAt: string) {
   height: 104px;
 }
 
-.customer-details__seal svg {
+/* Piedra verde de «confirmado»: la misma gema tallada del cargador NAVA
+   (contorno, rombo interior, facetas y un destello), pero en verde y sin
+   repetirse. El contorno se talla una vez, aparecen las facetas, cruza el
+   destello y la piedra queda quieta. */
+.customer-details__gem {
+  position: relative;
   width: 100%;
   height: 100%;
   overflow: visible;
-  fill: none;
-  stroke: var(--pb-brass);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
-.customer-details__seal-diamond {
-  transform: rotate(45deg);
-  transform-origin: 48px 48px;
-  stroke-dasharray: 1;
-  animation: seal-draw 0.9s cubic-bezier(0.55, 0, 0.2, 1) 0.15s backwards;
-}
-
-.customer-details__seal-check {
+.customer-details__gem-outline {
   stroke: var(--color-success-on-strong);
-  stroke-width: 3;
-  stroke-dasharray: 1;
-  animation: seal-draw 0.55s cubic-bezier(0.55, 0, 0.2, 1) 0.8s backwards;
+  stroke-width: 2;
+  stroke-linejoin: miter;
+  stroke-dasharray: 100;
+  animation: gem-draw 0.95s cubic-bezier(0.55, 0, 0.2, 1) 0.15s backwards;
+}
+
+.customer-details__gem-facets {
+  stroke: var(--color-success-on-strong);
+  stroke-width: 0.8;
+  opacity: 0.5;
+  animation: gem-facets 0.6s ease-out 0.85s backwards;
+}
+
+.customer-details__gem-inner {
+  fill: color-mix(in srgb, var(--color-success-on-strong) 30%, transparent);
+  stroke: color-mix(in srgb, var(--color-success-on-strong) 75%, transparent);
+  stroke-width: 1;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: gem-inner 0.7s cubic-bezier(0.3, 1.4, 0.5, 1) 0.8s backwards;
+}
+
+.customer-details__gem-glint {
+  transform: translateX(96px);
+  animation: gem-glint 1s cubic-bezier(0.5, 0, 0.3, 1) 1.5s backwards;
 }
 
 .customer-details__spark {
@@ -983,18 +1765,37 @@ function chooseAlternative(startsAt: string) {
   width: 5px;
   height: 5px;
   margin: -2.5px 0 0 -2.5px;
-  background-color: var(--pb-brass);
+  background-color: var(--color-success-on-strong);
   opacity: 0;
   transform: rotate(var(--spark-angle)) translateY(0) rotate(45deg);
   animation: seal-spark 1s cubic-bezier(0.2, 0.7, 0.2, 1) var(--spark-delay, 0.8s) backwards;
 }
 
-@keyframes seal-draw {
+@keyframes gem-draw {
   from {
-    stroke-dashoffset: 1;
+    stroke-dashoffset: 100;
   }
   to {
     stroke-dashoffset: 0;
+  }
+}
+
+@keyframes gem-facets {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes gem-inner {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}
+
+@keyframes gem-glint {
+  from {
+    transform: translateX(-40px);
   }
 }
 
@@ -1011,16 +1812,28 @@ function chooseAlternative(startsAt: string) {
 
 @media (prefers-reduced-motion: reduce) {
   .customer-details__rise,
-  .pb-sheet__form > *,
+  .customer-details__fields > *,
+  .customer-details__submit,
   .customer-details__summary-row,
-  .customer-details__seal-diamond,
-  .customer-details__seal-check,
+  .customer-details__gem-outline,
+  .customer-details__gem-facets,
+  .customer-details__gem-inner,
+  .customer-details__gem-glint,
   .customer-details__radio input:checked + span::before {
     animation: none;
   }
 
-  .customer-details__spark {
+  .customer-details__spark,
+  .ticket__card::after {
     display: none;
+  }
+
+  .ticket__card,
+  .ticket__title,
+  .ticket__leaf,
+  .ticket__stamp,
+  .pb-page--confirmed .customer-details__seal::before {
+    animation: none;
   }
 
   .customer-details__radio span,

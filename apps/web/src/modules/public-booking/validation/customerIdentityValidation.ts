@@ -31,6 +31,17 @@ export function validateCustomerPhone(value: string): string | undefined {
     : 'El teléfono debe incluir el indicativo de país, por ejemplo +573001234567.'
 }
 
+// El formulario captura el prefijo en su propia casilla: el cliente ya no
+// puede olvidarlo, así que el mensaje habla del número y no del indicativo. La
+// forma final sigue siendo la E.164 del API (prefijo + dígitos).
+export function validateCustomerPhoneParts(dial: string, national: string): string | undefined {
+  const digits = national.replace(/\D/g, '')
+  if (digits === '') return 'El teléfono es obligatorio.'
+  return PHONE_PATTERN.test(`${dial}${digits}`)
+    ? undefined
+    : 'El número no parece completo. Revisa que tenga todos los dígitos.'
+}
+
 export function validateCustomerEmail(value: string): string | undefined {
   const trimmed = value.trim()
   if (trimmed === '') return 'El correo es obligatorio.'

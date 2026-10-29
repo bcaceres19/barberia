@@ -19,7 +19,7 @@ content:
       $ref: '../schemas/Problem.yaml'
     examples:
       fueraDeRango:
-        summary: slotGridMinutes fuera del conjunto discreto permitido
+        summary: slotGridMinutes fuera del rango permitido (1 a 60)
         value:
           type: /api/v1/problems/validation-error
           title: Error de validación

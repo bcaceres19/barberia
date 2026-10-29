@@ -10,7 +10,7 @@ Leer [protocolo](../02-protocolo-agentes.md), [transversal](../04-transversal.md
 | --- | --- | --- |
 | UI-POLICY-01 | Leer iniciales → editar válido → F5 | Defaults 60/3/15/20 y tardía+motivo, antes de edición. |
 | UI-POLICY-02 | Anticipación 0/1440, ventana 1/90 y valores fuera | Enteros/rangos; anticipo menor a ventana total. |
-| UI-POLICY-03 | Cada rejilla permitida y una inválida | 5/10/15/20/30/60 persistidas; otra rechazada. |
+| UI-POLICY-03 | Rejilla en los límites y fuera de rango (1, 7, 60; 0, 61, vacío, signo o decimal) | 1, 7 y 60 persistidos; 0, 61 y vacío rechazados; el campo no admite signos ni decimales. |
 | UI-POLICY-04 | Cancelación 0/10080 y fuera | Validación, sin escritura parcial. |
 | UI-POLICY-05 | Permitir/rechazar tardía y motivo requerido | Coherencia de flags según contrato y UI. |
 | UI-POLICY-06 | Dos pestañas actualizan versión antigua | Conflicto optimista controlado. |

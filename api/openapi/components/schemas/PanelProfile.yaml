@@ -1,13 +1,17 @@
-# Perfil del panel de la barbería (issue #294, DEC-115). Presentación pura: no
-# limita cuántos barberos existen ni cambia reglas de agenda. Añadir un valor
-# exige una migración (barbershop_panel_profile_ck) y la misma clave en la
+# Panel del usuario autenticado (issue #294, DEC-115; roles, issue #365,
+# DEC-134). Presentación pura: no limita cuántos barberos existen, ni cambia
+# reglas de agenda ni permisos. Se deriva de los roles de `staff_user_role`:
+# añadir un valor exige un rol nuevo en esa tabla y la misma clave en la
 # navegación del cliente.
 type: string
-enum: [shop, solo]
+enum: [shop, solo, employee]
 description: >
-  Perfil del panel: `shop` (barbería con equipo, el panel completo; valor
-  inicial) o `solo` (barbero individual: sin gestión de equipo ni selector de
-  barbero). Un barbero independiente sigue siendo una barbería con un solo
-  barbero (`DEC-019`); el perfil solo cambia lo que el panel muestra.
+  Panel que ve el usuario: `shop` (rol `empresa`, o sin ningún rol: el panel
+  completo con gestión de equipo), `solo` (rol `independiente`: barbero
+  individual, sin gestión de equipo ni selector de barbero) o `employee` (rol
+  `empleado`: panel individual limitado, sin Servicios, Reserva pública ni
+  Configuración). Con varios roles prevalece `empresa`, luego `independiente`
+  y luego `empleado`. Un barbero independiente sigue siendo una barbería con un
+  solo barbero (`DEC-019`); el perfil solo cambia lo que el panel muestra.
 examples:
   - solo

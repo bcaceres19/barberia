@@ -20,8 +20,8 @@ type fakeRepository struct {
 	listPageFn    func(context.Context, string, int, int) (staff.PageResult, error)
 	listFn        func(ctx context.Context, barbershopID string, cursor *staff.Cursor, limit int) (staff.ListResult, error)
 	getFn         func(ctx context.Context, barbershopID, barberID string) (staff.Barber, bool, error)
-	createFn      func(ctx context.Context, barbershopID, fullName string, key idempotency.Key, fingerprint idempotency.Fingerprint) (staff.CreateResult, error)
-	renameFn      func(ctx context.Context, barbershopID, barberID, fullName string) (staff.RenameResult, error)
+	createFn      func(ctx context.Context, barbershopID, fullName string, description *string, key idempotency.Key, fingerprint idempotency.Fingerprint) (staff.CreateResult, error)
+	updateFn      func(ctx context.Context, barbershopID, barberID, fullName string, description staff.DescriptionPatch) (staff.UpdateResult, error)
 	putPhotoFn    func(ctx context.Context, barbershopID, barberID string, photo staff.Photo) (staff.PhotoResult, error)
 	getPhotoFn    func(ctx context.Context, barbershopID, barberID string) (staff.StoredPhoto, bool, error)
 	deletePhotoFn func(ctx context.Context, barbershopID, barberID string) (bool, error)
@@ -40,13 +40,13 @@ func (f *fakeRepository) Get(ctx context.Context, barbershopID, barberID string)
 	return f.getFn(ctx, barbershopID, barberID)
 }
 
-func (f *fakeRepository) Create(ctx context.Context, barbershopID, fullName string, key idempotency.Key, fingerprint idempotency.Fingerprint) (staff.CreateResult, error) {
+func (f *fakeRepository) Create(ctx context.Context, barbershopID, fullName string, description *string, key idempotency.Key, fingerprint idempotency.Fingerprint) (staff.CreateResult, error) {
 	f.createCalls++
-	return f.createFn(ctx, barbershopID, fullName, key, fingerprint)
+	return f.createFn(ctx, barbershopID, fullName, description, key, fingerprint)
 }
 
-func (f *fakeRepository) Rename(ctx context.Context, barbershopID, barberID, fullName string) (staff.RenameResult, error) {
-	return f.renameFn(ctx, barbershopID, barberID, fullName)
+func (f *fakeRepository) Update(ctx context.Context, barbershopID, barberID, fullName string, description staff.DescriptionPatch) (staff.UpdateResult, error) {
+	return f.updateFn(ctx, barbershopID, barberID, fullName, description)
 }
 
 func (f *fakeRepository) PutPhoto(ctx context.Context, barbershopID, barberID string, photo staff.Photo) (staff.PhotoResult, error) {
@@ -94,13 +94,13 @@ func mustBeNotFound(t *testing.T, err error) {
 // --- Create: validación de nombre (CA-021-03) --------------------------
 
 func TestCreate_EmptyName_RejectedWithoutTouchingRepository(t *testing.T) {
-	repo := &fakeRepository{createFn: func(context.Context, string, string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
+	repo := &fakeRepository{createFn: func(context.Context, string, string, *string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
 		t.Fatal("repository must not be called for an invalid name")
 		return staff.CreateResult{}, nil
 	}}
 	svc := staff.NewService(repo)
 
-	_, err := svc.Create(context.Background(), "shop-1", "", "key-1", "a")
+	_, err := svc.Create(context.Background(), "shop-1", "", nil, "key-1", "a")
 	mustBeValidation(t, err)
 	if repo.createCalls != 0 {
 		t.Fatalf("expected 0 repository calls, got %d", repo.createCalls)
@@ -108,30 +108,30 @@ func TestCreate_EmptyName_RejectedWithoutTouchingRepository(t *testing.T) {
 }
 
 func TestCreate_WhitespaceOnlyName_Rejected(t *testing.T) {
-	repo := &fakeRepository{createFn: func(context.Context, string, string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
+	repo := &fakeRepository{createFn: func(context.Context, string, string, *string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
 		t.Fatal("repository must not be called")
 		return staff.CreateResult{}, nil
 	}}
 	svc := staff.NewService(repo)
 
-	_, err := svc.Create(context.Background(), "shop-1", "   \t\n  ", "key-1", "a")
+	_, err := svc.Create(context.Background(), "shop-1", "   \t\n  ", nil, "key-1", "a")
 	mustBeValidation(t, err)
 }
 
 func TestCreate_NameOver120Characters_Rejected(t *testing.T) {
-	repo := &fakeRepository{createFn: func(context.Context, string, string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
+	repo := &fakeRepository{createFn: func(context.Context, string, string, *string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
 		t.Fatal("repository must not be called")
 		return staff.CreateResult{}, nil
 	}}
 	svc := staff.NewService(repo)
 
-	_, err := svc.Create(context.Background(), "shop-1", strings.Repeat("a", 121), "key-1", "a")
+	_, err := svc.Create(context.Background(), "shop-1", strings.Repeat("a", 121), nil, "key-1", "a")
 	mustBeValidation(t, err)
 }
 
 func TestCreate_NameExactly120Characters_Accepted(t *testing.T) {
 	name := strings.Repeat("a", 120)
-	repo := &fakeRepository{createFn: func(_ context.Context, _ string, fullName string, _ idempotency.Key, _ idempotency.Fingerprint) (staff.CreateResult, error) {
+	repo := &fakeRepository{createFn: func(_ context.Context, _ string, fullName string, _ *string, _ idempotency.Key, _ idempotency.Fingerprint) (staff.CreateResult, error) {
 		if fullName != name {
 			t.Fatalf("expected repository to receive the trimmed name %q, got %q", name, fullName)
 		}
@@ -139,14 +139,14 @@ func TestCreate_NameExactly120Characters_Accepted(t *testing.T) {
 	}}
 	svc := staff.NewService(repo)
 
-	_, err := svc.Create(context.Background(), "shop-1", name, "key-1", "a")
+	_, err := svc.Create(context.Background(), "shop-1", name, nil, "key-1", "a")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
 func TestCreate_TrimsNameBeforeCallingRepository(t *testing.T) {
-	repo := &fakeRepository{createFn: func(_ context.Context, _ string, fullName string, _ idempotency.Key, _ idempotency.Fingerprint) (staff.CreateResult, error) {
+	repo := &fakeRepository{createFn: func(_ context.Context, _ string, fullName string, _ *string, _ idempotency.Key, _ idempotency.Fingerprint) (staff.CreateResult, error) {
 		if fullName != "Carlos Ramírez" {
 			t.Fatalf("expected trimmed name, got %q", fullName)
 		}
@@ -154,7 +154,7 @@ func TestCreate_TrimsNameBeforeCallingRepository(t *testing.T) {
 	}}
 	svc := staff.NewService(repo)
 
-	_, err := svc.Create(context.Background(), "shop-1", "  Carlos Ramírez  ", "key-1", "a")
+	_, err := svc.Create(context.Background(), "shop-1", "  Carlos Ramírez  ", nil, "key-1", "a")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -164,12 +164,12 @@ func TestCreate_UnicodeName_CountsRunesNotBytes(t *testing.T) {
 	// 120 runas de "ñ" (2 bytes cada una en UTF-8, 240 bytes en total): debe
 	// aceptarse porque la regla cuenta caracteres, no bytes (CA-021-03).
 	name := strings.Repeat("ñ", 120)
-	repo := &fakeRepository{createFn: func(context.Context, string, string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
+	repo := &fakeRepository{createFn: func(context.Context, string, string, *string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
 		return staff.CreateResult{Decision: idempotency.Decision{Outcome: idempotency.OutcomeProceed}}, nil
 	}}
 	svc := staff.NewService(repo)
 
-	_, err := svc.Create(context.Background(), "shop-1", name, "key-1", "a")
+	_, err := svc.Create(context.Background(), "shop-1", name, nil, "key-1", "a")
 	if err != nil {
 		t.Fatalf("unexpected error for a 120-rune unicode name: %v", err)
 	}
@@ -180,12 +180,12 @@ func TestCreate_PropagatesRepositoryResultUntouched(t *testing.T) {
 		Decision: idempotency.Decision{Outcome: idempotency.OutcomeReplay, Response: idempotency.StoredResponse{Status: 201, Body: `{"id":"x"}`}},
 		Response: idempotency.StoredResponse{Status: 201, Body: `{"id":"x"}`},
 	}
-	repo := &fakeRepository{createFn: func(context.Context, string, string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
+	repo := &fakeRepository{createFn: func(context.Context, string, string, *string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
 		return want, nil
 	}}
 	svc := staff.NewService(repo)
 
-	got, err := svc.Create(context.Background(), "shop-1", "Carlos", "key-1", "a")
+	got, err := svc.Create(context.Background(), "shop-1", "Carlos", nil, "key-1", "a")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -197,52 +197,52 @@ func TestCreate_PropagatesRepositoryResultUntouched(t *testing.T) {
 // --- Rename: mismas reglas de nombre, además de not-found ----------------
 
 func TestRename_EmptyName_RejectedWithoutTouchingRepository(t *testing.T) {
-	repo := &fakeRepository{renameFn: func(context.Context, string, string, string) (staff.RenameResult, error) {
+	repo := &fakeRepository{updateFn: func(context.Context, string, string, string, staff.DescriptionPatch) (staff.UpdateResult, error) {
 		t.Fatal("repository must not be called for an invalid name")
-		return staff.RenameResult{}, nil
+		return staff.UpdateResult{}, nil
 	}}
 	svc := staff.NewService(repo)
 
-	_, err := svc.Rename(context.Background(), "shop-1", "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4", "")
+	_, err := svc.Update(context.Background(), "shop-1", "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4", "", staff.DescriptionPatch{})
 	mustBeValidation(t, err)
 }
 
 func TestRename_MalformedID_ReturnsNotFoundWithoutTouchingRepository(t *testing.T) {
-	repo := &fakeRepository{renameFn: func(context.Context, string, string, string) (staff.RenameResult, error) {
+	repo := &fakeRepository{updateFn: func(context.Context, string, string, string, staff.DescriptionPatch) (staff.UpdateResult, error) {
 		t.Fatal("repository must not be called for a malformed id")
-		return staff.RenameResult{}, nil
+		return staff.UpdateResult{}, nil
 	}}
 	svc := staff.NewService(repo)
 
-	_, err := svc.Rename(context.Background(), "shop-1", "not-a-uuid", "Nombre Válido")
+	_, err := svc.Update(context.Background(), "shop-1", "not-a-uuid", "Nombre Válido", staff.DescriptionPatch{})
 	mustBeNotFound(t, err)
 }
 
 func TestRename_NotFound_TranslatesToNotFound(t *testing.T) {
-	repo := &fakeRepository{renameFn: func(context.Context, string, string, string) (staff.RenameResult, error) {
-		return staff.RenameResult{Found: false}, nil
+	repo := &fakeRepository{updateFn: func(context.Context, string, string, string, staff.DescriptionPatch) (staff.UpdateResult, error) {
+		return staff.UpdateResult{Found: false}, nil
 	}}
 	svc := staff.NewService(repo)
 
-	_, err := svc.Rename(context.Background(), "shop-1", "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4", "Nombre Válido")
+	_, err := svc.Update(context.Background(), "shop-1", "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4", "Nombre Válido", staff.DescriptionPatch{})
 	mustBeNotFound(t, err)
 }
 
 func TestRename_Found_ReturnsUpdatedBarberByID_NoDuplication(t *testing.T) {
 	id := "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4"
 	updated := staff.Barber{ID: id, FullName: "Nuevo Nombre", CreatedAt: time.Now(), UpdatedAt: time.Now()}
-	repo := &fakeRepository{renameFn: func(_ context.Context, _, barberID, fullName string) (staff.RenameResult, error) {
+	repo := &fakeRepository{updateFn: func(_ context.Context, _, barberID, fullName string, _ staff.DescriptionPatch) (staff.UpdateResult, error) {
 		if barberID != id {
 			t.Fatalf("expected repository to receive id %q, got %q", id, barberID)
 		}
 		if fullName != "Nuevo Nombre" {
 			t.Fatalf("expected trimmed name, got %q", fullName)
 		}
-		return staff.RenameResult{Found: true, Barber: updated}, nil
+		return staff.UpdateResult{Found: true, Barber: updated}, nil
 	}}
 	svc := staff.NewService(repo)
 
-	got, err := svc.Rename(context.Background(), "shop-1", id, "  Nuevo Nombre  ")
+	got, err := svc.Update(context.Background(), "shop-1", id, "  Nuevo Nombre  ", staff.DescriptionPatch{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -499,4 +499,119 @@ func TestListPage_DefaultsBoundsAndCanceledContext(t *testing.T) {
 			t.Fatal("canceled context reached repository")
 		}
 	}
+}
+
+// --- Descripción del barbero (DEC-127) -------------------------------------
+
+func descPtr(s string) *string { return &s }
+
+func TestCreate_Description_IsTrimmedBeforeReachingRepository(t *testing.T) {
+	var got *string
+	repo := &fakeRepository{createFn: func(_ context.Context, _, _ string, description *string, _ idempotency.Key, _ idempotency.Fingerprint) (staff.CreateResult, error) {
+		got = description
+		return staff.CreateResult{}, nil
+	}}
+	svc := staff.NewService(repo)
+
+	if _, err := svc.Create(context.Background(), "shop-1", "Carlos", descPtr("  Fade y barba  "), "key-1", "a"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got == nil || *got != "Fade y barba" {
+		t.Fatalf("expected the trimmed description, got %v", got)
+	}
+}
+
+func TestCreate_BlankDescription_BecomesNoDescription(t *testing.T) {
+	for name, raw := range map[string]*string{"ausente": nil, "vacía": descPtr(""), "solo espacios": descPtr(" \t\n ")} {
+		t.Run(name, func(t *testing.T) {
+			called := false
+			repo := &fakeRepository{createFn: func(_ context.Context, _, _ string, description *string, _ idempotency.Key, _ idempotency.Fingerprint) (staff.CreateResult, error) {
+				called = true
+				if description != nil {
+					t.Fatalf("a blank description must reach the repository as nil, got %q", *description)
+				}
+				return staff.CreateResult{}, nil
+			}}
+			svc := staff.NewService(repo)
+
+			if _, err := svc.Create(context.Background(), "shop-1", "Carlos", raw, "key-1", "a"); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if !called {
+				t.Fatal("expected the repository to be called")
+			}
+		})
+	}
+}
+
+func TestCreate_DescriptionTooLong_RejectedWithoutTouchingRepository(t *testing.T) {
+	repo := &fakeRepository{createFn: func(context.Context, string, string, *string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
+		t.Fatal("repository must not be called for an invalid description")
+		return staff.CreateResult{}, nil
+	}}
+	svc := staff.NewService(repo)
+
+	_, err := svc.Create(context.Background(), "shop-1", "Carlos", descPtr(strings.Repeat("a", staff.DescriptionMaxLength+1)), "key-1", "a")
+	mustBeValidation(t, err)
+	if repo.createCalls != 0 {
+		t.Fatalf("expected 0 repository calls, got %d", repo.createCalls)
+	}
+}
+
+// El límite se cuenta en caracteres Unicode, no en bytes: 280 «ñ» (560 bytes)
+// son válidas y 281 no.
+func TestCreate_DescriptionLimit_CountsRunesNotBytes(t *testing.T) {
+	repo := &fakeRepository{createFn: func(context.Context, string, string, *string, idempotency.Key, idempotency.Fingerprint) (staff.CreateResult, error) {
+		return staff.CreateResult{}, nil
+	}}
+	svc := staff.NewService(repo)
+
+	if _, err := svc.Create(context.Background(), "shop-1", "Carlos", descPtr(strings.Repeat("ñ", staff.DescriptionMaxLength)), "key-1", "a"); err != nil {
+		t.Fatalf("280 runes must be accepted: %v", err)
+	}
+	_, err := svc.Create(context.Background(), "shop-1", "Carlos", descPtr(strings.Repeat("ñ", staff.DescriptionMaxLength+1)), "key-2", "b")
+	mustBeValidation(t, err)
+}
+
+func TestUpdate_Description_NotSetKeepsAndSetNormalizes(t *testing.T) {
+	id := "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4"
+	var got staff.DescriptionPatch
+	repo := &fakeRepository{updateFn: func(_ context.Context, _, _, _ string, description staff.DescriptionPatch) (staff.UpdateResult, error) {
+		got = description
+		return staff.UpdateResult{Found: true, Barber: staff.Barber{ID: id}}, nil
+	}}
+	svc := staff.NewService(repo)
+
+	if _, err := svc.Update(context.Background(), "shop-1", id, "Carlos", staff.DescriptionPatch{}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got.Set {
+		t.Fatal("a patch without description must not ask the repository to write it")
+	}
+
+	if _, err := svc.Update(context.Background(), "shop-1", id, "Carlos", staff.DescriptionPatch{Set: true, Value: descPtr("  Navaja  ")}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !got.Set || got.Value == nil || *got.Value != "Navaja" {
+		t.Fatalf("expected a trimmed description to be written, got %+v", got)
+	}
+
+	if _, err := svc.Update(context.Background(), "shop-1", id, "Carlos", staff.DescriptionPatch{Set: true, Value: descPtr("   ")}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !got.Set || got.Value != nil {
+		t.Fatalf("a blank description must clear it (Set with nil), got %+v", got)
+	}
+}
+
+func TestUpdate_DescriptionTooLong_RejectedWithoutTouchingRepository(t *testing.T) {
+	repo := &fakeRepository{updateFn: func(context.Context, string, string, string, staff.DescriptionPatch) (staff.UpdateResult, error) {
+		t.Fatal("repository must not be called for an invalid description")
+		return staff.UpdateResult{}, nil
+	}}
+	svc := staff.NewService(repo)
+
+	_, err := svc.Update(context.Background(), "shop-1", "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4", "Carlos",
+		staff.DescriptionPatch{Set: true, Value: descPtr(strings.Repeat("a", staff.DescriptionMaxLength+1))})
+	mustBeValidation(t, err)
 }

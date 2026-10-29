@@ -40,6 +40,8 @@ function barberFixture(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     id: 'a1111111-1111-1111-1111-111111111111',
     fullName: 'Juan Pérez',
+    description: null,
+    photoUpdatedAt: null,
     ...overrides,
   }
 }
@@ -509,6 +511,107 @@ describe('PublicBarberSelectionPage', () => {
       props: { slug: 'no-existe', serviceId: SERVICE_A },
     })
     await flushPromises()
+    const results = await axe(wrapper.element)
+    expect(results).toHaveNoViolations()
+  })
+
+  // --- Descripción y fotografía públicas (DEC-127) ----------------------------
+
+  const withProfile = {
+    description: 'Fade, barba y navaja con más de diez años en el oficio.',
+    photoUpdatedAt: '2026-09-30T12:00:00Z',
+  }
+
+  async function mountSeveral() {
+    getMock.mockResolvedValueOnce({
+      data: {
+        items: [
+          barberFixture({ id: 'a', fullName: 'Ana Gómez', ...withProfile }),
+          barberFixture({ id: 'b', fullName: 'Luis Rojas' }),
+        ],
+      },
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
+      props: { slug: 'barberia ejemplo', serviceId: SERVICE_A },
+    })
+    await flushPromises()
+    return wrapper
+  }
+
+  it('shows each barber with photo, name and description, falling back to the monogram', async () => {
+    const wrapper = await mountSeveral()
+    const [ana, luis] = wrapper.findAll('[role="radio"]')
+
+    expect(ana!.find('.barber-avatar--portrait').exists()).toBe(true)
+    expect(ana!.find('img').attributes('src')).toBe(
+      '/api/v1/public/barbershops/barberia%20ejemplo/barbers/a/photo?v=2026-09-30T12%3A00%3A00Z',
+    )
+    expect(ana!.text()).toContain('Ana Gómez')
+    expect(ana!.text()).toContain('Fade, barba y navaja con más de diez años en el oficio.')
+
+    // Sin foto ni descripción: monograma y solo el nombre.
+    expect(luis!.find('img').exists()).toBe(false)
+    expect(luis!.text()).toContain('LR')
+    expect(luis!.find('.pb-choice__description').exists()).toBe(false)
+  })
+
+  it('names each option by the barber name and describes it with the description', async () => {
+    const wrapper = await mountSeveral()
+    const ana = wrapper.findAll('[role="radio"]')[0]!
+    const nameId = ana.attributes('aria-labelledby')!
+    const descriptionId = ana.attributes('aria-describedby')!
+
+    expect(wrapper.get(`#${nameId}`).text()).toBe('Ana Gómez')
+    expect(wrapper.get(`#${descriptionId}`).text()).toContain('Fade, barba y navaja')
+    expect(wrapper.findAll('[role="radio"]')[1]!.attributes('aria-describedby')).toBeUndefined()
+  })
+
+  it('keeps the full long description in the DOM (the row only clamps it visually)', async () => {
+    const long = 'Texto largo. '.repeat(40).trim()
+    getMock.mockResolvedValueOnce({
+      data: {
+        items: [
+          barberFixture({ id: 'a', fullName: 'Ana Gómez', description: long }),
+          barberFixture({ id: 'b', fullName: 'Luis Rojas' }),
+        ],
+      },
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
+      props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
+    })
+    await flushPromises()
+
+    const description = wrapper.get('.pb-choice__description')
+    expect(description.text()).toBe(long)
+    expect(description.classes()).toContain('pb-choice__description--clamped')
+  })
+
+  it('shows the description and photo of the only barber in the preselected card', async () => {
+    getMock.mockResolvedValueOnce({
+      data: { items: [barberFixture({ fullName: 'Juan Pérez', ...withProfile })] },
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mount(PublicBarberSelectionPage, {
+      global: { stubs: { RouterLink: RouterLinkStub } },
+      props: { slug: 'barberia-ejemplo', serviceId: SERVICE_A },
+    })
+    await flushPromises()
+
+    expect(wrapper.find('[role="radiogroup"]').exists()).toBe(false)
+    expect(wrapper.get('.pb-ficha img').attributes('src')).toContain('/photo?v=')
+    expect(wrapper.get('.pb-ficha__description').text()).toContain('Fade, barba y navaja')
+    expect(wrapper.get('.pb-ficha__text').text()).toContain('Juan Pérez')
+  })
+
+  it('has no accessibility violations with photos and descriptions', async () => {
+    const wrapper = await mountSeveral()
     const results = await axe(wrapper.element)
     expect(results).toHaveNoViolations()
   })

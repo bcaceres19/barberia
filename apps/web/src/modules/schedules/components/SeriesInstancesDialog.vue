@@ -200,7 +200,7 @@ async function onRemoveException(date: string) {
     :model-value="modelValue && series !== null"
     :title="isDateList ? 'Fechas y excepciones' : 'Excepciones de la serie'"
     :description="heading"
-    size="md"
+    size="lg"
     content-class="block-dialog"
     @update:model-value="emit('update:modelValue', $event)"
   >

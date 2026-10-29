@@ -1,7 +1,7 @@
 // Pruebas del caso de uso EN AISLAMIENTO, sin PostgreSQL real: cubren
 // resolución de slug/forma de serviceId-barberId, orquestación de los
 // cinco puertos y traducción a AvailabilityResult. El algoritmo de
-// generación de franjas en sí (fusión, resta, rejilla, DEC-084) se prueba
+// generación de franjas en sí (fusión, resta, rejilla, DEC-135) se prueba
 // exhaustivamente en internal/modules/availability. La resolución real
 // contra PostgreSQL (ResolveBarbershopID, ListOccupiedIntervals, dos
 // tenants) se prueba en

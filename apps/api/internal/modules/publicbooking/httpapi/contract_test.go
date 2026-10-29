@@ -150,3 +150,69 @@ func TestContract_OpenAPIYAML_RegistersPublicBarbershopPath(t *testing.T) {
 		t.Fatal("openapi.yaml no registra paths./public/barbershops/{slug}")
 	}
 }
+
+// TestContract_PublicBarberResponseSchema_MatchesDTOFields verifica que
+// httpapi.PublicBarberResponse (id, fullName, description, photoUpdatedAt)
+// coincide exactamente con PublicBarberResponse.yaml y que los cuatro campos
+// son obligatorios (DEC-127: nullable pero siempre presentes).
+func TestContract_PublicBarberResponseSchema_MatchesDTOFields(t *testing.T) {
+	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/PublicBarberResponse.yaml")
+	want := []string{"id", "fullName", "description", "photoUpdatedAt"}
+	if len(schema.Properties) != len(want) {
+		t.Fatalf("expected %d properties, schema has %d: %v", len(want), len(schema.Properties), schema.Properties)
+	}
+	for _, name := range want {
+		if _, ok := schema.Properties[name]; !ok {
+			t.Errorf("PublicBarberResponse.yaml no declara %q", name)
+		}
+		required := false
+		for _, r := range schema.Required {
+			required = required || r == name
+		}
+		if !required {
+			t.Errorf("PublicBarberResponse.yaml debe exigir %q (nullable, pero siempre presente)", name)
+		}
+	}
+}
+
+// TestContract_GetPublicBarberPhotoOperation_MethodPathSecurityAndResponses
+// verifica que la foto pública es una operación sin sesión (security: []) con
+// slug y barberId en la ruta y exactamente los códigos que el handler produce
+// (200, 304, 404 uniforme, 500; sin 401: nunca exige sesión).
+func TestContract_GetPublicBarberPhotoOperation_MethodPathSecurityAndResponses(t *testing.T) {
+	type photoPathFile struct {
+		Photo struct {
+			Get operation `yaml:"get"`
+		} `yaml:"/public/barbershops/{slug}/barbers/{barberId}/photo"`
+	}
+	doc := loadYAML[photoPathFile](t, "api/openapi/paths/public-booking.yaml")
+	op := doc.Photo.Get
+
+	if op.OperationID != "getPublicBarberPhoto" {
+		t.Fatalf("expected operationId getPublicBarberPhoto, got %q", op.OperationID)
+	}
+	if len(op.Security) != 0 {
+		t.Fatalf("DEC-127: la foto pública nunca exige sesión, security debe ser [], got %v", op.Security)
+	}
+
+	paths := map[string]bool{}
+	for _, p := range op.Parameters {
+		if p.In == "path" && p.Required {
+			paths[p.Name] = true
+		}
+	}
+	if !paths["slug"] || !paths["barberId"] {
+		t.Fatalf("expected required path parameters slug and barberId, got %+v", op.Parameters)
+	}
+
+	wantStatuses := []string{"200", "304", "404", "500"}
+	for _, s := range wantStatuses {
+		if _, ok := op.Responses[s]; !ok {
+			t.Errorf("el contrato no documenta la respuesta %s, pero el handler la produce", s)
+		}
+	}
+	if len(op.Responses) != len(wantStatuses) {
+		t.Errorf("el contrato documenta %d respuestas, se esperaban exactamente %d (%v)",
+			len(op.Responses), len(wantStatuses), wantStatuses)
+	}
+}

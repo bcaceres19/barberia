@@ -6,7 +6,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
-import { BaseDatePicker, BaseInput, BaseSelect } from '@/shared/ui'
+import { BaseDatePicker, BaseInput, BaseSelect, BaseTimePicker } from '@/shared/ui'
 import { toastState } from '@/shared/model/toastStore'
 import { displayCivilDate as d } from '../../model/displayDate'
 import type { TimeBlockSeries } from '../../model/timeBlock'
@@ -265,7 +265,9 @@ describe('SeriesFormDialog · edición', () => {
     const wrapper = mountEdit(weekly)
 
     expect(wrapper.text()).toContain('Editar serie de bloqueo')
-    wrapper.get('input[inputmode="numeric"]').setValue(45)
+    // 13:00 → 14:00 (60 min) pasa a terminar a las 13:45: la API recibe 45 min.
+    expect(wrapper.text()).not.toContain('Duración')
+    wrapper.findAllComponents(BaseTimePicker)[1]!.vm.$emit('update:modelValue', '13:45')
     await flushPromises()
     await wrapper.get('form').trigger('submit')
     await flushPromises()

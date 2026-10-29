@@ -28,18 +28,7 @@ test.beforeAll(async ({ browser }, testInfo) => {
   page = await context.newPage()
 })
 
-// Aunque una prueba falle a mitad del cambio de perfil, la barbería vuelve a `solo` para la
-// siguiente ejecución (el servidor conserva lo demás de la marca si se omite).
 test.afterAll(async () => {
-  await page.goto('/panel')
-  await page.evaluate(async () => {
-    const current = await (await fetch('/api/v1/private/settings/brand')).json()
-    await fetch('/api/v1/private/settings/brand', {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ ...current, panelProfile: 'solo' }),
-    })
-  })
   await context.close()
 })
 
@@ -79,8 +68,8 @@ test('el dock del barbero individual solo trae lo necesario', async () => {
     'Servicios',
     'Mi perfil',
     'Horarios',
-    'Configuración',
     'Reserva pública',
+    'Configuración',
   ])
   // Sin gestión de equipo ni la matriz «Servicios por barbero».
   await expect(page.getByRole('link', { name: 'Barberos' })).toHaveCount(0)
@@ -195,24 +184,28 @@ test('un servicio nuevo queda ofrecido sin pasar por la matriz', async () => {
 const desktopLabel = (text: string) =>
   page.locator('.app-nav__list--desktop .app-nav__label', { hasText: text })
 
-test('cambiar a «Barbería con equipo» devuelve las pantallas de equipo y se puede volver', async () => {
-  await page.goto('/panel/barberia')
-  await expect(page.getByRole('heading', { name: 'Configuración', level: 1 })).toBeVisible()
-  const group = page.getByRole('radiogroup', { name: 'Perfil del panel' })
-  await expect(group.getByRole('radio', { name: /Barbero individual/ })).toBeChecked()
-
-  await group.getByRole('radio', { name: /Barbería con equipo/ }).check()
-  await page.getByRole('button', { name: /Guardar/ }).click()
-  await expect(desktopLabel('Servicios por barbero')).toHaveCount(1)
-  await expect(desktopLabel('Barberos')).toHaveCount(1)
-  // Ningún dato cambió: sigue siendo la misma barbería con el mismo barbero.
-  const barbers = await apiGet<{ items: unknown[] }>('/api/v1/private/barbers')
-  expect(barbers.body.items).toHaveLength(1)
-
-  await group.getByRole('radio', { name: /Barbero individual/ }).check()
-  await page.getByRole('button', { name: /Guardar/ }).click()
-  await expect(desktopLabel('Mi perfil')).toHaveCount(1)
-  await expect(desktopLabel('Servicios por barbero')).toHaveCount(0)
+// DEC-134: el panel lo decide el rol `independiente` del usuario en la base de datos, no un
+// ajuste de Configuración.
+test('el panel individual viene del rol y Configuración ya no lo ofrece', async () => {
+  await page.goto('/panel')
   const brand = await apiGet<{ panelProfile: string }>('/api/v1/private/settings/brand')
   expect(brand.body.panelProfile).toBe('solo')
+
+  await page.goto('/panel/barberia')
+  await expect(page.getByRole('heading', { name: 'Configuración', level: 1 })).toBeVisible()
+  await expect(page.getByRole('radiogroup', { name: 'Perfil del panel' })).toHaveCount(0)
+  await expect(page.getByText('Cómo trabajas')).toHaveCount(0)
+
+  // El PATCH ya no admite el campo: un cliente viejo no puede cambiar el panel.
+  const patch = await page.evaluate(async () => {
+    const current = await (await fetch('/api/v1/private/settings/brand')).json()
+    const response = await fetch('/api/v1/private/settings/brand', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ ...current, panelProfile: 'shop' }),
+    })
+    return response.status
+  })
+  expect(patch).toBe(400)
+  await expect(desktopLabel('Mi perfil')).toHaveCount(1)
 })

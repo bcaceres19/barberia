@@ -13,15 +13,17 @@ import type { BrandAccentKey } from './brandPalette'
 
 export type Gender = 'masculine' | 'feminine'
 
-/** Perfil del panel (DEC-115): `shop` es el panel completo de una barbería con equipo
- * y `solo` el de un barbero individual, sin gestión de equipo ni selector de barbero.
- * Es presentación pura: no limita cuántos barberos existen. */
-export type PanelProfile = 'shop' | 'solo'
+/** Panel del usuario (DEC-115, DEC-134): `shop` es el panel completo con gestión de
+ * equipo (rol `empresa`), `solo` el de un barbero independiente (sin gestión de equipo
+ * ni selector de barbero) y `employee` el individual limitado de un barbero empleado.
+ * Lo deriva el servidor de los roles del usuario; no es un ajuste editable. Es
+ * presentación pura: no limita cuántos barberos existen ni concede permisos. */
+export type PanelProfile = 'shop' | 'solo' | 'employee'
 
-export const PANEL_PROFILES: readonly PanelProfile[] = ['shop', 'solo']
+export const PANEL_PROFILES: readonly PanelProfile[] = ['shop', 'solo', 'employee']
 
 export function isPanelProfile(value: unknown): value is PanelProfile {
-  return value === 'shop' || value === 'solo'
+  return value === 'shop' || value === 'solo' || value === 'employee'
 }
 
 export interface BrandSettings {

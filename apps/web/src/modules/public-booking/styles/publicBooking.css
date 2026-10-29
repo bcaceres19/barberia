@@ -290,8 +290,10 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Fila de barbero (DEC-127): rombo, retrato y texto (nombre y descripción) en
+   tres columnas, con la misma altura y jerarquía que las filas de servicio. */
 .pb-choice--person {
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto auto minmax(0, 1fr);
   align-items: center;
 }
 
@@ -465,11 +467,15 @@
   stroke-dashoffset: 0;
 }
 
-/* Fila de barbero: retrato y nombre en línea, con el nombre en la serif. */
-.pb-choice__body--person {
-  flex-direction: row;
-  gap: var(--space-4);
-  align-items: center;
+/* La descripción del barbero se recorta a tres líneas para que una larga no
+   desproporcione la fila; el texto completo sigue en el DOM (y lo lee la
+   tecnología de apoyo vía aria-describedby). */
+.pb-choice__description--clamped {
+  display: -webkit-box;
+  overflow: hidden;
+  line-clamp: 3;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 /* ── Barra de acción fija al pie ────────────────────────────────────────── */
@@ -806,6 +812,139 @@
   list-style: none;
 }
 
+/* Horario: la pantalla cabe en la ventana y solo la lista de horas se
+   desplaza. Con muchas franjas, la lista cede el alto sobrante (cabecera,
+   fechas y, al elegir, la ficha) en vez de alargar toda la página. En una
+   ventana tan baja que ni dos filas caben, `min-height` evita aplastarla y
+   la página vuelve a desplazarse como antes. El relleno interior deja sitio
+   al desplazamiento y al contorno de foco, que de otro modo el recorte de
+   `overflow` cortaría. */
+.pb-layout:has(.pb-page--scroll-slots),
+.pb-layout:has(.pb-page--scroll-choices),
+.pb-layout:has(.pb-page--scroll-form) {
+  height: 100dvh;
+}
+
+.pb-page--scroll-slots,
+.pb-page--scroll-choices,
+.pb-page--scroll-form {
+  min-height: 0;
+}
+
+/* Datos del cliente: igual que en las listas, la hoja cede el alto sobrante y
+   solo la región de campos se desplaza; el botón de enviar queda fijo debajo.
+   El relleno con margen negativo deja sitio al anillo de foco, que el recorte
+   de `overflow` cortaría. Con una ventana tan baja que ni dos campos caben,
+   `min-height` evita aplastarla y la página vuelve a desplazarse. */
+.pb-page--scroll-form .pb-sheet {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  margin-top: var(--space-6);
+}
+
+.pb-page--scroll-form .pb-sheet__form {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.pb-page--scroll-form .customer-details__summary {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.pb-page--scroll-form .customer-details__summary-body,
+.pb-page--scroll-form .customer-details__fields {
+  flex: 1 1 auto;
+  min-height: 168px;
+  padding: var(--space-2);
+  margin: calc(var(--space-2) * -1);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--pb-line-strong) transparent;
+  scrollbar-width: thin;
+}
+
+/* Ventanas bajas (móvil, portátil): se compactan cabecera y hoja para que los
+   campos tengan alto útil antes de recurrir a su desplazamiento. */
+@media (max-height: 820px) {
+  .pb-page--scroll-form {
+    padding-top: var(--space-5);
+    padding-bottom: var(--space-4);
+  }
+
+  .pb-page--scroll-form .pb-title {
+    margin-top: var(--space-2);
+    font-size: clamp(32px, 9vw, 44px);
+  }
+
+  .pb-page--scroll-form .pb-rule {
+    margin-top: var(--space-4);
+  }
+
+  .pb-page--scroll-form .pb-sheet {
+    padding: var(--space-6) var(--space-5) var(--space-5);
+    margin-top: var(--space-4);
+  }
+
+  .pb-page--scroll-form .pb-sheet .customer-details__fields {
+    gap: var(--space-4);
+  }
+
+  .pb-page--scroll-form .customer-details__when {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .pb-page--scroll-form .customer-details__when-time {
+    font-size: 30px;
+    line-height: 36px;
+  }
+
+  .pb-page--scroll-form .customer-details__who {
+    padding-top: var(--space-2);
+    margin-top: 0;
+  }
+
+  /* El resumen, con el talón y el barbero ya arriba, cede más alto a la
+     región desplazable que el formulario: con tres filas basta para verla. */
+  .pb-page--scroll-form .customer-details__summary-body {
+    min-height: 104px;
+  }
+}
+
+/* Servicio: misma idea con la lista de servicios. Las filas llenan todo el
+   ancho y su foco es interior (`inset`), así que no necesitan el relleno que
+   sí llevan las franjas. */
+.pb-page--scroll-choices .pb-choices {
+  flex: 0 1 auto;
+  min-height: 120px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--pb-line-strong) transparent;
+  scrollbar-width: thin;
+}
+
+.pb-page--scroll-slots .pb-slots {
+  flex: 0 1 auto;
+  min-height: 112px;
+  padding: var(--space-1);
+  margin: var(--space-4) calc(var(--space-1) * -1) 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--pb-line-strong) transparent;
+  scrollbar-width: thin;
+}
+
+/* En una ventana baja la ficha de la franja elegida alargaría la página y
+   devolvería el desplazamiento general; la barra de acción ya repite la
+   misma franja («Tu horario»), así que la ficha cede su sitio a la lista. */
+@media (max-height: 920px) {
+  .pb-page--scroll-slots .pb-ticket {
+    display: none;
+  }
+}
+
 .pb-slot {
   position: relative;
   display: flex;
@@ -988,6 +1127,21 @@
   border-left-width: 3px;
   border-left-color: var(--pb-brass);
   animation: pb-rise 0.7s var(--pb-ease) 0.3s backwards;
+}
+
+.pb-ficha__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.pb-ficha__description {
+  margin: 0;
+  font-size: var(--font-size-body-sm);
+  line-height: var(--font-size-body-sm-line);
+  overflow-wrap: anywhere;
+  color: var(--pb-muted);
 }
 
 .pb-ficha__text {
@@ -1319,5 +1473,189 @@
   .pb-day:hover,
   .pb-slot:hover {
     transform: none;
+  }
+}
+
+/* ── Diálogo de horario ocupado ──────────────────────────────────────────── */
+
+/* El diálogo se teletransporta al <body>, fuera de `.pb-layout`: no hereda los
+   `--pb-*`, así que lee los tokens de tinta y latón directamente. La clase se
+   duplica con `.base-dialog` para ganar a los estilos con ámbito del
+   componente compartido. */
+.base-dialog.pb-conflict-dialog {
+  --cd-text: var(--color-on-strong);
+  --cd-muted: var(--color-on-strong-muted);
+  --cd-brass: var(--color-brand-accent-surface);
+  --cd-line: color-mix(in srgb, var(--cd-text) 16%, transparent);
+
+  color: var(--cd-text);
+  background-color: color-mix(in srgb, #000 26%, var(--color-surface-strong));
+  border: 1px solid var(--cd-line);
+  border-top: 2px solid var(--cd-brass);
+  border-radius: 2px;
+  box-shadow: 0 32px 64px -24px rgb(0 0 0 / 80%);
+}
+
+.pb-conflict-dialog .base-dialog__header {
+  padding: var(--space-6) var(--space-6) 0;
+  border-bottom: 0;
+}
+
+.pb-conflict-dialog .base-dialog__heading {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.pb-conflict-dialog .base-dialog__title {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 34px;
+  color: var(--cd-text);
+}
+
+.pb-conflict-dialog .base-dialog__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6) var(--space-5);
+}
+
+.pb-conflict-dialog .base-dialog__footer {
+  padding: var(--space-4) var(--space-6) var(--space-6);
+  border-top: 1px solid var(--cd-line);
+}
+
+/* Sello de aviso: rombo de latón con el signo dentro. */
+.pb-conflict__mark {
+  position: relative;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1;
+  color: var(--cd-brass);
+  place-items: center;
+}
+
+.pb-conflict__mark::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1.5px solid var(--cd-brass);
+  transform: rotate(45deg);
+}
+
+.pb-conflict__lead {
+  margin: 0;
+  color: var(--color-on-strong-soft);
+}
+
+.pb-conflict__lead strong {
+  font-weight: 600;
+  color: var(--cd-text);
+}
+
+.pb-conflict__label {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 14px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cd-brass);
+}
+
+.pb-conflict__alts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: var(--space-3);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.pb-conflict__alt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+  width: 100%;
+  min-height: 60px;
+  padding: var(--space-2) var(--space-3);
+  color: var(--cd-text);
+  cursor: pointer;
+  background-color: transparent;
+  border: 1px solid var(--cd-line);
+  border-bottom: 2px solid var(--cd-brass);
+  border-radius: 2px;
+  transition:
+    background-color var(--motion-duration-base) var(--motion-easing-standard),
+    border-color var(--motion-duration-base) var(--motion-easing-standard),
+    color var(--motion-duration-base) var(--motion-easing-standard);
+}
+
+.pb-conflict__alt:hover {
+  color: var(--color-brand-accent-text);
+  background-color: var(--cd-brass);
+  border-color: var(--cd-brass);
+}
+
+.pb-conflict__alt:focus-visible {
+  outline: 2px solid var(--cd-brass);
+  outline-offset: 3px;
+}
+
+.pb-conflict__alt-time {
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 24px;
+}
+
+.pb-conflict__alt-day {
+  font-size: var(--font-size-body-sm);
+  line-height: var(--font-size-body-sm-line);
+  opacity: 0.8;
+}
+
+.pb-conflict__alt-day::first-letter {
+  text-transform: uppercase;
+}
+
+/* Botones del diálogo en latón sobre tinta (BaseButton se pensó para papel). */
+.pb-conflict-dialog .base-button {
+  width: 100%;
+  font-weight: 600;
+}
+
+.pb-conflict-dialog .base-button--primary {
+  color: var(--color-brand-accent-text);
+  background-color: var(--cd-brass);
+  border-color: var(--cd-brass);
+}
+
+.pb-conflict-dialog .base-button--secondary {
+  color: var(--cd-brass);
+  background-color: transparent;
+  border-color: var(--cd-brass);
+}
+
+.pb-conflict-dialog .base-button--secondary:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--cd-brass) 15%, transparent);
+}
+
+.pb-conflict-dialog .base-button:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--color-surface-strong),
+    0 0 0 4px var(--color-on-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pb-conflict__alt {
+    transition: none;
   }
 }

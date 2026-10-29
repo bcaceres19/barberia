@@ -5,8 +5,8 @@
 type: object
 description: >
   Configuración de anticipación, ventana, rejilla y cancelación tardía de
-  la barbería activa. Los rangos y el conjunto discreto de slotGridMinutes
-  están fijados por DEC-083.
+  la barbería activa. Los rangos están fijados por DEC-083 y el de
+  slotGridMinutes (entero de 1 a 60) por DEC-133.
 properties:
   minAdvanceMinutes:
     type: integer
@@ -26,7 +26,8 @@ properties:
       - 3
   slotGridMinutes:
     type: integer
-    enum: [5, 10, 15, 20, 30, 60]
+    minimum: 1
+    maximum: 60
     description: Paso en minutos de la rejilla de franjas ofrecidas al cliente (RN-DIS-06).
     examples:
       - 15

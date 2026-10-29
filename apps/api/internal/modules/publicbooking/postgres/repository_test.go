@@ -62,6 +62,13 @@ const (
 	barberoUnBarberoID     = "00920011-0092-0092-0092-009200110011"
 	barberoUnBarberoNombre = "Barbero HU-092 Uno-1"
 	barberoVariosSegundoID = "00920012-0092-0092-0092-009200120012"
+
+	// DEC-127: Uno-1 tiene descripción y fotografía; Uno-2 no tiene ninguna;
+	// Uno-3 tiene fotografía pero ninguna asignación vigente; Dos-1 tiene
+	// fotografía de otra barbería.
+	barberoUnBarberoDescripcion = "Descripción pública HU-092 Uno-1"
+	barberoSinAsignacionID      = "00920014-0092-0092-0092-009200140014"
+	barberoOtraBarberiaID       = "00920013-0092-0092-0092-009200130013"
 )
 
 func setupTestDB(t *testing.T) *database.DB {
@@ -545,5 +552,85 @@ func TestListPublicBarbers_TenantAIsolatedFromTenantB(t *testing.T) {
 	own, foundOwn, err := repo.ListPublicBarbers(context.Background(), slugBarberoDos, servicioDosBarberoID)
 	if err != nil || !foundOwn || len(own.Items) != 1 {
 		t.Fatalf("ListPublicBarbers(slugBarberoDos, servicioDosBarberoID): found=%v items=%d err=%v", foundOwn, len(own.Items), err)
+	}
+}
+
+// --- DEC-127: descripción y fotografía públicas ----------------------------
+
+// TestListPublicBarbers_DescriptionAndPhotoVersion_AreProjected comprueba que
+// la lista pública incluye la descripción y la versión de la fotografía de
+// quien las tiene y null (nil) para quien no.
+func TestListPublicBarbers_DescriptionAndPhotoVersion_AreProjected(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+
+	result, found, err := repo.ListPublicBarbers(context.Background(), slugBarberoUno, servicioVariosID)
+	if err != nil || !found {
+		t.Fatalf("ListPublicBarbers: found=%v err=%v", found, err)
+	}
+	if len(result.Items) != 2 {
+		t.Fatalf("expected 2 barbers, got %+v", result.Items)
+	}
+
+	withBoth, without := result.Items[0], result.Items[1]
+	if withBoth.ID != barberoUnBarberoID || withBoth.Description == nil || *withBoth.Description != barberoUnBarberoDescripcion {
+		t.Fatalf("expected Uno-1 with its description, got %+v", withBoth)
+	}
+	if withBoth.PhotoUpdatedAt == nil {
+		t.Fatalf("expected Uno-1 with a photo version, got %+v", withBoth)
+	}
+	if without.ID != barberoVariosSegundoID || without.Description != nil || without.PhotoUpdatedAt != nil {
+		t.Fatalf("expected Uno-2 with neither description nor photo, got %+v", without)
+	}
+}
+
+func TestGetPublicBarberPhoto_EligibleBarber_ReturnsBytesAndContentType(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+
+	photo, found, err := repo.GetPublicBarberPhoto(context.Background(), slugBarberoUno, barberoUnBarberoID)
+	if err != nil || !found {
+		t.Fatalf("GetPublicBarberPhoto: found=%v err=%v", found, err)
+	}
+	if photo.ContentType != "image/png" || len(photo.Data) == 0 || photo.UpdatedAt.IsZero() {
+		t.Fatalf("expected a PNG with bytes and a version, got %+v", photo)
+	}
+}
+
+// Sin fotografía, sin asignación vigente, de otra barbería, con slug
+// desconocido o con un identificador inexistente: siempre found=false, sin
+// distinguir la causa.
+func TestGetPublicBarberPhoto_NotVisible_ReturnsNotFound(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+
+	for name, tc := range map[string]struct{ slug, barberID string }{
+		"sin fotografía":                     {slugBarberoUno, barberoVariosSegundoID},
+		"con fotografía pero sin asignación": {slugBarberoUno, barberoSinAsignacionID},
+		"barbero de otra barbería":           {slugBarberoUno, barberoOtraBarberiaID},
+		"slug desconocido":                   {"no-existe-hu127", barberoUnBarberoID},
+		"barbero inexistente":                {slugBarberoUno, "99999999-9999-4999-8999-999999999999"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			photo, found, err := repo.GetPublicBarberPhoto(context.Background(), tc.slug, tc.barberID)
+			if err != nil {
+				t.Fatalf("GetPublicBarberPhoto: %v", err)
+			}
+			if found || len(photo.Data) != 0 {
+				t.Fatalf("expected found=false with no bytes, got found=%v %+v", found, photo)
+			}
+		})
+	}
+}
+
+// El barbero de la barbería Dos sí es elegible a través de SU slug: el
+// aislamiento depende del slug, no de que la imagen no exista.
+func TestGetPublicBarberPhoto_OwnTenant_ServesItsOwnBarber(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+
+	_, found, err := repo.GetPublicBarberPhoto(context.Background(), slugBarberoDos, barberoOtraBarberiaID)
+	if err != nil || !found {
+		t.Fatalf("expected shop Dos to serve its own barber's photo, found=%v err=%v", found, err)
 	}
 }

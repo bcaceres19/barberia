@@ -53,14 +53,31 @@ vi.mock('../../api/staffApi', () => ({
 const { default: StaffPage } = await import('../StaffPage.vue')
 const { default: BarberPhotoField } = await import('../../components/BarberPhotoField.vue')
 
-function barber(id: string, fullName: string, photoUpdatedAt: string | null = null) {
+function barber(
+  id: string,
+  fullName: string,
+  photoUpdatedAt: string | null = null,
+  description: string | null = null,
+) {
   return {
     id,
     fullName,
     createdAt: '2026-08-23T15:04:05Z',
     updatedAt: '2026-08-23T15:04:05Z',
     photoUpdatedAt,
+    description,
   }
+}
+
+function openDialogDescription(wrapper: VueWrapper): HTMLTextAreaElement {
+  return openDialogElement(wrapper).querySelector(
+    'textarea[name="description"]',
+  ) as HTMLTextAreaElement
+}
+
+function setTextareaValue(textarea: HTMLTextAreaElement, value: string) {
+  textarea.value = value
+  textarea.dispatchEvent(new Event('input'))
 }
 
 const oneBarber = [barber('b-1', 'Carlos Ramírez')]
@@ -747,12 +764,108 @@ describe('StaffPage', () => {
     await waitOutMoreHold()
     await flushPromises()
 
-    expect(renameMock).toHaveBeenCalledWith('b-1', 'Carlos A. Ramírez')
+    expect(renameMock).toHaveBeenCalledWith('b-1', 'Carlos A. Ramírez', undefined)
     expect(uploadPhotoMock).not.toHaveBeenCalled()
     expect(removePhotoMock).not.toHaveBeenCalled()
     expect(wrapper.findAll('.staff-page__row').length).toBe(1)
     expect(wrapper.text()).toContain('Carlos A. Ramírez')
     expect(toastState.items.map((item) => item.title)).toEqual(['Nombre actualizado'])
+  })
+
+  // --- Descripción pública (DEC-127) -----------------------------------------
+
+  it('creates a barber with the public description the user wrote', async () => {
+    const wrapper = await mountReady()
+    await findButtonByText(wrapper, 'Agregar barbero').trigger('click')
+    await flushPromises()
+
+    expect(openDialogDescription(wrapper).value).toBe('')
+    expect(openDialogElement(wrapper).textContent).toContain('Texto público')
+
+    setInputValue(openDialogInput(wrapper), 'Nuevo Barbero')
+    setTextareaValue(openDialogDescription(wrapper), 'Fade y barba.')
+    await flushPromises()
+    expect(openDialogElement(wrapper).textContent).toContain('13 / 280')
+
+    createMock.mockResolvedValueOnce({
+      kind: 'success',
+      barber: barber('b-new', 'Nuevo Barbero', null, 'Fade y barba.'),
+    })
+    submitOpenDialog(wrapper)
+    await flushPromises()
+    await waitOutMoreHold()
+    await flushPromises()
+
+    expect(createMock).toHaveBeenCalledWith('Nuevo Barbero', expect.any(String), 'Fade y barba.')
+  })
+
+  it('rejects a description over 280 characters without calling the API', async () => {
+    const wrapper = await mountReady()
+    await findButtonByText(wrapper, 'Agregar barbero').trigger('click')
+    await flushPromises()
+
+    setInputValue(openDialogInput(wrapper), 'Nuevo Barbero')
+    setTextareaValue(openDialogDescription(wrapper), 'a'.repeat(281))
+    await flushPromises()
+    submitOpenDialog(wrapper)
+    await flushPromises()
+
+    expect(createMock).not.toHaveBeenCalled()
+    expect(openDialogElement(wrapper).querySelector('[role="alert"]')?.textContent).toContain(
+      'La descripción no puede superar 280 caracteres.',
+    )
+    expect(openDialogElement(wrapper).textContent).toContain('281 / 280')
+
+    // Corregir el texto limpia el error al instante (ya se intentó enviar).
+    setTextareaValue(openDialogDescription(wrapper), 'a'.repeat(280))
+    await flushPromises()
+    expect(openDialogElement(wrapper).textContent).not.toContain('no puede superar 280')
+  })
+
+  it('prefills the edit dialog with the description and sends only what changed', async () => {
+    fetchMock.mockReset()
+    const withDescription = [barber('b-1', 'Carlos Ramírez', null, 'Fade y barba.')]
+    const wrapper = await mountReady(withDescription)
+    await findButtonByText(wrapper, 'Editar').trigger('click')
+    await flushPromises()
+
+    expect(openDialogDescription(wrapper).value).toBe('Fade y barba.')
+
+    // Sin cambios no se envía nada.
+    submitOpenDialog(wrapper)
+    await flushPromises()
+    expect(renameMock).not.toHaveBeenCalled()
+
+    await findButtonByText(wrapper, 'Editar').trigger('click')
+    await flushPromises()
+    setTextareaValue(openDialogDescription(wrapper), 'Navaja clásica.')
+    renameMock.mockResolvedValueOnce({
+      kind: 'success',
+      barber: barber('b-1', 'Carlos Ramírez', null, 'Navaja clásica.'),
+    })
+    submitOpenDialog(wrapper)
+    await flushPromises()
+    await waitOutMoreHold()
+    await flushPromises()
+
+    expect(renameMock).toHaveBeenCalledWith('b-1', 'Carlos Ramírez', 'Navaja clásica.')
+    expect(toastState.items.map((item) => item.title)).toEqual(['Descripción actualizada'])
+  })
+
+  it('removes the description by clearing the field', async () => {
+    fetchMock.mockReset()
+    const wrapper = await mountReady([barber('b-1', 'Carlos Ramírez', null, 'Fade y barba.')])
+    await findButtonByText(wrapper, 'Editar').trigger('click')
+    await flushPromises()
+
+    setTextareaValue(openDialogDescription(wrapper), '')
+    renameMock.mockResolvedValueOnce({ kind: 'success', barber: barber('b-1', 'Carlos Ramírez') })
+    submitOpenDialog(wrapper)
+    await flushPromises()
+    await waitOutMoreHold()
+    await flushPromises()
+
+    expect(renameMock).toHaveBeenCalledWith('b-1', 'Carlos Ramírez', '')
   })
 
   it('replaces the item by id without duplicating or reordering unstably', async () => {

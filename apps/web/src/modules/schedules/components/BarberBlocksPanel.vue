@@ -44,6 +44,7 @@ import {
   validateStartsTime,
 } from '../validation/timeBlockValidation'
 import { validateDurationMinutes } from '../validation/scheduleValidation'
+import { durationBetween } from '../model/weekBoard'
 import SeriesFormDialog from './SeriesFormDialog.vue'
 import SeriesInstancesDialog from './SeriesInstancesDialog.vue'
 
@@ -169,7 +170,7 @@ const blockPreview = computed(() =>
 )
 const seriesPreview = computed(
   () =>
-    `${weekdayLabel(createSeriesWeekday.value)} · ${createSeriesStartsTime.value || '—'} · ${createSeriesDuration.value || '—'} min`,
+    `${weekdayLabel(createSeriesWeekday.value)} · ${createSeriesStartsTime.value || '—'} → ${createSeriesEndsTime.value || '—'}`,
 )
 
 // --- Alta de bloqueo puntual --------------------------------------------
@@ -321,7 +322,7 @@ const isCreateSeriesOpen = ref(false)
 const createSeriesType = ref<BlockType>('lunch')
 const createSeriesWeekday = ref(1)
 const createSeriesStartsTime = ref('')
-const createSeriesDuration = ref(60)
+const createSeriesEndsTime = ref('')
 const createSeriesEffectiveFrom = ref('')
 const createSeriesReason = ref('')
 const createSeriesError = ref<string | undefined>(undefined)
@@ -332,7 +333,7 @@ function openCreateSeriesDialog() {
   createSeriesType.value = 'lunch'
   createSeriesWeekday.value = 1
   createSeriesStartsTime.value = ''
-  createSeriesDuration.value = 60
+  createSeriesEndsTime.value = ''
   createSeriesEffectiveFrom.value = ''
   createSeriesReason.value = ''
   createSeriesError.value = undefined
@@ -351,7 +352,12 @@ async function onSubmitCreateSeries() {
 
   const weekdayError = validateISOWeekday(createSeriesWeekday.value)
   const startsTimeError = validateStartsTime(createSeriesStartsTime.value)
-  const durationError = validateDurationMinutes(createSeriesDuration.value)
+  const endsTimeError = validateStartsTime(createSeriesEndsTime.value)
+  const durationError =
+    endsTimeError ??
+    validateDurationMinutes(
+      durationBetween(createSeriesStartsTime.value, createSeriesEndsTime.value),
+    )
   const effectiveFromError = validateEffectiveFrom(createSeriesEffectiveFrom.value)
   const reasonError = validateReason(createSeriesReason.value)
   const firstError =
@@ -367,7 +373,7 @@ async function onSubmitCreateSeries() {
     createSeriesType.value,
     createSeriesWeekday.value,
     createSeriesStartsTime.value,
-    createSeriesDuration.value,
+    durationBetween(createSeriesStartsTime.value, createSeriesEndsTime.value),
     createSeriesEffectiveFrom.value,
     createSeriesReason.value.trim() === '' ? null : createSeriesReason.value.trim(),
     createSeriesIdempotencyKey,
@@ -726,7 +732,7 @@ function seriesCounts(item: TimeBlockSeries): string {
       v-model="isCreateBlockOpen"
       title="Agregar bloqueo puntual"
       description="Define el tiempo que no estará disponible en la agenda."
-      size="md"
+      size="lg"
       content-class="block-dialog"
       :close-on-backdrop="createBlockStatus !== 'saving'"
       :close-on-escape="createBlockStatus !== 'saving'"
@@ -847,7 +853,7 @@ function seriesCounts(item: TimeBlockSeries): string {
       v-model="isCreateSeriesOpen"
       title="Agregar serie semanal"
       :description="`Una pausa recurrente para ${barberName}.`"
-      size="md"
+      size="lg"
       content-class="block-dialog"
       :close-on-backdrop="createSeriesStatus !== 'saving'"
       :close-on-escape="createSeriesStatus !== 'saving'"
@@ -886,10 +892,9 @@ function seriesCounts(item: TimeBlockSeries): string {
             label="Hora de inicio"
             required
             :disabled="createSeriesStatus === 'saving'"
-          /><BaseInput
-            v-model.number="createSeriesDuration"
-            type="number"
-            label="Duración (minutos)"
+          /><BaseTimePicker
+            v-model="createSeriesEndsTime"
+            label="Hora de fin"
             required
             :disabled="createSeriesStatus === 'saving'"
           />
@@ -1269,13 +1274,14 @@ function seriesCounts(item: TimeBlockSeries): string {
   min-width: 0;
 }
 .block-form__preview {
-  border-left: 2px solid var(--color-brand-accent-surface);
+  border-top: 2px solid var(--color-brand-accent-surface);
   background: var(--color-field-strong);
-  padding: 14px 16px;
+  padding: 16px 20px;
 }
 .block-form__preview p {
-  font-size: var(--font-size-body-sm);
-  line-height: 1.7;
+  font-family: var(--font-display);
+  font-size: var(--font-size-body-lg);
+  line-height: 1.4;
   margin: 8px 0;
 }
 .block-form__preview small {
@@ -1342,6 +1348,11 @@ function seriesCounts(item: TimeBlockSeries): string {
 
 <style>
 /* BaseDialog se teleporta al body: este ámbito solo gobierna el panel de HU-042. */
+/* `size="lg"` solo fija max-width; el ancho real se declara aquí para que los
+   formularios de bloqueo respiren igual que los de Servicios. */
+.block-dialog.base-dialog {
+  width: min(100%, 720px) !important;
+}
 .block-dialog {
   --color-text-primary: var(--color-on-strong);
   --color-text-secondary: var(--color-on-strong-muted);
@@ -1396,5 +1407,87 @@ function seriesCounts(item: TimeBlockSeries): string {
 }
 .block-dialog .base-dialog__close {
   color: var(--color-on-strong);
+}
+
+/* Entrada: la tarjeta rebota al asentarse (misma curva que Servicios y Mi
+   perfil) y los campos del formulario llegan escalonados, de arriba abajo, un
+   instante después. El resumen traza su filete dorado de izquierda a derecha. */
+.block-dialog.base-dialog--open {
+  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+.block-dialog .block-form > * {
+  animation: block-dialog-field-enter 360ms var(--motion-easing-standard) backwards;
+  animation-delay: calc(140ms + var(--field-index, 0) * 55ms);
+}
+/* `backwards` (no `both`): al terminar la entrada el campo vuelve a su estado
+   natural y no deja un contexto de apilamiento; con `both` el transform final
+   atrapaba la lista de BaseSelect y los campos siguientes se pintaban encima. */
+.block-dialog .block-form > :focus-within {
+  position: relative;
+  z-index: 2;
+}
+.block-dialog .block-form > :nth-child(1) {
+  --field-index: 0;
+}
+.block-dialog .block-form > :nth-child(2) {
+  --field-index: 1;
+}
+.block-dialog .block-form > :nth-child(3) {
+  --field-index: 2;
+}
+.block-dialog .block-form > :nth-child(4) {
+  --field-index: 3;
+}
+.block-dialog .block-form > :nth-child(5) {
+  --field-index: 4;
+}
+.block-dialog .block-form > :nth-child(6) {
+  --field-index: 5;
+}
+.block-dialog .block-form > :nth-child(n + 7) {
+  --field-index: 6;
+}
+.block-dialog .block-form__preview,
+.block-dialog .block-form__summary {
+  position: relative;
+  border-top-color: transparent;
+}
+.block-dialog .block-form__preview::before,
+.block-dialog .block-form__summary::before {
+  content: '';
+  position: absolute;
+  inset: -2px 0 auto;
+  height: 2px;
+  background: var(--color-brand-accent-surface);
+  transform-origin: left;
+  animation: block-dialog-rule-draw 520ms var(--motion-easing-standard) 420ms both;
+}
+@keyframes block-dialog-field-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes block-dialog-rule-draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .block-dialog.base-dialog--open {
+    transition-timing-function: var(--motion-easing-standard) !important;
+  }
+  .block-dialog .block-form > *,
+  .block-dialog .block-form__preview::before,
+  .block-dialog .block-form__summary::before {
+    animation: none;
+  }
 }
 </style>

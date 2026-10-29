@@ -100,6 +100,37 @@ func requireProps(t *testing.T, schema schemaDoc, want []string) {
 	}
 }
 
+// requireOptionalProps es requireProps para un esquema con campos opcionales
+// (DEC-127: description en las solicitudes de alta y actualización): las
+// propiedades de required deben ser obligatorias y las de optional, existir
+// sin ser obligatorias.
+func requireOptionalProps(t *testing.T, schema schemaDoc, required, optional []string) {
+	t.Helper()
+	if want := len(required) + len(optional); len(schema.Properties) != want {
+		t.Fatalf("expected %d properties, schema has %d: %v", want, len(schema.Properties), schema.Properties)
+	}
+	isRequired := map[string]bool{}
+	for _, r := range schema.Required {
+		isRequired[r] = true
+	}
+	for _, prop := range required {
+		if _, ok := schema.Properties[prop]; !ok {
+			t.Errorf("schema no declara la propiedad %q", prop)
+		}
+		if !isRequired[prop] {
+			t.Errorf("schema no marca %q como required", prop)
+		}
+	}
+	for _, prop := range optional {
+		if _, ok := schema.Properties[prop]; !ok {
+			t.Errorf("schema no declara la propiedad opcional %q", prop)
+		}
+		if isRequired[prop] {
+			t.Errorf("schema marca %q como required, pero es opcional (DEC-127)", prop)
+		}
+	}
+}
+
 func requireResponses(t *testing.T, op operation, wantOperationID string, wantStatuses []string) {
 	t.Helper()
 	if op.OperationID != wantOperationID {
@@ -122,18 +153,18 @@ func requireResponses(t *testing.T, op operation, wantOperationID string, wantSt
 // --- Schemas -------------------------------------------------------------
 
 // TestContract_BarberResponseSchema_MatchesDTOFields verifica que
-// httpapi.BarberResponse (id, fullName, createdAt, updatedAt, photoUpdatedAt)
-// coincide exactamente con BarberResponse.yaml (CA-021-07: nunca active,
-// deletedAt, sortOrder, staffUserId, servicios ni horarios; DEC-104 añade
-// photoUpdatedAt).
+// httpapi.BarberResponse (id, fullName, createdAt, updatedAt, photoUpdatedAt,
+// description) coincide exactamente con BarberResponse.yaml (CA-021-07: nunca
+// active, deletedAt, sortOrder, staffUserId, servicios ni horarios; DEC-104
+// añade photoUpdatedAt y DEC-127 description).
 func TestContract_BarberResponseSchema_MatchesDTOFields(t *testing.T) {
 	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/BarberResponse.yaml")
-	requireProps(t, schema, []string{"id", "fullName", "createdAt", "updatedAt", "photoUpdatedAt"})
+	requireProps(t, schema, []string{"id", "fullName", "createdAt", "updatedAt", "photoUpdatedAt", "description"})
 }
 
 func TestContract_CreateBarberRequestSchema_MatchesDTOFields(t *testing.T) {
 	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/CreateBarberRequest.yaml")
-	requireProps(t, schema, []string{"fullName"})
+	requireOptionalProps(t, schema, []string{"fullName"}, []string{"description"})
 	if _, ok := schema.Properties["barbershopId"]; ok {
 		t.Fatal("el contrato de alta nunca debe declarar barbershopId")
 	}
@@ -141,7 +172,7 @@ func TestContract_CreateBarberRequestSchema_MatchesDTOFields(t *testing.T) {
 
 func TestContract_UpdateBarberRequestSchema_MatchesDTOFields(t *testing.T) {
 	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/UpdateBarberRequest.yaml")
-	requireProps(t, schema, []string{"fullName"})
+	requireOptionalProps(t, schema, []string{"fullName"}, []string{"description"})
 	for _, forbidden := range []string{"active", "deletedAt", "sortOrder", "staffUserId", "barbershopId"} {
 		if _, ok := schema.Properties[forbidden]; ok {
 			t.Fatalf("CA-021-07/DEC-047: el contrato de renombrado nunca debe declarar %q", forbidden)

@@ -1,11 +1,15 @@
 package httpapi
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // BarberResponse es la representación canónica de un barbero (CA-021-01,
 // CA-021-07): exactamente id, fullName, createdAt, updatedAt y, por DEC-104,
 // photoUpdatedAt (null mientras no hay fotografía; cuando existe, es la
-// versión de la imagen). Nunca active, deletedAt, sortOrder, staffUserId,
+// versión de la imagen) y, por DEC-127, description (null mientras no hay
+// descripción). Nunca active, deletedAt, sortOrder, staffUserId,
 // servicios ni horarios (DEC-047).
 //
 // ADVERTENCIA: postgres.barberResponseWire (staff/postgres/repository.go)
@@ -20,6 +24,7 @@ type BarberResponse struct {
 	CreatedAt      time.Time  `json:"createdAt"`
 	UpdatedAt      time.Time  `json:"updatedAt"`
 	PhotoUpdatedAt *time.Time `json:"photoUpdatedAt"`
+	Description    *string    `json:"description"`
 }
 
 // BarberListResponse es la página paginada por cursor de GET /private/barbers
@@ -35,14 +40,43 @@ type BarberListResponse struct {
 // barbershopId: el tenant se deriva exclusivamente de auth.Principal.
 type CreateBarberRequest struct {
 	FullName string `json:"fullName"`
+	// Description es opcional y admite null (DEC-127): ausente, null o vacía
+	// equivalen a "sin descripción".
+	Description *string `json:"description"`
 }
 
 // UpdateBarberRequest es el cuerpo de PATCH /private/barbers/{barberId}
-// (CA-021-04). Cerrado y limitado al único campo editable de HU-021: nunca
-// active, deletedAt, sortOrder, staffUserId, servicios ni horarios
-// (DEC-047, CA-021-07).
+// (CA-021-04). Cerrado y limitado a los campos editables (el nombre de HU-021
+// y, por DEC-127, la descripción): nunca active, deletedAt, sortOrder,
+// staffUserId, servicios ni horarios (DEC-047, CA-021-07).
 type UpdateBarberRequest struct {
-	FullName string `json:"fullName"`
+	FullName    string       `json:"fullName"`
+	Description OptionalText `json:"description"`
+}
+
+// OptionalText distingue un campo ausente de uno enviado como null o vacío:
+// ausente conserva el valor actual y null/vacío lo quita. `encoding/json`
+// llama a UnmarshalJSON solo cuando la clave viene en el cuerpo, así que Set
+// queda en false si no vino.
+type OptionalText struct {
+	Set   bool
+	Value *string
+}
+
+// UnmarshalJSON implementa json.Unmarshaler. Un valor que no es cadena ni
+// null falla con el mismo error de JSON inválido que cualquier otro campo.
+func (o *OptionalText) UnmarshalJSON(data []byte) error {
+	o.Set = true
+	if string(data) == "null" {
+		o.Value = nil
+		return nil
+	}
+	var value string
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	o.Value = &value
+	return nil
 }
 
 // LinkMyBarberRequest es el cuerpo de PUT /private/me/barber (DEC-100).

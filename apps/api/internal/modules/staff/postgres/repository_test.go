@@ -15,6 +15,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -82,7 +83,7 @@ func createBarber(t *testing.T, repo *staffpostgres.Repository, shop database.Ba
 	t.Helper()
 	key := idempotency.Key("fixture-" + uniqueSuffix(t))
 	fp := idempotency.ComputeFingerprint("POST", "/api/v1/private/barbers", []byte(`{"fullName":"`+fullName+`"}`))
-	result, err := repo.Create(context.Background(), string(shop), fullName, key, fp)
+	result, err := repo.Create(context.Background(), string(shop), fullName, nil, key, fp)
 	if err != nil {
 		t.Fatalf("createBarber: %v", err)
 	}
@@ -276,7 +277,7 @@ func TestRename_CrossTenant_NeverRenamesAnotherShopsBarber(t *testing.T) {
 
 	barberD := createBarber(t, repo, shopD, "Nombre Original D "+suffix)
 
-	result, err := repo.Rename(context.Background(), string(shopC), barberD.ID, "Renombrado por C "+suffix)
+	result, err := repo.Update(context.Background(), string(shopC), barberD.ID, "Renombrado por C "+suffix, staff.DescriptionPatch{})
 	if err != nil {
 		t.Fatalf("Rename: %v", err)
 	}
@@ -302,7 +303,7 @@ func TestRename_OwnTenant_UpdatesByIDWithoutDuplicating(t *testing.T) {
 
 	original := createBarber(t, repo, shopC, "Antes de renombrar "+suffix)
 
-	result, err := repo.Rename(context.Background(), string(shopC), original.ID, "Después de renombrar "+suffix)
+	result, err := repo.Update(context.Background(), string(shopC), original.ID, "Después de renombrar "+suffix, staff.DescriptionPatch{})
 	if err != nil {
 		t.Fatalf("Rename: %v", err)
 	}
@@ -340,10 +341,10 @@ func TestRename_DuplicateNameAcrossBarbers_Allowed(t *testing.T) {
 	a := createBarber(t, repo, shopC, "Barbero Uno "+suffix)
 	b := createBarber(t, repo, shopC, "Barbero Dos "+suffix)
 
-	if _, err := repo.Rename(context.Background(), string(shopC), a.ID, sharedName); err != nil {
+	if _, err := repo.Update(context.Background(), string(shopC), a.ID, sharedName, staff.DescriptionPatch{}); err != nil {
 		t.Fatalf("Rename a: %v", err)
 	}
-	if _, err := repo.Rename(context.Background(), string(shopC), b.ID, sharedName); err != nil {
+	if _, err := repo.Update(context.Background(), string(shopC), b.ID, sharedName, staff.DescriptionPatch{}); err != nil {
 		t.Fatalf("Rename b: %v", err)
 	}
 
@@ -367,7 +368,7 @@ func TestCreate_FirstExecution_PersistsAndReturnsProceed(t *testing.T) {
 	key := idempotency.Key("first-exec-" + suffix)
 	fp := idempotency.ComputeFingerprint("POST", "/api/v1/private/barbers", []byte(`{"fullName":"Nuevo"}`))
 
-	result, err := repo.Create(context.Background(), string(shopC), "Nuevo "+suffix, key, fp)
+	result, err := repo.Create(context.Background(), string(shopC), "Nuevo "+suffix, nil, key, fp)
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -399,7 +400,7 @@ func TestCreate_SameKeyAndContent_ReplaysWithoutCreatingASecondRow(t *testing.T)
 	body := []byte(`{"fullName":"Repetido"}`)
 	fp := idempotency.ComputeFingerprint("POST", "/api/v1/private/barbers", body)
 
-	first, err := repo.Create(context.Background(), string(shopC), "Repetido "+suffix, key, fp)
+	first, err := repo.Create(context.Background(), string(shopC), "Repetido "+suffix, nil, key, fp)
 	if err != nil {
 		t.Fatalf("Create (first): %v", err)
 	}
@@ -407,7 +408,7 @@ func TestCreate_SameKeyAndContent_ReplaysWithoutCreatingASecondRow(t *testing.T)
 		t.Fatalf("expected first call to proceed, got %s", first.Decision.Outcome)
 	}
 
-	second, err := repo.Create(context.Background(), string(shopC), "Repetido "+suffix, key, fp)
+	second, err := repo.Create(context.Background(), string(shopC), "Repetido "+suffix, nil, key, fp)
 	if err != nil {
 		t.Fatalf("Create (second): %v", err)
 	}
@@ -441,7 +442,7 @@ func TestCreate_SameKeyDifferentContent_ConflictsWithoutEffect(t *testing.T) {
 	fpA := idempotency.ComputeFingerprint("POST", "/api/v1/private/barbers", []byte(`{"fullName":"A"}`))
 	fpB := idempotency.ComputeFingerprint("POST", "/api/v1/private/barbers", []byte(`{"fullName":"B"}`))
 
-	first, err := repo.Create(context.Background(), string(shopC), "Nombre A "+suffix, key, fpA)
+	first, err := repo.Create(context.Background(), string(shopC), "Nombre A "+suffix, nil, key, fpA)
 	if err != nil {
 		t.Fatalf("Create (first): %v", err)
 	}
@@ -449,7 +450,7 @@ func TestCreate_SameKeyDifferentContent_ConflictsWithoutEffect(t *testing.T) {
 		t.Fatalf("expected first call to proceed, got %s", first.Decision.Outcome)
 	}
 
-	second, err := repo.Create(context.Background(), string(shopC), "Nombre B "+suffix, key, fpB)
+	second, err := repo.Create(context.Background(), string(shopC), "Nombre B "+suffix, nil, key, fpB)
 	if err != nil {
 		t.Fatalf("Create (second): %v", err)
 	}
@@ -506,12 +507,12 @@ func TestCreate_TwoRealConcurrentConnections_SingleEffect(t *testing.T) {
 		// ambas rutas (proceed+replay o proceed+locked) son válidas y la
 		// prueba las acepta explícitamente más abajo (ver comentario final).
 		close(aStarted)
-		aResult, aErr = repo.Create(context.Background(), string(shopC), fullName, key, fp)
+		aResult, aErr = repo.Create(context.Background(), string(shopC), fullName, nil, key, fp)
 	}()
 	go func() {
 		defer wg.Done()
 		<-aStarted
-		bResult, bErr = repo.Create(context.Background(), string(shopC), fullName, key, fp)
+		bResult, bErr = repo.Create(context.Background(), string(shopC), fullName, nil, key, fp)
 		close(bAttempted)
 	}()
 	wg.Wait()
@@ -566,7 +567,7 @@ func TestCreate_SameKeyLiteralInTwoTenants_DoesNotInterfere(t *testing.T) {
 	key := idempotency.Key("cross-tenant-" + suffix)
 	fp := idempotency.ComputeFingerprint("POST", "/api/v1/private/barbers", []byte(`{"fullName":"X"}`))
 
-	resultC, err := repo.Create(context.Background(), string(shopC), "En C "+suffix, key, fp)
+	resultC, err := repo.Create(context.Background(), string(shopC), "En C "+suffix, nil, key, fp)
 	if err != nil {
 		t.Fatalf("Create shopC: %v", err)
 	}
@@ -574,7 +575,7 @@ func TestCreate_SameKeyLiteralInTwoTenants_DoesNotInterfere(t *testing.T) {
 		t.Fatalf("expected shopC to proceed, got %s", resultC.Decision.Outcome)
 	}
 
-	resultD, err := repo.Create(context.Background(), string(shopD), "En D "+suffix, key, fp)
+	resultD, err := repo.Create(context.Background(), string(shopD), "En D "+suffix, nil, key, fp)
 	if err != nil {
 		t.Fatalf("Create shopD: %v", err)
 	}
@@ -597,11 +598,11 @@ func TestCreate_DifferentKeysSameName_CreatesTwoDistinctBarbers(t *testing.T) {
 
 	fp := idempotency.ComputeFingerprint("POST", "/api/v1/private/barbers", []byte(`{"fullName":"`+name+`"}`))
 
-	first, err := repo.Create(context.Background(), string(shopC), name, idempotency.Key("key-1-"+suffix), fp)
+	first, err := repo.Create(context.Background(), string(shopC), name, nil, idempotency.Key("key-1-"+suffix), fp)
 	if err != nil {
 		t.Fatalf("Create (1): %v", err)
 	}
-	second, err := repo.Create(context.Background(), string(shopC), name, idempotency.Key("key-2-"+suffix), fp)
+	second, err := repo.Create(context.Background(), string(shopC), name, nil, idempotency.Key("key-2-"+suffix), fp)
 	if err != nil {
 		t.Fatalf("Create (2): %v", err)
 	}
@@ -626,7 +627,7 @@ func TestCreate_StoredResponseBody_MatchesHTTPAPIWireShape(t *testing.T) {
 	key := idempotency.Key("wire-shape-" + suffix)
 	fp := idempotency.ComputeFingerprint("POST", "/api/v1/private/barbers", []byte(`{"fullName":"Forma"}`))
 
-	result, err := repo.Create(context.Background(), string(shopC), "Forma "+suffix, key, fp)
+	result, err := repo.Create(context.Background(), string(shopC), "Forma "+suffix, nil, key, fp)
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -635,7 +636,7 @@ func TestCreate_StoredResponseBody_MatchesHTTPAPIWireShape(t *testing.T) {
 	if err := json.Unmarshal([]byte(result.Response.Body), &generic); err != nil {
 		t.Fatalf("unmarshal stored body: %v", err)
 	}
-	wantKeys := []string{"id", "fullName", "createdAt", "updatedAt", "photoUpdatedAt"}
+	wantKeys := []string{"id", "fullName", "createdAt", "updatedAt", "photoUpdatedAt", "description"}
 	if len(generic) != len(wantKeys) {
 		t.Fatalf("expected exactly %v, got keys %v", wantKeys, generic)
 	}
@@ -644,8 +645,133 @@ func TestCreate_StoredResponseBody_MatchesHTTPAPIWireShape(t *testing.T) {
 			t.Fatalf("expected key %q in the stored response body, got %v", k, generic)
 		}
 	}
-	// Un barbero recién creado no tiene fotografía: null explícito, no ausente.
+	// Un barbero recién creado no tiene fotografía ni descripción: null
+	// explícito, no ausente.
 	if generic["photoUpdatedAt"] != nil {
 		t.Fatalf("a new barber has no photo, got photoUpdatedAt=%v", generic["photoUpdatedAt"])
+	}
+	if generic["description"] != nil {
+		t.Fatalf("a new barber has no description, got description=%v", generic["description"])
+	}
+}
+
+// --- Descripción del barbero (DEC-127) -------------------------------------
+
+func strPtr(s string) *string { return &s }
+
+func TestCreate_WithDescription_PersistsAndAppearsInStoredResponse(t *testing.T) {
+	db := setupTestDB(t)
+	repo := newRepository(db)
+	suffix := uniqueSuffix(t)
+
+	key := idempotency.Key("desc-create-" + suffix)
+	fp := idempotency.ComputeFingerprint("POST", "/api/v1/private/barbers", []byte(`{"fullName":"Con descripción","description":"Fade y barba"}`))
+	result, err := repo.Create(context.Background(), string(shopC), "Con descripción "+suffix, strPtr("Fade y barba"), key, fp)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if result.Barber.Description == nil || *result.Barber.Description != "Fade y barba" {
+		t.Fatalf("expected the description on the created barber, got %+v", result.Barber)
+	}
+
+	var stored map[string]any
+	if err := json.Unmarshal([]byte(result.Response.Body), &stored); err != nil {
+		t.Fatalf("unmarshal stored body: %v", err)
+	}
+	if stored["description"] != "Fade y barba" {
+		t.Fatalf("expected the replayable response to carry the description, got %v", stored["description"])
+	}
+
+	got, found, err := repo.Get(context.Background(), string(shopC), result.Barber.ID)
+	if err != nil || !found || got.Description == nil || *got.Description != "Fade y barba" {
+		t.Fatalf("expected Get to read the description back, got %+v found=%v err=%v", got, found, err)
+	}
+}
+
+func TestUpdate_Description_SetKeepAndClear(t *testing.T) {
+	db := setupTestDB(t)
+	repo := newRepository(db)
+	suffix := uniqueSuffix(t)
+	ctx := context.Background()
+
+	barber := createBarber(t, repo, shopC, "Descripción "+suffix)
+	if barber.Description != nil {
+		t.Fatalf("a barber created without description must have none, got %q", *barber.Description)
+	}
+
+	set, err := repo.Update(ctx, string(shopC), barber.ID, barber.FullName, staff.DescriptionPatch{Set: true, Value: strPtr("Navaja clásica")})
+	if err != nil || !set.Found || set.Barber.Description == nil || *set.Barber.Description != "Navaja clásica" {
+		t.Fatalf("expected the description to be set, got %+v err=%v", set, err)
+	}
+
+	// Sin `Set` el nombre cambia y la descripción se conserva.
+	kept, err := repo.Update(ctx, string(shopC), barber.ID, "Otro nombre "+suffix, staff.DescriptionPatch{})
+	if err != nil || !kept.Found {
+		t.Fatalf("Update: %+v err=%v", kept, err)
+	}
+	if kept.Barber.Description == nil || *kept.Barber.Description != "Navaja clásica" {
+		t.Fatalf("an update without a description change must keep it, got %+v", kept.Barber.Description)
+	}
+
+	cleared, err := repo.Update(ctx, string(shopC), barber.ID, "Otro nombre "+suffix, staff.DescriptionPatch{Set: true, Value: nil})
+	if err != nil || !cleared.Found {
+		t.Fatalf("Update: %+v err=%v", cleared, err)
+	}
+	if cleared.Barber.Description != nil {
+		t.Fatalf("Set with a nil value must clear the description, got %q", *cleared.Barber.Description)
+	}
+}
+
+func TestUpdate_Description_CrossTenant_NeverTouchesAnotherShopsBarber(t *testing.T) {
+	db := setupTestDB(t)
+	repo := newRepository(db)
+	suffix := uniqueSuffix(t)
+	ctx := context.Background()
+
+	barberD := createBarber(t, repo, shopD, "Barbero D "+suffix)
+	if _, err := repo.Update(ctx, string(shopD), barberD.ID, barberD.FullName, staff.DescriptionPatch{Set: true, Value: strPtr("De D")}); err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+
+	result, err := repo.Update(ctx, string(shopC), barberD.ID, "Intruso "+suffix, staff.DescriptionPatch{Set: true, Value: strPtr("Pisada por C")})
+	if err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+	if result.Found {
+		t.Fatal("CA-021-05: shopC's context updated shopD's barber")
+	}
+
+	stillD, found, err := repo.Get(ctx, string(shopD), barberD.ID)
+	if err != nil || !found {
+		t.Fatalf("Get: found=%v err=%v", found, err)
+	}
+	if stillD.FullName != barberD.FullName || stillD.Description == nil || *stillD.Description != "De D" {
+		t.Fatalf("expected shopD's barber untouched, got %+v", stillD)
+	}
+}
+
+// La base rechaza una descripción vacía o de más de 280 caracteres aunque la
+// aplicación ya la normalice: barber_description_ck es la última defensa.
+func TestUpdate_Description_DatabaseRejectsEmptyAndOversized(t *testing.T) {
+	db := setupTestDB(t)
+	repo := newRepository(db)
+	suffix := uniqueSuffix(t)
+	ctx := context.Background()
+
+	barber := createBarber(t, repo, shopC, "Restricción "+suffix)
+
+	for name, value := range map[string]string{
+		"vacía":          "",
+		"solo espacios":  "   ",
+		"281 caracteres": strings.Repeat("a", 281),
+	} {
+		if _, err := repo.Update(ctx, string(shopC), barber.ID, barber.FullName, staff.DescriptionPatch{Set: true, Value: strPtr(value)}); err == nil {
+			t.Errorf("%s: expected barber_description_ck to reject the value", name)
+		}
+	}
+
+	exact, err := repo.Update(ctx, string(shopC), barber.ID, barber.FullName, staff.DescriptionPatch{Set: true, Value: strPtr(strings.Repeat("ñ", 280))})
+	if err != nil || !exact.Found {
+		t.Fatalf("a 280-character description must be accepted, got %+v err=%v", exact, err)
 	}
 }

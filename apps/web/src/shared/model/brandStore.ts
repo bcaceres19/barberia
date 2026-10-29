@@ -49,8 +49,10 @@ function readStored(): BrandSettings {
         professionalTerm: c.professionalTerm,
         professionalTermPlural: c.professionalTermPlural,
         professionalTermGender: c.professionalTermGender,
-        // Una copia guardada antes de DEC-115 no trae perfil: se lee como `shop`
-        // (el panel de siempre) en vez de descartar el resto de la marca.
+        // Una copia guardada sin perfil (anterior a DEC-115) se lee como `shop`
+        // (el panel de siempre) en vez de descartar el resto de la marca. El perfil
+        // es del usuario (DEC-134): `resetBrand` borra la copia al cerrar sesión y el
+        // servidor la corrige en cuanto responde.
         panelProfile: isPanelProfile(c.panelProfile) ? c.panelProfile : 'shop',
       }
     }
@@ -83,7 +85,7 @@ export const effectiveAccent = computed<BrandAccentKey>(
   () => state.accentPreview ?? state.brand.accent,
 )
 
-/** Perfil del panel confirmado por el servidor (DEC-115). */
+/** Panel del usuario confirmado por el servidor, derivado de sus roles (DEC-134). */
 export const panelProfile = computed<PanelProfile>(() => state.brand.panelProfile)
 
 /** `true` en el panel de barbero individual (perfil `solo`). */

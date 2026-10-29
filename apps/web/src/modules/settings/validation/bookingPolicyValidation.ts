@@ -1,14 +1,14 @@
 // Validación de forma en cliente (docs/03-desarrollo/estandar-frontend-vue.md
 // §7.6): ayuda a corregir antes de enviar, nunca sustituye al backend. Los
-// rangos y el conjunto discreto son EXACTAMENTE los de DEC-083
-// (barbershop_*_ck en la base): el cliente no inventa un límite más
-// estricto ni más laxo que el servidor.
-import { ALLOWED_SLOT_GRID_MINUTES } from '../model/bookingPolicy'
-
+// rangos son EXACTAMENTE los de DEC-083 y DEC-133 (barbershop_*_ck en la
+// base): el cliente no inventa un límite más estricto ni más laxo que el
+// servidor.
 export const MIN_ADVANCE_MINUTES_FLOOR = 0
 export const MIN_ADVANCE_MINUTES_CEIL = 1440
 export const MAX_ADVANCE_DAYS_FLOOR = 1
 export const MAX_ADVANCE_DAYS_CEIL = 90
+export const SLOT_GRID_MINUTES_FLOOR = 1
+export const SLOT_GRID_MINUTES_CEIL = 60
 export const CANCELLATION_DEADLINE_MINUTES_FLOOR = 0
 export const CANCELLATION_DEADLINE_MINUTES_CEIL = 10080
 
@@ -31,8 +31,12 @@ export function validateMaxAdvanceDays(value: number): string | undefined {
 }
 
 export function validateSlotGridMinutes(value: number): string | undefined {
-  if (!ALLOWED_SLOT_GRID_MINUTES.includes(value as (typeof ALLOWED_SLOT_GRID_MINUTES)[number])) {
-    return `Elige uno de los pasos permitidos: ${ALLOWED_SLOT_GRID_MINUTES.join(', ')} minutos.`
+  if (
+    !Number.isInteger(value) ||
+    value < SLOT_GRID_MINUTES_FLOOR ||
+    value > SLOT_GRID_MINUTES_CEIL
+  ) {
+    return `Escribe un número entero entre ${SLOT_GRID_MINUTES_FLOOR} y ${SLOT_GRID_MINUTES_CEIL} minutos.`
   }
   return undefined
 }

@@ -216,7 +216,7 @@ func (h *CreateBarberHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	fingerprint := httpserver.IdempotencyFingerprint(r, body)
 
-	result, err := h.service.Create(r.Context(), principal.BarbershopID, req.FullName, key, fingerprint)
+	result, err := h.service.Create(r.Context(), principal.BarbershopID, req.FullName, req.Description, key, fingerprint)
 	if err != nil {
 		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
 		return
@@ -241,18 +241,18 @@ func (h *CreateBarberHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// RenameBarberHandler expone PATCH /private/barbers/{barberId} (CA-021-04).
-type RenameBarberHandler struct {
+// UpdateBarberHandler expone PATCH /private/barbers/{barberId} (CA-021-04).
+type UpdateBarberHandler struct {
 	service *staff.Service
 }
 
-// NewRenameBarberHandler construye el handler de renombrado.
-func NewRenameBarberHandler(service *staff.Service) *RenameBarberHandler {
-	return &RenameBarberHandler{service: service}
+// NewUpdateBarberHandler construye el handler de actualización.
+func NewUpdateBarberHandler(service *staff.Service) *UpdateBarberHandler {
+	return &UpdateBarberHandler{service: service}
 }
 
 // ServeHTTP implementa http.Handler.
-func (h *RenameBarberHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *UpdateBarberHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	requestID := httpserver.RequestIDFromContext(r.Context())
 	principal, ok := principalOrInternalError(w, r, requestID)
 	if !ok {
@@ -278,7 +278,10 @@ func (h *RenameBarberHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	barber, err := h.service.Rename(r.Context(), principal.BarbershopID, barberID, req.FullName)
+	barber, err := h.service.Update(
+		r.Context(), principal.BarbershopID, barberID, req.FullName,
+		staff.DescriptionPatch{Set: req.Description.Set, Value: req.Description.Value},
+	)
 	if err != nil {
 		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
 		return
@@ -296,6 +299,7 @@ func newBarberResponse(b staff.Barber) BarberResponse {
 		CreatedAt:      b.CreatedAt,
 		UpdatedAt:      b.UpdatedAt,
 		PhotoUpdatedAt: b.PhotoUpdatedAt,
+		Description:    b.Description,
 	}
 }
 

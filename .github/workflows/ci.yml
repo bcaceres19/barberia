@@ -97,7 +97,10 @@ jobs:
                    20261009130000_create_google_calendar_connection.sql \
                    20261010100000_create_google_calendar_sync.sql \
                    20261010120000_drop_auth_phone_challenge_destination.sql \
-                   20261010130000_create_whatsapp_webhook.sql; do
+                   20261010130000_create_whatsapp_webhook.sql \
+                   20261026120000_add_barber_description.sql \
+                   20261029120000_relax_barbershop_slot_grid_check.sql \
+                   20261029130000_create_staff_user_role.sql; do
             psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$f"
           done
           psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_app PASSWORD 'app_test';"
@@ -109,6 +112,7 @@ jobs:
         run: |
           set -euo pipefail
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/dos_barberias.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/staff_user_role_365.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu005_credenciales_sesiones.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu007_reto_telefonico.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu021_barberos.sql
@@ -270,6 +274,7 @@ jobs:
         run: |
           set -euo pipefail
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/dos_barberias.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/staff_user_role_365.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu005_credenciales_sesiones.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu007_reto_telefonico.sql
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/testdata/hu021_barberos.sql
@@ -315,10 +320,20 @@ jobs:
           PGPASSWORD: postgres
         run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/panel_perfil_barbero_individual.sql
 
+      - name: Suite de los roles del usuario (DEC-134)
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/staff_user_role.sql
+
       - name: Suite del vínculo barbero–usuario (DEC-100)
         env:
           PGPASSWORD: postgres
         run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/barbero_vinculo_usuario.sql
+
+      - name: Suite de la descripción del barbero (DEC-127)
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/barber_description.sql
 
       - name: Suite de la conexión con Google Calendar (DEC-099, DEC-102)
         env:

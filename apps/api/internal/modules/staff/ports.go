@@ -30,11 +30,12 @@ type CreateResult struct {
 	Response idempotency.StoredResponse
 }
 
-// RenameResult es el desenlace de un intento de renombrado. Found en false
+// UpdateResult es el desenlace de un intento de actualización (nombre y
+// descripción). Found en false
 // cubre un barbero inexistente o de otra barbería (CA-021-05): el
 // UPDATE ... RETURNING no encontró fila que actualizar, sin distinguir la
 // causa.
-type RenameResult struct {
+type UpdateResult struct {
 	Barber Barber
 	Found  bool
 }
@@ -72,23 +73,25 @@ type Repository interface {
 	Get(ctx context.Context, barbershopID, barberID string) (barber Barber, found bool, err error)
 
 	// Create ejecuta el protocolo completo de idempotencia (Begin, INSERT,
-	// Complete) dentro de UNA sola InTenantTx. fullName ya llegó
-	// normalizado y validado por Service; key y fingerprint ya fueron
+	// Complete) dentro de UNA sola InTenantTx. fullName y description (nil =
+	// sin descripción) ya llegaron normalizados y validados por Service; key y fingerprint ya fueron
 	// interpretados por la capa HTTP (httpserver.IdempotencyKeyFromRequest/
 	// IdempotencyFingerprint) antes de llegar aquí.
 	Create(
 		ctx context.Context,
 		barbershopID string,
 		fullName string,
+		description *string,
 		key idempotency.Key,
 		fingerprint idempotency.Fingerprint,
 	) (CreateResult, error)
 
-	// Rename ejecuta `UPDATE ... RETURNING` dentro de una transacción
+	// Update ejecuta `UPDATE ... RETURNING` dentro de una transacción
 	// tenant-aware, filtrando por barbershopID además de RLS: nunca crea ni
-	// duplica una fila (CA-021-04), y nunca renombra la de otra barbería
-	// (CA-021-05).
-	Rename(ctx context.Context, barbershopID, barberID, fullName string) (RenameResult, error)
+	// duplica una fila (CA-021-04), y nunca modifica la de otra barbería
+	// (CA-021-05). La descripción solo se escribe cuando description.Set es
+	// true; si no, conserva el valor actual.
+	Update(ctx context.Context, barbershopID, barberID, fullName string, description DescriptionPatch) (UpdateResult, error)
 
 	// PutPhoto crea o reemplaza la fotografía del barbero (DEC-104) y devuelve
 	// al barbero ya con `PhotoUpdatedAt`. Reemplazar es idempotente por

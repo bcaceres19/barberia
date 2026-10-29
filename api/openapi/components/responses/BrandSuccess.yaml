@@ -29,7 +29,7 @@ content:
           professionalTermGender: feminine
           panelProfile: shop
       barberoIndividual:
-        summary: Barbero individual con el panel simplificado
+        summary: "Usuario con el rol independiente: panel individual completo"
         value:
           accent: brass
           businessTerm: barbería
@@ -38,3 +38,13 @@ content:
           professionalTermPlural: barberos
           professionalTermGender: masculine
           panelProfile: solo
+      empleado:
+        summary: "Usuario con el rol empleado: panel individual limitado"
+        value:
+          accent: brass
+          businessTerm: barbería
+          businessTermGender: feminine
+          professionalTerm: barbero
+          professionalTermPlural: barberos
+          professionalTermGender: masculine
+          panelProfile: employee

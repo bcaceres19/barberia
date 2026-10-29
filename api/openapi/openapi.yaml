@@ -21,7 +21,7 @@
 # HU-094 agrega la cuarta operación pública de reserva: GET
 # /public/barbershops/{slug}/services/{serviceId}/barbers/{barberId}/
 # availability (paths/public-booking.yaml), disponibilidad pública real sin
-# sesión (CA-094-01 a CA-094-06). Resuelve DP-PUB-03 como DEC-084.
+# sesión (CA-094-01 a CA-094-06). Resuelve DP-PUB-03 como DEC-084; DEC-135 la sustituye por una rejilla fija.
 #
 # HU-093 agrega la política pública de reserva y cancelación al tag
 # Settings: GET/PUT /private/settings/booking-policy (paths/settings.yaml),
@@ -91,7 +91,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.35.0
+  version: 0.38.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -154,6 +154,8 @@ paths:
     $ref: './paths/public-booking.yaml#/~1public~1barbershops~1{slug}'
   /public/barbershops/{slug}/services:
     $ref: './paths/public-booking.yaml#/~1public~1barbershops~1{slug}~1services'
+  /public/barbershops/{slug}/barbers/{barberId}/photo:
+    $ref: './paths/public-booking.yaml#/~1public~1barbershops~1{slug}~1barbers~1{barberId}~1photo'
   /public/barbershops/{slug}/services/{serviceId}/barbers:
     $ref: './paths/public-booking.yaml#/~1public~1barbershops~1{slug}~1services~1{serviceId}~1barbers'
   /public/barbershops/{slug}/services/{serviceId}/barbers/{barberId}/availability:

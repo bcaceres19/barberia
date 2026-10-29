@@ -976,7 +976,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 - Recurso `GET`/`PATCH /private/settings/brand` y seis columnas con `CHECK` en `barbershop`; el contrato de `HU-020` no se amplía.
 - Pantalla de Configuración rediseñada sobre tinta: índice de secciones, selector de zona horaria con buscador y reloj en vivo, vista previa del vocabulario, barra de cambios sin guardar y animaciones con movimiento reducido.
 - Aplicación del vocabulario a navegación, Barberos, Agenda, Nuevo turno, Detalle del turno, Servicios, Servicios por barbero y Configuración.
-- Perfil del panel (`DEC-115`): `shop` (con equipo, valor inicial) o `solo` (barbero individual), guardado con la marca en `barbershop.panel_profile` y editable en una sección de Configuración. Con `solo`: dock sin «Servicios por barbero» y con «Mi perfil», Agenda/Nuevo turno/Horarios sin selector cuando hay un único barbero, «mi día» en la Agenda e interruptor «Lo ofrezco» por servicio. Es presentación: no cambia datos ni permisos.
+- Perfil del panel (`DEC-115`, reemplazada en su origen por `DEC-134`, issue [#365](https://github.com/bcaceres19/barberia/issues/365)): `shop` (con equipo, valor inicial), `solo` (barbero independiente) o `employee` (empleado, panel individual limitado). **Desde `DEC-134` lo deciden los roles del usuario en la base de datos (`empresa`, `independiente`, `empleado`), no un ajuste editable de Configuración**; la sección «Perfil del panel» ya no existe y el `PATCH` no admite `panelProfile`. Con `solo`: dock sin «Servicios por barbero» y con «Mi perfil», Agenda/Nuevo turno/Horarios sin selector cuando hay un único barbero, «mi día» en la Agenda e interruptor «Lo ofrezco» por servicio. Es presentación: no cambia datos ni permisos.
 
 **Alcance excluido**
 
@@ -999,7 +999,7 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 | `CA-025-07` | Los contratos, las pruebas y el comportamiento de `HU-020` y `HU-093` siguen vigentes. |
 | `CA-025-08` | Carga, error recuperable, guardando, éxito y error de campo son accesibles; el teclado alcanza todo; axe no reporta violaciones en ningún modo; un error recuperable conserva lo escrito. |
 | `CA-025-09` | OpenAPI, cliente tipado, migración, decisión, matriz e historial coinciden. |
-| `CA-025-10` | `panelProfile` vale `shop` o `solo` y es `shop` en una barbería que nunca lo cambió; omitirlo en el `PATCH` conserva el guardado; un valor fuera de la lista responde `422` sin escribir; otra barbería no ve el cambio (RLS con dos tenants). |
+| `CA-025-10` | `panelProfile` vale `shop`, `solo` o `employee` y es `shop` para un usuario sin roles; `GET /private/settings/brand` lo deriva de los roles de quien consulta (`DEC-134`) y el `PATCH` lo rechaza como campo desconocido; otra barbería no ve los roles (RLS con dos tenants). *(Sustituye la redacción de `DEC-115`: valor guardado y editable.)* |
 | `CA-025-11` | Con `solo`, el dock muestra Agenda, Servicios, Mi perfil, Horarios, Configuración y Reserva pública; «Servicios por barbero» y la gestión de equipo no son destinos, y su ruta lleva a Servicios aunque el perfil llegue después de entrar. |
 | `CA-025-12` | Con `solo` y exactamente un barbero, Agenda, Nuevo turno y Horarios no piden elegirlo (la selección sigue en la URL, `DEC-074`) y «Mi perfil» es su ficha sin controles de equipo; con varios barberos, o en `shop`, los controles de elección y de alta se conservan. |
 | `CA-025-13` | Con `solo`, «Lo ofrezco» refleja y cambia la asignación real del único barbero solo cuando el servidor confirma; un servicio nuevo queda ofrecido y, si esa asignación falla, el servicio existe y se avisa. |
@@ -2136,7 +2136,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 - Proyección pura por fecha civil, zona de barbería, barbero y servicio vigentes.
 - Intersección de jornada recurrente, excepciones/festivos, bloqueos vigentes y citas que ocupan agenda; unión de solapes antes de restar.
 - Aplicación de duración snapshot candidata, `[inicio, fin)`, anticipación, ventana y rejilla aprobada.
-- Reinicio de la rejilla desde el instante en que termina cada interrupción dentro del tramo (`DEC-084`, resuelve `DP-PUB-03`).
+- Rejilla fija anclada al inicio del tramo laboral, sin reiniciarla donde termina una interrupción (`DEC-135`, que sustituye el reinicio de `DEC-084`/`DP-PUB-03`).
 - Resultado determinista, ordenado y sin reservar temporalmente ninguna franja.
 
 **Alcance excluido**

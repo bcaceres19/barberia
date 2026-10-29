@@ -14,6 +14,6 @@ La matriz histórica de 05-matriz-combinaciones.md contiene muestras, no prueba 
 
 Primero fronteras de un campo con resto válido; después parejas de riesgo; triples dirigidos: sesión vencida+formulario+guardar, doble envío+red lenta+F5, dos reservas+bloqueo+franja. No ejecutar producto cartesiano ni permitir que un campo inválido oculte otra rama.
 
-Límites verificados en validadores/contrato al preparar #300: nombres 120, descripción/nota 500; duración 1–1440 entera; precio COP >0 y dos decimales; anticipación 0–1440 min, ventana 1–90 días, rejilla 5/10/15/20/30/60, cancelación 0–10080 min. Anticipación < ventana total. Login correo 254/contraseña 256; contraseña nueva usa su política de recuperación. Releer fuentes si cambia SHA.
+Límites verificados en validadores/contrato al preparar #300: nombres 120, descripción/nota 500; duración 1–1440 entera; precio COP >0 y dos decimales; anticipación 0–1440 min, ventana 1–90 días, rejilla entera 1–60 (DEC-133), cancelación 0–10080 min. Anticipación < ventana total. Login correo 254/contraseña 256; contraseña nueva usa su política de recuperación. Releer fuentes si cambia SHA.
 
 Duración 1440 válida; precio 0 inválido DEC-067; última asignación se puede retirar DEC-114. No conservar esperados históricos opuestos.

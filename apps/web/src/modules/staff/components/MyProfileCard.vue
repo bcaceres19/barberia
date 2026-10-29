@@ -6,10 +6,12 @@
 // diálogo de edición que StaffPage ya tiene. Mismo lenguaje visual que el
 // detalle de barbero y los diálogos de Servicios: tinta hundida, filete de
 // latón, retrato con marco de esquinas y rombo de estado.
-import { BarberAvatar } from '@/shared/ui'
+import { BarberAvatar, BaseButton } from '@/shared/ui'
 
 defineProps<{
   fullName: string
+  /** Descripción pública (DEC-127); null mientras no tiene. */
+  description: string | null
   photoUrl: string | null
   hasPhoto: boolean
   sinceLabel: string
@@ -27,6 +29,7 @@ defineEmits<{ edit: [] }>()
       </span>
       <p class="my-profile-card__role">{{ roleLabel }}</p>
       <h2 id="my-profile-card-name" class="my-profile-card__name">{{ fullName }}</h2>
+      <p v-if="description" class="my-profile-card__description">{{ description }}</p>
     </div>
 
     <dl class="my-profile-card__facts">
@@ -47,14 +50,25 @@ defineEmits<{ edit: [] }>()
 
     <div class="my-profile-card__actions">
       <slot name="actions" />
-      <button
-        type="button"
+      <BaseButton
+        variant="secondary"
         class="my-profile-card__edit"
         :aria-label="`Editar ${fullName}`"
         @click="$emit('edit')"
       >
+        <svg
+          class="my-profile-card__edit-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          aria-hidden="true"
+        >
+          <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z" />
+          <path d="m13.5 6.5 4 4" />
+        </svg>
         Editar mi perfil
-      </button>
+      </BaseButton>
     </div>
   </section>
 </template>
@@ -138,6 +152,17 @@ defineEmits<{ edit: [] }>()
   text-transform: uppercase;
 }
 
+.my-profile-card__description {
+  max-width: 36ch;
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-body);
+  line-height: var(--font-size-body-line);
+  color: var(--color-on-strong-muted);
+  text-align: center;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
 .my-profile-card__name {
   margin: 0;
   font-family: var(--font-display);
@@ -219,36 +244,41 @@ defineEmits<{ edit: [] }>()
   width: 100%;
 }
 
-/* Botones propios (no BaseButton): el mismo par latón-sólido / tinta-fantasma
-   que el resto del panel, calibrado para flotar sobre tinta hundida. El de
-   "Bloquear" llega por slot ya vestido desde StaffWorkspacePage. */
-.my-profile-card__edit {
-  height: 40px;
-  padding-inline: 20px;
-  background-color: var(--color-brand-accent-surface);
-  color: var(--color-brand-accent-text);
-  border: var(--border-width-normal) solid var(--color-brand-accent-surface);
-  border-radius: var(--radius-md);
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: filter var(--motion-duration-fast) var(--motion-easing-standard);
+/* «Editar mi perfil» y «Bloquear» (que llega por slot desde StaffWorkspacePage)
+   comparten forma: BaseButton secundario, fantasma con filete inferior de color
+   e icono de línea. Aquí el color es el latón de la marca; el de Bloquear es el
+   de peligro. */
+.my-profile-card__edit.base-button.base-button--secondary {
+  background-color: transparent;
+  color: var(--color-brand-accent-surface);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
+  border-bottom-color: var(--color-brand-accent-surface);
 }
 
-.my-profile-card__edit:hover {
-  filter: brightness(92%);
+.my-profile-card__edit.base-button.base-button--secondary:hover:not(:disabled):not(
+    .base-button--loading
+  ) {
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
+  border-bottom-color: var(--color-brand-accent-surface);
 }
 
-.my-profile-card__edit:active {
-  filter: brightness(84%);
+.my-profile-card__edit.base-button.base-button--secondary:active:not(:disabled):not(
+    .base-button--loading
+  ) {
+  background-color: color-mix(in srgb, var(--color-brand-accent-surface) 20%, transparent);
 }
 
-.my-profile-card__edit:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 2px var(--color-surface-strong),
-    0 0 0 4px var(--color-focus);
+.my-profile-card__edit :deep(.base-button__content) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.my-profile-card__edit-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 @media (max-width: 640px) {

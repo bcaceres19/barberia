@@ -27,10 +27,13 @@ describe('BarberAvatar', () => {
     expect(wrapper.get('.barber-avatar__monogram').text()).toBe('JR')
   })
 
-  it.each(['closed', 'option', 'row', 'hero'] as const)('applies the %s size class', (size) => {
-    const wrapper = mount(BarberAvatar, { props: { fullName: 'Julián Rodríguez', size } })
-    expect(wrapper.classes()).toContain(`barber-avatar--${size}`)
-  })
+  it.each(['closed', 'option', 'row', 'portrait', 'hero'] as const)(
+    'applies the %s size class',
+    (size) => {
+      const wrapper = mount(BarberAvatar, { props: { fullName: 'Julián Rodríguez', size } })
+      expect(wrapper.classes()).toContain(`barber-avatar--${size}`)
+    },
+  )
 
   it('renders a decorative photo and suppresses the monogram when photoUrl is set', () => {
     const wrapper = mount(BarberAvatar, {

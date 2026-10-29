@@ -34,6 +34,6 @@ export const barberServicesNavItems: NavItem[] = [
     label: 'Servicios por barbero',
     labelFor: (v) => `Servicios por ${v.professional}`,
     // Con un solo barbero la matriz no tiene sentido: «Servicios» ofrece cada servicio (DEC-115).
-    profiles: { solo: { hidden: true } },
+    profiles: { solo: { hidden: true }, employee: { hidden: true } },
   },
 ]

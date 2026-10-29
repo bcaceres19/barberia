@@ -54,8 +54,11 @@ import { newIdempotencyKey } from '../model/idempotencyKey'
 import {
   civilDateTile as dateTile,
   computeScale,
+  durationBetween,
   endLabel,
   formatHours,
+  minutesToTime,
+  timeToMinutes,
   nowInTimezone,
   type BoardNow,
 } from '../model/weekBoard'
@@ -186,7 +189,20 @@ function onRetryWorkingHours() {
 const isCreateOpen = ref(false)
 const createISOWeekday = ref(1)
 const createStartsTime = ref('')
-const createDurationMinutes = ref(60)
+// Una hora de fin igual o anterior a la de inicio cruza la medianoche (22:00 →
+// 01:00 son 180 min), igual que en los bloqueos y las excepciones.
+function derivedDuration(startsTime: string, endsTime: string): number {
+  return startsTime && endsTime ? durationBetween(startsTime, endsTime) : 0
+}
+
+function endsTimeError(endsTime: string, durationMinutes: number): string | undefined {
+  return endsTime === '' ? 'Elige la hora de fin.' : validateDurationMinutes(durationMinutes)
+}
+
+// El tramo se captura como «de HH:MM a HH:MM»; durationMinutes (lo que pide la
+// API) se deriva de ambas horas y vale 0 mientras falte alguna.
+const createEndsTime = ref('')
+const createDurationMinutes = ref(0)
 const createWeekdayError = ref<string | undefined>(undefined)
 const createStartsTimeError = ref<string | undefined>(undefined)
 const createDurationError = ref<string | undefined>(undefined)
@@ -200,7 +216,8 @@ let createIdempotencyKey = newIdempotencyKey()
 function openCreateDialog(isoWeekday?: number) {
   createISOWeekday.value = isoWeekday ?? 1
   createStartsTime.value = ''
-  createDurationMinutes.value = 60
+  createEndsTime.value = ''
+  createDurationMinutes.value = 0
   createWeekdayError.value = undefined
   createStartsTimeError.value = undefined
   createDurationError.value = undefined
@@ -218,7 +235,7 @@ function revalidateCreate() {
   if (!createAttempted.value) return
   createWeekdayError.value = validateISOWeekday(createISOWeekday.value)
   createStartsTimeError.value = validateStartsTime(createStartsTime.value)
-  createDurationError.value = validateDurationMinutes(createDurationMinutes.value)
+  createDurationError.value = endsTimeError(createEndsTime.value, createDurationMinutes.value)
 }
 
 function onCreateWeekdayInput(value: number) {
@@ -228,11 +245,13 @@ function onCreateWeekdayInput(value: number) {
 
 function onCreateStartsTimeInput(value: string | number) {
   createStartsTime.value = String(value)
+  createDurationMinutes.value = derivedDuration(createStartsTime.value, createEndsTime.value)
   revalidateCreate()
 }
 
-function onCreateDurationInput(value: string | number) {
-  createDurationMinutes.value = Number(value)
+function onCreateEndsTimeInput(value: string | number) {
+  createEndsTime.value = String(value)
+  createDurationMinutes.value = derivedDuration(createStartsTime.value, createEndsTime.value)
   revalidateCreate()
 }
 
@@ -242,7 +261,7 @@ async function onSubmitCreate() {
   createAttempted.value = true
   const weekdayError = validateISOWeekday(createISOWeekday.value)
   const startsTimeError = validateStartsTime(createStartsTime.value)
-  const durationError = validateDurationMinutes(createDurationMinutes.value)
+  const durationError = endsTimeError(createEndsTime.value, createDurationMinutes.value)
   createWeekdayError.value = weekdayError
   createStartsTimeError.value = startsTimeError
   createDurationError.value = durationError
@@ -290,7 +309,8 @@ const isEditOpen = ref(false)
 const editTarget = ref<WorkingHour | null>(null)
 const editISOWeekday = ref(1)
 const editStartsTime = ref('')
-const editDurationMinutes = ref(60)
+const editEndsTime = ref('')
+const editDurationMinutes = ref(0)
 const editWeekdayError = ref<string | undefined>(undefined)
 const editStartsTimeError = ref<string | undefined>(undefined)
 const editDurationError = ref<string | undefined>(undefined)
@@ -301,6 +321,7 @@ function openEditDialog(wh: WorkingHour) {
   editTarget.value = wh
   editISOWeekday.value = wh.isoWeekday
   editStartsTime.value = wh.startsTime
+  editEndsTime.value = minutesToTime(timeToMinutes(wh.startsTime) + wh.durationMinutes)
   editDurationMinutes.value = wh.durationMinutes
   editWeekdayError.value = undefined
   editStartsTimeError.value = undefined
@@ -318,7 +339,7 @@ function revalidateEdit() {
   if (!editAttempted.value) return
   editWeekdayError.value = validateISOWeekday(editISOWeekday.value)
   editStartsTimeError.value = validateStartsTime(editStartsTime.value)
-  editDurationError.value = validateDurationMinutes(editDurationMinutes.value)
+  editDurationError.value = endsTimeError(editEndsTime.value, editDurationMinutes.value)
 }
 
 function onEditWeekdayInput(value: number) {
@@ -328,11 +349,13 @@ function onEditWeekdayInput(value: number) {
 
 function onEditStartsTimeInput(value: string | number) {
   editStartsTime.value = String(value)
+  editDurationMinutes.value = derivedDuration(editStartsTime.value, editEndsTime.value)
   revalidateEdit()
 }
 
-function onEditDurationInput(value: string | number) {
-  editDurationMinutes.value = Number(value)
+function onEditEndsTimeInput(value: string | number) {
+  editEndsTime.value = String(value)
+  editDurationMinutes.value = derivedDuration(editStartsTime.value, editEndsTime.value)
   revalidateEdit()
 }
 
@@ -342,7 +365,7 @@ async function onSubmitEdit() {
   editAttempted.value = true
   const weekdayError = validateISOWeekday(editISOWeekday.value)
   const startsTimeError = validateStartsTime(editStartsTime.value)
-  const durationError = validateDurationMinutes(editDurationMinutes.value)
+  const durationError = endsTimeError(editEndsTime.value, editDurationMinutes.value)
   editWeekdayError.value = weekdayError
   editStartsTimeError.value = startsTimeError
   editDurationError.value = durationError
@@ -528,13 +551,33 @@ type ExceptionSaveStatus =
   | 'network-error'
   | 'unexpected-error'
 
+// El tramo se captura como «de HH:MM a HH:MM»; durationMinutes es lo que pide
+// la API y se deriva de ambas horas (0 mientras falte alguna, que la validación
+// rechaza). Una hora de fin igual o anterior a la de inicio cruza la
+// medianoche, igual que en los bloqueos.
 interface ExceptionSegmentRow {
   startsTime: string
+  endsTime: string
   durationMinutes: number
 }
 
 function newSegmentRow(): ExceptionSegmentRow {
-  return { startsTime: '', durationMinutes: 60 }
+  return { startsTime: '', endsTime: '', durationMinutes: 0 }
+}
+
+function syncSegmentDuration(segment: ExceptionSegmentRow) {
+  segment.durationMinutes =
+    segment.startsTime && segment.endsTime
+      ? durationBetween(segment.startsTime, segment.endsTime)
+      : 0
+}
+
+function segmentCrossesMidnight(segment: ExceptionSegmentRow): boolean {
+  return (
+    !!segment.startsTime &&
+    !!segment.endsTime &&
+    timeToMinutes(segment.endsTime) <= timeToMinutes(segment.startsTime)
+  )
 }
 
 // --- Alta de excepción -----------------------------------------------------
@@ -674,6 +717,7 @@ function openExceptionEditDialog(exception: ScheduleException) {
   editReason.value = exception.reason ?? ''
   editSegments.value = exception.segments.map((s) => ({
     startsTime: s.startsTime,
+    endsTime: minutesToTime(timeToMinutes(s.startsTime) + s.durationMinutes),
     durationMinutes: s.durationMinutes,
   }))
   editEffectiveDateError.value = undefined
@@ -828,15 +872,6 @@ const LOADING_PHRASES = [
 ] as const
 
 // Duraciones que un barbero escribe una y otra vez: atajos, no una regla.
-const DURATION_PRESETS = [
-  { minutes: 30, label: '30 min' },
-  { minutes: 45, label: '45 min' },
-  { minutes: 60, label: '1 h' },
-  { minutes: 120, label: '2 h' },
-  { minutes: 240, label: '4 h' },
-  { minutes: 480, label: '8 h' },
-] as const
-
 // Panel lateral en acordeón: un solo apartado abierto a la vez para que la
 // pantalla quepa sin desplazarse. Las excepciones abren primero: son lo que
 // más se edita; el estado de los festivos se lee en la insignia del apartado.
@@ -923,7 +958,7 @@ function buildPreview(
     scale: computeScale(valid ? [...context, draft] : context),
     text: valid
       ? `${weekdayLabel(isoWeekday)} · ${startsTime} – ${endLabel(startsTime, durationMinutes)} · ${formatHours(durationMinutes)}`
-      : 'Elige la hora y la duración para ver cómo queda.',
+      : 'Elige la hora de inicio y de fin para ver cómo queda.',
   }
 }
 
@@ -1337,7 +1372,7 @@ const editPreview = computed(() =>
       v-model="isCreateOpen"
       title="Agregar tramo"
       :description="`Define cuándo trabaja ${selectedBarber?.fullName ?? v.theProfessional} ese día.`"
-      size="md"
+      size="lg"
       content-class="schedules-page__dialog"
       @close="onCreateDialogClosed"
     >
@@ -1412,33 +1447,18 @@ const editPreview = computed(() =>
               {{ createStartsTimeError }}
             </div>
           </div>
-          <BaseInput
-            :model-value="createDurationMinutes"
-            type="number"
-            name="durationMinutes"
-            label="Duración (minutos)"
-            required
-            :min="1"
-            :max="1440"
-            :disabled="createStatus === 'saving'"
-            :error="createDurationError"
-            :class="{ 'schedules-page__input--filled': !!createDurationMinutes }"
-            @update:model-value="onCreateDurationInput"
-          />
-        </div>
-
-        <div class="schedules-page__presets" role="group" aria-label="Duraciones habituales">
-          <button
-            v-for="preset in DURATION_PRESETS"
-            :key="preset.minutes"
-            type="button"
-            class="schedules-page__preset"
-            :aria-pressed="createDurationMinutes === preset.minutes"
-            :disabled="createStatus === 'saving'"
-            @click="onCreateDurationInput(preset.minutes)"
-          >
-            {{ preset.label }}
-          </button>
+          <div class="schedules-page__field">
+            <BaseTimePicker
+              :model-value="createEndsTime"
+              label="Hora de fin"
+              required
+              :disabled="createStatus === 'saving'"
+              @update:model-value="onCreateEndsTimeInput"
+            />
+            <div v-if="createDurationError" class="schedules-page__field-error" role="alert">
+              {{ createDurationError }}
+            </div>
+          </div>
         </div>
 
         <div class="schedules-page__preview" aria-live="polite">
@@ -1473,7 +1493,7 @@ const editPreview = computed(() =>
       v-model="isEditOpen"
       title="Editar tramo"
       :description="`Ajusta el horario de ${editTarget ? weekdayLabel(editTarget.isoWeekday) : 'ese día'}.`"
-      size="md"
+      size="lg"
       content-class="schedules-page__dialog"
       @close="onEditDialogClosed"
     >
@@ -1542,33 +1562,18 @@ const editPreview = computed(() =>
               {{ editStartsTimeError }}
             </div>
           </div>
-          <BaseInput
-            :model-value="editDurationMinutes"
-            type="number"
-            name="durationMinutes"
-            label="Duración (minutos)"
-            required
-            :min="1"
-            :max="1440"
-            :disabled="editStatus === 'saving'"
-            :error="editDurationError"
-            :class="{ 'schedules-page__input--filled': !!editDurationMinutes }"
-            @update:model-value="onEditDurationInput"
-          />
-        </div>
-
-        <div class="schedules-page__presets" role="group" aria-label="Duraciones habituales">
-          <button
-            v-for="preset in DURATION_PRESETS"
-            :key="preset.minutes"
-            type="button"
-            class="schedules-page__preset"
-            :aria-pressed="editDurationMinutes === preset.minutes"
-            :disabled="editStatus === 'saving'"
-            @click="onEditDurationInput(preset.minutes)"
-          >
-            {{ preset.label }}
-          </button>
+          <div class="schedules-page__field">
+            <BaseTimePicker
+              :model-value="editEndsTime"
+              label="Hora de fin"
+              required
+              :disabled="editStatus === 'saving'"
+              @update:model-value="onEditEndsTimeInput"
+            />
+            <div v-if="editDurationError" class="schedules-page__field-error" role="alert">
+              {{ editDurationError }}
+            </div>
+          </div>
         </div>
 
         <div class="schedules-page__preview" aria-live="polite">
@@ -1603,7 +1608,7 @@ const editPreview = computed(() =>
       v-model="isExceptionCreateOpen"
       title="Agregar excepción"
       description="Un día que se sale de la jornada habitual."
-      size="md"
+      size="lg"
       content-class="schedules-page__dialog"
       @close="onExceptionCreateDialogClosed"
     >
@@ -1718,22 +1723,20 @@ const editPreview = computed(() =>
               @update:model-value="
                 (v) => {
                   segment.startsTime = v
+                  syncSegmentDuration(segment)
                   revalidateExceptionCreate()
                 }
               "
             />
-            <BaseInput
-              :model-value="segment.durationMinutes"
-              type="number"
-              :name="`createSegmentDuration${index}`"
-              label="Duración (minutos)"
+            <BaseTimePicker
+              :model-value="segment.endsTime"
+              label="Hora de fin"
               required
-              :min="1"
-              :max="1440"
               :disabled="createExceptionStatus === 'saving'"
               @update:model-value="
                 (v) => {
-                  segment.durationMinutes = Number(v)
+                  segment.endsTime = v
+                  syncSegmentDuration(segment)
                   revalidateExceptionCreate()
                 }
               "
@@ -1747,6 +1750,9 @@ const editPreview = computed(() =>
             >
               Quitar
             </BaseButton>
+            <p v-if="segmentCrossesMidnight(segment)" class="schedules-page__segment-note">
+              Termina al día siguiente.
+            </p>
           </div>
           <BaseButton
             type="button"
@@ -1800,7 +1806,7 @@ const editPreview = computed(() =>
       v-model="isExceptionEditOpen"
       title="Editar excepción"
       description="Ajusta la fecha, el estado o los tramos de ese día."
-      size="md"
+      size="lg"
       content-class="schedules-page__dialog"
       @close="onExceptionEditDialogClosed"
     >
@@ -1909,22 +1915,20 @@ const editPreview = computed(() =>
               @update:model-value="
                 (v) => {
                   segment.startsTime = v
+                  syncSegmentDuration(segment)
                   revalidateExceptionEdit()
                 }
               "
             />
-            <BaseInput
-              :model-value="segment.durationMinutes"
-              type="number"
-              :name="`editSegmentDuration${index}`"
-              label="Duración (minutos)"
+            <BaseTimePicker
+              :model-value="segment.endsTime"
+              label="Hora de fin"
               required
-              :min="1"
-              :max="1440"
               :disabled="editExceptionStatus === 'saving'"
               @update:model-value="
                 (v) => {
-                  segment.durationMinutes = Number(v)
+                  segment.endsTime = v
+                  syncSegmentDuration(segment)
                   revalidateExceptionEdit()
                 }
               "
@@ -1938,6 +1942,9 @@ const editPreview = computed(() =>
             >
               Quitar
             </BaseButton>
+            <p v-if="segmentCrossesMidnight(segment)" class="schedules-page__segment-note">
+              Termina al día siguiente.
+            </p>
           </div>
           <BaseButton
             type="button"
@@ -2631,15 +2638,20 @@ const editPreview = computed(() =>
   }
 }
 
+/* Ficha de fecha. Alto y relleno pensados para que el día y el mes respiren
+   dentro del marco: con 48px el número de 24px de línea más el mes llenaban
+   el interior y el día tocaba el filete superior. */
 .schedules-tile {
   display: flex;
-  width: 44px;
-  height: 48px;
+  box-sizing: border-box;
+  width: 48px;
+  height: 60px;
   flex: 0 0 auto;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
+  gap: 3px;
+  padding: 5px 0 6px;
   background-color: var(--color-surface-strong);
   border: var(--border-width-normal) solid
     color-mix(in srgb, var(--color-brand-accent-surface) 45%, transparent);
@@ -2655,13 +2667,14 @@ const editPreview = computed(() =>
   font-family: var(--font-display);
   font-size: var(--font-size-title-item);
   font-weight: 400;
-  line-height: 24px;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
 .schedules-tile i {
   color: var(--color-brand-accent-surface);
   font-size: var(--font-size-caption);
+  line-height: 1;
   font-style: normal;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -2929,7 +2942,7 @@ const editPreview = computed(() =>
 }
 
 .schedules-page__form {
-  gap: var(--space-5);
+  gap: var(--space-6);
 }
 
 .schedules-page__field {
@@ -2962,57 +2975,6 @@ const editPreview = computed(() =>
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
   gap: var(--space-4);
-}
-
-/* Duraciones habituales: fichas que se encienden de latón al elegirlas. */
-.schedules-page__presets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: calc(var(--space-2) * -1);
-}
-
-.schedules-page__preset {
-  min-height: 32px;
-  padding: 0 12px;
-  color: var(--color-brand-accent-surface);
-  font-family: var(--font-sans);
-  font-size: var(--font-size-caption);
-  font-variant-numeric: tabular-nums;
-  background: transparent;
-  border: var(--border-width-normal) solid
-    color-mix(in srgb, var(--color-brand-accent-surface) 40%, transparent);
-  border-radius: 2px;
-  cursor: pointer;
-  transition:
-    background-color var(--motion-duration-fast) var(--motion-easing-standard),
-    color var(--motion-duration-fast) var(--motion-easing-standard),
-    transform var(--motion-duration-base) cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@media (hover: hover) {
-  .schedules-page__preset:hover:not(:disabled):not([aria-pressed='true']) {
-    background-color: color-mix(in srgb, var(--color-brand-accent-surface) 14%, transparent);
-    transform: translateY(-2px);
-  }
-}
-
-.schedules-page__preset[aria-pressed='true'] {
-  color: var(--color-brand-accent-text);
-  background-color: var(--color-brand-accent-surface);
-  border-color: var(--color-brand-accent-surface);
-}
-
-.schedules-page__preset:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 2px var(--color-surface-strong),
-    0 0 0 4px var(--color-focus);
-}
-
-.schedules-page__preset:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
 }
 
 /* "Así queda": la pista del día con la propuesta en latón y lo ya existente
@@ -3126,6 +3088,13 @@ const editPreview = computed(() =>
   height: 44px;
 }
 
+.schedules-page__segment-note {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: var(--font-size-caption);
+  color: var(--color-on-strong-muted);
+}
+
 .schedules-page__segment-add {
   align-self: flex-start;
 }
@@ -3227,7 +3196,6 @@ const editPreview = computed(() =>
   .schedules-row,
   .schedules-switch__track,
   .schedules-switch__thumb,
-  .schedules-page__preset,
   .schedules-page__choice-option {
     transition: none;
   }
@@ -3262,6 +3230,14 @@ const editPreview = computed(() =>
   border: var(--border-width-normal) solid var(--color-field-strong-border) !important;
 }
 
+/* Ancho explícito: sin él el diálogo se ajusta al contenido y, sin los campos
+   de duración, el formulario de un tramo quedaba en ~320px con el selector de
+   día y las dos horas apretados. El mismo ancho en los cuatro diálogos de la
+   pantalla evita que cambien de tamaño según lo que muestren. */
+.schedules-page__dialog.base-dialog {
+  width: min(100%, 580px) !important;
+}
+
 /* Mismo rebote de apertura que los diálogos de Servicios y Barberos. */
 .schedules-page__dialog.base-dialog--open {
   transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1) !important;
@@ -3271,6 +3247,20 @@ const editPreview = computed(() =>
   .schedules-page__dialog.base-dialog--open {
     transition-timing-function: var(--motion-easing-standard) !important;
   }
+}
+
+/* Más aire que el diálogo base: márgenes laterales de 32px y un respiro mayor
+   entre el título, la descripción y el formulario. */
+.schedules-page__dialog .base-dialog__header {
+  padding: var(--space-5) var(--space-6) !important;
+}
+
+.schedules-page__dialog .base-dialog__description {
+  padding: var(--space-4) var(--space-6) 0 !important;
+}
+
+.schedules-page__dialog .base-dialog__content {
+  padding: var(--space-5) var(--space-6) var(--space-6) !important;
 }
 
 .schedules-page__dialog .base-dialog__header {

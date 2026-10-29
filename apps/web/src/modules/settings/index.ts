@@ -18,7 +18,18 @@ export { loadWorkspaceBrand } from './model/workspaceBrand'
 // HU-093 agrega "Reserva pública" como una segunda entrada plana (mismo
 // mecanismo de composición, sin agrupar visualmente: NavItem no modela
 // jerarquía todavía).
+//
+// El panel de un empleado (DEC-134) no administra la barbería: ambas entradas se
+// ocultan para él (sus rutas redirigen a la Agenda, ver profileGuard).
 export const settingsNavItems: NavItem[] = [
-  { to: { name: 'configuracion-reserva-publica' }, label: 'Reserva pública' },
-  { to: { name: 'configuracion-barberia' }, label: 'Configuración' },
+  {
+    to: { name: 'configuracion-reserva-publica' },
+    label: 'Reserva pública',
+    profiles: { employee: { hidden: true } },
+  },
+  {
+    to: { name: 'configuracion-barberia' },
+    label: 'Configuración',
+    profiles: { employee: { hidden: true } },
+  },
 ]

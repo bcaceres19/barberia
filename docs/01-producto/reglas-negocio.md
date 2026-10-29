@@ -286,9 +286,9 @@ Todo intervalo de cita o de bloqueo se interpreta como `[inicio, fin)`: incluye 
 
 ### RN-DIS-06 · Paso de la rejilla de horarios
 
-**Estado: Decisión confirmada** (`DEC-006`, `DEC-018`, `DEC-084`)
+**Estado: Decisión confirmada** (`DEC-006`, `DEC-018`, `DEC-084` sustituida por `DEC-135`, `DEC-133`)
 
-Las franjas ofrecidas al cliente se generan cada N minutos desde el inicio de cada tramo laboral disponible. El valor inicial de N es 15 minutos.
+Las franjas ofrecidas al cliente se generan cada N minutos desde el inicio de cada tramo laboral disponible. El valor inicial de N es 15 minutos. N es un entero de 1 a 60 minutos que cada barbería fija con un campo numérico (`DEC-133`, que sustituye el conjunto discreto de `DEC-083`).
 
 **Motivo:** ofrecer cualquier minuto produce listas inmanejables en un celular; un paso demasiado grande desperdicia huecos.
 
@@ -298,7 +298,7 @@ Las franjas ofrecidas al cliente se generan cada N minutos desde el inicio de ca
 
 **Casos límite:**
 - Un servicio de 25 minutos con rejilla de 15 deja huecos residuales de 5 minutos. Es aceptable y previsible.
-- Tras un bloqueo, cita u otra interrupción que termina a las 13:47 (fuera de la rejilla original del tramo), la rejilla **reinicia desde ese instante** (`DEC-084`, resuelve `DP-PUB-03`): la siguiente franja ofrecida es 13:47 y desde ahí se generan 14:02, 14:17…, en vez de esperar al siguiente múltiplo de la rejilla original del tramo.
+- La rejilla es **fija** y se ancla al inicio del tramo laboral (`DEC-135`, que sustituye el reinicio de `DEC-084`): tras un bloqueo, cita u otra interrupción que termina a las 13:47, con rejilla de 15 minutos desde las 9:00, la siguiente franja ofrecida es 14:00 y no 13:47. Una franja solo se ofrece si el servicio cabe antes de la siguiente interrupción; puede quedar un hueco sin ofrecer hasta la siguiente marca.
 
 **Módulos afectados:** disponibilidad, interfaz pública.
 

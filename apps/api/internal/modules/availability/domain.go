@@ -75,9 +75,8 @@ func mergeIntervals(intervals []Interval) []Interval {
 
 // subtractBusy resta busy (ya fusionado y ordenado por Start) de seg y
 // devuelve los intervalos libres resultantes, en orden. Cada intervalo
-// libre devuelto ancla su propio inicio: el llamador que genere la rejilla
-// sobre cada uno de ellos por separado implementa DEC-084 sin ningún caso
-// especial.
+// libre devuelto conserva su inicio real; la rejilla NO se ancla a él sino al
+// inicio del tramo laboral (DEC-135, que sustituye a DEC-084).
 func subtractBusy(seg Interval, busy []Interval) []Interval {
 	if !seg.valid() {
 		return nil
@@ -109,9 +108,10 @@ func subtractBusy(seg Interval, busy []Interval) []Interval {
 
 // GenerateStarts proyecta los inicios públicos válidos (CA-094-01,
 // CA-094-02, CA-094-03): fusiona segments y busy por separado, resta busy
-// de cada tramo fusionado, y genera candidatos cada policy.GridStep dentro
-// de cada intervalo libre resultante, anclado al inicio de ESE intervalo
-// (DEC-084). Un candidato solo se conserva si el servicio completo cabe
+// de cada tramo fusionado, y genera candidatos en la rejilla fija del tramo:
+// inicio del tramo + k × policy.GridStep, sin importar dónde terminen un
+// bloqueo o una cita (DEC-135, que sustituye el reinicio de DEC-084). Un
+// candidato solo se conserva si el servicio completo cabe
 // ([inicio, inicio+duración) enteramente dentro del intervalo libre,
 // RN-DIS-01/RN-DIS-05) y si cae dentro de
 // [policy.EarliestStart, policy.LatestStart] (RN-DIS-04). El resultado
@@ -132,7 +132,7 @@ func GenerateStarts(segments []Interval, busy []Interval, policy Policy) []time.
 	var starts []time.Time
 	for _, seg := range mergedSegments {
 		for _, free := range subtractBusy(seg, mergedBusy) {
-			for t := free.Start; !t.Add(policy.ServiceDuration).After(free.End); t = t.Add(policy.GridStep) {
+			for t := firstOnGrid(seg.Start, free.Start, policy.GridStep); !t.Add(policy.ServiceDuration).After(free.End); t = t.Add(policy.GridStep) {
 				if t.Before(policy.EarliestStart) {
 					continue
 				}
@@ -144,4 +144,16 @@ func GenerateStarts(segments []Interval, busy []Interval, policy Policy) []time.
 		}
 	}
 	return starts
+}
+
+// firstOnGrid devuelve el primer instante de la rejilla anclada en anchor
+// (anchor + k × step, k >= 0) que no es anterior a from. Anclar al inicio del
+// tramo, y no al de cada hueco libre, mantiene todas las franjas del día
+// alineadas con el paso configurado (DEC-135).
+func firstOnGrid(anchor, from time.Time, step time.Duration) time.Time {
+	if !from.After(anchor) {
+		return anchor
+	}
+	steps := (from.Sub(anchor) + step - 1) / step
+	return anchor.Add(steps * step)
 }

@@ -135,3 +135,34 @@ func (s *Service) ListPublicBarbers(ctx context.Context, rawSlug string, rawServ
 	}
 	return result, nil
 }
+
+// PublicBarberPhoto devuelve la fotografía de un barbero visible en la reserva
+// pública (DEC-127). Un slug inválido, un barbero con forma inválida, ajeno,
+// inexistente, sin fotografía o no elegible producen el MISMO
+// apperr.NotFound: la causa no se distingue (mismo criterio que CA-090-02 y
+// CA-092-03).
+func (s *Service) PublicBarberPhoto(ctx context.Context, rawSlug string, rawBarberID string) (PublicBarberPhoto, error) {
+	if err := ctx.Err(); err != nil {
+		return PublicBarberPhoto{}, apperr.Internal(fmt.Errorf("publicbooking: contexto cancelado antes de leer la fotografía pública: %w", err))
+	}
+
+	slug := strings.TrimSpace(rawSlug)
+	if slug == "" || len(slug) > MaxSlugLength || !LooksLikePublicBarberID(rawBarberID) {
+		return PublicBarberPhoto{}, errPublicBarberPhotoNotFound()
+	}
+
+	photo, found, err := s.repo.GetPublicBarberPhoto(ctx, slug, rawBarberID)
+	if err != nil {
+		return PublicBarberPhoto{}, apperr.Internal(fmt.Errorf("publicbooking: leer fotografía pública: %w", err))
+	}
+	if !found {
+		return PublicBarberPhoto{}, errPublicBarberPhotoNotFound()
+	}
+	return photo, nil
+}
+
+// errPublicBarberPhotoNotFound es el único apperr.NotFound de la fotografía
+// pública: no revela si falló la barbería, el barbero o la imagen.
+func errPublicBarberPhotoNotFound() error {
+	return apperr.NotFound("no existe una fotografía pública con ese identificador")
+}

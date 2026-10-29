@@ -57,6 +57,11 @@ antes de agregar código.
   inexistente o de otra barbería (`CA-021-05`); sin borrado, desactivación,
   orden manual ni vínculo con `staff_user` (`DEC-047`). Ver la sección
   "Registro y listado de barberos (HU-021)" más abajo.
+  `DEC-127` añade la descripción opcional (`description`, 280 caracteres) al
+  alta y a la edición, y la reserva pública la muestra junto a la fotografía:
+  `GET /api/v1/public/barbershops/{slug}/barbers/{barberId}/photo` sirve la
+  imagen solo de un barbero visible en la reserva, con el mismo `404` para
+  cualquier otro caso.
 - **Catálogo básico de servicios (HU-022)**: `internal/modules/catalog`
   implementa `GET`/`POST /api/v1/private/services` y
   `GET`/`PATCH /api/v1/private/services/{serviceId}`: lista paginada por

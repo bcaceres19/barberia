@@ -36,23 +36,14 @@ const (
 
 	CancellationDeadlineMinutesFloor = 0
 	CancellationDeadlineMinutesCeil  = 10080
+
+	// DEC-133 sustituye el conjunto discreto de DEC-083 por un entero de 1 a
+	// 60 (RN-DIS-06, barbershop_slot_grid_minutes_ck): un paso fuera del
+	// rango se rechaza, nunca se redondea. El motor de disponibilidad funciona
+	// con cualquier paso positivo (rejilla fija del tramo, DEC-135).
+	SlotGridMinutesFloor = 1
+	SlotGridMinutesCeil  = 60
 )
-
-// AllowedSlotGridMinutes es el conjunto discreto que DEC-083 autoriza para
-// la rejilla (RN-DIS-06, barbershop_slot_grid_minutes_ck): un paso no
-// listado aquí se rechaza, nunca se redondea ni se acepta silenciosamente.
-var AllowedSlotGridMinutes = [...]int{5, 10, 15, 20, 30, 60}
-
-// IsAllowedSlotGridMinutes informa si v pertenece al conjunto discreto que
-// DEC-083 autoriza para la rejilla.
-func IsAllowedSlotGridMinutes(v int) bool {
-	for _, allowed := range AllowedSlotGridMinutes {
-		if v == allowed {
-			return true
-		}
-	}
-	return false
-}
 
 // EncodeBookingPolicyVersionToken produce el token opaco de concurrencia de
 // la política de reserva de una barbería a partir de su identificador y su

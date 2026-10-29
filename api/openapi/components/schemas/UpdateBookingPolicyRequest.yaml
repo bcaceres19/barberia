@@ -21,7 +21,8 @@ properties:
       - 3
   slotGridMinutes:
     type: integer
-    enum: [5, 10, 15, 20, 30, 60]
+    minimum: 1
+    maximum: 60
     examples:
       - 15
   cancellationDeadlineMinutes:

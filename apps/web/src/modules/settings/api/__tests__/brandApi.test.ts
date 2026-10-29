@@ -77,12 +77,15 @@ describe('brandApi.fetchBrand', () => {
 describe('brandApi.saveBrand', () => {
   beforeEach(() => patchMock.mockReset())
 
-  it('sends exactly the seven fields and returns what the server confirmed', async () => {
+  it('sends exactly the six brand fields, never the panel, and returns what the server confirmed', async () => {
     patchMock.mockResolvedValueOnce(ok({ ...brand, businessTerm: 'salón de belleza' }))
 
     const outcome = await saveBrand(brand)
 
-    expect(patchMock).toHaveBeenCalledWith('/private/settings/brand', { body: brand })
+    expect(patchMock.mock.calls[0]![1].body).not.toHaveProperty('panelProfile')
+    expect(patchMock).toHaveBeenCalledWith('/private/settings/brand', {
+      body: expect.objectContaining({ accent: brand.accent }),
+    })
     expect(Object.keys(patchMock.mock.calls[0]![1].body).sort()).toEqual(
       [
         'accent',
@@ -91,7 +94,6 @@ describe('brandApi.saveBrand', () => {
         'professionalTerm',
         'professionalTermGender',
         'professionalTermPlural',
-        'panelProfile',
       ].sort(),
     )
     expect(outcome).toEqual({

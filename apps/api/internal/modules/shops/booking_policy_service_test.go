@@ -10,6 +10,7 @@ package shops_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"system-barbershop/internal/modules/shops"
@@ -166,7 +167,9 @@ func TestBookingPolicyUpdate_FieldOutOfRange_ReturnsValidationWithoutCallingRepo
 		{"minAdvanceMinutes above ceiling", func(i *shops.BookingPolicyInput) { i.MinAdvanceMinutes = 1441 }},
 		{"maxAdvanceDays below floor", func(i *shops.BookingPolicyInput) { i.MaxAdvanceDays = 0 }},
 		{"maxAdvanceDays above ceiling", func(i *shops.BookingPolicyInput) { i.MaxAdvanceDays = 91 }},
-		{"slotGridMinutes not in allowed set", func(i *shops.BookingPolicyInput) { i.SlotGridMinutes = 7 }},
+		{"slotGridMinutes zero", func(i *shops.BookingPolicyInput) { i.SlotGridMinutes = 0 }},
+		{"slotGridMinutes negative", func(i *shops.BookingPolicyInput) { i.SlotGridMinutes = -5 }},
+		{"slotGridMinutes above ceiling", func(i *shops.BookingPolicyInput) { i.SlotGridMinutes = 61 }},
 		{"cancellationDeadlineMinutes below floor", func(i *shops.BookingPolicyInput) { i.CancellationDeadlineMinutes = -1 }},
 		{"cancellationDeadlineMinutes above ceiling", func(i *shops.BookingPolicyInput) { i.CancellationDeadlineMinutes = 10081 }},
 	}
@@ -186,9 +189,9 @@ func TestBookingPolicyUpdate_FieldOutOfRange_ReturnsValidationWithoutCallingRepo
 	}
 }
 
-func TestBookingPolicyUpdate_AllowedSlotGridValues_AllPass(t *testing.T) {
-	for _, grid := range shops.AllowedSlotGridMinutes {
-		t.Run("", func(t *testing.T) {
+func TestBookingPolicyUpdate_SlotGridWithinRange_AllPass(t *testing.T) {
+	for grid := shops.SlotGridMinutesFloor; grid <= shops.SlotGridMinutesCeil; grid++ {
+		t.Run(fmt.Sprintf("grid=%d", grid), func(t *testing.T) {
 			repo := &fakeBookingPolicyRepository{updateResult: shops.BookingPolicyUpdateResult{Outcome: shops.BookingPolicyUpdateOutcomeUpdated}}
 			svc := shops.NewBookingPolicyService(repo)
 

@@ -1,8 +1,10 @@
 // Perfil de barbero individual (DEC-115): «Servicios por barbero» deja de ser un
 // destino porque con un solo barbero cada servicio se ofrece desde «Servicios».
-// La ruta sigue existiendo para el panel completo; aquí solo se desvía a quien
-// trabaja solo y entra por un enlace guardado, para que nunca vea una pantalla
-// que no es suya ni una en blanco.
+// El panel de un empleado (DEC-134) tampoco administra servicios, la reserva
+// pública ni la configuración de la barbería. Las rutas siguen existiendo para el
+// panel completo; aquí solo se desvía a quien entra por un enlace guardado a una
+// que su panel oculta, para que nunca vea una pantalla que no es suya ni una en
+// blanco. Es presentación, no autorización: el API no cambia.
 import { watch } from 'vue'
 import type { RouteLocationNormalized, RouteLocationRaw, Router } from 'vue-router'
 import { panelProfile, type PanelProfile } from '@/shared/model'
@@ -10,6 +12,12 @@ import { panelProfile, type PanelProfile } from '@/shared/model'
 const RETIRED_ROUTES: Record<PanelProfile, Record<string, string>> = {
   shop: {},
   solo: { 'barber-services': 'catalog-servicios' },
+  employee: {
+    'barber-services': 'panel',
+    'catalog-servicios': 'panel',
+    'configuracion-reserva-publica': 'panel',
+    'configuracion-barberia': 'panel',
+  },
 }
 
 /** Destino alternativo para `to` en `profile`, o `null` si la ruta sigue disponible. */
