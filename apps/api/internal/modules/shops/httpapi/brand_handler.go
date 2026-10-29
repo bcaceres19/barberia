@@ -106,6 +106,8 @@ func (h *UpdateBrandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		AddressSet:          req.Address.Set,
 		Address:             req.Address.Value,
 		OffersHomeService:   req.OffersHomeService,
+		GooglePlaceIDSet:    req.GooglePlaceID.Set,
+		GooglePlaceID:       req.GooglePlaceID.Value,
 	})
 	if err != nil {
 		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
@@ -123,7 +125,7 @@ func (h *UpdateBrandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // newBrandResponse construye la representación canónica: siempre los mismos
-// doce campos, en la misma forma para GET y para la respuesta 200 de PATCH.
+// trece campos, en la misma forma para GET y para la respuesta 200 de PATCH.
 // El panel lo aporta quien consulta, no la marca (DEC-134).
 func newBrandResponse(b shops.Brand, profile shops.PanelProfile) BrandResponse {
 	return BrandResponse{
@@ -139,5 +141,6 @@ func newBrandResponse(b shops.Brand, profile shops.PanelProfile) BrandResponse {
 		Latitude:               b.Location.Latitude,
 		Longitude:              b.Location.Longitude,
 		OffersHomeService:      b.Location.OffersHomeService,
+		GooglePlaceID:          b.Location.GooglePlaceID,
 	}
 }

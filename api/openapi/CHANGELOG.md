@@ -4,6 +4,26 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.42.0 · 2026-11-02
+
+### Añadido
+
+- Reseñas y estrellas de Google (`DEC-129`, `HU-101`). Nueva operación pública
+  `getPublicGoogleReviews` (`GET /public/barbershops/{slug}/reviews`, sin sesión):
+  calificación, total, enlace a la ficha real y hasta 5 reseñas
+  (`PublicGoogleReviews`, `PublicGoogleReview`). Sin ficha, sin credencial de
+  Google o ante una consulta fallida responde `200` con la estructura vacía
+  explícita (`rating: null`, `ratingCount: 0`, `mapsUrl: null`, `reviews: []`);
+  un `slug` inválido o no publicable, el mismo `404` uniforme.
+- `BrandResponse` suma `googlePlaceId` (obligatorio, `null` sin ficha) y
+  `UpdateBrandRequest` lo acepta opcional: ausente conserva la ficha, `null` o
+  vacío la quita y una forma imposible responde `422`.
+
+### Compatibilidad
+
+- El campo y la operación son aditivos; un cliente que ignora propiedades
+  desconocidas no se rompe y `googlePlaceId` en la solicitud es opcional.
+
 ## 0.41.0 · 2026-11-01
 
 ### Añadido

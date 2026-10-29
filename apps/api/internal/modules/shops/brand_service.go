@@ -103,6 +103,16 @@ func (s *BrandService) Update(ctx context.Context, barbershopID string, input Br
 // escribe nada.
 func (s *BrandService) resolveLocation(ctx context.Context, barbershopID string, patch LocationPatch) (LocationWrite, error) {
 	write := LocationWrite{HasPhysicalLocation: patch.HasPhysicalLocation, OffersHomeService: patch.OffersHomeService}
+	if patch.GooglePlaceIDSet {
+		var placeID *string
+		if patch.GooglePlaceID != nil {
+			var ok bool
+			if placeID, ok = NormalizeGooglePlaceID(*patch.GooglePlaceID); !ok {
+				return LocationWrite{}, errGooglePlaceIDInvalid()
+			}
+		}
+		write.ReplaceGooglePlaceID, write.GooglePlaceID = true, placeID
+	}
 	if !patch.AddressSet {
 		return write, nil
 	}

@@ -63,7 +63,7 @@ func profilesFor(roles ...shops.Role) *shops.PanelProfileService {
 
 const validBrandBody = `{"accent":"emerald","businessTerm":"Salón","businessTermGender":"masculine","professionalTerm":"Estilista","professionalTermPlural":"estilistas","professionalTermGender":"feminine"}`
 
-func TestGetBrandHandler_Success_ReturnsTheTwelveFields(t *testing.T) {
+func TestGetBrandHandler_Success_ReturnsTheThirteenFields(t *testing.T) {
 	repo := &fakeBrandRepository{getFound: true, getBrand: shops.DefaultBrand}
 	h := httpapi.NewGetBrandHandler(shops.NewBrandService(repo, nil), profilesFor())
 
@@ -86,6 +86,8 @@ func TestGetBrandHandler_Success_ReturnsTheTwelveFields(t *testing.T) {
 		"hasPhysicalLocation": true, "address": nil, "latitude": nil, "longitude": nil,
 		// El interruptor de domicilio (DEC-131) viaja siempre; nace apagado.
 		"offersHomeService": false,
+		// La ficha de Google (DEC-129) viaja siempre: null sin ficha.
+		"googlePlaceId": nil,
 	}
 	if len(body) != len(want) {
 		t.Fatalf("expected exactly %d fields, got %v", len(want), body)

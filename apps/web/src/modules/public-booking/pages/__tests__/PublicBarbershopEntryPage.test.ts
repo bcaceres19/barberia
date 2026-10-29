@@ -14,6 +14,13 @@ vi.mock('@/shared/api/httpClient', () => ({
   httpClient: { GET: getMock, POST: vi.fn() },
 }))
 
+// Las reseñas de Google (HU-101) tienen su propia suite: aquí se aíslan para que esta
+// siga contando solo las peticiones de la entrada.
+const getGoogleReviewsMock = vi.hoisted(() => vi.fn())
+vi.mock('../../api/getPublicGoogleReviewsApi', () => ({
+  getPublicGoogleReviews: getGoogleReviewsMock,
+}))
+
 const { default: PublicBarbershopEntryPage } = await import('../PublicBarbershopEntryPage.vue')
 
 // Una barbería que nunca configuró su vocabulario recibe los valores iniciales (DEC-119).
@@ -23,6 +30,16 @@ const initialVocabulary = {
   professionalTerm: 'barbero',
   professionalTermPlural: 'barberos',
   professionalTermGender: 'masculine',
+}
+
+const profile = {
+  name: 'Barbería Ejemplo',
+  timezone: 'America/Bogota',
+  contactEmail: null,
+  contactPhone: null,
+  vocabulary: initialVocabulary,
+  location: null,
+  offersHomeService: false,
 }
 
 function okResponse(): Response {
@@ -46,6 +63,8 @@ function mountEntryPage(props: { slug: string }) {
 
 beforeEach(() => {
   getMock.mockReset()
+  getGoogleReviewsMock.mockReset()
+  getGoogleReviewsMock.mockResolvedValue({ kind: 'empty' })
 })
 
 describe('PublicBarbershopEntryPage', () => {
@@ -239,6 +258,36 @@ describe('PublicBarbershopEntryPage', () => {
 
     expect(wrapper.text()).toContain('req-abc-123')
     expect(wrapper.text()).toContain('Ocurrió un error inesperado')
+  })
+
+  it('shows the Google reviews section only when the listing has data (HU-101, CA-101-01)', async () => {
+    getMock.mockResolvedValueOnce({
+      data: profile,
+      error: undefined,
+      response: okResponse(),
+    })
+    getGoogleReviewsMock.mockResolvedValueOnce({
+      kind: 'success',
+      reviews: { rating: 4.7, ratingCount: 128, mapsUrl: null, reviews: [] },
+    })
+    const wrapper = mountEntryPage({ slug: 'barberia-ejemplo' })
+    await flushPromises()
+
+    expect(getGoogleReviewsMock).toHaveBeenCalledWith('barberia-ejemplo')
+    expect(wrapper.text()).toContain('Opiniones en Google')
+  })
+
+  it('shows no Google section and no error when there is nothing to show (CA-101-01, CA-101-03)', async () => {
+    getMock.mockResolvedValueOnce({
+      data: profile,
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mountEntryPage({ slug: 'barberia-ejemplo' })
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Google')
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
   })
 
   it('has no accessibility violations in the loading state', async () => {

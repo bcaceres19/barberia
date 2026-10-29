@@ -1,0 +1,44 @@
+# Calificación y reseñas de Google del negocio (HU-101, CA-101-02, DEC-129).
+type: object
+description: >
+  Calificación, total y hasta 5 reseñas de la ficha de Google de la barbería.
+  La respuesta vacía explícita (`rating: null`, `ratingCount: 0`, `mapsUrl: null`,
+  `reviews: []`) significa «no hay nada que mostrar» y cubre, sin distinguirlos,
+  una barbería sin ficha configurada, un servidor sin credencial de Google y una
+  consulta fallida (red, cuota agotada, identificador inválido, `CA-101-03`):
+  nunca un error visible para el cliente.
+properties:
+  rating:
+    type:
+      - number
+      - "null"
+    minimum: 1
+    maximum: 5
+    description: Calificación promedio de Google (hasta 1 decimal), o `null` si no hay datos.
+    examples:
+      - 4.7
+  ratingCount:
+    type: integer
+    minimum: 0
+    description: Total de calificaciones en Google (puede superar las reseñas devueltas).
+    examples:
+      - 128
+  mapsUrl:
+    type:
+      - string
+      - "null"
+    format: uri
+    maxLength: 500
+    description: Enlace a la ficha real en Google Maps, destino de la atribución; `null` sin datos.
+    examples:
+      - https://maps.google.com/?cid=1234567890
+  reviews:
+    type: array
+    maxItems: 5
+    items:
+      $ref: './PublicGoogleReview.yaml'
+required:
+  - rating
+  - ratingCount
+  - mapsUrl
+  - reviews

@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-HU-101-v1"
 version: "1.0"
 kind: "hu"
-status: "ready"
+status: "executed"
 target_agents: ["codex", "claude"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
@@ -11,9 +11,9 @@ related_hu: ["HU-090", "HU-025"]
 issue: 358
 issue_url: "https://github.com/bcaceres19/barberia/issues/358"
 suggested_issue_title: "feat(public-booking): implementar HU-101 reseñas y estrellas de Google del negocio"
-branch: null
-pr: null
-pr_url: null
+branch: "feat/358-hu101-resenas-google"
+pr: 373
+pr_url: "https://github.com/bcaceres19/barberia/pull/373"
 depends_on: ["Credencial de servidor de Google Places disponible en el ambiente de despliegue"]
 rules: ["RN-TEN-01"]
 decisions: ["DEC-082", "DEC-110", "DEC-129"]
@@ -35,7 +35,7 @@ source_docs:
   - "apps/api/internal/modules/publicbooking"
   - "apps/api/internal/modules/googlecalendar"
 created_at: "2026-10-26"
-updated_at: "2026-10-26"
+updated_at: "2026-10-29"
 supersedes: null
 superseded_by: null
 ---

@@ -2446,7 +2446,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Actor | Cliente que visita la reserva pública |
 | Depende de | Credencial de servidor de Google Places configurada en el ambiente de despliegue |
 | Bloquea | Ninguna |
-| Estado | Propuesta; sin issue real todavía |
+| Estado | Implementada en [#358](https://github.com/bcaceres19/barberia/issues/358) |
 | Riesgo | Exponer la clave de servidor en el navegador o incumplir los términos de caché de Google Maps Platform puede suspender la credencial de toda la plataforma. |
 
 **Historia**

@@ -52,9 +52,11 @@ import { DEFAULT_LOCATION, type LocationSettings } from '../model/brandOutcome'
 import {
   ADDRESS_MAX_LENGTH,
   draftFromSaved,
+  GOOGLE_PLACE_ID_MAX_LENGTH,
   locationChange,
   sameLocation,
   validateAddress,
+  validateGooglePlaceId,
   type LocationDraft,
 } from '../model/locationDraft'
 import {
@@ -181,7 +183,8 @@ type FieldErrors = Partial<
     | 'businessTerm'
     | 'professionalTerm'
     | 'professionalTermPlural'
-    | 'address',
+    | 'address'
+    | 'googlePlaceId',
     string
   >
 >
@@ -200,6 +203,7 @@ function runValidation(): FieldErrors {
   set('professionalTerm', validateTerm(brand.professionalTerm))
   set('professionalTermPlural', validateTerm(brand.professionalTermPlural))
   set('address', validateAddress(location.address))
+  set('googlePlaceId', validateGooglePlaceId(location.googlePlaceId))
   return errors
 }
 
@@ -217,6 +221,11 @@ function onShopInput<K extends keyof BarbershopSettingsFormValues>(
 
 function onAddressInput(value: string | number) {
   location.address = String(value)
+  revalidate()
+}
+
+function onGooglePlaceIdInput(value: string | number) {
+  location.googlePlaceId = String(value)
   revalidate()
 }
 
@@ -994,6 +1003,19 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
                   : 'Apagado: todos los turnos son en tu local.'
               "
               :disabled="saving"
+            />
+            <BaseInput
+              :model-value="location.googlePlaceId"
+              name="googlePlaceId"
+              label="Identificador de tu ficha de Google (opcional)"
+              hint="Si tu negocio tiene ficha en Google, pega aquí su Place ID para mostrar tus estrellas y reseñas en la reserva pública. Déjalo vacío para no mostrarlas."
+              :maxlength="GOOGLE_PLACE_ID_MAX_LENGTH"
+              autocomplete="off"
+              spellcheck="false"
+              :disabled="saving"
+              :error="fieldErrors.googlePlaceId"
+              :class="{ 'settings-input--filled': !!location.googlePlaceId }"
+              @update:model-value="onGooglePlaceIdInput"
             />
             <div
               v-if="

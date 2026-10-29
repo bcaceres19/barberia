@@ -237,3 +237,71 @@ func TestContract_GetPublicBarberPhotoOperation_MethodPathSecurityAndResponses(t
 			len(op.Responses), len(wantStatuses), wantStatuses)
 	}
 }
+
+// TestContract_PublicGoogleReviewsSchemas_MatchDTOFields verifica que los DTO
+// PublicGoogleReviewsResponse y PublicGoogleReviewResponse (HU-101, DEC-129)
+// coinciden exactamente con PublicGoogleReviews.yaml y PublicGoogleReview.yaml, y
+// que nunca declaran el Place ID (el navegador no necesita la ficha, solo lo que
+// Google devolvió ya recortado).
+func TestContract_PublicGoogleReviewsSchemas_MatchDTOFields(t *testing.T) {
+	cases := map[string][]string{
+		"api/openapi/components/schemas/PublicGoogleReviews.yaml": {"rating", "ratingCount", "mapsUrl", "reviews"},
+		"api/openapi/components/schemas/PublicGoogleReview.yaml":  {"authorName", "authorUrl", "rating", "text", "relativeTime"},
+	}
+	for path, want := range cases {
+		schema := loadYAML[schemaDoc](t, path)
+		if len(schema.Properties) != len(want) {
+			t.Fatalf("%s: expected %d properties, schema has %d: %v", path, len(want), len(schema.Properties), schema.Properties)
+		}
+		for _, name := range want {
+			if _, ok := schema.Properties[name]; !ok {
+				t.Errorf("%s no declara %q", path, name)
+			}
+			required := false
+			for _, r := range schema.Required {
+				required = required || r == name
+			}
+			if !required {
+				t.Errorf("%s debe exigir %q (nullable, pero siempre presente)", path, name)
+			}
+		}
+		for _, forbidden := range []string{"placeId", "googlePlaceId", "apiKey", "key"} {
+			if _, ok := schema.Properties[forbidden]; ok {
+				t.Fatalf("CA-101-04: %s nunca debe declarar %q", path, forbidden)
+			}
+		}
+	}
+}
+
+// TestContract_GetPublicGoogleReviewsOperation_MethodPathSecurityAndResponses
+// verifica que las reseñas de Google son una operación sin sesión (security: [])
+// con slug en la ruta y exactamente los códigos que el handler produce (200 con
+// la estructura vacía incluida, 404 uniforme, 500; sin 401 ni 422).
+func TestContract_GetPublicGoogleReviewsOperation_MethodPathSecurityAndResponses(t *testing.T) {
+	type reviewsPathFile struct {
+		Reviews struct {
+			Get operation `yaml:"get"`
+		} `yaml:"/public/barbershops/{slug}/reviews"`
+	}
+	doc := loadYAML[reviewsPathFile](t, "api/openapi/paths/public-booking.yaml")
+	op := doc.Reviews.Get
+
+	if op.OperationID != "getPublicGoogleReviews" {
+		t.Fatalf("expected operationId getPublicGoogleReviews, got %q", op.OperationID)
+	}
+	if len(op.Security) != 0 {
+		t.Fatalf("HU-101: la operación nunca exige sesión, security debe ser [], got %v", op.Security)
+	}
+	if len(op.Parameters) != 1 || op.Parameters[0].Name != "slug" || op.Parameters[0].In != "path" || !op.Parameters[0].Required {
+		t.Fatalf("expected exactly one required path parameter named slug, got %+v", op.Parameters)
+	}
+	wantStatuses := []string{"200", "404", "500"}
+	for _, s := range wantStatuses {
+		if _, ok := op.Responses[s]; !ok {
+			t.Errorf("el contrato no documenta la respuesta %s, pero el handler la produce", s)
+		}
+	}
+	if len(op.Responses) != len(wantStatuses) {
+		t.Errorf("el contrato documenta %d respuestas, se esperaban exactamente %d (%v)", len(op.Responses), len(wantStatuses), wantStatuses)
+	}
+}

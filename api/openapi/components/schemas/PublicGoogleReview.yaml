@@ -1,0 +1,52 @@
+# Una reseña de Google mostrada en la reserva pública (HU-101, DEC-129).
+type: object
+description: >
+  Reseña pública de la ficha de Google del negocio, tal como la entrega Google
+  Places. La atribución al autor y a Google es obligatoria al mostrarla. No se
+  persiste: vive solo en la caché de servidor de 6 horas.
+properties:
+  authorName:
+    type: string
+    maxLength: 200
+    description: Nombre público del autor en Google.
+    examples:
+      - Camila R.
+  authorUrl:
+    type:
+      - string
+      - "null"
+    format: uri
+    maxLength: 500
+    description: Perfil del autor en Google Maps; `null` si Google no lo entrega.
+    examples:
+      - https://www.google.com/maps/contrib/100000000000000000000
+  rating:
+    type: integer
+    minimum: 1
+    maximum: 5
+    examples:
+      - 5
+  text:
+    type:
+      - string
+      - "null"
+    maxLength: 2000
+    description: Texto de la reseña; `null` si el autor solo calificó.
+    examples:
+      - Excelente atención y muy puntuales.
+  relativeTime:
+    type:
+      - string
+      - "null"
+    maxLength: 100
+    description: >
+      Cuándo se publicó, ya redactado por Google en español («hace un mes»);
+      `null` si no lo entrega.
+    examples:
+      - hace un mes
+required:
+  - authorName
+  - authorUrl
+  - rating
+  - text
+  - relativeTime

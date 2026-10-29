@@ -432,3 +432,45 @@ func homeServiceInput(r *HomeServiceRequest) *publicbooking.HomeServiceInput {
 	}
 	return &publicbooking.HomeServiceInput{Address: r.Address, Latitude: r.Latitude, Longitude: r.Longitude}
 }
+
+// GetPublicGoogleReviewsHandler expone GET /public/barbershops/{slug}/reviews
+// (HU-101, DEC-129): la calificación y las reseñas de Google de la barbería,
+// sin sesión. Solo un slug inválido o no publicable es un error (el 404 uniforme
+// de HU-090); sin ficha, sin credencial o ante una consulta fallida responde 200
+// con la estructura vacía (CA-101-01, CA-101-03).
+type GetPublicGoogleReviewsHandler struct {
+	service *publicbooking.GoogleReviewsService
+}
+
+// NewGetPublicGoogleReviewsHandler construye el handler de reseñas de Google.
+func NewGetPublicGoogleReviewsHandler(service *publicbooking.GoogleReviewsService) *GetPublicGoogleReviewsHandler {
+	return &GetPublicGoogleReviewsHandler{service: service}
+}
+
+// ServeHTTP implementa http.Handler.
+func (h *GetPublicGoogleReviewsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestID := httpserver.RequestIDFromContext(r.Context())
+
+	reviews, err := h.service.Get(r.Context(), httpserver.URLParam(r, slugParam))
+	if err != nil {
+		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(newPublicGoogleReviewsResponse(reviews))
+}
+
+func newPublicGoogleReviewsResponse(g publicbooking.GoogleReviews) PublicGoogleReviewsResponse {
+	items := make([]PublicGoogleReviewResponse, 0, len(g.Reviews))
+	for _, r := range g.Reviews {
+		items = append(items, PublicGoogleReviewResponse{
+			AuthorName: r.AuthorName, AuthorURL: r.AuthorURL, Rating: r.Rating,
+			Text: r.Text, RelativeTime: r.RelativeTime,
+		})
+	}
+	return PublicGoogleReviewsResponse{
+		Rating: g.Rating, RatingCount: g.RatingCount, MapsURL: g.MapsURL, Reviews: items,
+	}
+}

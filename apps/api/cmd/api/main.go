@@ -34,6 +34,7 @@ import (
 	notificationhttpapi "system-barbershop/internal/modules/notification/httpapi"
 	notificationpostgres "system-barbershop/internal/modules/notification/postgres"
 	"system-barbershop/internal/modules/publicbooking"
+	publicbookinggoogle "system-barbershop/internal/modules/publicbooking/google"
 	publicbookinghttpapi "system-barbershop/internal/modules/publicbooking/httpapi"
 	publicbookingpostgres "system-barbershop/internal/modules/publicbooking/postgres"
 	"system-barbershop/internal/modules/reviews"
@@ -222,6 +223,13 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	router.Get("/api/v1/public/barbershops/{slug}", resolveBarbershopHandler.ServeHTTP)
 	listPublicServicesHandler := publicbookinghttpapi.NewListPublicServicesHandler(publicBookingService)
 	router.Get("/api/v1/public/barbershops/{slug}/services", listPublicServicesHandler.ServeHTTP)
+
+	// HU-101 (DEC-129): calificación y reseñas de Google del negocio. Mismo
+	// criterio sin sesión; la caché de 6 horas y la clave de servidor viven en el
+	// adaptador, y sin ficha, sin credencial o ante un fallo responde vacío.
+	googleReviewsHandler := publicbookinghttpapi.NewGetPublicGoogleReviewsHandler(
+		publicbooking.NewGoogleReviewsService(publicBookingService, buildGoogleReviewsProvider(logger, cfg), logger))
+	router.Get("/api/v1/public/barbershops/{slug}/reviews", googleReviewsHandler.ServeHTTP)
 
 	// HU-092: selección pública de barbero. Mismo criterio de resolución
 	// sin sesión que HU-090/HU-091; serviceId nunca se confía sin
@@ -749,6 +757,27 @@ func buildGeocoder(logger *slog.Logger, cfg config.Config) shops.Geocoder {
 	default:
 		logger.Warn("shops.geocode.sin_clave",
 			"detail", "sin GOOGLE_MAPS_API_KEY: no se pueden verificar direcciones nuevas")
+		return nil
+	}
+}
+
+// buildGoogleReviewsProvider elige el proveedor de reseñas de Google (DEC-129):
+// el real si hay GOOGLE_MAPS_API_KEY (la misma clave de servidor de HU-102, con
+// Places API (New) habilitada); en local y test, sin clave, uno simulado para
+// poder ver la sección sin credenciales; en cualquier otro ambiente sin clave,
+// ninguno, y la integración queda desactivada: la reserva pública no muestra
+// reseñas de Google ni lo trata como un error.
+func buildGoogleReviewsProvider(logger *slog.Logger, cfg config.Config) publicbooking.GoogleReviewsProvider {
+	switch {
+	case cfg.GoogleMapsAPIKey != "":
+		return publicbookinggoogle.New(publicbookinggoogle.Config{APIKey: cfg.GoogleMapsAPIKey})
+	case cfg.Environment == "local" || cfg.Environment == "test":
+		logger.Warn("publicbooking.google_reviews.simulado",
+			"detail", "sin GOOGLE_MAPS_API_KEY: las reseñas de Google son una ficha ficticia")
+		return publicbookinggoogle.Simulated{}
+	default:
+		logger.Warn("publicbooking.google_reviews.sin_clave",
+			"detail", "sin GOOGLE_MAPS_API_KEY: las reseñas de Google quedan desactivadas")
 		return nil
 	}
 }

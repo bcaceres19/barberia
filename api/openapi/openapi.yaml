@@ -91,7 +91,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.41.0
+  version: 0.42.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -168,6 +168,8 @@ paths:
     $ref: './paths/customer-appointments.yaml#/~1customer~1appointments~1{token}~1review'
   /public/barbershops/{slug}/barbers/{barberId}/reviews:
     $ref: './paths/public-booking.yaml#/~1public~1barbershops~1{slug}~1barbers~1{barberId}~1reviews'
+  /public/barbershops/{slug}/reviews:
+    $ref: './paths/public-booking.yaml#/~1public~1barbershops~1{slug}~1reviews'
   /public/webhooks/meta/whatsapp:
     $ref: './paths/public-webhooks.yaml#/~1public~1webhooks~1meta~1whatsapp'
   /public/auth/login:
