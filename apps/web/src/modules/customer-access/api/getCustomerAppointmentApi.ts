@@ -40,6 +40,9 @@ export async function getCustomerAppointment(
         cancellationDeadlineMinutes: data.cancellationDeadlineMinutes,
         lateCancellationClientAllowed: data.lateCancellationClientAllowed,
         lateCancellationReasonRequired: data.lateCancellationReasonRequired,
+        versionToken: data.versionToken,
+        barbershopContactEmail: data.barbershopContactEmail,
+        barbershopContactPhone: data.barbershopContactPhone,
         vocabulary: {
           businessTerm: data.vocabulary.businessTerm,
           businessTermGender: data.vocabulary.businessTermGender,

@@ -29,6 +29,9 @@ const APPOINTMENT_VIEW = {
   cancellationDeadlineMinutes: 20,
   lateCancellationClientAllowed: true,
   lateCancellationReasonRequired: true,
+  versionToken: 'version-token-1',
+  barbershopContactEmail: null,
+  barbershopContactPhone: null,
   vocabulary: INITIAL_VOCABULARY,
 }
 

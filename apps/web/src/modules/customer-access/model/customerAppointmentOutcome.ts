@@ -68,6 +68,11 @@ export interface CustomerAppointment {
   cancellationDeadlineMinutes: number
   lateCancellationClientAllowed: boolean
   lateCancellationReasonRequired: boolean
+  /** Token opaco de versión: se reenvía tal cual como `If-Match` al cancelar (HU-099). */
+  versionToken: string
+  /** Contacto público opcional de la barbería: adonde acudir si la política rechaza cancelar. */
+  barbershopContactEmail: string | null
+  barbershopContactPhone: string | null
   /** Palabras con las que la barbería nombra a su negocio y a su profesional (DEC-119). */
   vocabulary: VocabularyTerms
   /** «Calificar» solo se ofrece con el turno completado y sin reseña (HU-100, CA-100-01). */
@@ -103,6 +108,34 @@ export type CreateReviewOutcome =
   | { kind: 'success'; review: CustomerReview }
   | { kind: 'validation-error' }
   | { kind: 'not-reviewable' }
+  | { kind: 'not-found' }
+  | { kind: 'network-error' }
+  | { kind: 'unexpected-error'; requestId?: string }
+
+/** Rechazo de política de la cancelación que el servidor devolvió y la interfaz explica. */
+export type CancellationRejection = 'window-closed' | 'reason-required' | null
+
+/** Lo que el cliente envía al cancelar (HU-099). */
+export interface CancelAppointmentInput {
+  /** Texto libre ya recortado; `null` si no escribió nada. */
+  reason: string | null
+}
+
+/**
+ * Resultado de cancelar el turno (HU-099), discriminado por `status`/`code` y
+ * nunca por `detail`. `window-closed` y `reason-required` son los dos rechazos
+ * de política (422); `changed` cubre los 409 de versión obsoleta o estado ya no
+ * confirmado (la página recarga para mostrar lo vigente); `not-found` es el 404
+ * uniforme del enlace (también el de un enlace ya revocado por una cancelación
+ * previa). `validation-error` es el motivo demasiado largo o un 400.
+ */
+export type CancelAppointmentOutcome =
+  | { kind: 'success' }
+  | { kind: 'window-closed' }
+  | { kind: 'reason-required' }
+  | { kind: 'validation-error' }
+  | { kind: 'changed' }
+  | { kind: 'idempotency-in-progress' }
   | { kind: 'not-found' }
   | { kind: 'network-error' }
   | { kind: 'unexpected-error'; requestId?: string }

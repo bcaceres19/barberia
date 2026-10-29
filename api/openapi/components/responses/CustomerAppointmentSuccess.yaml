@@ -30,6 +30,9 @@ content:
           cancellationDeadlineMinutes: 20
           lateCancellationClientAllowed: true
           lateCancellationReasonRequired: true
+          versionToken: 3n9Kq1x2v8pQwZbJt5Yc0Rr6Hh4Ss7Ff1Gg3Dd8Ee2Aa
+          barbershopContactEmail: contacto@barberia-ejemplo.test
+          barbershopContactPhone: "+573001234567"
           vocabulary:
             businessTerm: barbería
             businessTermGender: feminine
@@ -53,6 +56,9 @@ content:
           cancellationDeadlineMinutes: 20
           lateCancellationClientAllowed: true
           lateCancellationReasonRequired: true
+          versionToken: 3n9Kq1x2v8pQwZbJt5Yc0Rr6Hh4Ss7Ff1Gg3Dd8Ee2Aa
+          barbershopContactEmail: null
+          barbershopContactPhone: null
           vocabulary:
             businessTerm: barbería
             businessTermGender: feminine

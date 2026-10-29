@@ -69,7 +69,8 @@ func (r *Repository) ResolveAppointmentByTokenHash(ctx context.Context, tokenHas
 			        bs.late_cancellation_reason_required,
 			        bs.business_term, bs.business_term_gender,
 			        bs.professional_term, bs.professional_term_plural, bs.professional_term_gender,
-			        rv.rating, rv.comment, rv.created_at
+			        rv.rating, rv.comment, rv.created_at,
+			        bs.contact_email, bs.contact_phone, ap.id, ap.updated_at
 			   FROM appointment_access_token t
 			   JOIN appointment ap ON ap.barbershop_id = t.barbershop_id AND ap.id = t.appointment_id
 			   JOIN barbershop bs ON bs.id = t.barbershop_id
@@ -89,6 +90,7 @@ func (r *Repository) ResolveAppointmentByTokenHash(ctx context.Context, tokenHas
 			&view.Vocabulary.ProfessionalTerm, &view.Vocabulary.ProfessionalTermPlural,
 			&view.Vocabulary.ProfessionalTermGender,
 			&reviewRating, &reviewComment, &reviewCreatedAt,
+			&view.BarbershopContactEmail, &view.BarbershopContactPhone, &view.AppointmentID, &view.UpdatedAt,
 		)
 		switch {
 		case err == nil:
@@ -112,4 +114,50 @@ func (r *Repository) ResolveAppointmentByTokenHash(ctx context.Context, tokenHas
 		return customeraccess.AppointmentView{}, false, fmt.Errorf("customeraccess/postgres: read appointment view: %w", err)
 	}
 	return view, viewFound, nil
+}
+
+// ResolveCancellationTarget implementa customeraccess.Repository para HU-099
+// con los mismos dos pasos que ResolveAppointmentByTokenHash: primero la
+// función SECURITY DEFINER estrecha (responde igual a un hash inexistente,
+// vencido o revocado) y después, ya dentro del tenant, la cita a la que ese
+// hash vigente da acceso. Devuelve solo identificadores internos para que
+// booking ejecute T5; nunca llegan al cliente.
+func (r *Repository) ResolveCancellationTarget(ctx context.Context, tokenHash string) (customeraccess.CancellationTarget, bool, error) {
+	barbershopID, found, err := r.db.ResolveTenant(ctx,
+		`SELECT public_resolve_appointment_token_tenant($1)`,
+		tokenHash,
+	)
+	if err != nil {
+		return customeraccess.CancellationTarget{}, false, fmt.Errorf("customeraccess/postgres: resolve tenant by token: %w", err)
+	}
+	if !found {
+		return customeraccess.CancellationTarget{}, false, nil
+	}
+
+	target := customeraccess.CancellationTarget{BarbershopID: string(barbershopID)}
+	targetFound := false
+	err = r.db.InTenantTx(ctx, barbershopID, func(ctx context.Context, q database.Queries) error {
+		err := q.QueryRow(ctx,
+			`SELECT t.appointment_id
+			   FROM appointment_access_token t
+			  WHERE t.token_hash = $1
+			    AND t.revoked_at IS NULL
+			    AND (t.expires_at IS NULL OR t.expires_at > now())`,
+			tokenHash,
+		).Scan(&target.AppointmentID)
+		switch {
+		case err == nil:
+			targetFound = true
+		case errors.Is(err, pgx.ErrNoRows):
+			// Revocado entre ambos pasos: se responde igual que un token
+			// inexistente (CA-098-02).
+		default:
+			return fmt.Errorf("select cancellation target: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return customeraccess.CancellationTarget{}, false, fmt.Errorf("customeraccess/postgres: read cancellation target: %w", err)
+	}
+	return target, targetFound, nil
 }

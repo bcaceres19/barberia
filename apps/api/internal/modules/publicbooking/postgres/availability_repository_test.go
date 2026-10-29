@@ -126,11 +126,15 @@ func TestListOccupiedIntervals_OnlyOccupyingStatusesAndTenantIsolation(t *testin
 	confirmedEnd := confirmedStart.Add(30 * time.Minute)
 	cancelledStart := base.Add(2 * time.Hour)
 	cancelledEnd := cancelledStart.Add(30 * time.Minute)
+	cancelledByCustomerStart := base.Add(3 * time.Hour)
+	cancelledByCustomerEnd := cancelledByCustomerStart.Add(30 * time.Minute)
 	otherShopStart := base.Add(4 * time.Hour)
 	otherShopEnd := otherShopStart.Add(30 * time.Minute)
 
 	createAppointmentForOccupancy(t, db, barbershopAvailUnoID, barberAvailUnoID, serviceAvailUnoID, "confirmed", confirmedStart, confirmedEnd)
 	createAppointmentForOccupancy(t, db, barbershopAvailUnoID, barberAvailUnoID, serviceAvailUnoID, "cancelled_by_barber", cancelledStart, cancelledEnd)
+	// HU-099, CA-099-04: una cancelación del cliente también libera la franja.
+	createAppointmentForOccupancy(t, db, barbershopAvailUnoID, barberAvailUnoID, serviceAvailUnoID, "cancelled_by_customer", cancelledByCustomerStart, cancelledByCustomerEnd)
 	createAppointmentForOccupancy(t, db, barbershopAvailDosID, barberAvailDosID, "00940201-0094-0094-0094-009402010201", "confirmed", otherShopStart, otherShopEnd)
 
 	from := base

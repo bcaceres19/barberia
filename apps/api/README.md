@@ -769,6 +769,39 @@ API lo avisa al arrancar. El mapa del navegador usa otra clave
 (`VITE_GOOGLE_MAPS_BROWSER_KEY`, Maps Embed API, restringida por dominio); sin
 ella la sección se oculta fuera de desarrollo.
 
+### Cancelación pública por el cliente (HU-099, T5)
+
+`POST /customer/appointments/{token}/cancel` (sin sesión, `Idempotency-Key` e `If-Match` obligatorios, cuerpo
+opcional `{ "reason": string|null }`, cerrado). Reparto entre módulos sin que ninguno importe a otro:
+`customeraccess` resuelve el token (SHA-256 → `public_resolve_appointment_token_tenant`) a la barbería y la cita,
+y delega en `booking` a través del puerto `AppointmentCanceller` (adaptador
+`booking.CustomerAppointmentCancellerAdapter`, cableado en `cmd/api`). `booking.Repository.CancelByCustomer` hace
+todo en **una** transacción tenant-aware: reclamar la clave, bloquear la cita (`FOR UPDATE`), releer la política de
+la barbería, comparar versión y estado, evaluar la política, aplicar `cancelled_by_customer` + `cancellation_reason`,
+insertar un único evento `appointment_cancelled_by_customer` con actor cliente, avisar al gancho de Google Calendar
+y **revocar el enlace** (`DEC-089`).
+
+| Situación | Respuesta |
+| --- | --- |
+| Cancelada | `200 {"status":"cancelled_by_customer"}`; repetir la misma clave y contenido reproduce el cuerpo |
+| Ya `cancelled_by_customer` (otra clave, carrera) | `200` sin evento nuevo |
+| Plazo vencido sin política tardía, o turno ya iniciado | `422` `cancellation-window-closed` |
+| Tardía permitida con motivo obligatorio y sin motivo | `422` `cancellation-reason-required` |
+| Motivo de más de 500 caracteres | `422` `validation-error` |
+| Versión obsoleta / otro estado terminal | `409` `version-conflict` / `invalid-state` |
+| Misma clave con otro contenido / en curso | `409` `idempotency-conflict` / `idempotency-locked` |
+| Enlace inexistente, vencido o ya revocado (incluida una repetición tras cancelar) | `404` uniforme |
+
+Regla (`CustomerCancellationPolicy.Evaluate`): hasta `startsAt − plazo` **inclusive** es dentro de plazo y no
+exige motivo; después y antes de `startsAt` aplica `late_cancellation_client_allowed` y, si procede,
+`late_cancellation_reason_required`; un plazo de 0 trata toda cancelación como tardía (`DEC-083`); con el turno ya
+iniciado nunca procede. El reloj lo inyecta `cmd/api` (`clock.System`) y llega al repositorio en la entrada; un
+rechazo revierte la transacción, así que **no consume la clave**. Un `GET` posterior responde `404` (enlace
+revocado): por eso una repetición exacta *después* de commit también es `404`; la repetición concurrente sí
+reproduce la respuesta. `GET /customer/appointments/{token}` suma `versionToken` (mismo
+`booking.EncodeVersionToken`, inyectado a `customeraccess`) y el contacto público opcional de la barbería. El aviso
+al barbero y las confirmaciones por canal son de B5: no se envía nada.
+
 ### Reseñas por barbero (DEC-128, HU-100)
 
 Módulo `internal/modules/reviews` (sin dependencias de otros módulos): una reseña por turno `completed`
@@ -2245,7 +2278,7 @@ si el barbero tiene una conexión viva (`connected` o `error`). Ni `booking` ni
 `schedule` importan la integración (lo comprueba `internal/platform/archtest`) y un
 error del gancho revierte el cambio de negocio. `sync_hook_test.go` falla si
 aparece una escritura sobre esas tablas sin llamar al gancho: **toda escritura
-nueva (por ejemplo la cancelación por el cliente, HU-099) debe llamarlo.**
+nueva debe llamarlo** (la cancelación por el cliente, HU-099, ya lo hace).
 
 **El worker** (`cmd/worker`) arranca el publicador si las variables
 `GOOGLE_CALENDAR_*` están completas (necesita las MISMAS que el API, la misma clave

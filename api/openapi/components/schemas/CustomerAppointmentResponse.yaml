@@ -89,6 +89,27 @@ properties:
     description: Si una cancelación tardía exige motivo (HU-093, HU-099 la exige).
     examples:
       - true
+  versionToken:
+    type: string
+    minLength: 1
+    description: >
+      Token opaco de versión del turno (`HU-099`): se envía tal cual como
+      `If-Match` al cancelar. Nunca se decodifica ni se persiste; si el turno
+      cambió desde esta lectura, la cancelación responde `409` con
+      `code: version-conflict`.
+    examples:
+      - 3n9Kq1x2v8pQwZbJt5Yc0Rr6Hh4Ss7Ff1Gg3Dd8Ee2Aa
+  barbershopContactEmail:
+    type: [string, "null"]
+    maxLength: 254
+    description: >
+      Correo público opcional de la barbería (`HU-020`, el mismo de la reserva
+      pública): el contacto seguro al que acudir cuando la política rechaza
+      la cancelación (`CA-099-06`). `null` si no lo configuró.
+  barbershopContactPhone:
+    type: [string, "null"]
+    maxLength: 32
+    description: Teléfono público opcional de la barbería; mismo propósito que `barbershopContactEmail`.
   vocabulary:
     $ref: './PublicVocabulary.yaml'
   canReview:
@@ -116,6 +137,9 @@ required:
   - cancellationDeadlineMinutes
   - lateCancellationClientAllowed
   - lateCancellationReasonRequired
+  - versionToken
+  - barbershopContactEmail
+  - barbershopContactPhone
   - vocabulary
   - canReview
   - review

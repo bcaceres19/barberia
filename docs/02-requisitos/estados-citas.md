@@ -250,7 +250,7 @@ stateDiagram-v2
 ### Precisiones
 
 - **T3 regenera recordatorios si cambia el servicio o la duración**, conforme a `RN-REC-01`. Un cambio de precio aplicado a una cita existente produce historial y aviso inmediato (`DEC-004`), pero no regenera el recordatorio si servicio, fecha, hora y duración permanecen iguales.
-- **T5 debe avisar al barbero.** Es la única transición iniciada por el cliente y el barbero necesita enterarse sin revisar la aplicación. Su ausencia sería un fallo grave del producto.
+- **T5 debe avisar al barbero.** Es la única transición iniciada por el cliente y el barbero necesita enterarse sin revisar la aplicación. Su ausencia sería un fallo grave del producto. `HU-099` implementa la transición, el historial y la liberación de la franja; el aviso al barbero y la confirmación al cliente pertenecen a B5 y **todavía no se envían** (no se simulan): hasta entonces el barbero la ve al abrir la agenda, y es una condición de salida de B5, no una opción.
 - **T7 notifica solo si la barbería lo habilita.** La opción está desactivada por defecto (`DEC-018`).
 - Toda entrada de historial registra actor, instante, campos modificados y valores anterior y nuevo (`RN-HIS-01`), y no se modifica después (`RN-HIS-02`).
 

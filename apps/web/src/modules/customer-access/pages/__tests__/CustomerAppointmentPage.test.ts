@@ -6,7 +6,7 @@
  * requestId, ausencia de identificadores internos (CA-098-03) y ausencia de
  * violaciones de accesibilidad (axe-core) en cada estado observable.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
 
@@ -39,6 +39,9 @@ function successData() {
     cancellationDeadlineMinutes: 20,
     lateCancellationClientAllowed: true,
     lateCancellationReasonRequired: true,
+    versionToken: 'version-token-1',
+    barbershopContactEmail: 'contacto@barberia-ejemplo.test',
+    barbershopContactPhone: '+573001234567',
     vocabulary: {
       businessTerm: 'barbería',
       businessTermGender: 'feminine',
@@ -108,13 +111,22 @@ describe('CustomerAppointmentPage', () => {
     expect(text).not.toContain('se cancela automáticamente')
   })
 
-  it('shows the cancellation policy without offering a cancel action (out of HU-098 scope)', async () => {
+  it('shows the cancellation policy and, since HU-099, offers «Cancelar turno» only while confirmed', async () => {
     getMock.mockResolvedValueOnce({ data: successData(), error: undefined, response: okResponse() })
     const wrapper = mountPage({ token: 'token-en-claro' })
     await flushPromises()
 
     expect(wrapper.text()).toContain('20 minutos antes')
-    expect(wrapper.find('button').exists()).toBe(false)
+    expect(wrapper.findAll('button').map((b) => b.text())).toEqual(['Cancelar turno'])
+
+    getMock.mockResolvedValueOnce({
+      data: { ...successData(), status: 'completed' },
+      error: undefined,
+      response: okResponse(),
+    })
+    const completed = mountPage({ token: 'token-en-claro' })
+    await flushPromises()
+    expect(completed.find('button').exists()).toBe(false)
   })
 
   it('never renders an internal id, barbershopId, appointmentId or customerId (CA-098-03)', async () => {
@@ -393,5 +405,226 @@ describe('CustomerAppointmentPage · reseña', () => {
     document.body.appendChild(done.element)
     expect(await axe(done.element)).toHaveNoViolations()
     done.unmount()
+  })
+})
+
+describe('CustomerAppointmentPage · cancelación (HU-099)', () => {
+  const postMock = vi.fn()
+
+  beforeEach(async () => {
+    postMock.mockReset()
+    const { httpClient } = await import('@/shared/api/httpClient')
+    ;(httpClient as unknown as { POST: typeof postMock }).POST = postMock
+  })
+
+  const mounted: Array<{ unmount: () => void }> = []
+
+  afterEach(() => {
+    vi.useRealTimers()
+    mounted.splice(0).forEach((w) => w.unmount())
+  })
+
+  const problem = (status: number, code: string) => ({
+    type: `/api/v1/problems/${code}`,
+    title: 'x',
+    status,
+    code,
+    requestId: 'req-1',
+  })
+
+  async function mountConfirmed(data: Record<string, unknown> = successData()) {
+    getMock.mockResolvedValueOnce({ data, error: undefined, response: okResponse() })
+    const wrapper = mount(CustomerAppointmentPage, {
+      props: { token: 'token-en-claro' },
+      attachTo: document.body,
+    })
+    await flushPromises()
+    mounted.push(wrapper)
+    return wrapper
+  }
+
+  async function openForm(wrapper: Awaited<ReturnType<typeof mountConfirmed>>) {
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Cancelar turno')!
+      .trigger('click')
+  }
+
+  async function confirm(wrapper: Awaited<ReturnType<typeof mountConfirmed>>) {
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+  }
+
+  it('cancela dentro de plazo: manda versión, clave y motivo, y pasa a cancelado sin enlace vigente', async () => {
+    postMock.mockResolvedValueOnce({
+      data: { status: 'cancelled_by_customer' },
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = await mountConfirmed()
+    await openForm(wrapper)
+    await wrapper.get('textarea').setValue('  Me surgió algo  ')
+    await confirm(wrapper)
+
+    const [path, init] = postMock.mock.calls[0]!
+    expect(path).toBe('/customer/appointments/{token}/cancel')
+    expect(init.params.path).toEqual({ token: 'token-en-claro' })
+    expect(init.params.header['If-Match']).toBe('version-token-1')
+    expect(init.params.header['Idempotency-Key']).toMatch(/^[0-9a-f-]{36}$/)
+    expect(init.body).toEqual({ reason: 'Me surgió algo' })
+
+    expect(wrapper.text()).toContain('Cancelado por el cliente')
+    expect(wrapper.text()).toContain('Cancelaste tu turno')
+    expect(wrapper.text()).toContain('este enlace ya no funciona')
+    expect(wrapper.find('form').exists()).toBe(false)
+    expect(wrapper.findAll('button')).toHaveLength(0)
+    expect(document.activeElement).toBe(wrapper.get('.customer-appointment__cancelled').element)
+  })
+
+  it('un turno cancelado por el cliente ya no ofrece cancelar ni calificar', async () => {
+    const wrapper = await mountConfirmed({ ...successData(), status: 'cancelled_by_customer' })
+    expect(wrapper.text()).toContain('Cancelado por el cliente')
+    expect(wrapper.find('button').exists()).toBe(false)
+  })
+
+  it('un reintento tras un fallo de red reutiliza la clave; con otro motivo usa una nueva', async () => {
+    postMock.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    postMock.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    postMock.mockResolvedValueOnce({
+      data: { status: 'cancelled_by_customer' },
+      response: okResponse(),
+    })
+    const wrapper = await mountConfirmed()
+    await openForm(wrapper)
+
+    await wrapper.get('textarea').setValue('Motivo uno')
+    await confirm(wrapper)
+    expect(wrapper.text()).toContain('No pudimos conectar')
+    await confirm(wrapper)
+    await wrapper.get('textarea').setValue('Motivo dos')
+    await confirm(wrapper)
+
+    const keys = postMock.mock.calls.map((c) => c[1].params.header['Idempotency-Key'])
+    expect(keys[0]).toBe(keys[1])
+    expect(keys[2]).not.toBe(keys[0])
+  })
+
+  it('un rechazo por plazo vencido explica y muestra el contacto, y deja el turno confirmado', async () => {
+    postMock.mockResolvedValueOnce({
+      data: undefined,
+      error: problem(422, 'cancellation-window-closed'),
+      response: errorResponse(422),
+    })
+    const wrapper = await mountConfirmed()
+    await openForm(wrapper)
+    await confirm(wrapper)
+
+    expect(wrapper.text()).toContain('El plazo para cancelar por tu cuenta ya venció')
+    expect(wrapper.find('a[href="tel:+573001234567"]').exists()).toBe(true)
+    expect(wrapper.find('form').exists()).toBe(false)
+    expect(wrapper.text()).toContain('Confirmado')
+  })
+
+  it('un rechazo por motivo faltante vuelve obligatorio el campo y conserva el formulario', async () => {
+    postMock.mockResolvedValueOnce({
+      data: undefined,
+      error: problem(422, 'cancellation-reason-required'),
+      response: errorResponse(422),
+    })
+    const wrapper = await mountConfirmed()
+    await openForm(wrapper)
+    await confirm(wrapper)
+    await flushPromises()
+
+    expect(wrapper.find('form').exists()).toBe(true)
+    expect(wrapper.text()).toContain('(obligatorio)')
+    expect(wrapper.text()).toContain('Cuéntanos brevemente el motivo')
+  })
+
+  it('fuera de plazo (reloj local) con motivo obligatorio exige el motivo antes de llamar al API', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2027-03-15T14:50:00Z'))
+    const wrapper = await mountConfirmed()
+    await openForm(wrapper)
+    expect(wrapper.text()).toContain('(obligatorio)')
+
+    await confirm(wrapper)
+    expect(postMock).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('Cuéntanos brevemente el motivo')
+  })
+
+  it('fuera de plazo con la política que no lo permite no hay botón y se muestra el contacto', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2027-03-15T14:50:00Z'))
+    const wrapper = await mountConfirmed({
+      ...successData(),
+      lateCancellationClientAllowed: false,
+      lateCancellationReasonRequired: false,
+    })
+    expect(wrapper.text()).toContain('El plazo para cancelar por tu cuenta ya venció')
+    expect(wrapper.find('a[href="mailto:contacto@barberia-ejemplo.test"]').exists()).toBe(true)
+    expect(wrapper.findAll('button').map((b) => b.text())).not.toContain('Cancelar turno')
+  })
+
+  it('un 409 recarga el turno y avisa que cambió', async () => {
+    postMock.mockResolvedValueOnce({
+      data: undefined,
+      error: problem(409, 'version-conflict'),
+      response: errorResponse(409),
+    })
+    const wrapper = await mountConfirmed()
+    await openForm(wrapper)
+    getMock.mockResolvedValueOnce({
+      data: { ...successData(), status: 'cancelled_by_barber' },
+      error: undefined,
+      response: okResponse(),
+    })
+    await confirm(wrapper)
+
+    expect(getMock).toHaveBeenCalledTimes(2)
+    expect(wrapper.text()).toContain('Tu turno cambió mientras tanto')
+    expect(wrapper.text()).toContain('Cancelado')
+    expect(wrapper.find('form').exists()).toBe(false)
+  })
+
+  it('un 404 (enlace ya revocado) muestra el estado de enlace no accesible', async () => {
+    postMock.mockResolvedValueOnce({
+      data: undefined,
+      error: problem(404, 'not-found'),
+      response: errorResponse(404),
+    })
+    const wrapper = await mountConfirmed()
+    await openForm(wrapper)
+    await confirm(wrapper)
+    expect(wrapper.text()).toContain('No pudimos abrir ese enlace')
+  })
+
+  it('un error inesperado muestra el código de soporte y permite reintentar', async () => {
+    postMock.mockResolvedValueOnce({
+      data: undefined,
+      error: problem(500, 'internal-error'),
+      response: errorResponse(500),
+    })
+    const wrapper = await mountConfirmed()
+    await openForm(wrapper)
+    await confirm(wrapper)
+    expect(wrapper.text()).toContain('req-1')
+    expect(wrapper.find('form').exists()).toBe(true)
+  })
+
+  it('no tiene violaciones de axe en el formulario, el rechazo ni el estado cancelado', async () => {
+    const form = await mountConfirmed()
+    await openForm(form)
+    expect(await axe(form.element)).toHaveNoViolations()
+    form.unmount()
+
+    postMock.mockResolvedValueOnce({
+      data: { status: 'cancelled_by_customer' },
+      response: okResponse(),
+    })
+    const done = await mountConfirmed()
+    await openForm(done)
+    await confirm(done)
+    expect(await axe(done.element)).toHaveNoViolations()
   })
 })

@@ -1628,6 +1628,198 @@ func (r *Repository) CancelByBarber(
 	return result, nil
 }
 
+// ---------------------------------------------------------------------------
+// HU-099: cancelación por el cliente con el enlace de su turno (T5)
+// ---------------------------------------------------------------------------
+
+// cancelAppointmentByCustomerOperation identifica la operación de HU-099 para
+// el protocolo de idempotencia (RN-IDE-01, DEC-043), igual que
+// cancelAppointmentByBarberOperation: una clave usada para otra operación no
+// puede reutilizarse aquí.
+const cancelAppointmentByCustomerOperation idempotency.Operation = "cancel_appointment_by_customer"
+
+// cancelAppointmentByCustomerIdempotencyTTL: mismo valor que las demás
+// operaciones de escritura de booking.
+const cancelAppointmentByCustomerIdempotencyTTL = 10 * time.Minute
+
+// customerCancellationResponseWire es el cuerpo almacenado de idempotencia de
+// T5 y también el 200 de la API: deliberadamente solo el estado final, sin
+// identificadores internos ni datos del turno (el cliente ya los tiene y el
+// enlace queda revocado).
+type customerCancellationResponseWire struct {
+	Status string `json:"status"`
+}
+
+var _ booking.CustomerCancellationRepository = (*Repository)(nil)
+
+// readCancellationPolicy lee la política vigente DENTRO de la transacción que
+// ya tiene la fila de la cita bloqueada, para que un cambio de configuración
+// concurrente no pueda quedar a medio camino (RN-CAN-02: aplica desde que se
+// confirma el cambio).
+func readCancellationPolicy(ctx context.Context, q database.Queries, barbershopID string) (booking.CustomerCancellationPolicy, error) {
+	var p booking.CustomerCancellationPolicy
+	err := q.QueryRow(ctx, `
+		SELECT cancellation_deadline_minutes, late_cancellation_client_allowed, late_cancellation_reason_required
+		  FROM barbershop
+		 WHERE id = $1`,
+		barbershopID,
+	).Scan(&p.DeadlineMinutes, &p.LateClientAllowed, &p.LateReasonRequired)
+	return p, err
+}
+
+// updateAppointmentStatusCancelledByCustomer aplica el estado terminal, el
+// motivo y resolved_at en UNA sola sentencia (appointment_resolved_at_ck y
+// appointment_cancellation_reason_ck exigen coherencia entre las tres
+// columnas). reason vacío se guarda como NULL: no se inventa un motivo.
+func updateAppointmentStatusCancelledByCustomer(
+	ctx context.Context,
+	q database.Queries,
+	barbershopID, appointmentID, reason string,
+) error {
+	_, err := q.Exec(ctx, `
+		UPDATE appointment
+		   SET status = 'cancelled_by_customer', resolved_at = now(), cancellation_reason = NULLIF($3, '')
+		 WHERE barbershop_id = $1 AND id = $2`,
+		barbershopID, appointmentID, reason,
+	)
+	return err
+}
+
+// insertAppointmentCancelledByCustomerHistory inserta el evento con actor
+// cliente (la persona dueña de la cita, RN-HIS-01) y su único cambio de
+// estado, en la misma transacción que el UPDATE.
+func insertAppointmentCancelledByCustomerHistory(
+	ctx context.Context,
+	q database.Queries,
+	barbershopID, appointmentID, customerID, reason string,
+) error {
+	var historyID string
+	err := q.QueryRow(ctx, `
+		INSERT INTO appointment_history (
+			barbershop_id, appointment_id, event_type, actor_type, actor_customer_id, reason
+		) VALUES ($1, $2, 'appointment_cancelled_by_customer', 'customer', $3, NULLIF($4, ''))
+		RETURNING id`,
+		barbershopID, appointmentID, customerID, reason,
+	).Scan(&historyID)
+	if err != nil {
+		return err
+	}
+	_, err = q.Exec(ctx, `
+		INSERT INTO appointment_history_change (barbershop_id, history_id, field_name, previous_value, new_value)
+		VALUES ($1, $2, 'status', 'confirmed', 'cancelled_by_customer')`,
+		barbershopID, historyID,
+	)
+	return err
+}
+
+// revokeAppointmentAccessTokens revoca el enlace del cliente al cancelar
+// (DEC-089): desde ese instante el enlace responde el 404 uniforme de HU-098.
+func revokeAppointmentAccessTokens(ctx context.Context, q database.Queries, barbershopID, appointmentID string) error {
+	_, err := q.Exec(ctx, `
+		UPDATE appointment_access_token
+		   SET revoked_at = now()
+		 WHERE barbershop_id = $1 AND appointment_id = $2 AND revoked_at IS NULL`,
+		barbershopID, appointmentID,
+	)
+	return err
+}
+
+// CancelByCustomer implementa booking.CustomerCancellationRepository (HU-099,
+// T5), con la misma estructura transaccional que CancelByBarber: Begin,
+// bloquear la fila, verificar con la fila bloqueada, aplicar estado + motivo +
+// historial + revocación del enlace, Complete. Un rechazo (versión, estado o
+// política) devuelve el error y revierte la transacción completa, incluida la
+// reclamación de idempotencia: no deja ninguna escritura ni consume la clave.
+func (r *Repository) CancelByCustomer(
+	ctx context.Context,
+	barbershopID string,
+	input booking.CancelAppointmentByCustomerInput,
+	key idempotency.Key,
+	fingerprint idempotency.Fingerprint,
+) (booking.CancelAppointmentByCustomerResult, error) {
+	shop, err := database.ValidBarbershopID(barbershopID)
+	if err != nil {
+		return booking.CancelAppointmentByCustomerResult{}, fmt.Errorf("booking/postgres: %w", err)
+	}
+
+	var result booking.CancelAppointmentByCustomerResult
+
+	err = r.db.InTenantTx(ctx, shop, func(ctx context.Context, q database.Queries) error {
+		decision, err := r.coord.Begin(ctx, q, shop, key, cancelAppointmentByCustomerOperation, fingerprint, cancelAppointmentByCustomerIdempotencyTTL)
+		if err != nil {
+			return fmt.Errorf("idempotency begin: %w", err)
+		}
+		result.Decision = decision
+
+		if decision.Outcome != idempotency.OutcomeProceed {
+			if decision.Outcome == idempotency.OutcomeReplay {
+				result.Response = decision.Response
+			}
+			return nil
+		}
+
+		current, found, err := lockAppointmentForReschedule(ctx, q, barbershopID, input.AppointmentID)
+		if err != nil {
+			return err
+		}
+		if !found {
+			return errAppointmentNotFound()
+		}
+
+		switch {
+		case current.status == string(booking.StatusCancelledByCustomer):
+			// Ya cancelada por el cliente (p. ej. una segunda llamada con otra
+			// clave que llegó antes de ver la revocación): éxito sin tocar nada
+			// y sin duplicar el evento de historial (CA-099-05).
+		case current.status != string(booking.StatusConfirmed):
+			return errAppointmentNotConfirmed()
+		default:
+			if booking.EncodeVersionToken(current.id, current.updatedAt) != input.ExpectedVersionToken {
+				return errVersionConflict()
+			}
+			policy, err := readCancellationPolicy(ctx, q, barbershopID)
+			if err != nil {
+				return fmt.Errorf("read cancellation policy: %w", err)
+			}
+			if err := policy.Evaluate(current.startsAt, input.Now, input.Reason); err != nil {
+				return err
+			}
+			if err := updateAppointmentStatusCancelledByCustomer(ctx, q, barbershopID, current.id, input.Reason); err != nil {
+				return err
+			}
+			if err := r.appointmentChanged(ctx, q, barbershopID, current.id); err != nil {
+				return err
+			}
+			if err := insertAppointmentCancelledByCustomerHistory(ctx, q, barbershopID, current.id, current.customerID, input.Reason); err != nil {
+				return err
+			}
+			if err := revokeAppointmentAccessTokens(ctx, q, barbershopID, current.id); err != nil {
+				return err
+			}
+		}
+
+		body, err := json.Marshal(customerCancellationResponseWire{Status: string(booking.StatusCancelledByCustomer)})
+		if err != nil {
+			return fmt.Errorf("marshal customer cancellation: %w", err)
+		}
+		stored := idempotency.StoredResponse{Status: 200, ContentType: "application/json", Body: string(body)}
+
+		ok, err := r.coord.Complete(ctx, q, shop, key, stored)
+		if err != nil {
+			return fmt.Errorf("idempotency complete: %w", err)
+		}
+		if !ok {
+			return fmt.Errorf("idempotency complete: la reclamación ya no estaba in_progress")
+		}
+		result.Response = stored
+		return nil
+	})
+	if err != nil {
+		return booking.CancelAppointmentByCustomerResult{}, err
+	}
+	return result, nil
+}
+
 // completeAppointmentOperation identifica, para el protocolo de
 // idempotencia (RN-IDE-01, DEC-043), el comando T4 manual de HU-067 frente
 // a cualquier otra operación de booking, mismo criterio que

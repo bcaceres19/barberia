@@ -4,6 +4,31 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.43.0 · 2026-11-03
+
+### Añadido
+
+- Cancelación pública (`HU-099`, `T5`). Nueva operación `cancelCustomerAppointment`
+  (`POST /customer/appointments/{token}/cancel`, sin sesión, con
+  `Idempotency-Key` e `If-Match`) y cuerpo opcional `CancelCustomerAppointmentRequest`
+  (`reason`, de hasta 500 caracteres). Responde `200` con
+  `CustomerAppointmentCancelled` (`status: cancelled_by_customer`). Los rechazos
+  de política responden `422` con `code` distinguible: `cancellation-window-closed`
+  (plazo vencido sin política tardía, o turno ya iniciado) y
+  `cancellation-reason-required` (motivo obligatorio ausente o en blanco); versión
+  obsoleta y estado no confirmado responden `409` (`version-conflict`,
+  `invalid-state`); un enlace inexistente, vencido o ya revocado, el `404` uniforme.
+  Cancelar revoca el enlace (`DEC-089`).
+- `CustomerAppointmentResponse` suma `versionToken` (el `If-Match` de la cancelación),
+  `barbershopContactEmail` y `barbershopContactPhone` (contacto público opcional,
+  `null` sin configurar) para mostrar el contacto cuando la política rechaza.
+
+### Compatibilidad
+
+- La operación y los campos son aditivos; los tres campos nuevos de la respuesta
+  de `GET` son obligatorios en la respuesta, no en ninguna solicitud, así que un
+  cliente que ignora propiedades desconocidas no se rompe.
+
 ## 0.42.0 · 2026-11-02
 
 ### Añadido

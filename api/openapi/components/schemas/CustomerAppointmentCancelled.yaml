@@ -1,0 +1,13 @@
+# Respuesta 200 de POST /customer/appointments/{token}/cancel (HU-099).
+# Deliberadamente mínima: el enlace queda revocado (DEC-089), así que no hay
+# una representación posterior que consultar.
+type: object
+additionalProperties: false
+description: Resultado de la cancelación del cliente.
+properties:
+  status:
+    type: string
+    enum: [cancelled_by_customer]
+    description: Estado terminal en el que quedó el turno.
+required:
+  - status

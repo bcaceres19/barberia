@@ -3,18 +3,23 @@
 // (HU-098, CA-098-01 a CA-098-06). Sin mockup asignado: composición libre
 // dentro de NAVA / Tailored Grid (DEC-078). Posee estado y reintento; no
 // conoce la forma RFC 9457 del contrato (eso queda dentro de
-// `api/getCustomerAppointmentApi.ts`). Fuera de alcance a propósito:
-// cuenta, portal, edición, reprogramación o cancelación (HU-099).
-import { computed, onMounted, ref } from 'vue'
+// `api/getCustomerAppointmentApi.ts`). Cancelar el turno es HU-099 (T5). Fuera de
+// alcance a propósito: cuenta, portal, edición y reprogramación.
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { BaseAlert, BaseBadge, BaseButton, NavaWordmark, PageState } from '@/shared/ui'
 import { buildVocabularyFromTerms } from '@/shared/model'
 import { formatInstantInTimezone, formatTimeInTimezone } from '@/shared/time/formatInstant'
 import { getCustomerAppointment } from '../api/getCustomerAppointmentApi'
 import { createReview } from '../api/createReviewApi'
+import { cancelCustomerAppointment } from '../api/cancelCustomerAppointmentApi'
+import AppointmentCancellation from '../components/AppointmentCancellation.vue'
 import AppointmentReview from '../components/AppointmentReview.vue'
+import { newIdempotencyKey } from '../model/idempotencyKey'
 import {
   APPOINTMENT_STATUS_BADGE_VARIANT,
   appointmentStatusLabel,
+  type CancelAppointmentInput,
+  type CancellationRejection,
   type CustomerAppointment,
   type ReviewInput,
 } from '../model/customerAppointmentOutcome'
@@ -36,10 +41,14 @@ type ScreenState =
   | { status: 'unexpected-error'; requestId?: string }
 
 const screenState = ref<ScreenState>({ status: 'loading' })
+// Reloj del dispositivo al cargar: solo alimenta la pista local de la política de
+// cancelación; la decisión real es del servidor (HU-099).
+const nowMs = ref(Date.now())
 
 async function load() {
   screenState.value = { status: 'loading' }
   const outcome = await getCustomerAppointment(props.token)
+  nowMs.value = Date.now()
   switch (outcome.kind) {
     case 'success':
       screenState.value = { status: 'success', appointment: outcome.appointment }
@@ -92,6 +101,81 @@ async function submitReview(input: ReviewInput) {
       reviewError.value = outcome.requestId
         ? `No pudimos guardar tu reseña. Si continúa, comparte este código con soporte: ${outcome.requestId}.`
         : 'No pudimos guardar tu reseña. Inténtalo de nuevo en unos segundos.'
+  }
+}
+
+// Cancelación del turno (HU-099, T5): la página posee el envío y la clave de
+// idempotencia. Se reutiliza la clave solo al reintentar la MISMA intención (mismo
+// motivo) tras un fallo de red o una respuesta inesperada; cualquier otra cosa es un
+// intento nuevo con clave nueva (RN-IDE-01, DEC-043).
+const cancelSubmitting = ref(false)
+const cancelError = ref('')
+const cancelRejection = ref<CancellationRejection>(null)
+const cancelNotice = ref('')
+const justCancelled = ref(false)
+const cancelledNotice = ref<HTMLElement | null>(null)
+let lastCancelAttempt: { reason: string | null; key: string } | null = null
+
+function cancelAttemptKey(reason: string | null): string {
+  if (lastCancelAttempt && lastCancelAttempt.reason === reason) return lastCancelAttempt.key
+  lastCancelAttempt = { reason, key: newIdempotencyKey() }
+  return lastCancelAttempt.key
+}
+
+async function submitCancel(input: CancelAppointmentInput) {
+  if (screenState.value.status !== 'success' || cancelSubmitting.value) return
+  const { appointment } = screenState.value
+  cancelSubmitting.value = true
+  cancelError.value = ''
+  cancelRejection.value = null
+  const outcome = await cancelCustomerAppointment(
+    props.token,
+    appointment.versionToken,
+    cancelAttemptKey(input.reason),
+    input,
+  )
+  cancelSubmitting.value = false
+
+  switch (outcome.kind) {
+    case 'success':
+      lastCancelAttempt = null
+      justCancelled.value = true
+      screenState.value = {
+        status: 'success',
+        appointment: { ...appointment, status: 'cancelled_by_customer', canReview: false },
+      }
+      await nextTick()
+      cancelledNotice.value?.focus()
+      return
+    case 'window-closed':
+    case 'reason-required':
+      lastCancelAttempt = null
+      cancelRejection.value = outcome.kind
+      return
+    case 'validation-error':
+      cancelError.value = 'Revisa el motivo e inténtalo de nuevo.'
+      return
+    case 'changed':
+      lastCancelAttempt = null
+      cancelNotice.value =
+        'Tu turno cambió mientras tanto, así que no lo cancelamos. Esto es lo que figura ahora.'
+      await load()
+      return
+    case 'idempotency-in-progress':
+      cancelError.value =
+        'Tu cancelación sigue en curso. Espera unos segundos e inténtalo de nuevo.'
+      return
+    case 'not-found':
+      lastCancelAttempt = null
+      screenState.value = { status: 'not-found' }
+      return
+    case 'network-error':
+      cancelError.value = 'No pudimos conectar. Revisa tu conexión e inténtalo de nuevo.'
+      return
+    case 'unexpected-error':
+      cancelError.value = outcome.requestId
+        ? `No pudimos cancelar tu turno. Si continúa, comparte este código con soporte: ${outcome.requestId}.`
+        : 'No pudimos cancelar tu turno. Inténtalo de nuevo en unos segundos.'
   }
 }
 
@@ -242,9 +326,32 @@ const unexpectedErrorMessage = computed(() => {
         </div>
       </dl>
 
-      <BaseAlert variant="plain" role="status">
+      <BaseAlert v-if="cancelNotice" variant="warning" role="status">{{ cancelNotice }}</BaseAlert>
+
+      <div
+        v-if="justCancelled"
+        ref="cancelledNotice"
+        class="customer-appointment__cancelled"
+        tabindex="-1"
+      >
+        <BaseAlert variant="success" role="status">
+          Cancelaste tu turno. El horario quedó libre y este enlace ya no funciona.
+        </BaseAlert>
+      </div>
+      <BaseAlert v-else variant="plain" role="status">
         {{ cancellationPolicyLabel }}
       </BaseAlert>
+
+      <AppointmentCancellation
+        v-if="screenState.appointment.status === 'confirmed'"
+        :appointment="screenState.appointment"
+        :vocabulary="v"
+        :now-ms="nowMs"
+        :submitting="cancelSubmitting"
+        :rejection="cancelRejection"
+        :error-message="cancelError"
+        @submit="submitCancel"
+      />
 
       <AppointmentReview
         :can-review="screenState.appointment.canReview"
@@ -295,6 +402,16 @@ const unexpectedErrorMessage = computed(() => {
   align-items: center;
   gap: var(--space-5);
   text-align: center;
+}
+
+.customer-appointment__cancelled {
+  width: 100%;
+  text-align: left;
+}
+
+.customer-appointment__cancelled:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--color-focus);
+  outline-offset: 2px;
 }
 
 .customer-appointment__header {

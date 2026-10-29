@@ -25,6 +25,12 @@ type CustomerAppointmentResponse struct {
 
 	Vocabulary PublicVocabularyResponse `json:"vocabulary"`
 
+	// VersionToken es el If-Match de la cancelación (HU-099); BarbershopContact*
+	// es el contacto público opcional al que acudir si la política la rechaza.
+	VersionToken           string  `json:"versionToken"`
+	BarbershopContactEmail *string `json:"barbershopContactEmail"`
+	BarbershopContactPhone *string `json:"barbershopContactPhone"`
+
 	// CanReview y Review (HU-100): la acción «Calificar» solo se ofrece con el
 	// turno completado y sin reseña; Review es la que el cliente ya dejó.
 	CanReview bool                    `json:"canReview"`
@@ -49,4 +55,11 @@ type PublicVocabularyResponse struct {
 	ProfessionalTerm       string `json:"professionalTerm"`
 	ProfessionalTermPlural string `json:"professionalTermPlural"`
 	ProfessionalTermGender string `json:"professionalTermGender"`
+}
+
+// CancelAppointmentRequest es el cuerpo opcional de la cancelación (HU-099):
+// único campo `reason`. El servidor ignora cualquier intento de fijar estado,
+// actor o tiempo porque el decodificador rechaza campos desconocidos.
+type CancelAppointmentRequest struct {
+	Reason *string `json:"reason"`
 }

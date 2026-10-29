@@ -2353,7 +2353,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | Actor | Cliente con acceso válido a su turno |
 | Depende de | `HU-093`/`HU-094` integradas (satisfecho); `HU-098` integrada (satisfecho, PR #272); `DP-PUB-02` resuelta (`DEC-083`, satisfecho); `DP-PUB-05` resuelta (`DEC-089`, 2026-09-15) |
 | Bloquea | Criterio de salida de B4 y efectos de B5 |
-| Estado | Propuesta; prompt `PROMPT-HU-099-v1` en `draft`, todas las dependencias satisfechas, pendiente de issue real |
+| Estado | Implementada; issue real [#374](https://github.com/bcaceres19/barberia/issues/374), prompt `PROMPT-HU-099-v1` |
 | Riesgo | Evaluar el plazo en el navegador o aplicar mal la política cancela compromisos sin autorización o deja una franja bloqueada. |
 
 **Historia**
@@ -2385,6 +2385,8 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | `CA-099-06` | UI y contrato explican rechazo y contacto seguro; confirmación, espera, error y estado cancelado cumplen responsive, teclado, foco, zoom y axe-core. |
 
 **Pruebas obligatorias:** tabla de política y fronteras temporales; HTTP/idempotencia; PostgreSQL real con dos tenants, atomicidad/liberación y carrera; componente y E2E cancelar→reconsultar franja.
+
+**Decisiones de implementación (sin cambiar los criterios):** el plazo se mide `startsAt - plazo` **inclusive** (el instante exacto cuenta como dentro de plazo); un plazo de `0` trata toda cancelación como tardía (`DEC-083`); con el turno ya iniciado la cancelación propia nunca procede, ni con la política tardía permitida. Cancelar **revoca el enlace** (`DEC-089`): después, `GET` y cualquier repetición con ese enlace responden el `404` uniforme; la confirmación se muestra con la respuesta del propio `POST`. Los rechazos se distinguen por `code` (`cancellation-window-closed`, `cancellation-reason-required`, `version-conflict`, `invalid-state`). El contacto seguro es el contacto público opcional de la barbería (`HU-020`).
 
 **Terminado cuando** el cliente cancela solo cuando está autorizado, deja rastro correcto y libera de inmediato una franja futura.
 

@@ -432,3 +432,86 @@ func TestResolveAppointmentByTokenHash_CanReview_FollowsStatusAndExistingReview(
 		t.Fatalf("completado con reseña: err=%v canReview=%v review=%+v", err, view.CanReview, view.Review)
 	}
 }
+
+func tokenHash(plain string) string {
+	sum := sha256.Sum256([]byte(plain))
+	return hex.EncodeToString(sum[:])
+}
+
+// HU-099: el GET trae lo necesario para el If-Match de la cancelación. El
+// versionToken calculado a partir de la vista debe ser EXACTAMENTE el que
+// booking valida al cancelar (mismo AppointmentID y updated_at).
+func TestResolveAppointmentByTokenHash_ExposesDataForVersionToken(t *testing.T) {
+	db := setupTestDB(t)
+	repo := customeraccesspostgres.New(db)
+	bookingRepo := bookingpostgres.New(db, idempotency.NewSQLCoordinator())
+
+	appointment := createTestAppointment(t, db, shopUno, barberUno, serviceUno, booking.StatusConfirmed)
+	tokenPlain := insertAccessToken(t, db, shopUno, appointment.ID, tokenState{expiresIn: 90 * 24 * time.Hour})
+
+	view, found, err := repo.ResolveAppointmentByTokenHash(context.Background(), tokenHash(tokenPlain))
+	if err != nil || !found {
+		t.Fatalf("ResolveAppointmentByTokenHash: found=%v err=%v", found, err)
+	}
+	detail, ok, err := bookingRepo.GetAppointmentDetail(context.Background(), shopUno, appointment.ID)
+	if err != nil || !ok {
+		t.Fatalf("GetAppointmentDetail: found=%v err=%v", ok, err)
+	}
+	if got := booking.EncodeVersionToken(view.AppointmentID, view.UpdatedAt); got != detail.VersionToken {
+		t.Fatalf("versionToken = %q, want %q", got, detail.VersionToken)
+	}
+}
+
+func TestResolveCancellationTarget_ValidToken_ReturnsInternalIDs(t *testing.T) {
+	db := setupTestDB(t)
+	repo := customeraccesspostgres.New(db)
+
+	appointment := createTestAppointment(t, db, shopUno, barberUno, serviceUno, booking.StatusConfirmed)
+	tokenPlain := insertAccessToken(t, db, shopUno, appointment.ID, tokenState{expiresIn: 90 * 24 * time.Hour})
+
+	target, found, err := repo.ResolveCancellationTarget(context.Background(), tokenHash(tokenPlain))
+	if err != nil || !found {
+		t.Fatalf("ResolveCancellationTarget: found=%v err=%v", found, err)
+	}
+	if target.BarbershopID != shopUno || target.AppointmentID != appointment.ID {
+		t.Fatalf("target = %+v", target)
+	}
+}
+
+func TestResolveCancellationTarget_UnusableTokensAreAllNotFound(t *testing.T) {
+	db := setupTestDB(t)
+	repo := customeraccesspostgres.New(db)
+
+	appointment := createTestAppointment(t, db, shopUno, barberUno, serviceUno, booking.StatusConfirmed)
+	cases := map[string]string{
+		"vencido":     insertAccessToken(t, db, shopUno, appointment.ID, tokenState{expired: true}),
+		"revocado":    insertAccessToken(t, db, shopUno, appointment.ID, tokenState{expiresIn: 90 * 24 * time.Hour, revoked: true}),
+		"inexistente": "token-que-nunca-se-emitio",
+	}
+	for name, plain := range cases {
+		_, found, err := repo.ResolveCancellationTarget(context.Background(), tokenHash(plain))
+		if err != nil || found {
+			t.Fatalf("%s: found=%v err=%v, se esperaba not found sin error", name, found, err)
+		}
+	}
+}
+
+// RN-TEN-01: cada token resuelve únicamente a la cita de SU barbería.
+func TestResolveCancellationTarget_TenantIsolation(t *testing.T) {
+	db := setupTestDB(t)
+	repo := customeraccesspostgres.New(db)
+
+	apptUno := createTestAppointment(t, db, shopUno, barberUno, serviceUno, booking.StatusConfirmed)
+	tokenUno := insertAccessToken(t, db, shopUno, apptUno.ID, tokenState{expiresIn: 90 * 24 * time.Hour})
+	apptDos := createTestAppointment(t, db, shopDos, barberDos, serviceDos, booking.StatusConfirmed)
+	tokenDos := insertAccessToken(t, db, shopDos, apptDos.ID, tokenState{expiresIn: 90 * 24 * time.Hour})
+
+	uno, foundUno, err := repo.ResolveCancellationTarget(context.Background(), tokenHash(tokenUno))
+	if err != nil || !foundUno || uno.BarbershopID != shopUno || uno.AppointmentID != apptUno.ID {
+		t.Fatalf("token de shopUno: %+v found=%v err=%v", uno, foundUno, err)
+	}
+	dos, foundDos, err := repo.ResolveCancellationTarget(context.Background(), tokenHash(tokenDos))
+	if err != nil || !foundDos || dos.BarbershopID != shopDos || dos.AppointmentID != apptDos.ID {
+		t.Fatalf("token de shopDos: %+v found=%v err=%v", dos, foundDos, err)
+	}
+}

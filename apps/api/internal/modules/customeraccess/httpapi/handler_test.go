@@ -27,6 +27,15 @@ type fakeRepository struct {
 	found bool
 	err   error
 	calls []string
+
+	target      customeraccess.CancellationTarget
+	targetFound bool
+	targetCalls []string
+}
+
+func (f *fakeRepository) ResolveCancellationTarget(_ context.Context, tokenHash string) (customeraccess.CancellationTarget, bool, error) {
+	f.targetCalls = append(f.targetCalls, tokenHash)
+	return f.target, f.targetFound, f.err
 }
 
 func (f *fakeRepository) ResolveAppointmentByTokenHash(_ context.Context, tokenHash string) (customeraccess.AppointmentView, bool, error) {

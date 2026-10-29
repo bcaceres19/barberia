@@ -185,3 +185,28 @@ func TestTranslate_MaxBytesError_MapsToPayloadTooLarge(t *testing.T) {
 		t.Fatalf("expected payload-too-large code, got %q", p.Code)
 	}
 }
+
+func TestTranslate_CancellationPolicyRejections_Map422WithDistinctCodes(t *testing.T) {
+	cases := []struct {
+		name string
+		err  error
+		code string
+	}{
+		{"plazo vencido", apperr.CancellationWindowClosed("fuera de plazo"), "cancellation-window-closed"},
+		{"motivo obligatorio", apperr.CancellationReasonRequired("falta el motivo"), "cancellation-reason-required"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := httpserver.Translate(tc.err, "req-99")
+			if p.Status != http.StatusUnprocessableEntity {
+				t.Fatalf("expected 422, got %d", p.Status)
+			}
+			if p.Code != tc.code {
+				t.Fatalf("expected code %q, got %q", tc.code, p.Code)
+			}
+			if p.Detail == "" {
+				t.Fatal("expected the safe message to pass through")
+			}
+		})
+	}
+}
