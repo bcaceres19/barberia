@@ -12,8 +12,8 @@ issue: 357
 issue_url: "https://github.com/bcaceres19/barberia/issues/357"
 suggested_issue_title: "feat(public-booking): implementar HU-100 reseñas internas por barbero"
 branch: "feat/357-hu100-resenas-internas"
-pr: null
-pr_url: null
+pr: 371
+pr_url: "https://github.com/bcaceres19/barberia/pull/371"
 depends_on: ["HU-098 integrada (satisfecho, PR #272)"]
 rules: ["RN-TEN-01", "RN-DAT-02"]
 decisions: ["DEC-089", "DEC-104", "DEC-128"]
