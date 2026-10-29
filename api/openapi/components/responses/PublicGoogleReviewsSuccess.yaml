@@ -1,0 +1,34 @@
+# Respuesta 200 de GET /public/barbershops/{slug}/reviews (HU-101).
+description: Calificación y reseñas de Google del negocio, o la estructura vacía explícita.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/PublicGoogleReviews.yaml'
+    examples:
+      conFicha:
+        summary: Barbería con ficha de Google y reseñas
+        value:
+          rating: 4.7
+          ratingCount: 128
+          mapsUrl: https://maps.google.com/?cid=1234567890
+          reviews:
+            - authorName: Camila R.
+              authorUrl: https://www.google.com/maps/contrib/100000000000000000000
+              rating: 5
+              text: Excelente atención y muy puntuales.
+              relativeTime: hace un mes
+            - authorName: Andrés M.
+              authorUrl: null
+              rating: 4
+              text: null
+              relativeTime: hace 3 meses
+      sinNadaQueMostrar:
+        summary: Sin ficha, sin credencial o consulta fallida
+        value:
+          rating: null
+          ratingCount: 0
+          mapsUrl: null
+          reviews: []

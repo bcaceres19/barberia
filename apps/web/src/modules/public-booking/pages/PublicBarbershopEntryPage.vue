@@ -10,6 +10,7 @@ import { isMapAvailable } from '@/shared/model/mapEmbed'
 import { LocationMap } from '@/shared/ui'
 import { formatInstantInTimezone } from '@/shared/time/formatInstant'
 import BookingStateScreen from '../components/BookingStateScreen.vue'
+import GoogleReviews from '../components/GoogleReviews.vue'
 import { loadPublicProfile } from '../model/publicProfile'
 import type { PublicBarbershopProfile } from '../model/barbershopProfileOutcome'
 import { usePublicVocabulary } from '../model/publicVocabulary'
@@ -125,6 +126,9 @@ const failedRequestId = computed(() =>
         :address="screenState.profile.location.address"
       />
     </section>
+
+    <!-- DEC-129: solo con ficha de Google y datos; si no, nada, sin error. -->
+    <GoogleReviews :slug="props.slug" />
 
     <RouterLink
       :to="{ name: 'reserva-publica-servicios', params: { slug: props.slug } }"

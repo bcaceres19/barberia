@@ -36,6 +36,7 @@ const location = {
   latitude: 4.598056,
   longitude: -74.076111,
   offersHomeService: false,
+  googlePlaceId: null,
 }
 // El servidor siempre devuelve la marca junto con la ubicación (DEC-130).
 const body = { ...brand, ...location }
@@ -79,6 +80,7 @@ describe('brandApi.fetchBrand', () => {
       latitude: null,
       longitude: null,
       offersHomeService: false,
+      googlePlaceId: null,
     }
     getMock.mockResolvedValueOnce(ok({ ...brand, ...empty }))
 
@@ -152,6 +154,21 @@ describe('brandApi.saveBrand', () => {
 
     await saveBrand(brand, { address: 'Calle 1 # 2-3' })
     expect(patchMock.mock.calls[1]![1].body).not.toHaveProperty('offersHomeService')
+  })
+
+  it('sends the Google listing only when it changed, and null removes it (DEC-129)', async () => {
+    patchMock.mockResolvedValue(ok({ ...body, googlePlaceId: 'ChIJabc' }))
+
+    const outcome = await saveBrand(brand, { googlePlaceId: 'ChIJabc' })
+
+    expect(patchMock.mock.calls[0]![1].body).toMatchObject({ googlePlaceId: 'ChIJabc' })
+    expect(outcome).toMatchObject({ kind: 'success', location: { googlePlaceId: 'ChIJabc' } })
+
+    await saveBrand(brand, { address: 'Calle 1 # 2-3' })
+    expect(patchMock.mock.calls[1]![1].body).not.toHaveProperty('googlePlaceId')
+
+    await saveBrand(brand, { googlePlaceId: null })
+    expect(patchMock.mock.calls[2]![1].body).toHaveProperty('googlePlaceId', null)
   })
 
   it('never sends coordinates: the server computes them', async () => {

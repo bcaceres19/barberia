@@ -785,6 +785,32 @@ Módulo `internal/modules/reviews` (sin dependencias de otros módulos): una res
 `BarberResponse` y `PublicBarberResponse`. El enlace del turno vive 90 días, que acota cuándo puede
 reseñarse.
 
+### Reseñas de Google del negocio (DEC-129, HU-101)
+
+`GET /public/barbershops/{slug}/reviews` (sin sesión) devuelve la calificación, el total, el
+enlace a la ficha y hasta 5 reseñas de la ficha de Google de la barbería. El Place ID se guarda en
+`barbershop.google_place_id` y se edita con `googlePlaceId` en `PATCH /private/settings/brand`
+(`null` o vacío lo quita; una forma imposible responde `422`; no se consulta a Google al guardar).
+
+Adaptador `internal/modules/publicbooking/google` (el único que habla con Google Places (New)):
+
+- **Credencial**: la misma `GOOGLE_MAPS_API_KEY` de servidor de la ubicación, con **Places API
+  (New)** habilitada además de Geocoding. Viaja en la cabecera `X-Goog-Api-Key`, nunca en una URL ni
+  en un registro, y nunca llega al navegador (`CA-101-04`).
+- **Caché**: en memoria, 6 horas por ficha (`CA-101-05`); el texto de una reseña no se persiste. Una
+  sola llamada por ficha aunque haya visitas simultáneas; un fallo se recuerda 1 minuto (no hay
+  reintento síncrono, y una cuota agotada no se golpea en cada visita). Tiempo máximo de consulta: 3 s.
+- **Degradación**: sin ficha, sin credencial o ante cualquier fallo (red, cuota, identificador
+  inexistente) responde `200` con `{"rating":null,"ratingCount":0,"mapsUrl":null,"reviews":[]}` y
+  registra la causa solo en el servidor (`CA-101-01`, `CA-101-03`). Solo un enlace inválido o no
+  publicable es `404` (el uniforme de `HU-090`).
+- **Saneado**: se descartan calificaciones fuera de 1–5 y los enlaces que no sean `https`, y se
+  acotan nombres y textos; el Place ID nunca se devuelve.
+
+Sin `GOOGLE_MAPS_API_KEY`, en `APP_ENVIRONMENT=local`/`test` se usa una ficha simulada y fija
+(autores marcados «simulada»); en cualquier otro ambiente la integración queda desactivada y el API
+lo avisa al arrancar.
+
 ### Servicio a domicilio (DEC-131, HU-103)
 
 Interruptor general `barbershop.offers_home_service` (`PATCH /private/settings/brand`, campo

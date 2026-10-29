@@ -22,7 +22,7 @@ func restoreBrand(t *testing.T, db *database.DB, shop string) {
 				        professional_term = 'barbero', professional_term_plural = 'barberos',
 				        professional_term_gender = 'masculine',
 				        has_physical_location = true, address = NULL, latitude = NULL, longitude = NULL,
-				        offers_home_service = false
+				        offers_home_service = false, google_place_id = NULL
 				  WHERE id = $1`, shop)
 			return err
 		})
@@ -364,5 +364,50 @@ func TestBrandUpdate_OffersHomeService_TogglesAndNeverCrossesTenants(t *testing.
 	res, err = repo.Update(ctx, shopA, salonBrand(), shops.LocationWrite{OffersHomeService: &off})
 	if err != nil || res.Brand.Location.OffersHomeService {
 		t.Fatalf("apagar: %+v err=%v", res.Brand.Location, err)
+	}
+}
+
+// TestBrandUpdate_GooglePlaceID_SavesKeepsRemovesAndNeverCrossesTenants cubre
+// DEC-129: la ficha nace vacía, se guarda, ausente la conserva, un valor nulo la
+// quita, la base rechaza una forma imposible y la de A nunca se ve en B.
+func TestBrandUpdate_GooglePlaceID_SavesKeepsRemovesAndNeverCrossesTenants(t *testing.T) {
+	db := setupTestDB(t)
+	repo := shopspostgres.NewBrandRepository(db)
+	restoreBrand(t, db, shopA)
+	restoreBrand(t, db, shopB)
+	ctx := context.Background()
+
+	initial, _, err := repo.Get(ctx, shopA)
+	if err != nil || initial.Location.GooglePlaceID != nil {
+		t.Fatalf("una barbería nueva no tiene ficha: %+v err=%v", initial.Location, err)
+	}
+
+	res, err := repo.Update(ctx, shopA, salonBrand(), shops.LocationWrite{
+		ReplaceGooglePlaceID: true, GooglePlaceID: str("ChIJN1t_tDeuEmsRUsoyG83frY4"),
+	})
+	if err != nil || res.Brand.Location.GooglePlaceID == nil || *res.Brand.Location.GooglePlaceID != "ChIJN1t_tDeuEmsRUsoyG83frY4" {
+		t.Fatalf("guardar: %+v err=%v", res.Brand.Location, err)
+	}
+
+	// Ausente conserva la ficha, también al cambiar solo la dirección.
+	res, err = repo.Update(ctx, shopA, salonBrand(), shops.LocationWrite{ReplaceAddress: true, Address: str("Calle 1"), Latitude: f64(1), Longitude: f64(2)})
+	if err != nil || res.Brand.Location.GooglePlaceID == nil {
+		t.Fatalf("ausente debe conservar la ficha: %+v err=%v", res.Brand.Location, err)
+	}
+
+	gotB, _, err := repo.Get(ctx, shopB)
+	if err != nil || gotB.Location.GooglePlaceID != nil {
+		t.Fatalf("la ficha de A no debe verse en B: %+v err=%v", gotB.Location, err)
+	}
+
+	if _, err := repo.Update(ctx, shopA, salonBrand(), shops.LocationWrite{
+		ReplaceGooglePlaceID: true, GooglePlaceID: str("no/valido"),
+	}); err == nil {
+		t.Fatal("la base debe rechazar un Place ID con una forma imposible")
+	}
+
+	res, err = repo.Update(ctx, shopA, salonBrand(), shops.LocationWrite{ReplaceGooglePlaceID: true})
+	if err != nil || res.Brand.Location.GooglePlaceID != nil {
+		t.Fatalf("quitar: %+v err=%v", res.Brand.Location, err)
 	}
 }

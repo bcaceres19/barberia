@@ -23,6 +23,7 @@ content:
           latitude: null
           longitude: null
           offersHomeService: false
+          googlePlaceId: null
       salonDeBelleza:
         summary: Salón con estilistas, acento esmeralda y local geocodificado
         value:
@@ -38,6 +39,7 @@ content:
           latitude: 4.598056
           longitude: -74.076111
           offersHomeService: true
+          googlePlaceId: ChIJN1t_tDeuEmsRUsoyG83frY4
       barberoIndividual:
         summary: "Usuario con el rol independiente: panel individual completo"
         value:
@@ -53,6 +55,7 @@ content:
           latitude: null
           longitude: null
           offersHomeService: false
+          googlePlaceId: null
       empleado:
         summary: "Usuario con el rol empleado: panel individual limitado"
         value:
@@ -68,3 +71,4 @@ content:
           latitude: null
           longitude: null
           offersHomeService: false
+          googlePlaceId: null

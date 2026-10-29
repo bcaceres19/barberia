@@ -592,3 +592,110 @@ func TestGetPublicBarberPhotoHandler_NotFound_ReturnsUniform404(t *testing.T) {
 		}
 	}
 }
+
+type fakeReviewsProvider struct {
+	reviews publicbooking.GoogleReviews
+	err     error
+	calls   int
+}
+
+func (f *fakeReviewsProvider) Fetch(context.Context, string) (publicbooking.GoogleReviews, error) {
+	f.calls++
+	return f.reviews, f.err
+}
+
+func serveGoogleReviews(t *testing.T, repo *fakeRepository, provider publicbooking.GoogleReviewsProvider) *httptest.ResponseRecorder {
+	t.Helper()
+	service := publicbooking.NewService(repo)
+	h := httpapi.NewGetPublicGoogleReviewsHandler(publicbooking.NewGoogleReviewsService(service, provider, nil))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, requestWithSlug("barberia-ejemplo"))
+	return rec
+}
+
+func TestGetPublicGoogleReviewsHandler_Success_ReturnsRatingAndAttributedReviews(t *testing.T) {
+	rating := 4.7
+	text, url := "Excelente atención.", "https://www.google.com/maps/contrib/1"
+	maps := "https://maps.google.com/?cid=1"
+	provider := &fakeReviewsProvider{reviews: publicbooking.GoogleReviews{
+		Rating: &rating, RatingCount: 128, MapsURL: &maps,
+		Reviews: []publicbooking.GoogleReview{{AuthorName: "Camila R.", AuthorURL: &url, Rating: 5, Text: &text}},
+	}}
+	place := "ChIJabc"
+	repo := &fakeRepository{found: true, profile: publicbooking.BarbershopProfile{GooglePlaceID: &place}}
+
+	rec := serveGoogleReviews(t, repo, provider)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var body map[string]any
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if body["rating"] != 4.7 || body["ratingCount"] != float64(128) || body["mapsUrl"] != maps {
+		t.Fatalf("resumen mal serializado: %v", body)
+	}
+	reviews, _ := body["reviews"].([]any)
+	if len(reviews) != 1 {
+		t.Fatalf("expected 1 review, got %v", body["reviews"])
+	}
+	first := reviews[0].(map[string]any)
+	// Forma exacta del contrato: las cinco claves siempre presentes (null explícito).
+	for _, k := range []string{"authorName", "authorUrl", "rating", "text", "relativeTime"} {
+		if _, ok := first[k]; !ok {
+			t.Fatalf("la reseña debe traer %q siempre: %v", k, first)
+		}
+	}
+	if first["authorName"] != "Camila R." || first["relativeTime"] != nil {
+		t.Fatalf("reseña mal serializada: %v", first)
+	}
+}
+
+func TestGetPublicGoogleReviewsHandler_NothingToShow_IsTheExplicitEmptyStructure(t *testing.T) {
+	place := "ChIJabc"
+	cases := map[string]struct {
+		profile  publicbooking.BarbershopProfile
+		provider publicbooking.GoogleReviewsProvider
+	}{
+		"sin ficha":        {profile: publicbooking.BarbershopProfile{}, provider: &fakeReviewsProvider{}},
+		"sin credencial":   {profile: publicbooking.BarbershopProfile{GooglePlaceID: &place}, provider: nil},
+		"consulta fallida": {profile: publicbooking.BarbershopProfile{GooglePlaceID: &place}, provider: &fakeReviewsProvider{err: publicbooking.ErrGoogleReviewsUnavailable}},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			rec := serveGoogleReviews(t, &fakeRepository{found: true, profile: tc.profile}, tc.provider)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("CA-101-03: nunca un error visible, got %d: %s", rec.Code, rec.Body.String())
+			}
+			want := `{"rating":null,"ratingCount":0,"mapsUrl":null,"reviews":[]}`
+			if got := strings.TrimSpace(rec.Body.String()); got != want {
+				t.Fatalf("expected %s, got %s", want, got)
+			}
+		})
+	}
+}
+
+func TestGetPublicGoogleReviewsHandler_UnknownSlug_Is404AndNeverCallsGoogle(t *testing.T) {
+	provider := &fakeReviewsProvider{}
+	rec := serveGoogleReviews(t, &fakeRepository{found: false}, provider)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if provider.calls != 0 {
+		t.Fatal("sin barbería no se consulta a Google")
+	}
+}
+
+func TestGetPublicGoogleReviewsHandler_NeverExposesThePlaceIDOrAnyKey(t *testing.T) {
+	place := "ChIJsecretoDeLaFicha"
+	rating := 4.0
+	provider := &fakeReviewsProvider{reviews: publicbooking.GoogleReviews{Rating: &rating, Reviews: []publicbooking.GoogleReview{}}}
+	rec := serveGoogleReviews(t, &fakeRepository{found: true, profile: publicbooking.BarbershopProfile{GooglePlaceID: &place}}, provider)
+
+	if strings.Contains(rec.Body.String(), place) || strings.Contains(strings.ToLower(rec.Body.String()), "key") {
+		t.Fatalf("la respuesta no debe contener el Place ID ni claves: %s", rec.Body.String())
+	}
+}

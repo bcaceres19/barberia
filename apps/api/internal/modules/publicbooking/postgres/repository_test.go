@@ -815,3 +815,42 @@ func TestResolveBySlug_OffersHomeService_FollowsTheShopSwitchOnly(t *testing.T) 
 		t.Fatal("RN-TEN-01: el interruptor de slugUno se filtró a slugDos")
 	}
 }
+
+// TestResolveBySlug_GooglePlaceID_FollowsTheShopOnly cubre DEC-129 en la capa de
+// datos: el perfil que usa el servidor trae la ficha de SU barbería y nunca la de
+// otra (RN-TEN-01); el DTO público no la expone (contract_test.go).
+func TestResolveBySlug_GooglePlaceID_FollowsTheShopOnly(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+	ctx := context.Background()
+
+	before, _, err := repo.ResolveBySlug(ctx, slugUno)
+	if err != nil || before.GooglePlaceID != nil {
+		t.Fatalf("una barbería nueva no tiene ficha: %+v err=%v", before, err)
+	}
+
+	id, found, err := repo.ResolveBarbershopID(ctx, slugUno)
+	if err != nil || !found {
+		t.Fatalf("ResolveBarbershopID: found=%v err=%v", found, err)
+	}
+	set := func(placeID *string) error {
+		return db.InTenantTx(ctx, database.BarbershopID(id), func(ctx context.Context, q database.Queries) error {
+			_, err := q.Exec(ctx, `UPDATE barbershop SET google_place_id = $2 WHERE id = $1`, id, placeID)
+			return err
+		})
+	}
+	want := "ChIJN1t_tDeuEmsRUsoyG83frY4"
+	if err := set(&want); err != nil {
+		t.Fatalf("guardar ficha: %v", err)
+	}
+	t.Cleanup(func() { _ = set(nil) })
+
+	p, _, _ := repo.ResolveBySlug(ctx, slugUno)
+	if p.GooglePlaceID == nil || *p.GooglePlaceID != want {
+		t.Fatalf("CA-101-02: el perfil debe traer la ficha configurada: %v", p.GooglePlaceID)
+	}
+	other, _, _ := repo.ResolveBySlug(ctx, slugDos)
+	if other.GooglePlaceID != nil {
+		t.Fatalf("RN-TEN-01: la ficha de slugUno se filtró a slugDos: %q", *other.GooglePlaceID)
+	}
+}

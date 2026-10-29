@@ -177,3 +177,24 @@ type AvailabilityResponse struct {
 	Timezone        string                     `json:"timezone"`
 	SlotGridMinutes int                        `json:"slotGridMinutes"`
 }
+
+// PublicGoogleReviewsResponse es la forma exacta del componente OpenAPI
+// PublicGoogleReviews.yaml (HU-101, DEC-129). La estructura vacía explícita
+// (rating null, ratingCount 0, mapsUrl null, reviews []) significa «nada que
+// mostrar»; reviews nunca es null.
+type PublicGoogleReviewsResponse struct {
+	Rating      *float64                     `json:"rating"`
+	RatingCount int                          `json:"ratingCount"`
+	MapsURL     *string                      `json:"mapsUrl"`
+	Reviews     []PublicGoogleReviewResponse `json:"reviews"`
+}
+
+// PublicGoogleReviewResponse es la forma exacta de PublicGoogleReview.yaml: una
+// reseña de Google con la atribución a su autor.
+type PublicGoogleReviewResponse struct {
+	AuthorName   string  `json:"authorName"`
+	AuthorURL    *string `json:"authorUrl"`
+	Rating       int     `json:"rating"`
+	Text         *string `json:"text"`
+	RelativeTime *string `json:"relativeTime"`
+}

@@ -608,3 +608,40 @@
         $ref: '../components/responses/NotFoundProblem.yaml'
       "500":
         $ref: '../components/responses/InternalErrorProblem.yaml'
+
+/public/barbershops/{slug}/reviews:
+  get:
+    tags: [PublicBooking]
+    summary: Leer la calificación y las reseñas de Google del negocio
+    description: >
+      Devuelve la calificación, el total y hasta 5 reseñas de la ficha de Google
+      de la barbería (HU-101, `CA-101-02`, `DEC-129`), sin sesión. El servidor
+      consulta a Google Places con su propia clave (`CA-101-04`: nunca llega al
+      navegador) y guarda el resultado 6 horas en memoria (`CA-101-05`); el texto
+      de una reseña no se persiste. Sin `googlePlaceId`, sin credencial de Google
+      o ante una consulta fallida (red, cuota agotada, identificador inválido)
+      responde `200` con la estructura vacía explícita, nunca un error visible
+      (`CA-101-01`, `CA-101-03`). Un `slug` inválido o de una barbería no
+      publicable responde el mismo `404` uniforme (`CA-090-02`, `RN-TEN-01`).
+    operationId: getPublicGoogleReviews
+    security: []
+    x-business-rules: [RN-TEN-01]
+    x-decisions: [DEC-024, DEC-082, DEC-110, DEC-129]
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        description: Identificador del enlace público de reservas (DEC-082).
+        schema:
+          type: string
+          maxLength: 100
+        examples:
+          slug:
+            value: barberia-ejemplo
+    responses:
+      "200":
+        $ref: '../components/responses/PublicGoogleReviewsSuccess.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

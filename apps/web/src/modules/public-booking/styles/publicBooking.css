@@ -1770,3 +1770,105 @@
   overflow-wrap: anywhere;
   color: var(--pb-text);
 }
+
+/* Reseñas de Google del negocio (HU-101, DEC-129): resumen, lista bajo demanda y
+   atribución. Mismo lenguaje que .pb-reviews. */
+.pb-google {
+  max-width: 560px;
+  margin: var(--space-8) 0 0;
+  color: var(--pb-text);
+}
+
+.pb-google__title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pb-brass);
+}
+
+.pb-google__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+}
+
+.pb-google__score {
+  margin: 0;
+  font-size: var(--font-size-body-sm);
+  color: var(--pb-muted);
+}
+
+.pb-google__score strong {
+  font-size: var(--font-size-body);
+  color: var(--pb-text);
+}
+
+.pb-google__toggle {
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  margin-left: calc(var(--space-2) * -1);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-body-sm);
+  color: var(--pb-brass);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.pb-google a {
+  color: var(--pb-brass);
+  text-underline-offset: 3px;
+}
+
+.pb-google__toggle:focus-visible,
+.pb-google a:focus-visible {
+  outline: 2px solid var(--pb-brass);
+  outline-offset: 2px;
+}
+
+.pb-google__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-3) 0 0;
+  margin: 0;
+  list-style: none;
+}
+
+.pb-google__item {
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--pb-line);
+}
+
+.pb-google__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+  font-size: var(--font-size-body-sm);
+}
+
+.pb-google__when {
+  font-size: var(--font-size-caption, 13px);
+  color: var(--pb-soft);
+}
+
+.pb-google__text {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-body-sm);
+  line-height: var(--font-size-body-sm-line);
+  overflow-wrap: anywhere;
+  color: var(--pb-text);
+}
+
+.pb-google__attribution {
+  margin: var(--space-3) 0 0;
+  font-size: var(--font-size-caption, 13px);
+  color: var(--pb-soft);
+}

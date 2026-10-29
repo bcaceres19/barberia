@@ -16,6 +16,8 @@ export interface LocationSettings {
   longitude: number | null
   /** Interruptor general del servicio a domicilio (DEC-131, HU-103). */
   offersHomeService: boolean
+  /** Place ID de la ficha de Google (DEC-129, HU-101); `null` sin ficha. */
+  googlePlaceId: string | null
 }
 
 /** Cambio de ubicación a enviar: lo ausente no se toca; `address: null` la quita. */
@@ -23,6 +25,8 @@ export interface LocationChange {
   hasPhysicalLocation?: boolean
   address?: string | null
   offersHomeService?: boolean
+  /** `null` quita la ficha; ausente la conserva. */
+  googlePlaceId?: string | null
 }
 
 export const DEFAULT_LOCATION: LocationSettings = {
@@ -31,6 +35,7 @@ export const DEFAULT_LOCATION: LocationSettings = {
   latitude: null,
   longitude: null,
   offersHomeService: false,
+  googlePlaceId: null,
 }
 
 export type FetchBrandOutcome =

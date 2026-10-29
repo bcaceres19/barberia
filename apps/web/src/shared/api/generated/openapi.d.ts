@@ -184,6 +184,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/barbershops/{slug}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Leer la calificación y las reseñas de Google del negocio
+         * @description Devuelve la calificación, el total y hasta 5 reseñas de la ficha de Google de la barbería (HU-101, `CA-101-02`, `DEC-129`), sin sesión. El servidor consulta a Google Places con su propia clave (`CA-101-04`: nunca llega al navegador) y guarda el resultado 6 horas en memoria (`CA-101-05`); el texto de una reseña no se persiste. Sin `googlePlaceId`, sin credencial de Google o ante una consulta fallida (red, cuota agotada, identificador inválido) responde `200` con la estructura vacía explícita, nunca un error visible (`CA-101-01`, `CA-101-03`). Un `slug` inválido o de una barbería no publicable responde el mismo `404` uniforme (`CA-090-02`, `RN-TEN-01`).
+         */
+        get: operations["getPublicGoogleReviews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/public/webhooks/meta/whatsapp": {
         parameters: {
             query?: never;
@@ -1554,6 +1574,11 @@ export interface components {
             longitude: number | null;
             /** @description Interruptor general del servicio a domicilio (`DEC-131`). Con `true`, la reserva pública ofrece «a domicilio» para cualquier servicio. */
             offersHomeService: boolean;
+            /**
+             * @description Place ID de la ficha de Google de la barbería (`DEC-129`); `null` sin ficha. Con él la reserva pública muestra la calificación y las reseñas de Google.
+             * @example ChIJN1t_tDeuEmsRUsoyG83frY4
+             */
+            googlePlaceId: string | null;
         };
         /** @description Marca y vocabulario a guardar. Los seis campos de la marca viajan siempre presentes. No incluye `panelProfile`: el panel lo deciden los roles del usuario (`DEC-134`). La ubicación (`hasPhysicalLocation`, `address`) es opcional: ausente no la toca (`DEC-130`). */
         UpdateBrandRequest: {
@@ -1572,6 +1597,11 @@ export interface components {
             address?: string | null;
             /** @description Interruptor general del servicio a domicilio (`DEC-131`). Ausente conserva el valor; apagarlo no afecta los turnos ya creados con domicilio. */
             offersHomeService?: boolean;
+            /**
+             * @description Place ID de la ficha de Google (`DEC-129`). Ausente conserva la ficha; `null` o vacío la quita; un valor con letras, números, `-` o `_` (sin espacios ni símbolos) la guarda y cualquier otra forma responde `422`. No se consulta a Google al guardar: un identificador bien formado pero inexistente solo oculta las reseñas en la reserva pública.
+             * @example ChIJN1t_tDeuEmsRUsoyG83frY4
+             */
+            googlePlaceId?: string | null;
         };
         /**
          * @description Color de acento del panel: `brass` (el latón NAVA, valor inicial), `emerald`, `sapphire`, `ruby`, `amethyst` o `copper`.
@@ -2260,6 +2290,52 @@ export interface components {
              */
             ratingCount: number;
             items: components["schemas"]["PublicReview"][];
+        };
+        /** @description Reseña pública de la ficha de Google del negocio, tal como la entrega Google Places. La atribución al autor y a Google es obligatoria al mostrarla. No se persiste: vive solo en la caché de servidor de 6 horas. */
+        PublicGoogleReview: {
+            /**
+             * @description Nombre público del autor en Google.
+             * @example Camila R.
+             */
+            authorName: string;
+            /**
+             * Format: uri
+             * @description Perfil del autor en Google Maps; `null` si Google no lo entrega.
+             * @example https://www.google.com/maps/contrib/100000000000000000000
+             */
+            authorUrl: string | null;
+            /** @example 5 */
+            rating: number;
+            /**
+             * @description Texto de la reseña; `null` si el autor solo calificó.
+             * @example Excelente atención y muy puntuales.
+             */
+            text: string | null;
+            /**
+             * @description Cuándo se publicó, ya redactado por Google en español («hace un mes»); `null` si no lo entrega.
+             * @example hace un mes
+             */
+            relativeTime: string | null;
+        };
+        /** @description Calificación, total y hasta 5 reseñas de la ficha de Google de la barbería. La respuesta vacía explícita (`rating: null`, `ratingCount: 0`, `mapsUrl: null`, `reviews: []`) significa «no hay nada que mostrar» y cubre, sin distinguirlos, una barbería sin ficha configurada, un servidor sin credencial de Google y una consulta fallida (red, cuota agotada, identificador inválido, `CA-101-03`): nunca un error visible para el cliente. */
+        PublicGoogleReviews: {
+            /**
+             * @description Calificación promedio de Google (hasta 1 decimal), o `null` si no hay datos.
+             * @example 4.7
+             */
+            rating: number | null;
+            /**
+             * @description Total de calificaciones en Google (puede superar las reseñas devueltas).
+             * @example 128
+             */
+            ratingCount: number;
+            /**
+             * Format: uri
+             * @description Enlace a la ficha real en Google Maps, destino de la atribución; `null` sin datos.
+             * @example https://maps.google.com/?cid=1234567890
+             */
+            mapsUrl: string | null;
+            reviews: components["schemas"]["PublicGoogleReview"][];
         };
         MetaWhatsAppWebhookRequest: {
             /**
@@ -4025,6 +4101,16 @@ export interface components {
                 "application/json": components["schemas"]["PublicReviewList"];
             };
         };
+        /** @description Calificación y reseñas de Google del negocio, o la estructura vacía explícita. */
+        PublicGoogleReviewsSuccess: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["PublicGoogleReviews"];
+            };
+        };
         /** @description La solicitud fue recibida. Si la cuenta existe y tiene el teléfono verificado, se envía un código por WhatsApp oficial y correo; en cualquier otro caso no ocurre ningún envío, sin que la respuesta lo revele. */
         RecoveryRequestAccepted: {
             headers: {
@@ -4920,6 +5006,23 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["PublicReviewListSuccess"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getPublicGoogleReviews: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador del enlace público de reservas (DEC-082). */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["PublicGoogleReviewsSuccess"];
             404: components["responses"]["NotFoundProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
