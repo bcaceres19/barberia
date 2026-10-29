@@ -42,6 +42,7 @@ export async function resolveBarbershop(slug: string): Promise<ResolveBarbershop
                 longitude: data.location.longitude,
               }
             : null,
+          offersHomeService: data.offersHomeService ?? false,
         },
       }
     }

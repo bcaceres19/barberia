@@ -56,6 +56,7 @@ const readyDetail = {
   currency: 'COP',
   versionToken: 'opaque-token',
   createdAt: '2026-08-20T10:00:00Z',
+  homeService: null,
 }
 
 const createdEvent = {
@@ -242,6 +243,35 @@ describe('AppointmentDetailPage', () => {
     expect(wrapper.text()).toContain('+573001234567')
     expect(wrapper.text()).toContain('Prefiere silla junto a la ventana')
     expect(fetchAppointmentDetailMock).toHaveBeenCalledWith('a-1')
+  })
+
+  it('shows the customer address with a map link for a home-service turn (DEC-131, HU-103)', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({
+      kind: 'success',
+      detail: {
+        ...readyDetail,
+        homeService: {
+          address: 'Carrera 7 # 71-21, Bogotá',
+          latitude: 4.6486,
+          longitude: -74.0628,
+        },
+      },
+    })
+    const { wrapper } = await mountPage()
+
+    expect(wrapper.text()).toContain('A domicilio')
+    expect(wrapper.text()).toContain('Carrera 7 # 71-21, Bogotá')
+    const link = wrapper.get('a[href^="https://www.google.com/maps/search/"]')
+    expect(link.attributes('href')).toContain('4.6486%2C-74.0628')
+    expect(link.attributes('rel')).toContain('noopener')
+  })
+
+  it('shows no address section for a turn at the shop', async () => {
+    fetchAppointmentDetailMock.mockResolvedValue({ kind: 'success', detail: readyDetail })
+    const { wrapper } = await mountPage()
+
+    expect(wrapper.text()).not.toContain('A domicilio')
+    expect(wrapper.find('a[href*="google.com/maps"]').exists()).toBe(false)
   })
 
   it('does not render a contact section when phone and email are both absent', async () => {

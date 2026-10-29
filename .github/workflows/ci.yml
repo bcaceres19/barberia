@@ -102,7 +102,8 @@ jobs:
                    20261029120000_relax_barbershop_slot_grid_check.sql \
                    20261029130000_create_staff_user_role.sql \
                    20261030120000_add_barbershop_location.sql \
-                   20261031120000_create_barber_review.sql; do
+                   20261031120000_create_barber_review.sql \
+                   20261101120000_add_home_service.sql; do
             psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$f"
           done
           psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_app PASSWORD 'app_test';"
@@ -334,6 +335,11 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/barber_review.sql
+
+      - name: Suite del servicio a domicilio (DEC-131)
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/appointment_domicilio.sql
 
       - name: Suite de la ubicación de la barbería (DEC-130)
         env:

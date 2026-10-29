@@ -102,7 +102,7 @@ func (s *BrandService) Update(ctx context.Context, barbershopID string, input Br
 // normaliza la dirección, decide si hace falta geocodificar y lo hace. No
 // escribe nada.
 func (s *BrandService) resolveLocation(ctx context.Context, barbershopID string, patch LocationPatch) (LocationWrite, error) {
-	write := LocationWrite{HasPhysicalLocation: patch.HasPhysicalLocation}
+	write := LocationWrite{HasPhysicalLocation: patch.HasPhysicalLocation, OffersHomeService: patch.OffersHomeService}
 	if !patch.AddressSet {
 		return write, nil
 	}

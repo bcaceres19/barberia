@@ -1,9 +1,11 @@
 package booking
 
 import (
+	"math"
 	"regexp"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 // barberIDPattern refleja la forma de un UUID, mismo criterio que
@@ -270,6 +272,31 @@ type Appointment struct {
 	UpdatedAt                time.Time
 }
 
+// HomeServiceAddressMaxLength es el largo máximo de la dirección a domicilio,
+// igual que appointment_home_service_ck.
+const HomeServiceAddressMaxLength = 200
+
+// HomeService es la dirección del cliente para un turno a domicilio (DEC-131,
+// HU-103): dirección en texto y coordenadas siempre juntas, o ninguna (nil en
+// el turno). Es dato personal (RN-DAT-02): nunca se registra.
+type HomeService struct {
+	Address   string
+	Latitude  float64
+	Longitude float64
+}
+
+func (h HomeService) validate() error {
+	address := strings.TrimSpace(h.Address)
+	if address == "" || address != h.Address || utf8.RuneCountInString(address) > HomeServiceAddressMaxLength {
+		return errHomeServiceInvalid()
+	}
+	if math.IsNaN(h.Latitude) || math.IsNaN(h.Longitude) ||
+		h.Latitude < -90 || h.Latitude > 90 || h.Longitude < -180 || h.Longitude > 180 {
+		return errHomeServiceInvalid()
+	}
+	return nil
+}
+
 // CreateInternalInput es la entrada ya autorizada de la primitiva
 // transaccional interna (§2.2 del prompt de HU-060): quien la construye
 // (HU-061 en adelante) ya validó jornada, bloqueos y asignación
@@ -286,9 +313,16 @@ type CreateInternalInput struct {
 	CustomerNote *string
 	Customer     CustomerInput
 	Actor        Actor
+	// HomeService es nil para un turno en el local (DEC-131).
+	HomeService *HomeService
 }
 
 func (in CreateInternalInput) validate() error {
+	if in.HomeService != nil {
+		if err := in.HomeService.validate(); err != nil {
+			return err
+		}
+	}
 	if strings.TrimSpace(in.BarberID) == "" {
 		return errBarberIDRequired()
 	}

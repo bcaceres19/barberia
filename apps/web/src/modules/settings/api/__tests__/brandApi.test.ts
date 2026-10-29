@@ -35,6 +35,7 @@ const location = {
   address: 'Calle 10 # 5-20, Bogotá',
   latitude: 4.598056,
   longitude: -74.076111,
+  offersHomeService: false,
 }
 // El servidor siempre devuelve la marca junto con la ubicación (DEC-130).
 const body = { ...brand, ...location }
@@ -72,7 +73,13 @@ describe('brandApi.fetchBrand', () => {
   })
 
   it('reads a barbershop without address as null coordinates, never as empty text', async () => {
-    const empty = { hasPhysicalLocation: true, address: null, latitude: null, longitude: null }
+    const empty = {
+      hasPhysicalLocation: true,
+      address: null,
+      latitude: null,
+      longitude: null,
+      offersHomeService: false,
+    }
     getMock.mockResolvedValueOnce(ok({ ...brand, ...empty }))
 
     expect(await fetchBrand()).toEqual({ kind: 'success', brand, location: empty })
@@ -133,6 +140,18 @@ describe('brandApi.saveBrand', () => {
 
     await saveBrand(brand, { address: null })
     expect(patchMock.mock.calls[2]![1].body).toHaveProperty('address', null)
+  })
+
+  it('sends the home service switch only when it changed (DEC-131)', async () => {
+    patchMock.mockResolvedValue(ok({ ...body, offersHomeService: true }))
+
+    const outcome = await saveBrand(brand, { offersHomeService: true })
+
+    expect(patchMock.mock.calls[0]![1].body).toMatchObject({ offersHomeService: true })
+    expect(outcome).toMatchObject({ kind: 'success', location: { offersHomeService: true } })
+
+    await saveBrand(brand, { address: 'Calle 1 # 2-3' })
+    expect(patchMock.mock.calls[1]![1].body).not.toHaveProperty('offersHomeService')
   })
 
   it('never sends coordinates: the server computes them', async () => {

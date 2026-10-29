@@ -449,18 +449,21 @@ func insertAppointment(
 			barbershop_id, barber_id, service_id, customer_id, attendee_name,
 			starts_at, ends_at, status, origin,
 			service_name_snapshot, duration_minutes_snapshot, price_amount_snapshot, price_currency_snapshot,
-			customer_note
+			customer_note,
+			is_home_service, service_address, service_latitude, service_longitude
 		) VALUES (
 			$1, $2, $3, $4, $5,
 			$6, $7, 'confirmed', $8,
 			$9, $10, $11, $12,
-			$13
+			$13,
+			$14, $15, $16, $17
 		)
 		RETURNING`+appointmentResponseFields,
 		barbershopID, input.BarberID, input.ServiceID, customerID, input.AttendeeName,
 		input.StartsAt, input.EndsAt, string(input.Origin),
 		input.Service.Name, input.Service.DurationMinutes, formatPriceAmount(input.Service.PriceAmountCents), input.Service.Currency,
 		input.CustomerNote,
+		input.HomeService != nil, homeAddress(input.HomeService), homeLatitude(input.HomeService), homeLongitude(input.HomeService),
 	)
 
 	appointment, err := scanAppointment(row)
@@ -495,6 +498,30 @@ func insertAppointment(
 		return booking.Appointment{}, err
 	}
 	return appointment, nil
+}
+
+// homeAddress, homeLatitude y homeLongitude desempaquetan el domicilio opcional
+// para el INSERT: nil en los tres cuando el turno es en el local, que es lo que
+// appointment_home_service_ck exige (DEC-131).
+func homeAddress(h *booking.HomeService) *string {
+	if h == nil {
+		return nil
+	}
+	return &h.Address
+}
+
+func homeLatitude(h *booking.HomeService) *float64 {
+	if h == nil {
+		return nil
+	}
+	return &h.Latitude
+}
+
+func homeLongitude(h *booking.HomeService) *float64 {
+	if h == nil {
+		return nil
+	}
+	return &h.Longitude
 }
 
 func insertAppointmentCreatedHistory(
@@ -597,7 +624,8 @@ func (r *Repository) ListDailyAgenda(
 		rows, err := q.Query(ctx, `
 			SELECT id, attendee_name, starts_at, ends_at, status, origin,
 			       service_name_snapshot, duration_minutes_snapshot,
-			       price_amount_snapshot, price_currency_snapshot
+			       price_amount_snapshot, price_currency_snapshot,
+			       is_home_service, service_address, service_latitude, service_longitude
 			  FROM appointment
 			 WHERE barbershop_id = $1
 			   AND barber_id = $2
@@ -630,6 +658,23 @@ func (r *Repository) ListDailyAgenda(
 	return entries, nil
 }
 
+// homeServiceColumns agrupa las cuatro columnas de domicilio de appointment
+// para escanearlas juntas; appointment_home_service_ck garantiza que address,
+// latitude y longitude solo son nulas cuando is es false.
+type homeServiceColumns struct {
+	is        bool
+	address   *string
+	latitude  *float64
+	longitude *float64
+}
+
+func (c homeServiceColumns) value() *booking.HomeService {
+	if !c.is || c.address == nil || c.latitude == nil || c.longitude == nil {
+		return nil
+	}
+	return &booking.HomeService{Address: *c.address, Latitude: *c.latitude, Longitude: *c.longitude}
+}
+
 func scanDailyAgendaEntry(row pgx.Row) (booking.DailyAgendaEntry, error) {
 	var (
 		e           booking.DailyAgendaEntry
@@ -637,13 +682,16 @@ func scanDailyAgendaEntry(row pgx.Row) (booking.DailyAgendaEntry, error) {
 		status      string
 		origin      string
 	)
+	var home homeServiceColumns
 	err := row.Scan(
 		&e.ID, &e.AttendeeName, &e.StartsAt, &e.EndsAt, &status, &origin,
 		&e.ServiceNameSnapshot, &e.DurationMinutesSnapshot, &priceAmount, &e.CurrencySnapshot,
+		&home.is, &home.address, &home.latitude, &home.longitude,
 	)
 	if err != nil {
 		return booking.DailyAgendaEntry{}, err
 	}
+	e.HomeService = home.value()
 	e.Status = booking.Status(status)
 	e.Origin = booking.Origin(origin)
 	cents, err := parsePriceAmount(priceAmount)
@@ -690,6 +738,7 @@ func (r *Repository) GetAppointmentDetail(
 			       a.customer_note, a.starts_at, a.ends_at, a.status, a.origin,
 			       a.service_name_snapshot, a.duration_minutes_snapshot,
 			       a.price_amount_snapshot, a.price_currency_snapshot,
+			       a.is_home_service, a.service_address, a.service_latitude, a.service_longitude,
 			       a.created_at, a.updated_at
 			  FROM appointment a
 			  JOIN customer c ON c.barbershop_id = a.barbershop_id AND c.id = a.customer_id
@@ -716,6 +765,7 @@ func scanAppointmentDetail(row pgx.Row) (booking.AppointmentDetail, bool, error)
 		status      string
 		origin      string
 		updatedAt   time.Time
+		home        homeServiceColumns
 	)
 	err := row.Scan(
 		&d.ID, &d.BarberID, &d.AttendeeName,
@@ -723,6 +773,7 @@ func scanAppointmentDetail(row pgx.Row) (booking.AppointmentDetail, bool, error)
 		&d.CustomerNote, &d.StartsAt, &d.EndsAt, &status, &origin,
 		&d.ServiceNameSnapshot, &d.DurationMinutesSnapshot,
 		&priceAmount, &d.CurrencySnapshot,
+		&home.is, &home.address, &home.latitude, &home.longitude,
 		&d.CreatedAt, &updatedAt,
 	)
 	if err != nil {
@@ -731,6 +782,7 @@ func scanAppointmentDetail(row pgx.Row) (booking.AppointmentDetail, bool, error)
 		}
 		return booking.AppointmentDetail{}, false, err
 	}
+	d.HomeService = home.value()
 	d.Status = booking.Status(status)
 	d.Origin = booking.Origin(origin)
 	cents, err := parsePriceAmount(priceAmount)

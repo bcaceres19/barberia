@@ -22,6 +22,7 @@ content:
           address: null
           latitude: null
           longitude: null
+          offersHomeService: false
       salonDeBelleza:
         summary: Salón con estilistas, acento esmeralda y local geocodificado
         value:
@@ -36,6 +37,7 @@ content:
           address: Calle 10 # 5-20, Bogotá
           latitude: 4.598056
           longitude: -74.076111
+          offersHomeService: true
       barberoIndividual:
         summary: "Usuario con el rol independiente: panel individual completo"
         value:
@@ -50,6 +52,7 @@ content:
           address: null
           latitude: null
           longitude: null
+          offersHomeService: false
       empleado:
         summary: "Usuario con el rol empleado: panel individual limitado"
         value:
@@ -64,3 +67,4 @@ content:
           address: null
           latitude: null
           longitude: null
+          offersHomeService: false

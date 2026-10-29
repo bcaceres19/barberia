@@ -51,6 +51,11 @@ properties:
     minimum: -180
     maximum: 180
     description: Longitud, igual que `latitude`.
+  offersHomeService:
+    type: boolean
+    description: >
+      Interruptor general del servicio a domicilio (`DEC-131`). Con `true`, la
+      reserva pública ofrece «a domicilio» para cualquier servicio.
 required:
   - accent
   - businessTerm
@@ -63,3 +68,4 @@ required:
   - address
   - latitude
   - longitude
+  - offersHomeService

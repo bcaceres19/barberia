@@ -22,6 +22,10 @@ type Location struct {
 	Address             *string
 	Latitude            *float64
 	Longitude           *float64
+	// OffersHomeService es el interruptor general del servicio a domicilio
+	// (DEC-131, HU-103): independiente de la ubicación del local. Apagarlo no
+	// toca los turnos ya creados con domicilio.
+	OffersHomeService bool
 }
 
 // Visible informa si la reserva pública debe mostrar el mapa: el interruptor
@@ -38,11 +42,13 @@ type LocationPatch struct {
 	HasPhysicalLocation *bool
 	AddressSet          bool
 	Address             *string
+	// OffersHomeService nil conserva el interruptor de domicilio (DEC-131).
+	OffersHomeService *bool
 }
 
 // IsZero informa si el parche no pide ningún cambio.
 func (p LocationPatch) IsZero() bool {
-	return p.HasPhysicalLocation == nil && !p.AddressSet
+	return p.HasPhysicalLocation == nil && !p.AddressSet && p.OffersHomeService == nil
 }
 
 // LocationWrite es lo que BrandRepository.Update escribe sobre la ubicación,
@@ -51,6 +57,8 @@ func (p LocationPatch) IsZero() bool {
 type LocationWrite struct {
 	// HasPhysicalLocation nil conserva el valor actual.
 	HasPhysicalLocation *bool
+	// OffersHomeService nil conserva el interruptor de domicilio (DEC-131).
+	OffersHomeService *bool
 	// ReplaceAddress true sobrescribe Address, Latitude y Longitude juntos
 	// (los tres a nil si se quitó la dirección); false deja los tres como están.
 	ReplaceAddress bool

@@ -27,6 +27,7 @@ import {
   markAppointmentNoShow,
   rescheduleAppointment,
 } from '../api/appointmentsApi'
+import { mapsLinkUrl } from '@/shared/model/mapEmbed'
 import { newIdempotencyKey } from '../model/idempotencyKey'
 import type { AppointmentDetail, HistoryEntry } from '../model/appointmentDetail'
 import { historyEventLabel, historyFieldLabel } from '../model/appointmentDetail'
@@ -108,6 +109,7 @@ const FACT_ICONS: Record<string, string> = {
   service: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3c3 3 4 6 4 9s-1 6-4 9"></path><path d="M18 3c-3 3-4 6-4 9s1 6 4 9"></path><path d="M8.5 8.5 15.5 15.5"></path><path d="M15.5 8.5 8.5 15.5"></path></svg>`,
   barber: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3.5"></circle><path d="M4.5 21c.6-4.2 3.5-6.5 7.5-6.5s6.9 2.3 7.5 6.5"></path><path d="M3.5 12.5h3M17.5 12.5h3"></path></svg>`,
   contact: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m4 7 8 6 8-6"></path></svg>`,
+  place: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z"></path><circle cx="12" cy="10" r="2.3"></circle></svg>`,
   note: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v12H9l-4 4V4Z"></path></svg>`,
   calendar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M8 3v4M16 3v4M4 10h16"></path></svg>`,
   check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 9.5 17 19 7"></path></svg>`,
@@ -123,6 +125,14 @@ function historyIcon(entry: HistoryEntry): string {
     ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17.5V20h2.5L18 8.5 15.5 6 4 17.5Z"></path><path d="m14.5 7 2.5 2.5"></path></svg>`
     : FACT_ICONS.calendar
 }
+
+// Dirección del cliente en un turno a domicilio (DEC-131): el enlace abre el punto en
+// Google Maps sin clave; si las coordenadas no fueran válidas solo queda el texto.
+const homeServiceMapsUrl = computed(() =>
+  detail.value?.homeService
+    ? mapsLinkUrl(detail.value.homeService.latitude, detail.value.homeService.longitude)
+    : null,
+)
 
 const timeRangeLabel = computed(() => {
   if (!detail.value || !barbershopTimezone.value) return ''
@@ -850,6 +860,23 @@ function occurredAtLabel(entry: HistoryEntry): string {
               <span v-if="detail.customerPhone">{{ detail.customerPhone }}</span>
               <span v-if="detail.customerPhone && detail.customerEmail"> · </span>
               <span v-if="detail.customerEmail">{{ detail.customerEmail }}</span>
+            </dd>
+          </div>
+          <div v-if="detail.homeService" class="appointment-detail-page__fact">
+            <span
+              class="appointment-detail-page__fact-icon"
+              aria-hidden="true"
+              v-html="factIcon('place')"
+            />
+            <dt>A domicilio</dt>
+            <dd>
+              <span>{{ detail.homeService.address }}</span>
+              <template v-if="homeServiceMapsUrl">
+                {{ ' ' }}·
+                <a :href="homeServiceMapsUrl" target="_blank" rel="noopener noreferrer"
+                  >Abrir en Google Maps (nueva pestaña)</a
+                >
+              </template>
             </dd>
           </div>
           <div v-if="detail.customerNote" class="appointment-detail-page__fact">

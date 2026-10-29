@@ -68,7 +68,8 @@ func restoreBrandRow(t *testing.T, db *database.DB, shop string) {
 				    SET brand_accent = 'brass', business_term = 'barbería', business_term_gender = 'feminine',
 				        professional_term = 'barbero', professional_term_plural = 'barberos',
 				        professional_term_gender = 'masculine',
-				        has_physical_location = true, address = NULL, latitude = NULL, longitude = NULL
+				        has_physical_location = true, address = NULL, latitude = NULL, longitude = NULL,
+				        offers_home_service = false
 				  WHERE id = $1`, shop)
 			return err
 		})
@@ -401,5 +402,52 @@ func TestBrand_HTTP_Location_TwoTenants_NeverCrossesBarbershops(t *testing.T) {
 	}
 	if loc := decodeLocation(t, doBrandRequest(router, http.MethodGet, rawB, nil)); loc.Address != nil || loc.Latitude != nil {
 		t.Fatalf("RN-TEN-01: la ubicación de A se filtró a B: %+v", loc)
+	}
+}
+
+// TestBrand_HTTP_OffersHomeService_TogglesFromSettingsAndStaysPerTenant cubre
+// DEC-131 contra el router real: la marca expone el interruptor (apagado por
+// defecto), PATCH lo enciende/apaga, un PATCH sin él lo conserva y el de la
+// barbería A nunca cambia el de B.
+func TestBrand_HTTP_OffersHomeService_TogglesFromSettingsAndStaysPerTenant(t *testing.T) {
+	db := setupTestDB(t)
+	t.Cleanup(func() { db.Close() })
+	router, err := buildRouter(db, discardLogger(), testRouterConfig())
+	if err != nil {
+		t.Fatalf("buildRouter: %v", err)
+	}
+	restoreBrandRow(t, db, shopA)
+	restoreBrandRow(t, db, shopB)
+	rawA := createSessionCookie(t, db, shopA, staffUserActiveA, "brand-home-a")
+	rawB := createSessionCookie(t, db, shopB, staffUserActiveB, "brand-home-b")
+
+	offers := func(rec *httptest.ResponseRecorder) bool {
+		t.Helper()
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+		}
+		var body struct {
+			OffersHomeService *bool `json:"offersHomeService"`
+		}
+		if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil || body.OffersHomeService == nil {
+			t.Fatalf("offersHomeService debe viajar siempre: %s err=%v", rec.Body.String(), err)
+		}
+		return *body.OffersHomeService
+	}
+
+	if offers(doBrandRequest(router, http.MethodGet, rawA, nil)) {
+		t.Fatal("una barbería nueva no ofrece domicilio")
+	}
+	if !offers(doBrandRequest(router, http.MethodPatch, rawA, patchBody(map[string]any{"offersHomeService": true}))) {
+		t.Fatal("PATCH debe encender el interruptor")
+	}
+	if !offers(doBrandRequest(router, http.MethodPatch, rawA, patchBody(nil))) {
+		t.Fatal("un PATCH sin offersHomeService debe conservarlo")
+	}
+	if offers(doBrandRequest(router, http.MethodGet, rawB, nil)) {
+		t.Fatal("RN-TEN-01: encender A no debe encender B")
+	}
+	if offers(doBrandRequest(router, http.MethodPatch, rawA, patchBody(map[string]any{"offersHomeService": false}))) {
+		t.Fatal("PATCH debe apagar el interruptor")
 	}
 }

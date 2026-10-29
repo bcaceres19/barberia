@@ -12,6 +12,8 @@ package publicbooking_test
 import (
 	"context"
 	"errors"
+	"math"
+	"strings"
 	"testing"
 	"time"
 
@@ -38,6 +40,8 @@ type capturedAppointmentCall struct {
 	priceAmountCents                               int64
 	currency                                       string
 	customerNote                                   *string
+	homeAddress                                    *string
+	homeLatitude, homeLongitude                    *float64
 	customerExistingID                             *string
 	customerUpdatePhone, customerUpdateEmail       *string
 	customerFullName, customerPhone, customerEmail string
@@ -63,6 +67,7 @@ func (f *fakePublicAppointmentPort) CreatePublicAppointment(
 	priceAmountCents int64,
 	currency string,
 	customerNote *string,
+	homeAddress *string, homeLatitude, homeLongitude *float64,
 	customerExistingID *string,
 	customerUpdatePhone *string,
 	customerUpdateEmail *string,
@@ -79,7 +84,8 @@ func (f *fakePublicAppointmentPort) CreatePublicAppointment(
 			startsAt: startsAt, endsAt: endsAt,
 			attendeeName: attendeeName, serviceName: serviceName,
 			durationMinutes: durationMinutes, priceAmountCents: priceAmountCents, currency: currency,
-			customerNote:        customerNote,
+			customerNote: customerNote,
+			homeAddress:  homeAddress, homeLatitude: homeLatitude, homeLongitude: homeLongitude,
 			customerExistingID:  customerExistingID,
 			customerUpdatePhone: customerUpdatePhone, customerUpdateEmail: customerUpdateEmail,
 			customerFullName: customerFullName, customerPhone: customerPhone, customerEmail: customerEmail,
@@ -320,5 +326,106 @@ func TestConfirmAppointment_NoWebBaseURL_SendsEmailWithoutLink(t *testing.T) {
 	}
 	if len(email.calls) != 1 || email.calls[0].accessLink != "" {
 		t.Fatalf("expected exactly one email with an empty access link, got %+v", email.calls)
+	}
+}
+
+func homeInput(startsAt time.Time) publicbooking.ConfirmPublicAppointmentInput {
+	in := validConfirmInput(startsAt)
+	in.HomeService = &publicbooking.HomeServiceInput{Address: "  Calle 10   # 5-20,  Bogotá ", Latitude: 4.598056, Longitude: -74.076111}
+	return in
+}
+
+func TestConfirmAppointment_HomeService_PersistsNormalizedAddressWhenOffered(t *testing.T) {
+	loc, _ := time.LoadLocation("America/Bogota")
+	now := time.Date(2026, time.September, 14, 8, 0, 0, 0, loc)
+	startsAt := time.Date(2026, time.September, 14, 9, 0, 0, 0, loc)
+
+	svc, profiles, _, appointments, _ := newConfirmationFixture(now)
+	profiles.profile.OffersHomeService = true
+	appointments.captured = &capturedAppointmentCall{}
+
+	if _, _, err := svc.ConfirmAppointment(context.Background(), homeInput(startsAt), idempotency.Key("k-1"), idempotency.Fingerprint("f-1")); err != nil {
+		t.Fatalf("ConfirmAppointment: %v", err)
+	}
+	got := appointments.captured
+	if got.homeAddress == nil || *got.homeAddress != "Calle 10 # 5-20, Bogotá" {
+		t.Fatalf("homeAddress = %v, want the trimmed, single-spaced address", got.homeAddress)
+	}
+	if got.homeLatitude == nil || *got.homeLatitude != 4.598056 || got.homeLongitude == nil || *got.homeLongitude != -74.076111 {
+		t.Fatalf("coordinates were not forwarded: %v %v", got.homeLatitude, got.homeLongitude)
+	}
+}
+
+func TestConfirmAppointment_WithoutHomeService_ForwardsNoAddress(t *testing.T) {
+	loc, _ := time.LoadLocation("America/Bogota")
+	now := time.Date(2026, time.September, 14, 8, 0, 0, 0, loc)
+	startsAt := time.Date(2026, time.September, 14, 9, 0, 0, 0, loc)
+
+	svc, profiles, _, appointments, _ := newConfirmationFixture(now)
+	profiles.profile.OffersHomeService = true // ofrecerlo no obliga a pedirlo
+	appointments.captured = &capturedAppointmentCall{}
+
+	if _, _, err := svc.ConfirmAppointment(context.Background(), validConfirmInput(startsAt), idempotency.Key("k-1"), idempotency.Fingerprint("f-1")); err != nil {
+		t.Fatalf("ConfirmAppointment: %v", err)
+	}
+	got := appointments.captured
+	if got.homeAddress != nil || got.homeLatitude != nil || got.homeLongitude != nil {
+		t.Fatalf("a turn in the shop must carry no address data, got %v %v %v", got.homeAddress, got.homeLatitude, got.homeLongitude)
+	}
+}
+
+// CA-103-05: apagado entre la elección y el envío (o nunca ofrecido) → 422 y no
+// se llega a persistir nada.
+func TestConfirmAppointment_HomeServiceNotOffered_RejectsWithoutPersisting(t *testing.T) {
+	loc, _ := time.LoadLocation("America/Bogota")
+	now := time.Date(2026, time.September, 14, 8, 0, 0, 0, loc)
+	startsAt := time.Date(2026, time.September, 14, 9, 0, 0, 0, loc)
+
+	svc, _, _, appointments, email := newConfirmationFixture(now)
+	appointments.captured = &capturedAppointmentCall{}
+
+	_, _, err := svc.ConfirmAppointment(context.Background(), homeInput(startsAt), idempotency.Key("k-1"), idempotency.Fingerprint("f-1"))
+	appErr, ok := apperr.As(err)
+	if !ok || appErr.Kind != apperr.KindValidation {
+		t.Fatalf("expected apperr.KindValidation, got %v", err)
+	}
+	if appointments.captured.barberID != "" {
+		t.Fatal("the appointment port must not be called when home service is not offered")
+	}
+	if len(email.calls) != 0 {
+		t.Fatal("no confirmation email may be sent for a rejected request")
+	}
+}
+
+func TestConfirmAppointment_InvalidHomeService_Rejected(t *testing.T) {
+	loc, _ := time.LoadLocation("America/Bogota")
+	now := time.Date(2026, time.September, 14, 8, 0, 0, 0, loc)
+	startsAt := time.Date(2026, time.September, 14, 9, 0, 0, 0, loc)
+
+	cases := map[string]publicbooking.HomeServiceInput{
+		"empty address":      {Address: "   ", Latitude: 4.6, Longitude: -74},
+		"too long address":   {Address: strings.Repeat("x", 201), Latitude: 4.6, Longitude: -74},
+		"latitude too high":  {Address: "Calle 1", Latitude: 91, Longitude: -74},
+		"longitude too low":  {Address: "Calle 1", Latitude: 4.6, Longitude: -181},
+		"not a number":       {Address: "Calle 1", Latitude: math.NaN(), Longitude: -74},
+		"infinite longitude": {Address: "Calle 1", Latitude: 4.6, Longitude: math.Inf(1)},
+	}
+	for name, home := range cases {
+		t.Run(name, func(t *testing.T) {
+			svc, profiles, _, appointments, _ := newConfirmationFixture(now)
+			profiles.profile.OffersHomeService = true
+			appointments.captured = &capturedAppointmentCall{}
+			in := validConfirmInput(startsAt)
+			in.HomeService = &home
+
+			_, _, err := svc.ConfirmAppointment(context.Background(), in, idempotency.Key("k-1"), idempotency.Fingerprint("f-1"))
+			appErr, ok := apperr.As(err)
+			if !ok || appErr.Kind != apperr.KindValidation {
+				t.Fatalf("expected apperr.KindValidation, got %v", err)
+			}
+			if appointments.captured.barberID != "" {
+				t.Fatal("nothing may be persisted for an invalid address")
+			}
+		})
 	}
 }

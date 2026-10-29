@@ -11,12 +11,21 @@
 // mismo (CA-096-01, RN-RES-02).
 import { computed, nextTick, onMounted, ref, useId } from 'vue'
 import { useRouter } from 'vue-router'
-import { BarberAvatar, BaseAlert, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
+import {
+  AddressAutocomplete,
+  BarberAvatar,
+  BaseAlert,
+  BaseButton,
+  BaseDialog,
+  BaseInput,
+} from '@/shared/ui'
+import { isPlacesAvailable, type PlaceSelection } from '@/shared/model/placesAutocomplete'
 import PhoneField from '../components/PhoneField.vue'
 import { confirmPublicAppointment } from '../api/confirmPublicAppointmentApi'
 import { listPublicBarbers } from '../api/listPublicBarbersApi'
 import { useBookingChrome } from '../model/bookingChrome'
 import { newIdempotencyKey } from '../model/idempotencyKey'
+import { loadPublicProfile } from '../model/publicProfile'
 import type { PublicBarber } from '../model/publicBarberListOutcome'
 import { publicBarberPhotoUrl } from '../model/publicBarberPhotoUrl'
 import { DEFAULT_PHONE_COUNTRY, composePhone, phoneCountry } from '../model/phoneCountries'
@@ -82,6 +91,23 @@ onMounted(async () => {
   }
 })
 
+// Servicio a domicilio (DEC-131, HU-103): el paso solo existe si la barbería lo ofrece Y hay
+// forma de elegir una dirección con el autocompletado en este entorno. Se lee fresco al
+// abrir la página; el servidor lo revalida al confirmar (CA-103-05), así que un valor viejo
+// aquí solo produciría un 422 explicado, nunca un turno equivocado.
+type ServiceMode = 'local' | 'home'
+const offersHomeService = ref(false)
+const serviceMode = ref<ServiceMode>('local')
+const homePlace = ref<PlaceSelection | null>(null)
+onMounted(async () => {
+  const outcome = await loadPublicProfile(props.slug)
+  if (outcome.kind === 'success') {
+    offersHomeService.value = outcome.profile.offersHomeService && isPlacesAvailable()
+  }
+})
+// Sin la opción visible, el turno siempre es en el local aunque el estado local diga otra cosa.
+const isHomeService = computed(() => offersHomeService.value && serviceMode.value === 'home')
+
 const attempted = ref(false)
 const reviewing = ref(false)
 
@@ -114,6 +140,11 @@ const fieldErrors = computed(() => ({
   note: validateCustomerNote(note.value),
   attendeeName:
     attendeeChoice.value === 'other' ? validateAttendeeName(attendeeName.value) : undefined,
+  // CA-103-03: un texto libre sin una selección del autocompletado no es suficiente.
+  home:
+    isHomeService.value && !homePlace.value
+      ? 'Elige tu dirección de la lista de sugerencias.'
+      : undefined,
 }))
 
 const hasErrors = computed(() => Object.values(fieldErrors.value).some((message) => !!message))
@@ -240,6 +271,14 @@ async function handleConfirm() {
       note: note.value.trim() || null,
       forSomeoneElse: attendeeChoice.value === 'other',
       attendeeName: attendeeChoice.value === 'other' ? attendeeName.value.trim() : null,
+      homeService:
+        isHomeService.value && homePlace.value
+          ? {
+              address: homePlace.value.address,
+              latitude: homePlace.value.latitude,
+              longitude: homePlace.value.longitude,
+            }
+          : null,
     },
     idempotencyKey.value,
   )
@@ -391,6 +430,35 @@ function chooseAlternative(startsAt: string) {
             </div>
           </fieldset>
 
+          <fieldset
+            v-if="offersHomeService"
+            class="customer-details__fieldset customer-details__span"
+          >
+            <legend class="customer-details__legend">¿Dónde te atendemos?</legend>
+            <div
+              class="customer-details__radio-group"
+              role="radiogroup"
+              aria-label="¿Dónde te atendemos?"
+            >
+              <label class="customer-details__radio">
+                <input v-model="serviceMode" type="radio" name="service-mode" value="local" />
+                <span>En el local</span>
+              </label>
+              <label class="customer-details__radio">
+                <input v-model="serviceMode" type="radio" name="service-mode" value="home" />
+                <span>A domicilio</span>
+              </label>
+            </div>
+            <AddressAutocomplete
+              v-if="serviceMode === 'home'"
+              v-model="homePlace"
+              class="customer-details__address customer-details__rise"
+              label="Tu dirección"
+              hint="Escribe y elige tu dirección de la lista; confirma el punto en el mapa."
+              :error="attempted ? fieldErrors.home : undefined"
+            />
+          </fieldset>
+
           <BaseInput
             v-model="fullName"
             :class="{ 'customer-details__span': attendeeChoice === 'self' }"
@@ -501,7 +569,14 @@ function chooseAlternative(startsAt: string) {
 
         <!-- Región desplazable: con poco alto es lo único que se mueve y los
              botones quedan siempre a la vista. -->
-        <div class="customer-details__summary-body">
+        <!-- Foco y nombre: con la dirección a domicilio la región puede desbordar y, sin
+             contenido enfocable dentro, el teclado no podría desplazarla. -->
+        <div
+          class="customer-details__summary-body"
+          tabindex="0"
+          role="region"
+          aria-label="Resumen del turno"
+        >
           <dl class="customer-details__summary-list">
             <div class="customer-details__summary-row">
               <dt>Cliente</dt>
@@ -520,6 +595,10 @@ function chooseAlternative(startsAt: string) {
             <div class="customer-details__summary-row">
               <dt>Correo</dt>
               <dd>{{ email }}</dd>
+            </div>
+            <div v-if="isHomeService && homePlace" class="customer-details__summary-row">
+              <dt>Te atendemos en</dt>
+              <dd>{{ homePlace.address }}</dd>
             </div>
             <div v-if="note.trim()" class="customer-details__summary-row">
               <dt>Nota</dt>

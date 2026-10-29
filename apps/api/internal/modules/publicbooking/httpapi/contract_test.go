@@ -71,12 +71,12 @@ func loadYAML[T any](t *testing.T, relPath string) T {
 
 // TestContract_PublicBarbershopProfileSchema_MatchesDTOFields verifica que
 // httpapi.PublicBarbershopProfileResponse (name, timezone, contactEmail,
-// contactPhone, vocabulary, location) coincide exactamente con las propiedades y los required de
+// contactPhone, vocabulary, location, offersHomeService) coincide exactamente con las propiedades y los required de
 // PublicBarbershopProfile.yaml (CA-090-04: nunca un identificador interno
 // ni el slug mismo).
 func TestContract_PublicBarbershopProfileSchema_MatchesDTOFields(t *testing.T) {
 	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/PublicBarbershopProfile.yaml")
-	want := []string{"name", "timezone", "contactEmail", "contactPhone", "vocabulary", "location"}
+	want := []string{"name", "timezone", "contactEmail", "contactPhone", "vocabulary", "location", "offersHomeService"}
 
 	if len(schema.Properties) != len(want) {
 		t.Fatalf("expected %d properties, schema has %d: %v", len(want), len(schema.Properties), schema.Properties)

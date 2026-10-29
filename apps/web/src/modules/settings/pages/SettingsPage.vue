@@ -954,7 +954,7 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
             id="configuracion-ubicacion"
             number="06"
             title="Ubicación"
-            description="Dónde queda tu local. Tus clientes ven el mapa al reservar."
+            description="Dónde queda tu local y si atiendes a domicilio. Tus clientes lo ven al reservar."
             scope="shop"
             :scope-label="`Para ${v.theBusiness}`"
             style="--panel-index: 5"
@@ -985,6 +985,16 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
               La dirección es pública: cualquiera que abra tu enlace de reservas puede verla. Si
               trabajas desde tu casa, apaga el interruptor para no mostrarla.
             </p>
+            <SwitchField
+              v-model="location.offersHomeService"
+              label="Atiendo a domicilio"
+              :hint="
+                location.offersHomeService
+                  ? 'Al reservar, tus clientes podrán elegir «a domicilio» e indicar su dirección con un mapa.'
+                  : 'Apagado: todos los turnos son en tu local.'
+              "
+              :disabled="saving"
+            />
             <div
               v-if="
                 savedLocation.address &&

@@ -21,7 +21,8 @@ func restoreBrand(t *testing.T, db *database.DB, shop string) {
 				    SET brand_accent = 'brass', business_term = 'barbería', business_term_gender = 'feminine',
 				        professional_term = 'barbero', professional_term_plural = 'barberos',
 				        professional_term_gender = 'masculine',
-				        has_physical_location = true, address = NULL, latitude = NULL, longitude = NULL
+				        has_physical_location = true, address = NULL, latitude = NULL, longitude = NULL,
+				        offers_home_service = false
 				  WHERE id = $1`, shop)
 			return err
 		})
@@ -324,5 +325,44 @@ func TestBrandUpdate_Location_TwoTenants_NeverCrossesBarbershops(t *testing.T) {
 	}
 	if gotB.Location.Address != nil || gotB.Location.Latitude != nil {
 		t.Fatalf("la ubicación de A no debe verse en B: %+v", gotB.Location)
+	}
+}
+
+// TestBrandUpdate_OffersHomeService_TogglesAndNeverCrossesTenants cubre DEC-131:
+// el interruptor nace apagado, se enciende y se apaga sin tocar el resto, ausente
+// lo conserva y no afecta a otra barbería.
+func TestBrandUpdate_OffersHomeService_TogglesAndNeverCrossesTenants(t *testing.T) {
+	db := setupTestDB(t)
+	repo := shopspostgres.NewBrandRepository(db)
+	restoreBrand(t, db, shopA)
+	restoreBrand(t, db, shopB)
+	ctx := context.Background()
+
+	initial, _, err := repo.Get(ctx, shopA)
+	if err != nil || initial.Location.OffersHomeService {
+		t.Fatalf("una barbería nueva no ofrece domicilio: %+v err=%v", initial.Location, err)
+	}
+
+	on := true
+	res, err := repo.Update(ctx, shopA, salonBrand(), shops.LocationWrite{OffersHomeService: &on})
+	if err != nil || !res.Brand.Location.OffersHomeService {
+		t.Fatalf("encender: %+v err=%v", res.Brand.Location, err)
+	}
+
+	// Ausente conserva el valor.
+	res, err = repo.Update(ctx, shopA, salonBrand(), shops.LocationWrite{})
+	if err != nil || !res.Brand.Location.OffersHomeService {
+		t.Fatalf("ausente debe conservar el interruptor: %+v err=%v", res.Brand.Location, err)
+	}
+
+	gotB, _, err := repo.Get(ctx, shopB)
+	if err != nil || gotB.Location.OffersHomeService {
+		t.Fatalf("encender A no debe tocar B: %+v err=%v", gotB.Location, err)
+	}
+
+	off := false
+	res, err = repo.Update(ctx, shopA, salonBrand(), shops.LocationWrite{OffersHomeService: &off})
+	if err != nil || res.Brand.Location.OffersHomeService {
+		t.Fatalf("apagar: %+v err=%v", res.Brand.Location, err)
 	}
 }

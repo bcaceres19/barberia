@@ -777,3 +777,41 @@ func TestListPublicBarbers_RatingCountsOnlyVisibleReviews(t *testing.T) {
 		}
 	}
 }
+
+// TestResolveBySlug_OffersHomeService_FollowsTheShopSwitchOnly cubre DEC-131 en la
+// capa de datos: el perfil público refleja el interruptor de SU barbería y nunca el
+// de otra (RN-TEN-01).
+func TestResolveBySlug_OffersHomeService_FollowsTheShopSwitchOnly(t *testing.T) {
+	db := setupTestDB(t)
+	repo := publicbookingpostgres.New(db)
+	ctx := context.Background()
+
+	before, _, err := repo.ResolveBySlug(ctx, slugUno)
+	if err != nil || before.OffersHomeService {
+		t.Fatalf("una barbería nueva no ofrece domicilio: %+v err=%v", before, err)
+	}
+
+	id, found, err := repo.ResolveBarbershopID(ctx, slugUno)
+	if err != nil || !found {
+		t.Fatalf("ResolveBarbershopID: found=%v err=%v", found, err)
+	}
+	setOffers := func(on bool) error {
+		return db.InTenantTx(ctx, database.BarbershopID(id), func(ctx context.Context, q database.Queries) error {
+			_, err := q.Exec(ctx, `UPDATE barbershop SET offers_home_service = $2 WHERE id = $1`, id, on)
+			return err
+		})
+	}
+	if err := setOffers(true); err != nil {
+		t.Fatalf("encender: %v", err)
+	}
+	t.Cleanup(func() { _ = setOffers(false) })
+
+	p, _, _ := repo.ResolveBySlug(ctx, slugUno)
+	if !p.OffersHomeService {
+		t.Fatal("CA-103-02: con el interruptor encendido el perfil debe publicarlo")
+	}
+	other, _, _ := repo.ResolveBySlug(ctx, slugDos)
+	if other.OffersHomeService {
+		t.Fatal("RN-TEN-01: el interruptor de slugUno se filtró a slugDos")
+	}
+}

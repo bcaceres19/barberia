@@ -1002,7 +1002,10 @@ const dayChangeMarkerPercent = computed(() => {
                   <span class="daily-agenda-page__item-time">{{ entryTimeRange(entry) }}</span>
                   <span class="daily-agenda-page__item-details">
                     <span class="daily-agenda-page__item-name">{{ entry.attendeeName }}</span>
-                    <span class="daily-agenda-page__item-service">{{ entry.serviceName }}</span>
+                    <span class="daily-agenda-page__item-service"
+                      >{{ entry.serviceName
+                      }}<template v-if="entry.homeService"> · A domicilio</template></span
+                    >
                   </span>
                 </RouterLink>
                 <BaseBadge

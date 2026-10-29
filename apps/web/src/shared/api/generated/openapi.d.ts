@@ -1552,6 +1552,8 @@ export interface components {
             latitude: number | null;
             /** @description Longitud, igual que `latitude`. */
             longitude: number | null;
+            /** @description Interruptor general del servicio a domicilio (`DEC-131`). Con `true`, la reserva pública ofrece «a domicilio» para cualquier servicio. */
+            offersHomeService: boolean;
         };
         /** @description Marca y vocabulario a guardar. Los seis campos de la marca viajan siempre presentes. No incluye `panelProfile`: el panel lo deciden los roles del usuario (`DEC-134`). La ubicación (`hasPhysicalLocation`, `address`) es opcional: ausente no la toca (`DEC-130`). */
         UpdateBrandRequest: {
@@ -1568,6 +1570,8 @@ export interface components {
              * @example Calle 10
              */
             address?: string | null;
+            /** @description Interruptor general del servicio a domicilio (`DEC-131`). Ausente conserva el valor; apagarlo no afecta los turnos ya creados con domicilio. */
+            offersHomeService?: boolean;
         };
         /**
          * @description Color de acento del panel: `brass` (el latón NAVA, valor inicial), `emerald`, `sapphire`, `ruby`, `amethyst` o `copper`.
@@ -1903,6 +1907,8 @@ export interface components {
             vocabulary: components["schemas"]["PublicVocabulary"];
             /** @description Ubicación física de la barbería (`DEC-130`). `null` salvo que la barbería haya activado la ubicación y tenga coordenadas: con el interruptor apagado, o sin dirección geocodificada, la reserva pública no pinta ninguna sección. */
             location: components["schemas"]["PublicLocation"] | null;
+            /** @description Si la barbería atiende a domicilio (`DEC-131`). Con `true` el cliente puede elegir «a domicilio» al reservar e indicar su dirección. */
+            offersHomeService: boolean;
         };
         /** @description Servicio ofrecido públicamente por la barbería resuelta: activo y con al menos una asignación vigente a un barbero (HU-091, CA-091-01). currency es siempre "COP" (DEC-067). */
         PublicServiceResponse: {
@@ -2021,6 +2027,18 @@ export interface components {
              */
             slotGridMinutes: number;
         };
+        /** @description A dónde va el barbero. Se guardan los tres datos juntos o ninguno (`appointment_home_service_ck`). */
+        HomeServiceAddress: {
+            /**
+             * @description Dirección en texto; el servidor recorta y colapsa los espacios.
+             * @example Carrera 7
+             */
+            address: string;
+            /** @example 4.6486 */
+            latitude: number;
+            /** @example -74.0628 */
+            longitude: number;
+        };
         /** @description Confirma la reserva pública elegida en los pasos anteriores (HU-091, HU-092, HU-094, HU-096). `startsAt` debe ser exactamente uno de los instantes que `GET .../availability` devolvió; el servidor lo revalida de nuevo contra la jornada, los bloqueos y la ventana pública vigentes antes de persistir (CA-097-02), y contra la restricción de exclusión de PostgreSQL como última defensa (RN-CON-03). Si la franja ya no está disponible, la respuesta es `409` con alternativas cercanas (RN-CON-05, DEC-090); los datos del formulario nunca se pierden en ese caso. */
         ConfirmPublicAppointmentRequest: {
             /**
@@ -2060,6 +2078,8 @@ export interface components {
              * @example Ana Gómez
              */
             attendeeName?: string | null;
+            /** @description `null` o ausente: el turno es en el local. Con valor, el turno es a domicilio en esa dirección (`DEC-131`, `HU-103`). Solo se acepta si la barbería ofrece domicilio en el momento de confirmar; si no, `422` sin crear el turno. Dato personal (`RN-DAT-02`). */
+            homeService?: components["schemas"]["HomeServiceAddress"] | null;
         };
         ConfirmedPublicAppointmentResponse: {
             /**
@@ -3225,6 +3245,8 @@ export interface components {
             priceAmount: string;
             /** @example COP */
             currency: string;
+            /** @description Dirección del cliente cuando el turno es a domicilio (`DEC-131`); `null` en el local. Solo la ve el panel de esa barbería (`CA-103-06`). */
+            homeService: components["schemas"]["HomeServiceAddress"] | null;
         };
         /** @description Turnos del barbero de la ruta cuyo intervalo interseca el día pedido, ordenados de forma estable por `startsAt` y luego por `id` (CA-062-03). */
         DailyAgendaResponse: {
@@ -3266,6 +3288,8 @@ export interface components {
             versionToken: string;
             /** Format: date-time */
             createdAt: string;
+            /** @description Dirección del cliente cuando el turno es a domicilio (`DEC-131`); `null` en el local. Solo la ve el panel de esa barbería (`CA-103-06`). */
+            homeService: components["schemas"]["HomeServiceAddress"] | null;
         };
         AppointmentHistoryChange: {
             fieldName: string;

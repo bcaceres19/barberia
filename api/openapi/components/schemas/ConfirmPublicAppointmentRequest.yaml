@@ -67,6 +67,15 @@ properties:
       `forSomeoneElse` es `true`; ignorado en caso contrario.
     examples:
       - Ana Gómez
+  homeService:
+    oneOf:
+      - $ref: './HomeServiceAddress.yaml'
+      - type: "null"
+    description: >
+      `null` o ausente: el turno es en el local. Con valor, el turno es a
+      domicilio en esa dirección (`DEC-131`, `HU-103`). Solo se acepta si la
+      barbería ofrece domicilio en el momento de confirmar; si no, `422` sin
+      crear el turno. Dato personal (`RN-DAT-02`).
 required:
   - startsAt
   - fullName

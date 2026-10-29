@@ -37,6 +37,7 @@ func (a PublicAppointmentAdapter) CreatePublicAppointment(
 	priceAmountCents int64,
 	currency string,
 	customerNote *string,
+	homeAddress *string, homeLatitude, homeLongitude *float64,
 	customerExistingID *string,
 	customerUpdatePhone *string,
 	customerUpdateEmail *string,
@@ -58,6 +59,11 @@ func (a PublicAppointmentAdapter) CreatePublicAppointment(
 		}
 	}
 
+	var home *HomeService
+	if homeAddress != nil && homeLatitude != nil && homeLongitude != nil {
+		home = &HomeService{Address: *homeAddress, Latitude: *homeLatitude, Longitude: *homeLongitude}
+	}
+
 	input := CreatePublicInput{
 		BarberID:     barberID,
 		ServiceID:    serviceID,
@@ -71,6 +77,7 @@ func (a PublicAppointmentAdapter) CreatePublicAppointment(
 			Currency:         currency,
 		},
 		CustomerNote:        customerNote,
+		HomeService:         home,
 		BarbershopName:      barbershopName,
 		Timezone:            timezone,
 		TokenPlain:          tokenPlain,

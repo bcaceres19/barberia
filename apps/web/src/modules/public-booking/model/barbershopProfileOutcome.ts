@@ -30,6 +30,8 @@ export interface PublicBarbershopProfile {
    * mapa sin coordenadas reales.
    */
   location: PublicBarbershopLocation | null
+  /** Si la barbería atiende a domicilio (DEC-131, HU-103). */
+  offersHomeService: boolean
 }
 
 /** Resultado discriminado de resolver un enlace público contra el API

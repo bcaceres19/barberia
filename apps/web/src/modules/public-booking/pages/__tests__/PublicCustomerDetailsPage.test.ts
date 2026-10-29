@@ -30,6 +30,12 @@ vi.mock('../../api/listPublicBarbersApi', () => ({
   listPublicBarbers: listPublicBarbersMock,
 }))
 
+const loadPublicProfileMock = vi.hoisted(() => vi.fn())
+vi.mock('../../model/publicProfile', () => ({
+  loadPublicProfile: loadPublicProfileMock,
+  publicTermsFor: () => null,
+}))
+
 const { default: PublicCustomerDetailsPage } = await import('../PublicCustomerDetailsPage.vue')
 
 const BASE_PROPS = {
@@ -53,6 +59,21 @@ const CONFIRMED_APPOINTMENT = {
   customerNote: null,
 }
 
+function profileOutcome(offersHomeService: boolean) {
+  return {
+    kind: 'success',
+    profile: {
+      name: 'Barbería Ejemplo',
+      timezone: 'America/Bogota',
+      contactEmail: null,
+      contactPhone: null,
+      vocabulary: { barber: 'Barbero', service: 'Servicio', appointment: 'Turno' },
+      location: null,
+      offersHomeService,
+    },
+  }
+}
+
 function mountPage() {
   return mount(PublicCustomerDetailsPage, { props: BASE_PROPS })
 }
@@ -64,6 +85,8 @@ beforeEach(() => {
   confirmPublicAppointmentMock.mockReset()
   routerPushMock.mockReset()
   listPublicBarbersMock.mockReset()
+  loadPublicProfileMock.mockReset()
+  loadPublicProfileMock.mockResolvedValue(profileOutcome(false))
   listPublicBarbersMock.mockResolvedValue({
     kind: 'success',
     barbers: [
@@ -78,7 +101,9 @@ beforeEach(() => {
 })
 
 async function fillValidForm(wrapper: ReturnType<typeof mountPage>) {
-  await wrapper.find('input[type="text"]').setValue('Ana Ríos')
+  // Por autocomplete y no por tipo: con el paso a domicilio abierto, el combobox de la
+  // dirección también es type="text".
+  await wrapper.find('input[autocomplete="name"]').setValue('Ana Ríos')
   await wrapper.find('input[type="tel"]').setValue('+573001234567')
   await wrapper.find('input[type="email"]').setValue('ana@example.com')
 }
@@ -534,5 +559,102 @@ describe('PublicCustomerDetailsPage', () => {
 
     const results = await axe(wrapper.element)
     expect(results).toHaveNoViolations()
+  })
+  describe('servicio a domicilio (DEC-131, HU-103)', () => {
+    async function mountOffering() {
+      loadPublicProfileMock.mockResolvedValue(profileOutcome(true))
+      const wrapper = mountPage()
+      await flushPromises()
+      return wrapper
+    }
+
+    async function chooseAddress(wrapper: Awaited<ReturnType<typeof mountOffering>>) {
+      await wrapper.find('input[name="service-mode"][value="home"]').setValue(true)
+      await wrapper.get('input[role="combobox"]').setValue('Carrera 7 71')
+      await new Promise((r) => setTimeout(r, 320))
+      await flushPromises()
+      await wrapper.get('[role="option"]').trigger('click')
+      await flushPromises()
+    }
+
+    it('does not offer the modality when the barbershop does not serve at home (CA-103-01)', async () => {
+      const wrapper = mountPage()
+      await flushPromises()
+      expect(wrapper.find('input[name="service-mode"]').exists()).toBe(false)
+      expect(wrapper.text()).not.toContain('A domicilio')
+    })
+
+    it('offers local/home when enabled and defaults to the shop (CA-103-01)', async () => {
+      const wrapper = await mountOffering()
+      const local = wrapper.get('input[name="service-mode"][value="local"]')
+      expect((local.element as HTMLInputElement).checked).toBe(true)
+      expect(wrapper.find('input[role="combobox"]').exists()).toBe(false)
+    })
+
+    it('requires choosing an address from the list before reviewing (CA-103-02)', async () => {
+      const wrapper = await mountOffering()
+      await fillValidForm(wrapper)
+      await wrapper.find('input[name="service-mode"][value="home"]').setValue(true)
+      await wrapper.get('input[role="combobox"]').setValue('Carrera 7 71')
+      await wrapper.find('form').trigger('submit')
+
+      expect(wrapper.text()).toContain('Elige tu dirección de la lista de sugerencias.')
+      expect(wrapper.text()).not.toContain('Confirmar turno')
+    })
+
+    it('sends the chosen address with coordinates on confirm and shows it in the summary (CA-103-03)', async () => {
+      confirmPublicAppointmentMock.mockResolvedValueOnce({
+        kind: 'success',
+        appointment: CONFIRMED_APPOINTMENT,
+      })
+      const wrapper = await mountOffering()
+      await chooseAddress(wrapper)
+      await fillValidForm(wrapper)
+      await wrapper.find('form').trigger('submit')
+
+      expect(wrapper.text()).toContain('Te atendemos en')
+      expect(wrapper.text()).toContain('Carrera 7 71, Bogotá (1)')
+
+      await wrapper
+        .findAll('button')
+        .find((b) => b.text().includes('Confirmar turno'))!
+        .trigger('click')
+      await flushPromises()
+
+      const input = confirmPublicAppointmentMock.mock.calls[0]![3]
+      expect(input.homeService).toEqual({
+        address: 'Carrera 7 71, Bogotá (1)',
+        latitude: 4.6486,
+        longitude: -74.0628,
+      })
+    })
+
+    it('sends no address when the customer stays with the shop modality', async () => {
+      confirmPublicAppointmentMock.mockResolvedValueOnce({
+        kind: 'success',
+        appointment: CONFIRMED_APPOINTMENT,
+      })
+      const wrapper = await mountOffering()
+      await chooseAddress(wrapper)
+      await wrapper.find('input[name="service-mode"][value="local"]').setValue(true)
+      await fillValidForm(wrapper)
+      await wrapper.find('form').trigger('submit')
+      expect(wrapper.text()).not.toContain('Te atendemos en')
+
+      await wrapper
+        .findAll('button')
+        .find((b) => b.text().includes('Confirmar turno'))!
+        .trigger('click')
+      await flushPromises()
+
+      expect(confirmPublicAppointmentMock.mock.calls[0]![3].homeService).toBeNull()
+    })
+
+    it('has no accessibility violations with the address step open', async () => {
+      const wrapper = await mountOffering()
+      await wrapper.find('input[name="service-mode"][value="home"]').setValue(true)
+      const results = await axe(wrapper.element)
+      expect(results).toHaveNoViolations()
+    })
   })
 })

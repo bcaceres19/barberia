@@ -24,6 +24,9 @@ type BarbershopProfile struct {
 	// interruptor activo Y coordenadas guardadas. Con cualquier otra
 	// combinación es nil y la reserva pública no pinta ninguna sección.
 	Location *Location
+	// OffersHomeService indica que la barbería ofrece atender a domicilio
+	// (DEC-131, HU-103): la reserva pública solo pide la modalidad cuando es true.
+	OffersHomeService bool
 }
 
 // Location es la ubicación física que la reserva pública muestra (DEC-130,

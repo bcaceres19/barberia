@@ -58,6 +58,9 @@ type AppointmentDetail struct {
 	DurationMinutesSnapshot  int
 	PriceAmountCentsSnapshot int64
 	CurrencySnapshot         string
+	// HomeService es la dirección del cliente cuando el turno es a domicilio
+	// (DEC-131, CA-103-06); nil en el local. Solo la ve el panel de la barbería.
+	HomeService *HomeService
 	// VersionToken es el token opaco de concurrencia (trabajo requerido
 	// §2.4 del prompt de HU-064): determinista a partir de ID y del instante
 	// de actualización vigente, pero irreversible (hash, no una codificación

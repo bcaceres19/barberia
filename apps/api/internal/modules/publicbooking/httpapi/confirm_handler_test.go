@@ -15,6 +15,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -95,6 +96,7 @@ func (f *confirmFakePublicAppointmentPort) CreatePublicAppointment(
 	int64,
 	string,
 	*string,
+	*string, *float64, *float64,
 	*string,
 	*string,
 	*string,
@@ -254,5 +256,49 @@ func TestConfirmPublicAppointmentHandler_RepositoryScheduleConflict_Returns409(t
 
 	if rec.Code != http.StatusConflict {
 		t.Fatalf("expected 409, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func homeBody(startsAt time.Time, home string) string {
+	return `{"startsAt":"` + startsAt.Format(time.RFC3339) + `","fullName":"Carlos Restrepo","phone":"+573001234567","email":"carlos@example.com","homeService":` + home + `}`
+}
+
+// CA-103-05: sin domicilio ofrecido (o apagado entre la elección y el envío) la
+// solicitud responde 422 y no llega al repositorio.
+func TestConfirmPublicAppointmentHandler_HomeServiceNotOffered_Returns422(t *testing.T) {
+	loc, _ := time.LoadLocation("America/Bogota")
+	now := time.Date(2026, time.September, 14, 8, 0, 0, 0, loc)
+	startsAt := time.Date(2026, time.September, 14, 9, 0, 0, 0, loc)
+
+	appointments := &confirmFakePublicAppointmentPort{decision: idempotency.Decision{Outcome: idempotency.OutcomeProceed}}
+	email := &confirmFakeEmailPort{}
+	h := newConfirmHandler(appointments, email, now)
+	req := confirmRequest(t, homeBody(startsAt, `{"address":"Calle 10 # 5-20","latitude":4.6,"longitude":-74.07}`), "key-1")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if email.calls != 0 {
+		t.Fatal("no se debe enviar correo de una solicitud rechazada")
+	}
+	if strings.Contains(rec.Body.String(), "Calle 10") {
+		t.Fatalf("la dirección del cliente nunca viaja en un error (RN-DAT-02): %s", rec.Body.String())
+	}
+}
+
+func TestConfirmPublicAppointmentHandler_HomeServiceUnknownNestedField_Returns400(t *testing.T) {
+	loc, _ := time.LoadLocation("America/Bogota")
+	now := time.Date(2026, time.September, 14, 8, 0, 0, 0, loc)
+	startsAt := time.Date(2026, time.September, 14, 9, 0, 0, 0, loc)
+
+	h := newConfirmHandler(&confirmFakePublicAppointmentPort{decision: idempotency.Decision{Outcome: idempotency.OutcomeProceed}}, &confirmFakeEmailPort{}, now)
+	req := confirmRequest(t, homeBody(startsAt, `{"address":"Calle 10","latitude":4.6,"longitude":-74.07,"floor":3}`), "key-1")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
 	}
 }

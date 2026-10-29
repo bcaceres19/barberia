@@ -14,12 +14,15 @@ export interface LocationSettings {
   address: string | null
   latitude: number | null
   longitude: number | null
+  /** Interruptor general del servicio a domicilio (DEC-131, HU-103). */
+  offersHomeService: boolean
 }
 
 /** Cambio de ubicación a enviar: lo ausente no se toca; `address: null` la quita. */
 export interface LocationChange {
   hasPhysicalLocation?: boolean
   address?: string | null
+  offersHomeService?: boolean
 }
 
 export const DEFAULT_LOCATION: LocationSettings = {
@@ -27,6 +30,7 @@ export const DEFAULT_LOCATION: LocationSettings = {
   address: null,
   latitude: null,
   longitude: null,
+  offersHomeService: false,
 }
 
 export type FetchBrandOutcome =

@@ -22,6 +22,8 @@ type BrandResponse struct {
 	Address             *string  `json:"address"`
 	Latitude            *float64 `json:"latitude"`
 	Longitude           *float64 `json:"longitude"`
+	// OffersHomeService es el interruptor general del servicio a domicilio (DEC-131).
+	OffersHomeService bool `json:"offersHomeService"`
 }
 
 // UpdateBrandRequest es el cuerpo de PATCH /private/settings/brand. Cerrado:
@@ -43,6 +45,8 @@ type UpdateBrandRequest struct {
 	// geocodificar una dirección nueva.
 	HasPhysicalLocation *bool        `json:"hasPhysicalLocation"`
 	Address             OptionalText `json:"address"`
+	// OffersHomeService es opcional (DEC-131): ausente conserva el interruptor.
+	OffersHomeService *bool `json:"offersHomeService"`
 }
 
 // OptionalText distingue un campo ausente de uno enviado como null: ausente

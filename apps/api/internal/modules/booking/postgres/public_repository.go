@@ -76,6 +76,7 @@ func (r *Repository) CreatePublic(
 			Origin:       booking.OriginPublic,
 			Service:      input.Service,
 			CustomerNote: input.CustomerNote,
+			HomeService:  input.HomeService,
 		}
 
 		appointment, err := insertAppointment(ctx, q, barbershopID, customer.ID, internalInput)

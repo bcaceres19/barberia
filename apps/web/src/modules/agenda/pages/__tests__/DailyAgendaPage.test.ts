@@ -54,6 +54,7 @@ const oneEntry = [
     durationMinutes: 30,
     priceAmount: '20000.00',
     currency: 'COP',
+    homeService: null,
   },
 ]
 
@@ -71,6 +72,7 @@ const nightEntry = [
     durationMinutes: 60,
     priceAmount: '25000.00',
     currency: 'COP',
+    homeService: null,
   },
 ]
 
@@ -86,6 +88,7 @@ const terminalEntry = [
     durationMinutes: 30,
     priceAmount: '15000.00',
     currency: 'COP',
+    homeService: null,
   },
 ]
 
@@ -227,6 +230,27 @@ describe('DailyAgendaPage', () => {
     // La URL queda normalizada con barbero y fecha explícitos.
     expect(router.currentRoute.value.query.barberId).toBe('b-1')
     expect(router.currentRoute.value.query.date).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  })
+
+  it('marks a home-service turn in the agenda without showing the address (DEC-131, HU-103)', async () => {
+    fetchDailyAgendaMock.mockResolvedValueOnce({
+      kind: 'success',
+      items: [
+        {
+          ...oneEntry[0]!,
+          homeService: {
+            address: 'Carrera 7 # 71-21, Bogotá',
+            latitude: 4.6486,
+            longitude: -74.0628,
+          },
+        },
+      ],
+    })
+    const { wrapper } = await mountReady()
+
+    expect(wrapper.text()).toContain('Corte clásico · A domicilio')
+    // La dirección es dato personal: vive solo en el detalle del turno.
+    expect(wrapper.text()).not.toContain('Carrera 7')
   })
 
   it('shows an explicit empty message when the selected barber has no turns today', async () => {

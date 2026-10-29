@@ -24,3 +24,4 @@ content:
           address: null
           latitude: null
           longitude: null
+          offersHomeService: false

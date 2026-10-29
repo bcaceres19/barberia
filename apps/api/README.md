@@ -785,6 +785,25 @@ Módulo `internal/modules/reviews` (sin dependencias de otros módulos): una res
 `BarberResponse` y `PublicBarberResponse`. El enlace del turno vive 90 días, que acota cuándo puede
 reseñarse.
 
+### Servicio a domicilio (DEC-131, HU-103)
+
+Interruptor general `barbershop.offers_home_service` (`PATCH /private/settings/brand`, campo
+`offersHomeService`; también en `GET /public/barbershops/{slug}`). La confirmación pública
+(`POST .../appointments`) acepta `homeService { address, latitude, longitude }` y:
+
+- responde `422` **antes de crear el turno** si la barbería ya no ofrece domicilio (CA-103-05);
+- normaliza la dirección (espacios colapsados, 1–200 caracteres) y rechaza coordenadas no finitas o
+  fuera de rango; el servidor **no vuelve a geocodificar** lo que envía el cliente (las coordenadas
+  salen de la selección del autocompletado);
+- persiste `is_home_service`, `service_address`, `service_latitude` y `service_longitude` en la misma
+  transacción que el turno; el `CHECK` `appointment_home_service_ck` impide combinaciones parciales
+  aun ante un error de aplicación.
+
+`homeService` viaja solo en la agenda y el detalle privados (`DailyAgendaEntry`,
+`AppointmentDetailResponse`); nunca en la reserva pública, en las reseñas ni en los registros
+(`RN-DAT-02`). No hay variable nueva: el autocompletado vive en el navegador. Cuando exista la
+anonimización (`RN-DAT-03`) deberá vaciar la dirección junto con `is_home_service = false`.
+
 ### Prueba local completa: capturar el código sin un WhatsApp real
 
 `APP_PHONE_CHALLENGE_CAPTURE_FILE=<ruta>` hace que

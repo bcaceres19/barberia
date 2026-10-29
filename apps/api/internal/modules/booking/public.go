@@ -34,6 +34,10 @@ type CreatePublicInput struct {
 	Service      ServiceSnapshot
 	CustomerNote *string
 
+	// HomeService es nil para un turno en el local; con valor, la dirección del
+	// cliente que se persiste junto al turno en la misma transacción (DEC-131).
+	HomeService *HomeService
+
 	// BarbershopName y Timezone viajan aquí, ya resueltos por
 	// publicbooking, ÚNICAMENTE para que la respuesta almacenada de
 	// idempotencia (publicAppointmentResponseWire) pueda construirse
@@ -101,6 +105,11 @@ func (in CreatePublicInput) validate() error {
 	}
 	if err := in.Customer.validate(); err != nil {
 		return err
+	}
+	if in.HomeService != nil {
+		if err := in.HomeService.validate(); err != nil {
+			return err
+		}
 	}
 	if !tokenHashPattern.MatchString(in.TokenHash) {
 		return errPublicTokenHashInvalid()
