@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-FEAT-GCAL-03-PUBLICACION-NAVA-A-GOOGLE-v1"
 version: "1.0"
 kind: "hu"
-status: "ready"
+status: "executed"
 target_agents:
   - "any"
 repository: "bcaceres19/barberia"
