@@ -93,26 +93,11 @@ type Service struct {
 }
 
 // DeactivationImpact es el resultado de previsualizar o confirmar el efecto
-// de desactivar un servicio (CA-024-01, CA-024-04). AffectedAppointments es
-// siempre 0 en B1 (DEC-069): `appointment` no existe todavía en la cadena
-// migrada, así que cero citas futuras existen para ningún servicio -es el
-// conteo real del sistema actual, no un valor por defecto ni un dato
-// simulado. B3 sustituye el cálculo por una consulta real contra
-// `appointment` sin cambiar esta forma.
+// de desactivar un servicio (CA-024-01, CA-024-04). AffectedAppointments es el
+// recuento real de citas `confirmed` futuras del servicio (RN-SER-03): desde que
+// `appointment` existe (B3, DEC-069) lo calcula una consulta, no un valor fijo.
 type DeactivationImpact struct {
 	AffectedAppointments int
-}
-
-// currentDeactivationImpact es el único punto donde B1 decide
-// AffectedAppointments (DEC-069). No es un puerto ni un adaptador que
-// simule consultar una tabla: es la verdad honesta y literal del sistema
-// actual, porque appointment no existe todavía en ningún ambiente
-// migrado -no puede haber una sola cita futura, para ningún servicio, de
-// ninguna barbería. Cuando B3 cree appointment, esta función (y solo esta)
-// se reemplaza por una consulta real al repositorio de esa capacidad, sin
-// tocar el resto de esta historia.
-func currentDeactivationImpact() DeactivationImpact {
-	return DeactivationImpact{AffectedAppointments: 0}
 }
 
 // serviceIDPattern es la misma forma canónica 8-4-4-4-12 que

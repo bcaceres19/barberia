@@ -2,6 +2,7 @@ package catalog_test
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -23,6 +24,9 @@ type fakeRepository struct {
 	updateFn     func(ctx context.Context, barbershopID, serviceID string, fields catalog.UpdateFields) (catalog.UpdateResult, error)
 	deactivateFn func(ctx context.Context, barbershopID, serviceID string, key idempotency.Key, fingerprint idempotency.Fingerprint) (catalog.LifecycleResult, error)
 	reactivateFn func(ctx context.Context, barbershopID, serviceID string, key idempotency.Key, fingerprint idempotency.Fingerprint) (catalog.LifecycleResult, error)
+
+	futureAppointments    int
+	futureAppointmentsErr error
 
 	createCalls     int
 	updateCalls     int
@@ -51,6 +55,10 @@ func (f *fakeRepository) Update(ctx context.Context, barbershopID, serviceID str
 func (f *fakeRepository) Deactivate(ctx context.Context, barbershopID, serviceID string, key idempotency.Key, fingerprint idempotency.Fingerprint) (catalog.LifecycleResult, error) {
 	f.deactivateCalls++
 	return f.deactivateFn(ctx, barbershopID, serviceID, key, fingerprint)
+}
+
+func (f *fakeRepository) CountFutureAppointments(context.Context, string, string) (int, error) {
+	return f.futureAppointments, f.futureAppointmentsErr
 }
 
 func (f *fakeRepository) Reactivate(ctx context.Context, barbershopID, serviceID string, key idempotency.Key, fingerprint idempotency.Fingerprint) (catalog.LifecycleResult, error) {
@@ -581,8 +589,8 @@ func TestPreviewDeactivation_NotFound_TranslatesToNotFound(t *testing.T) {
 	mustBeNotFound(t, err)
 }
 
-func TestPreviewDeactivation_Found_ReturnsZeroAffectedAppointments(t *testing.T) {
-	repo := &fakeRepository{getFn: func(context.Context, string, string) (catalog.Service, bool, error) {
+func TestPreviewDeactivation_Found_ReturnsTheRepositoryCount(t *testing.T) {
+	repo := &fakeRepository{futureAppointments: 4, getFn: func(context.Context, string, string) (catalog.Service, bool, error) {
 		return catalog.Service{ID: validServiceID, IsActive: true}, true, nil
 	}}
 	svc := catalog.NewService(repo)
@@ -591,10 +599,22 @@ func TestPreviewDeactivation_Found_ReturnsZeroAffectedAppointments(t *testing.T)
 	if err != nil {
 		t.Fatalf("PreviewDeactivation: %v", err)
 	}
-	// DEC-069: B1 no tiene appointment todavía, así que el conteo real es
-	// siempre 0.
-	if impact.AffectedAppointments != 0 {
-		t.Fatalf("expected AffectedAppointments=0 (DEC-069), got %d", impact.AffectedAppointments)
+	// CA-024-01: el impacto sale de una consulta real, no de un valor fijo.
+	if impact.AffectedAppointments != 4 {
+		t.Fatalf("expected AffectedAppointments=4 from the repository, got %d", impact.AffectedAppointments)
+	}
+}
+
+func TestPreviewDeactivation_CountFails_ReturnsInternalError(t *testing.T) {
+	repo := &fakeRepository{futureAppointmentsErr: errors.New("boom"), getFn: func(context.Context, string, string) (catalog.Service, bool, error) {
+		return catalog.Service{ID: validServiceID, IsActive: true}, true, nil
+	}}
+	svc := catalog.NewService(repo)
+
+	_, err := svc.PreviewDeactivation(context.Background(), "shop-1", validServiceID)
+	appErr, ok := apperr.As(err)
+	if !ok || appErr.Kind != apperr.KindInternal {
+		t.Fatalf("expected KindInternal, got %v", err)
 	}
 }
 
