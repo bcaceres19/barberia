@@ -44,6 +44,12 @@ vi.mock('../../api/brandApi', () => ({
   saveBrand: saveBrandMock,
 }))
 vi.mock('../../api/publicLinkApi', () => ({ fetchPublicLink: fetchPublicLinkMock }))
+// El canal del código de acceso (DEC-139) también es un recurso propio, con su
+// prueba en LoginOtpPanel.test.ts: aquí solo se evita la red.
+vi.mock('../../api/loginOtpApi', () => ({
+  fetchLoginOtpChannel: vi.fn(() => Promise.resolve({ kind: 'success', channel: 'email' })),
+  saveLoginOtpChannel: vi.fn(),
+}))
 vi.mock('@/modules/auth', () => ({ updateBarbershopName: updateBarbershopNameMock }))
 
 const { default: SettingsPage } = await import('../SettingsPage.vue')
@@ -417,7 +423,7 @@ describe('SettingsPage', () => {
       const wrapper = await mountReady()
 
       const numbers = wrapper.findAll('.settings-panel__number').map((n) => n.text())
-      expect(numbers).toEqual(['01', '02', '03', '04', '05', '06', '07', '08', '09'])
+      expect(numbers).toEqual(['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'])
     })
 
     it('keeps the panel of the user when the brand is saved, and never sends it', async () => {

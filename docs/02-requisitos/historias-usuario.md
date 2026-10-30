@@ -362,7 +362,7 @@ La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para c
 | --- | --- |
 | Función | `F-SEG-03` |
 | Reglas | `RN-DAT-02` |
-| Decisiones | `DEC-026`, `DEC-052`, `DEC-061`, `DEC-062`, `DEC-081` |
+| Decisiones | `DEC-026`, `DEC-052`, `DEC-061`, `DEC-062`, `DEC-081`, `DEC-139` |
 | Actor | Propietario (protege), barbero (afectado si se excede) |
 | Depende de | `HU-003`, `HU-005` |
 | Bloquea | — |
@@ -393,6 +393,9 @@ La base transversal de experiencia (`HU-009`) se adelanta a las pantallas para c
 | `CA-007-05` | El umbral y la ventana se cambian por configuración, sin recompilar ni editar código. |
 | `CA-007-06` | Los datos de conteo vencen solos y no contienen correo, nombre ni teléfono. |
 | `CA-007-07` | El límite no depende de una cabecera que el cliente pueda falsificar libremente; la obtención de la IP está documentada y probada según el despliegue previsto. |
+| `CA-007-08` | (`DEC-139`) El código del reto sale por el canal que la barbería configuró (`email`, `whatsapp` o `both`); las barberías nuevas nacen en `email` y las anteriores quedaron en `whatsapp`. Los destinos los deriva el servidor (teléfono verificado y/o correo de la cuenta) y ninguna petición pública los aporta. |
+| `CA-007-09` | (`DEC-139`) Con `both` el mismo código sale por los dos canales en una sola operación lógica; basta que uno entregue y el fallo del otro solo se registra internamente. Un canal sin destino utilizable (WhatsApp sin teléfono verificado) no se sustituye por otro. La respuesta HTTP es la misma en todos los casos (`CA-007-03`). |
+| `CA-007-10` | (`DEC-139`) Configuración muestra y cambia el canal (`GET`/`PATCH /private/settings/login-otp`); cada barbería solo ve y cambia el suyo. |
 
 **Pruebas obligatorias**
 

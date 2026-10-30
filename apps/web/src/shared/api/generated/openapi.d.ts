@@ -500,6 +500,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/private/settings/login-otp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar el canal del código de acceso de la barbería activa
+         * @description Lectura autenticada (DEC-139) del canal por el que la barbería recibe el código del reto adicional de acceso (`HU-007`): `email`, `whatsapp` o `both`. `barbershopId` nunca es un parámetro: el tenant se deriva exclusivamente de `SessionCookie`. La respuesta no se almacena en caché.
+         */
+        get: operations["getLoginOtpSettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Cambiar el canal del código de acceso de la barbería activa
+         * @description Actualización autenticada (DEC-139) del canal del código del reto adicional de acceso. Aplica a la barbería de la sesión y a todas sus cuentas; el servidor deriva los destinos (teléfono verificado y/o correo de cada cuenta) y nunca acepta uno del cliente (`DEC-081`): un campo desconocido responde `400`. Con `whatsapp`, una cuenta sin teléfono verificado no recibe código y no se usa el correo como respaldo; con `both`, basta que un canal entregue. No cambia la recuperación de acceso (`DEC-092`). Sin precondición de versión: la última escritura gana.
+         */
+        patch: operations["updateLoginOtpSettings"];
+        trace?: never;
+    };
     "/private/integrations/google-calendar": {
         parameters: {
             query?: never;
@@ -2612,6 +2636,20 @@ export interface components {
             /** @example cortefinok7x2m9q4 */
             slug: string;
         };
+        /**
+         * @description Por dónde se entrega el código del reto adicional de acceso (`HU-007`): `email` al correo de la cuenta, `whatsapp` al teléfono verificado de la cuenta por WhatsApp oficial, o `both` por los dos con el mismo código. Es un valor por barbería: las nuevas nacen en `email` (`DEC-081`) y las anteriores a `DEC-139` quedaron en `whatsapp`. El destino nunca lo envía el cliente: el servidor lo deriva de la cuenta. No cambia la recuperación de acceso (`DEC-092`), donde la persona elige el canal.
+         * @example email
+         * @enum {string}
+         */
+        LoginOtpChannel: "email" | "whatsapp" | "both";
+        /** @description Canal del código del reto adicional de acceso de la barbería de la sesión. */
+        LoginOtpSettings: {
+            channel: components["schemas"]["LoginOtpChannel"];
+        };
+        /** @description Nuevo canal del código del reto de acceso. Solo `channel`: los destinos los deriva el servidor de los contactos de cada cuenta y nunca llegan del cliente. */
+        UpdateLoginOtpRequest: {
+            channel: components["schemas"]["LoginOtpChannel"];
+        };
         /** @description Estado de la integración del usuario autenticado. `enabled` es falso cuando el servidor no tiene credenciales de Google configuradas (la integración queda desactivada y el resto del producto funciona). `barberLinked` es falso mientras el usuario no haya declarado cuál barbero es (`DEC-100`): sin barbero no se puede conectar. */
         GoogleCalendarConnectionResponse: {
             /** @description El servidor tiene la integración con Google Calendar configurada. */
@@ -4238,6 +4276,28 @@ export interface components {
                 "application/json": components["schemas"]["PublicLinkResponse"];
             };
         };
+        /** @description Canal vigente del código del reto de acceso de la barbería activa. */
+        LoginOtpSettings: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                /** @description Siempre `no-store`. */
+                "Cache-Control"?: "no-store";
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["LoginOtpSettings"];
+            };
+        };
+        /** @description El cuerpo es JSON válido con `channel`, pero su valor no es `email`, `whatsapp` ni `both`. Ninguna escritura ocurre cuando esto sucede. */
+        LoginOtpValidationProblem: {
+            headers: {
+                "X-Request-Id": components["headers"]["XRequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
         /** @description Estado de la integración del barbero con Google Calendar. */
         GoogleCalendarConnectionSuccess: {
             headers: {
@@ -5469,6 +5529,42 @@ export interface operations {
             200: components["responses"]["PublicLinkSuccess"];
             401: components["responses"]["UnauthorizedProblem"];
             404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    getLoginOtpSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["LoginOtpSettings"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            500: components["responses"]["InternalErrorProblem"];
+        };
+    };
+    updateLoginOtpSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateLoginOtpRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["LoginOtpSettings"];
+            400: components["responses"]["InvalidRequestProblem"];
+            401: components["responses"]["UnauthorizedProblem"];
+            404: components["responses"]["NotFoundProblem"];
+            422: components["responses"]["LoginOtpValidationProblem"];
             500: components["responses"]["InternalErrorProblem"];
         };
     };

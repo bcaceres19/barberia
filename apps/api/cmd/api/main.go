@@ -188,6 +188,7 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	// Usa el proveedor WhatsApp seleccionado y el marcador local seguro solo
 	// para local/test sin configuración Meta.
 	whatsAppOTPProvider := selectWhatsAppOTPProvider(cfg, logger, hmacSecret)
+	challengeEmailSender := selectChallengeEmailSender(cfg, logger)
 	if capturePath := os.Getenv("APP_PHONE_CHALLENGE_CAPTURE_FILE"); capturePath != "" {
 		// Doble candado de entorno (aquí y en el propio nombre de la
 		// variable): la captura de código en claro en un archivo NUNCA
@@ -198,6 +199,7 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 				"auth: APP_PHONE_CHALLENGE_CAPTURE_FILE solo puede usarse en local/test (uso exclusivo de e2e)")
 		}
 		whatsAppOTPProvider = auth.NewCapturingWhatsAppOTPProvider(whatsAppOTPProvider, capturePath)
+		challengeEmailSender = auth.NewCapturingChallengeEmailSender(challengeEmailSender, capturePath)
 	}
 	phoneChallengeService := auth.NewPhoneChallengeServiceWithOTPProvider(
 		authpostgres.NewPhoneChallengeRepository(db),
@@ -208,7 +210,7 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 			RateMaxActive:         cfg.PhoneChallengeRateMaxActive,
 			ResendCooldownSeconds: cfg.PhoneChallengeResendCooldownSeconds,
 		},
-	)
+	).WithEmailSender(challengeEmailSender)
 	challengeHandler := authhttpapi.NewChallengeHandler(phoneChallengeService, throttleService, trustedProxies)
 	challengeVerifyHandler := authhttpapi.NewChallengeVerifyHandler(phoneChallengeService, throttleService, trustedProxies)
 	router.Post("/api/v1/public/auth/challenge", challengeHandler.ServeHTTP)
@@ -293,6 +295,14 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	updateBrandHandler := shopshttpapi.NewUpdateBrandHandler(brandService, panelProfileService)
 	private.Get("/settings/brand", getBrandHandler.ServeHTTP)
 	private.Patch("/settings/brand", updateBrandHandler.ServeHTTP)
+
+	// DEC-139: canal del código del reto adicional de acceso (correo, WhatsApp o
+	// ambos) de la barbería de la sesión. Sin versionado: la última escritura gana.
+	loginOTPService := shops.NewLoginOTPService(shopspostgres.NewLoginOTPRepository(db))
+	getLoginOTPHandler := shopshttpapi.NewGetLoginOTPHandler(loginOTPService)
+	updateLoginOTPHandler := shopshttpapi.NewUpdateLoginOTPHandler(loginOTPService)
+	private.Get("/settings/login-otp", getLoginOTPHandler.ServeHTTP)
+	private.Patch("/settings/login-otp", updateLoginOTPHandler.ServeHTTP)
 
 	// Issue #304 (DEC-117): enlace público de reservas de la barbería de la
 	// sesión, generado `<nombre><código>` en la primera lectura si aún no
@@ -691,6 +701,19 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	}
 
 	return router, nil
+}
+
+// selectChallengeEmailSender elige cómo se entrega por correo el código del reto
+// de acceso (DEC-139): Resend si está configurado por completo; si no, un
+// marcador que solo deja constancia en el log, sin correo ni código.
+func selectChallengeEmailSender(cfg config.Config, logger *slog.Logger) auth.ChallengeEmailSender {
+	if cfg.ResendAPIKey != "" && cfg.ResendFromAddress != "" {
+		return notification.NewResendLoginChallengeEmailSender(notification.ResendEmailConfig{
+			APIKey:      cfg.ResendAPIKey,
+			FromAddress: cfg.ResendFromAddress,
+		}, nil)
+	}
+	return auth.NewLoggingChallengeEmailSender(logger)
 }
 
 // selectRecoverySender selects the email-only delivery path. WhatsApp OTP

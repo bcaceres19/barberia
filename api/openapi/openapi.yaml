@@ -7,6 +7,9 @@
 # notificaciones firmadas de Meta WhatsApp Cloud API. Lo llama Meta; el frontend
 # no lo consume.
 #
+# DEC-139 agrega GET/PATCH /private/settings/login-otp (paths/settings.yaml): el
+# canal (correo, WhatsApp o ambos) del código del reto adicional de acceso.
+#
 # Issue #304 (DEC-117) agrega GET /private/settings/public-link
 # (paths/settings.yaml): el enlace público de reservas de la barbería de la
 # sesión, generado `<nombre><código aleatorio>` (sin guiones, `DEC-118`) en la primera lectura.
@@ -91,7 +94,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.46.0
+  version: 0.47.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -198,6 +201,8 @@ paths:
     $ref: './paths/settings.yaml#/~1private~1settings~1brand'
   /private/settings/public-link:
     $ref: './paths/settings.yaml#/~1private~1settings~1public-link'
+  /private/settings/login-otp:
+    $ref: './paths/settings.yaml#/~1private~1settings~1login-otp'
   /private/integrations/google-calendar:
     $ref: './paths/google-calendar.yaml#/~1private~1integrations~1google-calendar'
   /private/integrations/google-calendar/connect:

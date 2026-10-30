@@ -55,14 +55,23 @@ type resendEmailRequest struct {
 
 // Send implementa [EmailSender].
 func (s ResendEmailSender) Send(ctx context.Context, email, code string) error {
+	return postResendEmail(ctx, s.httpClient, s.cfg, email, s.cfg.Subject,
+		fmt.Sprintf("Tu código de recuperación de acceso es: %s\n\nVence en pocos minutos. Si no lo solicitaste, ignora este mensaje.", code))
+}
+
+// postResendEmail envía un correo de texto por Resend. Comparte el manejo de
+// errores de los correos de código (recuperación y reto de acceso): sin
+// reintento síncrono y sin copiar el cuerpo de error del proveedor, que puede
+// incluir el destinatario (RN-DAT-02).
+func postResendEmail(ctx context.Context, httpClient *http.Client, cfg ResendEmailConfig, to, subject, text string) error {
 	ctx, cancel := context.WithTimeout(ctx, resendSendTimeout)
 	defer cancel()
 
 	payload := resendEmailRequest{
-		From:    s.cfg.FromAddress,
-		To:      []string{email},
-		Subject: s.cfg.Subject,
-		Text:    fmt.Sprintf("Tu código de recuperación de acceso es: %s\n\nVence en pocos minutos. Si no lo solicitaste, ignora este mensaje.", code),
+		From:    cfg.FromAddress,
+		To:      []string{to},
+		Subject: subject,
+		Text:    text,
 	}
 
 	body, err := json.Marshal(payload)
@@ -75,17 +84,15 @@ func (s ResendEmailSender) Send(ctx context.Context, email, code string) error {
 		return fmt.Errorf("notification: construir solicitud a Resend: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+s.cfg.APIKey)
+	req.Header.Set("Authorization", "Bearer "+cfg.APIKey)
 
-	resp, err := s.httpClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("notification: enviar solicitud a Resend: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 300 {
-		// El cuerpo del error de Resend puede incluir el destinatario; se
-		// descarta explícitamente (RN-DAT-02).
 		_, _ = io.Copy(io.Discard, resp.Body)
 		return fmt.Errorf("%w: resend respondió %d", errDeliveryFailed, resp.StatusCode)
 	}

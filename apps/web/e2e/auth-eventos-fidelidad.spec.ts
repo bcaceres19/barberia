@@ -193,13 +193,13 @@ for (const viewport of [
           })
         })
         await page.getByRole('button', { name: 'Iniciar sesión' }).click()
-        await expect(page.getByText('Verifica tu teléfono')).toBeVisible()
+        await expect(page.getByText('Verifica tu identidad')).toBeVisible()
 
         await page.route('**/api/v1/public/auth/challenge', async (route) => {
           await route.fulfill({ status: 202, contentType: 'application/json', body: '{}' })
         })
-        await page.getByRole('button', { name: 'Enviar código al teléfono' }).click()
-        await expect(page.getByText('Teléfono verificado', { exact: true })).toBeVisible()
+        await page.getByRole('button', { name: 'Enviar código' }).click()
+        await expect(page.getByText('Código de verificación', { exact: true })).toBeVisible()
         await shoot(page, viewport.name, 'acceso', '08-reto-envio-whatsapp.png')
       })
 
@@ -221,13 +221,13 @@ for (const viewport of [
           })
         })
         await page.getByRole('button', { name: 'Iniciar sesión' }).click()
-        await expect(page.getByText('Verifica tu teléfono')).toBeVisible()
+        await expect(page.getByText('Verifica tu identidad')).toBeVisible()
 
         await page.route('**/api/v1/public/auth/challenge', async (route) => {
           await route.fulfill({ status: 202, contentType: 'application/json', body: '{}' })
         })
-        await page.getByRole('button', { name: 'Enviar código al teléfono' }).click()
-        await expect(page.getByText('Teléfono verificado', { exact: true })).toBeVisible()
+        await page.getByRole('button', { name: 'Enviar código' }).click()
+        await expect(page.getByText('Código de verificación', { exact: true })).toBeVisible()
 
         await page.route('**/api/v1/public/auth/challenge/verify', async (route) => {
           await route.fulfill({

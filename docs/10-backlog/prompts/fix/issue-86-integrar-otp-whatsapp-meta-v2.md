@@ -68,7 +68,7 @@ source_docs:
   - "docs/10-backlog/prompts/hu/hu-007-defensa-abuso.md"
   - "docs/10-backlog/prompts/test/issue-86-otp-correo-resend.md"
   - "docs/10-backlog/prompts/test/issue-86-otp-correo-resend-report.md"
-  - "docs/10-backlog/prompts/fix/issue-pending-otp-canales-configurados-v2.md"
+  - "docs/10-backlog/prompts/fix/issue-384-otp-canales-configurados-v2.md"
   - "apps/api/README.md"
   - "apps/api/internal/platform/config/config.go"
   - "apps/api/internal/modules/auth/phone_challenge.go"
@@ -132,6 +132,7 @@ Si cualquiera de estos hechos ya cambió en `main`, adapta la solución al estad
    ```
 
    Ejecútalo desde `apps/api`. Después valida únicamente presencia, nunca contenido, de `APP_META_WHATSAPP_API_VERSION`, `APP_META_WHATSAPP_PHONE_NUMBER_ID`, `APP_META_WHATSAPP_ACCESS_TOKEN`, `APP_META_WHATSAPP_TEMPLATE_NAME` y `APP_META_WHATSAPP_LANGUAGE_CODE`.
+
 6. No agregues `META_WHATSAPP_WABA_ID` ni `META_WHATSAPP_TEST_RECIPIENT` a `config.Config`: son auxiliares de administración/Postman y el runtime de NAVA no debe decidir el destino desde ellas.
 7. Confirma fuera de logs que la plantilla configurada es categoría `AUTHENTICATION`, está `APPROVED`, tiene botón `COPY_CODE` y que el idioma coincide exactamente. Si Meta exige renovar el token temporal o aprobar la plantilla, marca solo la prueba manual como bloqueada hasta que el operador lo resuelva; continúa con implementación y pruebas automatizadas.
 8. Como el árbol principal está sucio, trabaja en un worktree aislado creado desde `origin/main` y usa la rama `fix/86-reto-otp-whatsapp-meta`. No copies el `.env` al worktree ni lo comitees; para la prueba real carga las variables desde el archivo local ignorado por una ruta conocida sin imprimirlas.
@@ -157,12 +158,12 @@ Agregar `SendCode` directamente a `MetaWhatsAppSender` es aceptable solo si las 
 
 Extrae o implementa en `apps/api/cmd/api/main.go` una selección probada, análoga a `selectRecoverySender`, con esta matriz:
 
-| Meta completa | Ambiente | Remitente HU-007 |
-| --- | --- | --- |
-| sí | `local`/`test` | adaptador real sobre `MetaWhatsAppSender` |
-| sí | `pilot`/`production` | adaptador real sobre `MetaWhatsAppSender` |
-| no | `local`/`test` | `LoggingPhoneCodeSender` |
-| no | `pilot`/`production` | configuración inválida; `config.Load` debe impedir el arranque |
+| Meta completa | Ambiente             | Remitente HU-007                                               |
+| ------------- | -------------------- | -------------------------------------------------------------- |
+| sí            | `local`/`test`       | adaptador real sobre `MetaWhatsAppSender`                      |
+| sí            | `pilot`/`production` | adaptador real sobre `MetaWhatsAppSender`                      |
+| no            | `local`/`test`       | `LoggingPhoneCodeSender`                                       |
+| no            | `pilot`/`production` | configuración inválida; `config.Load` debe impedir el arranque |
 
 “Meta completa” significa phone number ID, access token y template name no vacíos. API version y language code conservan sus defaults/configuración validada.
 

@@ -72,6 +72,7 @@ import {
   validateTimezone,
 } from '../validation/settingsValidation'
 import OptionGroup from '../components/OptionGroup.vue'
+import LoginOtpPanel from '../components/LoginOtpPanel.vue'
 import PublicLinkPanel from '../components/PublicLinkPanel.vue'
 import SaveBar from '../components/SaveBar.vue'
 import SettingsIndex from '../components/SettingsIndex.vue'
@@ -431,6 +432,7 @@ const SECTIONS = [
   { id: 'configuracion-enlace', number: '07', label: 'Enlace' },
   { id: 'configuracion-reservas', number: '08', label: 'Reservas' },
   { id: 'configuracion-integraciones', number: '09', label: 'Integraciones' },
+  { id: 'configuracion-acceso', number: '10', label: 'Acceso' },
 ] as const
 
 const activeSection = ref<string>(SECTIONS[0].id)
@@ -1066,6 +1068,17 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
               </span>
               <span class="settings-link__arrow" aria-hidden="true">→</span>
             </RouterLink>
+          </SettingsPanel>
+
+          <!-- 10 · Código de acceso (DEC-139): se aplica al instante, no es parte del borrador -->
+          <SettingsPanel
+            id="configuracion-acceso"
+            number="10"
+            title="Código de acceso"
+            description="Por dónde llega el código de verificación cuando alguien necesita confirmar su identidad para entrar."
+            style="--panel-index: 9"
+          >
+            <LoginOtpPanel />
           </SettingsPanel>
 
           <div class="settings-page__save">

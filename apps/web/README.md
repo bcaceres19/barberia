@@ -1179,6 +1179,11 @@ lo necesita para layout; la apariencia semántica solo se elige con `variant`
 - **Clave**: el navegador nunca recibe la clave de servidor; la consulta a Google la hace el API.
 - **Pruebas**: `api/__tests__/getPublicGoogleReviewsApi.test.ts`, `components/__tests__/GoogleReviews.test.ts` (con axe), bloque de Google de `PublicBarbershopEntryPage.test.ts`, `SettingsPage.test.ts` y `e2e/google-resenas-reserva-publica.spec.ts` (320/360/768/1280, axe).
 
+## Canal del código de acceso (HU-007, DEC-139)
+
+- **Configuración** (`/panel/barberia`, panel 10 «Código de acceso», `components/LoginOtpPanel.vue`): grupo de opciones «Correo», «WhatsApp» y «Correo y WhatsApp». Elegir una opción la guarda al instante con `PATCH /private/settings/login-otp` (cliente `api/loginOtpApi.ts`), lo anuncia en una región viva y, si falla, conserva la anterior. La pantalla nunca pide ni muestra un correo o teléfono: el servidor deriva los destinos de cada cuenta. La recuperación de acceso no se configura aquí (`DEC-092`).
+- **Pruebas**: `api/__tests__/loginOtpApi.test.ts`, `components/__tests__/LoginOtpPanel.test.ts` (con axe), `SettingsPage.test.ts` y `e2e/acceso-codigo-canal.spec.ts` (320/360/768/1280, axe).
+
 ## Servicio a domicilio (HU-103, DEC-131, DEC-138)
 
 - **Configuración** (panel 06 «Ubicación»): interruptor «Atiendo a domicilio» (`offersHomeService`), se guarda con la misma petición que la marca.

@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-FIX-OTP-CANALES-CONFIGURADOS-v2"
 version: "2.0"
 kind: "fix"
-status: "draft"
+status: "executed"
 target_agents:
   - "claude"
   - "codex"
@@ -13,11 +13,11 @@ primary_hu: "HU-007"
 related_hu:
   - "HU-008"
   - "HU-011"
-issue: "pending"
-issue_url: null
+issue: "#384"
+issue_url: "https://github.com/bcaceres19/barberia/issues/384"
 suggested_issue_title: "fix(auth): configurar canales y destinos verificados para OTP"
-branch: null
-pr: null
+branch: "feat/384-otp-canal-reto-acceso"
+pr: "https://github.com/bcaceres19/barberia/pull/385"
 pr_url: null
 depends_on:
   - "DEC-081"
@@ -32,6 +32,8 @@ decisions:
   - "DEC-065"
   - "DEC-066"
   - "DEC-081"
+  - "DEC-092"
+  - "DEC-139"
 acceptance_criteria:
   - "Correo es el canal predeterminado y cada evento puede configurar correo, WhatsApp oficial o ambos."
   - "El servidor deriva los destinos desde contactos verificados; el cliente nunca aporta un destino arbitrario."
@@ -59,7 +61,7 @@ source_docs:
   - "apps/api/internal/modules/notification"
   - "apps/api/cmd/api/main.go"
 created_at: "2026-09-03"
-updated_at: "2026-09-04"
+updated_at: "2026-10-30"
 supersedes:
   - "PROMPT-FIX-OTP-CANAL-UNICO-v1"
   - "PROMPT-FIX-LOGIN-OTP-DESTINO-VERIFICADO-v1"
@@ -69,7 +71,18 @@ superseded_by: null
 
 # Canales configurados y destinos verificados para OTP
 
-## Instrucción
+## Estado de la ejecución (2026-10-30)
+
+Ejecutado contra el issue [#384](https://github.com/bcaceres19/barberia/issues/384) con `DEC-139`, que resuelve lo que `DEC-081` dejó abierto. Alcance real, distinto del texto original de este prompt:
+
+- **Solo el reto de acceso** (`HU-007`). La recuperación de acceso queda como la dejó `DEC-092` (la persona elige WhatsApp o correo y escribe su valor), por lo que ya no aplica la parte de este prompt que la cubría.
+- **Dueño: la barbería.** Una columna `barbershop.login_otp_channel` (`email` | `whatsapp` | `both`); las existentes quedan en `whatsapp`, las nuevas en `email`. Sin tabla por evento (solo existe un evento configurable).
+- **Fallo parcial en `both`:** basta que un canal entregue; el otro se registra internamente. Un canal sin contacto utilizable no se sustituye por otro.
+- **UI:** panel «Código de acceso» en Configuración. No se rediseñó la pantalla de autenticación (variantes 07–12 del atlas), que sigue siendo un trabajo visual aparte.
+
+El resto del cuerpo se conserva tal como se redactó, como registro de lo pedido.
+
+## Instrucción (texto original)
 
 No ejecutes este prompt mientras `issue: pending`. Cuando exista un issue real, implementa únicamente la adaptación funcional exigida por `DEC-081`; no la mezcles con el rediseño visual de autenticación.
 

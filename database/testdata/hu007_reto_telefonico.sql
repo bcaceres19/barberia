@@ -15,6 +15,12 @@
 
 BEGIN;
 
+-- Estas pruebas cubren el reto por WhatsApp (DEC-062): las dos barberías lo
+-- piden explícitamente porque una barbería nueva nace con correo (DEC-139). Los
+-- canales de correo y ambos se cubren en tests/login_otp_channel.sql.
+UPDATE barbershop SET login_otp_channel = 'whatsapp'
+WHERE id IN ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222');
+
 -- Dos UPDATE separados a propósito: staff_user_reset_phone_verification_trg
 -- (BEFORE UPDATE OF phone) anula phone_verified_at cada vez que la columna
 -- phone participa en el UPDATE, aunque el mismo UPDATE también intente

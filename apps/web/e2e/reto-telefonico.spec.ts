@@ -138,7 +138,7 @@ test.describe('Defensa escalonada contra abuso del acceso (HU-007)', () => {
     await page.getByRole('button', { name: 'Iniciar sesión' }).click()
 
     await expect(page.getByText('Demasiados intentos')).toBeVisible()
-    await expect(page.getByText('Verifica tu teléfono')).toBeVisible()
+    await expect(page.getByText('Verifica tu identidad')).toBeVisible()
     // Sigue en /acceso: la contraseña correcta no bastó (CA-007-02).
     await expect(page).toHaveURL(/\/acceso$/)
   })
@@ -153,10 +153,10 @@ test.describe('Defensa escalonada contra abuso del acceso (HU-007)', () => {
       await fillCredentials(page, EMAIL, i < 5 ? 'contraseña-incorrecta-a-proposito' : PASSWORD)
       await page.getByRole('button', { name: 'Iniciar sesión' }).click()
     }
-    await expect(page.getByText('Verifica tu teléfono')).toBeVisible()
+    await expect(page.getByText('Verifica tu identidad')).toBeVisible()
 
-    await page.getByRole('button', { name: 'Enviar código al teléfono' }).click()
-    await expect(page.getByText('Si tu cuenta existe')).toBeVisible()
+    await page.getByRole('button', { name: 'Enviar código' }).click()
+    await expect(page.getByText('Si tu cuenta puede continuar')).toBeVisible()
 
     // Terceros interceptados (cabecera de este archivo): el código real se
     // lee de la captura de prueba, nunca de un WhatsApp real.
@@ -191,10 +191,10 @@ test.describe('Defensa escalonada contra abuso del acceso (HU-007)', () => {
       await fillCredentials(page, EMAIL, 'contraseña-incorrecta-a-proposito')
       await page.getByRole('button', { name: 'Iniciar sesión' }).click()
     }
-    await expect(page.getByText('Verifica tu teléfono')).toBeVisible()
+    await expect(page.getByText('Verifica tu identidad')).toBeVisible()
 
-    await page.getByRole('button', { name: 'Enviar código al teléfono' }).click()
-    await expect(page.getByText('Si tu cuenta existe')).toBeVisible()
+    await page.getByRole('button', { name: 'Enviar código' }).click()
+    await expect(page.getByText('Si tu cuenta puede continuar')).toBeVisible()
 
     await fillOtp(page, '000000')
     await page.getByRole('button', { name: 'Verificar código' }).click()
