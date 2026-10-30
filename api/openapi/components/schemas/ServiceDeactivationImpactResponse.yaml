@@ -1,10 +1,7 @@
 # Previsualización del impacto de desactivar un servicio (HU-024,
-# CA-024-01, DEC-069). B1 no tiene la tabla `appointment` en la cadena
-# migrada: affectedAppointments es siempre 0, el valor real del sistema
-# actual (cero citas futuras existen para ningún servicio porque la
-# capacidad de citas todavía no existe), no un valor por defecto sin
-# consultar ni un dato simulado. B3 sustituye este cálculo por una consulta
-# real contra `appointment` sin cambiar la forma de esta operación.
+# CA-024-01, DEC-069). affectedAppointments es el recuento real de citas
+# `confirmed` futuras del servicio en la barbería de la sesión; era 0 fijo
+# solo mientras `appointment` no existía (B1).
 type: object
 description: >
   Impacto real, calculado en el momento de la solicitud, de desactivar el
@@ -14,9 +11,9 @@ properties:
     type: integer
     minimum: 0
     description: >
-      Cantidad de citas futuras que quedarían afectadas si el servicio se
-      desactiva. Siempre 0 en B1 (DEC-069): ninguna cita existe todavía en
-      el sistema.
+      Cantidad de citas `confirmed` con inicio futuro que quedarían afectadas
+      si el servicio se desactiva (RN-SER-03). Ninguna se cancela ni se
+      modifica al desactivar.
     examples:
       - 0
 required:
