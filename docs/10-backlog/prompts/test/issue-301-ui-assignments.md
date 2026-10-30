@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-TEST-301-UI-ASSIGNMENTS-v1"
 version: "1.0"
 kind: "test"
-status: "ready"
+status: "executed"
 target_agents: ["codex"]
 repository: "bcaceres19/barberia"
 base_branch: "main"

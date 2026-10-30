@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-ORCH-301-UI-LUNA-v1"
 version: "1.0"
 kind: "orchestration"
-status: "ready"
+status: "in_progress"
 target_agents: ["codex"]
 repository: "bcaceres19/barberia"
 base_branch: "main"
