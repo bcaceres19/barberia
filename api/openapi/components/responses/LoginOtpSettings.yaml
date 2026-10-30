@@ -1,0 +1,23 @@
+# Respuesta 200 de GET y PATCH /private/settings/login-otp (DEC-139).
+description: Canal vigente del código del reto de acceso de la barbería activa.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+  Cache-Control:
+    description: Siempre `no-store`.
+    schema:
+      type: string
+      enum: [no-store]
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/LoginOtpSettings.yaml'
+    examples:
+      correo:
+        summary: Correo (valor de las barberías nuevas)
+        value:
+          channel: email
+      ambos:
+        summary: Correo y WhatsApp con el mismo código
+        value:
+          channel: both

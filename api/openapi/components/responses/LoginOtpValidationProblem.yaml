@@ -1,0 +1,26 @@
+# 422 de PATCH /private/settings/login-otp (DEC-139): cuerpo bien formado con un
+# canal fuera de la lista cerrada. Distinto de InvalidRequestProblem (JSON o
+# forma inválida, un campo desconocido responde 400). Mismo schema que
+# ValidationProblem.yaml; solo cambian los ejemplos (docs/06-api/estandar-openapi.md
+# sección 9, regla 4).
+description: >
+  El cuerpo es JSON válido con `channel`, pero su valor no es `email`,
+  `whatsapp` ni `both`. Ninguna escritura ocurre cuando esto sucede.
+headers:
+  X-Request-Id:
+    $ref: '../headers/XRequestId.yaml'
+content:
+  application/problem+json:
+    schema:
+      $ref: '../schemas/Problem.yaml'
+    examples:
+      canalFueraDeLista:
+        summary: Canal que no pertenece a la lista cerrada
+        value:
+          type: /api/v1/problems/validation-error
+          title: Error de validación
+          status: 422
+          detail: channel debe ser email, whatsapp o both
+          instance: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5
+          code: validation-error
+          requestId: 8f3ac2b1e4d5f6a7c8d9e0f1a2b3c4d5

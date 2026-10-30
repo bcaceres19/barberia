@@ -243,7 +243,7 @@ describe('LoginPage', () => {
       ['warning', 'Demasiados intentos'],
     ])
     expect(toastState.items[0]!.detail).toContain('2 minuto(s)')
-    expect(wrapper.text()).toContain('Verifica tu teléfono')
+    expect(wrapper.text()).toContain('Verifica tu identidad')
   })
 
   it('does not show the phone challenge outside the rate-limited state', async () => {
@@ -253,7 +253,7 @@ describe('LoginPage', () => {
     await fillAndSubmit(wrapper)
     await flushPromises()
 
-    expect(wrapper.text()).not.toContain('Verifica tu teléfono')
+    expect(wrapper.text()).not.toContain('Verifica tu identidad')
   })
 
   // CA-007-02 de punta a punta en la capa de página: tras un 429, verificar
@@ -278,7 +278,7 @@ describe('LoginPage', () => {
 
     const requestCodeButton = wrapper
       .findAll('button')
-      .find((button) => button.text().includes('Enviar código al teléfono'))
+      .find((button) => button.text().includes('Enviar código'))
     expect(requestCodeButton).toBeDefined()
     await requestCodeButton!.trigger('click')
     await flushPromises()

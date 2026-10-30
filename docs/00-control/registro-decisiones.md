@@ -131,6 +131,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-136` | 2026-10-29 | Cancelar un turno ya no revoca el enlace del cliente: sigue mostrándolo como cancelado | `DEC-089`, `HU-098`, `HU-099`; issue #376 | Confirmada |
 | `DEC-137` | 2026-10-29 | El Place ID de la ficha de Google se gestiona solo por base de datos, no desde Configuración | `DEC-129`, `HU-101`; issue #380 | Confirmada |
 | `DEC-138` | 2026-10-30 | Domicilio: el cliente marca su ubicación moviendo el mapa o con «Usar mi ubicación»; la dirección escrita pasa a ser opcional | `DEC-131`; `HU-103`; issue #382 | Confirmada |
+| `DEC-139` | 2026-10-30 | El canal del código del reto de acceso (correo, WhatsApp o ambos) es una preferencia por barbería, editable en Configuración; amplía `DEC-081` | `DEC-062`, `DEC-065`, `DEC-081`, `DEC-092`; `HU-007`; issue #384 | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -939,7 +940,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Documentos afectados:** `docs/00-control/{dudas-pendientes.md,contradicciones.md,matriz-trazabilidad.md}`, `docs/01-producto/reglas-negocio.md`, `docs/02-requisitos/historias-usuario.md`, `docs/03-desarrollo/{estandar-diseno-visual.md,especificacion-frontend-nava.md}` y `docs/10-backlog/evidence/ui-mockups-nava-tailored-grid-2026-09-03/auth-eventos/README.md`.
 - **Fuente:** observación explícita del propietario del 2026-09-03 al revisar los mockups: correo por defecto, opción de WhatsApp o ambos según configuración del sistema, notificación unificada y un mockup separado por evento/canal.
 
-**Actualización posterior:** `DEC-092` (2026-09-19) sustituye esta decisión únicamente para el paso 1 de la recuperación de acceso: la persona elige WhatsApp o correo y escribe su valor. El reto adicional de acceso conserva `DEC-081` sin cambios.
+**Actualización posterior:** `DEC-092` (2026-09-19) sustituye esta decisión únicamente para el paso 1 de la recuperación de acceso: la persona elige WhatsApp o correo y escribe su valor. El reto adicional de acceso conserva `DEC-081`; `DEC-139` (2026-10-30) la implementa y resuelve lo que dejó abierto (dueño por barbería, ausencia de contacto, fallo parcial, valor inicial de las existentes).
 
 ### DEC-082 · Resolución de `DP-PUB-01`: generación, mutabilidad y conducta al deshabilitar del slug público
 
@@ -1657,3 +1658,23 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alcance:** solo `apps/web` (selector de ubicación, `HomeLocationField`, `PublicCustomerDetailsPage`) y descripciones del contrato; no hay migración ni cambio de reglas del servidor (`NormalizeHomeService` y el `CHECK` ya aceptan cualquier dirección con coordenadas válidas). Fuera de alcance: seguimiento de la posición en tiempo real, radio de cobertura, guardar ubicaciones favoritas.
 - **Documentos afectados:** `historias-usuario.md` (`HU-103`), `matriz-trazabilidad.md`, `historial-cambios.md`, `api/openapi/` (0.46.0, solo descripciones), `apps/web/README.md`.
 - **Fuente:** instrucción explícita del propietario el 2026-10-30; issue [#382](https://github.com/bcaceres19/barberia/issues/382).
+
+### DEC-139 · Canal del código del reto de acceso por barbería (implementa `DEC-081`)
+
+- **Fecha:** 2026-10-30.
+- **Decisión:** el código del reto adicional de acceso (`HU-007`, `DEC-062`) se entrega por el canal que la barbería configura en Configuración: **correo**, **WhatsApp** oficial o **ambos**. El canal es una columna de la barbería, `barbershop.login_otp_channel` (`email` | `whatsapp` | `both`, con `CHECK`), y aplica a todas las cuentas de esa barbería. Resuelve los puntos que `DEC-081` dejó abiertos:
+  1. **Dueño y granularidad.** La barbería (no la cuenta, no el entorno), un único valor para el reto de acceso. Sin `jsonb` ni tabla nueva (3FN: es un atributo de la barbería). La recuperación de acceso **no** se configura: `DEC-092` sigue vigente (cada persona elige WhatsApp o correo y lo escribe).
+  2. **Valor inicial.** Las barberías nuevas nacen en `email` (`DEC-081`). Las existentes al aplicar la migración quedan en `whatsapp`, que es como se entregaba hasta entonces: el cambio no altera el comportamiento de nadie sin que lo decida su barbería.
+  3. **Destinos.** Los deriva el servidor y nunca llegan del cliente: WhatsApp = teléfono verificado de la cuenta (`phone_verified_at`); correo = el correo de la cuenta. La función `auth_phone_challenge_request` devuelve `(accepted, phone, email)` con solo los destinos del canal configurado.
+  4. **Ausencia de contacto.** Si el canal no tiene un destino utilizable (WhatsApp sin teléfono verificado), la solicitud no se acepta y se comporta igual que una cuenta inexistente: respuesta `202` uniforme (`DEC-065`), sin crear el reto y **sin probar otro canal no configurado**. En `both`, una cuenta sin teléfono verificado recibe solo el correo.
+  5. **Fallo parcial en `both`.** Un solo código, un solo reto, una sola operación lógica (una fila en `auth_phone_challenge`) y un intento de entrega por canal. Basta que un canal entregue; el fallo del otro se registra internamente (solo el canal, nunca destinatario ni código) y no cambia la respuesta ni se filtra al cliente. No hay respaldo a un canal no configurado ni reintento cruzado.
+  6. **Quién puede cambiarlo.** Cualquier usuario del panel de la barbería, igual que el resto de Configuración (la API de ajustes no distingue roles hoy); `PATCH /private/settings/login-otp`, sin versionado (la última escritura gana, como la marca).
+  7. **Correo.** Mismo proveedor y credenciales que la recuperación (Resend, `DEC-066`) con un asunto y texto propios («Código de verificación de acceso»); sin Resend configurado (desarrollo) queda un marcador que no registra destino ni código.
+- **Quién lo decidió:** el propietario delegó el diseño el 2026-10-30 («lo primero escoge el que quieras») y pidió continuar («Sí, continúa»). El diseño anterior lo eligió el agente dentro de esa delegación.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** `DEC-081` fijó la intención (canal configurable, correo por defecto) pero dejó sin resolver quién configura, con qué granularidad y qué pasa ante ausencia de contacto o fallo parcial. Hoy el reto solo sale por WhatsApp, lo que impide usarlo sin Meta configurado.
+- **Alternativas descartadas:** configuración por cuenta (cada persona decidiría un control de seguridad de la barbería); configuración por despliegue/entorno (no es por barbería, `DEC-081` lo excluye); tabla `(barbershop_id, evento)` (solo existe un evento configurable; se crea cuando haya un segundo); fallback automático a otro canal (contradice `DEC-081`); migrar todas las barberías a correo (cambia el comportamiento sin que lo decidan).
+- **Alcance:** migración `20261103120000_add_login_otp_channel.sql`, módulos `auth` (servicio, repositorio, remitentes de correo), `notification` (correo Resend del reto) y `shops` (`GET`/`PATCH /private/settings/login-otp`), OpenAPI 0.47.0, y el panel «Código de acceso» de Configuración. Fuera de alcance: cambiar umbral, vigencia o intentos (`DEC-062`/`DEC-064`), SMS, la recuperación de acceso, mostrar destinos completos o enmascarados, y guardar códigos o destinos.
+- **Documentos afectados:** `database/{migrations,tests,testdata,README.md}`, `historias-usuario.md` (`HU-007`), `matriz-trazabilidad.md`, `historial-cambios.md`, `api/openapi/` (0.47.0), `apps/api/README.md`, `apps/web/README.md`, el prompt `PROMPT-FIX-OTP-CANALES-CONFIGURADOS-v2` y su índice.
+- **Fuente:** instrucciones del propietario del 2026-10-30; issue [#384](https://github.com/bcaceres19/barberia/issues/384).
+

@@ -104,7 +104,8 @@ jobs:
                    20261030120000_add_barbershop_location.sql \
                    20261031120000_create_barber_review.sql \
                    20261101120000_add_home_service.sql \
-                   20261102120000_add_google_place_id.sql; do
+                   20261102120000_add_google_place_id.sql \
+                   20261103120000_add_login_otp_channel.sql; do
             psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$f"
           done
           psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_app PASSWORD 'app_test';"
@@ -341,6 +342,11 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/appointment_domicilio.sql
+
+      - name: Suite del canal del código de acceso (DEC-139)
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/login_otp_channel.sql
 
       - name: Suite de la ficha de Google de la barbería (DEC-129)
         env:

@@ -1,0 +1,9 @@
+# Configuración del código de acceso de la barbería activa (DEC-139).
+type: object
+additionalProperties: false
+description: Canal del código del reto adicional de acceso de la barbería de la sesión.
+properties:
+  channel:
+    $ref: './LoginOtpChannel.yaml'
+required:
+  - channel

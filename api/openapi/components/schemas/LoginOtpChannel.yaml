@@ -1,0 +1,16 @@
+# Canal del código del reto adicional de acceso de la barbería (DEC-139, HU-007).
+type: string
+enum:
+  - email
+  - whatsapp
+  - both
+description: >
+  Por dónde se entrega el código del reto adicional de acceso (`HU-007`):
+  `email` al correo de la cuenta, `whatsapp` al teléfono verificado de la cuenta
+  por WhatsApp oficial, o `both` por los dos con el mismo código. Es un valor
+  por barbería: las nuevas nacen en `email` (`DEC-081`) y las anteriores a
+  `DEC-139` quedaron en `whatsapp`. El destino nunca lo envía el cliente: el
+  servidor lo deriva de la cuenta. No cambia la recuperación de acceso
+  (`DEC-092`), donde la persona elige el canal.
+examples:
+  - email

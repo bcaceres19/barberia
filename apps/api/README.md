@@ -683,8 +683,20 @@ resuelve tenant ni llama `PasswordHasher.Verify` en esa rama). Responde
   mismo mensaje genérico, exista o no la cuenta, esté o no el teléfono
   verificado y esté o no la IP realmente escalada (no enumeración). Límite
   propio: 1 solicitud/60 s y máximo 3 activas por IP en 15 min
-  (`auth_phone_challenge_request`, misma función que resuelve las tres
-  condiciones y devuelve el teléfono solo en el camino aceptado).
+  (`auth_phone_challenge_request`, misma función que resuelve las
+  condiciones y devuelve los destinos solo en el camino aceptado).
+- **Canal del código (`DEC-139`)**: cada barbería elige correo (por defecto),
+  WhatsApp o ambos (`barbershop.login_otp_channel`, `GET`/`PATCH
+  /api/v1/private/settings/login-otp`). La función devuelve solo los destinos
+  de ese canal: teléfono verificado para WhatsApp y correo de la cuenta para
+  correo; nada llega del cliente. Con `both` el mismo código sale por los dos
+  canales en una sola operación (`PhoneChallengeService.deliver`): basta que
+  uno entregue y el fallo del otro solo se registra (canal, nunca destinatario
+  ni código). Un canal sin destino utilizable no se sustituye por otro. El
+  correo usa Resend con asunto propio (`selectChallengeEmailSender`); sin
+  Resend, un marcador que solo deja constancia en el log. En local/test,
+  `APP_PHONE_CHALLENGE_CAPTURE_FILE` captura el código de cualquiera de los
+  dos canales. Las barberías anteriores a `DEC-139` quedaron en WhatsApp.
 - `POST /api/v1/public/auth/challenge/verify { email, code }` → código de
   6 dígitos, vigente 5 min, máximo 5 intentos, atado a la IP concreta que lo
   pidió. Con `OTP_PROVIDER=meta`, se conserva el HMAC-SHA256 del código

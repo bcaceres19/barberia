@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -63,6 +64,25 @@ type PhoneCodeSender interface {
 	SendCode(ctx context.Context, phone, code string) error
 }
 
+// ChallengeEmailSender entrega el código del reto de acceso por correo al
+// correo de la cuenta ya resuelto por el repositorio (DEC-139). Mismo criterio
+// que [PhoneCodeSender]: auth no conoce el proveedor (DEC-066).
+type ChallengeEmailSender interface {
+	SendCode(ctx context.Context, email, code string) error
+}
+
+// ChallengeDestinations son los destinos que el repositorio derivó de la
+// cuenta según el canal configurado de su barbería (DEC-139). Un destino vacío
+// significa «canal no configurado o sin contacto utilizable» y NUNCA se
+// sustituye por el otro. Nunca provienen del llamador (DEC-081).
+type ChallengeDestinations struct {
+	Phone string
+	Email string
+}
+
+// None informa si no hay ningún destino al que entregar.
+func (d ChallengeDestinations) None() bool { return d.Phone == "" && d.Email == "" }
+
 // PhoneChallengeRepository es el puerto de persistencia del reto telefónico.
 // Ambas operaciones corren ANTES de resolver contexto de tenant (igual que
 // Repository.ResolveLoginTenant): auth_phone_challenge_request y
@@ -70,10 +90,12 @@ type PhoneCodeSender interface {
 type PhoneChallengeRepository interface {
 	// RequestChallenge intenta registrar un reto para email desde ipHash
 	// con codeHash. accepted=false cubre, indistinguiblemente, cuenta
-	// inexistente, teléfono no verificado, IP no escalada y límite propio
-	// de reenvío/solicitudes activas excedido; en ese caso phone queda
-	// vacío y NINGÚN envío debe intentarse.
-	RequestChallenge(ctx context.Context, email, ipHash, codeHash string, cfg PhoneChallengeConfig) (accepted bool, phone string, err error)
+	// inexistente o inactiva, canal de la barbería sin contacto utilizable,
+	// IP no escalada y límite propio de reenvío/solicitudes activas
+	// excedido; en ese caso los destinos quedan vacíos y NINGÚN envío debe
+	// intentarse. Con accepted=true, los destinos son exactamente los del
+	// canal configurado de la barbería de la cuenta (DEC-139).
+	RequestChallenge(ctx context.Context, email, ipHash, codeHash string, cfg PhoneChallengeConfig) (accepted bool, dest ChallengeDestinations, err error)
 
 	// VerifyChallenge valida codeHash contra el reto vigente de email
 	// atado a ipHash. ok=true ya limpió el escalamiento de esa IP en
@@ -86,6 +108,7 @@ type PhoneChallengeRepository interface {
 type PhoneChallengeService struct {
 	repo     PhoneChallengeRepository
 	provider WhatsAppOTPProvider
+	email    ChallengeEmailSender
 	cfg      PhoneChallengeConfig
 }
 
@@ -113,9 +136,18 @@ func NewPhoneChallengeServiceWithOTPProvider(
 	return &PhoneChallengeService{repo: repo, provider: provider, cfg: cfg}
 }
 
+// WithEmailSender habilita la entrega por correo (canales email y both de
+// DEC-139). Sin remitente de correo, un destino de correo se reporta como fallo
+// interno de ese canal y no se sustituye por WhatsApp.
+func (s *PhoneChallengeService) WithEmailSender(sender ChallengeEmailSender) *PhoneChallengeService {
+	s.email = sender
+	return s
+}
+
 // Request genera un código nuevo y, si el repositorio acepta la solicitud
-// (cuenta con teléfono verificado, IP realmente escalada, límite propio no
-// excedido), lo envía por el puerto de entrega. El resultado de esta
+// (cuenta activa con un destino utilizable en el canal de su barbería, IP
+// realmente escalada, límite propio no excedido), lo envía por cada canal
+// configurado con el MISMO código y una sola operación lógica (DEC-139). El resultado de esta
 // llamada NUNCA debe cambiar la respuesta HTTP: el handler responde 202
 // siempre, sin importar qué devuelva Request (no enumeración, DEC-062). El
 // error que sí puede devolver es exclusivamente para diagnóstico interno
@@ -131,21 +163,44 @@ func (s *PhoneChallengeService) Request(ctx context.Context, rawEmail, ipHash st
 	}
 
 	email := NormalizeEmail(rawEmail)
-	accepted, phone, err := s.repo.RequestChallenge(ctx, email, ipHash, prepared.PersistenceDigest(), s.cfg)
+	accepted, dest, err := s.repo.RequestChallenge(ctx, email, ipHash, prepared.PersistenceDigest(), s.cfg)
 	if err != nil {
 		return apperr.Internal(fmt.Errorf("auth: solicitar reto telefónico: %w", err))
 	}
-	if !accepted || phone == "" {
+	if !accepted || dest.None() {
 		return nil
 	}
 
-	if err := s.provider.Deliver(ctx, phone, prepared); err != nil {
-		// El fallo de entrega se reporta al llamador solo para que lo
-		// registre sin destinatario ni código (RN-DAT-02); la respuesta al
-		// cliente ya se decidió antes de invocar este método y no cambia.
-		return apperr.Internal(fmt.Errorf("auth: enviar código del reto telefónico: %w", err))
+	return s.deliver(ctx, dest, prepared)
+}
+
+// deliver entrega el código por cada canal con destino. Los canales son
+// independientes (DEC-139): el fallo de uno no impide el intento del otro y no
+// hay respaldo a un canal no configurado. El error devuelto solo nombra el
+// canal que falló —nunca el destinatario ni el código (RN-DAT-02)— y existe
+// para diagnóstico interno: la respuesta al cliente ya se decidió antes de
+// invocar este método y no cambia.
+func (s *PhoneChallengeService) deliver(ctx context.Context, dest ChallengeDestinations, prepared PreparedWhatsAppOTP) error {
+	var failures []error
+	if dest.Phone != "" {
+		if err := s.provider.Deliver(ctx, dest.Phone, prepared); err != nil {
+			failures = append(failures, fmt.Errorf("canal whatsapp: %w", err))
+		}
 	}
-	return nil
+	if dest.Email != "" {
+		switch {
+		case s.email == nil:
+			failures = append(failures, errors.New("canal correo: sin remitente configurado"))
+		default:
+			if err := s.email.SendCode(ctx, dest.Email, prepared.Code()); err != nil {
+				failures = append(failures, fmt.Errorf("canal correo: %w", err))
+			}
+		}
+	}
+	if len(failures) == 0 {
+		return nil
+	}
+	return apperr.Internal(fmt.Errorf("auth: enviar código del reto: %w", errors.Join(failures...)))
 }
 
 // Verify comprueba code contra el reto vigente de rawEmail atado a ipHash.

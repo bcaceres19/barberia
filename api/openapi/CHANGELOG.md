@@ -4,6 +4,23 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.47.0 · 2026-10-30
+
+### Agregado
+
+- `GET`/`PATCH /private/settings/login-otp` (`getLoginOtpSettings`,
+  `updateLoginOtpSettings`, `DEC-139`): el canal del código del reto adicional de
+  acceso de la barbería de la sesión, `email`, `whatsapp` o `both`. El cuerpo es
+  solo `channel`; un correo o teléfono de destino se rechaza como campo
+  desconocido (`400`) y un canal fuera de la lista, con `422`. Esquemas nuevos
+  `LoginOtpChannel`, `LoginOtpSettings` y `UpdateLoginOtpRequest`.
+
+### Compatibilidad
+
+- Compatible: solo agrega operaciones y esquemas; ninguna operación existente
+  cambia. El reto público `POST /public/auth/challenge` mantiene su contrato y su
+  respuesta uniforme `202`; cambia únicamente por dónde sale el código.
+
 ## 0.46.0 · 2026-10-30
 
 ### Cambiado

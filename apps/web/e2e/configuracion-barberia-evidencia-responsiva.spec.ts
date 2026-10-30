@@ -29,6 +29,13 @@ const brand = {
   professionalTerm: 'barbero',
   professionalTermPlural: 'barberos',
   professionalTermGender: 'masculine',
+  // Ubicación (DEC-130/DEC-131): sin estos campos los interruptores quedan sin
+  // `aria-checked` y axe lo señala.
+  hasPhysicalLocation: false,
+  address: null,
+  latitude: null,
+  longitude: null,
+  offersHomeService: false,
 }
 
 const viewports = [
@@ -76,6 +83,8 @@ async function openSettings(
           ? json({ slug: 'navaqalocalk7x2m9q4' })
           : json({ title: 'Error' }, publicLinkStatus),
       )
+    } else if (pathname.endsWith('/settings/login-otp')) {
+      await route.fulfill(json({ channel: 'email' }))
     } else {
       await route.fulfill(json({ title: 'Mock endpoint not found' }, 404))
     }

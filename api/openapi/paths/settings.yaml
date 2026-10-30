@@ -324,3 +324,72 @@
         $ref: '../components/responses/NotFoundProblem.yaml'
       "500":
         $ref: '../components/responses/InternalErrorProblem.yaml'
+
+/private/settings/login-otp:
+  get:
+    tags: [Settings]
+    summary: Consultar el canal del código de acceso de la barbería activa
+    description: >
+      Lectura autenticada (DEC-139) del canal por el que la barbería recibe el
+      código del reto adicional de acceso (`HU-007`): `email`, `whatsapp` o
+      `both`. `barbershopId` nunca es un parámetro: el tenant se deriva
+      exclusivamente de `SessionCookie`. La respuesta no se almacena en caché.
+    operationId: getLoginOtpSettings
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01]
+    x-decisions: [DEC-081, DEC-139]
+    responses:
+      "200":
+        $ref: '../components/responses/LoginOtpSettings.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'
+  patch:
+    tags: [Settings]
+    summary: Cambiar el canal del código de acceso de la barbería activa
+    description: >
+      Actualización autenticada (DEC-139) del canal del código del reto
+      adicional de acceso. Aplica a la barbería de la sesión y a todas sus
+      cuentas; el servidor deriva los destinos (teléfono verificado y/o correo de
+      cada cuenta) y nunca acepta uno del cliente (`DEC-081`): un campo
+      desconocido responde `400`. Con `whatsapp`, una cuenta sin teléfono
+      verificado no recibe código y no se usa el correo como respaldo; con
+      `both`, basta que un canal entregue. No cambia la recuperación de acceso
+      (`DEC-092`). Sin precondición de versión: la última escritura gana.
+    operationId: updateLoginOtpSettings
+    security:
+      - SessionCookie: []
+    x-business-rules: [RN-TEN-01, RN-DAT-02]
+    x-decisions: [DEC-065, DEC-081, DEC-139]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/UpdateLoginOtpRequest.yaml'
+          examples:
+            ambos:
+              summary: Correo y WhatsApp
+              value:
+                channel: both
+            soloCorreo:
+              summary: Solo correo
+              value:
+                channel: email
+    responses:
+      "200":
+        $ref: '../components/responses/LoginOtpSettings.yaml'
+      "400":
+        $ref: '../components/responses/InvalidRequestProblem.yaml'
+      "401":
+        $ref: '../components/responses/UnauthorizedProblem.yaml'
+      "404":
+        $ref: '../components/responses/NotFoundProblem.yaml'
+      "422":
+        $ref: '../components/responses/LoginOtpValidationProblem.yaml'
+      "500":
+        $ref: '../components/responses/InternalErrorProblem.yaml'

@@ -26,30 +26,36 @@ func NewPhoneChallengeRepository(db *database.DB) *PhoneChallengeRepository {
 
 var _ auth.PhoneChallengeRepository = (*PhoneChallengeRepository)(nil)
 
-// RequestChallenge implementa auth.PhoneChallengeRepository.
-func (r *PhoneChallengeRepository) RequestChallenge(ctx context.Context, email, ipHash, codeHash string, cfg auth.PhoneChallengeConfig) (bool, string, error) {
+// RequestChallenge implementa auth.PhoneChallengeRepository. Los destinos
+// salen de auth_phone_challenge_request según el canal de la barbería de la
+// cuenta (DEC-139); este método no los calcula ni los filtra.
+func (r *PhoneChallengeRepository) RequestChallenge(ctx context.Context, email, ipHash, codeHash string, cfg auth.PhoneChallengeConfig) (bool, auth.ChallengeDestinations, error) {
 	var accepted bool
-	var phone *string
+	var phone, accountEmail *string
 
 	err := r.db.CallSecurityDefinerRow(ctx,
-		`SELECT accepted, phone
+		`SELECT accepted, phone, email
 		   FROM auth_phone_challenge_request($1, $2, $3, $4, $5, $6, $7)`,
 		[]any{
 			email, ipHash, codeHash,
 			cfg.ExpiresSeconds, cfg.RateWindowSeconds, cfg.RateMaxActive, cfg.ResendCooldownSeconds,
 		},
 		func(row pgx.Row) error {
-			return row.Scan(&accepted, &phone)
+			return row.Scan(&accepted, &phone, &accountEmail)
 		},
 	)
 	if err != nil {
-		return false, "", fmt.Errorf("auth/postgres: request phone challenge: %w", err)
+		return false, auth.ChallengeDestinations{}, fmt.Errorf("auth/postgres: request phone challenge: %w", err)
 	}
 
-	if phone == nil {
-		return accepted, "", nil
+	var dest auth.ChallengeDestinations
+	if phone != nil {
+		dest.Phone = *phone
 	}
-	return accepted, *phone, nil
+	if accountEmail != nil {
+		dest.Email = *accountEmail
+	}
+	return accepted, dest, nil
 }
 
 // VerifyChallenge implementa auth.PhoneChallengeRepository.

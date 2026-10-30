@@ -1,0 +1,12 @@
+# Cuerpo de PATCH /private/settings/login-otp (DEC-139). Cerrado: un campo
+# desconocido —en particular un correo o teléfono de destino— se rechaza con 400.
+type: object
+additionalProperties: false
+description: >
+  Nuevo canal del código del reto de acceso. Solo `channel`: los destinos los
+  deriva el servidor de los contactos de cada cuenta y nunca llegan del cliente.
+properties:
+  channel:
+    $ref: './LoginOtpChannel.yaml'
+required:
+  - channel

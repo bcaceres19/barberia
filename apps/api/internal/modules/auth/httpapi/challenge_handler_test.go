@@ -20,8 +20,8 @@ type stubPhoneChallengeRepository struct {
 	verifyOK        bool
 }
 
-func (s stubPhoneChallengeRepository) RequestChallenge(context.Context, string, string, string, auth.PhoneChallengeConfig) (bool, string, error) {
-	return s.requestAccepted, s.requestPhone, nil
+func (s stubPhoneChallengeRepository) RequestChallenge(context.Context, string, string, string, auth.PhoneChallengeConfig) (bool, auth.ChallengeDestinations, error) {
+	return s.requestAccepted, auth.ChallengeDestinations{Phone: s.requestPhone}, nil
 }
 
 func (s stubPhoneChallengeRepository) VerifyChallenge(context.Context, string, string, string) (bool, error) {

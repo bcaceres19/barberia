@@ -3,6 +3,7 @@ package auth_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"system-barbershop/internal/modules/auth"
@@ -17,6 +18,7 @@ type requestChallengeCall struct {
 type fakePhoneChallengeRepository struct {
 	requestAccepted bool
 	requestPhone    string
+	requestEmail    string
 	requestErr      error
 	requestCalls    []requestChallengeCall
 
@@ -25,9 +27,9 @@ type fakePhoneChallengeRepository struct {
 	verifyCall struct{ email, ipHash, codeHash string }
 }
 
-func (f *fakePhoneChallengeRepository) RequestChallenge(_ context.Context, email, ipHash, codeHash string, cfg auth.PhoneChallengeConfig) (bool, string, error) {
+func (f *fakePhoneChallengeRepository) RequestChallenge(_ context.Context, email, ipHash, codeHash string, cfg auth.PhoneChallengeConfig) (bool, auth.ChallengeDestinations, error) {
 	f.requestCalls = append(f.requestCalls, requestChallengeCall{email, ipHash, codeHash, cfg})
-	return f.requestAccepted, f.requestPhone, f.requestErr
+	return f.requestAccepted, auth.ChallengeDestinations{Phone: f.requestPhone, Email: f.requestEmail}, f.requestErr
 }
 
 func (f *fakePhoneChallengeRepository) VerifyChallenge(_ context.Context, email, ipHash, codeHash string) (bool, error) {
@@ -220,5 +222,132 @@ func TestCryptoPhoneCodeGenerator_ProducesSixDigits(t *testing.T) {
 				t.Fatalf("expected only digits, got %q", code)
 			}
 		}
+	}
+}
+
+type emailSendCall struct{ email, code string }
+
+type fakeEmailSender struct {
+	err   error
+	calls []emailSendCall
+}
+
+func (s *fakeEmailSender) SendCode(_ context.Context, email, code string) error {
+	s.calls = append(s.calls, emailSendCall{email, code})
+	return s.err
+}
+
+func newChannelService(repo *fakePhoneChallengeRepository, wa *fakeSender, mail *fakeEmailSender) *auth.PhoneChallengeService {
+	svc := auth.NewPhoneChallengeService(repo, fixedCodeGenerator{code: "482913"}, wa, testChallengeCfg(), []byte(testHMACSecret))
+	if mail != nil {
+		svc.WithEmailSender(mail)
+	}
+	return svc
+}
+
+// DEC-139: con el canal de correo el código sale solo por correo.
+func TestPhoneChallengeService_Request_EmailChannel_SendsOnlyEmail(t *testing.T) {
+	repo := &fakePhoneChallengeRepository{requestAccepted: true, requestEmail: "duena@ejemplo.test"}
+	wa, mail := &fakeSender{}, &fakeEmailSender{}
+
+	if err := newChannelService(repo, wa, mail).Request(context.Background(), "duena@ejemplo.test", "ip"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(wa.calls) != 0 {
+		t.Fatalf("whatsapp must not be used with the email channel, got %d calls", len(wa.calls))
+	}
+	if len(mail.calls) != 1 || mail.calls[0] != (emailSendCall{"duena@ejemplo.test", "482913"}) {
+		t.Fatalf("unexpected email calls: %+v", mail.calls)
+	}
+}
+
+// Con ambos canales el MISMO código sale por WhatsApp y por correo, tras una
+// sola solicitud al repositorio (una operación lógica).
+func TestPhoneChallengeService_Request_BothChannels_SameCodeOneLogicalRequest(t *testing.T) {
+	repo := &fakePhoneChallengeRepository{requestAccepted: true, requestPhone: "+573001234567", requestEmail: "duena@ejemplo.test"}
+	wa, mail := &fakeSender{}, &fakeEmailSender{}
+
+	if err := newChannelService(repo, wa, mail).Request(context.Background(), "duena@ejemplo.test", "ip"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(repo.requestCalls) != 1 {
+		t.Fatalf("expected one logical request, got %d", len(repo.requestCalls))
+	}
+	if len(wa.calls) != 1 || len(mail.calls) != 1 {
+		t.Fatalf("expected one delivery per channel, got whatsapp=%d email=%d", len(wa.calls), len(mail.calls))
+	}
+	if wa.calls[0].code != mail.calls[0].code || wa.calls[0].code != "482913" {
+		t.Fatalf("both channels must carry the same code, got %q and %q", wa.calls[0].code, mail.calls[0].code)
+	}
+}
+
+// Fallo parcial: el otro canal igual se intenta; el error es solo diagnóstico,
+// nombra el canal y no incluye destinatario ni código.
+func TestPhoneChallengeService_Request_BothChannels_PartialFailure(t *testing.T) {
+	repo := &fakePhoneChallengeRepository{requestAccepted: true, requestPhone: "+573001234567", requestEmail: "duena@ejemplo.test"}
+	wa := &fakeSender{err: errors.New("whatsapp: timeout")}
+	mail := &fakeEmailSender{}
+
+	err := newChannelService(repo, wa, mail).Request(context.Background(), "duena@ejemplo.test", "ip")
+
+	if len(mail.calls) != 1 {
+		t.Fatal("a failing channel must not prevent the other one from being attempted")
+	}
+	if err == nil {
+		t.Fatal("expected a diagnostic error for the failed channel")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "whatsapp") || strings.Contains(msg, "correo") {
+		t.Fatalf("the error must name only the failed channel, got %q", msg)
+	}
+	for _, secret := range []string{"+573001234567", "duena@ejemplo.test", "482913"} {
+		if strings.Contains(msg, secret) {
+			t.Fatalf("the error must not leak %q: %q", secret, msg)
+		}
+	}
+}
+
+func TestPhoneChallengeService_Request_BothChannels_BothFail(t *testing.T) {
+	repo := &fakePhoneChallengeRepository{requestAccepted: true, requestPhone: "+573001234567", requestEmail: "duena@ejemplo.test"}
+	wa := &fakeSender{err: errors.New("whatsapp: down")}
+	mail := &fakeEmailSender{err: errors.New("resend: 500")}
+
+	err := newChannelService(repo, wa, mail).Request(context.Background(), "duena@ejemplo.test", "ip")
+
+	appErr, ok := apperr.As(err)
+	if !ok || appErr.Kind != apperr.KindInternal {
+		t.Fatalf("expected KindInternal, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "whatsapp") || !strings.Contains(err.Error(), "correo") {
+		t.Fatalf("expected both channels named, got %q", err.Error())
+	}
+}
+
+// Un destino de correo sin remitente configurado es un fallo interno de ese
+// canal: no se sustituye por WhatsApp (DEC-081).
+func TestPhoneChallengeService_Request_EmailWithoutSender_NoFallbackToWhatsApp(t *testing.T) {
+	repo := &fakePhoneChallengeRepository{requestAccepted: true, requestEmail: "duena@ejemplo.test"}
+	wa := &fakeSender{}
+
+	err := newChannelService(repo, wa, nil).Request(context.Background(), "duena@ejemplo.test", "ip")
+
+	if err == nil {
+		t.Fatal("expected an internal error when there is no email sender")
+	}
+	if len(wa.calls) != 0 {
+		t.Fatal("the email channel must never fall back to WhatsApp")
+	}
+}
+
+// Con WhatsApp configurado, un destino de correo vacío nunca dispara correo.
+func TestPhoneChallengeService_Request_WhatsAppChannel_NeverSendsEmail(t *testing.T) {
+	repo := &fakePhoneChallengeRepository{requestAccepted: true, requestPhone: "+573001234567"}
+	wa, mail := &fakeSender{}, &fakeEmailSender{}
+
+	if err := newChannelService(repo, wa, mail).Request(context.Background(), "duena@ejemplo.test", "ip"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(wa.calls) != 1 || len(mail.calls) != 0 {
+		t.Fatalf("expected only whatsapp, got whatsapp=%d email=%d", len(wa.calls), len(mail.calls))
 	}
 }

@@ -54,7 +54,7 @@ describe('PhoneChallengeForm', () => {
   describe('Fase previa (no representada en los mockups, composición actual)', () => {
     it('shows the request-code button initially, no code input yet', () => {
       const wrapper = mountChallenge()
-      expect(wrapper.text()).toContain('Verifica tu teléfono')
+      expect(wrapper.text()).toContain('Verifica tu identidad')
       expect(wrapper.find('button').text()).toContain('Enviar código')
       expect(wrapper.find('input').exists()).toBe(false)
     })
@@ -84,7 +84,7 @@ describe('PhoneChallengeForm', () => {
   })
 
   describe('Reto con código enviado (mockups 07-12, sección reglada)', () => {
-    it('drops the standalone "Verifica tu teléfono" alert and shows the channel section instead', async () => {
+    it('drops the standalone "Verifica tu identidad" alert and shows the channel section instead', async () => {
       requestChallengeMock.mockResolvedValueOnce({ kind: 'accepted' })
       const wrapper = mountChallenge()
 
@@ -92,10 +92,10 @@ describe('PhoneChallengeForm', () => {
       await flushPromises()
 
       expect(wrapper.find('input').exists()).toBe(true)
-      expect(wrapper.text()).not.toContain('Verifica tu teléfono')
-      expect(wrapper.text()).toContain('Si tu cuenta existe')
+      expect(wrapper.text()).not.toContain('Verifica tu identidad')
+      expect(wrapper.text()).toContain('Si tu cuenta puede continuar')
       // La interfaz no expone el proveedor de entrega configurado.
-      expect(wrapper.text()).toContain('Teléfono verificado')
+      expect(wrapper.text()).toContain('Código de verificación')
     })
 
     it('renders exactly six OTP slots for the code', async () => {

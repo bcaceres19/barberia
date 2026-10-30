@@ -14,6 +14,7 @@ import (
 
 	"system-barbershop/internal/modules/auth"
 	authpostgres "system-barbershop/internal/modules/auth/postgres"
+	"system-barbershop/internal/platform/database"
 )
 
 // verifiedEmailA/verifiedEmailB corresponden a duena.a/dueno.b, con
@@ -47,15 +48,15 @@ func TestPhoneChallengeRepository_RequestChallenge_VerifiedPhoneAndEscalatedIP_A
 		}
 	}
 
-	accepted, phone, err := challengeRepo.RequestChallenge(context.Background(), verifiedEmailA, ipHash, testCodeHash(t, "accepted"), testChallengeCfg())
+	accepted, dest, err := challengeRepo.RequestChallenge(context.Background(), verifiedEmailA, ipHash, testCodeHash(t, "accepted"), testChallengeCfg())
 	if err != nil {
 		t.Fatalf("RequestChallenge: %v", err)
 	}
 	if !accepted {
 		t.Fatal("expected accepted=true for a verified phone with an escalated IP")
 	}
-	if phone == "" {
-		t.Fatal("expected a non-empty phone on the accepted path")
+	if dest.Phone == "" || dest.Email != "" {
+		t.Fatalf("expected only the phone for the whatsapp channel (DEC-139), got %+v", dest)
 	}
 }
 
@@ -73,12 +74,12 @@ func TestPhoneChallengeRepository_RequestChallenge_UnverifiedPhone_NotAccepted(t
 		}
 	}
 
-	accepted, phone, err := challengeRepo.RequestChallenge(context.Background(), unverifiedEmailA, ipHash, testCodeHash(t, "unverified"), testChallengeCfg())
+	accepted, dest, err := challengeRepo.RequestChallenge(context.Background(), unverifiedEmailA, ipHash, testCodeHash(t, "unverified"), testChallengeCfg())
 	if err != nil {
 		t.Fatalf("RequestChallenge: %v", err)
 	}
-	if accepted || phone != "" {
-		t.Fatalf("expected accepted=false and empty phone for an unverified phone, got accepted=%v phone=%q", accepted, phone)
+	if accepted || !dest.None() {
+		t.Fatalf("expected accepted=false and empty phone for an unverified phone, got accepted=%v dest=%+v", accepted, dest)
 	}
 }
 
@@ -90,12 +91,12 @@ func TestPhoneChallengeRepository_RequestChallenge_NonEscalatedIP_NotAccepted(t 
 	// IP nueva, jamás registrada en login_throttle: no está escalada.
 	ipHash := testThrottleIPHash(t, "challenge-not-escalated")
 
-	accepted, phone, err := challengeRepo.RequestChallenge(context.Background(), verifiedEmailA, ipHash, testCodeHash(t, "not-escalated"), testChallengeCfg())
+	accepted, dest, err := challengeRepo.RequestChallenge(context.Background(), verifiedEmailA, ipHash, testCodeHash(t, "not-escalated"), testChallengeCfg())
 	if err != nil {
 		t.Fatalf("RequestChallenge: %v", err)
 	}
-	if accepted || phone != "" {
-		t.Fatalf("expected accepted=false for a non-escalated IP, got accepted=%v phone=%q", accepted, phone)
+	if accepted || !dest.None() {
+		t.Fatalf("expected accepted=false for a non-escalated IP, got accepted=%v dest=%+v", accepted, dest)
 	}
 }
 
@@ -113,12 +114,12 @@ func TestPhoneChallengeRepository_RequestChallenge_UnknownAccount_NotAccepted(t 
 		}
 	}
 
-	accepted, phone, err := challengeRepo.RequestChallenge(context.Background(), "no-existe@ejemplo.test", ipHash, testCodeHash(t, "unknown"), testChallengeCfg())
+	accepted, dest, err := challengeRepo.RequestChallenge(context.Background(), "no-existe@ejemplo.test", ipHash, testCodeHash(t, "unknown"), testChallengeCfg())
 	if err != nil {
 		t.Fatalf("RequestChallenge: %v", err)
 	}
-	if accepted || phone != "" {
-		t.Fatalf("expected accepted=false for an unknown account, got accepted=%v phone=%q", accepted, phone)
+	if accepted || !dest.None() {
+		t.Fatalf("expected accepted=false for an unknown account, got accepted=%v dest=%+v", accepted, dest)
 	}
 }
 
@@ -141,12 +142,12 @@ func TestPhoneChallengeRepository_RequestChallenge_ResendCooldown_RejectsImmedia
 		t.Fatalf("expected first request accepted, got accepted=%v err=%v", first, err)
 	}
 
-	second, phone, err := challengeRepo.RequestChallenge(context.Background(), verifiedEmailA, ipHash, testCodeHash(t, "cooldown-2"), testChallengeCfg())
+	second, dest, err := challengeRepo.RequestChallenge(context.Background(), verifiedEmailA, ipHash, testCodeHash(t, "cooldown-2"), testChallengeCfg())
 	if err != nil {
 		t.Fatalf("RequestChallenge: %v", err)
 	}
-	if second || phone != "" {
-		t.Fatalf("expected the immediate resend to be rejected by cooldown, got accepted=%v phone=%q", second, phone)
+	if second || !dest.None() {
+		t.Fatalf("expected the immediate resend to be rejected by cooldown, got accepted=%v dest=%+v", second, dest)
 	}
 }
 
@@ -302,5 +303,134 @@ func TestPhoneChallengeRepository_VerifyChallenge_WrongDigest_ExhaustsAttempts(t
 	}
 	if ok, err := challengeRepo.VerifyChallenge(context.Background(), verifiedEmailA, ip, codeHash); err != nil || ok {
 		t.Fatalf("the correct digest must fail once attempts are exhausted: ok=%v err=%v", ok, err)
+	}
+}
+
+// --- DEC-139: el destino sale del canal de la barbería de la cuenta -------------
+
+const (
+	channelShopA    = "11111111-1111-1111-1111-111111111111"
+	channelShopB    = "22222222-2222-2222-2222-222222222222"
+	inactiveEmailB  = "barbero.b@ejemplo.test"
+	channelRestored = "whatsapp"
+)
+
+// setLoginChannel fija el canal de una barbería dentro de su propio tenant (la
+// misma ruta que usa la aplicación) y lo restablece a WhatsApp al terminar la
+// prueba, que es el valor con el que testdata/hu007_reto_telefonico.sql deja
+// las dos barberías.
+func setLoginChannel(t *testing.T, db *database.DB, shopID, channel string) {
+	t.Helper()
+	write := func(db *database.DB, value string) {
+		err := db.InTenantTx(context.Background(), database.BarbershopID(shopID), func(ctx context.Context, q database.Queries) error {
+			_, err := q.Exec(ctx, `UPDATE barbershop SET login_otp_channel = $2 WHERE id = $1`, shopID, value)
+			return err
+		})
+		if err != nil {
+			t.Fatalf("set login_otp_channel=%s: %v", value, err)
+		}
+	}
+	write(db, channel)
+	// El cierre del pool de la prueba (defer) corre antes que t.Cleanup, así que la
+	// restauración abre su propia conexión.
+	t.Cleanup(func() {
+		fresh := setupTestDB(t)
+		defer fresh.Close()
+		write(fresh, channelRestored)
+	})
+}
+
+func escalatedIP(t *testing.T, db *database.DB, label string) string {
+	t.Helper()
+	ipHash := testThrottleIPHash(t, label)
+	cfg := auth.ThrottleConfig{WindowSeconds: 900, EscalationSeconds: 86400, Threshold: 5, RetentionSeconds: 172800}
+	throttleRepo := authpostgres.NewThrottleRepository(db)
+	for i := 0; i < 6; i++ {
+		if _, _, _, err := throttleRepo.RegisterAttempt(context.Background(), ipHash, cfg); err != nil {
+			t.Fatalf("escalate: %v", err)
+		}
+	}
+	return ipHash
+}
+
+func TestPhoneChallengeRepository_RequestChallenge_ChannelDecidesDestinations(t *testing.T) {
+	cases := []struct {
+		name      string
+		channel   string
+		account   string
+		accepted  bool
+		wantPhone bool
+		wantEmail bool
+	}{
+		{"email, phone verified", "email", verifiedEmailA, true, false, true},
+		{"email, phone NOT verified still receives by email", "email", unverifiedEmailA, true, false, true},
+		{"whatsapp, phone verified", "whatsapp", verifiedEmailA, true, true, false},
+		{"whatsapp, phone NOT verified: no destination and no email fallback", "whatsapp", unverifiedEmailA, false, false, false},
+		{"both, phone verified: both destinations", "both", verifiedEmailA, true, true, true},
+		{"both, phone NOT verified: only the email", "both", unverifiedEmailA, true, false, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			db := setupTestDB(t)
+			defer db.Close()
+			setLoginChannel(t, db, channelShopA, tc.channel)
+			ip := escalatedIP(t, db, "channel-"+tc.name)
+
+			accepted, dest, err := authpostgres.NewPhoneChallengeRepository(db).RequestChallenge(
+				context.Background(), tc.account, ip, testCodeHash(t, "channel-"+tc.name), testChallengeCfg())
+			if err != nil {
+				t.Fatalf("RequestChallenge: %v", err)
+			}
+			if accepted != tc.accepted {
+				t.Fatalf("accepted = %v, want %v (dest=%+v)", accepted, tc.accepted, dest)
+			}
+			if (dest.Phone != "") != tc.wantPhone || (dest.Email != "") != tc.wantEmail {
+				t.Fatalf("destinations = %+v, want phone=%v email=%v", dest, tc.wantPhone, tc.wantEmail)
+			}
+			if dest.Email != "" && dest.Email != tc.account {
+				t.Fatalf("the email destination must be the account's own email, got %q", dest.Email)
+			}
+		})
+	}
+}
+
+// El canal de una barbería no cambia el destino de la otra (RN-TEN-01).
+func TestPhoneChallengeRepository_RequestChallenge_ChannelIsPerBarbershop(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+	setLoginChannel(t, db, channelShopA, "both")
+	setLoginChannel(t, db, channelShopB, "whatsapp")
+	repo := authpostgres.NewPhoneChallengeRepository(db)
+
+	accepted, dest, err := repo.RequestChallenge(context.Background(), verifiedEmailB, escalatedIP(t, db, "per-shop-b"), testCodeHash(t, "per-shop-b"), testChallengeCfg())
+	if err != nil || !accepted {
+		t.Fatalf("expected B accepted, got accepted=%v err=%v", accepted, err)
+	}
+	if dest.Phone == "" || dest.Email != "" {
+		t.Fatalf("barbershop B is on whatsapp and must not inherit A's channel, got %+v", dest)
+	}
+
+	accepted, dest, err = repo.RequestChallenge(context.Background(), verifiedEmailA, escalatedIP(t, db, "per-shop-a"), testCodeHash(t, "per-shop-a"), testChallengeCfg())
+	if err != nil || !accepted {
+		t.Fatalf("expected A accepted, got accepted=%v err=%v", accepted, err)
+	}
+	if dest.Phone == "" || dest.Email == "" {
+		t.Fatalf("barbershop A is on both channels, got %+v", dest)
+	}
+}
+
+// Una cuenta inactiva no recibe destino con ningún canal.
+func TestPhoneChallengeRepository_RequestChallenge_InactiveAccount_NoDestination(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+	setLoginChannel(t, db, channelShopB, "both")
+
+	accepted, dest, err := authpostgres.NewPhoneChallengeRepository(db).RequestChallenge(
+		context.Background(), inactiveEmailB, escalatedIP(t, db, "inactive"), testCodeHash(t, "inactive"), testChallengeCfg())
+	if err != nil {
+		t.Fatalf("RequestChallenge: %v", err)
+	}
+	if accepted || !dest.None() {
+		t.Fatalf("an inactive account must look like an unknown one, got accepted=%v dest=%+v", accepted, dest)
 	}
 }
