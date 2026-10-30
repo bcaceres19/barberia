@@ -35,6 +35,18 @@ describe('PageState', () => {
     expect(wrapper.get('.page-state__headline').text()).toBe(headline)
   })
 
+  // Regresión (campaña #301, customer F2): la marca sobre la superficie fuerte
+  // debe usar tokens medidos AA, no los pares claros (danger daba 2.04:1).
+  it.each([
+    ['info', '--color-brand-accent-surface'],
+    ['success', '--color-success-on-strong'],
+    ['warning', '--color-warning-on-strong'],
+    ['danger', '--color-danger-on-strong'],
+  ] as const)('paints the %s mark with %s', (variant, token) => {
+    const wrapper = mount(PageState, { props: { variant, headline: 'Titular' } })
+    expect(wrapper.attributes('style')).toContain(`--page-state-mark: var(${token})`)
+  })
+
   it('omits the status label when not provided (informational states)', () => {
     const wrapper = mount(PageState, {
       props: { variant: 'info', headline: 'Aún no tienes barberos registrados.' },
