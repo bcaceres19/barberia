@@ -175,6 +175,51 @@ func TestSessionMiddleware_ValidSession_CallsNextWithPrincipalInContext(t *testi
 	}
 }
 
+// DEC-050 / CA-006-02: la renovación deslizante llega al navegador. La cookie se
+// reemite con el mismo token y el Expires renovado, no solo se extiende en BD.
+func TestSessionMiddleware_ValidSession_ReissuesTheCookieWithTheRenewedExpiry(t *testing.T) {
+	renewed := time.Date(2026, 9, 12, 0, 0, 0, 0, time.UTC)
+	principal := auth.Principal{SessionID: "s-1", StaffUserID: "u-1", BarbershopID: "shop-1", ExpiresAt: renewed}
+	repo := &spySessionRepo{resolveShop: "shop-1", resolveFound: true, renewValid: true, renewPrincipal: principal}
+	mw := newSessionMiddleware(t, repo)
+	var called bool
+	const token = "un-token-con-forma-valida-1234"
+
+	rec := doPrivateRequest(t, mw, protectedHandler(&called), &http.Cookie{Name: httpapi.CookieName, Value: token})
+
+	var got *http.Cookie
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == httpapi.CookieName {
+			got = c
+		}
+	}
+	if got == nil {
+		t.Fatal("expected a Set-Cookie renewing the session cookie")
+	}
+	want := httpapi.DefaultCookieConfig()
+	if got.Value != token || !got.Expires.Equal(renewed) {
+		t.Fatalf("expected the same token with Expires=%v, got value-match=%v Expires=%v", renewed, got.Value == token, got.Expires)
+	}
+	if !got.HttpOnly || got.Secure != want.Secure || got.Path != want.Path || got.SameSite != want.SameSite {
+		t.Fatalf("the renewed cookie must keep the login attributes, got %+v", got)
+	}
+}
+
+func TestSessionMiddleware_InvalidSession_NeverSetsACookie(t *testing.T) {
+	repo := &spySessionRepo{resolveShop: "shop-1", resolveFound: true, renewValid: false}
+	mw := newSessionMiddleware(t, repo)
+	var called bool
+
+	rec := doPrivateRequest(t, mw, protectedHandler(&called), &http.Cookie{Name: httpapi.CookieName, Value: "un-token-con-forma-valida-1234"})
+
+	if called || rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected a uniform 401, got called=%v code=%d", called, rec.Code)
+	}
+	if len(rec.Result().Cookies()) != 0 {
+		t.Fatal("a rejected session must not receive a cookie")
+	}
+}
+
 func TestSessionMiddleware_RepositoryFailure_ReturnsSafe500(t *testing.T) {
 	repo := &spySessionRepo{resolveErr: errors.New("pq: connection reset by peer")}
 	mw := newSessionMiddleware(t, repo)
