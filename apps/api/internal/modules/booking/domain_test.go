@@ -229,6 +229,10 @@ func (s *stubRepository) CreatePublic(
 	panic("no usado")
 }
 
+func (s *stubRepository) ReplayPublic(context.Context, string, idempotency.Key, idempotency.Fingerprint) (booking.CreatePublicResult, error) {
+	panic("no usado")
+}
+
 func (s *stubRepository) ListDailyAgenda(
 	_ context.Context, _, _ string, _, _ time.Time,
 ) ([]booking.DailyAgendaEntry, error) {

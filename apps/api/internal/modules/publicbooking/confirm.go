@@ -241,6 +241,23 @@ func (s *ConfirmationService) ConfirmAppointment(
 	}
 
 	if !containsInstant(starts, startsAt) {
+		// Tras un éxito cuya respuesta se perdió, la franja ya es de esta misma
+		// solicitud y deja de figurar disponible: antes de declarar el conflicto
+		// se consulta la idempotencia para reproducir el resultado original
+		// (RN-IDE-01, CA-097-04). Solo ocurre en el camino del conflicto, así que
+		// la reserva normal no paga la consulta.
+		replay, stored, replayErr := s.appointments.ReplayPublicAppointment(ctx, barbershopID, key, fingerprint)
+		if replayErr != nil {
+			return ConfirmResult{}, nil, replayErr
+		}
+		switch replay.Outcome {
+		case idempotency.OutcomeReplay:
+			return ConfirmResult{Decision: replay, Response: stored}, nil, nil
+		case idempotency.OutcomeProceed:
+			// Clave libre: el conflicto de franja es real.
+		default:
+			return ConfirmResult{}, nil, replay.AsError()
+		}
 		return ConfirmResult{}, nil, &ScheduleConflictError{
 			Cause:        errScheduleConflict(),
 			Alternatives: computeAlternatives(starts, startsAt, loc),

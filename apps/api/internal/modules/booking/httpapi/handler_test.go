@@ -41,6 +41,10 @@ func (f *fakeRepository) CreatePublic(context.Context, string, booking.CreatePub
 	panic("no usado")
 }
 
+func (f *fakeRepository) ReplayPublic(context.Context, string, idempotency.Key, idempotency.Fingerprint) (booking.CreatePublicResult, error) {
+	panic("no usado")
+}
+
 func (f *fakeRepository) ListDailyAgenda(context.Context, string, string, time.Time, time.Time) ([]booking.DailyAgendaEntry, error) {
 	panic("no usado")
 }

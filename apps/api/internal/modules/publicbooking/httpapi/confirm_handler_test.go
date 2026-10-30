@@ -85,6 +85,12 @@ type confirmFakePublicAppointmentPort struct {
 	err      error
 }
 
+func (f *confirmFakePublicAppointmentPort) ReplayPublicAppointment(
+	context.Context, string, idempotency.Key, idempotency.Fingerprint,
+) (idempotency.Decision, idempotency.StoredResponse, error) {
+	return idempotency.Decision{}, idempotency.StoredResponse{}, nil
+}
+
 func (f *confirmFakePublicAppointmentPort) CreatePublicAppointment(
 	context.Context,
 	string, string, string,
