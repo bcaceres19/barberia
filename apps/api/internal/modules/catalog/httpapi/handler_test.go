@@ -29,6 +29,8 @@ type fakeRepository struct {
 	updateFn     func(barbershopID, serviceID string, fields catalog.UpdateFields) (catalog.UpdateResult, error)
 	deactivateFn func(barbershopID, serviceID string, key idempotency.Key, fp idempotency.Fingerprint) (catalog.LifecycleResult, error)
 	reactivateFn func(barbershopID, serviceID string, key idempotency.Key, fp idempotency.Fingerprint) (catalog.LifecycleResult, error)
+
+	futureAppointments int
 }
 
 func (f *fakeRepository) List(_ context.Context, barbershopID string, page, pageSize int, search string) (catalog.ListResult, error) {
@@ -49,6 +51,10 @@ func (f *fakeRepository) Update(_ context.Context, barbershopID, serviceID strin
 
 func (f *fakeRepository) Deactivate(_ context.Context, barbershopID, serviceID string, key idempotency.Key, fp idempotency.Fingerprint) (catalog.LifecycleResult, error) {
 	return f.deactivateFn(barbershopID, serviceID, key, fp)
+}
+
+func (f *fakeRepository) CountFutureAppointments(context.Context, string, string) (int, error) {
+	return f.futureAppointments, nil
 }
 
 func (f *fakeRepository) Reactivate(_ context.Context, barbershopID, serviceID string, key idempotency.Key, fp idempotency.Fingerprint) (catalog.LifecycleResult, error) {
@@ -626,8 +632,8 @@ func TestUpdateServiceHandler_ValidationError_Returns422(t *testing.T) {
 
 const lifecycleServiceID = "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4"
 
-func TestGetServiceDeactivationImpactHandler_Found_Returns200WithZero(t *testing.T) {
-	repo := &fakeRepository{getFn: func(barbershopID, serviceID string) (catalog.Service, bool, error) {
+func TestGetServiceDeactivationImpactHandler_Found_ReturnsTheRealCount(t *testing.T) {
+	repo := &fakeRepository{futureAppointments: 3, getFn: func(barbershopID, serviceID string) (catalog.Service, bool, error) {
 		if barbershopID != testShopID || serviceID != lifecycleServiceID {
 			t.Fatalf("unexpected lookup: shop=%s service=%s", barbershopID, serviceID)
 		}
@@ -646,8 +652,8 @@ func TestGetServiceDeactivationImpactHandler_Found_Returns200WithZero(t *testing
 	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 		t.Fatalf("decode body: %v", err)
 	}
-	if body.AffectedAppointments != 0 {
-		t.Fatalf("expected affectedAppointments=0 (DEC-069), got %d", body.AffectedAppointments)
+	if body.AffectedAppointments != 3 {
+		t.Fatalf("expected affectedAppointments=3 from the repository count (CA-024-01), got %d", body.AffectedAppointments)
 	}
 }
 

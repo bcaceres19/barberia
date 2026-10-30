@@ -305,6 +305,25 @@ func totalPages(total, pageSize int) int {
 	return pages
 }
 
+// futureAppointmentsSQL cuenta las citas que una desactivación dejaría sin su
+// servicio activo: `confirmed` y con inicio futuro. Las completadas, las
+// inasistencias y las canceladas ya no ocupan agenda (RN-SER-03).
+const futureAppointmentsSQL = `SELECT count(*) FROM appointment
+	 WHERE barbershop_id = $1 AND service_id = $2
+	   AND status = 'confirmed' AND starts_at > now()`
+
+// CountFutureAppointments implementa catalog.Repository.CountFutureAppointments.
+func (r *Repository) CountFutureAppointments(ctx context.Context, barbershopID, serviceID string) (int, error) {
+	var count int
+	err := r.db.InTenantTx(ctx, database.BarbershopID(barbershopID), func(ctx context.Context, q database.Queries) error {
+		return q.QueryRow(ctx, futureAppointmentsSQL, barbershopID, serviceID).Scan(&count)
+	})
+	if err != nil {
+		return 0, fmt.Errorf("catalog/postgres: count future appointments: %w", err)
+	}
+	return count, nil
+}
+
 // Get implementa catalog.Repository.Get. RLS (service_select_tenant_policy)
 // ya restringe la fila visible a barbershop_id = current_setting(...); el
 // filtro explícito WHERE barbershop_id = $2 es defensa en profundidad,
@@ -591,7 +610,13 @@ func (r *Repository) Deactivate(
 			return fmt.Errorf("deactivate service: update: %w", err)
 		}
 
-		impact := catalog.DeactivationImpact{AffectedAppointments: 0}
+		// CA-024-04: la confirmación vuelve a consultar el impacto en la misma
+		// transacción, sin depender de un valor de la previsualización.
+		var affected int
+		if err := q.QueryRow(ctx, futureAppointmentsSQL, barbershopID, serviceID).Scan(&affected); err != nil {
+			return fmt.Errorf("deactivate service: count future appointments: %w", err)
+		}
+		impact := catalog.DeactivationImpact{AffectedAppointments: affected}
 		body, err := json.Marshal(deactivationResponseWire{
 			Service: serviceResponseWire{
 				ID: svc.ID, Name: svc.Name, Description: svc.Description,
