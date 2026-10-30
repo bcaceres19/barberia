@@ -936,10 +936,10 @@ Orden de construcción recomendado para esta parte del bloque: `HU-020` → `HU-
 
 | Código | Criterio |
 | --- | --- |
-| `CA-024-01` | Antes de desactivar, el sistema presenta el impacto real disponible mediante una consulta real (siempre 0 en B1, conforme a `DEC-069`); nunca lo muestra como un valor por defecto sin consultar ni simula datos. |
+| `CA-024-01` | Antes de desactivar, el sistema presenta el impacto real disponible mediante una consulta real (el recuento de citas `confirmed` futuras del servicio; era 0 solo mientras `appointment` no existía en B1, conforme a `DEC-069`); nunca lo muestra como un valor por defecto sin consultar ni simula datos. |
 | `CA-024-02` | Cuando se confirma la desactivación conforme al contrato vigente, entonces el servicio queda inactivo con su identificador e historial conservados y no se borra ninguna asociación o cita por cascada. |
 | `CA-024-03` | Las citas existentes se mantienen por defecto y ninguna se cancela, reprograma o modifica sin una operación futura explícita de la capacidad dueña (`RN-SER-03`, `RN-SER-04`). |
-| `CA-024-04` | La confirmación de desactivación vuelve a consultar el impacto real en la misma operación (sin depender de un valor cacheado de la previsualización); no requiere bloqueo optimista porque en B1 el conteo no puede cambiar entre ambas llamadas (`DEC-069`). |
+| `CA-024-04` | La confirmación de desactivación vuelve a consultar el impacto real en la misma operación (sin depender de un valor cacheado de la previsualización); no requiere bloqueo optimista según `DEC-069` (la protección de concurrencia sobre el conteo queda para la cancelación selectiva de B3). |
 | `CA-024-05` | Cuando se reactiva un servicio, vuelve a estado activo sin crear otra fila ni alterar duración, precio o asignaciones. |
 | `CA-024-06` | Repetir desactivación o reactivación con la misma intención produce un solo efecto; una clave reutilizada con otra intención se rechaza conforme a `RN-IDE-01`. |
 | `CA-024-07` | Un servicio ajeno o inexistente produce el mismo `404`; el rol de aplicación no dispone de `DELETE` físico y RLS impide cambios cruzados. |

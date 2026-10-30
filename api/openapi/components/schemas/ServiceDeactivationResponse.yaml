@@ -1,8 +1,8 @@
 # Resultado de confirmar la desactivación de un servicio (HU-024,
 # CA-024-02, CA-024-04). affectedAppointments es el impacto RECIÉN
 # consultado dentro de esta misma operación de confirmación (nunca un valor
-# cacheado de una llamada previa a .../deactivation-impact): siempre 0 en B1
-# (DEC-069).
+# cacheado de una llamada previa a .../deactivation-impact): el recuento real de
+# citas `confirmed` futuras del servicio.
 type: object
 description: >
   Servicio ya desactivado, junto con el impacto real que la propia
@@ -16,7 +16,7 @@ properties:
     minimum: 0
     description: >
       Citas futuras afectadas, calculadas de nuevo en esta misma operación
-      de confirmación. Siempre 0 en B1 (DEC-069).
+      de confirmación (citas `confirmed` con inicio futuro, RN-SER-03).
     examples:
       - 0
 required:

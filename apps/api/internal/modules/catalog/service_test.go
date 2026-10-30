@@ -734,6 +734,22 @@ func TestReactivate_InvalidTransition_TranslatesToConflict(t *testing.T) {
 	mustBeConflict(t, err)
 }
 
+// RN-SER-01: si otro servicio activo tomó el nombre mientras estuvo inactivo,
+// reactivar es un conflicto de nombre (409), no un error interno.
+func TestReactivate_NameTaken_TranslatesToConflict(t *testing.T) {
+	repo := &fakeRepository{reactivateFn: func(context.Context, string, string, idempotency.Key, idempotency.Fingerprint) (catalog.LifecycleResult, error) {
+		return catalog.LifecycleResult{
+			Decision:  idempotency.Decision{Outcome: idempotency.OutcomeProceed},
+			Found:     true,
+			NameTaken: true,
+		}, nil
+	}}
+	svc := catalog.NewService(repo)
+
+	_, err := svc.Reactivate(context.Background(), "shop-1", validServiceID, "key-1", "a")
+	mustBeConflict(t, err)
+}
+
 func TestReactivate_Proceed_ReturnsResultUntouched(t *testing.T) {
 	want := catalog.LifecycleResult{
 		Decision: idempotency.Decision{Outcome: idempotency.OutcomeProceed},

@@ -262,6 +262,9 @@ func (s *CatalogService) Reactivate(
 		if result.InvalidTransition {
 			return LifecycleResult{}, errServiceAlreadyActive()
 		}
+		if result.NameTaken {
+			return LifecycleResult{}, errNameConflict()
+		}
 	}
 	return result, nil
 }

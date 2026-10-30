@@ -703,6 +703,13 @@ func (r *Repository) Reactivate(
 		)
 		svc, err := scanServiceWithID(row)
 		if err != nil {
+			if isNameConflict(err) {
+				// Mientras estuvo inactivo, otro servicio activo tomó el nombre
+				// (RN-SER-01): conflicto esperado, no un fallo del servidor. El
+				// rollback libera la clave de idempotencia.
+				result.NameTaken = true
+				return errLifecycleAbortInternal
+			}
 			return fmt.Errorf("reactivate service: update: %w", err)
 		}
 

@@ -4,6 +4,33 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.47.3 · 2026-10-30
+
+### Corregido
+
+- `POST /private/services/{serviceId}/reactivate` responde `409`
+  (`ServiceConflictProblem`, `RN-SER-01`) cuando otro servicio activo ya usa el
+  nombre del servicio inactivo; antes respondía `500`. No escribe nada ni consume
+  la clave de idempotencia. La descripción de la operación lo documenta.
+
+### Compatibilidad
+
+- Sin cambios de esquema: `409` ya era una respuesta declarada de la operación.
+
+## 0.47.2 · 2026-10-30
+
+### Corregido
+
+- `GET /private/services/{serviceId}/deactivation-impact` y la respuesta de
+  `POST .../deactivate` informan el recuento real de citas `confirmed` futuras
+  del servicio (`RN-SER-03`, `CA-024-01`, `CA-024-04`); antes devolvían `0` fijo,
+  valor honesto solo mientras `appointment` no existía (`DEC-069`, B1).
+
+### Compatibilidad
+
+- Sin cambios de esquema ni de códigos de estado; solo cambia el valor de
+  `affectedAppointments`, que ya podía ser cualquier entero `>= 0`.
+
 ## 0.47.1 · 2026-10-30
 
 ### Corregido

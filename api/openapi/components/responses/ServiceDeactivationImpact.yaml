@@ -12,6 +12,10 @@ content:
       $ref: '../schemas/ServiceDeactivationImpactResponse.yaml'
     examples:
       sinCitas:
-        summary: B1, sin capacidad de citas todavía (DEC-069)
+        summary: El servicio no tiene citas futuras confirmadas
         value:
           affectedAppointments: 0
+      conCitas:
+        summary: El servicio tiene tres citas futuras confirmadas (RN-SER-03)
+        value:
+          affectedAppointments: 3
