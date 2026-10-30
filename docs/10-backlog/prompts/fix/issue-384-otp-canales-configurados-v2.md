@@ -17,7 +17,7 @@ issue: "#384"
 issue_url: "https://github.com/bcaceres19/barberia/issues/384"
 suggested_issue_title: "fix(auth): configurar canales y destinos verificados para OTP"
 branch: "feat/384-otp-canal-reto-acceso"
-pr: null
+pr: "https://github.com/bcaceres19/barberia/pull/385"
 pr_url: null
 depends_on:
   - "DEC-081"
