@@ -17,9 +17,11 @@
       esta misma solicitud, igual que cualquier otra ruta bajo
       `/api/v1/private`- y devuelve el nombre de la barbería activa
       (`barbershop.name`, columna real aislada por tenant vía RLS) y la
-      expiración ya renovada. No emite ni modifica `Set-Cookie`, a
-      diferencia de login/logout: repetir la llamada nunca tiene un efecto
-      adicional. El payload nunca incluye `staffUserID`, correo ni nombre
+      expiración ya renovada. Como en cualquier otra ruta bajo
+      `/api/v1/private`, la renovación deslizante de `DEC-050` también se
+      refleja en el navegador: la respuesta reemite la misma cookie con el
+      `Expires` renovado (mismos atributos que el login); no cambia el token
+      ni abre otra sesión. El payload nunca incluye `staffUserID`, correo ni nombre
       del barbero (`RN-DAT-02`, mismo patrón que `auth.Principal`).
     operationId: getSessionContext
     security:

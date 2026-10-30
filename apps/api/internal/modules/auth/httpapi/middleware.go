@@ -64,6 +64,21 @@ func (m *SessionMiddleware) RequireSession(next http.Handler) http.Handler {
 			return
 		}
 
+		// DEC-050: la renovación deslizante también debe llegar al navegador. Sin
+		// este Set-Cookie el Expires quedaría fijo en el del login y el
+		// navegador descartaría la cookie 30 días después aunque la sesión siga
+		// vigente en el servidor. Se emite ANTES de next: el cierre de sesión
+		// escribe después su cookie vencida y esa es la que prevalece.
+		http.SetCookie(w, &http.Cookie{
+			Name:     m.cookie.Name,
+			Value:    c.Value,
+			Path:     m.cookie.Path,
+			Expires:  principal.ExpiresAt,
+			HttpOnly: true,
+			Secure:   m.cookie.Secure,
+			SameSite: m.cookie.SameSite,
+		})
+
 		ctx := auth.ContextWithPrincipal(r.Context(), principal)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

@@ -16,6 +16,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"system-barbershop/internal/modules/auth"
 )
@@ -33,8 +34,8 @@ func doSessionContextRequest(router http.Handler, rawToken string) *httptest.Res
 // TestSessionContext_HTTP_ValidSession_ReturnsRealBarbershopName cubre
 // CA-012-01/CA-012-04 a nivel HTTP/PostgreSQL real: el nombre devuelto es la
 // columna real de la barbería propietaria de la sesión, nunca un valor
-// fijo, y la respuesta no fija Set-Cookie (es una lectura, no una mutación,
-// a diferencia de login/logout).
+// fijo, y la respuesta no reemite la cookie con el Expires renovado (DEC-050:
+// la renovación deslizante llega al navegador en cada uso, también en esta lectura).
 func TestSessionContext_HTTP_ValidSession_ReturnsRealBarbershopName(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
@@ -49,8 +50,14 @@ func TestSessionContext_HTTP_ValidSession_ReturnsRealBarbershopName(t *testing.T
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
-	if len(rec.Result().Cookies()) != 0 {
-		t.Fatal("expected no Set-Cookie on a session-context read")
+	var renewed *http.Cookie
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == "barberia_session" {
+			renewed = c
+		}
+	}
+	if renewed == nil || renewed.Value != raw || !renewed.Expires.After(time.Now().Add(29*24*time.Hour)) {
+		t.Fatal("expected the session cookie to be reissued with the renewed expiry (DEC-050)")
 	}
 
 	var body struct {
