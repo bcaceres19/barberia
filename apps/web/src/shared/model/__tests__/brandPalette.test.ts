@@ -86,6 +86,23 @@ describe('BRAND_ACCENTS', () => {
   })
 })
 
+describe('texto de estado sobre Tinta (tokens.css)', () => {
+  const tokens = readFileSync(resolve(__dirname, '../../../styles/tokens.css'), 'utf-8')
+  const root = /:root \{([\s\S]*?)\n\}/.exec(tokens)?.[1] ?? ''
+
+  it.each([
+    '--color-danger-on-strong',
+    '--color-warning-on-strong',
+    '--color-success-on-strong',
+    '--color-info-on-strong',
+    '--color-brand-accent-surface',
+  ])('%s reads on Tinta (AA)', (name) => {
+    const color = new RegExp(`${name}: (#[0-9a-f]{6});`).exec(root)?.[1]
+    expect(color).toBeDefined()
+    expect(contrastRatio(color as string, SURFACE_INK)).toBeGreaterThanOrEqual(AA_TEXT)
+  })
+})
+
 describe('tema Marfil (tokens.css)', () => {
   const tokens = readFileSync(resolve(__dirname, '../../../styles/tokens.css'), 'utf-8')
   const block = /:root\[data-app-theme='ivory'\] \{([^}]*)\}/.exec(tokens)?.[1] ?? ''
