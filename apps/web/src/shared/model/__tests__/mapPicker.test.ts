@@ -162,6 +162,24 @@ describe('Google engine', () => {
     })
   })
 
+  it('skips Plus Code results and falls back to null when only those come back', async () => {
+    const fake = installFakeGoogle()
+    fake.geocode.mockResolvedValue({
+      results: [
+        { formatted_address: '67P7JW7R+G8', types: ['plus_code'] },
+        { formatted_address: 'Cra. 7 # 26-10, Bogotá', types: ['street_address'] },
+      ],
+    })
+    expect(await engine().describe({ latitude: 4.6, longitude: -74.07 })).toBe(
+      'Cra. 7 # 26-10, Bogotá',
+    )
+
+    fake.geocode.mockResolvedValue({
+      results: [{ formatted_address: '67P7JW7R+G8', types: ['plus_code'] }],
+    })
+    expect(await engine().describe({ latitude: 4.6, longitude: -74.07 })).toBeNull()
+  })
+
   it('returns null when there is no address or the request was aborted', async () => {
     const fake = installFakeGoogle()
     fake.geocode.mockResolvedValue({ results: [] })
@@ -192,7 +210,46 @@ describe('loadGoogleMaps', () => {
     const retried = document.head.querySelectorAll('script')
     expect(retried).toHaveLength(2)
     ;(window as unknown as { google: unknown }).google = { maps: { importLibrary: vi.fn() } }
-    retried[1]!.onload?.(new Event('load'))
+    callReady(retried[1]!)
     await expect(retry).resolves.toBeDefined()
   })
+
+  // Regresión: con `loading=async` el evento `load` llega antes de que exista `importLibrary`
+  // (en Google real el mapa no cargaba en frío). Solo `callback` indica que la API está lista.
+  it('waits for the API callback, not the script load event', async () => {
+    const { loadGoogleMaps } = await freshModule()
+    const loaded = loadGoogleMaps('browser-key')
+    const script = document.head.querySelector('script')!
+    script.onload?.(new Event('load'))
+    let settled = false
+    void loaded.then(
+      () => (settled = true),
+      () => (settled = true),
+    )
+    await Promise.resolve()
+    expect(settled).toBe(false)
+
+    ;(window as unknown as { google: unknown }).google = { maps: { importLibrary: vi.fn() } }
+    callReady(script)
+    await expect(loaded).resolves.toBeDefined()
+  })
+
+  it('rejects if the API reports ready without importLibrary', async () => {
+    const { loadGoogleMaps } = await freshModule()
+    const loaded = loadGoogleMaps('browser-key')
+    callReady(document.head.querySelector('script')!)
+    await expect(loaded).rejects.toThrow('maps-api-unavailable')
+  })
 })
+
+/** El cargador recuerda la promesa de la primera carga: cada prueba pide un módulo limpio. */
+async function freshModule() {
+  vi.resetModules()
+  return import('../mapPicker')
+}
+
+/** Invoca el `callback` que la URL del script le pide a Google, como haría la API al quedar lista. */
+function callReady(script: HTMLScriptElement) {
+  const name = new URL(script.src).searchParams.get('callback')!
+  ;(window as unknown as Record<string, () => void>)[name]!()
+}

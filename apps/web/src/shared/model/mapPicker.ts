@@ -106,11 +106,14 @@ interface GoogleMapsNamespace {
       geocode(request: {
         location: { lat: number; lng: number }
         language?: string
-      }): Promise<{ results: { formatted_address?: string }[] }>
+      }): Promise<{ results: { formatted_address?: string; types?: string[] }[] }>
     }
   }>
 }
 type GoogleWindow = Window & { google?: { maps?: Partial<GoogleMapsNamespace> } }
+
+/** Nombre global que la API de Google invoca al quedar lista (parámetro `callback`). */
+const READY_CALLBACK = '__navaGoogleMapsReady'
 
 let loading: Promise<GoogleMapsNamespace> | null = null
 
@@ -121,15 +124,28 @@ export function loadGoogleMaps(key: string): Promise<GoogleMapsNamespace> {
   if (loading) return loading
   loading = new Promise<GoogleMapsNamespace>((resolve, reject) => {
     const script = document.createElement('script')
-    const params = new URLSearchParams({ key, v: 'weekly', language: 'es', loading: 'async' })
-    script.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`
-    script.async = true
-    script.onload = () => {
-      const maps = (window as GoogleWindow).google?.maps
+    // Con `loading=async` el evento `load` del script llega ANTES de que exista
+    // `google.maps.importLibrary`; la API avisa que está lista llamando a `callback`.
+    const w = window as unknown as GoogleWindow & Record<string, unknown>
+    w[READY_CALLBACK] = () => {
+      delete w[READY_CALLBACK]
+      const maps = w.google?.maps
       if (maps?.importLibrary) resolve(maps as GoogleMapsNamespace)
       else reject(new Error('maps-api-unavailable'))
     }
-    script.onerror = () => reject(new Error('maps-api-load-failed'))
+    const params = new URLSearchParams({
+      key,
+      v: 'weekly',
+      language: 'es',
+      loading: 'async',
+      callback: READY_CALLBACK,
+    })
+    script.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`
+    script.async = true
+    script.onerror = () => {
+      delete w[READY_CALLBACK]
+      reject(new Error('maps-api-load-failed'))
+    }
     document.head.appendChild(script)
   }).catch((error: unknown) => {
     loading = null
@@ -194,7 +210,10 @@ function googleEngine(key: string): MapPickerEngine {
         language: 'es',
       })
       if (signal?.aborted) return null
-      const text = (results[0]?.formatted_address ?? '').trim().replace(/\s+/g, ' ')
+      // Para un punto sin dirección postal Google devuelve primero un código Plus
+      // («67P7JW7R+G8»): no le sirve al barbero, así que se salta y, si no hay otra, queda el texto de respaldo.
+      const address = results.find((r) => !r.types?.includes('plus_code'))
+      const text = (address?.formatted_address ?? '').trim().replace(/\s+/g, ' ')
       return text === '' ? null : text
     },
   }
