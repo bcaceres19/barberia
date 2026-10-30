@@ -191,6 +191,14 @@ const v = computed(() =>
   ),
 )
 
+// DEC-136: el enlace sigue vivo tras cancelar y muestra el turno cancelado, sin
+// política de cancelación ni acciones.
+const isCancelled = computed(
+  () =>
+    screenState.value.status === 'success' &&
+    screenState.value.appointment.status.startsWith('cancelled'),
+)
+
 const statusLabel = computed(() =>
   screenState.value.status === 'success'
     ? appointmentStatusLabel(screenState.value.appointment.status, v.value)
@@ -335,9 +343,12 @@ const unexpectedErrorMessage = computed(() => {
         tabindex="-1"
       >
         <BaseAlert variant="success" role="status">
-          Cancelaste tu turno. El horario quedó libre y este enlace ya no funciona.
+          Cancelaste tu turno. El horario quedó libre.
         </BaseAlert>
       </div>
+      <BaseAlert v-else-if="isCancelled" variant="warning" role="status">
+        Este turno está cancelado. El horario quedó libre.
+      </BaseAlert>
       <BaseAlert v-else variant="plain" role="status">
         {{ cancellationPolicyLabel }}
       </BaseAlert>

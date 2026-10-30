@@ -154,7 +154,7 @@ func (f customerCancelFixture) assertUntouched(t *testing.T) {
 }
 
 // CA-099-01: un único cambio de estado, motivo, un único evento con actor
-// cliente y enlace revocado, todo en la misma transacción.
+// cliente y enlace VIGENTE (DEC-136: cancelar no lo revoca), todo en la misma transacción.
 func TestCancelByCustomer_WithinDeadline_CancelsOnceWithCustomerActor(t *testing.T) {
 	f := newCustomerCancelFixture(t)
 	now := f.start.Add(-2 * time.Hour)
@@ -168,7 +168,7 @@ func TestCancelByCustomer_WithinDeadline_CancelsOnceWithCustomerActor(t *testing
 		t.Fatalf("result = %+v", result)
 	}
 	s := f.state(t)
-	if s.status != "cancelled_by_customer" || !s.hasReason || s.reason != "cambio de planes" || !s.tokenRevoked ||
+	if s.status != "cancelled_by_customer" || !s.hasReason || s.reason != "cambio de planes" || s.tokenRevoked ||
 		s.events != 1 || s.actorType != "customer" || !s.actorCustomer || !s.eventHasReason || s.eventReason != "cambio de planes" {
 		t.Fatalf("state = %+v", s)
 	}

@@ -285,6 +285,27 @@ func TestResolveAppointmentByTokenHash_RevokedToken_NotFound(t *testing.T) {
 	}
 }
 
+// DEC-136: un turno cancelado conserva el enlace vigente y lo muestra como
+// cancelado; solo vencer o anonimizar lo vuelve inaccesible.
+func TestResolveAppointmentByTokenHash_CancelledAppointment_StillResolves(t *testing.T) {
+	db := setupTestDB(t)
+	repo := customeraccesspostgres.New(db)
+
+	appointment := createTestAppointment(t, db, shopUno, barberUno, serviceUno, booking.StatusCancelledByCustomer)
+	tokenPlain := insertAccessToken(t, db, shopUno, appointment.ID, tokenState{expiresIn: 90 * 24 * time.Hour})
+
+	view, found, err := repo.ResolveAppointmentByTokenHash(context.Background(), tokenHash(tokenPlain))
+	if err != nil {
+		t.Fatalf("ResolveAppointmentByTokenHash: %v", err)
+	}
+	if !found {
+		t.Fatal("un turno cancelado con enlace vigente debe resolver (DEC-136)")
+	}
+	if view.Status != string(booking.StatusCancelledByCustomer) {
+		t.Fatalf("Status = %q, want cancelled_by_customer", view.Status)
+	}
+}
+
 func TestResolveAppointmentByTokenHash_UnknownToken_NotFound(t *testing.T) {
 	db := setupTestDB(t)
 	repo := customeraccesspostgres.New(db)
