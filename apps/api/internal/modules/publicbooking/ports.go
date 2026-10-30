@@ -215,6 +215,17 @@ type PublicAppointmentPort interface {
 		key idempotency.Key,
 		fingerprint idempotency.Fingerprint,
 	) (decision idempotency.Decision, stored idempotency.StoredResponse, err error)
+
+	// ReplayPublicAppointment consulta, sin efectos, si key ya completó esta
+	// reserva (RN-IDE-01, CA-097-04). ConfirmationService la usa antes de
+	// responder un conflicto de franja: tras un éxito cuya respuesta se perdió
+	// la franja ya es del propio cliente y corresponde reproducir el 201.
+	ReplayPublicAppointment(
+		ctx context.Context,
+		barbershopID string,
+		key idempotency.Key,
+		fingerprint idempotency.Fingerprint,
+	) (decision idempotency.Decision, stored idempotency.StoredResponse, err error)
 }
 
 // ConfirmationEmailPort entrega el correo de confirmación de HU-097

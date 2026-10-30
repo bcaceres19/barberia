@@ -99,6 +99,20 @@ func (a PublicAppointmentAdapter) CreatePublicAppointment(
 	return result.Decision, result.Response, nil
 }
 
+// ReplayPublicAppointment implementa publicbooking.PublicAppointmentPort.
+func (a PublicAppointmentAdapter) ReplayPublicAppointment(
+	ctx context.Context,
+	barbershopID string,
+	key idempotency.Key,
+	fingerprint idempotency.Fingerprint,
+) (idempotency.Decision, idempotency.StoredResponse, error) {
+	result, err := a.repo.ReplayPublic(ctx, barbershopID, key, fingerprint)
+	if err != nil {
+		return idempotency.Decision{}, idempotency.StoredResponse{}, err
+	}
+	return result.Decision, result.Response, nil
+}
+
 // stringPtrOrNil convierte una cadena vacía en nil (NewCustomerInput.Phone/
 // Email son opcionales, mismo criterio que ManualBookingService.
 // normalizeOptional): el puerto público solo declara string porque
