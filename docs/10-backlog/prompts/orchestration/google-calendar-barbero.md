@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-ORCH-GCAL-BARBERO-v1"
 version: "1.0"
 kind: "orchestration"
-status: "draft"
+status: "executed"
 target_agents:
   - "any"
 repository: "bcaceres19/barberia"
