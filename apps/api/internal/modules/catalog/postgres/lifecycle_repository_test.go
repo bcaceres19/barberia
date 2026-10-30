@@ -7,10 +7,13 @@ package postgres_test
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"system-barbershop/internal/modules/catalog"
+	"system-barbershop/internal/platform/database"
 	"system-barbershop/internal/platform/idempotency"
 )
 
@@ -304,5 +307,93 @@ func TestDeactivate_TwoRealConcurrentConnections_ExactlyOneSucceeds(t *testing.T
 	}
 	if !found || got.IsActive || got.DeactivatedAt == nil {
 		t.Fatalf("expected the service to end up inactive exactly once, got %+v", got)
+	}
+}
+
+// --- RN-SER-03 / CA-024-01 / CA-024-04: impacto real de desactivar ---------
+
+// insertAppointmentFixture crea una cita para el recuento de impacto; el
+// estado y el inicio son lo único que el recuento distingue.
+func insertAppointmentFixture(t *testing.T, db *database.DB, shop database.BarbershopID, barberID, serviceID, customerID, status string, startsAt time.Time) {
+	t.Helper()
+	err := db.InTenantTx(context.Background(), shop, func(ctx context.Context, q database.Queries) error {
+		_, err := q.Exec(ctx,
+			`INSERT INTO appointment (barbershop_id, barber_id, service_id, customer_id, attendee_name,
+			                          starts_at, ends_at, status, origin,
+			                          service_name_snapshot, duration_minutes_snapshot,
+			                          price_amount_snapshot, price_currency_snapshot, resolved_at)
+			 VALUES ($1, $2, $3, $4, 'Persona atendida', $5, $6, $7, 'manual', 'Servicio', 30, 20000.00, 'COP',
+			         CASE WHEN $7 = 'confirmed' THEN NULL ELSE now() END)`,
+			string(shop), barberID, serviceID, customerID, startsAt, startsAt.Add(30*time.Minute), status)
+		return err
+	})
+	if err != nil {
+		t.Fatalf("insertAppointmentFixture(%s): %v", status, err)
+	}
+}
+
+func createCustomerFixture(t *testing.T, db *database.DB, shop database.BarbershopID) string {
+	t.Helper()
+	var id string
+	err := db.InTenantTx(context.Background(), shop, func(ctx context.Context, q database.Queries) error {
+		return q.QueryRow(ctx,
+			`INSERT INTO customer (barbershop_id, full_name) VALUES ($1, 'Cliente de prueba') RETURNING id`,
+			string(shop)).Scan(&id)
+	})
+	if err != nil {
+		t.Fatalf("createCustomerFixture: %v", err)
+	}
+	return id
+}
+
+// El recuento solo incluye citas `confirmed` futuras de ESE servicio y de la
+// barbería de la sesión; desactivar no toca ninguna cita (CA-024-03).
+func TestCountFutureAppointments_CountsOnlyConfirmedFutureOfThatServiceAndTenant(t *testing.T) {
+	db := setupTestDB(t)
+	repo := newRepository(db)
+	suffix := uniqueSuffix(t)
+
+	target := createService(t, repo, shopE, "Servicio con citas "+suffix)
+	other := createService(t, repo, shopE, "Otro servicio "+suffix)
+	barber := createBarberFixture(t, db, shopE, "Barbero impacto "+suffix)
+	customer := createCustomerFixture(t, db, shopE)
+	now := time.Now()
+
+	insertAppointmentFixture(t, db, shopE, barber.ID, target.ID, customer, "confirmed", now.Add(48*time.Hour))
+	insertAppointmentFixture(t, db, shopE, barber.ID, target.ID, customer, "confirmed", now.Add(72*time.Hour))
+	insertAppointmentFixture(t, db, shopE, barber.ID, target.ID, customer, "confirmed", now.Add(-48*time.Hour))
+	insertAppointmentFixture(t, db, shopE, barber.ID, target.ID, customer, "cancelled_by_barber", now.Add(96*time.Hour))
+	insertAppointmentFixture(t, db, shopE, barber.ID, other.ID, customer, "confirmed", now.Add(120*time.Hour))
+
+	got, err := repo.CountFutureAppointments(context.Background(), string(shopE), target.ID)
+	if err != nil {
+		t.Fatalf("CountFutureAppointments: %v", err)
+	}
+	if got != 2 {
+		t.Fatalf("expected 2 confirmed future appointments of the service, got %d", got)
+	}
+
+	foreign, err := repo.CountFutureAppointments(context.Background(), string(shopF), target.ID)
+	if err != nil {
+		t.Fatalf("CountFutureAppointments from another tenant: %v", err)
+	}
+	if foreign != 0 {
+		t.Fatalf("RN-TEN-01: another tenant must not count the appointments, got %d", foreign)
+	}
+
+	// CA-024-04: la confirmación repite la consulta en su propia transacción.
+	result, err := repo.Deactivate(context.Background(), string(shopE), target.ID,
+		idempotency.Key("deactivate-impact-"+suffix), deactivateFP(target.ID))
+	if err != nil {
+		t.Fatalf("Deactivate: %v", err)
+	}
+	if !strings.Contains(result.Response.Body, `"affectedAppointments":2`) {
+		t.Fatalf("expected the confirmation to report 2 affected appointments, got %s", result.Response.Body)
+	}
+
+	// CA-024-03: ninguna cita se cancela ni se modifica.
+	after, err := repo.CountFutureAppointments(context.Background(), string(shopE), target.ID)
+	if err != nil || after != 2 {
+		t.Fatalf("deactivating must not touch appointments: count=%d err=%v", after, err)
 	}
 }

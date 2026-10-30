@@ -144,6 +144,11 @@ type Repository interface {
 	// causa en el resultado.
 	Get(ctx context.Context, barbershopID, serviceID string) (service Service, found bool, err error)
 
+	// CountFutureAppointments cuenta las citas `confirmed` de serviceID en
+	// barbershopID cuyo inicio es posterior a ahora: el impacto real de
+	// desactivarlo (RN-SER-03, CA-024-01). Solo lee; nunca modifica una cita.
+	CountFutureAppointments(ctx context.Context, barbershopID, serviceID string) (int, error)
+
 	// Create ejecuta el protocolo completo de idempotencia (Begin, INSERT,
 	// Complete) dentro de UNA sola InTenantTx. input ya llegó normalizado y
 	// validado por Service; key y fingerprint ya fueron interpretados por

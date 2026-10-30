@@ -179,7 +179,7 @@ func (s *CatalogService) Update(ctx context.Context, barbershopID, serviceID str
 // PreviewDeactivation calcula el impacto real de desactivar serviceID ahora
 // mismo (CA-024-01), sin cambiar ningún dato: solo confirma que el servicio
 // existe en barbershopID (mismo apperr.NotFound uniforme que Get) y
-// devuelve currentDeactivationImpact(), siempre 0 en B1 (DEC-069).
+// devuelve el recuento real de citas futuras del servicio (DEC-069, B3).
 func (s *CatalogService) PreviewDeactivation(ctx context.Context, barbershopID, serviceID string) (DeactivationImpact, error) {
 	if err := ctx.Err(); err != nil {
 		return DeactivationImpact{}, apperr.Internal(fmt.Errorf("catalog: contexto cancelado antes de previsualizar desactivación: %w", err))
@@ -195,7 +195,11 @@ func (s *CatalogService) PreviewDeactivation(ctx context.Context, barbershopID, 
 	if !found {
 		return DeactivationImpact{}, errServiceNotFound()
 	}
-	return currentDeactivationImpact(), nil
+	affected, err := s.repo.CountFutureAppointments(ctx, barbershopID, serviceID)
+	if err != nil {
+		return DeactivationImpact{}, apperr.Internal(fmt.Errorf("catalog: contar citas futuras para previsualizar desactivación: %w", err))
+	}
+	return DeactivationImpact{AffectedAppointments: affected}, nil
 }
 
 // Deactivate transiciona serviceID de activo a inactivo (CA-024-02,
