@@ -59,7 +59,10 @@ const CONFIRMED_APPOINTMENT = {
   customerNote: null,
 }
 
-function profileOutcome(offersHomeService: boolean) {
+function profileOutcome(
+  offersHomeService: boolean,
+  location: { address: string; latitude: number; longitude: number } | null = null,
+) {
   return {
     kind: 'success',
     profile: {
@@ -68,7 +71,7 @@ function profileOutcome(offersHomeService: boolean) {
       contactEmail: null,
       contactPhone: null,
       vocabulary: { barber: 'Barbero', service: 'Servicio', appointment: 'Turno' },
-      location: null,
+      location,
       offersHomeService,
     },
   }
@@ -591,15 +594,125 @@ describe('PublicCustomerDetailsPage', () => {
       expect(wrapper.find('input[role="combobox"]').exists()).toBe(false)
     })
 
-    it('requires choosing an address from the list before reviewing (CA-103-02)', async () => {
+    it('requires a marked location before reviewing: typed text alone is not one (CA-103-02, CA-138-03)', async () => {
       const wrapper = await mountOffering()
       await fillValidForm(wrapper)
       await wrapper.find('input[name="service-mode"][value="home"]').setValue(true)
       await wrapper.get('input[role="combobox"]').setValue('Carrera 7 71')
       await wrapper.find('form').trigger('submit')
 
-      expect(wrapper.text()).toContain('Elige tu dirección de la lista de sugerencias.')
+      expect(wrapper.text()).toContain('Marca tu ubicación en el mapa')
       expect(wrapper.text()).not.toContain('Confirmar turno')
+    })
+
+    it('lets the customer mark the location by moving the map, with no address typed (CA-138-01)', async () => {
+      confirmPublicAppointmentMock.mockResolvedValueOnce({
+        kind: 'success',
+        appointment: CONFIRMED_APPOINTMENT,
+      })
+      const wrapper = await mountOffering()
+      await fillValidForm(wrapper)
+      await wrapper.find('input[name="service-mode"][value="home"]').setValue(true)
+      await flushPromises()
+      await wrapper.get('button[aria-label="Mover el mapa al norte"]').trigger('click')
+      await flushPromises()
+      expect(wrapper.text()).toContain('Ubicación marcada:')
+
+      await wrapper.find('form').trigger('submit')
+      expect(wrapper.text()).toContain('Te atendemos en')
+      await wrapper
+        .findAll('button')
+        .find((b) => b.text().includes('Confirmar turno'))!
+        .trigger('click')
+      await flushPromises()
+
+      const input = confirmPublicAppointmentMock.mock.calls[0]![3]
+      expect(input.homeService).toMatchObject({ latitude: 4.712, longitude: -74.0721 })
+      expect(input.homeService.address).toContain('Punto marcado cerca de')
+    })
+
+    it('opens the map on the barbershop when it published a location', async () => {
+      loadPublicProfileMock.mockResolvedValue(
+        profileOutcome(true, { address: 'Calle 1', latitude: 6.2442, longitude: -75.5812 }),
+      )
+      confirmPublicAppointmentMock.mockResolvedValueOnce({
+        kind: 'success',
+        appointment: CONFIRMED_APPOINTMENT,
+      })
+      const wrapper = mountPage()
+      await flushPromises()
+      await fillValidForm(wrapper)
+      await wrapper.find('input[name="service-mode"][value="home"]').setValue(true)
+      await flushPromises()
+      await wrapper.get('button[aria-label="Mover el mapa al este"]').trigger('click')
+      await flushPromises()
+      await wrapper.find('form').trigger('submit')
+      await wrapper
+        .findAll('button')
+        .find((b) => b.text().includes('Confirmar turno'))!
+        .trigger('click')
+      await flushPromises()
+
+      expect(confirmPublicAppointmentMock.mock.calls[0]![3].homeService).toMatchObject({
+        latitude: 6.2442,
+        longitude: -75.5802,
+      })
+    })
+
+    it('detects the device location with the button and sends it (CA-138-02)', async () => {
+      confirmPublicAppointmentMock.mockResolvedValueOnce({
+        kind: 'success',
+        appointment: CONFIRMED_APPOINTMENT,
+      })
+      const getCurrentPosition = vi.fn((ok: (p: unknown) => void) =>
+        ok({ coords: { latitude: 4.65, longitude: -74.06, accuracy: 20 } }),
+      )
+      Object.defineProperty(navigator, 'geolocation', {
+        value: { getCurrentPosition },
+        configurable: true,
+      })
+      try {
+        const wrapper = await mountOffering()
+        await fillValidForm(wrapper)
+        await wrapper.find('input[name="service-mode"][value="home"]').setValue(true)
+        await flushPromises()
+        await wrapper
+          .findAll('button')
+          .find((b) => b.text().includes('Usar mi ubicación'))!
+          .trigger('click')
+        await flushPromises()
+        expect(getCurrentPosition).toHaveBeenCalledTimes(1)
+
+        await wrapper.find('form').trigger('submit')
+        await wrapper
+          .findAll('button')
+          .find((b) => b.text().includes('Confirmar turno'))!
+          .trigger('click')
+        await flushPromises()
+
+        expect(confirmPublicAppointmentMock.mock.calls[0]![3].homeService).toMatchObject({
+          latitude: 4.65,
+          longitude: -74.06,
+        })
+      } finally {
+        Reflect.deleteProperty(navigator, 'geolocation')
+      }
+    })
+
+    it('never asks the browser for the location until the button is pressed (CA-138-05)', async () => {
+      const getCurrentPosition = vi.fn()
+      Object.defineProperty(navigator, 'geolocation', {
+        value: { getCurrentPosition },
+        configurable: true,
+      })
+      try {
+        const wrapper = await mountOffering()
+        await wrapper.find('input[name="service-mode"][value="home"]').setValue(true)
+        await flushPromises()
+        expect(getCurrentPosition).not.toHaveBeenCalled()
+      } finally {
+        Reflect.deleteProperty(navigator, 'geolocation')
+      }
     })
 
     it('sends the chosen address with coordinates on confirm and shows it in the summary (CA-103-03)', async () => {

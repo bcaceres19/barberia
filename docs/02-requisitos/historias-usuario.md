@@ -2533,7 +2533,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | --- | --- |
 | Función | `F-PUB-12` |
 | Reglas | `RN-TEN-01`, `RN-DAT-02`, `RN-CON-01` |
-| Decisiones | `DEC-085`, `DEC-089`–`DEC-091`, `DEC-131` |
+| Decisiones | `DEC-085`, `DEC-089`–`DEC-091`, `DEC-131`, `DEC-138` |
 | Actor | Cliente que reserva un turno |
 | Depende de | `HU-096`, `HU-097` integradas (satisfecho); credencial de Google Places Autocomplete configurada |
 | Bloquea | Ninguna |
@@ -2548,7 +2548,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 
 - `offers_home_service` en `barbershop` como interruptor general, editable en Configuración.
 - Paso «¿en el local o a domicilio?» en el flujo público, entre `HU-096` y la confirmación de `HU-097`, presente solo cuando `offers_home_service = true`.
-- Campo de dirección con autocompletado de Google Places y mapa interactivo de confirmación; exige una selección válida con coordenadas antes de continuar.
+- Ubicación del cliente con tres formas equivalentes (`DEC-138`): autocompletado de Google Places, mover el mapa hasta que un pin fijo quede sobre el lugar, o el botón «Usar mi ubicación»; exige una ubicación marcada con coordenadas antes de continuar, sin exigir la dirección escrita.
 - `is_home_service`, `service_address`, `service_latitude` y `service_longitude` en `appointment`, con una restricción que exige los tres datos de dirección juntos cuando hay domicilio y los tres nulos cuando no; la confirmación pública los acepta y los persiste en la misma transacción que crea el turno.
 - La dirección a domicilio es visible únicamente en el panel privado de esa barbería sobre ese turno.
 
@@ -2562,11 +2562,13 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | --- | --- |
 | `CA-103-01` | `offers_home_service = false` no muestra el paso de modalidad; el turno siempre nace sin domicilio (`is_home_service = false`, los tres campos de dirección en `NULL`). |
 | `CA-103-02` | `offers_home_service = true` muestra el paso; elegir «en el local» continúa igual que `CA-103-01`. |
-| `CA-103-03` | Elegir «a domicilio» exige una selección válida del autocompletado con coordenadas antes de habilitar continuar; un texto libre sin selección no es suficiente. |
+| `CA-103-03` | Elegir «a domicilio» exige una ubicación marcada con coordenadas (sugerencia elegida, punto marcado moviendo el mapa o posición detectada, `DEC-138`) antes de habilitar continuar; un texto libre sin ubicación marcada no es suficiente. |
 | `CA-103-04` | Confirmar con domicilio persiste `is_home_service = true` junto con `service_address`/`latitude`/`longitude` en la misma transacción que crea el turno; confirmar sin domicilio deja los tres en `NULL`. Una combinación parcial queda impedida por una restricción de base de datos incluso ante un error de aplicación. |
 | `CA-103-05` | Confirmar con domicilio cuando `offers_home_service` pasó a `false` entre la elección y el envío responde `422` sin crear el turno, mismo criterio que las demás revalidaciones de `HU-097`. |
 | `CA-103-06` | La dirección a domicilio es visible en el panel privado de esa barbería sobre ese turno (agenda y detalle) y nunca en la reserva pública de otro cliente, en las reseñas de `HU-100`/`HU-101` ni en ningún registro (`RN-DAT-02`). |
-| `CA-103-07` | El paso de modalidad, el autocompletado y el mapa de confirmación cumplen teclado, foco visible, lector, zoom 200 % y los cuatro anchos normativos. |
+| `CA-103-07` | El paso de modalidad, el autocompletado, el mapa y el botón de ubicación cumplen teclado, foco visible, lector, zoom 200 % y los cuatro anchos normativos. |
+| `CA-103-08` | (`DEC-138`) El cliente puede marcar su ubicación moviendo el mapa sin escribir dirección; el turno se envía con las coordenadas del pin y un texto (dirección aproximada o «Ubicación marcada en el mapa»). |
+| `CA-103-09` | (`DEC-138`) «Usar mi ubicación» pide la posición al navegador solo al pulsarlo y centra el mapa; si se niega, tarda o no existe, se explica y la persona puede seguir marcando o buscando; si el mapa no carga, el botón y el autocompletado siguen funcionando. |
 
 **Pruebas obligatorias:** PostgreSQL real con dos tenants sobre la restricción de consistencia; contrato de confirmación con y sin domicilio, y con `offers_home_service` revalidado; componente del selector de modalidad y el autocompletado (simulado); E2E completo con domicilio y sin él.
 

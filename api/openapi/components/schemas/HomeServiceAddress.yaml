@@ -1,5 +1,7 @@
-# Dirección del cliente para un turno a domicilio (DEC-131, HU-103): la que eligió
-# con el autocompletado de Google Places, con sus coordenadas. Dato personal
+# Dirección del cliente para un turno a domicilio (DEC-131, DEC-138, HU-103): el
+# punto donde lo atienden, con su texto. El cliente lo marca eligiendo una
+# sugerencia de Google Places, moviendo el mapa o con la posición de su
+# dispositivo; el servidor valida solo la forma. Dato personal
 # (RN-DAT-02): solo la envía el cliente al confirmar y solo la lee el panel de
 # esa barbería; nunca aparece en la reserva pública ni en las reseñas.
 type: object
@@ -12,7 +14,10 @@ properties:
     type: string
     minLength: 1
     maxLength: 200
-    description: Dirección en texto; el servidor recorta y colapsa los espacios.
+    description: >
+      Texto de la ubicación; el servidor recorta y colapsa los espacios. Puede
+      ser la sugerencia elegida, una dirección aproximada del punto marcado en
+      el mapa o «Ubicación marcada en el mapa» (`DEC-138`).
     examples:
       - Carrera 7 # 71-21, Bogotá
   latitude:

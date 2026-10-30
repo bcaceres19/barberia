@@ -137,4 +137,41 @@ describe('AddressAutocomplete', () => {
     expect(wrapper.get('input').attributes('aria-invalid')).toBe('true')
     expect(await axe(wrapper.element)).toHaveNoViolations()
   })
+
+  describe('when a map picker owns the location (DEC-138)', () => {
+    it('keeps the chosen point while typing if clearOnInput is off', async () => {
+      const wrapper = mount(AddressAutocomplete, {
+        attachTo: document.body,
+        props: {
+          modelValue: selection,
+          label: 'Tu dirección',
+          client: fakeClient(),
+          debounceMs: 0,
+          clearOnInput: false,
+        },
+      })
+      await type(wrapper, 'Calle 80')
+
+      expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+    })
+
+    it('still clears the point while typing by default', async () => {
+      const wrapper = mountIt(fakeClient(), selection)
+      await type(wrapper, 'Calle 80')
+
+      expect(wrapper.emitted('update:modelValue')![0]).toEqual([null])
+    })
+
+    it('hides its own map when showMap is off', () => {
+      const wrapper = mount(AddressAutocomplete, {
+        props: {
+          modelValue: selection,
+          label: 'Tu dirección',
+          client: fakeClient(),
+          showMap: false,
+        },
+      })
+      expect(wrapper.findComponent({ name: 'LocationMap' }).exists()).toBe(false)
+    })
+  })
 })

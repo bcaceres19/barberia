@@ -30,6 +30,13 @@ interface Props {
   client?: PlacesClient | null
   /** Espera tras la última tecla antes de consultar. */
   debounceMs?: number
+  /** Dibuja el mapa de confirmación bajo el campo. Apagado cuando otro mapa lo reemplaza. */
+  showMap?: boolean
+  /**
+   * Escribir descarta la selección (un texto libre no es una dirección). Apagado cuando la
+   * ubicación puede venir de otro lado (p. ej. el mapa) y esto es solo una ayuda para buscarla.
+   */
+  clearOnInput?: boolean
 }
 const props = withDefaults(defineProps<Props>(), {
   hint: '',
@@ -37,6 +44,8 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   client: undefined,
   debounceMs: 250,
+  showMap: true,
+  clearOnInput: true,
 })
 const emit = defineEmits<{ 'update:modelValue': [value: PlaceSelection | null] }>()
 
@@ -89,7 +98,7 @@ function cancelPending() {
 function onInput(event: Event) {
   text.value = (event.target as HTMLInputElement).value
   // Editar el texto invalida la selección anterior: un texto libre no es una dirección.
-  if (props.modelValue) emit('update:modelValue', null)
+  if (props.modelValue && props.clearOnInput) emit('update:modelValue', null)
   failed.value = false
   activeIndex.value = -1
   cancelPending()
@@ -179,7 +188,9 @@ function onKeydown(event: KeyboardEvent) {
 watch(
   () => props.modelValue,
   (value) => {
-    if (value === null) return
+    // Con `clearOnInput` apagado el texto es solo una búsqueda: lo que marque otro control
+    // (el mapa) no lo reescribe.
+    if (value === null || !props.clearOnInput) return
     text.value = value.address
   },
 )
@@ -232,7 +243,7 @@ onBeforeUnmount(cancelPending)
     <p v-if="error" :id="errorId" class="address-autocomplete__error" role="alert">{{ error }}</p>
     <p :id="statusId" class="address-autocomplete__status" role="status">{{ statusText }}</p>
     <LocationMap
-      v-if="modelValue"
+      v-if="modelValue && showMap"
       class="address-autocomplete__map"
       :latitude="modelValue.latitude"
       :longitude="modelValue.longitude"

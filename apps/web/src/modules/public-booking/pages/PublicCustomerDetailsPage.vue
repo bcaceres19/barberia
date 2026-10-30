@@ -11,15 +11,10 @@
 // mismo (CA-096-01, RN-RES-02).
 import { computed, nextTick, onMounted, ref, useId } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  AddressAutocomplete,
-  BarberAvatar,
-  BaseAlert,
-  BaseButton,
-  BaseDialog,
-  BaseInput,
-} from '@/shared/ui'
+import { BarberAvatar, BaseAlert, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
+import type { LatLng } from '@/shared/model/mapPicker'
 import { isPlacesAvailable, type PlaceSelection } from '@/shared/model/placesAutocomplete'
+import HomeLocationField from '../components/HomeLocationField.vue'
 import PhoneField from '../components/PhoneField.vue'
 import { confirmPublicAppointment } from '../api/confirmPublicAppointmentApi'
 import { listPublicBarbers } from '../api/listPublicBarbersApi'
@@ -99,10 +94,14 @@ type ServiceMode = 'local' | 'home'
 const offersHomeService = ref(false)
 const serviceMode = ref<ServiceMode>('local')
 const homePlace = ref<PlaceSelection | null>(null)
+// Dónde abre el mapa de «a domicilio»: la barbería, si publicó su ubicación (DEC-138).
+const homeMapStart = ref<LatLng | null>(null)
 onMounted(async () => {
   const outcome = await loadPublicProfile(props.slug)
   if (outcome.kind === 'success') {
     offersHomeService.value = outcome.profile.offersHomeService && isPlacesAvailable()
+    const where = outcome.profile.location
+    homeMapStart.value = where ? { latitude: where.latitude, longitude: where.longitude } : null
   }
 })
 // Sin la opción visible, el turno siempre es en el local aunque el estado local diga otra cosa.
@@ -140,10 +139,11 @@ const fieldErrors = computed(() => ({
   note: validateCustomerNote(note.value),
   attendeeName:
     attendeeChoice.value === 'other' ? validateAttendeeName(attendeeName.value) : undefined,
-  // CA-103-03: un texto libre sin una selección del autocompletado no es suficiente.
+  // DEC-138: basta una ubicación marcada (mapa, «Usar mi ubicación» o una sugerencia elegida);
+  // un texto libre sin ninguna de ellas no es una ubicación.
   home:
     isHomeService.value && !homePlace.value
-      ? 'Elige tu dirección de la lista de sugerencias.'
+      ? 'Marca tu ubicación en el mapa, usa tu ubicación o elige una dirección de la lista.'
       : undefined,
 }))
 
@@ -449,12 +449,11 @@ function chooseAlternative(startsAt: string) {
                 <span>A domicilio</span>
               </label>
             </div>
-            <AddressAutocomplete
+            <HomeLocationField
               v-if="serviceMode === 'home'"
               v-model="homePlace"
               class="customer-details__address customer-details__rise"
-              label="Tu dirección"
-              hint="Escribe y elige tu dirección de la lista; confirma el punto en el mapa."
+              :start="homeMapStart"
               :error="attempted ? fieldErrors.home : undefined"
             />
           </fieldset>

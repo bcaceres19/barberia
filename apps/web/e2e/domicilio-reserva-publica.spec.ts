@@ -4,14 +4,17 @@ import { fileURLToPath } from 'node:url'
 import { INITIAL_VOCABULARY } from './fixtures/vocabularioInicial'
 
 /**
- * Servicio a domicilio en la reserva pública (HU-103, DEC-131). Respuestas simuladas del API: la
+ * Servicio a domicilio en la reserva pública (HU-103, DEC-131, DEC-138). Respuestas simuladas del API: la
  * regla de «el interruptor de la barbería manda» (422), el CHECK de todo-o-nada y el aislamiento
  * entre barberías los cubren las pruebas Go y SQL con PostgreSQL real. Aquí se recorre lo visible:
  *  1. sin el interruptor encendido no aparece la modalidad;
- *  2. con él, el cliente elige «A domicilio», busca su dirección, elige una sugerencia (el cliente
- *     de Places es el simulado de desarrollo: Vite corre en modo dev sin clave) y confirma el mapa;
- *  3. sin elegir una sugerencia no se puede revisar, y lo enviado incluye la dirección con
- *     coordenadas; en el local no se envía dirección.
+ *  2. con él, el cliente elige «A domicilio» y marca su ubicación de tres formas equivalentes (los
+ *     clientes de Places y de mapa son los simulados de desarrollo: Vite corre en modo dev sin
+ *     clave): una sugerencia de dirección, moviendo el mapa (sin escribir dirección) o con el botón
+ *     «Usar mi ubicación» (geolocalización del navegador, solo al pulsar);
+ *  3. sin ubicación marcada no se puede revisar, y lo enviado incluye el texto con coordenadas; si
+ *     se niega el permiso de ubicación se explica y se puede marcar en el mapa; en el local no se
+ *     envía dirección.
  * En 320/360/768/1280 px, sin scroll horizontal y con axe-core. Evidencia en
  * e2e/evidence/domicilio-reserva-publica/.
  */
@@ -136,17 +139,96 @@ test('sin el interruptor encendido no se ofrece «a domicilio»', async ({ page 
   await expect(page.getByLabel('A domicilio')).toHaveCount(0)
 })
 
-test('exige elegir una sugerencia: un texto escrito no es una dirección', async ({ page }) => {
+test('exige marcar la ubicación: un texto escrito no es una ubicación', async ({ page }) => {
   await installApi(page, true)
   await page.goto(ROUTE)
 
   await fillCustomer(page)
   await page.getByLabel('A domicilio').check()
-  await page.getByRole('combobox', { name: 'Tu dirección' }).fill('Carrera 7 71')
+  await page.getByRole('combobox', { name: 'Busca tu dirección (opcional)' }).fill('Carrera 7 71')
   await page.getByRole('button', { name: 'Ver resumen' }).click()
 
-  await expect(page.getByText('Elige tu dirección de la lista de sugerencias.')).toBeVisible()
+  await expect(
+    page.getByText(
+      'Marca tu ubicación en el mapa, usa tu ubicación o elige una dirección de la lista.',
+    ),
+  ).toBeVisible()
   await expect(page.getByRole('button', { name: 'Confirmar turno' })).toHaveCount(0)
+})
+
+test('marca la ubicación moviendo el mapa, sin escribir ninguna dirección', async ({ page }) => {
+  const confirmations = await installApi(page, true)
+  await page.goto(ROUTE)
+
+  await fillCustomer(page)
+  await page.getByLabel('A domicilio').check()
+  await page.getByRole('button', { name: 'Mover el mapa al norte' }).click()
+  await page.getByRole('button', { name: 'Mover el mapa al este' }).click()
+  await expect(page.getByText('Ubicación marcada:')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Ver resumen' }).click()
+  await expect(page.getByText('Te atendemos en')).toBeVisible()
+  await page.getByRole('button', { name: 'Confirmar turno' }).click()
+
+  await expect(page.getByText('¡Tu turno quedó confirmado!')).toBeVisible()
+  expect(confirmations).toHaveLength(1)
+  const home = confirmations[0]!.homeService!
+  expect(home.latitude).toBeCloseTo(4.712, 6)
+  expect(home.longitude).toBeCloseTo(-74.0711, 6)
+  expect(home.address).toContain('Punto marcado cerca de')
+})
+
+test.describe('«Usar mi ubicación»', () => {
+  test.use({
+    permissions: ['geolocation'],
+    geolocation: { latitude: 4.65, longitude: -74.06, accuracy: 15 },
+  })
+
+  test('detecta la posición del dispositivo solo al pulsar el botón', async ({ page }) => {
+    let asked = false
+    await page.addInitScript(() => {
+      const original = navigator.geolocation.getCurrentPosition.bind(navigator.geolocation)
+      navigator.geolocation.getCurrentPosition = (...args) => {
+        ;(window as unknown as { __geoAsked: boolean }).__geoAsked = true
+        return original(...args)
+      }
+    })
+    const confirmations = await installApi(page, true)
+    await page.goto(ROUTE)
+
+    await fillCustomer(page)
+    await page.getByLabel('A domicilio').check()
+    asked = await page.evaluate(() =>
+      Boolean((window as unknown as { __geoAsked?: boolean }).__geoAsked),
+    )
+    expect(asked).toBe(false)
+
+    await page.getByRole('button', { name: 'Usar mi ubicación' }).click()
+    await expect(page.getByText('Ubicamos tu posición. Ajusta el pin si hace falta.')).toBeVisible()
+    await expect(page.getByText('Ubicación marcada:')).toBeVisible()
+
+    await page.getByRole('button', { name: 'Ver resumen' }).click()
+    await page.getByRole('button', { name: 'Confirmar turno' }).click()
+    await expect(page.getByText('¡Tu turno quedó confirmado!')).toBeVisible()
+    expect(confirmations[0]!.homeService).toMatchObject({ latitude: 4.65, longitude: -74.06 })
+  })
+})
+
+test('si se niega el permiso de ubicación se explica y se puede marcar en el mapa', async ({
+  page,
+}) => {
+  // Sin `permissions: ['geolocation']` el navegador de pruebas niega la petición.
+  await installApi(page, true)
+  await page.goto(ROUTE)
+
+  await fillCustomer(page)
+  await page.getByLabel('A domicilio').check()
+  await page.getByRole('button', { name: 'Usar mi ubicación' }).click()
+  await expect(page.getByText('No tenemos permiso para ver tu ubicación')).toBeVisible()
+  await expect(page.getByText('Ubicación marcada:')).toHaveCount(0)
+
+  await page.getByRole('button', { name: 'Mover el mapa al sur' }).click()
+  await expect(page.getByText('Ubicación marcada:')).toBeVisible()
 })
 
 test('en el local no se envía ninguna dirección', async ({ page }) => {
@@ -164,7 +246,7 @@ test('en el local no se envía ninguna dirección', async ({ page }) => {
 })
 
 for (const viewport of viewports) {
-  test(`el cliente reserva a domicilio con su dirección a ${viewport.name} px`, async ({
+  test(`el cliente reserva a domicilio marcando su ubicación a ${viewport.name} px`, async ({
     page,
   }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height })
@@ -173,14 +255,17 @@ for (const viewport of viewports) {
 
     await expect(page.getByText('¿Dónde te atendemos?')).toBeVisible()
     await page.getByLabel('A domicilio').check()
-    await page.getByRole('combobox', { name: 'Tu dirección' }).fill('Carrera 7 71')
+    await page.getByRole('combobox', { name: 'Busca tu dirección (opcional)' }).fill('Carrera 7 71')
     const option = page.getByRole('option').first()
     await expect(option).toBeVisible()
     await option.click()
-    // La selección muestra el mapa de confirmación del punto elegido.
-    await expect(page.locator('iframe')).toBeVisible()
+    // Elegir una sugerencia marca el punto en el mapa interactivo (único mapa de la sección).
+    await expect(page.getByText('Ubicación marcada:')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Mover el mapa al norte' })).toBeVisible()
     await fillCustomer(page)
     await expectAccessibleWithoutOverflow(page)
+    // Los campos se desplazan dentro de la hoja: se muestra el selector de ubicación en la evidencia.
+    await page.locator('.location-picker__map').scrollIntoViewIfNeeded()
     await page.screenshot({
       path: path.join(evidenceDir, `domicilio-direccion-${viewport.name}.png`),
       fullPage: true,

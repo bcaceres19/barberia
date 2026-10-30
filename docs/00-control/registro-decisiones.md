@@ -130,6 +130,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-135` | 2026-10-28 | Las franjas ofrecidas caen siempre en la rejilla fija anclada al inicio del tramo laboral; sustituye el reinicio tras una interrupción de `DEC-084` | `DEC-084`, `DEC-133`, `RN-DIS-06`; `DP-PUB-03` | Confirmada |
 | `DEC-136` | 2026-10-29 | Cancelar un turno ya no revoca el enlace del cliente: sigue mostrándolo como cancelado | `DEC-089`, `HU-098`, `HU-099`; issue #376 | Confirmada |
 | `DEC-137` | 2026-10-29 | El Place ID de la ficha de Google se gestiona solo por base de datos, no desde Configuración | `DEC-129`, `HU-101`; issue #380 | Confirmada |
+| `DEC-138` | 2026-10-30 | Domicilio: el cliente marca su ubicación moviendo el mapa o con «Usar mi ubicación»; la dirección escrita pasa a ser opcional | `DEC-131`; `HU-103`; issue #382 | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -1558,6 +1559,8 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Documentos afectados:** `database` (migración que añade `offers_home_service` a `barbershop` y `is_home_service`/`service_address`/`service_latitude`/`service_longitude` con su `CHECK` a `appointment`), `api/openapi` (recurso de marca de `DEC-110`, contrato de confirmación de `HU-097`, detalle de turno privado), `apps/api` (módulos `publicbooking`, `booking`, `staff`/Configuración), `apps/web` (reserva pública y agenda/detalle del panel), `historias-usuario.md` (`HU-103`), `matriz-trazabilidad.md`, `historial-cambios.md`.
 - **Fuente:** instrucción explícita del propietario el 2026-10-26: «si llegado el caso la barbería tiene la opción de domicilios, que se habilite la especificación de la dirección con mapa si se usa dicho servicio»; forma de interruptor general y nivel de integración de pago confirmados en la misma conversación.
 
+**Actualización posterior:** `DEC-138` (2026-10-30) reemplaza únicamente la exigencia de elegir una sugerencia del autocompletado (punto 3): la ubicación también se puede marcar moviendo el mapa o con «Usar mi ubicación». El resto de esta decisión se mantiene.
+
 ### DEC-132 · El backend sube a Go 1.26.10 (amplía `DEC-121`)
 
 - **Fecha:** 2026-10-27.
@@ -1637,3 +1640,20 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alcance:** se elimina la escritura y la lectura del Place ID en el módulo `shops` (dominio, servicio, repositorio, DTO, handler), el contrato privado (OpenAPI `0.45.0`) y el campo de `SettingsPage`. No cambia la migración ya aplicada: el `CHECK` `barbershop_google_place_id_ck` sigue siendo la única validación de forma. No cambia la caché de reseñas ni el proveedor de Google.
 - **Documentos afectados:** `historias-usuario.md` (`HU-101`), `matriz-trazabilidad.md`, `historial-cambios.md`, `api/openapi/` (0.45.0), `apps/api/README.md`, `apps/web/README.md`.
 - **Fuente:** instrucción explícita del propietario el 2026-10-29.
+
+### DEC-138 · Domicilio: ubicación marcada en el mapa o detectada, sin exigir la dirección (reemplaza parte de `DEC-131`)
+
+- **Fecha:** 2026-10-30.
+- **Decisión:** en un turno a domicilio el cliente indica dónde lo atienden de cualquiera de tres formas equivalentes, y basta una: (1) buscar una dirección y elegir una sugerencia del autocompletado (como en `DEC-131`); (2) **mover el mapa** hasta que un pin fijo en el centro quede sobre el lugar, sin escribir ninguna dirección; (3) pulsar **«Usar mi ubicación»**, que pide la posición al navegador y centra el mapa ahí. Sustituye únicamente la parte de `DEC-131` que exigía elegir una sugerencia del autocompletado: un texto escrito sin ubicación marcada sigue sin ser suficiente.
+  1. **Dato guardado.** Sin cambios: texto de la dirección más latitud y longitud, juntos (`appointment_home_service_ck`). El texto es la sugerencia elegida; si el cliente marcó el punto en el mapa, la dirección aproximada obtenida por geocodificación inversa (mejor esfuerzo) o, si no hay una, «Ubicación marcada en el mapa». El pin con coordenadas manda para que el barbero llegue; el texto es una ayuda.
+  2. **Permiso de ubicación.** La posición del dispositivo se pide solo al pulsar el botón, nunca al cargar la página. Si se niega, tarda o no está disponible, se explica con un mensaje y la persona sigue marcando en el mapa o buscando una dirección; si el mapa no carga, el botón y el autocompletado siguen funcionando. La posición es dato personal (`RN-DAT-02`): no se registra, no se guarda fuera del formulario y se envía al servidor solo al confirmar el turno, como la dirección de `DEC-131`.
+  3. **Mapa.** Con la clave de navegador de `DEC-130`/`DEC-131` se usa la API de JavaScript de Google Maps (cargada con un `<script>`, sin dependencia nueva de `package.json`) y geocodificación inversa; en desarrollo sin clave, un mapa simulado con botones para mover el punto. Sin clave y fuera de desarrollo la modalidad «a domicilio» sigue sin ofrecerse. El mapa de la reserva abre en la barbería si tiene ubicación (`DEC-130`) y, si no, en Bogotá.
+  4. **Accesibilidad.** La alternativa a arrastrar el mapa es el botón y el autocompletado; el mapa admite teclado, la ubicación marcada se anuncia y los errores se asocian al campo.
+- **Quién lo decidió:** el propietario, el 2026-10-30: que el cliente pueda manipular el mapa para colocar su ubicación sin necesariamente poner su dirección explícita, «ya que muchas veces ni se la saben», y un botón para detectar la ubicación del usuario.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** muchos clientes no saben su dirección exacta; exigir una sugerencia del autocompletado los deja sin poder reservar a domicilio.
+- **Consecuencia aceptada:** una ubicación marcada a mano puede ser menos precisa que una dirección geocodificada; el cliente ve el texto resultante y puede ajustar el pin. La clave de navegador necesita habilitadas Maps JavaScript API y Geocoding API además de lo ya usado.
+- **Alternativas descartadas:** mantener la dirección obligatoria con el mapa solo como confirmación (contradice lo pedido); guardar solo coordenadas sin texto (el panel del barbero y las vistas existentes esperan una dirección legible); pedir la posición del dispositivo al abrir el paso (permiso sin contexto, se rechaza más y es intrusivo).
+- **Alcance:** solo `apps/web` (selector de ubicación, `HomeLocationField`, `PublicCustomerDetailsPage`) y descripciones del contrato; no hay migración ni cambio de reglas del servidor (`NormalizeHomeService` y el `CHECK` ya aceptan cualquier dirección con coordenadas válidas). Fuera de alcance: seguimiento de la posición en tiempo real, radio de cobertura, guardar ubicaciones favoritas.
+- **Documentos afectados:** `historias-usuario.md` (`HU-103`), `matriz-trazabilidad.md`, `historial-cambios.md`, `api/openapi/` (0.46.0, solo descripciones), `apps/web/README.md`.
+- **Fuente:** instrucción explícita del propietario el 2026-10-30; issue [#382](https://github.com/bcaceres19/barberia/issues/382).
