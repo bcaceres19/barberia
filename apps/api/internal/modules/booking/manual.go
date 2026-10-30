@@ -120,6 +120,14 @@ func (s *ManualBookingService) CreateManualAppointment(
 
 	endsAt := startsAt.Add(time.Duration(durationMinutes) * time.Minute)
 
+	within, err := s.blocks.WithinWorkingHours(ctx, barbershopID, barberID, startsAt, endsAt, timezone)
+	if err != nil {
+		return CreateManualResult{}, err
+	}
+	if !within {
+		return CreateManualResult{}, errOutsideWorkingHours()
+	}
+
 	blocked, err := s.blocks.HasActiveBlock(ctx, barbershopID, barberID, startsAt, endsAt, timezone)
 	if err != nil {
 		return CreateManualResult{}, err

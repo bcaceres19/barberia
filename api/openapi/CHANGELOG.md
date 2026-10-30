@@ -4,6 +4,22 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.47.1 · 2026-10-30
+
+### Corregido
+
+- `POST /private/appointments` y `POST /private/appointments/{appointmentId}/reschedule`
+  rechazan con `422` y sin escribir un intervalo que no cabe completo en la
+  jornada efectiva del barbero (`CA-061-02`, `CA-065-04`); antes solo se
+  comprobaban bloqueos y cruces. La descripción de ambas operaciones y de la
+  respuesta `AppointmentValidationProblem` lo documenta.
+
+### Compatibilidad
+
+- Sin cambios de esquema ni de códigos de estado: `422` ya era una respuesta
+  declarada de ambas operaciones. Compatible a nivel de contrato; endurece una
+  validación que la norma ya exigía.
+
 ## 0.47.0 · 2026-10-30
 
 ### Agregado

@@ -119,7 +119,13 @@ func (f fakeBarberServicePort) ActiveAssignedService(context.Context, string, st
 
 type fakeBlockCheckPort struct {
 	blocked bool
-	err     error
+	// outsideHours simula un intervalo fuera de la jornada efectiva (CA-061-02).
+	outsideHours bool
+	err          error
+}
+
+func (f fakeBlockCheckPort) WithinWorkingHours(context.Context, string, string, time.Time, time.Time, string) (bool, error) {
+	return !f.outsideHours, f.err
 }
 
 func (f fakeBlockCheckPort) HasActiveBlock(context.Context, string, string, time.Time, time.Time, string) (bool, error) {
@@ -216,6 +222,18 @@ func TestCreateManualAppointment_ActiveBlock_ReturnsConflictWithoutCallingReposi
 	assertKind(t, err, apperr.KindConflict)
 	if repo.lastInput.BarberID != "" {
 		t.Fatalf("no debía llamar a CreateManual con un bloqueo vigente")
+	}
+}
+
+// CA-061-02: un intervalo fuera de la jornada efectiva se rechaza sin escritura.
+func TestCreateManualAppointment_OutsideWorkingHours_ReturnsValidationWithoutCallingRepository(t *testing.T) {
+	repo := &fakeManualRepository{}
+	svc := booking.NewManualBookingService(repo, validManualService(), fakeBlockCheckPort{outsideHours: true}, fakeTimezonePort{timezone: "America/Bogota"})
+
+	_, err := svc.CreateManualAppointment(context.Background(), "shop-1", validManualRequest(), "key-1", "fp-1")
+	assertKind(t, err, apperr.KindValidation)
+	if repo.lastInput.BarberID != "" {
+		t.Fatalf("no debía llamar a CreateManual fuera de la jornada")
 	}
 }
 

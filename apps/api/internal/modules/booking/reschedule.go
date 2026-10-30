@@ -152,6 +152,15 @@ func (s *RescheduleService) RescheduleAppointment(
 
 	newEndsAt := newStartsAt.Add(time.Duration(detail.DurationMinutesSnapshot) * time.Minute)
 
+	within, err := s.blocks.WithinWorkingHours(ctx, barbershopID, detail.BarberID, newStartsAt, newEndsAt, timezone)
+	if err != nil {
+		return RescheduleResult{}, err
+	}
+	if !within {
+		// CA-065-04: un intervalo fuera de la jornada efectiva se rechaza sin escritura.
+		return RescheduleResult{}, errOutsideWorkingHours()
+	}
+
 	blocked, err := s.blocks.HasActiveBlock(ctx, barbershopID, detail.BarberID, newStartsAt, newEndsAt, timezone)
 	if err != nil {
 		return RescheduleResult{}, err

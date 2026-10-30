@@ -209,6 +209,7 @@ func newPublication(t *testing.T, db *database.DB, label string) *publication {
 	if rec := doAssignServiceRequest(router, raw, barber.ID, service.ID); rec.Code != http.StatusCreated {
 		t.Fatalf("asignar servicio: %d %s", rec.Code, rec.Body.String())
 	}
+	openEveryDay(t, db, barber.ID)
 	linkMe(t, router, raw, barber.ID)
 	state := startConnection(t, router, raw)
 	if rec := doGCal(router, raw, http.MethodPost, "/callback", `{"state":"`+state+`","code":"codigo"}`); rec.Code != http.StatusOK {
@@ -276,6 +277,22 @@ func (p *publication) restoreAll() {
 		if !p.publisher.RestoreOnce(context.Background()) {
 			return
 		}
+	}
+}
+
+// openEveryDay le da al barbero una jornada de 08:00 a 22:00 todos los días: el
+// alta y la reprogramación manuales solo aceptan intervalos dentro de la jornada
+// efectiva (CA-061-02, CA-065-04).
+func openEveryDay(t *testing.T, db *database.DB, barberID string) {
+	t.Helper()
+	err := db.InTenantTx(context.Background(), database.BarbershopID(shopA), func(ctx context.Context, q database.Queries) error {
+		_, err := q.Exec(ctx,
+			`INSERT INTO working_hour (barbershop_id, barber_id, iso_weekday, starts_time, duration_minutes)
+			 SELECT $1, $2, d, '08:00', 840 FROM generate_series(1, 7) AS d`, shopA, barberID)
+		return err
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 

@@ -164,6 +164,19 @@ func TestRescheduleAppointment_BlockedInterval_ReturnsConflictWithoutCallingRepo
 	}
 }
 
+// CA-065-04: reprogramar a un intervalo fuera de la jornada efectiva se rechaza sin escritura.
+func TestRescheduleAppointment_OutsideWorkingHours_ReturnsValidationWithoutCallingRepository(t *testing.T) {
+	repo := &fakeRescheduleRepository{detailFound: true, detail: booking.AppointmentDetail{BarberID: "barber-1", DurationMinutesSnapshot: 30}}
+	svc := booking.NewRescheduleService(repo, fakeBlockCheckPort{outsideHours: true}, fakeTimezonePort{timezone: "America/Bogota"}, fakeClock{now: time.Now()})
+
+	req := validRescheduleRequest(t, time.Now().Add(48*time.Hour))
+	_, err := svc.RescheduleAppointment(context.Background(), "shop-1", req, "key-1", "fp-1")
+	assertKind(t, err, apperr.KindValidation)
+	if repo.lastRescheduleInput.AppointmentID != "" {
+		t.Fatalf("no debió llamar al repositorio fuera de la jornada (CA-065-04)")
+	}
+}
+
 func TestRescheduleAppointment_BlockCheckPortError_Propagates(t *testing.T) {
 	repo := &fakeRescheduleRepository{detailFound: true, detail: booking.AppointmentDetail{BarberID: "barber-1", DurationMinutesSnapshot: 30}}
 	wantErr := apperr.Internal(errors.New("schedule: fallo simulado"))
