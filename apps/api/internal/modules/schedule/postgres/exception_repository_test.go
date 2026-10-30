@@ -355,6 +355,9 @@ func TestUpdateException_ConflictWithAnotherDate_LeavesOriginalUntouched(t *test
 	if !result.Conflict {
 		t.Fatal("expected Conflict=true when the new date collides with another exception of the same barber")
 	}
+	if !result.Found {
+		t.Fatal("the exception exists: a date conflict must not look like a missing exception (F-SCH-01)")
+	}
 
 	unchanged, found, err := repo.GetException(context.Background(), string(shopM), barberM2, moving.ID)
 	if err != nil {

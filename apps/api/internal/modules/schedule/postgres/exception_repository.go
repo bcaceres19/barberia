@@ -500,9 +500,11 @@ func (r *Repository) UpdateException(ctx context.Context, barbershopID, barberID
 	if err != nil {
 		if errors.Is(err, errExceptionConflictInternal) {
 			// El ROLLBACK ya deshizo el UPDATE de la cabecera y el DELETE
-			// de los tramos previos: Found se limpia para reflejar que no
-			// se persistió ningún cambio, solo Conflict=true importa aquí.
-			return schedule.UpdateExceptionResult{Conflict: true}, nil
+			// de los tramos previos: no se persistió ningún cambio. La
+			// excepción SÍ existe (el conflicto solo ocurre al tocar una fila
+			// propia), así que Found sigue en true: el llamador no debe
+			// confundirlo con un 404 (CA-041-06).
+			return schedule.UpdateExceptionResult{Found: true, Conflict: true}, nil
 		}
 		return schedule.UpdateExceptionResult{}, fmt.Errorf("schedule/postgres: update exception: %w", err)
 	}
