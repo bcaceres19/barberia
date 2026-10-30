@@ -124,6 +124,44 @@ func (r *Repository) CreatePublic(
 	return result, nil
 }
 
+// errReplayProbeRollback revierte la transacción de ReplayPublic cuando la
+// clave estaba libre: Begin la reclamó dentro de esa transacción y el
+// ROLLBACK la libera, de modo que consultar no deja ninguna reclamación.
+var errReplayProbeRollback = errors.New("booking/postgres: sondeo de repetición sin efectos")
+
+// ReplayPublic implementa booking.Repository.ReplayPublic.
+func (r *Repository) ReplayPublic(
+	ctx context.Context,
+	barbershopID string,
+	key idempotency.Key,
+	fingerprint idempotency.Fingerprint,
+) (booking.CreatePublicResult, error) {
+	shop, err := database.ValidBarbershopID(barbershopID)
+	if err != nil {
+		return booking.CreatePublicResult{}, fmt.Errorf("booking/postgres: %w", err)
+	}
+
+	var result booking.CreatePublicResult
+	err = r.db.InTenantTx(ctx, shop, func(ctx context.Context, q database.Queries) error {
+		decision, err := r.coord.Begin(ctx, q, shop, key, createPublicAppointmentOperation, fingerprint, createPublicAppointmentIdempotencyTTL)
+		if err != nil {
+			return fmt.Errorf("idempotency begin: %w", err)
+		}
+		result.Decision = decision
+		if decision.Outcome == idempotency.OutcomeReplay {
+			result.Response = decision.Response
+		}
+		if decision.Outcome == idempotency.OutcomeProceed {
+			return errReplayProbeRollback
+		}
+		return nil
+	})
+	if err != nil && !errors.Is(err, errReplayProbeRollback) {
+		return booking.CreatePublicResult{}, err
+	}
+	return result, nil
+}
+
 // publicAppointmentResponseWire es la forma exacta que CreatePublic
 // serializa como cuerpo almacenado de idempotencia (idempotency_record.
 // response_body): debe coincidir campo a campo con

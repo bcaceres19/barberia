@@ -75,6 +75,21 @@ type Repository interface {
 		fingerprint idempotency.Fingerprint,
 	) (CreatePublicResult, error)
 
+	// ReplayPublic consulta, sin dejar efectos, si key ya completó una
+	// reserva pública con el mismo contenido (RN-IDE-01, CA-097-04): ejecuta
+	// Begin dentro de una transacción que siempre se revierte cuando la clave
+	// está libre, así que no reclama nada. result.Decision trae el Outcome:
+	// Replay con la respuesta original, un conflicto de idempotencia, o
+	// Proceed cuando no hay nada que reproducir. publicbooking lo usa ANTES de
+	// responder un conflicto de franja, porque tras un éxito cuya respuesta
+	// se perdió la franja ya es del propio cliente.
+	ReplayPublic(
+		ctx context.Context,
+		barbershopID string,
+		key idempotency.Key,
+		fingerprint idempotency.Fingerprint,
+	) (CreatePublicResult, error)
+
 	// ListDailyAgenda lee, dentro de barbershopID y del único barberID
 	// pedido (DEC-074), las citas cuyo intervalo [starts_at, ends_at)
 	// interseca [rangeStart, rangeEnd) (DEC-075: rangeStart/rangeEnd ya

@@ -54,6 +54,18 @@ type fakePublicAppointmentPort struct {
 	stored   idempotency.StoredResponse
 	err      error
 	captured *capturedAppointmentCall
+	// replay y replayStored responden al sondeo de idempotencia previo al
+	// conflicto de franja; el valor cero es OutcomeProceed (clave libre).
+	replay       idempotency.Decision
+	replayStored idempotency.StoredResponse
+	replayCalls  int
+}
+
+func (f *fakePublicAppointmentPort) ReplayPublicAppointment(
+	context.Context, string, idempotency.Key, idempotency.Fingerprint,
+) (idempotency.Decision, idempotency.StoredResponse, error) {
+	f.replayCalls++
+	return f.replay, f.replayStored, nil
 }
 
 func (f *fakePublicAppointmentPort) CreatePublicAppointment(
@@ -220,6 +232,51 @@ func TestConfirmAppointment_SlotNoLongerAvailable_ReturnsScheduleConflictWithAlt
 	}
 	if len(conflict.Alternatives) > publicbooking.MaxAlternatives {
 		t.Fatalf("expected at most %d alternatives, got %d", publicbooking.MaxAlternatives, len(conflict.Alternatives))
+	}
+}
+
+// RN-IDE-01 / CA-097-04: tras un éxito cuya respuesta se perdió, la franja ya es
+// del propio cliente y no figura disponible; el reintento con la misma clave
+// reproduce el 201 original en lugar de responder un conflicto de franja.
+func TestConfirmAppointment_SlotTakenBySameRequest_ReplaysOriginalResult(t *testing.T) {
+	loc, _ := time.LoadLocation("America/Bogota")
+	now := time.Date(2026, time.September, 14, 8, 0, 0, 0, loc)
+	// Fuera de la jornada del fixture: la franja ya no figura disponible.
+	startsAt := time.Date(2026, time.September, 14, 20, 0, 0, 0, loc)
+
+	svc, _, _, appointments, email := newConfirmationFixture(now)
+	appointments.replay = idempotency.Decision{Outcome: idempotency.OutcomeReplay}
+	appointments.replayStored = idempotency.StoredResponse{Status: 201, ContentType: "application/json", Body: `{"ok":true}`}
+
+	result, emailErr, err := svc.ConfirmAppointment(context.Background(), validConfirmInput(startsAt), idempotency.Key("k-1"), idempotency.Fingerprint("f-1"))
+	if err != nil || emailErr != nil {
+		t.Fatalf("expected the original result to be replayed, got err=%v emailErr=%v", err, emailErr)
+	}
+	if result.Decision.Outcome != idempotency.OutcomeReplay || result.Response.Body != `{"ok":true}` {
+		t.Fatalf("unexpected result %+v", result)
+	}
+	if appointments.replayCalls != 1 || appointments.captured != nil {
+		t.Fatalf("expected one replay probe and no new appointment, got %+v", appointments)
+	}
+	if len(email.calls) != 0 {
+		t.Fatalf("a replay must not resend the confirmation email, got %d", len(email.calls))
+	}
+}
+
+// Misma clave con contenido distinto sigue siendo conflicto de idempotencia,
+// no un conflicto de franja (CA-097-04, DEC-043).
+func TestConfirmAppointment_SlotTakenAndKeyReusedWithOtherContent_ReturnsIdempotencyConflict(t *testing.T) {
+	loc, _ := time.LoadLocation("America/Bogota")
+	now := time.Date(2026, time.September, 14, 8, 0, 0, 0, loc)
+	startsAt := time.Date(2026, time.September, 14, 20, 0, 0, 0, loc)
+
+	svc, _, _, appointments, _ := newConfirmationFixture(now)
+	appointments.replay = idempotency.Decision{Outcome: idempotency.OutcomeConflictFingerprint}
+
+	_, _, err := svc.ConfirmAppointment(context.Background(), validConfirmInput(startsAt), idempotency.Key("k-1"), idempotency.Fingerprint("f-1"))
+	appErr, ok := apperr.As(err)
+	if !ok || appErr.Kind != apperr.KindIdempotencyConflict {
+		t.Fatalf("expected an idempotency conflict, got %v", err)
 	}
 }
 

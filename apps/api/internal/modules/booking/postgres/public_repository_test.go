@@ -202,6 +202,64 @@ func TestCreatePublic_SameKeyAndFingerprint_Replays(t *testing.T) {
 	}
 }
 
+// TestReplayPublic cubre RN-IDE-01 / CA-097-04: tras un éxito cuya respuesta se
+// perdió, el sondeo reproduce el resultado original sin crear nada; con una
+// clave libre no deja reclamación (el siguiente CreatePublic sigue siendo
+// Proceed); con contenido distinto informa el conflicto de idempotencia.
+func TestReplayPublic(t *testing.T) {
+	db := setupTestDB(t)
+	repo := newRepository(db)
+	suffix := uniqueSuffix(t)
+	start := baseStart(t)
+
+	input := publicInput(t, barberQ1, serviceQ, start, suffix, booking.CustomerInput{
+		New: &booking.NewCustomerInput{FullName: "Cliente sondeo " + suffix},
+	})
+	key := idempotency.Key("public-probe-" + suffix)
+	fingerprint := idempotency.Fingerprint("5123456789abcdef0123456789abcdef")
+
+	free, err := repo.ReplayPublic(context.Background(), string(shopQ), key, fingerprint)
+	if err != nil {
+		t.Fatalf("ReplayPublic on a free key: %v", err)
+	}
+	if free.Decision.Outcome != idempotency.OutcomeProceed {
+		t.Fatalf("free key Outcome = %v, want OutcomeProceed", free.Decision.Outcome)
+	}
+
+	first, err := repo.CreatePublic(context.Background(), string(shopQ), input, key, fingerprint)
+	if err != nil {
+		t.Fatalf("CreatePublic after the probe: %v", err)
+	}
+	if first.Decision.Outcome != idempotency.OutcomeProceed {
+		t.Fatalf("probe must not leave a claim: CreatePublic Outcome = %v, want OutcomeProceed", first.Decision.Outcome)
+	}
+
+	replay, err := repo.ReplayPublic(context.Background(), string(shopQ), key, fingerprint)
+	if err != nil {
+		t.Fatalf("ReplayPublic after success: %v", err)
+	}
+	if replay.Decision.Outcome != idempotency.OutcomeReplay || replay.Response.Body != first.Response.Body {
+		t.Fatalf("expected the original response, got outcome %v", replay.Decision.Outcome)
+	}
+
+	other, err := repo.ReplayPublic(context.Background(), string(shopQ), key, idempotency.Fingerprint("6123456789abcdef0123456789abcdef"))
+	if err != nil {
+		t.Fatalf("ReplayPublic with another fingerprint: %v", err)
+	}
+	if other.Decision.Outcome != idempotency.OutcomeConflictFingerprint {
+		t.Fatalf("other content Outcome = %v, want OutcomeConflictFingerprint", other.Decision.Outcome)
+	}
+
+	// Otra barbería no ve la clave: el sondeo respeta el aislamiento (RN-TEN-01).
+	foreign, err := repo.ReplayPublic(context.Background(), string(shopR), key, fingerprint)
+	if err != nil {
+		t.Fatalf("ReplayPublic from another tenant: %v", err)
+	}
+	if foreign.Decision.Outcome != idempotency.OutcomeProceed {
+		t.Fatalf("another tenant must not see the key, Outcome = %v", foreign.Decision.Outcome)
+	}
+}
+
 // TestCreatePublic_AccessToken_TenantIsolated cubre RN-TEN-01 para la tabla
 // nueva `appointment_access_token`: un token emitido dentro de shopQ nunca
 // es visible leyendo con el contexto de tenant de shopR, verificado con el
