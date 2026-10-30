@@ -2,7 +2,7 @@
 prompt_id: "PROMPT-TEST-87-AISLAMIENTO-CROSS-TENANT-HTTP-v1"
 version: "1.0"
 kind: "test"
-status: "ready"
+status: "executed"
 target_agents:
   - "codex"
   - "claude"
@@ -16,7 +16,7 @@ related_hu:
 issue: 87
 issue_url: "https://github.com/bcaceres19/barberia/issues/87"
 suggested_issue_title: null
-branch: null
+branch: "test/87-aislamiento-cross-tenant-http"
 pr: null
 pr_url: null
 depends_on:
@@ -46,7 +46,7 @@ source_docs:
   - "apps/api/cmd/api/catalog_integration_test.go"
   - "apps/api/cmd/api/barber_services_integration_test.go"
 created_at: "2026-09-04"
-updated_at: "2026-09-04"
+updated_at: "2026-10-30"
 supersedes: null
 superseded_by: null
 ---
