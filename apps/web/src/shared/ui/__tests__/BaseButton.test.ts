@@ -2,6 +2,8 @@
  * Tests for BaseButton component
  * Verifies: variants, sizes, states, accessibility, events
  */
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
@@ -177,4 +179,27 @@ describe('BaseButton', () => {
       expect(wrapper.classes()).toContain('my-custom-class')
     })
   })
+})
+
+// jsdom no resuelve la cascada, así que se protege la regla en la fuente: si el
+// hover/active del primario recupera la especificidad plena de `:hover:not()`,
+// vuelve a pisar el acento de marca que las pantallas sobre tinta aplican
+// (1.16:1, campaña #301, HALL-CAT-04). Verificado además con axe en navegador real.
+describe('BaseButton primary state rules', () => {
+  const source = readFileSync(resolve(__dirname, '../BaseButton.vue'), 'utf-8')
+
+  it.each(['hover', 'active'])(
+    'keeps the %s background at the specificity of the variant',
+    (state) => {
+      expect(source).toContain(
+        `.base-button--primary:where(:${state}:not(:disabled):not(.base-button--loading)) {`,
+      )
+      expect(source).not.toMatch(
+        new RegExp(
+          `^\\.base-button--primary:${state}:not\\(:disabled\\)[^{]*\\{\\s*background-color`,
+          'm',
+        ),
+      )
+    },
+  )
 })

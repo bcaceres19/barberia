@@ -180,12 +180,19 @@ const handleClick = (event: MouseEvent) => {
   border-color: var(--color-action-primary);
 }
 
-.base-button--primary:hover:not(:disabled):not(.base-button--loading) {
+/* `:where()` deja los estados hover/active con la especificidad de la variante
+   misma: las pantallas sobre tinta repintan el primario con el acento de marca
+   (`.pagina .base-button--primary`) y solo añaden `filter` al hover; con la
+   especificidad plena de `:hover:not():not()` este fondo volvía a ganar y
+   dejaba el texto del acento sobre `--color-action-primary-hover` (1.16:1,
+   campaña #301, HALL-CAT-04). Sin sobrescritura de la página, el hover y el
+   active se ven igual que antes: esta regla va después de la base. */
+.base-button--primary:where(:hover:not(:disabled):not(.base-button--loading)) {
   background-color: var(--color-action-primary-hover);
   border-color: var(--color-action-primary-hover);
 }
 
-.base-button--primary:active:not(:disabled):not(.base-button--loading) {
+.base-button--primary:where(:active:not(:disabled):not(.base-button--loading)) {
   background-color: var(--color-action-primary-active);
   border-color: var(--color-action-primary-active);
 }
