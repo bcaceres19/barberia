@@ -4,6 +4,19 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.46.0 · 2026-10-30
+
+### Cambiado
+
+- Solo descripciones de `HomeServiceAddress` (`DEC-138`, reemplaza la parte de
+  `DEC-131` que exigía una sugerencia del autocompletado): `address` puede ser la
+  sugerencia elegida, una dirección aproximada del punto marcado en el mapa o
+  «Ubicación marcada en el mapa». Ninguna forma, límite ni regla cambia.
+
+### Compatibilidad
+
+- Compatible: no cambia el esquema ni su validación.
+
 ## 0.45.0 · 2026-10-29
 
 ### Eliminado

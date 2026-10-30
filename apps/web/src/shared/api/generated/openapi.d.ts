@@ -2070,7 +2070,7 @@ export interface components {
         /** @description A dónde va el barbero. Se guardan los tres datos juntos o ninguno (`appointment_home_service_ck`). */
         HomeServiceAddress: {
             /**
-             * @description Dirección en texto; el servidor recorta y colapsa los espacios.
+             * @description Texto de la ubicación; el servidor recorta y colapsa los espacios. Puede ser la sugerencia elegida, una dirección aproximada del punto marcado en el mapa o «Ubicación marcada en el mapa» (`DEC-138`).
              * @example Carrera 7
              */
             address: string;
