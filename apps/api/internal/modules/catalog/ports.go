@@ -117,6 +117,9 @@ type LifecycleResult struct {
 	Response          idempotency.StoredResponse
 	Found             bool
 	InvalidTransition bool
+	// NameTaken: al reactivar, otro servicio activo ya usa el nombre
+	// (unique_violation del índice de nombre activo). No se escribió nada.
+	NameTaken bool
 }
 
 // Repository es el puerto de persistencia del módulo catalog. El núcleo no
