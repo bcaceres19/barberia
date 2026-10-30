@@ -152,6 +152,18 @@ func TestUpdateException_NotFound_TranslatesToNotFound(t *testing.T) {
 	mustBeNotFound(t, err)
 }
 
+// Regresión (campaña #301, F-SCH-01): tras el rollback el repositorio no marca
+// Found; el conflicto debe seguir siendo 409 y no un 404 «ya no existe».
+func TestUpdateException_ConflictWithoutFound_StillTranslatesToConflict(t *testing.T) {
+	repo := &fakeRepository{updateExceptionFn: func(context.Context, string, string, string, schedule.UpdateExceptionInput) (schedule.UpdateExceptionResult, error) {
+		return schedule.UpdateExceptionResult{Conflict: true}, nil
+	}}
+	svc := schedule.NewService(repo, fakeBarberPort{})
+
+	_, err := svc.UpdateException(context.Background(), "shop-1", validBarberID, validExceptionID, "2026-12-08", true, nil, nil)
+	mustBeConflict(t, err)
+}
+
 func TestUpdateException_Conflict_TranslatesToConflict(t *testing.T) {
 	repo := &fakeRepository{updateExceptionFn: func(context.Context, string, string, string, schedule.UpdateExceptionInput) (schedule.UpdateExceptionResult, error) {
 		return schedule.UpdateExceptionResult{Found: true, Conflict: true}, nil

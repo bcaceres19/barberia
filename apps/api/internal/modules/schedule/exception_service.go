@@ -192,11 +192,13 @@ func (s *Service) UpdateException(
 	if err != nil {
 		return ScheduleException{}, apperr.Internal(fmt.Errorf("schedule: editar excepción: %w", err))
 	}
-	if !result.Found {
-		return ScheduleException{}, errExceptionNotFound()
-	}
+	// El conflicto se evalúa primero: solo ocurre sobre una excepción propia que
+	// existe, y un 404 aquí haría creer que desapareció (CA-041-04/05, CA-041-06).
 	if result.Conflict {
 		return ScheduleException{}, errExceptionDateConflict()
+	}
+	if !result.Found {
+		return ScheduleException{}, errExceptionNotFound()
 	}
 	return result.Exception, nil
 }
