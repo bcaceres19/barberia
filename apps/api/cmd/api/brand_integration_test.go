@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"system-barbershop/internal/platform/database"
@@ -452,11 +453,11 @@ func TestBrand_HTTP_OffersHomeService_TogglesFromSettingsAndStaysPerTenant(t *te
 	}
 }
 
-// TestBrand_HTTP_GooglePlaceID_SavesRemovesValidatesAndStaysPerTenant cubre
-// DEC-129 contra el router real: la marca expone la ficha (null por defecto),
-// PATCH la guarda, un PATCH sin ella la conserva, null o vacío la quita, una
-// forma imposible responde 422 sin tocar la guardada y la de A nunca se ve en B.
-func TestBrand_HTTP_GooglePlaceID_SavesRemovesValidatesAndStaysPerTenant(t *testing.T) {
+// TestBrand_HTTP_GooglePlaceID_IsDatabaseOnly cubre DEC-137 contra el router
+// real: el Place ID de la ficha de Google lo fija quien opera la base de datos,
+// así que la marca no lo expone, el PATCH lo rechaza como campo desconocido, y
+// guardar la ubicación o el domicilio nunca lo modifica ni lo cruza a otro tenant.
+func TestBrand_HTTP_GooglePlaceID_IsDatabaseOnly(t *testing.T) {
 	db := setupTestDB(t)
 	t.Cleanup(func() { db.Close() })
 	router, err := buildRouter(db, discardLogger(), testRouterConfig())
@@ -468,48 +469,46 @@ func TestBrand_HTTP_GooglePlaceID_SavesRemovesValidatesAndStaysPerTenant(t *test
 	rawA := createSessionCookie(t, db, shopA, staffUserActiveA, "brand-gplace-a")
 	rawB := createSessionCookie(t, db, shopB, staffUserActiveB, "brand-gplace-b")
 
-	placeID := func(rec *httptest.ResponseRecorder) *string {
+	storedPlaceID := func(shop string) (id *string) {
 		t.Helper()
+		err := db.InTenantTx(context.Background(), database.BarbershopID(shop), func(ctx context.Context, q database.Queries) error {
+			return q.QueryRow(ctx, `SELECT google_place_id FROM barbershop WHERE id = $1`, shop).Scan(&id)
+		})
+		if err != nil {
+			t.Fatalf("leer google_place_id: %v", err)
+		}
+		return id
+	}
+	err = db.InTenantTx(context.Background(), database.BarbershopID(shopA), func(ctx context.Context, q database.Queries) error {
+		_, err := q.Exec(ctx, `UPDATE barbershop SET google_place_id = 'ChIJabc_123-X' WHERE id = $1`, shopA)
+		return err
+	})
+	if err != nil {
+		t.Fatalf("fijar el Place ID por base de datos: %v", err)
+	}
+
+	for name, rec := range map[string]*httptest.ResponseRecorder{
+		"GET":   doBrandRequest(router, http.MethodGet, rawA, nil),
+		"PATCH": doBrandRequest(router, http.MethodPatch, rawA, patchBody(map[string]any{"offersHomeService": true})),
+	} {
 		if rec.Code != http.StatusOK {
-			t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+			t.Fatalf("%s: expected 200, got %d: %s", name, rec.Code, rec.Body.String())
 		}
-		var body map[string]any
-		if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
-			t.Fatalf("decode: %v", err)
+		if strings.Contains(rec.Body.String(), "googlePlaceId") {
+			t.Fatalf("%s no debe exponer googlePlaceId: %s", name, rec.Body.String())
 		}
-		raw, present := body["googlePlaceId"]
-		if !present {
-			t.Fatalf("googlePlaceId debe viajar siempre: %s", rec.Body.String())
-		}
-		if raw == nil {
-			return nil
-		}
-		s := raw.(string)
-		return &s
 	}
 
-	if got := placeID(doBrandRequest(router, http.MethodGet, rawA, nil)); got != nil {
-		t.Fatalf("una barbería nueva no tiene ficha: %q", *got)
+	if rec := doBrandRequest(router, http.MethodPatch, rawA, patchBody(map[string]any{"googlePlaceId": "ChIJotro_999"})); rec.Code != http.StatusBadRequest {
+		t.Fatalf("googlePlaceId ya no es un campo admitido: expected 400, got %d: %s", rec.Code, rec.Body.String())
 	}
-	if got := placeID(doBrandRequest(router, http.MethodPatch, rawA, patchBody(map[string]any{"googlePlaceId": " ChIJabc_123-X "}))); got == nil || *got != "ChIJabc_123-X" {
-		t.Fatalf("PATCH debe guardar el Place ID recortado, obtuvo %v", got)
+	if got := storedPlaceID(shopA); got == nil || *got != "ChIJabc_123-X" {
+		t.Fatalf("guardar desde el panel no debe tocar el Place ID: %v", got)
 	}
-	if got := placeID(doBrandRequest(router, http.MethodPatch, rawA, patchBody(nil))); got == nil {
-		t.Fatal("un PATCH sin googlePlaceId debe conservarlo")
+	if got := storedPlaceID(shopB); got != nil {
+		t.Fatalf("RN-TEN-01: el Place ID de A se filtró a B: %q", *got)
 	}
-	if got := placeID(doBrandRequest(router, http.MethodGet, rawB, nil)); got != nil {
-		t.Fatalf("RN-TEN-01: la ficha de A se filtró a B: %q", *got)
-	}
-
-	rec := doBrandRequest(router, http.MethodPatch, rawA, patchBody(map[string]any{"googlePlaceId": "https://maps.google.com/?cid=1"}))
-	if rec.Code != http.StatusUnprocessableEntity {
-		t.Fatalf("una forma imposible debe responder 422, obtuvo %d: %s", rec.Code, rec.Body.String())
-	}
-	if got := placeID(doBrandRequest(router, http.MethodGet, rawA, nil)); got == nil || *got != "ChIJabc_123-X" {
-		t.Fatal("un 422 no debe tocar la ficha guardada")
-	}
-
-	if got := placeID(doBrandRequest(router, http.MethodPatch, rawA, patchBody(map[string]any{"googlePlaceId": nil}))); got != nil {
-		t.Fatalf("null debe quitar la ficha, obtuvo %q", *got)
+	if rec := doBrandRequest(router, http.MethodGet, rawB, nil); strings.Contains(rec.Body.String(), "googlePlaceId") {
+		t.Fatalf("la marca de B no debe exponer googlePlaceId: %s", rec.Body.String())
 	}
 }

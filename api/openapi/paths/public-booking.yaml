@@ -618,7 +618,8 @@
       de la barbería (HU-101, `CA-101-02`, `DEC-129`), sin sesión. El servidor
       consulta a Google Places con su propia clave (`CA-101-04`: nunca llega al
       navegador) y guarda el resultado 6 horas en memoria (`CA-101-05`); el texto
-      de una reseña no se persiste. Sin `googlePlaceId`, sin credencial de Google
+      de una reseña no se persiste. Sin Place ID guardado en la base de datos (`DEC-137`: lo fija quien opera la
+      base, no el panel), sin credencial de Google
       o ante una consulta fallida (red, cuota agotada, identificador inválido)
       responde `200` con la estructura vacía explícita, nunca un error visible
       (`CA-101-01`, `CA-101-03`). Un `slug` inválido o de una barbería no

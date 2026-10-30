@@ -52,7 +52,6 @@ export async function saveBrand(
         ...(location.offersHomeService !== undefined
           ? { offersHomeService: location.offersHomeService }
           : {}),
-        ...(location.googlePlaceId !== undefined ? { googlePlaceId: location.googlePlaceId } : {}),
       },
     })
     if (response.ok && data) {
@@ -98,6 +97,5 @@ function toLocation(data: LocationSettings): LocationSettings {
     latitude: data.latitude,
     longitude: data.longitude,
     offersHomeService: data.offersHomeService,
-    googlePlaceId: data.googlePlaceId,
   }
 }

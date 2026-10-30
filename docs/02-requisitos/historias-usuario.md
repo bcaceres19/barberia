@@ -2457,10 +2457,10 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 
 **Alcance incluido**
 
-- `googlePlaceId` configurable en Configuración, junto a los demás ajustes de marca (`DEC-110`).
+- `google_place_id` guardado por barbería y fijado **solo por base de datos** (`DEC-137`, que reemplaza el campo de Configuración que pedía `DEC-129`): el panel no lo muestra, no lo recibe ni lo envía, y guardar los ajustes de la barbería nunca lo modifica.
 - `GET /public/barbershops/{slug}/reviews`: calificación, total y hasta 5 reseñas con la atribución que exige Google.
 - Caché de servidor de 6 horas; nunca se persiste el texto de una reseña más allá de esa ventana.
-- Sección oculta, sin error visible, cuando falta `googlePlaceId`, falta la credencial o la consulta falla.
+- Sección oculta, sin error visible, cuando falta el Place ID, falta la credencial o la consulta falla.
 
 **Alcance excluido**
 
@@ -2470,8 +2470,8 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 
 | Código | Criterio |
 | --- | --- |
-| `CA-101-01` | Sin `googlePlaceId` configurado, la reserva pública no muestra el apartado de reseñas de Google. |
-| `CA-101-02` | Con `googlePlaceId` válido, la respuesta incluye calificación, total y hasta 5 reseñas, cada una con atribución a Google y un enlace a la ficha real. |
+| `CA-101-01` | Sin Place ID guardado en la base, la reserva pública no muestra el apartado de reseñas de Google. |
+| `CA-101-02` | Con un Place ID válido guardado en la base, la respuesta incluye calificación, total y hasta 5 reseñas, cada una con atribución a Google y un enlace a la ficha real. |
 | `CA-101-03` | Una consulta fallida (red, cuota agotada, identificador inválido) no propaga error al cliente: oculta la sección y registra el fallo solo en el servidor. |
 | `CA-101-04` | La clave de servidor nunca se expone en el HTML ni en el JavaScript servidos al navegador; el mapa usa, si lo necesita, una clave de frontend distinta y restringida por dominio. |
 | `CA-101-05` | Una segunda consulta dentro de las 6 horas de caché no vuelve a golpear la API de Google (verificable por conteo de llamadas en la prueba del adaptador). |

@@ -822,8 +822,18 @@ reseñarse.
 
 `GET /public/barbershops/{slug}/reviews` (sin sesión) devuelve la calificación, el total, el
 enlace a la ficha y hasta 5 reseñas de la ficha de Google de la barbería. El Place ID se guarda en
-`barbershop.google_place_id` y se edita con `googlePlaceId` en `PATCH /private/settings/brand`
-(`null` o vacío lo quita; una forma imposible responde `422`; no se consulta a Google al guardar).
+`barbershop.google_place_id` y **solo se fija por base de datos** (`DEC-137`): `GET`/`PATCH
+/private/settings/brand` no lo exponen ni lo aceptan, y guardar la ubicación nunca lo toca. La base valida
+su forma con `barbershop_google_place_id_ck` (letras, números, `-` y `_`, de 1 a 200 caracteres).
+
+Para fijarlo o quitarlo, con el rol propietario de la base (o `postgres`):
+
+```sql
+UPDATE barbershop SET google_place_id = 'ChIJ...' WHERE id = '<uuid-de-la-barbería>';  -- fijar
+UPDATE barbershop SET google_place_id = NULL      WHERE id = '<uuid-de-la-barbería>';  -- quitar
+```
+
+La reserva pública lo lee de la base en cada visita; como la caché de 6 horas es por ficha, un Place ID nuevo se consulta a Google de inmediato.
 
 Adaptador `internal/modules/publicbooking/google` (el único que habla con Google Places (New)):
 

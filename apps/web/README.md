@@ -1174,7 +1174,7 @@ lo necesita para layout; la apariencia semántica solo se elige con `variant`
 
 ## Reseñas de Google del negocio (HU-101, DEC-129)
 
-- **Configuración** (panel 06 «Ubicación»): campo «Identificador de tu ficha de Google (opcional)» (`googlePlaceId`). Se valida antes de guardar (solo letras, números, `-` y `_`: pegar un enlace de Google Maps muestra un aviso) y vacío la quita.
+- **Configuración** (panel 06 «Ubicación»): no ofrece el identificador de la ficha de Google; lo fija quien opera la base de datos (`DEC-137`) y guardar la ubicación o el domicilio nunca lo modifica.
 - **Entrada pública** (`/reservar/:slug`): `public-booking/components/GoogleReviews.vue` pide `GET /public/barbershops/{slug}/reviews` al abrir y muestra «Opiniones en Google» con estrellas, el total, las reseñas bajo demanda con la atribución a cada autor, «Reseñas de Google» y el enlace a la ficha real. **Sin ficha, sin credencial, con la estructura vacía o ante cualquier error, la sección no existe y no se muestra ningún error.**
 - **Clave**: el navegador nunca recibe la clave de servidor; la consulta a Google la hace el API.
 - **Pruebas**: `api/__tests__/getPublicGoogleReviewsApi.test.ts`, `components/__tests__/GoogleReviews.test.ts` (con axe), bloque de Google de `PublicBarbershopEntryPage.test.ts`, `SettingsPage.test.ts` y `e2e/google-resenas-reserva-publica.spec.ts` (320/360/768/1280, axe).

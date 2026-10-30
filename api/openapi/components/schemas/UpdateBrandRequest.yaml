@@ -44,19 +44,6 @@ properties:
     description: >
       Interruptor general del servicio a domicilio (`DEC-131`). Ausente conserva
       el valor; apagarlo no afecta los turnos ya creados con domicilio.
-  googlePlaceId:
-    type:
-      - string
-      - "null"
-    maxLength: 200
-    description: >
-      Place ID de la ficha de Google (`DEC-129`). Ausente conserva la ficha;
-      `null` o vacío la quita; un valor con letras, números, `-` o `_` (sin
-      espacios ni símbolos) la guarda y cualquier otra forma responde `422`. No
-      se consulta a Google al guardar: un identificador bien formado pero
-      inexistente solo oculta las reseñas en la reserva pública.
-    examples:
-      - ChIJN1t_tDeuEmsRUsoyG83frY4
 required:
   - accent
   - businessTerm

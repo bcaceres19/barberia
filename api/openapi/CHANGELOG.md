@@ -4,6 +4,33 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.45.0 · 2026-10-29
+
+### Eliminado
+
+- `googlePlaceId` sale de `BrandResponse` (`GET`/`PATCH /private/settings/brand`)
+  y de `UpdateBrandRequest` (`DEC-137`, reemplaza lo que `DEC-129` pedía del
+  panel). El identificador de la ficha de Google lo fija quien opera la base de
+  datos; la reserva pública (`GET /public/barbershops/{slug}/reviews`) lo sigue
+  leyendo de la base y no cambia.
+
+### Compatibilidad
+
+- Es un cambio incompatible para quien lea o envíe `googlePlaceId` en la marca:
+  la respuesta ya no lo trae y la solicitud lo rechaza como cualquier campo
+  desconocido (`400`). El único consumidor es el cliente tipado de `apps/web`,
+  que cambia en el mismo PR.
+
+## 0.44.0 · 2026-10-29
+
+### Cambiado
+
+- Cancelar un turno ya no revoca el enlace del cliente (`DEC-136`, reemplaza esa
+  parte de `DEC-089`): `GET /customer/appointments/{token}` de un turno cancelado
+  responde `200` con el estado cancelado y repetir `cancelCustomerAppointment` con
+  la misma `Idempotency-Key` reproduce la respuesta original. Solo cambian
+  descripciones; ninguna forma de solicitud o respuesta se modifica.
+
 ## 0.43.0 · 2026-11-03
 
 ### Añadido

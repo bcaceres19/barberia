@@ -565,7 +565,6 @@ describe('SettingsPage', () => {
       latitude: 4.598056,
       longitude: -74.076111,
       offersHomeService: false,
-      googlePlaceId: null,
     }
 
     async function mountWithLocation(location: typeof savedLocation | typeof DEFAULT_LOCATION) {
@@ -647,48 +646,11 @@ describe('SettingsPage', () => {
       wrapper.unmount()
     })
 
-    it('saves the Google listing id (trimmed) without touching the address (DEC-129, HU-101)', async () => {
-      const wrapper = await mountWithLocation(savedLocation)
-      saveBrandMock.mockImplementationOnce(async (brand) => ({
-        kind: 'success',
-        brand,
-        location: { ...savedLocation, googlePlaceId: 'ChIJabc_1-X' },
-      }))
-
-      await wrapper.get('input[name="googlePlaceId"]').setValue('  ChIJabc_1-X ')
-      expect(wrapper.get('.save-bar').text()).toContain('Ubicación')
-      await submit(wrapper)
-
-      expect(saveBrandMock.mock.calls[0]![1]).toEqual({ googlePlaceId: 'ChIJabc_1-X' })
-      expect((wrapper.get('input[name="googlePlaceId"]').element as HTMLInputElement).value).toBe(
-        'ChIJabc_1-X',
-      )
-      wrapper.unmount()
-    })
-
-    it('blocks a pasted Google Maps link with a clear message and sends nothing', async () => {
+    it('does not offer the Google listing id: it is managed in the database (DEC-137)', async () => {
       const wrapper = await mountWithLocation(savedLocation)
 
-      await wrapper.get('input[name="googlePlaceId"]').setValue('https://maps.google.com/?cid=1')
-      await submit(wrapper)
-
-      expect(saveBrandMock).not.toHaveBeenCalled()
-      expect(wrapper.get('#configuracion-ubicacion').text()).toContain('no pegues un enlace')
-      wrapper.unmount()
-    })
-
-    it('an empty field removes the listing with null', async () => {
-      const wrapper = await mountWithLocation({ ...savedLocation, googlePlaceId: 'ChIJabc' })
-      saveBrandMock.mockImplementationOnce(async (brand) => ({
-        kind: 'success',
-        brand,
-        location: savedLocation,
-      }))
-
-      await wrapper.get('input[name="googlePlaceId"]').setValue('')
-      await submit(wrapper)
-
-      expect(saveBrandMock.mock.calls[0]![1]).toEqual({ googlePlaceId: null })
+      expect(wrapper.find('input[name="googlePlaceId"]').exists()).toBe(false)
+      expect(wrapper.get('#configuracion-ubicacion').text()).not.toContain('ficha de Google')
       wrapper.unmount()
     })
 

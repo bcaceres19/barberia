@@ -129,6 +129,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-134` | 2026-10-28 | El tipo de panel (empresa, empleado, independiente) se define en la BD por roles del usuario, no en Configuración; sustituye `barbershop.panel_profile` de `DEC-115` | `DEC-115`, `DEC-116`, `DEC-100`; issue #365 | Confirmada (modelo de roles); composición del panel de empleado sujeta a revisión |
 | `DEC-135` | 2026-10-28 | Las franjas ofrecidas caen siempre en la rejilla fija anclada al inicio del tramo laboral; sustituye el reinicio tras una interrupción de `DEC-084` | `DEC-084`, `DEC-133`, `RN-DIS-06`; `DP-PUB-03` | Confirmada |
 | `DEC-136` | 2026-10-29 | Cancelar un turno ya no revoca el enlace del cliente: sigue mostrándolo como cancelado | `DEC-089`, `HU-098`, `HU-099`; issue #376 | Confirmada |
+| `DEC-137` | 2026-10-29 | El Place ID de la ficha de Google se gestiona solo por base de datos, no desde Configuración | `DEC-129`, `HU-101`; issue #380 | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -1525,6 +1526,8 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Documentos afectados:** `database` (migración que añade `barbershop.google_place_id`), `api/openapi` (`GET /public/barbershops/{slug}/reviews`, campo `googlePlaceId` en el recurso de marca de `DEC-110`), `apps/api` (módulo nuevo `googlereviews` o adaptador dentro de `publicbooking`, con timeout corto y sin reintento síncrono, mismo criterio que `DEC-066`), `apps/web` (Configuración y reserva pública), `apps/api/README.md` (guía de credenciales de Google Cloud, mismo formato que la de Calendar), `historias-usuario.md` (`HU-101`), `matriz-trazabilidad.md`, `historial-cambios.md`.
 - **Fuente:** instrucción explícita del propietario el 2026-10-26: «para Google el del local (si es un barbero pues este dará el nombre de su empresa registrada)... el del local se colocará también estrellas pero estas sí van al apartado de Google»; nivel de integración de pago confirmado en la misma conversación.
 
+**Actualización posterior:** `DEC-137` (2026-10-29) reemplaza únicamente la edición del Place ID desde Configuración: el valor se fija por base de datos. El resto de esta decisión se mantiene.
+
 ### DEC-130 · Ubicación de la barbería en la reserva pública, configurable por barbería
 
 - **Fecha:** 2026-10-26.
@@ -1620,4 +1623,17 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** mantener el `404` uniforme tras cancelar (`DEC-089` original).
 - **Alcance:** solo se elimina la revocación en `booking.Repository.CancelByCustomer`; la vigencia, el hash, la emisión única y la anonimización de `DEC-089` se conservan. Una repetición con la misma `Idempotency-Key` reproduce la respuesta original; con otra clave sobre un turno ya cancelado se mantiene el rechazo de estado existente.
 - **Documentos afectados:** `historias-usuario.md` (`HU-098`, `HU-099`), `matriz-trazabilidad.md`, `historial-cambios.md`, `api/openapi/` (0.44.0), `apps/api/README.md`, `apps/web/README.md`.
+- **Fuente:** instrucción explícita del propietario el 2026-10-29.
+
+### DEC-137 · El Place ID de la ficha de Google se gestiona solo por base de datos (reemplaza parte de `DEC-129`)
+
+- **Fecha:** 2026-10-29.
+- **Decisión:** `barbershop.google_place_id` ya no se edita desde Configuración. El panel no muestra el campo, y `GET`/`PATCH /private/settings/brand` no exponen ni aceptan `googlePlaceId` (un campo enviado se rechaza como cualquier campo desconocido). Quien opera la base de datos lo fija o lo quita con SQL. La reserva pública (`HU-101`) sigue leyéndolo de la base: con valor muestra estrellas y reseñas, sin valor oculta la sección.
+- **Quién lo decidió:** el propietario, el 2026-10-29: «que ese identificador sea por BD, no por pantalla, ya que las personas quedarán [perdidas]».
+- **Responsable:** propietario del proyecto.
+- **Motivo:** un usuario final no sabe qué es un Place ID ni cómo obtenerlo; pedírselo en pantalla genera confusión y valores inválidos.
+- **Consecuencia aceptada:** configurar o cambiar la ficha de una barbería exige una intervención operativa (procedimiento en `apps/api/README.md`); no hay autoservicio.
+- **Alternativas descartadas:** mantener el campo con ayuda contextual; buscar la ficha por nombre y dirección desde la pantalla (requeriría una consulta a Places al guardar y su costo).
+- **Alcance:** se elimina la escritura y la lectura del Place ID en el módulo `shops` (dominio, servicio, repositorio, DTO, handler), el contrato privado (OpenAPI `0.45.0`) y el campo de `SettingsPage`. No cambia la migración ya aplicada: el `CHECK` `barbershop_google_place_id_ck` sigue siendo la única validación de forma. No cambia la caché de reseñas ni el proveedor de Google.
+- **Documentos afectados:** `historias-usuario.md` (`HU-101`), `matriz-trazabilidad.md`, `historial-cambios.md`, `api/openapi/` (0.45.0), `apps/api/README.md`, `apps/web/README.md`.
 - **Fuente:** instrucción explícita del propietario el 2026-10-29.

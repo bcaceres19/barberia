@@ -106,8 +106,6 @@ func (h *UpdateBrandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		AddressSet:          req.Address.Set,
 		Address:             req.Address.Value,
 		OffersHomeService:   req.OffersHomeService,
-		GooglePlaceIDSet:    req.GooglePlaceID.Set,
-		GooglePlaceID:       req.GooglePlaceID.Value,
 	})
 	if err != nil {
 		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
@@ -141,6 +139,5 @@ func newBrandResponse(b shops.Brand, profile shops.PanelProfile) BrandResponse {
 		Latitude:               b.Location.Latitude,
 		Longitude:              b.Location.Longitude,
 		OffersHomeService:      b.Location.OffersHomeService,
-		GooglePlaceID:          b.Location.GooglePlaceID,
 	}
 }
