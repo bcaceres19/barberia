@@ -148,7 +148,9 @@
       Nunca crea otra fila ni altera `name`, `durationMinutes`, `price` ni
       asignaciones (RN-SER-04). Un identificador inexistente o de otra
       barbería responde `404` uniforme. Un servicio ya activo, con una clave
-      de idempotencia nueva, responde `409` (transición inválida).
+      de idempotencia nueva, responde `409` (transición inválida); también
+      `409` si otro servicio activo ya usa su nombre (`ServiceConflictProblem`,
+      RN-SER-01), sin escribir y sin consumir la clave.
     operationId: reactivateService
     security:
       - SessionCookie: []

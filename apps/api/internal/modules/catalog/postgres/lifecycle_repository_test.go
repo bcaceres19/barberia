@@ -211,6 +211,49 @@ func TestReactivate_InactiveService_SetsActiveClearsTimestamp(t *testing.T) {
 	}
 }
 
+// RN-SER-01: mientras un servicio estuvo inactivo, otro activo pudo tomar su
+// nombre; reactivarlo es un conflicto de nombre controlado, no un error de
+// servidor, no escribe nada y deja libre la clave de idempotencia.
+func TestReactivate_NameTakenByAnotherActiveService_ReportsNameTakenWithoutWriting(t *testing.T) {
+	db := setupTestDB(t)
+	repo := newRepository(db)
+	suffix := uniqueSuffix(t)
+
+	original := createService(t, repo, shopE, "Corte repetido "+suffix)
+	if _, err := repo.Deactivate(context.Background(), string(shopE), original.ID,
+		idempotency.Key("deactivate-dup-"+suffix), deactivateFP(original.ID)); err != nil {
+		t.Fatalf("Deactivate: %v", err)
+	}
+	createService(t, repo, shopE, "Corte repetido "+suffix) // toma el nombre libre
+
+	key := idempotency.Key("reactivate-dup-" + suffix)
+	result, err := repo.Reactivate(context.Background(), string(shopE), original.ID, key, reactivateFP(original.ID))
+	if err != nil {
+		t.Fatalf("Reactivate must report the conflict, not fail: %v", err)
+	}
+	if !result.NameTaken {
+		t.Fatalf("expected NameTaken, got %+v", result)
+	}
+
+	got, found, err := repo.Get(context.Background(), string(shopE), original.ID)
+	if err != nil || !found {
+		t.Fatalf("Get: found=%v err=%v", found, err)
+	}
+	if got.IsActive {
+		t.Fatal("a name conflict must leave the service inactive")
+	}
+
+	// La clave quedó libre: tras liberar el nombre, el mismo reintento funciona.
+	renamed := "Otro nombre " + suffix
+	if _, err := repo.Update(context.Background(), string(shopE), original.ID, catalog.UpdateFields{Name: &renamed}); err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+	retry, err := repo.Reactivate(context.Background(), string(shopE), original.ID, key, reactivateFP(original.ID))
+	if err != nil || retry.NameTaken || !retry.Service.IsActive {
+		t.Fatalf("expected the retry with the same key to reactivate, got %+v (err %v)", retry, err)
+	}
+}
+
 func TestReactivate_AlreadyActive_NewKey_ReturnsInvalidTransition(t *testing.T) {
 	db := setupTestDB(t)
 	repo := newRepository(db)
