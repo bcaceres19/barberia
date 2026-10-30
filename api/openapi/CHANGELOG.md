@@ -4,6 +4,20 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.47.4 · 2026-10-30
+
+### Corregido
+
+- Las rutas bajo `/api/v1/private` reemiten la cookie de sesión con el `Expires`
+  renovado cuando la sesión es válida (`DEC-050`, renovación deslizante en cada
+  uso); antes el vencimiento del navegador quedaba fijo en el del login. La
+  descripción de `GET /private/auth/session` ya no dice que no emite `Set-Cookie`.
+
+### Compatibilidad
+
+- Compatible: no cambia esquemas ni códigos; el token y los atributos de la
+  cookie son los del login.
+
 ## 0.47.3 · 2026-10-30
 
 ### Corregido
