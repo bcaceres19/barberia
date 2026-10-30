@@ -40,12 +40,16 @@ const resolvedRole = computed(() => {
   return props.variant === 'warning' || props.variant === 'danger' ? 'alert' : 'status'
 })
 
+// PageState vive siempre sobre la superficie fuerte (tinta o marfil), así que
+// la marca usa los tokens `*-on-strong` (medidos AA en ambos temas) y el
+// acento de marca de esa superficie; los pares claros del sistema darían
+// 2.04:1 (danger) a 3.68:1 (warning) sobre tinta.
 const markVar = computed(() => {
   const map: Record<string, string> = {
-    info: 'var(--color-accent-brass)',
-    success: 'var(--color-success-text)',
-    warning: 'var(--color-warning-border)',
-    danger: 'var(--color-danger-action)',
+    info: 'var(--color-brand-accent-surface)',
+    success: 'var(--color-success-on-strong)',
+    warning: 'var(--color-warning-on-strong)',
+    danger: 'var(--color-danger-on-strong)',
   }
   return map[props.variant] || map.info
 })
@@ -143,7 +147,7 @@ const style = computed(() => ({ '--page-state-mark': markVar.value }))
  * no expone un prop de color libre (props describen intención, no valores
  * libres, mismo criterio que BaseBadge). */
 .page-state__body :deep(.page-state__link) {
-  color: var(--color-accent-brass);
+  color: var(--color-brand-accent-surface);
   font-weight: 600;
   text-decoration: none;
 }
