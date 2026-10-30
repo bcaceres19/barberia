@@ -213,7 +213,7 @@ export interface paths {
         };
         /**
          * Leer la calificación y las reseñas de Google del negocio
-         * @description Devuelve la calificación, el total y hasta 5 reseñas de la ficha de Google de la barbería (HU-101, `CA-101-02`, `DEC-129`), sin sesión. El servidor consulta a Google Places con su propia clave (`CA-101-04`: nunca llega al navegador) y guarda el resultado 6 horas en memoria (`CA-101-05`); el texto de una reseña no se persiste. Sin `googlePlaceId`, sin credencial de Google o ante una consulta fallida (red, cuota agotada, identificador inválido) responde `200` con la estructura vacía explícita, nunca un error visible (`CA-101-01`, `CA-101-03`). Un `slug` inválido o de una barbería no publicable responde el mismo `404` uniforme (`CA-090-02`, `RN-TEN-01`).
+         * @description Devuelve la calificación, el total y hasta 5 reseñas de la ficha de Google de la barbería (HU-101, `CA-101-02`, `DEC-129`), sin sesión. El servidor consulta a Google Places con su propia clave (`CA-101-04`: nunca llega al navegador) y guarda el resultado 6 horas en memoria (`CA-101-05`); el texto de una reseña no se persiste. Sin Place ID guardado en la base de datos (`DEC-137`: lo fija quien opera la base, no el panel), sin credencial de Google o ante una consulta fallida (red, cuota agotada, identificador inválido) responde `200` con la estructura vacía explícita, nunca un error visible (`CA-101-01`, `CA-101-03`). Un `slug` inválido o de una barbería no publicable responde el mismo `404` uniforme (`CA-090-02`, `RN-TEN-01`).
          */
         get: operations["getPublicGoogleReviews"];
         put?: never;
@@ -1594,11 +1594,6 @@ export interface components {
             longitude: number | null;
             /** @description Interruptor general del servicio a domicilio (`DEC-131`). Con `true`, la reserva pública ofrece «a domicilio» para cualquier servicio. */
             offersHomeService: boolean;
-            /**
-             * @description Place ID de la ficha de Google de la barbería (`DEC-129`); `null` sin ficha. Con él la reserva pública muestra la calificación y las reseñas de Google.
-             * @example ChIJN1t_tDeuEmsRUsoyG83frY4
-             */
-            googlePlaceId: string | null;
         };
         /** @description Marca y vocabulario a guardar. Los seis campos de la marca viajan siempre presentes. No incluye `panelProfile`: el panel lo deciden los roles del usuario (`DEC-134`). La ubicación (`hasPhysicalLocation`, `address`) es opcional: ausente no la toca (`DEC-130`). */
         UpdateBrandRequest: {
@@ -1617,11 +1612,6 @@ export interface components {
             address?: string | null;
             /** @description Interruptor general del servicio a domicilio (`DEC-131`). Ausente conserva el valor; apagarlo no afecta los turnos ya creados con domicilio. */
             offersHomeService?: boolean;
-            /**
-             * @description Place ID de la ficha de Google (`DEC-129`). Ausente conserva la ficha; `null` o vacío la quita; un valor con letras, números, `-` o `_` (sin espacios ni símbolos) la guarda y cualquier otra forma responde `422`. No se consulta a Google al guardar: un identificador bien formado pero inexistente solo oculta las reseñas en la reserva pública.
-             * @example ChIJN1t_tDeuEmsRUsoyG83frY4
-             */
-            googlePlaceId?: string | null;
         };
         /**
          * @description Color de acento del panel: `brass` (el latón NAVA, valor inicial), `emerald`, `sapphire`, `ruby`, `amethyst` o `copper`.

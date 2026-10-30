@@ -337,8 +337,8 @@ const panelProfileField = "panelProfile"
 // cuatro; la petición solo admite el interruptor y la dirección (opcionales:
 // ausente = sin cambio), nunca las coordenadas, que calcula el servidor.
 var (
-	locationResponseFields = []string{"hasPhysicalLocation", "address", "latitude", "longitude", "offersHomeService", "googlePlaceId"}
-	locationRequestFields  = []string{"hasPhysicalLocation", "address", "offersHomeService", "googlePlaceId"}
+	locationResponseFields = []string{"hasPhysicalLocation", "address", "latitude", "longitude", "offersHomeService"}
+	locationRequestFields  = []string{"hasPhysicalLocation", "address", "offersHomeService"}
 )
 
 // TestContract_BrandSchemas_MatchDTOFields verifica que BrandResponse y

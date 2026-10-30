@@ -56,17 +56,6 @@ properties:
     description: >
       Interruptor general del servicio a domicilio (`DEC-131`). Con `true`, la
       reserva pública ofrece «a domicilio» para cualquier servicio.
-  googlePlaceId:
-    type:
-      - string
-      - "null"
-    maxLength: 200
-    pattern: '^[A-Za-z0-9_-]+$'
-    description: >
-      Place ID de la ficha de Google de la barbería (`DEC-129`); `null` sin ficha.
-      Con él la reserva pública muestra la calificación y las reseñas de Google.
-    examples:
-      - ChIJN1t_tDeuEmsRUsoyG83frY4
 required:
   - accent
   - businessTerm
@@ -80,4 +69,3 @@ required:
   - latitude
   - longitude
   - offersHomeService
-  - googlePlaceId

@@ -26,11 +26,6 @@ type Location struct {
 	// (DEC-131, HU-103): independiente de la ubicación del local. Apagarlo no
 	// toca los turnos ya creados con domicilio.
 	OffersHomeService bool
-	// GooglePlaceID es el Place ID de la ficha de Google de la barbería
-	// (DEC-129, HU-101): nil = sin ficha, y la reserva pública no muestra reseñas
-	// de Google. Lo escribe el panel; la calificación y las reseñas nunca se
-	// guardan (viven en la caché de memoria del adaptador).
-	GooglePlaceID *string
 }
 
 // Visible informa si la reserva pública debe mostrar el mapa: el interruptor
@@ -49,15 +44,11 @@ type LocationPatch struct {
 	Address             *string
 	// OffersHomeService nil conserva el interruptor de domicilio (DEC-131).
 	OffersHomeService *bool
-	// GooglePlaceIDSet true con GooglePlaceID nil o vacío quita la ficha de
-	// Google; con un valor lo guarda (DEC-129). False conserva la actual.
-	GooglePlaceIDSet bool
-	GooglePlaceID    *string
 }
 
 // IsZero informa si el parche no pide ningún cambio.
 func (p LocationPatch) IsZero() bool {
-	return p.HasPhysicalLocation == nil && !p.AddressSet && p.OffersHomeService == nil && !p.GooglePlaceIDSet
+	return p.HasPhysicalLocation == nil && !p.AddressSet && p.OffersHomeService == nil
 }
 
 // LocationWrite es lo que BrandRepository.Update escribe sobre la ubicación,
@@ -74,10 +65,6 @@ type LocationWrite struct {
 	Address        *string
 	Latitude       *float64
 	Longitude      *float64
-	// ReplaceGooglePlaceID true sobrescribe la ficha de Google con
-	// GooglePlaceID (nil la quita); false la deja como está (DEC-129).
-	ReplaceGooglePlaceID bool
-	GooglePlaceID        *string
 }
 
 // Coordinates es un punto geográfico en grados decimales.
@@ -127,31 +114,4 @@ func NormalizeAddress(raw string) *string {
 // IsValidAddressLength informa si address, ya normalizada, cabe en la base.
 func IsValidAddressLength(address string) bool {
 	return utf8.RuneCountInString(address) <= MaxAddressLength
-}
-
-// MaxGooglePlaceIDLength es el largo máximo del Place ID, igual que
-// barbershop_google_place_id_ck.
-const MaxGooglePlaceIDLength = 200
-
-// NormalizeGooglePlaceID recorta el Place ID y valida su forma (letras, dígitos,
-// `_` y `-`, de 1 a 200 caracteres), la misma que exige la base: el valor viaja
-// luego como segmento de una URL de Google, así que nunca debe admitir `/`, `?`
-// ni espacios. Devuelve (nil, true) si queda vacío (quitar la ficha) y
-// (nil, false) si la forma no es válida.
-func NormalizeGooglePlaceID(raw string) (*string, bool) {
-	id := strings.TrimSpace(raw)
-	if id == "" {
-		return nil, true
-	}
-	if len(id) > MaxGooglePlaceIDLength {
-		return nil, false
-	}
-	for _, r := range id {
-		switch {
-		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '_', r == '-':
-		default:
-			return nil, false
-		}
-	}
-	return &id, true
 }

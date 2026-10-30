@@ -41,15 +41,14 @@ func (r *BrandRepository) Get(ctx context.Context, barbershopID string) (shops.B
 		err := q.QueryRow(ctx,
 			`SELECT brand_accent, business_term, business_term_gender,
 			        professional_term, professional_term_plural, professional_term_gender,
-			        has_physical_location, address, latitude, longitude, offers_home_service,
-			        google_place_id
+			        has_physical_location, address, latitude, longitude, offers_home_service
 			   FROM barbershop
 			  WHERE id = $1`,
 			barbershopID,
 		).Scan(&b.Accent, &b.BusinessTerm, &b.BusinessTermGender,
 			&b.ProfessionalTerm, &b.ProfessionalTermPlural, &b.ProfessionalTermGender,
 			&b.Location.HasPhysicalLocation, &b.Location.Address, &b.Location.Latitude, &b.Location.Longitude,
-			&b.Location.OffersHomeService, &b.Location.GooglePlaceID)
+			&b.Location.OffersHomeService)
 		switch {
 		case err == nil:
 			found = true
@@ -91,24 +90,21 @@ func (r *BrandRepository) Update(ctx context.Context, barbershopID string, brand
 			        address   = CASE WHEN $9::boolean THEN $10::text ELSE address END,
 			        latitude  = CASE WHEN $9::boolean THEN $11::numeric ELSE latitude END,
 			        longitude = CASE WHEN $9::boolean THEN $12::numeric ELSE longitude END,
-			        offers_home_service = COALESCE($13::boolean, offers_home_service),
-			        google_place_id = CASE WHEN $14::boolean THEN $15::text ELSE google_place_id END
+			        offers_home_service = COALESCE($13::boolean, offers_home_service)
 			  WHERE id = $1
 			RETURNING brand_accent, business_term, business_term_gender,
 			          professional_term, professional_term_plural, professional_term_gender,
-			          has_physical_location, address, latitude, longitude, offers_home_service,
-			          google_place_id`,
+			          has_physical_location, address, latitude, longitude, offers_home_service`,
 			barbershopID,
 			brand.Accent, brand.BusinessTerm, string(brand.BusinessTermGender),
 			brand.ProfessionalTerm, brand.ProfessionalTermPlural, string(brand.ProfessionalTermGender),
 			location.HasPhysicalLocation, location.ReplaceAddress,
 			location.Address, location.Latitude, location.Longitude,
 			location.OffersHomeService,
-			location.ReplaceGooglePlaceID, location.GooglePlaceID,
 		).Scan(&b.Accent, &b.BusinessTerm, &b.BusinessTermGender,
 			&b.ProfessionalTerm, &b.ProfessionalTermPlural, &b.ProfessionalTermGender,
 			&b.Location.HasPhysicalLocation, &b.Location.Address, &b.Location.Latitude, &b.Location.Longitude,
-			&b.Location.OffersHomeService, &b.Location.GooglePlaceID)
+			&b.Location.OffersHomeService)
 		switch {
 		case err == nil:
 			result.Found = true

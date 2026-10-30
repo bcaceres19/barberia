@@ -24,8 +24,6 @@ type BrandResponse struct {
 	Longitude           *float64 `json:"longitude"`
 	// OffersHomeService es el interruptor general del servicio a domicilio (DEC-131).
 	OffersHomeService bool `json:"offersHomeService"`
-	// GooglePlaceID es el Place ID de la ficha de Google (DEC-129), null sin ficha.
-	GooglePlaceID *string `json:"googlePlaceId"`
 }
 
 // UpdateBrandRequest es el cuerpo de PATCH /private/settings/brand. Cerrado:
@@ -49,9 +47,6 @@ type UpdateBrandRequest struct {
 	Address             OptionalText `json:"address"`
 	// OffersHomeService es opcional (DEC-131): ausente conserva el interruptor.
 	OffersHomeService *bool `json:"offersHomeService"`
-	// GooglePlaceID es opcional (DEC-129): ausente conserva la ficha, null o vacío
-	// la quita y un valor la guarda.
-	GooglePlaceID OptionalText `json:"googlePlaceId"`
 }
 
 // OptionalText distingue un campo ausente de uno enviado como null: ausente

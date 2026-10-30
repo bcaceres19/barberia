@@ -100,14 +100,6 @@ func errBrandGenderInvalid(field string) error {
 	return apperr.Validation(fmt.Sprintf("%s debe ser masculine o feminine", field))
 }
 
-// errGooglePlaceIDInvalid es el 422 de un identificador de ficha de Google con
-// una forma imposible (DEC-129). No se consulta a Google al guardar: un
-// identificador bien formado pero inexistente solo oculta la sección.
-func errGooglePlaceIDInvalid() error {
-	return apperr.Validation(
-		"googlePlaceId solo admite letras, números, guion y guion bajo (hasta 200 caracteres)")
-}
-
 func errAddressTooLong() error {
 	return apperr.Validation(fmt.Sprintf("address no puede superar %d caracteres", MaxAddressLength))
 }
