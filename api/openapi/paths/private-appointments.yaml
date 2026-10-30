@@ -19,8 +19,11 @@
       reserva pública (RN-DIS-04, DEC-005/DEC-018): admite un instante que
       ya empezó o uno más allá de la ventana pública. El servicio elegido
       debe estar activo y asignado al barbero elegido (DEC-072); un
-      intervalo que se solapa con otra cita del mismo barbero (RN-CON-01)
-      o con un bloqueo vigente (DEC-073) responde `409`. El cliente se
+      intervalo que no cabe completo en la jornada efectiva del barbero
+      (excepción manual, festivo activado u horario semanal; CA-061-02)
+      responde `422` sin escribir nada; uno que se solapa con otra cita del
+      mismo barbero (RN-CON-01) o con un bloqueo vigente (DEC-073) responde
+      `409`. El cliente se
       reconcilia por teléfono o, si falta, por correo (DEC-045, DEC-046,
       DEC-071); sin ninguno de los dos, siempre se crea un cliente nuevo,
       nunca por nombre. El tenant y el actor se derivan exclusivamente de
@@ -413,7 +416,9 @@
       representación vigente ya cambió, responde `409` con
       `code: version-conflict` en vez de aplicar un último escritor
       silencioso. Un intervalo idéntico al vigente es un no-op exitoso: no
-      genera una entrada de historial nueva. Un bloqueo vigente del barbero
+      genera una entrada de historial nueva. Un nuevo intervalo que no cabe
+      completo en la jornada efectiva del barbero (CA-065-04) responde `422`
+      sin escribir nada. Un bloqueo vigente del barbero
       en el nuevo intervalo rechaza la operación con el mismo `409` que un
       cruce con otra cita (`DEC-076`). El tenant y el actor se derivan
       exclusivamente de `SessionCookie`.

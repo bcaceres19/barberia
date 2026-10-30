@@ -20,6 +20,13 @@ func errBlockedInterval() error {
 	return apperr.Conflict("el barbero tiene un bloqueo vigente en ese intervalo")
 }
 
+// errOutsideWorkingHours cubre CA-061-02 y CA-065-04: el intervalo no cabe
+// dentro de la jornada efectiva del barbero. 422 (no 409): no hay otro
+// recurso con el que chocar, la entrada pide algo que el horario no admite.
+func errOutsideWorkingHours() error {
+	return apperr.Validation("el intervalo queda fuera de la jornada del barbero")
+}
+
 // errTimezoneUnresolvable cubre el caso defensivo de una zona IANA
 // persistida que time.LoadLocation ya no reconoce: no debería ocurrir
 // nunca (shops.Repository.Update ya la valida contra pg_timezone_names

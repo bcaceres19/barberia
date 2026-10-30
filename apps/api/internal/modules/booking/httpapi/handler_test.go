@@ -97,6 +97,10 @@ func (fakeCatalog) ActiveAssignedService(context.Context, string, string, string
 
 type fakeBlocks struct{}
 
+func (fakeBlocks) WithinWorkingHours(context.Context, string, string, time.Time, time.Time, string) (bool, error) {
+	return true, nil
+}
+
 func (fakeBlocks) HasActiveBlock(context.Context, string, string, time.Time, time.Time, string) (bool, error) {
 	return false, nil
 }
@@ -248,6 +252,10 @@ func TestCreateManualAppointmentHandler_BlockedInterval_Returns409(t *testing.T)
 }
 
 type blockedBlocks struct{}
+
+func (blockedBlocks) WithinWorkingHours(context.Context, string, string, time.Time, time.Time, string) (bool, error) {
+	return true, nil
+}
 
 func (blockedBlocks) HasActiveBlock(context.Context, string, string, time.Time, time.Time, string) (bool, error) {
 	return true, nil

@@ -292,8 +292,18 @@ type BarberServicePort interface {
 // convertir las ocurrencias de serie -civiles- a instantes absolutos antes
 // de comparar. Firma con tipos universales únicamente, mismo criterio que
 // BarberServicePort.
+//
+// WithinWorkingHours responde si [startsAt, endsAt) cabe COMPLETO dentro de un
+// segmento de la jornada efectiva del barbero para esa fecha civil (excepción
+// manual > festivo activado > horario semanal, CA-041-07), en timezone. Un día
+// sin jornada o un intervalo que atraviesa una pausa entre segmentos no cabe
+// (CA-061-02, CA-065-04); un segmento nocturno (DEC-020) puede terminar al
+// día siguiente. La cita manual sigue exenta
+// de anticipación, ventana y rejilla pública (RN-CIT-02): solo debe respetar
+// la jornada.
 type BlockCheckPort interface {
 	HasActiveBlock(ctx context.Context, barbershopID, barberID string, startsAt, endsAt time.Time, timezone string) (bool, error)
+	WithinWorkingHours(ctx context.Context, barbershopID, barberID string, startsAt, endsAt time.Time, timezone string) (bool, error)
 }
 
 // TimezonePort resuelve la zona IANA vigente de barbershopID (RN-DIS-07).
