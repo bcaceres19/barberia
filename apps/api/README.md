@@ -779,7 +779,7 @@ y delega en `booking` a través del puerto `AppointmentCanceller` (adaptador
 todo en **una** transacción tenant-aware: reclamar la clave, bloquear la cita (`FOR UPDATE`), releer la política de
 la barbería, comparar versión y estado, evaluar la política, aplicar `cancelled_by_customer` + `cancellation_reason`,
 insertar un único evento `appointment_cancelled_by_customer` con actor cliente, avisar al gancho de Google Calendar
-y **revocar el enlace** (`DEC-089`).
+sin revocar el enlace (`DEC-136`): `GET` sigue mostrando el turno como cancelado.
 
 | Situación | Respuesta |
 | --- | --- |

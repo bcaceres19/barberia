@@ -128,6 +128,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-133` | 2026-10-28 | La rejilla de horarios es un entero libre de 1 a 60 minutos, editado con un campo numérico; sustituye el conjunto `{5, 10, 15, 20, 30, 60}` de `DEC-083` | `DEC-083`, `DEC-084`; issue pendiente | Confirmada |
 | `DEC-134` | 2026-10-28 | El tipo de panel (empresa, empleado, independiente) se define en la BD por roles del usuario, no en Configuración; sustituye `barbershop.panel_profile` de `DEC-115` | `DEC-115`, `DEC-116`, `DEC-100`; issue #365 | Confirmada (modelo de roles); composición del panel de empleado sujeta a revisión |
 | `DEC-135` | 2026-10-28 | Las franjas ofrecidas caen siempre en la rejilla fija anclada al inicio del tramo laboral; sustituye el reinicio tras una interrupción de `DEC-084` | `DEC-084`, `DEC-133`, `RN-DIS-06`; `DP-PUB-03` | Confirmada |
+| `DEC-136` | 2026-10-29 | Cancelar un turno ya no revoca el enlace del cliente: sigue mostrándolo como cancelado | `DEC-089`, `HU-098`, `HU-099`; issue #376 | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -1042,6 +1043,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** vigencia de 30 días (más estricta, pero corta el acceso a una política de cancelación o un historial que el cliente aún podría necesitar consultar); token de un solo uso que rota en cada acceso (más restrictivo, pero rompe "volver a ver mi turno" desde el mismo enlace guardado); reenvío del enlace por contacto verificado (amplía el alcance de `HU-098` con una operación y una superficie de abuso nuevas, sin que ninguna historia lo pida).
 - **Documentos afectados:** `docs/00-control/dudas-pendientes.md` (cierra `DP-PUB-05`), `docs/02-requisitos/historias-usuario.md` (`HU-097`, `HU-098`, `HU-099`), `docs/10-backlog/prompts/hu/{hu-097-confirmacion-publica-concurrente.md,hu-098-acceso-cliente-turno.md,hu-099-cancelacion-publica.md}`.
 - **Fuente:** decisión explícita del propietario del 2026-09-15 (opción recomendada, `AskUserQuestion`), issue documental [#240](https://github.com/bcaceres19/barberia/issues/240).
+- **Actualización (2026-10-29):** `DEC-136` reemplaza únicamente la revocación del token **al cancelar**: el enlace sigue vigente y muestra el turno cancelado. El resto de esta decisión se mantiene.
 
 ### DEC-090 · Resolución de `DP-PUB-06`: orden y acotación de las franjas alternativas tras perder una carrera de confirmación
 
@@ -1606,3 +1608,16 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alcance:** solo cambia qué franjas genera `availability.GenerateStarts`; `RN-DIS-04` (anticipación y ventana) y `RN-CON-01`/`RN-CON-03` (solapes) se siguen aplicando igual.
 - **Documentos afectados:** `docs/01-producto/reglas-negocio.md` (`RN-DIS-06`), `docs/02-requisitos/historias-usuario.md` (`HU-094`), `docs/00-control/{dudas-pendientes,matriz-trazabilidad,historial-cambios}.md`, `docs/10-backlog/prompts/hu/hu-094-motor-disponibilidad-publica.md`, `api/openapi` (descripción de la disponibilidad pública, 0.38.0), `apps/api` (`availability`).
 - **Fuente:** instrucción explícita del propietario el 2026-10-28.
+
+### DEC-136 · El enlace del turno sigue mostrando «cancelado» tras cancelar (reemplaza parte de `DEC-089`)
+
+- **Fecha:** 2026-10-29.
+- **Decisión:** cancelar un turno **no revoca** el token de acceso del cliente. El enlace `/mi-turno/:token` sigue resolviendo y muestra el turno con su estado cancelado, sin política de cancelación, formulario ni reseña. Los demás motivos de inaccesibilidad de `DEC-089` no cambian: token con forma inválida, inexistente, vencido (90 días) o revocado por anonimización (`RN-DAT-03`) responden el mismo `404` uniforme.
+- **Quién lo decidió:** el propietario, el 2026-10-29: «debe seguir mostrando cancelado porque se canceló un turno».
+- **Responsable:** propietario del proyecto.
+- **Motivo:** recargar el enlace tras cancelar mostraba «No pudimos abrir ese enlace», lo que parecía un error; el cliente sí canceló y debe poder verlo.
+- **Consecuencia aceptada:** el enlace de un turno cancelado conserva el nombre de la persona atendida y los datos mínimos de `HU-098` hasta su vencimiento o anonimización; no expone identificadores internos ni contacto del cliente. Cancelar por el barbero o la barbería se ve igual por el mismo enlace.
+- **Alternativas descartadas:** mantener el `404` uniforme tras cancelar (`DEC-089` original).
+- **Alcance:** solo se elimina la revocación en `booking.Repository.CancelByCustomer`; la vigencia, el hash, la emisión única y la anonimización de `DEC-089` se conservan. Una repetición con la misma `Idempotency-Key` reproduce la respuesta original; con otra clave sobre un turno ya cancelado se mantiene el rechazo de estado existente.
+- **Documentos afectados:** `historias-usuario.md` (`HU-098`, `HU-099`), `matriz-trazabilidad.md`, `historial-cambios.md`, `api/openapi/` (0.44.0), `apps/api/README.md`, `apps/web/README.md`.
+- **Fuente:** instrucción explícita del propietario el 2026-10-29.

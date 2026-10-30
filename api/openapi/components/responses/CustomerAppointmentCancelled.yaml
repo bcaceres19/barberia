@@ -1,9 +1,8 @@
 # Respuesta 200 de POST /customer/appointments/{token}/cancel (HU-099, T5).
 description: >
   El turno quedó `cancelled_by_customer` (o ya lo estaba: la operación es
-  idempotente y no agrega otra entrada de historial). El enlace deja de ser
-  accesible: tanto `GET` como repetir la cancelación con un enlace ya
-  revocado responden el `404` uniforme (DEC-089).
+  idempotente y no agrega otra entrada de historial). El enlace sigue
+  vigente (DEC-136): `GET` muestra el turno como cancelado, sin acciones.
 headers:
   X-Request-Id:
     $ref: '../headers/XRequestId.yaml'

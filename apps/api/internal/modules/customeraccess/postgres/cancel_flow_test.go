@@ -55,7 +55,7 @@ func doCancel(h http.Handler, token, body, key, version string) *httptest.Respon
 	return rec
 }
 
-func TestCancelFlow_ReadCancelThenLinkIsRevoked(t *testing.T) {
+func TestCancelFlow_ReadCancelThenLinkStillShowsCancelled(t *testing.T) {
 	db := setupTestDB(t)
 	get, cancel := realCancelHandlers(t, db)
 
@@ -74,13 +74,16 @@ func TestCancelFlow_ReadCancelThenLinkIsRevoked(t *testing.T) {
 		t.Fatalf("cancelación: %d %s", first.Code, first.Body.String())
 	}
 
-	// DEC-089: tras cancelar el enlace responde el 404 uniforme, y repetir la
-	// llamada (misma clave) tampoco modifica ni revela nada.
-	if after := doGet(get, token); after.Code != http.StatusNotFound {
-		t.Fatalf("GET tras cancelar: %d, se esperaba 404", after.Code)
+	// DEC-136: cancelar NO revoca el enlace; sigue mostrando el turno como
+	// cancelado (sin acciones). Repetir la llamada con la misma clave es una
+	// réplica idempotente que no modifica nada.
+	after := doGet(get, token)
+	var cancelledView httpapi.CustomerAppointmentResponse
+	if after.Code != http.StatusOK || json.Unmarshal(after.Body.Bytes(), &cancelledView) != nil || cancelledView.Status != "cancelled_by_customer" || cancelledView.CanReview {
+		t.Fatalf("GET tras cancelar: %d %s", after.Code, after.Body.String())
 	}
-	if again := doCancel(cancel, token, `{"reason":"cambio de planes"}`, key, view.VersionToken); again.Code != http.StatusNotFound {
-		t.Fatalf("repetición tras revocar: %d, se esperaba 404", again.Code)
+	if again := doCancel(cancel, token, `{"reason":"cambio de planes"}`, key, view.VersionToken); again.Code != http.StatusOK {
+		t.Fatalf("repetición con la misma clave: %d %s", again.Code, again.Body.String())
 	}
 
 	var status string

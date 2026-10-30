@@ -1644,8 +1644,7 @@ const cancelAppointmentByCustomerIdempotencyTTL = 10 * time.Minute
 
 // customerCancellationResponseWire es el cuerpo almacenado de idempotencia de
 // T5 y también el 200 de la API: deliberadamente solo el estado final, sin
-// identificadores internos ni datos del turno (el cliente ya los tiene y el
-// enlace queda revocado).
+// identificadores internos ni datos del turno (el cliente ya los tiene).
 type customerCancellationResponseWire struct {
 	Status string `json:"status"`
 }
@@ -1712,22 +1711,11 @@ func insertAppointmentCancelledByCustomerHistory(
 	return err
 }
 
-// revokeAppointmentAccessTokens revoca el enlace del cliente al cancelar
-// (DEC-089): desde ese instante el enlace responde el 404 uniforme de HU-098.
-func revokeAppointmentAccessTokens(ctx context.Context, q database.Queries, barbershopID, appointmentID string) error {
-	_, err := q.Exec(ctx, `
-		UPDATE appointment_access_token
-		   SET revoked_at = now()
-		 WHERE barbershop_id = $1 AND appointment_id = $2 AND revoked_at IS NULL`,
-		barbershopID, appointmentID,
-	)
-	return err
-}
-
 // CancelByCustomer implementa booking.CustomerCancellationRepository (HU-099,
 // T5), con la misma estructura transaccional que CancelByBarber: Begin,
 // bloquear la fila, verificar con la fila bloqueada, aplicar estado + motivo +
-// historial + revocación del enlace, Complete. Un rechazo (versión, estado o
+// historial, Complete. El enlace NO se revoca (DEC-136): sigue mostrando el
+// turno como cancelado. Un rechazo (versión, estado o
 // política) devuelve el error y revierte la transacción completa, incluida la
 // reclamación de idempotencia: no deja ninguna escritura ni consume la clave.
 func (r *Repository) CancelByCustomer(
@@ -1769,7 +1757,7 @@ func (r *Repository) CancelByCustomer(
 		switch {
 		case current.status == string(booking.StatusCancelledByCustomer):
 			// Ya cancelada por el cliente (p. ej. una segunda llamada con otra
-			// clave que llegó antes de ver la revocación): éxito sin tocar nada
+			// clave que llegó antes de ver la primera respuesta): éxito sin tocar nada
 			// y sin duplicar el evento de historial (CA-099-05).
 		case current.status != string(booking.StatusConfirmed):
 			return errAppointmentNotConfirmed()
@@ -1791,9 +1779,6 @@ func (r *Repository) CancelByCustomer(
 				return err
 			}
 			if err := insertAppointmentCancelledByCustomerHistory(ctx, q, barbershopID, current.id, current.customerID, input.Reason); err != nil {
-				return err
-			}
-			if err := revokeAppointmentAccessTokens(ctx, q, barbershopID, current.id); err != nil {
 				return err
 			}
 		}

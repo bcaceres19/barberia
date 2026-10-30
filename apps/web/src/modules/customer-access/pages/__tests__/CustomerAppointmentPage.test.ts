@@ -89,6 +89,22 @@ describe('CustomerAppointmentPage', () => {
     )
   })
 
+  it('un turno ya cancelado se ve como cancelado al abrir el enlace, sin política ni acciones (DEC-136)', async () => {
+    getMock.mockResolvedValueOnce({
+      data: { ...successData(), status: 'cancelled_by_customer' },
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mountPage({ token: 'token-en-claro' })
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Cancelado por el cliente')
+    expect(wrapper.text()).toContain('Este turno está cancelado')
+    expect(wrapper.text()).not.toContain('Si cancelas')
+    expect(wrapper.find('form').exists()).toBe(false)
+    expect(wrapper.findAll('button')).toHaveLength(0)
+  })
+
   it('renders barbershop, attendee, service, barber and time range on success', async () => {
     getMock.mockResolvedValueOnce({ data: successData(), error: undefined, response: okResponse() })
     const wrapper = mountPage({ token: 'token-en-claro' })
@@ -208,6 +224,34 @@ describe('CustomerAppointmentPage', () => {
     const text = wrapper.text()
     expect(text).toContain('Tatuadora')
     expect(text).toContain('Cancelado por la tatuadora')
+    expect(text).toContain('Este turno está cancelado')
+    expect(text).not.toMatch(/barber(o|a|os|as|ía|ías)\b/i)
+  })
+
+  it('names the business and the professional with the words the barbershop configured en la política de un turno vigente (DEC-119)', async () => {
+    getMock.mockResolvedValueOnce({
+      data: {
+        ...successData(),
+        barbershopName: 'Estudio Lila',
+        barberName: 'Laura Mejía',
+        status: 'confirmed',
+        lateCancellationClientAllowed: false,
+        vocabulary: {
+          businessTerm: 'estudio',
+          businessTermGender: 'masculine',
+          professionalTerm: 'tatuadora',
+          professionalTermPlural: 'tatuadoras',
+          professionalTermGender: 'feminine',
+        },
+      },
+      error: undefined,
+      response: okResponse(),
+    })
+    const wrapper = mountPage({ token: 'token-en-claro' })
+    await flushPromises()
+
+    const text = wrapper.text()
+    expect(text).toContain('Tatuadora')
     expect(text).toContain('contacta directamente al estudio')
     expect(text).not.toMatch(/barber(o|a|os|as|ía|ías)\b/i)
   })
@@ -475,7 +519,7 @@ describe('CustomerAppointmentPage · cancelación (HU-099)', () => {
 
     expect(wrapper.text()).toContain('Cancelado por el cliente')
     expect(wrapper.text()).toContain('Cancelaste tu turno')
-    expect(wrapper.text()).toContain('este enlace ya no funciona')
+    expect(wrapper.text()).not.toContain('ya no funciona')
     expect(wrapper.find('form').exists()).toBe(false)
     expect(wrapper.findAll('button')).toHaveLength(0)
     expect(document.activeElement).toBe(wrapper.get('.customer-appointment__cancelled').element)

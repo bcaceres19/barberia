@@ -21,9 +21,11 @@
       `20260916120000_add_public_resolve_appointment_token_tenant.sql`
       (mismo patrón exacto que `public_resolve_barbershop_by_slug`, HU-090).
       Un `token` con forma inválida, inexistente, vencido o ya revocado
-      (al cancelar, HU-099, o al anonimizarse la cita, RN-DAT-03) produce
+      (al anonimizarse la cita, RN-DAT-03) produce
       EXACTAMENTE la misma respuesta `404` uniforme (CA-098-02, RN-TEN-01):
-      esta operación nunca distingue la causa. La respuesta trae solo los
+      esta operación nunca distingue la causa. Cancelar NO revoca el enlace
+      (`DEC-136`): un turno cancelado responde `200` con su `status`
+      cancelado, sin acciones disponibles. La respuesta trae solo los
       datos mínimos ya autorizados por HU-098 (barbería, persona atendida,
       servicio, barbero, intervalo/zona, estado y política vigente de
       cancelación); nunca un identificador interno, contacto del cliente,
@@ -152,11 +154,12 @@
       (el `versionToken` de `GET`): una repetición exacta reproduce la respuesta
       sin duplicar el historial. En una sola transacción el turno pasa a
       `cancelled_by_customer`, se registra el motivo y un único evento con actor
-      cliente, y el enlace queda revocado (`DEC-089`): desde ese instante `GET`
-      y cualquier repetición con ese enlace responden el `404` uniforme. La
-      franja vuelve de inmediato a la disponibilidad pública (`HU-094`). Un
-      `token` inexistente, vencido o revocado responde el mismo `404` uniforme
-      que `GET`, sin revelar la causa. Notificar al barbero queda para B5.
+      cliente. El enlace NO se revoca (`DEC-136`): `GET` sigue mostrando el
+      turno cancelado y repetir la misma llamada (misma `Idempotency-Key`)
+      reproduce la respuesta original. La franja vuelve de inmediato a la
+      disponibilidad pública (`HU-094`). Un `token` inexistente, vencido o
+      revocado responde el mismo `404` uniforme que `GET`, sin revelar la
+      causa. Notificar al barbero queda para B5.
     operationId: cancelCustomerAppointment
     security: []
     x-business-rules: [RN-CAN-01, RN-CAN-02, RN-CIT-03, RN-HIS-01, RN-HIS-02, RN-IDE-01, RN-TEN-01]

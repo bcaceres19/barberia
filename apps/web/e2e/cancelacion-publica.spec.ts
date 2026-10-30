@@ -86,7 +86,7 @@ async function assertNoAxeViolations(page: Page) {
 }
 
 test.describe('Cancelación pública del turno (HU-099)', () => {
-  test('cancela dentro de plazo, el enlace queda revocado y la franja vuelve a ofrecerse (CA-099-01, CA-099-04)', async ({
+  test('cancela dentro de plazo, el enlace sigue mostrando el turno cancelado y la franja vuelve a ofrecerse (CA-099-01, CA-099-04)', async ({
     page,
   }) => {
     await page.clock.setFixedTime(BEFORE_DEADLINE)
@@ -94,14 +94,13 @@ test.describe('Cancelación pública del turno (HU-099)', () => {
     let captured: { headers: Record<string, string>; body: unknown } | undefined
 
     await page.route(`**/api/v1/customer/appointments/${ACCESS_TOKEN}`, (route) =>
-      cancelled
-        ? json(
-            route,
-            404,
-            problem(404, 'not-found', 'no existe un turno accesible con ese enlace'),
-            'application/problem+json',
-          )
-        : json(route, 200, APPOINTMENT_VIEW),
+      json(
+        route,
+        200,
+        cancelled
+          ? { ...APPOINTMENT_VIEW, status: 'cancelled_by_customer', canReview: false }
+          : APPOINTMENT_VIEW,
+      ),
     )
     await page.route(`**/api/v1/customer/appointments/${ACCESS_TOKEN}/cancel`, (route) => {
       captured = { headers: route.request().headers(), body: route.request().postDataJSON() }
@@ -135,9 +134,11 @@ test.describe('Cancelación pública del turno (HU-099)', () => {
     expect(captured?.headers['idempotency-key']).toMatch(/^[0-9a-f-]{36}$/)
     expect(captured?.body).toEqual({ reason: 'Me surgió un imprevisto' })
 
-    // DEC-089: el enlace ya no sirve.
+    // DEC-136: el enlace sigue vivo y muestra el turno como cancelado, sin acciones.
     await page.reload()
-    await expect(page.getByRole('alert')).toContainText('No pudimos abrir ese enlace')
+    await expect(page.getByText('Este turno está cancelado')).toBeVisible()
+    await expect(page.getByText('Cancelado por el cliente')).toBeVisible()
+    await expect(page.getByRole('button', { name: /Cancelar turno|Sí, cancelar/ })).toHaveCount(0)
 
     // CA-099-04: al reconsultar la disponibilidad pública la franja liberada vuelve.
     await availability([STARTS_AT])
