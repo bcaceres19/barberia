@@ -318,9 +318,9 @@ function onReloadAfterConflict() {
             title="La configuración cambió"
             role="alert"
           >
-            Alguien más actualizó esta configuración mientras la editabas. Recarga para ver la
-            versión vigente; no perdiste lo que escribiste, pero debes revisarlo contra los valores
-            nuevos.
+            Esta configuración cambió desde que la abriste: otra persona u otra pestaña, o un
+            guardado anterior que no llegó a confirmarse. Recarga para ver la versión vigente; no
+            perdiste lo que escribiste, pero debes revisarlo contra los valores nuevos.
             <template #action>
               <BaseButton variant="secondary" type="button" @click="onReloadAfterConflict"
                 >Recargar</BaseButton
