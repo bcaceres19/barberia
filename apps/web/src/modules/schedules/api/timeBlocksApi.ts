@@ -7,6 +7,12 @@
 // sub-recursos de fechas explícitas y excepciones, y la edición de series
 // por alcance (whole / this_and_following).
 import { httpClient } from '@/shared/api/httpClient'
+import {
+  affectedBetween,
+  civilDaysTouched,
+  MAX_AFFECTED_DAYS,
+  type AffectedAppointment,
+} from '../model/affectedAppointments'
 import type {
   BlockType,
   TimeBlock,
@@ -16,6 +22,7 @@ import type {
 } from '../model/timeBlock'
 import type {
   CreateTimeBlockOutcome,
+  FetchAffectedAppointmentsOutcome,
   CreateTimeBlockSeriesOutcome,
   DeleteTimeBlockOutcome,
   DeleteTimeBlockSeriesOutcome,
@@ -438,4 +445,36 @@ function toSeriesPage(data: {
   nextCursor: string | null
 }): TimeBlockSeriesPage {
   return { items: data.items.map(toSeries), nextCursor: data.nextCursor }
+}
+
+// HU-069: consulta la agenda diaria de cada día que toca el bloqueo (hasta
+// MAX_AFFECTED_DAYS) y se queda con los turnos `confirmed` que se solapan. Llama
+// directo al cliente compartido: este módulo no importa `agenda`. Un fallo de la
+// consulta no deshace el bloqueo, solo impide mostrar la lista.
+export async function fetchAffectedAppointments(
+  barberId: string,
+  startsAt: string,
+  endsAt: string,
+  timeZone: string,
+): Promise<FetchAffectedAppointmentsOutcome> {
+  const allDays = civilDaysTouched(startsAt, endsAt, timeZone)
+  const days = allDays.slice(0, MAX_AFFECTED_DAYS)
+  try {
+    const entries: Array<AffectedAppointment & { status: string }> = []
+    for (const date of days) {
+      const { data, response } = await httpClient.GET(
+        '/private/barbers/{barberId}/appointments/daily-agenda',
+        { params: { path: { barberId }, query: { date } } },
+      )
+      if (!response.ok || !data) return { kind: 'unavailable' }
+      entries.push(...data.items)
+    }
+    return {
+      kind: 'success',
+      items: affectedBetween(entries, startsAt, endsAt),
+      truncated: allDays.length > days.length,
+    }
+  } catch {
+    return { kind: 'unavailable' }
+  }
 }

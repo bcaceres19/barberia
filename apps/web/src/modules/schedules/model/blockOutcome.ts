@@ -2,6 +2,7 @@
 // recibe la página coordinadora. Ninguno expone `Problem`, `status` HTTP
 // crudo ni cabeceras (docs/03-desarrollo/estandar-frontend-vue.md §6),
 // mismo criterio que scheduleOutcome.ts (HU-040/041).
+import type { AffectedAppointment } from './affectedAppointments'
 import type { TimeBlock, TimeBlockPage, TimeBlockSeries, TimeBlockSeriesPage } from './timeBlock'
 
 export type FetchTimeBlocksOutcome =
@@ -64,3 +65,8 @@ export type SeriesChildOutcome =
   | { kind: 'not-found' }
   | { kind: 'network-error' }
   | { kind: 'unexpected-error' }
+
+// HU-069: turnos confirmados que quedan bajo un bloqueo. `truncated` indica que el
+// bloqueo cubre más días de los que se consultan (MAX_AFFECTED_DAYS).
+export type FetchAffectedAppointmentsOutcome =
+  { kind: 'success'; items: AffectedAppointment[]; truncated: boolean } | { kind: 'unavailable' }
