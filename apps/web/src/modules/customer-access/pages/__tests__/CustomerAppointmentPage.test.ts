@@ -78,6 +78,41 @@ describe('CustomerAppointmentPage', () => {
     await flushPromises()
   })
 
+  // F-RQ-CU-01 (#442): el componente se reutiliza al cambiar de token dentro de la SPA.
+  it('reloads when the token changes and ignores the late response of the previous token', async () => {
+    let resolveFirst!: (value: unknown) => void
+    getMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveFirst = resolve
+      }),
+    )
+    const wrapper = mountPage({ token: 'token-a' })
+    expect(wrapper.text()).toContain('Buscando tu turno')
+
+    getMock.mockResolvedValueOnce({
+      data: { ...successData(), barbershopName: 'Barbería B' },
+      error: undefined,
+      response: okResponse(),
+    })
+    await wrapper.setProps({ token: 'token-b' })
+    await flushPromises()
+    expect(getMock).toHaveBeenLastCalledWith(
+      '/customer/appointments/{token}',
+      expect.objectContaining({ params: { path: { token: 'token-b' } } }),
+    )
+    expect(wrapper.text()).toContain('Barbería B')
+
+    resolveFirst({
+      data: { ...successData(), barbershopName: 'Barbería A' },
+      error: undefined,
+      response: okResponse(),
+    })
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Barbería B')
+    expect(wrapper.text()).not.toContain('Barbería A')
+  })
+
   it('resolves the token from props, without reading useRoute (CA-098-01)', async () => {
     getMock.mockResolvedValueOnce({ data: successData(), error: undefined, response: okResponse() })
     mountPage({ token: 'token-en-claro' })
