@@ -240,6 +240,10 @@ const totalPages = ref(1)
 // backend.
 const searchTerm = ref('')
 const activeSearch = ref('')
+// El término al que pertenece `totalItems`: cambia solo cuando llega la respuesta. Con la
+// respuesta en vuelo `activeSearch` ya es el nuevo, y el pie anunciaba el total viejo para él
+// («25 resultados para «c02»», HALL-RQ-CAT-02).
+const loadedSearch = ref('')
 // pageStatus cubre la carga de una página YA EN PANTALLA (cambiar de
 // página o escribir en el buscador): a diferencia de loadStatus (carga
 // inicial, con esqueleto de página completa), esto NUNCA reemplaza la tabla
@@ -262,8 +266,8 @@ const skeletonRowCount = computed(() => Math.max(services.value.length, 3))
 // buscador"): confirma cuántos coincidieron, no solo cuántas páginas hay.
 const resultsLabel = computed(() => {
   const n = totalItems.value
-  if (isSearching.value) {
-    return `${n} ${n === 1 ? 'resultado' : 'resultados'} para «${activeSearch.value}»`
+  if (loadedSearch.value !== '') {
+    return `${n} ${n === 1 ? 'resultado' : 'resultados'} para «${loadedSearch.value}»`
   }
   return `${n} ${n === 1 ? 'servicio' : 'servicios'}`
 })
@@ -333,10 +337,11 @@ async function load(page: number) {
     startPageHold()
   }
 
+  const requestedSearch = activeSearch.value
   const outcome = await fetchServices({
     page,
     pageSize: effectivePageSize.value,
-    search: activeSearch.value || undefined,
+    search: requestedSearch || undefined,
   })
   if (token !== requestToken) return
 
@@ -350,6 +355,7 @@ async function load(page: number) {
       // contra la verdad ya confirmada.
       effectivePageSize.value = outcome.page.pageSize
       totalItems.value = outcome.page.total
+      loadedSearch.value = requestedSearch
       totalPages.value = outcome.page.totalPages
       loadStatus.value = 'ready'
       pageStatus.value = 'idle'
