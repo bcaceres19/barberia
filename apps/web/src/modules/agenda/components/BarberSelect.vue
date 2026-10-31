@@ -40,7 +40,7 @@ interface Props {
   /** Texto visible mientras no hay barbero elegido. El código de cada
    * pantalla lo escribe; este componente no lo redacta. */
   placeholder?: string
-  /** Campo hundido y de 40 px para una barra de controles (agenda diaria). */
+  /** Campo hundido y de 44 px para una barra de controles (agenda diaria). */
   compact?: boolean
 }
 
@@ -253,11 +253,11 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentClick))
 }
 
 /* Variante compacta de la agenda diaria: campo hundido (más oscuro que la
-   página, --color-field-strong) de 40 px, con la misma altura y filete que el
-   selector de fecha de al lado. Los formularios (Nuevo turno) conservan el
+   página, --color-field-strong) de 44 px (CA-062-08/CA-063-08), con la misma
+   altura y filete que el selector de fecha de al lado. Los formularios (Nuevo turno) conservan el
    velo claro y los 44 px de sus campos vecinos. */
 .barber-select--compact .barber-select__trigger {
-  min-height: 40px;
+  min-height: var(--control-height);
   padding-block: 0;
   background-color: var(--color-field-strong);
   border-color: var(--color-field-strong-border);
