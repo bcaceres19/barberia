@@ -88,6 +88,15 @@ async function mountPage() {
 
 const switches = (wrapper: VueWrapper) => wrapper.findAll('[role="switch"]')
 
+// Tras crear, el catálogo vuelve a pedir la página (HALL-CAT-03): el servidor devuelve la
+// lista con el servicio nuevo al final, porque ordena por created_at.
+function serverListsCreated(created: ReturnType<typeof service>) {
+  fetchServicesMock.mockResolvedValueOnce({
+    kind: 'success',
+    page: { items: [...services, created], page: 1, pageSize: 20, total: 3, totalPages: 1 },
+  })
+}
+
 describe('CatalogWorkspacePage', () => {
   afterEach(() => {
     while (mounted.length) mounted.pop()!.unmount()
@@ -174,6 +183,7 @@ describe('CatalogWorkspacePage', () => {
       service: service('s-new', 'Cejas'),
     })
     assignServiceMock.mockResolvedValueOnce({ kind: 'success', assignment: {} })
+    serverListsCreated(service('s-new', 'Cejas'))
 
     await wrapper
       .findAll('button')
@@ -193,9 +203,12 @@ describe('CatalogWorkspacePage', () => {
     form.dispatchEvent(new Event('submit', { cancelable: true }))
     await flushPromises()
 
+    await waitOutHold()
+    await flushPromises()
+
     expect(assignServiceMock).toHaveBeenCalledWith('b-1', 's-new')
-    expect(switches(wrapper)[0]!.attributes('aria-label')).toBe('Lo ofrezco: Cejas')
-    expect(switches(wrapper)[0]!.attributes('aria-checked')).toBe('true')
+    expect(switches(wrapper).at(-1)!.attributes('aria-label')).toBe('Lo ofrezco: Cejas')
+    expect(switches(wrapper).at(-1)!.attributes('aria-checked')).toBe('true')
   })
 
   it('says so when a created service could not be offered, and leaves it switchable', async () => {
@@ -208,6 +221,7 @@ describe('CatalogWorkspacePage', () => {
       service: service('s-new', 'Cejas'),
     })
     assignServiceMock.mockResolvedValueOnce({ kind: 'network-error' })
+    serverListsCreated(service('s-new', 'Cejas'))
 
     await wrapper
       .findAll('button')
@@ -232,7 +246,9 @@ describe('CatalogWorkspacePage', () => {
       'warning',
       'El servicio se creó, pero aún no lo ofreces',
     ])
-    expect(switches(wrapper)[0]!.attributes('aria-checked')).toBe('false')
+    await waitOutHold()
+    await flushPromises()
+    expect(switches(wrapper).at(-1)!.attributes('aria-checked')).toBe('false')
   })
 
   it('shows no column when the solo profile has several barbers: there is nobody to pick', async () => {
