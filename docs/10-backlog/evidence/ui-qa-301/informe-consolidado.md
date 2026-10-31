@@ -82,13 +82,22 @@
 
 ## Dudas para el propietario
 
-1. ¿El contrato exige reproducir el 201 cuando la franja ya la ocupa esa misma solicitud (RN-IDE-01 / DEC-043 frente a la revalidación previa)? Aplica también a RECOVERY-F-02 (DEC-064).
-2. CA-092-03 pide «rechazar de forma uniforme» un ID ajeno: el API devuelve 200 con lista vacía (público) y 404 en el POST. ¿Es lo normativo? (public-barber DUDA-01, journeys D-03, public-slots).
-3. HU-092/DEC-104 excluyen fotos y perfiles en la selección pública, pero la pantalla los muestra por decisiones posteriores: ¿se actualiza HU-092?
-4. CA-099-05 pide conflicto ante versión obsoleta; el servicio responde 200 sin cambios si la cita ya está cancelada por el cliente (customer D1).
-5. ¿El aviso de citas afectadas al crear un bloqueo tiene HU dueña (journeys D-02)?
-6. Agenda: ¿preselección del primer profesional con dos o más (DEC-074 / CA-063-01)?
-7. Teléfonos nacionales de 6 dígitos (+57 300555) se aceptan porque la regla es solo E.164.
+Resueltas el 2026-10-31 en `DEC-140` (y `DEC-127` para la 3). Las que siguen abiertas necesitan una decisión del propietario.
+
+| # | Duda | Estado |
+| --- | --- | --- |
+| 1 | Reproducir el 201 frente a revalidar (`RN-IDE-01`/`DEC-043` y `DEC-064`) | Resuelta: en la recuperación prevalece `DEC-064`; en la reserva pública se reproduce (#393). |
+| 2 | `CA-092-03`: 200 vacío o 404 con un ID ajeno | Resuelta: se conserva y `CA-092-03` se reescribió. |
+| 3 | `HU-092`/`DEC-104` excluyen fotos y perfiles | Resuelta: `DEC-127` registrada (retroactiva) y `HU-092` actualizada. |
+| 4 | `CA-099-05`: 200 sin cambios si el cliente ya canceló | Abierta: es deliberado en el código (idempotente, sin duplicar historial), pero `DEC-136` habla de «rechazo de estado» ante otra clave. Hay que aclarar cuál manda. |
+| 5 | HU dueña del aviso de citas afectadas al crear un bloqueo (`RN-BLQ-03`) | Abierta: asignarla a la HU de bloqueos de barbero con un criterio nuevo. |
+| 6 | Agenda con 2+ profesionales: ¿se preselecciona el primero? | Abierta: `DEC-074` pide un «selector obligatorio» sin default implícito, pero `CA-063-01` solo exige que el selector exista. Decisión del propietario. |
+| 7 | Teléfonos nacionales de 6 dígitos | Abierta: no hay mínimo de dígitos por país; endurecerlo exige una decisión. |
+| 8 | Concurrencia en catálogo, equipo y marca (UI-T-08) | Resuelta: «última escritura gana»; UI-T-08 no aplica. |
+| 9 | `DEC-004`/`RN-SER-04`: elegir a qué turnos se aplica el precio nuevo | Abierta: no es un defecto (los turnos guardan su precio); falta una HU en el backlog. |
+| 10 | Panel `independiente` con más de un barbero | Resuelta: los selectores reaparecen (`DEC-115`, `DEC-134`). |
+| 11 | `BaseAlert` en `<h4>` frente a axe `heading-order` | Resuelta: se mantiene (`HU-009`); excepción aceptada. |
+| 12 | `PUT` de la política de reservas ante un reintento idéntico | Resuelta: se mantiene el 409; el aviso es neutral (#441). |
 
 ## Capacidades no verificadas
 
@@ -160,13 +169,7 @@ Cada uno en su issue, rama y PR, con prueba en la capa más baja y verificación
 - **RQ-F2 (P3):** el título de `BaseAlert` es un `<h4>` y axe marca `heading-order` tras el `h1`. Es una decisión de HU-009, usada en cinco pantallas y excluida de axe a propósito (`e2e/evidence/auth-fidelidad-desviaciones.md`); cambiarlo afectaría a toda la app (duda 11).
 - **Si el `PUT` de la política debe tolerar un reintento idéntico** tras una respuesta perdida: sin norma; solo se corrigió el texto (duda 12).
 
-### Dudas añadidas para el propietario
-
-8. La edición de barberos, servicios y marca es «la última escritura gana» sin aviso; el caso de concurrencia UI-T-08 quedó BLOCKED por falta de política.
-9. `DEC-004` / `RN-SER-04`: el diálogo de editar servicio no ofrece elegir a qué turnos se aplica el nuevo precio.
-10. Un perfil «independiente» con más de un barbero: ¿qué selectores de barbero debe ocultar (`DEC-115` solo lo define con exactamente uno)?
-11. ¿Se cambia el título de `BaseAlert` de `<h4>` a texto no encabezado para que axe no marque `heading-order`, o se mantiene la decisión de HU-009?
-12. ¿El `PUT` de la política de reserva debe reconocer un reintento idéntico tras una respuesta perdida, en vez de responder 409?
+Las dudas 8 a 12 están en la tabla de «Dudas para el propietario».
 
 ## Correcciones
 

@@ -1,9 +1,9 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.54"
+version: "1.55"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
-ultima_actualizacion: "2026-10-27"
+ultima_actualizacion: "2026-10-31"
 documentos_relacionados:
   - "contradicciones.md"
   - "matriz-trazabilidad.md"
@@ -120,6 +120,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-124` | 2026-10-10 | El modo de texto libre de WhatsApp (`text`) se permite en cualquier ambiente como opción explícita mientras Meta no habilite la plantilla Authentication; amplía `DEC-123` | `HU-007`, `HU-008`; issue #351 | Confirmada |
 | `DEC-125` | 2026-10-10 | Se retira el soporte de OTP validado por un proveedor externo: la función SQL `auth_phone_challenge_destination` y el manejo de rechazo del proveedor; NAVA genera y valida siempre el código | `HU-007`, `HU-008`; issue #353; completa `DEC-123` | Confirmada |
 | `DEC-126` | 2026-10-10 | Webhook de Meta WhatsApp: estados de entrega y ventana de 24 h por teléfono, autenticado por token propio y firma HMAC, sin decidir envíos con él | `DEC-027`, `DEC-123`, `DEC-124`; issue #355 | Confirmada |
+| `DEC-127` | 2026-10-26 | El barbero tiene una descripción corta y la reserva pública muestra su descripción y su fotografía (registro retroactivo) | `DEC-104`, `HU-021`, `HU-092`; issue #366 | Confirmada |
 | `DEC-128` | 2026-10-26 | Reseñas y calificación interna por barbero, gatilladas por un turno `completed`, publicación inmediata y ocultable | `HU-098`, `HU-100`; issue #357 | Confirmada |
 | `DEC-129` | 2026-10-26 | Reseñas y estrellas de Google por negocio (barbería o barbero independiente), una sola ficha por barbería | `DEC-082`, `DEC-110`; `HU-101`; issue #358 | Confirmada |
 | `DEC-130` | 2026-10-26 | Ubicación de la barbería en la reserva pública, configurable por barbería, con mapa de Google | `DEC-110`, `DEC-115`; `HU-102`; issue #359 | Confirmada |
@@ -132,6 +133,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-137` | 2026-10-29 | El Place ID de la ficha de Google se gestiona solo por base de datos, no desde Configuración | `DEC-129`, `HU-101`; issue #380 | Confirmada |
 | `DEC-138` | 2026-10-30 | Domicilio: el cliente marca su ubicación moviendo el mapa o con «Usar mi ubicación»; la dirección escrita pasa a ser opcional | `DEC-131`; `HU-103`; issue #382 | Confirmada |
 | `DEC-139` | 2026-10-30 | El canal del código del reto de acceso (correo, WhatsApp o ambos) es una preferencia por barbería, editable en Configuración; amplía `DEC-081` | `DEC-062`, `DEC-065`, `DEC-081`, `DEC-092`; `HU-007`; issue #384 | Confirmada |
+| `DEC-140` | 2026-10-31 | Resuelve las dudas de la campaña #301: «última escritura gana» en catálogo, equipo y marca; la lista pública de barberos devuelve 200 vacío ante un ID ajeno; `DEC-064` acota a `RN-IDE-01` en la recuperación | `RN-IDE-01`, `DEC-064`, `DEC-069`, `DEC-114`, `DEC-115`; `HU-009`, `HU-092`, `HU-093`; issue #449 | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -1496,6 +1498,16 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Documentos afectados:** `apps/api` (módulo `notification`, configuración, rutas, worker, `README.md`, `.env.example`), `api/openapi` (0.35.0), `database` (migración `20261010130000`, modelo físico, prueba SQL, `README.md`), `.github/workflows/ci.yml`, `historial-cambios.md`; issue [#355](https://github.com/bcaceres19/barberia/issues/355).
 - **Fuente:** instrucción explícita del propietario el 2026-10-10 de implementar el webhook de Meta.
 
+### DEC-127 · Descripción corta del barbero y descripción y fotografía en la reserva pública (registro retroactivo)
+
+- **Fecha:** 2026-10-26.
+- **Decisión:** cada barbero puede tener una descripción corta y opcional (hasta 280 caracteres, recortada; vacía o `null` la quita) que escribe el equipo en el panel. La selección pública de barbero (`HU-092`) muestra esa descripción y la fotografía vigente del barbero; la fotografía se sirve por `GET /public/barbershops/{slug}/barbers/{barberId}/photo`, sin sesión, con `ETag` y `304`, y responde un `404` uniforme para slug inválido, barbero ajeno, sin fotografía o sin asignación vigente.
+- **Quién lo decidió:** el propietario al pedir la integración de la descripción del barbero (#366/#367). Este registro es **retroactivo**: el contrato (OpenAPI 0.36.0), el código y las pruebas ya citaban `DEC-127`, pero la entrada no existía en este registro.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** la reserva pública era anónima y sin rostro; la descripción y la foto ayudan a elegir con quién reservar. Reemplaza, solo para la selección pública, la exclusión de fotos de `DEC-104` (en el panel nada cambia) y la exclusión de «perfiles, fotos» del alcance de `HU-092`.
+- **Documentos afectados:** `historias-usuario.md` (`HU-092`), `api/openapi/CHANGELOG.md` (0.36.0, ya vigente), `historial-cambios.md`.
+- **Fuente:** `api/openapi/CHANGELOG.md` 0.36.0; PR #367.
+
 ### DEC-128 · Reseñas y calificación interna por barbero, gatilladas por un turno completado
 
 - **Fecha:** 2026-10-26.
@@ -1678,3 +1690,19 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Documentos afectados:** `database/{migrations,tests,testdata,README.md}`, `historias-usuario.md` (`HU-007`), `matriz-trazabilidad.md`, `historial-cambios.md`, `api/openapi/` (0.47.0), `apps/api/README.md`, `apps/web/README.md`, el prompt `PROMPT-FIX-OTP-CANALES-CONFIGURADOS-v2` y su índice.
 - **Fuente:** instrucciones del propietario del 2026-10-30; issue [#384](https://github.com/bcaceres19/barberia/issues/384).
 
+### DEC-140 · Resolución de las dudas de la campaña #301 de pruebas de UI
+
+- **Fecha:** 2026-10-31.
+- **Decisión:**
+  1. **Concurrencia en catálogo, equipo y marca.** Editar servicios, barberos, equipo y marca sigue la regla de «la última escritura gana», sin `versionToken` ni `409` de versión (igual que `DEC-069` para el conteo de desactivación y que `DEC-115` para el perfil del panel). La versión explícita queda solo donde una historia la exige: la política de reservas (`CA-093-02`) y los cambios de estado de un turno. El caso de concurrencia UI-T-08 no aplica a esos módulos.
+  2. **Lista pública de barberos con un ID ajeno.** `CA-092-03` se lee así: la lista responde `200` con arreglo vacío cuando el servicio no tiene barberos asignados (estado válido por `DEC-114`), y la disponibilidad y la creación de la cita responden el mismo `404` uniforme ante un barbero ajeno, inexistente o ya no asignado. No se filtra existencia en ningún caso.
+  3. **Recuperación e idempotencia.** En la recuperación de cuenta prevalece la revalidación de `DEC-064` sobre la reproducción de la respuesta original de `RN-IDE-01`. En la reserva pública se conserva la reproducción (corregido en #393).
+  4. **`PUT` de la política de reservas.** Conserva el `409` ante un `versionToken` desactualizado, también tras una respuesta perdida; el aviso lo dice con texto neutral (#441). No se añade `Idempotency-Key` a ese endpoint.
+  5. **Panel individual con varios barberos.** Los selectores de barbero solo se ocultan con exactamente un barbero (`DEC-115`, `DEC-134`); con más, el panel recupera los controles aunque el rol sea `independiente`.
+  6. **`BaseAlert`.** Se mantiene el título como `<h4>` (decisión de `HU-009`); la regla `heading-order` de axe queda como excepción aceptada y documentada.
+- **Quién lo decidió:** el propietario, el 2026-10-31, al pedir al agente que respondiera las dudas «en base al proyecto» y aceptar sus recomendaciones («Realiza lo pertinente»).
+- **Responsable:** propietario del proyecto.
+- **Motivo:** son las lecturas coherentes con decisiones ya vigentes; ninguna cambia código. Queda **fuera** de esta decisión, y abierto en el informe de la campaña: el aviso de citas afectadas al crear un bloqueo (`RN-BLQ-03`), la preselección del primer profesional en la agenda con varios (`DEC-074`), el mínimo de dígitos de un teléfono, la elección de aplicación del precio (`DEC-004`/`RN-SER-04`) y el no-op `200` de la cancelación repetida (`CA-099-05` frente a `DEC-136`).
+- **Alternativas descartadas:** versión de concurrencia en servicios y barberos (coste sin una historia que la pida); `404` en la lista pública (contradice `DEC-114`); `Idempotency-Key` en la política (cambio de contrato sin norma que lo exija); título de `BaseAlert` sin encabezado (rompe la decisión de `HU-009`).
+- **Documentos afectados:** `reglas-negocio.md` (`RN-IDE-01`), `historias-usuario.md` (`CA-092-03`), `informe-consolidado.md` de la campaña #301, `historial-cambios.md`.
+- **Fuente:** informe consolidado de la campaña #301; issue [#449](https://github.com/bcaceres19/barberia/issues/449).

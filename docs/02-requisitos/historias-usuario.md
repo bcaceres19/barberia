@@ -2035,7 +2035,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | --- | --- |
 | Función | `F-PUB-04` (selección) |
 | Reglas | `RN-TEN-01`, `RN-CON-01`, `RN-DAT-02` |
-| Decisiones | `DEC-019`, `DEC-024`, `DEC-047`, `DEC-068`, `DEC-077`–`DEC-079` |
+| Decisiones | `DEC-019`, `DEC-024`, `DEC-047`, `DEC-068`, `DEC-077`–`DEC-079`, `DEC-127`, `DEC-128`, `DEC-140` |
 | Actor | Cliente que ya eligió un servicio |
 | Depende de | `HU-091`; `HU-021`/`HU-023` integradas |
 | Bloquea | `HU-094`–`HU-097` |
@@ -2054,7 +2054,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 
 **Alcance excluido**
 
-- Preferencias, ranking, “cualquiera”, asignación automática, perfiles, fotos o baja de barberos.
+- Preferencias, ranking, “cualquiera”, asignación automática o baja de barberos. La descripción y la fotografía del barbero que muestra la selección son de `DEC-127`; las reseñas, de `DEC-128`.
 - Consultar disponibilidad o crear la cita.
 
 **Criterios de aceptación**
@@ -2063,7 +2063,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | --- | --- |
 | `CA-092-01` | Con un único barbero asignado, queda seleccionado y el flujo no agrega un paso; con varios, exige una elección explícita. |
 | `CA-092-02` | Solo se listan barberos de la barbería pública con asignación vigente al servicio activo elegido. |
-| `CA-092-03` | Un ID ajeno, inexistente o ya no asignado se rechaza de forma uniforme antes de consultar horas o crear cita. |
+| `CA-092-03` | Un ID ajeno, inexistente o ya no asignado nunca se ofrece ni se revela: la lista responde `200` con arreglo vacío si el servicio no tiene barberos, y la disponibilidad y la creación de la cita lo rechazan con el mismo `404` uniforme (`DEC-140`). |
 | `CA-092-04` | Cambiar el servicio limpia una selección incompatible y conserva una compatible únicamente tras revalidarla. |
 | `CA-092-05` | Estados y selector funcionan con teclado, foco visible, lector, zoom 200 % y los cuatro anchos normativos. |
 

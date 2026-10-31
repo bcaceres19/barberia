@@ -1019,6 +1019,7 @@ Repetir una operación crítica —por doble toque, pérdida de conexión o rein
 **Casos límite:**
 - Misma clave de idempotencia con contenido distinto: debe rechazarse como conflicto, no ejecutarse.
 - Reintento después de que la operación ya haya tenido éxito: debe devolver el resultado original.
+- En la recuperación de cuenta, `DEC-064` acota esta regla: la solicitud se revalida en cada reintento en lugar de reproducir la respuesta original (`DEC-140`).
 
 **Módulos afectados:** API, citas, notificaciones, tareas programadas.
 
