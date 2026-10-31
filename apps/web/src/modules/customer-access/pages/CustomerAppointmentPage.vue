@@ -5,7 +5,7 @@
 // conoce la forma RFC 9457 del contrato (eso queda dentro de
 // `api/getCustomerAppointmentApi.ts`). Cancelar el turno es HU-099 (T5). Fuera de
 // alcance a propósito: cuenta, portal, edición y reprogramación.
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { BaseAlert, BaseBadge, BaseButton, NavaWordmark, PageState } from '@/shared/ui'
 import { buildVocabularyFromTerms } from '@/shared/model'
 import { formatInstantInTimezone, formatTimeInTimezone } from '@/shared/time/formatInstant'
@@ -45,9 +45,15 @@ const screenState = ref<ScreenState>({ status: 'loading' })
 // cancelación; la decisión real es del servidor (HU-099).
 const nowMs = ref(Date.now())
 
+// Solo vale la respuesta de la última carga: si el token cambia con la pantalla montada
+// (F-RQ-CU-01, #442), la de un token anterior no pinta su turno bajo la URL del nuevo.
+let loadSeq = 0
+
 async function load() {
+  const seq = ++loadSeq
   screenState.value = { status: 'loading' }
   const outcome = await getCustomerAppointment(props.token)
+  if (seq !== loadSeq) return
   nowMs.value = Date.now()
   switch (outcome.kind) {
     case 'success':
@@ -65,6 +71,8 @@ async function load() {
 }
 
 onMounted(load)
+// El componente se reutiliza al cambiar de token dentro de la SPA: sin esto no recargaba.
+watch(() => props.token, load)
 
 // Reseña del turno (HU-100, DEC-128): la página posee el envío; el componente solo
 // presenta el formulario. Un `409` significa que el turno ya no admite reseña (la
