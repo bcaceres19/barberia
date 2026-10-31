@@ -144,8 +144,8 @@ function onSubmit() {
 
     <form v-else class="appointment-cancel__form" novalidate @submit.prevent="onSubmit">
       <p id="appointment-cancel-consequence" class="appointment-cancel__consequence">
-        Al cancelar se libera tu horario y este enlace deja de funcionar. No se puede deshacer: para
-        volver a venir tendrás que reservar de nuevo.
+        Al cancelar se libera tu horario y este enlace seguirá mostrando el turno como cancelado. No
+        se puede deshacer: para volver a venir tendrás que reservar de nuevo.
       </p>
 
       <div class="appointment-cancel__field">
