@@ -386,6 +386,9 @@ describe('CatalogPage', () => {
     expect(wrapper.findAll('.catalog-page__skeleton-row--table').length).toBeGreaterThan(0)
     expect(wrapper.text()).not.toContain('Corte clásico')
     expect(wrapper.text()).not.toContain('Corte + barba')
+    // HALL-RQ-CAT-02 (#438): sin respuesta aplicada, el pie no afirma un recuento para «barba».
+    expect(wrapper.get('.catalog-page__pagination-count').text()).toContain('34 servicios')
+    expect(wrapper.get('.catalog-page__pagination-count').text()).not.toContain('barba')
 
     await waitOutPageLoadHold()
     await flushPromises()
