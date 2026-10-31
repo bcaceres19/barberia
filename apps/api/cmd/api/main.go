@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	appointmentnoticepostgres "system-barbershop/internal/modules/appointmentnotice/postgres"
 	"system-barbershop/internal/modules/auth"
 	authhttpapi "system-barbershop/internal/modules/auth/httpapi"
 	authpostgres "system-barbershop/internal/modules/auth/postgres"
@@ -509,7 +510,11 @@ func buildRouter(db *database.DB, logger *slog.Logger, cfg config.Config) (*chi.
 	// viceversa (mismo criterio que catalog/schedule frente a staff, HU-023).
 	// DEC-102: cada escritura sobre `appointment` encola, en la misma transacción,
 	// la publicación en Google Calendar del barbero (si tiene una conexión viva).
-	bookingRepo := bookingpostgres.New(db, idempotency.NewSQLCoordinator()).WithSyncHook(googlecalendarpostgres.NewEnqueuer())
+	// El aviso al cliente por cancelación o reprogramación del barbero se encola en
+	// la misma transacción del cambio (HU-130, DEC-142); lo envía el worker.
+	bookingRepo := bookingpostgres.New(db, idempotency.NewSQLCoordinator()).
+		WithSyncHook(googlecalendarpostgres.NewEnqueuer()).
+		WithNoticeHook(appointmentnoticepostgres.NewEnqueuer())
 
 	// HU-097: confirmación pública concurrente. ConfirmationService
 	// (publicbooking, dueño del flujo público) colabora con booking SOLO a

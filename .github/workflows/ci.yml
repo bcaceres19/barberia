@@ -105,7 +105,8 @@ jobs:
                    20261031120000_create_barber_review.sql \
                    20261101120000_add_home_service.sql \
                    20261102120000_add_google_place_id.sql \
-                   20261103120000_add_login_otp_channel.sql; do
+                   20261103120000_add_login_otp_channel.sql \
+                   20261104120000_create_appointment_notice.sql; do
             psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$f"
           done
           psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_app PASSWORD 'app_test';"
@@ -377,6 +378,11 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/google_calendar_sync.sql
+
+      - name: Suite de la cola de avisos al cliente (DEC-142)
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f database/tests/appointment_notice.sql
 
       - name: Suite del webhook de Meta WhatsApp (DEC-126)
         env:

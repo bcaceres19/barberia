@@ -52,6 +52,8 @@ type Repository struct {
 	db    *database.DB
 	coord idempotency.Coordinator
 	hook  SyncHook
+	// notices encola el aviso al cliente en la transacción del cambio (HU-130).
+	notices NoticeHook
 }
 
 // New construye el repositorio a partir del pool tenant-aware compartido y
@@ -1333,6 +1335,9 @@ func (r *Repository) Reschedule(
 			if err := r.appointmentChanged(ctx, q, barbershopID, current.id); err != nil {
 				return err
 			}
+			if err := r.noticeRequired(ctx, q, barbershopID, current.id, NoticeRescheduled); err != nil {
+				return err
+			}
 			if err := insertAppointmentRescheduledHistory(
 				ctx, q, barbershopID, current.id, input.Actor,
 				current.startsAt, current.endsAt, input.NewStartsAt, input.NewEndsAt,
@@ -1586,6 +1591,9 @@ func (r *Repository) CancelByBarber(
 				return err
 			}
 			if err := r.appointmentChanged(ctx, q, barbershopID, current.id); err != nil {
+				return err
+			}
+			if err := r.noticeRequired(ctx, q, barbershopID, current.id, NoticeCancelledByBarber); err != nil {
 				return err
 			}
 			if err := insertAppointmentCancelledByBarberHistory(ctx, q, barbershopID, current.id, input.Actor); err != nil {

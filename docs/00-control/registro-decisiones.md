@@ -1,6 +1,6 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.56"
+version: "1.57"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-10-31"
@@ -135,6 +135,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-139` | 2026-10-30 | El canal del código del reto de acceso (correo, WhatsApp o ambos) es una preferencia por barbería, editable en Configuración; amplía `DEC-081` | `DEC-062`, `DEC-065`, `DEC-081`, `DEC-092`; `HU-007`; issue #384 | Confirmada |
 | `DEC-140` | 2026-10-31 | Resuelve las dudas de la campaña #301: «última escritura gana» en catálogo, equipo y marca; la lista pública de barberos devuelve 200 vacío ante un ID ajeno; `DEC-064` acota a `RN-IDE-01` en la recuperación | `RN-IDE-01`, `DEC-064`, `DEC-069`, `DEC-114`, `DEC-115`; `HU-009`, `HU-092`, `HU-093`; issue #449 | Confirmada |
 | `DEC-141` | 2026-10-31 | Resuelve las dudas 4–7 y 9 de la campaña #301: cancelación repetida idempotente, agenda con el primer profesional visible, teléfono `+57` de 10 dígitos y dos historias nuevas (`HU-069`, `HU-029`) | `DEC-004`, `DEC-074`, `DEC-136`, `RN-BLQ-03`, `RN-IDE-01`; `HU-029`, `HU-069`, `HU-099`; issue #453 | Confirmada |
+| `DEC-142` | 2026-10-31 | Primer tramo de B5: aviso por correo al cliente cuando el barbero cancela o reprograma, con cola propia, worker y evidencia por intento; WhatsApp y recordatorios quedan fuera | `DEC-004`, `DEC-027`, `DEC-032`, `DEC-102`; `RN-REC-01`–`RN-REC-06`, `RN-BLQ-03`; `HU-130`; issue #463 | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -1723,3 +1724,21 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** rechazar la cancelación repetida (rompe `RN-IDE-01` y confunde al cliente que recarga); vista consolidada o último profesional recordado (`DEC-074`); `libphonenumber` o una tabla de longitudes por país (dependencia nueva o riesgo de rechazar números válidos); aplicar el precio a las futuras sin pedirlo (`DEC-004`).
 - **Documentos afectados:** `historias-usuario.md` (`HU-029`, `HU-069`, `CA-099-05` queda como está), `informe-consolidado.md` de la campaña #301, `historial-cambios.md`, `api/openapi/` (0.47.5).
 - **Fuente:** informe consolidado de la campaña #301; issues [#453](https://github.com/bcaceres19/barberia/issues/453) y [#454](https://github.com/bcaceres19/barberia/issues/454).
+
+### DEC-142 · Primer tramo de B5: aviso al cliente cuando el barbero cancela o reprograma
+
+- **Fecha:** 2026-10-31.
+- **Decisión:**
+  1. **Qué se construye.** `F-NOT-02` en su versión mínima: cuando el barbero **cancela** (`T6`) o **reprograma** (`T2`) un turno, el cliente recibe un correo. No avisa una repetición idempotente ni una reprogramación al mismo intervalo (no cambió nada). La cancelación o el cambio hechos por el propio cliente no generan aviso: ya lo sabe.
+  2. **Solo correo.** WhatsApp espera la verificación de proveedores y plantillas aprobadas que `DEC-027` exige antes del piloto. Un cliente sin correo (solo teléfono) no recibe aviso: el intento queda registrado como `skipped` con causa `no_email` y no se inventa un destinatario (`RN-REC-06`). La configuración por evento y canal de `RN-REC-05` no existe todavía: el correo está siempre activo para estos dos eventos.
+  3. **Cola en la misma transacción.** El aviso se persiste en `appointment_notice` dentro de la transacción del cambio (`RN-REC-06`), con el mismo patrón que la publicación en Google Calendar (`DEC-102`): el worker reclama con lease y `SKIP LOCKED`, sin contexto de tenant y solo mediante funciones `SECURITY DEFINER` (`DEC-040`). Si el cambio no se confirma, no hay aviso; si se confirma, el aviso no se pierde aunque el proceso caiga.
+  4. **Un solo aviso vigente por turno.** Hay como máximo un aviso `pending` por turno; un cambio nuevo lo reemplaza (la cancelación sustituye a una reprogramación pendiente) y reinicia una espera de 60 segundos, de modo que dos reprogramaciones seguidas producen un único correo (`RN-REC-01`). Si otro aviso ya envió el estado vigente mientras este esperaba, se descarta como `skipped` con causa `superseded`.
+  5. **Mensaje del estado vigente.** El texto se redacta al enviar, leyendo el turno en ese instante (`RN-REC-03`). Una reprogramación no se envía si el turno ya quedó cancelado (`RN-REC-02`); ningún aviso se envía si el turno ya empezó (`skipped`, causa `past`).
+  6. **Evidencia por intento.** Cada intento deja una fila en `appointment_notice_attempt` con canal, resultado y código de error, sin correo, teléfono ni nombre (`RN-REC-04`, `RN-DAT-02`). Reintentos: hasta 5 intentos con espera creciente; un rechazo permanente del proveedor (4xx salvo 408 y 429) no se reintenta.
+  7. **Qué queda fuera.** Recordatorios programados (`F-NOT-03`), WhatsApp, configuración por evento, aviso por cambio de precio de `HU-029` (`DEC-004`), aviso de bloqueos que cubren turnos (`HU-069`, el barbero decide turno por turno) y la purga de la evidencia (B6, `RN-DAT-03`).
+- **Quién lo decidió:** el propietario, el 2026-10-31, al pedir «continúa con lo que falta y los bloqueos que tengas», tras haber pedido resolver «en base al sistema y otras plataformas».
+- **Responsable:** propietario del proyecto.
+- **Motivo:** `DEC-004` y `RN-BLQ-03` piden comunicar los cambios, y `HU-065`/`HU-066` los dejaron sin aviso con la promesa de B5. El plan de bloques redacta B5 al cerrar B4, pero este tramo es lo único que impide cumplir esas dos reglas y no depende de los proveedores pendientes de `DEC-027` porque el correo con Resend ya está verificado y en uso (`HU-008`, `HU-097`).
+- **Alternativas descartadas:** enviar el correo dentro de la petición HTTP (un fallo del proveedor bloquearía o revertiría la cancelación, y un caído-y-reiniciado perdería el aviso); enviarlo después del `COMMIT` sin cola (se pierde si cae el proceso y no deja evidencia durable); esperar a todo B5 (deja a los clientes sin aviso de un cambio que ya ocurre); avisar por WhatsApp sin plantilla aprobada (viola `DEC-027`).
+- **Documentos afectados:** `historias-usuario.md` (`HU-130`), `reglas-negocio.md` (sin cambio de texto), `matriz-trazabilidad.md`, `database/README.md`, `historial-cambios.md`, migración `20261104120000_create_appointment_notice.sql`.
+- **Fuente:** `DEC-004`, `DEC-008`, `RN-BLQ-03`, `RN-REC-01`–`RN-REC-06`; issue [#463](https://github.com/bcaceres19/barberia/issues/463).

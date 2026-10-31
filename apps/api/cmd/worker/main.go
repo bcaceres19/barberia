@@ -12,6 +12,8 @@ import (
 	"syscall"
 	"time"
 
+	"system-barbershop/internal/modules/appointmentnotice"
+	appointmentnoticepostgres "system-barbershop/internal/modules/appointmentnotice/postgres"
 	"system-barbershop/internal/modules/auth"
 	authpostgres "system-barbershop/internal/modules/auth/postgres"
 	"system-barbershop/internal/modules/googlecalendar"
@@ -101,6 +103,26 @@ func run() error {
 	} else if cfg.GoogleCalendarPartiallyConfigured() {
 		logger.Warn("google_calendar.config.incomplete",
 			"detail", "faltan variables GOOGLE_CALENDAR_*; la publicación queda desactivada")
+	}
+
+	// HU-130 (DEC-142): avisos al cliente cuando el barbero cancela o reprograma.
+	// Reutiliza las credenciales de Resend del resto de correos; sin ellas el
+	// worker sigue purgando y los avisos esperan en la cola hasta configurarlas.
+	if cfg.ResendAPIKey != "" && cfg.ResendFromAddress != "" {
+		dispatcher := appointmentnotice.NewDispatcher(appointmentnotice.Deps{
+			Store: appointmentnoticepostgres.NewWorkerRepository(db),
+			Mailer: notification.NewResendChangeNoticeSender(notification.ResendChangeNoticeConfig{
+				APIKey: cfg.ResendAPIKey, FromAddress: cfg.ResendFromAddress,
+			}, nil),
+			Clock:  clock.System{},
+			Config: appointmentnotice.DefaultConfig(),
+			Logger: logger,
+		})
+		go dispatcher.Run(ctx)
+		logger.Info("worker: avisos de cambio de turno activos")
+	} else {
+		logger.Warn("appointment_notice.config.incomplete",
+			"detail", "faltan APP_RESEND_API_KEY y APP_RESEND_FROM_ADDRESS; los avisos de cambio de turno quedan en cola")
 	}
 
 	logger.Info("worker iniciado", "environment", cfg.Environment, "purge_interval", purgeInterval.String())
