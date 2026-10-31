@@ -823,9 +823,15 @@
    la página vuelve a desplazarse como antes. El relleno interior deja sitio
    al desplazamiento y al contorno de foco, que de otro modo el recorte de
    `overflow` cortaría. */
-.pb-layout:has(.pb-page--scroll-choices),
 .pb-layout:has(.pb-page--scroll-form) {
   height: 100dvh;
+}
+
+/* Servicio y Barbero: a 150–200 % de zoom (853x480, 640x360) la lista quedaba en ~119 px por
+   debajo del fin de la página y el pie y la barra de acción la tapaban (PC-F1, CA-091-05).
+   Suelo = cabecera + título + dos filas de lista + barra de acción + pie. */
+.pb-layout:has(.pb-page--scroll-choices) {
+  height: max(100dvh, 560px);
 }
 
 /* Horario: el `min-height` de la lista no se propaga a la página (`min-height: 0`), así que
