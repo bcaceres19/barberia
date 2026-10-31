@@ -855,6 +855,15 @@
   height: max(100dvh, 840px);
 }
 
+/* Con el aviso de error de la confirmación (F-RQ-01, #429) el resumen crece ~140 px en
+   pantallas estrechas: sin más suelo el pie quedaba entre el aviso y los botones. Desde 768 px
+   el aviso mide ~92 px y cabe en el suelo anterior. */
+@media (max-width: 767px) {
+  .pb-layout:has(.pb-page--scroll-form .customer-details__summary [role='alert']) {
+    height: max(100dvh, 1000px);
+  }
+}
+
 /* Datos del cliente: a 200 % de zoom (640x360) la hoja quedaba en ~47 px y el formulario en 0 px
    mientras los campos desbordaban hacia el pie. Suelo suficiente para la cabecera, la hoja con
    sus campos (`min-height: 168px`), el botón y el pie. */

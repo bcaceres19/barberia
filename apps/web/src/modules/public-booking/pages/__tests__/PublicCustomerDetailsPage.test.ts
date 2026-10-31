@@ -77,8 +77,8 @@ function profileOutcome(
   }
 }
 
-function mountPage() {
-  return mount(PublicCustomerDetailsPage, { props: BASE_PROPS })
+function mountPage(options: { attachTo?: HTMLElement } = {}) {
+  return mount(PublicCustomerDetailsPage, { props: BASE_PROPS, ...options })
 }
 
 beforeEach(() => {
@@ -476,6 +476,10 @@ describe('PublicCustomerDetailsPage', () => {
 
     expect(wrapper.text()).toContain('No pudimos conectar con el servidor')
     expect(wrapper.find('form').exists()).toBe(false)
+    // F-RQ-01 (#429): el aviso va fuera de la región desplazable del resumen, junto a los
+    // botones; dentro quedaba bajo su borde visible y no se veía.
+    const alert = wrapper.get('.customer-details__summary [role="alert"]')
+    expect(alert.element.closest('.customer-details__summary-body')).toBeNull()
 
     await confirmButton.trigger('click')
     await flushPromises()
@@ -485,6 +489,22 @@ describe('PublicCustomerDetailsPage', () => {
     const secondKey = confirmPublicAppointmentMock.mock.calls[1]![4]
     expect(secondKey).toBe(firstKey)
     expect(wrapper.text()).toContain('¡Tu turno quedó confirmado!')
+  })
+
+  it('gives the focus back to «Confirmar turno» after a failure so the retry works by keyboard (F-RQ-01)', async () => {
+    confirmPublicAppointmentMock.mockResolvedValueOnce({ kind: 'network-error' })
+    const wrapper = mountPage({ attachTo: document.body })
+    await fillValidForm(wrapper)
+    await wrapper.find('form').trigger('submit')
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('Confirmar turno'))!
+      .trigger('click')
+    await flushPromises()
+
+    expect(document.activeElement?.textContent).toContain('Confirmar turno')
+    wrapper.unmount()
   })
 
   it('has no accessibility violations on the schedule-conflict dialog', async () => {
