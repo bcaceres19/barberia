@@ -37,6 +37,12 @@
      futuro al color del anillo de foco no debe mover accidentalmente
      estos usos tipográficos y viceversa. */
   --color-accent-brass: #765c2f;
+  /* Copia resuelta en :root del latón de arriba, para texto que se pinta
+     sobre una superficie clara PROPIA aunque su contenedor sea oscuro (la
+     palabra de estado de BaseAlert). Los ámbitos sobre tinta reasignan
+     --color-accent-brass al latón claro de marca; esta copia no se reasigna,
+     así que no lo hereda. */
+  --color-accent-brass-on-surface: var(--color-accent-brass);
 
   /* Color: estado */
   --color-success-surface: #eaf0eb;
