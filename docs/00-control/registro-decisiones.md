@@ -1,6 +1,6 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.55"
+version: "1.56"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-10-31"
@@ -134,6 +134,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-138` | 2026-10-30 | Domicilio: el cliente marca su ubicación moviendo el mapa o con «Usar mi ubicación»; la dirección escrita pasa a ser opcional | `DEC-131`; `HU-103`; issue #382 | Confirmada |
 | `DEC-139` | 2026-10-30 | El canal del código del reto de acceso (correo, WhatsApp o ambos) es una preferencia por barbería, editable en Configuración; amplía `DEC-081` | `DEC-062`, `DEC-065`, `DEC-081`, `DEC-092`; `HU-007`; issue #384 | Confirmada |
 | `DEC-140` | 2026-10-31 | Resuelve las dudas de la campaña #301: «última escritura gana» en catálogo, equipo y marca; la lista pública de barberos devuelve 200 vacío ante un ID ajeno; `DEC-064` acota a `RN-IDE-01` en la recuperación | `RN-IDE-01`, `DEC-064`, `DEC-069`, `DEC-114`, `DEC-115`; `HU-009`, `HU-092`, `HU-093`; issue #449 | Confirmada |
+| `DEC-141` | 2026-10-31 | Resuelve las dudas 4–7 y 9 de la campaña #301: cancelación repetida idempotente, agenda con el primer profesional visible, teléfono `+57` de 10 dígitos y dos historias nuevas (`HU-069`, `HU-029`) | `DEC-004`, `DEC-074`, `DEC-136`, `RN-BLQ-03`, `RN-IDE-01`; `HU-029`, `HU-069`, `HU-099`; issue #453 | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -1706,3 +1707,19 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** versión de concurrencia en servicios y barberos (coste sin una historia que la pida); `404` en la lista pública (contradice `DEC-114`); `Idempotency-Key` en la política (cambio de contrato sin norma que lo exija); título de `BaseAlert` sin encabezado (rompe la decisión de `HU-009`).
 - **Documentos afectados:** `reglas-negocio.md` (`RN-IDE-01`), `historias-usuario.md` (`CA-092-03`), `informe-consolidado.md` de la campaña #301, `historial-cambios.md`.
 - **Fuente:** informe consolidado de la campaña #301; issue [#449](https://github.com/bcaceres19/barberia/issues/449).
+
+### DEC-141 · Resolución de las dudas abiertas 4–7 y 9 de la campaña #301
+
+- **Fecha:** 2026-10-31.
+- **Decisión:**
+  1. **Cancelación repetida (`CA-099-05`).** Cancelar un turno que ya está `cancelled_by_customer` responde éxito sin tocar nada y sin duplicar historial, con cualquier clave de idempotencia; un turno en otro estado terminal se rechaza por estado. La frase de `DEC-136` sobre «el rechazo de estado existente» se refiere a esos otros estados. Es lo que `RN-IDE-01` pide («el mismo resultado») y lo que el enlace que sigue mostrando «cancelado» (`DEC-136`) ya anticipa.
+  2. **Agenda con varios profesionales (`DEC-074`).** La agenda abre con el primer profesional **visible y seleccionado en un selector siempre presente**, y su `barberId` viaja en la URL. Lo que `DEC-074` prohíbe es la vista consolidada y una selección que el usuario no puede ver ni cambiar; no prohíbe un valor inicial visible. Recordar el último profesional sigue descartado.
+  3. **Teléfono del cliente en la reserva pública.** Con el prefijo `+57` el número nacional tiene exactamente 10 dígitos, en el servidor y en el formulario (OpenAPI 0.47.5). El resto de prefijos conserva el rango E.164 de 8 a 15 dígitos; el panel (cliente manual, ajustes, recuperación) no cambia. No se añade una librería de números: extender la regla a otro país exige una decisión nueva.
+  4. **Citas afectadas por un bloqueo (`RN-BLQ-03`).** La lista de afectadas y su resolución uno a uno quedan a cargo de la nueva `HU-069` (bloque B3). `HU-042` ya las deja fuera y apunta a B3/B5.
+  5. **Aplicación del precio nuevo (`DEC-004`).** La opción «solo nuevas / también las futuras» queda a cargo de la nueva `HU-029` (bloque B1), con «solo nuevas» como valor por defecto. Es la parte de `DEC-004` que hoy no existe; el comportamiento actual (solo nuevas, sin opción) es una de las alternativas que `DEC-004` descartó, así que es un hueco y no un valor definitivo.
+- **Quién lo decidió:** el propietario, el 2026-10-31 («guíate según el contexto de la página y cómo se comportan otras páginas similares»), apoyado en las decisiones vigentes y en lo que hacen plataformas comparables.
+- **Responsable:** propietario del proyecto.
+- **Motivo:** cierra las dudas con la lectura más coherente con las decisiones ya tomadas. Referencia externa verificada: el centro de ayuda de Fresha describe, al cambiar el precio de un servicio con citas próximas, una ventana con una casilla «aplicar a las citas próximas» desmarcada por defecto (las citas existentes conservan su precio), que es el modelo de `HU-029`. No se encontró documentación de Fresha sobre qué hace al bloquear tiempo sobre citas ni sobre su vista de calendario por defecto (otros productos varían: Mangomint muestra todo el equipo, Setmore un miembro a la vez), por eso esos puntos se resuelven con `RN-BLQ-03` y `DEC-074`, no con una comparación.
+- **Alternativas descartadas:** rechazar la cancelación repetida (rompe `RN-IDE-01` y confunde al cliente que recarga); vista consolidada o último profesional recordado (`DEC-074`); `libphonenumber` o una tabla de longitudes por país (dependencia nueva o riesgo de rechazar números válidos); aplicar el precio a las futuras sin pedirlo (`DEC-004`).
+- **Documentos afectados:** `historias-usuario.md` (`HU-029`, `HU-069`, `CA-099-05` queda como está), `informe-consolidado.md` de la campaña #301, `historial-cambios.md`, `api/openapi/` (0.47.5).
+- **Fuente:** informe consolidado de la campaña #301; issues [#453](https://github.com/bcaceres19/barberia/issues/453) y [#454](https://github.com/bcaceres19/barberia/issues/454).

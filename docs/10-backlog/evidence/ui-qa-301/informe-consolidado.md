@@ -82,19 +82,19 @@
 
 ## Dudas para el propietario
 
-Resueltas el 2026-10-31 en `DEC-140` (y `DEC-127` para la 3). Las que siguen abiertas necesitan una decisión del propietario.
+Resueltas el 2026-10-31 en `DEC-140` (y `DEC-127` para la 3) y `DEC-141` (4, 5, 6, 7 y 9). No queda ninguna duda sin decisión; la 5 y la 9 pasan a historias propuestas que esperan aprobación.
 
 | # | Duda | Estado |
 | --- | --- | --- |
 | 1 | Reproducir el 201 frente a revalidar (`RN-IDE-01`/`DEC-043` y `DEC-064`) | Resuelta: en la recuperación prevalece `DEC-064`; en la reserva pública se reproduce (#393). |
 | 2 | `CA-092-03`: 200 vacío o 404 con un ID ajeno | Resuelta: se conserva y `CA-092-03` se reescribió. |
 | 3 | `HU-092`/`DEC-104` excluyen fotos y perfiles | Resuelta: `DEC-127` registrada (retroactiva) y `HU-092` actualizada. |
-| 4 | `CA-099-05`: 200 sin cambios si el cliente ya canceló | Abierta: es deliberado en el código (idempotente, sin duplicar historial), pero `DEC-136` habla de «rechazo de estado» ante otra clave. Hay que aclarar cuál manda. |
-| 5 | HU dueña del aviso de citas afectadas al crear un bloqueo (`RN-BLQ-03`) | Abierta: asignarla a la HU de bloqueos de barbero con un criterio nuevo. |
-| 6 | Agenda con 2+ profesionales: ¿se preselecciona el primero? | Abierta: `DEC-074` pide un «selector obligatorio» sin default implícito, pero `CA-063-01` solo exige que el selector exista. Decisión del propietario. |
-| 7 | Teléfonos nacionales de 6 dígitos | Abierta: no hay mínimo de dígitos por país; endurecerlo exige una decisión. |
+| 4 | `CA-099-05`: 200 sin cambios si el cliente ya canceló | Resuelta (`DEC-141`): se mantiene el éxito sin efecto; el «rechazo de estado» de `DEC-136` aplica a otros estados. |
+| 5 | HU dueña del aviso de citas afectadas al crear un bloqueo (`RN-BLQ-03`) | Resuelta (`DEC-141`): `HU-069`, propuesta, issue #455. |
+| 6 | Agenda con 2+ profesionales: ¿se preselecciona el primero? | Resuelta (`DEC-141`): sí, visible en un selector siempre presente; `DEC-074` prohíbe la vista consolidada, no el valor inicial. |
+| 7 | Teléfonos nacionales de 6 dígitos | Resuelta (`DEC-141`): `+57` exige 10 dígitos en la reserva pública (#454, PR #457); los demás prefijos no cambian. |
 | 8 | Concurrencia en catálogo, equipo y marca (UI-T-08) | Resuelta: «última escritura gana»; UI-T-08 no aplica. |
-| 9 | `DEC-004`/`RN-SER-04`: elegir a qué turnos se aplica el precio nuevo | Abierta: no es un defecto (los turnos guardan su precio); falta una HU en el backlog. |
+| 9 | `DEC-004`/`RN-SER-04`: elegir a qué turnos se aplica el precio nuevo | Resuelta (`DEC-141`): `HU-029`, propuesta, issue #456; casilla desmarcada por defecto, como en Fresha. |
 | 10 | Panel `independiente` con más de un barbero | Resuelta: los selectores reaparecen (`DEC-115`, `DEC-134`). |
 | 11 | `BaseAlert` en `<h4>` frente a axe `heading-order` | Resuelta: se mantiene (`HU-009`); excepción aceptada. |
 | 12 | `PUT` de la política de reservas ante un reintento idéntico | Resuelta: se mantiene el 409; el aviso es neutral (#441). |
