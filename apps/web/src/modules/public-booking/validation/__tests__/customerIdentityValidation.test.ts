@@ -5,6 +5,7 @@ import {
   validateCustomerFullName,
   validateCustomerNote,
   validateCustomerPhone,
+  validateCustomerPhoneParts,
 } from '../customerIdentityValidation'
 
 describe('customerIdentityValidation', () => {
@@ -17,6 +18,14 @@ describe('customerIdentityValidation', () => {
     expect(validateCustomerPhone('')).toBeDefined()
     expect(validateCustomerPhone('3001234567')).toBeDefined()
     expect(validateCustomerPhone('+573001234567')).toBeUndefined()
+  })
+
+  it('exige 10 dígitos nacionales con el prefijo de Colombia y deja el rango E.164 en el resto', () => {
+    expect(validateCustomerPhone('+57300555')).toBeDefined()
+    expect(validateCustomerPhone('+5730012345678')).toBeDefined()
+    expect(validateCustomerPhoneParts('+57', '300555')).toBeDefined()
+    expect(validateCustomerPhoneParts('+57', '300 123 4567')).toBeUndefined()
+    expect(validateCustomerPhoneParts('+34', '612345678')).toBeUndefined()
   })
 
   it('requires a well-formed email', () => {

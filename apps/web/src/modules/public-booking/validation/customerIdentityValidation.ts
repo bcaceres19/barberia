@@ -10,6 +10,13 @@
 // importa el módulo agenda (mismo criterio de independencia entre módulos
 // que CA-002-06 aplica en el backend), así que las reglas se repiten aquí.
 const PHONE_PATTERN = /^\+[1-9][0-9]{7,14}$/
+// DEC-141: con el prefijo de Colombia el número nacional tiene exactamente 10 dígitos.
+const COLOMBIA_PHONE_PATTERN = /^\+57[0-9]{10}$/
+
+function isValidPhone(e164: string): boolean {
+  if (!PHONE_PATTERN.test(e164)) return false
+  return !e164.startsWith('+57') || COLOMBIA_PHONE_PATTERN.test(e164)
+}
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export const CUSTOMER_FULL_NAME_MAX_LENGTH = 120
@@ -26,7 +33,7 @@ export function validateCustomerFullName(value: string): string | undefined {
 export function validateCustomerPhone(value: string): string | undefined {
   const trimmed = value.trim()
   if (trimmed === '') return 'El teléfono es obligatorio.'
-  return PHONE_PATTERN.test(trimmed)
+  return isValidPhone(trimmed)
     ? undefined
     : 'El teléfono debe incluir el indicativo de país, por ejemplo +573001234567.'
 }
@@ -37,7 +44,7 @@ export function validateCustomerPhone(value: string): string | undefined {
 export function validateCustomerPhoneParts(dial: string, national: string): string | undefined {
   const digits = national.replace(/\D/g, '')
   if (digits === '') return 'El teléfono es obligatorio.'
-  return PHONE_PATTERN.test(`${dial}${digits}`)
+  return isValidPhone(`${dial}${digits}`)
     ? undefined
     : 'El número no parece completo. Revisa que tenga todos los dígitos.'
 }
