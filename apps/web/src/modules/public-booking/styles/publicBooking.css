@@ -842,6 +842,20 @@
   }
 }
 
+/* Resumen de la reserva: mismo problema. Con el `min-height` de su región desplazable la
+   lista y las acciones llegaban más abajo que la hoja y el pie tapaba «Confirmar turno»
+   (PCONF-F-02, 320x640 y 360x640; también 360x740). Mismo suelo: bajo él la página se desplaza. */
+.pb-layout:has(.pb-page--scroll-form .customer-details__summary-body) {
+  height: max(100dvh, 840px);
+}
+
+/* Datos del cliente: a 200 % de zoom (640x360) la hoja quedaba en ~47 px y el formulario en 0 px
+   mientras los campos desbordaban hacia el pie. Suelo suficiente para la cabecera, la hoja con
+   sus campos (`min-height: 168px`), el botón y el pie. */
+.pb-layout:has(.pb-page--scroll-form .customer-details__fields) {
+  height: max(100dvh, 640px);
+}
+
 .pb-page--scroll-slots,
 .pb-page--scroll-choices,
 .pb-page--scroll-form {
