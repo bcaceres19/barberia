@@ -7,7 +7,7 @@
  * se sustituye por un doble de prueba; el recorrido real contra el API vive
  * en el E2E de HU-023.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { resetToasts, toastState } from '@/shared/model/toastStore'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { axe } from 'vitest-axe'
@@ -40,8 +40,16 @@ const twoServices = [
   { id: 's-2', name: 'Barba' },
 ]
 
+// Adjunto al documento: el foco solo existe en elementos conectados (ASSIGN-F-1).
+const mounted: VueWrapper[] = []
+
 function mountPage() {
-  return mount(BarberServicesPage, { global: { stubs: { teleport: true } } })
+  const wrapper = mount(BarberServicesPage, {
+    attachTo: document.body,
+    global: { stubs: { teleport: true } },
+  })
+  mounted.push(wrapper)
+  return wrapper
 }
 
 async function mountReady(
@@ -78,6 +86,10 @@ function barberSelect(wrapper: VueWrapper): HTMLSelectElement {
 const axeOptions = { rules: { 'color-contrast': { enabled: false } } }
 
 describe('BarberServicesPage', () => {
+  afterEach(() => {
+    while (mounted.length) mounted.pop()!.unmount()
+  })
+
   beforeEach(() => {
     resetToasts()
     fetchBarberSummariesMock.mockReset()
@@ -287,18 +299,30 @@ describe('BarberServicesPage', () => {
     expect(checkbox(wrapper, 's-1').checked).toBe(false)
   })
 
-  it('disables the checkbox while its own request is in flight (no double submit)', async () => {
+  it('marks the checkbox busy, not disabled, while its own request is in flight (no double submit, keeps focus)', async () => {
     const wrapper = await mountReady(oneBarber, twoServices, [])
     let resolveAssign: (value: unknown) => void = () => {}
     assignServiceMock.mockReturnValueOnce(new Promise((resolve) => (resolveAssign = resolve)))
 
     const box = checkbox(wrapper, 's-1')
+    box.focus()
     box.checked = true
     await box.dispatchEvent(new Event('change'))
     await flushPromises()
 
-    expect(checkbox(wrapper, 's-1').disabled).toBe(true)
+    // AGENDA ASSIGN-F-1: `disabled` expulsa el foco a BODY (CA-023-08, WCAG 2.4.3).
+    expect(checkbox(wrapper, 's-1').disabled).toBe(false)
+    expect(checkbox(wrapper, 's-1').getAttribute('aria-disabled')).toBe('true')
+    expect(checkbox(wrapper, 's-1').getAttribute('aria-busy')).toBe('true')
+    expect(document.activeElement).toBe(checkbox(wrapper, 's-1'))
     expect(assignServiceMock).toHaveBeenCalledTimes(1)
+
+    // Un segundo cambio mientras guarda se descarta y la casilla vuelve al estado real.
+    checkbox(wrapper, 's-1').checked = false
+    await checkbox(wrapper, 's-1').dispatchEvent(new Event('change'))
+    await flushPromises()
+    expect(assignServiceMock).toHaveBeenCalledTimes(1)
+    expect(unassignServiceMock).not.toHaveBeenCalled()
 
     resolveAssign({
       kind: 'success',
@@ -306,7 +330,8 @@ describe('BarberServicesPage', () => {
     })
     await flushPromises()
 
-    expect(checkbox(wrapper, 's-1').disabled).toBe(false)
+    expect(checkbox(wrapper, 's-1').getAttribute('aria-disabled')).toBeNull()
+    expect(document.activeElement).toBe(checkbox(wrapper, 's-1'))
   })
 
   it('never shows barber schedules, availability, appointments, or per-barber pricing', async () => {
