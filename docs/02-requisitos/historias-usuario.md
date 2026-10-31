@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.57"
+version: "1.58"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-10-26"
@@ -53,7 +53,7 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | B2 · Horario laboral y bloqueos | `HU-040` – `HU-042` | Integradas en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93), [PR #96](https://github.com/bcaceres19/barberia/pull/96), [PR #99](https://github.com/bcaceres19/barberia/pull/99)); seguimientos parciales en `#90`, `#95`, `#98` y `#100` |
 | B3 · Agenda, estados e integridad | `HU-060` – `HU-068` | `HU-060`–`HU-068` integradas en `main`, issues reales [#225](https://github.com/bcaceres19/barberia/issues/225)–[#227](https://github.com/bcaceres19/barberia/issues/227); tercer lote de B3 completo, T3/cierre automático pendientes |
 | B4 · Reserva pública y disponibilidad | `HU-090` – `HU-103` | `HU-090`–`HU-099` redactadas como propuesta en issue [#240](https://github.com/bcaceres19/barberia/issues/240), `DP-PUB-01`–`DP-PUB-06`/`CT-011` resueltas; `HU-100`–`HU-103` (reseñas internas, reseñas de Google, ubicación y domicilio) redactadas el 2026-10-26 (`DEC-128`–`DEC-131`), sin issue real todavía |
-| B5 · Notificaciones y recordatorios | `HU-130` – | Pendientes |
+| B5 · Notificaciones y recordatorios | `HU-130` – | `HU-130` implementada (issue [#463](https://github.com/bcaceres19/barberia/issues/463), `DEC-142`); recordatorios, WhatsApp y configuración por evento pendientes |
 | B6 · Operación, privacidad y piloto | `HU-150` – | Pendientes |
 
 ---
@@ -1839,7 +1839,7 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 | `CA-066-04` | Una cita `completed`, `no_show` o cancelada por otro actor responde `409` sin cambiar estado ni historial; una cancelación repetida por el barbero devuelve éxito sin duplicar el evento. |
 | `CA-066-05` | La misma `Idempotency-Key` e intención reproduce el resultado lógico, contenido distinto entra en conflicto y una precondición obsoleta responde `409` distinguible con instrucción segura de recargar. |
 | `CA-066-06` | Un ID inexistente, mal formado o de otra barbería no permite inferir existencia ni mutar datos: responde según el contrato uniforme y dos tenants reales permanecen aislados. |
-| `CA-066-07` | La operación no cambia intervalo, snapshots, cliente, persona, contacto, nota ni barbero; tampoco crea intentos de notificación o recordatorios ficticios y ningún log contiene datos personales. |
+| `CA-066-07` | La operación no cambia intervalo, snapshots, cliente, persona, contacto, nota ni barbero; tampoco envía ni registra intentos de notificación dentro de la operación (el aviso real al cliente lo encola `HU-130` en la misma transacción y lo envía el worker) ni crea recordatorios ficticios, y ningún log contiene datos personales. |
 | `CA-066-08` | El detalle ofrece la acción solo para `confirmed`, comunica la consecuencia antes de confirmar, evita doble toque, conserva contexto ante error y representa el resultado terminal en 320, 360, 768 y 1280 px, teclado y zoom 200 %, con axe-core limpio. |
 
 **Pruebas obligatorias**
@@ -1996,7 +1996,7 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 
 - Reprogramar o cancelar de forma automática o masiva (`RN-BLQ-03`, `RN-RET-01`) y proponer horas nuevas.
 - Series de bloqueo (semanales o por fechas): no muestran la lista; el barbero revisa la agenda de esos días.
-- El aviso al cliente cuando el barbero cancela o reprograma: hoy esas operaciones no notifican, y esa notificación es de B5 (`DEC-004`, `RN-BLQ-03`); esta historia no la promete ni la implementa.
+- El aviso al cliente cuando el barbero cancela o reprograma: lo cubre `HU-130` (`DEC-142`), solo por correo y para un cliente que lo tenga; esta historia no lo promete en pantalla ni lo implementa, y no avisa por sí misma de los turnos que un bloqueo cubre.
 
 **Criterios de aceptación**
 
@@ -2664,7 +2664,64 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 
 ---
 
-## 8. Historias pendientes de redacción
+## 8. Bloque B5 · Notificaciones y recordatorios
+
+### HU-130 · Aviso al cliente cuando el barbero cancela o reprograma su turno
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-NOT-02` (primer tramo de B5) |
+| Reglas | `RN-REC-01`, `RN-REC-02`, `RN-REC-03`, `RN-REC-04`, `RN-REC-06`, `RN-BLQ-03`, `RN-DAT-02`, `RN-IDE-01`, `RN-TEN-01` |
+| Decisiones | `DEC-004`, `DEC-008`, `DEC-027`, `DEC-032`, `DEC-040`, `DEC-102`, `DEC-142` |
+| Actor | Sistema (worker), a raíz de una acción del barbero |
+| Depende de | `HU-065` y `HU-066` integradas |
+| Estado | Implementada contra el issue real [#463](https://github.com/bcaceres19/barberia/issues/463) |
+| Riesgo | Avisar una hora que ya cambió, avisar dos veces el mismo cambio, perder el aviso si cae el proceso o dejar un correo en claro en la evidencia. |
+
+**Historia**
+
+> Como cliente, quiero recibir un correo cuando el barbero cancela o cambia la hora de mi turno, para no presentarme a una cita que ya no existe ni a una hora vieja.
+
+**Alcance incluido**
+
+- Un aviso por correo tras `T6` (cancelación por el barbero) y `T2` (reprogramación), persistido en la misma transacción que el cambio.
+- Un solo aviso vigente por turno: cambios seguidos se funden en uno, tras una espera de 60 segundos.
+- Mensaje redactado al enviar con el estado vigente: servicio, barbería y fecha y hora locales de la barbería.
+- Evidencia de cada intento sin datos de contacto; reintentos acotados; rechazo permanente sin reintento.
+- Un cliente sin correo queda registrado como no enviable (`skipped`).
+
+**Alcance excluido**
+
+- WhatsApp, recordatorios programados (`F-NOT-03`), configuración por evento y canal (`RN-REC-05`), aviso por cambio de precio (`HU-029`) y purga de la evidencia (B6).
+- Avisar cambios hechos por el cliente o por el sistema, y repeticiones idempotentes o reprogramaciones al mismo intervalo.
+- Mostrar al barbero el estado del aviso.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-130-01` | Cancelar o reprogramar un turno confirmado crea, en la misma transacción, un aviso `pending`; si la transacción se revierte no queda aviso. |
+| `CA-130-02` | Una cancelación repetida (mismo barbero o misma clave) y una reprogramación al mismo intervalo no crean aviso. |
+| `CA-130-03` | Dos cambios seguidos del mismo turno dejan exactamente un aviso `pending`; la cancelación sustituye a la reprogramación pendiente. |
+| `CA-130-04` | El correo se redacta al enviar con la hora vigente; una reprogramación cuyo turno ya está cancelado, o un turno que ya empezó, no se envía y queda `skipped`. |
+| `CA-130-05` | Cada intento (enviado, reintento, fallo, omitido) deja una fila de evidencia sin correo, teléfono ni nombre; los logs tampoco los contienen. |
+| `CA-130-06` | Un fallo transitorio se reintenta con espera creciente hasta 5 intentos; un rechazo permanente del proveedor termina en `failed` sin reintento. |
+| `CA-130-07` | Un cliente sin correo no genera envío: el aviso queda `skipped` con causa `no_email`. |
+| `CA-130-08` | Dos workers no reclaman el mismo aviso; un lease vencido lo hace elegible de nuevo y el primer worker ya no puede cerrarlo. |
+| `CA-130-09` | Con dos barberías reales, ningún aviso, evidencia ni contexto de una es visible o reclamable desde la otra por la aplicación; el worker solo opera mediante funciones `SECURITY DEFINER`. |
+
+**Pruebas obligatorias**
+
+- Dominio del despachador con puertos simulados: envío, reintento, rechazo permanente, omisiones y contenido al enviar.
+- Adaptador de Resend contra un servidor HTTP de prueba, incluida la clasificación permanente/transitoria y la ausencia del destinatario en el error.
+- PostgreSQL real con dos tenants: encolado en la transacción del cambio, fusión de avisos, reclamo concurrente, lease vencido, cierre por CAS, evidencia sin datos personales y RLS.
+- Repositorio de `booking`: el gancho se invoca en la transacción de `T6` y `T2` y no en una repetición ni en un no-op.
+
+**Terminado cuando** un cliente con correo recibe un único aviso con la hora vigente tras cada cancelación o reprogramación del barbero, y cada intento queda auditado sin datos de contacto.
+
+---
+
+## 9. Historias pendientes de redacción
 
 | Bloque | Rango reservado | Se redacta cuando |
 | --- | --- | --- |
@@ -2672,14 +2729,14 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | B2 | `HU-040` – `HU-042` | Integradas en `main` (PR `#93`, `#96`, `#99`); seguimientos parciales en issues `#90`, `#95`, `#98` y `#100` (este último completo el 2026-10-08) |
 | B3 | `HU-069` – | `HU-066`–`HU-068` ya integradas en `main`; continuar con T3 y cierre automático solo después de revisar este lote y resolver cualquier duda de semántica de snapshots/configuración |
 | B4 | `HU-104` – | `HU-090`–`HU-103` ya redactadas (`HU-100`–`HU-103`: reseñas internas, reseñas de Google, ubicación y domicilio, `DEC-128`–`DEC-131`); continuar con el resto solo tras resolver cualquier duda nueva de esas cuatro historias |
-| B5 | `HU-130` – | B4 cumple su criterio de salida |
+| B5 | `HU-131` – (`HU-130`: aviso al cliente al cancelar o reprogramar, `DEC-142`) | B4 cumple su criterio de salida; recordatorios, WhatsApp y configuración por evento siguen pendientes |
 | B6 | `HU-150` – | B5 cumple su criterio de salida |
 
 Redactar por anticipado las historias de un bloque lejano produce texto que hay que reescribir: lo que se aprende construyendo el bloque anterior cambia la historia siguiente.
 
 ---
 
-## 9. Dudas que bloqueaban historias de B0
+## 10. Dudas que bloqueaban historias de B0
 
 | Duda | Historia antes bloqueada | Qué faltaba decidir | Resuelta como |
 | --- | --- | --- | --- |
