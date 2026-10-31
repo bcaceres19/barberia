@@ -5,6 +5,8 @@
 *.pem
 *.key
 *.p12
+# Salida de shell sin nombre (`> o`) que se colo con credenciales en #397.
+apps/api/o
 
 # Editores y sistema operativo
 .DS_Store
