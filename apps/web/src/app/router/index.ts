@@ -83,6 +83,13 @@ const routes: RouteRecordRaw[] = [
       ...settingsNavItems,
     ],
   ),
+  // Cualquier otra ruta: pantalla de «no encontrada» en vez de una página en blanco. Va al
+  // final y sin guardas: no cambia la sesión exigida a las rutas reales ni revela cuáles existen.
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'no-encontrada',
+    component: () => import('../pages/NotFoundPage.vue'),
+  },
 ]
 
 export const router = createRouter({
