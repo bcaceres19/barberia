@@ -751,9 +751,9 @@ function chooseAlternative(startsAt: string) {
       </template>
 
       <p class="pb-conflict__lead">
-        Alguien reservó las <strong>{{ formatLocalTime(selectedStartsAt) }}</strong> del
-        <strong>{{ formatLocalDay(selectedStartsAt) }}</strong> justo antes que tú. Elige otra hora
-        para seguir con tu turno.
+        Las <strong>{{ formatLocalTime(selectedStartsAt) }}</strong> del
+        <strong>{{ formatLocalDay(selectedStartsAt) }}</strong> ya no están disponibles. Elige otra
+        hora para seguir con tu turno.
       </p>
 
       <template v-if="alternatives.length > 0">
