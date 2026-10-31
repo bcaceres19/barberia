@@ -21,6 +21,12 @@ const (
 
 var customerPhonePattern = regexp.MustCompile(`^\+[1-9][0-9]{7,14}$`)
 
+// colombianPhonePattern endurece el prefijo +57 (DEC-141): el mercado es
+// Colombia y el teléfono recibe avisos por WhatsApp, así que un número con
+// menos o más de 10 dígitos nacionales es un error de captura aunque sea
+// E.164 válido. Los demás prefijos conservan el rango general.
+var colombianPhonePattern = regexp.MustCompile(`^\+57[0-9]{10}$`)
+
 // customerEmailShapePattern refleja customer_email_ck: al menos un
 // carácter, '@', al menos un carácter, '.', al menos un carácter. La forma
 // canónica (minúsculas, sin espacios) se valida aparte.
@@ -71,7 +77,8 @@ func NormalizeAndValidateCustomerIdentity(in CustomerIdentityInput) (CustomerIde
 	if phone == "" {
 		return CustomerIdentity{}, errIdentityPhoneRequired()
 	}
-	if !customerPhonePattern.MatchString(phone) {
+	if !customerPhonePattern.MatchString(phone) ||
+		(strings.HasPrefix(phone, "+57") && !colombianPhonePattern.MatchString(phone)) {
 		return CustomerIdentity{}, errIdentityPhoneInvalid()
 	}
 

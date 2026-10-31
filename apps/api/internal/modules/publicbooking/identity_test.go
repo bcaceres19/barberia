@@ -65,6 +65,8 @@ func TestNormalizeAndValidateCustomerIdentity_RequiredFields(t *testing.T) {
 		{"full name too long", func(in *publicbooking.CustomerIdentityInput) { in.FullName = repeat("a", 121) }},
 		{"empty phone", func(in *publicbooking.CustomerIdentityInput) { in.Phone = "" }},
 		{"invalid phone", func(in *publicbooking.CustomerIdentityInput) { in.Phone = "3001234567" }},
+		{"colombian phone too short", func(in *publicbooking.CustomerIdentityInput) { in.Phone = "+57300555" }},
+		{"colombian phone too long", func(in *publicbooking.CustomerIdentityInput) { in.Phone = "+5730012345678" }},
 		{"empty email", func(in *publicbooking.CustomerIdentityInput) { in.Email = "" }},
 		{"invalid email", func(in *publicbooking.CustomerIdentityInput) { in.Email = "no-arroba" }},
 		{"note too long", func(in *publicbooking.CustomerIdentityInput) { in.Note = strPtr(repeat("a", 501)) }},
