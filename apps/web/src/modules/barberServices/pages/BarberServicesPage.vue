@@ -280,9 +280,10 @@ async function onToggleService(service: ServiceSummary, event: Event) {
   const checkbox = event.target as HTMLInputElement
 
   if (!barberId || isPending(service.id)) {
-    // Defensivo: el checkbox está deshabilitado mientras está pendiente
-    // (evita doble envío en la práctica), pero si de algún modo llegara un
-    // evento igual, se revierte de inmediato al estado real.
+    // Mientras guarda, la casilla usa aria-disabled y no `disabled`: un control
+    // deshabilitado pierde el foco y el teclado volvía a BODY (CA-023-08, WCAG 2.4.3).
+    // Por eso un segundo cambio aún puede llegar: se descarta y se revierte de
+    // inmediato al estado real.
     checkbox.checked = isAssigned(service.id)
     return
   }
@@ -526,7 +527,8 @@ async function onToggleService(service: ServiceSummary, event: Event) {
                       type="checkbox"
                       class="barber-services-page__checkbox"
                       :checked="isAssigned(service.id)"
-                      :disabled="isPending(service.id)"
+                      :aria-disabled="isPending(service.id) ? 'true' : undefined"
+                      :aria-busy="isPending(service.id) ? 'true' : undefined"
                       @change="onToggleService(service, $event)"
                     />
                     <span class="barber-services-page__service-icon" aria-hidden="true">{{
@@ -1067,7 +1069,7 @@ async function onToggleService(service: ServiceSummary, event: Event) {
   transform: rotate(45deg) scale(1);
 }
 
-.barber-services-page__checkbox:disabled {
+.barber-services-page__checkbox[aria-disabled='true'] {
   cursor: progress;
   opacity: 0.6;
 }

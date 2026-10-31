@@ -122,11 +122,13 @@ describe('OfferServiceSwitch', () => {
     expect(toastState.items).toEqual([])
   })
 
-  it('is busy and disabled while the request is in flight', () => {
+  it('is busy but not disabled while the request is in flight, so it keeps the keyboard focus', () => {
     const wrapper = mountSwitch(fakeOffering({ busy: ['s-1'] }).offering)
     const sw = wrapper.get('[role="switch"]')
 
-    expect(sw.attributes('disabled')).toBeDefined()
+    // `disabled` expulsa el foco a BODY (ASSIGN-F-1, CA-023-08): se anuncia con aria-disabled.
+    expect(sw.attributes('disabled')).toBeUndefined()
+    expect(sw.attributes('aria-disabled')).toBe('true')
     expect(sw.attributes('aria-busy')).toBe('true')
   })
 

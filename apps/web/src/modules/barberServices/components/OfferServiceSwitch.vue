@@ -4,7 +4,9 @@
 // se desliza), en tamaño de fila. El estado se anuncia con `aria-checked` y con
 // texto, nunca solo con el color. Solo cambia cuando el servidor confirma
 // (`BarberOffering.setOffered`), así que mientras viaja la petición queda
-// ocupado y no admite un segundo clic.
+// ocupado y no admite un segundo clic. Usa `aria-disabled` y no `disabled`: un botón
+// deshabilitado pierde el foco y el teclado volvía a BODY (CA-023-08, WCAG 2.4.3);
+// el segundo clic lo descarta `setOffered`.
 import { useToast } from '@/shared/composables'
 import type { BarberOffering } from '../model/barberOffering'
 
@@ -55,7 +57,7 @@ async function onToggle() {
     :aria-checked="offering.isOffered(serviceId)"
     :aria-label="`Lo ofrezco: ${serviceName}`"
     :aria-busy="offering.isBusy(serviceId)"
-    :disabled="offering.isBusy(serviceId)"
+    :aria-disabled="offering.isBusy(serviceId) ? 'true' : undefined"
     @click="onToggle"
   >
     <span v-if="!compact" class="offer-switch__text" aria-hidden="true">{{
@@ -139,11 +141,11 @@ async function onToggle() {
   background: var(--color-brand-accent-surface);
 }
 
-.offer-switch:hover:not(:disabled) .offer-switch__track {
+.offer-switch:hover:not([aria-disabled='true']) .offer-switch__track {
   border-color: var(--color-brand-accent-surface);
 }
 
-.offer-switch:disabled {
+.offer-switch[aria-disabled='true'] {
   cursor: progress;
   opacity: 0.6;
 }
