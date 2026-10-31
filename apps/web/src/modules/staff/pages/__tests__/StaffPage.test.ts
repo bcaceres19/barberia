@@ -726,6 +726,47 @@ describe('StaffPage', () => {
     expect(uploadPhotoMock).not.toHaveBeenCalled()
   })
 
+  // F-RQ-PB-01 (#431): un 422 del servidor dejaba el diálogo abierto sin ningún mensaje.
+  it('on a server validation-error, says so in the create dialog and keeps what was typed', async () => {
+    const wrapper = await mountReady()
+    await findButtonByText(wrapper, 'Agregar barbero').trigger('click')
+    await flushPromises()
+
+    const input = openDialogInput(wrapper)
+    setInputValue(input, 'Rechazado')
+    await flushPromises()
+
+    createMock.mockResolvedValueOnce({ kind: 'validation-error' })
+    submitOpenDialog(wrapper)
+    await flushPromises()
+    await waitOutMoreHold()
+    await flushPromises()
+
+    const alert = openDialogElement(wrapper).querySelector('[role="alert"]')
+    expect(alert?.textContent).toContain('No pudimos guardar los datos')
+    expect(input.value).toBe('Rechazado')
+  })
+
+  it('on a server validation-error, says so in the edit dialog and keeps what was typed', async () => {
+    const wrapper = await mountReady()
+    await findButtonByText(wrapper, 'Editar').trigger('click')
+    await flushPromises()
+
+    const input = openDialogInput(wrapper)
+    setInputValue(input, 'Nombre rechazado')
+    await flushPromises()
+
+    renameMock.mockResolvedValueOnce({ kind: 'validation-error' })
+    submitOpenDialog(wrapper)
+    await flushPromises()
+    await waitOutMoreHold()
+    await flushPromises()
+
+    const alert = openDialogElement(wrapper).querySelector('[role="alert"]')
+    expect(alert?.textContent).toContain('No pudimos guardar los datos')
+    expect(input.value).toBe('Nombre rechazado')
+  })
+
   it('never shows placeholders for service, schedule, active status, or linked user', async () => {
     const wrapper = await mountReady(fourBarbers)
     const text = wrapper.text().toLowerCase()

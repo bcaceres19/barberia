@@ -1044,6 +1044,14 @@ async function onSubmitRename() {
         @submit.prevent="onSubmitCreate"
       >
         <BaseAlert
+          v-if="createStatus === 'validation-error'"
+          variant="danger"
+          title="No pudimos guardar los datos"
+          role="alert"
+        >
+          Revisa el nombre y la descripción e inténtalo de nuevo. Lo que escribiste sigue aquí.
+        </BaseAlert>
+        <BaseAlert
           v-if="createStatus === 'idempotency-conflict'"
           variant="danger"
           title="No pudimos completar el intento anterior"
@@ -1128,6 +1136,14 @@ async function onSubmitRename() {
         novalidate
         @submit.prevent="onSubmitRename"
       >
+        <BaseAlert
+          v-if="renameStatus === 'validation-error'"
+          variant="danger"
+          title="No pudimos guardar los datos"
+          role="alert"
+        >
+          Revisa el nombre y la descripción e inténtalo de nuevo. Lo que escribiste sigue aquí.
+        </BaseAlert>
         <BaseAlert
           v-if="renameStatus === 'not-found'"
           variant="warning"
