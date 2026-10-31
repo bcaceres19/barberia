@@ -9,7 +9,7 @@
 // ante un error de validación o conflicto (CA-096-03, CA-097-03) y resuelve
 // `attendeeName` sin pedirlo dos veces cuando el cliente reserva para sí
 // mismo (CA-096-01, RN-RES-02).
-import { computed, nextTick, onMounted, ref, useId } from 'vue'
+import { computed, nextTick, onMounted, ref, useId, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { BarberAvatar, BaseAlert, BaseButton, BaseDialog, BaseInput } from '@/shared/ui'
 import type { LatLng } from '@/shared/model/mapPicker'
@@ -130,6 +130,7 @@ const idempotencyKey = ref<string | null>(null)
 
 const formRef = ref<HTMLElement | null>(null)
 const summaryRef = ref<HTMLElement | null>(null)
+const actionsRef = ref<HTMLElement | null>(null)
 const confirmedRef = ref<HTMLElement | null>(null)
 
 const fieldErrors = computed(() => ({
@@ -167,6 +168,18 @@ async function handleSubmit() {
   await nextTick()
   summaryRef.value?.focus()
 }
+
+// Tras un fallo el botón se había deshabilitado y el foco cayó al <body>; además, en móvil el
+// aviso entra bajo el borde de la ventana y empuja los botones fuera de ella. Se devuelve el
+// foco a «Confirmar turno» (reintento por teclado) y se lleva a la vista aviso y botones.
+watch(confirmState, async (state) => {
+  if (state !== 'error') return
+  await nextTick()
+  actionsRef.value
+    ?.querySelector<HTMLElement>('button:last-of-type')
+    ?.focus({ preventScroll: true })
+  actionsRef.value?.scrollIntoView?.({ block: 'end' })
+})
 
 async function editAgain() {
   reviewing.value = false
@@ -613,13 +626,15 @@ function chooseAlternative(startsAt: string) {
             <strong>{{ email }}</strong
             >.
           </p>
-
-          <BaseAlert v-if="confirmState === 'error'" variant="danger" role="alert">
-            {{ errorMessage }}
-          </BaseAlert>
         </div>
 
-        <div class="customer-details__actions">
+        <!-- Fuera de la región desplazable: dentro, el aviso quedaba bajo su borde
+             visible y quien confirmó solo veía el botón activo de nuevo (F-RQ-01, #429). -->
+        <BaseAlert v-if="confirmState === 'error'" variant="danger" role="alert">
+          {{ errorMessage }}
+        </BaseAlert>
+
+        <div ref="actionsRef" class="customer-details__actions">
           <BaseButton
             type="button"
             variant="secondary"

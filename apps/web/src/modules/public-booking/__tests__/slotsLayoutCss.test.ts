@@ -35,6 +35,12 @@ describe('pantalla de horario público: layout en ventanas bajas', () => {
     )
   })
 
+  it('con el aviso de error del resumen el suelo sube: el pie no queda entre el aviso y los botones', () => {
+    expect(
+      rule(".pb-layout:has(.pb-page--scroll-form .customer-details__summary [role='alert'])"),
+    ).toMatch(/height:\s*max\(100dvh, 1000px\)/)
+  })
+
   it('el formulario de datos tiene un suelo de alto: a 200 % de zoom la hoja no se aplasta', () => {
     expect(rule('.pb-layout:has(.pb-page--scroll-form .customer-details__fields)')).toMatch(
       /height:\s*max\(100dvh,/,
