@@ -65,6 +65,9 @@ describe('AppointmentCancellation', () => {
 
     expect(wrapper.find('form').exists()).toBe(true)
     expect(wrapper.text()).toContain('No se puede deshacer')
+    // DEC-136: cancelar no revoca el enlace; sigue mostrando el turno como cancelado.
+    expect(wrapper.text()).toContain('seguirá mostrando el turno como cancelado')
+    expect(wrapper.text()).not.toContain('deja de funcionar')
     expect(wrapper.text()).toContain('(opcional)')
     expect(document.activeElement?.id).toBe('appointment-cancel-reason')
     wrapper.unmount()
