@@ -37,7 +37,9 @@ properties:
       Teléfono del cliente en formato E.164, obligatorio en el flujo
       público (a diferencia de la creación manual, RN-CIT-02 no aplica
       aquí): la reserva pública siempre necesita poder contactar al
-      cliente.
+      cliente. Con el prefijo `+57` (Colombia) el número nacional debe tener
+      exactamente 10 dígitos (`DEC-141`); un número que no la cumple se
+      rechaza con `422` como cualquier teléfono inválido.
     examples:
       - "+573001234567"
   email:

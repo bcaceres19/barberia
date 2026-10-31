@@ -4,6 +4,19 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.47.5 · 2026-10-31
+
+### Corregido
+
+- `ConfirmPublicAppointmentRequest.customer.phone` documenta que con el prefijo
+  `+57` el número nacional tiene exactamente 10 dígitos (`DEC-141`); antes se
+  aceptaba cualquier E.164 de 8 a 15 dígitos, también `+57300555`.
+
+### Compatibilidad
+
+- Compatible: el patrón del esquema no cambia; el servidor rechaza con el mismo
+  `422` de teléfono inválido el número colombiano mal formado.
+
 ## 0.47.4 · 2026-10-30
 
 ### Corregido
