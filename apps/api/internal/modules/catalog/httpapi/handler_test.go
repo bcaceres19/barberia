@@ -520,6 +520,54 @@ func TestUpdateServiceHandler_Success_Returns200(t *testing.T) {
 	}
 }
 
+func TestUpdateServiceHandler_ApplyPriceToUpcoming_ReportsHowManyChanged(t *testing.T) {
+	now := time.Now().UTC()
+	repo := &fakeRepository{updateFn: func(barbershopID, serviceID string, fields catalog.UpdateFields) (catalog.UpdateResult, error) {
+		if !fields.ApplyPriceToUpcoming || fields.ActorStaffUserID != "u-1" {
+			t.Fatalf("the flag and the session actor must reach the repository: %+v", fields)
+		}
+		return catalog.UpdateResult{Found: true, UpcomingPricesUpdated: 2,
+			Service: catalog.Service{ID: serviceID, Name: "Corte", Currency: "COP", PriceCents: 3_500_000, CreatedAt: now, UpdatedAt: now}}, nil
+	}}
+	h := httpapi.NewUpdateServiceHandler(catalog.NewService(repo))
+
+	req := requestWithServiceID(http.MethodPatch, "/api/v1/private/services/8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4",
+		[]byte(`{"price":"35000","applyPriceToUpcoming":true}`), "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var body struct {
+		Price                       string `json:"price"`
+		UpcomingAppointmentsUpdated int    `json:"upcomingAppointmentsUpdated"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if body.Price != "35000.00" || body.UpcomingAppointmentsUpdated != 2 {
+		t.Fatalf("unexpected body: %s", rec.Body.String())
+	}
+}
+
+func TestUpdateServiceHandler_ApplyPriceToUpcomingWithoutPrice_Returns422(t *testing.T) {
+	repo := &fakeRepository{updateFn: func(string, string, catalog.UpdateFields) (catalog.UpdateResult, error) {
+		t.Fatal("repository must not be called without a price to apply")
+		return catalog.UpdateResult{}, nil
+	}}
+	h := httpapi.NewUpdateServiceHandler(catalog.NewService(repo))
+
+	req := requestWithServiceID(http.MethodPatch, "/api/v1/private/services/8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4",
+		[]byte(`{"name":"Otro","applyPriceToUpcoming":true}`), "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
 func TestUpdateServiceHandler_UnknownField_Returns400(t *testing.T) {
 	repo := &fakeRepository{updateFn: func(string, string, catalog.UpdateFields) (catalog.UpdateResult, error) {
 		t.Fatal("repository must not be called for an unknown field")

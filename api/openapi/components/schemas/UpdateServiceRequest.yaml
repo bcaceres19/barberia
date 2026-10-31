@@ -1,15 +1,17 @@
 # Cuerpo de PATCH /private/services/{serviceId} (CA-022-04, CA-022-05).
 # Cerrado y limitado a los campos de catálogo de HU-022: nunca isActive,
-# currency, asignaciones a barberos, citas ni ningún alcance de propagación
-# hacia una cita existente (RN-SER-04, DEC-067). Edición PARCIAL: cada
+# currency ni asignaciones a barberos. La única propagación hacia citas
+# existentes es la que el barbero pide con `applyPriceToUpcoming` (HU-029,
+# DEC-004); por defecto nada cambia (RN-SER-04, DEC-067). Edición PARCIAL: cada
 # campo es opcional, pero un objeto vacío `{}` se rechaza (ningún campo que
 # editar).
 type: object
 description: >
   Edición parcial de un servicio del catálogo de la barbería activa. Solo
-  cambia `service`: ninguna operación de esta HU acepta alcance sobre citas
-  ni simula propagación a recursos futuros (RN-SER-04). Al menos uno de los
-  cuatro campos debe estar presente.
+  cambia `service`, salvo que el barbero pida `applyPriceToUpcoming`
+  (HU-029, DEC-004): entonces el precio nuevo también se copia a sus turnos
+  futuros confirmados (RN-SER-04). Al menos uno de los cuatro campos de
+  catálogo debe estar presente.
 properties:
   name:
     type: string
@@ -49,4 +51,16 @@ properties:
       que cero. Formato inválido, negativo o igual a cero responde `422`.
     examples:
       - "50000.00"
+  applyPriceToUpcoming:
+    type: boolean
+    default: false
+    description: >
+      Con `true` (`HU-029`, `DEC-004`), el `price` nuevo se copia también a
+      los turnos `confirmed` futuros de este servicio, en la misma
+      transacción, y cada turno suma un evento `appointment_service_changed`
+      con el precio anterior y el nuevo a nombre de quien edita. Sin él (valor
+      por defecto) ninguna cita cambia (`RN-SER-04`). Exige `price`; sin él
+      responde `422`. No avisa al cliente: la notificación es de B5.
+    examples:
+      - true
 additionalProperties: false

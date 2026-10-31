@@ -94,7 +94,7 @@
 openapi: 3.1.2
 info:
   title: API del sistema de agenda para barberías
-  version: 0.47.5
+  version: 0.48.0
   description: >
     Contrato HTTP entre apps/web y apps/api. Tres audiencias comparten este
     documento: /api/v1/public (reserva sin sesión), /api/v1/customer
@@ -325,6 +325,8 @@ components:
       $ref: './components/schemas/UpdateBarberRequest.yaml'
     ServiceResponse:
       $ref: './components/schemas/ServiceResponse.yaml'
+    ServiceUpdateResponse:
+      $ref: './components/schemas/ServiceUpdateResponse.yaml'
     ServiceListResponse:
       $ref: './components/schemas/ServiceListResponse.yaml'
     CreateServiceRequest:

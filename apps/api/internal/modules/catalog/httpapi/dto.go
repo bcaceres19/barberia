@@ -82,4 +82,14 @@ type UpdateServiceRequest struct {
 	Description     *string `json:"description,omitempty"`
 	DurationMinutes *int    `json:"durationMinutes,omitempty"`
 	Price           *string `json:"price,omitempty"`
+	// ApplyPriceToUpcoming (HU-029, DEC-004): copia el precio nuevo a los
+	// turnos confirmados futuros del servicio. Exige `price`.
+	ApplyPriceToUpcoming bool `json:"applyPriceToUpcoming,omitempty"`
+}
+
+// ServiceUpdateResponse es el 200 de PATCH /private/services/{serviceId}: el
+// servicio guardado y cuántos turnos futuros adoptaron el precio nuevo.
+type ServiceUpdateResponse struct {
+	ServiceResponse
+	UpcomingAppointmentsUpdated int `json:"upcomingAppointmentsUpdated"`
 }

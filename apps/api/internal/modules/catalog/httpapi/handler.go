@@ -275,9 +275,12 @@ func (h *UpdateServiceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		Description:     req.Description,
 		DurationMinutes: req.DurationMinutes,
 		Price:           req.Price,
+
+		ApplyPriceToUpcoming: req.ApplyPriceToUpcoming,
+		ActorStaffUserID:     principal.StaffUserID,
 	}
 
-	svc, err := h.service.Update(r.Context(), principal.BarbershopID, serviceID, raw)
+	outcome, err := h.service.UpdateService(r.Context(), principal.BarbershopID, serviceID, raw)
 	if err != nil {
 		httpserver.WriteProblem(w, httpserver.Translate(err, requestID))
 		return
@@ -285,7 +288,10 @@ func (h *UpdateServiceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(newServiceResponse(svc))
+	_ = json.NewEncoder(w).Encode(ServiceUpdateResponse{
+		ServiceResponse:             newServiceResponse(outcome.Service),
+		UpcomingAppointmentsUpdated: outcome.UpcomingAppointmentsUpdated,
+	})
 }
 
 // GetServiceDeactivationImpactHandler expone

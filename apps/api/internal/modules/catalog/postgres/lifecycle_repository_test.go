@@ -440,3 +440,173 @@ func TestCountFutureAppointments_CountsOnlyConfirmedFutureOfThatServiceAndTenant
 		t.Fatalf("deactivating must not touch appointments: count=%d err=%v", after, err)
 	}
 }
+
+// --- HU-029 / DEC-004: aplicar el precio nuevo a los turnos futuros ---------
+
+const staffPriceE = "eeeeee01-eeee-4eee-8eee-eeeeeeeeee01"
+
+func appointmentPrice(t *testing.T, db *database.DB, shop database.BarbershopID, appointmentID string) string {
+	t.Helper()
+	var price string
+	err := db.InTenantTx(context.Background(), shop, func(ctx context.Context, q database.Queries) error {
+		return q.QueryRow(ctx, `SELECT price_amount_snapshot::text FROM appointment WHERE id = $1`, appointmentID).Scan(&price)
+	})
+	if err != nil {
+		t.Fatalf("appointmentPrice: %v", err)
+	}
+	return price
+}
+
+func appointmentIDs(t *testing.T, db *database.DB, shop database.BarbershopID, serviceID string) []string {
+	t.Helper()
+	var ids []string
+	err := db.InTenantTx(context.Background(), shop, func(ctx context.Context, q database.Queries) error {
+		rows, err := q.Query(ctx, `SELECT id::text FROM appointment WHERE service_id = $1 ORDER BY starts_at`, serviceID)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var id string
+			if err := rows.Scan(&id); err != nil {
+				return err
+			}
+			ids = append(ids, id)
+		}
+		return rows.Err()
+	})
+	if err != nil {
+		t.Fatalf("appointmentIDs: %v", err)
+	}
+	return ids
+}
+
+func priceHistory(t *testing.T, db *database.DB, shop database.BarbershopID, appointmentID string) (events int, previous, next string) {
+	t.Helper()
+	err := db.InTenantTx(context.Background(), shop, func(ctx context.Context, q database.Queries) error {
+		if err := q.QueryRow(ctx,
+			`SELECT count(*) FROM appointment_history WHERE appointment_id = $1 AND event_type = 'appointment_service_changed'`,
+			appointmentID).Scan(&events); err != nil {
+			return err
+		}
+		if events == 0 {
+			return nil
+		}
+		return q.QueryRow(ctx,
+			`SELECT c.previous_value, c.new_value
+			   FROM appointment_history_change c
+			   JOIN appointment_history h ON h.barbershop_id = c.barbershop_id AND h.id = c.history_id
+			  WHERE h.appointment_id = $1 AND c.field_name = 'price_amount_snapshot'`,
+			appointmentID).Scan(&previous, &next)
+	})
+	if err != nil {
+		t.Fatalf("priceHistory: %v", err)
+	}
+	return events, previous, next
+}
+
+func TestUpdate_ApplyPriceToUpcoming_ChangesOnlyConfirmedFutureOfThatService(t *testing.T) {
+	db := setupTestDB(t)
+	repo := newRepository(db)
+	suffix := uniqueSuffix(t)
+
+	target := createService(t, repo, shopE, "Precio a futuras "+suffix)
+	other := createService(t, repo, shopE, "Precio otro "+suffix)
+	barber := createBarberFixture(t, db, shopE, "Barbero precio "+suffix)
+	customer := createCustomerFixture(t, db, shopE)
+	now := time.Now()
+
+	insertAppointmentFixture(t, db, shopE, barber.ID, target.ID, customer, "confirmed", now.Add(48*time.Hour))
+	insertAppointmentFixture(t, db, shopE, barber.ID, target.ID, customer, "confirmed", now.Add(72*time.Hour))
+	insertAppointmentFixture(t, db, shopE, barber.ID, target.ID, customer, "confirmed", now.Add(-48*time.Hour))
+	insertAppointmentFixture(t, db, shopE, barber.ID, target.ID, customer, "cancelled_by_barber", now.Add(96*time.Hour))
+	insertAppointmentFixture(t, db, shopE, barber.ID, other.ID, customer, "confirmed", now.Add(120*time.Hour))
+	ids := appointmentIDs(t, db, shopE, target.ID)
+	otherIDs := appointmentIDs(t, db, shopE, other.ID)
+
+	newPrice := int64(3_500_000) // 35000.00
+	result, err := repo.Update(context.Background(), string(shopE), target.ID, catalog.UpdateFields{
+		PriceCents: &newPrice, ApplyPriceToUpcoming: true, ActorStaffUserID: staffPriceE,
+	})
+	if err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+	if !result.Found || result.UpcomingPricesUpdated != 2 {
+		t.Fatalf("expected found and 2 upcoming appointments updated, got %+v", result)
+	}
+
+	// ids viene ordenado por inicio: pasada, 48 h, 72 h, cancelada (96 h).
+	wantPrices := []string{"20000.00", "35000.00", "35000.00", "20000.00"}
+	if len(ids) != len(wantPrices) {
+		t.Fatalf("expected %d appointments, got %d", len(wantPrices), len(ids))
+	}
+	for i, id := range ids {
+		if got := appointmentPrice(t, db, shopE, id); got != wantPrices[i] {
+			t.Errorf("appointment %d: expected price %s, got %s", i, wantPrices[i], got)
+		}
+	}
+	if got := appointmentPrice(t, db, shopE, otherIDs[0]); got != "20000.00" {
+		t.Errorf("another service's appointment must keep its price, got %s", got)
+	}
+
+	events, previous, next := priceHistory(t, db, shopE, ids[1])
+	if events != 1 || previous != "20000.00" || next != "35000.00" {
+		t.Errorf("expected one price event 20000.00 -> 35000.00, got %d %s -> %s", events, previous, next)
+	}
+	if events, _, _ := priceHistory(t, db, shopE, ids[0]); events != 0 {
+		t.Errorf("a past appointment must get no history event, got %d", events)
+	}
+}
+
+func TestUpdate_WithoutApplyPriceToUpcoming_LeavesAppointmentsUntouched(t *testing.T) {
+	db := setupTestDB(t)
+	repo := newRepository(db)
+	suffix := uniqueSuffix(t)
+
+	svc := createService(t, repo, shopE, "Precio sin propagar "+suffix)
+	barber := createBarberFixture(t, db, shopE, "Barbero sin propagar "+suffix)
+	customer := createCustomerFixture(t, db, shopE)
+	insertAppointmentFixture(t, db, shopE, barber.ID, svc.ID, customer, "confirmed", time.Now().Add(48*time.Hour))
+
+	newPrice := int64(4_000_000)
+	result, err := repo.Update(context.Background(), string(shopE), svc.ID, catalog.UpdateFields{PriceCents: &newPrice})
+	if err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+	if result.UpcomingPricesUpdated != 0 {
+		t.Fatalf("expected no appointments updated, got %d", result.UpcomingPricesUpdated)
+	}
+	id := appointmentIDs(t, db, shopE, svc.ID)[0]
+	if got := appointmentPrice(t, db, shopE, id); got != "20000.00" {
+		t.Fatalf("RN-SER-04: the appointment must keep its price, got %s", got)
+	}
+	if events, _, _ := priceHistory(t, db, shopE, id); events != 0 {
+		t.Fatalf("expected no history event, got %d", events)
+	}
+}
+
+func TestUpdate_ApplyPriceToUpcoming_NeverCrossesTenants(t *testing.T) {
+	db := setupTestDB(t)
+	repo := newRepository(db)
+	suffix := uniqueSuffix(t)
+
+	svc := createService(t, repo, shopE, "Precio aislado "+suffix)
+	barber := createBarberFixture(t, db, shopE, "Barbero aislado "+suffix)
+	customer := createCustomerFixture(t, db, shopE)
+	insertAppointmentFixture(t, db, shopE, barber.ID, svc.ID, customer, "confirmed", time.Now().Add(48*time.Hour))
+
+	newPrice := int64(5_000_000)
+	result, err := repo.Update(context.Background(), string(shopF), svc.ID, catalog.UpdateFields{
+		PriceCents: &newPrice, ApplyPriceToUpcoming: true, ActorStaffUserID: staffPriceE,
+	})
+	if err != nil {
+		t.Fatalf("Update from another tenant: %v", err)
+	}
+	if result.Found || result.UpcomingPricesUpdated != 0 {
+		t.Fatalf("another tenant must neither find the service nor change its appointments, got %+v", result)
+	}
+	id := appointmentIDs(t, db, shopE, svc.ID)[0]
+	if got := appointmentPrice(t, db, shopE, id); got != "20000.00" {
+		t.Fatalf("the appointment of shop E must keep its price, got %s", got)
+	}
+}

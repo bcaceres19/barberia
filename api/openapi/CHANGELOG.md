@@ -4,6 +4,23 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Ver [`docs/06-api/estandar-openapi.md`](../../docs/06-api/estandar-openapi.md)
 sección 18 para qué cuenta como cambio compatible o incompatible.
 
+## 0.48.0 · 2026-10-31
+
+### Agregado
+
+- `applyPriceToUpcoming` (booleano, por defecto `false`) en `UpdateServiceRequest`,
+  `HU-029`/`DEC-004`: con `price`, copia el precio nuevo a los turnos `confirmed`
+  futuros del servicio en la misma transacción y deja un evento
+  `appointment_service_changed` por turno. Sin `price` responde `422`.
+- `ServiceUpdateResponse` (el `ServiceResponse` más `upcomingAppointmentsUpdated`)
+  como cuerpo del `200` de `PATCH /private/services/{serviceId}`.
+
+### Compatibilidad
+
+- Compatible: el campo nuevo de la solicitud es opcional y el de la respuesta se
+  suma a la representación anterior; sin `applyPriceToUpcoming` el comportamiento
+  no cambia.
+
 ## 0.47.5 · 2026-10-31
 
 ### Corregido

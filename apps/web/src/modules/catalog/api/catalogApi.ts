@@ -98,9 +98,12 @@ export async function createService(
   }
 }
 
+// applyPriceToUpcoming (HU-029, DEC-004): copia el precio nuevo a los turnos futuros
+// confirmados del servicio; por defecto ninguno cambia (RN-SER-04).
 export async function updateService(
   serviceId: string,
   input: ServiceInput,
+  applyPriceToUpcoming = false,
 ): Promise<UpdateServiceOutcome> {
   try {
     const { data, response } = await httpClient.PATCH('/private/services/{serviceId}', {
@@ -110,11 +113,16 @@ export async function updateService(
         description: input.description.trim(),
         durationMinutes: input.durationMinutes,
         price: input.price,
+        applyPriceToUpcoming,
       },
     })
 
     if (response.ok && data) {
-      return { kind: 'success', service: toService(data) }
+      return {
+        kind: 'success',
+        service: toService(data),
+        upcomingAppointmentsUpdated: data.upcomingAppointmentsUpdated,
+      }
     }
 
     switch (response.status) {
