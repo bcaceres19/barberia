@@ -1216,7 +1216,7 @@ const dayChangeMarkerPercent = computed(() => {
    componentes compartidos, porque el resto de sus usos (auth-eventos)
    sí está sobre superficie clara y necesita el latón oscuro. */
 .daily-agenda-page__date-nav :deep(.base-button--ghost) {
-  --btn-height: 40px;
+  --btn-height: var(--control-height);
   color: var(--color-brand-accent-surface);
   border-color: color-mix(in srgb, var(--color-brand-accent-surface) 50%, transparent);
   border-bottom-color: var(--color-brand-accent-surface);
