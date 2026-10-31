@@ -103,6 +103,30 @@ describe('texto de estado sobre Tinta (tokens.css)', () => {
   })
 })
 
+describe('palabra de estado de BaseAlert (tokens.css)', () => {
+  const tokens = readFileSync(resolve(__dirname, '../../../styles/tokens.css'), 'utf-8')
+  const root = /:root \{([\s\S]*?)\n\}/.exec(tokens)?.[1] ?? ''
+  const alert = readFileSync(resolve(__dirname, '../../ui/BaseAlert.vue'), 'utf-8')
+
+  it('usa un latón que los paneles sobre tinta no reasignan', () => {
+    expect(root).toContain('--color-accent-brass-on-surface: var(--color-accent-brass);')
+    expect(/\.base-alert__status \{[^}]*var\(--color-accent-brass-on-surface\)/.test(alert)).toBe(
+      true,
+    )
+  })
+
+  it.each(['success', 'warning', 'danger', 'info'])(
+    'el latón se lee (AA) sobre la superficie de %s',
+    (variant) => {
+      const surface = new RegExp(`--color-${variant}-surface: (#[0-9a-f]{6});`).exec(root)?.[1]
+      expect(surface).toBeDefined()
+      expect(contrastRatio(accentByKey('brass').ivory, surface as string)).toBeGreaterThanOrEqual(
+        AA_TEXT,
+      )
+    },
+  )
+})
+
 describe('tema Marfil (tokens.css)', () => {
   const tokens = readFileSync(resolve(__dirname, '../../../styles/tokens.css'), 'utf-8')
   const block = /:root\[data-app-theme='ivory'\] \{([^}]*)\}/.exec(tokens)?.[1] ?? ''

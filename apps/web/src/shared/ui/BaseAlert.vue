@@ -281,7 +281,9 @@ const style = computed(() => ({
 
 /* Palabra de estado (Error/Atención/Nota/Confirmación): versalitas de
    latón sobre el título, misma familia tipográfica que el rótulo de
-   BaseInput y las ranuras de OtpInput. */
+   BaseInput y las ranuras de OtpInput. Se pinta sobre la superficie teñida
+   de la propia alerta, así que usa el latón fijo y no el que un panel sobre
+   tinta reasigna a su latón claro (2,49:1 sobre el amarillo de «Atención»). */
 .base-alert__status {
   margin: 0 0 var(--space-1) 0;
   font-family: var(--font-sans);
@@ -289,7 +291,7 @@ const style = computed(() => ({
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-accent-brass);
+  color: var(--color-accent-brass-on-surface);
 }
 
 .base-alert__title {
