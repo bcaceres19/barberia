@@ -834,6 +834,14 @@
   height: max(100dvh, 560px);
 }
 
+/* Con las reseñas del barbero abiertas el contenido ya no cabe en un alto fijo (F-RQ-PB-02,
+   #446): la lista se recortaba y el pie se pintaba sobre «Continuar». Sin alto fijo la página
+   crece con su contenido y la barra de acción, `sticky`, sigue al final. */
+.pb-layout:has(.pb-page--scroll-choices .pb-reviews__panel) {
+  height: auto;
+  min-height: 100dvh;
+}
+
 /* Horario: el `min-height` de la lista no se propaga a la página (`min-height: 0`), así que
    en una ventana baja la lista desbordaba y tapaba el pie. El suelo de alto del contenedor
    (cabecera + título + fechas + navegación + dos filas de horas + pie) hace que, por debajo

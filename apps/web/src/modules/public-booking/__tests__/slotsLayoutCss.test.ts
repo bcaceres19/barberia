@@ -29,6 +29,12 @@ describe('pantalla de horario público: layout en ventanas bajas', () => {
     expect(fixed).not.toContain('scroll-choices')
   })
 
+  it('con las reseñas del barbero abiertas la página crece con su contenido (sin alto fijo)', () => {
+    const open = rule('.pb-layout:has(.pb-page--scroll-choices .pb-reviews__panel)')
+    expect(open).toMatch(/height:\s*auto/)
+    expect(open).toMatch(/min-height:\s*100dvh/)
+  })
+
   it('el resumen de la reserva tiene su propio suelo de alto, así el pie no tapa «Confirmar turno»', () => {
     expect(rule('.pb-layout:has(.pb-page--scroll-form .customer-details__summary-body)')).toMatch(
       /height:\s*max\(100dvh,/,
