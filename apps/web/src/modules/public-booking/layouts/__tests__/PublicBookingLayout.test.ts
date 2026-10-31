@@ -63,6 +63,8 @@ async function mountAt(path: string, routes: RouteRecordRaw[] = stubbedRoutes())
 const STEP_LABELS = ['Servicio', 'Barbero', 'Horario', 'Tus datos']
 const SERVICE = '8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4'
 const BARBER = 'a1111111-1111-1111-1111-111111111111'
+// La ruta de «Tus datos» descarta franjas pasadas (#436): siempre una futura.
+const FUTURE_START = new Date(Date.now() + 24 * 3600 * 1000).toISOString()
 
 describe('PublicBookingLayout', () => {
   it('on the entry shows no progress, no back link and no step caption', async () => {
@@ -106,7 +108,7 @@ describe('PublicBookingLayout', () => {
 
   it('completes the progress and drops the back link once the booking is confirmed', async () => {
     const { wrapper } = await mountAt(
-      `/reservar/b/servicios/${SERVICE}/barbero/${BARBER}/horario/2026-09-15T19:00:00Z/cliente`,
+      `/reservar/b/servicios/${SERVICE}/barbero/${BARBER}/horario/${FUTURE_START}/cliente`,
     )
     expect(wrapper.find('.pb-header__caption').text()).toBe('Confirmado')
     expect(wrapper.find('.pb-back').exists()).toBe(false)

@@ -16,6 +16,9 @@ const registeredPaths = [
   ...publicBookingRoutes.flatMap((route) => (route.children ?? []).map((child) => child.path)),
 ]
 
+// Una franja futura: la ruta de «Tus datos» descarta las pasadas (F-RQ-02, #436).
+const futureStart = new Date(Date.now() + 24 * 3600 * 1000).toISOString()
+
 function buildRouter() {
   return createRouter({
     history: createMemoryHistory(),
@@ -32,7 +35,7 @@ describe('publicBookingRoutes', () => {
       ['/reservar/a/servicios', 1],
       ['/reservar/a/servicios/s/barbero', 2],
       ['/reservar/a/servicios/s/barbero/b/horario', 3],
-      ['/reservar/a/servicios/s/barbero/b/horario/2026-09-15T19:00:00Z/cliente', 4],
+      [`/reservar/a/servicios/s/barbero/b/horario/${futureStart}/cliente`, 4],
     ]
     for (const [path, step] of expected) {
       await router.push(path)
@@ -108,7 +111,7 @@ describe('publicBookingRoutes', () => {
   it('resolves the customer details route with the four params as props, without any session guard', async () => {
     const router = buildRouter()
     await router.push(
-      '/reservar/barberia-ejemplo/servicios/8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4/barbero/a1111111-1111-1111-1111-111111111111/horario/2026-09-20T14%3A30%3A00Z/cliente',
+      `/reservar/barberia-ejemplo/servicios/8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4/barbero/a1111111-1111-1111-1111-111111111111/horario/${encodeURIComponent(futureStart)}/cliente`,
     )
     await router.isReady()
     expect(router.currentRoute.value.name).toBe('reserva-publica-cliente')
@@ -116,6 +119,18 @@ describe('publicBookingRoutes', () => {
     expect(router.currentRoute.value.params.slug).toBe('barberia-ejemplo')
     expect(router.currentRoute.value.params.serviceId).toBe('8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4')
     expect(router.currentRoute.value.params.barberId).toBe('a1111111-1111-1111-1111-111111111111')
-    expect(router.currentRoute.value.params.startsAt).toBe('2026-09-20T14:30:00Z')
+    expect(router.currentRoute.value.params.startsAt).toBe(futureStart)
   })
+
+  // F-RQ-02 (#436)
+  it.each(['no-es-fecha', '2020-01-01T15:00:00Z'])(
+    'sends an unreadable or past startsAt (%s) back to the schedule instead of the form',
+    async (startsAt) => {
+      const router = buildRouter()
+      await router.push(`/reservar/a/servicios/s/barbero/b/horario/${startsAt}/cliente`)
+      const current = router.currentRoute.value
+      expect(current.name).toBe('reserva-publica-horario')
+      expect(current.params).toMatchObject({ slug: 'a', serviceId: 's', barberId: 'b' })
+    },
+  )
 })

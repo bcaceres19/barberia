@@ -17,9 +17,9 @@
 // `startsAt` como props del componente, no vía `useRoute()`: la página no
 // depende del router para sus propios parámetros, lo que la hace
 // verificable en aislamiento (component tests). `startsAt` viaja en la URL
-// sin interpretarse en esta página (HU-096 no persiste ni revalida la
-// franja, HU-097 lo hará): solo se conserva para que la confirmación
-// pública, cuando exista, reciba el contexto completo sin pedirlo de nuevo.
+// sin que esta página revalide la franja (lo hace el servidor al confirmar, HU-097): solo se
+// conserva para que la confirmación reciba el contexto completo. La ruta únicamente descarta
+// un valor ilegible o ya pasado (`beforeEnter`).
 //
 // Las cinco pantallas son hijas de un único cascarón (`PublicBookingLayout`):
 // el fondo, el progreso y la transición entre pasos persisten mientras la
@@ -28,6 +28,7 @@
 // `router.push({ name })` cambia. `meta.bookingStep` indica el paso del
 // asistente (1-4); la entrada no lo tiene porque aún no es un paso.
 import type { RouteRecordRaw } from 'vue-router'
+import { isBookableStart } from './model/bookableStart'
 
 export const publicBookingRoutes: RouteRecordRaw[] = [
   {
@@ -67,6 +68,20 @@ export const publicBookingRoutes: RouteRecordRaw[] = [
         component: () => import('./pages/PublicCustomerDetailsPage.vue'),
         props: true,
         meta: { bookingStep: 4 },
+        // Un `startsAt` ilegible o pasado (enlace viejo, URL tocada) devuelve al horario en vez
+        // de abrir un formulario que acabaría en «Invalid Date» o en un falso «horario ocupado».
+        beforeEnter: (to) =>
+          isBookableStart(to.params.startsAt)
+            ? true
+            : {
+                name: 'reserva-publica-horario',
+                params: {
+                  slug: to.params.slug,
+                  serviceId: to.params.serviceId,
+                  barberId: to.params.barberId,
+                },
+                replace: true,
+              },
       },
     ],
   },
