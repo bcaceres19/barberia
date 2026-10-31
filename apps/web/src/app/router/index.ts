@@ -12,6 +12,7 @@ import { publicBookingRoutes } from '@/modules/public-booking'
 import { schedulesNavItems, schedulesPrivateShellChildRoutes } from '@/modules/schedules'
 import { settingsNavItems, settingsPrivateShellChildRoutes } from '@/modules/settings'
 import { staffNavItems, staffPrivateShellChildRoutes } from '@/modules/staff'
+import { installChunkLoadRecovery } from './chunkLoadRecovery'
 import { installProfileRedirect } from './profileGuard'
 
 // Cada ruta se carga de forma diferida (docs/04-arquitectura/frontend.md):
@@ -92,3 +93,6 @@ export const router = createRouter({
 // Perfil de barbero individual (DEC-115): las rutas que ese perfil retira se desvían a
 // un destino válido (ver profileGuard.ts).
 installProfileRedirect(router)
+
+// Sin red, la descarga diferida de una pantalla falla: se avisa y se puede reintentar.
+installChunkLoadRecovery(router)
