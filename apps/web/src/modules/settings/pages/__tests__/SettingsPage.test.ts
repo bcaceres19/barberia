@@ -286,7 +286,7 @@ describe('SettingsPage', () => {
 
       // Lo guardado no se vuelve a enviar, lo fallido sigue pendiente y escrito.
       expect(updateBarbershopNameMock).toHaveBeenCalledWith('Nuevo')
-      expect(wrapper.text()).toContain('No pudimos conectar')
+      expect(toastState.items.map((item) => item.title)).toContain('No pudimos conectar')
       expect(wrapper.get('.save-bar').text()).toContain('Marca y vocabulario')
       expect(wrapper.get('.save-bar').text()).not.toContain('Datos básicos')
       expect(input(wrapper, 'businessTerm').value).toBe('estudio')
@@ -299,10 +299,47 @@ describe('SettingsPage', () => {
 
       await submit(wrapper)
 
-      expect(wrapper.text()).toContain('No pudimos conectar')
+      expect(toastState.items.map((item) => item.title)).toContain('No pudimos conectar')
       expect(updateBarbershopNameMock).not.toHaveBeenCalled()
       expect(input(wrapper, 'name').value).toBe('Nombre editado sin guardar')
       expect(wrapper.find('.save-bar').exists()).toBe(true)
+    })
+
+    // HAL-SHOP-01 (#427): una alerta al inicio del formulario quedaba fuera de pantalla en
+    // móvil; DEC-095 manda avisar este fallo como toast con «Reintentar».
+    it('announces a connection failure as a toast, not as an inline alert out of view', async () => {
+      const wrapper = await mountReady()
+      await wrapper.get('input[name="name"]').setValue('Nombre editado')
+      saveMock.mockResolvedValueOnce({ kind: 'network-error' })
+
+      await submit(wrapper)
+
+      expect(wrapper.find('.settings-page__form [role="alert"]').exists()).toBe(false)
+      const [toastItem] = toastState.items
+      expect(toastItem).toMatchObject({ variant: 'warning', title: 'No pudimos conectar' })
+      expect(toastItem?.action?.label).toBe('Reintentar')
+    })
+
+    it('announces an unexpected failure as an error toast and retries the save from it', async () => {
+      const wrapper = await mountReady()
+      await wrapper.get('input[name="name"]').setValue('Nombre editado')
+      saveMock.mockResolvedValueOnce({ kind: 'unexpected-error' })
+
+      await submit(wrapper)
+
+      const [toastItem] = toastState.items
+      expect(toastItem).toMatchObject({ variant: 'danger', title: 'Ocurrió un error inesperado' })
+      expect(wrapper.find('.settings-page__form [role="alert"]').exists()).toBe(false)
+
+      saveMock.mockResolvedValueOnce({
+        kind: 'success',
+        settings: { ...loadedSettings, name: 'Nombre editado' },
+      })
+      toastItem?.action?.run()
+      await flushPromises()
+
+      expect(saveMock).toHaveBeenCalledTimes(2)
+      expect(wrapper.find('.save-bar').exists()).toBe(false)
     })
 
     it('on a validation-error for the basic data, keeps the typed values and never updates the header', async () => {
