@@ -405,6 +405,9 @@ describe('PublicCustomerDetailsPage', () => {
     expect(isConflictOpen()).toBe(true)
     expect(conflictDialog()!.getAttribute('role')).toBe('dialog')
     expect(conflictDialog()!.textContent).toContain('Ese horario se acaba de ocupar')
+    // F-RQ-03 (#444): la franja pudo quedar bloqueada y no reservada; no se atribuye a nadie.
+    expect(conflictDialog()!.textContent).toContain('ya no están disponibles')
+    expect(conflictDialog()!.textContent).not.toContain('Alguien reservó')
     // Sin salida lateral: ni botón de cerrar, y el aviso ya no vive en la hoja.
     expect(conflictDialog()!.querySelector('.base-dialog__close')).toBeNull()
     expect(wrapper.find('.base-alert').exists()).toBe(false)
