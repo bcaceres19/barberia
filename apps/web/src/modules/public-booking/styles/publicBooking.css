@@ -655,6 +655,10 @@
 
 .pb-days {
   display: flex;
+  /* Alto natural: en la pantalla de horario (columna de 100dvh) la tira es un ítem
+     flexible y se contraía a ~16 px con un día completo (CA-095-05, PSLOTS-F-01).
+     Quien cede alto sobrante es la lista de horas. */
+  flex: none;
   gap: var(--space-2);
   padding: var(--space-1) var(--pb-gutter) var(--space-3);
   margin: var(--space-5) calc(var(--pb-gutter) * -1) 0;
@@ -819,10 +823,23 @@
    la página vuelve a desplazarse como antes. El relleno interior deja sitio
    al desplazamiento y al contorno de foco, que de otro modo el recorte de
    `overflow` cortaría. */
-.pb-layout:has(.pb-page--scroll-slots),
 .pb-layout:has(.pb-page--scroll-choices),
 .pb-layout:has(.pb-page--scroll-form) {
   height: 100dvh;
+}
+
+/* Horario: el `min-height` de la lista no se propaga a la página (`min-height: 0`), así que
+   en una ventana baja la lista desbordaba y tapaba el pie. El suelo de alto del contenedor
+   (cabecera + título + fechas + navegación + dos filas de horas + pie) hace que, por debajo
+   de él, la página vuelva a desplazarse en vez de solaparse (PSLOTS-F-01). */
+.pb-layout:has(.pb-page--scroll-slots) {
+  height: max(100dvh, 800px);
+}
+
+@media (min-width: 768px) {
+  .pb-layout:has(.pb-page--scroll-slots) {
+    height: max(100dvh, 760px);
+  }
 }
 
 .pb-page--scroll-slots,
