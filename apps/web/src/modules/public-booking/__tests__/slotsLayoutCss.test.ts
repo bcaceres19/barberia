@@ -1,4 +1,4 @@
-// CA-095-05 (PSLOTS-F-01, issue #415) y PCONF-F-02 (issue #417): jsdom no calcula layout, así que la regresión se fija
+// CA-095-05 (PSLOTS-F-01, issue #415), PCONF-F-02 (#417) y PC-F1 (#419): jsdom no calcula layout, así que la regresión se fija
 // sobre las reglas del CSS. La tira de fechas dejó de contraerse a ~16 px (chips de 24 px) y
 // la lista de horas dejó de desbordar sobre el pie en ventanas bajas.
 import { readFileSync } from 'node:fs'
@@ -22,12 +22,11 @@ describe('pantalla de horario público: layout en ventanas bajas', () => {
     expect(rule('.pb-layout:has(.pb-page--scroll-slots)')).toMatch(/height:\s*max\(100dvh,/)
   })
 
-  it('el horario ya no comparte la regla de alto fijo de 100dvh', () => {
-    const shared = rule(
-      '.pb-layout:has(.pb-page--scroll-choices),\n.pb-layout:has(.pb-page--scroll-form)',
-    )
-    expect(shared).toMatch(/height:\s*100dvh/)
-    expect(shared).not.toContain('scroll-slots')
+  it('solo el formulario sigue con alto fijo de 100dvh; horario y listas tienen suelo propio', () => {
+    const fixed = rule('.pb-layout:has(.pb-page--scroll-form)')
+    expect(fixed).toMatch(/height:\s*100dvh/)
+    expect(fixed).not.toContain('scroll-slots')
+    expect(fixed).not.toContain('scroll-choices')
   })
 
   it('el resumen de la reserva tiene su propio suelo de alto, así el pie no tapa «Confirmar turno»', () => {
@@ -40,5 +39,9 @@ describe('pantalla de horario público: layout en ventanas bajas', () => {
     expect(rule('.pb-layout:has(.pb-page--scroll-form .customer-details__fields)')).toMatch(
       /height:\s*max\(100dvh,/,
     )
+  })
+
+  it('Servicio y Barbero tienen suelo de alto: con zoom 150–200 % el pie no tapa la lista', () => {
+    expect(rule('.pb-layout:has(.pb-page--scroll-choices)')).toMatch(/height:\s*max\(100dvh,/)
   })
 })
