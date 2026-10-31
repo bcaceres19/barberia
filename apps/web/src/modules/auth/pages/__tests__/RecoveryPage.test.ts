@@ -94,7 +94,9 @@ describe('RecoveryPage', () => {
     await wrapper.get('form').trigger('submit')
     await flushPromises()
     expect(wrapper.text()).toContain('Paso 3 de 3')
-    expect(wrapper.text()).toContain('+57 *** *** 12')
+    // Se eligió Correo: solo ese destino, no el teléfono de la cuenta (DEC-092, CA-011-11).
+    expect(wrapper.text()).toContain('b***@c***.test')
+    expect(wrapper.text()).not.toContain('+57 *** *** 12')
 
     await wrapper.get('input[name="newPassword"]').setValue('contraseña-nueva-valida')
     await wrapper.get('input[name="confirmPassword"]').setValue('contraseña-nueva-valida')

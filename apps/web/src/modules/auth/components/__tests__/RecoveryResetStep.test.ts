@@ -41,11 +41,17 @@ async function fillAndSubmit(
 describe('RecoveryResetStep', () => {
   beforeEach(() => resetRecoveryPasswordMock.mockReset())
 
-  it('confirms the masked destination and explains the password policy before typing (CA-011-02, CA-011-06)', () => {
+  it('confirms the masked destination of the chosen email channel and explains the password policy before typing (CA-011-02, CA-011-06)', () => {
     const wrapper = mountStep()
-    expect(wrapper.text()).toContain('+57 *** *** 12')
-    expect(wrapper.text()).toContain('b***@c***.test')
+    expect(wrapper.text()).toContain('enviado a b***@c***.test')
     expect(wrapper.text()).toContain('entre 10 y 128 caracteres')
+  })
+
+  it('names only the channel the code went through: never the other contact (DEC-092, CA-011-11)', () => {
+    expect(mountStep().text()).not.toContain('+57 *** *** 12')
+    const whatsapp = mountStep(WHATSAPP_TARGET)
+    expect(whatsapp.text()).toContain('enviado a +57 *** *** 12')
+    expect(whatsapp.text()).not.toContain('b***@c***.test')
   })
 
   it('rejects a password equal to the email without calling the API', async () => {
