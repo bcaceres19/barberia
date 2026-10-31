@@ -166,6 +166,9 @@ function clickDialogButton(wrapper: VueWrapper, text: string) {
 describe('CatalogPage', () => {
   beforeEach(() => {
     fetchMock.mockReset()
+    // Tras crear, la pantalla vuelve a pedir la página actual (HALL-CAT-03): sin una respuesta
+    // preparada por la prueba, repite la lista básica.
+    fetchMock.mockResolvedValue({ kind: 'success', page: listPage(oneService) })
     createMock.mockReset()
     updateMock.mockReset()
     previewDeactivationMock.mockReset()
@@ -441,7 +444,7 @@ describe('CatalogPage', () => {
     expect(wrapper.text()).toContain('El precio debe ser mayor que cero.')
   })
 
-  it('on success, prepends the confirmed service once and closes the dialog', async () => {
+  it('on success, closes the dialog and refreshes list and footer from the server', async () => {
     const wrapper = await mountReady()
     await findButtonByText(wrapper, 'Agregar servicio').trigger('click')
     await flushPromises()
@@ -453,18 +456,56 @@ describe('CatalogPage', () => {
       kind: 'success',
       service: service('s-new', 'Nuevo Servicio'),
     })
+    // HALL-CAT-03: el recuento y las filas vienen del servidor, no de insertar a mano.
+    fetchMock.mockResolvedValueOnce({
+      kind: 'success',
+      page: listPage([...oneService, service('s-new', 'Nuevo Servicio')], {
+        total: 2,
+        totalPages: 1,
+      }),
+    })
     submitOpenDialog(wrapper)
+    await flushPromises()
+    await waitOutPageLoadHold()
     await flushPromises()
 
     expect(createMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1 }))
     expect(wrapper.findAll('li').length).toBe(2)
     expect(wrapper.text()).toContain('Nuevo Servicio')
+    expect(wrapper.text()).toContain('2 servicios')
     // DEC-095: la confirmación es un aviso emergente; la lista sigue siendo
     // el resultado persistente.
     expect(toastState.items.map((item) => [item.variant, item.title])).toEqual([
       ['success', 'Servicio creado'],
     ])
     expect(toastState.items[0].detail).toContain('Nuevo Servicio')
+  })
+
+  it('does not insert the created row by hand: the list is exactly what the server returns', async () => {
+    const wrapper = await mountReady(oneService, { pageSize: 1, total: 1, totalPages: 1 })
+    await findButtonByText(wrapper, 'Agregar servicio').trigger('click')
+    await flushPromises()
+    fillCreateForm(wrapper, 'Nuevo Servicio')
+    await flushPromises()
+
+    createMock.mockResolvedValueOnce({
+      kind: 'success',
+      service: service('s-new', 'Nuevo Servicio'),
+    })
+    // La fila nueva cae en la página 2 (orden por created_at): la 1 sigue con una sola fila.
+    fetchMock.mockResolvedValueOnce({
+      kind: 'success',
+      page: listPage(oneService, { pageSize: 1, total: 2, totalPages: 2 }),
+    })
+    submitOpenDialog(wrapper)
+    await flushPromises()
+    await waitOutPageLoadHold()
+    await flushPromises()
+
+    expect(wrapper.findAll('li').length).toBe(1)
+    expect(wrapper.text()).toContain('Página 1 de 2')
   })
 
   it('sends the same idempotency key across a submit and a network-error retry of the same logical attempt', async () => {

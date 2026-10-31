@@ -639,9 +639,11 @@ async function onSubmitCreate() {
 
   switch (outcome.kind) {
     case 'success':
-      services.value.unshift(outcome.service)
       isCreateOpen.value = false
       createStatus.value = 'idle'
+      // El servidor es quien ordena (created_at) y cuenta (DEC-103): insertar la fila a mano
+      // dejaba más filas que pageSize y un pie «N servicios · Página X de Y» obsoleto (HALL-CAT-03).
+      void load(currentPage.value)
       emit('service-created', outcome.service)
       toast.success('Servicio creado', {
         detail: `«${outcome.service.name}» ya aparece en tu catálogo.`,
