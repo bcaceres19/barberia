@@ -682,8 +682,40 @@ const editFieldErrors = ref<FormFieldErrors>({})
 const editStatus = ref<SaveStatus>('idle')
 const editAttempted = ref(false)
 
+// HU-029 (DEC-004): si el precio cambia y el servicio tiene turnos futuros, el barbero
+// elige si el precio nuevo también se aplica a esos turnos. Desmarcada por defecto: los
+// turnos conservan el precio con el que se agendaron (RN-SER-04). `null` = aún no se sabe
+// cuántos son (cargando o falló la consulta): la casilla se ofrece igual, sin el número.
+const editApplyToUpcoming = ref(false)
+const editUpcomingCount = ref<number | null>(null)
+let editImpactSeq = 0
+
+const editPriceChanged = computed(() => {
+  if (!editTarget.value) return false
+  const next = Number(editForm.value.price.trim())
+  return (
+    editForm.value.price.trim() !== '' &&
+    Number.isFinite(next) &&
+    next !== Number(editTarget.value.price)
+  )
+})
+const showApplyToUpcoming = computed(
+  () => editPriceChanged.value && (editUpcomingCount.value === null || editUpcomingCount.value > 0),
+)
+
+async function loadUpcomingCount(serviceId: string) {
+  const seq = ++editImpactSeq
+  const outcome = await previewDeactivation(serviceId)
+  // Una respuesta de un diálogo anterior no pisa la del servicio que se edita ahora.
+  if (seq !== editImpactSeq) return
+  editUpcomingCount.value = outcome.kind === 'success' ? outcome.affectedAppointments : null
+}
+
 function openEditDialog(service: Service) {
   editTarget.value = service
+  editApplyToUpcoming.value = false
+  editUpcomingCount.value = null
+  void loadUpcomingCount(service.id)
   editForm.value = {
     name: service.name,
     description: service.description ?? '',
@@ -743,12 +775,16 @@ async function onSubmitEdit() {
   if (hasFieldError(errors)) return
 
   editStatus.value = 'saving'
-  const outcome = await updateService(editTarget.value.id, {
-    name: editForm.value.name.trim(),
-    description: editForm.value.description,
-    durationMinutes: Number(editDurationRaw.value.trim()),
-    price: editForm.value.price.trim(),
-  })
+  const outcome = await updateService(
+    editTarget.value.id,
+    {
+      name: editForm.value.name.trim(),
+      description: editForm.value.description,
+      durationMinutes: Number(editDurationRaw.value.trim()),
+      price: editForm.value.price.trim(),
+    },
+    showApplyToUpcoming.value && editApplyToUpcoming.value,
+  )
 
   switch (outcome.kind) {
     case 'success': {
@@ -760,7 +796,10 @@ async function onSubmitEdit() {
       isEditOpen.value = false
       editStatus.value = 'idle'
       toast.success('Servicio actualizado', {
-        detail: `Guardamos los cambios de «${outcome.service.name}».`,
+        detail:
+          outcome.upcomingAppointmentsUpdated > 0
+            ? `Guardamos los cambios de «${outcome.service.name}» y el precio nuevo en ${outcome.upcomingAppointmentsUpdated} ${outcome.upcomingAppointmentsUpdated === 1 ? 'turno' : 'turnos'} futuros.`
+            : `Guardamos los cambios de «${outcome.service.name}».`,
       })
       return
     }
@@ -1643,6 +1682,25 @@ async function reloadAfterConflict(serviceId: string) {
           :class="{ 'catalog-page__edit-input--filled': !!editForm.price }"
           @update:model-value="onEditPriceInput"
         />
+
+        <label v-if="showApplyToUpcoming" class="catalog-page__apply-upcoming">
+          <input
+            v-model="editApplyToUpcoming"
+            type="checkbox"
+            class="catalog-page__apply-upcoming-box"
+            :disabled="editStatus === 'saving'"
+          />
+          <span>
+            <strong>Aplicar el precio nuevo a los turnos ya agendados</strong>
+            <small>
+              {{
+                editUpcomingCount === null
+                  ? 'Si no la marcas, los turnos futuros conservan el precio con el que se agendaron.'
+                  : `Hay ${editUpcomingCount} ${editUpcomingCount === 1 ? 'turno futuro' : 'turnos futuros'} de este servicio. Si no la marcas, conservan el precio con el que se agendaron.`
+              }}
+            </small>
+          </span>
+        </label>
 
         <div class="catalog-page__dialog-actions">
           <BaseButton type="button" variant="secondary" @click="isEditOpen = false">
@@ -2799,6 +2857,36 @@ async function reloadAfterConflict(serviceId: string) {
 .catalog-page__create-form > *,
 .catalog-page__edit-form > * {
   grid-column: 1 / -1;
+}
+
+/* HU-029: casilla de «aplicar el precio a los turnos ya agendados». */
+.catalog-page__apply-upcoming {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3, 0.75rem);
+  cursor: pointer;
+}
+
+.catalog-page__apply-upcoming-box {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.125rem;
+  accent-color: var(--color-accent, #b8955a);
+}
+
+.catalog-page__apply-upcoming span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.catalog-page__apply-upcoming {
+  color: var(--color-on-strong);
+}
+
+.catalog-page__apply-upcoming small {
+  color: var(--color-on-strong-muted);
 }
 
 .catalog-page__create-form > .catalog-page__form-half,

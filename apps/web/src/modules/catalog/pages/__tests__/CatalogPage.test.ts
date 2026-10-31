@@ -172,6 +172,8 @@ describe('CatalogPage', () => {
     createMock.mockReset()
     updateMock.mockReset()
     previewDeactivationMock.mockReset()
+    // Abrir la edición consulta cuántos turnos futuros tiene el servicio (HU-029).
+    previewDeactivationMock.mockResolvedValue({ kind: 'success', affectedAppointments: 0 })
     deactivateMock.mockReset()
     reactivateMock.mockReset()
     resetToasts()
@@ -747,10 +749,83 @@ describe('CatalogPage', () => {
     expect(updateMock).toHaveBeenCalledWith(
       's-1',
       expect.objectContaining({ name: 'Corte clásico', price: '50000.00' }),
+      false,
     )
     expect(wrapper.findAll('li').length).toBe(1)
     expect(wrapper.text()).toContain('50000.00 COP')
     expect(toastState.items.map((item) => item.title)).toEqual(['Servicio actualizado'])
+  })
+
+  describe('HU-029: aplicar el precio nuevo a los turnos futuros (DEC-004)', () => {
+    async function openEditWithUpcoming(count: number | 'error') {
+      previewDeactivationMock.mockResolvedValue(
+        count === 'error'
+          ? { kind: 'network-error' }
+          : { kind: 'success', affectedAppointments: count },
+      )
+      const wrapper = await mountReady([service('s-1', 'Corte clásico', { price: '45000.00' })])
+      await findButtonByText(wrapper, 'Editar').trigger('click')
+      await flushPromises()
+      return wrapper
+    }
+
+    const applyBox = (wrapper: VueWrapper) =>
+      openDialogElement(wrapper).querySelector<HTMLInputElement>(
+        '.catalog-page__apply-upcoming-box',
+      )
+
+    it('no ofrece la casilla mientras el precio no cambia', async () => {
+      const wrapper = await openEditWithUpcoming(2)
+      expect(applyBox(wrapper)).toBeNull()
+    })
+
+    it('con el precio cambiado y turnos futuros ofrece la casilla desmarcada y dice cuántos son', async () => {
+      const wrapper = await openEditWithUpcoming(2)
+      setInputValue(openDialogInput(wrapper, 'price'), '50000.00')
+      await flushPromises()
+
+      expect(applyBox(wrapper)?.checked).toBe(false)
+      expect(openDialogElement(wrapper).textContent).toContain('Hay 2 turnos futuros')
+    })
+
+    it('marcarla envía la petición de aplicar y avisa de cuántos turnos cambiaron', async () => {
+      const wrapper = await openEditWithUpcoming(2)
+      setInputValue(openDialogInput(wrapper, 'price'), '50000.00')
+      await flushPromises()
+      const box = applyBox(wrapper)!
+      box.checked = true
+      box.dispatchEvent(new Event('change'))
+      await flushPromises()
+
+      updateMock.mockResolvedValueOnce({
+        kind: 'success',
+        service: service('s-1', 'Corte clásico', { price: '50000.00' }),
+        upcomingAppointmentsUpdated: 2,
+      })
+      submitOpenDialog(wrapper)
+      await flushPromises()
+
+      expect(updateMock).toHaveBeenCalledWith(
+        's-1',
+        expect.objectContaining({ price: '50000.00' }),
+        true,
+      )
+      expect(toastState.items[0]!.detail).toContain('2 turnos futuros')
+    })
+
+    it('sin turnos futuros no hay nada que elegir; si la consulta falla, se ofrece sin el número', async () => {
+      const none = await openEditWithUpcoming(0)
+      setInputValue(openDialogInput(none, 'price'), '50000.00')
+      await flushPromises()
+      expect(applyBox(none)).toBeNull()
+      none.unmount()
+
+      const unknown = await openEditWithUpcoming('error')
+      setInputValue(openDialogInput(unknown, 'price'), '50000.00')
+      await flushPromises()
+      expect(applyBox(unknown)).not.toBeNull()
+      expect(openDialogElement(unknown).textContent).not.toContain('Hay ')
+    })
   })
 
   it('replaces the item by id without duplicating or reordering unstably', async () => {

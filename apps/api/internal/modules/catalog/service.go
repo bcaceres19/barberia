@@ -138,6 +138,17 @@ type UpdateInputRaw struct {
 	Description     *string
 	DurationMinutes *int
 	Price           *string
+	// ApplyPriceToUpcoming y ActorStaffUserID: HU-029 (DEC-004). Sin Price, pedir
+	// aplicar el precio a los turnos futuros es un error de validación.
+	ApplyPriceToUpcoming bool
+	ActorStaffUserID     string
+}
+
+// UpdateOutcome es el servicio ya editado y, si se pidió (HU-029), cuántos
+// turnos futuros adoptaron el precio nuevo.
+type UpdateOutcome struct {
+	Service                     Service
+	UpcomingAppointmentsUpdated int
 }
 
 // Update cambia los campos de catálogo autorizados de un servicio existente
@@ -148,32 +159,46 @@ type UpdateInputRaw struct {
 // misma barbería produce apperr.Conflict (DEC-067). Ningún campo de esta
 // operación toca citas ni simula propagación a recursos futuros (RN-SER-04).
 func (s *CatalogService) Update(ctx context.Context, barbershopID, serviceID string, raw UpdateInputRaw) (Service, error) {
+	outcome, err := s.UpdateService(ctx, barbershopID, serviceID, raw)
+	return outcome.Service, err
+}
+
+// UpdateService es Update con el recuento de turnos futuros actualizados
+// (HU-029): el handler HTTP lo usa para informarlo al barbero.
+func (s *CatalogService) UpdateService(ctx context.Context, barbershopID, serviceID string, raw UpdateInputRaw) (UpdateOutcome, error) {
 	if err := ctx.Err(); err != nil {
-		return Service{}, apperr.Internal(fmt.Errorf("catalog: contexto cancelado antes de editar servicio: %w", err))
+		return UpdateOutcome{}, apperr.Internal(fmt.Errorf("catalog: contexto cancelado antes de editar servicio: %w", err))
 	}
 	if !LooksLikeServiceID(serviceID) {
-		return Service{}, errServiceNotFound()
+		return UpdateOutcome{}, errServiceNotFound()
 	}
 
 	fields, err := validateUpdateFields(raw)
 	if err != nil {
-		return Service{}, err
+		return UpdateOutcome{}, err
 	}
 	if !fields.HasAny() {
-		return Service{}, errUpdateEmptyBody()
+		return UpdateOutcome{}, errUpdateEmptyBody()
+	}
+	if raw.ApplyPriceToUpcoming {
+		if fields.PriceCents == nil {
+			return UpdateOutcome{}, errApplyPriceWithoutPrice()
+		}
+		fields.ApplyPriceToUpcoming = true
+		fields.ActorStaffUserID = raw.ActorStaffUserID
 	}
 
 	result, err := s.repo.Update(ctx, barbershopID, serviceID, fields)
 	if err != nil {
-		return Service{}, apperr.Internal(fmt.Errorf("catalog: editar servicio: %w", err))
+		return UpdateOutcome{}, apperr.Internal(fmt.Errorf("catalog: editar servicio: %w", err))
 	}
 	if result.NameTaken {
-		return Service{}, errNameConflict()
+		return UpdateOutcome{}, errNameConflict()
 	}
 	if !result.Found {
-		return Service{}, errServiceNotFound()
+		return UpdateOutcome{}, errServiceNotFound()
 	}
-	return result.Service, nil
+	return UpdateOutcome{Service: result.Service, UpcomingAppointmentsUpdated: result.UpcomingPricesUpdated}, nil
 }
 
 // PreviewDeactivation calcula el impacto real de desactivar serviceID ahora

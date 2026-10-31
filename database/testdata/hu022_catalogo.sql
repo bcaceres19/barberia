@@ -20,4 +20,11 @@ INSERT INTO barbershop (id, name, timezone) VALUES
   ('66666666-6666-6666-6666-666666666666', 'Barbería de prueba F (catalog)', 'America/Bogota')
 ON CONFLICT (id) DO NOTHING;
 
+-- HU-029 (#456): usuario del panel que firma los eventos de historial que deja
+-- aplicar un precio nuevo a los turnos futuros de un servicio de la barbería E.
+INSERT INTO staff_user (id, barbershop_id, email, full_name, is_active) VALUES
+  ('eeeeee01-eeee-4eee-8eee-eeeeeeeeee01', '55555555-5555-5555-5555-555555555555',
+   'precio.e1@ejemplo.test', 'Usuario precio E1', true)
+ON CONFLICT (id) DO NOTHING;
+
 COMMIT;

@@ -490,6 +490,13 @@ func (r *Repository) Update(ctx context.Context, barbershopID, serviceID string,
 			svc.PriceCents = cents
 			result.Found = true
 			result.Service = svc
+			if fields.ApplyPriceToUpcoming && fields.PriceCents != nil {
+				updated, propErr := applyPriceToUpcomingAppointments(ctx, q, barbershopID, serviceID, fields.ActorStaffUserID, *fields.PriceCents)
+				if propErr != nil {
+					return propErr
+				}
+				result.UpcomingPricesUpdated = updated
+			}
 		case errors.Is(err, pgx.ErrNoRows):
 			// result.Found queda false: defensivo, ver catalog.UpdateResult.Found.
 		case isNameConflict(err):
@@ -507,6 +514,54 @@ func (r *Repository) Update(ctx context.Context, barbershopID, serviceID string,
 		return catalog.UpdateResult{}, fmt.Errorf("catalog/postgres: update service: %w", err)
 	}
 	return result, nil
+}
+
+// applyPriceToUpcomingSQL copia el precio nuevo a los turnos `confirmed` futuros del
+// servicio (HU-029, DEC-004) y registra, por turno, un evento
+// `appointment_service_changed` con el precio anterior y el nuevo. Es una sola
+// sentencia: los turnos se bloquean (FOR UPDATE), se actualizan y se auditan
+// juntos, y quedan fuera los que ya tienen ese precio. `updated_at` cambia, así
+// que el token de versión de un detalle abierto queda obsoleto (RN-CON-03).
+const applyPriceToUpcomingSQL = `
+WITH target AS (
+  SELECT id, price_amount_snapshot AS previous_price
+    FROM appointment
+   WHERE barbershop_id = $1 AND service_id = $2
+     AND status = 'confirmed' AND starts_at > now()
+     AND price_amount_snapshot <> $3::numeric(12,2)
+   FOR UPDATE
+), upd AS (
+  UPDATE appointment a
+     SET price_amount_snapshot = $3::numeric(12,2), updated_at = now()
+    FROM target t
+   WHERE a.barbershop_id = $1 AND a.id = t.id
+   RETURNING a.id, t.previous_price
+), hist AS (
+  INSERT INTO appointment_history (barbershop_id, appointment_id, event_type, actor_type, actor_staff_user_id)
+  SELECT $1, id, 'appointment_service_changed', 'staff', $4::uuid FROM upd
+  RETURNING id, appointment_id
+), chg AS (
+  INSERT INTO appointment_history_change (barbershop_id, history_id, field_name, previous_value, new_value)
+  SELECT $1, h.id, 'price_amount_snapshot', u.previous_price::text, $3::numeric(12,2)::text
+    FROM hist h JOIN upd u ON u.id = h.appointment_id
+  RETURNING 1
+)
+SELECT count(*) FROM upd`
+
+// applyPriceToUpcomingAppointments ejecuta applyPriceToUpcomingSQL dentro de la
+// transacción de la edición del servicio y devuelve cuántos turnos cambiaron.
+func applyPriceToUpcomingAppointments(
+	ctx context.Context,
+	q database.Queries,
+	barbershopID, serviceID, actorStaffUserID string,
+	priceCents int64,
+) (int, error) {
+	var updated int
+	price := numericFromCentsPtr(&priceCents)
+	if err := q.QueryRow(ctx, applyPriceToUpcomingSQL, barbershopID, serviceID, price, actorStaffUserID).Scan(&updated); err != nil {
+		return 0, fmt.Errorf("apply price to upcoming appointments: %w", err)
+	}
+	return updated, nil
 }
 
 // deactivateServiceOperation y reactivateServiceOperation identifican,

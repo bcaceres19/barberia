@@ -390,6 +390,61 @@ func TestUpdate_PriceZero_Rejected(t *testing.T) {
 	mustBeValidation(t, err)
 }
 
+// HU-029: aplicar el precio a los turnos futuros exige un precio nuevo y llega al
+// repositorio con el actor que firma el historial.
+func TestUpdate_ApplyPriceToUpcoming_WithoutPrice_Rejected(t *testing.T) {
+	name := "Solo nombre"
+	repo := &fakeRepository{updateFn: func(context.Context, string, string, catalog.UpdateFields) (catalog.UpdateResult, error) {
+		t.Fatal("repository must not be called when there is no price to apply")
+		return catalog.UpdateResult{}, nil
+	}}
+	svc := catalog.NewService(repo)
+
+	_, err := svc.Update(context.Background(), "shop-1", "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4",
+		catalog.UpdateInputRaw{Name: &name, ApplyPriceToUpcoming: true, ActorStaffUserID: "u-1"})
+	mustBeValidation(t, err)
+}
+
+func TestUpdateService_ApplyPriceToUpcoming_PassesActorAndReportsCount(t *testing.T) {
+	var got catalog.UpdateFields
+	repo := &fakeRepository{updateFn: func(_ context.Context, _, serviceID string, fields catalog.UpdateFields) (catalog.UpdateResult, error) {
+		got = fields
+		return catalog.UpdateResult{Found: true, Service: catalog.Service{ID: serviceID}, UpcomingPricesUpdated: 3}, nil
+	}}
+	svc := catalog.NewService(repo)
+
+	price := "35000"
+	outcome, err := svc.UpdateService(context.Background(), "shop-1", "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4",
+		catalog.UpdateInputRaw{Price: &price, ApplyPriceToUpcoming: true, ActorStaffUserID: "u-1"})
+	if err != nil {
+		t.Fatalf("UpdateService: %v", err)
+	}
+	if !got.ApplyPriceToUpcoming || got.ActorStaffUserID != "u-1" || got.PriceCents == nil || *got.PriceCents != 3_500_000 {
+		t.Fatalf("unexpected fields sent to the repository: %+v", got)
+	}
+	if outcome.UpcomingAppointmentsUpdated != 3 {
+		t.Fatalf("expected 3 upcoming appointments reported, got %d", outcome.UpcomingAppointmentsUpdated)
+	}
+}
+
+func TestUpdateService_WithoutApplyFlag_NeverAsksToPropagate(t *testing.T) {
+	var got catalog.UpdateFields
+	repo := &fakeRepository{updateFn: func(_ context.Context, _, serviceID string, fields catalog.UpdateFields) (catalog.UpdateResult, error) {
+		got = fields
+		return catalog.UpdateResult{Found: true, Service: catalog.Service{ID: serviceID}}, nil
+	}}
+	svc := catalog.NewService(repo)
+
+	price := "35000"
+	if _, err := svc.UpdateService(context.Background(), "shop-1", "8f3ac2b1-e4d5-46f6-a7c8-d9e0f1a2b3c4",
+		catalog.UpdateInputRaw{Price: &price, ActorStaffUserID: "u-1"}); err != nil {
+		t.Fatalf("UpdateService: %v", err)
+	}
+	if got.ApplyPriceToUpcoming || got.ActorStaffUserID != "" {
+		t.Fatalf("RN-SER-04: the default must not propagate, got %+v", got)
+	}
+}
+
 func TestUpdate_NotFound_TranslatesToNotFound(t *testing.T) {
 	name := "Nuevo nombre"
 	repo := &fakeRepository{updateFn: func(context.Context, string, string, catalog.UpdateFields) (catalog.UpdateResult, error) {

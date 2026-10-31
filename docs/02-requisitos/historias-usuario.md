@@ -1195,13 +1195,13 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 | Campo | Valor |
 | --- | --- |
 | Función | `F-SERV-01`, `F-CITA-04` |
-| Reglas | `RN-SER-04`, `RN-HIS-01`, `RN-IDE-01`, `RN-TEN-01` |
+| Reglas | `RN-SER-04`, `RN-HIS-01`, `RN-CON-03`, `RN-TEN-01` |
 | Decisiones | `DEC-004`, `DEC-141` |
 | Actor | Barbero autenticado |
-| Depende de | `HU-022` integrada; el aviso al cliente depende de la bandeja de B5 (`DP-NOT-01`) |
+| Depende de | `HU-022`, `HU-024` (recuento de turnos futuros) integradas |
 | Bloquea | Ninguna |
-| Estado | Propuesta; issue real [#456](https://github.com/bcaceres19/barberia/issues/456); no se implementa hasta que el propietario la apruebe |
-| Riesgo | Cambiar el precio de turnos ya agendados sin aviso ni historial sorprende al cliente; no ofrecer la opción obliga a editar turno por turno. |
+| Estado | Implementada en [#456](https://github.com/bcaceres19/barberia/issues/456); aceptada por el propietario el 2026-10-31 |
+| Riesgo | Cambiar el precio de turnos ya agendados sin que el barbero lo elija sorprende al cliente; no ofrecer la opción obliga a editar turno por turno. |
 
 **Historia**
 
@@ -1209,28 +1209,28 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 
 **Alcance incluido**
 
-- Al guardar un cambio de precio en un servicio con turnos futuros `confirmed`, el diálogo muestra cuántos son y una casilla «Aplicar el precio nuevo a esos turnos», **desmarcada por defecto**.
-- Sin la casilla, los turnos conservan su precio (`RN-SER-04`). Con ella, cada turno actualiza su precio en la misma transacción que el servicio y deja un evento de historial con el precio anterior y el nuevo.
-- El cambio de precio de un servicio sin turnos futuros no muestra la casilla.
+- `PATCH /private/services/{serviceId}` acepta `applyPriceToUpcoming` (por defecto `false`, exige `price`; sin él, `422`) y responde `upcomingAppointmentsUpdated`. Contrato OpenAPI 0.48.0.
+- Con `true`, en la misma transacción que el servicio, los turnos `confirmed` con inicio futuro de ese servicio y esa barbería que tengan otro precio adoptan el precio nuevo y cada uno suma un evento `appointment_service_changed` con el precio anterior y el nuevo a nombre de quien edita. Su `updated_at` cambia, así que un detalle abierto queda con un token de versión obsoleto.
+- En el diálogo de editar servicio, si el precio cambia y hay turnos futuros (el número sale de `deactivation-impact`; si esa consulta falla se ofrece igual, sin el número), aparece la casilla «Aplicar el precio nuevo a los turnos ya agendados», **desmarcada por defecto**; el aviso de guardado dice cuántos turnos cambiaron.
 
 **Alcance excluido**
 
-- Cambios de duración (los cruces que provocan siguen sin aplicarse a turnos existentes, `DEC-004`), turnos pasados o en otro estado, y descuentos.
-- El aviso al cliente por WhatsApp o correo, hasta que exista la bandeja de B5; mientras tanto el evento de historial deja constancia.
+- Cambios de duración (los cruces que provocarían no se aplican a turnos existentes, `DEC-004`), turnos pasados o en otro estado y descuentos.
+- El aviso al cliente por WhatsApp o correo, que `DEC-004` pide para todo cambio aplicado a una cita existente: depende de la bandeja de B5 (`DP-NOT-01`). Mientras tanto el evento de historial deja constancia y la pantalla no promete ningún aviso.
 
 **Criterios de aceptación**
 
 | Código | Criterio |
 | --- | --- |
-| `CA-029-01` | Cambiar el precio de un servicio con turnos futuros pide la elección; por defecto no se modifica ningún turno. |
-| `CA-029-02` | Con la casilla marcada, todos los turnos futuros `confirmed` de ese servicio y de esa barbería adoptan el precio nuevo en la misma transacción que el servicio y cada uno suma un evento de historial; un fallo revierte todo. |
-| `CA-029-03` | Los turnos de otra barbería, pasados, cancelados o terminados no cambian. |
-| `CA-029-04` | La repetición con la misma clave de idempotencia no duplica eventos; con otra versión del servicio responde conflicto sin escribir. |
-| `CA-029-05` | El diálogo cumple responsive, teclado, foco y zoom 200 % en los cuatro anchos normativos. |
+| `CA-029-01` | Sin `applyPriceToUpcoming` (valor por defecto) ningún turno cambia, aunque el precio del servicio sí; la casilla de la pantalla aparece desmarcada. |
+| `CA-029-02` | Con `applyPriceToUpcoming: true` y `price`, todos los turnos `confirmed` futuros de ese servicio y barbería con otro precio adoptan el precio nuevo en la misma transacción, cada uno con un único evento `appointment_service_changed`; un fallo revierte servicio y turnos. |
+| `CA-029-03` | Los turnos de otro servicio, de otra barbería, pasados o en otro estado no cambian ni reciben evento. |
+| `CA-029-04` | `applyPriceToUpcoming: true` sin `price` responde `422` sin escribir nada. |
+| `CA-029-05` | La casilla solo aparece si el precio cambió y hay turnos futuros (o se desconoce cuántos); el diálogo cumple responsive, teclado, foco y contraste en 360 y 1280 px. |
 
-**Pruebas obligatorias:** PostgreSQL real con dos tenants (alcance y atomicidad), idempotencia, contrato OpenAPI, componente y E2E del diálogo.
+**Pruebas obligatorias:** PostgreSQL real con dos barberías (alcance, estado, historial y aislamiento), servicio y handler (actor y validación), contrato OpenAPI, cliente y componente del diálogo, y verificación en Chromium.
 
-**Terminado cuando** ningún turno cambia de precio sin que el barbero lo haya elegido y cada cambio aplicado queda en el historial.
+**Terminado cuando** ningún turno cambia de precio sin que el barbero lo haya elegido y cada cambio aplicado queda en el historial del turno.
 
 ---
 

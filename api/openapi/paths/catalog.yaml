@@ -203,17 +203,21 @@
       Edición parcial limitada a los campos de catálogo (HU-022, CA-022-04,
       CA-022-05): `name`, `description`, `durationMinutes`, `price`. Rechaza
       un objeto vacío y cualquier campo fuera de esos cuatro -en particular
-      `isActive`, `currency`, asignaciones a barberos, citas o cualquier
-      alcance de propagación, todos fuera de alcance (RN-SER-04, DEC-067)-.
+      `isActive`, `currency` o asignaciones a barberos (RN-SER-04, DEC-067)-.
       Un identificador inexistente o de otra barbería responde el mismo
       `404` que `GET` (`CA-022-06`). Un nombre editado que choque con otro
-      servicio activo de la misma barbería responde `409` (DEC-067). Ningún
-      cambio de esta operación afecta una cita existente (RN-SER-04).
+      servicio activo de la misma barbería responde `409` (DEC-067). Por
+      defecto ningún cambio de esta operación afecta una cita existente
+      (RN-SER-04); con `applyPriceToUpcoming: true` y `price`, el precio nuevo
+      se copia además a los turnos `confirmed` futuros del servicio en la misma
+      transacción, con un evento de historial por turno (HU-029, DEC-004); la
+      respuesta informa cuántos cambiaron en `upcomingAppointmentsUpdated`.
+      `applyPriceToUpcoming` sin `price` responde `422`.
     operationId: updateService
     security:
       - SessionCookie: []
     x-business-rules: [RN-TEN-01, RN-DAT-02, RN-SER-01, RN-SER-02, RN-SER-04]
-    x-decisions: [DEC-024, DEC-067]
+    x-decisions: [DEC-004, DEC-024, DEC-067]
     parameters:
       - name: serviceId
         in: path

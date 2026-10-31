@@ -1,0 +1,19 @@
+# Cuerpo del 200 de PATCH /private/services/{serviceId} (HU-022, HU-029): el
+# servicio ya guardado más cuántos turnos futuros adoptaron el precio nuevo.
+description: >
+  Servicio editado y, con `applyPriceToUpcoming`, el número de turnos futuros
+  confirmados cuyo precio cambió (`DEC-004`); `0` en cualquier otro caso.
+allOf:
+  - $ref: './ServiceResponse.yaml'
+  - type: object
+    required:
+      - upcomingAppointmentsUpdated
+    properties:
+      upcomingAppointmentsUpdated:
+        type: integer
+        minimum: 0
+        description: >
+          Turnos `confirmed` futuros del servicio que recibieron el precio
+          nuevo; `0` sin `applyPriceToUpcoming` o si ya tenían ese precio.
+        examples:
+          - 2

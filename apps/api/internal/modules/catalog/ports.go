@@ -65,6 +65,12 @@ type UpdateFields struct {
 	Description     OptionalDescription
 	DurationMinutes *int
 	PriceCents      *int64
+	// ApplyPriceToUpcoming (HU-029, DEC-004) pide copiar el precio nuevo a los
+	// turnos `confirmed` futuros del servicio, en la misma transacción y con un
+	// evento de historial por turno a nombre de ActorStaffUserID. Solo tiene
+	// sentido con PriceCents presente; Service.Update lo garantiza.
+	ApplyPriceToUpcoming bool
+	ActorStaffUserID     string
 }
 
 // HasAny informa si al menos un campo de catálogo viene presente (CA-022-04:
@@ -91,6 +97,9 @@ type UpdateResult struct {
 	Service   Service
 	Found     bool
 	NameTaken bool
+	// UpcomingPricesUpdated cuenta los turnos futuros cuyo precio cambió
+	// (HU-029); 0 sin ApplyPriceToUpcoming.
+	UpcomingPricesUpdated int
 }
 
 // LifecycleResult es el desenlace completo de un intento de

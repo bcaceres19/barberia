@@ -239,12 +239,26 @@ describe('catalogApi.updateService', () => {
         description: 'Nueva descripción',
         durationMinutes: 45,
         price: '50000.00',
+        applyPriceToUpcoming: false,
       },
     })
   })
 
+  it('HU-029: asks to apply the new price to upcoming appointments only when told to, and reports how many changed', async () => {
+    patchMock.mockResolvedValueOnce(ok({ ...serviceBody, upcomingAppointmentsUpdated: 3 }))
+
+    const outcome = await updateService(
+      serviceBody.id,
+      { name: 'Corte clásico', description: '', durationMinutes: 30, price: '50000.00' },
+      true,
+    )
+
+    expect(patchMock.mock.calls[0]![1].body).toMatchObject({ applyPriceToUpcoming: true })
+    expect(outcome).toMatchObject({ kind: 'success', upcomingAppointmentsUpdated: 3 })
+  })
+
   it('maps a 200 success body to a success outcome', async () => {
-    patchMock.mockResolvedValueOnce(ok(serviceBody))
+    patchMock.mockResolvedValueOnce(ok({ ...serviceBody, upcomingAppointmentsUpdated: 0 }))
 
     const outcome = await updateService(serviceBody.id, {
       name: 'Corte clásico',
@@ -253,7 +267,11 @@ describe('catalogApi.updateService', () => {
       price: '45000.00',
     })
 
-    expect(outcome).toEqual({ kind: 'success', service: serviceBody })
+    expect(outcome).toEqual({
+      kind: 'success',
+      service: serviceBody,
+      upcomingAppointmentsUpdated: 0,
+    })
   })
 
   it('maps 404 to not-found', async () => {

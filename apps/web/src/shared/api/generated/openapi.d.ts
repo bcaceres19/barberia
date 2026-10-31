@@ -397,7 +397,7 @@ export interface paths {
         };
         /**
          * Obtener el contexto de sesión vigente
-         * @description Lectura no destructiva (HU-012, `DEC-060`) que rehidrata la cookie de sesión `HttpOnly` al abrir o recargar la aplicación: confirma que la sesión sigue vigente -`SessionMiddleware` ya la validó y renovó para esta misma solicitud, igual que cualquier otra ruta bajo `/api/v1/private`- y devuelve el nombre de la barbería activa (`barbershop.name`, columna real aislada por tenant vía RLS) y la expiración ya renovada. No emite ni modifica `Set-Cookie`, a diferencia de login/logout: repetir la llamada nunca tiene un efecto adicional. El payload nunca incluye `staffUserID`, correo ni nombre del barbero (`RN-DAT-02`, mismo patrón que `auth.Principal`).
+         * @description Lectura no destructiva (HU-012, `DEC-060`) que rehidrata la cookie de sesión `HttpOnly` al abrir o recargar la aplicación: confirma que la sesión sigue vigente -`SessionMiddleware` ya la validó y renovó para esta misma solicitud, igual que cualquier otra ruta bajo `/api/v1/private`- y devuelve el nombre de la barbería activa (`barbershop.name`, columna real aislada por tenant vía RLS) y la expiración ya renovada. Como en cualquier otra ruta bajo `/api/v1/private`, la renovación deslizante de `DEC-050` también se refleja en el navegador: la respuesta reemite la misma cookie con el `Expires` renovado (mismos atributos que el login); no cambia el token ni abre otra sesión. El payload nunca incluye `staffUserID`, correo ni nombre del barbero (`RN-DAT-02`, mismo patrón que `auth.Principal`).
          */
         get: operations["getSessionContext"];
         put?: never;
@@ -799,7 +799,7 @@ export interface paths {
         head?: never;
         /**
          * Editar un servicio del catálogo de la barbería activa
-         * @description Edición parcial limitada a los campos de catálogo (HU-022, CA-022-04, CA-022-05): `name`, `description`, `durationMinutes`, `price`. Rechaza un objeto vacío y cualquier campo fuera de esos cuatro -en particular `isActive`, `currency`, asignaciones a barberos, citas o cualquier alcance de propagación, todos fuera de alcance (RN-SER-04, DEC-067)-. Un identificador inexistente o de otra barbería responde el mismo `404` que `GET` (`CA-022-06`). Un nombre editado que choque con otro servicio activo de la misma barbería responde `409` (DEC-067). Ningún cambio de esta operación afecta una cita existente (RN-SER-04).
+         * @description Edición parcial limitada a los campos de catálogo (HU-022, CA-022-04, CA-022-05): `name`, `description`, `durationMinutes`, `price`. Rechaza un objeto vacío y cualquier campo fuera de esos cuatro -en particular `isActive`, `currency` o asignaciones a barberos (RN-SER-04, DEC-067)-. Un identificador inexistente o de otra barbería responde el mismo `404` que `GET` (`CA-022-06`). Un nombre editado que choque con otro servicio activo de la misma barbería responde `409` (DEC-067). Por defecto ningún cambio de esta operación afecta una cita existente (RN-SER-04); con `applyPriceToUpcoming: true` y `price`, el precio nuevo se copia además a los turnos `confirmed` futuros del servicio en la misma transacción, con un evento de historial por turno (HU-029, DEC-004); la respuesta informa cuántos cambiaron en `upcomingAppointmentsUpdated`. `applyPriceToUpcoming` sin `price` responde `422`.
          */
         patch: operations["updateService"];
         trace?: never;
@@ -899,7 +899,7 @@ export interface paths {
         put?: never;
         /**
          * Reactivar un servicio del catálogo de la barbería activa
-         * @description Transición explícita inactivo → activo sobre el mismo `service` (HU-024, CA-024-05), protegida con clave de idempotencia (RN-IDE-01, DEC-043): repetir el mismo `POST` con la misma `Idempotency-Key` reproduce la misma respuesta sin ejecutar la transición de nuevo. Nunca crea otra fila ni altera `name`, `durationMinutes`, `price` ni asignaciones (RN-SER-04). Un identificador inexistente o de otra barbería responde `404` uniforme. Un servicio ya activo, con una clave de idempotencia nueva, responde `409` (transición inválida).
+         * @description Transición explícita inactivo → activo sobre el mismo `service` (HU-024, CA-024-05), protegida con clave de idempotencia (RN-IDE-01, DEC-043): repetir el mismo `POST` con la misma `Idempotency-Key` reproduce la misma respuesta sin ejecutar la transición de nuevo. Nunca crea otra fila ni altera `name`, `durationMinutes`, `price` ni asignaciones (RN-SER-04). Un identificador inexistente o de otra barbería responde `404` uniforme. Un servicio ya activo, con una clave de idempotencia nueva, responde `409` (transición inválida); también `409` si otro servicio activo ya usa su nombre (`ServiceConflictProblem`, RN-SER-01), sin escribir y sin consumir la clave.
          */
         post: operations["reactivateService"];
         delete?: never;
@@ -1267,7 +1267,7 @@ export interface paths {
         put?: never;
         /**
          * Registrar un turno manual
-         * @description Alta de una cita `confirmed` a partir de un turno recibido por teléfono, WhatsApp o en persona (HU-061, CA-061-01 a CA-061-08), protegida con clave de idempotencia (RN-IDE-01, DEC-043): repetir el mismo `POST` con la misma `Idempotency-Key` y el mismo cuerpo devuelve la misma representación creada sin crear una segunda cita. No está sujeta a la anticipación mínima ni a la ventana máxima de la reserva pública (RN-DIS-04, DEC-005/DEC-018): admite un instante que ya empezó o uno más allá de la ventana pública. El servicio elegido debe estar activo y asignado al barbero elegido (DEC-072); un intervalo que se solapa con otra cita del mismo barbero (RN-CON-01) o con un bloqueo vigente (DEC-073) responde `409`. El cliente se reconcilia por teléfono o, si falta, por correo (DEC-045, DEC-046, DEC-071); sin ninguno de los dos, siempre se crea un cliente nuevo, nunca por nombre. El tenant y el actor se derivan exclusivamente de `SessionCookie`; el cuerpo nunca acepta `barbershopId`, `customerId`, `status`, `origin` ni ningún dato de servicio.
+         * @description Alta de una cita `confirmed` a partir de un turno recibido por teléfono, WhatsApp o en persona (HU-061, CA-061-01 a CA-061-08), protegida con clave de idempotencia (RN-IDE-01, DEC-043): repetir el mismo `POST` con la misma `Idempotency-Key` y el mismo cuerpo devuelve la misma representación creada sin crear una segunda cita. No está sujeta a la anticipación mínima ni a la ventana máxima de la reserva pública (RN-DIS-04, DEC-005/DEC-018): admite un instante que ya empezó o uno más allá de la ventana pública. El servicio elegido debe estar activo y asignado al barbero elegido (DEC-072); un intervalo que no cabe completo en la jornada efectiva del barbero (excepción manual, festivo activado u horario semanal; CA-061-02) responde `422` sin escribir nada; uno que se solapa con otra cita del mismo barbero (RN-CON-01) o con un bloqueo vigente (DEC-073) responde `409`. El cliente se reconcilia por teléfono o, si falta, por correo (DEC-045, DEC-046, DEC-071); sin ninguno de los dos, siempre se crea un cliente nuevo, nunca por nombre. El tenant y el actor se derivan exclusivamente de `SessionCookie`; el cuerpo nunca acepta `barbershopId`, `customerId`, `status`, `origin` ni ningún dato de servicio.
          */
         post: operations["createManualAppointment"];
         delete?: never;
@@ -1347,7 +1347,7 @@ export interface paths {
         put?: never;
         /**
          * Reprogramar un turno (T2)
-         * @description Mueve el intervalo de una cita `confirmed` a un nuevo inicio futuro (HU-065, `T2` de `estados-citas.md`), sin cambiar ningún otro dato: barbero, servicio, duración, precio, cliente, persona, origen, nota y estado permanecen iguales. El fin se deriva de `durationMinutesSnapshot`, nunca del cliente. Protegida con clave de idempotencia (RN-IDE-01, DEC-043) y con la precondición `If-Match` (el `versionToken` de una lectura anterior del detalle, HU-064): si la representación vigente ya cambió, responde `409` con `code: version-conflict` en vez de aplicar un último escritor silencioso. Un intervalo idéntico al vigente es un no-op exitoso: no genera una entrada de historial nueva. Un bloqueo vigente del barbero en el nuevo intervalo rechaza la operación con el mismo `409` que un cruce con otra cita (`DEC-076`). El tenant y el actor se derivan exclusivamente de `SessionCookie`.
+         * @description Mueve el intervalo de una cita `confirmed` a un nuevo inicio futuro (HU-065, `T2` de `estados-citas.md`), sin cambiar ningún otro dato: barbero, servicio, duración, precio, cliente, persona, origen, nota y estado permanecen iguales. El fin se deriva de `durationMinutesSnapshot`, nunca del cliente. Protegida con clave de idempotencia (RN-IDE-01, DEC-043) y con la precondición `If-Match` (el `versionToken` de una lectura anterior del detalle, HU-064): si la representación vigente ya cambió, responde `409` con `code: version-conflict` en vez de aplicar un último escritor silencioso. Un intervalo idéntico al vigente es un no-op exitoso: no genera una entrada de historial nueva. Un nuevo intervalo que no cabe completo en la jornada efectiva del barbero (CA-065-04) responde `422` sin escribir nada. Un bloqueo vigente del barbero en el nuevo intervalo rechaza la operación con el mismo `409` que un cruce con otra cita (`DEC-076`). El tenant y el actor se derivan exclusivamente de `SessionCookie`.
          */
         post: operations["rescheduleAppointment"];
         delete?: never;
@@ -1806,6 +1806,14 @@ export interface components {
              */
             updatedAt: string;
         };
+        /** @description Servicio editado y, con `applyPriceToUpcoming`, el número de turnos futuros confirmados cuyo precio cambió (`DEC-004`); `0` en cualquier otro caso. */
+        ServiceUpdateResponse: components["schemas"]["ServiceResponse"] & {
+            /**
+             * @description Turnos `confirmed` futuros del servicio que recibieron el precio nuevo; `0` sin `applyPriceToUpcoming` o si ya tenían ese precio.
+             * @example 2
+             */
+            upcomingAppointmentsUpdated: number;
+        };
         /** @description Página de servicios del catálogo de la barbería activa, ordenada de forma estable por fecha de alta y luego por identificador, con conteo total y filtro opcional de búsqueda por nombre. */
         ServiceListResponse: {
             /** @description Servicios de esta página, en el orden estable del servidor. */
@@ -1854,7 +1862,7 @@ export interface components {
              */
             price: string;
         };
-        /** @description Edición parcial de un servicio del catálogo de la barbería activa. Solo cambia `service`: ninguna operación de esta HU acepta alcance sobre citas ni simula propagación a recursos futuros (RN-SER-04). Al menos uno de los cuatro campos debe estar presente. */
+        /** @description Edición parcial de un servicio del catálogo de la barbería activa. Solo cambia `service`, salvo que el barbero pida `applyPriceToUpcoming` (HU-029, DEC-004): entonces el precio nuevo también se copia a sus turnos futuros confirmados (RN-SER-04). Al menos uno de los cuatro campos de catálogo debe estar presente. */
         UpdateServiceRequest: {
             /**
              * @description Nuevo nombre visible, ya recortado por el servidor. Vacío, solo espacios o mayor de 120 caracteres responde `422`; un nombre igual al de otro servicio activo de la misma barbería responde `409` (DEC-067).
@@ -1876,6 +1884,12 @@ export interface components {
              * @example 50000.00
              */
             price?: string;
+            /**
+             * @description Con `true` (`HU-029`, `DEC-004`), el `price` nuevo se copia también a los turnos `confirmed` futuros de este servicio, en la misma transacción, y cada turno suma un evento `appointment_service_changed` con el precio anterior y el nuevo a nombre de quien edita. Sin él (valor por defecto) ninguna cita cambia (`RN-SER-04`). Exige `price`; sin él responde `422`. No avisa al cliente: la notificación es de B5.
+             * @default false
+             * @example true
+             */
+            applyPriceToUpcoming: boolean;
         };
         /** @description Asociación entre un barbero y un servicio de la misma barbería. Sin columnas propias de negocio: nunca duplica nombre, duración, precio ni estado de ninguna de las dos tablas dueñas. */
         AssignmentResponse: {
@@ -1911,7 +1925,7 @@ export interface components {
         /** @description Impacto real, calculado en el momento de la solicitud, de desactivar el servicio ahora mismo. */
         ServiceDeactivationImpactResponse: {
             /**
-             * @description Cantidad de citas futuras que quedarían afectadas si el servicio se desactiva. Siempre 0 en B1 (DEC-069): ninguna cita existe todavía en el sistema.
+             * @description Cantidad de citas `confirmed` con inicio futuro que quedarían afectadas si el servicio se desactiva (RN-SER-03). Ninguna se cancela ni se modifica al desactivar.
              * @example 0
              */
             affectedAppointments: number;
@@ -1920,7 +1934,7 @@ export interface components {
         ServiceDeactivationResponse: {
             service: components["schemas"]["ServiceResponse"];
             /**
-             * @description Citas futuras afectadas, calculadas de nuevo en esta misma operación de confirmación. Siempre 0 en B1 (DEC-069).
+             * @description Citas futuras afectadas, calculadas de nuevo en esta misma operación de confirmación (citas `confirmed` con inicio futuro, RN-SER-03).
              * @example 0
              */
             affectedAppointments: number;
@@ -2117,7 +2131,7 @@ export interface components {
              */
             fullName: string;
             /**
-             * @description Teléfono del cliente en formato E.164, obligatorio en el flujo público (a diferencia de la creación manual, RN-CIT-02 no aplica aquí): la reserva pública siempre necesita poder contactar al cliente.
+             * @description Teléfono del cliente en formato E.164, obligatorio en el flujo público (a diferencia de la creación manual, RN-CIT-02 no aplica aquí): la reserva pública siempre necesita poder contactar al cliente. Con el prefijo `+57` (Colombia) el número nacional debe tener exactamente 10 dígitos (`DEC-141`); un número que no la cumple se rechaza con `422` como cualquier teléfono inválido.
              * @example +573001234567
              */
             phone: string;
@@ -3983,7 +3997,7 @@ export interface components {
                 [name: string]: unknown;
             };
             content: {
-                "application/json": components["schemas"]["ServiceResponse"];
+                "application/json": components["schemas"]["ServiceUpdateResponse"];
             };
         };
         /** @description El cuerpo es JSON válido, pero incumple una validación de campo (nombre, descripción, duración o precio). No se persistió ningún cambio. */
@@ -4733,7 +4747,7 @@ export interface components {
                 "application/json": components["schemas"]["AppointmentResponse"];
             };
         };
-        /** @description El cuerpo es JSON válido, pero uno de sus campos (nombre, contacto, nota o startsAt) incumple una validación. No se persistió nada. */
+        /** @description El cuerpo es JSON válido, pero uno de sus campos (nombre, contacto, nota o startsAt) incumple una validación, o el intervalo no cabe en la jornada efectiva del barbero (CA-061-02). No se persistió nada. */
         AppointmentValidationProblem: {
             headers: {
                 "X-Request-Id": components["headers"]["XRequestId"];

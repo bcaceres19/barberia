@@ -28,7 +28,8 @@ export type CreateServiceOutcome =
   | { kind: 'unexpected-error' }
 
 export type UpdateServiceOutcome =
-  | { kind: 'success'; service: Service }
+  // upcomingAppointmentsUpdated (HU-029): turnos futuros que adoptaron el precio nuevo.
+  | { kind: 'success'; service: Service; upcomingAppointmentsUpdated: number }
   | { kind: 'validation-error' }
   | { kind: 'name-conflict' }
   | { kind: 'not-found' }

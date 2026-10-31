@@ -158,13 +158,33 @@ func TestContract_CreateServiceRequestSchema_MatchesDTOFields(t *testing.T) {
 
 func TestContract_UpdateServiceRequestSchema_MatchesDTOFields(t *testing.T) {
 	schema := loadYAML[schemaDoc](t, "api/openapi/components/schemas/UpdateServiceRequest.yaml")
+	// HU-029 (DEC-004): applyPriceToUpcoming es el único campo que toca citas, y solo si
+	// el barbero lo pide; por defecto ninguna cambia (RN-SER-04).
 	requireExactProps(t, schema,
-		[]string{"name", "description", "durationMinutes", "price"},
+		[]string{"name", "description", "durationMinutes", "price", "applyPriceToUpcoming"},
 		[]string{})
 	for _, forbidden := range []string{"isActive", "currency", "barbershopId", "barberIds", "appointments"} {
 		if _, ok := schema.Properties[forbidden]; ok {
 			t.Fatalf("RN-SER-04/DEC-067: el contrato de edición nunca debe declarar %q", forbidden)
 		}
+	}
+}
+
+func TestContract_ServiceUpdateResponseSchema_AddsTheUpdatedCountToServiceResponse(t *testing.T) {
+	type allOfSchema struct {
+		AllOf []struct {
+			Ref        string                    `yaml:"$ref"`
+			Required   []string                  `yaml:"required"`
+			Properties map[string]map[string]any `yaml:"properties"`
+		} `yaml:"allOf"`
+	}
+	schema := loadYAML[allOfSchema](t, "api/openapi/components/schemas/ServiceUpdateResponse.yaml")
+	if len(schema.AllOf) != 2 || schema.AllOf[0].Ref != "./ServiceResponse.yaml" {
+		t.Fatalf("HU-029: ServiceUpdateResponse debe extender ServiceResponse, got %+v", schema.AllOf)
+	}
+	extra := schema.AllOf[1]
+	if _, ok := extra.Properties["upcomingAppointmentsUpdated"]; !ok || len(extra.Required) != 1 || extra.Required[0] != "upcomingAppointmentsUpdated" {
+		t.Fatalf("HU-029: upcomingAppointmentsUpdated debe ser el único campo añadido y obligatorio, got %+v", extra)
 	}
 }
 

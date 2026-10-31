@@ -58,6 +58,12 @@ func errUpdateEmptyBody() error {
 	return apperr.Validation("debe incluir al menos un campo del catálogo para editar")
 }
 
+// errApplyPriceWithoutPrice cubre HU-029: aplicar el precio a los turnos
+// futuros sin enviar un precio nuevo no tiene qué aplicar.
+func errApplyPriceWithoutPrice() error {
+	return apperr.Validation("applyPriceToUpcoming exige enviar también price")
+}
+
 // errServiceAlreadyInactive cubre HU-024: una clave de idempotencia nueva
 // que intenta desactivar un servicio que ya está inactivo (CA-024-06,
 // "transición inválida"). apperr.KindConflict, no KindValidation: no es un
