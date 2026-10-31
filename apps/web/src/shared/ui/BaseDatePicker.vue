@@ -490,14 +490,14 @@ const triggerLabelledBy = computed(() =>
 
 /* Campo hundido: más oscuro que la tinta de la página (--color-field-strong)
    con filete de latón, nunca un velo claro sobre el azul. Mismo lenguaje y
-   misma altura que BarberSelect. */
+   misma altura que BarberSelect: 44 px (CA-063-08, objetivo táctil). */
 .agenda-date-picker__trigger {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
   width: 100%;
-  min-height: 40px;
+  min-height: var(--control-height);
   padding: 0 var(--space-3);
   font-family: var(--font-family-base);
   font-size: var(--font-size-body);
