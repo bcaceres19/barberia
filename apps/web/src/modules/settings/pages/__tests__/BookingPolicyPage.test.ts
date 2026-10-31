@@ -172,6 +172,8 @@ describe('BookingPolicyPage', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('La configuración cambió')
+    // F-POLICY-05 (#440): puede ser un guardado propio sin confirmar; no culpa a otra persona.
+    expect(wrapper.text()).not.toContain('Alguien más')
     expect(
       (wrapper.find('input[name="minAdvanceMinutes"]').element as HTMLInputElement).value,
     ).toBe('90')
