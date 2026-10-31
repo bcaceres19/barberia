@@ -1190,6 +1190,48 @@ Orden recomendado: HU-040 → HU-041 → HU-042. La disponibilidad, las citas af
 
 **Terminado cuando** el barbero conecta y administra su Google Calendar desde NAVA sin que el código OAuth toque la URL ni el almacenamiento, entendiendo qué hace la integración.
 
+### HU-029 · Aplicar el precio nuevo de un servicio a los turnos futuros
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-SERV-01`, `F-CITA-04` |
+| Reglas | `RN-SER-04`, `RN-HIS-01`, `RN-IDE-01`, `RN-TEN-01` |
+| Decisiones | `DEC-004`, `DEC-141` |
+| Actor | Barbero autenticado |
+| Depende de | `HU-022` integrada; el aviso al cliente depende de la bandeja de B5 (`DP-NOT-01`) |
+| Bloquea | Ninguna |
+| Estado | Propuesta; issue real [#456](https://github.com/bcaceres19/barberia/issues/456); no se implementa hasta que el propietario la apruebe |
+| Riesgo | Cambiar el precio de turnos ya agendados sin aviso ni historial sorprende al cliente; no ofrecer la opción obliga a editar turno por turno. |
+
+**Historia**
+
+> Como barbero, quiero elegir si el precio nuevo de un servicio se aplica también a los turnos futuros ya agendados, para no sorprender a quien ya reservó ni tener que corregir turno por turno.
+
+**Alcance incluido**
+
+- Al guardar un cambio de precio en un servicio con turnos futuros `confirmed`, el diálogo muestra cuántos son y una casilla «Aplicar el precio nuevo a esos turnos», **desmarcada por defecto**.
+- Sin la casilla, los turnos conservan su precio (`RN-SER-04`). Con ella, cada turno actualiza su precio en la misma transacción que el servicio y deja un evento de historial con el precio anterior y el nuevo.
+- El cambio de precio de un servicio sin turnos futuros no muestra la casilla.
+
+**Alcance excluido**
+
+- Cambios de duración (los cruces que provocan siguen sin aplicarse a turnos existentes, `DEC-004`), turnos pasados o en otro estado, y descuentos.
+- El aviso al cliente por WhatsApp o correo, hasta que exista la bandeja de B5; mientras tanto el evento de historial deja constancia.
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-029-01` | Cambiar el precio de un servicio con turnos futuros pide la elección; por defecto no se modifica ningún turno. |
+| `CA-029-02` | Con la casilla marcada, todos los turnos futuros `confirmed` de ese servicio y de esa barbería adoptan el precio nuevo en la misma transacción que el servicio y cada uno suma un evento de historial; un fallo revierte todo. |
+| `CA-029-03` | Los turnos de otra barbería, pasados, cancelados o terminados no cambian. |
+| `CA-029-04` | La repetición con la misma clave de idempotencia no duplica eventos; con otra versión del servicio responde conflicto sin escribir. |
+| `CA-029-05` | El diálogo cumple responsive, teclado, foco y zoom 200 % en los cuatro anchos normativos. |
+
+**Pruebas obligatorias:** PostgreSQL real con dos tenants (alcance y atomicidad), idempotencia, contrato OpenAPI, componente y E2E del diálogo.
+
+**Terminado cuando** ningún turno cambia de precio sin que el barbero lo haya elegido y cada cambio aplicado queda en el historial.
+
 ---
 
 ---
@@ -1926,6 +1968,48 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 - Evidencia responsive/accesible en los anchos normativos; sin mockup exacto asignado, la composición es libre dentro de NAVA / Tailored Grid.
 
 **Terminado cuando** un error de clasificación terminal puede corregirse con motivo y rastro inmutable, sin reapertura, pérdida de auditoría, fuga tenant o cruce de agenda.
+
+### HU-069 · Citas afectadas al crear un bloqueo
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-HOR-02`, `F-CITA-04` |
+| Reglas | `RN-BLQ-03`, `RN-RET-01`, `RN-HIS-01`, `RN-IDE-01`, `RN-TEN-01` |
+| Decisiones | `DEC-008`, `DEC-141` |
+| Actor | Barbero autenticado |
+| Depende de | `HU-042` y `HU-064`–`HU-066` integradas |
+| Bloquea | Ninguna |
+| Estado | Propuesta; issue real [#455](https://github.com/bcaceres19/barberia/issues/455); no se implementa hasta que el propietario la apruebe |
+| Riesgo | Un bloqueo creado encima de turnos que nadie revisa deja al cliente esperando a alguien que no va a estar. |
+
+**Historia**
+
+> Como barbero, quiero ver qué turnos quedan debajo de un bloqueo que acabo de crear y decidir uno por uno si lo reprogramo o lo cancelo, para no dejar a ningún cliente esperando.
+
+**Alcance incluido**
+
+- Al crear un bloqueo, el servidor informa cuántos turnos `confirmed` del barbero intersecan su intervalo, sin rechazar ni modificar nada (`CA-042-06`).
+- La pantalla lista esos turnos (hora, persona atendida, servicio) con acceso directo al detalle, donde ya existen cancelar y reprogramar con su aviso al cliente.
+- Cerrar la lista sin actuar deja los turnos como están.
+
+**Alcance excluido**
+
+- Reprogramar o cancelar de forma automática o masiva (`RN-BLQ-03`, `RN-RET-01`), y proponer horas nuevas.
+- El texto y el canal de los avisos al cliente (B5).
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-069-01` | Crear un bloqueo que solapa turnos lo crea igual y responde la lista de turnos afectados; sin solape, la lista va vacía y no aparece aviso. |
+| `CA-069-02` | Solo se listan turnos `confirmed` del mismo barbero y de la misma barbería; ningún turno cambia por crear el bloqueo. |
+| `CA-069-03` | Cada turno de la lista abre su detalle, donde el barbero cancela o reprograma con la política y el aviso vigentes; quedar en la lista no obliga a ninguna acción. |
+| `CA-069-04` | Un bloqueo recurrente informa los turnos afectados de la primera ocurrencia y el total de las demás, sin listar miles. |
+| `CA-069-05` | La lista cumple responsive, teclado, foco y zoom 200 % en los cuatro anchos normativos. |
+
+**Pruebas obligatorias:** PostgreSQL real con dos tenants (alcance), frontera de solape semiabierto, contrato OpenAPI, componente y E2E del aviso.
+
+**Terminado cuando** el barbero ve siempre qué turnos quedaron bajo un bloqueo y ninguno cambia sin su decisión.
 
 ---
 
