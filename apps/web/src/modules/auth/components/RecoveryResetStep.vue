@@ -1,7 +1,9 @@
 <script setup lang="ts">
 // Paso 3/3 de HU-011: establecer la contraseña nueva. Confirma el destino
 // enmascarado que devolvió la verificación (CA-008-06/CA-011-02: única vez
-// que aparece, y llegar aquí ya exigió el código real) y explica la
+// que aparece, y llegar aquí ya exigió el código real) —solo el del canal
+// elegido, porque el código fue únicamente por ese canal (DEC-092, CA-011-11)—
+// y explica la
 // política de `DEC-063` ANTES del campo (CA-011-06), no solo al fallar.
 import { computed, ref } from 'vue'
 import { BaseAlert, BaseButton, BaseInput } from '@/shared/ui'
@@ -28,6 +30,12 @@ const confirmPassword = ref('')
 const fieldErrors = ref<{ newPassword?: string; confirmPassword?: string }>({})
 const attemptedSubmit = ref(false)
 const status = ref<'idle' | 'submitting' | 'invalid-token' | 'policy-violation'>('idle')
+
+// El código se envió solo por el canal elegido en el paso 1: nombrar también el otro contacto
+// engañaba sobre el canal real y revelaba un dato que la persona no pidió (RECOVERY-F-01).
+const maskedDestination = computed(() =>
+  props.target.channel === 'email' ? props.maskedEmail : props.maskedPhone,
+)
 
 const isSubmitting = computed(() => status.value === 'submitting')
 const errorCount = computed(() => Object.keys(fieldErrors.value).length)
@@ -95,7 +103,9 @@ const onRestart = () => emit('restart')
 <template>
   <form class="recovery-reset" novalidate @submit.prevent="onSubmit">
     <p class="recovery-reset__confirmed" role="status">
-      Verificamos tu código, enviado a {{ maskedPhone }} y {{ maskedEmail }}.
+      Verificamos tu código<template v-if="maskedDestination"
+        >, enviado a {{ maskedDestination }}</template
+      >.
     </p>
 
     <!-- Excepción del ancla de alertas (trabajo requerido §3): la alerta
