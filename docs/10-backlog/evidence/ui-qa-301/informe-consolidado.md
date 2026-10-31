@@ -94,63 +94,80 @@
 
 Mapa, geocodificación, OTP y correo reales (el OTP real por WhatsApp Meta se probó aparte en #86), Google Calendar, worker, recordatorios, retención, zoom real al 200 %, frontera exacta de anticipación/ventana y plazo de cancelación (requiere reloj controlado), RLS más allá de las peticiones cruzadas por HTTP (cubiertas también en #87).
 
-## Segunda tanda: reencolados y correcciones (2026-10-30)
+## Segunda tanda: reencolados y correcciones (2026-10-30 y 31)
 
 Con apoyo SQL acotado por tenant (cada valor tocado se restauró) se reencolaron los casos BLOCKED/NOT_RUN que dependían de él. El detalle por caso queda en el `reencolado.md` privado de cada scope; aquí solo el resultado.
 
-**Reencolado sin fallo nuevo:** UI-T-10 (sesión vencida) en los 9 scopes que la tenían pendiente; public-entry 02b y 07b; public-slots 03b; recovery CA-008-10; detail 05/07 (turnos movidos al pasado); y las repeticiones de public-confirm 05 y T-06 tras la corrección de PCONF-F-01, que ahora pasan con 1 cita, 1 token y la misma clave de idempotencia. Los scopes policy, schedules, agenda, manual, staff, catalog, shop, public-barber y customer volvieron a correrse con resultado mayoritariamente PASS y los hallazgos nuevos de abajo.
+**Reencolados sin fallo:**
 
-**Sigue sin ejecutarse** (necesita datos o reloj que esta tanda no armó): customer 03b y 04c (revocar o vencer un token propio), public-confirm 06b (franja bloqueada desde el panel), public-barber reseñas (`barber_review`) y retirar la última asignación (DEC-114), journeys UI-J-10 (tenant de un solo profesional), public-slots 02b (reloj controlado), UI-AGENDA-07 (perfil individual), UI-T-15 de shop/staff por conflicto y los NOT_RUN restantes de cada `report.md`.
+- UI-T-10 (sesión vencida) en los 9 scopes que la tenían pendiente; public-entry 02b y 07b; public-slots 03b; recovery CA-008-10; detail 05/07 (turnos movidos al pasado).
+- Repeticiones de public-confirm 05 y T-06 tras la corrección de PCONF-F-01: 1 cita, 1 token y la misma clave de idempotencia.
+- **customer 03b:** un token revocado y uno vencido responden el mismo 404 uniforme que un token desconocido (API), con el mismo aviso en la UI a 320 y 1280 px y sin datos del turno.
+- **public-confirm 06b:** con un bloqueo real creado desde el panel mientras el resumen estaba abierto, «Confirmar turno» da 409 `slot-conflict`, 0 citas y alternativas (RN-CON-06 se cumple). Hallazgo de copy corregido en #445.
+- **public-barber EXTRA-CALIFICACION:** con reseñas reales insertadas, promedio 4,0 y «2 reseñas»; la reseña oculta no cuenta ni se ve; un comentario con `<b>` se muestra literal. La base exige el turno `completed` (trigger). Hallazgo de layout corregido en #447.
+- **public-barber EXTRA-ULTIMA-ASIGNACION (DEC-114):** retirar las dos asignaciones de un servicio da 204 sin 409; un tercer DELETE da 404 uniforme; el servicio sale del catálogo público y de los servicios del barbero (cita manual, DEC-072), sigue en el catálogo privado y la URL directa dice «Este servicio no tiene barberos disponibles». Restaurado.
+- **UI-AGENDA-07 y J-10 (perfil individual):** con un solo barbero y rol `independiente` no aparece selector de barbero en Agenda, Horarios, Servicios ni Nuevo turno, y «Barberos» pasa a «Mi perfil»; sin desborde y axe sin violaciones a 360 y 1280 px. No se creó una cita manual dentro de este recorrido.
+- Los scopes policy, schedules, agenda, manual, staff, catalog, shop, public-barber y customer volvieron a correrse con resultado mayoritariamente PASS y los hallazgos de abajo.
+
+**04c (límite exacto del plazo de cancelación):** no es verificable desde la UI sin controlar el reloj del servidor. Queda cubierto en la capa más baja: `booking/cancel_customer_test.go` fija con reloj inyectado que «exactamente en el límite cuenta como dentro de plazo» y que un instante después ya no.
+
+**Siguen sin ejecutarse o bloqueados por norma:**
+
+- public-slots 02b (frontera de anticipación y ventana: requiere reloj controlado; hay pruebas de dominio, no de UI).
+- UI-T-15 por conflicto en shop (la pantalla no tiene 409) y UI-T-08 de staff, catalog y barberos (BLOCKED: no hay política de concurrencia, duda 8).
+- Los NOT_RUN restantes de cada `report.md` privado.
 
 ### Hallazgos corregidos
 
 Cada uno en su issue, rama y PR, con prueba en la capa más baja y verificación en Chromium.
 
-| Hallazgo                          | PR   |
-| --------------------------------- | ---- |
-| PCONF-F-01 (P1)                   | #393 |
-| F-DETAIL-01 (P1)                  | #395 |
-| HALL-CAT-01                       | #397 |
-| HALL-CAT-02                       | #400 |
-| F-SCH-01                          | #402 |
-| ACCESS-F-01                       | #404 |
-| CUST-F2                           | #406 |
-| HALL-CAT-04                       | #408 |
-| AGENDA-H-02                       | #410 |
-| HALL-CAT-03                       | #412 |
-| ASSIGN-F-1                        | #414 |
-| PSLOTS-F-01                       | #416 |
-| PCONF-F-02                        | #418 |
-| PC-F1                             | #420 |
-| PENTRY-F-01                       | #422 |
-| RECOVERY F-01 (copy, P3)          | #424 |
-| ruta desconocida en blanco (P3) ¹ | #426 |
-| HAL-SHOP-01 (P2, nuevo)           | #428 |
-| F-RQ-01 (P2, nuevo)               | #430 |
-| F-RQ-PB-01 (P3, nuevo)            | #432 |
+| Hallazgo                                  | PR   |
+| ----------------------------------------- | ---- |
+| PCONF-F-01 (P1)                           | #393 |
+| F-DETAIL-01 (P1)                          | #395 |
+| HALL-CAT-01                               | #397 |
+| HALL-CAT-02                               | #400 |
+| F-SCH-01                                  | #402 |
+| ACCESS-F-01                               | #404 |
+| CUST-F2                                   | #406 |
+| HALL-CAT-04                               | #408 |
+| AGENDA-H-02                               | #410 |
+| HALL-CAT-03                               | #412 |
+| ASSIGN-F-1                                | #414 |
+| PSLOTS-F-01                               | #416 |
+| PCONF-F-02                                | #418 |
+| PC-F1                                     | #420 |
+| PENTRY-F-01                               | #422 |
+| RECOVERY F-01 (copy, P3)                  | #424 |
+| ruta desconocida en blanco (P3) ¹         | #426 |
+| HAL-SHOP-01 (P2, nuevo)                   | #428 |
+| F-RQ-01 (P2, nuevo)                       | #430 |
+| F-RQ-PB-01 (P3, nuevo)                    | #432 |
+| F-RQ-02: `startsAt` ilegible o pasado     | #437 |
+| HALL-RQ-CAT-02: total falso en el pie     | #439 |
+| F-POLICY-05 y OBS-SHOP-03: copy del 409   | #441 |
+| F-RQ-CU-01: Mi turno al cambiar de token  | #443 |
+| F-RQ-03: copy del conflicto por bloqueo   | #445 |
+| F-RQ-PB-02: pie sobre «Continuar» (nuevo) | #447 |
 
 ¹ Cubre `OBS-SHOP-05` y `customer F4` (`/mi-turno/` sin token): una ruta final con «No encontramos esta página» sustituye la pantalla en blanco, sin revelar qué rutas privadas existen.
-
-### Hallazgos nuevos aún abiertos (P3, sin issue todavía)
-
-- **HALL-RQ-CAT-02:** el pie del catálogo muestra un total falso mientras carga una búsqueda lenta.
-- **F-POLICY-05 y shop:** «Alguien más actualizó esta configuración» aparece tras el propio reintento con respuesta perdida y al guardar la marca; el texto induce a error.
-- **RQ-F2:** el estado de error del listado de barberos salta de `h1` a `h4`.
-- **F-RQ-02:** un `startsAt` inválido o pasado en la URL de la reserva llega al resumen («Invalid Date») o a un diálogo de «horario ocupado» engañoso.
-- **F-RQ-CU-01 (latente):** `/mi-turno/:token` carga el turno solo en `onMounted`; cambiar el token con la pantalla montada no recarga.
 
 ### Sin corregir por decisión o duda abierta
 
 - **RECOVERY-F-02:** se mantiene el comportamiento, porque `DEC-064` prevalece sobre `RN-IDE-01` en el reintento del reset (duda 1).
 - **STAFF-F1 / J-F-02:** sin dueño normativo claro para el aviso de citas afectadas al bloquear (duda 5).
 - **F1 de customer:** «este enlace deja de funcionar» sigue en pantalla; el texto contradice `DEC-136` y espera confirmación.
+- **RQ-F2 (P3):** el título de `BaseAlert` es un `<h4>` y axe marca `heading-order` tras el `h1`. Es una decisión de HU-009, usada en cinco pantallas y excluida de axe a propósito (`e2e/evidence/auth-fidelidad-desviaciones.md`); cambiarlo afectaría a toda la app (duda 11).
+- **Si el `PUT` de la política debe tolerar un reintento idéntico** tras una respuesta perdida: sin norma; solo se corrigió el texto (duda 12).
 
 ### Dudas añadidas para el propietario
 
 8. La edición de barberos, servicios y marca es «la última escritura gana» sin aviso; el caso de concurrencia UI-T-08 quedó BLOCKED por falta de política.
 9. `DEC-004` / `RN-SER-04`: el diálogo de editar servicio no ofrece elegir a qué turnos se aplica el nuevo precio.
 10. Un perfil «independiente» con más de un barbero: ¿qué selectores de barbero debe ocultar (`DEC-115` solo lo define con exactamente uno)?
+11. ¿Se cambia el título de `BaseAlert` de `<h4>` a texto no encabezado para que axe no marque `heading-order`, o se mantiene la decisión de HU-009?
+12. ¿El `PUT` de la política de reserva debe reconocer un reintento idéntico tras una respuesta perdida, en vez de responder 409?
 
 ## Correcciones
 
-La campaña no corrige producto en su propio PR: cada hallazgo confirmado se atiende en su issue, rama y PR (tabla arriba). #301 sigue abierto mientras queden los casos sin ejecutar y los P3 listados.
+La campaña no corrige producto en su propio PR: cada hallazgo confirmado se atiende en su issue, rama y PR (tabla arriba). Con esta tanda todos los casos tienen un estado con evidencia; los que siguen sin ejecutarse están listados arriba con su motivo (reloj, falta de norma). El criterio de #301 que exige subagentes GPT-6 Luna / medium no se cumplió (se usó Claude Sonnet 5.5, desviación registrada al inicio), así que el cierre de #301 queda a decisión del propietario.
