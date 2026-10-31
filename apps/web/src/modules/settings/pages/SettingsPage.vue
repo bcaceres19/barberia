@@ -369,6 +369,34 @@ async function onSave() {
       detail: `Los cambios ya están aplicados en ${v.value.theBusiness}.`,
     })
   }
+  announceSaveFailure()
+}
+
+// Un fallo de conexión o inesperado no pertenece a ningún campo: DEC-095 lo avisa como
+// toast con «Reintentar». Una alerta en línea al inicio del formulario quedaba fuera de
+// pantalla en móvil, donde la barra de guardado es lo único a la vista.
+function announceSaveFailure() {
+  const retry = { label: 'Reintentar', run: () => void onSave() }
+  if (shopError.value === 'network' || brandError.value === 'network') {
+    toast.warning('No pudimos conectar', {
+      detail: 'Revisa tu conexión e inténtalo de nuevo. No perdiste lo que escribiste.',
+      action: retry,
+    })
+  }
+  if (shopError.value === 'unexpected' || brandError.value === 'unexpected') {
+    toast.error('Ocurrió un error inesperado', {
+      detail: 'Inténtalo de nuevo en unos segundos. No perdiste lo que escribiste.',
+      action: retry,
+    })
+  }
+  // El rechazo de validación sí es del formulario y sigue en línea: se lleva a la vista.
+  if (shopError.value === 'validation' || brandError.value === 'validation') {
+    void nextTick(() =>
+      document
+        .querySelector<HTMLElement>('.settings-page__form [role="alert"]')
+        ?.scrollIntoView?.({ block: 'center' }),
+    )
+  }
 }
 
 function onDiscard() {
@@ -572,22 +600,6 @@ const previewClass = computed(() => ({ 'settings-page__preview--changed': brandD
             role="alert"
           >
             Revisa las palabras: usa solo letras, espacios, guion o apóstrofo.
-          </BaseAlert>
-          <BaseAlert
-            v-if="shopError === 'network' || brandError === 'network'"
-            variant="warning"
-            title="No pudimos conectar"
-            role="alert"
-          >
-            Revisa tu conexión e inténtalo de nuevo. No perdiste lo que escribiste.
-          </BaseAlert>
-          <BaseAlert
-            v-if="shopError === 'unexpected' || brandError === 'unexpected'"
-            variant="danger"
-            title="Ocurrió un error inesperado"
-            role="alert"
-          >
-            Inténtalo de nuevo en unos segundos. No perdiste lo que escribiste.
           </BaseAlert>
 
           <!-- 01 · Pantalla (este dispositivo) -->
