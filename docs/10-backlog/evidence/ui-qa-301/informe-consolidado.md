@@ -1,4 +1,4 @@
-# Campaña #301 · Informe consolidado de pruebas de UI (primera pasada)
+# Campaña #301 · Informe consolidado de pruebas de UI (primera pasada y reencolados)
 
 - Issue: #301 · Prompt de orquestación: PROMPT-ORCH-301-UI-LUNA-v1 · Campaña: `qa-ba991bb4eb`
 - SHA ejecutado: `fd4fabe` (rama `test/301-pruebas-ui`) · Fecha: 2026-10-30
@@ -94,14 +94,63 @@
 
 Mapa, geocodificación, OTP y correo reales (el OTP real por WhatsApp Meta se probó aparte en #86), Google Calendar, worker, recordatorios, retención, zoom real al 200 %, frontera exacta de anticipación/ventana y plazo de cancelación (requiere reloj controlado), RLS más allá de las peticiones cruzadas por HTTP (cubiertas también en #87).
 
-## Pendiente para reencolar (siguiente tanda, con apoyo SQL acotado del coordinador)
+## Segunda tanda: reencolados y correcciones (2026-10-30)
 
-- UI-T-10 (expirar solo la sesión QA con `expires_at = issued_at + interval '1 microsecond'`): shop, policy, staff, catalog, assignments, schedules, agenda, manual, detail.
-- detail: UI-DETAIL-05/07 (mover citas propias al pasado). customer: 03b (revocar y vencer un token propio). public-entry: 02b y 07b (restaurando el valor). public-barber: reseñas/estrellas (INSERT sintético en `barber_review`) y retirar la última asignación (DEC-114). journeys: UI-J-10 (rol `independiente` en un tenant de un solo profesional) y elegir una alternativa tras el conflicto de UI-J-03. assignments-06.
-- public-slots: 02b (reloj) y 03b; public-confirm: 06b (franja bloqueada), UI-T-04/05/07/15 y repetir 05/T-06 cuando se corrija PCONF-F-01; customer: 04c y NOT_RUN.
-- Los NOT_RUN por scope listados en cada `report.md` privado (shop X-03, T-02/04/09/15/16; staff 10; catalog 7; etc.).
-- Repetir UI-J-09 público tras la corrección de PCONF-F-01.
+Con apoyo SQL acotado por tenant (cada valor tocado se restauró) se reencolaron los casos BLOCKED/NOT_RUN que dependían de él. El detalle por caso queda en el `reencolado.md` privado de cada scope; aquí solo el resultado.
+
+**Reencolado sin fallo nuevo:** UI-T-10 (sesión vencida) en los 9 scopes que la tenían pendiente; public-entry 02b y 07b; public-slots 03b; recovery CA-008-10; detail 05/07 (turnos movidos al pasado); y las repeticiones de public-confirm 05 y T-06 tras la corrección de PCONF-F-01, que ahora pasan con 1 cita, 1 token y la misma clave de idempotencia. Los scopes policy, schedules, agenda, manual, staff, catalog, shop, public-barber y customer volvieron a correrse con resultado mayoritariamente PASS y los hallazgos nuevos de abajo.
+
+**Sigue sin ejecutarse** (necesita datos o reloj que esta tanda no armó): customer 03b y 04c (revocar o vencer un token propio), public-confirm 06b (franja bloqueada desde el panel), public-barber reseñas (`barber_review`) y retirar la última asignación (DEC-114), journeys UI-J-10 (tenant de un solo profesional), public-slots 02b (reloj controlado), UI-AGENDA-07 (perfil individual), UI-T-15 de shop/staff por conflicto y los NOT_RUN restantes de cada `report.md`.
+
+### Hallazgos corregidos
+
+Cada uno en su issue, rama y PR, con prueba en la capa más baja y verificación en Chromium.
+
+| Hallazgo                          | PR   |
+| --------------------------------- | ---- |
+| PCONF-F-01 (P1)                   | #393 |
+| F-DETAIL-01 (P1)                  | #395 |
+| HALL-CAT-01                       | #397 |
+| HALL-CAT-02                       | #400 |
+| F-SCH-01                          | #402 |
+| ACCESS-F-01                       | #404 |
+| CUST-F2                           | #406 |
+| HALL-CAT-04                       | #408 |
+| AGENDA-H-02                       | #410 |
+| HALL-CAT-03                       | #412 |
+| ASSIGN-F-1                        | #414 |
+| PSLOTS-F-01                       | #416 |
+| PCONF-F-02                        | #418 |
+| PC-F1                             | #420 |
+| PENTRY-F-01                       | #422 |
+| RECOVERY F-01 (copy, P3)          | #424 |
+| ruta desconocida en blanco (P3) ¹ | #426 |
+| HAL-SHOP-01 (P2, nuevo)           | #428 |
+| F-RQ-01 (P2, nuevo)               | #430 |
+| F-RQ-PB-01 (P3, nuevo)            | #432 |
+
+¹ Cubre `OBS-SHOP-05` y `customer F4` (`/mi-turno/` sin token): una ruta final con «No encontramos esta página» sustituye la pantalla en blanco, sin revelar qué rutas privadas existen.
+
+### Hallazgos nuevos aún abiertos (P3, sin issue todavía)
+
+- **HALL-RQ-CAT-02:** el pie del catálogo muestra un total falso mientras carga una búsqueda lenta.
+- **F-POLICY-05 y shop:** «Alguien más actualizó esta configuración» aparece tras el propio reintento con respuesta perdida y al guardar la marca; el texto induce a error.
+- **RQ-F2:** el estado de error del listado de barberos salta de `h1` a `h4`.
+- **F-RQ-02:** un `startsAt` inválido o pasado en la URL de la reserva llega al resumen («Invalid Date») o a un diálogo de «horario ocupado» engañoso.
+- **F-RQ-CU-01 (latente):** `/mi-turno/:token` carga el turno solo en `onMounted`; cambiar el token con la pantalla montada no recarga.
+
+### Sin corregir por decisión o duda abierta
+
+- **RECOVERY-F-02:** se mantiene el comportamiento, porque `DEC-064` prevalece sobre `RN-IDE-01` en el reintento del reset (duda 1).
+- **STAFF-F1 / J-F-02:** sin dueño normativo claro para el aviso de citas afectadas al bloquear (duda 5).
+- **F1 de customer:** «este enlace deja de funcionar» sigue en pantalla; el texto contradice `DEC-136` y espera confirmación.
+
+### Dudas añadidas para el propietario
+
+8. La edición de barberos, servicios y marca es «la última escritura gana» sin aviso; el caso de concurrencia UI-T-08 quedó BLOCKED por falta de política.
+9. `DEC-004` / `RN-SER-04`: el diálogo de editar servicio no ofrece elegir a qué turnos se aplica el nuevo precio.
+10. Un perfil «independiente» con más de un barbero: ¿qué selectores de barbero debe ocultar (`DEC-115` solo lo define con exactamente uno)?
 
 ## Correcciones
 
-Esta campaña no corrige producto. Cada hallazgo confirmado se atiende en su propio issue, rama y PR.
+La campaña no corrige producto en su propio PR: cada hallazgo confirmado se atiende en su issue, rama y PR (tabla arriba). #301 sigue abierto mientras queden los casos sin ejecutar y los P3 listados.
