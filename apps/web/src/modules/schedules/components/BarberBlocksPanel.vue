@@ -15,15 +15,18 @@ import {
   BarberAvatar,
   BaseSpinner,
 } from '@/shared/ui'
+import { RouterLink } from 'vue-router'
 import { fetchBarbershopTimezone } from '../api/schedulesApi'
 import {
   createTimeBlock,
+  fetchAffectedAppointments,
   createTimeBlockSeries,
   deleteTimeBlock,
   deleteTimeBlockSeries,
   fetchTimeBlockSeries,
   fetchTimeBlocks,
 } from '../api/timeBlocksApi'
+import { MAX_AFFECTED_DAYS, type AffectedAppointment } from '../model/affectedAppointments'
 import { civilDateTimeToInstant, formatInstantInTimezone } from '../model/civilTime'
 import { displayCivilDate } from '../model/displayDate'
 import { newIdempotencyKey } from '../model/idempotencyKey'
@@ -102,8 +105,33 @@ async function loadTimezone() {
   timezoneLoading.value = false
 }
 
+// HU-069 (RN-BLQ-03): turnos que quedaron bajo el último bloqueo creado. Solo informa;
+// ninguno cambia hasta que el barbero lo abre y decide.
+const affected = ref<{ items: AffectedAppointment[]; truncated: boolean } | null>(null)
+
+async function showAffectedAppointments(startsAt: string, endsAt: string) {
+  const barberId = selectedBarberId.value
+  const timeZone = barbershopTimezone.value
+  if (!barberId || !timeZone) return
+  const outcome = await fetchAffectedAppointments(barberId, startsAt, endsAt, timeZone)
+  // Si mientras tanto se cambió de profesional, esta respuesta ya no le corresponde.
+  if (barberId !== selectedBarberId.value || outcome.kind !== 'success') return
+  affected.value =
+    outcome.items.length > 0 || outcome.truncated
+      ? { items: outcome.items, truncated: outcome.truncated }
+      : null
+}
+
+function affectedWhen(item: AffectedAppointment): string {
+  const tz = barbershopTimezone.value ?? 'UTC'
+  const start = formatInstantInTimezone(item.startsAt, tz)
+  const end = formatInstantInTimezone(item.endsAt, tz)
+  return `${displayCivilDate(start.date)}, ${start.time} a ${end.time}`
+}
+
 async function loadLists() {
   const token = ++requestToken
+  affected.value = null
   blocksStatus.value = 'loading'
   seriesStatus.value = 'loading'
   const [blocksOutcome, seriesOutcome] = await Promise.all([
@@ -269,6 +297,7 @@ async function onSubmitCreateBlock() {
       toast.success('Bloqueo agregado', {
         detail: `El bloqueo ya aparece en el calendario ${v.value.ofTheProfessional}.`,
       })
+      void showAffectedAppointments(startsAt, endsAt)
       return
     case 'validation-error':
       createBlockStatus.value = 'validation-error'
@@ -539,6 +568,37 @@ function seriesCounts(item: TimeBlockSeries): string {
         ><BaseButton variant="secondary" @click="loadTimezone"
           >Reintentar zona horaria</BaseButton
         ></template
+      >
+    </BaseAlert>
+
+    <BaseAlert
+      v-if="affected"
+      class="blocks-panel__affected"
+      variant="warning"
+      :title="
+        affected.items.length === 0
+          ? 'Revisa la agenda de los días siguientes'
+          : affected.items.length === 1
+            ? 'Este bloqueo cubre 1 turno'
+            : `Este bloqueo cubre ${affected.items.length} turnos`
+      "
+    >
+      <p v-if="affected.items.length > 0">
+        No cambiamos ningún turno. Abre cada uno para reprogramarlo o cancelarlo.
+      </p>
+      <ul v-if="affected.items.length > 0" class="blocks-panel__affected-list">
+        <li v-for="item in affected.items" :key="item.id">
+          <RouterLink :to="{ name: 'agenda-detalle-turno', params: { appointmentId: item.id } }">
+            {{ affectedWhen(item) }} · {{ item.attendeeName }} · {{ item.serviceName }}
+          </RouterLink>
+        </li>
+      </ul>
+      <p v-if="affected.truncated">
+        El bloqueo abarca más de {{ MAX_AFFECTED_DAYS }} días y solo revisamos los primeros. Mira la
+        agenda de los días siguientes.
+      </p>
+      <template #action
+        ><BaseButton variant="secondary" @click="affected = null">Entendido</BaseButton></template
       >
     </BaseAlert>
 
@@ -1161,6 +1221,20 @@ function seriesCounts(item: TimeBlockSeries): string {
   justify-content: flex-end;
   gap: 8px;
 }
+.blocks-panel__affected {
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.blocks-panel__affected-list {
+  margin: var(--space-2, 0.5rem) 0 0;
+  padding-left: 1.25rem;
+}
+
+.blocks-panel__affected-list a {
+  color: inherit;
+  text-decoration: underline;
+}
+
 .blocks-panel__empty,
 .blocks-panel__state {
   min-height: 150px;

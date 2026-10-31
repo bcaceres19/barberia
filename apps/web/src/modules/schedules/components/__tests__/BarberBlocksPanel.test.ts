@@ -21,6 +21,9 @@ const deleteTimeBlockSeriesMock = vi.hoisted(() => vi.fn())
 const createDateListSeriesMock = vi.hoisted(() => vi.fn())
 const updateTimeBlockSeriesMock = vi.hoisted(() => vi.fn())
 const addSeriesExceptionMock = vi.hoisted(() => vi.fn())
+const fetchAffectedAppointmentsMock = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({ kind: 'success', items: [], truncated: false }),
+)
 
 vi.mock('../../api/schedulesApi', () => ({
   fetchBarbershopTimezone: fetchBarbershopTimezoneMock,
@@ -35,6 +38,7 @@ vi.mock('../../api/timeBlocksApi', () => ({
   createDateListSeries: createDateListSeriesMock,
   updateTimeBlockSeries: updateTimeBlockSeriesMock,
   addSeriesException: addSeriesExceptionMock,
+  fetchAffectedAppointments: fetchAffectedAppointmentsMock,
 }))
 
 const { default: BarberBlocksPanel } = await import('../../components/BarberBlocksPanel.vue')
@@ -114,6 +118,12 @@ describe('BarberBlocksPanel · avisos emergentes (DEC-095)', () => {
     ]) {
       mock.mockReset()
     }
+    fetchAffectedAppointmentsMock.mockReset()
+    fetchAffectedAppointmentsMock.mockResolvedValue({
+      kind: 'success',
+      items: [],
+      truncated: false,
+    })
   })
 
   it('confirms a created block with a success toast and lists it', async () => {
@@ -145,6 +155,76 @@ describe('BarberBlocksPanel · avisos emergentes (DEC-095)', () => {
     expect(toastState.items.map((item) => [item.variant, item.title])).toEqual([
       ['success', 'Bloqueo agregado'],
     ])
+  })
+
+  async function createEmergencyBlock(wrapper: VueWrapper) {
+    createTimeBlockMock.mockResolvedValueOnce({
+      kind: 'success',
+      block: { ...block, id: 'blk-2', blockType: 'emergency' },
+    })
+    await wrapper
+      .findAll('button')
+      .find((button) => button.text() === 'Agregar bloqueo')!
+      .trigger('click')
+    await flushPromises()
+    const form = wrapper.get('form.blocks-page__form')
+    const dates = form.findAllComponents(BaseDatePicker)
+    const times = form.findAllComponents(BaseTimePicker)
+    dates[0]!.vm.$emit('update:modelValue', '2099-01-06')
+    times[0]!.vm.$emit('update:modelValue', '09:00')
+    dates[1]!.vm.$emit('update:modelValue', '2099-01-06')
+    times[1]!.vm.$emit('update:modelValue', '10:00')
+    await flushPromises()
+    await form.trigger('submit')
+    await flushPromises()
+  }
+
+  it('HU-069: lists the confirmed appointments under a new block and links to each one', async () => {
+    const wrapper = await mountReady()
+    fetchAffectedAppointmentsMock.mockResolvedValueOnce({
+      kind: 'success',
+      truncated: false,
+      items: [
+        {
+          id: 'apt-1',
+          attendeeName: 'Carlos Restrepo',
+          serviceName: 'Corte',
+          startsAt: '2099-01-06T14:30:00Z',
+          endsAt: '2099-01-06T15:00:00Z',
+        },
+      ],
+    })
+
+    await createEmergencyBlock(wrapper)
+
+    expect(fetchAffectedAppointmentsMock).toHaveBeenCalledOnce()
+    const alert = wrapper.get('.blocks-panel__affected')
+    expect(alert.text()).toContain('Este bloqueo cubre 1 turno')
+    expect(alert.text()).toContain('No cambiamos ningún turno')
+    expect(wrapper.getComponent({ name: 'RouterLink' }).props('to')).toEqual({
+      name: 'agenda-detalle-turno',
+      params: { appointmentId: 'apt-1' },
+    })
+
+    await alert
+      .findAll('button')
+      .find((button) => button.text() === 'Entendido')!
+      .trigger('click')
+    expect(wrapper.find('.blocks-panel__affected').exists()).toBe(false)
+  })
+
+  it('HU-069: shows no notice when the block overlaps nothing, and warns when it spans too many days', async () => {
+    const wrapper = await mountReady()
+    await createEmergencyBlock(wrapper)
+    expect(wrapper.find('.blocks-panel__affected').exists()).toBe(false)
+
+    fetchAffectedAppointmentsMock.mockResolvedValueOnce({
+      kind: 'success',
+      truncated: true,
+      items: [],
+    })
+    await createEmergencyBlock(wrapper)
+    expect(wrapper.get('.blocks-panel__affected').text()).toContain('más de 7 días')
   })
 
   it('confirms a retired block with a success toast', async () => {

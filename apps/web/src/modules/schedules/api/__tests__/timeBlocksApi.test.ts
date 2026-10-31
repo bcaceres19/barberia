@@ -8,12 +8,14 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 const postMock = vi.hoisted(() => vi.fn())
 const patchMock = vi.hoisted(() => vi.fn())
 const deleteMock = vi.hoisted(() => vi.fn())
+const getMock = vi.hoisted(() => vi.fn())
 
 vi.mock('@/shared/api/httpClient', () => ({
-  httpClient: { GET: vi.fn(), POST: postMock, PATCH: patchMock, DELETE: deleteMock },
+  httpClient: { GET: getMock, POST: postMock, PATCH: patchMock, DELETE: deleteMock },
 }))
 
 const {
+  fetchAffectedAppointments,
   createDateListSeries,
   updateTimeBlockSeries,
   addSeriesDate,
@@ -228,5 +230,72 @@ describe('timeBlocksApi fechas explícitas y excepciones', () => {
     expect(await removeSeriesDate('b-1', 'ser-1', '2027-12-15')).toEqual({
       kind: 'network-error',
     })
+  })
+})
+
+describe('fetchAffectedAppointments (HU-069)', () => {
+  beforeEach(() => {
+    getMock.mockReset()
+  })
+
+  const agendaItem = (id: string, startsAt: string, endsAt: string, status = 'confirmed') => ({
+    id,
+    attendeeName: 'Ana',
+    serviceName: 'Corte',
+    startsAt,
+    endsAt,
+    status,
+  })
+
+  it('queries one daily agenda per touched civil day and keeps overlapping confirmed turns', async () => {
+    getMock.mockImplementation(async (...args: unknown[]) => {
+      const { params } = args[1] as { params: { query: { date: string } } }
+      const items =
+        params.query.date === '2099-01-06'
+          ? [
+              agendaItem('a', '2099-01-06T14:30:00Z', '2099-01-06T15:00:00Z'),
+              agendaItem('b', '2099-01-06T18:00:00Z', '2099-01-06T18:30:00Z'),
+              agendaItem('c', '2099-01-06T14:30:00Z', '2099-01-06T15:00:00Z', 'completed'),
+            ]
+          : []
+      return result(200, { items })
+    })
+
+    const outcome = await fetchAffectedAppointments(
+      'b-1',
+      '2099-01-06T14:00:00Z',
+      '2099-01-06T16:00:00Z',
+      'America/Bogota',
+    )
+
+    expect(getMock).toHaveBeenCalledTimes(1)
+    expect(outcome).toMatchObject({ kind: 'success', truncated: false })
+    expect(outcome.kind === 'success' && outcome.items.map((item) => item.id)).toEqual(['a'])
+  })
+
+  it('stops at seven days and reports the block as truncated', async () => {
+    getMock.mockResolvedValue(result(200, { items: [] }))
+
+    const outcome = await fetchAffectedAppointments(
+      'b-1',
+      '2099-01-06T14:00:00Z',
+      '2099-01-26T14:00:00Z',
+      'America/Bogota',
+    )
+
+    expect(getMock).toHaveBeenCalledTimes(7)
+    expect(outcome).toEqual({ kind: 'success', items: [], truncated: true })
+  })
+
+  it('is unavailable when any daily agenda fails, without throwing', async () => {
+    getMock.mockResolvedValueOnce(result(500))
+    expect(
+      await fetchAffectedAppointments('b-1', '2099-01-06T14:00:00Z', '2099-01-06T16:00:00Z', 'UTC'),
+    ).toEqual({ kind: 'unavailable' })
+
+    getMock.mockRejectedValueOnce(new Error('network'))
+    expect(
+      await fetchAffectedAppointments('b-1', '2099-01-06T14:00:00Z', '2099-01-06T16:00:00Z', 'UTC'),
+    ).toEqual({ kind: 'unavailable' })
   })
 })

@@ -1977,9 +1977,9 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 | Reglas | `RN-BLQ-03`, `RN-RET-01`, `RN-HIS-01`, `RN-IDE-01`, `RN-TEN-01` |
 | Decisiones | `DEC-008`, `DEC-141` |
 | Actor | Barbero autenticado |
-| Depende de | `HU-042` y `HU-064`–`HU-066` integradas |
+| Depende de | `HU-042` y `HU-062`–`HU-066` integradas |
 | Bloquea | Ninguna |
-| Estado | Propuesta; issue real [#455](https://github.com/bcaceres19/barberia/issues/455); no se implementa hasta que el propietario la apruebe |
+| Estado | Implementada en [#455](https://github.com/bcaceres19/barberia/issues/455); aceptada por el propietario el 2026-10-31 |
 | Riesgo | Un bloqueo creado encima de turnos que nadie revisa deja al cliente esperando a alguien que no va a estar. |
 
 **Historia**
@@ -1988,28 +1988,29 @@ Orden recomendado: `HU-060` → `HU-061` → `HU-062` → `HU-063` → `HU-064` 
 
 **Alcance incluido**
 
-- Al crear un bloqueo, el servidor informa cuántos turnos `confirmed` del barbero intersecan su intervalo, sin rechazar ni modificar nada (`CA-042-06`).
-- La pantalla lista esos turnos (hora, persona atendida, servicio) con acceso directo al detalle, donde ya existen cancelar y reprogramar con su aviso al cliente.
-- Cerrar la lista sin actuar deja los turnos como están.
+- Tras crear un bloqueo puntual, la pantalla consulta la agenda diaria del barbero (`HU-062`) de cada día civil que toca el bloqueo, hasta 7 días, y se queda con los turnos `confirmed` cuyo intervalo se solapa con el del bloqueo (intervalo semiabierto). No hay endpoint nuevo ni cambio de contrato.
+- Si hay turnos afectados, un aviso encima de los bloqueos los lista (fecha, hora, persona atendida, servicio), cada uno con enlace a su detalle, donde ya existen cancelar y reprogramar (`HU-065`, `HU-066`).
+- Cerrar el aviso sin actuar deja los turnos como están.
 
 **Alcance excluido**
 
-- Reprogramar o cancelar de forma automática o masiva (`RN-BLQ-03`, `RN-RET-01`), y proponer horas nuevas.
-- El texto y el canal de los avisos al cliente (B5).
+- Reprogramar o cancelar de forma automática o masiva (`RN-BLQ-03`, `RN-RET-01`) y proponer horas nuevas.
+- Series de bloqueo (semanales o por fechas): no muestran la lista; el barbero revisa la agenda de esos días.
+- El aviso al cliente cuando el barbero cancela o reprograma: hoy esas operaciones no notifican, y esa notificación es de B5 (`DEC-004`, `RN-BLQ-03`); esta historia no la promete ni la implementa.
 
 **Criterios de aceptación**
 
 | Código | Criterio |
 | --- | --- |
-| `CA-069-01` | Crear un bloqueo que solapa turnos lo crea igual y responde la lista de turnos afectados; sin solape, la lista va vacía y no aparece aviso. |
-| `CA-069-02` | Solo se listan turnos `confirmed` del mismo barbero y de la misma barbería; ningún turno cambia por crear el bloqueo. |
-| `CA-069-03` | Cada turno de la lista abre su detalle, donde el barbero cancela o reprograma con la política y el aviso vigentes; quedar en la lista no obliga a ninguna acción. |
-| `CA-069-04` | Un bloqueo recurrente informa los turnos afectados de la primera ocurrencia y el total de las demás, sin listar miles. |
-| `CA-069-05` | La lista cumple responsive, teclado, foco y zoom 200 % en los cuatro anchos normativos. |
+| `CA-069-01` | Crear un bloqueo puntual que solapa turnos lo crea igual (`CA-042-06`) y muestra el aviso con el número de turnos afectados; sin solape, no aparece aviso. |
+| `CA-069-02` | Solo se listan turnos `confirmed` del mismo barbero y barbería cuyo intervalo se solapa con el bloqueo; uno que termina cuando el bloqueo empieza, o empieza cuando termina, no cuenta, y un turno que cruza medianoche aparece una sola vez. Ningún turno cambia por crear el bloqueo. |
+| `CA-069-03` | Cada turno de la lista enlaza a su detalle; quedar en la lista no obliga a ninguna acción y «Entendido» cierra el aviso. |
+| `CA-069-04` | Un bloqueo que toca más de 7 días consulta los 7 primeros y avisa de que revise la agenda de los siguientes; si la consulta falla, el bloqueo queda creado y no se muestra la lista. |
+| `CA-069-05` | El aviso cumple responsive, teclado y foco en 360 y 1280 px sin desbordar; la regla `heading-order` de axe es la excepción aceptada de `BaseAlert` (`DEC-140`). |
 
-**Pruebas obligatorias:** PostgreSQL real con dos tenants (alcance), frontera de solape semiabierto, contrato OpenAPI, componente y E2E del aviso.
+**Pruebas obligatorias:** modelo (solape semiabierto, duplicados, días civiles), cliente HTTP (un día, límite de 7, fallo), componente del panel (con y sin turnos, truncado) y verificación en Chromium a 360 y 1280 px.
 
-**Terminado cuando** el barbero ve siempre qué turnos quedaron bajo un bloqueo y ninguno cambia sin su decisión.
+**Terminado cuando** el barbero ve siempre qué turnos confirmados quedaron bajo un bloqueo puntual y ninguno cambia sin su decisión.
 
 ---
 
