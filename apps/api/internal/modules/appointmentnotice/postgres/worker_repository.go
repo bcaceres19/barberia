@@ -53,12 +53,12 @@ func (r *WorkerRepository) NoticeContext(ctx context.Context, noticeID, claimTok
 	found := false
 	err := r.db.CallSecurityDefinerRow(ctx,
 		`SELECT kind, appointment_status, starts_at, appointment_state_at, coalesce(customer_email, ''),
-		        attendee_name, service_name, barbershop_name, barbershop_timezone, already_covered
+		        attendee_name, service_name, barbershop_name, barbershop_timezone, already_covered, notice_state_at
 		   FROM notice_context($1::uuid, $2::uuid)`,
 		[]any{noticeID, claimToken},
 		func(row pgx.Row) error {
 			err := row.Scan(&c.Kind, &c.AppointmentStatus, &c.StartsAt, &c.StateAt, &c.CustomerEmail,
-				&c.AttendeeName, &c.ServiceName, &c.BarbershopName, &c.Timezone, &c.AlreadyCovered)
+				&c.AttendeeName, &c.ServiceName, &c.BarbershopName, &c.Timezone, &c.AlreadyCovered, &c.NoticeStateAt)
 			if errors.Is(err, pgx.ErrNoRows) {
 				return nil // la reclamación ya no es vigente
 			}

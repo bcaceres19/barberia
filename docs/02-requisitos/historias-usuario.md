@@ -1,6 +1,6 @@
 ---
 titulo: "Historias de usuario y criterios de aceptación"
-version: "1.58"
+version: "1.59"
 estado: "Propuesta"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-10-26"
@@ -53,7 +53,7 @@ La secuencia de bloques vive en [plan-bloques.md](../10-backlog/plan-bloques.md)
 | B2 · Horario laboral y bloqueos | `HU-040` – `HU-042` | Integradas en `main` ([PR #93](https://github.com/bcaceres19/barberia/pull/93), [PR #96](https://github.com/bcaceres19/barberia/pull/96), [PR #99](https://github.com/bcaceres19/barberia/pull/99)); seguimientos parciales en `#90`, `#95`, `#98` y `#100` |
 | B3 · Agenda, estados e integridad | `HU-060` – `HU-068` | `HU-060`–`HU-068` integradas en `main`, issues reales [#225](https://github.com/bcaceres19/barberia/issues/225)–[#227](https://github.com/bcaceres19/barberia/issues/227); tercer lote de B3 completo, T3/cierre automático pendientes |
 | B4 · Reserva pública y disponibilidad | `HU-090` – `HU-103` | `HU-090`–`HU-099` redactadas como propuesta en issue [#240](https://github.com/bcaceres19/barberia/issues/240), `DP-PUB-01`–`DP-PUB-06`/`CT-011` resueltas; `HU-100`–`HU-103` (reseñas internas, reseñas de Google, ubicación y domicilio) redactadas el 2026-10-26 (`DEC-128`–`DEC-131`), sin issue real todavía |
-| B5 · Notificaciones y recordatorios | `HU-130` – | `HU-130` implementada (issue [#463](https://github.com/bcaceres19/barberia/issues/463), `DEC-142`); recordatorios, WhatsApp y configuración por evento pendientes |
+| B5 · Notificaciones y recordatorios | `HU-130` – `HU-131` | `HU-130` implementada (issue [#463](https://github.com/bcaceres19/barberia/issues/463), `DEC-142`); `HU-131` implementada (issue [#467](https://github.com/bcaceres19/barberia/issues/467), `DEC-144`); WhatsApp, varios recordatorios y configuración por evento pendientes |
 | B6 · Operación, privacidad y piloto | `HU-150` – | Pendientes |
 
 ---
@@ -2721,6 +2721,58 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 
 ---
 
+### HU-131 · Recordatorio por correo 30 minutos antes del turno
+
+| Campo | Valor |
+| --- | --- |
+| Función | `F-NOT-03` (segundo tramo de B5) |
+| Reglas | `RN-REC-01`, `RN-REC-02`, `RN-REC-03`, `RN-REC-04`, `RN-REC-06`, `RN-DAT-02`, `RN-IDE-01`, `RN-TEN-01` |
+| Decisiones | `DEC-018`, `DEC-027`, `DEC-032`, `DEC-040`, `DEC-102`, `DEC-142`, `DEC-143`, `DEC-144` |
+| Actor | Sistema (worker), a raíz de una reserva o reprogramación |
+| Depende de | `HU-130` integrada |
+| Estado | Implementada contra el issue real [#467](https://github.com/bcaceres19/barberia/issues/467) |
+| Riesgo | Recordar una hora que ya cambió, recordar un turno cancelado, recordar dos veces o dejar un correo en claro en la evidencia. |
+
+**Historia**
+
+> Como cliente, quiero recibir un recordatorio por correo poco antes de mi turno, para no olvidarlo ni llegar tarde.
+
+**Alcance incluido**
+
+- Un recordatorio por correo 30 minutos antes del inicio (la anticipación inicial de `RN-REC-01`), programado en la misma transacción que crea el turno (reserva pública y turno manual) y regenerado al reprogramar.
+- Reutiliza la cola de `HU-130`: lease, worker, evidencia por intento y plantilla de marca (`DEC-143`).
+- Un solo recordatorio vigente por turno; coexiste con un aviso de cambio pendiente sin sustituirlo.
+- Mensaje redactado al enviar con el estado vigente: servicio, barbería y fecha y hora locales.
+
+**Alcance excluido**
+
+- WhatsApp, más de un recordatorio por turno, anticipación configurable y configuración por evento y canal (`RN-REC-05`).
+- Recordatorio de un turno que vuelve a `confirmed` por corrección de estado; avisar al barbero; mostrar el estado del envío; purga de la evidencia (B6).
+
+**Criterios de aceptación**
+
+| Código | Criterio |
+| --- | --- |
+| `CA-131-01` | Crear un turno con al menos 30 minutos de antelación (reserva pública o manual) deja, en la misma transacción, un recordatorio `pending` que vence 30 minutos antes del inicio; si la transacción se revierte no queda recordatorio. |
+| `CA-131-02` | Un turno que empieza en menos de 30 minutos, o que no está confirmado, no genera recordatorio; una repetición idempotente de la reserva no programa otro. |
+| `CA-131-03` | Reprogramar a otro intervalo regenera el recordatorio: queda exactamente uno pendiente con la hora nueva; una reprogramación al mismo intervalo no lo toca. |
+| `CA-131-04` | Un recordatorio y un aviso de cambio de `HU-130` pueden estar pendientes a la vez para el mismo turno; ninguno sustituye al otro y nunca hay dos recordatorios pendientes. |
+| `CA-131-05` | El correo se redacta al enviar con la hora vigente. Si el turno ya no está confirmado, cambió de hora desde que se programó o ya empezó, no se envía y queda `skipped` (`not_confirmed`, `superseded`, `past`). |
+| `CA-131-06` | Un recordatorio ya enviado para una hora no se repite para esa misma hora; uno de otra hora no se considera cubierto. |
+| `CA-131-07` | Cada intento deja evidencia sin correo, teléfono ni nombre; los reintentos, el rechazo permanente y el cliente sin correo (`no_email`) se comportan como en `HU-130`. |
+| `CA-131-08` | Con dos barberías reales, ninguna programa ni ve recordatorios de la otra; el worker solo opera mediante funciones `SECURITY DEFINER`. |
+
+**Pruebas obligatorias**
+
+- Dominio del despachador con puertos simulados: envío con la hora vigente y omisiones.
+- Adaptador de Resend contra un servidor HTTP de prueba y plantilla (`DEC-143`).
+- PostgreSQL real con dos tenants: programación, regeneración sin duplicar, coexistencia con el aviso de cambio, cobertura exacta, descarte de la hora vieja y RLS; suite SQL `database/tests/appointment_notice.sql`.
+- Repositorio de `booking`: el gancho se invoca en la transacción de creación (pública y manual) y de reprogramación, y no en una repetición ni en un no-op.
+
+**Terminado cuando** un cliente con correo recibe un único recordatorio con la hora vigente 30 minutos antes de su turno, y ninguno por un turno cancelado o movido.
+
+---
+
 ## 9. Historias pendientes de redacción
 
 | Bloque | Rango reservado | Se redacta cuando |
@@ -2729,7 +2781,7 @@ Orden recomendado: `HU-090` → `HU-091` → `HU-092` → `HU-093` → `HU-094` 
 | B2 | `HU-040` – `HU-042` | Integradas en `main` (PR `#93`, `#96`, `#99`); seguimientos parciales en issues `#90`, `#95`, `#98` y `#100` (este último completo el 2026-10-08) |
 | B3 | `HU-069` – | `HU-066`–`HU-068` ya integradas en `main`; continuar con T3 y cierre automático solo después de revisar este lote y resolver cualquier duda de semántica de snapshots/configuración |
 | B4 | `HU-104` – | `HU-090`–`HU-103` ya redactadas (`HU-100`–`HU-103`: reseñas internas, reseñas de Google, ubicación y domicilio, `DEC-128`–`DEC-131`); continuar con el resto solo tras resolver cualquier duda nueva de esas cuatro historias |
-| B5 | `HU-131` – (`HU-130`: aviso al cliente al cancelar o reprogramar, `DEC-142`) | B4 cumple su criterio de salida; recordatorios, WhatsApp y configuración por evento siguen pendientes |
+| B5 | `HU-132` – (`HU-130`: aviso al cliente al cancelar o reprogramar, `DEC-142`; `HU-131`: recordatorio 30 minutos antes, `DEC-144`) | B4 cumple su criterio de salida; recordatorios, WhatsApp y configuración por evento siguen pendientes |
 | B6 | `HU-150` – | B5 cumple su criterio de salida |
 
 Redactar por anticipado las historias de un bloque lejano produce texto que hay que reescribir: lo que se aprende construyendo el bloque anterior cambia la historia siguiente.

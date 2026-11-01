@@ -1061,7 +1061,15 @@ confirmación y avisos de cambio de `HU-130`) salen con la plantilla de marca
 de `notification/email_template.go` (`DEC-143`): HTML y texto plano en la misma
 petición a Resend. Para verlos en un navegador sin enviar nada:
 `EMAIL_PREVIEW_DIR=<carpeta> go test ./internal/modules/notification -run WritePreviews`
-escribe cuatro `.html` de ejemplo con datos ficticios.
+escribe los `.html` de ejemplo con datos ficticios.
+
+El worker también envía el **recordatorio 30 minutos antes del turno**
+(`HU-131`, `DEC-144`) sobre la misma cola de avisos: se programa en la
+transacción que crea o reprograma el turno y, al enviarse, se descarta si el
+turno se canceló, cambió de hora o ya empezó. Solo correo, sin anticipación
+configurable todavía. Necesita las mismas variables que el aviso de cambio
+(`APP_RESEND_API_KEY`, `APP_RESEND_FROM_ADDRESS`) y `APP_WORKER_DATABASE_URL`
+con el rol `barberia_worker`.
 
 ### Meta WhatsApp Cloud API: modos de envío (`DEC-123`)
 

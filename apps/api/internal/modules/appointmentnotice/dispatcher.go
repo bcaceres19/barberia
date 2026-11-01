@@ -115,6 +115,13 @@ func skipReason(c Context, now time.Time) string {
 		return CodeNotConfirmed
 	case c.Kind == KindCancelledByBarber && c.AppointmentStatus != "cancelled_by_barber":
 		return CodeNotCancelled
+	case c.Kind == KindReminder && c.AppointmentStatus != "confirmed":
+		// RN-REC-02: un turno cancelado, completado o no asistido no se recuerda.
+		return CodeNotConfirmed
+	case c.Kind == KindReminder && !c.NoticeStateAt.Equal(c.StartsAt):
+		// RN-REC-01/03: el turno cambió de hora; el recordatorio de la hora vieja
+		// no se envía (el vigente lo programó la reprogramación).
+		return CodeSuperseded
 	case !c.StartsAt.After(now):
 		return CodePast
 	case c.CustomerEmail == "":
@@ -161,6 +168,9 @@ func (d *Dispatcher) Process(ctx context.Context, n Notice) {
 	switch {
 	case err == nil:
 		in.Outcome, in.CoversStateAt = OutcomeSent, c.StateAt
+		if c.Kind == KindReminder {
+			in.CoversStateAt = c.NoticeStateAt
+		}
 	case isPermanent(err):
 		in.Outcome, in.Code = OutcomePermanent, CodeProviderRejected
 	default:

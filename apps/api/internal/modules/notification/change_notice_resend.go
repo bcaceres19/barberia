@@ -17,6 +17,7 @@ import (
 const (
 	changeNoticeCancelled   = "cancelled_by_barber"
 	changeNoticeRescheduled = "rescheduled"
+	changeNoticeReminder    = "reminder"
 )
 
 // ResendChangeNoticeConfig agrupa los valores de despliegue del aviso de cambio
@@ -27,7 +28,7 @@ type ResendChangeNoticeConfig struct {
 }
 
 // ResendChangeNoticeSender satisface appointmentnotice.Mailer: avisa al cliente
-// de que el barbero canceló o movió su turno. El texto describe el estado
+// de que el barbero canceló o movió su turno y le recuerda el turno que se acerca (HU-131). El texto describe el estado
 // vigente que recibe, nunca uno guardado al programar (RN-REC-03).
 type ResendChangeNoticeSender struct {
 	httpClient *http.Client
@@ -93,6 +94,15 @@ func (s ResendChangeNoticeSender) SendChangeNotice(
 		content.Paragraphs = []string{
 			fmt.Sprintf("%s cambió el horario de tu turno. Este es el horario vigente:", barbershopName),
 			"Si no puedes asistir, comunícate con la barbería.",
+		}
+	case changeNoticeReminder:
+		subject = "Recordatorio de tu turno"
+		content.Preheader = fmt.Sprintf("Tu turno en %s es muy pronto.", barbershopName)
+		content.Badge = &emailBadge{Label: "Recordatorio", Tone: toneNeutral}
+		content.Title = "Tu turno es muy pronto"
+		content.Paragraphs = []string{
+			fmt.Sprintf("Te recordamos tu turno en %s. Te esperamos:", barbershopName),
+			"Si no puedes asistir, avísale a la barbería con tiempo.",
 		}
 	default:
 		return errors.New("notification: tipo de aviso desconocido")

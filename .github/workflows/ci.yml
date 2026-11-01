@@ -106,7 +106,8 @@ jobs:
                    20261101120000_add_home_service.sql \
                    20261102120000_add_google_place_id.sql \
                    20261103120000_add_login_otp_channel.sql \
-                   20261104120000_create_appointment_notice.sql; do
+                   20261104120000_create_appointment_notice.sql \
+                   20261105120000_add_appointment_reminder_kind.sql; do
             psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$f"
           done
           psql -h localhost -U postgres -d postgres -c "ALTER ROLE barberia_app PASSWORD 'app_test';"

@@ -188,6 +188,14 @@ func TestEmailTemplate_WritePreviews(t *testing.T) {
 			Details:    []emailDetail{{"Servicio", "Corte clásico"}, {"Fecha y hora", "jueves 7 de enero, 4:30 p. m."}},
 			Footnotes:  []string{"Si no esperabas este mensaje, ignóralo."},
 		},
+		"recordatorio": {
+			Preheader: "Tu turno en Barbería Centro es muy pronto.", Brand: "Barbería Centro",
+			Badge: &emailBadge{Label: "Recordatorio", Tone: toneNeutral}, Title: "Tu turno es muy pronto",
+			Greeting:   "Hola Ana,",
+			Paragraphs: []string{"Te recordamos tu turno en Barbería Centro. Te esperamos:", "Si no puedes asistir, avísale a la barbería con tiempo."},
+			Details:    []emailDetail{{"Servicio", "Corte clásico"}, {"Fecha y hora", "jueves 7 de enero, 4:30 p. m."}},
+			Footnotes:  []string{"Si no esperabas este mensaje, ignóralo."},
+		},
 		"reprogramado": {
 			Preheader: "Barbería Centro cambió el horario de tu turno.", Brand: "Barbería Centro",
 			Badge: &emailBadge{Label: "Horario actualizado", Tone: toneWarning}, Title: "Tu turno cambió de horario",

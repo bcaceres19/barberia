@@ -52,6 +52,10 @@ func TestTransactionalEmails_SendBrandedHTMLAndText(t *testing.T) {
 			return newChangeNoticeSender(t, srv).SendChangeNotice(context.Background(),
 				"cancelled_by_barber", "c@ejemplo.test", "Barbería Centro", "Corte", evil, "jueves 7 de enero")
 		}, []string{"Barbería Centro", "Turno cancelado", "jueves 7 de enero"}},
+		{"recordatorio", func() error {
+			return newChangeNoticeSender(t, srv).SendChangeNotice(context.Background(),
+				"reminder", "c@ejemplo.test", "Barbería Centro", "Corte", evil, "jueves 7 de enero")
+		}, []string{"Barbería Centro", "Recordatorio", "jueves 7 de enero", "Tu turno es muy pronto"}},
 		{"reprogramación", func() error {
 			return newChangeNoticeSender(t, srv).SendChangeNotice(context.Background(),
 				"rescheduled", "c@ejemplo.test", "Barbería Centro", "Corte", evil, "viernes 8 de enero")

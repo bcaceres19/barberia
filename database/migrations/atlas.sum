@@ -1,4 +1,4 @@
-h1:V3eyJdPmLK2vmKjzwWbEy9aBDpaFeb60yVApDCb6kkg=
+h1:W7WmAcdH/sOZhEzQwTd1h1apTJkql8B8peStfIhKU6Y=
 20260807170000_create_tenant_foundation.sql h1:9KyewD/Xqtm6MjQ7MkTora3f47kjPOobGVfE2q66AUI=
 20260807170100_create_idempotency_record.sql h1:he0jfwTn3otdzgu/qHhFo7Z4ra9+1AL/mT2db82DOrU=
 20260811145252_harden_roles_and_definer_functions.sql h1:KhiZKVpFfL81T+f/73nMkVD0ndVWsCdM4ShqMHZfZ/g=
@@ -39,3 +39,4 @@ h1:V3eyJdPmLK2vmKjzwWbEy9aBDpaFeb60yVApDCb6kkg=
 20261102120000_add_google_place_id.sql h1:J0dDQLsAe4sotOEW0Imt8X75Jiaq8AvyFQY1V+Fas0E=
 20261103120000_add_login_otp_channel.sql h1:RwQIwU1QQMacURAOzgU2cKDospqfO/0nbltUNe65vrI=
 20261104120000_create_appointment_notice.sql h1:li9ckMWWr6QjSlDj/1mRT4NrQHU2cg8yuizGmZtlmuQ=
+20261105120000_add_appointment_reminder_kind.sql h1:e9pBBmDbm0qeTFTVIdYuJcgvIt4vwAJL6bMy7lBOIBQ=

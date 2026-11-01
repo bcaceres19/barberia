@@ -113,6 +113,9 @@ func (r *Repository) CreateInternal(
 		if err := r.appointmentChanged(ctx, q, barbershopID, appointment.ID); err != nil {
 			return err
 		}
+		if err := r.reminderRequired(ctx, q, barbershopID, appointment.ID); err != nil {
+			return err
+		}
 
 		if err := insertAppointmentCreatedHistory(ctx, q, barbershopID, appointment.ID, input.Actor); err != nil {
 			return err
@@ -260,6 +263,9 @@ func (r *Repository) CreateManual(
 			return err
 		}
 		if err := r.appointmentChanged(ctx, q, barbershopID, appointment.ID); err != nil {
+			return err
+		}
+		if err := r.reminderRequired(ctx, q, barbershopID, appointment.ID); err != nil {
 			return err
 		}
 
@@ -1336,6 +1342,9 @@ func (r *Repository) Reschedule(
 				return err
 			}
 			if err := r.noticeRequired(ctx, q, barbershopID, current.id, NoticeRescheduled); err != nil {
+				return err
+			}
+			if err := r.reminderRequired(ctx, q, barbershopID, current.id); err != nil {
 				return err
 			}
 			if err := insertAppointmentRescheduledHistory(

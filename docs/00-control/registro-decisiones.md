@@ -1,6 +1,6 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.58"
+version: "1.59"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-10-31"
@@ -137,6 +137,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-141` | 2026-10-31 | Resuelve las dudas 4–7 y 9 de la campaña #301: cancelación repetida idempotente, agenda con el primer profesional visible, teléfono `+57` de 10 dígitos y dos historias nuevas (`HU-069`, `HU-029`) | `DEC-004`, `DEC-074`, `DEC-136`, `RN-BLQ-03`, `RN-IDE-01`; `HU-029`, `HU-069`, `HU-099`; issue #453 | Confirmada |
 | `DEC-142` | 2026-10-31 | Primer tramo de B5: aviso por correo al cliente cuando el barbero cancela o reprograma, con cola propia, worker y evidencia por intento; WhatsApp y recordatorios quedan fuera | `DEC-004`, `DEC-027`, `DEC-032`, `DEC-102`; `RN-REC-01`–`RN-REC-06`, `RN-BLQ-03`; `HU-130`; issue #463 | Confirmada |
 | `DEC-143` | 2026-11-01 | Plantilla de marca compartida para los correos transaccionales: HTML y texto plano en la misma petición, sin cambiar asuntos, destinatarios ni reglas | `DEC-066`, `DEC-077`, `DEC-139`, `DEC-142`; `RN-DAT-02`; `HU-008`, `HU-097`, `HU-130`; issue #465 | Confirmada |
+| `DEC-144` | 2026-11-01 | Segundo tramo de B5: recordatorio por correo 30 minutos antes del turno, sobre la misma cola que los avisos de cambio; configuración, WhatsApp y varios recordatorios quedan fuera | `DEC-018`, `DEC-027`, `DEC-032`, `DEC-040`, `DEC-142`; `RN-REC-01`–`RN-REC-04`, `RN-REC-06`; `HU-131`; issue #467 | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -1761,3 +1762,20 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** plantillas de Resend alojadas en el proveedor (acoplan el diseño al proveedor y `DEC-066` permite sustituirlo); React Email (añade una cadena de compilación de Node al backend Go por cuatro correos); un logo en imagen (los clientes bloquean imágenes remotas por defecto y obliga a alojar un recurso público).
 - **Documentos afectados:** `historial-cambios.md`, `apps/api/README.md`, evidencia en `docs/10-backlog/evidence/correos-plantilla-2026-11-01/`.
 - **Fuente:** solicitud del propietario; `DEC-066`, `DEC-077`; issue [#465](https://github.com/bcaceres19/barberia/issues/465).
+
+### DEC-144 · Segundo tramo de B5: recordatorio por correo 30 minutos antes del turno
+
+- **Fecha:** 2026-11-01.
+- **Decisión:**
+  1. **Qué se construye.** `F-NOT-03` en su versión mínima: el cliente con correo recibe UN recordatorio 30 minutos antes del turno, la anticipación inicial que fija `RN-REC-01` y `DEC-018`. Solo correo, con la plantilla de `DEC-143`.
+  2. **Misma cola que `HU-130`.** El recordatorio es una fila más de `appointment_notice` (`kind = 'reminder'`), con el mismo lease, `SKIP LOCKED`, evidencia por intento y funciones `SECURITY DEFINER` (`DEC-040`, `DEC-102`). La migración `20261105120000_add_appointment_reminder_kind.sql` amplía el `CHECK` de `kind`, hace que el índice único de pendientes sea «uno por turno y clase» (un recordatorio y un aviso de cambio pueden esperar a la vez, sin sustituirse) y añade `notice_state_at` al contexto del worker.
+  3. **Se programa en la transacción que crea o mueve el turno** (`DEC-032`, `RN-REC-06`): reserva pública, turno manual y reprogramación. Un turno que empieza en menos de 30 minutos o que no está confirmado no genera recordatorio (no hay nada que recordar con antelación). Reprogramar actualiza el pendiente en vez de crear otro (`RN-REC-01`: un solo recordatorio vigente).
+  4. **Qué cubre cada recordatorio.** Su `state_at` es el instante del turno para el que se programó. Al enviar, el worker lo descarta (`superseded`) si ya no coincide con el inicio vigente (el turno se movió) o si otro recordatorio ya cubrió ese mismo instante; no usa `updated_at`, de modo que corregir el nombre de un cliente no lo invalida (excepción de `RN-REC-01`).
+  5. **Decide al enviar con el estado vigente** (`RN-REC-02`, `RN-REC-03`): no se envía si el turno ya no está confirmado, ya empezó o el cliente no tiene correo (`skipped` con su causa). Cancelar no toca la fila: basta la verificación final, que además cubre la carrera del minuto del envío.
+  6. **Qué queda fuera.** WhatsApp (`DEC-027`), anticipación configurable y hasta tres recordatorios (`DEC-018`), configuración por evento y canal (`RN-REC-05`), recordatorio de un turno que vuelve a `confirmed` por corrección de estado, y la purga de la evidencia (B6).
+- **Quién lo decidió:** el propietario, el 2026-11-01, al pedir «aplica lo que falte».
+- **Responsable:** propietario del proyecto.
+- **Motivo:** `F-NOT-03` es P0 desde `DEC-032` y `HU-130` dejó lista la cola, el worker y la evidencia; reutilizarlos da recordatorios reales con el menor cambio posible.
+- **Alternativas descartadas:** una tabla propia de recordatorios (duplica lease, evidencia y funciones sin ganar nada); comparar con `updated_at` para invalidar (anularía el recordatorio por cambios que `RN-REC-01` excluye); borrar el recordatorio al cancelar (la aplicación no tiene `DELETE` sobre la cola y la verificación final ya es obligatoria); programar siempre aunque falten menos de 30 minutos (un turno tomado «para ya» recibiría un recordatorio inmediato sin sentido).
+- **Documentos afectados:** `historias-usuario.md` (`HU-131`), `matriz-trazabilidad.md`, `database/README.md`, `historial-cambios.md`, `apps/api/README.md`, migración `20261105120000_add_appointment_reminder_kind.sql`.
+- **Fuente:** `DEC-018`, `DEC-032`, `DEC-142`, `RN-REC-01`–`RN-REC-04`; issue [#467](https://github.com/bcaceres19/barberia/issues/467).

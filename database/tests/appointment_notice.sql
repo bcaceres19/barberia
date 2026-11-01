@@ -1,5 +1,6 @@
--- Pruebas SQL del issue #463 (HU-130, DEC-142): cola del aviso al cliente por
--- cancelación o reprogramación del barbero y evidencia de cada intento. Cubren los
+-- Pruebas SQL del issue #463 (HU-130, DEC-142) y #467 (HU-131, DEC-144): cola del
+-- aviso al cliente por cancelación o reprogramación del barbero, del recordatorio
+-- previo al turno, y evidencia de cada intento. Cubren los
 -- privilegios (el worker solo ejecuta funciones; la aplicación solo encola), el RLS
 -- entre dos barberías, un solo aviso pendiente por turno, el reclamo con lease y el
 -- cierre por CAS (DDL-CON-01), el contexto con estado vigente y la evidencia sin
@@ -118,14 +119,14 @@ BEGIN
   INSERT INTO appointment_notice (barbershop_id, appointment_id, kind, state_at, run_at)
   VALUES ('11111111-1111-1111-1111-111111111111', 'b4630004-0000-4000-8000-00000000000a',
           'rescheduled', '2026-01-05 09:00:00-05', '2026-01-05 09:01:00-05')
-  ON CONFLICT (appointment_id) WHERE status = 'pending'
+  ON CONFLICT (appointment_id, (kind = 'reminder')) WHERE status = 'pending'
   DO UPDATE SET kind = EXCLUDED.kind, state_at = EXCLUDED.state_at, run_at = EXCLUDED.run_at;
 
   -- Un cambio posterior REEMPLAZA al pendiente (la cancelación sustituye a la reprogramación).
   INSERT INTO appointment_notice (barbershop_id, appointment_id, kind, state_at, run_at)
   VALUES ('11111111-1111-1111-1111-111111111111', 'b4630004-0000-4000-8000-00000000000a',
           'cancelled_by_barber', '2026-01-05 09:00:20-05', '2026-01-05 09:01:20-05')
-  ON CONFLICT (appointment_id) WHERE status = 'pending'
+  ON CONFLICT (appointment_id, (kind = 'reminder')) WHERE status = 'pending'
   DO UPDATE SET kind = EXCLUDED.kind, state_at = EXCLUDED.state_at, run_at = EXCLUDED.run_at;
 
   SELECT count(*), max(kind) INTO v_count, v_kind FROM appointment_notice;
@@ -499,5 +500,132 @@ BEGIN
 END
 $$;
 \echo 'restricciones OK · un pendiente por turno, sin cruce de tenants y evidencia sin contacto'
+
+-- ---------------------------------------------------------------------------
+-- Issue #467 (HU-131, DEC-144): el recordatorio comparte la cola
+-- ---------------------------------------------------------------------------
+RESET ROLE;
+INSERT INTO appointment (
+  id, barbershop_id, barber_id, service_id, customer_id, attendee_name,
+  starts_at, ends_at, status, origin,
+  service_name_snapshot, duration_minutes_snapshot, price_amount_snapshot, price_currency_snapshot
+) VALUES
+  ('b4630004-0000-4000-8000-0000000000c1', '11111111-1111-1111-1111-111111111111', 'b4630001-0000-4000-8000-00000000000a',
+   'b4630002-0000-4000-8000-00000000000a', 'b4630003-0000-4000-8000-00000000000a', 'Cliente recordatorio',
+   '2099-01-09T10:00:00Z', '2099-01-09T10:30:00Z', 'confirmed', 'manual', 'Corte aviso A', 30, 20000.00, 'COP');
+
+SET ROLE barberia_app;
+SELECT set_config('app.barbershop_id', '11111111-1111-1111-1111-111111111111', true);
+DO $$
+DECLARE
+  v_count integer;
+BEGIN
+  -- Un recordatorio y un aviso de cambio pueden esperar a la vez: ninguno sustituye al otro.
+  INSERT INTO appointment_notice (barbershop_id, appointment_id, kind, state_at, run_at)
+  VALUES ('11111111-1111-1111-1111-111111111111', 'b4630004-0000-4000-8000-0000000000c1',
+          'reminder', '2099-01-09T10:00:00Z', '2099-01-09T09:30:00Z');
+  INSERT INTO appointment_notice (barbershop_id, appointment_id, kind, state_at, run_at)
+  VALUES ('11111111-1111-1111-1111-111111111111', 'b4630004-0000-4000-8000-0000000000c1',
+          'rescheduled', '2026-01-05 09:00:00-05', '2026-01-05 09:01:00-05')
+  ON CONFLICT (appointment_id, (kind = 'reminder')) WHERE status = 'pending'
+  DO UPDATE SET kind = EXCLUDED.kind, state_at = EXCLUDED.state_at, run_at = EXCLUDED.run_at;
+
+  -- Reprogramar regenera el recordatorio: se actualiza el pendiente, no se duplica.
+  INSERT INTO appointment_notice (barbershop_id, appointment_id, kind, state_at, run_at)
+  VALUES ('11111111-1111-1111-1111-111111111111', 'b4630004-0000-4000-8000-0000000000c1',
+          'reminder', '2099-01-09T13:00:00Z', '2099-01-09T12:30:00Z')
+  ON CONFLICT (appointment_id, (kind = 'reminder')) WHERE status = 'pending'
+  DO UPDATE SET state_at = EXCLUDED.state_at, run_at = EXCLUDED.run_at;
+
+  SELECT count(*) INTO v_count FROM appointment_notice
+   WHERE appointment_id = 'b4630004-0000-4000-8000-0000000000c1' AND status = 'pending';
+  IF v_count <> 2 THEN
+    RAISE EXCEPTION 'debe haber un recordatorio y un aviso de cambio pendientes (hay %).', v_count;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM appointment_notice WHERE appointment_id = 'b4630004-0000-4000-8000-0000000000c1'
+                  AND kind = 'reminder' AND state_at = '2099-01-09T13:00:00Z' AND run_at = '2099-01-09T12:30:00Z') THEN
+    RAISE EXCEPTION 'el recordatorio regenerado debe llevar el instante nuevo del turno.';
+  END IF;
+
+  -- Dos recordatorios pendientes del mismo turno se rechazan.
+  BEGIN
+    INSERT INTO appointment_notice (barbershop_id, appointment_id, kind, state_at, run_at)
+    VALUES ('11111111-1111-1111-1111-111111111111', 'b4630004-0000-4000-8000-0000000000c1',
+            'reminder', '2099-01-09T14:00:00Z', '2099-01-09T13:30:00Z');
+    RAISE EXCEPTION 'un segundo recordatorio pendiente debe rechazarse.';
+  EXCEPTION WHEN unique_violation THEN NULL;
+  END;
+
+  -- Una clase desconocida sigue rechazándose.
+  BEGIN
+    INSERT INTO appointment_notice (barbershop_id, appointment_id, kind, state_at)
+    VALUES ('11111111-1111-1111-1111-111111111111', 'b4630004-0000-4000-8000-00000000000a', 'whatsapp_reminder', now());
+    RAISE EXCEPTION 'una clase de aviso desconocida debe rechazarse.';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+END
+$$;
+
+-- Contexto y cobertura: la cobertura es por clase y, para el recordatorio, exacta.
+RESET ROLE;
+UPDATE appointment_notice SET status = 'sent', attempts = 1, covers_state_at = '2100-01-01T00:00:00Z', finished_at = now()
+ WHERE appointment_id = 'b4630004-0000-4000-8000-0000000000c1' AND kind = 'rescheduled';
+DELETE FROM appointment_notice WHERE appointment_id = 'b4630004-0000-4000-8000-0000000000c1' AND kind = 'reminder';
+INSERT INTO appointment_notice (id, barbershop_id, appointment_id, kind, state_at, run_at) VALUES
+  ('b4630011-0000-4000-8000-0000000000c1', '11111111-1111-1111-1111-111111111111',
+   'b4630004-0000-4000-8000-0000000000c1', 'reminder', '2099-01-09T10:00:00Z', '2099-01-09T09:30:00Z');
+SET ROLE barberia_worker;
+DO $$
+DECLARE
+  v_c   record;
+  v_ctx record;
+BEGIN
+  SELECT * INTO v_c FROM notice_claim(100, 60, 5, '2099-01-09T09:31:00Z'::timestamptz)
+   WHERE notice_id = 'b4630011-0000-4000-8000-0000000000c1';
+  SELECT * INTO v_ctx FROM notice_context(v_c.notice_id, v_c.claim_token);
+  IF v_ctx.notice_state_at <> '2099-01-09T10:00:00Z' OR v_ctx.starts_at <> '2099-01-09T10:00:00Z' THEN
+    RAISE EXCEPTION 'el contexto debe devolver el instante que cubre el recordatorio.';
+  END IF;
+  IF v_ctx.already_covered THEN
+    RAISE EXCEPTION 'un aviso de cambio enviado NO cubre un recordatorio (clase distinta).';
+  END IF;
+  PERFORM notice_finish(v_c.notice_id, v_c.claim_token, 'sent', NULL, NULL, 5, v_ctx.notice_state_at, '2099-01-09T09:31:01Z');
+END
+$$;
+RESET ROLE;
+INSERT INTO appointment_notice (id, barbershop_id, appointment_id, kind, state_at, run_at) VALUES
+  ('b4630012-0000-4000-8000-0000000000c1', '11111111-1111-1111-1111-111111111111',
+   'b4630004-0000-4000-8000-0000000000c1', 'reminder', '2099-01-09T10:00:00Z', '2099-01-09T09:30:00Z');
+SET ROLE barberia_worker;
+DO $$
+DECLARE
+  v_c record;
+BEGIN
+  SELECT * INTO v_c FROM notice_claim(100, 60, 5, '2099-01-09T09:32:00Z'::timestamptz)
+   WHERE notice_id = 'b4630012-0000-4000-8000-0000000000c1';
+  IF NOT (SELECT already_covered FROM notice_context(v_c.notice_id, v_c.claim_token)) THEN
+    RAISE EXCEPTION 'un recordatorio del mismo instante ya enviado debe verse cubierto.';
+  END IF;
+  PERFORM notice_finish(v_c.notice_id, v_c.claim_token, 'skipped', 'superseded', NULL, 5, NULL, '2099-01-09T09:32:01Z');
+END
+$$;
+RESET ROLE;
+INSERT INTO appointment_notice (id, barbershop_id, appointment_id, kind, state_at, run_at) VALUES
+  ('b4630013-0000-4000-8000-0000000000c1', '11111111-1111-1111-1111-111111111111',
+   'b4630004-0000-4000-8000-0000000000c1', 'reminder', '2099-01-09T08:00:00Z', '2099-01-09T07:30:00Z');
+SET ROLE barberia_worker;
+DO $$
+DECLARE
+  v_c record;
+BEGIN
+  SELECT * INTO v_c FROM notice_claim(100, 60, 5, '2099-01-09T09:33:00Z'::timestamptz)
+   WHERE notice_id = 'b4630013-0000-4000-8000-0000000000c1';
+  IF (SELECT already_covered FROM notice_context(v_c.notice_id, v_c.claim_token)) THEN
+    RAISE EXCEPTION 'un recordatorio de otro instante NO debe verse cubierto, aunque sea anterior (cobertura exacta).';
+  END IF;
+END
+$$;
+RESET ROLE;
+\echo 'recordatorio OK · convive con el aviso de cambio, se regenera sin duplicar y su cobertura es exacta'
 
 ROLLBACK;
