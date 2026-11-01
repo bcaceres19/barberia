@@ -2,7 +2,6 @@ package notification
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 )
 
@@ -32,6 +31,11 @@ func NewResendLoginChallengeEmailSender(cfg ResendEmailConfig, httpClient *http.
 // SendCode entrega el código al correo de la cuenta. El error devuelto no
 // incluye el destinatario ni el código (RN-DAT-02).
 func (s ResendLoginChallengeEmailSender) SendCode(ctx context.Context, email, code string) error {
-	return postResendEmail(ctx, s.httpClient, s.cfg, email, loginChallengeEmailSubject,
-		fmt.Sprintf("Tu código de verificación para entrar es: %s\n\nVence en pocos minutos. Si no intentaste entrar, ignora este mensaje y considera cambiar tu contraseña.", code))
+	return postResendEmail(ctx, s.httpClient, s.cfg, email, loginChallengeEmailSubject, emailContent{
+		Preheader:  "Tu código de verificación para entrar a NAVA.",
+		Title:      "Verifica que eres tú",
+		Paragraphs: []string{"Tu código de verificación para entrar es el siguiente. Vence en pocos minutos."},
+		Code:       code,
+		Footnotes:  []string{"Si no intentaste entrar, ignora este mensaje y considera cambiar tu contraseña."},
+	})
 }

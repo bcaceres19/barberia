@@ -1056,6 +1056,13 @@ por si algo construye un `config.Config` sin pasar por `Load`.
 | `APP_RESEND_FROM_ADDRESS` | (vacía) | Remitente verificado del correo. |
 | `APP_RESEND_SUBJECT` | `Código de recuperación de acceso` | Asunto fijo del correo. |
 
+Los cuatro correos transaccionales (recuperación, código de acceso,
+confirmación y avisos de cambio de `HU-130`) salen con la plantilla de marca
+de `notification/email_template.go` (`DEC-143`): HTML y texto plano en la misma
+petición a Resend. Para verlos en un navegador sin enviar nada:
+`EMAIL_PREVIEW_DIR=<carpeta> go test ./internal/modules/notification -run WritePreviews`
+escribe cuatro `.html` de ejemplo con datos ficticios.
+
 ### Meta WhatsApp Cloud API: modos de envío (`DEC-123`)
 
 `MetaWhatsAppSender` envía a `POST https://graph.facebook.com/{versión}/{phone_number_id}/messages`

@@ -1,6 +1,6 @@
 ---
 titulo: "Registro de decisiones"
-version: "1.57"
+version: "1.58"
 estado: "Vigente"
 responsable: "Propietario del proyecto"
 ultima_actualizacion: "2026-10-31"
@@ -136,6 +136,7 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 | `DEC-140` | 2026-10-31 | Resuelve las dudas de la campaña #301: «última escritura gana» en catálogo, equipo y marca; la lista pública de barberos devuelve 200 vacío ante un ID ajeno; `DEC-064` acota a `RN-IDE-01` en la recuperación | `RN-IDE-01`, `DEC-064`, `DEC-069`, `DEC-114`, `DEC-115`; `HU-009`, `HU-092`, `HU-093`; issue #449 | Confirmada |
 | `DEC-141` | 2026-10-31 | Resuelve las dudas 4–7 y 9 de la campaña #301: cancelación repetida idempotente, agenda con el primer profesional visible, teléfono `+57` de 10 dígitos y dos historias nuevas (`HU-069`, `HU-029`) | `DEC-004`, `DEC-074`, `DEC-136`, `RN-BLQ-03`, `RN-IDE-01`; `HU-029`, `HU-069`, `HU-099`; issue #453 | Confirmada |
 | `DEC-142` | 2026-10-31 | Primer tramo de B5: aviso por correo al cliente cuando el barbero cancela o reprograma, con cola propia, worker y evidencia por intento; WhatsApp y recordatorios quedan fuera | `DEC-004`, `DEC-027`, `DEC-032`, `DEC-102`; `RN-REC-01`–`RN-REC-06`, `RN-BLQ-03`; `HU-130`; issue #463 | Confirmada |
+| `DEC-143` | 2026-11-01 | Plantilla de marca compartida para los correos transaccionales: HTML y texto plano en la misma petición, sin cambiar asuntos, destinatarios ni reglas | `DEC-066`, `DEC-077`, `DEC-139`, `DEC-142`; `RN-DAT-02`; `HU-008`, `HU-097`, `HU-130`; issue #465 | Confirmada |
 
 ## 3. Decisiones detalladas
 
@@ -1742,3 +1743,21 @@ Cada código `DEC-*` es estable y no se reutiliza. Este registro normaliza respu
 - **Alternativas descartadas:** enviar el correo dentro de la petición HTTP (un fallo del proveedor bloquearía o revertiría la cancelación, y un caído-y-reiniciado perdería el aviso); enviarlo después del `COMMIT` sin cola (se pierde si cae el proceso y no deja evidencia durable); esperar a todo B5 (deja a los clientes sin aviso de un cambio que ya ocurre); avisar por WhatsApp sin plantilla aprobada (viola `DEC-027`).
 - **Documentos afectados:** `historias-usuario.md` (`HU-130`), `reglas-negocio.md` (sin cambio de texto), `matriz-trazabilidad.md`, `database/README.md`, `historial-cambios.md`, migración `20261104120000_create_appointment_notice.sql`.
 - **Fuente:** `DEC-004`, `DEC-008`, `RN-BLQ-03`, `RN-REC-01`–`RN-REC-06`; issue [#463](https://github.com/bcaceres19/barberia/issues/463).
+
+### DEC-143 · Plantilla de marca compartida para los correos transaccionales
+
+- **Fecha:** 2026-11-01.
+- **Decisión:**
+  1. **Un solo diseño para los cuatro correos.** El código de recuperación (`HU-008`), el código de acceso (`DEC-139`), la confirmación de turno (`HU-097`) y el aviso de cancelación o reprogramación (`HU-130`) se arman con una plantilla común en `apps/api/internal/modules/notification/email_template.go`. Cada remitente aporta solo el contenido; la presentación vive en un único lugar.
+  2. **Identidad.** NAVA / Tailored Grid (`DEC-077`): banda de tinta `#101b2b` con el wordmark de texto «NAVA» y, cuando el correo pertenece a una barbería, su nombre; filete de latón `#b8955a`; tarjeta blanca sobre fondo crema `#f4f0e7`; insignia de estado (confirmado, cancelado, horario actualizado), tarjeta de datos del turno, código grande y botón. Son los mismos valores de `tokens.css`, repetidos como literales porque un correo no lee variables CSS.
+  3. **Compatibilidad.** HTML con tablas de maquetación, estilos en línea, ancho máximo de 600 px que se contrae a 320 px sin desbordar, tipografías del sistema, modo oscuro mediante `prefers-color-scheme` (los clientes que no lo respetan muestran la versión clara) y ninguna imagen remota ni script: no hay logo alojado que un cliente pueda bloquear.
+  4. **HTML y texto en la misma petición.** Resend recibe `html` y `text`; el texto conserva el mismo orden y datos y es la alternativa para quien no renderiza HTML.
+  5. **Escape.** Todo valor dinámico (nombre del cliente, barbería, servicio, enlace) pasa por `html/template`, que escapa por contexto y neutraliza URL peligrosas; esos valores son entrada de usuarios.
+  6. **Sin cambios de comportamiento.** Asuntos, destinatarios, condiciones de envío, reintentos y la regla de no copiar al destinatario en errores (`RN-DAT-02`) permanecen. Los correos de código no nombran una barbería; la confirmación sin enlace conserva su frase de respaldo.
+  7. **Fuera de alcance.** Plantillas de WhatsApp (`DEC-027`, `DEC-123`), correos de marketing, un logo en imagen alojada y la personalización de colores por barbería.
+- **Quién lo decidió:** el propietario, el 2026-11-01, al pedir «una plantilla linda y bonita para los envíos de correo».
+- **Responsable:** propietario del proyecto.
+- **Motivo:** los cuatro correos salían como texto plano y cada remitente armaba su propio cuerpo; el aviso de `HU-130` es el primero que ve un cliente final y no reflejaba la marca.
+- **Alternativas descartadas:** plantillas de Resend alojadas en el proveedor (acoplan el diseño al proveedor y `DEC-066` permite sustituirlo); React Email (añade una cadena de compilación de Node al backend Go por cuatro correos); un logo en imagen (los clientes bloquean imágenes remotas por defecto y obliga a alojar un recurso público).
+- **Documentos afectados:** `historial-cambios.md`, `apps/api/README.md`, evidencia en `docs/10-backlog/evidence/correos-plantilla-2026-11-01/`.
+- **Fuente:** solicitud del propietario; `DEC-066`, `DEC-077`; issue [#465](https://github.com/bcaceres19/barberia/issues/465).

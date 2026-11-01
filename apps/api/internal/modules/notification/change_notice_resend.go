@@ -66,28 +66,48 @@ func (s ResendChangeNoticeSender) SendChangeNotice(
 	ctx context.Context,
 	kind, email, barbershopName, serviceName, attendeeName, startsAtLocal string,
 ) error {
-	var subject, text string
+	var subject string
+	content := emailContent{
+		Brand:    barbershopName,
+		Greeting: fmt.Sprintf("Hola %s,", attendeeName),
+		Details: []emailDetail{
+			{Label: "Servicio", Value: serviceName},
+			{Label: "Fecha y hora", Value: startsAtLocal},
+		},
+	}
 	switch kind {
 	case changeNoticeCancelled:
 		subject = "Tu turno fue cancelado"
-		text = fmt.Sprintf(
-			"Hola %s,\n\n%s canceló tu turno.\n\nServicio: %s\nFecha y hora: %s\n\nSi quieres otro horario, comunícate con la barbería o reserva de nuevo.\n\nSi no esperabas este mensaje, ignóralo.",
-			attendeeName, barbershopName, serviceName, startsAtLocal,
-		)
+		content.Preheader = fmt.Sprintf("%s canceló tu turno.", barbershopName)
+		content.Badge = &emailBadge{Label: "Turno cancelado", Tone: toneDanger}
+		content.Title = "Tu turno fue cancelado"
+		content.Paragraphs = []string{
+			fmt.Sprintf("%s canceló tu turno. Estos son los datos del turno cancelado:", barbershopName),
+			"Si quieres otro horario, comunícate con la barbería o reserva de nuevo.",
+		}
 	case changeNoticeRescheduled:
 		subject = "Tu turno cambió de horario"
-		text = fmt.Sprintf(
-			"Hola %s,\n\n%s cambió el horario de tu turno. Este es el horario vigente:\n\nServicio: %s\nFecha y hora: %s\n\nSi no puedes asistir, comunícate con la barbería.\n\nSi no esperabas este mensaje, ignóralo.",
-			attendeeName, barbershopName, serviceName, startsAtLocal,
-		)
+		content.Preheader = fmt.Sprintf("%s cambió el horario de tu turno.", barbershopName)
+		content.Badge = &emailBadge{Label: "Horario actualizado", Tone: toneWarning}
+		content.Title = "Tu turno cambió de horario"
+		content.Paragraphs = []string{
+			fmt.Sprintf("%s cambió el horario de tu turno. Este es el horario vigente:", barbershopName),
+			"Si no puedes asistir, comunícate con la barbería.",
+		}
 	default:
 		return errors.New("notification: tipo de aviso desconocido")
+	}
+	content.Footnotes = []string{"Si no esperabas este mensaje, ignóralo."}
+
+	htmlBody, err := content.HTML()
+	if err != nil {
+		return err
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, resendSendTimeout)
 	defer cancel()
 
-	body, err := json.Marshal(resendEmailRequest{From: s.cfg.FromAddress, To: []string{email}, Subject: subject, Text: text})
+	body, err := json.Marshal(resendEmailRequest{From: s.cfg.FromAddress, To: []string{email}, Subject: subject, HTML: htmlBody, Text: content.Text()})
 	if err != nil {
 		return fmt.Errorf("notification: codificar aviso de cambio de Resend: %w", err)
 	}
