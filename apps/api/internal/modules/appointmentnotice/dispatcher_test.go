@@ -290,3 +290,57 @@ func TestRunOnce_StopsProcessingWhenTheContextIsCancelled(t *testing.T) {
 		t.Fatal("con el contexto cancelado no se envía nada; el lease devolverá los avisos")
 	}
 }
+
+// HU-131 (DEC-144): el recordatorio decide con el estado vigente del turno.
+func reminderContext() appointmentnotice.Context {
+	c := validContext()
+	c.Kind = appointmentnotice.KindReminder
+	c.NoticeStateAt = c.StartsAt // programado para la hora vigente
+	return c
+}
+
+func TestProcess_Reminder_IsSentForTheCurrentHourAndCoversThatInstant(t *testing.T) {
+	store, mailer := &fakeStore{ctx: reminderContext()}, &fakeMailer{}
+	fin, _ := process(t, store, mailer, 1)
+
+	if len(mailer.calls) != 1 || mailer.calls[0].kind != "reminder" ||
+		mailer.calls[0].when != "2099-01-07 16:30 (America/Bogota)" {
+		t.Fatalf("debe enviar el recordatorio con la hora vigente: %+v", mailer.calls)
+	}
+	if fin.Outcome != appointmentnotice.OutcomeSent || !fin.CoversStateAt.Equal(reminderContext().StartsAt) {
+		t.Fatalf("un recordatorio cubre el instante del turno, no el updated_at: %+v", fin)
+	}
+}
+
+func TestProcess_Reminder_Skips(t *testing.T) {
+	cases := []struct {
+		name   string
+		mutate func(c *appointmentnotice.Context)
+		code   string
+	}{
+		{"turno cancelado (RN-REC-02)", func(c *appointmentnotice.Context) { c.AppointmentStatus = "cancelled_by_customer" }, appointmentnotice.CodeNotConfirmed},
+		{"turno cancelado por el barbero", func(c *appointmentnotice.Context) { c.AppointmentStatus = "cancelled_by_barber" }, appointmentnotice.CodeNotConfirmed},
+		{"turno completado", func(c *appointmentnotice.Context) { c.AppointmentStatus = "completed" }, appointmentnotice.CodeNotConfirmed},
+		{"el turno cambió de hora: recordatorio de la hora vieja (RN-REC-03)", func(c *appointmentnotice.Context) { c.NoticeStateAt = c.StartsAt.Add(-3 * time.Hour) }, appointmentnotice.CodeSuperseded},
+		{"ya enviado para esa hora", func(c *appointmentnotice.Context) { c.AlreadyCovered = true }, appointmentnotice.CodeSuperseded},
+		{"el turno ya empezó", func(c *appointmentnotice.Context) {
+			c.StartsAt = now.Add(-time.Minute)
+			c.NoticeStateAt = c.StartsAt
+		}, appointmentnotice.CodePast},
+		{"cliente sin correo", func(c *appointmentnotice.Context) { c.CustomerEmail = "" }, appointmentnotice.CodeNoEmail},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			ctx := reminderContext()
+			c.mutate(&ctx)
+			store, mailer := &fakeStore{ctx: ctx}, &fakeMailer{}
+			fin, _ := process(t, store, mailer, 1)
+			if len(mailer.calls) != 0 {
+				t.Fatalf("no debe enviar, envió %d", len(mailer.calls))
+			}
+			if fin.Outcome != appointmentnotice.OutcomeSkipped || fin.Code != c.code {
+				t.Fatalf("cierre = %s/%s, quiero skipped/%s", fin.Outcome, fin.Code, c.code)
+			}
+		})
+	}
+}

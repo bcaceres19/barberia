@@ -9,6 +9,9 @@ import (
 const (
 	KindCancelledByBarber = "cancelled_by_barber"
 	KindRescheduled       = "rescheduled"
+	// KindReminder es el recordatorio previo al turno (HU-131, DEC-144). Su
+	// `state_at` es el instante del turno para el que se programó.
+	KindReminder = "reminder"
 )
 
 // Resultados con los que se cierra un aviso (argumento de `notice_finish`).
@@ -54,8 +57,13 @@ type Context struct {
 	ServiceName    string
 	BarbershopName string
 	Timezone       string
-	// AlreadyCovered indica que otro aviso ya envió un estado igual o más reciente.
+	// AlreadyCovered indica que otro aviso de la misma clase ya envió un estado
+	// igual o más reciente (para un recordatorio, el mismo instante del turno).
 	AlreadyCovered bool
+	// NoticeStateAt es el estado que ESTE aviso cubre. Para un recordatorio es el
+	// instante del turno con el que se programó: si ya no coincide con StartsAt,
+	// el turno cambió de hora y el recordatorio quedó viejo (RN-REC-01, RN-REC-03).
+	NoticeStateAt time.Time
 }
 
 // FinishInput cierra un aviso con CAS sobre su claim_token.

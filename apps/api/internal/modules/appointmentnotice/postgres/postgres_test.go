@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -63,21 +64,55 @@ func hex8(t *testing.T) string {
 	return hex.EncodeToString(b)
 }
 
-// seedAppointment crea barbero, servicio, cliente (con o sin correo) y una cita
-// confirmada dentro del tenant, y devuelve su id y el correo del cliente.
+// shopFixture es el barbero y el servicio que las pruebas de este paquete comparten
+// por barbería. Crear uno nuevo por prueba inflaba el catálogo de la barbería de
+// fixtures (otras suites listan solo 50 servicios), así que se crean una vez.
+type shopFixture struct{ barberID, serviceID string }
+
+var (
+	fixturesMu sync.Mutex
+	fixtures   = map[database.BarbershopID]shopFixture{}
+)
+
+func sharedFixture(t *testing.T, db *database.DB, shop database.BarbershopID) shopFixture {
+	t.Helper()
+	fixturesMu.Lock()
+	defer fixturesMu.Unlock()
+	if f, ok := fixtures[shop]; ok {
+		return f
+	}
+	var f shopFixture
+	err := db.InTenantTx(context.Background(), shop, func(ctx context.Context, q database.Queries) error {
+		if err := q.QueryRow(ctx, `INSERT INTO barber (barbershop_id, full_name) VALUES ($1, $2) RETURNING id::text`,
+			string(shop), "Barbero aviso "+hex8(t)).Scan(&f.barberID); err != nil {
+			return err
+		}
+		return q.QueryRow(ctx,
+			`INSERT INTO service (barbershop_id, name, duration_minutes, price_amount) VALUES ($1, $2, 40, 30000) RETURNING id::text`,
+			string(shop), "Corte "+hex8(t)).Scan(&f.serviceID)
+	})
+	if err != nil {
+		t.Fatalf("sharedFixture: %v", err)
+	}
+	fixtures[shop] = f
+	return f
+}
+
+// seedAppointment crea un cliente (con o sin correo) y una cita confirmada con el
+// barbero y el servicio compartidos de la barbería, y devuelve su id y el correo.
+// El inicio es aleatorio dentro de un año para que ninguna cita se solape con otra
+// del mismo barbero.
 func seedAppointment(t *testing.T, db *database.DB, shop database.BarbershopID, withEmail bool) (id, email string) {
 	t.Helper()
+	f := sharedFixture(t, db, shop)
+	b := make([]byte, 3)
+	if _, err := rand.Read(b); err != nil {
+		t.Fatal(err)
+	}
+	offsetMinutes := int(b[0])<<16 | int(b[1])<<8 | int(b[2]) // hasta ~16,7 M de minutos
+	offsetMinutes %= 365 * 24 * 60
 	err := db.InTenantTx(context.Background(), shop, func(ctx context.Context, q database.Queries) error {
-		var barberID, serviceID, customerID string
-		if err := q.QueryRow(ctx, `INSERT INTO barber (barbershop_id, full_name) VALUES ($1, $2) RETURNING id::text`,
-			string(shop), "Barbero aviso "+hex8(t)).Scan(&barberID); err != nil {
-			return err
-		}
-		if err := q.QueryRow(ctx,
-			`INSERT INTO service (barbershop_id, name, duration_minutes, price_amount) VALUES ($1, $2, 40, 30000) RETURNING id::text`,
-			string(shop), "Corte "+hex8(t)).Scan(&serviceID); err != nil {
-			return err
-		}
+		var customerID string
 		var emailArg *string
 		if withEmail {
 			email = "cliente." + hex8(t) + "@ejemplo.test"
@@ -88,7 +123,7 @@ func seedAppointment(t *testing.T, db *database.DB, shop database.BarbershopID, 
 			string(shop), emailArg).Scan(&customerID); err != nil {
 			return err
 		}
-		start := time.Now().UTC().Add(72 * time.Hour).Truncate(time.Minute)
+		start := time.Now().UTC().Add(72*time.Hour + time.Duration(offsetMinutes)*time.Minute).Truncate(time.Minute)
 		return q.QueryRow(ctx,
 			`INSERT INTO appointment (barbershop_id, barber_id, service_id, customer_id, attendee_name, starts_at, ends_at,
 			                          status, origin, service_name_snapshot, duration_minutes_snapshot,
@@ -96,7 +131,7 @@ func seedAppointment(t *testing.T, db *database.DB, shop database.BarbershopID, 
 			 VALUES ($1, $2, $3, $4, 'Ana Pérez', $5::timestamptz, $5::timestamptz + interval '40 minutes',
 			         'confirmed', 'manual', 'Corte clásico', 40, 30000, 'COP')
 			 RETURNING id::text`,
-			string(shop), barberID, serviceID, customerID, start).Scan(&id)
+			string(shop), f.barberID, f.serviceID, customerID, start).Scan(&id)
 	})
 	if err != nil {
 		t.Fatalf("seedAppointment: %v", err)
@@ -469,3 +504,187 @@ type permanent struct{}
 
 func (permanent) Error() string   { return "rechazo" }
 func (permanent) Permanent() bool { return true }
+
+// ---- HU-131 / DEC-144: recordatorio 30 minutos antes ----
+
+func enqueueReminder(t *testing.T, db *database.DB, shop database.BarbershopID, appointmentID string) {
+	t.Helper()
+	err := db.InTenantTx(context.Background(), shop, func(ctx context.Context, q database.Queries) error {
+		return noticepostgres.NewEnqueuer().AppointmentReminderRequired(ctx, q, string(shop), appointmentID)
+	})
+	if err != nil {
+		t.Fatalf("enqueueReminder: %v", err)
+	}
+}
+
+// startsAt lee el inicio vigente del turno y, del recordatorio pendiente, cuándo vence.
+func startsAt(t *testing.T, db *database.DB, shop database.BarbershopID, appointmentID string) time.Time {
+	t.Helper()
+	var at time.Time
+	err := db.InTenantTx(context.Background(), shop, func(ctx context.Context, q database.Queries) error {
+		return q.QueryRow(ctx, `SELECT starts_at FROM appointment WHERE barbershop_id = $1 AND id = $2`,
+			string(shop), appointmentID).Scan(&at)
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return at
+}
+
+func reminderRunAt(t *testing.T, db *database.DB, shop database.BarbershopID, appointmentID string) (time.Time, int) {
+	t.Helper()
+	var runAt time.Time
+	var n int
+	err := db.InTenantTx(context.Background(), shop, func(ctx context.Context, q database.Queries) error {
+		return q.QueryRow(ctx,
+			`SELECT coalesce(max(run_at), 'epoch'), count(*) FROM appointment_notice
+			  WHERE barbershop_id = $1 AND appointment_id = $2 AND kind = 'reminder' AND status = 'pending'`,
+			string(shop), appointmentID).Scan(&runAt, &n)
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return runAt, n
+}
+
+func setStart(t *testing.T, db *database.DB, shop database.BarbershopID, appointmentID string, start time.Time, status string) {
+	t.Helper()
+	err := db.InTenantTx(context.Background(), shop, func(ctx context.Context, q database.Queries) error {
+		if status == "confirmed" {
+			_, err := q.Exec(ctx, `UPDATE appointment SET starts_at = $3::timestamptz, ends_at = $3::timestamptz + interval '40 minutes'
+			                        WHERE barbershop_id = $1 AND id = $2`, string(shop), appointmentID, start)
+			return err
+		}
+		_, err := q.Exec(ctx, `UPDATE appointment SET status = $3, resolved_at = now() WHERE barbershop_id = $1 AND id = $2`,
+			string(shop), appointmentID, status)
+		return err
+	})
+	if err != nil {
+		t.Fatalf("setStart: %v", err)
+	}
+}
+
+func TestReminder_IsDueThirtyMinutesBeforeAndCoexistsWithAChangeNotice(t *testing.T) {
+	app := appDB(t)
+	id, _ := seedAppointment(t, app, shopA, true)
+	start := startsAt(t, app, shopA, id)
+
+	enqueueReminder(t, app, shopA, id)
+	runAt, n := reminderRunAt(t, app, shopA, id)
+	if n != 1 || !runAt.Equal(start.Add(-30*time.Minute)) {
+		t.Fatalf("un recordatorio pendiente a 30 minutos del turno: n=%d run_at=%s start=%s", n, runAt, start)
+	}
+
+	// Una reprogramación pendiente no sustituye al recordatorio ni al revés (CA-131-04).
+	enqueue(t, app, shopA, id, "rescheduled")
+	enqueueReminder(t, app, shopA, id)
+	enqueueReminder(t, app, shopA, id)
+	var kinds []string
+	for _, row := range notices(t, app, shopA, id) {
+		kinds = append(kinds, row.Kind+"/"+row.Status)
+	}
+	if len(kinds) != 2 {
+		t.Fatalf("un recordatorio y un aviso de cambio, no más (RN-REC-01): %v", kinds)
+	}
+}
+
+func TestReminder_IsNotScheduledWhenThereIsNothingToRemind(t *testing.T) {
+	app := appDB(t)
+
+	soon, _ := seedAppointment(t, app, shopA, true)
+	setStart(t, app, shopA, soon, time.Now().UTC().Add(10*time.Minute), "confirmed")
+	enqueueReminder(t, app, shopA, soon)
+	if _, n := reminderRunAt(t, app, shopA, soon); n != 0 {
+		t.Fatal("un turno a menos de 30 minutos no genera recordatorio")
+	}
+
+	cancelled, _ := seedAppointment(t, app, shopA, true)
+	setStart(t, app, shopA, cancelled, time.Time{}, "cancelled_by_customer")
+	enqueueReminder(t, app, shopA, cancelled)
+	if _, n := reminderRunAt(t, app, shopA, cancelled); n != 0 {
+		t.Fatal("un turno no confirmado no genera recordatorio (RN-REC-02)")
+	}
+}
+
+func TestReminder_MovingTheAppointmentRegeneratesOneAndTheOldHourIsNeverSent(t *testing.T) {
+	app, worker := appDB(t), noticepostgres.NewWorkerRepository(workerDB(t))
+	id, _ := seedAppointment(t, app, shopA, true)
+	enqueueReminder(t, app, shopA, id)
+	oldRun, _ := reminderRunAt(t, app, shopA, id)
+	old := notices(t, app, shopA, id)[0]
+
+	// El turno se mueve 3 horas después y el recordatorio viejo vence antes de regenerarse.
+	setStart(t, app, shopA, id, startsAt(t, app, shopA, id).Add(3*time.Hour), "confirmed")
+	mailer := &recordingMailer{}
+	runDispatcherOnMine(t, worker, old.ID, mailer, oldRun.Add(time.Minute))
+	if len(mailer.calls) != 0 {
+		t.Fatalf("no se recuerda la hora vieja (RN-REC-03): %v", mailer.calls)
+	}
+	if got := notices(t, app, shopA, id)[0]; got.Status != "skipped" || got.Code != "superseded" {
+		t.Fatalf("el recordatorio de la hora vieja queda skipped/superseded: %+v", got)
+	}
+
+	// La reprogramación programa el nuevo: uno solo vigente.
+	enqueueReminder(t, app, shopA, id)
+	enqueueReminder(t, app, shopA, id)
+	newRun, n := reminderRunAt(t, app, shopA, id)
+	if n != 1 || !newRun.Equal(oldRun.Add(3*time.Hour)) {
+		t.Fatalf("un solo recordatorio vigente a la hora nueva: n=%d run_at=%s", n, newRun)
+	}
+}
+
+func TestReminder_SentOnceWithTheCurrentHourAndNotRepeatedForTheSameHour(t *testing.T) {
+	app, worker := appDB(t), noticepostgres.NewWorkerRepository(workerDB(t))
+	id, email := seedAppointment(t, app, shopA, true)
+	enqueueReminder(t, app, shopA, id)
+	first := notices(t, app, shopA, id)[0]
+	runAt, _ := reminderRunAt(t, app, shopA, id)
+
+	mailer := &recordingMailer{}
+	runDispatcherOnMine(t, worker, first.ID, mailer, runAt.Add(time.Second))
+	if len(mailer.calls) != 1 || !strings.HasPrefix(mailer.calls[0], "reminder|"+email+"|") {
+		t.Fatalf("debe enviarse el recordatorio al correo del cliente: %v", mailer.calls)
+	}
+	if got := notices(t, app, shopA, id)[0]; got.Status != "sent" {
+		t.Fatalf("debe quedar sent: %+v", got)
+	}
+
+	// Un segundo recordatorio para la misma hora ya está cubierto: no se repite.
+	enqueueReminder(t, app, shopA, id)
+	rows := notices(t, app, shopA, id)
+	second := rows[len(rows)-1]
+	runDispatcherOnMine(t, worker, second.ID, mailer, runAt.Add(2*time.Second))
+	if len(mailer.calls) != 1 {
+		t.Fatalf("no se repite el recordatorio de la misma hora: %v", mailer.calls)
+	}
+	if got := notices(t, app, shopA, id); got[len(got)-1].Code != "superseded" {
+		t.Fatalf("el duplicado queda skipped/superseded: %+v", got)
+	}
+}
+
+func TestReminder_CancelledWhileWaitingIsNotSent(t *testing.T) {
+	app, worker := appDB(t), noticepostgres.NewWorkerRepository(workerDB(t))
+	id, _ := seedAppointment(t, app, shopA, true)
+	enqueueReminder(t, app, shopA, id)
+	n := notices(t, app, shopA, id)[0]
+	runAt, _ := reminderRunAt(t, app, shopA, id)
+
+	setStart(t, app, shopA, id, time.Time{}, "cancelled_by_customer")
+	mailer := &recordingMailer{}
+	runDispatcherOnMine(t, worker, n.ID, mailer, runAt.Add(time.Second))
+	if len(mailer.calls) != 0 {
+		t.Fatalf("no se recuerda un turno cancelado (RN-REC-02): %v", mailer.calls)
+	}
+	if got := notices(t, app, shopA, id)[0]; got.Status != "skipped" || got.Code != "not_confirmed" {
+		t.Fatalf("debe quedar skipped/not_confirmed: %+v", got)
+	}
+}
+
+func TestReminder_OtherTenantCannotScheduleForMyAppointment(t *testing.T) {
+	app := appDB(t)
+	id, _ := seedAppointment(t, app, shopA, true)
+	enqueueReminder(t, app, shopB, id) // sesión de B sobre el turno de A: el INSERT…SELECT no ve nada
+	if _, n := reminderRunAt(t, app, shopA, id); n != 0 {
+		t.Fatal("otra barbería no puede programar recordatorios de un turno ajeno (RN-TEN-01)")
+	}
+}

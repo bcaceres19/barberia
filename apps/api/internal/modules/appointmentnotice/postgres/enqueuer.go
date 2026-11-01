@@ -31,8 +31,35 @@ INSERT INTO appointment_notice (barbershop_id, appointment_id, kind, state_at, r
 SELECT a.barbershop_id, a.id, $3, a.updated_at, now() + interval '60 seconds'
   FROM appointment a
  WHERE a.barbershop_id = $1 AND a.id = $2
-ON CONFLICT (appointment_id) WHERE status = 'pending'
+ON CONFLICT (appointment_id, (kind = 'reminder')) WHERE status = 'pending'
 DO UPDATE SET kind = EXCLUDED.kind, state_at = EXCLUDED.state_at, run_at = EXCLUDED.run_at`
+
+// La anticipación (30 minutos) es la inicial del recordatorio (RN-REC-01, DEC-144).
+// No es configurable todavía (RN-REC-05 queda fuera del primer tramo).
+//
+// El recordatorio guarda como state_at el instante del turno: si el turno cambia
+// de hora, el recordatorio viejo ya no coincide y el worker lo descarta al enviar
+// (RN-REC-01, RN-REC-03). No se programa si faltan menos de reminderLead para el
+// turno: no habría nada que recordar con antelación (un turno tomado "para ya").
+// Un turno no confirmado no se programa. El índice único admite un recordatorio
+// pendiente por turno: reprogramar lo actualiza (regenera) en vez de duplicarlo.
+const reminderSQL = `
+INSERT INTO appointment_notice (barbershop_id, appointment_id, kind, state_at, run_at)
+SELECT a.barbershop_id, a.id, 'reminder', a.starts_at, a.starts_at - interval '30 minutes'
+  FROM appointment a
+ WHERE a.barbershop_id = $1 AND a.id = $2
+   AND a.status = 'confirmed'
+   AND a.starts_at - interval '30 minutes' > now()
+ON CONFLICT (appointment_id, (kind = 'reminder')) WHERE status = 'pending'
+DO UPDATE SET state_at = EXCLUDED.state_at, run_at = EXCLUDED.run_at`
+
+// AppointmentReminderRequired implementa booking/postgres.NoticeHook.
+func (Enqueuer) AppointmentReminderRequired(ctx context.Context, q database.Queries, barbershopID, appointmentID string) error {
+	if _, err := q.Exec(ctx, reminderSQL, barbershopID, appointmentID); err != nil {
+		return fmt.Errorf("appointmentnotice/postgres: enqueue reminder: %w", err)
+	}
+	return nil
+}
 
 // AppointmentNoticeRequired implementa booking/postgres.NoticeHook.
 func (Enqueuer) AppointmentNoticeRequired(ctx context.Context, q database.Queries, barbershopID, appointmentID, kind string) error {

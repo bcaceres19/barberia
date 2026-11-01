@@ -24,6 +24,10 @@ const (
 // confirmar el cambio a confirmarlo sin dejar el aviso en la cola.
 type NoticeHook interface {
 	AppointmentNoticeRequired(ctx context.Context, q database.Queries, barbershopID, appointmentID, kind string) error
+	// AppointmentReminderRequired programa (o regenera, si el turno cambió de
+	// hora) el recordatorio previo al turno (HU-131, DEC-144) en la transacción
+	// que lo crea o lo reprograma. Decide por sí mismo si hay algo que recordar.
+	AppointmentReminderRequired(ctx context.Context, q database.Queries, barbershopID, appointmentID string) error
 }
 
 // WithNoticeHook registra quien encola los avisos al cliente. Se llama durante
@@ -39,4 +43,11 @@ func (r *Repository) noticeRequired(ctx context.Context, q database.Queries, bar
 		return nil
 	}
 	return r.notices.AppointmentNoticeRequired(ctx, q, barbershopID, appointmentID, kind)
+}
+
+func (r *Repository) reminderRequired(ctx context.Context, q database.Queries, barbershopID, appointmentID string) error {
+	if r.notices == nil {
+		return nil
+	}
+	return r.notices.AppointmentReminderRequired(ctx, q, barbershopID, appointmentID)
 }
