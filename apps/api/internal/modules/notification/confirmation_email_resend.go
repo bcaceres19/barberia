@@ -55,21 +55,38 @@ func (s ResendConfirmationEmailSender) SendConfirmation(
 	ctx, cancel := context.WithTimeout(ctx, resendSendTimeout)
 	defer cancel()
 
-	linkLine := "Muy pronto podrás consultar tu turno en línea con el enlace que enviaremos por separado."
-	if accessLink != "" {
-		linkLine = fmt.Sprintf("Consulta tu turno cuando quieras en este enlace: %s", accessLink)
+	content := emailContent{
+		Preheader: fmt.Sprintf("Tu turno en %s quedó confirmado.", barbershopName),
+		Brand:     barbershopName,
+		Badge:     &emailBadge{Label: "Turno confirmado", Tone: toneSuccess},
+		Title:     "Tu turno está listo",
+		Greeting:  fmt.Sprintf("Hola %s,", attendeeName),
+		Paragraphs: []string{
+			fmt.Sprintf("Tu turno en %s quedó confirmado.", barbershopName),
+		},
+		Details: []emailDetail{
+			{Label: "Servicio", Value: serviceName},
+			{Label: "Fecha y hora", Value: startsAtLocalFormatted},
+		},
+		Footnotes: []string{"Si no reservaste este turno, ignora este mensaje."},
 	}
-
-	text := fmt.Sprintf(
-		"Hola %s,\n\nTu turno en %s quedó confirmado.\n\nServicio: %s\nFecha y hora: %s\n\n%s\n\nSi no reservaste este turno, ignora este mensaje.",
-		attendeeName, barbershopName, serviceName, startsAtLocalFormatted, linkLine,
-	)
+	if accessLink != "" {
+		content.Paragraphs = append(content.Paragraphs, "Consulta tu turno cuando quieras con el siguiente botón.")
+		content.Button = &emailButton{Label: "Ver mi turno", URL: accessLink}
+	} else {
+		content.Paragraphs = append(content.Paragraphs, "Muy pronto podrás consultar tu turno en línea con el enlace que enviaremos por separado.")
+	}
+	htmlBody, err := content.HTML()
+	if err != nil {
+		return err
+	}
 
 	payload := resendEmailRequest{
 		From:    s.cfg.FromAddress,
 		To:      []string{email},
 		Subject: confirmationEmailSubject,
-		Text:    text,
+		HTML:    htmlBody,
+		Text:    content.Text(),
 	}
 
 	body, err := json.Marshal(payload)

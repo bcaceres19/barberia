@@ -50,20 +50,34 @@ type resendEmailRequest struct {
 	From    string   `json:"from"`
 	To      []string `json:"to"`
 	Subject string   `json:"subject"`
-	Text    string   `json:"text"`
+	// HTML y Text viajan juntos (issue #465): el cliente de correo elige; Text
+	// es además la alternativa para quien no renderiza HTML.
+	HTML string `json:"html,omitempty"`
+	Text string `json:"text"`
 }
 
 // Send implementa [EmailSender].
 func (s ResendEmailSender) Send(ctx context.Context, email, code string) error {
-	return postResendEmail(ctx, s.httpClient, s.cfg, email, s.cfg.Subject,
-		fmt.Sprintf("Tu código de recuperación de acceso es: %s\n\nVence en pocos minutos. Si no lo solicitaste, ignora este mensaje.", code))
+	return postResendEmail(ctx, s.httpClient, s.cfg, email, s.cfg.Subject, emailContent{
+		Preheader:  "Tu código para recuperar el acceso a NAVA.",
+		Title:      "Recupera tu acceso",
+		Paragraphs: []string{"Usa este código para recuperar el acceso a tu cuenta. Vence en pocos minutos."},
+		Code:       code,
+		Footnotes:  []string{"Si no lo solicitaste, ignora este mensaje: tu cuenta sigue segura."},
+	})
 }
 
-// postResendEmail envía un correo de texto por Resend. Comparte el manejo de
+// postResendEmail envía por Resend un correo con la plantilla de marca (HTML y
+// texto). Comparte el manejo de
 // errores de los correos de código (recuperación y reto de acceso): sin
 // reintento síncrono y sin copiar el cuerpo de error del proveedor, que puede
 // incluir el destinatario (RN-DAT-02).
-func postResendEmail(ctx context.Context, httpClient *http.Client, cfg ResendEmailConfig, to, subject, text string) error {
+func postResendEmail(ctx context.Context, httpClient *http.Client, cfg ResendEmailConfig, to, subject string, content emailContent) error {
+	htmlBody, err := content.HTML()
+	if err != nil {
+		return err
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, resendSendTimeout)
 	defer cancel()
 
@@ -71,7 +85,8 @@ func postResendEmail(ctx context.Context, httpClient *http.Client, cfg ResendEma
 		From:    cfg.FromAddress,
 		To:      []string{to},
 		Subject: subject,
-		Text:    text,
+		HTML:    htmlBody,
+		Text:    content.Text(),
 	}
 
 	body, err := json.Marshal(payload)
